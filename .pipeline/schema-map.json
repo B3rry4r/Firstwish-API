@@ -1,0 +1,831 @@
+{
+ "phase": "SCHEMA (Phase 4)",
+ "registrySha256": "c6aab05763d250e0066130e7a2264c521a99b5d053ca3695c3b5727396b385c8",
+ "rules": [
+  "table: something writes it (a POST, PUT, PATCH, DELETE or INTERNAL route, or a server:* declaration). A GET's query parameters are not writers.",
+  "view: read only, worked out on read from the tables named in 'of'. No table of its own.",
+  "config: price book, settings, catalogues and templates that staff change; a table seeded with reference rows where a declaration gives them.",
+  "document: stored whole as validated JSON. 'host' names the model and column that hold it.",
+  "not-stored: kept in the web app by ruling.",
+  "Columns of a table: every field its declaration lists, plus every registry field that a write route or a server:* declaration writes, plus (for a resource with no declaration) every registry field. A registry field that is a read-side join or a derived display value of a declared resource stays in the contract only.",
+  "A dotted field (content.cover) lives inside its root column as JSON. A field whose name is reader prose, not a name, is left out.",
+  "Storage nullability: a declared field keeps its declared nullability; a screen-only field is nullable in storage (no writer guarantees it at insert), while the contract keeps the registry's nullability.",
+  "Relations: one foreign key per dep-graph.json edge between two stored models.",
+  "Ownership: a stored resource that the dep-graph leaves without an owner but whose routes are scoped to the signed-in account (/v1/me, /v1/feed, /v1/studio, /v1/creator) or to the member's business (/v1/business) gets one foreign key to Account or Business ('owner'), because conventions.md (Who can do what) asks for the ownership check. Listed per resource.",
+  "An admin action's reason and action are written to the audit row (DEC-125), not to the subject, unless a declaration lists them as fields."
+ ],
+ "resources": {
+  "Account": {
+   "class": "table",
+   "reason": "written by E-3, E-7, E-9, E-11 and server:sessions; the person's account (sessions declaration Me); erase really removes personal fields, so name, contact (the email, S-27), phone, bio and handle are nullable in storage",
+   "omit": {
+    "here": "the side chosen before sign-in travels in the link (DEC-88)"
+   },
+   "unique": [
+    [
+     "contact"
+    ],
+    [
+     "handle"
+    ]
+   ],
+   "declaredAs": "Me",
+   "alias": {
+    "joined": "createdAt",
+    "email": "contact"
+   },
+   "nullable": [
+    "name",
+    "contact",
+    "email",
+    "phone",
+    "bio",
+    "handle"
+   ],
+   "keep": {
+    "phone": "an optional plain detail stored E.164 when given (R11, S-27)"
+   }
+  },
+  "AiRequest": {
+   "class": "table",
+   "reason": "written by E-12..E-16 and server:ai-writing (one row per AI request, credits charged)"
+  },
+  "ApprovedDate": {
+   "class": "config",
+   "reason": "the dates a business may make wishes for, served by GET /v1/business/approved-dates; no route writes it, staff keep the list"
+  },
+  "AuditEntry": {
+   "class": "table",
+   "reason": "written by server:audit-log in the same transaction as every staff change (DEC-117); append-only, no update (database trigger)",
+   "omit": {
+    "from": "query parameter of E-18, not stored"
+   }
+  },
+  "AuthCode": {
+   "class": "table",
+   "reason": "written by E-19, E-20 and server:auth-codes (one-time sign-in codes, hashed)",
+   "omit": {
+    "code": "the verify input of E-20; only codeHash is kept (auth-codes declaration)"
+   },
+   "alias": {
+    "contact": "destination"
+   }
+  },
+  "Ban": {
+   "class": "table",
+   "reason": "written by E-21 and server:moderation"
+  },
+  "BankAccount": {
+   "class": "table",
+   "reason": "written by E-22 (a creator's payout bank account)",
+   "owner": [
+    "Creator"
+   ]
+  },
+  "Business": {
+   "class": "table",
+   "reason": "written by E-9 (set up) and E-26 (brand); a business side of an account; brand is embedded JSON (Brand)",
+   "owner": [
+    "Account"
+   ]
+  },
+  "ChapterSpec": {
+   "class": "config",
+   "reason": "the chapter catalogue served by GET /v1/chapter-specs; staff keep it"
+  },
+  "ClientWish": {
+   "class": "table",
+   "reason": "written by E-30, E-32, E-33 (a business's wish for a client)",
+   "owner": [
+    "Business"
+   ]
+  },
+  "ConciergeOrder": {
+   "class": "table",
+   "reason": "written by E-34, E-35, E-39, E-40 and server:concierge-orders",
+   "alias": {
+    "maker": "makerId"
+   },
+   "omit": {
+    "to": "date-only query window of 'Due this week', not a field of the order (DEC-128)"
+   }
+  },
+  "Creator": {
+   "class": "table",
+   "reason": "the public creator profile, 1:1 with an account (DEC-76); credits, plan and signed are written by payment fulfilment (E-91, E-93, E-94)",
+   "unique": [
+    [
+     "handle"
+    ],
+    [
+     "accountId"
+    ]
+   ],
+   "owner": [
+    "Account"
+   ]
+  },
+  "CreatorOffer": {
+   "class": "view",
+   "reason": "creator plan prices and shares read from the price book (DEC-96)",
+   "of": [
+    "Price",
+    "Entitlements",
+    "Promotion"
+   ]
+  },
+  "CreatorState": {
+   "class": "table",
+   "reason": "written by E-44 and server:ai-writing (a creator's credits and reviews left)"
+  },
+  "DateRow": {
+   "class": "table",
+   "reason": "written by E-46, E-47 (a person's remembered dates)",
+   "owner": [
+    "Account"
+   ]
+  },
+  "DayPick": {
+   "class": "table",
+   "reason": "written by E-49 (staff pick for a day on Now showing)",
+   "unique": [
+    [
+     "date"
+    ]
+   ]
+  },
+  "EarningsSummary": {
+   "class": "view",
+   "reason": "totals over royalty accruals and payments for a period (DEC-67); E-50 is a read",
+   "of": [
+    "RoyaltyAccrual",
+    "Payment"
+   ]
+  },
+  "EndingPurpose": {
+   "class": "config",
+   "reason": "the ending catalogue served by GET /v1/ending-purposes; staff keep it"
+  },
+  "Entitlements": {
+   "class": "config",
+   "reason": "price-book declaration: what each ticket, plan and pass includes; changed by staff as part of a price-book version"
+  },
+  "Event": {
+   "class": "table",
+   "reason": "written by E-52 and server:analytics-events (raw app events)"
+  },
+  "ExternalIdentity": {
+   "class": "table",
+   "reason": "written by E-53..E-56 and server:google-identity (a Google sign-in linked to an account)",
+   "omit": {
+    "code": "OAuth query parameter of E-53, never stored",
+    "state": "OAuth query parameter of E-53, never stored"
+   }
+  },
+  "Extra": {
+   "class": "view",
+   "reason": "extras and their prices per ticket, read from the price book (DEC-96)",
+   "of": [
+    "Price",
+    "Promotion",
+    "Entitlements"
+   ]
+  },
+  "Follow": {
+   "class": "table",
+   "reason": "written by E-57, E-58 (an account follows a creator)",
+   "owner": [
+    "Account"
+   ],
+   "unique": [
+    [
+     "accountId",
+     "handle"
+    ]
+   ]
+  },
+  "Invoice": {
+   "class": "table",
+   "reason": "a business invoice issued for a paid plan or pack; listed by E-59, the file built from it by E-60",
+   "owner": [
+    "Business"
+   ]
+  },
+  "Job": {
+   "class": "table",
+   "reason": "written by E-62 and server:jobs (timed work definitions and state)"
+  },
+  "JobRun": {
+   "class": "table",
+   "reason": "written by server:jobs (a recorded run of a job)"
+  },
+  "LedgerDay": {
+   "class": "view",
+   "reason": "one day of ledger totals against the provider's settlement",
+   "of": [
+    "LedgerEntry",
+    "Reconciliation"
+   ]
+  },
+  "LedgerEntry": {
+   "class": "table",
+   "reason": "written by server:ledger and E-65; append-only (no update or delete: database trigger)",
+   "omit": {
+    "from": "query parameter of E-64",
+    "to": "query parameter of E-64"
+   }
+  },
+  "LifecycleConfig": {
+   "class": "config",
+   "reason": "one row of lifecycle terms served inside the public price book (DEC-70); staff change it"
+  },
+  "Login": {
+   "class": "table",
+   "reason": "written by E-67, E-68 (a business's member logins)",
+   "owner": [
+    "Business"
+   ]
+  },
+  "Maker": {
+   "class": "view",
+   "reason": "staff with the maker role and their open Concierge orders",
+   "of": [
+    "StaffAccount",
+    "ConciergeOrder"
+   ]
+  },
+  "MessageDelivery": {
+   "class": "table",
+   "reason": "written by E-70, E-72, E-73 and server:messages-email"
+  },
+  "MessageTemplate": {
+   "class": "config",
+   "reason": "message wording kept by staff (messages-email declaration)"
+  },
+  "Moment": {
+   "class": "config",
+   "reason": "the opening and ending scene catalogue served by GET /v1/moments; field definitions stay in the web app (DEC-82)"
+  },
+  "Notice": {
+   "class": "table",
+   "reason": "written by E-76 and server:notices"
+  },
+  "NoticePrefs": {
+   "class": "table",
+   "reason": "written by E-78 (an account's notice choices)",
+   "owner": [
+    "Account"
+   ],
+   "unique": [
+    [
+     "accountId"
+    ]
+   ]
+  },
+  "Numbers": {
+   "class": "view",
+   "reason": "figures worked out by the server (DEC-113); see HALT-1: E-80 writes targets but no contract names a target field",
+   "of": [
+    "Payment",
+    "Wish",
+    "Event",
+    "Style"
+   ]
+  },
+  "OpeningDef": {
+   "class": "config",
+   "reason": "the opening catalogue served by GET /v1/opening-defs; staff keep it"
+  },
+  "Overview": {
+   "class": "view",
+   "reason": "the admin overview worked out by the server (DEC-113)",
+   "of": [
+    "Payment",
+    "MessageDelivery",
+    "ConciergeOrder",
+    "Report",
+    "StyleSubmission",
+    "PublishRequest",
+    "SupportThread"
+   ]
+  },
+  "PassMembership": {
+   "class": "table",
+   "reason": "a Pass bought by an account, granted by payment fulfilment E-104 (DEC-94); read by E-83",
+   "owner": [
+    "Account"
+   ]
+  },
+  "PassOffer": {
+   "class": "view",
+   "reason": "the Pass offer read from the price book (DEC-96)",
+   "of": [
+    "Price",
+    "Promotion",
+    "Entitlements"
+   ]
+  },
+  "Payment": {
+   "class": "table",
+   "reason": "written by E-86, E-87, E-88 and server:payments",
+   "alias": {
+    "ref": "providerReference",
+    "reference": "providerReference",
+    "record": "amountKobo",
+    "at": "createdAt",
+    "state": "status",
+    "way": "channel"
+   },
+   "omit": {
+    "reason": "refund input of E-86, written to the refund and audit row",
+    "personName": "joined from Account on read",
+    "person": "joined from Account on read",
+    "wish": "joined from the subject wish on read",
+    "title": "price-book line name, joined on read",
+    "what": "price-book line name, joined on read",
+    "line": "worked out from lines on read"
+   },
+   "unique": [
+    [
+     "providerReference"
+    ],
+    [
+     "idempotencyKey"
+    ]
+   ]
+  },
+  "Payout": {
+   "class": "table",
+   "reason": "written by E-114, E-115 and server:royalties-payouts",
+   "alias": {
+    "creator": "creatorId"
+   }
+  },
+  "Person": {
+   "class": "table",
+   "reason": "written by E-118..E-121 (a business's client people)",
+   "owner": [
+    "Business"
+   ]
+  },
+  "PersonDetail": {
+   "class": "view",
+   "reason": "staff view of one account with its payments and wishes (DEC-113)",
+   "of": [
+    "Account",
+    "Payment",
+    "Wish"
+   ]
+  },
+  "PlayWish": {
+   "class": "view",
+   "reason": "a wish and its content for playing in the app",
+   "of": [
+    "Wish"
+   ]
+  },
+  "Price": {
+   "class": "config",
+   "reason": "price-book lines in kobo (price-book declaration); staff change them by E-124 as a new version",
+   "alias": {
+    "list": "listKobo"
+   },
+   "unique": [
+    [
+     "sku",
+     "version"
+    ]
+   ]
+  },
+  "PriceBookVersion": {
+   "class": "config",
+   "reason": "price-book versions written by E-126, E-127 (owner publishes, finance drafts)",
+   "unique": [
+    [
+     "version"
+    ]
+   ]
+  },
+  "ProPlan": {
+   "class": "view",
+   "reason": "Pro plans and prices read from the price book (DEC-96)",
+   "of": [
+    "Price",
+    "Entitlements",
+    "Promotion"
+   ]
+  },
+  "ProPricingCopy": {
+   "class": "view",
+   "reason": "figures on the business page read from the price book (DEC-96)",
+   "of": [
+    "Price",
+    "Entitlements"
+   ]
+  },
+  "ProUsage": {
+   "class": "view",
+   "reason": "a business's wishes used and left this period",
+   "of": [
+    "Business",
+    "Wish",
+    "Payment",
+    "Entitlements"
+   ]
+  },
+  "Promotion": {
+   "class": "config",
+   "reason": "the price-book promotion row with its end date (DEC-121)"
+  },
+  "Provider": {
+   "class": "config",
+   "reason": "the provider list shown on admin settings; which adapter is on comes from Settings"
+  },
+  "PublicWishView": {
+   "class": "view",
+   "reason": "what the public link returns (DEC-64), worked out from the wish, its link and its opens; the POST routes on /v1/w/:slug write WishOpen, Report and Wish, never this shape",
+   "of": [
+    "Wish",
+    "WishLink",
+    "WishOpen"
+   ]
+  },
+  "PublishRequest": {
+   "class": "table",
+   "reason": "written by E-135..E-137 and server:now-showing-review"
+  },
+  "PublishedWish": {
+   "class": "table",
+   "reason": "a wish listed on Now showing (DEC-63, house wishes are seeded rows); written by E-139"
+  },
+  "QrCard": {
+   "class": "table",
+   "reason": "written by E-141 and server:qr-card"
+  },
+  "Queue": {
+   "class": "view",
+   "reason": "counts of work waiting on admin overview",
+   "of": [
+    "ConciergeOrder",
+    "Report",
+    "StyleSubmission",
+    "PublishRequest",
+    "SupportThread",
+    "MessageDelivery"
+   ]
+  },
+  "Reaction": {
+   "class": "table",
+   "reason": "written by E-142, E-143 (an account's reaction to a feed wish)",
+   "owner": [
+    "Account"
+   ],
+   "unique": [
+    [
+     "accountId",
+     "wish"
+    ]
+   ]
+  },
+  "Reconciliation": {
+   "class": "table",
+   "reason": "written by E-144 and server:ledger (daily settlement against the provider)",
+   "unique": [
+    [
+     "day"
+    ]
+   ]
+  },
+  "Refund": {
+   "class": "table",
+   "reason": "written by E-145, E-146 and server:refunds"
+  },
+  "RenderJob": {
+   "class": "table",
+   "reason": "written by E-148 and server:video-render"
+  },
+  "Report": {
+   "class": "table",
+   "reason": "written by E-150, E-151 and server:moderation",
+   "alias": {
+    "wish": "wishId"
+   }
+  },
+  "RevealLink": {
+   "class": "table",
+   "reason": "written by E-153 (the proofs or finals link a business copies)",
+   "owner": [
+    "Business"
+   ]
+  },
+  "RevealPlay": {
+   "class": "view",
+   "reason": "a client wish's reveal as the receiver plays it",
+   "of": [
+    "ClientWish",
+    "Shoot",
+    "StoredFile"
+   ]
+  },
+  "RoleAccess": {
+   "class": "config",
+   "reason": "the Team access table: which admin sections each staff role opens (DEC-112); seeded"
+  },
+  "RoyaltyAccrual": {
+   "class": "table",
+   "reason": "written by server:royalties-payouts on each paid wish in a creator's style"
+  },
+  "SavedReply": {
+   "class": "config",
+   "reason": "support saved replies that staff keep"
+  },
+  "SavedWish": {
+   "class": "table",
+   "reason": "written by E-155, E-156 (an account saves a feed wish)",
+   "owner": [
+    "Account"
+   ],
+   "unique": [
+    [
+     "accountId",
+     "wish"
+    ]
+   ]
+  },
+  "ScreeningResult": {
+   "class": "table",
+   "reason": "written by E-157, E-158 and server:upload-screening"
+  },
+  "Session": {
+   "class": "table",
+   "reason": "written by server:sessions and E-159..E-161 (rotating refresh tokens)"
+  },
+  "Settings": {
+   "class": "config",
+   "reason": "admin switches and the storage choice, written by E-164, E-165 (owner only)"
+  },
+  "Share": {
+   "class": "table",
+   "reason": "written by E-166 (a share of a feed wish; the link comes from the server, DEC-89)",
+   "owner": [
+    "Account"
+   ]
+  },
+  "Shoot": {
+   "class": "table",
+   "reason": "written by E-168, E-169, E-171, E-172 (a business's Vault shoot)",
+   "owner": [
+    "Business"
+   ]
+  },
+  "SignedUrl": {
+   "class": "table",
+   "reason": "written by E-173 (the storage port issues a short-lived signed read; the row records the read granted)"
+  },
+  "StaffAccount": {
+   "class": "table",
+   "reason": "written by E-174..E-181 and server:staff-accounts",
+   "unique": [
+    [
+     "email"
+    ]
+   ],
+   "omit": {
+    "code": "the sign-in code input of E-176; kept as an AuthCode"
+   },
+   "alias": {
+    "role": "roles"
+   }
+  },
+  "StaffSession": {
+   "class": "view",
+   "reason": "the staff sign-in form's inputs; what is kept is the AuthCode and the Session (sessions declaration)",
+   "of": [
+    "AuthCode",
+    "Session"
+   ]
+  },
+  "StoredFile": {
+   "class": "table",
+   "reason": "written by E-182..E-184 and server:storage"
+  },
+  "StudioPrefs": {
+   "class": "document",
+   "reason": "the Studio editor's preferences for one account, stored whole as JSON (written by E-186)",
+   "host": "StudioPrefs.document",
+   "owner": [
+    "Account"
+   ],
+   "unique": [
+    [
+     "accountId"
+    ]
+   ]
+  },
+  "StudioStyle": {
+   "class": "document",
+   "reason": "a Studio style (DEC-65: StudioStyle is the document), stored whole as validated JSON with its owner and state as columns",
+   "host": "StudioStyle.document",
+   "owner": [
+    "Account"
+   ]
+  },
+  "Style": {
+   "class": "table",
+   "reason": "the server's style record: slug, level, on/off, creator, counts (DEC-69); written by E-194 and events (DEC-124)",
+   "unique": [
+    [
+     "slug"
+    ]
+   ]
+  },
+  "StyleLevel": {
+   "class": "config",
+   "reason": "style levels set by staff (E-197) and server:style-levels"
+  },
+  "StyleRate": {
+   "class": "view",
+   "reason": "preview-to-paid rate per quarter worked out from events; E-199 is a read",
+   "of": [
+    "Event",
+    "Style"
+   ]
+  },
+  "StyleSubmission": {
+   "class": "table",
+   "reason": "written by E-201, E-202 and server:style-review (DEC-65)"
+  },
+  "SubmissionView": {
+   "class": "view",
+   "reason": "staff view of a submission with its style and creator (DEC-113 Submission = StyleSubmission)",
+   "of": [
+    "StyleSubmission",
+    "StudioStyle",
+    "Creator"
+   ]
+  },
+  "SupportMessage": {
+   "class": "table",
+   "reason": "written by E-203 and server:support-threads"
+  },
+  "SupportThread": {
+   "class": "table",
+   "reason": "written by E-204, E-208..E-211 and server:support-threads",
+   "alias": {
+    "state": "status"
+   }
+  },
+  "Template": {
+   "class": "config",
+   "reason": "house Studio templates served by GET /v1/studio/templates; staff keep them"
+  },
+  "ThreadCounts": {
+   "class": "view",
+   "reason": "support thread counts, their own read (DEC-123)",
+   "of": [
+    "SupportThread"
+   ]
+  },
+  "Ticket": {
+   "class": "view",
+   "reason": "tickets and their prices read from the price book (DEC-96)",
+   "of": [
+    "Price",
+    "Entitlements",
+    "Promotion"
+   ]
+  },
+  "TicketOffer": {
+   "class": "view",
+   "reason": "the price to move a wish to another ticket, worked out on read (T-32)",
+   "of": [
+    "Price",
+    "Promotion",
+    "Wish",
+    "Payment"
+   ]
+  },
+  "TicketTerms": {
+   "class": "view",
+   "reason": "ticket terms on the terms page read from the price book (DEC-96)",
+   "of": [
+    "Entitlements",
+    "LifecycleConfig"
+   ]
+  },
+  "UploadTicket": {
+   "class": "table",
+   "reason": "written by server:storage (a signed upload granted, waiting for its confirm)"
+  },
+  "VaultFile": {
+   "class": "view",
+   "reason": "a business's Vault files",
+   "of": [
+    "StoredFile",
+    "Shoot"
+   ]
+  },
+  "VaultPricing": {
+   "class": "view",
+   "reason": "Vault space prices read from the price book (DEC-96)",
+   "of": [
+    "Price",
+    "Entitlements"
+   ]
+  },
+  "VaultStorage": {
+   "class": "view",
+   "reason": "a business's Vault space used and paid for",
+   "of": [
+    "StoredFile",
+    "Payment",
+    "Entitlements"
+   ]
+  },
+  "VoiceNote": {
+   "class": "table",
+   "reason": "a voice note recorded for a wish (dep-graph VoiceNote to Wish), its audio a StoredFile"
+  },
+  "WebhookEvent": {
+   "class": "table",
+   "reason": "written by E-217 and server:payments; stored once by event id",
+   "unique": [
+    [
+     "provider",
+     "eventId"
+    ]
+   ]
+  },
+  "Wish": {
+   "class": "table",
+   "reason": "written by E-220, E-222..E-233 and server:wish-lifecycle; content is a document column; content is JSON (DEC-64 typed WishData, DEC-82 Wish.content.details object) though the registry's top-level type reads string",
+   "alias": {
+    "state": "status",
+    "style": "styleSlug",
+    "wishId": "id"
+   },
+   "omit": {
+    "action": "action input of E-220, written to AuditEntry (DEC-125)",
+    "reason": "action input, written to the audit row (DEC-125)",
+    "link": "the slug of the wish's WishLink, joined on read",
+    "patch": "PATCH body wrapper of E-225, not a field",
+    "result": "upload result of E-226, not a field",
+    "personName": "joined from Account on read",
+    "person": "joined from Account on read",
+    "amount": "a quote worked out from the price book on seal (E-231), the paid amount is on Payment",
+    "price": "a quote from the price book (E-228), the paid amount is on Payment",
+    "payWay": "payment way, kept on Payment.channel",
+    "paymentWay": "payment way, kept on Payment.channel",
+    "days": "keep length chosen in E-228, kept as keptUntil",
+    "keepKey": "price-book sku chosen in E-228, kept on Payment.line",
+    "extraDays": "derived from the ticket terms (LifecycleConfig)",
+    "from": "the sender's name, kept in content",
+    "files": "upload input of E-226, kept as StoredFile rows"
+   },
+   "unique": [
+    [
+     "no"
+    ]
+   ],
+   "types": {
+    "content": "Json"
+   }
+  },
+  "WishData": {
+   "class": "document",
+   "reason": "a wish's content (DEC-64: public link content is typed WishData), stored whole as validated JSON on the wish",
+   "host": "Wish.content"
+  },
+  "WishDetail": {
+   "class": "view",
+   "reason": "staff view of one wish with its messages, payments and person (DEC-113)",
+   "of": [
+    "Wish",
+    "MessageDelivery",
+    "Payment",
+    "Account"
+   ]
+  },
+  "WishLink": {
+   "class": "table",
+   "reason": "written by server:wish-link (a wish's public slug)",
+   "unique": [
+    [
+     "slug"
+    ]
+   ]
+  },
+  "WishNumberSequence": {
+   "class": "table",
+   "reason": "written by server:wish-number (issues wish numbers in order)"
+  },
+  "WishOpen": {
+   "class": "table",
+   "reason": "written by server:wish-link (E-131 records an opening of the public link)"
+  },
+  "WishTransition": {
+   "class": "table",
+   "reason": "written by server:wish-lifecycle (every state change of a wish, with the job run that made it)"
+  }
+ }
+}

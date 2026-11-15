@@ -352,3 +352,5 @@ GG5 Seal can draw from the Pass in place of a ticket payment: the seal body take
     transaction (20 at once with 1 left: one seals). Business client wishes draw from the business (B17).
 GG6 Owed by others: Pro plan logins and invoices (an Invoice row with its VAT part for every plan and pack payment, T-40) by B17,
     called from the plan handlers; the end of a creator's Signed period by a timed job in B16.
+GG7 (P-B06) E-225 (save a draft) body gains `passcode` (write only, hashed, never returned) and loses the legacy whole-wish fields
+    (letter, blessing, ticket, photos and the like): the draft is saved through `content` and the named fields only.

@@ -95,7 +95,7 @@ export class WishLifecycleService implements OnModuleInit {
       data: { id: this.ids.id(), wishId: wish.id, from, to, cause: opt.cause, jobRunId: opt.jobRunId ?? null, createdAt: now },
     });
     if (outOfSight(to)) {
-      await this.saved.forget([wish.id], tx);
+      await this.saved.forgetForWishes(tx, [wish.id]);
       await tx.wishLink.updateMany({ where: { wishId: wish.id }, data: { active: false } });
       if (to === "erased") await tx.wishFile.deleteMany({ where: { wishId: wish.id } });
       for (const kind of ["open-wish", "rest-wish", "erase-wish", "restore-window-end", "send-notice"]) await this.jobs.cancel(kind, wish.id, tx);

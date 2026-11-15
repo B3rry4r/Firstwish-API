@@ -384,3 +384,6 @@ II4 An account gets a timeZone (set at sign-up from the browser, changeable in /
 II5 MessageDeliveryPurpose gains sealed and opens.
 II6 Identity sends its sign-in code through notices.send and deliverNow (one path for every email); a failed send no longer
     undoes the code, and the person can ask again.
+JJ1 (Verify P-B06, medium, kernel) The JSON body limit is 512 KB (a config value), above the 256 KB content limit, so an oversize
+    wish gets the service's 422 with its reason, not a bare 413. (INT-4.)
+JJ2 (for B10) lifecycle.markOpened answers {opened: false} when refused and never throws: the receiver's read must look at it.

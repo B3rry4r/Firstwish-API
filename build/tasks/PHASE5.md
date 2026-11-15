@@ -31,4 +31,4 @@ After Phase 5: Phase 6 wires the 89 screens (bundles of 3 to 5 by area, from .pi
 store) as the exit; Phase 7 smoke; Phase 8 live gate.
 
 ## Current state
-- Waiting on the schema (branch api-schema). No bundle started.
+- 15 Nov: schema merged (7ce487b), registry re-frozen DEC-145 (106 resources, 233 endpoints). B01 and B03 building. Briefs ready: B04, B05, B06.

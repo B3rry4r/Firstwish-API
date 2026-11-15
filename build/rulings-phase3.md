@@ -430,3 +430,17 @@ MM3 (P-B07) HH5 is closed in the wave join (the settle's erased-account branch a
     keys they mean (`only`), so one spec never runs another's jobs (the cause of HH9; the join fixes the two specs that do not).
 NN7 (P-B10) E-131 (POST /v1/w/:slug/opens) answers PublicWishView in the registry (INT-4). A reaction may hold the zero-width
     joiner that emoji sequences need; direction overrides and the other invisible characters stay refused (wave join).
+
+## Wave 4 list (halts of B17, B08, B13; applied in this wave's joins or the next shared base). Default (lead), owner may override.
+OO1 (B17) The "business" guard passes for the business's owner OR a live login of it. A person who only has a login acts on the
+    business they are a login of; a person who owns one and is a login of another acts on their own unless the request names
+    the other (header x-business-id, checked against their logins). Turning the business side on never makes a second business
+    for someone who came in by an invite unless they ask for their own.
+OO2 (B17) A "login-invite" message with its own wording is added to the notices catalog and seed.
+OO3 (B17) E-33 (send a reveal from a shoot) is built with Vault (B18).
+OO4 (B17) Invoice gains paymentId, period and voidedAt; the invoice counter becomes a model (next shared base); until then B17's
+    SQL tables stand.
+OO5 (B17) The plan, pack and Vault handlers call invoices.issue(tx, payment) in the settle transaction; a refund calls
+    invoices.voidFor(tx, paymentId). (This wave's join.)
+OO6 (B17) Reading a business (staff or owner) shows the month already rolled without writing; the roll is written only when a
+    wish is drawn or a payment lands.

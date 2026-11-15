@@ -7,10 +7,10 @@ import { SessionFamilies, StartedSession } from "../../common/auth/session-famil
 import { AskLimits, SignInCodes } from "../../common/auth/sign-in-codes";
 import type { StaffPrincipal } from "../../common/auth/principal";
 import { Clock } from "../../common/ports/clock.port";
-import { EmailPort } from "../../common/ports/email.port";
 import type { StaffAuthResult } from "../../contracts";
 import { AuditService } from "../audit/audit.service";
 import { networkOf } from "../audit/ip-network";
+import { NoticesService } from "../notices/notices.service";
 import { staffToWire } from "./staff-view";
 import { STAFF_SESSION } from "./staff-session";
 
@@ -44,7 +44,7 @@ export class StaffAuthService {
     private readonly audit: AuditService,
     private readonly families: SessionFamilies,
     private readonly codes: SignInCodes,
-    private readonly email: EmailPort,
+    private readonly notices: NoticesService,
     private readonly clock: Clock,
   ) {}
 
@@ -54,28 +54,27 @@ export class StaffAuthService {
    * the answer. Past a limit the answer is still 204 and nothing is sent.
    */
   async requestCode(email: string, req: RequestInfo): Promise<void> {
-    let code: string;
+    let code: { id: string; code: string };
     try {
       code = await this.db.$transaction(async (tx) => {
         const issued = await this.codes.issue(tx, { destination: email, purpose: "staff_sign_in", address: networkOf(req.ip), limits: STAFF_CODE_LIMITS });
-        return issued.code;
+        return issued;
       });
     } catch (e) {
       if (e instanceof RateLimited) return;
       throw e;
     }
     const staff = await this.db.staffAccount.findUnique({ where: { email }, select: { status: true, roles: true } });
-    if (canSignIn(staff)) this.queue(email, code, "sign-in");
+    if (canSignIn(staff)) this.queue(email, code);
   }
 
   /** Makes a fresh code for a newly invited member and emails it (after the answer). */
   async inviteCode(staff: Pick<StaffRow, "email">): Promise<void> {
     try {
       const code = await this.db.$transaction(async (tx) => {
-        const issued = await this.codes.issue(tx, { destination: staff.email, purpose: "staff_sign_in", address: null, limits: INVITE_LIMITS });
-        return issued.code;
+        return this.codes.issue(tx, { destination: staff.email, purpose: "staff_sign_in", address: null, limits: INVITE_LIMITS });
       });
-      this.queue(staff.email, code, "invite");
+      this.queue(staff.email, code);
     } catch (e) {
       if (!(e instanceof RateLimited)) throw e;
       this.log.warn("invite code not made: too many codes for this email; the member can ask for one at sign-in");
@@ -144,14 +143,16 @@ export class StaffAuthService {
     return { staff: staffToWire(staff), accessToken: s.access.token, accessTokenExpiresAt: s.access.expiresAt.toISOString() };
   }
 
-  /** Sends after the answer has gone (U4). A failed send is logged, never shown: the answer is the same for every email. */
-  private queue(to: string, code: string, why: "sign-in" | "invite"): void {
-    const subject = why === "invite" ? "You are invited to the Firstwish team" : "Your Firstwish staff sign-in code";
-    const lead = why === "invite" ? "You have been added to the Firstwish team. " : "";
+  /**
+   * Sends after the answer has gone (U4), through the one path for every email (II6: notices.send, then deliverNow). A failed
+   * send is logged, never shown: the answer is the same for every email, and the code stays.
+   */
+  private queue(to: string, issued: { id: string; code: string }): void {
     const job: Promise<void> = new Promise<void>((resolve) => setImmediate(resolve))
-      .then(() =>
-        this.email.send({ to, subject, text: `${lead}Your sign-in code is ${code}. It works for 10 minutes. If you did not ask for it, you can ignore this email.` }),
-      )
+      .then(async () => {
+        const sent = await this.notices.send(undefined, { template: "code", toEmail: to, data: { code: issued.code }, key: `staff-code:${issued.id}` });
+        await this.notices.deliverNow(sent.deliveryId);
+      })
       .then(
         () => undefined,
         (e: unknown) => this.log.warn(`staff code email not sent: ${(e as Error).message}`),

@@ -39,7 +39,7 @@ export interface RevokeResult {
 /**
  * The fulfilment handlers (B07), registered with the payments frame at boot, and the way back for a refund (B08): revoke(tx, payment).
  * Each handler runs in the settle transaction it is given, claims its purchase_grant row first (a repeat finds it and changes nothing),
- * locks the row it changes, and never reads the phone or Date.now(): the clock port gives every term.
+ * locks the row it changes, and never reads the phone or the system clock: the clock port gives every term.
  */
 @Injectable()
 export class PurchasesService implements OnModuleInit {

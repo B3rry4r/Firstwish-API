@@ -381,6 +381,14 @@ describe("payments core E-87, E-88, E-217 (contract)", () => {
     expect((await start(a.token, KEEPSAKE)).status).toBe(401);
   });
 
+  it("HH5 an erased account's payment is also flagged refund_due", async () => {
+    const a = await payer();
+    const p = await started(a.token);
+    await db.account.update({ where: { id: a.id }, data: { erasedAt: NOW } });
+    expect((await signedHook(await successBody(p.reference))).status).toBe(200);
+    expect((await rows(p.reference)).flags).toEqual(expect.arrayContaining(["account_erased", "refund_due"]));
+  });
+
   it("webhook: refund events are stored for the refunds bundle; junk with a valid signature is 400", async () => {
     const body = JSON.stringify({ event: "refund.processed", data: { id: 777000 + ++seq, reference: "fw-x" } });
     expect((await signedHook(body)).status).toBe(200);

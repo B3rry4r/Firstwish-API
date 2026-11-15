@@ -12,7 +12,7 @@ import { isPortTimeout } from "../../common/ports/time-limit";
 import { ProviderError } from "../../common/ports/adapters/http";
 import { JobContext, JobResult, JobsService } from "../jobs/jobs.service";
 import {
-  DELIVERY_TRIES, fill, fillSubject, scrubReason, isTemplateKey, MissingValueError, missingValues, NOTICE_HOUR_LOCAL, RETRY_WAIT_MS, scrubEmails, TEMPLATES, TemplateKey,
+  CODE_WORDING_FALLBACK, DELIVERY_TRIES, fill, fillSubject, scrubReason, isTemplateKey, MissingValueError, missingValues, NOTICE_HOUR_LOCAL, RETRY_WAIT_MS, scrubEmails, TEMPLATES, TemplateKey,
 } from "./catalog";
 import { atLocalHour, dayText } from "./zoned";
 
@@ -143,7 +143,8 @@ export class NoticesService implements OnModuleInit {
   /** The template row now in force for a key, or null. */
   async template(db: Pick<Tx, "messageTemplate">, key: string): Promise<{ id: string; subject: string; body: string; version: number } | null> {
     const row = await db.messageTemplate.findFirst({ where: { key, channel: "email", locale: LANG }, orderBy: { version: "desc" } });
-    return row ? { id: row.id, subject: row.subject ?? "", body: row.body, version: row.version } : null;
+    if (row) return { id: row.id, subject: row.subject ?? "", body: row.body, version: row.version };
+    return key === "code" ? { id: "", ...CODE_WORDING_FALLBACK, version: 0 } : null;
   }
 
   /** Why this message cannot be written with these values (a missing wording or a placeholder with no value), or null. */
@@ -172,6 +173,13 @@ export class NoticesService implements OnModuleInit {
   }
 
   private async sendMessageJob(c: JobContext): Promise<JobResult> {
+    // A retry is taken only once its wait has passed (the wait runs from the failed try, on the clock port).
+    if (UUID.test(c.subjectId)) {
+      const waiting = await this.prisma.$queryRaw<{ left: number }[]>`
+        SELECT ceil(extract(epoch FROM ("updatedAt" + (CASE WHEN attempts >= 2 THEN ${RETRY_WAIT_MS[1]} ELSE ${RETRY_WAIT_MS[0]} END) * interval '1 millisecond' - ${c.now}::timestamptz)) * 1000)::int AS "left"
+        FROM message_delivery WHERE id = ${c.subjectId}::uuid AND status = 'queued' AND attempts > 0 AND attempts < ${DELIVERY_TRIES}`;
+      if (waiting[0] && waiting[0].left > 0) return { skipped: true, again: new Date(c.now.getTime() + waiting[0].left) };
+    }
     const r = await this.deliver(c.subjectId);
     if (r.outcome === "skipped") return r.busy ? { skipped: true, again: new Date(c.now.getTime() + RETRY_WAIT_MS[0]) } : { skipped: true };
     return { changed: { outcome: r.outcome, ...(r.reason ? { reason: r.reason } : {}) }, ...(r.again ? { again: r.again } : {}) };
@@ -190,6 +198,15 @@ export class NoticesService implements OnModuleInit {
         AND (status = 'queued' OR (status = 'sent' AND "updatedAt" < now() - interval '5 minutes'))
       RETURNING attempts`;
     if (got.length === 0) {
+      // In flight past its stale time with every try used: nobody will try again, so it is failed for staff.
+      const gone = await this.prisma.$queryRaw<{ templateKey: string }[]>`
+        UPDATE message_delivery SET status = 'failed', error = 'The email service did not finish this try.'
+        WHERE id = ${deliveryId}::uuid AND status = 'sent' AND attempts >= ${DELIVERY_TRIES} AND "updatedAt" < now() - interval '5 minutes'
+        RETURNING "templateKey"`;
+      if (gone.length) {
+        await this.settle(deliveryId, gone[0].templateKey as TemplateKey, "failed", "The email service did not finish this try.");
+        return { outcome: "failed", reason: "The email service did not finish this try." };
+      }
       const cur = await this.prisma.messageDelivery.findUnique({ where: { id: deliveryId }, select: { status: true } });
       return cur?.status === "sent" ? { outcome: "skipped", busy: true } : { outcome: "skipped" };
     }
@@ -224,7 +241,7 @@ export class NoticesService implements OnModuleInit {
     } catch (e) {
       const { forGood, reason } = classify(e);
       if (forGood || tries >= DELIVERY_TRIES) return this.settle(row.id, key, "failed", reason);
-      await this.prisma.messageDelivery.updateMany({ where: { id: row.id, status: "sent" }, data: { status: "queued", error: reason } });
+      await this.prisma.messageDelivery.updateMany({ where: { id: row.id, status: "sent" }, data: { status: "queued", error: reason, updatedAt: this.clock.now() } });
       return { outcome: "retry", reason, again: new Date(this.clock.now().getTime() + RETRY_WAIT_MS[Math.min(tries - 1, RETRY_WAIT_MS.length - 1)]) };
     }
   }

@@ -1,3 +1,4 @@
+import { ProviderError } from "../../../common/ports/adapters/http";
 import { codeFor, refreshCookieOf, signIn, SignInApp, signInApp, subOf, uniqueEmail, uniqueIp } from "../../sessions/tests/sign-in.kit";
 
 describe("auth codes E-19, E-20 (contract)", () => {
@@ -29,6 +30,23 @@ describe("auth codes E-19, E-20 (contract)", () => {
       expect(row.expiresAt.getTime() - t.clock.now().getTime()).toBe(10 * 60 * 1000);
       expect(row.attempts).toBe(0);
       expect(row.channel).toBe("email");
+    });
+
+    it("J5 (II6) the code goes through the notices path, and a failed send does not undo the code", async () => {
+      const email = uniqueEmail("ii6");
+      const spy = jest.spyOn(t.email, "send").mockRejectedValue(new ProviderError("resend", 503, "down"));
+      const res = await ask(email, uniqueIp());
+      spy.mockRestore();
+      expect(res.status).toBe(200);
+      expect(await t.db.authCode.count({ where: { destination: email } })).toBe(1);
+      const d = await t.db.messageDelivery.findFirstOrThrow({ where: { to: email } });
+      expect(d.templateKey).toBe("code");
+      expect(d.status).toBe("queued"); // a retry is the delivery's, never the code's
+      expect(d.attempts).toBe(1);
+      const ok = uniqueEmail("ii6b");
+      expect((await ask(ok, uniqueIp())).status).toBe(200);
+      expect(codeFor(t, ok)).toMatch(/^\d{6}$/);
+      expect((await t.db.messageDelivery.findFirstOrThrow({ where: { to: ok } })).status).toBe("delivered");
     });
 
     it("answers the same whether or not the email has an account", async () => {
@@ -99,16 +117,6 @@ describe("auth codes E-19, E-20 (contract)", () => {
       expect(res.status).toBe(429);
       expect(res.body.error.code).toBe("too_many_requests");
       expect(Number(res.headers["retry-after"])).toBe(3600);
-    });
-
-    it("a failed email send stores and counts nothing", async () => {
-      const email = uniqueEmail("fail");
-      const spy = jest.spyOn(t.email, "send").mockRejectedValueOnce(new Error("provider down"));
-      const res = await ask(email, uniqueIp());
-      expect(res.status).toBe(500);
-      spy.mockRestore();
-      expect(await t.db.authCode.count({ where: { destination: email } })).toBe(0);
-      expect((await ask(email, uniqueIp())).status).toBe(200);
     });
   });
 

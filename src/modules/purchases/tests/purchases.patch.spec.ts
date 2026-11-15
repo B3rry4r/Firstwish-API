@@ -299,6 +299,21 @@ describe("purchases P-B07: the rulings HH1 to HH9", () => {
     expect(row.keptUntil!.getTime()).toBe(row.endsAt!.getTime());
   });
 
+  it("J7. a month keep bought after a year keep leaves the label on the year; revoking the year leaves the month", async () => {
+    t.clock.set(FAR);
+    const a = await account();
+    const ends = new Date(FAR.getTime() + 5 * DAY);
+    const w = await liveWish(a, ends);
+    const y = await pay(a, "keep.year", { subjectId: w });
+    await pay(a, "keep.month", { subjectId: w });
+    let row = await wishRow(w);
+    expect(row).toMatchObject({ keep: "year", keptBy: "keep" });
+    expect(row.endsAt!.getTime()).toBe(ends.getTime() + 395 * DAY);
+    await revoke(y);
+    row = await wishRow(w);
+    expect(row).toMatchObject({ keep: "month", keptBy: "keep" });
+  });
+
   it("HH5. a payment for an erased account is recorded and flagged account_erased (refund_due is the payments service's: see the hand-back)", async () => {
     const a = await account();
     await db.account.update({ where: { id: a }, data: { erasedAt: NOW } });
@@ -336,6 +351,12 @@ describe("purchases P-B07: the rulings HH1 to HH9", () => {
     await db.login.create({ data: { id: ids.next(), contact: "member.pb07@example.com", status: "active", businessId: b } });
     const ok = await pay(member, "pro.pack", {}, { businessId: b });
     expect((await paymentRow(ok)).flags).toEqual([]);
+    expect((await bizRow(b)).pack).toBe(5);
+
+    const invited = await account("invited.pb07@example.com");
+    await db.login.create({ data: { id: ids.next(), contact: "invited.pb07@example.com", status: "invited", businessId: b } });
+    const not = await pay(invited, "pro.pack", {}, { businessId: b });
+    expect((await paymentRow(not)).flags).toContain("refund_due:business_not_payers");
     expect((await bizRow(b)).pack).toBe(5);
 
     const gone = await account("gone.pb07@example.com");

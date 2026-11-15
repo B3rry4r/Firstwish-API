@@ -1,4 +1,5 @@
 import { Injectable } from "@nestjs/common";
+import { ReceiverActivityService } from "../public-wishes/receiver-activity.service";
 import { Prisma, Wish } from "@prisma/client";
 import { randomBytes, scrypt } from "node:crypto";
 import { lockAccount } from "../../common/db/account-lock";
@@ -83,6 +84,7 @@ export class WishesService {
     private readonly entitlements: EntitlementsService,
     private readonly jobs: JobsService,
     private readonly business: BusinessOf,
+    private readonly activity: ReceiverActivityService,
   ) {}
 
   // ---- reads ----
@@ -106,7 +108,9 @@ export class WishesService {
 
   async get(accountId: string, id: string): Promise<Obj> {
     const row = await this.owned(this.prisma, accountId, id, await this.business.find(accountId));
-    return this.wire(row, (await this.linksFor([id])).get(id));
+    // LL5: what the receivers did (opens, plays, reactions, favourites, shares), counted from rows; only for a wish the caller owns.
+    const activity = (await this.activity.summary([row.id])).get(row.id);
+    return { ...this.wire(row, (await this.linksFor([id])).get(id)), activity };
   }
 
   async link(accountId: string, id: string): Promise<{ link: string; slug: string }> {

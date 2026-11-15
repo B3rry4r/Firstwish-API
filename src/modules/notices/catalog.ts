@@ -52,6 +52,12 @@ export const MUTABLE_KEYS = TEMPLATE_KEYS.filter((k) => TEMPLATES[k].mutable);
 
 export const isTemplateKey = (k: unknown): k is TemplateKey => typeof k === "string" && Object.prototype.hasOwnProperty.call(TEMPLATES, k);
 
+/** The sign-in code's wording when no row exists yet (a database before its seed): a missing wording must never lock everyone out. Same words as the seed. */
+export const CODE_WORDING_FALLBACK = {
+  subject: "Your Firstwish code: {code}",
+  body: "Your code is {code}. It works for 10 minutes. If you did not ask for it, you can leave this email.\n\nFirstwish",
+} as const;
+
 /** A delivery gets 3 tries (the first counts), with these waits before try 2 and try 3 (declared, PROVISIONAL). */
 export const DELIVERY_TRIES = 3;
 export const RETRY_WAIT_MS: readonly number[] = [60_000, 5 * 60_000];

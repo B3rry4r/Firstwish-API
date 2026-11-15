@@ -2,7 +2,7 @@
 import { Equals, IsArray, IsIn, IsInt, IsObject, IsOptional, IsString, Max, MaxLength, Min } from "class-validator";
 import { Type } from "class-transformer";
 import { IsCanonHandle, MinTrimmed } from "../../common/validation/decorators";
-import type { DeleteMeBusinessBody, GetAdminPeopleByIdParams, GetAdminPeopleQuery, GetHandlesByHandleParams, PatchMeBody, PostAdminPeopleByIdActionsBody, PostAdminPeopleByIdActionsParams, PostAdminPeopleByIdContactRevealBody, PostAdminPeopleByIdContactRevealParams, PostMeBusinessBody, PostMeCreatorBody } from "../types";
+import type { DeleteMeBusinessBody, GetAdminPeopleByIdParams, GetAdminPeopleQuery, GetHandlesByHandleParams, PatchMeBody, PostAdminPeopleByIdActionsBody, PostAdminPeopleByIdActionsParams, PostAdminPeopleByIdContactRevealBody, PostAdminPeopleByIdContactRevealParams, PostMeBusinessBody, PostMeCreatorBody, PostMeEraseBody } from "../types";
 
 /** E-1 GET /v1/admin/people (query). */
 export class GetAdminPeopleQueryDto implements GetAdminPeopleQuery {
@@ -144,4 +144,10 @@ export class PostMeCreatorBodyDto implements PostMeCreatorBody {
   @IsOptional()
   @IsIn(["creator"])
   space?: "creator";
+}
+
+/** E-235 POST /v1/me/erase (body). */
+export class PostMeEraseBodyDto implements PostMeEraseBody {
+  @IsIn(["erase"])
+  confirm!: "erase";
 }

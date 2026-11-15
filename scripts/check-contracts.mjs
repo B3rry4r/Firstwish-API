@@ -5,6 +5,8 @@
 //  3. every registry resource is classified in .pipeline/schema-map.json, and every table, config and document in it
 //     exists in prisma/schema.prisma (a hosted document: its host model and column).
 //  4. no Float or Decimal anywhere in the schema, and every money field stored is BigInt kobo.
+//  5. (AA2) every String, String[] and Json column of Account and of every table with an owner key (a relation to Account,
+//     Business or Creator) has an erase rule in schema-map.json: blank, or keep with its reason. Id columns are keys.
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -92,5 +94,22 @@ for (const r of registry.resources) {
 }
 for (const [name, fields] of models) for (const [f, t] of fields) if (/kobo$/i.test(f) && t.replace("?", "") !== "BigInt") money.push(`${name}.${f}: ${t}`);
 report("no Float or Decimal; money fields are BigInt kobo", money);
+
+// 5. erase rules (AA2)
+const erase = [];
+const OWNERS = new Set(["Account", "Business", "Creator"]);
+for (const m of schema.matchAll(/^model (\w+) \{([\s\S]*?)^\}/gm)) {
+  const name = m[1];
+  const owned = name === "Account" || [...m[2].matchAll(/^\s+\w+\s+(\w+)\??\s+@relation\("[^"]+", fields: \[/gm)].some((x) => OWNERS.has(x[1]));
+  if (!owned) continue;
+  const rules = schemaMap[name]?.erase ?? {};
+  for (const [col, type] of models.get(name)) {
+    if (!/^(String|Json)(\[\])?\??$/.test(type) || col === "id" || col.endsWith("Id")) continue;
+    const r = rules[col];
+    if (!r) erase.push(`${name}.${col}: no erase rule`);
+    else if (r.rule !== "blank" && !(r.rule === "keep" && typeof r.why === "string" && r.why.trim())) erase.push(`${name}.${col}: rule must be blank, or keep with why`);
+  }
+}
+report("every text and json column of an owned table has an erase rule (AA2)", erase);
 
 process.exit(findings.length ? 1 : 0);

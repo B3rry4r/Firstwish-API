@@ -26,6 +26,9 @@ TYPE_NAMES = {"string", "number", "boolean", "undefined", "null", "object", "arr
 LIT_UNION = re.compile(r"^\s*'?[A-Za-z0-9_.-]+'?(\s*\|\s*'?[A-Za-z0-9_.-]+'?)+\s*$")
 
 assert set(MAP) == set(RES), f"schema-map must classify every resource: missing {set(RES) - set(MAP)}, extra {set(MAP) - set(RES)}"
+# tables a ruling adds that are no registry resource (schema-map 'joinTables', Y5 in INT-2): storage only, no contract shape
+JOIN = json.loads((P / "schema-map.json").read_text()).get("joinTables", {})
+assert not set(JOIN) & set(RES), "a join table must not share a resource's name"
 
 # ---------------------------------------------------------------- declarations
 DECL = defaultdict(OrderedDict)  # entity -> name -> field
@@ -188,9 +191,10 @@ def model_columns(name: str):
             continue
         d = decl.get(fn)
         f = regf.get(fn)
-        typ, attrs, kind = prisma_type(name, fn, f, d)
-        if fn in m.get("types", {}):
+        if fn in m.get("types", {}):  # a ruled type wins before any enum is named for the column
             typ, attrs, kind = m["types"][fn], "", "json" if m["types"][fn] == "Json" else "string"
+        else:
+            typ, attrs, kind = prisma_type(name, fn, f, d)
         opt = d["nullable"] if d else True
         if fn in m.get("nullable", []):
             opt = True
@@ -233,6 +237,16 @@ def model_columns(name: str):
 
 
 MODELS = OrderedDict((n, model_columns(n)) for n in RES if n in STORED)
+for _n, _m in JOIN.items():
+    MAP[_n] = dict(_m, **{"class": "table"})
+    _cols: "OrderedDict[str, dict]" = OrderedDict()
+    _cols["id"] = {"type": "String", "attrs": "@id @db.Uuid", "opt": False, "kind": "id"}
+    for _c, _v in _m["columns"].items():
+        _t = _v["type"]
+        if ENUM_IN.match(_t):
+            _t = enum_name(_n, _c, ENUM_IN.match(_t).group(1).split("|"))
+        _cols[_c] = {"type": _t, "attrs": _v.get("attrs", ""), "opt": _v.get("opt", True), "kind": "ruled"}
+    MODELS[_n] = _cols
 for n, m in MAP.items():
     if m["class"] == "document" and m["host"].split(".")[0] != n:
         host_model, host_col = m["host"].split(".")
@@ -286,7 +300,7 @@ INDEXES = defaultdict(list)
 for a, b, col in RELS:
     INDEXES[a].append([col, "id"])
 for n in MODELS:
-    for e in RES[n]["endpoints"]:
+    for e in (RES[n]["endpoints"] if n in RES else []):
         if e["method"] != "GET":
             continue
         for b in e["body"]:
@@ -340,7 +354,7 @@ def render_schema() -> str:
             stem = col[:-2] if col.endswith("Id") else col + "Ref"
             field = stem if stem not in cols else stem + "Ref"
             q = "?" if cols[col]["opt"] else ""
-            od = m.get("onDelete")
+            od = m.get("refOnDelete", {}).get(col, m.get("onDelete"))
             rule = f", onDelete: {od}, onUpdate: {od}" if od else ""
             out.append(f"  {field} {b}{q} @relation({rel}, fields: [{col}], references: [id]{rule})")
         for a, col in back[n]:
@@ -395,6 +409,10 @@ def ts_field_type(res: str, f: dict) -> str:
         return "Instant"
     if t in TS_SCALAR:
         base = TS_SCALAR[t]
+    elif t == "kobo-or-time":
+        return "Kobo | Instant"  # X15 (DEC-162): kobo for kind naira, an instant for kind date
+    elif t.startswith("object {url, method, headers, expiresAt}"):
+        return "SignedUpload"  # X20 (DEC-163)
     elif t.startswith("object {active: boolean, endsAt: time}"):
         return "{ active: boolean; endsAt: Instant } | null"
     elif t.startswith("array<enum("):
@@ -459,6 +477,7 @@ SPECIAL_RESP = {
     "ok | {ok:false,error}": "UnlockResult", "none (navigation to /app/new)": "void",
     "StudioStyle (withdraw, back to draft) | SubmittedStyle (template)": "StudioStyle | SubmittedStyle",
     "AuthResult": "AuthResult", "StaffAuthResult": "StaffAuthResult", "GoogleStart": "GoogleStart",
+    "TicketQuote": "TicketQuote", "PriceBook": "PriceBook",
 }
 
 SHARED_TYPES = '''/** A UUIDv7 id issued by the server. */
@@ -582,6 +601,49 @@ export interface StaffAuthResult {
 /** E-54 (T2, DEC-151): where the browser goes to sign in with Google. */
 export interface GoogleStart {
   url: string;
+}
+/** A read that returns every row in ONE answer, no paging (X28, DEC-166): nextCursor is always null. */
+export interface AllList<T> {
+  items: T[];
+  nextCursor: null;
+}
+/** UploadTicket.upload (X20, DEC-163): the signed PUT. It binds the content type and length (X26). */
+export interface SignedUpload {
+  url: string;
+  method: "PUT";
+  headers: Record<string, string>;
+  expiresAt: Instant;
+}
+/** One priced line of a quote (X13, DEC-160). */
+export interface QuoteLine {
+  sku: string;
+  name: string;
+  qty: number;
+  /** The list price of one. */
+  listKobo: Kobo;
+  /** The price charged for one at the quote's moment. */
+  unitKobo: Kobo;
+  /** unitKobo times qty. */
+  totalKobo: Kobo;
+  discounted: boolean;
+}
+/** E-213 (X13, DEC-160): ONE quote for a ticket and its extras, priced by the server from the price book. */
+export interface TicketQuote {
+  /** The price-book version the quote used. */
+  version: number;
+  versionId: Id;
+  lines: QuoteLine[];
+  totalKobo: Kobo;
+  listTotalKobo: Kobo;
+}
+/** E-125 (X14, DEC-161): the public price book, paged by ?cursor=&limit=. */
+export interface PriceBook {
+  version: number;
+  items: Price[];
+  promotion: Promotion | null;
+  lifecycle: LifecycleConfig | null;
+  entitlements: Entitlements;
+  nextCursor: string | null;
 }
 /** E-19: the registry names the response SignInCode and gives no fields. */
 export type SignInCode = Record<string, unknown>;
@@ -719,6 +781,8 @@ def response_type(e: dict) -> str:
         raise SystemExit(f"HALT: {e['id']} response {ent!r} has no representation")
     if card == "list":
         return f"PaginatedList<{base}>"
+    if card == "all":
+        return f"AllList<{base}>"
     if card.startswith("count"):
         return "number"
     return base
@@ -782,7 +846,7 @@ for r in REG["resources"]:
                 dto.append(f"  @{d}")
                 used_decos.add(d.split("(")[0])
             dto.append(f"  {prop(n)}{'?' if opt else '!'}: {ts};")
-        if is_query and (e["response"] or {}).get("cardinality") == "list":
+        if is_query and (e["response"] or {}).get("cardinality") in ("list", "page"):
             TYPE_LINES.append("  cursor?: string;")
             TYPE_LINES.append("  limit?: number;")
             dto += ["  @IsOptional()", "  @IsString()", "  cursor?: string;", "  @IsOptional()", "  @Type(() => Number)", "  @IsInt()", "  @Min(1)", "  @Max(50)", "  limit?: number;"]

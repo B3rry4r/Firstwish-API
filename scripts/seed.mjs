@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 // Reference rows only: the price book (version 1, its lines in kobo, the promotion, entitlements), the staff roles and the
 // sections each opens, the lifecycle terms and the PROVISIONAL payout threshold, and the catalogues the web app holds as
-// constants (prisma/seed-data/*.json, written by scripts/export-seed-data.mjs; ruling Q11). Never people, accounts or wishes.
+// constants (prisma/seed-data/*.json, written by scripts/export-seed-data.mjs; ruling Q11). Never people or wishes; the one
+// account is the house (X8): handle firstwish, a creator side, no email, so it can never sign in.
 // Running it twice gives the same rows: every row has a fixed id made from its natural key and is upserted.
 //   DATABASE_URL=... node scripts/seed.mjs            (node scripts/seed.mjs styles: the styles alone)
 import { createHash } from "node:crypto";
@@ -34,7 +35,8 @@ const ALL = ["/admin", "/admin/wishes", "/admin/people", "/admin/moderation", "/
   "/admin/numbers", "/admin/team", "/admin/audit", "/admin/settings"];
 const ROLE_SECTIONS = {
   owner: ALL,
-  ops: ALL.filter((h) => !["/admin/team", "/admin/settings", "/admin/prices"].includes(h)),
+  // X16: ops reads /admin/prices (E-123); only owner and finance change a price (E-124's roles, A9).
+  ops: ALL.filter((h) => !["/admin/team", "/admin/settings"].includes(h)),
   moderator: ["/admin", "/admin/wishes", "/admin/people", "/admin/moderation", "/admin/showing"],
   reviewer: ["/admin", "/admin/styles", "/admin/styles/review", "/admin/creators"],
   support: ["/admin", "/admin/wishes", "/admin/people", "/admin/support", "/admin/messages"],
@@ -63,7 +65,7 @@ const ENTITLEMENTS = {
       "clip-60s": { clips: 1, clipSeconds: 60, video: true },
     },
     keeps: { month: { termDays: 30 }, half: { termDays: 182 }, year: { termDays: 365 } },
-    concierge: { single: { wishes: 1 }, rush: { deliveryHours: 1 } },
+    concierge: { single: { wishes: 1 } },
   },
   keepsakeExtrasCeilingKobo: 750000n,
   passWishes: 20,
@@ -87,6 +89,25 @@ const ENTITLEMENTS = {
     vault: { block: { vaultGb: 100, days: 30 }, "block-bulk": { vaultGb: 100, days: 30, fromGb: 1000 } },
   },
 };
+
+/* Z2: concierge.rush is in no web app file and by R5 the app is the truth for what is sold, so it is not seeded (listed to the
+   owner; it comes back as a price line when the app sells it). A copy an earlier seed wrote is removed. */
+const NOT_SOLD = new Set(["concierge.rush"]);
+const SOLD_PRICES = priceBook.seed.prices.filter((p) => !NOT_SOLD.has(p.sku));
+
+/* X8: the house. Styles and wishes made by Firstwish have an owner, and the creators list includes it. No email and no Google
+   identity: no sign-in can ever reach it. "firstwish" is a reserved handle, so no person can take it. */
+export const HOUSE_ACCOUNT_ID = seedId("account:house");
+export const HOUSE_HANDLE = "firstwish";
+
+async function seedHouse(db) {
+  const at = new Date(SEED_MS);
+  const account = { name: "Firstwish", handle: HOUSE_HANDLE, sides: ["person", "creator"], lastSide: "creator", contact: null, phone: null };
+  await db.account.upsert({ where: { id: HOUSE_ACCOUNT_ID }, create: { id: HOUSE_ACCOUNT_ID, ...account, createdAt: at }, update: account });
+  const creatorId = seedId("creator:house");
+  const creator = { accountId: HOUSE_ACCOUNT_ID, name: "Firstwish", house: true, href: `/creators/${HOUSE_HANDLE}`, line: "Made by Firstwish" };
+  await db.creator.upsert({ where: { accountId: HOUSE_ACCOUNT_ID }, create: { id: creatorId, ...creator }, update: creator });
+}
 
 /* Lifecycle terms (DEC-70), from the wish-lifecycle declaration and the app's account.ts. */
 const LIFECYCLE = {
@@ -134,7 +155,7 @@ export async function seed(db) {
     create: { id: seedId("price-book:1"), version, effectiveFrom, createdBy: "seed", note: "Seed from the app (R5)", createdAt: effectiveFrom },
     update: {},
   });
-  for (const p of priceBook.seed.prices) {
+  for (const p of SOLD_PRICES) {
     const row = {
       sku: p.sku,
       name: p.name,
@@ -151,8 +172,9 @@ export async function seed(db) {
     label: promo.label,
     percentOff: promo.percentOff,
     endsAt: new Date(promo.endsAt),
-    appliesTo: priceBook.seed.prices.filter((p) => p.promoKobo !== null).map((p) => p.sku),
+    appliesTo: SOLD_PRICES.filter((p) => p.promoKobo !== null).map((p) => p.sku),
   };
+  await db.price.deleteMany({ where: { sku: { in: [...NOT_SOLD] }, version } });
   await db.promotion.upsert({ where: { id: seedId("promotion:launch-40") }, create: { id: seedId("promotion:launch-40"), ...promoRow }, update: promoRow });
   await db.entitlements.upsert({ where: { id: seedId("entitlements:1") }, create: { id: seedId("entitlements:1"), ...ENTITLEMENTS }, update: ENTITLEMENTS });
   await db.lifecycleConfig.upsert({ where: { id: seedId("lifecycle:1") }, create: { id: seedId("lifecycle:1"), ...LIFECYCLE }, update: LIFECYCLE });
@@ -170,6 +192,7 @@ export async function seed(db) {
   });
   await seedCatalogues(db);
   await seedStyles(db);
+  await seedHouse(db);
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {

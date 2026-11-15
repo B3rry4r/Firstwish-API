@@ -387,3 +387,13 @@ II6 Identity sends its sign-in code through notices.send and deliverNow (one pat
 JJ1 (Verify P-B06, medium, kernel) The JSON body limit is 512 KB (a config value), above the 256 KB content limit, so an oversize
     wish gets the service's 422 with its reason, not a bare 413. (INT-4.)
 JJ2 (for B10) lifecycle.markOpened answers {opened: false} when refused and never throws: the receiver's read must look at it.
+
+## From Verify B11 (15 Nov): how each finding is closed. Default (lead), owner may override.
+KK1 (high) A try at sending is claimed by ONE conditional UPDATE (the delivery is queued or due for retry AND its try count is
+    the one read: then it becomes "sending" with the count plus one). Only the caller whose UPDATE took the row calls the
+    provider. The job tick and deliverNow overlapping, or 50 calls at once: one provider call per try, at most 3 per delivery.
+KK2 (medium) Staff wording: a subject is at most 150 characters and a body 4,000; no tags, no zero-width or control characters
+    (422). Emails are plain text.
+KK3 (low) Line breaks are stripped from any value that goes into a subject. KK4 (low) The staff log masks an address wherever
+    it appears, inside values too. KK5 (low) An erased account's queued deliveries end "dropped", not failed. KK6 (low) Provider
+    error text is scrubbed of codes as well as addresses.

@@ -328,3 +328,12 @@ EE8 (T-45) A wedding wish counts its term from the wedding date: endsAt = the we
 EE9 A sealed wish that nobody opens stays openable; 365 days after its open time it rests (PROVISIONAL, listed to the owner).
 Stale in the verdict (already fixed on the wave 2 branch after B06 branched): erase now kills the links, jobs, files and saves
 (X10, J1, J2); uploads go to a staging key (Y1). The wave 3 base re-proves both once B06 is on it.
+
+## From Verify B05 (15 Nov): how each finding is closed. Default (lead), owner may override.
+FF1 (medium, kernel) Every call to a provider port has a time limit (10 s for payments; set per port in config). On a timeout the
+    verify route answers the payment as it stands (pending) and never hangs; nothing is granted on a timeout.
+FF2 (low) A signed event whose id or reference holds a control character is refused (400), never a 500.
+FF3 (low) A stored event's id is type : provider id : reference, so two events for different references never collide.
+FF4 (low) The same idempotency key after the payment succeeded answers 200 with the payment as it stands and no checkout address.
+FF5 (low) A pending payment is abandoned at 60 minutes or older (not strictly older).
+FF6 (low, kernel) In live mode PAYSTACK_SECRET_KEY must be at least 20 characters; boot refuses a shorter one.

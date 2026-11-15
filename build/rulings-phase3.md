@@ -210,3 +210,14 @@ X2 (B14) E-193 (staff list of styles) query gains `level`.
 X3 (B14) StyleRate (E-199) is {styleSlug, name, level, quarter, previews, paid, rate}.
 X4 (B14) Event gains a `key` column, unique with name and account (a replay counts once), and an index on (styleSlug, name, at).
 X5 (B14, for Phase 6) the web app's lib/levels.ts follows the contract: the paged levels read and PUT /v1/admin/styles/:slug/level.
+X6 (B02) GET /v1/creators/:handle (public) is added: a creator's public page (public fields only; one 404 for missing, side off,
+   banned or erased).
+X7 (B02) Erase on request: POST /v1/me/erase (signed in; a sign-in younger than 10 minutes, else 403 fresh_sign_in_needed; body
+   {confirm: "erase"}; answers 204 and ends every session). It calls the erase service B02 built.
+X8 (B02) The house is a seeded account with a creator side and the reserved handle "firstwish" (no email, cannot sign in), so house
+   styles and wishes have an owner and the creators list includes it.
+X9 (B02) published_wish.wishId is a uuid with a foreign key to wish.
+X10 (B02) Erasing an account also removes its stored files (a job through the storage port, after the transaction) and its wishes'
+   public links answer "gone"; B09 and B10 each do their part; INT-2 joins the erase service to the files job.
+X11 (B02) E-5 (is this handle free?) needs a signed-in user, not the creator side.
+X12 (B02) Business keeps the registry's fields; "kind" in the B02 brief was the lead's slip.

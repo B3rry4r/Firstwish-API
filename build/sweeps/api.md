@@ -11,3 +11,4 @@
 - B05 (Verify P, note): a start that timed out leaves a failed payment; a late signed success for it is granted once and flagged late_success_after_failed for staff (kept: the money was taken). An upper-case hex signature is accepted (needs the secret; harmless).
 - B07 (Verify P, low): with a month keep and a year keep bought at once the wish's keep label follows apply order, not the longer keep (src/modules/purchases/wish-handlers.ts:100): label = the longest keep that remains.
 - B07 (Verify P, low): a login with status "invited" counts as the business's own for a plan or pack payment (isPayers in business-handlers.ts): only an active login counts.
+- Wave 3 join (note): a staff invite email now uses the sign-in code wording (the invite's own lead line is gone): add an 'invite' message with its wording in INT-4 (MessageTemplate seed).

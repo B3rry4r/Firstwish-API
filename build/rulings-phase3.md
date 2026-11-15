@@ -354,3 +354,21 @@ GG6 Owed by others: Pro plan logins and invoices (an Invoice row with its VAT pa
     called from the plan handlers; the end of a creator's Signed period by a timed job in B16.
 GG7 (P-B06) E-225 (save a draft) body gains `passcode` (write only, hashed, never returned) and loses the legacy whole-wish fields
     (letter, blessing, ticket, photos and the like): the draft is saved through `content` and the named fields only.
+
+## From Verify B07 (15 Nov): how each finding is closed. Default (lead), owner may override.
+HH1 (high) A Pro plan's month is rolled by the server, not by a payment: whenever a business's plan is read or drawn from, the
+    months that have passed since its stored month are rolled first, in the same locked transaction, by the rule in the web app's
+    lib/pro-data.ts roll() (unused wishes carry forward as it says). A plan payment made early does not reset the running month:
+    it pushes `renews` one month on from its current end. Tests work the verifier's case by hand (Starter paid 1 Dec with 4 used,
+    paid again 20 Dec: January has a fresh allowance plus what rolled) and three more.
+HH2 (medium, payments) Inside the settle transaction everything, the entitlement read included, uses the transaction's own
+    connection, never the pool. 10 webhooks + 10 verifies at once on one payment: granted once, no 500.
+HH3 (medium) Revoke does not restore a snapshot. It marks the grant revoked and works the state out again from the grants that
+    remain (the plan is the newest unrevoked plan grant; counters are the unrevoked grants less what was used).
+HH4 (medium) Revoking a keep works keep, keptBy, keptUntil and endsAt out again from the keeps that remain.
+HH5 (low) A payment for an erased account is flagged refund_due and account_erased in payment.flags.
+HH6 (low) A handler checks the business named on the payment is the payer's own (owner or a live login), else flags it for refund.
+HH7 (low) A draw takes from the month's allowance only while the plan is live (renews in the future); pack wishes do not expire.
+HH8 (low, payments) The start body's `ticket` field takes every ticket id.
+HH9 The builder's "two keeps at once" test failed once in four runs (endsAt came out as now + 30 days): find the cause and fix
+    it (a test that passes three times in four is a finding, never noise).

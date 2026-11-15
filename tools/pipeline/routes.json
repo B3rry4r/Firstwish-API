@@ -1447,37 +1447,90 @@
       "drop": [
         "amount",
         "price"
-      ]
+      ],
+      "response": {
+        "entity": "PassMembership",
+        "cardinality": "single",
+        "paymentStart": "required",
+        "note": "{payment, item}: item is what the payment buys, null until the verified payment fulfils it (DEC-139)"
+      }
     },
     "POST /v1/wishes/:id/video": {
       "decision": "DEC-134",
       "drop": [
         "amount"
-      ]
+      ],
+      "response": {
+        "entity": "VideoOrder",
+        "cardinality": "single",
+        "paymentStart": "required",
+        "note": "{payment, item}: item is the video order, null until the verified payment fulfils it (DEC-139)"
+      }
     },
     "POST /v1/wishes/:id/keep": {
       "decision": "DEC-134",
       "drop": [
         "price"
-      ]
+      ],
+      "response": {
+        "entity": "Wish",
+        "cardinality": "single",
+        "paymentStart": "optional",
+        "note": "{payment, item}: payment null when the Pass covers the keep; item is the wish, status live, endsAt = max(endsAt, now)+days for live; now+days for resting (DEC-139)"
+      }
     },
     "POST /v1/wishes/:id/seal": {
       "decision": "DEC-134",
       "drop": [
         "amount"
-      ]
+      ],
+      "response": {
+        "entity": "Wish",
+        "cardinality": "single",
+        "paymentStart": "required",
+        "note": "{payment, item}: item is the wish, sealed once the verified payment fulfils it (DEC-139)"
+      }
     },
     "POST /v1/auth/codes": {
-      "decision": "DEC-135",
+      "decision": "DEC-140",
       "drop": [
         "channel"
-      ]
+      ],
+      "set": {
+        "contact": "string (email, trimmed and lowercased; /^\\S+@\\S+\\.\\S+$/; DEC-140)",
+        "via": "'email' (DEC-140)"
+      }
     },
     "PATCH /v1/me/notice-prefs": {
       "decision": "DEC-135",
       "drop": [
         "channel"
       ]
+    },
+    "PATCH /v1/me": {
+      "decision": "DEC-137",
+      "set": {
+        "mode": "'light'|'dark'|'system' (DEC-137)"
+      }
+    },
+    "PUT /v1/admin/prices/:key": {
+      "decision": "DEC-138",
+      "drop": [
+        "value"
+      ],
+      "set": {
+        "sku": "string (the price-book line, DEC-138)",
+        "priceKobo": "integer (kobo, optional; at least one of priceKobo, listKobo, promotionEndsAt)",
+        "listKobo": "integer (kobo, optional; at least one of priceKobo, listKobo, promotionEndsAt)",
+        "promotionEndsAt": "time (ISO-8601, optional; at least one of priceKobo, listKobo, promotionEndsAt)"
+      }
+    },
+    "POST /v1/admin/refunds": {
+      "decision": "DEC-141",
+      "set": {
+        "amountKobo": "integer (kobo, positive; at most the payment's amount, checked in the service)",
+        "reason": "string (4 or more characters; DEC-125)"
+      }
     }
   },
   "extraFields": [
@@ -1522,6 +1575,13 @@
       "type": "object {<line>: integer kobo | null}",
       "nullable": false,
       "decision": "DEC-132"
+    },
+    {
+      "resource": "Account",
+      "name": "mode",
+      "type": "enum(light|dark|system)",
+      "nullable": false,
+      "decision": "DEC-137"
     }
   ]
 }

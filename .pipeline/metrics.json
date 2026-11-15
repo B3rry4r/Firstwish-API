@@ -1044,7 +1044,7 @@
         "admin-prices"
       ],
       "writerPath": [
-        "server:price-book",
+        "E-124",
         "price book (S-14: the web reads GET /v1/prices)"
       ],
       "formula": [],
@@ -1083,7 +1083,6 @@
         "admin-prices"
       ],
       "writerPath": [
-        "E-124",
         "price book (S-14: the web reads GET /v1/prices)"
       ],
       "formula": [],

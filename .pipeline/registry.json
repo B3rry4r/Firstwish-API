@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "frozenAt": "2026-11-15T16:30:11Z",
+  "frozenAt": "2026-11-15T16:45:10Z",
   "framework": "nestjs",
   "generatedBy": "tools/pipeline/reconcile.py",
   "resources": [
@@ -275,6 +275,19 @@
             "sessions"
           ],
           "supersedes": []
+        },
+        {
+          "name": "mode",
+          "type": "enum(light|dark|system)",
+          "classes": [
+            "enum"
+          ],
+          "nullable": false,
+          "provenance": [
+            "DEC-137"
+          ],
+          "supersedes": [],
+          "typeBy": "DEC-137"
         },
         {
           "name": "name",
@@ -962,9 +975,9 @@
             },
             {
               "name": "mode",
-              "type": "'dark'|'light'",
+              "type": "'light'|'dark'|'system' (DEC-137)",
               "from": [
-                "app-you"
+                "DEC-137"
               ]
             },
             {
@@ -1016,6 +1029,7 @@
             }
           ],
           "notes": [
+            "body by DEC-137",
             "route by DEC-103"
           ]
         },
@@ -2371,7 +2385,7 @@
         },
         {
           "name": "purpose",
-          "type": "string",
+          "type": "enum(sign-in|confirm-email|staff-sign-in)",
           "classes": [
             "enum"
           ],
@@ -2379,11 +2393,12 @@
           "provenance": [
             "auth-codes"
           ],
-          "supersedes": []
+          "supersedes": [],
+          "typeBy": "DEC-140"
         },
         {
           "name": "via",
-          "type": "string",
+          "type": "enum(email)",
           "classes": [
             "enum"
           ],
@@ -2392,7 +2407,8 @@
             "sign-in",
             "sign-up"
           ],
-          "supersedes": []
+          "supersedes": [],
+          "typeBy": "DEC-140"
         }
       ],
       "endpoints": [
@@ -2408,11 +2424,9 @@
           "body": [
             {
               "name": "contact",
-              "type": "string (phone as '<cc> <digits>' e.g. '+234 803 000 0000', or email trimmed); phone needs >= 7 digits, email /^\\S+@\\S+\\.\\S+$/",
+              "type": "string (email, trimmed and lowercased; /^\\S+@\\S+\\.\\S+$/; DEC-140)",
               "from": [
-                "auth-codes",
-                "sign-in",
-                "sign-up"
+                "DEC-140"
               ]
             },
             {
@@ -2425,10 +2439,9 @@
             },
             {
               "name": "via",
-              "type": "'phone'|'email'",
+              "type": "'email' (DEC-140)",
               "from": [
-                "sign-in",
-                "sign-up"
+                "DEC-140"
               ]
             }
           ],
@@ -2460,7 +2473,7 @@
             }
           ],
           "notes": [
-            "body by DEC-135",
+            "body by DEC-140",
             "route by DEC-104"
           ]
         },
@@ -10340,7 +10353,7 @@
         },
         {
           "name": "priceBookVersion",
-          "type": "money",
+          "type": "integer (the price-book version)",
           "classes": [
             "money-number"
           ],
@@ -10348,7 +10361,8 @@
           "provenance": [
             "payments"
           ],
-          "supersedes": []
+          "supersedes": [],
+          "typeBy": "DEC-142"
         },
         {
           "name": "provider",
@@ -10775,7 +10789,8 @@
           "response": {
             "entity": "PassMembership",
             "cardinality": "single",
-            "note": "pass true, since = purchase time"
+            "paymentStart": "required",
+            "note": "{payment, item}: item is what the payment buys, null until the verified payment fulfils it (DEC-139)"
           },
           "sources": [
             {
@@ -12341,7 +12356,7 @@
         },
         {
           "name": "kind",
-          "type": "money",
+          "type": "enum(naira|date)",
           "classes": [
             "money-kobo"
           ],
@@ -12351,7 +12366,8 @@
           ],
           "supersedes": [
             "S-1: integer kobo, currency NGN, over the wire and in storage; prices only from the price book"
-          ]
+          ],
+          "typeBy": "DEC-142"
         },
         {
           "name": "lead",
@@ -12597,6 +12613,27 @@
               ]
             },
             {
+              "name": "listKobo",
+              "type": "integer (kobo, optional; at least one of priceKobo, listKobo, promotionEndsAt)",
+              "from": [
+                "DEC-138"
+              ]
+            },
+            {
+              "name": "priceKobo",
+              "type": "integer (kobo, optional; at least one of priceKobo, listKobo, promotionEndsAt)",
+              "from": [
+                "DEC-138"
+              ]
+            },
+            {
+              "name": "promotionEndsAt",
+              "type": "time (ISO-8601, optional; at least one of priceKobo, listKobo, promotionEndsAt)",
+              "from": [
+                "DEC-138"
+              ]
+            },
+            {
               "name": "reason",
               "type": "string (trimmed, 4 or more characters; the Confirm dialog disables the button below 4, the seam throws 'failed')",
               "from": [
@@ -12604,10 +12641,10 @@
               ]
             },
             {
-              "name": "value",
-              "type": "number (whole naira, > 0 and <= 10,000,000, typed with optional ₦ and commas) or YYYY-MM-DD string for the date row (the UI accepts 'YYYY-MM-DD' or 'D Mon YYYY')",
+              "name": "sku",
+              "type": "string (the price-book line, DEC-138)",
               "from": [
-                "admin-prices"
+                "DEC-138"
               ]
             }
           ],
@@ -12622,6 +12659,7 @@
             }
           ],
           "notes": [
+            "body by DEC-138",
             "route by DEC-112"
           ]
         },
@@ -15726,9 +15764,9 @@
           "body": [
             {
               "name": "amountKobo",
-              "type": "integer",
+              "type": "integer (kobo, positive; at most the payment's amount, checked in the service)",
               "from": [
-                "refunds"
+                "DEC-141"
               ]
             },
             {
@@ -15740,9 +15778,9 @@
             },
             {
               "name": "reason",
-              "type": "string",
+              "type": "string (4 or more characters; DEC-125)",
               "from": [
-                "refunds"
+                "DEC-141"
               ]
             }
           ],
@@ -15756,7 +15794,9 @@
               "via": "action:requestRefund"
             }
           ],
-          "notes": []
+          "notes": [
+            "body by DEC-141"
+          ]
         },
         {
           "id": "E-146",
@@ -16010,7 +16050,9 @@
           ],
           "response": {
             "entity": "VideoOrder",
-            "cardinality": "single"
+            "cardinality": "single",
+            "paymentStart": "required",
+            "note": "{payment, item}: item is the video order, null until the verified payment fulfils it (DEC-139)"
           },
           "sources": [
             {
@@ -27725,7 +27767,8 @@
           "response": {
             "entity": "Wish",
             "cardinality": "single",
-            "note": "status live, endsAt = max(endsAt, now)+days for live; now+days for resting"
+            "paymentStart": "optional",
+            "note": "{payment, item}: payment null when the Pass covers the keep; item is the wish, status live, endsAt = max(endsAt, now)+days for live; now+days for resting (DEC-139)"
           },
           "sources": [
             {
@@ -27913,7 +27956,9 @@
           ],
           "response": {
             "entity": "Wish",
-            "cardinality": "single"
+            "cardinality": "single",
+            "paymentStart": "required",
+            "note": "{payment, item}: item is the wish, sealed once the verified payment fulfils it (DEC-139)"
           },
           "sources": [
             {

@@ -321,6 +321,22 @@
       "noWriter": false
     },
     {
+      "field": "Account.mode",
+      "writers": [
+        "E-7"
+      ],
+      "store": "Account",
+      "readers": [],
+      "writerActors": [
+        "business",
+        "creator",
+        "person"
+      ],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": false
+    },
+    {
       "field": "Account.name",
       "writers": [
         "E-7",
@@ -8181,14 +8197,14 @@
     {
       "field": "Price.listKobo",
       "writers": [
-        "server:price-book"
+        "E-124"
       ],
       "store": "Price",
       "readers": [
         "admin-prices"
       ],
       "writerActors": [
-        "server"
+        "staff"
       ],
       "readerActors": [
         "staff"
@@ -8284,12 +8300,12 @@
     {
       "field": "Price.sku",
       "writers": [
-        "server:price-book"
+        "E-124"
       ],
       "store": "Price",
       "readers": [],
       "writerActors": [
-        "server"
+        "staff"
       ],
       "readerActors": [],
       "crossActor": false,
@@ -8327,21 +8343,17 @@
     },
     {
       "field": "Price.value",
-      "writers": [
-        "E-124"
-      ],
+      "writers": [],
       "store": "Price",
       "readers": [
         "admin-prices"
       ],
-      "writerActors": [
-        "staff"
-      ],
+      "writerActors": [],
       "readerActors": [
         "staff"
       ],
       "crossActor": false,
-      "noWriter": false
+      "noWriter": true
     },
     {
       "field": "Price.vatIncluded",
@@ -19776,5 +19788,5 @@
     }
   ],
   "crossActor": 35,
-  "noWriter": 599
+  "noWriter": 600
 }

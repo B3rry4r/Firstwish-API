@@ -203,3 +203,10 @@ W1 The web app reaches the API on its own origin: Next.js rewrites /v1/:path* to
    local work only. (Phase 6 builds the rewrite; the API host can then sit anywhere, DigitalOcean included.)
 W2 Routes that act on a cookie alone (both refresh routes, both sign-outs when sent without a bearer) refuse a request whose Origin
    header is present and not on the allowlist (403, envelope). SameSite=Lax stays as the first guard.
+
+## Wave 2 halts (B14, B04, B09, B02): collected for ONE reopen (task INT-2). Default (lead), owner may override.
+X1 (B14) Style.rate is number or null (null under 200 previews in the quarter).
+X2 (B14) E-193 (staff list of styles) query gains `level`.
+X3 (B14) StyleRate (E-199) is {styleSlug, name, level, quarter, previews, paid, rate}.
+X4 (B14) Event gains a `key` column, unique with name and account (a replay counts once), and an index on (styleSlug, name, at).
+X5 (B14, for Phase 6) the web app's lib/levels.ts follows the contract: the paged levels read and PUT /v1/admin/styles/:slug/level.

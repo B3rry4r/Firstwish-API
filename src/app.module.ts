@@ -36,6 +36,10 @@ import { PeopleModule } from "./modules/people/people.module";
 import { SavedWishesModule } from "./modules/saved-wishes/saved-wishes.module";
 // end B12
 
+// B05: payments core
+import { PaymentsModule } from "./modules/payments/payments.module";
+// end B05
+
 /** Registration entry: each resource module adds one import line here. */
 @Module({
   imports: [
@@ -75,6 +79,9 @@ import { SavedWishesModule } from "./modules/saved-wishes/saved-wishes.module";
     DatesModule,
     SavedWishesModule,
     // end B12
+    // B05
+    PaymentsModule,
+    // end B05
   ],
 })
 export class AppModule {}

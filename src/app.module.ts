@@ -11,6 +11,11 @@ import { AuditModule } from "./modules/audit/audit.module";
 import { RoleAccessModule } from "./modules/role-access/role-access.module";
 import { StaffAccountsModule } from "./modules/staff-accounts/staff-accounts.module";
 // end B03
+// B14: styles (levels, on and off, use counts), app events, Studio templates
+import { EventsModule } from "./modules/events/events.module";
+import { StylesModule } from "./modules/styles/styles.module";
+import { TemplatesModule } from "./modules/templates/templates.module";
+// end B14
 
 /** Registration entry: each resource module adds one import line here. */
 @Module({
@@ -27,6 +32,11 @@ import { StaffAccountsModule } from "./modules/staff-accounts/staff-accounts.mod
     RoleAccessModule,
     StaffAccountsModule,
     // end B03
+    // B14
+    StylesModule,
+    EventsModule,
+    TemplatesModule,
+    // end B14
   ],
 })
 export class AppModule {}

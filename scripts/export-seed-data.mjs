@@ -105,6 +105,19 @@ const TABLES = {
     from: "lib/studio.ts (HOUSE)", key: (r) => r.base,
     rows: () => web("lib/studio.ts").HOUSE.map((t) => pick(t, ["name", "handle", "house", "base", "pace", "orientation", "dimension", "kinds", "mood", "line", "theme"])),
   },
+  // B14: the server keeps slug, level, on/off, creator and counts (DEC-69); the copy rides along for the staff list. Levels
+  // are each style's level as the app shows it today (lib/levels.ts levelOf, the manifests' own), never retyped.
+  Style: {
+    from: "lib/styles.ts (allStyles(), levels from lib/levels.ts)", key: (r) => r.slug,
+    rows: () => {
+      const { allStyles } = web("lib/styles.ts");
+      return allStyles().map((s) => ({
+        ...pick(s, ["slug", "name", "line", "feel", "say", "motion", "light", "look", "level", "tier", "get", "pace", "orientation", "moves", "mood"]),
+        dimension: s.manifest.dimension, kinds: plain(s.manifest.kinds), occasions: plain(s.manifest.occasions ?? null),
+        by: s.manifest.creator, house: s.manifest.creator === "firstwish", packaged: true,
+      }));
+    },
+  },
   SavedReply: {
     from: "lib/admin/d-fixtures.ts (savedReplies)", key: (r) => r.name,
     rows: () => web("lib/admin/d-fixtures.ts").savedReplies.map((s) => pick(s, ["name", "text"])),

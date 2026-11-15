@@ -38,6 +38,7 @@ import { SavedWishesModule } from "./modules/saved-wishes/saved-wishes.module";
 // B06: the wish and the jobs frame
 import { JobsModule } from "./modules/jobs/jobs.module";
 import { WishesModule } from "./modules/wishes/wishes.module";
+import { PublicWishesModule } from "./modules/public-wishes/public-wishes.module";
 // end B06
 
 // B05: payments core
@@ -101,6 +102,9 @@ import { NoticesModule } from "./modules/notices/notices.module";
     // B07
     PurchasesModule,
     // end B07
+    // B10
+    PublicWishesModule,
+    // end B10
     // INT-3
     JobHandlersModule,
     // end INT-3

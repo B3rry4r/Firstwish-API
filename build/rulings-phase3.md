@@ -444,3 +444,21 @@ OO5 (B17) The plan, pack and Vault handlers call invoices.issue(tx, payment) in 
     invoices.voidFor(tx, paymentId). (This wave's join.)
 OO6 (B17) Reading a business (staff or owner) shows the month already rolled without writing; the roll is written only when a
     wish is drawn or a payment lands.
+PP1 (B08) The refund and settlement calls stay their own port (RefundProviderPort); it moves to src/common/ports at the next
+    shared base. The Paystack adapter is NOT RUN against real Paystack (R16).
+PP2 (B08) E-84 gains `q` and `flag`, E-63 gains `day` in the registry (next shared base); the optional params stand until then.
+PP3 (B08) Refund gains a `note` column (next shared base); the audit rows stand until then.
+PP4 (B08) The edit to payments/webhook.service.ts (refund events go to a sink) is accepted.
+PP5 (B08) Only whole refunds: amountKobo must equal the payment's amount. The seeded role table follows the registry: a role the
+    registry names on a route holds the section that route checks (support can start a refund, E-145). (B08 patch.)
+PP6 (B08) An email that fails for good marks the payment `refund_due` for a person to send; built with Support (B20), where the
+    email provider's webhook lands. Nothing refunds by itself.
+QQ1 (B13) E-133 takes an optional `code`; without one it answers {sent, expiresAt}. Registry at the next shared base.
+QQ2 (B13) Lifting a ban gets a staff route (DELETE /v1/admin/bans/:id; owner and ops) at the next shared base.
+QQ3 (B13) The owner's wish detail carries `publish` (WishesService.get calls publishStateOf). (This wave's join.)
+QQ4 (B13) The lifecycle calls ShowingService.dropForWishes in the same transaction when a wish rests, is taken down, removed
+    or erased. (This wave's join.)
+QQ5 (B13) Accepted: one staff list with a `queue` field; flagged photos are decided through E-157; E-138 gives waiting then
+    listed; a decision is in the audit row, not on the sender's timeline; the wish of the day can be set today through the
+    next 6 days (PROVISIONAL, owner may change).
+QQ6 (B13) The raw-SQL tables of B13 and B17 become Prisma models with erase rules at the next shared base.

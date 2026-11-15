@@ -23,6 +23,9 @@
   column you add to an owned table gets an erase rule in schema-map.json (a gate fails without it; AA2); a signed upload never
   points at a file's final key (Y1); a file's type is decided from its bytes (Y3); storage and other slow calls happen outside
   a database transaction (Y4); a link is stored as new URL(v).href, https only (AA4).
+- Specs share one database: a spec that runs due jobs passes the keys it means (runDue(limit, only)), uses its own
+  addresses (uniqueAddress()) and a clock no other spec reaches, and looks rows up by id, never items[0]. A test that passes
+  three times in four is a finding: find the cause.
 - A gap you notice is a task, not a comment: no "out of scope", "later", "this wave", TODO in src (the gate refuses them). Say it in the hand-back.
 - Checks (quiet logs, EXIT lines): build, typecheck, lint on changed files, `npm run test:affected -- <your paths>`, scripts/gates.sh,
   scripts/check-contracts.mjs; T2: `scripts/stack.sh up <prefix> <port>` and the cases by real HTTP (curl), then down.

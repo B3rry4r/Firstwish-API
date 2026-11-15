@@ -425,3 +425,6 @@ NN3 (low) A slug with a control character or a bad escape is 404. NN4 (low) The 
     are HMACs with a server secret, never a bare hash of an address. NN5 (low) A reaction is 1 to 40 characters of ordinary
     text: direction-override and other invisible characters are refused.
 NN6 (listed to the owner) 30 wrong passcode tries lock a link for an hour for everyone, the real receiver included.
+MM3 (P-B07) HH5 is closed in the wave join (the settle's erased-account branch also sets refund_due). HH8 needs the contract:
+    the start body's `ticket` takes every ticket id (INT-4 registry). Tests that run due jobs in a shared database pass the job
+    keys they mean (`only`), so one spec never runs another's jobs (the cause of HH9; the join fixes the two specs that do not).

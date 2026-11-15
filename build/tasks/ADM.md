@@ -49,14 +49,14 @@ it must work at 360 and 390 wide with no sideways page scroll (tables scroll ins
 - ADM-A: screen built (front end only, sample data), web branch `adm-a`. ADM-B, ADM-C, ADM-D: can start; build on the parts below.
 - Shell: app/admin/layout.tsx + components/admin/Shell.tsx (side nav at 960px+, drawer below; who and role at the nav foot; light/dark;
   "Sample data" marker while lib/admin-api CONNECTED is false). Nav list: components/admin/nav.ts (18 sections, grouped).
-- Not built sections open app/admin/[...rest] ("Not built yet"); a real route at the same address takes over by itself. Unknown -> 404.
+- Every nav section has its own route (ADM-J); app/admin/[...rest] now only shows the 404 page (NotBuilt removed).
 - Shared parts: components/admin/ui.tsx: Head, Block, Pill, Stat, Search, Chips, Table (sort, paging, own scroll on a laptop, cards
   under 760px), Pager, Drawer, Confirm (needs a reason of 4+ characters), Timeline, Loading, Problem, Nothing, Facts. Sheet/Empty/Toast
   are the app's own (components/app/ui.tsx), reused unchanged.
 - Seam: lib/admin-api.ts (each function names its /v1/admin/... request; useAdmin() reloads after any action). Changes live in memory
   until a reload. Fixtures: lib/admin-fixtures.ts (SAMPLE, prices pulled from lib/catalog.ts and lib/pro-data.ts); types lib/admin-types.ts.
 - Default (lead), owner may override: sample sign-in takes any email and any six digits and signs in as Owner; the session is kept in
-  localStorage fo-staff. Phones and emails are masked (last four digits); phone search uses the last 3+ digits.
+  memory only (a reload asks for sign-in again; R10). Phones and emails are masked (last four digits); phone search uses the last 3+ digits.
 - Default (lead), owner may override: "Taken down" is its own wish state beside draft, sealed, live, resting, erased. Goodwill extension
   is 7 days. Resend goes on WhatsApp. Refund only marks the ticket payment "Refund started" (Payments, ADM-C, finishes it).
 - Default (lead), owner may override: overview counts, takings by line and queue sizes are SAMPLE (PROVISIONAL) numbers.
@@ -122,3 +122,18 @@ it must work at 360 and 390 wide with no sideways page scroll (tables scroll ins
   the starting counts 3/5/1/8/2 but do not move with decisions: lead to wire at merge).
 - Proof (ADM-B): tsc, check-css, Playwright walk (360/390/1440, light and dark, all B cases incl. decisions showing on Wishes and
   People, no sideways scroll, zero console errors; /app and /app/pro same layout after /admin). Pictures: scratchpad build/verify/adm-b/.
+- ADM-J (seams): screen built (front end only, sample data), web branch `adm-j`. One audit log: lib/admin/audit.ts holds the one
+  store; writeAudit({section, what, on, href, reason}) is the only write and every action in every section calls it (wishes,
+  people, moderation, Now Showing, styles, style review, creators, payments, concierge, prices, support, messages, team,
+  settings); /admin/audit reads readAudit() and shows What, On (linked), Who, Section, When, Why. AuditRow gains `on`.
+  A Moderation decision writes one row (its wish/person actions pass audit: false). Overview "Needs someone" is read from the
+  queues (moderation by queue, publish requests, styles sent in, support threads needing a reply, wishes taken down); rows link
+  to /admin/moderation?queue=report|flagged|takedown, /admin/showing, /admin/styles/review, /admin/support, /admin/wishes?state=down.
+  lib/admin/terms.ts holds PAYOUT_THRESHOLD (5000, R14 PROVISIONAL), PAY_DAY, OFFER_ENDS once; Prices lists "Creators' payout
+  threshold" (PROVISIONAL pill) and changing it moves Due / Rolls on on Creators at once. Block `wrap` (chips under the title
+  below 760px), used by Numbers' blocks. Confirm shows "A few words on why" under a reason of 1 to 3 characters.
+- Default (lead), owner may override (ADM-J): sample sign-in is the Team's Owner (name "Owner") whatever email is typed; taking a
+  wish down (anywhere) also takes it off Now Showing, restoring does not list it again; erasing an account unlists its wishes.
+  The sweep list build/sweeps/admin.md is closed. In dev an unknown /admin path renders the 404 page with status 200 (streamed).
+- Proof (ADM-J): tsc, check-css, Playwright walk 291/291 (J1 to J4 and sweeps at 360/390/1440, light and dark at 390 and 1440;
+  18 sections at 360/390/1440 light and 390/1440 dark; no sideways scroll; zero console errors). Pictures: scratchpad build/verify/adm-j/.

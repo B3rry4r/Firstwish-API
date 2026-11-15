@@ -166,3 +166,16 @@ T4 A rotated refresh token used again ends that session family only (that device
 T5 Kernel: the Google identity port, its real adapter and stand-in move to src/common/ports; the access-token issuer and verifier
    move to src/common/auth and are bound in CommonModule (one verifier for user and staff tokens: S1).
 T6 Test kit: the stand-in id generator must give ids that never repeat across test apps sharing one database.
+
+## From Verify B03 (15 Nov): how each finding is closed. Default (lead), owner may override. The same rules bind B01's sign-in.
+U1 (high) Tries are counted atomically: one UPDATE that adds a try only while tries are under the limit, and the code is compared
+   only if that UPDATE took a row. 10 wrong and 1 right sent at once: at most 5 are looked at.
+U2 (high) Limits never depend on Redis: codes asked per email and per address are counted in the database (the auth_code rows in the
+   window). A new code does not give a fresh budget of guesses: wrong tries are also capped per email per hour (15, PROVISIONAL)
+   across codes. If the database cannot answer, the request is refused (503), never let through.
+U3 (medium) A unique violation on invite answers 409 already_staff, never 500.
+U4 (medium) Asking for a code takes the same time whoever asks: the answer is sent before any email work (the send is queued), and
+   the same hashing work is done for a stranger. A test compares the two medians (20 each) and fails above 2 ms apart.
+U5 (medium) A removed member can be invited again: they return as invited with the new role; one audit row.
+U6 (low) `reason` is 4 to 500 characters everywhere. U7 (low) A staff account can never be deleted at the database (a trigger).
+U8 (kit) `npm run test:affected -- <directory>` runs the specs under that directory.

@@ -72,10 +72,12 @@ export class EventsService {
     }
     if (name === "style_previewed" && styleSlug === null) throw AppError.validation({ "props.style": "Say which style was previewed." });
     if (styleSlug !== null) {
-      const known = await this.db.style.findFirst({ where: { slug: styleSlug }, select: { id: true } });
+      const known = await this.db.style.findFirst({ where: { slug: styleSlug }, select: { on: true } });
       if (!known) throw AppError.validation({ "props.style": "No style has this slug." });
+      // X29: a style that is switched off takes no new events (wishes already made in it still play and still pay).
+      if (!known.on) throw AppError.validation({ "props.style": "This style is switched off." });
     }
-    await this.write({ name, key, accountId, wishId: null, styleSlug, kind: null, amountKobo: null, line: null, props: { key, ...(styleSlug ? { style: styleSlug } : {}) } });
+    await this.write({ name, key, accountId, wishId: null, styleSlug, kind: null, amountKobo: null, line: null, props: styleSlug ? { style: styleSlug } : {} });
   }
 
   /**
@@ -95,36 +97,40 @@ export class EventsService {
       kind: e.kind ?? null,
       amountKobo: e.amountKobo ?? null,
       line: e.line ?? null,
-      props: { key: e.key },
+      props: {},
     };
     await this.write(row, tx);
   }
 
-  /** Writes once per (name, account, key): a transaction-scoped lock on that triple makes two at once write one row. */
+  /**
+   * Writes once per (name, account, key). The key is its own column with a unique index (X4): with an account the index
+   * decides, so two at once write one row. An event with no account (the index cannot see a NULL) takes a transaction lock on
+   * its name and key first.
+   */
   private async write(r: Row, tx?: Prisma.TransactionClient): Promise<void> {
     const run = async (t: Prisma.TransactionClient) => {
-      const scope = `${r.name}|${r.accountId ?? "-"}|${r.key}`;
-      await t.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${scope}, 0))`;
-      const seen = await t.$queryRaw<{ n: number }[]>`
-        SELECT 1 AS n FROM "event"
-        WHERE "name" = ${wireName(r.name)}::"EventName"
-          AND "accountId" IS NOT DISTINCT FROM ${r.accountId}::uuid
-          AND "props"->>'key' = ${r.key}
-        LIMIT 1`;
-      if (seen.length) return;
-      await t.event.create({
-        data: {
-          id: this.ids.id(),
-          name: r.name,
-          accountId: r.accountId,
-          wishId: r.wishId,
-          styleSlug: r.styleSlug,
-          kind: r.kind,
-          amountKobo: r.amountKobo,
-          line: r.line,
-          at: this.clock.now(),
-          props: r.props as Prisma.InputJsonObject,
-        },
+      if (r.accountId === null) {
+        await t.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`${r.name}|${r.key}`}, 0))`;
+        const seen = await t.event.findFirst({ where: { name: r.name, accountId: null, key: r.key }, select: { id: true } });
+        if (seen) return;
+      }
+      await t.event.createMany({
+        data: [
+          {
+            id: this.ids.id(),
+            name: r.name,
+            key: r.key,
+            accountId: r.accountId,
+            wishId: r.wishId,
+            styleSlug: r.styleSlug,
+            kind: r.kind,
+            amountKobo: r.amountKobo,
+            line: r.line,
+            at: this.clock.now(),
+            props: r.props as Prisma.InputJsonObject,
+          },
+        ],
+        skipDuplicates: true,
       });
     };
     if (tx) await run(tx);

@@ -23,11 +23,8 @@ export interface Counts {
   paid: number;
 }
 
-/**
- * The staff and public style. `rate` is null until the style has MIN_PREVIEWS_FOR_RATE previews in the quarter (brief case 4);
- * the contract types it as a number, so this widens that one field (asked of the lead in the hand-back).
- */
-export type StyleOut = Omit<Style, "rate"> & { rate: number | null };
+/** The staff and public style, exactly the contract's: `rate` is null until MIN_PREVIEWS_FOR_RATE previews in the quarter (X1). */
+export type StyleOut = Style;
 
 export function rateOf(c: Counts): number | null {
   return c.previews >= MIN_PREVIEWS_FOR_RATE ? c.paid / c.previews : null;

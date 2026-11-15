@@ -100,3 +100,48 @@ describe("EventsService.record: a wish paid in a style (server only)", () => {
     expect(staff.status).toBe(401);
   });
 });
+
+describe("X4 the event key is its own column", () => {
+  it("X4: the key is a column with a unique index, props carry no key, and a replay at once counts once", async () => {
+    const slug = await addStyle();
+    const key = `x4-${tag()}`;
+    await Promise.all(Array.from({ length: 6 }, () => post({ name: "style-previewed", props: { style: slug, key } })));
+    const rows = await db.event.findMany({ where: { styleSlug: slug } });
+    expect(rows).toHaveLength(1);
+    expect(rows[0].key).toBe(key);
+    expect(rows[0].props).toEqual({ style: slug });
+    // the index itself refuses a second row for the same name, account and key
+    await expect(
+      db.event.create({ data: { id: ids.next(), name: "style_previewed", accountId, key, styleSlug: slug, at: t.clock.now() } }),
+    ).rejects.toMatchObject({ code: "P2002" });
+    // another account may use the same key
+    const other = ids.next();
+    await db.account.create({ data: { id: other, lastSide: "me" } });
+    const tok2 = `user-${tag()}`;
+    t.tokens.set(tok2, { kind: "user", accountId: other, sides: ["person"] });
+    await t.http().post("/v1/events").set("Authorization", `Bearer ${tok2}`).send({ name: "style-previewed", props: { style: slug, key } });
+    expect(await previews(slug)).toBe(2);
+  });
+
+  it("X4: a server event with no account is written once per key, even at once", async () => {
+    const slug = await addStyle();
+    const svc = t.app.get(EventsService);
+    const key = `x4_noacct_${tag()}`;
+    await Promise.all(Array.from({ length: 4 }, () => svc.record({ name: "paid", key, styleSlug: slug })));
+    expect(await previews(slug, "paid")).toBe(1);
+  });
+});
+
+describe("X29 an event for a switched-off style", () => {
+  it("X29: is 422 and not counted; the style on again takes events", async () => {
+    const slug = await addStyle();
+    await db.style.update({ where: { slug }, data: { on: false } });
+    const r = await post({ name: "style-previewed", props: { style: slug, key: `x29-${tag()}` } });
+    expect(r.status).toBe(422);
+    expect((r.body as Body).error.fields).toHaveProperty(["props.style"]);
+    expect(await previews(slug)).toBe(0);
+    await db.style.update({ where: { slug }, data: { on: true } });
+    expect((await post({ name: "style-previewed", props: { style: slug, key: `x29-${tag()}` } })).status).toBe(200);
+    expect(await previews(slug)).toBe(1);
+  });
+});

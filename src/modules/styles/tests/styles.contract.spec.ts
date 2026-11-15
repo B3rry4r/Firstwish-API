@@ -278,3 +278,68 @@ describe("E-195, E-196 public style reads", () => {
     expect((list.body.items as Body[]).every((s) => s.on === true && (s.record as unknown[]).length === 0)).toBe(true);
   });
 });
+
+describe("contract shapes and the one-answer levels read", () => {
+  it("X1: Style.rate is a number or null, from the contract's own type", async () => {
+    const slug = await addStyle();
+    const at = t.clock.now();
+    await db.event.createMany({
+      data: [
+        ...Array.from({ length: 200 }, (_, i) => ({ id: ids.next(), name: "style_previewed" as const, styleSlug: slug, at, key: `x1p-${slug}-${i}` })),
+        ...Array.from({ length: 20 }, (_, i) => ({ id: ids.next(), name: "paid" as const, styleSlug: slug, at, key: `x1q-${slug}-${i}` })),
+      ],
+    });
+    const hot = await t.http().get(`/v1/styles/${slug}`);
+    expect(hot.body.rate).toBe(0.1);
+    const cold = await addStyle();
+    const one = await t.http().get(`/v1/styles/${cold}`);
+    expect(one.body.rate).toBeNull();
+    const staff = await t.http().get("/v1/admin/styles").set(auth("owner")).query({ level: "standard", limit: 50 });
+    expect(staff.status).toBe(200);
+    for (const s of staff.body.items as Body[]) expect(s.rate === null || typeof s.rate === "number").toBe(true);
+  });
+
+  it("X2: the level filter is the contract's: exact values only", async () => {
+    const slug = await addStyle({ level: "premium" });
+    const ok = await t.http().get("/v1/admin/styles").set(auth("ops")).query({ level: "premium", limit: 50 });
+    expect(ok.status).toBe(200);
+    expect((ok.body.items as Body[]).every((s) => s.level === "premium")).toBe(true);
+    expect((await t.http().get("/v1/admin/styles").set(auth("ops")).query({ level: "PREMIUM" })).status).toBe(422);
+    expect((await t.http().get("/v1/admin/styles").set(auth("ops")).query({ level: "gold" })).status).toBe(422);
+    expect(slug).toBeTruthy();
+  });
+
+  it("X3: a StyleRate row is {styleSlug, name, level, quarter, previews, paid, rate}", async () => {
+    const slug = await addStyle({ level: "premium" });
+    const rows: Body[] = [];
+    let cursor: string | null = null;
+    do {
+      const r = await t.http().get("/v1/admin/styles/preview-to-paid").set(auth("owner")).query({ quarter: "2026-Q1", limit: 50, ...(cursor ? { cursor } : {}) });
+      expect(r.status).toBe(200);
+      rows.push(...(r.body.items as Body[]));
+      cursor = r.body.nextCursor as string | null;
+    } while (cursor);
+    const row = rows.find((x) => x.styleSlug === slug);
+    expect(row).toBeDefined();
+    expect(Object.keys(row as Body).sort()).toEqual(["level", "name", "paid", "previews", "quarter", "rate", "styleSlug"]);
+    expect(row).toMatchObject({ level: "premium", quarter: "2026-Q1", previews: 0, paid: 0, rate: null });
+  });
+
+  it("X28: every style that is on comes in one answer, and the ETag covers all of it", async () => {
+    const slugs: string[] = [];
+    for (let i = 0; i < 25; i++) slugs.push(await addStyle({ slug: `zz-${tag()}-${String(i).padStart(2, "0")}` }));
+    const last = slugs.sort().at(-1) as string;
+    const a = await t.http().get("/v1/styles/levels");
+    expect(a.status).toBe(200);
+    expect(a.body.nextCursor).toBeNull();
+    const got = new Set((a.body.items as Body[]).map((i) => String(i.slug)));
+    expect(got.size).toBeGreaterThan(60);
+    for (const s of slugs) expect(got.has(s)).toBe(true);
+    // a change to the last style on the list changes the ETag, so a page-one-only hash would fail here
+    const mv = await t.http().put(`/v1/admin/styles/${last}/level`).set(auth("ops")).send({ level: "premium", reason: "X28 check" });
+    expect(mv.status).toBe(200);
+    const b = await t.http().get("/v1/styles/levels");
+    expect(b.headers.etag).not.toBe(a.headers.etag);
+    expect((await t.http().get("/v1/styles/levels").set("If-None-Match", String(b.headers.etag))).status).toBe(304);
+  });
+});

@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "frozenAt": "2026-11-15T18:52:28Z",
+  "frozenAt": "2026-11-15T19:55:55Z",
   "framework": "nestjs",
   "generatedBy": "tools/pipeline/reconcile.py",
   "resources": [
@@ -725,8 +725,8 @@
           "path": "/v1/handles/:handle",
           "auth": [
             {
-              "kind": "role",
-              "role": "creator"
+              "kind": "user",
+              "scope": "signed in"
             }
           ],
           "body": [
@@ -749,6 +749,7 @@
             }
           ],
           "notes": [
+            "auth by DEC-159",
             "route by conventions naming"
           ]
         },
@@ -1288,6 +1289,40 @@
           ],
           "notes": [
             "route by conventions naming"
+          ]
+        },
+        {
+          "id": "E-235",
+          "method": "POST",
+          "path": "/v1/me/erase",
+          "auth": [
+            {
+              "kind": "user",
+              "scope": "signed in"
+            }
+          ],
+          "body": [
+            {
+              "name": "confirm",
+              "type": "'erase'",
+              "from": [
+                "DEC-158"
+              ]
+            }
+          ],
+          "response": {
+            "entity": null,
+            "cardinality": "none",
+            "note": "204; every session ends; 403 fresh_sign_in_needed for a sign-in older than 10 minutes (DEC-158)"
+          },
+          "sources": [
+            {
+              "src": "DEC-158",
+              "via": "ruling:DEC-158"
+            }
+          ],
+          "notes": [
+            "body by DEC-158"
           ]
         }
       ]
@@ -5212,6 +5247,39 @@
             }
           ],
           "notes": []
+        },
+        {
+          "id": "E-236",
+          "method": "GET",
+          "path": "/v1/creators/:handle",
+          "auth": [
+            {
+              "kind": "public"
+            }
+          ],
+          "body": [
+            {
+              "name": "handle",
+              "type": "string (path)",
+              "from": [
+                "DEC-157"
+              ]
+            }
+          ],
+          "response": {
+            "entity": "Creator",
+            "cardinality": "single",
+            "note": "public fields only; one 404 for missing, side off, banned or erased (DEC-157)"
+          },
+          "sources": [
+            {
+              "src": "DEC-157",
+              "via": "ruling:DEC-157"
+            }
+          ],
+          "notes": [
+            "body by DEC-157"
+          ]
         }
       ]
     },
@@ -12290,7 +12358,7 @@
           "classes": [
             "number"
           ],
-          "nullable": false,
+          "nullable": true,
           "provenance": [
             "site-contact"
           ],
@@ -12302,7 +12370,7 @@
           "classes": [
             "money-kobo"
           ],
-          "nullable": false,
+          "nullable": true,
           "provenance": [
             "site-contact"
           ],
@@ -12328,7 +12396,7 @@
           "classes": [
             "string"
           ],
-          "nullable": false,
+          "nullable": true,
           "provenance": [
             "admin-prices"
           ],
@@ -12340,7 +12408,7 @@
           "classes": [
             "enum"
           ],
-          "nullable": false,
+          "nullable": true,
           "provenance": [
             "admin-prices"
           ],
@@ -12352,7 +12420,7 @@
           "classes": [
             "array"
           ],
-          "nullable": false,
+          "nullable": true,
           "provenance": [
             "site-business",
             "site-home",
@@ -12393,7 +12461,7 @@
           "classes": [
             "string"
           ],
-          "nullable": false,
+          "nullable": true,
           "provenance": [
             "site-business",
             "site-home",
@@ -12439,7 +12507,7 @@
           "classes": [
             "string"
           ],
-          "nullable": false,
+          "nullable": true,
           "provenance": [
             "admin-prices"
           ],
@@ -12451,7 +12519,7 @@
           "classes": [
             "money-kobo"
           ],
-          "nullable": false,
+          "nullable": true,
           "provenance": [
             "site-business",
             "site-home",
@@ -12480,7 +12548,7 @@
           "classes": [
             "string"
           ],
-          "nullable": false,
+          "nullable": true,
           "provenance": [
             "admin-prices"
           ],
@@ -12504,7 +12572,7 @@
           "classes": [
             "string"
           ],
-          "nullable": false,
+          "nullable": true,
           "provenance": [
             "site-make"
           ],
@@ -12516,7 +12584,7 @@
           "classes": [
             "string"
           ],
-          "nullable": false,
+          "nullable": true,
           "provenance": [
             "site-business",
             "site-home",
@@ -12526,7 +12594,7 @@
         },
         {
           "name": "value",
-          "type": "money",
+          "type": "kobo-or-time",
           "classes": [
             "money-kobo"
           ],
@@ -12536,7 +12604,8 @@
           ],
           "supersedes": [
             "S-1: integer kobo, currency NGN, over the wire and in storage; prices only from the price book"
-          ]
+          ],
+          "typeBy": "DEC-162"
         },
         {
           "name": "vatIncluded",
@@ -12568,7 +12637,7 @@
           "classes": [
             "money-kobo"
           ],
-          "nullable": false,
+          "nullable": true,
           "provenance": [
             "site-business",
             "site-home",
@@ -12692,8 +12761,9 @@
           ],
           "body": [],
           "response": {
-            "entity": "Price",
-            "cardinality": "list"
+            "entity": "PriceBook",
+            "cardinality": "page",
+            "note": "{version, items, promotion, lifecycle, entitlements, nextCursor} (DEC-161)"
           },
           "sources": [
             {
@@ -12847,6 +12917,7 @@
           ],
           "notes": [
             "auth by DEC-96",
+            "body by DEC-161",
             "route by DEC-96"
           ]
         }
@@ -17213,6 +17284,44 @@
       ],
       "endpoints": [
         {
+          "id": "E-237",
+          "method": "GET",
+          "path": "/v1/admin/screening-results",
+          "auth": [
+            {
+              "kind": "staff role",
+              "roles": [
+                "moderator",
+                "ops",
+                "owner"
+              ]
+            }
+          ],
+          "body": [
+            {
+              "name": "verdict",
+              "type": "pass|review|reject (optional; only results with this verdict)",
+              "from": [
+                "DEC-164"
+              ]
+            }
+          ],
+          "response": {
+            "entity": "ScreeningResult",
+            "cardinality": "list",
+            "note": "the screening queue for Moderation's flagged photos (DEC-164)"
+          },
+          "sources": [
+            {
+              "src": "DEC-164",
+              "via": "ruling:DEC-164"
+            }
+          ],
+          "notes": [
+            "body by DEC-164"
+          ]
+        },
+        {
           "id": "E-157",
           "method": "POST",
           "path": "/v1/admin/screening-results/:id/decision",
@@ -18361,26 +18470,26 @@
       "embedded": [],
       "fields": [
         {
-          "name": "fileId",
-          "type": "string",
+          "name": "expiresAt",
+          "type": "time",
           "classes": [
-            "string"
+            "time-iso"
           ],
           "nullable": false,
           "provenance": [
-            "storage"
+            "DEC-163"
           ],
           "supersedes": []
         },
         {
-          "name": "variant",
+          "name": "url",
           "type": "string",
           "classes": [
             "string"
           ],
           "nullable": false,
           "provenance": [
-            "storage"
+            "DEC-163"
           ],
           "supersedes": []
         }
@@ -19120,7 +19229,7 @@
         },
         {
           "name": "kind",
-          "type": "unknown",
+          "type": "enum(image|sound|model|video)",
           "classes": [
             "unknown"
           ],
@@ -19128,7 +19237,8 @@
           "provenance": [
             "studio-editor"
           ],
-          "supersedes": []
+          "supersedes": [],
+          "typeBy": "DEC-165"
         },
         {
           "name": "objectKey",
@@ -19279,15 +19389,17 @@
             },
             {
               "name": "kind",
-              "type": "image|sound|model (derived from file by kindOfFile)",
+              "type": "image|sound|model|video (optional; the media kind, DEC-165)",
               "from": [
+                "DEC-165",
                 "studio-editor"
               ]
             },
             {
               "name": "purpose",
-              "type": "string",
+              "type": "string (photo|voice|clip|vault|studio|brand; what the file is for, DEC-165)",
               "from": [
+                "DEC-165",
                 "storage"
               ]
             },
@@ -19321,8 +19433,9 @@
             }
           ],
           "response": {
-            "entity": "VoiceNote",
-            "cardinality": "single"
+            "entity": "UploadTicket",
+            "cardinality": "single",
+            "note": "{id, purpose, upload: {url, method, headers, expiresAt}} (DEC-163)"
           },
           "sources": [
             {
@@ -19343,6 +19456,7 @@
             }
           ],
           "notes": [
+            "body by DEC-165",
             "route by DEC-10"
           ]
         },
@@ -19381,8 +19495,9 @@
             }
           ],
           "response": {
-            "entity": "VoiceNote",
-            "cardinality": "single"
+            "entity": null,
+            "cardinality": "none",
+            "note": "204 with no body (DEC-163)"
           },
           "sources": [
             {
@@ -19395,6 +19510,7 @@
             }
           ],
           "notes": [
+            "body by DEC-163",
             "route by DEC-10"
           ]
         },
@@ -20890,7 +21006,7 @@
           "classes": [
             "number"
           ],
-          "nullable": false,
+          "nullable": true,
           "provenance": [
             "admin-styles"
           ],
@@ -21013,7 +21129,15 @@
               ]
             }
           ],
-          "body": [],
+          "body": [
+            {
+              "name": "level",
+              "type": "starter|standard|premium (optional; only styles at this level)",
+              "from": [
+                "DEC-155"
+              ]
+            }
+          ],
           "response": {
             "entity": "Style",
             "cardinality": "list"
@@ -21025,6 +21149,7 @@
             }
           ],
           "notes": [
+            "body by DEC-155",
             "route by DEC-112"
           ]
         },
@@ -21395,7 +21520,8 @@
           "body": [],
           "response": {
             "entity": "StyleLevel",
-            "cardinality": "list"
+            "cardinality": "all",
+            "note": "every style in one answer, no paging; the ETag covers the whole answer (DEC-166)"
           },
           "sources": [
             {
@@ -21431,7 +21557,9 @@
               "via": "action:getLevels"
             }
           ],
-          "notes": []
+          "notes": [
+            "body by DEC-166"
+          ]
         }
       ]
     },
@@ -21444,6 +21572,55 @@
       "embedded": [],
       "fields": [
         {
+          "name": "level",
+          "type": "enum(starter|standard|premium)",
+          "classes": [
+            "enum"
+          ],
+          "nullable": false,
+          "provenance": [
+            "DEC-156"
+          ],
+          "supersedes": [],
+          "typeBy": "DEC-156"
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "DEC-156"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "paid",
+          "type": "number",
+          "classes": [
+            "integer"
+          ],
+          "nullable": false,
+          "provenance": [
+            "DEC-156"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "previews",
+          "type": "number",
+          "classes": [
+            "integer"
+          ],
+          "nullable": false,
+          "provenance": [
+            "DEC-156"
+          ],
+          "supersedes": []
+        },
+        {
           "name": "quarter",
           "type": "string",
           "classes": [
@@ -21452,6 +21629,30 @@
           "nullable": false,
           "provenance": [
             "analytics-events"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "rate",
+          "type": "number",
+          "classes": [
+            "number"
+          ],
+          "nullable": true,
+          "provenance": [
+            "DEC-156"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "styleSlug",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "DEC-156"
           ],
           "supersedes": []
         }
@@ -21481,7 +21682,8 @@
           ],
           "response": {
             "entity": "StyleRate",
-            "cardinality": "list"
+            "cardinality": "list",
+            "note": "{styleSlug, name, level, quarter, previews, paid, rate}; rate null under 200 previews (DEC-156)"
           },
           "sources": [
             {
@@ -21490,6 +21692,7 @@
             }
           ],
           "notes": [
+            "body by DEC-156",
             "route by conventions naming"
           ]
         }
@@ -23262,10 +23465,26 @@
               "role": "business"
             }
           ],
-          "body": [],
+          "body": [
+            {
+              "name": "extras",
+              "type": "array<string> (optional, repeatable ?extras=; extra lines of the price book)",
+              "from": [
+                "DEC-160"
+              ]
+            },
+            {
+              "name": "ticket",
+              "type": "string (a ticket line of the price book, such as ticket.single)",
+              "from": [
+                "DEC-160"
+              ]
+            }
+          ],
           "response": {
-            "entity": "TicketOffer",
-            "cardinality": "list"
+            "entity": "TicketQuote",
+            "cardinality": "single",
+            "note": "one quote: lines in kobo, the total, the version used (DEC-160)"
           },
           "sources": [
             {
@@ -23273,7 +23492,9 @@
               "via": "read:Offer (derived per ticket from wish + catalog)"
             }
           ],
-          "notes": []
+          "notes": [
+            "body by DEC-160"
+          ]
         }
       ]
     },
@@ -23345,26 +23566,14 @@
       "embedded": [],
       "fields": [
         {
-          "name": "bytes",
-          "type": "number",
-          "classes": [
-            "integer"
-          ],
-          "nullable": false,
-          "provenance": [
-            "storage"
-          ],
-          "supersedes": []
-        },
-        {
-          "name": "contentType",
+          "name": "id",
           "type": "string",
           "classes": [
             "string"
           ],
           "nullable": false,
           "provenance": [
-            "storage"
+            "DEC-163"
           ],
           "supersedes": []
         },
@@ -23381,16 +23590,17 @@
           "supersedes": []
         },
         {
-          "name": "subjectId",
-          "type": "string",
+          "name": "upload",
+          "type": "object {url, method, headers, expiresAt}",
           "classes": [
-            "string"
+            "object"
           ],
           "nullable": false,
           "provenance": [
-            "storage"
+            "DEC-163"
           ],
-          "supersedes": []
+          "supersedes": [],
+          "typeBy": "DEC-163"
         }
       ],
       "endpoints": []

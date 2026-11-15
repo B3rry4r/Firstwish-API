@@ -376,6 +376,14 @@ def main():
         if x["decision"] in dec_ids:
             sources.setdefault(x["decision"], {"kind": "decision", "data": {}, "text": ""})
             add_field(x["resource"], x["name"], x["type"], x.get("nullable"), x["decision"])
+    # fields a decision makes optional on a shape (routes.json optionalFields: X1, X15 in INT-2); the type stays as the sources give it
+    for x in routes.get("optionalFields", []):
+        if x["decision"] in dec_ids:
+            f_ = R(x["resource"])["fields"].get(x["name"])
+            if f_ is None:
+                print("HALT: routes.json optionalFields names %s.%s, which no source makes" % (x["resource"], x["name"]))
+                sys.exit(3)
+            f_["nullable"].add(True)
 
     def srcs_of(name):
         out = set()

@@ -2578,6 +2578,158 @@
       "confidence": "high",
       "source": "build/rulings-phase3.md (From B03's halts; From B01's halts)",
       "decidedAt": "2026-11-15T21:05:00Z"
+    },
+    {
+      "id": "DEC-154",
+      "topic": "style rate may be null",
+      "closes": [],
+      "decision": "X1: Style.rate is number or null: null while the style has under 200 previews in the quarter (no rate is shown on too few previews).",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (Wave 2 halts) X1",
+      "decidedAt": "2026-11-15T23:00:00Z"
+    },
+    {
+      "id": "DEC-155",
+      "topic": "staff styles list filter",
+      "closes": [],
+      "decision": "X2: E-193 GET /v1/admin/styles takes an optional `level` query (starter|standard|premium) beside its paging.",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (Wave 2 halts) X2",
+      "decidedAt": "2026-11-15T23:00:00Z"
+    },
+    {
+      "id": "DEC-156",
+      "topic": "preview-to-paid row",
+      "closes": [],
+      "decision": "X3: StyleRate (E-199) is {styleSlug, name, level, quarter, previews, paid, rate}; rate is null under 200 previews (X1).",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (Wave 2 halts) X3",
+      "decidedAt": "2026-11-15T23:00:00Z",
+      "fieldTypes": {
+        "StyleRate.level": "enum(starter|standard|premium)"
+      }
+    },
+    {
+      "id": "DEC-157",
+      "topic": "a creator's public page",
+      "closes": [],
+      "decision": "X6: GET /v1/creators/:handle is public and answers one Creator with public fields only (id, handle, name, line, href, img, house, following for a signed-in reader); one 404 for a missing handle, a creator side switched off, a banned or an erased account.",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (Wave 2 halts) X6",
+      "decidedAt": "2026-11-15T23:00:00Z"
+    },
+    {
+      "id": "DEC-158",
+      "topic": "erase on request",
+      "closes": [],
+      "decision": "X7: POST /v1/me/erase, signed in; the sign-in must be younger than 10 minutes, else 403 fresh_sign_in_needed; body {confirm: \"erase\"}; answers 204 and ends every session of the account. It calls the erase service (B02); erase takes the account lock (AA1).",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (Wave 2 halts) X7",
+      "decidedAt": "2026-11-15T23:00:00Z"
+    },
+    {
+      "id": "DEC-159",
+      "topic": "handle check auth",
+      "closes": [],
+      "decision": "X11: E-5 GET /v1/handles/:handle (is this handle free?) needs a signed-in user, any side; not the creator side (a person picks the handle while turning the creator side on).",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (Wave 2 halts) X11",
+      "decidedAt": "2026-11-15T23:00:00Z"
+    },
+    {
+      "id": "DEC-160",
+      "topic": "ticket offer quote",
+      "closes": [],
+      "decision": "X13: E-213 GET /v1/ticket-offers takes `ticket` (a ticket line of the price book) and repeatable `extras` (extra lines) and answers ONE TicketQuote {version, versionId, lines: [{sku, name, qty, listKobo, unitKobo, totalKobo, discounted}], totalKobo, listTotalKobo}: lines in kobo, the total, the price-book version used.",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (Wave 2 halts) X13",
+      "decidedAt": "2026-11-15T23:00:00Z"
+    },
+    {
+      "id": "DEC-161",
+      "topic": "public price book answer",
+      "closes": [],
+      "decision": "X14: E-125 GET /v1/price-book answers PriceBook {version, items: Price[], promotion: Promotion | null, lifecycle: LifecycleConfig | null, entitlements: Entitlements, nextCursor}; it is paged by ?cursor=&limit= like a list.",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (Wave 2 halts) X14",
+      "decidedAt": "2026-11-15T23:00:00Z"
+    },
+    {
+      "id": "DEC-162",
+      "topic": "price value and optional screen fields",
+      "closes": [],
+      "decision": "X15: Price.value is kobo (an integer) for kind naira and an ISO-8601 instant for kind date. Fields that belong to other screens (title, group, price, was, per, from, lead, sla, reason, items, conciergeDeliveryHours, conciergeSingleWish, changed) are optional.",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (Wave 2 halts) X15",
+      "decidedAt": "2026-11-15T23:00:00Z",
+      "fieldTypes": {
+        "Price.value": "kobo-or-time"
+      }
+    },
+    {
+      "id": "DEC-163",
+      "topic": "upload ticket and signed read shapes",
+      "closes": [],
+      "decision": "X20: E-182 POST /v1/uploads answers UploadTicket {id, purpose, upload: {url, method, headers, expiresAt}}; E-183 DELETE /v1/uploads/:id answers 204 with no body; SignedUrl is {url, expiresAt}.",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (Wave 2 halts) X20",
+      "decidedAt": "2026-11-15T23:00:00Z",
+      "fieldTypes": {
+        "UploadTicket.upload": "object {url, method, headers, expiresAt}"
+      }
+    },
+    {
+      "id": "DEC-164",
+      "topic": "staff screening queue",
+      "closes": [],
+      "decision": "X24: staff read the screening queue at GET /v1/admin/screening-results (owner, ops, moderator), paged, with an optional `verdict` filter; it feeds Moderation's flagged photos.",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (Wave 2 halts) X24",
+      "decidedAt": "2026-11-15T23:00:00Z"
+    },
+    {
+      "id": "DEC-165",
+      "topic": "stored file kind and upload purpose",
+      "closes": [],
+      "decision": "X25: StoredFile.kind stays the media kind, enum(image|sound|model|video). E-182's body gains `purpose`: photo|voice|clip|vault|studio, and brand for a brand logo (AA5, so the B02 patch needs no further reopen).",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (Wave 2 halts) X25, (From Verify B02) AA5",
+      "decidedAt": "2026-11-15T23:00:00Z",
+      "fieldTypes": {
+        "StoredFile.kind": "enum(image|sound|model|video)"
+      }
+    },
+    {
+      "id": "DEC-166",
+      "topic": "levels read in one answer",
+      "closes": [],
+      "decision": "X28: E-198 GET /v1/styles/levels returns every style in ONE answer {items, nextCursor: null} with no paging (tens of styles, not thousands); its ETag covers the whole answer.",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (Wave 2 halts) X28",
+      "decidedAt": "2026-11-15T23:00:00Z"
+    },
+    {
+      "id": "DEC-167",
+      "topic": "registry re-freeze (fourth reopen)",
+      "closes": [],
+      "decision": "The registry is re-frozen after X1, X2, X3, X6, X7, X11, X13, X14, X15, X20, X24, X25, X28 (DEC-154..166) by tools/pipeline/freeze.py; reconcile.py was run twice with --reopen (identical outputs, EXIT 0, 0 open conflicts, both admin gate lines 0). Frozen at 106 resources, 237 endpoints (new: E-235 POST /v1/me/erase, E-236 GET /v1/creators/:handle, E-237 GET /v1/admin/screening-results). Endpoint ids already issued are unchanged; the new routes take the next free numbers. The other wave 2 rulings change code, storage or the seed only.",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (Wave 2 halts) X1..X28",
+      "decidedAt": "2026-11-15T23:05:00Z"
     }
   ]
 }

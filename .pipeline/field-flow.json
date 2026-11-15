@@ -3263,14 +3263,18 @@
     },
     {
       "field": "Creator.handle",
-      "writers": [],
+      "writers": [
+        "E-236"
+      ],
       "store": "Creator",
       "readers": [
         "admin-creators",
         "app-home",
         "site-showing"
       ],
-      "writerActors": [],
+      "writerActors": [
+        "public"
+      ],
       "readerActors": [
         "business",
         "creator",
@@ -3278,8 +3282,8 @@
         "public",
         "staff"
       ],
-      "crossActor": false,
-      "noWriter": true
+      "crossActor": true,
+      "noWriter": false
     },
     {
       "field": "Creator.house",
@@ -11607,12 +11611,12 @@
     {
       "field": "ScreeningResult.verdict",
       "writers": [
-        "server:upload-screening"
+        "E-237"
       ],
       "store": "ScreeningResult",
       "readers": [],
       "writerActors": [
-        "server"
+        "staff"
       ],
       "readerActors": [],
       "crossActor": false,
@@ -12239,6 +12243,16 @@
       "noWriter": false
     },
     {
+      "field": "SignedUrl.expiresAt",
+      "writers": [],
+      "store": "SignedUrl",
+      "readers": [],
+      "writerActors": [],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
       "field": "SignedUrl.fileId",
       "writers": [
         "E-173"
@@ -12251,6 +12265,16 @@
       "readerActors": [],
       "crossActor": false,
       "noWriter": false
+    },
+    {
+      "field": "SignedUrl.url",
+      "writers": [],
+      "store": "SignedUrl",
+      "readers": [],
+      "writerActors": [],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": true
     },
     {
       "field": "SignedUrl.variant",
@@ -13746,7 +13770,9 @@
     },
     {
       "field": "Style.level",
-      "writers": [],
+      "writers": [
+        "E-193"
+      ],
       "store": "Style",
       "readers": [
         "admin-styles",
@@ -13761,7 +13787,9 @@
         "site-styles",
         "site-wishes-kind"
       ],
-      "writerActors": [],
+      "writerActors": [
+        "staff"
+      ],
       "readerActors": [
         "business",
         "creator",
@@ -13769,8 +13797,8 @@
         "public",
         "staff"
       ],
-      "crossActor": false,
-      "noWriter": true
+      "crossActor": true,
+      "noWriter": false
     },
     {
       "field": "Style.light",
@@ -14352,6 +14380,46 @@
       "noWriter": false
     },
     {
+      "field": "StyleRate.level",
+      "writers": [],
+      "store": "StyleRate",
+      "readers": [],
+      "writerActors": [],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "StyleRate.name",
+      "writers": [],
+      "store": "StyleRate",
+      "readers": [],
+      "writerActors": [],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "StyleRate.paid",
+      "writers": [],
+      "store": "StyleRate",
+      "readers": [],
+      "writerActors": [],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "StyleRate.previews",
+      "writers": [],
+      "store": "StyleRate",
+      "readers": [],
+      "writerActors": [],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
       "field": "StyleRate.quarter",
       "writers": [
         "E-199"
@@ -14364,6 +14432,26 @@
       "readerActors": [],
       "crossActor": false,
       "noWriter": false
+    },
+    {
+      "field": "StyleRate.rate",
+      "writers": [],
+      "store": "StyleRate",
+      "readers": [],
+      "writerActors": [],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "StyleRate.styleSlug",
+      "writers": [],
+      "store": "StyleRate",
+      "readers": [],
+      "writerActors": [],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": true
     },
     {
       "field": "StyleSubmission.checks",
@@ -15778,6 +15866,16 @@
       "noWriter": false
     },
     {
+      "field": "UploadTicket.id",
+      "writers": [],
+      "store": "UploadTicket",
+      "readers": [],
+      "writerActors": [],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
       "field": "UploadTicket.purpose",
       "writers": [
         "server:storage"
@@ -15804,6 +15902,16 @@
       "readerActors": [],
       "crossActor": false,
       "noWriter": false
+    },
+    {
+      "field": "UploadTicket.upload",
+      "writers": [],
+      "store": "UploadTicket",
+      "readers": [],
+      "writerActors": [],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": true
     },
     {
       "field": "VaultFile.id",
@@ -19791,6 +19899,6 @@
       "noWriter": false
     }
   ],
-  "crossActor": 35,
-  "noWriter": 599
+  "crossActor": 37,
+  "noWriter": 607
 }

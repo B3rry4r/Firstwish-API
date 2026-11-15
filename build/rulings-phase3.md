@@ -88,3 +88,18 @@ A12 Numbers' targets are a staff-set setting (none set -> "No target set"); thre
 A13 Style use counts (previews, paid uses) are written by events from the app (a preview played, a wish paid in that style), never
     invented; a wish records the style it was made in (Wish.style). Automatic checks on a submitted style run in the page and are
     re-run by the reviewer's page; the server stores the result with who ran it (it cannot run a browser check itself).
+
+## Admin join, leftovers (15 Nov, later). Default (lead), owner may override.
+A14 Every /v1/admin request that changes something carries `reason` (string, 4 or more characters), written to the audit row. This
+    includes the declared ones that lacked it (staff accounts patch and suspend, concierge delivery and quote, job retry, payout-run
+    approve, price-book version create and publish, reconciliations, refund approve, screening decision, support assignee). Only the
+    staff sign-in routes (code, verify, sign-out) take none; code and verify are public by nature (before sign-in), rate-limited.
+A15 Account.pass is an object or null: {active: boolean, endsAt: time}. A staff list's boolean is `pass.active`.
+A16 Account.sides is an array of enum(person|creator|business); each side's details live on Creator and Business.
+A17 ConciergeOrder.from is a string (who ordered). "Due this week" is a read over ConciergeOrder with query parameters `from` and `to`
+    (date-only); the window is not a field of the order.
+A18 Same field: ConciergeOrder.maker = makerId; Payout.creator = creatorId; Report.wish = wishId. Different: Report.decided is the
+    decision taken (enum), Report.decidedAt is when.
+A19 Endpoints the rulings ask for and no screen names are built: GET /v1/admin/support/counts, POST /v1/webhooks/email/inbound
+    (signature checked), a daily settlement job (internal), PUT /v1/admin/numbers/targets (owner, finance; reason), and
+    POST /v1/admin/people/:id/contact-reveal (reason; audited; returns the full phone and email once).

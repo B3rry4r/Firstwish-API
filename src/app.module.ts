@@ -35,6 +35,10 @@ import { DatesModule } from "./modules/dates/dates.module";
 import { PeopleModule } from "./modules/people/people.module";
 import { SavedWishesModule } from "./modules/saved-wishes/saved-wishes.module";
 // end B12
+// B06: the wish and the jobs frame
+import { JobsModule } from "./modules/jobs/jobs.module";
+import { WishesModule } from "./modules/wishes/wishes.module";
+// end B06
 
 // B05: payments core
 import { PaymentsModule } from "./modules/payments/payments.module";
@@ -82,6 +86,10 @@ import { PaymentsModule } from "./modules/payments/payments.module";
     // B05
     PaymentsModule,
     // end B05
+    // B06
+    JobsModule,
+    WishesModule,
+    // end B06
   ],
 })
 export class AppModule {}

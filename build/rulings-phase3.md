@@ -196,3 +196,10 @@ V7 (low) No Date.now() outside the clock port (Google adapter). V8 (low) Reserve
    moderator, wish, w, v1, me, sign-in, sign-up, pricing, terms, privacy, contact.
 V9 (low) Verifying a code is also limited per address (60 an hour, PROVISIONAL).
 Not changed (sweep): an old code sent after a new one costs the new code a try.
+
+## Wiring and deployment rules that fall out of the identity work (15 Nov). Default (lead), owner may override.
+W1 The web app reaches the API on its own origin: Next.js rewrites /v1/:path* to the API host (API_ORIGIN, server-side env). The
+   sign-in cookies are therefore first-party, there is no cross-site request from the page, and CORS stays a short allowlist for
+   local work only. (Phase 6 builds the rewrite; the API host can then sit anywhere, DigitalOcean included.)
+W2 Routes that act on a cookie alone (both refresh routes, both sign-outs when sent without a bearer) refuse a request whose Origin
+   header is present and not on the allowlist (403, envelope). SameSite=Lax stays as the first guard.

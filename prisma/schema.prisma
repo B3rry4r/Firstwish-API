@@ -1,0 +1,12 @@
+// Firstwish database schema. Resource models are added by the schema step from .pipeline/registry.json.
+// Until then the schema holds only the connection; `prisma migrate deploy` still records runs in _prisma_migrations,
+// which GET /v1/health checks.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}

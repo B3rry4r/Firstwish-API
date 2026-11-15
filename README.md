@@ -1,0 +1,71 @@
+# Firstwish API
+
+The server for Firstwish. NestJS 11 on Node 22, TypeScript strict, PostgreSQL 16 through Prisma, Redis with BullMQ for timed work.
+Every route lives under `/v1`.
+
+## What you need
+
+- Node 22 (`.nvmrc`)
+- PostgreSQL 16 and Redis 7. On this machine `scripts/stack.sh up` starts both if they are down.
+
+## First run
+
+```bash
+npm install                      # also generates the Prisma client
+npm run build
+scripts/stack.sh up dev 4000     # database dev_test, API on port 4000 with stand-in providers
+curl http://127.0.0.1:4000/v1/health
+scripts/stack.sh down dev        # stops the API and drops dev_test
+```
+
+`stack.sh up <prefix> <port>` prints the base URL, the API's PID and the database URL, and writes them to
+`$STACKS_DIR/<prefix>.env`. Two stacks with different prefixes and ports can run side by side.
+
+To run the API yourself, copy `.env.example` to `.env`, fill it in, load it into your shell, then `npm run migrate` and `npm start`.
+If a variable is missing or wrong the API does not start and names each one.
+
+## Checks
+
+| Command | What it does |
+| --- | --- |
+| `npm run build` | compiles `src/` to `dist/` |
+| `npm run lint` | ESLint with type checks |
+| `npm run typecheck` | TypeScript over source and tests |
+| `npm test` | every spec, against a fresh database copied from a migrated template |
+| `npm run test:affected -- <paths>` | only those specs (a source file runs the specs that use it) |
+| `bash scripts/gates.sh` | no float money, no deferral notes in `src`, no real provider host in tests |
+
+Tests need PostgreSQL and Redis. `PG_ADMIN_URL` is a role that can create databases
+(default `postgresql://firstwish:firstwish@127.0.0.1:5432/postgres`); `TEST_DB_PREFIX` names the test databases (default `fw`).
+CI (`.github/workflows/ci.yml`) runs install, lint, typecheck, build, gates, migrate and the full suite on every push.
+
+## Providers
+
+Each outside service sits behind a port in `src/common/ports`, with a real adapter and a stand-in:
+
+| Port | Real adapter | Picked by |
+| --- | --- | --- |
+| payments | Paystack | `PROVIDERS` |
+| email | Resend | `PROVIDERS` |
+| storage | S3 adapter for Cloudflare R2 or DigitalOcean Spaces | `PROVIDERS`, then `STORAGE_DRIVER` (`r2` or `spaces`) |
+| AI writing | Anthropic | `PROVIDERS` |
+| upload screening | file signature and size check | `PROVIDERS`, then `SCREENING_PROVIDER` |
+| clock, ids, codes | system time and crypto randomness | `PROVIDERS` |
+
+`PROVIDERS=standin` uses the stand-ins: no network calls, a clock tests can move, and a record of every call.
+It is refused when `NODE_ENV=production`. Tests always run on stand-ins.
+
+## How the code is laid out
+
+- `src/common/`: the shared kernel. Environment schema, error envelope, request ids, validation, access guard, ports,
+  Money (integer kobo), time, ids, phone, email and handle canon, cursor pagination.
+- `src/health/`: `GET /v1/health`.
+- `src/<resource>/`: one module per resource, each with `tests/<resource>.contract.spec.ts`; registered with one import line in `src/app.module.ts`.
+- `test/kit/`: `createTestApp()` builds the real app with stand-ins and a frozen clock.
+
+## Shapes every route keeps
+
+- Errors: `{ "error": { "code", "message", "fields"?, "requestId" } }`. Bad input is 422 with `fields`; an unexpected failure is 500 with no detail.
+- Every response has an `x-request-id` header.
+- Lists: `?cursor=&limit=` (1 to 50, default 20), answering `{ "items": [...], "nextCursor": string | null }`.
+- Money: `{ "amount": <kobo>, "currency": "NGN" }`. Times: ISO-8601 UTC. Calendar dates: `YYYY-MM-DD`. Ids: UUIDv7.

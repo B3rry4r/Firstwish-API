@@ -8,6 +8,7 @@ import {
   type AuthResult,
   type Empty,
 } from "../../contracts";
+import { CookieOriginCheck } from "../../common/auth/cookie-origin";
 import { CookieAuth, CurrentPrincipal } from "../../common/auth/decorators";
 import type { Principal, UserPrincipal } from "../../common/auth/principal";
 import type { ClientMeta } from "../../common/auth/session-families";
@@ -43,6 +44,7 @@ export class SessionsController {
    * cleared only when the session has really ended.
    */
   @CookieAuth()
+  @CookieOriginCheck()
   @Post("refresh")
   @HttpCode(200)
   async refresh(@Body() _body: PostAuthRefreshBodyDto, @Req() req: Request, @Res({ passthrough: true }) res: Response): Promise<AuthResult> {
@@ -57,6 +59,7 @@ export class SessionsController {
   }
 
   /** E-160: ends this device's session family. */
+  @CookieOriginCheck()
   @Post("sign-out")
   @HttpCode(204)
   async signOut(@Body() _body: PostAuthSignOutBodyDto, @CurrentPrincipal() p: Principal | undefined, @Res({ passthrough: true }) res: Response): Promise<void> {

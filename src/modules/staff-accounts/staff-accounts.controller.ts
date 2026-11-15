@@ -1,5 +1,6 @@
 import { Body, Controller, Get, HttpCode, Inject, Param, Patch, Post, Query, Req, Res } from "@nestjs/common";
 import type { Request, Response } from "express";
+import { CookieOriginCheck } from "../../common/auth/cookie-origin";
 import { CookieAuth, CurrentPrincipal, Public, StaffRoles } from "../../common/auth/decorators";
 import type { Principal } from "../../common/auth/principal";
 import { ENV } from "../../common/env/env.module";
@@ -65,6 +66,7 @@ export class StaffAccountsController {
 
   /** E-234 (S5, T3): public by the staff cookie; rotates it (10-second grace, V2); the cookie is cleared only when ended. */
   @CookieAuth()
+  @CookieOriginCheck()
   @Post("auth/refresh")
   @HttpCode(200)
   async refresh(@Body() _body: PostAdminAuthRefreshBodyDto, @Req() req: Request, @Res({ passthrough: true }) res: Response): Promise<StaffAuthResult> {
@@ -79,6 +81,7 @@ export class StaffAccountsController {
   }
 
   /** E-175: any staff role; ends this session family. */
+  @CookieOriginCheck()
   @StaffRoles("finance", "maker", "moderator", "ops", "owner", "reviewer", "support")
   @Post("auth/sign-out")
   @HttpCode(204)

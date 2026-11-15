@@ -150,4 +150,46 @@ describe("sessions E-159..E-162 (contract)", () => {
       expect(bad.body.error.fields.cursor).toBeDefined();
     });
   });
+
+  describe("INT-1 round 1: V2 late reply, W2 foreign origin (user)", () => {
+    it("V2: O->C, C->D, then O again within the grace answers 200 with the live head's cookie, which refreshes", async () => {
+      const s = await signIn(t, uniqueEmail("v2"));
+      const c = await refresh(s.cookie);
+      const d = await refresh(refreshCookieOf(c)!);
+      expect([c.status, d.status]).toEqual([200, 200]);
+      t.clock.advance(2000);
+      const again = await refresh(s.cookie);
+      expect(again.status).toBe(200);
+      expect(again.body.session.id).toBe(d.body.session.id);
+      const held = refreshCookieOf(again);
+      expect(held).toBe(refreshCookieOf(d));
+      expect((await refresh(held!)).status).toBe(200);
+    });
+
+    it("V2: O after the grace ends the family, 401, cookie cleared", async () => {
+      const s = await signIn(t, uniqueEmail("v2late"));
+      const c = await refresh(s.cookie);
+      await refresh(refreshCookieOf(c)!);
+      t.clock.advance(11_000);
+      const late = await refresh(s.cookie);
+      expect(late.status).toBe(401);
+      expect(String(late.headers["set-cookie"])).toContain("fw_refresh=; Max-Age=0");
+      const fam = (await t.db.session.findUniqueOrThrow({ where: { id: s.sessionId } })).familyId;
+      expect((await t.db.session.count({ where: { familyId: fam, revokedAt: null } }))).toBe(0);
+    });
+
+    it("W2: a foreign Origin gets 403 and nothing rotates; an allowed Origin or none gets 200", async () => {
+      const s = await signIn(t, uniqueEmail("w2"));
+      const evil = await refresh(s.cookie).set("Origin", "https://evil.example");
+      expect(evil.status).toBe(403);
+      expect(evil.body.error.code).toBe("forbidden");
+      expect(evil.headers["set-cookie"]).toBeUndefined();
+      const ok = await refresh(s.cookie).set("Origin", "http://localhost:3000");
+      expect(ok.status).toBe(200);
+      const none = await refresh(refreshCookieOf(ok)!);
+      expect(none.status).toBe(200);
+      const out = await t.http().post("/v1/auth/sign-out").set("Origin", "https://evil.example");
+      expect(out.status).toBe(403);
+    });
+  });
 });

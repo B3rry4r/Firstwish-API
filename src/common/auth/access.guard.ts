@@ -6,6 +6,7 @@ import { ENV } from "../env/env.module";
 import type { Env } from "../env/env";
 import { AppError } from "../errors/app-error";
 import { PaymentsPort } from "../ports/payments.port";
+import { assertCookieOrigin, COOKIE_ORIGIN } from "./cookie-origin";
 import { ACCESS, Access } from "./decorators";
 import { AccessTokenVerifier, Principal } from "./principal";
 
@@ -34,6 +35,7 @@ export class AccessGuard implements CanActivate {
     if (ctx.getType() !== "http") return true;
     const access = this.reflector.getAllAndOverride<Access | undefined>(ACCESS, [ctx.getHandler(), ctx.getClass()]) ?? { kind: "user" };
     const req = ctx.switchToHttp().getRequest<Req>();
+    if (this.reflector.getAllAndOverride<boolean | undefined>(COOKIE_ORIGIN, [ctx.getHandler(), ctx.getClass()])) assertCookieOrigin(req, this.env);
 
     switch (access.kind) {
       case "public":

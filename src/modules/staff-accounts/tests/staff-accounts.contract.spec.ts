@@ -278,4 +278,53 @@ describe("staff accounts and staff sign-in (contract)", () => {
       expect((await auditFor(m.staff.id)).map((a) => a.action)).toEqual(["staff.sign-in"]);
     });
   });
+
+  describe("INT-1 round 1: V2 late reply, W2 foreign origin (staff)", () => {
+    const cookieOf = (r: { headers: Record<string, unknown> }): string | null => {
+      const raw = r.headers["set-cookie"];
+      const c = (Array.isArray(raw) ? (raw as string[]) : typeof raw === "string" ? [raw] : []).find((x) => x.startsWith("fw_staff_refresh="));
+      return c ? c.slice("fw_staff_refresh=".length).split(";")[0] || null : null;
+    };
+    const refresh = (cookie?: string) => {
+      const r = t.http().post("/v1/admin/auth/refresh");
+      return cookie ? r.set("Cookie", `fw_staff_refresh=${cookie}`) : r;
+    };
+
+    it("V2: O->C, C->D, then O again within the grace answers 200 with the live head's cookie, which refreshes", async () => {
+      const s = await makeStaff(t.db, ["support"]);
+      const o = cookieOf(await signIn(t, s.email))!;
+      const c = await refresh(o);
+      const d = await refresh(cookieOf(c)!);
+      expect([c.status, d.status]).toEqual([200, 200]);
+      const again = await refresh(o);
+      expect(again.status).toBe(200);
+      expect(cookieOf(again)).toBe(cookieOf(d));
+      expect((await refresh(cookieOf(again)!)).status).toBe(200);
+    });
+
+    it("V2: O after the grace ends the family, 401, cookie cleared", async () => {
+      const s = await makeStaff(t.db, ["support"]);
+      const o = cookieOf(await signIn(t, s.email))!;
+      const c = await refresh(o);
+      await refresh(cookieOf(c)!);
+      t.clock.advance(11_000);
+      const late = await refresh(o);
+      expect(late.status).toBe(401);
+      expect(String(late.headers["set-cookie"])).toMatch(/fw_staff_refresh=;/);
+      expect((await refresh(cookieOf(c)!)).status).toBe(401);
+    });
+
+    it("W2: a foreign Origin gets 403 and nothing rotates; an allowed Origin or none gets 200", async () => {
+      const s = await makeStaff(t.db, ["support"]);
+      const o = cookieOf(await signIn(t, s.email))!;
+      const evil = await refresh(o).set("Origin", "https://evil.example");
+      expect(evil.status).toBe(403);
+      expect(evil.body.error.code).toBe("forbidden");
+      expect(evil.headers["set-cookie"]).toBeUndefined();
+      const ok = await refresh(o).set("Origin", "http://localhost:3000");
+      expect(ok.status).toBe(200);
+      expect((await refresh(cookieOf(ok)!)).status).toBe(200);
+      expect((await t.http().post("/v1/admin/auth/sign-out").set("Origin", "https://evil.example")).status).toBe(403);
+    });
+  });
 });

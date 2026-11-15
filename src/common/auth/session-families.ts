@@ -82,9 +82,15 @@ export class SessionFamilies {
       if (row.rotatedAt) {
         const inGrace = now.getTime() - row.rotatedAt.getTime() <= REFRESH_GRACE_SECONDS * 1000;
         if (inGrace && row.replacedById) {
-          const child = await tx.session.findUnique({ where: { id: row.replacedById } });
-          if (child && !child.revokedAt && child.expiresAt.getTime() > now.getTime()) {
-            return { row: child, cookie: `${child.id}.${childToken}`, access: this.access(holder, child) };
+          // V2: follow replacedById to the family's live head (the token of each hop is worked out from the one before).
+          let head: SessionRow | null = row;
+          let headToken = token;
+          for (let hops = 0; head?.replacedById && hops < 50; hops++) {
+            head = await tx.session.findUnique({ where: { id: head.replacedById } });
+            headToken = this.childToken(kind, headToken);
+          }
+          if (head && head.id !== row.id && !head.revokedAt && head.expiresAt.getTime() > now.getTime()) {
+            return { row: head, cookie: `${head.id}.${headToken}`, access: this.access(holder, head) };
           }
         }
         if (!inGrace) await this.endFamily(tx, row.familyId, "reused");

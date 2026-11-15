@@ -1,4 +1,5 @@
 import type { StaffAccount as StaffRow } from "@prisma/client";
+import { StaffAccountsService } from "../staff-accounts.service";
 import { createStaffApp, makeStaff, signIn, StaffApp, tag, tokenFor } from "./staff-kit";
 
 describe("staff accounts and staff sign-in (contract)", () => {
@@ -250,6 +251,12 @@ describe("staff accounts and staff sign-in (contract)", () => {
       expect(next.body.items[0].name >= first.body.items[1].name).toBe(true);
       expect(next.body.items[0].id).not.toBe(first.body.items[1].id);
       expect((await t.http().get("/v1/admin/team?limit=0").set(bearer(ownerToken))).status).toBe(422);
+    });
+
+    it("the first-owner bootstrap does nothing once the team has an owner", async () => {
+      const email = `boot-${tag()}@example.test`;
+      await t.app.get(StaffAccountsService).bootstrapOwner(email);
+      expect(await t.db.staffAccount.count({ where: { email } })).toBe(0);
     });
 
     it("sign-out ends this session at once", async () => {

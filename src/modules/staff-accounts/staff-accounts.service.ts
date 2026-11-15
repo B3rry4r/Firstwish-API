@@ -64,7 +64,7 @@ export class StaffAccountsService implements OnApplicationBootstrap {
 
   async bootstrapOwner(email: string): Promise<void> {
     await this.db.$transaction(async (tx) => {
-      await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtext('fw:staff-bootstrap'))`;
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext('fw:staff-bootstrap'))`;
       const owners = await tx.staffAccount.count({ where: { roles: { has: "owner" } } });
       if (owners > 0) return;
       const existing = await tx.staffAccount.findUnique({ where: { email } });

@@ -1,0 +1,8 @@
+{
+ "frozenAt": "2026-11-15T17:45:00Z",
+ "registrySha256": "c6aab05763d250e0066130e7a2264c521a99b5d053ca3695c3b5727396b385c8",
+ "resources": 105,
+ "endpoints": 233,
+ "decision": "DEC-131",
+ "note": "Do not run tools/pipeline/reconcile.py against this tree unless a new ruling reopens the registry; it rewrites registry.json with frozenAt null."
+}

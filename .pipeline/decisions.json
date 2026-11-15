@@ -2329,6 +2329,16 @@
       "confidence": "high",
       "source": "build/rulings-phase3.md (Admin join, leftovers)",
       "decidedAt": "2026-11-15T22:00:00Z"
+    },
+    {
+      "id": "DEC-131",
+      "topic": "registry freeze",
+      "closes": [],
+      "decision": "The registry is frozen at 105 resources, 233 endpoints (73 under /v1/admin), 7 waves, 0 open conflicts. The owner handed over (R4: 'Proceed with full build the backend'), so the freeze is the lead's call under the skill's autonomous mode; the summary is listed to the owner. From here registry.json is read-only: an agent that finds it wrong halts and reports; a change is a new ruling, a re-run of tools/pipeline/reconcile.py and a new lock.",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "medium",
+      "source": "build/rulings.md R4, R10",
+      "decidedAt": "2026-11-15T17:45:00Z"
     }
   ]
 }

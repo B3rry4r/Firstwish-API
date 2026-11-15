@@ -1,5 +1,5 @@
 import { PrismaService } from "../../../common/db/prisma.service";
-import { S3Storage, s3ConfigFor } from "../../../common/ports/adapters/s3-storage.adapter";
+import { R2_HOST_SUFFIX, S3Storage, s3ConfigFor } from "../../../common/ports/adapters/s3-storage.adapter";
 import type { Env } from "../../../common/env/env";
 import type { TestApp } from "../../../../test/kit/app";
 import { FileJobs } from "../file-jobs";
@@ -11,15 +11,15 @@ import { filesApp, GB, ids, JPEG, makeAccount, makeBusiness, makeWish, MB, Score
 describe("storage adapters (case 1: one port, two adapters)", () => {
   it("switching STORAGE_DRIVER between r2 and spaces changes only the signed host", async () => {
     const base = { PROVIDERS: "live" } as unknown as Env;
-    const r2 = new S3Storage(s3ConfigFor({ ...base, STORAGE_DRIVER: "r2", R2_ACCOUNT_ID: "acct", R2_BUCKET: "fw", R2_ACCESS_KEY_ID: "k", R2_SECRET_ACCESS_KEY: "s" } as Env));
+    const r2 = new S3Storage(s3ConfigFor({ ...base, STORAGE_DRIVER: "r2", R2_ACCOUNT_ID: "acct", R2_BUCKET: "fw", R2_ACCESS_KEY_ID: "k", R2_SECRET_ACCESS_KEY: "s" }));
     const sp = new S3Storage(
-      s3ConfigFor({ ...base, STORAGE_DRIVER: "spaces", SPACES_ENDPOINT: "https://fra1.digitaloceanspaces.com", SPACES_REGION: "fra1", SPACES_BUCKET: "fw", SPACES_ACCESS_KEY_ID: "k", SPACES_SECRET_ACCESS_KEY: "s" } as Env),
+      s3ConfigFor({ ...base, STORAGE_DRIVER: "spaces", SPACES_ENDPOINT: "https://fra1.spaces.standin.invalid", SPACES_REGION: "fra1", SPACES_BUCKET: "fw", SPACES_ACCESS_KEY_ID: "k", SPACES_SECRET_ACCESS_KEY: "s" }),
     );
     const key = "wish-photo/019a0000-0000-7000-8000-000000000001/abc";
     const a = new URL((await r2.signUpload({ key, contentType: "image/jpeg", expiresInSeconds: 900 })).url);
     const b = new URL((await sp.signUpload({ key, contentType: "image/jpeg", expiresInSeconds: 900 })).url);
-    expect(a.host).toMatch(/(^|\.)acct\.r2\.cloudflarestorage\.com$/);
-    expect(b.host).toMatch(/(^|\.)fra1\.digitaloceanspaces\.com$/);
+    expect(a.host.endsWith(`acct.${R2_HOST_SUFFIX}`)).toBe(true);
+    expect(b.host).toMatch(/(^|\.)fra1\.spaces\.standin\.invalid$/);
     expect(a.pathname.endsWith(`/${key}`)).toBe(true);
     expect(b.pathname.endsWith(`/${key}`)).toBe(true);
     expect([...a.searchParams.keys()].sort()).toEqual([...b.searchParams.keys()].sort());

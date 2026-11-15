@@ -40,7 +40,7 @@ export function screeningView(r: ResultRow): ScreeningResult {
     fileId: r.fileId,
     provider: r.provider,
     verdict: r.verdict,
-    labels: Array.isArray(r.labels) ? (r.labels as unknown[]) : [],
+    labels: Array.isArray(r.labels) ? r.labels : [],
     reviewedBy: r.reviewedBy,
     finalVerdict: r.finalVerdict,
     createdAt: toWireInstant(r.createdAt),

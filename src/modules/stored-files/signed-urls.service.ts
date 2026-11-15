@@ -11,7 +11,7 @@ import { isUuid, READ_TTL_SECONDS, variantsOf } from "./file-rules";
 
 /**
  * Who reads. "owner": the file's owner, checked here as a query condition. "allowed": a caller that has already proved the reader
- * may see the thing the file belongs to (the receiver's read, B10); it gets only files that passed screening, never a held one.
+ * may see the wish or shoot that holds the file (the receiver's read, B10); it gets only files that passed screening, never a held one.
  */
 export type Reader = { type: "owner"; accountId: string } | { type: "allowed" };
 

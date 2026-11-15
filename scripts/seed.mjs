@@ -3,7 +3,7 @@
 // sections each opens, the lifecycle terms and the PROVISIONAL payout threshold, and the catalogues the web app holds as
 // constants (prisma/seed-data/*.json, written by scripts/export-seed-data.mjs; ruling Q11). Never people, accounts or wishes.
 // Running it twice gives the same rows: every row has a fixed id made from its natural key and is upserted.
-//   DATABASE_URL=... node scripts/seed.mjs
+//   DATABASE_URL=... node scripts/seed.mjs            (node scripts/seed.mjs styles: the styles alone)
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -93,6 +93,20 @@ async function seedCatalogues(db) {
   }
 }
 
+/* B14: the styles the web app registers today (prisma/seed-data/Style.json), each with the level the app shows now and its
+   first level row. Created once: a re-run never undoes a level staff moved or a style staff switched off. */
+export async function seedStyles(db) {
+  const doc = JSON.parse(readFileSync(join(ROOT, "prisma/seed-data/Style.json"), "utf8"));
+  const at = new Date(SEED_MS);
+  for (const { seedKey, ...r } of doc.rows) {
+    const row = Object.fromEntries(Object.entries(r).filter(([, v]) => v !== null && v !== undefined));
+    const id = seedId(`Style:${seedKey}`);
+    await db.style.upsert({ where: { slug: row.slug }, create: { id, ...row, on: true, addedAt: at, record: [] }, update: {} });
+    const lid = seedId(`StyleLevel:${seedKey}`);
+    await db.styleLevel.upsert({ where: { id: lid }, create: { id: lid, styleSlug: row.slug, slug: row.slug, level: row.level, since: at, by: "seed" }, update: {} });
+  }
+}
+
 export async function seed(db) {
   const version = 1;
   const effectiveFrom = new Date(SEED_MS);
@@ -136,11 +150,12 @@ export async function seed(db) {
     update: { key: "payout.thresholdKobo", choice },
   });
   await seedCatalogues(db);
+  await seedStyles(db);
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   const db = new PrismaClient();
-  seed(db)
+  (process.argv[2] === "styles" ? seedStyles(db) : seed(db))
     .then(() => console.log("seed: reference rows in place"))
     .catch((e) => {
       console.error(e);

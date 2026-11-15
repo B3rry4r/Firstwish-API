@@ -45,7 +45,7 @@ export class WebhookService {
       return;
     }
     if (ev.type.startsWith("refund.")) return; // the refunds bundle reads these
-    await this.db.webhookEvent.update({ where: { id: row.id }, data: { processedAt: this.clock.now(), event: { outcome: "ignored" } } });
+    await this.db.webhookEvent.update({ where: { id: row.id }, data: { processedAt: this.clock.now(), outcome: "ignored" } });
   }
 }
 
@@ -60,10 +60,16 @@ function parse(raw: Buffer): Parsed {
   const type = typeof payload?.event === "string" ? payload.event : "";
   const data = payload?.data && typeof payload.data === "object" && !Array.isArray(payload.data) ? (payload.data as Record<string, unknown>) : null;
   if (!payload || !type || !data) throw new AppError(400, "bad_event", "The event has no type or data.");
-  // Paystack events carry no event id of their own: the transaction (or refund) id with the type names one delivery's subject.
-  const ref = typeof data.id === "number" || typeof data.id === "string" ? String(data.id) : typeof data.reference === "string" ? data.reference : "";
-  if (!ref) throw new AppError(400, "bad_event", "The event names no transaction.");
-  return { eventId: `${type}:${ref}`.slice(0, 200), type, payload, data };
+  // Paystack events carry no event id of their own: the type, the provider's transaction (or refund) id and the reference name
+  // one delivery's subject. Two events with one provider id for different references are two events (FF3).
+  const providerId = typeof data.id === "number" || typeof data.id === "string" ? String(data.id) : "";
+  const reference = typeof data.reference === "string" ? data.reference : "";
+  if (!providerId && !reference) throw new AppError(400, "bad_event", "The event names no transaction.");
+  // FF2: a control character in what names the event (or a NUL anywhere in the document, which the database refuses) is a 400.
+  if ([type, providerId, reference].some(hasControl) || hasNul(payload)) throw new AppError(400, "bad_event", "The event holds a control character.");
+  const eventId = `${type}:${providerId}:${reference}`;
+  if (eventId.length > 300) throw new AppError(400, "bad_event", "The event names are too long.");
+  return { eventId, type, payload, data };
 }
 
 function answerOf(ev: Parsed): ProviderAnswer {
@@ -80,4 +86,15 @@ function answerOf(ev: Parsed): ProviderAnswer {
     feeKobo: fee,
     channel: typeof d.channel === "string" ? d.channel : null,
   };
+}
+
+// eslint-disable-next-line no-control-regex
+const hasControl = (s: string): boolean => /[\u0000-\u001f\u007f-\u009f]/.test(s);
+
+/** A NUL in any string or key of the document: Postgres refuses it in a jsonb column. */
+function hasNul(v: unknown): boolean {
+  if (typeof v === "string") return v.includes("\u0000");
+  if (Array.isArray(v)) return v.some(hasNul);
+  if (v && typeof v === "object") return Object.entries(v).some(([k, x]) => k.includes("\u0000") || hasNul(x));
+  return false;
 }

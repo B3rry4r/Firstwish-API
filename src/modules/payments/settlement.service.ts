@@ -9,7 +9,7 @@ import { PriceBookService } from "../price-book/price-book.service";
 import { EventsService } from "../events/events.service";
 import { FulfilmentRegistry, type PaidLineInfo } from "./fulfilment.registry";
 import { paymentEntries } from "./ledger";
-import { readOptions, withFlag, writeOptions } from "./payment-options";
+import { readOptions, withFlag } from "./payment-options";
 
 /** What the provider says about one payment: from a verify call or a webhook event. Never from a request the payer sent. */
 export interface ProviderAnswer {
@@ -78,7 +78,7 @@ export class SettlementService {
       if (webhookEventId) {
         await tx.webhookEvent.update({
           where: { id: webhookEventId },
-          data: { processedAt: this.clock.now(), event: { outcome: result.outcome, flagged: result.flagged, reference: answer.reference } },
+          data: { processedAt: this.clock.now(), outcome: result.outcome },
         });
       }
       return result;
@@ -89,7 +89,8 @@ export class SettlementService {
     const p = await tx.payment.findUniqueOrThrow({ where: { id: paymentId } });
     const now = this.clock.now();
     if (p.status === "succeeded" || p.status === "refunded" || p.status === "partly_refunded") return { outcome: "already", flagged: false };
-    let opts = readOptions(p.options);
+    const opts = readOptions(p.options);
+    let flags = p.flags;
 
     if (a.status === "failed") {
       if (p.status === "failed") return { outcome: "already", flagged: false };
@@ -99,19 +100,19 @@ export class SettlementService {
     if (a.status !== "success") return { outcome: "not_paid", flagged: false };
 
     if (a.currency !== p.currency || a.amountKobo !== p.amountKobo) {
-      opts = withFlag(opts, "amount_mismatch");
-      await tx.payment.update({ where: { id: p.id }, data: { options: writeOptions(opts), updatedAt: now } });
+      flags = withFlag(flags, "amount_mismatch");
+      await tx.payment.update({ where: { id: p.id }, data: { flags, updatedAt: now } });
       return { outcome: "amount_mismatch", flagged: true };
     }
 
     let flagged = false;
     if (p.status === "abandoned" || p.status === "failed") {
-      opts = withFlag(opts, `late_success_after_${p.status}`);
+      flags = withFlag(flags, `late_success_after_${p.status}`);
       flagged = true;
     }
     const erased = p.accountId ? (await tx.account.findUnique({ where: { id: p.accountId }, select: { erasedAt: true } }))?.erasedAt != null : false;
     if (erased) {
-      opts = withFlag(opts, "account_erased");
+      flags = withFlag(flags, "account_erased");
       flagged = true;
     }
 
@@ -125,7 +126,7 @@ export class SettlementService {
         channel: a.channel ?? p.channel,
         feeKobo: a.feeKobo ?? null,
         fulfilledAt: erased ? null : now,
-        options: writeOptions(opts),
+        flags,
         updatedAt: now,
       },
     });

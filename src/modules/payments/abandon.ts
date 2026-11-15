@@ -6,10 +6,10 @@ import { Clock } from "../../common/ports/clock.port";
 export const PAYMENTS_ABANDON_AFTER_MINUTES = 60;
 
 /**
- * The handler of the `abandon-payment` job. Marks every pending or started payment older than the declared time abandoned, in
+ * The handler of the `abandon-payment` job. Marks every pending or started payment at least as old as the declared time (60 minutes or older, FF5) abandoned, in
  * one statement (the status is checked in the same UPDATE, so a payment that was just paid is never touched). A late success
  * after this still fulfils once and is flagged (SettlementService). Returns how many it marked.
- * Registration with the jobs frame (B06) is the lead's wiring: call `abandonPendingPayments()` from the job handler.
+ * The jobs frame runs it as `abandon-payment` (registered by the job-handlers module).
  */
 @Injectable()
 export class AbandonPayments {
@@ -25,5 +25,5 @@ export class AbandonPayments {
 
 export async function abandonPendingPayments(db: Pick<PrismaService, "$executeRaw">, now: Date, afterMinutes = PAYMENTS_ABANDON_AFTER_MINUTES): Promise<number> {
   const cutoff = new Date(now.getTime() - afterMinutes * 60_000);
-  return db.$executeRaw`UPDATE payment SET status = 'abandoned', "updatedAt" = ${now} WHERE status IN ('pending', 'started') AND "fulfilledAt" IS NULL AND "createdAt" < ${cutoff}`;
+  return db.$executeRaw`UPDATE payment SET status = 'abandoned', "updatedAt" = ${now} WHERE status IN ('pending', 'started') AND "fulfilledAt" IS NULL AND "createdAt" <= ${cutoff}`;
 }

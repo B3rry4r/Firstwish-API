@@ -11,6 +11,9 @@ import { AuditModule } from "./modules/audit/audit.module";
 import { RoleAccessModule } from "./modules/role-access/role-access.module";
 import { StaffAccountsModule } from "./modules/staff-accounts/staff-accounts.module";
 // end B03
+// B04: the price book
+import { PriceBookModule } from "./modules/price-book/price-book.module";
+// end B04
 
 /** Registration entry: each resource module adds one import line here. */
 @Module({
@@ -27,6 +30,9 @@ import { StaffAccountsModule } from "./modules/staff-accounts/staff-accounts.mod
     RoleAccessModule,
     StaffAccountsModule,
     // end B03
+    // B04
+    PriceBookModule,
+    // end B04
   ],
 })
 export class AppModule {}

@@ -31,4 +31,7 @@ After Phase 5: Phase 6 wires the 89 screens (bundles of 3 to 5 by area, from .pi
 store) as the exit; Phase 7 smoke; Phase 8 live gate.
 
 ## Current state
-- 15 Nov: schema merged (7ce487b), registry re-frozen DEC-145 (106 resources, 233 endpoints). B01 and B03 building. Briefs ready: B04, B05, B06.
+- 15 Nov 19:30 UTC: identity MERGED (f0be0ad): B01 sign-in + B03 staff and audit, joined and re-checked (INT-1). Registry re-frozen
+  DEC-153 (106 resources, 234 endpoints). Stand-ins only for Google and email.
+- Building (opus): B04 price book, B09 files, B02 account and sides, B14 styles. Briefs ready: B05, B06, B12.
+- To write: B07, B08, B10, B11, B13, B15-B21.

@@ -35,6 +35,10 @@ import { DatesModule } from "./modules/dates/dates.module";
 import { PeopleModule } from "./modules/people/people.module";
 import { SavedWishesModule } from "./modules/saved-wishes/saved-wishes.module";
 // end B12
+// B06: the wish and the jobs frame
+import { JobsModule } from "./modules/jobs/jobs.module";
+import { WishesModule } from "./modules/wishes/wishes.module";
+// end B06
 
 /** Registration entry: each resource module adds one import line here. */
 @Module({
@@ -75,6 +79,10 @@ import { SavedWishesModule } from "./modules/saved-wishes/saved-wishes.module";
     DatesModule,
     SavedWishesModule,
     // end B12
+    // B06
+    JobsModule,
+    WishesModule,
+    // end B06
   ],
 })
 export class AppModule {}

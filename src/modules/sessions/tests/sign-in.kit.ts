@@ -17,7 +17,11 @@ export interface SignInApp extends TestApp {
 
 export async function signInApp(): Promise<SignInApp> {
   const holder: { v?: JwtAccessTokenVerifier } = {};
+  // The stand-in ids come from the clock and a counter that starts at 0 in every app; specs share one database, so each
+  // app starts at its own random moment or two apps would issue the same ids.
+  const now = new Date(Date.UTC(2026, 0, 1, 9) + Math.floor(Math.random() * 50 * 365 * 24 * 3600) * 1000);
   const t = await createTestApp({
+    now,
     configure: (b) =>
       b.overrideProvider(AccessTokenVerifier).useValue({ verify: (tok: string) => (holder.v ? holder.v.verify(tok) : Promise.resolve(null)) }),
   });

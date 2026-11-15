@@ -289,3 +289,4 @@ BB6 (Verify B12, medium) A wish that is taken down, removed or erased leaves eve
     into the wave), B06 (the state machine's moves to resting-erased and taken down), B13 (staff take-down).
 BB7 (Verify B12, low) The dates list pages in the database, not in memory; its cursor is the row's month-day and id, so a paging
     run that crosses midnight neither repeats nor skips. A POST naming someone else's id answers 404, not 409.
+BB8 (P-B12) E-121 (import people) answers {added, skipped: [{row, reason}]}; the contract's `number` is replaced at the next reopen.

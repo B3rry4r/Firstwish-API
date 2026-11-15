@@ -106,7 +106,7 @@ export class AccountSidesService {
 
   private readPro(pro: PostMeBusinessBody["pro"], fields: ErrorFields): string | undefined {
     if (pro === undefined) return undefined;
-    const p = pro as Record<string, unknown>;
+    const p: Record<string, unknown> = pro;
     const unknown = Object.keys(p).filter((k) => k !== "plan" && k !== "business");
     for (const k of unknown) fields[`pro.${k}`] = "Not a known field.";
     if (p.plan !== undefined && p.plan !== "pack") fields["pro.plan"] = "Must be pack.";

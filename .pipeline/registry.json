@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "frozenAt": "2026-11-15T16:48:55Z",
+  "frozenAt": "2026-11-15T16:55:02Z",
   "framework": "nestjs",
   "generatedBy": "tools/pipeline/reconcile.py",
   "resources": [
@@ -977,7 +977,8 @@
               "name": "mode",
               "type": "'light'|'dark'|'system' (DEC-137)",
               "from": [
-                "DEC-137"
+                "DEC-137",
+                "app-you"
               ]
             },
             {
@@ -2426,7 +2427,10 @@
               "name": "contact",
               "type": "string (email, trimmed and lowercased; /^\\S+@\\S+\\.\\S+$/; DEC-140)",
               "from": [
-                "DEC-140"
+                "DEC-140",
+                "auth-codes",
+                "sign-in",
+                "sign-up"
               ]
             },
             {
@@ -2441,7 +2445,9 @@
               "name": "via",
               "type": "'email' (DEC-140)",
               "from": [
-                "DEC-140"
+                "DEC-140",
+                "sign-in",
+                "sign-up"
               ]
             }
           ],
@@ -15742,7 +15748,8 @@
               "name": "amountKobo",
               "type": "integer (kobo, positive; at most the payment's amount, checked in the service)",
               "from": [
-                "DEC-141"
+                "DEC-141",
+                "refunds"
               ]
             },
             {
@@ -15756,7 +15763,8 @@
               "name": "reason",
               "type": "string (4 or more characters; DEC-125)",
               "from": [
-                "DEC-141"
+                "DEC-141",
+                "refunds"
               ]
             }
           ],

@@ -143,9 +143,6 @@ CREATE UNIQUE INDEX "creator_state_accountId_key" ON "creator_state"("accountId"
 CREATE INDEX IF NOT EXISTS "notice_deliveryId_id_idx" ON "notice"("deliveryId", "id");
 
 -- CreateIndex
-CREATE INDEX IF NOT EXISTS "numbers_target_setBy_id_idx" ON "numbers_target"("setBy", "id");
-
--- CreateIndex
 CREATE INDEX IF NOT EXISTS "pass_membership_paymentId_id_idx" ON "pass_membership"("paymentId", "id");
 
 -- CreateIndex
@@ -185,9 +182,6 @@ CREATE INDEX IF NOT EXISTS "support_message_threadId_id_idx" ON "support_message
 CREATE INDEX IF NOT EXISTS "support_thread_assigneeId_id_idx" ON "support_thread"("assigneeId", "id");
 
 -- AddForeignKey
-ALTER TABLE "audit_entry" ADD CONSTRAINT "audit_entry_actorId_fkey" FOREIGN KEY ("actorId") REFERENCES "staff_account"("id") ON DELETE RESTRICT ON UPDATE RESTRICT;
-
--- AddForeignKey
 ALTER TABLE "concierge_order" ADD CONSTRAINT "concierge_order_makerId_fkey" FOREIGN KEY ("makerId") REFERENCES "staff_account"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -201,9 +195,6 @@ ALTER TABLE "ledger_entry" ADD CONSTRAINT "ledger_entry_refundId_fkey" FOREIGN K
 
 -- AddForeignKey
 ALTER TABLE "notice" ADD CONSTRAINT "notice_deliveryId_fkey" FOREIGN KEY ("deliveryId") REFERENCES "message_delivery"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "numbers_target" ADD CONSTRAINT "numbers_target_setBy_fkey" FOREIGN KEY ("setBy") REFERENCES "staff_account"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "pass_membership" ADD CONSTRAINT "pass_membership_paymentId_fkey" FOREIGN KEY ("paymentId") REFERENCES "payment"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

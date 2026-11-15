@@ -1867,7 +1867,7 @@ export type GetAdminAuditResponse = PaginatedList<AuditEntry>;
 export type PostAuthCodesParams = Record<string, never>;
 export interface PostAuthCodesBody {
   /** string (email, trimmed and lowercased; /^\S+@\S+\.\S+$/; DEC-140) */
-  contact?: string;
+  contact: string;
   /** 'up'|'in' (the flow; the UI behaves the same) */
   mode?: "up" | "in";
   /** 'email' (DEC-140) */

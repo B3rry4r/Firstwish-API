@@ -5,9 +5,8 @@ import type { PostAuthCodesBody, PostAuthCodesVerifyBody } from "../types";
 
 /** E-19 POST /v1/auth/codes (body). */
 export class PostAuthCodesBodyDto implements PostAuthCodesBody {
-  @IsOptional()
   @IsCanonEmail()
-  contact?: string;
+  contact!: string;
   @IsOptional()
   @IsIn(["up", "in"])
   mode?: "up" | "in";

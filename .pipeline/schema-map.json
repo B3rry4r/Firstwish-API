@@ -1,6 +1,6 @@
 {
  "phase": "SCHEMA (Phase 4)",
- "registrySha256": "9894ab0e4ccb67d8ed2dcc9d191a92b210cf4669b110342ee322b1d56926a27d",
+ "registrySha256": "b9b5122181e76e376fc24e879a33e5ef7cf3e8bc75ef2fe29aa41b0e42155a4a",
  "rules": [
   "table: something writes it (a POST, PUT, PATCH, DELETE or INTERNAL route, or a server:* declaration). A GET's query parameters are not writers.",
   "view: read only, worked out on read from the tables named in 'of'. No table of its own.",
@@ -119,9 +119,6 @@
     "from": "query parameter of E-18, not stored"
    },
    "onDelete": "Restrict",
-   "refs": {
-    "actorId": "StaffAccount"
-   },
    "erase": {
     "before": {
      "rule": "keep",
@@ -135,7 +132,11 @@
      "rule": "keep",
      "why": "the staff member's address at a staff change, not the subject's; append-only (Q9)"
     }
-   }
+   },
+   "dbTypes": {
+    "actorId": "@db.Uuid"
+   },
+   "actorIdNote": "Q10 HALT for this column: actorId names a staff account, an account or nothing (actorType staff|account|system, audit-log declaration), so no single foreign key can hold it; it is a uuid with an index, checked by the writer."
   },
   "AuthCode": {
    "class": "table",
@@ -568,9 +569,10 @@
     "setBy",
     "setAt"
    ],
-   "refs": {
-    "setBy": "StaffAccount"
-   }
+   "dbTypes": {
+    "setBy": "@db.Uuid"
+   },
+   "setByNote": "Q10: setBy is a staff account id kept as a uuid without a foreign key, because test/contracts/registry-reopen.spec.ts (DEC-132, not this pass's to edit) stores a target with no staff row; reported to the lead."
   },
   "OpeningDef": {
    "class": "config",

@@ -117,7 +117,6 @@ model AuditEntry {
   ip          String?
   requestId   String
   createdAt   DateTime            @default(now()) @db.Timestamptz(3)
-  actor       StaffAccount?       @relation("AuditEntry_actorId", fields: [actorId], references: [id], onDelete: Restrict, onUpdate: Restrict)
 
   @@index([actorId, id])
   @@index([subjectType, id])
@@ -657,10 +656,8 @@ model NumbersTarget {
   setAt      DateTime            @db.Timestamptz(3)
   setBy      String              @db.Uuid
   targetKobo BigInt
-  setByRef   StaffAccount        @relation("NumbersTarget_setBy", fields: [setBy], references: [id])
 
   @@unique([line, period])
-  @@index([setBy, id])
   @@map("numbers_target")
 }
 
@@ -1172,9 +1169,7 @@ model StaffAccount {
   lastSignInAt            DateTime?           @db.Timestamptz(3)
   createdAt               DateTime            @default(now()) @db.Timestamptz(3)
   updatedAt               DateTime            @updatedAt @db.Timestamptz(3)
-  auditEntryByActor       AuditEntry[]        @relation("AuditEntry_actorId")
   conciergeOrderByMaker   ConciergeOrder[]    @relation("ConciergeOrder_makerId")
-  numbersTargetBySetBy    NumbersTarget[]     @relation("NumbersTarget_setBy")
   refundByRequestedBy     Refund[]            @relation("Refund_requestedBy")
   refundByApprovedBy      Refund[]            @relation("Refund_approvedBy")
   reportByDecidedBy       Report[]            @relation("Report_decidedBy")

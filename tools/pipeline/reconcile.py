@@ -792,7 +792,8 @@ def main():
         for n in ov.get("drop", []):
             ep["body"].pop(n, None)
         for n, t in ov.get("set", {}).items():
-            ep["body"][n] = {"type": t, "from": {ov["decision"]}}
+            # a retyped field keeps the sources that send it (so a field every source sends stays required)
+            ep["body"][n] = {"type": t, "from": set(ep["body"].get(n, {}).get("from", set())) | {ov["decision"]}}
         if "response" in ov:
             ep["response"] = ov["response"]
         ep["notes"].add("body by " + ov["decision"])

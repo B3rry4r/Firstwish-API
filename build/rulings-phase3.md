@@ -53,3 +53,6 @@ R11 new supersede: sign-in by phone is removed (email code or Google); phone is 
 R12 the email adapter is Resend (RESEND_API_KEY, MAIL_FROM in env-manifest). R13 no transcription provider or env var; dictation is the
     browser's; the AI gets text only. R14 payout threshold 500000 kobo, monthly on the 5th, PROVISIONAL, a price-book line staff can change
     (replaces the open item on T-64). R15 contact details are set (STUB-22, STUB-168: resolved, implemented in lib/config.ts).
+## Round 2 leftovers (15 Nov, 16:20)
+C-20 (round 2) QrCard.wishIds is string[] only (DEC-109). C-21 (round 2) StoredFile.fileId is a string id; bytes go straight to storage by a
+signed upload, never through the API (DEC-110). The public price route is GET /v1/price-book (DEC-111).

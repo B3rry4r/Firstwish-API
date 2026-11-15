@@ -11905,7 +11905,7 @@
         },
         {
           "name": "wishIds",
-          "type": "CONFLICT:array|string",
+          "type": "array<string>",
           "classes": [
             "array",
             "string"
@@ -11914,7 +11914,8 @@
           "provenance": [
             "qr-card"
           ],
-          "supersedes": []
+          "supersedes": [],
+          "typeBy": "DEC-109"
         }
       ],
       "endpoints": [
@@ -14848,7 +14849,7 @@
         },
         {
           "name": "fileId",
-          "type": "CONFLICT:binary|string",
+          "type": "string",
           "classes": [
             "binary",
             "string"
@@ -14860,7 +14861,8 @@
           ],
           "supersedes": [
             "S-2: server-issued UUIDv7 ids"
-          ]
+          ],
+          "typeBy": "DEC-110"
         },
         {
           "name": "id",

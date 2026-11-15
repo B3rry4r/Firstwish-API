@@ -571,7 +571,9 @@
         "array",
         "string"
       ],
-      "status": "open"
+      "status": "closed",
+      "closedBy": "DEC-109",
+      "round1Id": "C-20"
     },
     {
       "id": "C-21",
@@ -601,7 +603,9 @@
         "binary",
         "string"
       ],
-      "status": "open"
+      "status": "closed",
+      "closedBy": "DEC-110",
+      "round1Id": "C-21"
     },
     {
       "id": "C-22",
@@ -1439,6 +1443,6 @@
     "type-mismatch": 9,
     "unparseable-action": 1
   },
-  "open": 2,
-  "closed": 67
+  "open": 0,
+  "closed": 69
 }

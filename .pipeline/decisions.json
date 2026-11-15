@@ -1932,6 +1932,54 @@
       "confidence": "high",
       "source": "build/rulings-phase3.md",
       "decidedAt": "2026-11-15T16:00:00Z"
+    },
+    {
+      "id": "DEC-109",
+      "topic": "QrCard.wishIds",
+      "closes": [
+        {
+          "conflict": "C-20",
+          "key": "type-mismatch|QrCard|QrCard.wishIds is seen as array vs string",
+          "detail": "QrCard.wishIds is seen as array vs string"
+        }
+      ],
+      "decision": "one field wishIds: string[]; a single card is a list of one; the single wishId form is stale",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md",
+      "decidedAt": "2026-11-15T16:20:00Z",
+      "fieldTypes": {
+        "QrCard.wishIds": "array<string>"
+      }
+    },
+    {
+      "id": "DEC-110",
+      "topic": "StoredFile.fileId",
+      "closes": [
+        {
+          "conflict": "C-21",
+          "key": "type-mismatch|StoredFile|StoredFile.fileId is seen as binary vs string",
+          "detail": "StoredFile.fileId is seen as binary vs string"
+        }
+      ],
+      "decision": "fileId is a string id. The file's bytes never pass through the API: the page asks for a signed upload, sends the bytes straight to storage, then confirms with the fileId (declared/storage.json). The studio's File is that upload, not a field.",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md",
+      "decidedAt": "2026-11-15T16:20:00Z",
+      "fieldTypes": {
+        "StoredFile.fileId": "string"
+      }
+    },
+    {
+      "id": "DEC-111",
+      "topic": "price book route",
+      "closes": [],
+      "decision": "the public route is GET /v1/price-book; where S-14 and declared/price-book.json say /v1/prices, read /v1/price-book",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md",
+      "decidedAt": "2026-11-15T16:20:00Z"
     }
   ]
 }

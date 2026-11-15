@@ -114,3 +114,32 @@ P3 E-87 (and any other payment start): the body carries no amount or price; the 
    client fields are removed from the contract.
 P4 E-19 (ask for a sign-in code): the only channel is email (R11); `channel` is removed from the body (or is enum(email) if a later
    ruling adds one). The same for any contract still naming sms or whatsapp as something Firstwish sends.
+
+## Registry reopened a second time, from the schema's verifier (15 Nov). Default (lead), owner may override, unless it cites R..
+Q1  Account.mode: enum(light|dark|system), default system, read and set through /v1/me (DEC-103, R10). Added to the registry.
+Q2  Money on the wire is a JSON integer (kobo). One serialiser turns every BigInt into a number and refuses (500, logged) a value
+    past the safe integer range; no route returns a raw BigInt. A test proves a response with money serialises.
+Q3  E-124 (change a price): body {sku, priceKobo?: kobo, listKobo?: kobo, promotionEndsAt?: time, reason}; at least one of the three.
+    The old untyped `value` is removed.
+Q4  Calendar dates are DATE columns (ruling C-29): date_row.date, person.birthday, person.start, shoot.date, client_wish.day, and any other date-only field.
+Q5  Nothing may be granted twice. Uniques: payout (creatorId, month) and payout.providerReference; royalty_accrual (paymentId,
+    creatorId); pass_membership.paymentId; creator_state.accountId; refund.providerReference. Columns: payment.fulfilledAt (set once);
+    pass_membership.state and paymentId; `version` integer on every row a counter lives on (business usage, creator_state, vault
+    storage, pass_membership, wish). CHECK constraints: every kobo amount >= 0; credits, reviews, wishes used, bytes used >= 0.
+Q6  Refund body: amountKobo is kobo (positive, at most the payment's amount, checked in the service), reason 4 or more characters.
+Q7  Email and handle are unique without regard to case (stored lowercased AND a unique index on lower(...)). One handle namespace:
+    the handle lives on Account; Creator reads it (no second handle column).
+Q8  The wish link: slug varchar(32), issued by the server. The passcode is never in the content JSON: Wish.passcodeHash (hashed),
+    with tries and lockedUntil on the link (E-134 counts them). The receiver's read never returns the passcode or its hash.
+Q9  Erase: Account.erasedAt; schema-map.json gains, for every column outside Account that holds personal data, an `erase` rule
+    (blank | keep, with the reason, for example a ledger row keeps its amount and loses nothing personal). Audit rows hold ids and the
+    names of changed fields, never personal values; so audit never needs blanking and stays append-only (UPDATE and DELETE refused).
+Q10 Every id column that points at another table is a uuid with a foreign key and an index (support_message.threadId and the staff
+    and owner id columns the verifier listed). Ledger foreign keys are ON DELETE RESTRICT.
+Q11 The 9 config tables with no writer and no seed are seeded from the constants the web app holds today, through ONE export script
+    in the API repo that reads the web repo's files (named in schema-map), so their GETs are never empty; staff editing them is not
+    built (no screen asks).
+Q12 Every payment start returns {payment: {reference, state, amountKobo, authorizationUrl}} beside what it buys; an endpoint whose
+    registry response is null answers 204 with no body, stated in its contract.
+Q13 (K1, R11) Sign-in is by email only: AuthCodeVia is email only, the purpose confirm-phone is removed, E-19's contact is an email.
+Q14 Loose contract types are fixed where the verifier named them (NumbersTarget.targetKobo is kobo; Price.kind is its enum).

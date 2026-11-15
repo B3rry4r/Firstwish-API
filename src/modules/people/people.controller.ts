@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Header, HttpCode, Param, Patch, Post, Query } from "@nestjs/common";
+import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, Query } from "@nestjs/common";
 import {
   DeleteBusinessPeopleByIdBodyDto,
   DeleteBusinessPeopleByIdParamsDto,
@@ -14,7 +14,7 @@ import { CurrentPrincipal, Roles } from "../../common/auth/decorators";
 import type { Principal } from "../../common/auth/principal";
 import { DEFAULT_LIMIT, Page } from "../../common/pagination/cursor";
 import { BusinessOf } from "./business-of";
-import { PeopleService } from "./people.service";
+import { ImportAnswer, PeopleService } from "./people.service";
 
 /** E-117..E-121 a business's people, and E-17 the dates it has approved (registry auth: business). */
 @Controller("business")
@@ -39,8 +39,7 @@ export class PeopleController {
   @Roles("business")
   @Post("people/import")
   @HttpCode(200)
-  @Header("Content-Type", "application/json; charset=utf-8")
-  async import(@Body() body: PostBusinessPeopleImportBodyDto, @CurrentPrincipal() p: Principal | undefined): Promise<number> {
+  async import(@Body() body: PostBusinessPeopleImportBodyDto, @CurrentPrincipal() p: Principal | undefined): Promise<ImportAnswer> {
     return this.people.import(await this.business.require(p), body.rows);
   }
 

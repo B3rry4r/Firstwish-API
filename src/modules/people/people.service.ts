@@ -1,6 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { Person as PersonRecord, Prisma } from "@prisma/client";
 import type { ApprovedDate, Person, PostBusinessPeopleBody } from "../../contracts";
+import { lockBusinessOwner } from "../../common/db/account-lock";
 import { PrismaService } from "../../common/db/prisma.service";
 import { AppError, ErrorFields } from "../../common/errors/app-error";
 import { IdGenerator } from "../../common/ports/ids.port";
@@ -20,6 +21,12 @@ interface PersonInput {
   team: string | null;
   birthday: string | null;
   start: string | null;
+}
+
+/** E-121's answer. */
+export interface ImportAnswer {
+  added: number;
+  skipped: { row: number; reason: string }[];
 }
 
 const asDate = (d: string | null): Date | null => (d ? new Date(`${d}T00:00:00.000Z`) : null);
@@ -63,6 +70,7 @@ export class PeopleService {
   async create(businessId: string, body: PostBusinessPeopleBody): Promise<Person> {
     const input = this.read(body);
     const row = await this.prisma.$transaction(async (tx) => {
+      await lockBusinessOwner(tx, businessId);
       await this.lock(tx, businessId);
       await this.roomFor(tx, businessId, 1);
       return tx.person.create({ data: { id: this.ids.id(), businessId, ...this.data(input) } });
@@ -73,16 +81,19 @@ export class PeopleService {
   async update(businessId: string, id: string, body: PostBusinessPeopleBody): Promise<Person> {
     if (!isUuidV7(id)) throw AppError.notFound();
     const input = this.read(body);
-    const done = await this.prisma.person.updateMany({ where: { id, businessId }, data: this.data(input) });
-    if (done.count === 0) throw AppError.notFound();
-    const row = await this.prisma.person.findFirst({ where: { id, businessId } });
-    if (!row) throw AppError.notFound();
+    const row = await this.prisma.$transaction(async (tx) => {
+      await lockBusinessOwner(tx, businessId);
+      const done = await tx.person.updateMany({ where: { id, businessId }, data: this.data(input) });
+      if (done.count === 0) throw AppError.notFound();
+      return tx.person.findFirstOrThrow({ where: { id, businessId } });
+    });
     return this.view(row);
   }
 
   async remove(businessId: string, id: string): Promise<void> {
     if (!isUuidV7(id)) throw AppError.notFound();
     await this.prisma.$transaction(async (tx) => {
+      await lockBusinessOwner(tx, businessId);
       const done = await tx.person.deleteMany({ where: { id, businessId } });
       if (done.count === 0) throw AppError.notFound();
       await tx.$executeRaw`DELETE FROM approved_date WHERE split_part(key, ':', 1) = ${id}`;
@@ -90,42 +101,52 @@ export class PeopleService {
   }
 
   /**
-   * E-121: adds the readable rows and answers how many were added. A row needs a name and at least one readable date (birthday
-   * or start); other rows are skipped, as the app's paste rule says. A row the business already has (same name, birthday and
-   * start) is not added twice. All rows go in one transaction.
+   * E-121: adds the readable rows and answers { added, skipped: [{ row, reason }] }; `row` counts the rows sent from 1. A row needs a
+   * name and at least one readable date (birthday or start); the others are skipped, each with its reason, as the app's paste rule
+   * says. A row the business already has (same name, birthday and start), or sent twice, is skipped. All good rows go in one
+   * transaction.
    */
-  async import(businessId: string, raw: unknown): Promise<number> {
+  async import(businessId: string, raw: unknown): Promise<ImportAnswer> {
     if (!Array.isArray(raw)) throw AppError.validation({ rows: "Must be a list of people." });
     if (raw.length > IMPORT_MAX) throw AppError.validation({ rows: `Send at most ${IMPORT_MAX} people at once.` });
-    const inputs: PersonInput[] = [];
-    for (const item of raw) {
-      if (!item || typeof item !== "object") continue;
+    const skipped: ImportAnswer["skipped"] = [];
+    const inputs: { row: number; input: PersonInput }[] = [];
+    raw.forEach((item, i) => {
+      const row = i + 1;
+      if (!item || typeof item !== "object") return void skipped.push({ row, reason: "Not a person." });
       const r = item as Record<string, unknown>;
       const text = (k: string) => (typeof r[k] === "string" ? r[k].trim().slice(0, PERSON_TEXT_MAX) : "");
       const name = text("name");
       const birthday = normaliseDateOnly(text("birthday"));
       const start = normaliseDateOnly(text("start"));
-      if (!name || (!birthday && !start)) continue;
+      if (!name) return void skipped.push({ row, reason: "Needs a name." });
+      if (!birthday && !start) return void skipped.push({ row, reason: "Needs a birthday or start date we can read." });
       const phone = text("phone") ? normalisePhone(text("phone")) : null;
-      inputs.push({ name, phone, team: text("team") || null, birthday, start });
-    }
-    if (!inputs.length) return 0;
-    return this.prisma.$transaction(async (tx) => {
+      inputs.push({ row, input: { name, phone, team: text("team") || null, birthday, start } });
+    });
+    if (!inputs.length) return { added: 0, skipped };
+    const added = await this.prisma.$transaction(async (tx) => {
+      await lockBusinessOwner(tx, businessId);
       await this.lock(tx, businessId);
       const have = await tx.person.findMany({ where: { businessId }, select: { name: true, birthday: true, start: true } });
       const sig = (n: string, b: string | null, s: string | null) => `${n.toLowerCase()}|${b ?? ""}|${s ?? ""}`;
       const seen = new Set(have.map((h) => sig(h.name ?? "", h.birthday ? dateOnlyOf(h.birthday) : null, h.start ? dateOnlyOf(h.start) : null)));
-      const fresh = inputs.filter((i) => {
+      const fresh = inputs.filter(({ row, input: i }) => {
         const k = sig(i.name, i.birthday, i.start);
-        if (seen.has(k)) return false;
+        if (seen.has(k)) {
+          skipped.push({ row, reason: "Already on your list." });
+          return false;
+        }
         seen.add(k);
         return true;
       });
       if (!fresh.length) return 0;
       await this.roomFor(tx, businessId, fresh.length);
-      const made = await tx.person.createMany({ data: fresh.map((i) => ({ id: this.ids.id(), businessId, ...this.data(i) })) });
+      const made = await tx.person.createMany({ data: fresh.map(({ input: i }) => ({ id: this.ids.id(), businessId, ...this.data(i) })) });
       return made.count;
     });
+    skipped.sort((a, b) => a.row - b.row);
+    return { added, skipped };
   }
 
   /** E-17: the dates this business has approved; an approval's key names one of its people (`${personId}:b|s:${year}`). */
@@ -144,11 +165,6 @@ export class PeopleService {
        LIMIT ${limit + 1}`;
     const page = toPage(rows, limit, (r) => ({ key: r.id, id: r.id }));
     return { items: page.items.map((r) => ({ key: r.key })), nextCursor: page.nextCursor };
-  }
-
-  /** The business's people with at least one date, for the coming-dates list (E-45). */
-  withDates(businessId: string): Promise<PersonRecord[]> {
-    return this.prisma.person.findMany({ where: { businessId, OR: [{ birthday: { not: null } }, { start: { not: null } }] } });
   }
 
   private read(body: PostBusinessPeopleBody): PersonInput {

@@ -1,6 +1,6 @@
 import { PrismaService } from "../../../common/db/prisma.service";
 import type { TestApp } from "../../../../test/kit/app";
-import { filesApp, ids, makeAccount, makeWish, WEBM } from "../../stored-files/tests/files-kit";
+import { filesApp, ids, makeAccount, makeWish, stage, WEBM } from "../../stored-files/tests/files-kit";
 
 describe("E-216 voice note (contract)", () => {
   let t: TestApp;
@@ -22,7 +22,7 @@ describe("E-216 voice note (contract)", () => {
     const r = await t.http().post("/v1/uploads").set(auth(me.token)).send({ purpose: "Voice", contentType: "audio/WEBM", bytes: 300, seconds: 12.4, subjectId: wish });
     expect(r.status).toBe(201);
     const id = r.body.id as string;
-    t.storage.put((await db.storedFile.findUniqueOrThrow({ where: { id } })).objectKey, WEBM(300), "audio/webm");
+    await stage(t, db, id, WEBM(300), "audio/webm");
     if (confirm) expect((await t.http().post(`/v1/uploads/${id}/confirm`).set(auth(me.token)).send({ fileId: id })).status).toBe(200);
     return { id, wish };
   }

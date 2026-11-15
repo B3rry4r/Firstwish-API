@@ -1,4 +1,5 @@
 import type { StoredFile as FileRow, StoredFilePurpose } from "@prisma/client";
+import { SIGNATURES } from "../../common/ports/adapters/basic-screening.adapter";
 import { toWireInstant } from "../../common/time/time";
 import type { StoredFile } from "../../contracts";
 
@@ -20,7 +21,13 @@ export const IMAGE_WIDTHS = [320, 768, 1600] as const;
 /** The contract's longest voice note (E-182: up to 180 s). */
 export const MAX_VOICE_SECONDS = 180;
 
-export type UploadPurpose = "wish-photo" | "voice-note" | "video-clip" | "vault-file";
+export type UploadPurpose = "wish-photo" | "voice-note" | "video-clip" | "vault-file" | "studio-asset" | "brand-logo";
+
+/** Y1: a signed PUT points at this staging key only; the file's own key (objectKey) is never signed for a PUT. */
+export const STAGING_PREFIX = "incoming/";
+export const stagingKeyOf = (objectKey: string) => `${STAGING_PREFIX}${objectKey}`;
+/** The sweep of a staging key runs once every signed PUT for it has expired (the ticket's 15 minutes, plus a minute). */
+export const STAGING_SWEEP_AFTER_SECONDS = UPLOAD_TTL_SECONDS + 60;
 
 const IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/heic", "image/gif"];
 const AUDIO_TYPES = ["audio/webm", "audio/mpeg", "audio/mp4", "audio/x-m4a", "audio/ogg", "audio/wav"];
@@ -32,15 +39,16 @@ export interface PurposeRule {
   /** DEC-38..41 (PROVISIONAL): 15 MB photo, 10 MB voice, 200 MB clip, 100 MB Vault file. */
   maxBytes: number;
   types: string[];
-  /** The contract's kind (image|sound|model) the type must agree with, when one is sent. */
-  kinds: string[];
 }
 
 export const RULES: Record<UploadPurpose, PurposeRule> = {
-  "wish-photo": { purpose: "wish-photo", db: "wish_photo", maxBytes: 15 * MB, types: IMAGE_TYPES, kinds: ["image"] },
-  "voice-note": { purpose: "voice-note", db: "voice_note", maxBytes: 10 * MB, types: AUDIO_TYPES, kinds: ["sound"] },
-  "video-clip": { purpose: "video-clip", db: "video_clip", maxBytes: 200 * MB, types: VIDEO_TYPES, kinds: [] },
-  "vault-file": { purpose: "vault-file", db: "vault_file", maxBytes: 100 * MB, types: [...IMAGE_TYPES, ...VIDEO_TYPES], kinds: [] },
+  "wish-photo": { purpose: "wish-photo", db: "wish_photo", maxBytes: 15 * MB, types: IMAGE_TYPES },
+  "voice-note": { purpose: "voice-note", db: "voice_note", maxBytes: 10 * MB, types: AUDIO_TYPES },
+  "video-clip": { purpose: "video-clip", db: "video_clip", maxBytes: 200 * MB, types: VIDEO_TYPES },
+  "vault-file": { purpose: "vault-file", db: "vault_file", maxBytes: 100 * MB, types: [...IMAGE_TYPES, ...VIDEO_TYPES] },
+  /** Studio assets and (AA5) a brand logo take the photo rules: the same image types, no SVG, the same size. */
+  "studio-asset": { purpose: "studio-asset", db: "studio_asset", maxBytes: 15 * MB, types: IMAGE_TYPES },
+  "brand-logo": { purpose: "brand-logo", db: "brand_logo", maxBytes: 15 * MB, types: IMAGE_TYPES },
 };
 
 const PURPOSE_ALIASES: Record<string, UploadPurpose> = {
@@ -52,9 +60,13 @@ const PURPOSE_ALIASES: Record<string, UploadPurpose> = {
   "video-clip": "video-clip",
   vault: "vault-file",
   "vault-file": "vault-file",
+  studio: "studio-asset",
+  "studio-asset": "studio-asset",
+  brand: "brand-logo",
+  "brand-logo": "brand-logo",
 };
 
-/** The purpose (the brief's kind: photo, voice, clip, Vault file), normalised: trimmed, lowercased, "_" or " " read as "-". */
+/** The purpose (photo, voice, clip, vault, studio or brand: X25), normalised: trimmed, lowercased, "_" or " " read as "-". */
 export function purposeOf(input: unknown): PurposeRule | null {
   if (typeof input !== "string") return null;
   const p = PURPOSE_ALIASES[input.trim().toLowerCase().replace(/[_\s]+/g, "-")];
@@ -72,6 +84,26 @@ export function normaliseType(input: unknown): string | null {
 }
 
 export const isImage = (contentType: string) => IMAGE_TYPES.includes(contentType);
+
+const HEIC_BRANDS = ["heic", "heix", "hevc", "hevx", "heim", "heis", "mif1", "msf1"];
+
+/** True when the first bytes are an SVG (or XML that can carry one): never a photo, whatever the type said (Y3, AA5). */
+export function looksLikeSvg(head: Buffer): boolean {
+  const text = head.toString("utf8", 0, 256).replace(/^\uFEFF/, "").trimStart().toLowerCase();
+  return text.startsWith("<svg") || text.startsWith("<?xml") || text.startsWith("<!doctype svg") || text.startsWith("<!--");
+}
+
+/**
+ * Y3: the type the file's own first bytes say. Some signatures are shared (a webm is audio or video; an mp4 family brand covers
+ * video, audio and heic), so the declared type is kept when the bytes allow it and refused (null) when they do not.
+ */
+export function typeFromBytes(head: Buffer, declared: string): string | null {
+  if (looksLikeSvg(head)) return null;
+  const sniff = SIGNATURES[declared];
+  if (!sniff || !sniff(head)) return null;
+  if (declared === "image/heic" && !HEIC_BRANDS.includes(head.toString("latin1", 8, 12))) return null;
+  return declared;
+}
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export const isUuid = (v: unknown): v is string => typeof v === "string" && UUID.test(v);

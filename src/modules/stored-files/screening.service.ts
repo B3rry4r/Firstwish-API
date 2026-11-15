@@ -3,7 +3,7 @@ import { Prisma, type ScreeningResult as ResultRow, type StoredFile as FileRow }
 import { ENV } from "../../common/env/env.module";
 import type { Env } from "../../common/env/env";
 import { IdGenerator } from "../../common/ports/ids.port";
-import { ScreenResult, UploadScreeningPort } from "../../common/ports/screening.port";
+import { UploadScreeningPort } from "../../common/ports/screening.port";
 import { toWireInstant } from "../../common/time/time";
 import type { ScreeningResult } from "../../contracts";
 import { REJECT_SCORE, REVIEW_SCORE } from "./file-rules";
@@ -11,27 +11,21 @@ import { REJECT_SCORE, REVIEW_SCORE } from "./file-rules";
 export type Verdict = "pass" | "review" | "reject";
 
 /**
- * The provider's confidence that a file breaks the rules, 0 to 1. The port's result has no score field yet (asked for in the
- * hand-back), so a score the adapter adds is read when present; otherwise "rejected" is 1 and "clean" is 0.
+ * DEC-43, DEC-44, X21: reject at or above 0.9, staff review from 0.5, by the score the port answers. A port that says
+ * "rejected" never lets a file pass, even with a low score: it goes to staff.
  */
-export function scoreOf(r: ScreenResult): number {
-  const s = (r as { score?: unknown }).score;
-  if (typeof s === "number" && Number.isFinite(s) && s >= 0 && s <= 1) return s;
-  return r.verdict === "rejected" ? 1 : 0;
-}
-
-/** DEC-43, DEC-44: reject at or above 0.9, staff review from 0.5. */
-export function verdictOf(score: number): Verdict {
+export function verdictOf(score: number, portSaysRejected = false): Verdict {
   if (score >= REJECT_SCORE) return "reject";
-  if (score >= REVIEW_SCORE) return "review";
+  if (score >= REVIEW_SCORE || portSaysRejected) return "review";
   return "pass";
 }
 
-function labelsOf(r: ScreenResult): string[] {
-  const extra = (r as { labels?: unknown }).labels;
-  const labels = Array.isArray(extra) ? extra.filter((l): l is string => typeof l === "string") : [];
-  if (r.verdict === "rejected") labels.push(r.reason);
-  return labels;
+/** What the port found, as the confirm records it. */
+export interface Screened {
+  verdict: Verdict;
+  score: number;
+  labels: string[];
+  provider: string;
 }
 
 export function screeningView(r: ResultRow): ScreeningResult {
@@ -60,14 +54,17 @@ export class ScreeningService {
     return this.env.PROVIDERS === "standin" ? "standin" : (this.env.SCREENING_PROVIDER ?? "basic");
   }
 
-  /** Runs inside the caller's transaction (the confirm), so the result row and the file's new status commit together. */
-  async screenFile(tx: Prisma.TransactionClient, file: FileRow, size: number, head: Buffer): Promise<{ verdict: Verdict; result: ResultRow }> {
+  /** Y4: asks the port (a slow call, never inside a transaction). The labels are the port's, plus its reason for a refusal. */
+  async screen(file: Pick<FileRow, "objectKey" | "contentType">, size: number, head: Buffer): Promise<Screened> {
     const r = await this.port.screen({ key: file.objectKey, contentType: file.contentType, size, head });
-    const score = scoreOf(r);
-    const verdict = verdictOf(score);
-    const result = await tx.screeningResult.create({
-      data: { id: this.ids.id(), fileId: file.id, provider: this.provider, verdict, labels: [...labelsOf(r), `score:${score}`] },
-    });
-    return { verdict, result };
+    const score = Number.isFinite(r.score) ? Math.min(1, Math.max(0, r.score)) : 1;
+    const labels = [...r.labels];
+    if (r.verdict === "rejected" && !labels.includes(r.reason)) labels.push(r.reason);
+    return { verdict: verdictOf(score, r.verdict === "rejected"), score, labels, provider: this.provider };
+  }
+
+  /** Records a finished screening in the caller's (short) transaction, so the result row and the file's new status commit together. */
+  record(tx: Prisma.TransactionClient, fileId: string, s: Screened): Promise<ResultRow> {
+    return tx.screeningResult.create({ data: { id: this.ids.id(), fileId, provider: s.provider, verdict: s.verdict, labels: s.labels } });
   }
 }

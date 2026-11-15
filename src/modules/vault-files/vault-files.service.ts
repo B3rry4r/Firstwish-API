@@ -7,6 +7,7 @@ import { decodeCursor, DEFAULT_LIMIT, toPage } from "../../common/pagination/cur
 import type { GetBusinessVaultFilesQuery, GetBusinessVaultFilesResponse } from "../../contracts";
 import { isUuid } from "../stored-files/file-rules";
 import { SignedUrlsService } from "../stored-files/signed-urls.service";
+import { businessAccessOf } from "../stored-files/vault-access";
 
 const EXT: Record<string, string> = {
   "image/jpeg": "jpg",
@@ -27,12 +28,15 @@ export class VaultFilesService {
     private readonly reads: SignedUrlsService,
   ) {}
 
-  /** E-214: newest first; each with a signed GET good for 10 minutes. A held file shows to its business owner only. */
+  /** E-214: newest first; each with a signed GET good for 10 minutes. A held file shows to the business's owner only. */
   async list(p: UserPrincipal, q: GetBusinessVaultFilesQuery): Promise<GetBusinessVaultFilesResponse> {
-    const biz = await this.db.business.findFirst({ where: { accountId: p.accountId }, select: { id: true } });
-    if (!biz) throw AppError.forbidden("Vault files need a business.");
+    // X27: the business's owner, or one of its logins. An owner sees held files too; a member sees only files that passed screening.
+    const access = await businessAccessOf(this.db, p.accountId);
+    const businessId = access.owned[0] ?? access.member[0];
+    if (!businessId) throw AppError.forbidden("Vault files need a business.");
+    const isOwner = access.owned.includes(businessId);
     const limit = q.limit ?? DEFAULT_LIMIT;
-    const where: Prisma.StoredFileWhereInput = { businessId: biz.id, ownerAccountId: p.accountId, purpose: "vault_file", status: { in: ["ready", "screening"] } };
+    const where: Prisma.StoredFileWhereInput = { businessId, purpose: "vault_file", status: isOwner ? { in: ["ready", "screening"] } : "ready" };
     if (q.cursor) {
       const at = decodeCursor(q.cursor).id;
       if (!isUuid(at)) throw AppError.validation({ cursor: "Must be a cursor from a previous page." });
@@ -42,7 +46,7 @@ export class VaultFilesService {
     const page = toPage(rows, limit, (r) => ({ key: r.id, id: r.id }));
     const items = [];
     for (const r of page.items) {
-      const read = await this.reads.signedRead({ fileId: r.id }, { type: "owner", accountId: p.accountId });
+      const read = await this.reads.signedRead({ fileId: r.id }, { type: "vault", accountId: p.accountId });
       items.push({ id: r.id, name: `vault-${r.id.slice(-12)}.${EXT[r.contentType] ?? "bin"}`, size: Number(r.bytes), url: read.url });
     }
     return { items, nextCursor: page.nextCursor };

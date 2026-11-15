@@ -166,6 +166,16 @@ describe("stand-ins", () => {
     expect(signed).toContain("content-type");
     expect(up.headers["content-length"]).toBe("99");
   });
+  it("J5: the signed PUT carries no x-amz-checksum parameter and still binds content type and length", async () => {
+    const s = new S3Storage(s3ConfigFor({ ...standinEnv(), STORAGE_DRIVER: "spaces", SPACES_ENDPOINT: "http://spaces.test", SPACES_REGION: "fra1", SPACES_ACCESS_KEY_ID: "k", SPACES_SECRET_ACCESS_KEY: "s", SPACES_BUCKET: "wishes" } as never));
+    const up = await s.signUpload({ key: "u/1/p.png", contentType: "image/png", contentLength: 99, expiresInSeconds: 60 });
+    const names = [...new URL(up.url).searchParams.keys()].map((k) => k.toLowerCase());
+    expect(names.filter((k) => k.includes("checksum"))).toEqual([]);
+    expect(up.url.toLowerCase()).not.toContain("x-amz-checksum");
+    const signed = new URL(up.url).searchParams.get("X-Amz-SignedHeaders") ?? "";
+    expect(signed).toContain("content-length");
+    expect(signed).toContain("content-type");
+  });
   it("the stand-in token is random: two generators never repeat a token (X26)", async () => {
     const { StandinCodeGenerator } = await import("../ids.port");
     const a = new StandinCodeGenerator();

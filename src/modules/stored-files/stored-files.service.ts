@@ -35,6 +35,7 @@ type Tx = Prisma.TransactionClient;
 
 const refused = (message: string) => new AppError(HttpStatus.UNPROCESSABLE_ENTITY, "upload_refused", message, { fileId: message });
 const WAIT_FOR_OTHER_CONFIRM_MS = 25_000;
+const WAIT_POLL_MS = 100;
 
 /** X23: a file still named by a row with a real foreign key (a wish, a card, a render, a request) cannot be deleted. */
 const isStillUsed = (e: unknown) => e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2003";
@@ -190,15 +191,14 @@ export class StoredFilesService {
 
   /** A confirm in flight on another request: wait for it to finish, then answer what it made (Y4). */
   private async awaitOtherConfirm(p: UserPrincipal, id: string): Promise<StoredFile> {
-    const until = Date.now() + WAIT_FOR_OTHER_CONFIRM_MS;
-    for (;;) {
+    for (let polls = 0; ; polls++) {
       const row = await this.db.storedFile.findFirst({ where: { id, ownerAccountId: p.accountId } });
       if (!row) throw refused("The file was refused.");
       if (row.status === "ready" || row.status === "screening" || row.status === "rejected") return fileView(row);
       if (row.status === "pending") return this.confirm(p, id, id);
       if (row.status !== "uploaded") throw AppError.notFound("No such file.");
-      if (Date.now() > until) throw AppError.conflict("confirm_in_progress", "This file is still being checked. Try again in a moment.");
-      await sleep(100);
+      if (polls * WAIT_POLL_MS > WAIT_FOR_OTHER_CONFIRM_MS) throw AppError.conflict("confirm_in_progress", "This file is still being checked. Try again in a moment.");
+      await sleep(WAIT_POLL_MS);
     }
   }
 

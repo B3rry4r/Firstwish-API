@@ -1,4 +1,7 @@
 import { IdGenerator } from "../../../common/ports/ids.port";
+import { StandinStorage } from "../../../common/ports/adapters/standins";
+import { StoragePort } from "../../../common/ports/storage.port";
+import { PNG, SVG } from "../../stored-files/tests/files-kit";
 import { bearer, signIn, SignInApp, signInApp, uniqueEmail } from "../../sessions/tests/sign-in.kit";
 
 describe("patch B02: business brand", () => {
@@ -14,8 +17,9 @@ describe("patch B02: business brand", () => {
     const biz = await t.db.business.findFirstOrThrow({ where: { accountId: s.accountId } });
     return { ...s, businessId: biz.id };
   }
-  async function file(o: { accountId: string; businessId: string }, over: Record<string, unknown> = {}) {
+  async function file(o: { accountId: string; businessId: string }, over: Record<string, unknown> = {}, bytes: Buffer | null = PNG(1000)) {
     const id = t.app.get(IdGenerator).id();
+    if (bytes) t.app.get<StandinStorage>(StoragePort).put(`files/${id}`, bytes, "image/png");
     await t.db.storedFile.create({
       data: {
         id,
@@ -83,6 +87,9 @@ describe("patch B02: business brand", () => {
       "a file for another purpose": await file(o, { purpose: "wish_photo" }),
       "a file not yet ready": await file(o, { status: "screening" }),
       "a rejected file": await file(o, { status: "rejected" }),
+      "an SVG row": await file(o, { contentType: "image/svg+xml" }, SVG(200)),
+      "a png row whose bytes are an SVG": await file(o, {}, SVG(200)),
+      "a ready row with no object": await file(o, {}, null),
     };
     for (const [what, logo] of Object.entries(refused)) {
       const r = await patch(o.accessToken, { brand: { logo } });

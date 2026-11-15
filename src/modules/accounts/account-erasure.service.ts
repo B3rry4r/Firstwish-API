@@ -6,6 +6,8 @@ import { AppError } from "../../common/errors/app-error";
 import { Clock } from "../../common/ports/clock.port";
 import { IdGenerator } from "../../common/ports/ids.port";
 import { AuditActor, AuditService } from "../audit/audit.service";
+import { SavedWishesService } from "../saved-wishes/saved-wishes.service";
+import { FileJobs } from "../stored-files/file-jobs";
 import type { Db } from "./account-rules";
 
 /** How young the session family (the sign-in) must be for a person to erase their own account. */
@@ -56,7 +58,7 @@ export interface EraseRequest {
 /**
  * Erase on request (Q9). In ONE transaction: every column schema-map marks 'blank' for this account is blanked, erasedAt set,
  * every session ended, the creator and business sides taken away (their public pages gone), follows by and of the account
- * removed, and its wishes removed and erased (the lifecycle's "erase now": content gone for good). Payments and ledger rows
+ * removed, and its wishes removed and erased (the lifecycle's "erase now": content gone for good), saved rows dropped, and one job row scheduled to remove its stored files. Payments and ledger rows
  * stay with their amounts and lose only personal fields. The email is free again, so it can sign up later as a new, empty account.
  * Erasing an erased account changes nothing.
  */
@@ -67,6 +69,8 @@ export class AccountErasureService {
     private readonly clock: Clock,
     private readonly ids: IdGenerator,
     private readonly audit: AuditService,
+    private readonly savedWishes: SavedWishesService,
+    private readonly fileJobs: FileJobs,
   ) {}
 
   async erase(accountId: string, req: EraseRequest): Promise<void> {
@@ -168,6 +172,11 @@ export class AccountErasureService {
     });
     // X10: the wishes' public links answer "gone" (the link row stays as a key; it is no longer active).
     if (wishIds.length) await tx.wishLink.updateMany({ where: { wishId: { in: wishIds } }, data: { active: false } });
+    // BB6: every saved list drops the wishes (a feed row's id too); the account's own saved rows go with it.
+    await this.savedWishes.forgetForWishes(tx, wishIds);
+    await tx.savedWish.deleteMany({ where: { accountId } });
+    // X10: the account's stored files are removed after this commits: one job row now, the storage calls by the cleanup handler (Y4).
+    await this.fileJobs.removeAccountFiles(accountId, tx);
     await tx.follow.deleteMany({ where: { accountId } });
     if (handle) await tx.follow.deleteMany({ where: { handle } });
   }

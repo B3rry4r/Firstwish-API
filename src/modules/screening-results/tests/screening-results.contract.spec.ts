@@ -95,7 +95,7 @@ describe("E-157 screening decision (contract)", () => {
       const r = await t.http().get("/v1/admin/screening-results?verdict=review&limit=50").set(auth(who));
       expect(r.status).toBe(200);
       expect((r.body.items as { id: string }[]).map((i) => i.id)).toEqual(expect.arrayContaining([a.resultId, b.resultId]));
-      expect(r.body.items[0]).toMatchObject({ verdict: "review", labels: ["stand-in label", "stand-in reason"] });
+      expect((r.body.items as { id: string }[]).find((i) => i.id === a.resultId)).toMatchObject({ verdict: "review", labels: ["stand-in label", "stand-in reason"] });
     }
     expect((await t.http().get("/v1/admin/screening-results").set(auth("support"))).status).toBe(403);
     expect((await t.http().get("/v1/admin/screening-results").set(auth(me.token))).status).toBe(403);

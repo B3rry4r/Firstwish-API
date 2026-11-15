@@ -1,0 +1,51 @@
+{
+ "table": "MessageTemplate",
+ "from": "Firstwish-web lib/admin/d-fixtures.ts (templates)",
+ "rows": [
+  {
+   "seedKey": "sealed:en-NG:1",
+   "body": "Hi {name},\n\nYour wish for {for} is sealed. It opens on {date}. We will send you the link at midnight so you can share it.\n\nFirstwish",
+   "channel": "email",
+   "key": "sealed",
+   "locale": "en-NG",
+   "subject": "Your wish for {for} is sealed",
+   "version": 1
+  },
+  {
+   "seedKey": "opens:en-NG:1",
+   "body": "Hi {name},\n\nToday is the day. Here is the link to {for}'s wish:\n{link}\n\nShare it however you like.\n\nFirstwish",
+   "channel": "email",
+   "key": "opens",
+   "locale": "en-NG",
+   "subject": "{for}'s wish opens today",
+   "version": 1
+  },
+  {
+   "seedKey": "opened:en-NG:1",
+   "body": "Hi {name},\n\n{for} just opened your wish.\n\nFirstwish",
+   "channel": "email",
+   "key": "opened",
+   "locale": "en-NG",
+   "subject": "{for} opened your wish",
+   "version": 1
+  },
+  {
+   "seedKey": "resting:en-NG:1",
+   "body": "Hi {name},\n\nThe wish for {for} rests on {date}. To keep it live, open it in the app and pick a keep.\n{link}\n\nFirstwish",
+   "channel": "email",
+   "key": "resting",
+   "locale": "en-NG",
+   "subject": "{for}'s wish rests on {date}",
+   "version": 1
+  },
+  {
+   "seedKey": "code:en-NG:1",
+   "body": "Your code is {code}. It works for 10 minutes. If you did not ask for it, you can leave this email.\n\nFirstwish",
+   "channel": "email",
+   "key": "code",
+   "locale": "en-NG",
+   "subject": "Your Firstwish code: {code}",
+   "version": 1
+  }
+ ]
+}

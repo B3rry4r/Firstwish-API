@@ -1,0 +1,1269 @@
+{
+ "table": "ChapterSpec",
+ "from": "Firstwish-web lib/occasions.ts (RECIPES[].chapters, each distinct spec once)",
+ "rows": [
+  {
+   "seedKey": "letter:ec52fef799b3",
+   "ask": {
+    "hint": "Talk or type. Say it the way you would say it to them.",
+    "input": "text",
+    "title": "What do you want to say?"
+   },
+   "line": "Your words, set large.",
+   "rule": "L",
+   "title": "The letter",
+   "type": "letter",
+   "why": "This is what makes it a birthday wish."
+  },
+  {
+   "seedKey": "reasons:70b32b774f57",
+   "ask": {
+    "hint": "A few words each. One photo goes with each.",
+    "input": "list",
+    "max": 5,
+    "title": "Three things you love about them."
+   },
+   "heading": "What I love about you",
+   "line": "A photo and a line for each.",
+   "rule": "L",
+   "title": "A few of the reasons",
+   "type": "reasons",
+   "why": "This is what makes it a birthday wish."
+  },
+  {
+   "seedKey": "memory:9583a796462e",
+   "ask": {
+    "hint": "Where you were, what happened.",
+    "input": "text",
+    "title": "One memory you keep coming back to."
+   },
+   "line": "One memory, beside its photo.",
+   "rule": "on",
+   "title": "My favourite memory",
+   "type": "memory"
+  },
+  {
+   "seedKey": "blessing:3e2c4fc335be",
+   "ask": {
+    "hint": "Leave it out if it is not for you.",
+    "input": "verse",
+    "title": "A prayer or a verse for them?"
+   },
+   "line": "A verse or a prayer.",
+   "rule": "+",
+   "title": "A prayer for you",
+   "type": "blessing"
+  },
+  {
+   "seedKey": "timeline:89d836eeddd6",
+   "ask": {
+    "hint": "Three or four, each with its date.",
+    "input": "dated",
+    "max": 6,
+    "title": "The moments, in order."
+   },
+   "line": "Dated moments, in order.",
+   "rule": "+",
+   "title": "How we got here",
+   "type": "timeline"
+  },
+  {
+   "seedKey": "timeline:c099c30012fc",
+   "ask": {
+    "hint": "The moments that made the years, each with its date.",
+    "input": "dated",
+    "max": 8,
+    "title": "From the first photo to this one."
+   },
+   "line": "Dated moments, in order.",
+   "rule": "L",
+   "title": "From the first photo to this one",
+   "type": "timeline",
+   "why": "This is what makes it an anniversary wish."
+  },
+  {
+   "seedKey": "letter:d2af573db18f",
+   "ask": {
+    "hint": "Talk or type. Say it the way you would say it to them.",
+    "input": "text",
+    "title": "What do you want to say?"
+   },
+   "line": "Your words, set large.",
+   "rule": "L",
+   "title": "The letter",
+   "type": "letter",
+   "why": "This is what makes it an anniversary wish."
+  },
+  {
+   "seedKey": "reasons:bdc2e6142a78",
+   "ask": {
+    "hint": "A few words each. One photo goes with each.",
+    "input": "list",
+    "max": 5,
+    "title": "Three things you love about them."
+   },
+   "heading": "What I love about you",
+   "line": "A photo and a line for each.",
+   "rule": "on",
+   "title": "A few of the reasons",
+   "type": "reasons"
+  },
+  {
+   "seedKey": "memory:6d4039777daf",
+   "ask": {
+    "hint": "Where you were, what happened.",
+    "input": "text",
+    "title": "One memory you keep coming back to."
+   },
+   "line": "One memory, beside its photo.",
+   "rule": "+",
+   "title": "My favourite memory",
+   "type": "memory"
+  },
+  {
+   "seedKey": "letter:448c5a85c0b2",
+   "ask": {
+    "hint": "Talk or type. Say it the way you would say it to them.",
+    "input": "text",
+    "title": "What do you want to say?"
+   },
+   "line": "Your words, set large.",
+   "rule": "L",
+   "title": "The letter",
+   "type": "letter",
+   "why": "This is what makes it a Valentine."
+  },
+  {
+   "seedKey": "reasons:bf3e6f98124b",
+   "ask": {
+    "hint": "A few words each. One photo goes with each.",
+    "input": "list",
+    "max": 5,
+    "title": "Three things you love about them."
+   },
+   "heading": "What I love about you",
+   "line": "A photo and a line for each.",
+   "rule": "L",
+   "title": "A few of the reasons",
+   "type": "reasons",
+   "why": "This is what makes it a Valentine."
+  },
+  {
+   "seedKey": "story:5e663ef0442a",
+   "ask": {
+    "hint": "A line for each photo, in order. It leads to the question.",
+    "input": "captions",
+    "title": "How did you two get here?"
+   },
+   "line": "The photos in order, a line each.",
+   "rule": "L",
+   "title": "How we got here",
+   "type": "story",
+   "why": "This is what makes it a proposal."
+  },
+  {
+   "seedKey": "letter:146516c7ee74",
+   "ask": {
+    "hint": "Talk or type. Say it the way you would say it to them.",
+    "input": "text",
+    "title": "What do you want to say?"
+   },
+   "line": "Your words, set large.",
+   "rule": "L",
+   "title": "The letter",
+   "type": "letter",
+   "why": "This is what makes it a proposal."
+  },
+  {
+   "seedKey": "letter:93dd49967c06",
+   "ask": {
+    "hint": "Say it plainly. No excuses, no but.",
+    "input": "text",
+    "title": "What happened?"
+   },
+   "line": "Your words, set large.",
+   "rule": "L",
+   "title": "What happened",
+   "type": "letter",
+   "why": "This is what makes it an apology."
+  },
+  {
+   "seedKey": "reasons:06ede227b096",
+   "ask": {
+    "hint": "A line each. One photo goes with each.",
+    "input": "list",
+    "max": 5,
+    "title": "What should you have said?"
+   },
+   "heading": "What I should have said",
+   "line": "A photo and a line for each.",
+   "rule": "L",
+   "title": "What I should have said",
+   "type": "reasons",
+   "why": "This is what makes it an apology."
+  },
+  {
+   "seedKey": "memory:b789d37a4c74",
+   "ask": {
+    "hint": "One moment of the two of you, as it was.",
+    "input": "text",
+    "title": "What do you want back?"
+   },
+   "line": "One memory, beside its photo.",
+   "rule": "+",
+   "title": "What I want back",
+   "type": "memory"
+  },
+  {
+   "seedKey": "letter:8f3b1aba3857",
+   "ask": {
+    "hint": "Talk or type. Say it the way you would say it to them.",
+    "input": "text",
+    "title": "What do you want to say?"
+   },
+   "line": "Your words, set large.",
+   "rule": "L",
+   "title": "The letter",
+   "type": "letter",
+   "why": "This is what makes it a long-distance wish."
+  },
+  {
+   "seedKey": "letter:76a0b1d1ab72",
+   "ask": {
+    "hint": "Talk or type. Say it the way you would say it to them.",
+    "input": "text",
+    "title": "What do you want to say?"
+   },
+   "line": "Your words, set large.",
+   "rule": "L",
+   "title": "The letter",
+   "type": "letter",
+   "why": "This is what makes it a just-because wish."
+  },
+  {
+   "seedKey": "reasons:5a32f29c2e61",
+   "ask": {
+    "hint": "A few words each. Three is enough.",
+    "input": "list",
+    "max": 3,
+    "title": "Three things you love about them."
+   },
+   "heading": "What I love about you",
+   "line": "A photo and a line for each.",
+   "rule": "L",
+   "title": "A few of the reasons",
+   "type": "reasons",
+   "why": "This is what makes it a just-because wish."
+  },
+  {
+   "seedKey": "letter:95c822601c80",
+   "ask": {
+    "hint": "Keep it short. The pictures carry this one.",
+    "input": "text",
+    "title": "What do you want to tell them?"
+   },
+   "line": "Your words, set large.",
+   "rule": "L",
+   "title": "A few words",
+   "type": "letter",
+   "why": "This is what makes it a birthday wish."
+  },
+  {
+   "seedKey": "story:67d707513b34",
+   "ask": {
+    "hint": "Oldest first. A year, a place, a line.",
+    "input": "captions",
+    "title": "A few words for the photos."
+   },
+   "line": "The photos in order, a line each.",
+   "rule": "L",
+   "title": "The photo story",
+   "type": "story",
+   "why": "This is what makes it a birthday wish."
+  },
+  {
+   "seedKey": "voices:be6eccc9f7a7",
+   "ask": {
+    "hint": "A sibling, a parent, a friend. Type what they said.",
+    "input": "people",
+    "max": 6,
+    "title": "Does anyone else want to add a line?"
+   },
+   "heading": "They wanted to say something too.",
+   "line": "Lines from other people, each signed.",
+   "rule": "on",
+   "title": "Voices",
+   "type": "voices"
+  },
+  {
+   "seedKey": "reasons:c28da13676d8",
+   "ask": {
+    "hint": "A few words each. One photo goes with each.",
+    "input": "list",
+    "max": 5,
+    "title": "Three things you love about them."
+   },
+   "heading": "What we love about you",
+   "line": "A photo and a line for each.",
+   "rule": "+",
+   "title": "A few of the reasons",
+   "type": "reasons"
+  },
+  {
+   "seedKey": "letter:c2458ceff9b4",
+   "ask": {
+    "hint": "Keep it short. The pictures carry this one.",
+    "input": "text",
+    "title": "What do you want to tell them?"
+   },
+   "line": "Your words, set large.",
+   "rule": "L",
+   "title": "A few words",
+   "type": "letter",
+   "why": "This is what makes it a Mother's Day wish."
+  },
+  {
+   "seedKey": "story:c834d17135eb",
+   "ask": {
+    "hint": "Start with the oldest photo you have of her.",
+    "input": "captions",
+    "title": "A few words for the photos."
+   },
+   "line": "The photos in order, a line each.",
+   "rule": "L",
+   "title": "The photo story",
+   "type": "story",
+   "why": "This is what makes it a Mother's Day wish."
+  },
+  {
+   "seedKey": "blessing:cfd3026da791",
+   "ask": {
+    "hint": "Leave it out if it is not for you.",
+    "input": "verse",
+    "title": "A prayer or a verse for them?"
+   },
+   "line": "A verse or a prayer.",
+   "rule": "on",
+   "title": "A prayer for you",
+   "type": "blessing"
+  },
+  {
+   "seedKey": "voices:13591a484754",
+   "ask": {
+    "hint": "A sibling, a parent, a friend. Type what they said.",
+    "input": "people",
+    "max": 6,
+    "title": "Does anyone else want to add a line?"
+   },
+   "heading": "They wanted to say something too.",
+   "line": "Lines from other people, each signed.",
+   "rule": "+",
+   "title": "Voices",
+   "type": "voices"
+  },
+  {
+   "seedKey": "letter:2f180b4f7b2a",
+   "ask": {
+    "hint": "Keep it short. The pictures carry this one.",
+    "input": "text",
+    "title": "What do you want to tell them?"
+   },
+   "line": "Your words, set large.",
+   "rule": "L",
+   "title": "A few words",
+   "type": "letter",
+   "why": "This is what makes it a Father's Day wish."
+  },
+  {
+   "seedKey": "story:ee84ba4886e4",
+   "ask": {
+    "hint": "Oldest first. A year, a place, a line.",
+    "input": "captions",
+    "title": "A few words for the photos."
+   },
+   "line": "The photos in order, a line each.",
+   "rule": "L",
+   "title": "The photo story",
+   "type": "story",
+   "why": "This is what makes it a Father's Day wish."
+  },
+  {
+   "seedKey": "letter:a2b0bb505717",
+   "ask": {
+    "hint": "Keep it short. The pictures carry this one.",
+    "input": "text",
+    "title": "What do you want to tell them?"
+   },
+   "line": "Your words, set large.",
+   "rule": "L",
+   "title": "A few words",
+   "type": "letter",
+   "why": "This is what makes it a graduation wish."
+  },
+  {
+   "seedKey": "story:958dabd77410",
+   "ask": {
+    "hint": "First day of school to today.",
+    "input": "captions",
+    "title": "A few words for the photos."
+   },
+   "line": "The photos in order, a line each.",
+   "rule": "L",
+   "title": "The photo story",
+   "type": "story",
+   "why": "This is what makes it a graduation wish."
+  },
+  {
+   "seedKey": "letter:274c6cd66d8c",
+   "ask": {
+    "hint": "Keep it short. The pictures carry this one.",
+    "input": "text",
+    "title": "What do you want to tell them?"
+   },
+   "line": "Your words, set large.",
+   "rule": "L",
+   "title": "A few words",
+   "type": "letter",
+   "why": "This is what makes it a new baby wish."
+  },
+  {
+   "seedKey": "voices:e85ff7f88642",
+   "ask": {
+    "hint": "Grandparents, aunts, uncles. Type what they said.",
+    "input": "people",
+    "max": 8,
+    "title": "Does the family want to add a line?"
+   },
+   "heading": "They wanted to say something too.",
+   "line": "Lines from other people, each signed.",
+   "rule": "on",
+   "title": "Voices",
+   "type": "voices"
+  },
+  {
+   "seedKey": "story:538d9f180f69",
+   "ask": {
+    "hint": "Oldest first. A year, a place, a line.",
+    "input": "captions",
+    "title": "A few words for the photos."
+   },
+   "line": "The photos in order, a line each.",
+   "rule": "+",
+   "title": "The photo story",
+   "type": "story"
+  },
+  {
+   "seedKey": "letter:b935183ae716",
+   "ask": {
+    "hint": "Keep it short. The pictures carry this one.",
+    "input": "text",
+    "title": "What do you want to tell them?"
+   },
+   "line": "Your words, set large.",
+   "rule": "L",
+   "title": "A few words",
+   "type": "letter",
+   "why": "This is what makes it a thanksgiving."
+  },
+  {
+   "seedKey": "blessing:e6e457c6a71e",
+   "ask": {
+    "hint": "A verse, or your own words of thanks.",
+    "input": "verse",
+    "title": "The prayer at the centre of it."
+   },
+   "line": "A verse or a prayer.",
+   "rule": "L",
+   "title": "A prayer of thanks",
+   "type": "blessing",
+   "why": "This is what makes it a thanksgiving."
+  },
+  {
+   "seedKey": "letter:2d2247b3b5ec",
+   "ask": {
+    "hint": "Keep it short. The pictures carry this one.",
+    "input": "text",
+    "title": "What do you want to tell them?"
+   },
+   "line": "Your words, set large.",
+   "rule": "L",
+   "title": "A few words",
+   "type": "letter",
+   "why": "This is what makes it a Christmas wish."
+  },
+  {
+   "seedKey": "story:cb4733d53970",
+   "ask": {
+    "hint": "Oldest first. A year, a place, a line.",
+    "input": "captions",
+    "title": "A few words for the photos."
+   },
+   "line": "The photos in order, a line each.",
+   "rule": "L",
+   "title": "The photo story",
+   "type": "story",
+   "why": "This is what makes it a Christmas wish."
+  },
+  {
+   "seedKey": "letter:6ebcf31b4a4e",
+   "ask": {
+    "hint": "Keep it short. The pictures carry this one.",
+    "input": "text",
+    "title": "What do you want to tell them?"
+   },
+   "line": "Your words, set large.",
+   "rule": "L",
+   "title": "A few words",
+   "type": "letter",
+   "why": "This is what makes it a New Year wish."
+  },
+  {
+   "seedKey": "story:7f36f011b423",
+   "ask": {
+    "hint": "Oldest first. A year, a place, a line.",
+    "input": "captions",
+    "title": "A few words for the photos."
+   },
+   "line": "The photos in order, a line each.",
+   "rule": "on",
+   "title": "The photo story",
+   "type": "story"
+  },
+  {
+   "seedKey": "letter:3ab0a2caab7b",
+   "ask": {
+    "hint": "Keep it short. The pictures carry this one.",
+    "input": "text",
+    "title": "What do you want to tell them?"
+   },
+   "line": "Your words, set large.",
+   "rule": "L",
+   "title": "A few words",
+   "type": "letter",
+   "why": "This is what makes it a proud-of-you wish."
+  },
+  {
+   "seedKey": "reasons:e3c685d8253e",
+   "ask": {
+    "hint": "A few words each. Three is enough.",
+    "input": "list",
+    "max": 3,
+    "title": "Three reasons you are proud of them."
+   },
+   "heading": "Why we are proud of you",
+   "line": "A photo and a line for each.",
+   "rule": "L",
+   "title": "Why we are proud",
+   "type": "reasons",
+   "why": "This is what makes it a proud-of-you wish."
+  },
+  {
+   "seedKey": "story:86cb093753eb",
+   "ask": {
+    "hint": "Your years together, oldest first.",
+    "input": "captions",
+    "title": "A few words for the photos."
+   },
+   "line": "The photos in order, a line each.",
+   "rule": "L",
+   "title": "Our years together",
+   "type": "story",
+   "why": "This is what makes it a send-off."
+  },
+  {
+   "seedKey": "letter:a53f5e35061b",
+   "ask": {
+    "hint": "Keep it short. The pictures carry this one.",
+    "input": "text",
+    "title": "What do you want to tell them?"
+   },
+   "line": "Your words, set large.",
+   "rule": "L",
+   "title": "A few words",
+   "type": "letter",
+   "why": "This is what makes it a send-off."
+  },
+  {
+   "seedKey": "letter:eb9717892ad7",
+   "ask": {
+    "hint": "Keep it short. The pictures carry this one.",
+    "input": "text",
+    "title": "What do you want to tell them?"
+   },
+   "line": "Your words, set large.",
+   "rule": "L",
+   "title": "A few words",
+   "type": "letter",
+   "why": "This is what makes it a get-well wish."
+  },
+  {
+   "seedKey": "letter:73125dacad27",
+   "ask": {
+    "hint": "Keep it short. The pictures carry this one.",
+    "input": "text",
+    "title": "What do you want to tell them?"
+   },
+   "line": "Your words, set large.",
+   "rule": "L",
+   "title": "A few words",
+   "type": "letter",
+   "why": "This is what makes it a wedding wish."
+  },
+  {
+   "seedKey": "story:72ff40446a84",
+   "ask": {
+    "hint": "Oldest first. A year, a place, a line.",
+    "input": "captions",
+    "title": "A few words for the photos."
+   },
+   "line": "The photos in order, a line each.",
+   "rule": "L",
+   "title": "The photo story",
+   "type": "story",
+   "why": "This is what makes it an end-of-year wish."
+  },
+  {
+   "seedKey": "letter:ebfc44eef390",
+   "ask": {
+    "hint": "Keep it short. The pictures carry this one.",
+    "input": "text",
+    "title": "What do you want to tell them?"
+   },
+   "line": "Your words, set large.",
+   "rule": "L",
+   "title": "A few words",
+   "type": "letter",
+   "why": "This is what makes it an end-of-year wish."
+  },
+  {
+   "seedKey": "voices:7392f345fea0",
+   "ask": {
+    "hint": "One question for your friends. You add their answers next.",
+    "input": "text",
+    "title": "What should everyone answer?"
+   },
+   "line": "Lines from other people, each signed.",
+   "rule": "L",
+   "title": "The voices",
+   "type": "voices",
+   "why": "This is what makes it a group birthday wish."
+  },
+  {
+   "seedKey": "note:fb84baf4280a",
+   "ask": {
+    "hint": "You started this. Say why.",
+    "input": "text",
+    "title": "And a note from you."
+   },
+   "line": "A short note, signed.",
+   "rule": "L",
+   "title": "A note from you",
+   "type": "note",
+   "why": "This is what makes it a group birthday wish."
+  },
+  {
+   "seedKey": "credits:cc441810feb7",
+   "line": "Every friend's name, rolling.",
+   "rule": "L",
+   "title": "From all of us",
+   "type": "credits",
+   "why": "This is what makes it a group birthday wish."
+  },
+  {
+   "seedKey": "voices:5d20e52db849",
+   "ask": {
+    "hint": "We suggest \"What will you miss most?\". You add their answers next.",
+    "input": "text",
+    "title": "What should everyone answer?"
+   },
+   "heading": "What will you miss most?",
+   "line": "Lines from other people, each signed.",
+   "rule": "L",
+   "title": "What will you miss most?",
+   "type": "voices",
+   "why": "This is what makes it a send-off from all of you."
+  },
+  {
+   "seedKey": "note:e0a51a0e6714",
+   "ask": {
+    "hint": "You started this. Say why.",
+    "input": "text",
+    "title": "And a note from you."
+   },
+   "line": "A short note, signed.",
+   "rule": "L",
+   "title": "A note from you",
+   "type": "note",
+   "why": "This is what makes it a send-off from all of you."
+  },
+  {
+   "seedKey": "voices:db172ff1b177",
+   "ask": {
+    "hint": "One question for your friends. You add their answers next.",
+    "input": "text",
+    "title": "What should everyone answer?"
+   },
+   "line": "Every voice, over the couple's photos.",
+   "rule": "L",
+   "title": "The voices",
+   "type": "voices",
+   "why": "This is what makes it wedding wishes from all of you."
+  },
+  {
+   "seedKey": "note:2c21dc6fe2e9",
+   "ask": {
+    "hint": "You started this. Say why.",
+    "input": "text",
+    "title": "And a note from you."
+   },
+   "line": "A short note, signed.",
+   "rule": "on",
+   "title": "A note from you",
+   "type": "note"
+  },
+  {
+   "seedKey": "voices:cb7db1894e05",
+   "ask": {
+    "hint": "We suggest \"What you did for us\". You add their answers next.",
+    "input": "text",
+    "title": "What should everyone answer?"
+   },
+   "heading": "What you did for us",
+   "line": "Lines from other people, each signed.",
+   "rule": "L",
+   "title": "What you did for us",
+   "type": "voices",
+   "why": "This is what makes it a proud-of-you from all of you."
+  },
+  {
+   "seedKey": "note:b0477bb3f81d",
+   "ask": {
+    "hint": "You started this. Say why.",
+    "input": "text",
+    "title": "And a note from you."
+   },
+   "line": "A short note, signed.",
+   "rule": "L",
+   "title": "A note from you",
+   "type": "note",
+   "why": "This is what makes it a proud-of-you from all of you."
+  },
+  {
+   "seedKey": "story:b90711af4006",
+   "ask": {
+    "hint": "One photo from each friend, a line each.",
+    "input": "captions",
+    "title": "A few words for the photos."
+   },
+   "line": "The photos in order, a line each.",
+   "rule": "L",
+   "title": "One photo from each of us",
+   "type": "story",
+   "why": "This is what makes it an end-of-year wish."
+  },
+  {
+   "seedKey": "voices:eae814af893b",
+   "ask": {
+    "hint": "One question for your friends. You add their answers next.",
+    "input": "text",
+    "title": "What should everyone answer?"
+   },
+   "line": "Lines from other people, each signed.",
+   "rule": "L",
+   "title": "The voices",
+   "type": "voices",
+   "why": "This is what makes it an end-of-year wish."
+  },
+  {
+   "seedKey": "voices:02a82affdf91",
+   "ask": {
+    "hint": "One question for your friends. You add their answers next.",
+    "input": "text",
+    "title": "What should everyone answer?"
+   },
+   "line": "The children and the grandchildren too.",
+   "rule": "L",
+   "title": "The voices",
+   "type": "voices",
+   "why": "This is what makes it a milestone wish from the children."
+  },
+  {
+   "seedKey": "note:df2ff9c88d75",
+   "ask": {
+    "hint": "You started this. Say why.",
+    "input": "text",
+    "title": "And a note from you."
+   },
+   "line": "A short note, signed.",
+   "rule": "L",
+   "title": "A note from you",
+   "type": "note",
+   "why": "This is what makes it a milestone wish from the children."
+  },
+  {
+   "seedKey": "timeline:a4f85847bdd3",
+   "ask": {
+    "hint": "Three or four moments, each with its date.",
+    "input": "dated",
+    "max": 5,
+    "title": "How did you two get here?"
+   },
+   "line": "Dated moments, in order.",
+   "rule": "+",
+   "title": "How we met",
+   "type": "timeline"
+  },
+  {
+   "seedKey": "details:a4f3b219cdf9",
+   "ask": {
+    "hint": "The venue and the date. The rest comes later.",
+    "input": "rows",
+    "title": "Where and when?"
+   },
+   "heading": "What you need to know.",
+   "line": "What guests need to know.",
+   "rule": "on",
+   "title": "The day",
+   "type": "details"
+  },
+  {
+   "seedKey": "timeline:472cdd4cda7b",
+   "ask": {
+    "hint": "Three or four moments, each with its date.",
+    "input": "dated",
+    "max": 5,
+    "title": "How did you two get here?"
+   },
+   "line": "Dated moments, in order.",
+   "rule": "L",
+   "title": "How we met",
+   "type": "timeline",
+   "why": "This is what makes it your story."
+  },
+  {
+   "seedKey": "story:8bc49e61139e",
+   "ask": {
+    "hint": "A line each is enough.",
+    "input": "captions",
+    "title": "A few words for the photos."
+   },
+   "line": "The photos in order, a line each.",
+   "rule": "L",
+   "title": "The photo story",
+   "type": "story",
+   "why": "This is what makes it your story."
+  },
+  {
+   "seedKey": "details:23894515eca0",
+   "ask": {
+    "hint": "Venue, time, dress code, colours, a map link.",
+    "input": "rows",
+    "title": "What do guests need to know?"
+   },
+   "heading": "What you need to know.",
+   "line": "What guests need to know.",
+   "rule": "L",
+   "title": "The details",
+   "type": "details",
+   "why": "This is what makes it your story."
+  },
+  {
+   "seedKey": "story:2c0029c414de",
+   "ask": {
+    "hint": "A line each is enough.",
+    "input": "captions",
+    "title": "A few words for the photos."
+   },
+   "line": "The photos in order, a line each.",
+   "rule": "L",
+   "title": "The photo story",
+   "type": "story",
+   "why": "This is what makes it a wedding thank-you."
+  },
+  {
+   "seedKey": "note:9526ce66f97e",
+   "ask": {
+    "hint": "Two or three sentences.",
+    "input": "text",
+    "title": "A note from the two of you."
+   },
+   "line": "A short note, signed.",
+   "rule": "L",
+   "title": "From the two of us",
+   "type": "note",
+   "why": "This is what makes it a wedding thank-you."
+  },
+  {
+   "seedKey": "credits:f4c7cb2877fb",
+   "ask": {
+    "hint": "Every vendor, with their handle.",
+    "input": "rows",
+    "title": "Who made the day?"
+   },
+   "line": "Every name, with a handle.",
+   "rule": "L",
+   "title": "Credits",
+   "type": "credits",
+   "why": "This is what makes it a wedding thank-you."
+  },
+  {
+   "seedKey": "voices:370ef264123c",
+   "ask": {
+    "hint": "A name and a line for each colleague.",
+    "input": "people",
+    "max": 12,
+    "title": "What does the team want to say?"
+   },
+   "heading": "What they said about you.",
+   "line": "Lines from other people, each signed.",
+   "rule": "L",
+   "title": "From the team",
+   "type": "voices",
+   "why": "This is what makes it a staff birthday wish."
+  },
+  {
+   "seedKey": "note:03ae96cb71d6",
+   "ask": {
+    "hint": "Two or three sentences, signed.",
+    "input": "text",
+    "title": "A note from the company."
+   },
+   "line": "A short note, signed.",
+   "rule": "L",
+   "title": "A note from the company",
+   "type": "note",
+   "why": "This is what makes it a staff birthday wish."
+  },
+  {
+   "seedKey": "story:29ef4fbeff05",
+   "ask": {
+    "hint": "Archive photos, oldest first.",
+    "input": "captions",
+    "title": "A few words for the photos."
+   },
+   "line": "The photos in order, a line each.",
+   "rule": "+",
+   "title": "From the archive",
+   "type": "story"
+  },
+  {
+   "seedKey": "voices:b4cbd252433b",
+   "ask": {
+    "hint": "A name and a line for each colleague.",
+    "input": "people",
+    "max": 12,
+    "title": "What does the team want to say?"
+   },
+   "heading": "What they said about you.",
+   "line": "Lines from other people, each signed.",
+   "rule": "L",
+   "title": "From the team",
+   "type": "voices",
+   "why": "This is what makes it a work anniversary."
+  },
+  {
+   "seedKey": "note:fcb5d433a8df",
+   "ask": {
+    "hint": "Two or three sentences, signed.",
+    "input": "text",
+    "title": "A note from the company."
+   },
+   "line": "A short note, signed.",
+   "rule": "L",
+   "title": "A note from the company",
+   "type": "note",
+   "why": "This is what makes it a work anniversary."
+  },
+  {
+   "seedKey": "note:d6ad7b641417",
+   "ask": {
+    "hint": "From the account lead, by name.",
+    "input": "text",
+    "title": "A note to your client."
+   },
+   "line": "A short note, signed.",
+   "rule": "L",
+   "title": "From the account lead",
+   "type": "note",
+   "why": "This is what makes it a client thank-you."
+  },
+  {
+   "seedKey": "voices:0d8e332db20a",
+   "ask": {
+    "hint": "A name and a line for each colleague.",
+    "input": "people",
+    "max": 12,
+    "title": "What does the team want to say?"
+   },
+   "heading": "What they said about you.",
+   "line": "Lines from other people, each signed.",
+   "rule": "+",
+   "title": "From the team",
+   "type": "voices"
+  },
+  {
+   "seedKey": "voices:209b20430d3f",
+   "ask": {
+    "hint": "Everyone, remote staff included. A name and a line each.",
+    "input": "people",
+    "max": 20,
+    "title": "What does the office want to say?"
+   },
+   "heading": "What they said about you.",
+   "line": "Lines from other people, each signed.",
+   "rule": "L",
+   "title": "From the team",
+   "type": "voices",
+   "why": "This is what makes it a farewell."
+  },
+  {
+   "seedKey": "note:43246f85db9b",
+   "ask": {
+    "hint": "Two or three sentences, signed.",
+    "input": "text",
+    "title": "A note from the company."
+   },
+   "line": "A short note, signed.",
+   "rule": "L",
+   "title": "A note from the company",
+   "type": "note",
+   "why": "This is what makes it a farewell."
+  },
+  {
+   "seedKey": "note:10501612551a",
+   "ask": {
+    "hint": "One design: a sheet of names makes a wish for each.",
+    "input": "text",
+    "title": "The note, written once."
+   },
+   "line": "A short note, signed.",
+   "rule": "L",
+   "title": "From all of us",
+   "type": "note",
+   "why": "This is what makes it a season's greeting."
+  },
+  {
+   "seedKey": "voices:9ce2f54fd181",
+   "ask": {
+    "hint": "A name and a line from each of them.",
+    "input": "people",
+    "max": 12,
+    "title": "What does the new team want to say?"
+   },
+   "heading": "From your new team",
+   "line": "Lines from other people, each signed.",
+   "rule": "L",
+   "title": "From your new team",
+   "type": "voices",
+   "why": "This is what makes it a welcome."
+  },
+  {
+   "seedKey": "note:fe4a88774f2f",
+   "ask": {
+    "hint": "Two or three sentences, signed.",
+    "input": "text",
+    "title": "A note from the company."
+   },
+   "line": "A short note, signed.",
+   "rule": "L",
+   "title": "A note from the company",
+   "type": "note",
+   "why": "This is what makes it a welcome."
+  },
+  {
+   "seedKey": "film:e38b1123e9b1",
+   "heading": "Every version of you.",
+   "line": "Every frame, numbered.",
+   "rule": "L",
+   "title": "The film",
+   "type": "film",
+   "why": "This is what makes it a Shoot Reveal."
+  },
+  {
+   "seedKey": "favourites:2650d8b327d7",
+   "heading": "Keep the ones you love.",
+   "line": "They heart the ones they love.",
+   "rule": "L",
+   "title": "Your favourites",
+   "type": "favourites",
+   "why": "This is what makes it a Shoot Reveal."
+  },
+  {
+   "seedKey": "note:3afb13411904",
+   "ask": {
+    "hint": "It is the only thing you write.",
+    "input": "text",
+    "title": "One note for the birthday."
+   },
+   "line": "A short note, signed.",
+   "rule": "L",
+   "title": "A note from you",
+   "type": "note",
+   "why": "This is what makes it a Shoot Reveal."
+  },
+  {
+   "seedKey": "credits:aa5691aa825b",
+   "ask": {
+    "hint": "A name and a handle for each role.",
+    "input": "rows",
+    "title": "Who worked on it?"
+   },
+   "line": "Every name, with a handle.",
+   "rule": "on",
+   "title": "Credits",
+   "type": "credits"
+  },
+  {
+   "seedKey": "links:850ea61ec7b9",
+   "ask": {
+    "hint": "The link to the full set, and your booking link.",
+    "input": "links",
+    "title": "Where are the full photos?"
+   },
+   "heading": "The full set, full size.",
+   "line": "Book again.",
+   "rule": "+",
+   "title": "Your photos",
+   "type": "links"
+  },
+  {
+   "seedKey": "note:3e3380b69450",
+   "ask": {
+    "hint": "It is the only thing you write.",
+    "input": "text",
+    "title": "One note to the two of them."
+   },
+   "line": "A short note, signed.",
+   "rule": "L",
+   "title": "A note from you",
+   "type": "note",
+   "why": "This is what makes it a Shoot Reveal."
+  },
+  {
+   "seedKey": "note:349f01b8967d",
+   "ask": {
+    "hint": "It is the only thing you write.",
+    "input": "text",
+    "title": "One note before the big day."
+   },
+   "line": "A short note, signed.",
+   "rule": "L",
+   "title": "A note from you",
+   "type": "note",
+   "why": "This is what makes it a Shoot Reveal."
+  },
+  {
+   "seedKey": "note:9ce572e30d9f",
+   "ask": {
+    "hint": "It is the only thing you write.",
+    "input": "text",
+    "title": "One note for the new family."
+   },
+   "line": "A short note, signed.",
+   "rule": "L",
+   "title": "A note from you",
+   "type": "note",
+   "why": "This is what makes it a Shoot Reveal."
+  },
+  {
+   "seedKey": "note:6b854da72585",
+   "ask": {
+    "hint": "It is the only thing you write.",
+    "input": "text",
+    "title": "One note for the graduate."
+   },
+   "line": "A short note, signed.",
+   "rule": "L",
+   "title": "A note from you",
+   "type": "note",
+   "why": "This is what makes it a Shoot Reveal."
+  },
+  {
+   "seedKey": "note:82f70ffa9317",
+   "ask": {
+    "hint": "It is the only thing you write.",
+    "input": "text",
+    "title": "One note to the family."
+   },
+   "line": "A short note, signed.",
+   "rule": "L",
+   "title": "A note from you",
+   "type": "note",
+   "why": "This is what makes it a Shoot Reveal."
+  },
+  {
+   "seedKey": "note:6f2e75d6820f",
+   "ask": {
+    "hint": "It is the only thing you write.",
+    "input": "text",
+    "title": "One note to the bride."
+   },
+   "line": "A short note, signed.",
+   "rule": "L",
+   "title": "A note from you",
+   "type": "note",
+   "why": "This is what makes it a Shoot Reveal."
+  },
+  {
+   "seedKey": "note:84c11c82021e",
+   "ask": {
+    "hint": "It is the only thing you write.",
+    "input": "text",
+    "title": "One note on the outfit."
+   },
+   "line": "A short note, signed.",
+   "rule": "L",
+   "title": "A note from you",
+   "type": "note",
+   "why": "This is what makes it a Shoot Reveal."
+  },
+  {
+   "seedKey": "note:45ea5409ba79",
+   "ask": {
+    "hint": "It is the only thing you write.",
+    "input": "text",
+    "title": "One note while the film is in the edit."
+   },
+   "line": "A short note, signed.",
+   "rule": "L",
+   "title": "A note from you",
+   "type": "note",
+   "why": "This is what makes it a Shoot Reveal."
+  },
+  {
+   "seedKey": "film:acd9a31ee6c7",
+   "heading": "Every version of you.",
+   "line": "Every frame, numbered.",
+   "rule": "L",
+   "title": "The film",
+   "type": "film",
+   "why": "This is what makes it the finals."
+  },
+  {
+   "seedKey": "note:18e788c00b63",
+   "ask": {
+    "hint": "It is the only thing you write.",
+    "input": "text",
+    "title": "One note to your client."
+   },
+   "line": "A short note, signed.",
+   "rule": "on",
+   "title": "A note from you",
+   "type": "note"
+  },
+  {
+   "seedKey": "links:251dd88dced5",
+   "ask": {
+    "hint": "The link to the full set, and your booking link.",
+    "input": "links",
+    "title": "Where are the full photos?"
+   },
+   "heading": "The full set, full size.",
+   "line": "Download all, and book again.",
+   "rule": "L",
+   "title": "Download",
+   "type": "links",
+   "why": "This is what makes it the finals."
+  }
+ ]
+}

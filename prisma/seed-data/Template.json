@@ -1,0 +1,889 @@
+{
+ "table": "Template",
+ "from": "Firstwish-web lib/studio.ts (HOUSE)",
+ "rows": [
+  {
+   "seedKey": "noir",
+   "base": "noir",
+   "dimension": "flat",
+   "handle": "firstwish",
+   "house": true,
+   "kinds": [
+    "love",
+    "celebration",
+    "photographers"
+   ],
+   "line": "copper on near-black",
+   "mood": [
+    "warm",
+    "editorial",
+    "tender"
+   ],
+   "name": "Studio Noir",
+   "orientation": "portrait",
+   "pace": "scroll"
+  },
+  {
+   "seedKey": "letter",
+   "base": "letter",
+   "dimension": "flat",
+   "handle": "firstwish",
+   "house": true,
+   "kinds": [
+    "love"
+   ],
+   "line": "ink and wine red on warm paper",
+   "mood": [
+    "tender",
+    "nostalgic",
+    "quiet"
+   ],
+   "name": "Love Letter",
+   "orientation": "portrait",
+   "pace": "scroll"
+  },
+  {
+   "seedKey": "golden",
+   "base": "golden",
+   "dimension": "flat",
+   "handle": "firstwish",
+   "house": true,
+   "kinds": [
+    "love",
+    "wedding",
+    "photographers"
+   ],
+   "line": "sunset peach to evening plum",
+   "mood": [
+    "warm",
+    "dreamy",
+    "romantic"
+   ],
+   "name": "Golden Hour",
+   "orientation": "portrait",
+   "pace": "scroll"
+  },
+  {
+   "seedKey": "grace",
+   "base": "grace",
+   "dimension": "flat",
+   "handle": "firstwish",
+   "house": true,
+   "kinds": [
+    "celebration"
+   ],
+   "line": "gold on ivory",
+   "mood": [
+    "calm",
+    "faith",
+    "quiet"
+   ],
+   "name": "Grace",
+   "orientation": "portrait",
+   "pace": "scroll"
+  },
+  {
+   "seedKey": "banter",
+   "base": "banter",
+   "dimension": "flat",
+   "handle": "firstwish",
+   "house": true,
+   "kinds": [
+    "celebration",
+    "group"
+   ],
+   "line": "black on yellow, with pink and blue",
+   "mood": [
+    "playful",
+    "bold",
+    "festive"
+   ],
+   "name": "Banter",
+   "orientation": "portrait",
+   "pace": "scroll"
+  },
+  {
+   "seedKey": "gele",
+   "base": "gele",
+   "dimension": "flat",
+   "handle": "firstwish",
+   "house": true,
+   "kinds": [
+    "celebration",
+    "group",
+    "wedding"
+   ],
+   "line": "gold on deep green",
+   "mood": [
+    "festive",
+    "luxurious",
+    "warm"
+   ],
+   "name": "Gele",
+   "orientation": "portrait",
+   "pace": "scroll"
+  },
+  {
+   "seedKey": "marquee",
+   "base": "marquee",
+   "dimension": "flat",
+   "handle": "firstwish",
+   "house": true,
+   "kinds": [
+    "love",
+    "teams",
+    "photographers"
+   ],
+   "line": "white and red on black",
+   "mood": [
+    "bold",
+    "editorial",
+    "dramatic"
+   ],
+   "name": "Marquee",
+   "orientation": "portrait",
+   "pace": "scroll"
+  },
+  {
+   "seedKey": "reel",
+   "base": "reel",
+   "dimension": "flat",
+   "handle": "firstwish",
+   "house": true,
+   "kinds": [
+    "love",
+    "celebration",
+    "teams",
+    "photographers"
+   ],
+   "line": "ivory and copper on black, letterboxed",
+   "mood": [
+    "cinematic",
+    "bold",
+    "editorial",
+    "nostalgic"
+   ],
+   "name": "Reel",
+   "orientation": "landscape",
+   "pace": "film"
+  },
+  {
+   "seedKey": "status",
+   "base": "status",
+   "dimension": "flat",
+   "handle": "firstwish",
+   "house": true,
+   "kinds": [
+    "love",
+    "celebration",
+    "group"
+   ],
+   "line": "copper, deep green, cream and plum grounds, white on photos",
+   "mood": [
+    "bold",
+    "playful",
+    "warm",
+    "festive"
+   ],
+   "name": "Status",
+   "orientation": "portrait",
+   "pace": "stories"
+  },
+  {
+   "seedKey": "gallery",
+   "base": "gallery",
+   "dimension": "3d",
+   "handle": "firstwish",
+   "house": true,
+   "kinds": [
+    "love",
+    "celebration",
+    "wedding",
+    "photographers"
+   ],
+   "line": "warm plaster walls, oak floor, black frames, ink on paper",
+   "mood": [
+    "calm",
+    "luxurious",
+    "tender",
+    "editorial"
+   ],
+   "name": "Gallery",
+   "orientation": "either",
+   "pace": "stage"
+  },
+  {
+   "seedKey": "aso-ebi",
+   "base": "aso-ebi",
+   "dimension": "drawn",
+   "handle": "firstwish",
+   "house": true,
+   "kinds": [
+    "wedding",
+    "celebration"
+   ],
+   "line": "etu indigo and one alaari thread on sanyan silk, or the colours the day names",
+   "mood": [
+    "luxurious",
+    "warm",
+    "editorial",
+    "festive"
+   ],
+   "name": "Aso-ebi",
+   "orientation": "either",
+   "pace": "film"
+  },
+  {
+   "seedKey": "before-and-after",
+   "base": "before-and-after",
+   "dimension": "flat",
+   "handle": "firstwish",
+   "house": true,
+   "kinds": [
+    "photographers"
+   ],
+   "line": "espresso ink and one line of warm light on bone paper",
+   "mood": [
+    "editorial",
+    "luxurious",
+    "calm",
+    "bold"
+   ],
+   "name": "Before and After",
+   "orientation": "portrait",
+   "pace": "swipe"
+  },
+  {
+   "seedKey": "bloom",
+   "base": "bloom",
+   "dimension": "drawn",
+   "handle": "firstwish",
+   "house": true,
+   "kinds": [
+    "love",
+    "celebration"
+   ],
+   "line": "sumi ink and one madder rose on warm paper",
+   "mood": [
+    "tender",
+    "warm",
+    "calm",
+    "luxurious"
+   ],
+   "name": "Bloom",
+   "orientation": "portrait",
+   "pace": "film"
+  },
+  {
+   "seedKey": "boarding-pass",
+   "base": "boarding-pass",
+   "dimension": "drawn",
+   "handle": "firstwish",
+   "house": true,
+   "kinds": [
+    "love",
+    "celebration",
+    "group",
+    "teams"
+   ],
+   "line": "ink navy and one signal orange on pale chart blue, with white passes",
+   "mood": [
+    "warm",
+    "calm",
+    "editorial",
+    "hopeful"
+   ],
+   "name": "Boarding Pass",
+   "orientation": "either",
+   "pace": "swipe"
+  },
+  {
+   "seedKey": "cap-toss",
+   "base": "cap-toss",
+   "dimension": "3d",
+   "handle": "firstwish",
+   "house": true,
+   "kinds": [
+    "celebration",
+    "group"
+   ],
+   "line": "ink caps and one gold tassel on a pale morning sky",
+   "mood": [
+    "proud",
+    "bright",
+    "luxurious",
+    "warm"
+   ],
+   "name": "Cap Toss",
+   "orientation": "portrait",
+   "pace": "film"
+  },
+  {
+   "seedKey": "cinema",
+   "base": "cinema",
+   "dimension": "flat",
+   "handle": "firstwish",
+   "house": true,
+   "kinds": [
+    "love",
+    "teams"
+   ],
+   "line": "cream type and one marquee amber on screen black, lit by a warm lamp",
+   "mood": [
+    "tender",
+    "nostalgic",
+    "luxurious"
+   ],
+   "name": "Cinema",
+   "orientation": "landscape",
+   "pace": "film"
+  },
+  {
+   "seedKey": "constellation",
+   "base": "constellation",
+   "dimension": "drawn",
+   "handle": "firstwish",
+   "house": true,
+   "kinds": [
+    "love"
+   ],
+   "line": "starlight ivory and star gold on a deep indigo night",
+   "mood": [
+    "tender",
+    "calm",
+    "luxurious",
+    "wonder"
+   ],
+   "name": "Constellation",
+   "orientation": "either",
+   "pace": "stage"
+  },
+  {
+   "seedKey": "contact-sheet",
+   "base": "contact-sheet",
+   "dimension": "drawn",
+   "handle": "firstwish",
+   "house": true,
+   "kinds": [
+    "photographers"
+   ],
+   "line": "film black and one grease-pencil red on a lit white light box",
+   "mood": [
+    "editorial",
+    "calm",
+    "luxurious",
+    "nostalgic"
+   ],
+   "name": "Contact Sheet",
+   "orientation": "either",
+   "pace": "stage"
+  },
+  {
+   "seedKey": "first-day",
+   "base": "first-day",
+   "dimension": "flat",
+   "handle": "firstwish",
+   "house": true,
+   "kinds": [
+    "teams"
+   ],
+   "line": "white passes and black ink on a stone wall, one persimmon lanyard",
+   "mood": [
+    "warm",
+    "bold",
+    "calm",
+    "editorial"
+   ],
+   "name": "First Day",
+   "orientation": "portrait",
+   "pace": "stories"
+  },
+  {
+   "seedKey": "gold-card",
+   "base": "gold-card",
+   "dimension": "3d",
+   "handle": "firstwish",
+   "house": true,
+   "kinds": [
+    "teams"
+   ],
+   "line": "satin champagne gold and espresso ink on a warm near-black",
+   "mood": [
+    "calm",
+    "luxurious",
+    "exact",
+    "warm"
+   ],
+   "name": "Gold Card",
+   "orientation": "either",
+   "pace": "stage"
+  },
+  {
+   "seedKey": "group-chat",
+   "base": "group-chat",
+   "dimension": "flat",
+   "handle": "firstwish",
+   "house": true,
+   "kinds": [
+    "group",
+    "celebration"
+   ],
+   "line": "white bubbles and one cobalt blue on pale daylight grey, with an ink-blue night",
+   "mood": [
+    "warm",
+    "playful",
+    "tender",
+    "editorial"
+   ],
+   "name": "Group Chat",
+   "orientation": "portrait",
+   "pace": "stories"
+  },
+  {
+   "seedKey": "harvest-light",
+   "base": "harvest-light",
+   "dimension": "drawn",
+   "handle": "firstwish",
+   "house": true,
+   "kinds": [
+    "celebration"
+   ],
+   "line": "late sun on a shaded wall: umber, straw and one amber light, brown ink",
+   "mood": [
+    "warm",
+    "faith",
+    "calm",
+    "tender"
+   ],
+   "name": "Harvest Light",
+   "orientation": "portrait",
+   "pace": "film"
+  },
+  {
+   "seedKey": "ink-and-wash",
+   "base": "ink-and-wash",
+   "dimension": "drawn",
+   "handle": "firstwish",
+   "house": true,
+   "kinds": [
+    "love",
+    "celebration"
+   ],
+   "line": "indigo wash and sumi ink on warm paper, one cinnabar seal",
+   "mood": [
+    "calm",
+    "tender",
+    "quiet",
+    "faith"
+   ],
+   "name": "Ink and Wash",
+   "orientation": "portrait",
+   "pace": "scroll"
+  },
+  {
+   "seedKey": "invitation",
+   "base": "invitation",
+   "dimension": "3d",
+   "handle": "firstwish",
+   "house": true,
+   "kinds": [
+    "wedding"
+   ],
+   "line": "ivory cotton card and gold foil on deep emerald",
+   "mood": [
+    "luxurious",
+    "tender",
+    "calm",
+    "editorial"
+   ],
+   "name": "Invitation",
+   "orientation": "portrait",
+   "pace": "stage"
+  },
+  {
+   "seedKey": "lookbook",
+   "base": "lookbook",
+   "dimension": "flat",
+   "handle": "firstwish",
+   "house": true,
+   "kinds": [
+    "photographers"
+   ],
+   "line": "carbon ink and one sienna thread on stone-grey paper, bound in charcoal board",
+   "mood": [
+    "editorial",
+    "luxurious",
+    "calm",
+    "bold"
+   ],
+   "name": "Lookbook",
+   "orientation": "portrait",
+   "pace": "swipe"
+  },
+  {
+   "seedKey": "lullaby",
+   "base": "lullaby",
+   "dimension": "3d",
+   "handle": "firstwish",
+   "house": true,
+   "kinds": [
+    "celebration"
+   ],
+   "line": "warm umber and one brass on milk-white morning light",
+   "mood": [
+    "tender",
+    "calm",
+    "warm",
+    "quiet"
+   ],
+   "name": "Lullaby",
+   "orientation": "portrait",
+   "pace": "stage"
+  },
+  {
+   "seedKey": "midnight",
+   "base": "midnight",
+   "dimension": "drawn",
+   "handle": "firstwish",
+   "house": true,
+   "kinds": [
+    "celebration",
+    "group"
+   ],
+   "line": "gold fire and ivory type on a midnight-blue city",
+   "mood": [
+    "festive",
+    "luxurious",
+    "bold",
+    "warm"
+   ],
+   "name": "Midnight",
+   "orientation": "either",
+   "pace": "film"
+  },
+  {
+   "seedKey": "milestone",
+   "base": "milestone",
+   "dimension": "flat",
+   "handle": "firstwish",
+   "house": true,
+   "kinds": [
+    "teams",
+    "celebration"
+   ],
+   "line": "ink numerals on bone paper, one vermilion mark, ink title cards",
+   "mood": [
+    "proud",
+    "editorial",
+    "nostalgic"
+   ],
+   "name": "Milestone",
+   "orientation": "landscape",
+   "pace": "film"
+  },
+  {
+   "seedKey": "mixtape",
+   "base": "mixtape",
+   "dimension": "flat",
+   "handle": "firstwish",
+   "house": true,
+   "kinds": [
+    "love"
+   ],
+   "line": "black vinyl and one oxblood red on cream paper",
+   "mood": [
+    "warm",
+    "tender",
+    "nostalgic",
+    "editorial"
+   ],
+   "name": "Mixtape",
+   "orientation": "portrait",
+   "pace": "swipe"
+  },
+  {
+   "seedKey": "mosaic",
+   "base": "mosaic",
+   "dimension": "drawn",
+   "handle": "firstwish",
+   "house": true,
+   "kinds": [
+    "group",
+    "teams"
+   ],
+   "line": "a dark wall of photo tiles, ivory tablets and one turquoise glaze",
+   "mood": [
+    "warm",
+    "bold",
+    "editorial",
+    "festive"
+   ],
+   "name": "Mosaic",
+   "orientation": "either",
+   "pace": "stage"
+  },
+  {
+   "seedKey": "owambe",
+   "base": "owambe",
+   "dimension": "3d",
+   "handle": "firstwish",
+   "house": true,
+   "kinds": [
+    "celebration",
+    "group",
+    "wedding"
+   ],
+   "line": "gold thread on aso-ebi in the colours of the day, in a hall at night",
+   "mood": [
+    "festive",
+    "luxurious",
+    "bold",
+    "warm"
+   ],
+   "name": "Owambe",
+   "orientation": "either",
+   "pace": "stage"
+  },
+  {
+   "seedKey": "pidgin-gist",
+   "base": "pidgin-gist",
+   "dimension": "flat",
+   "handle": "firstwish",
+   "house": true,
+   "kinds": [
+    "celebration",
+    "group"
+   ],
+   "line": "one green dot on near-black and warm cream",
+   "mood": [
+    "bold",
+    "warm",
+    "festive"
+   ],
+   "name": "Pidgin Gist",
+   "orientation": "portrait",
+   "pace": "stories"
+  },
+  {
+   "seedKey": "pinboard",
+   "base": "pinboard",
+   "dimension": "flat",
+   "handle": "firstwish",
+   "house": true,
+   "kinds": [
+    "teams"
+   ],
+   "line": "cream paper on green baize in window light, brass pins",
+   "mood": [
+    "warm",
+    "calm",
+    "editorial"
+   ],
+   "name": "Pinboard",
+   "orientation": "either",
+   "pace": "stage"
+  },
+  {
+   "seedKey": "polaroid-table",
+   "base": "polaroid-table",
+   "dimension": "drawn",
+   "handle": "firstwish",
+   "house": true,
+   "kinds": [
+    "love",
+    "celebration",
+    "group"
+   ],
+   "line": "instant prints and ivory paper on dark walnut, one red pencil",
+   "mood": [
+    "nostalgic",
+    "warm",
+    "tender"
+   ],
+   "name": "Polaroid Table",
+   "orientation": "portrait",
+   "pace": "stage"
+  },
+  {
+   "seedKey": "quiet",
+   "base": "quiet",
+   "dimension": "flat",
+   "handle": "firstwish",
+   "house": true,
+   "kinds": [
+    "love"
+   ],
+   "line": "soft black ink and one ribbon red on typing paper, in a dark room",
+   "mood": [
+    "quiet",
+    "calm",
+    "tender",
+    "plain"
+   ],
+   "name": "Quiet",
+   "orientation": "portrait",
+   "pace": "swipe"
+  },
+  {
+   "seedKey": "runway",
+   "base": "runway",
+   "dimension": "flat",
+   "handle": "firstwish",
+   "house": true,
+   "kinds": [
+    "photographers"
+   ],
+   "line": "bone type and one tungsten light on house black",
+   "mood": [
+    "editorial",
+    "luxurious",
+    "bold",
+    "calm"
+   ],
+   "name": "Runway",
+   "orientation": "portrait",
+   "pace": "film"
+  },
+  {
+   "seedKey": "scrapbook",
+   "base": "scrapbook",
+   "dimension": "3d",
+   "handle": "firstwish",
+   "house": true,
+   "kinds": [
+    "celebration",
+    "group"
+   ],
+   "line": "cream album paper and sepia ink on a walnut table, one burgundy cloth",
+   "mood": [
+    "warm",
+    "nostalgic",
+    "tender",
+    "calm"
+   ],
+   "name": "Scrapbook",
+   "orientation": "either",
+   "pace": "swipe"
+  },
+  {
+   "seedKey": "screening",
+   "base": "screening",
+   "dimension": "flat",
+   "handle": "firstwish",
+   "house": true,
+   "kinds": [
+    "photographers"
+   ],
+   "line": "lamp white on screening-room black, with one wine velvet",
+   "mood": [
+    "luxurious",
+    "calm",
+    "editorial",
+    "quiet"
+   ],
+   "name": "Screening",
+   "orientation": "landscape",
+   "pace": "film"
+  },
+  {
+   "seedKey": "showroom",
+   "base": "showroom",
+   "dimension": "3d",
+   "handle": "firstwish",
+   "house": true,
+   "kinds": [
+    "photographers"
+   ],
+   "line": "plaster and bone under daylight, charcoal doors and ink, one brass",
+   "mood": [
+    "luxurious",
+    "calm",
+    "editorial"
+   ],
+   "name": "Showroom",
+   "orientation": "either",
+   "pace": "stage"
+  },
+  {
+   "seedKey": "tailored",
+   "base": "tailored",
+   "dimension": "flat",
+   "handle": "firstwish",
+   "house": true,
+   "kinds": [
+    "celebration",
+    "teams"
+   ],
+   "line": "chalk and one brass on midnight pinstripe",
+   "mood": [
+    "editorial",
+    "luxurious",
+    "calm",
+    "warm"
+   ],
+   "name": "Tailored",
+   "orientation": "portrait",
+   "pace": "swipe"
+  },
+  {
+   "seedKey": "the-aisle",
+   "base": "the-aisle",
+   "dimension": "flat",
+   "handle": "firstwish",
+   "house": true,
+   "kinds": [
+    "wedding"
+   ],
+   "line": "ivory stone in daylight, charcoal ink, one deep green",
+   "mood": [
+    "tender",
+    "calm",
+    "luxurious",
+    "editorial"
+   ],
+   "name": "The Aisle",
+   "orientation": "landscape",
+   "pace": "swipe"
+  },
+  {
+   "seedKey": "the-question",
+   "base": "the-question",
+   "dimension": "3d",
+   "handle": "firstwish",
+   "house": true,
+   "kinds": [
+    "love"
+   ],
+   "line": "candle gold and cream on night plum",
+   "mood": [
+    "tender",
+    "luxurious",
+    "calm"
+   ],
+   "name": "The Question",
+   "orientation": "portrait",
+   "pace": "stage"
+  },
+  {
+   "seedKey": "tinsel",
+   "base": "tinsel",
+   "dimension": "3d",
+   "handle": "firstwish",
+   "house": true,
+   "kinds": [
+    "celebration",
+    "teams"
+   ],
+   "line": "warm lamp gold on fir-green night, ivory paper tags",
+   "mood": [
+    "festive",
+    "warm",
+    "luxurious",
+    "calm"
+   ],
+   "name": "Tinsel",
+   "orientation": "either",
+   "pace": "stage"
+  }
+ ]
+}

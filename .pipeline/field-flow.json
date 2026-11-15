@@ -321,6 +321,22 @@
       "noWriter": false
     },
     {
+      "field": "Account.mode",
+      "writers": [
+        "E-7"
+      ],
+      "store": "Account",
+      "readers": [],
+      "writerActors": [
+        "business",
+        "creator",
+        "person"
+      ],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": false
+    },
+    {
       "field": "Account.name",
       "writers": [
         "E-7",
@@ -1315,7 +1331,7 @@
     {
       "field": "AuthCode.channel",
       "writers": [
-        "E-19"
+        "server:auth-codes"
       ],
       "store": "AuthCode",
       "readers": [
@@ -1323,7 +1339,7 @@
         "sign-up"
       ],
       "writerActors": [
-        "public"
+        "server"
       ],
       "readerActors": [
         "public"
@@ -6417,12 +6433,12 @@
     {
       "field": "NoticePrefs.channel",
       "writers": [
-        "E-78"
+        "server:notices"
       ],
       "store": "NoticePrefs",
       "readers": [],
       "writerActors": [
-        "person"
+        "server"
       ],
       "readerActors": [],
       "crossActor": false,
@@ -6542,17 +6558,21 @@
     },
     {
       "field": "Numbers.period",
-      "writers": [],
+      "writers": [
+        "E-80"
+      ],
       "store": "Numbers",
       "readers": [
         "admin-numbers"
       ],
-      "writerActors": [],
+      "writerActors": [
+        "staff"
+      ],
       "readerActors": [
         "staff"
       ],
       "crossActor": false,
-      "noWriter": true
+      "noWriter": false
     },
     {
       "field": "Numbers.previews",
@@ -6579,6 +6599,66 @@
       "readerActors": [
         "staff"
       ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "Numbers.targets",
+      "writers": [],
+      "store": "Numbers",
+      "readers": [],
+      "writerActors": [],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "NumbersTarget.line",
+      "writers": [],
+      "store": "NumbersTarget",
+      "readers": [],
+      "writerActors": [],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "NumbersTarget.period",
+      "writers": [],
+      "store": "NumbersTarget",
+      "readers": [],
+      "writerActors": [],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "NumbersTarget.setAt",
+      "writers": [],
+      "store": "NumbersTarget",
+      "readers": [],
+      "writerActors": [],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "NumbersTarget.setBy",
+      "writers": [],
+      "store": "NumbersTarget",
+      "readers": [],
+      "writerActors": [],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "NumbersTarget.targetKobo",
+      "writers": [],
+      "store": "NumbersTarget",
+      "readers": [],
+      "writerActors": [],
+      "readerActors": [],
       "crossActor": false,
       "noWriter": true
     },
@@ -8117,14 +8197,14 @@
     {
       "field": "Price.listKobo",
       "writers": [
-        "server:price-book"
+        "E-124"
       ],
       "store": "Price",
       "readers": [
         "admin-prices"
       ],
       "writerActors": [
-        "server"
+        "staff"
       ],
       "readerActors": [
         "staff"
@@ -8220,12 +8300,12 @@
     {
       "field": "Price.sku",
       "writers": [
-        "server:price-book"
+        "E-124"
       ],
       "store": "Price",
       "readers": [],
       "writerActors": [
-        "server"
+        "staff"
       ],
       "readerActors": [],
       "crossActor": false,
@@ -8263,21 +8343,17 @@
     },
     {
       "field": "Price.value",
-      "writers": [
-        "E-124"
-      ],
+      "writers": [],
       "store": "Price",
       "readers": [
         "admin-prices"
       ],
-      "writerActors": [
-        "staff"
-      ],
+      "writerActors": [],
       "readerActors": [
         "staff"
       ],
       "crossActor": false,
-      "noWriter": false
+      "noWriter": true
     },
     {
       "field": "Price.vatIncluded",
@@ -16296,24 +16372,19 @@
     },
     {
       "field": "Wish.amount",
-      "writers": [
-        "E-231"
-      ],
+      "writers": [],
       "store": "Wish",
       "readers": [
         "app-wish-detail",
         "maker-ticket"
       ],
-      "writerActors": [
-        "business",
-        "person"
-      ],
+      "writerActors": [],
       "readerActors": [
         "business",
         "person"
       ],
       "crossActor": false,
-      "noWriter": false
+      "noWriter": true
     },
     {
       "field": "Wish.at",
@@ -18493,22 +18564,17 @@
     },
     {
       "field": "Wish.price",
-      "writers": [
-        "E-228"
-      ],
+      "writers": [],
       "store": "Wish",
       "readers": [
         "app-wish-detail"
       ],
-      "writerActors": [
-        "business",
-        "person"
-      ],
+      "writerActors": [],
       "readerActors": [
         "person"
       ],
       "crossActor": false,
-      "noWriter": false
+      "noWriter": true
     },
     {
       "field": "Wish.reaction",
@@ -19722,5 +19788,5 @@
     }
   ],
   "crossActor": 35,
-  "noWriter": 592
+  "noWriter": 600
 }

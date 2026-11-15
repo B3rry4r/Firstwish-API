@@ -16,7 +16,10 @@
     "migrate": "prisma migrate deploy",
     "prisma:generate": "prisma generate",
     "gates": "bash scripts/gates.sh",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "contracts:export": "node scripts/export-contracts.mjs",
+    "contracts:check": "node scripts/check-contracts.mjs",
+    "seed": "node scripts/seed.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1169.0",

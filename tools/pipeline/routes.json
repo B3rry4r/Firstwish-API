@@ -1,5 +1,5 @@
 {
-  "about": "Route table read by reconcile.py: the routes the Phase 3 rulings name and the cleaner names for clumsy mechanical routes. Every entry cites the decision (decisions.json) or the convention it follows. 'bases' rename a resource's route base (singleton: no :id; idParam: the id's name). 'actions' and 'reads' are keyed by canonical Resource.action / Resource, or screen:RawEntity(.action) for one screen, or screen:* for every read of a screen. A read set to {drop: decision} makes no endpoint; an action set to {ruling: decision} maps to that ruling.",
+  "about": "Route table read by reconcile.py: the routes the Phase 3 rulings name and the cleaner names for clumsy mechanical routes. Every entry cites the decision (decisions.json) or the convention it follows. 'bases' rename a resource's route base (singleton: no :id; idParam: the id's name). 'actions' and 'reads' are keyed by canonical Resource.action / Resource, or screen:RawEntity(.action) for one screen, or screen:* for every read of a screen. A read set to {drop: decision} makes no endpoint; an action set to {ruling: decision} maps to that ruling. 'endpointBody' (keyed 'METHOD /path') applies a decision to one endpoint's body: drop names fields removed, set adds or retypes fields, response names what it returns. 'extraFields' adds the fields (and so the resource) a decision names when no screen or declaration carries them. dropFields: a field a decision takes off a resource's shape.",
   "bases": {
     "Account": {
       "base": "/v1/me",
@@ -1427,5 +1427,175 @@
       "pro.starter": "pay -> plan active; replayed webhook adds nothing",
       "pro.pack": "pay -> pack added; replayed webhook adds nothing"
     }
-  }
+  },
+  "endpointBody": {
+    "PUT /v1/admin/numbers/targets": {
+      "decision": "DEC-132",
+      "set": {
+        "line": "'tickets'|'extras'|'keeps'|'pass'|'pro_plans'|'vault_space'|'concierge'|'creator_plans' (enum, DEC-132)",
+        "period": "'month' (DEC-132)",
+        "targetKobo": "integer (kobo)"
+      },
+      "response": {
+        "entity": "NumbersTarget",
+        "cardinality": "single",
+        "note": "the target as stored (DEC-132)"
+      }
+    },
+    "POST /v1/payments": {
+      "decision": "DEC-134",
+      "drop": [
+        "amount",
+        "price"
+      ],
+      "response": {
+        "entity": "PassMembership",
+        "cardinality": "single",
+        "paymentStart": "required",
+        "note": "{payment, item}: item is what the payment buys, null until the verified payment fulfils it (DEC-139)"
+      }
+    },
+    "POST /v1/wishes/:id/video": {
+      "decision": "DEC-134",
+      "drop": [
+        "amount"
+      ],
+      "response": {
+        "entity": "VideoOrder",
+        "cardinality": "single",
+        "paymentStart": "required",
+        "note": "{payment, item}: item is the video order, null until the verified payment fulfils it (DEC-139)"
+      }
+    },
+    "POST /v1/wishes/:id/keep": {
+      "decision": "DEC-134",
+      "drop": [
+        "price"
+      ],
+      "response": {
+        "entity": "Wish",
+        "cardinality": "single",
+        "paymentStart": "optional",
+        "note": "{payment, item}: payment null when the Pass covers the keep; item is the wish, status live, endsAt = max(endsAt, now)+days for live; now+days for resting (DEC-139)"
+      }
+    },
+    "POST /v1/wishes/:id/seal": {
+      "decision": "DEC-134",
+      "drop": [
+        "amount"
+      ],
+      "response": {
+        "entity": "Wish",
+        "cardinality": "single",
+        "paymentStart": "required",
+        "note": "{payment, item}: item is the wish, sealed once the verified payment fulfils it (DEC-139)"
+      }
+    },
+    "POST /v1/auth/codes": {
+      "decision": "DEC-140",
+      "drop": [
+        "channel"
+      ],
+      "set": {
+        "contact": "string (email, trimmed and lowercased; /^\\S+@\\S+\\.\\S+$/; DEC-140)",
+        "via": "'email' (DEC-140)"
+      }
+    },
+    "PATCH /v1/me/notice-prefs": {
+      "decision": "DEC-135",
+      "drop": [
+        "channel"
+      ]
+    },
+    "PATCH /v1/me": {
+      "decision": "DEC-137",
+      "set": {
+        "mode": "'light'|'dark'|'system' (DEC-137)"
+      }
+    },
+    "PUT /v1/admin/prices/:key": {
+      "decision": "DEC-138",
+      "drop": [
+        "value"
+      ],
+      "set": {
+        "sku": "string (the price-book line, DEC-138)",
+        "priceKobo": "integer (kobo, optional; at least one of priceKobo, listKobo, promotionEndsAt)",
+        "listKobo": "integer (kobo, optional; at least one of priceKobo, listKobo, promotionEndsAt)",
+        "promotionEndsAt": "time (ISO-8601, optional; at least one of priceKobo, listKobo, promotionEndsAt)"
+      }
+    },
+    "POST /v1/admin/refunds": {
+      "decision": "DEC-141",
+      "set": {
+        "amountKobo": "integer (kobo, positive; at most the payment's amount, checked in the service)",
+        "reason": "string (4 or more characters; DEC-125)"
+      }
+    }
+  },
+  "extraFields": [
+    {
+      "resource": "NumbersTarget",
+      "name": "line",
+      "type": "enum(tickets|extras|keeps|pass|pro_plans|vault_space|concierge|creator_plans)",
+      "nullable": false,
+      "decision": "DEC-132"
+    },
+    {
+      "resource": "NumbersTarget",
+      "name": "period",
+      "type": "enum(month)",
+      "nullable": false,
+      "decision": "DEC-132"
+    },
+    {
+      "resource": "NumbersTarget",
+      "name": "targetKobo",
+      "type": "integer (kobo)",
+      "nullable": false,
+      "decision": "DEC-132"
+    },
+    {
+      "resource": "NumbersTarget",
+      "name": "setBy",
+      "type": "string (the staff account id that set it)",
+      "nullable": false,
+      "decision": "DEC-132"
+    },
+    {
+      "resource": "NumbersTarget",
+      "name": "setAt",
+      "type": "time (ISO-8601)",
+      "nullable": false,
+      "decision": "DEC-132"
+    },
+    {
+      "resource": "Numbers",
+      "name": "targets",
+      "type": "object {<line>: integer kobo | null}",
+      "nullable": false,
+      "decision": "DEC-132"
+    },
+    {
+      "resource": "Account",
+      "name": "mode",
+      "type": "enum(light|dark|system)",
+      "nullable": false,
+      "decision": "DEC-137"
+    }
+  ],
+  "dropFields": [
+    {
+      "resource": "PublicWishView",
+      "name": "passcode",
+      "decision": "DEC-144",
+      "why": "Q8: the receiver's read never returns the passcode or its hash"
+    },
+    {
+      "resource": "PublicWishView",
+      "name": "answer",
+      "decision": "DEC-144",
+      "why": "Q8: the answer to a question opening is a secret like the passcode"
+    }
+  ]
 }

@@ -1505,11 +1505,11 @@
       "closes": [
         {
           "conflict": "C-34",
-          "key": "truth-mismatch|money|₦80,000 shown or sent by a screen is in no product truth and not in the price book seed",
-          "detail": "₦80,000 shown or sent by a screen is in no product truth and not in the price book seed"
+          "key": "truth-mismatch|money|\u20a680,000 shown or sent by a screen is in no product truth and not in the price book seed",
+          "detail": "\u20a680,000 shown or sent by a screen is in no product truth and not in the price book seed"
         }
       ],
-      "decision": "not a new figure: ₦80,000 = 100 wishes x the ₦800 royalty at list (T-65); the page works it out from the served price book (S-25). Listed to the owner.",
+      "decision": "not a new figure: \u20a680,000 = 100 wishes x the \u20a6800 royalty at list (T-65); the page works it out from the served price book (S-25). Listed to the owner.",
       "approvedBy": "lead default, owner may override",
       "confidence": "medium",
       "source": "build/rulings-phase3.md",
@@ -2083,13 +2083,13 @@
         },
         {
           "conflict": "C-44",
-          "key": "truth-mismatch|money|₦17 shown or sent by a screen is in no product truth and not in the price book seed",
-          "detail": "₦17 shown or sent by a screen is in no product truth and not in the price book seed"
+          "key": "truth-mismatch|money|\u20a617 shown or sent by a screen is in no product truth and not in the price book seed",
+          "detail": "\u20a617 shown or sent by a screen is in no product truth and not in the price book seed"
         },
         {
           "conflict": "C-45",
-          "key": "truth-mismatch|money|₦7,000 shown or sent by a screen is in no product truth and not in the price book seed",
-          "detail": "₦7,000 shown or sent by a screen is in no product truth and not in the price book seed"
+          "key": "truth-mismatch|money|\u20a67,000 shown or sent by a screen is in no product truth and not in the price book seed",
+          "detail": "\u20a67,000 shown or sent by a screen is in no product truth and not in the price book seed"
         }
       ],
       "decision": "A3: Figures in admin fixtures are sample data, not prices: the money truth check skips screens whose data files are the admin fixtures. Price.list and Price.listKobo are one field, listKobo.",
@@ -2339,6 +2339,162 @@
       "confidence": "medium",
       "source": "build/rulings.md R4, R10",
       "decidedAt": "2026-11-15T17:45:00Z"
+    },
+    {
+      "id": "DEC-132",
+      "topic": "Numbers targets",
+      "closes": [],
+      "decision": "P1 (HALT-1): PUT /v1/admin/numbers/targets takes {line: enum(tickets|extras|keeps|pass|pro_plans|vault_space|concierge|creator_plans), period: \"month\", targetKobo: integer kobo, reason}. Targets are stored in a config table NumbersTarget (line, period, targetKobo, setBy, setAt), one row per line and period; Numbers stays a view that reads it, and a line with no target set reads target null (\"No target set\").",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (Registry reopened once) P1",
+      "decidedAt": "2026-11-15T16:15:00Z",
+      "fieldTypes": {
+        "NumbersTarget.line": "enum(tickets|extras|keeps|pass|pro_plans|vault_space|concierge|creator_plans)",
+        "NumbersTarget.period": "enum(month)",
+        "NumbersTarget.targetKobo": "integer (kobo)",
+        "NumbersTarget.setBy": "string (the staff account id that set it)",
+        "NumbersTarget.setAt": "time",
+        "Numbers.targets": "object {<line>: integer kobo | null} (null: No target set)"
+      }
+    },
+    {
+      "id": "DEC-133",
+      "topic": "WebhookEvent.eventId",
+      "closes": [],
+      "decision": "P2 (HALT-2): WebhookEvent does not link to Event. WebhookEvent.eventId is the provider's event id (string, unique with provider). The dep-graph edge WebhookEvent to Event is dropped.",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (Registry reopened once) P2",
+      "decidedAt": "2026-11-15T16:15:00Z",
+      "fieldTypes": {
+        "WebhookEvent.eventId": "string (the provider's event id; unique with provider)"
+      }
+    },
+    {
+      "id": "DEC-134",
+      "topic": "payment start bodies",
+      "closes": [],
+      "decision": "P3: E-87 and every other payment start (E-148 buy a video, E-228 keep longer, E-231 pay and seal) carry no amount or price in the body; the server prices from the price book (S-24). The optional client amount and price fields are removed from the contracts, so a body that sends one is refused as an unknown field.",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (Registry reopened once) P3; S-24",
+      "decidedAt": "2026-11-15T16:15:00Z"
+    },
+    {
+      "id": "DEC-135",
+      "topic": "email is the only channel",
+      "closes": [],
+      "decision": "P4: E-19 (ask for a sign-in code): the only channel is email (R11), so channel is removed from the body. The same for every contract still naming sms or whatsapp as something Firstwish sends: E-78 (notice choices) loses channel too, and the stored AuthCode.channel and NoticePrefs.channel are enum(email). A later ruling that adds a channel brings it back as enum(email).",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings.md R11; build/rulings-phase3.md (Registry reopened once) P4",
+      "decidedAt": "2026-11-15T16:15:00Z",
+      "fieldTypes": {
+        "AuthCode.channel": "enum(email)",
+        "NoticePrefs.channel": "enum(email)"
+      }
+    },
+    {
+      "id": "DEC-136",
+      "topic": "registry re-freeze",
+      "closes": [],
+      "decision": "The registry is re-frozen after P1 to P4 (DEC-132..135) by tools/pipeline/freeze.py, which sets registry.json frozenAt and writes .pipeline/registry.lock.json. reconcile.py refuses to run while the lock exists unless called with --reopen naming the rulings that reopen it. Frozen at 106 resources, 233 endpoints, 7 waves, 0 open conflicts.",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (Registry reopened once)",
+      "decidedAt": "2026-11-15T16:30:11Z"
+    },
+    {
+      "id": "DEC-137",
+      "topic": "Account.mode",
+      "closes": [],
+      "decision": "Q1: light and dark mode is a field on the account (R10: nothing is stored in the browser; DEC-103). Account.mode is enum(light|dark|system), default system, read through GET /v1/me (E-6) and set through PATCH /v1/me (E-7).",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings.md R10; build/rulings-phase3.md (Registry reopened a second time) Q1",
+      "decidedAt": "2026-11-15T16:40:00Z",
+      "fieldTypes": {
+        "Account.mode": "enum(light|dark|system)"
+      }
+    },
+    {
+      "id": "DEC-138",
+      "topic": "change a price (E-124)",
+      "closes": [],
+      "decision": "Q3: PUT /v1/admin/prices/:key takes {sku, priceKobo?: integer kobo, listKobo?: integer kobo, promotionEndsAt?: time, reason}; at least one of priceKobo, listKobo and promotionEndsAt is sent. The old untyped `value` (a number or a date) is removed.",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (Registry reopened a second time) Q3",
+      "decidedAt": "2026-11-15T16:40:00Z"
+    },
+    {
+      "id": "DEC-139",
+      "topic": "payment start response; no-body responses",
+      "closes": [],
+      "decision": "Q12: every payment start (E-87 POST /v1/payments, E-148 buy a video, E-228 keep longer, E-231 pay and seal) answers {payment: {reference, state, amountKobo, authorizationUrl}, item} where item is what it buys (null until the verified payment fulfils it). E-228 answers payment null when the Pass covers the keep (no charge). An endpoint whose registry response is null or none answers 204 with no body, stated in its contract.",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (Registry reopened a second time) Q12",
+      "decidedAt": "2026-11-15T16:40:00Z"
+    },
+    {
+      "id": "DEC-140",
+      "topic": "sign-in is by email only",
+      "closes": [],
+      "decision": "Q13 (K1, R11): sign-in is by email only. AuthCode.via is enum(email), the purpose confirm-phone is removed (enum(sign-in|confirm-email|staff-sign-in)), and E-19's contact is an email (trimmed, lowercased); via is 'email'.",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings.md R11; build/rulings-phase3.md (Registry reopened a second time) Q13",
+      "decidedAt": "2026-11-15T16:40:00Z",
+      "fieldTypes": {
+        "AuthCode.via": "enum(email)",
+        "AuthCode.purpose": "enum(sign-in|confirm-email|staff-sign-in)"
+      }
+    },
+    {
+      "id": "DEC-141",
+      "topic": "refund body (E-145)",
+      "closes": [],
+      "decision": "Q6: POST /v1/admin/refunds: amountKobo is integer kobo, positive (at most the payment's amount, checked in the service); reason is 4 or more characters (DEC-125).",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (Registry reopened a second time) Q6",
+      "decidedAt": "2026-11-15T16:40:00Z"
+    },
+    {
+      "id": "DEC-142",
+      "topic": "loose contract types",
+      "closes": [],
+      "decision": "Q14: NumbersTarget.targetKobo is kobo and NumbersTarget.setBy a string; Price.kind is enum(naira|date) (the admin prices screen); Payment.priceBookVersion is an integer version, not money.",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (Registry reopened a second time) Q14",
+      "decidedAt": "2026-11-15T16:40:00Z",
+      "fieldTypes": {
+        "Price.kind": "enum(naira|date)",
+        "Payment.priceBookVersion": "integer (the price-book version)"
+      }
+    },
+    {
+      "id": "DEC-144",
+      "topic": "the wish passcode",
+      "closes": [],
+      "decision": "Q8: the passcode (and the answer of a question opening) is never in the content JSON: the server keeps Wish.passcodeHash (hashed) and counts tries and lockedUntil on the WishLink (E-134). The receiver's read (PublicWishView, E-130) never returns the passcode, the answer or a hash: both fields are taken off its shape. The link slug is varchar(32), issued by the server.",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (Registry reopened a second time) Q8",
+      "decidedAt": "2026-11-15T16:40:00Z"
+    },
+    {
+      "id": "DEC-145",
+      "topic": "registry re-freeze (second reopen)",
+      "closes": [],
+      "decision": "The registry is re-frozen after Q1, Q3, Q6, Q8, Q12, Q13 and Q14 (DEC-137..142, DEC-144) by tools/pipeline/freeze.py; reconcile.py was run twice with --reopen \"Q1,Q3,Q12,Q13\" (identical outputs, 0 open conflicts). Frozen at 106 resources, 233 endpoints. Q4, Q5, Q7, Q9 to Q11 change storage only and are ruled in .pipeline/schema-map.json.",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (Registry reopened a second time)",
+      "decidedAt": "2026-11-15T16:55:02Z"
     }
   ]
 }

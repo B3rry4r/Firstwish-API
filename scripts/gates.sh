@@ -3,6 +3,7 @@
 #  1. no float money: parseFloat, toFixed or toPrecision anywhere in src (money is integer kobo).
 #  2. no deferral phrasing in src: unfinished work is not shipped with a note saying so.
 #  3. no real provider host in tests: tests use stand-ins and local hosts only.
+#  4. contracts (scripts/check-contracts.mjs): frozen registry, a contract per endpoint, schema-map against schema.prisma, money as BigInt.
 set -uo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
 
@@ -31,5 +32,12 @@ report "no deferral phrasing in src" \
 tests="$(test_files)"
 report "no real provider host in tests" \
   "$( [[ -n "$tests" ]] && grep -n -i -E 'paystack\.co|resend\.(com|dev)|anthropic\.com|cloudflarestorage\.com|r2\.dev|digitaloceanspaces\.com|amazonaws\.com|googleapis\.com|accounts\.google\.com|firstwish-web\.vercel\.app|firstwish\.moxnafrica\.com' $tests )"
+
+if node scripts/check-contracts.mjs | sed 's/^/  /'; [[ ${PIPESTATUS[0]} -ne 0 ]]; then
+  echo "GATE FAIL: contracts (scripts/check-contracts.mjs)"
+  fail=1
+else
+  echo "gate ok: contracts"
+fi
 
 exit $fail

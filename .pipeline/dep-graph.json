@@ -152,12 +152,6 @@
       ]
     },
     {
-      "from": "WebhookEvent",
-      "to": [
-        "Event"
-      ]
-    },
-    {
       "from": "Wish",
       "to": [
         "Account",
@@ -190,23 +184,21 @@
       "PriceBookVersion",
       "Promotion",
       "Reconciliation",
-      "StaffAccount"
+      "StaffAccount",
+      "WebhookEvent"
     ],
     [
       "ExternalIdentity",
       "Payment",
       "Payout",
-      "Session",
-      "Wish"
+      "Session"
     ],
     [
-      "Event",
       "Refund",
       "RoyaltyAccrual"
     ],
     [
-      "LedgerEntry",
-      "WebhookEvent"
+      "LedgerEntry"
     ],
     [
       "ApprovedDate",
@@ -233,6 +225,7 @@
       "Moment",
       "NoticePrefs",
       "Numbers",
+      "NumbersTarget",
       "OpeningDef",
       "Overview",
       "PassMembership",
@@ -245,12 +238,9 @@
       "ProUsage",
       "Provider",
       "PublicWishView",
-      "PublishRequest",
       "PublishedWish",
-      "QrCard",
       "Queue",
       "Reaction",
-      "RenderJob",
       "RevealLink",
       "RevealPlay",
       "RoleAccess",
@@ -279,23 +269,28 @@
       "VaultFile",
       "VaultPricing",
       "VaultStorage",
-      "VoiceNote",
+      "Wish",
       "WishData",
       "WishDetail",
-      "WishLink",
       "WishNumberSequence",
       "WishOpen"
     ],
     [
       "AiRequest",
       "ConciergeOrder",
+      "Event",
       "JobRun",
       "Notice",
+      "PublishRequest",
+      "RenderJob",
       "Report",
       "StoredFile",
-      "StyleSubmission"
+      "StyleSubmission",
+      "VoiceNote",
+      "WishLink"
     ],
     [
+      "QrCard",
       "WishTransition"
     ]
   ],
@@ -306,7 +301,6 @@
     "Business",
     "Creator",
     "Entitlements",
-    "Event",
     "ExternalIdentity",
     "LedgerEntry",
     "Payment",
@@ -319,8 +313,7 @@
     "RoyaltyAccrual",
     "Session",
     "StaffAccount",
-    "WebhookEvent",
-    "Wish"
+    "WebhookEvent"
   ],
   "rule": "identity and money resources (declarations auth-codes, sessions, google-identity, staff-accounts, payments, ledger, refunds, price-book, royalties-payouts) and what they reference come first; then topological layers"
 }

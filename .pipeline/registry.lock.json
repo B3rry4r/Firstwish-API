@@ -1,8 +1,8 @@
 {
- "frozenAt": "2026-11-15T17:45:00Z",
- "registrySha256": "c6aab05763d250e0066130e7a2264c521a99b5d053ca3695c3b5727396b385c8",
- "resources": 105,
+ "frozenAt": "2026-11-15T16:55:02Z",
+ "registrySha256": "b9b5122181e76e376fc24e879a33e5ef7cf3e8bc75ef2fe29aa41b0e42155a4a",
+ "resources": 106,
  "endpoints": 233,
- "decision": "DEC-131",
- "note": "Do not run tools/pipeline/reconcile.py against this tree unless a new ruling reopens the registry; it rewrites registry.json with frozenAt null."
+ "decision": "DEC-145",
+ "note": "Written by tools/pipeline/freeze.py. reconcile.py refuses to run while this file exists unless called with --reopen \"<ruling ids>\"; after a reopen, freeze again with a new decision."
 }

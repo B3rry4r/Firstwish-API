@@ -1,0 +1,26 @@
+{
+ "table": "SavedReply",
+ "from": "Firstwish-web lib/admin/d-fixtures.ts (savedReplies)",
+ "rows": [
+  {
+   "seedKey": "Link sent again",
+   "name": "Link sent again",
+   "text": "We have sent the link again to your email. If it is not in your inbox in a few minutes, look in spam or promotions."
+  },
+  {
+   "seedKey": "Changes after sealing",
+   "name": "Changes after sealing",
+   "text": "A sealed wish cannot be changed, so it opens exactly as you made it. If something is wrong, reply here with what and we will look at it with you."
+  },
+  {
+   "seedKey": "Taken down",
+   "name": "Taken down",
+   "text": "We have taken it down. Nobody can open it now, the sender included."
+  },
+  {
+   "seedKey": "How to keep a wish",
+   "name": "How to keep a wish",
+   "text": "Open the wish in the app and pick a keep: one more month, six months or a year."
+  }
+ ]
+}

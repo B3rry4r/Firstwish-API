@@ -1,0 +1,91 @@
+{
+ "table": "OpeningDef",
+ "from": "Firstwish-web lib/engine/registry.ts (OPENINGS)",
+ "rows": [
+  {
+   "seedKey": "Sealed until a moment",
+   "fields": [
+    {
+     "key": "at",
+     "kind": "date",
+     "label": "When it opens"
+    },
+    {
+     "hint": "Midnight unless you change it",
+     "key": "time",
+     "kind": "time",
+     "label": "At"
+    }
+   ],
+   "line": "It stays sealed until the time you choose, in their time zone.",
+   "lock": "time",
+   "name": "Sealed until a moment"
+  },
+  {
+   "seedKey": "A countdown",
+   "fields": [
+    {
+     "key": "to",
+     "kind": "date",
+     "label": "Counts down to"
+    }
+   ],
+   "line": "The seal counts down to a day they are waiting for.",
+   "lock": "countdown",
+   "name": "A countdown"
+  },
+  {
+   "seedKey": "A passcode",
+   "fields": [
+    {
+     "hint": "Four to eight letters or numbers",
+     "key": "code",
+     "kind": "secret",
+     "label": "The code"
+    },
+    {
+     "key": "hint",
+     "kind": "text",
+     "label": "A hint",
+     "optional": true
+    }
+   ],
+   "line": "It opens with a code you give them yourself.",
+   "lock": "secret",
+   "name": "A passcode"
+  },
+  {
+   "seedKey": "A question only they can answer",
+   "fields": [
+    {
+     "key": "question",
+     "kind": "text",
+     "label": "The question"
+    },
+    {
+     "hint": "Not case sensitive",
+     "key": "answer",
+     "kind": "secret",
+     "label": "The answer"
+    }
+   ],
+   "line": "It opens when they answer it.",
+   "lock": "secret",
+   "name": "A question only they can answer"
+  },
+  {
+   "seedKey": "A title card",
+   "fields": [],
+   "line": "\"<name> presents\", then it plays when they tap Watch.",
+   "lock": "title",
+   "name": "A title card"
+  },
+  {
+   "seedKey": "Opens straight away",
+   "fields": [],
+   "line": "No seal. It opens when they open it.",
+   "lock": "none",
+   "name": "Opens straight away"
+  }
+ ]
+}

@@ -1,0 +1,1477 @@
+{
+ "table": "Style",
+ "from": "Firstwish-web lib/styles.ts (allStyles(), levels from lib/levels.ts)",
+ "rows": [
+  {
+   "seedKey": "noir",
+   "by": "firstwish",
+   "dimension": "flat",
+   "feel": "Dark, warm and editorial, with copper light. The portrait fills the screen and the words stay out of its way.",
+   "get": "The pick on a Moment, and on every ticket above it.",
+   "house": true,
+   "kinds": [
+    "love",
+    "celebration",
+    "photographers"
+   ],
+   "level": "starter",
+   "light": false,
+   "line": "Dark, warm, copper",
+   "look": "noir",
+   "mood": [
+    "warm",
+    "editorial",
+    "tender"
+   ],
+   "motion": "The name rises letter by letter over the portrait.",
+   "moves": "Scrolls like a page · Portrait",
+   "name": "Studio Noir",
+   "occasions": null,
+   "orientation": "portrait",
+   "pace": "scroll",
+   "packaged": true,
+   "say": "It's your day.",
+   "slug": "noir",
+   "tier": "Starter"
+  },
+  {
+   "seedKey": "letter",
+   "by": "firstwish",
+   "dimension": "flat",
+   "feel": "Paper, ink and a wax seal. It reads like something written by hand and kept in a drawer.",
+   "get": "The pick on a Moment, and on every ticket above it.",
+   "house": true,
+   "kinds": [
+    "love"
+   ],
+   "level": "starter",
+   "light": true,
+   "line": "Paper, ink, a wax seal",
+   "look": "letter",
+   "mood": [
+    "tender",
+    "nostalgic",
+    "quiet"
+   ],
+   "motion": "The seal breaks and the letter unfolds.",
+   "moves": "Scrolls like a page · Portrait",
+   "name": "Love Letter",
+   "occasions": null,
+   "orientation": "portrait",
+   "pace": "scroll",
+   "packaged": true,
+   "say": "I love you.",
+   "slug": "letter",
+   "tier": "Starter"
+  },
+  {
+   "seedKey": "golden",
+   "by": "firstwish",
+   "dimension": "flat",
+   "feel": "Warm sunset light, soft edges. Everything looks like the last hour of a good day.",
+   "get": "The pick on a Moment, and on every ticket above it.",
+   "house": true,
+   "kinds": [
+    "love",
+    "wedding",
+    "photographers"
+   ],
+   "level": "starter",
+   "light": false,
+   "line": "Sunset, soft and dreamy",
+   "look": "golden",
+   "mood": [
+    "warm",
+    "dreamy",
+    "romantic"
+   ],
+   "motion": "The light warms as you scroll.",
+   "moves": "Scrolls like a page · Portrait",
+   "name": "Golden Hour",
+   "occasions": null,
+   "orientation": "portrait",
+   "pace": "scroll",
+   "packaged": true,
+   "say": "Marry me.",
+   "slug": "golden",
+   "tier": "Starter"
+  },
+  {
+   "seedKey": "grace",
+   "by": "firstwish",
+   "dimension": "flat",
+   "feel": "Calm and light, with a verse or a prayer at the centre.",
+   "get": "The pick on a Moment, and on every ticket above it.",
+   "house": true,
+   "kinds": [
+    "celebration"
+   ],
+   "level": "starter",
+   "light": true,
+   "line": "Calm, light, scripture",
+   "look": "grace",
+   "mood": [
+    "calm",
+    "faith",
+    "quiet"
+   ],
+   "motion": "Verses come up like candlelight.",
+   "moves": "Scrolls like a page · Portrait",
+   "name": "Grace",
+   "occasions": null,
+   "orientation": "portrait",
+   "pace": "scroll",
+   "packaged": true,
+   "say": "Thank you, Mum.",
+   "slug": "grace",
+   "tier": "Starter"
+  },
+  {
+   "seedKey": "banter",
+   "by": "firstwish",
+   "dimension": "flat",
+   "feel": "Bright, loud and funny. Stickers, slang and the group chat's energy.",
+   "get": "The pick on a Moment, and on every ticket above it.",
+   "house": true,
+   "kinds": [
+    "celebration",
+    "group"
+   ],
+   "level": "starter",
+   "light": true,
+   "line": "Bright, funny, stickers",
+   "look": "pidgin",
+   "mood": [
+    "playful",
+    "bold",
+    "festive"
+   ],
+   "motion": "Stickers pop in with sound.",
+   "moves": "Scrolls like a page · Portrait",
+   "name": "Banter",
+   "occasions": null,
+   "orientation": "portrait",
+   "pace": "scroll",
+   "packaged": true,
+   "say": "You did that!",
+   "slug": "banter",
+   "tier": "Starter"
+  },
+  {
+   "seedKey": "gele",
+   "by": "firstwish",
+   "dimension": "flat",
+   "feel": "Gold and deep green, made for the people you dress up for.",
+   "get": "The pick on a Moment, and on every ticket above it.",
+   "house": true,
+   "kinds": [
+    "celebration",
+    "group",
+    "wedding"
+   ],
+   "level": "starter",
+   "light": false,
+   "line": "Gold on deep green",
+   "look": "owambe",
+   "mood": [
+    "festive",
+    "luxurious",
+    "warm"
+   ],
+   "motion": "Gold rises through every heading.",
+   "moves": "Scrolls like a page · Portrait",
+   "name": "Gele",
+   "occasions": null,
+   "orientation": "portrait",
+   "pace": "scroll",
+   "packaged": true,
+   "say": "Sixty looks good on you.",
+   "slug": "gele",
+   "tier": "Starter"
+  },
+  {
+   "seedKey": "marquee",
+   "by": "firstwish",
+   "dimension": "flat",
+   "feel": "Title cards in white and red on black. Their life, billed in lights.",
+   "get": "The pick on a Moment, and on every ticket above it.",
+   "house": true,
+   "kinds": [
+    "love",
+    "teams",
+    "photographers"
+   ],
+   "level": "starter",
+   "light": false,
+   "line": "Title cards, in lights",
+   "look": "cinema",
+   "mood": [
+    "bold",
+    "editorial",
+    "dramatic"
+   ],
+   "motion": "A \"Starring\" title on every chapter.",
+   "moves": "Scrolls like a page · Portrait",
+   "name": "Marquee",
+   "occasions": null,
+   "orientation": "portrait",
+   "pace": "scroll",
+   "packaged": true,
+   "say": "Starring: you.",
+   "slug": "marquee",
+   "tier": "Starter"
+  },
+  {
+   "seedKey": "reel",
+   "by": "firstwish",
+   "dimension": "flat",
+   "feel": "The wish as a landscape film, played like a trailer: a line on black, the names over the first photo, each chapter opened by a title card.",
+   "get": "The pick on a Signature or a Premiere, or an extra on a Keepsake.",
+   "house": true,
+   "kinds": [
+    "love",
+    "celebration",
+    "teams",
+    "photographers"
+   ],
+   "level": "premium",
+   "light": false,
+   "line": "A trailer, letterboxed",
+   "mood": [
+    "cinematic",
+    "bold",
+    "editorial",
+    "nostalgic"
+   ],
+   "motion": "Photos cut and push in, and the letter runs as subtitles.",
+   "moves": "Plays like a film · Landscape",
+   "name": "Reel",
+   "occasions": null,
+   "orientation": "landscape",
+   "pace": "film",
+   "packaged": true,
+   "slug": "reel",
+   "tier": "Premium"
+  },
+  {
+   "seedKey": "status",
+   "by": "firstwish",
+   "dimension": "flat",
+   "feel": "The wish as stories: one full-screen moment at a time, tapped through like a status.",
+   "get": "The pick on a Keepsake, and on every ticket above it.",
+   "house": true,
+   "kinds": [
+    "love",
+    "celebration",
+    "group"
+   ],
+   "level": "standard",
+   "light": false,
+   "line": "Stories, one screen at a time",
+   "mood": [
+    "bold",
+    "playful",
+    "warm",
+    "festive"
+   ],
+   "motion": "Each reason is one screen, with its photo.",
+   "moves": "Taps through like stories · Portrait",
+   "name": "Status",
+   "occasions": null,
+   "orientation": "portrait",
+   "pace": "stories",
+   "packaged": true,
+   "slug": "status",
+   "tier": "Standard"
+  },
+  {
+   "seedKey": "gallery",
+   "by": "firstwish",
+   "dimension": "3d",
+   "feel": "Their photos hang as framed prints along one long, lit wall, and they walk from print to print.",
+   "get": "The pick on a Signature or a Premiere, or an extra on a Keepsake.",
+   "house": true,
+   "kinds": [
+    "love",
+    "celebration",
+    "wedding",
+    "photographers"
+   ],
+   "level": "premium",
+   "light": false,
+   "line": "A lit gallery, in 3D",
+   "mood": [
+    "calm",
+    "luxurious",
+    "tender",
+    "editorial"
+   ],
+   "motion": "Swipe to walk; tilt the phone to look around.",
+   "moves": "A place to walk through · Portrait or Landscape · 3D",
+   "name": "Gallery",
+   "occasions": null,
+   "orientation": "either",
+   "pace": "stage",
+   "packaged": true,
+   "slug": "gallery",
+   "tier": "Premium"
+  },
+  {
+   "seedKey": "aso-ebi",
+   "by": "firstwish",
+   "dimension": "drawn",
+   "feel": "One length of cloth woven as you watch: the names, the numbers and the date come up out of the weave, thread by thread, in the colours of the day.",
+   "get": "The pick on a Signature or a Premiere, or an extra on a Keepsake.",
+   "house": true,
+   "kinds": [
+    "wedding",
+    "celebration"
+   ],
+   "level": "premium",
+   "light": false,
+   "line": "Cloth woven while you watch",
+   "mood": [
+    "luxurious",
+    "warm",
+    "editorial",
+    "festive"
+   ],
+   "moves": "Plays like a film · Portrait or Landscape · Drawn",
+   "name": "Aso-ebi",
+   "occasions": {
+    "celebration": [
+     "birthday"
+    ],
+    "wedding": [
+     "save-the-date",
+     "our-story"
+    ]
+   },
+   "orientation": "either",
+   "pace": "film",
+   "packaged": true,
+   "slug": "aso-ebi",
+   "tier": "Premium"
+  },
+  {
+   "seedKey": "before-and-after",
+   "by": "firstwish",
+   "dimension": "flat",
+   "feel": "One line of light crosses everything in the wish: what it has not reached is before, what it has passed is after.",
+   "get": "The pick on a Keepsake, and on every ticket above it.",
+   "house": true,
+   "kinds": [
+    "photographers"
+   ],
+   "level": "standard",
+   "light": false,
+   "line": "One line of light",
+   "mood": [
+    "editorial",
+    "luxurious",
+    "calm",
+    "bold"
+   ],
+   "moves": "Swipes card by card · Portrait",
+   "name": "Before and After",
+   "occasions": {
+    "photographers": [
+     "birthday-shoot",
+     "bridal-look"
+    ]
+   },
+   "orientation": "portrait",
+   "pace": "swipe",
+   "packaged": true,
+   "slug": "before-and-after",
+   "tier": "Standard"
+  },
+  {
+   "seedKey": "bloom",
+   "by": "firstwish",
+   "dimension": "drawn",
+   "feel": "The wish is one plant: a single stem climbs through every chapter, and each line that is written makes it grow.",
+   "get": "The pick on a Signature or a Premiere, or an extra on a Keepsake.",
+   "house": true,
+   "kinds": [
+    "love",
+    "celebration"
+   ],
+   "level": "premium",
+   "light": false,
+   "line": "One stem that grows",
+   "mood": [
+    "tender",
+    "warm",
+    "calm",
+    "luxurious"
+   ],
+   "moves": "Plays like a film · Portrait · Drawn",
+   "name": "Bloom",
+   "occasions": {
+    "celebration": [
+     "mothers-day"
+    ],
+    "love": [
+     "valentines",
+     "birthday",
+     "apology"
+    ]
+   },
+   "orientation": "portrait",
+   "pace": "film",
+   "packaged": true,
+   "slug": "bloom",
+   "tier": "Premium"
+  },
+  {
+   "seedKey": "boarding-pass",
+   "by": "firstwish",
+   "dimension": "drawn",
+   "feel": "One route drawn across a chart from you to them, a boarding pass printed for every stop, and one plane that carries it the whole way.",
+   "get": "The pick on a Keepsake, and on every ticket above it.",
+   "house": true,
+   "kinds": [
+    "love",
+    "celebration",
+    "group",
+    "teams"
+   ],
+   "level": "standard",
+   "light": false,
+   "line": "A flight to them",
+   "mood": [
+    "warm",
+    "calm",
+    "editorial",
+    "hopeful"
+   ],
+   "moves": "Swipes card by card · Portrait or Landscape · Drawn",
+   "name": "Boarding Pass",
+   "occasions": {
+    "celebration": [
+     "send-off"
+    ],
+    "group": [
+     "send-off"
+    ],
+    "love": [
+     "long-distance"
+    ],
+    "teams": [
+     "farewell"
+    ]
+   },
+   "orientation": "either",
+   "pace": "swipe",
+   "packaged": true,
+   "slug": "boarding-pass",
+   "tier": "Standard"
+  },
+  {
+   "seedKey": "cap-toss",
+   "by": "firstwish",
+   "dimension": "3d",
+   "feel": "The whole wish happens during one toss: a single cap leaves the hand as their name is called, and the years pass while it climbs and falls.",
+   "get": "The pick on a Signature or a Premiere, or an extra on a Keepsake.",
+   "house": true,
+   "kinds": [
+    "celebration",
+    "group"
+   ],
+   "level": "premium",
+   "light": false,
+   "line": "One cap in the air",
+   "mood": [
+    "proud",
+    "bright",
+    "luxurious",
+    "warm"
+   ],
+   "moves": "Plays like a film · Portrait · 3D",
+   "name": "Cap Toss",
+   "occasions": {
+    "celebration": [
+     "graduation"
+    ],
+    "group": [
+     "proud-of-you"
+    ]
+   },
+   "orientation": "portrait",
+   "pace": "film",
+   "packaged": true,
+   "slug": "cap-toss",
+   "tier": "Premium"
+  },
+  {
+   "seedKey": "cinema",
+   "by": "firstwish",
+   "dimension": "flat",
+   "feel": "Their life billed as a film, and the wish is the screening: a ticket to tear, a lamp that strikes, a title, a roll of credits, and one last light to put out.",
+   "get": "The pick on a Signature or a Premiere, or an extra on a Keepsake.",
+   "house": true,
+   "kinds": [
+    "love",
+    "teams"
+   ],
+   "level": "premium",
+   "light": false,
+   "line": "Billed like a film",
+   "mood": [
+    "tender",
+    "nostalgic",
+    "luxurious"
+   ],
+   "moves": "Plays like a film · Landscape",
+   "name": "Cinema",
+   "occasions": null,
+   "orientation": "landscape",
+   "pace": "film",
+   "packaged": true,
+   "slug": "cinema",
+   "tier": "Premium"
+  },
+  {
+   "seedKey": "constellation",
+   "by": "firstwish",
+   "dimension": "drawn",
+   "feel": "Their photos are stars, the stars join into their name, and the whole wish is one night sky.",
+   "get": "The pick on a Signature or a Premiere, or an extra on a Keepsake.",
+   "house": true,
+   "kinds": [
+    "love"
+   ],
+   "level": "premium",
+   "light": false,
+   "line": "Their photos as stars",
+   "mood": [
+    "tender",
+    "calm",
+    "luxurious",
+    "wonder"
+   ],
+   "moves": "A place to walk through · Portrait or Landscape · Drawn",
+   "name": "Constellation",
+   "occasions": {
+    "love": [
+     "long-distance",
+     "anniversary",
+     "birthday"
+    ]
+   },
+   "orientation": "either",
+   "pace": "stage",
+   "packaged": true,
+   "slug": "constellation",
+   "tier": "Premium"
+  },
+  {
+   "seedKey": "contact-sheet",
+   "by": "firstwish",
+   "dimension": "drawn",
+   "feel": "The shoot lies on a light box as film, and a loupe lifts any frame off the strip for a closer look.",
+   "get": "The pick on a Keepsake, and on every ticket above it.",
+   "house": true,
+   "kinds": [
+    "photographers"
+   ],
+   "level": "standard",
+   "light": false,
+   "line": "The shoot on a light box",
+   "mood": [
+    "editorial",
+    "calm",
+    "luxurious",
+    "nostalgic"
+   ],
+   "moves": "A place to walk through · Portrait or Landscape · Drawn",
+   "name": "Contact Sheet",
+   "occasions": {
+    "photographers": [
+     "birthday-shoot",
+     "couple",
+     "pre-wedding",
+     "maternity",
+     "graduation",
+     "family-portrait",
+     "bridal-look",
+     "finished-outfit",
+     "film-stills"
+    ]
+   },
+   "orientation": "either",
+   "pace": "stage",
+   "packaged": true,
+   "slug": "contact-sheet",
+   "tier": "Standard"
+  },
+  {
+   "seedKey": "first-day",
+   "by": "firstwish",
+   "dimension": "flat",
+   "feel": "The welcome is a bunch of staff passes on one lanyard: every colleague is a pass, and each tap fans the next one forward.",
+   "get": "The pick on a Keepsake, and on every ticket above it.",
+   "house": true,
+   "kinds": [
+    "teams"
+   ],
+   "level": "standard",
+   "light": false,
+   "line": "Staff passes on a lanyard",
+   "mood": [
+    "warm",
+    "bold",
+    "calm",
+    "editorial"
+   ],
+   "moves": "Taps through like stories · Portrait",
+   "name": "First Day",
+   "occasions": {
+    "teams": [
+     "welcome",
+     "staff-birthday"
+    ]
+   },
+   "orientation": "portrait",
+   "pace": "stories",
+   "packaged": true,
+   "slug": "first-day",
+   "tier": "Standard"
+  },
+  {
+   "seedKey": "gold-card",
+   "by": "firstwish",
+   "dimension": "3d",
+   "feel": "One heavy gold card in a single raking light: every part of the wish is struck into it, and the only cut is the card turning over.",
+   "get": "The pick on a Signature or a Premiere, or an extra on a Keepsake.",
+   "house": true,
+   "kinds": [
+    "teams"
+   ],
+   "level": "premium",
+   "light": false,
+   "line": "One heavy gold card",
+   "mood": [
+    "calm",
+    "luxurious",
+    "exact",
+    "warm"
+   ],
+   "moves": "A place to walk through · Portrait or Landscape · 3D",
+   "name": "Gold Card",
+   "occasions": {
+    "teams": [
+     "client-thank-you",
+     "seasons-greetings",
+     "work-anniversary"
+    ]
+   },
+   "orientation": "either",
+   "pace": "stage",
+   "packaged": true,
+   "slug": "gold-card",
+   "tier": "Premium"
+  },
+  {
+   "seedKey": "group-chat",
+   "by": "firstwish",
+   "dimension": "flat",
+   "feel": "The wish is one group chat: a friend types, the dots open into what they said, and every line is a bubble.",
+   "get": "The pick on a Keepsake, and on every ticket above it.",
+   "house": true,
+   "kinds": [
+    "group",
+    "celebration"
+   ],
+   "level": "standard",
+   "light": false,
+   "line": "One group chat",
+   "mood": [
+    "warm",
+    "playful",
+    "tender",
+    "editorial"
+   ],
+   "moves": "Taps through like stories · Portrait",
+   "name": "Group Chat",
+   "occasions": {
+    "celebration": [
+     "birthday"
+    ]
+   },
+   "orientation": "portrait",
+   "pace": "stories",
+   "packaged": true,
+   "slug": "group-chat",
+   "tier": "Standard"
+  },
+  {
+   "seedKey": "harvest-light",
+   "by": "firstwish",
+   "dimension": "drawn",
+   "feel": "One window's light on the wall of a quiet room, through one afternoon: each word is brown ink, seen only when the light reaches it.",
+   "get": "The pick on a Keepsake, and on every ticket above it.",
+   "house": true,
+   "kinds": [
+    "celebration"
+   ],
+   "level": "standard",
+   "light": false,
+   "line": "Window light on a wall",
+   "mood": [
+    "warm",
+    "faith",
+    "calm",
+    "tender"
+   ],
+   "moves": "Plays like a film · Portrait · Drawn",
+   "name": "Harvest Light",
+   "occasions": {
+    "celebration": [
+     "thanksgiving",
+     "get-well",
+     "mothers-day"
+    ]
+   },
+   "orientation": "portrait",
+   "pace": "film",
+   "packaged": true,
+   "slug": "harvest-light",
+   "tier": "Standard"
+  },
+  {
+   "seedKey": "ink-and-wash",
+   "by": "firstwish",
+   "dimension": "drawn",
+   "feel": "One tall sheet of paper painted while it is read: indigo hills in wash between the chapters, the words written by a brush, one red seal.",
+   "get": "The pick on a Keepsake, and on every ticket above it.",
+   "house": true,
+   "kinds": [
+    "love",
+    "celebration"
+   ],
+   "level": "standard",
+   "light": false,
+   "line": "A scroll painted as it is read",
+   "mood": [
+    "calm",
+    "tender",
+    "quiet",
+    "faith"
+   ],
+   "moves": "Scrolls like a page · Portrait · Drawn",
+   "name": "Ink and Wash",
+   "occasions": {
+    "celebration": [
+     "thanksgiving",
+     "get-well"
+    ],
+    "love": [
+     "apology"
+    ]
+   },
+   "orientation": "portrait",
+   "pace": "scroll",
+   "packaged": true,
+   "slug": "ink-and-wash",
+   "tier": "Standard"
+  },
+  {
+   "seedKey": "invitation",
+   "by": "firstwish",
+   "dimension": "3d",
+   "feel": "One heavy, gilt-edged wedding card: it arrives tied and sealed, and falls open panel by panel.",
+   "get": "The pick on a Signature or a Premiere, or an extra on a Keepsake.",
+   "house": true,
+   "kinds": [
+    "wedding"
+   ],
+   "level": "premium",
+   "light": false,
+   "line": "A gilt-edged wedding card",
+   "mood": [
+    "luxurious",
+    "tender",
+    "calm",
+    "editorial"
+   ],
+   "moves": "A place to walk through · Portrait · 3D",
+   "name": "Invitation",
+   "occasions": {
+    "wedding": [
+     "save-the-date"
+    ]
+   },
+   "orientation": "portrait",
+   "pace": "stage",
+   "packaged": true,
+   "slug": "invitation",
+   "tier": "Premium"
+  },
+  {
+   "seedKey": "lookbook",
+   "by": "firstwish",
+   "dimension": "flat",
+   "feel": "Every photograph is met twice, the way a lookbook prints it: first close, through a narrow frame, then whole.",
+   "get": "The pick on a Keepsake, and on every ticket above it.",
+   "house": true,
+   "kinds": [
+    "photographers"
+   ],
+   "level": "standard",
+   "light": false,
+   "line": "Every photo met twice",
+   "mood": [
+    "editorial",
+    "luxurious",
+    "calm",
+    "bold"
+   ],
+   "moves": "Swipes card by card · Portrait",
+   "name": "Lookbook",
+   "occasions": {
+    "photographers": [
+     "bridal-look",
+     "finished-outfit",
+     "couple",
+     "maternity"
+    ]
+   },
+   "orientation": "portrait",
+   "pace": "swipe",
+   "packaged": true,
+   "slug": "lookbook",
+   "tier": "Standard"
+  },
+  {
+   "seedKey": "lullaby",
+   "by": "firstwish",
+   "dimension": "3d",
+   "feel": "A cot mobile: every photo hangs from one brass ring that turns slowly over the cot.",
+   "get": "The pick on a Keepsake, and on every ticket above it.",
+   "house": true,
+   "kinds": [
+    "celebration"
+   ],
+   "level": "standard",
+   "light": false,
+   "line": "A cot mobile",
+   "mood": [
+    "tender",
+    "calm",
+    "warm",
+    "quiet"
+   ],
+   "moves": "A place to walk through · Portrait · 3D",
+   "name": "Lullaby",
+   "occasions": {
+    "celebration": [
+     "new-baby"
+    ]
+   },
+   "orientation": "portrait",
+   "pace": "stage",
+   "packaged": true,
+   "slug": "lullaby",
+   "tier": "Standard"
+  },
+  {
+   "seedKey": "midnight",
+   "by": "firstwish",
+   "dimension": "drawn",
+   "feel": "The wish opens at twelve: one night sky over one city holds the whole film, and every scene is opened by a firework.",
+   "get": "The pick on a Signature or a Premiere, or an extra on a Keepsake.",
+   "house": true,
+   "kinds": [
+    "celebration",
+    "group"
+   ],
+   "level": "premium",
+   "light": false,
+   "line": "A city sky at twelve",
+   "mood": [
+    "festive",
+    "luxurious",
+    "bold",
+    "warm"
+   ],
+   "moves": "Plays like a film · Portrait or Landscape · Drawn",
+   "name": "Midnight",
+   "occasions": {
+    "celebration": [
+     "new-year",
+     "birthday"
+    ],
+    "group": [
+     "end-of-year"
+    ]
+   },
+   "orientation": "either",
+   "pace": "film",
+   "packaged": true,
+   "slug": "midnight",
+   "tier": "Premium"
+  },
+  {
+   "seedKey": "milestone",
+   "by": "firstwish",
+   "dimension": "flat",
+   "feel": "The years, counted by one great number that never leaves the screen: each photo from the archive is seen through its digits first.",
+   "get": "The pick on a Signature or a Premiere, or an extra on a Keepsake.",
+   "house": true,
+   "kinds": [
+    "teams",
+    "celebration"
+   ],
+   "level": "premium",
+   "light": false,
+   "line": "One great number",
+   "mood": [
+    "proud",
+    "editorial",
+    "nostalgic"
+   ],
+   "moves": "Plays like a film · Landscape",
+   "name": "Milestone",
+   "occasions": {
+    "celebration": [
+     "graduation"
+    ],
+    "teams": [
+     "work-anniversary",
+     "farewell"
+    ]
+   },
+   "orientation": "landscape",
+   "pace": "film",
+   "packaged": true,
+   "slug": "milestone",
+   "tier": "Premium"
+  },
+  {
+   "seedKey": "mixtape",
+   "by": "firstwish",
+   "dimension": "flat",
+   "feel": "A record somebody pressed for them: it arrives in its sleeve, every chapter is a side, and the voice note is side A.",
+   "get": "The pick on a Keepsake, and on every ticket above it.",
+   "house": true,
+   "kinds": [
+    "love"
+   ],
+   "level": "standard",
+   "light": false,
+   "line": "A record pressed for them",
+   "mood": [
+    "warm",
+    "tender",
+    "nostalgic",
+    "editorial"
+   ],
+   "moves": "Swipes card by card · Portrait",
+   "name": "Mixtape",
+   "occasions": {
+    "love": [
+     "valentines",
+     "just-because",
+     "birthday"
+    ]
+   },
+   "orientation": "portrait",
+   "pace": "swipe",
+   "packaged": true,
+   "slug": "mixtape",
+   "tier": "Standard"
+  },
+  {
+   "seedKey": "mosaic",
+   "by": "firstwish",
+   "dimension": "drawn",
+   "feel": "Everyone who loves them is a tile on one wall: walk it tile by tile, then step back, and the tiles become their face.",
+   "get": "The pick on a Signature or a Premiere, or an extra on a Keepsake.",
+   "house": true,
+   "kinds": [
+    "group",
+    "teams"
+   ],
+   "level": "premium",
+   "light": false,
+   "line": "Everyone, a tile",
+   "mood": [
+    "warm",
+    "bold",
+    "editorial",
+    "festive"
+   ],
+   "moves": "A place to walk through · Portrait or Landscape · Drawn",
+   "name": "Mosaic",
+   "occasions": {
+    "group": [
+     "birthday",
+     "end-of-year",
+     "parents-milestone"
+    ],
+    "teams": [
+     "staff-birthday"
+    ]
+   },
+   "orientation": "either",
+   "pace": "stage",
+   "packaged": true,
+   "slug": "mosaic",
+   "tier": "Premium"
+  },
+  {
+   "seedKey": "owambe",
+   "by": "firstwish",
+   "dimension": "3d",
+   "feel": "The party is made of its cloth: the wish arrives as a tied parcel of the day's aso-ebi, and the cloth is let go.",
+   "get": "The pick on a Signature or a Premiere, or an extra on a Keepsake.",
+   "house": true,
+   "kinds": [
+    "celebration",
+    "group",
+    "wedding"
+   ],
+   "level": "premium",
+   "light": false,
+   "line": "The party, in its cloth",
+   "mood": [
+    "festive",
+    "luxurious",
+    "bold",
+    "warm"
+   ],
+   "moves": "A place to walk through · Portrait or Landscape · 3D",
+   "name": "Owambe",
+   "occasions": {
+    "celebration": [
+     "birthday",
+     "christmas",
+     "graduation"
+    ],
+    "group": [
+     "wedding-wishes",
+     "parents-milestone"
+    ],
+    "wedding": [
+     "our-story"
+    ]
+   },
+   "orientation": "either",
+   "pace": "stage",
+   "packaged": true,
+   "slug": "owambe",
+   "tier": "Premium"
+  },
+  {
+   "seedKey": "pidgin-gist",
+   "by": "firstwish",
+   "dimension": "flat",
+   "feel": "Told the way the group chat tells it, with one green dot that carries it from the first frame to the last.",
+   "get": "The pick on a Keepsake, and on every ticket above it.",
+   "house": true,
+   "kinds": [
+    "celebration",
+    "group"
+   ],
+   "level": "standard",
+   "light": false,
+   "line": "Told like the group chat",
+   "mood": [
+    "bold",
+    "warm",
+    "festive"
+   ],
+   "moves": "Taps through like stories · Portrait",
+   "name": "Pidgin Gist",
+   "occasions": {
+    "celebration": [
+     "birthday",
+     "proud-of-you",
+     "send-off"
+    ]
+   },
+   "orientation": "portrait",
+   "pace": "stories",
+   "packaged": true,
+   "slug": "pidgin-gist",
+   "tier": "Standard"
+  },
+  {
+   "seedKey": "pinboard",
+   "by": "firstwish",
+   "dimension": "flat",
+   "feel": "The office notice board on the day: each colleague's note is pinned up by hand, until the board is full round one place for the gift.",
+   "get": "The pick on a Keepsake, and on every ticket above it.",
+   "house": true,
+   "kinds": [
+    "teams"
+   ],
+   "level": "standard",
+   "light": false,
+   "line": "The office notice board",
+   "mood": [
+    "warm",
+    "calm",
+    "editorial"
+   ],
+   "moves": "A place to walk through · Portrait or Landscape",
+   "name": "Pinboard",
+   "occasions": {
+    "teams": [
+     "staff-birthday",
+     "welcome",
+     "work-anniversary",
+     "farewell"
+    ]
+   },
+   "orientation": "either",
+   "pace": "stage",
+   "packaged": true,
+   "slug": "pinboard",
+   "tier": "Standard"
+  },
+  {
+   "seedKey": "polaroid-table",
+   "by": "firstwish",
+   "dimension": "drawn",
+   "feel": "A table of instant prints under a lamp, with the words written on the paper beneath them.",
+   "get": "The pick on a Keepsake, and on every ticket above it.",
+   "house": true,
+   "kinds": [
+    "love",
+    "celebration",
+    "group"
+   ],
+   "level": "standard",
+   "light": false,
+   "line": "Instant prints under a lamp",
+   "mood": [
+    "nostalgic",
+    "warm",
+    "tender"
+   ],
+   "moves": "A place to walk through · Portrait · Drawn",
+   "name": "Polaroid Table",
+   "occasions": {
+    "celebration": [
+     "send-off"
+    ],
+    "group": [
+     "end-of-year"
+    ],
+    "love": [
+     "anniversary",
+     "just-because"
+    ]
+   },
+   "orientation": "portrait",
+   "pace": "stage",
+   "packaged": true,
+   "slug": "polaroid-table",
+   "tier": "Standard"
+  },
+  {
+   "seedKey": "quiet",
+   "by": "firstwish",
+   "dimension": "flat",
+   "feel": "An apology typed on one sheet of paper in a dark room: nothing but the page, the ink and the strike of each letter.",
+   "get": "The pick on a Moment, and on every ticket above it.",
+   "house": true,
+   "kinds": [
+    "love"
+   ],
+   "level": "starter",
+   "light": false,
+   "line": "One typed page",
+   "mood": [
+    "quiet",
+    "calm",
+    "tender",
+    "plain"
+   ],
+   "moves": "Swipes card by card · Portrait",
+   "name": "Quiet",
+   "occasions": {
+    "love": [
+     "apology"
+    ]
+   },
+   "orientation": "portrait",
+   "pace": "swipe",
+   "packaged": true,
+   "slug": "quiet",
+   "tier": "Starter"
+  },
+  {
+   "seedKey": "runway",
+   "by": "firstwish",
+   "dimension": "flat",
+   "feel": "Every photograph is a look that steps out of a door of light, walks toward the lens and is caught by one flash.",
+   "get": "The pick on a Signature or a Premiere, or an extra on a Keepsake.",
+   "house": true,
+   "kinds": [
+    "photographers"
+   ],
+   "level": "premium",
+   "light": false,
+   "line": "A show for one",
+   "mood": [
+    "editorial",
+    "luxurious",
+    "bold",
+    "calm"
+   ],
+   "moves": "Plays like a film · Portrait",
+   "name": "Runway",
+   "occasions": {
+    "photographers": [
+     "finished-outfit",
+     "bridal-look"
+    ]
+   },
+   "orientation": "portrait",
+   "pace": "film",
+   "packaged": true,
+   "slug": "runway",
+   "tier": "Premium"
+  },
+  {
+   "seedKey": "scrapbook",
+   "by": "firstwish",
+   "dimension": "3d",
+   "feel": "A family album open on a table: every chapter is a page filled by hand, and the paper curls over under the finger.",
+   "get": "The pick on a Signature or a Premiere, or an extra on a Keepsake.",
+   "house": true,
+   "kinds": [
+    "celebration",
+    "group"
+   ],
+   "level": "premium",
+   "light": false,
+   "line": "A family album",
+   "mood": [
+    "warm",
+    "nostalgic",
+    "tender",
+    "calm"
+   ],
+   "moves": "Swipes card by card · Portrait or Landscape · 3D",
+   "name": "Scrapbook",
+   "occasions": {
+    "celebration": [
+     "mothers-day",
+     "fathers-day",
+     "christmas",
+     "new-baby"
+    ],
+    "group": [
+     "parents-milestone"
+    ]
+   },
+   "orientation": "either",
+   "pace": "swipe",
+   "packaged": true,
+   "slug": "scrapbook",
+   "tier": "Premium"
+  },
+  {
+   "seedKey": "screening",
+   "by": "firstwish",
+   "dimension": "flat",
+   "feel": "A private screening: the curtain draws, the house lights go down, and the projector pulls each photograph into focus.",
+   "get": "The pick on a Signature or a Premiere, or an extra on a Keepsake.",
+   "house": true,
+   "kinds": [
+    "photographers"
+   ],
+   "level": "premium",
+   "light": false,
+   "line": "A private screening",
+   "mood": [
+    "luxurious",
+    "calm",
+    "editorial",
+    "quiet"
+   ],
+   "moves": "Plays like a film · Landscape",
+   "name": "Screening",
+   "occasions": {
+    "photographers": [
+     "your-finals",
+     "film-stills"
+    ]
+   },
+   "orientation": "landscape",
+   "pace": "film",
+   "packaged": true,
+   "slug": "screening",
+   "tier": "Premium"
+  },
+  {
+   "seedKey": "showroom",
+   "by": "firstwish",
+   "dimension": "3d",
+   "feel": "The studio's showroom opens for one client: the work turns under one soft light, then hangs along the wall to be chosen.",
+   "get": "The pick on a Signature or a Premiere, or an extra on a Keepsake.",
+   "house": true,
+   "kinds": [
+    "photographers"
+   ],
+   "level": "premium",
+   "light": false,
+   "line": "A private view",
+   "mood": [
+    "luxurious",
+    "calm",
+    "editorial"
+   ],
+   "moves": "A place to walk through · Portrait or Landscape · 3D",
+   "name": "Showroom",
+   "occasions": null,
+   "orientation": "either",
+   "pace": "stage",
+   "packaged": true,
+   "slug": "showroom",
+   "tier": "Premium"
+  },
+  {
+   "seedKey": "tailored",
+   "by": "firstwish",
+   "dimension": "flat",
+   "feel": "A suit cut to his measure: it arrives in its garment bag, and each swipe turns the cloth back like a lapel.",
+   "get": "The pick on a Keepsake, and on every ticket above it.",
+   "house": true,
+   "kinds": [
+    "celebration",
+    "teams"
+   ],
+   "level": "standard",
+   "light": false,
+   "line": "A suit cut to measure",
+   "mood": [
+    "editorial",
+    "luxurious",
+    "calm",
+    "warm"
+   ],
+   "moves": "Swipes card by card · Portrait",
+   "name": "Tailored",
+   "occasions": {
+    "celebration": [
+     "fathers-day",
+     "birthday"
+    ],
+    "teams": [
+     "work-anniversary"
+    ]
+   },
+   "orientation": "portrait",
+   "pace": "swipe",
+   "packaged": true,
+   "slug": "tailored",
+   "tier": "Standard"
+  },
+  {
+   "seedKey": "the-aisle",
+   "by": "firstwish",
+   "dimension": "flat",
+   "feel": "One walk down a daylit colonnade: each swipe is a step, and a stone pillar wipes one part of their story into the next.",
+   "get": "The pick on a Signature or a Premiere, or an extra on a Keepsake.",
+   "house": true,
+   "kinds": [
+    "wedding"
+   ],
+   "level": "premium",
+   "light": false,
+   "line": "One walk down the aisle",
+   "mood": [
+    "tender",
+    "calm",
+    "luxurious",
+    "editorial"
+   ],
+   "moves": "Swipes card by card · Landscape",
+   "name": "The Aisle",
+   "occasions": {
+    "wedding": [
+     "our-story",
+     "thank-you"
+    ]
+   },
+   "orientation": "landscape",
+   "pace": "swipe",
+   "packaged": true,
+   "slug": "the-aisle",
+   "tier": "Premium"
+  },
+  {
+   "seedKey": "the-question",
+   "by": "firstwish",
+   "dimension": "3d",
+   "feel": "One ring of gold, met four times on a slow walk toward it, until the question is asked.",
+   "get": "The pick on a Signature or a Premiere, or an extra on a Keepsake.",
+   "house": true,
+   "kinds": [
+    "love"
+   ],
+   "level": "premium",
+   "light": false,
+   "line": "One ring of gold",
+   "mood": [
+    "tender",
+    "luxurious",
+    "calm"
+   ],
+   "moves": "A place to walk through · Portrait · 3D",
+   "name": "The Question",
+   "occasions": {
+    "love": [
+     "proposal"
+    ]
+   },
+   "orientation": "portrait",
+   "pace": "stage",
+   "packaged": true,
+   "slug": "the-question",
+   "tier": "Premium"
+  },
+  {
+   "seedKey": "tinsel",
+   "by": "firstwish",
+   "dimension": "3d",
+   "feel": "A dark tree lit one light at a time: every photo hangs on it, and the last light, the star, is theirs to light.",
+   "get": "The pick on a Signature or a Premiere, or an extra on a Keepsake.",
+   "house": true,
+   "kinds": [
+    "celebration",
+    "teams"
+   ],
+   "level": "premium",
+   "light": false,
+   "line": "A tree lit one light at a time",
+   "mood": [
+    "festive",
+    "warm",
+    "luxurious",
+    "calm"
+   ],
+   "moves": "A place to walk through · Portrait or Landscape · 3D",
+   "name": "Tinsel",
+   "occasions": {
+    "celebration": [
+     "christmas"
+    ],
+    "teams": [
+     "seasons-greetings"
+    ]
+   },
+   "orientation": "either",
+   "pace": "stage",
+   "packaged": true,
+   "slug": "tinsel",
+   "tier": "Premium"
+  }
+ ]
+}

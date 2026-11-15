@@ -65,7 +65,7 @@ model AiRequest {
   id           String          @id @db.Uuid
   accountId    String          @db.Uuid
   kind         AiRequestKind
-  inputFileId  String?
+  inputFileId  String?         @db.Uuid
   transcript   String?
   output       Json?
   creditsSpent Int
@@ -83,15 +83,19 @@ model AiRequest {
   prompt       String?
   styleId      String?         @db.Uuid
   target       Json?
-  voiceFileId  String?
+  voiceFileId  String?         @db.Uuid
   wishId       String?         @db.Uuid
   account      Account         @relation("AiRequest_accountId", fields: [accountId], references: [id])
   style        Style?          @relation("AiRequest_styleId", fields: [styleId], references: [id])
   wish         Wish?           @relation("AiRequest_wishId", fields: [wishId], references: [id])
+  inputFile    StoredFile?     @relation("AiRequest_inputFileId", fields: [inputFileId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  voiceFile    StoredFile?     @relation("AiRequest_voiceFileId", fields: [voiceFileId], references: [id], onDelete: Restrict, onUpdate: Restrict)
 
   @@index([accountId, id])
   @@index([styleId, id])
   @@index([wishId, id])
+  @@index([inputFileId, id])
+  @@index([voiceFileId, id])
   @@index([status, id])
   @@map("ai_request")
 }
@@ -269,12 +273,12 @@ model ConciergeOrder {
   count        Int
   rush         Boolean
   brief        String
-  namesFileId  String?
+  namesFileId  String?              @db.Uuid
   quoteKobo    BigInt?
   makerId      String?              @db.Uuid
   status       ConciergeOrderStatus
   deliverBy    DateTime?            @db.Timestamptz(3)
-  reportFileId String?
+  reportFileId String?              @db.Uuid
   invoiceId    String?              @db.Uuid
   createdAt    DateTime             @default(now()) @db.Timestamptz(3)
   updatedAt    DateTime             @updatedAt @db.Timestamptz(3)
@@ -282,11 +286,15 @@ model ConciergeOrder {
   business     Business?            @relation("ConciergeOrder_businessId", fields: [businessId], references: [id])
   invoice      Invoice?             @relation("ConciergeOrder_invoiceId", fields: [invoiceId], references: [id])
   maker        StaffAccount?        @relation("ConciergeOrder_makerId", fields: [makerId], references: [id])
+  namesFile    StoredFile?          @relation("ConciergeOrder_namesFileId", fields: [namesFileId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  reportFile   StoredFile?          @relation("ConciergeOrder_reportFileId", fields: [reportFileId], references: [id], onDelete: Restrict, onUpdate: Restrict)
 
   @@index([accountId, id])
   @@index([businessId, id])
   @@index([invoiceId, id])
   @@index([makerId, id])
+  @@index([namesFileId, id])
+  @@index([reportFileId, id])
   @@index([status, id])
   @@map("concierge_order")
 }
@@ -410,12 +418,15 @@ model Event {
   line          EventLine?
   at            DateTime   @db.Timestamptz(3)
   props         Json?
+  key           String?
   account       Account?   @relation("Event_accountId", fields: [accountId], references: [id])
   wish          Wish?      @relation("Event_wishId", fields: [wishId], references: [id])
   qrCardByEvent QrCard[]   @relation("QrCard_eventId")
 
+  @@unique([name, accountId, key])
   @@index([accountId, id])
   @@index([wishId, id])
+  @@index([styleSlug, name, at])
   @@map("event")
 }
 
@@ -883,7 +894,10 @@ model PublishedWish {
   styleName    String?
   title        String?
   wish         String?
+  wishId       String?   @db.Uuid
+  wishRef      Wish?     @relation("PublishedWish_wishId", fields: [wishId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
+  @@index([wishId, id])
   @@map("published_wish")
 }
 
@@ -893,16 +907,18 @@ model QrCard {
   wishId    String?      @db.Uuid
   eventId   String?      @db.Uuid
   kind      QrCardKind
-  fileId    String?
+  fileId    String?      @db.Uuid
   status    QrCardStatus
   createdAt DateTime     @default(now()) @db.Timestamptz(3)
   names     Json?
   wishIds   String[]     @default([])
   event     Event?       @relation("QrCard_eventId", fields: [eventId], references: [id])
   wish      Wish?        @relation("QrCard_wishId", fields: [wishId], references: [id])
+  file      StoredFile?  @relation("QrCard_fileId", fields: [fileId], references: [id], onDelete: Restrict, onUpdate: Restrict)
 
   @@index([eventId, id])
   @@index([wishId, id])
+  @@index([fileId, id])
   @@index([status, id])
   @@map("qr_card")
 }
@@ -967,7 +983,7 @@ model RenderJob {
   wishId       String          @db.Uuid
   kind         RenderJobKind
   status       RenderJobStatus
-  outputFileId String?
+  outputFileId String?         @db.Uuid
   width        Int
   height       Int
   seconds      Int
@@ -975,8 +991,10 @@ model RenderJob {
   createdAt    DateTime        @default(now()) @db.Timestamptz(3)
   updatedAt    DateTime        @updatedAt @db.Timestamptz(3)
   wish         Wish            @relation("RenderJob_wishId", fields: [wishId], references: [id])
+  outputFile   StoredFile?     @relation("RenderJob_outputFileId", fields: [outputFileId], references: [id], onDelete: Restrict, onUpdate: Restrict)
 
   @@index([wishId, id])
+  @@index([outputFileId, id])
   @@index([status, id])
   @@map("render_job")
 }
@@ -1077,14 +1095,17 @@ model SavedWish {
 /// table: written by E-157, E-158 and server:upload-screening
 model ScreeningResult {
   id           String                       @id @db.Uuid
-  fileId       String
+  fileId       String                       @db.Uuid
   provider     String
   verdict      ScreeningResultVerdict
   labels       Json
   reviewedBy   String?
   finalVerdict ScreeningResultFinalVerdict?
   createdAt    DateTime                     @default(now()) @db.Timestamptz(3)
+  file         StoredFile                   @relation("ScreeningResult_fileId", fields: [fileId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
+  @@index([fileId, id])
+  @@index([verdict, id])
   @@map("screening_result")
 }
 
@@ -1161,10 +1182,13 @@ model Shoot {
 
 /// table: written by E-173 (the storage port issues a short-lived signed read; the row records the read granted)
 model SignedUrl {
-  id      String  @id @db.Uuid
-  fileId  String?
-  variant String?
+  id        String      @id @db.Uuid
+  expiresAt DateTime?   @db.Timestamptz(3)
+  fileId    String?     @db.Uuid
+  variant   String?
+  file      StoredFile? @relation("SignedUrl_fileId", fields: [fileId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
+  @@index([fileId, id])
   @@map("signed_url")
 }
 
@@ -1192,29 +1216,41 @@ model StaffAccount {
 
 /// table: written by E-182..E-184 and server:storage
 model StoredFile {
-  id             String            @id @db.Uuid
-  ownerAccountId String?           @db.Uuid
-  businessId     String?           @db.Uuid
-  purpose        StoredFilePurpose
-  objectKey      String
-  contentType    String
-  bytes          BigInt
-  sha256         String?
-  status         StoredFileStatus
-  variants       Json
-  driver         StoredFileDriver
-  createdAt      DateTime          @default(now()) @db.Timestamptz(3)
-  updatedAt      DateTime          @updatedAt @db.Timestamptz(3)
-  fileId         String?
-  kind           Json?
-  styleId        String?           @db.Uuid
-  business       Business?         @relation("StoredFile_businessId", fields: [businessId], references: [id])
-  style          Style?            @relation("StoredFile_styleId", fields: [styleId], references: [id])
-  ownerAccount   Account?          @relation("StoredFile_ownerAccountId", fields: [ownerAccountId], references: [id])
+  id                         String            @id @db.Uuid
+  ownerAccountId             String?           @db.Uuid
+  businessId                 String?           @db.Uuid
+  purpose                    StoredFilePurpose
+  objectKey                  String
+  contentType                String
+  bytes                      BigInt
+  sha256                     String?
+  status                     StoredFileStatus
+  variants                   Json
+  driver                     StoredFileDriver
+  createdAt                  DateTime          @default(now()) @db.Timestamptz(3)
+  updatedAt                  DateTime          @updatedAt @db.Timestamptz(3)
+  fileId                     String?           @db.Uuid
+  kind                       StoredFileKind?
+  styleId                    String?           @db.Uuid
+  business                   Business?         @relation("StoredFile_businessId", fields: [businessId], references: [id])
+  style                      Style?            @relation("StoredFile_styleId", fields: [styleId], references: [id])
+  ownerAccount               Account?          @relation("StoredFile_ownerAccountId", fields: [ownerAccountId], references: [id])
+  file                       StoredFile?       @relation("StoredFile_fileId", fields: [fileId], references: [id], onDelete: SetNull, onUpdate: SetNull)
+  aiRequestByInputFile       AiRequest[]       @relation("AiRequest_inputFileId")
+  aiRequestByVoiceFile       AiRequest[]       @relation("AiRequest_voiceFileId")
+  conciergeOrderByNamesFile  ConciergeOrder[]  @relation("ConciergeOrder_namesFileId")
+  conciergeOrderByReportFile ConciergeOrder[]  @relation("ConciergeOrder_reportFileId")
+  qrCardByFile               QrCard[]          @relation("QrCard_fileId")
+  renderJobByOutputFile      RenderJob[]       @relation("RenderJob_outputFileId")
+  screeningResultByFile      ScreeningResult[] @relation("ScreeningResult_fileId")
+  signedUrlByFile            SignedUrl[]       @relation("SignedUrl_fileId")
+  storedFileByFile           StoredFile[]      @relation("StoredFile_fileId")
+  wishFileByFile             WishFile[]        @relation("WishFile_fileId")
 
   @@index([businessId, id])
   @@index([styleId, id])
   @@index([ownerAccountId, id])
+  @@index([fileId, id])
   @@index([status, id])
   @@map("stored_file")
 }
@@ -1285,6 +1321,7 @@ model Style {
   styleSubmissionByStyle StyleSubmission[] @relation("StyleSubmission_styleId")
 
   @@unique([slug])
+  @@index([level, id])
   @@map("style")
 }
 
@@ -1381,9 +1418,9 @@ model Template {
 /// table: written by server:storage (a signed upload granted, waiting for its confirm)
 model UploadTicket {
   id          String  @id @db.Uuid
+  purpose     String?
   bytes       BigInt?
   contentType String?
-  purpose     String?
   subjectId   String?
 
   @@map("upload_ticket")
@@ -1485,6 +1522,8 @@ model Wish {
   voiceNoteByWish      VoiceNote[]      @relation("VoiceNote_wishId")
   wishLinkByWish       WishLink[]       @relation("WishLink_wishId")
   wishTransitionByWish WishTransition[] @relation("WishTransition_wishId")
+  publishedWishByWish  PublishedWish[]  @relation("PublishedWish_wishId")
+  wishFileByWish       WishFile[]       @relation("WishFile_wishId")
 
   @@unique([no])
   @@index([accountId, id])
@@ -1542,6 +1581,22 @@ model WishTransition {
   @@index([wishId, id])
   @@index([createdAt, id])
   @@map("wish_transition")
+}
+
+/// table: Y5: a file a wish names (wish, file, role), written when the content is saved; the foreign key keeps a file in a wish from being deleted by any race
+model WishFile {
+  id        String       @id @db.Uuid
+  wishId    String       @db.Uuid
+  fileId    String       @db.Uuid
+  role      WishFileRole
+  createdAt DateTime     @default(now()) @db.Timestamptz(3)
+  wish      Wish         @relation("WishFile_wishId", fields: [wishId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  file      StoredFile   @relation("WishFile_fileId", fields: [fileId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([wishId, fileId, role])
+  @@index([wishId, id])
+  @@index([fileId, id])
+  @@map("wish_file")
 }
 
 enum AccountSides {
@@ -1992,6 +2047,13 @@ enum StoredFileDriver {
   spaces
 }
 
+enum StoredFileKind {
+  image
+  sound
+  model
+  video
+}
+
 enum StyleLevelLevel {
   starter
   standard
@@ -2056,4 +2118,13 @@ enum WishKeep {
   month
   half
   year
+}
+
+enum WishFileRole {
+  photo
+  voice
+  clip
+  cover
+  sound
+  model
 }

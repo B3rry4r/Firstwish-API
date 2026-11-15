@@ -126,6 +126,49 @@ export interface StaffAuthResult {
 export interface GoogleStart {
   url: string;
 }
+/** A read that returns every row in ONE answer, no paging (X28, DEC-166): nextCursor is always null. */
+export interface AllList<T> {
+  items: T[];
+  nextCursor: null;
+}
+/** UploadTicket.upload (X20, DEC-163): the signed PUT. It binds the content type and length (X26). */
+export interface SignedUpload {
+  url: string;
+  method: "PUT";
+  headers: Record<string, string>;
+  expiresAt: Instant;
+}
+/** One priced line of a quote (X13, DEC-160). */
+export interface QuoteLine {
+  sku: string;
+  name: string;
+  qty: number;
+  /** The list price of one. */
+  listKobo: Kobo;
+  /** The price charged for one at the quote's moment. */
+  unitKobo: Kobo;
+  /** unitKobo times qty. */
+  totalKobo: Kobo;
+  discounted: boolean;
+}
+/** E-213 (X13, DEC-160): ONE quote for a ticket and its extras, priced by the server from the price book. */
+export interface TicketQuote {
+  /** The price-book version the quote used. */
+  version: number;
+  versionId: Id;
+  lines: QuoteLine[];
+  totalKobo: Kobo;
+  listTotalKobo: Kobo;
+}
+/** E-125 (X14, DEC-161): the public price book, paged by ?cursor=&limit=. */
+export interface PriceBook {
+  version: number;
+  items: Price[];
+  promotion: Promotion | null;
+  lifecycle: LifecycleConfig | null;
+  entitlements: Entitlements;
+  nextCursor: string | null;
+}
 /** E-19: the registry names the response SignInCode and gives no fields. */
 export type SignInCode = Record<string, unknown>;
 /** E-202 (DEC-65): a read view of a live StudioStyle with its submission. */
@@ -810,28 +853,28 @@ export interface PlayWish {
 /** Price: config. price-book lines in kobo (price-book declaration); staff change them by E-124 as a new version */
 export interface Price {
   changed?: boolean | null;
-  conciergeDeliveryHours: number;
-  conciergeSingleWish: Kobo;
+  conciergeDeliveryHours?: number | null;
+  conciergeSingleWish?: Kobo | null;
   discountable: boolean;
-  from: string;
-  group: string;
-  items: unknown[];
+  from?: string | null;
+  group?: string | null;
+  items?: unknown[] | null;
   key: string;
   kind: "naira" | "date";
-  lead: string;
+  lead?: string | null;
   listKobo?: number | null;
   name: string;
-  per: string;
-  price: Kobo;
+  per?: string | null;
+  price?: Kobo | null;
   promoKobo?: Kobo | null;
-  reason: string;
+  reason?: string | null;
   sku: string;
-  sla: string;
-  title: string;
-  value: Kobo;
+  sla?: string | null;
+  title?: string | null;
+  value: Kobo | Instant;
   vatIncluded: boolean;
   version: number;
-  was: Kobo;
+  was?: Kobo | null;
 }
 
 /** PriceBookVersion: config. price-book versions written by E-126, E-127 (owner publishes, finance drafts) */
@@ -1187,8 +1230,8 @@ export interface Shoot {
 
 /** SignedUrl: table. written by E-173 (the storage port issues a short-lived signed read; the row records the read granted) */
 export interface SignedUrl {
-  fileId: string;
-  variant: string;
+  expiresAt: Instant;
+  url: string;
 }
 
 /** StaffAccount: table. written by E-174..E-181 and server:staff-accounts */
@@ -1224,7 +1267,7 @@ export interface StoredFile {
   driver: "r2" | "spaces";
   fileId: string;
   id: string;
-  kind: unknown;
+  kind: "image" | "sound" | "model" | "video";
   objectKey: string;
   ownerAccountId?: string | null;
   purpose: "wish-photo" | "voice-note" | "video-clip" | "vault-file" | "studio-asset" | "brand-logo" | "render" | "qr-card" | "export";
@@ -1293,7 +1336,7 @@ export interface Style {
   house: boolean;
   img: string;
   kinds: unknown[];
-  level: string;
+  level: "starter" | "standard" | "premium";
   light: boolean;
   line: string;
   look?: string | null;
@@ -1309,7 +1352,7 @@ export interface Style {
   paid: number;
   pos: string;
   previews: number;
-  rate: number;
+  rate?: number | null;
   reason: string;
   record: unknown[];
   sample: Record<string, unknown>;
@@ -1330,7 +1373,13 @@ export interface StyleLevel {
 
 /** StyleRate: view. preview-to-paid rate per quarter worked out from events; E-199 is a read */
 export interface StyleRate {
+  level: "starter" | "standard" | "premium";
+  name: string;
+  paid: number;
+  previews: number;
   quarter: string;
+  rate?: number | null;
+  styleSlug: string;
 }
 
 /** StyleSubmission: table. written by E-201, E-202 and server:style-review (DEC-65) */
@@ -1462,10 +1511,9 @@ export interface TicketTerms {
 
 /** UploadTicket: table. written by server:storage (a signed upload granted, waiting for its confirm) */
 export interface UploadTicket {
-  bytes: number;
-  contentType: string;
+  id: string;
   purpose: string;
-  subjectId: string;
+  upload: SignedUpload;
 }
 
 /** VaultFile: view. a business's Vault files */
@@ -1701,7 +1749,7 @@ export type PostAdminPeopleByIdContactRevealHeaders = Record<string, never>;
 /** 204 No Content: the response has no body (Q12). */
 export type PostAdminPeopleByIdContactRevealResponse = NoContent;
 
-/** E-5 GET /v1/handles/:handle. Auth: creator. */
+/** E-5 GET /v1/handles/:handle. Auth: signed in. */
 export interface GetHandlesByHandleParams {
   handle: string;
 }
@@ -1792,6 +1840,16 @@ export interface PostMeCreatorBody {
 }
 export type PostMeCreatorHeaders = Record<string, never>;
 export type PostMeCreatorResponse = Account;
+
+/** E-235 POST /v1/me/erase. Auth: signed in. */
+export type PostMeEraseParams = Record<string, never>;
+export interface PostMeEraseBody {
+  /** 'erase' */
+  confirm: "erase";
+}
+export type PostMeEraseHeaders = Record<string, never>;
+/** 204 No Content: the response has no body (Q12). */
+export type PostMeEraseResponse = NoContent;
 
 /** E-12 POST /v1/ai/letter. Auth: creator; signed in. */
 export type PostAiLetterParams = Record<string, never>;
@@ -2144,6 +2202,14 @@ export interface GetCreatorsQuery {
 }
 export type GetCreatorsHeaders = Record<string, never>;
 export type GetCreatorsResponse = PaginatedList<Creator>;
+
+/** E-236 GET /v1/creators/:handle. Auth: public. */
+export interface GetCreatorsByHandleParams {
+  handle: string;
+}
+export type GetCreatorsByHandleQuery = Record<string, never>;
+export type GetCreatorsByHandleHeaders = Record<string, never>;
+export type GetCreatorsByHandleResponse = Creator;
 
 /** E-43 GET /v1/studio/me. Auth: creator. */
 export type GetStudioMeParams = Record<string, never>;
@@ -2957,7 +3023,7 @@ export interface GetPriceBookQuery {
   limit?: number;
 }
 export type GetPriceBookHeaders = Record<string, never>;
-export type GetPriceBookResponse = PaginatedList<Price>;
+export type GetPriceBookResponse = PriceBook;
 
 /** E-126 POST /v1/admin/price-book-versions. Auth: finance,owner. */
 export type PostAdminPriceBookVersionsParams = Record<string, never>;
@@ -3314,6 +3380,17 @@ export interface PutFeedWishesByIdSaveBody {
 export type PutFeedWishesByIdSaveHeaders = Record<string, never>;
 export type PutFeedWishesByIdSaveResponse = SaveResponse;
 
+/** E-237 GET /v1/admin/screening-results. Auth: moderator,ops,owner. */
+export type GetAdminScreeningResultsParams = Record<string, never>;
+export interface GetAdminScreeningResultsQuery {
+  /** pass|review|reject (optional; only results with this verdict) */
+  verdict?: "pass" | "review" | "reject";
+  cursor?: string;
+  limit?: number;
+}
+export type GetAdminScreeningResultsHeaders = Record<string, never>;
+export type GetAdminScreeningResultsResponse = PaginatedList<ScreeningResult>;
+
 /** E-157 POST /v1/admin/screening-results/:id/decision. Auth: moderator. */
 export interface PostAdminScreeningResultsByIdDecisionParams {
   id: string;
@@ -3598,9 +3675,9 @@ export interface PostUploadsBody {
   contentType?: string;
   /** File (image png/jpeg/webp/svg, sound mp3/mp4/aac/ogg/wav, model .glb/.riv) */
   file?: unknown;
-  /** image|sound|model (derived from file by kindOfFile) */
-  kind?: "image" | "sound" | "model";
-  /** string */
+  /** image|sound|model|video (optional; the media kind, DEC-165) */
+  kind?: "image" | "sound" | "model" | "video";
+  /** string (photo|voice|clip|vault|studio|brand; what the file is for, DEC-165) */
   purpose?: string;
   /** number */
   seconds?: number;
@@ -3612,7 +3689,7 @@ export interface PostUploadsBody {
   subjectId?: string;
 }
 export type PostUploadsHeaders = Record<string, never>;
-export type PostUploadsResponse = VoiceNote;
+export type PostUploadsResponse = UploadTicket;
 
 /** E-183 DELETE /v1/uploads/:id. Auth: business; creator; signed in. */
 export interface DeleteUploadsByIdParams {
@@ -3625,7 +3702,8 @@ export interface DeleteUploadsByIdBody {
   wishId?: string;
 }
 export type DeleteUploadsByIdHeaders = Record<string, never>;
-export type DeleteUploadsByIdResponse = VoiceNote;
+/** 204 No Content: the response has no body (Q12). */
+export type DeleteUploadsByIdResponse = NoContent;
 
 /** E-184 POST /v1/uploads/:id/confirm. Auth: business; creator; signed in. */
 export interface PostUploadsByIdConfirmParams {
@@ -3708,6 +3786,8 @@ export type PostStudioStylesByIdWithdrawResponse = StudioStyle | SubmittedStyle;
 /** E-193 GET /v1/admin/styles. Auth: ops,owner,reviewer. */
 export type GetAdminStylesParams = Record<string, never>;
 export interface GetAdminStylesQuery {
+  /** starter|standard|premium (optional; only styles at this level) */
+  level?: "starter" | "standard" | "premium";
   cursor?: string;
   limit?: number;
 }
@@ -3761,12 +3841,9 @@ export type PutAdminStylesBySlugLevelResponse = Style;
 
 /** E-198 GET /v1/styles/levels. Auth: public; business; creator; signed in. */
 export type GetStylesLevelsParams = Record<string, never>;
-export interface GetStylesLevelsQuery {
-  cursor?: string;
-  limit?: number;
-}
+export type GetStylesLevelsQuery = Record<string, never>;
 export type GetStylesLevelsHeaders = Record<string, never>;
-export type GetStylesLevelsResponse = PaginatedList<StyleLevel>;
+export type GetStylesLevelsResponse = AllList<StyleLevel>;
 
 /** E-199 GET /v1/admin/styles/preview-to-paid. Auth: owner,reviewer. */
 export type GetAdminStylesPreviewToPaidParams = Record<string, never>;
@@ -3923,11 +4000,13 @@ export type GetStudioTemplatesResponse = PaginatedList<Template>;
 /** E-213 GET /v1/ticket-offers. Auth: business. */
 export type GetTicketOffersParams = Record<string, never>;
 export interface GetTicketOffersQuery {
-  cursor?: string;
-  limit?: number;
+  /** array<string> (optional, repeatable ?extras=; extra lines of the price book) */
+  extras?: string[];
+  /** string (a ticket line of the price book, such as ticket.single) */
+  ticket: string;
 }
 export type GetTicketOffersHeaders = Record<string, never>;
-export type GetTicketOffersResponse = PaginatedList<TicketOffer>;
+export type GetTicketOffersResponse = TicketQuote;
 
 /** E-214 GET /v1/business/vault-files. Auth: business. */
 export type GetBusinessVaultFilesParams = Record<string, never>;
@@ -4246,6 +4325,7 @@ export interface EndpointContracts {
   "E-9": { params: PostMeBusinessParams; body: PostMeBusinessBody; headers: PostMeBusinessHeaders; response: PostMeBusinessResponse };
   "E-10": { params: DeleteMeCreatorParams; body: DeleteMeCreatorBody; headers: DeleteMeCreatorHeaders; response: DeleteMeCreatorResponse };
   "E-11": { params: PostMeCreatorParams; body: PostMeCreatorBody; headers: PostMeCreatorHeaders; response: PostMeCreatorResponse };
+  "E-235": { params: PostMeEraseParams; body: PostMeEraseBody; headers: PostMeEraseHeaders; response: PostMeEraseResponse };
   "E-12": { params: PostAiLetterParams; body: PostAiLetterBody; headers: PostAiLetterHeaders; response: PostAiLetterResponse };
   "E-13": { params: PostAiPickPhotosParams; body: PostAiPickPhotosBody; headers: PostAiPickPhotosHeaders; response: PostAiPickPhotosResponse };
   "E-14": { params: PostAiReasonsParams; body: PostAiReasonsBody; headers: PostAiReasonsHeaders; response: PostAiReasonsResponse };
@@ -4277,6 +4357,7 @@ export interface EndpointContracts {
   "E-40": { params: PostConciergeOrdersParams; body: PostConciergeOrdersBody; headers: PostConciergeOrdersHeaders; response: PostConciergeOrdersResponse };
   "E-41": { params: GetAdminCreatorsParams; query: GetAdminCreatorsQuery; headers: GetAdminCreatorsHeaders; response: GetAdminCreatorsResponse };
   "E-42": { params: GetCreatorsParams; query: GetCreatorsQuery; headers: GetCreatorsHeaders; response: GetCreatorsResponse };
+  "E-236": { params: GetCreatorsByHandleParams; query: GetCreatorsByHandleQuery; headers: GetCreatorsByHandleHeaders; response: GetCreatorsByHandleResponse };
   "E-43": { params: GetStudioMeParams; query: GetStudioMeQuery; headers: GetStudioMeHeaders; response: GetStudioMeResponse };
   "E-44": { params: PatchStudioMeParams; body: PatchStudioMeBody; headers: PatchStudioMeHeaders; response: PatchStudioMeResponse };
   "E-45": { params: GetMeDatesParams; query: GetMeDatesQuery; headers: GetMeDatesHeaders; response: GetMeDatesResponse };
@@ -4391,6 +4472,7 @@ export interface EndpointContracts {
   "E-154": { params: GetCreatorEarningsParams; query: GetCreatorEarningsQuery; headers: GetCreatorEarningsHeaders; response: GetCreatorEarningsResponse };
   "E-155": { params: DeleteFeedWishesByIdSaveParams; body: DeleteFeedWishesByIdSaveBody; headers: DeleteFeedWishesByIdSaveHeaders; response: DeleteFeedWishesByIdSaveResponse };
   "E-156": { params: PutFeedWishesByIdSaveParams; body: PutFeedWishesByIdSaveBody; headers: PutFeedWishesByIdSaveHeaders; response: PutFeedWishesByIdSaveResponse };
+  "E-237": { params: GetAdminScreeningResultsParams; query: GetAdminScreeningResultsQuery; headers: GetAdminScreeningResultsHeaders; response: GetAdminScreeningResultsResponse };
   "E-157": { params: PostAdminScreeningResultsByIdDecisionParams; body: PostAdminScreeningResultsByIdDecisionBody; headers: PostAdminScreeningResultsByIdDecisionHeaders; response: PostAdminScreeningResultsByIdDecisionResponse };
   "E-158": { params: InternalScreeningResultsScreenFileParams; body: InternalScreeningResultsScreenFileBody; headers: InternalScreeningResultsScreenFileHeaders; response: InternalScreeningResultsScreenFileResponse };
   "E-159": { params: PostAuthRefreshParams; body: PostAuthRefreshBody; headers: PostAuthRefreshHeaders; response: PostAuthRefreshResponse };

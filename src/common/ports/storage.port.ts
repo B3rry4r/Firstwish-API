@@ -1,6 +1,8 @@
 export interface SignUpload {
   key: string;
   contentType: string;
+  /** X26: the exact size in bytes the PUT must carry; the signature binds it with the content type. */
+  contentLength: number;
   expiresInSeconds: number;
 }
 export interface SignedUpload {
@@ -26,4 +28,6 @@ export abstract class StoragePort {
   /** The first `bytes` bytes of an object (for screening by file signature), or null when there is none. */
   abstract readStart(key: string, bytes: number): Promise<Buffer | null>;
   abstract delete(key: string): Promise<void>;
+  /** Copies an object inside storage (Y1: a confirmed upload moves from its staging key to a final key no PUT was signed for). */
+  abstract copy(fromKey: string, toKey: string): Promise<void>;
 }

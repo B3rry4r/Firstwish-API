@@ -1,9 +1,10 @@
 #!/usr/bin/env node
 // Reference rows only: the price book (version 1, its lines in kobo, the promotion, entitlements), the staff roles and the
 // sections each opens, the lifecycle terms and the PROVISIONAL payout threshold, and the catalogues the web app holds as
-// constants (prisma/seed-data/*.json, written by scripts/export-seed-data.mjs; ruling Q11). Never people, accounts or wishes.
+// constants (prisma/seed-data/*.json, written by scripts/export-seed-data.mjs; ruling Q11). Never people or wishes; the one
+// account is the house (X8): handle firstwish, a creator side, no email, so it can never sign in.
 // Running it twice gives the same rows: every row has a fixed id made from its natural key and is upserted.
-//   DATABASE_URL=... node scripts/seed.mjs
+//   DATABASE_URL=... node scripts/seed.mjs            (node scripts/seed.mjs styles: the styles alone)
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -34,7 +35,8 @@ const ALL = ["/admin", "/admin/wishes", "/admin/people", "/admin/moderation", "/
   "/admin/numbers", "/admin/team", "/admin/audit", "/admin/settings"];
 const ROLE_SECTIONS = {
   owner: ALL,
-  ops: ALL.filter((h) => !["/admin/team", "/admin/settings", "/admin/prices"].includes(h)),
+  // X16: ops reads /admin/prices (E-123); only owner and finance change a price (E-124's roles, A9).
+  ops: ALL.filter((h) => !["/admin/team", "/admin/settings"].includes(h)),
   moderator: ["/admin", "/admin/wishes", "/admin/people", "/admin/moderation", "/admin/showing"],
   reviewer: ["/admin", "/admin/styles", "/admin/styles/review", "/admin/creators"],
   support: ["/admin", "/admin/wishes", "/admin/people", "/admin/support", "/admin/messages"],
@@ -44,11 +46,26 @@ const ROLE_SECTIONS = {
 
 /* Entitlements, from the price-book declaration's behaviour (the app's account.ts, catalog.ts, pro-data.ts, studio.ts). */
 const ENTITLEMENTS = {
+  // Each ticket: term, photos, clips, style level and the extras it may take (catalog.ts extras table, "Yes" cells).
+  // Then what each extra, keep and Concierge line grants (catalog.ts:397-413; product-plan T-36 for the rush).
   tickets: {
-    moment: { termDays: 7, photos: 6, clips: 0, keepable: false },
-    keepsake: { termDays: 14, photos: 15, clips: 0, keepable: true },
-    signature: { termDays: 30, photos: 15, clips: 0, keepable: true },
-    premiere: { termDays: 60, photos: 20, clips: 3, clipSeconds: 15, keepable: true },
+    moment: { termDays: 7, photos: 6, clips: 0, keepable: false, styleLevel: "starter", takes: [] },
+    keepsake: { termDays: 14, photos: 15, clips: 0, keepable: true, styleLevel: "standard",
+      takes: ["extra.five-photos", "extra.premium-style", "extra.portrait-video", "extra.qr-card"] },
+    signature: { termDays: 30, photos: 15, clips: 0, keepable: true, styleLevel: "premium", portraitVideo: true, qrCard: true,
+      friendMessagesMax: 10, takes: ["extra.five-photos"] },
+    premiere: { termDays: 60, photos: 20, clips: 3, clipSeconds: 15, keepable: true, styleLevel: "premium", video: true,
+      portraitVideo: true, qrCard: true, takes: ["extra.clip-15s", "extra.clip-60s"] },
+    extras: {
+      "five-photos": { photos: 5 },
+      "premium-style": { styleLevel: "premium" },
+      "portrait-video": { portraitVideo: true },
+      "qr-card": { qrCard: true },
+      "clip-15s": { clips: 1, clipSeconds: 15, video: true },
+      "clip-60s": { clips: 1, clipSeconds: 60, video: true },
+    },
+    keeps: { month: { termDays: 30 }, half: { termDays: 182 }, year: { termDays: 365 } },
+    concierge: { single: { wishes: 1 } },
   },
   keepsakeExtrasCeilingKobo: 750000n,
   passWishes: 20,
@@ -58,6 +75,9 @@ const ENTITLEMENTS = {
   creator: {
     open: { creditsOnce: 3, reviewsPerMonth: 1 },
     creator: { credits: 10, reviewsPerMonth: 2 },
+    signed: { signed: true, days: 30 },
+    creditPack: { credits: 5 },
+    extraReview: { reviews: 1 },
     costs: { draft: 4, change: 1 },
     sharePercent: 20,
     templateRoyaltyPercent: 25,
@@ -66,8 +86,28 @@ const ENTITLEMENTS = {
     starter: { wishes: 10, logins: 1, vaultGb: 100 },
     studio: { wishes: 35, logins: 3, vaultGb: 500 },
     pack: { wishes: 5, vaultGb: 20, days: 90 },
+    vault: { block: { vaultGb: 100, days: 30 }, "block-bulk": { vaultGb: 100, days: 30, fromGb: 1000 } },
   },
 };
+
+/* Z2: concierge.rush is in no web app file and by R5 the app is the truth for what is sold, so it is not seeded (listed to the
+   owner; it comes back as a price line when the app sells it). A copy an earlier seed wrote is removed. */
+const NOT_SOLD = new Set(["concierge.rush"]);
+const SOLD_PRICES = priceBook.seed.prices.filter((p) => !NOT_SOLD.has(p.sku));
+
+/* X8: the house. Styles and wishes made by Firstwish have an owner, and the creators list includes it. No email and no Google
+   identity: no sign-in can ever reach it. "firstwish" is a reserved handle, so no person can take it. */
+export const HOUSE_ACCOUNT_ID = seedId("account:house");
+export const HOUSE_HANDLE = "firstwish";
+
+async function seedHouse(db) {
+  const at = new Date(SEED_MS);
+  const account = { name: "Firstwish", handle: HOUSE_HANDLE, sides: ["person", "creator"], lastSide: "creator", contact: null, phone: null };
+  await db.account.upsert({ where: { id: HOUSE_ACCOUNT_ID }, create: { id: HOUSE_ACCOUNT_ID, ...account, createdAt: at }, update: account });
+  const creatorId = seedId("creator:house");
+  const creator = { accountId: HOUSE_ACCOUNT_ID, name: "Firstwish", house: true, href: `/creators/${HOUSE_HANDLE}`, line: "Made by Firstwish" };
+  await db.creator.upsert({ where: { accountId: HOUSE_ACCOUNT_ID }, create: { id: creatorId, ...creator }, update: creator });
+}
 
 /* Lifecycle terms (DEC-70), from the wish-lifecycle declaration and the app's account.ts. */
 const LIFECYCLE = {
@@ -93,6 +133,20 @@ async function seedCatalogues(db) {
   }
 }
 
+/* B14: the styles the web app registers today (prisma/seed-data/Style.json), each with the level the app shows now and its
+   first level row. Created once: a re-run never undoes a level staff moved or a style staff switched off. */
+export async function seedStyles(db) {
+  const doc = JSON.parse(readFileSync(join(ROOT, "prisma/seed-data/Style.json"), "utf8"));
+  const at = new Date(SEED_MS);
+  for (const { seedKey, ...r } of doc.rows) {
+    const row = Object.fromEntries(Object.entries(r).filter(([, v]) => v !== null && v !== undefined));
+    const id = seedId(`Style:${seedKey}`);
+    await db.style.upsert({ where: { slug: row.slug }, create: { id, ...row, on: true, addedAt: at, record: [] }, update: {} });
+    const lid = seedId(`StyleLevel:${seedKey}`);
+    await db.styleLevel.upsert({ where: { id: lid }, create: { id: lid, styleSlug: row.slug, slug: row.slug, level: row.level, since: at, by: "seed" }, update: {} });
+  }
+}
+
 export async function seed(db) {
   const version = 1;
   const effectiveFrom = new Date(SEED_MS);
@@ -101,7 +155,7 @@ export async function seed(db) {
     create: { id: seedId("price-book:1"), version, effectiveFrom, createdBy: "seed", note: "Seed from the app (R5)", createdAt: effectiveFrom },
     update: {},
   });
-  for (const p of priceBook.seed.prices) {
+  for (const p of SOLD_PRICES) {
     const row = {
       sku: p.sku,
       name: p.name,
@@ -118,8 +172,9 @@ export async function seed(db) {
     label: promo.label,
     percentOff: promo.percentOff,
     endsAt: new Date(promo.endsAt),
-    appliesTo: priceBook.seed.prices.filter((p) => p.promoKobo !== null).map((p) => p.sku),
+    appliesTo: SOLD_PRICES.filter((p) => p.promoKobo !== null).map((p) => p.sku),
   };
+  await db.price.deleteMany({ where: { sku: { in: [...NOT_SOLD] }, version } });
   await db.promotion.upsert({ where: { id: seedId("promotion:launch-40") }, create: { id: seedId("promotion:launch-40"), ...promoRow }, update: promoRow });
   await db.entitlements.upsert({ where: { id: seedId("entitlements:1") }, create: { id: seedId("entitlements:1"), ...ENTITLEMENTS }, update: ENTITLEMENTS });
   await db.lifecycleConfig.upsert({ where: { id: seedId("lifecycle:1") }, create: { id: seedId("lifecycle:1"), ...LIFECYCLE }, update: LIFECYCLE });
@@ -136,11 +191,13 @@ export async function seed(db) {
     update: { key: "payout.thresholdKobo", choice },
   });
   await seedCatalogues(db);
+  await seedStyles(db);
+  await seedHouse(db);
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   const db = new PrismaClient();
-  seed(db)
+  (process.argv[2] === "styles" ? seedStyles(db) : seed(db))
     .then(() => console.log("seed: reference rows in place"))
     .catch((e) => {
       console.error(e);

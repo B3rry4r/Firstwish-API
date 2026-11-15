@@ -5,6 +5,7 @@ import type { Env } from "./common/env/env";
 import { ErrorEnvelopeFilter } from "./common/errors/error-envelope.filter";
 import { requestIdMiddleware } from "./common/http/request-id";
 import { WireJsonInterceptor, wireReplacer } from "./common/http/wire-json";
+import { ControlCharsPipe } from "./common/validation/control-chars.pipe";
 import { makeValidationPipe } from "./common/validation/validation.pipe";
 
 export const API_PREFIX = "v1";
@@ -24,7 +25,8 @@ export function setupApp(app: INestApplication): INestApplication {
   express.set("json replacer", wireReplacer);
   app.use(requestIdMiddleware);
   app.setGlobalPrefix(API_PREFIX);
-  app.useGlobalPipes(makeValidationPipe());
+  // AA3: control characters are refused (422) before validation, for every body, query and path value.
+  app.useGlobalPipes(new ControlCharsPipe(), makeValidationPipe());
   app.useGlobalInterceptors(new WireJsonInterceptor());
   app.useGlobalFilters(new ErrorEnvelopeFilter());
   app.enableCors({

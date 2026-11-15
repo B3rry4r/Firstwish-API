@@ -62,3 +62,22 @@ describe("canon DTO decorators", () => {
     expect(why).toEqual({ email: "Must be an email address.", phone: "Must be a phone number.", handle: "@admin is taken." });
   });
 });
+
+import { MAX_LINK_LENGTH, linkProblem, normaliseLink } from "../link";
+
+describe("link canon (AA4): the parsed URL's own text, https only, 2048 at most", () => {
+  it("stores new URL(v).href", () => {
+    expect(normaliseLink(" https://Example.COM ")).toBe("https://example.com/");
+    expect(normaliseLink("https://example.com:443/a b?x=1#top")).toBe(new URL("https://example.com/a b?x=1#top").href);
+  });
+  it("refuses other schemes, bare words, and names or passwords in the link", () => {
+    for (const bad of ["http://example.com", "javascript:alert(1)", "ftp://x.test", "example.com", "", "https://", "https://user:pw@example.com"]) {
+      expect(normaliseLink(bad)).toBeNull();
+      expect(linkProblem(bad)).not.toBeNull();
+    }
+  });
+  it("refuses a link longer than 2048 characters", () => {
+    expect(normaliseLink(`https://example.com/${"a".repeat(MAX_LINK_LENGTH)}`)).toBeNull();
+    expect(normaliseLink(`https://example.com/${"a".repeat(MAX_LINK_LENGTH - 21)}`)).not.toBeNull();
+  });
+});

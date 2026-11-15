@@ -7,6 +7,7 @@ import { EmailPort } from "./email.port";
 import { GoogleIdentityPort } from "./google.port";
 import { CodeGenerator, IdGenerator, StandinCodeGenerator, StandinIdGenerator, SystemCodeGenerator, SystemIdGenerator } from "./ids.port";
 import { PaymentsPort } from "./payments.port";
+import { ImageSizesPort, MissingImageSizes } from "./image-sizes.port";
 import { UploadScreeningPort } from "./screening.port";
 import { StoragePort } from "./storage.port";
 import { AnthropicWriting } from "./adapters/anthropic.adapter";
@@ -15,7 +16,15 @@ import { BasicScreening } from "./adapters/basic-screening.adapter";
 import { PaystackPayments } from "./adapters/paystack.adapter";
 import { ResendEmail } from "./adapters/resend.adapter";
 import { S3Storage, s3ConfigFor } from "./adapters/s3-storage.adapter";
-import { StandinAiWriting, StandinEmail, StandinGoogle, StandinPayments, StandinScreening, StandinStorage } from "./adapters/standins";
+import {
+  StandinAiWriting,
+  StandinEmail,
+  StandinGoogle,
+  StandinImageSizes,
+  StandinPayments,
+  StandinScreening,
+  StandinStorage,
+} from "./adapters/standins";
 
 const standin = (env: Env) => env.PROVIDERS === "standin";
 const need = (v: string | undefined): string => v as string; // presence is checked by loadEnv for PROVIDERS=live
@@ -57,8 +66,13 @@ const providers: Provider[] = [
       standin(env) ? new StandinGoogle() : new GoogleOidc(need(env.GOOGLE_CLIENT_ID), need(env.GOOGLE_CLIENT_SECRET), clock),
   },
   { provide: UploadScreeningPort, inject: [ENV], useFactory: (env: Env) => (standin(env) ? new StandinScreening() : new BasicScreening()) },
+  // X22: the image-sizes port; its real adapter comes with the jobs frame (B06)
+  { provide: ImageSizesPort, inject: [ENV], useFactory: (env: Env) => (standin(env) ? new StandinImageSizes() : new MissingImageSizes()) },
 ];
 
 @Global()
-@Module({ providers, exports: [Clock, IdGenerator, CodeGenerator, PaymentsPort, EmailPort, StoragePort, AiWritingPort, UploadScreeningPort, GoogleIdentityPort] })
+@Module({
+  providers,
+  exports: [Clock, IdGenerator, CodeGenerator, PaymentsPort, EmailPort, StoragePort, AiWritingPort, UploadScreeningPort, GoogleIdentityPort, ImageSizesPort],
+})
 export class ProvidersModule {}

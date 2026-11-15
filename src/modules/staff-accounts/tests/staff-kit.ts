@@ -5,7 +5,7 @@ import { CurrentPrincipal } from "../../../common/auth/decorators";
 import { AccessTokenVerifier, Principal } from "../../../common/auth/principal";
 import { PrismaService } from "../../../common/db/prisma.service";
 import { UuidV7Maker } from "../../../common/ids/uuidv7";
-import { createTestApp, TestApp, TestTokens } from "../../../../test/kit/app";
+import { createTestApp, TestApp, TestTokens, uniqueAddress } from "../../../../test/kit/app";
 import { SessionTokenVerifier } from "../../../common/auth/session-token.verifier";
 import { StaffAuthService } from "../staff-auth.service";
 
@@ -90,11 +90,9 @@ export async function makeStaff(db: PrismaService, roles: StaffAccountRoles[], s
   return db.staffAccount.create({ data: { id: ids.next(), email: `staff-${t}@example.test`, name: `Staff ${t}`, roles, status } });
 }
 
-let addr = 0;
-/** A client address of its own (the API trusts one proxy in tests), so per-address limits never cross specs. */
+/** A client address of its own (the API trusts one proxy in tests), so per-address limits never cross specs (AA6: the kit's block). */
 export function staffIp(): string {
-  addr++;
-  return `10.${(process.pid + addr) % 250}.${Math.floor(addr / 250) % 250}.${addr % 250}`;
+  return uniqueAddress();
 }
 
 /** Asks for a code, reads it from the stand-in email, verifies it. Returns the verify response. */

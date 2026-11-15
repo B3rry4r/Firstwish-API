@@ -1,6 +1,6 @@
 {
  "phase": "SCHEMA (Phase 4)",
- "registrySha256": "b29dc0385a59de5e431d5313d780b7f91c1204246c15956be68a8afbc5ab4915",
+ "registrySha256": "6c65c8208fd4b9dd3b45b127af2261128865b5f369d90acd5f1408a984fd8c9d",
  "rules": [
   "table: something writes it (a POST, PUT, PATCH, DELETE or INTERNAL route, or a server:* declaration). A GET's query parameters are not writers.",
   "view: read only, worked out on read from the tables named in 'of'. No table of its own.",
@@ -15,7 +15,11 @@
   "An admin action's reason and action are written to the audit row (DEC-125), not to the subject, unless a declaration lists them as fields.",
   "Erase (Q9): 'erase' names every column holding personal data with rule blank (set to null or '' when the account is erased) or keep (with the reason). test/schema/schema.rulings.spec.ts checks each named column exists.",
   "Indexes (INT-1): 'indexes' lists extra indexes a ruling asks for, each a list of columns.",
-  "U7 (INT-1): a staff account can never be deleted at the database (trigger staff_account_no_delete); a removed member stays, status removed (S3)."
+  "U7 (INT-1): a staff account can never be deleted at the database (trigger staff_account_no_delete); a removed member stays, status removed (S3).",
+  "Refs on delete (INT-2): 'refOnDelete' names the delete rule of one reference column (Cascade, Restrict, SetNull); the model's 'onDelete' is the default.",
+  "Join tables (INT-2, Y5): top-level 'joinTables' adds tables that are no registry resource (storage only, no contract shape), each with columns, refs, refOnDelete, unique.",
+  "X23 (INT-2): every *FileId column is a uuid with a real foreign key to stored_file; a file still named by a row cannot be deleted (Restrict), its signed reads and screening results go with it (Cascade). B09's link triggers are dropped.",
+  "AA2 (INT-2): every String, String[] and Json column of a table with an owner key (accountId, ownerAccountId, businessId or creatorId to Account, Business or Creator), and of Account, has an erase rule (blank or keep with why); scripts/check-contracts.mjs fails when one has none. Id columns (id, *Id) are keys, not text."
  ],
  "resources": {
   "Account": {
@@ -98,12 +102,74 @@
     "erasedAt": {
      "rule": "keep",
      "why": "when erase ran"
+    },
+    "lastSide": {
+     "rule": "keep",
+     "why": "set back to person by the erase; not personal"
+    },
+    "pro": {
+     "rule": "keep",
+     "why": "plan state, not personal"
     }
    }
   },
   "AiRequest": {
    "class": "table",
-   "reason": "written by E-12..E-16 and server:ai-writing (one row per AI request, credits charged)"
+   "reason": "written by E-12..E-16 and server:ai-writing (one row per AI request, credits charged)",
+   "refs": {
+    "inputFileId": "StoredFile",
+    "voiceFileId": "StoredFile"
+   },
+   "refOnDelete": {
+    "inputFileId": "Restrict",
+    "voiceFileId": "Restrict"
+   },
+   "erase": {
+    "transcript": {
+     "rule": "blank",
+     "why": "the person's spoken words"
+    },
+    "output": {
+     "rule": "blank",
+     "why": "made from the person's words"
+    },
+    "ask": {
+     "rule": "blank",
+     "why": "the person's words"
+    },
+    "description": {
+     "rule": "blank",
+     "why": "the person's words"
+    },
+    "instruction": {
+     "rule": "blank",
+     "why": "the person's words"
+    },
+    "made": {
+     "rule": "blank",
+     "why": "made from the person's words"
+    },
+    "prompt": {
+     "rule": "blank",
+     "why": "built from the person's words"
+    },
+    "target": {
+     "rule": "blank",
+     "why": "names what the person wrote about"
+    },
+    "model": {
+     "rule": "keep",
+     "why": "the AI model's name, not personal"
+    },
+    "base": {
+     "rule": "keep",
+     "why": "the style or kind the request started from, not personal"
+    },
+    "fileIds": {
+     "rule": "keep",
+     "why": "ids only; the files go by the erase files job (X10)"
+    }
+   }
   },
   "ApprovedDate": {
    "class": "config",
@@ -212,7 +278,17 @@
   },
   "Ban": {
    "class": "table",
-   "reason": "written by E-21 and server:moderation"
+   "reason": "written by E-21 and server:moderation",
+   "erase": {
+    "reason": {
+     "rule": "keep",
+     "why": "staff-written reason, kept for the safety record"
+    },
+    "by": {
+     "rule": "keep",
+     "why": "the staff member, not the subject"
+    }
+   }
   },
   "BankAccount": {
    "class": "table",
@@ -224,6 +300,10 @@
     "accountNumber": {
      "rule": "blank",
      "why": "personal"
+    },
+    "bankCode": {
+     "rule": "keep",
+     "why": "the bank's code, not personal; the account number is blanked"
     }
    }
   },
@@ -249,6 +329,38 @@
     "person": {
      "rule": "blank",
      "why": "personal"
+    },
+    "brand": {
+     "rule": "blank",
+     "why": "AA2"
+    },
+    "business": {
+     "rule": "blank",
+     "why": "AA2"
+    },
+    "name": {
+     "rule": "blank",
+     "why": "AA2"
+    },
+    "logins": {
+     "rule": "keep",
+     "why": "counts only; the members' contacts live on Login and are blanked"
+    },
+    "month": {
+     "rule": "keep",
+     "why": "a month key"
+    },
+    "plan": {
+     "rule": "keep",
+     "why": "plan state"
+    },
+    "record": {
+     "rule": "keep",
+     "why": "plan and usage history, no personal text"
+    },
+    "wishes": {
+     "rule": "keep",
+     "why": "counts only"
     }
    }
   },
@@ -279,6 +391,38 @@
     "client": {
      "rule": "blank",
      "why": "personal"
+    },
+    "wish": {
+     "rule": "blank",
+     "why": "the wish's words"
+    },
+    "hearts": {
+     "rule": "keep",
+     "why": "counts and file refs"
+    },
+    "key": {
+     "rule": "keep",
+     "why": "a key"
+    },
+    "kind": {
+     "rule": "keep",
+     "why": "the kind of wish"
+    },
+    "no": {
+     "rule": "keep",
+     "why": "the wish number"
+    },
+    "occasion": {
+     "rule": "keep",
+     "why": "the occasion's name, not personal"
+    },
+    "reveal": {
+     "rule": "keep",
+     "why": "reveal settings"
+    },
+    "shoot": {
+     "rule": "keep",
+     "why": "the shoot it came from"
     }
    }
   },
@@ -292,7 +436,19 @@
     "to": "date-only query window of 'Due this week', not a field of the order (DEC-128)"
    },
    "refs": {
-    "makerId": "StaffAccount"
+    "makerId": "StaffAccount",
+    "namesFileId": "StoredFile",
+    "reportFileId": "StoredFile"
+   },
+   "refOnDelete": {
+    "namesFileId": "Restrict",
+    "reportFileId": "Restrict"
+   },
+   "erase": {
+    "brief": {
+     "rule": "blank",
+     "why": "the person's brief"
+    }
    }
   },
   "Creator": {
@@ -325,6 +481,30 @@
     "person": {
      "rule": "blank",
      "why": "personal"
+    },
+    "line": {
+     "rule": "blank",
+     "why": "the creator's own words"
+    },
+    "href": {
+     "rule": "blank",
+     "why": "names the old handle"
+    },
+    "img": {
+     "rule": "blank",
+     "why": "the creator's photo link"
+    },
+    "counts": {
+     "rule": "keep",
+     "why": "counts only"
+    },
+    "plan": {
+     "rule": "keep",
+     "why": "plan state"
+    },
+    "styles": {
+     "rule": "keep",
+     "why": "style slugs; a live style stays in the catalogue (DEC-69)"
     }
    }
   },
@@ -351,6 +531,12 @@
      "attrs": "@default(0)",
      "opt": false,
      "why": "Q5: a counter lives on this row; a write checks and bumps version so two writers cannot both spend it"
+    }
+   },
+   "erase": {
+    "plan": {
+     "rule": "keep",
+     "why": "plan state"
     }
    }
   },
@@ -379,6 +565,14 @@
     "for": {
      "rule": "blank",
      "why": "personal"
+    },
+    "what": {
+     "rule": "blank",
+     "why": "AA2"
+    },
+    "key": {
+     "rule": "keep",
+     "why": "a key"
     }
    }
   },
@@ -418,7 +612,47 @@
   },
   "Event": {
    "class": "table",
-   "reason": "written by E-52 and server:analytics-events (raw app events)"
+   "reason": "written by E-52 and server:analytics-events (raw app events)",
+   "columns": {
+    "key": {
+     "type": "String",
+     "attrs": "",
+     "opt": true,
+     "why": "X4: the client's key for one event; unique with name and account, so a replay counts once"
+    }
+   },
+   "unique": [
+    [
+     "name",
+     "accountId",
+     "key"
+    ]
+   ],
+   "indexes": [
+    [
+     "styleSlug",
+     "name",
+     "at"
+    ]
+   ],
+   "erase": {
+    "styleSlug": {
+     "rule": "keep",
+     "why": "a style slug"
+    },
+    "kind": {
+     "rule": "keep",
+     "why": "the kind of wish"
+    },
+    "props": {
+     "rule": "keep",
+     "why": "the events contract allows names and numbers only, no personal text"
+    },
+    "key": {
+     "rule": "keep",
+     "why": "the client's replay key, no personal text"
+    }
+   }
   },
   "ExternalIdentity": {
    "class": "table",
@@ -435,6 +669,10 @@
     "subject": {
      "rule": "blank",
      "why": "the provider's id for the person"
+    },
+    "returnTo": {
+     "rule": "keep",
+     "why": "a path in the app"
     }
    }
   },
@@ -458,14 +696,38 @@
      "accountId",
      "handle"
     ]
-   ]
+   ],
+   "erase": {
+    "handle": {
+     "rule": "keep",
+     "why": "the rows by and of the account are removed on erase"
+    }
+   }
   },
   "Invoice": {
    "class": "table",
    "reason": "a business invoice issued for a paid plan or pack; listed by E-59, the file built from it by E-60",
    "owner": [
     "Business"
-   ]
+   ],
+   "erase": {
+    "key": {
+     "rule": "keep",
+     "why": "a key"
+    },
+    "lines": {
+     "rule": "keep",
+     "why": "a tax record kept with its amounts, like Payment"
+    },
+    "no": {
+     "rule": "keep",
+     "why": "the invoice number"
+    },
+    "what": {
+     "rule": "keep",
+     "why": "the line's product name"
+    }
+   }
   },
   "Job": {
    "class": "table",
@@ -512,6 +774,10 @@
     "contact": {
      "rule": "blank",
      "why": "personal"
+    },
+    "status": {
+     "rule": "keep",
+     "why": "state"
     }
    }
   },
@@ -579,6 +845,10 @@
     "subject": {
      "rule": "blank",
      "why": "names in the notice"
+    },
+    "key": {
+     "rule": "keep",
+     "why": "the template key"
     }
    }
   },
@@ -592,7 +862,13 @@
     [
      "accountId"
     ]
-   ]
+   ],
+   "erase": {
+    "muted": {
+     "rule": "keep",
+     "why": "notice keys only"
+    }
+   }
   },
   "Numbers": {
    "class": "view",
@@ -682,7 +958,17 @@
     [
      "paymentId"
     ]
-   ]
+   ],
+   "erase": {
+    "validUntil": {
+     "rule": "keep",
+     "why": "a date"
+    },
+    "way": {
+     "rule": "keep",
+     "why": "how it was paid"
+    }
+   }
   },
   "PassOffer": {
    "class": "view",
@@ -737,6 +1023,26 @@
     "amountKobo": {
      "rule": "keep",
      "why": "money record: the amount stays, nothing personal"
+    },
+    "lines": {
+     "rule": "keep",
+     "why": "money record: skus and amounts"
+    },
+    "providerReference": {
+     "rule": "keep",
+     "why": "money record"
+    },
+    "idempotencyKey": {
+     "rule": "keep",
+     "why": "money record"
+    },
+    "channel": {
+     "rule": "keep",
+     "why": "money record"
+    },
+    "options": {
+     "rule": "keep",
+     "why": "money record: what was bought"
     }
    }
   },
@@ -754,7 +1060,17 @@
     [
      "providerReference"
     ]
-   ]
+   ],
+   "erase": {
+    "month": {
+     "rule": "keep",
+     "why": "a month key"
+    },
+    "providerReference": {
+     "rule": "keep",
+     "why": "money record"
+    }
+   }
   },
   "Person": {
    "class": "table",
@@ -778,6 +1094,14 @@
     "birthday": {
      "rule": "blank",
      "why": "personal"
+    },
+    "rows": {
+     "rule": "blank",
+     "why": "the business's people and their details"
+    },
+    "team": {
+     "rule": "keep",
+     "why": "a team name of the business"
     }
    }
   },
@@ -889,6 +1213,20 @@
      "rule": "blank",
      "why": "personal"
     }
+   },
+   "columns": {
+    "wishId": {
+     "type": "String",
+     "attrs": "@db.Uuid",
+     "opt": true,
+     "why": "X9: the listed wish, a real foreign key to wish (the old `wish` text column stays for the registry field)"
+    }
+   },
+   "refs": {
+    "wishId": "Wish"
+   },
+   "refOnDelete": {
+    "wishId": "Cascade"
    }
   },
   "QrCard": {
@@ -899,6 +1237,12 @@
      "rule": "blank",
      "why": "personal"
     }
+   },
+   "refs": {
+    "fileId": "StoredFile"
+   },
+   "refOnDelete": {
+    "fileId": "Restrict"
    }
   },
   "Queue": {
@@ -924,7 +1268,13 @@
      "accountId",
      "wish"
     ]
-   ]
+   ],
+   "erase": {
+    "wish": {
+     "rule": "keep",
+     "why": "a wish reference"
+    }
+   }
   },
   "Reconciliation": {
    "class": "table",
@@ -950,7 +1300,13 @@
   },
   "RenderJob": {
    "class": "table",
-   "reason": "written by E-148 and server:video-render"
+   "reason": "written by E-148 and server:video-render",
+   "refs": {
+    "outputFileId": "StoredFile"
+   },
+   "refOnDelete": {
+    "outputFileId": "Restrict"
+   }
   },
   "Report": {
    "class": "table",
@@ -973,6 +1329,14 @@
     "note": {
      "rule": "blank",
      "why": "what the reporter wrote"
+    },
+    "decidedBy": {
+     "rule": "keep",
+     "why": "the staff member"
+    },
+    "slug": {
+     "rule": "keep",
+     "why": "what was reported"
     }
    }
   },
@@ -981,7 +1345,13 @@
    "reason": "written by E-153 (the proofs or finals link a business copies)",
    "owner": [
     "Business"
-   ]
+   ],
+   "erase": {
+    "link": {
+     "rule": "keep",
+     "why": "a link token; the wish's links answer gone after erase (X10)"
+    }
+   }
   },
   "RevealPlay": {
    "class": "view",
@@ -1004,7 +1374,17 @@
      "paymentId",
      "creatorId"
     ]
-   ]
+   ],
+   "erase": {
+    "styleSlug": {
+     "rule": "keep",
+     "why": "a style slug"
+    },
+    "month": {
+     "rule": "keep",
+     "why": "a month key"
+    }
+   }
   },
   "SavedReply": {
    "class": "config",
@@ -1027,11 +1407,23 @@
      "accountId",
      "wish"
     ]
-   ]
+   ],
+   "erase": {
+    "wish": {
+     "rule": "keep",
+     "why": "a wish reference"
+    }
+   }
   },
   "ScreeningResult": {
    "class": "table",
-   "reason": "written by E-157, E-158 and server:upload-screening"
+   "reason": "written by E-157, E-158 and server:upload-screening",
+   "refs": {
+    "fileId": "StoredFile"
+   },
+   "refOnDelete": {
+    "fileId": "Cascade"
+   }
   },
   "Session": {
    "class": "table",
@@ -1047,6 +1439,14 @@
     "userAgent": {
      "rule": "blank",
      "why": "device detail"
+    },
+    "refreshTokenHash": {
+     "rule": "keep",
+     "why": "a hash; the session is revoked on erase"
+    },
+    "revokeReason": {
+     "rule": "keep",
+     "why": "set to erased"
     }
    },
    "columns": {
@@ -1073,7 +1473,17 @@
    "reason": "written by E-166 (a share of a feed wish; the link comes from the server, DEC-89)",
    "owner": [
     "Account"
-   ]
+   ],
+   "erase": {
+    "style": {
+     "rule": "keep",
+     "why": "a style reference"
+    },
+    "wish": {
+     "rule": "keep",
+     "why": "a wish reference"
+    }
+   }
   },
   "Shoot": {
    "class": "table",
@@ -1083,11 +1493,76 @@
    ],
    "dates": [
     "date"
-   ]
+   ],
+   "erase": {
+    "client": {
+     "rule": "blank",
+     "why": "the client's name"
+    },
+    "title": {
+     "rule": "blank",
+     "why": "names the client's event"
+    },
+    "files": {
+     "rule": "keep",
+     "why": "file refs; the files go by the erase files job (X10)"
+    },
+    "finals": {
+     "rule": "keep",
+     "why": "file refs"
+    },
+    "finalsReveal": {
+     "rule": "keep",
+     "why": "reveal settings"
+    },
+    "hearts": {
+     "rule": "keep",
+     "why": "counts and file refs"
+    },
+    "proofs": {
+     "rule": "keep",
+     "why": "file refs"
+    },
+    "proofsReveal": {
+     "rule": "keep",
+     "why": "reveal settings"
+    },
+    "set": {
+     "rule": "keep",
+     "why": "shoot settings"
+    },
+    "shoot": {
+     "rule": "keep",
+     "why": "a key"
+    }
+   }
   },
   "SignedUrl": {
    "class": "table",
-   "reason": "written by E-173 (the storage port issues a short-lived signed read; the row records the read granted)"
+   "reason": "written by E-173 (the storage port issues a short-lived signed read; the row records the read granted)",
+   "refs": {
+    "fileId": "StoredFile"
+   },
+   "refOnDelete": {
+    "fileId": "Cascade"
+   },
+   "columns": {
+    "fileId": {
+     "type": "String",
+     "attrs": "",
+     "opt": true,
+     "why": "X20: SignedUrl's answer is {url, expiresAt}; the row still records which file the read was granted for (X23: a foreign key)"
+    },
+    "variant": {
+     "type": "String",
+     "attrs": "",
+     "opt": true,
+     "why": "X20: the row still records which size of the file was read"
+    }
+   },
+   "omit": {
+    "url": "X20: the signed link is a bearer secret; it is answered, never stored"
+   }
   },
   "StaffAccount": {
    "class": "table",
@@ -1126,7 +1601,29 @@
    "class": "table",
    "reason": "written by E-182..E-184 and server:storage",
    "refs": {
-    "ownerAccountId": "Account"
+    "ownerAccountId": "Account",
+    "fileId": "StoredFile"
+   },
+   "refOnDelete": {
+    "fileId": "SetNull"
+   },
+   "erase": {
+    "objectKey": {
+     "rule": "keep",
+     "why": "a storage key; the object goes by the erase files job (X10)"
+    },
+    "contentType": {
+     "rule": "keep",
+     "why": "a media type"
+    },
+    "sha256": {
+     "rule": "keep",
+     "why": "a hash"
+    },
+    "variants": {
+     "rule": "keep",
+     "why": "storage keys"
+    }
    }
   },
   "StudioPrefs": {
@@ -1140,7 +1637,13 @@
     [
      "accountId"
     ]
-   ]
+   ],
+   "erase": {
+    "document": {
+     "rule": "keep",
+     "why": "tool settings, no personal text"
+    }
+   }
   },
   "StudioStyle": {
    "class": "document",
@@ -1148,7 +1651,17 @@
    "host": "StudioStyle.document",
    "owner": [
     "Account"
-   ]
+   ],
+   "erase": {
+    "status": {
+     "rule": "keep",
+     "why": "state"
+    },
+    "document": {
+     "rule": "keep",
+     "why": "the creator's style work; a live style stays in the catalogue (DEC-69)"
+    }
+   }
   },
   "Style": {
    "class": "table",
@@ -1157,7 +1670,11 @@
     [
      "slug"
     ]
-   ]
+   ],
+   "types": {
+    "level": "String"
+   },
+   "levelNote": "X2 (INT-2): E-193's level filter names the values; the column stays text (the level history lives in style_level)"
   },
   "StyleLevel": {
    "class": "config",
@@ -1173,7 +1690,21 @@
   },
   "StyleSubmission": {
    "class": "table",
-   "reason": "written by E-201, E-202 and server:style-review (DEC-65)"
+   "reason": "written by E-201, E-202 and server:style-review (DEC-65)",
+   "erase": {
+    "checks": {
+     "rule": "keep",
+     "why": "review checks"
+    },
+    "reviewedBy": {
+     "rule": "keep",
+     "why": "the staff member"
+    },
+    "note": {
+     "rule": "keep",
+     "why": "the staff reviewer's note"
+    }
+   }
   },
   "SubmissionView": {
    "class": "view",
@@ -1271,7 +1802,30 @@
   },
   "UploadTicket": {
    "class": "table",
-   "reason": "written by server:storage (a signed upload granted, waiting for its confirm)"
+   "reason": "written by server:storage (a signed upload granted, waiting for its confirm)",
+   "omit": {
+    "upload": "X20: the signed PUT is a bearer secret; it is answered, never stored"
+   },
+   "columns": {
+    "bytes": {
+     "type": "BigInt",
+     "attrs": "",
+     "opt": true,
+     "why": "X20/X26: the size the signed PUT binds, kept to check at confirm (dropped from the answer only)"
+    },
+    "contentType": {
+     "type": "String",
+     "attrs": "",
+     "opt": true,
+     "why": "X20/X26: the type the signed PUT binds, kept to check at confirm"
+    },
+    "subjectId": {
+     "type": "String",
+     "attrs": "",
+     "opt": true,
+     "why": "X20: what the upload is for (a wish), kept for confirm"
+    }
+   }
   },
   "VaultFile": {
    "class": "view",
@@ -1379,6 +1933,102 @@
     "passcodeHash": {
      "rule": "blank",
      "why": "secret"
+    },
+    "blessing": {
+     "rule": "blank",
+     "why": "the wish's words"
+    },
+    "call": {
+     "rule": "blank",
+     "why": "the sender's words"
+    },
+    "captions": {
+     "rule": "blank",
+     "why": "the wish's words"
+    },
+    "chapter": {
+     "rule": "blank",
+     "why": "the wish's words"
+    },
+    "details": {
+     "rule": "blank",
+     "why": "the wish's words"
+    },
+    "finale": {
+     "rule": "blank",
+     "why": "the wish's words"
+    },
+    "links": {
+     "rule": "blank",
+     "why": "the sender's links"
+    },
+    "makerNote": {
+     "rule": "blank",
+     "why": "the maker's words"
+    },
+    "memory": {
+     "rule": "blank",
+     "why": "the wish's words"
+    },
+    "note": {
+     "rule": "blank",
+     "why": "the sender's words"
+    },
+    "photos": {
+     "rule": "blank",
+     "why": "the wish's photos"
+    },
+    "reasons": {
+     "rule": "blank",
+     "why": "the wish's words"
+    },
+    "timeline": {
+     "rule": "blank",
+     "why": "the wish's words"
+    },
+    "voices": {
+     "rule": "blank",
+     "why": "the wish's voice notes"
+    },
+    "adds": {
+     "rule": "keep",
+     "why": "extras bought, a money record"
+    },
+    "credits": {
+     "rule": "keep",
+     "why": "credit counts"
+    },
+    "effect": {
+     "rule": "keep",
+     "why": "an effect choice"
+    },
+    "kind": {
+     "rule": "keep",
+     "why": "the kind of wish"
+    },
+    "no": {
+     "rule": "keep",
+     "why": "the wish number"
+    },
+    "occasion": {
+     "rule": "keep",
+     "why": "the occasion's name"
+    },
+    "studio": {
+     "rule": "keep",
+     "why": "a studio style reference"
+    },
+    "styleSlug": {
+     "rule": "keep",
+     "why": "a style slug"
+    },
+    "timeZone": {
+     "rule": "keep",
+     "why": "a time zone"
+    },
+    "type": {
+     "rule": "keep",
+     "why": "a type choice"
     }
    }
   },
@@ -1434,6 +2084,48 @@
   "WishTransition": {
    "class": "table",
    "reason": "written by server:wish-lifecycle (every state change of a wish, with the job run that made it)"
+  }
+ },
+ "joinTables": {
+  "WishFile": {
+   "reason": "Y5: a file a wish names (wish, file, role), written when the content is saved; the foreign key keeps a file in a wish from being deleted by any race",
+   "columns": {
+    "wishId": {
+     "type": "String",
+     "attrs": "@db.Uuid",
+     "opt": false
+    },
+    "fileId": {
+     "type": "String",
+     "attrs": "@db.Uuid",
+     "opt": false
+    },
+    "role": {
+     "type": "enum(photo|voice|clip|cover|sound|model)",
+     "attrs": "",
+     "opt": false
+    },
+    "createdAt": {
+     "type": "DateTime",
+     "attrs": "@default(now()) @db.Timestamptz(3)",
+     "opt": false
+    }
+   },
+   "refs": {
+    "wishId": "Wish",
+    "fileId": "StoredFile"
+   },
+   "refOnDelete": {
+    "wishId": "Cascade",
+    "fileId": "Restrict"
+   },
+   "unique": [
+    [
+     "wishId",
+     "fileId",
+     "role"
+    ]
+   ]
   }
  }
 }

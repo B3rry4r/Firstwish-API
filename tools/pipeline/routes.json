@@ -1375,6 +1375,12 @@
         "cookie"
       ],
       "decision": "DEC-152"
+    },
+    "GET /v1/handles/:handle": {
+      "auth": [
+        "user"
+      ],
+      "decision": "DEC-159"
     }
   },
   "extraEndpoints": [
@@ -1440,6 +1446,35 @@
         "cookie"
       ],
       "decision": "DEC-148"
+    },
+    {
+      "resource": "Creator",
+      "method": "GET",
+      "path": "/v1/creators/:handle",
+      "auth": [
+        "public"
+      ],
+      "decision": "DEC-157"
+    },
+    {
+      "resource": "Account",
+      "method": "POST",
+      "path": "/v1/me/erase",
+      "auth": [
+        "user"
+      ],
+      "decision": "DEC-158"
+    },
+    {
+      "resource": "ScreeningResult",
+      "method": "GET",
+      "path": "/v1/admin/screening-results",
+      "auth": [
+        "staff:owner",
+        "staff:ops",
+        "staff:moderator"
+      ],
+      "decision": "DEC-164"
     }
   ],
   "fulfilment": {
@@ -1615,6 +1650,101 @@
         "cardinality": "single",
         "note": "{url}: where the browser goes next; sets the httpOnly Google state cookie (DEC-151)"
       }
+    },
+    "GET /v1/admin/styles": {
+      "decision": "DEC-155",
+      "set": {
+        "level": "starter|standard|premium (optional; only styles at this level)"
+      }
+    },
+    "GET /v1/admin/styles/preview-to-paid": {
+      "decision": "DEC-156",
+      "response": {
+        "entity": "StyleRate",
+        "cardinality": "list",
+        "note": "{styleSlug, name, level, quarter, previews, paid, rate}; rate null under 200 previews (DEC-156)"
+      }
+    },
+    "GET /v1/creators/:handle": {
+      "decision": "DEC-157",
+      "set": {
+        "handle": "string (path)"
+      },
+      "response": {
+        "entity": "Creator",
+        "cardinality": "single",
+        "note": "public fields only; one 404 for missing, side off, banned or erased (DEC-157)"
+      }
+    },
+    "POST /v1/me/erase": {
+      "decision": "DEC-158",
+      "set": {
+        "confirm": "'erase'"
+      },
+      "response": {
+        "entity": null,
+        "cardinality": "none",
+        "note": "204; every session ends; 403 fresh_sign_in_needed for a sign-in older than 10 minutes (DEC-158)"
+      }
+    },
+    "GET /v1/ticket-offers": {
+      "decision": "DEC-160",
+      "set": {
+        "ticket": "string (a ticket line of the price book, such as ticket.single)",
+        "extras": "array<string> (optional, repeatable ?extras=; extra lines of the price book)"
+      },
+      "response": {
+        "entity": "TicketQuote",
+        "cardinality": "single",
+        "note": "one quote: lines in kobo, the total, the version used (DEC-160)"
+      }
+    },
+    "GET /v1/price-book": {
+      "decision": "DEC-161",
+      "response": {
+        "entity": "PriceBook",
+        "cardinality": "page",
+        "note": "{version, items, promotion, lifecycle, entitlements, nextCursor} (DEC-161)"
+      }
+    },
+    "POST /v1/uploads": {
+      "decision": "DEC-165",
+      "set": {
+        "purpose": "string (photo|voice|clip|vault|studio|brand; what the file is for, DEC-165)",
+        "kind": "image|sound|model|video (optional; the media kind, DEC-165)"
+      },
+      "response": {
+        "entity": "UploadTicket",
+        "cardinality": "single",
+        "note": "{id, purpose, upload: {url, method, headers, expiresAt}} (DEC-163)"
+      }
+    },
+    "DELETE /v1/uploads/:id": {
+      "decision": "DEC-163",
+      "response": {
+        "entity": null,
+        "cardinality": "none",
+        "note": "204 with no body (DEC-163)"
+      }
+    },
+    "GET /v1/admin/screening-results": {
+      "decision": "DEC-164",
+      "set": {
+        "verdict": "pass|review|reject (optional; only results with this verdict)"
+      },
+      "response": {
+        "entity": "ScreeningResult",
+        "cardinality": "list",
+        "note": "the screening queue for Moderation's flagged photos (DEC-164)"
+      }
+    },
+    "GET /v1/styles/levels": {
+      "decision": "DEC-166",
+      "response": {
+        "entity": "StyleLevel",
+        "cardinality": "all",
+        "note": "every style in one answer, no paging; the ETag covers the whole answer (DEC-166)"
+      }
     }
   },
   "extraFields": [
@@ -1666,6 +1796,76 @@
       "type": "enum(light|dark|system)",
       "nullable": false,
       "decision": "DEC-137"
+    },
+    {
+      "resource": "StyleRate",
+      "name": "styleSlug",
+      "type": "string",
+      "nullable": false,
+      "decision": "DEC-156"
+    },
+    {
+      "resource": "StyleRate",
+      "name": "name",
+      "type": "string",
+      "nullable": false,
+      "decision": "DEC-156"
+    },
+    {
+      "resource": "StyleRate",
+      "name": "level",
+      "type": "enum(starter|standard|premium)",
+      "nullable": false,
+      "decision": "DEC-156"
+    },
+    {
+      "resource": "StyleRate",
+      "name": "previews",
+      "type": "integer",
+      "nullable": false,
+      "decision": "DEC-156"
+    },
+    {
+      "resource": "StyleRate",
+      "name": "paid",
+      "type": "integer",
+      "nullable": false,
+      "decision": "DEC-156"
+    },
+    {
+      "resource": "StyleRate",
+      "name": "rate",
+      "type": "number",
+      "nullable": true,
+      "decision": "DEC-156"
+    },
+    {
+      "resource": "UploadTicket",
+      "name": "id",
+      "type": "string",
+      "nullable": false,
+      "decision": "DEC-163"
+    },
+    {
+      "resource": "UploadTicket",
+      "name": "upload",
+      "type": "object {url, method, headers, expiresAt}",
+      "nullable": false,
+      "decision": "DEC-163"
+    },
+    {
+      "resource": "SignedUrl",
+      "name": "url",
+      "type": "string",
+      "nullable": false,
+      "decision": "DEC-163"
+    },
+    {
+      "resource": "SignedUrl",
+      "name": "expiresAt",
+      "type": "time",
+      "nullable": false,
+      "decision": "DEC-163"
     }
   ],
   "dropFields": [
@@ -1680,6 +1880,108 @@
       "name": "answer",
       "decision": "DEC-144",
       "why": "Q8: the answer to a question opening is a secret like the passcode"
+    },
+    {
+      "resource": "UploadTicket",
+      "name": "bytes",
+      "decision": "DEC-163",
+      "why": "X20: the ticket is {id, purpose, upload}; the size is bound inside the signed PUT (X26)"
+    },
+    {
+      "resource": "UploadTicket",
+      "name": "contentType",
+      "decision": "DEC-163",
+      "why": "X20: bound inside the signed PUT (X26)"
+    },
+    {
+      "resource": "UploadTicket",
+      "name": "subjectId",
+      "decision": "DEC-163",
+      "why": "X20: not part of the answer"
+    },
+    {
+      "resource": "SignedUrl",
+      "name": "fileId",
+      "decision": "DEC-163",
+      "why": "X20: SignedUrl is {url, expiresAt}"
+    },
+    {
+      "resource": "SignedUrl",
+      "name": "variant",
+      "decision": "DEC-163",
+      "why": "X20: SignedUrl is {url, expiresAt}"
+    }
+  ],
+  "optionalFields": [
+    {
+      "resource": "Style",
+      "name": "rate",
+      "decision": "DEC-154"
+    },
+    {
+      "resource": "Price",
+      "name": "title",
+      "decision": "DEC-162"
+    },
+    {
+      "resource": "Price",
+      "name": "group",
+      "decision": "DEC-162"
+    },
+    {
+      "resource": "Price",
+      "name": "price",
+      "decision": "DEC-162"
+    },
+    {
+      "resource": "Price",
+      "name": "was",
+      "decision": "DEC-162"
+    },
+    {
+      "resource": "Price",
+      "name": "per",
+      "decision": "DEC-162"
+    },
+    {
+      "resource": "Price",
+      "name": "from",
+      "decision": "DEC-162"
+    },
+    {
+      "resource": "Price",
+      "name": "lead",
+      "decision": "DEC-162"
+    },
+    {
+      "resource": "Price",
+      "name": "sla",
+      "decision": "DEC-162"
+    },
+    {
+      "resource": "Price",
+      "name": "reason",
+      "decision": "DEC-162"
+    },
+    {
+      "resource": "Price",
+      "name": "items",
+      "decision": "DEC-162"
+    },
+    {
+      "resource": "Price",
+      "name": "conciergeDeliveryHours",
+      "decision": "DEC-162"
+    },
+    {
+      "resource": "Price",
+      "name": "conciergeSingleWish",
+      "decision": "DEC-162"
+    },
+    {
+      "resource": "Price",
+      "name": "changed",
+      "decision": "DEC-162"
     }
   ]
 }

@@ -1,4 +1,5 @@
 import { createHash, createHmac, timingSafeEqual } from "node:crypto";
+import { ImageSizesPort, ResizeInput } from "../image-sizes.port";
 import { Money } from "../../money/money";
 import { AiWritingPort, WriteRequest, WriteResult } from "../ai.port";
 import { EmailPort, OutgoingEmail, SentEmail } from "../email.port";
@@ -93,15 +94,32 @@ export class StandinStorage extends StoragePort {
     super();
   }
 
-  private sig(key: string, exp: number): string {
-    return createHash("sha256").update(`${key}:${exp}`).digest("hex").slice(0, 16);
+  /** What each signed PUT bound (X26): the type and the exact length. */
+  readonly bound = new Map<string, { contentType: string; contentLength: number }>();
+
+  private sig(key: string, exp: number, bound = ""): string {
+    return createHash("sha256").update(`${key}:${exp}:${bound}`).digest("hex").slice(0, 16);
   }
 
   signUpload(input: SignUpload): Promise<SignedUpload> {
     const expiresAt = new Date(this.clock.now().getTime() + input.expiresInSeconds * 1000);
     const exp = Math.floor(expiresAt.getTime() / 1000);
-    const url = `https://storage.${STANDIN_HOST}/${this.bucket}/${encodeURI(input.key)}?expires=${exp}&signature=${this.sig(input.key, exp)}`;
-    return Promise.resolve({ url, method: "PUT", headers: { "content-type": input.contentType }, expiresAt });
+    const sig = this.sig(input.key, exp, `${input.contentType}:${input.contentLength}`);
+    const url = `https://storage.${STANDIN_HOST}/${this.bucket}/${encodeURI(input.key)}?expires=${exp}&signature=${sig}`;
+    this.bound.set(input.key, { contentType: input.contentType, contentLength: input.contentLength });
+    const headers = { "content-type": input.contentType, "content-length": String(input.contentLength) };
+    return Promise.resolve({ url, method: "PUT", headers, expiresAt });
+  }
+
+  /**
+   * The browser's signed PUT, as storage takes it: refused (false, nothing stored) when the type or the length differs from what
+   * the signature bound (X26). put() below stores without that check, for a test that sets storage up directly.
+   */
+  putSigned(key: string, bytes: Buffer, contentType: string): boolean {
+    const b = this.bound.get(key);
+    if (!b || b.contentType !== contentType || b.contentLength !== bytes.length) return false;
+    this.objects.set(key, { bytes, contentType });
+    return true;
   }
 
   signDownload(key: string, expiresInSeconds: number): Promise<string> {
@@ -128,6 +146,22 @@ export class StandinStorage extends StoragePort {
     this.objects.delete(key);
     return Promise.resolve();
   }
+
+  copy(fromKey: string, toKey: string): Promise<void> {
+    const o = this.objects.get(fromKey);
+    if (!o) return Promise.reject(new Error(`No object at ${fromKey}`));
+    this.objects.set(toKey, { bytes: Buffer.from(o.bytes), contentType: o.contentType });
+    return Promise.resolve();
+  }
+}
+
+/** The image-sizes stand-in (X22): records each request and makes nothing. */
+export class StandinImageSizes extends ImageSizesPort {
+  readonly made: ResizeInput[] = [];
+  resize(input: ResizeInput): Promise<void> {
+    this.made.push(input);
+    return Promise.resolve();
+  }
 }
 
 export class StandinAiWriting extends AiWritingPort {
@@ -149,10 +183,14 @@ export class StandinAiWriting extends AiWritingPort {
 export class StandinScreening extends UploadScreeningPort {
   readonly screened: ScreenInput[] = [];
 
-  /** Clean unless the key contains "reject". */
+  /** Clean (score 0) unless the key contains "reject" (score 1, label "stand-in"). */
   screen(input: ScreenInput): Promise<ScreenResult> {
     this.screened.push(input);
-    return Promise.resolve(input.key.includes("reject") ? { verdict: "rejected", reason: "Rejected by the stand-in." } : { verdict: "clean" });
+    return Promise.resolve(
+      input.key.includes("reject")
+        ? { verdict: "rejected", score: 1, labels: ["stand-in"], reason: "Rejected by the stand-in." }
+        : { verdict: "clean", score: 0, labels: [] },
+    );
   }
 }
 

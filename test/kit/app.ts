@@ -92,3 +92,19 @@ export async function createTestApp(opts: TestAppOptions = {}): Promise<TestApp>
     close: () => app.close(),
   };
 }
+
+let addressSeq = 0;
+// Fixed when the spec file loads (jest gives every spec file its own module registry and global, so nothing can be shared
+// between files except chance): two random 16-bit numbers pick this file's own run of networks.
+const addressGroup = Math.floor(Math.random() * 0x10000);
+const addressStart = Math.floor(Math.random() * 0x10000);
+/**
+ * AA6: a client address of its own for a test that counts per address (the API trusts one proxy in tests, so send it as
+ * X-Forwarded-For). Limits count per network (IPv4 /24, IPv6 /48), so each call answers an IPv6 address in a /48 of its own:
+ * fd00:<this file's random group>:<this file's random start + a counter>::1. Two files share a /48 only when both 16-bit
+ * numbers collide (about one in four billion per pair), so per-address limits never leak between specs, workers or runs.
+ */
+export function uniqueAddress(): string {
+  const n = (addressStart + addressSeq++) & 0xffff;
+  return `fd00:${addressGroup.toString(16)}:${n.toString(16)}::1`;
+}

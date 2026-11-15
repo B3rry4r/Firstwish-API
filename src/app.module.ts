@@ -11,6 +11,30 @@ import { AuditModule } from "./modules/audit/audit.module";
 import { RoleAccessModule } from "./modules/role-access/role-access.module";
 import { StaffAccountsModule } from "./modules/staff-accounts/staff-accounts.module";
 // end B03
+// B14: styles (levels, on and off, use counts), app events, Studio templates
+import { EventsModule } from "./modules/events/events.module";
+import { StylesModule } from "./modules/styles/styles.module";
+import { TemplatesModule } from "./modules/templates/templates.module";
+// end B14
+// B04: the price book
+import { PriceBookModule } from "./modules/price-book/price-book.module";
+// end B04
+// B02: account sides, creators, business profile, follow
+import { BusinessModule } from "./modules/business/business.module";
+import { CreatorsModule } from "./modules/creators/creators.module";
+import { FollowsModule } from "./modules/follows/follows.module";
+// end B02
+// B09: files
+import { StoredFilesModule } from "./modules/stored-files/stored-files.module";
+import { ScreeningResultsModule } from "./modules/screening-results/screening-results.module";
+import { VoiceNotesModule } from "./modules/voice-notes/voice-notes.module";
+import { VaultFilesModule } from "./modules/vault-files/vault-files.module";
+// end B09
+// B12: dates and saved things
+import { DatesModule } from "./modules/dates/dates.module";
+import { PeopleModule } from "./modules/people/people.module";
+import { SavedWishesModule } from "./modules/saved-wishes/saved-wishes.module";
+// end B12
 
 /** Registration entry: each resource module adds one import line here. */
 @Module({
@@ -27,6 +51,30 @@ import { StaffAccountsModule } from "./modules/staff-accounts/staff-accounts.mod
     RoleAccessModule,
     StaffAccountsModule,
     // end B03
+    // B14
+    StylesModule,
+    EventsModule,
+    TemplatesModule,
+    // end B14
+    // B04
+    PriceBookModule,
+    // end B04
+    // B02
+    CreatorsModule,
+    FollowsModule,
+    BusinessModule,
+    // end B02
+    // B09
+    StoredFilesModule,
+    ScreeningResultsModule,
+    VoiceNotesModule,
+    VaultFilesModule,
+    // end B09
+    // B12
+    PeopleModule,
+    DatesModule,
+    SavedWishesModule,
+    // end B12
   ],
 })
 export class AppModule {}

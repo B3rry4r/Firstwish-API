@@ -1,6 +1,6 @@
 import { PrismaService } from "../../../common/db/prisma.service";
 import type { TestApp } from "../../../../test/kit/app";
-import { filesApp, JPEG, makeAccount, makeBusiness, ScoredScreening } from "../../stored-files/tests/files-kit";
+import { filesApp, ids, makeAccount, makeBusiness, PNG, ScoredScreening, stage } from "../../stored-files/tests/files-kit";
 
 describe("E-214 Vault files (contract)", () => {
   let t: TestApp;
@@ -20,7 +20,7 @@ describe("E-214 Vault files (contract)", () => {
     const r = await t.http().post("/v1/uploads").set(auth(owner.token)).send({ purpose: "vault-file", contentType: "image/png", bytes });
     expect(r.status).toBe(201);
     const id = r.body.id as string;
-    t.storage.put((await db.storedFile.findUniqueOrThrow({ where: { id } })).objectKey, JPEG(bytes), "image/png");
+    await stage(t, db, id, PNG(bytes), "image/png");
     scored.next.push(score);
     await t.http().post(`/v1/uploads/${id}/confirm`).set(auth(owner.token)).send({ fileId: id });
     return id;
@@ -56,5 +56,39 @@ describe("E-214 Vault files (contract)", () => {
   it("a business side with no business row is 403", async () => {
     const lone = await makeAccount(db, t, ["business"]);
     expect((await t.http().get("/v1/business/vault-files").set(auth(lone.token))).status).toBe(403);
+  });
+
+  it("X27: the business's logins read its Vault files (passed ones only); a stranger gets 403; the owner also sees a held file", async () => {
+    const biz = await makeAccount(db, t, ["business"]);
+    const bizId = await makeBusiness(db, biz.id, { plan: "studio" });
+    const mk = async (score: number) => {
+      const r = await t.http().post("/v1/uploads").set(auth(biz.token)).send({ purpose: "vault", contentType: "image/png", bytes: 120 });
+      const id = r.body.id as string;
+      await stage(t, db, id, PNG(120), "image/png");
+      scored.next.push(score);
+      expect((await t.http().post(`/v1/uploads/${id}/confirm`).set(auth(biz.token)).send({ fileId: id })).status).toBe(200);
+      return id;
+    };
+    const passed = await mk(0);
+    const held = await mk(0.6);
+    const member = await makeAccount(db, t, ["business"]);
+    await db.account.update({ where: { id: member.id }, data: { contact: "member@example.test" } });
+    await db.login.create({ data: { id: ids.next(), businessId: bizId, contact: "Member@Example.test", status: "active" } });
+    const stranger = await makeAccount(db, t, ["business"]);
+    await db.account.update({ where: { id: stranger.id }, data: { contact: "stranger@example.test" } });
+    await makeBusiness(db, stranger.id, { plan: "starter" });
+
+    const asMember = await t.http().get("/v1/business/vault-files").set(auth(member.token));
+    expect(asMember.status).toBe(200);
+    expect((asMember.body.items as { id: string }[]).map((i) => i.id)).toEqual([passed]);
+    const asOwner = await t.http().get("/v1/business/vault-files").set(auth(biz.token));
+    expect((asOwner.body.items as { id: string }[]).map((i) => i.id).sort()).toEqual([passed, held].sort());
+    const asStranger = await t.http().get("/v1/business/vault-files").set(auth(stranger.token));
+    expect(JSON.stringify(asStranger.body)).not.toContain(passed);
+    const noBiz = await makeAccount(db, t, ["business"]);
+    await db.account.update({ where: { id: noBiz.id }, data: { contact: "nobody@example.test" } });
+    expect((await t.http().get("/v1/business/vault-files").set(auth(noBiz.token))).status).toBe(403);
+    await db.login.updateMany({ where: { businessId: bizId }, data: { status: "removed" } });
+    expect((await t.http().get("/v1/business/vault-files").set(auth(member.token))).status).toBe(403);
   });
 });

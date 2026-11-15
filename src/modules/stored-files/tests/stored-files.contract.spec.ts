@@ -6,8 +6,9 @@ import { FileJobs } from "../file-jobs";
 import { ImageSizesPort } from "../../../common/ports/image-sizes.port";
 import { StandinImageSizes } from "../../../common/ports/adapters/standins";
 import { SignedUrlsService } from "../signed-urls.service";
-import { scoreOf, verdictOf } from "../screening.service";
-import { filesApp, GB, ids, JPEG, makeAccount, makeBusiness, makeWish, MB, ScoredScreening, WEBM } from "./files-kit";
+import { verdictOf } from "../screening.service";
+import { stagingKeyOf } from "../file-rules";
+import { filesApp, GB, ids, JPEG, makeAccount, makeBusiness, makeWish, MB, PNG, ScoredScreening, stage, SVG, WEBM } from "./files-kit";
 
 describe("storage adapters (case 1: one port, two adapters)", () => {
   it("switching STORAGE_DRIVER between r2 and spaces changes only the signed host", async () => {
@@ -28,13 +29,12 @@ describe("storage adapters (case 1: one port, two adapters)", () => {
     expect(b.searchParams.get("X-Amz-Expires")).toBe("900");
   });
 
-  it("maps a provider score to a verdict: reject at 0.9, review from 0.5", () => {
+  it("X21: maps a provider score to a verdict: reject at 0.9, review from 0.5", () => {
     expect(verdictOf(0.9)).toBe("reject");
     expect(verdictOf(0.89)).toBe("review");
     expect(verdictOf(0.5)).toBe("review");
     expect(verdictOf(0.49)).toBe("pass");
-    expect(scoreOf({ verdict: "rejected", reason: "x", score: 1, labels: ["x"] })).toBe(1);
-    expect(scoreOf({ verdict: "clean", score: 0, labels: [] })).toBe(0);
+    expect(verdictOf(0.1, true)).toBe("review");
   });
 });
 
@@ -61,20 +61,25 @@ describe("E-182, E-184, E-183 uploads (contract)", () => {
     const r = await ticket({ purpose: "photo", contentType: "image/jpeg", bytes, ...body });
     expect(r.status).toBe(201);
     const id = r.body.id as string;
-    t.storage.put(await keyOf(id), JPEG(bytes), "image/jpeg");
+    await stage(t, db, id, JPEG(bytes), "image/jpeg");
     return id;
   }
 
-  it("E-182 issues a signed PUT for one server-made key, good for 15 minutes; the purpose and type are normalised", async () => {
+  it("X20, X25, Y1, X26: E-182 answers {id, purpose, upload} with a signed PUT for a STAGING key bound to type and length, good for 15 minutes; the purpose and type are normalised", async () => {
     const r = await ticket({ purpose: " Photo ", contentType: "image/JPG; charset=binary", bytes: 2048, kind: "image" });
     expect(r.status).toBe(201);
-    expect(r.body).toMatchObject({ purpose: "wish-photo", contentType: "image/jpeg", bytes: 2048, status: "pending", upload: { method: "PUT" } });
-    expect(r.body.fileId).toBe(r.body.id);
+    expect(Object.keys(r.body as object).sort()).toEqual(["id", "purpose", "upload"]);
+    expect(Object.keys(r.body.upload as object).sort()).toEqual(["expiresAt", "headers", "method", "url"]);
+    expect(r.body).toMatchObject({ purpose: "wish-photo", upload: { method: "PUT", headers: { "content-type": "image/jpeg", "content-length": "2048" } } });
     expect(r.body.upload.expiresAt).toBe(new Date(t.clock.now().getTime() + 15 * 60 * 1000).toISOString());
     const row = await db.storedFile.findUniqueOrThrow({ where: { id: r.body.id as string } });
     expect(row).toMatchObject({ status: "pending", ownerAccountId: me.id, purpose: "wish_photo", contentType: "image/jpeg" });
     expect(row.objectKey).toMatch(new RegExp(`^wish-photo/${row.id}/[A-Za-z0-9_-]{20,}$`));
-    expect(r.body.upload.url).toContain(encodeURI(row.objectKey));
+    expect(row.kind).toBe("image");
+    // Y1: the PUT points at the staging key, never at the file's own key.
+    expect(r.body.upload.url).toContain(encodeURI(stagingKeyOf(row.objectKey)));
+    expect(t.storage.bound.get(stagingKeyOf(row.objectKey))).toEqual({ contentType: "image/jpeg", contentLength: 2048 });
+    expect(t.storage.bound.has(row.objectKey)).toBe(false);
     expect(await db.uploadTicket.findUnique({ where: { id: row.id } })).toMatchObject({ purpose: "wish-photo", contentType: "image/jpeg" });
   });
 
@@ -91,6 +96,8 @@ describe("E-182, E-184, E-183 uploads (contract)", () => {
     [{ purpose: "song", contentType: "image/jpeg", bytes: 10 }, "purpose"],
     [{ purpose: "photo", contentType: "image/jpeg", bytes: 0 }, "bytes"],
     [{ purpose: "photo", contentType: "image/jpeg", bytes: 10, kind: "sound" }, "kind"],
+    [{ purpose: "photo", contentType: "image/svg+xml", bytes: 10 }, "contentType"],
+    [{ purpose: "brand", contentType: "image/svg+xml", bytes: 10 }, "contentType"],
     [{ purpose: "voice", contentType: "audio/webm", bytes: 10, seconds: 181 }, "seconds"],
     [{ purpose: "photo", contentType: "image/jpeg", bytes: "ten" }, "bytes"],
     [{ purpose: "clip", contentType: "video/mp4", bytes: 10 }, "subjectId"],
@@ -133,7 +140,7 @@ describe("E-182, E-184, E-183 uploads (contract)", () => {
     expect(await db.screeningResult.count({ where: { fileId: id } })).toBe(1);
   });
 
-  it("E-184 refuses and removes a file never uploaded, larger than asked, or of another type", async () => {
+  it("E-184 refuses and removes a file never uploaded, larger than asked, or not the type its bytes say", async () => {
     const never = (await ticket({ purpose: "photo", contentType: "image/jpeg", bytes: 100 })).body.id as string;
     const r1 = await confirm(never);
     expect(r1.status).toBe(422);
@@ -141,17 +148,46 @@ describe("E-182, E-184, E-183 uploads (contract)", () => {
     expect(await db.storedFile.count({ where: { id: never } })).toBe(0);
 
     const big = (await ticket({ purpose: "photo", contentType: "image/jpeg", bytes: 100 })).body.id as string;
-    const bigKey = await keyOf(big);
+    const bigKey = stagingKeyOf(await keyOf(big));
     t.storage.put(bigKey, JPEG(101), "image/jpeg");
     expect((await confirm(big)).status).toBe(422);
     expect(await t.storage.head(bigKey)).toBeNull();
     expect(await db.storedFile.count({ where: { id: big } })).toBe(0);
+  });
 
+  it("Y3: the type is decided from the file's first bytes, not from the storage header; the real size is stored; an SVG is never a photo", async () => {
+    // PNG bytes sent as a "jpeg" ticket, with a header that agrees: refused, removed.
     const png = (await ticket({ purpose: "photo", contentType: "image/jpeg", bytes: 100 })).body.id as string;
-    const pngKey = await keyOf(png);
-    t.storage.put(pngKey, JPEG(100), "image/png");
-    expect((await confirm(png)).status).toBe(422);
+    const pngFinal = await keyOf(png);
+    const pngKey = await stage(t, db, png, PNG(100), "image/jpeg");
+    const r1 = await confirm(png);
+    expect(r1.status).toBe(422);
     expect(await t.storage.head(pngKey)).toBeNull();
+    expect(await t.storage.head(pngFinal)).toBeNull();
+    // An SVG with an image header, on a png ticket and on a jpeg ticket.
+    for (const type of ["image/png", "image/jpeg"]) {
+      const svg = (await ticket({ purpose: "photo", contentType: type, bytes: 90 })).body.id as string;
+      await stage(t, db, svg, SVG(90), type);
+      const r2 = await confirm(svg);
+      expect(r2.status).toBe(422);
+      expect(r2.body.error.message).toMatch(/SVG/);
+      expect(await db.storedFile.count({ where: { id: svg } })).toBe(0);
+    }
+    // A header that lies the other way does not matter: the bytes are a jpeg, so it is one.
+    const ok = (await ticket({ purpose: "photo", contentType: "image/jpeg", bytes: 100 })).body.id as string;
+    const okKey = stagingKeyOf(await keyOf(ok));
+    t.storage.put(okKey, JPEG(100), "application/octet-stream");
+    expect((await confirm(ok)).body).toMatchObject({ status: "ready", bytes: 100, kind: "image", contentType: "image/jpeg" });
+    // Smaller than asked: the real size is the one stored.
+    const small = (await ticket({ purpose: "photo", contentType: "image/jpeg", bytes: 500 })).body.id as string;
+    t.storage.put(stagingKeyOf(await keyOf(small)), JPEG(120), "image/jpeg");
+    expect((await confirm(small)).body).toMatchObject({ status: "ready", bytes: 120 });
+    expect(Number((await db.storedFile.findUniqueOrThrow({ where: { id: small } })).bytes)).toBe(120);
+    // A sound with audio bytes and the kind column.
+    const wish = await makeWish(db, me.id);
+    const v = (await ticket({ purpose: "voice", contentType: "audio/webm", bytes: 64, subjectId: wish, kind: "sound" })).body.id as string;
+    await stage(t, db, v, WEBM(64), "audio/webm");
+    expect((await confirm(v)).body).toMatchObject({ kind: "sound", purpose: "voice-note" });
   });
 
   it("E-184 is the owner's only (404 for another account), 401 without a token, 422 for a fileId not the path's, 404 for a non-uuid", async () => {
@@ -205,7 +241,7 @@ describe("E-182, E-184, E-183 uploads (contract)", () => {
     expect(await jobs.makeImageSizes(id)).toEqual({ made: 0 });
   });
 
-  it("E-183 removes the row and the object; 404 for another account; 409 while a sealed wish uses it; 401 without a token", async () => {
+  it("E-183 (X20) answers 204 and removes the row and the object; 404 for another account; 409 while a sealed wish names it (Y5); 401 without a token", async () => {
     const id = await uploaded(200);
     await confirm(id);
     const key = await keyOf(id);
@@ -213,35 +249,46 @@ describe("E-182, E-184, E-183 uploads (contract)", () => {
     expect((await t.http().delete(`/v1/uploads/${id}`)).status).toBe(401);
     expect((await t.http().delete(`/v1/uploads/${id}`).set(auth(me.token)).send({ fileId: ids.next() })).status).toBe(422);
     const r = await t.http().delete(`/v1/uploads/${id}`).set(auth(me.token));
-    expect(r.status).toBe(200);
-    expect(r.body).toMatchObject({ id, status: "deleted" });
+    expect(r.status).toBe(204);
+    expect(r.text).toBe("");
     expect(await db.storedFile.count({ where: { id } })).toBe(0);
     expect(await t.storage.head(key)).toBeNull();
+    expect((await t.http().delete(`/v1/uploads/${id}`).set(auth(me.token))).status).toBe(404);
 
     const used = await uploaded(200);
     await confirm(used);
-    await makeWish(db, me.id, "sealed", "keepsake", [{ fileId: used }]);
+    const sealedWish = await makeWish(db, me.id, "sealed", "keepsake");
+    await db.wishFile.create({ data: { id: ids.next(), wishId: sealedWish, fileId: used, role: "photo" } });
     const blocked = await t.http().delete(`/v1/uploads/${used}`).set(auth(me.token));
     expect(blocked.status).toBe(409);
     expect(blocked.body.error.code).toBe("file_in_use");
     expect(await db.storedFile.count({ where: { id: used } })).toBe(1);
   });
 
-  it("the link triggers: a row may only name a stored file, and a file still named cannot be deleted", async () => {
+  it("X23: every file link is a uuid with a real foreign key; a file still named cannot be deleted; a draft wish's link goes with the file", async () => {
     const id = await uploaded(200);
     await confirm(id);
-    await expect(db.signedUrl.create({ data: { id: ids.next(), fileId: ids.next(), variant: "original" } })).rejects.toThrow(/not a stored file|Foreign key/);
-    await expect(db.signedUrl.create({ data: { id: ids.next(), fileId: "free text", variant: "original" } })).rejects.toThrow(/not a stored file|Foreign key/);
-    await db.qrCard.create({ data: { id: ids.next(), kind: "wish_card", status: "done", fileId: id } });
-    await expect(db.qrCard.create({ data: { id: ids.next(), kind: "wish_card", status: "done", fileId: ids.next() } })).rejects.toThrow(/not a stored file|Foreign key/);
+    await expect(db.signedUrl.create({ data: { id: ids.next(), fileId: ids.next(), variant: "original" } })).rejects.toThrow(/Foreign key/);
+    await expect(db.signedUrl.create({ data: { id: ids.next(), fileId: "free text", variant: "original" } })).rejects.toThrow();
+    const card = ids.next();
+    await db.qrCard.create({ data: { id: card, kind: "wish_card", status: "done", fileId: id } });
+    await expect(db.qrCard.create({ data: { id: ids.next(), kind: "wish_card", status: "done", fileId: ids.next() } })).rejects.toThrow(/Foreign key/);
     const r = await t.http().delete(`/v1/uploads/${id}`).set(auth(me.token));
     expect(r.status).toBe(409);
+    expect(r.body.error.code).toBe("file_in_use");
+    // Any other update to a row that names a file is not tripped by it (no trigger fires on unrelated updates).
+    await db.qrCard.update({ where: { id: card }, data: { status: "failed" } });
+    await db.qrCard.delete({ where: { id: card } });
+    const draft = await makeWish(db, me.id, "draft");
+    await db.wishFile.create({ data: { id: ids.next(), wishId: draft, fileId: id, role: "photo" } });
+    expect((await t.http().delete(`/v1/uploads/${id}`).set(auth(me.token))).status).toBe(204);
+    expect(await db.wishFile.count({ where: { wishId: draft } })).toBe(0);
   });
 
   it("upload cleanup removes uploads unconfirmed after 24 hours and keeps younger ones", async () => {
     const old = (await ticket({ purpose: "photo", contentType: "image/jpeg", bytes: 10 })).body.id as string;
     const oldKey = await keyOf(old);
-    t.storage.put(oldKey, JPEG(10), "image/jpeg");
+    t.storage.put(stagingKeyOf(oldKey), JPEG(10), "image/jpeg");
     t.clock.advance(23 * 60 * 60 * 1000);
     const young = (await ticket({ purpose: "photo", contentType: "image/jpeg", bytes: 10 })).body.id as string;
     t.clock.advance(2 * 60 * 60 * 1000);
@@ -250,6 +297,7 @@ describe("E-182, E-184, E-183 uploads (contract)", () => {
     expect(await db.storedFile.count({ where: { id: old } })).toBe(0);
     expect(await db.uploadTicket.count({ where: { id: old } })).toBe(0);
     expect(await t.storage.head(oldKey)).toBeNull();
+    expect(await t.storage.head(stagingKeyOf(oldKey))).toBeNull();
     expect(await db.storedFile.count({ where: { id: young } })).toBe(1);
   });
 
@@ -257,7 +305,7 @@ describe("E-182, E-184, E-183 uploads (contract)", () => {
     const wish = await makeWish(db, me.id);
     const r = await ticket({ purpose: "voice_note", contentType: "audio/webm;codecs=opus", bytes: 500, seconds: 42, subjectId: wish, kind: "sound" });
     expect(r.status).toBe(201);
-    t.storage.put(await keyOf(r.body.id as string), WEBM(500), "audio/webm");
+    await stage(t, db, r.body.id as string, WEBM(500), "audio/webm");
     expect((await confirm(r.body.id as string)).body.status).toBe("ready");
     expect(await db.voiceNote.findUnique({ where: { id: r.body.id as string } })).toMatchObject({ wishId: wish, seconds: 42 });
   });
@@ -286,7 +334,7 @@ describe("E-182, E-184, E-183 uploads (contract)", () => {
       for (let i = 0; i < 20; i++) {
         const r = await ticket({ purpose: "vault", contentType: "image/jpeg", bytes: 1000 + i }, owner.token);
         expect(r.status).toBe(201);
-        t.storage.put(await keyOf(r.body.id as string), JPEG(1000 + i), "image/jpeg");
+        await stage(t, db, r.body.id as string, JPEG(1000 + i), "image/jpeg");
         made.push(r.body.id as string);
       }
       const before = (await db.business.findUniqueOrThrow({ where: { id: bizId } })).version;
@@ -302,7 +350,7 @@ describe("E-182, E-184, E-183 uploads (contract)", () => {
       const made: string[] = [];
       for (let i = 0; i < 20; i++) {
         const r = await ticket({ purpose: "vault", contentType: "image/jpeg", bytes: MB }, owner.token);
-        t.storage.put(await keyOf(r.body.id as string), JPEG(MB), "image/jpeg");
+        await stage(t, db, r.body.id as string, JPEG(MB), "image/jpeg");
         made.push(r.body.id as string);
       }
       await db.business.update({ where: { id: bizId }, data: { vault: BigInt(100 * GB - Math.floor(15.5 * MB)) } });
@@ -317,11 +365,233 @@ describe("E-182, E-184, E-183 uploads (contract)", () => {
     it("deleting a Vault file gives its bytes back", async () => {
       await db.business.update({ where: { id: bizId }, data: { vault: 0n } });
       const r = await ticket({ purpose: "vault", contentType: "image/jpeg", bytes: 5000 }, owner.token);
-      t.storage.put(await keyOf(r.body.id as string), JPEG(5000), "image/jpeg");
+      await stage(t, db, r.body.id as string, JPEG(5000), "image/jpeg");
       await confirm(r.body.id as string, owner.token);
       expect(Number((await db.business.findUniqueOrThrow({ where: { id: bizId } })).vault)).toBe(5000);
-      expect((await t.http().delete(`/v1/uploads/${r.body.id as string}`).set(auth(owner.token))).status).toBe(200);
+      expect((await t.http().delete(`/v1/uploads/${r.body.id as string}`).set(auth(owner.token))).status).toBe(204);
       expect(Number((await db.business.findUniqueOrThrow({ where: { id: bizId } })).vault)).toBe(0);
     });
+  });
+});
+
+describe("patch rulings Y1, Y3, Y4, X21, X22, X25, AA1, AA5 (real database, real parallel requests)", () => {
+  let t: TestApp;
+  let db: PrismaService;
+  let scored: ScoredScreening;
+  let me: { id: string; token: string };
+  let biz: { id: string; token: string };
+  let bizId: string;
+  const auth = (token: string) => ({ authorization: `Bearer ${token}` });
+
+  beforeAll(async () => {
+    ({ t, db, scored } = await filesApp());
+    me = await makeAccount(db, t);
+    biz = await makeAccount(db, t, ["business"]);
+    bizId = await makeBusiness(db, biz.id, { plan: "starter" });
+  });
+  afterAll(() => t.close());
+
+  const ticket = (body: object, token = me.token) => t.http().post("/v1/uploads").set(auth(token)).send(body);
+  const confirm = (id: string, token = me.token) => t.http().post(`/v1/uploads/${id}/confirm`).set(auth(token)).send({ fileId: id });
+  const rowOf = (id: string) => db.storedFile.findUniqueOrThrow({ where: { id } });
+
+  it("Y1 attack: confirm a clean file, then PUT other bytes with the old signed URL: the served file and the Vault count are unchanged, and the cleanup handler removes the stray object", async () => {
+    const t0 = await ticket({ purpose: "vault", contentType: "image/png", bytes: 400 }, biz.token);
+    const id = t0.body.id as string;
+    const finalKey = (await rowOf(id)).objectKey;
+    const staging = stagingKeyOf(finalKey);
+    expect(new URL(t0.body.upload.url as string).pathname).toContain(encodeURI(staging));
+    const good = PNG(400);
+    expect(t.storage.putSigned(staging, good, "image/png")).toBe(true);
+    const c = await confirm(id, biz.token);
+    expect(c.body).toMatchObject({ status: "ready", bytes: 400 });
+    expect(Number((await db.business.findUniqueOrThrow({ where: { id: bizId } })).vault)).toBe(400);
+    const served = await t.storage.readStart(finalKey, 1000);
+    expect(served?.equals(good)).toBe(true);
+    // The attack: same type, same length (so the bound signature accepts it), other bytes, the old URL.
+    const evil = Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), Buffer.alloc(392, 9)]);
+    expect(t.storage.putSigned(staging, evil, "image/png")).toBe(true);
+    // A PUT with another length or type is refused by storage itself (X26).
+    expect(t.storage.putSigned(staging, Buffer.alloc(900, 1), "image/png")).toBe(false);
+    expect(t.storage.putSigned(staging, evil, "image/svg+xml")).toBe(false);
+    // The final key was never signed, and nothing changed there.
+    expect(t.storage.bound.has(finalKey)).toBe(false);
+    expect((await t.storage.readStart(finalKey, 1000))?.equals(good)).toBe(true);
+    expect(Number((await db.business.findUniqueOrThrow({ where: { id: bizId } })).vault)).toBe(400);
+    expect(await db.storedFile.count({ where: { id, status: "ready", bytes: 400n } })).toBe(1);
+    expect(await t.storage.head(staging)).not.toBeNull();
+    // Before the old URL has expired, the handler leaves the stray alone; after, it removes it.
+    expect(await t.app.get(FileJobs).cleanupUnconfirmed()).toMatchObject({ swept: 0 });
+    t.clock.advance(16 * 60 * 1000);
+    const out = await t.app.get(FileJobs).cleanupUnconfirmed();
+    expect(out.swept).toBeGreaterThanOrEqual(1);
+    expect(await t.storage.head(staging)).toBeNull();
+    expect((await t.storage.readStart(finalKey, 1000))?.equals(good)).toBe(true);
+    expect(await db.storedFile.count({ where: { id, status: "ready" } })).toBe(1);
+  });
+
+  it("Y1: a stray left after a refusal or a delete is swept too", async () => {
+    const a = (await ticket({ purpose: "photo", contentType: "image/jpeg", bytes: 50 })).body.id as string;
+    const aStaging = stagingKeyOf((await rowOf(a)).objectKey);
+    expect((await confirm(a)).status).toBe(422);
+    t.storage.put(aStaging, JPEG(50), "image/jpeg");
+    const b = (await ticket({ purpose: "photo", contentType: "image/jpeg", bytes: 50 })).body.id as string;
+    const bStaging = await stage(t, db, b, JPEG(50), "image/jpeg");
+    await confirm(b);
+    expect((await t.http().delete(`/v1/uploads/${b}`).set(auth(me.token))).status).toBe(204);
+    t.storage.put(bStaging, JPEG(50), "image/jpeg");
+    t.clock.advance(16 * 60 * 1000);
+    await t.app.get(FileJobs).cleanupUnconfirmed();
+    expect(await t.storage.head(aStaging)).toBeNull();
+    expect(await t.storage.head(bStaging)).toBeNull();
+  });
+
+  it("Y4: storage and the screening port are called outside any database transaction; the upload row is claimed by one conditional UPDATE, so 10 parallel confirms copy and screen once", async () => {
+    const id = (await ticket({ purpose: "photo", contentType: "image/jpeg", bytes: 300 })).body.id as string;
+    await stage(t, db, id, JPEG(300), "image/jpeg");
+    // Counts the transactions this app has open (spec files share a database, so the server's own view is not used).
+    let inTx = 0;
+    const open: number[] = [];
+    const probe = () => {
+      open.push(inTx);
+      return Promise.resolve();
+    };
+    const txOrig = db.$transaction.bind(db) as (fn: unknown, opts?: unknown) => Promise<unknown>;
+    const txSpy = jest.spyOn(db, "$transaction").mockImplementation(((fn: unknown, opts?: unknown) => {
+      if (typeof fn !== "function") return txOrig(fn, opts);
+      inTx++;
+      return txOrig(fn, opts).finally(() => {
+        inTx--;
+      });
+    }));
+    const spies = (["head", "copy", "readStart", "delete"] as const).map((m) => {
+      const orig = t.storage[m].bind(t.storage) as (...a: unknown[]) => Promise<unknown>;
+      return jest.spyOn(t.storage, m).mockImplementation(async (...a: unknown[]) => {
+        await probe();
+        return orig(...a) as never;
+      });
+    });
+    const screenOrig = scored.screen.bind(scored);
+    const screenSpy = jest.spyOn(scored, "screen").mockImplementation(async (i) => {
+      await probe();
+      return screenOrig(i);
+    });
+    const before = scored.screened.length;
+    const res = await Promise.all(Array.from({ length: 10 }, () => confirm(id)));
+    const copies = spies[1].mock.calls.length;
+    spies.forEach((s) => s.mockRestore());
+    txSpy.mockRestore();
+    screenSpy.mockRestore();
+    expect(res.map((r) => r.status)).toEqual(Array(10).fill(200));
+    expect(res.every((r) => r.body.status === "ready")).toBe(true);
+    expect(copies).toBe(1);
+    expect(scored.screened.length - before).toBe(1);
+    expect(await db.screeningResult.count({ where: { fileId: id } })).toBe(1);
+    expect(await db.job.count({ where: { subjectId: id, type: "make_image_sizes" } })).toBe(1);
+    expect(open.length).toBeGreaterThanOrEqual(5);
+    expect(open.every((n) => n === 0)).toBe(true);
+  });
+
+  it("X21: the port's score and labels decide: reject from 0.9, hold from 0.5; its labels are recorded", async () => {
+    const run = async (score: number, labels: string[]) => {
+      const id = (await ticket({ purpose: "photo", contentType: "image/jpeg", bytes: 70 })).body.id as string;
+      await stage(t, db, id, JPEG(70), "image/jpeg");
+      scored.next.push(score);
+      scored.nextLabels.push(labels);
+      const r = await confirm(id);
+      const res = await db.screeningResult.findFirstOrThrow({ where: { fileId: id } });
+      return { status: r.body.status as string, res };
+    };
+    const cases: [number, string, string][] = [
+      [0.9, "rejected", "reject"],
+      [0.89, "screening", "review"],
+      [0.5, "screening", "review"],
+      [0.49, "ready", "pass"],
+    ];
+    for (const [score, status, verdict] of cases) {
+      const out = await run(score, score >= 0.5 ? ["weapons", "text"] : []);
+      expect(out.status).toBe(status);
+      expect(out.res.verdict).toBe(verdict);
+      if (score >= 0.5) expect(out.res.labels).toEqual(expect.arrayContaining(["weapons", "text"]));
+      else expect(out.res.labels).toEqual([]);
+    }
+  });
+
+  it("X22: sizes are made through the kernel's image-sizes port, three widths, each under its own key", async () => {
+    const sizes = t.app.get<ImageSizesPort, StandinImageSizes>(ImageSizesPort);
+    expect(sizes).toBeInstanceOf(StandinImageSizes);
+    const id = (await ticket({ purpose: "photo", contentType: "image/jpeg", bytes: 70 })).body.id as string;
+    await stage(t, db, id, JPEG(70), "image/jpeg");
+    await confirm(id);
+    const made = (await t.app.get(FileJobs).makeImageSizes(id)).made;
+    expect(made).toBe(3);
+    const mine = sizes.made.filter((m) => m.targetKey.includes(id));
+    expect(new Set(mine.map((m) => m.targetKey)).size).toBe(3);
+  });
+
+  it("X25: purpose is in E-182's body (photo, voice, clip, vault, studio, brand) and kind is the media kind", async () => {
+    const wish = await makeWish(db, me.id, "draft", "premiere");
+    const cases: [object, string, string][] = [
+      [{ purpose: "photo", contentType: "image/png", bytes: 9, kind: "image" }, "wish-photo", "image"],
+      [{ purpose: "voice", contentType: "audio/mpeg", bytes: 9, kind: "sound", subjectId: wish }, "voice-note", "sound"],
+      [{ purpose: "clip", contentType: "video/mp4", bytes: 9, kind: "video", subjectId: wish }, "video-clip", "video"],
+      [{ purpose: "studio", contentType: "image/webp", bytes: 9 }, "studio-asset", "image"],
+    ];
+    for (const [body, purpose, kind] of cases) {
+      const r = await ticket(body);
+      expect(r.status).toBe(201);
+      expect(r.body.purpose).toBe(purpose);
+      expect((await rowOf(r.body.id as string)).kind).toBe(kind);
+    }
+    const vault = await ticket({ purpose: "vault", contentType: "video/mp4", bytes: 9, kind: "video" }, biz.token);
+    expect(vault.status).toBe(201);
+    expect((await ticket({ purpose: "photo", contentType: "image/png", bytes: 9, kind: "video" })).body.error.fields).toHaveProperty("kind");
+    expect((await ticket({ purpose: "voice", contentType: "audio/mpeg", bytes: 9, kind: "image", subjectId: wish })).status).toBe(422);
+  });
+
+  it("AA5: purpose brand takes the photo rules (screened, typed by its bytes, no SVG) and needs a business", async () => {
+    expect((await ticket({ purpose: "brand", contentType: "image/png", bytes: 80 })).status).toBe(403);
+    const vaultBefore = Number((await db.business.findUniqueOrThrow({ where: { id: bizId } })).vault ?? 0n);
+    const r = await ticket({ purpose: "brand", contentType: "image/png", bytes: 80 }, biz.token);
+    expect(r.status).toBe(201);
+    expect(r.body.purpose).toBe("brand-logo");
+    const id = r.body.id as string;
+    expect(await rowOf(id)).toMatchObject({ purpose: "brand_logo", businessId: bizId, kind: "image" });
+    await stage(t, db, id, PNG(80), "image/png");
+    expect((await confirm(id, biz.token)).body).toMatchObject({ status: "ready", purpose: "brand-logo", bytes: 80 });
+    expect(Number((await db.business.findUniqueOrThrow({ where: { id: bizId } })).vault ?? 0n)).toBe(vaultBefore);
+    // An SVG sent as a png logo: refused by its bytes and removed.
+    const svg = (await ticket({ purpose: "brand", contentType: "image/png", bytes: 90 }, biz.token)).body.id as string;
+    await stage(t, db, svg, SVG(90), "image/png");
+    const rs = await confirm(svg, biz.token);
+    expect(rs.status).toBe(422);
+    expect(await db.storedFile.count({ where: { id: svg } })).toBe(0);
+    // Held logo at 0.6, rejected at 0.95.
+    const bad = (await ticket({ purpose: "brand", contentType: "image/png", bytes: 80 }, biz.token)).body.id as string;
+    await stage(t, db, bad, PNG(80), "image/png");
+    scored.next.push(0.95);
+    expect((await confirm(bad, biz.token)).body.status).toBe("rejected");
+  });
+
+  it("AA1: an erased account takes no new upload ticket (401 account_erased)", async () => {
+    const gone = await makeAccount(db, t);
+    await db.account.update({ where: { id: gone.id }, data: { erasedAt: new Date() } });
+    const r = await ticket({ purpose: "photo", contentType: "image/png", bytes: 9 }, gone.token);
+    expect(r.status).toBe(401);
+    expect(r.body.error.code).toBe("account_erased");
+    expect(await db.storedFile.count({ where: { ownerAccountId: gone.id } })).toBe(0);
+  });
+
+  it("Y4: 20 parallel confirms of 20 Vault files near the limit still count the exact sum (claim, then short transaction)", async () => {
+    await db.business.update({ where: { id: bizId }, data: { vault: 0n, plan: "starter" } });
+    const ids20: string[] = [];
+    for (let i = 0; i < 20; i++) {
+      const r = await ticket({ purpose: "vault", contentType: "image/png", bytes: 2000 + i }, biz.token);
+      await stage(t, db, r.body.id as string, PNG(2000 + i), "image/png");
+      ids20.push(r.body.id as string);
+    }
+    const res = await Promise.all(ids20.map((id) => confirm(id, biz.token)));
+    expect(res.map((r) => r.status)).toEqual(Array(20).fill(200));
+    expect(Number((await db.business.findUniqueOrThrow({ where: { id: bizId } })).vault)).toBe(20 * 2000 + 190);
   });
 });

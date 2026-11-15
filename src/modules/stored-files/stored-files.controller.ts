@@ -8,9 +8,10 @@ import {
   PostUploadsByIdConfirmBodyDto,
   PostUploadsByIdConfirmParamsDto,
   type StoredFile,
+  type UploadTicket,
 } from "../../contracts";
 import { userOf } from "./principal";
-import { StoredFilesService, UploadTicketView } from "./stored-files.service";
+import { StoredFilesService } from "./stored-files.service";
 
 /** E-182..E-184: signed uploads straight to storage, then confirm (registry auth: business; creator; signed in, so any side). */
 @Controller("uploads")
@@ -21,7 +22,7 @@ export class StoredFilesController {
   @Roles("person", "creator", "business")
   @Post()
   @HttpCode(201)
-  ticket(@Body() body: PostUploadsBodyDto, @CurrentPrincipal() p: Principal | undefined): Promise<UploadTicketView> {
+  ticket(@Body() body: PostUploadsBodyDto, @CurrentPrincipal() p: Principal | undefined): Promise<UploadTicket> {
     return this.files.createTicket(userOf(p), body);
   }
 
@@ -37,15 +38,15 @@ export class StoredFilesController {
     return this.files.confirm(userOf(p), params.id, body.fileId);
   }
 
-  /** E-183 */
+  /** E-183 (X20: answers 204, no body) */
   @Roles("person", "creator", "business")
   @Delete(":id")
-  @HttpCode(200)
+  @HttpCode(204)
   remove(
     @Param() params: DeleteUploadsByIdParamsDto,
     @Body() body: DeleteUploadsByIdBodyDto,
     @CurrentPrincipal() p: Principal | undefined,
-  ): Promise<StoredFile> {
+  ): Promise<void> {
     return this.files.remove(userOf(p), params.id, body ?? {});
   }
 }

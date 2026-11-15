@@ -1,8 +1,10 @@
 import { Injectable } from "@nestjs/common";
+import type { Prisma } from "@prisma/client";
 import { PrismaService } from "../../common/db/prisma.service";
 import { AppError } from "../../common/errors/app-error";
 import { StoragePort } from "../../common/ports/storage.port";
-import type { ScreeningResult } from "../../contracts";
+import { decodeCursor, DEFAULT_LIMIT, toPage } from "../../common/pagination/cursor";
+import type { GetAdminScreeningResultsQuery, GetAdminScreeningResultsResponse, ScreeningResult } from "../../contracts";
 import { AuditActor, AuditService, requireReason } from "../audit/audit.service";
 import { isUuid, variantsOf } from "../stored-files/file-rules";
 import { screeningView } from "../stored-files/screening.service";
@@ -15,6 +17,21 @@ export class ScreeningResultsService {
     private readonly audit: AuditService,
     private readonly storage: StoragePort,
   ) {}
+
+  /** E-237 (X24): results newest first, paged by cursor, optionally only one verdict. Feeds Moderation's flagged photos. */
+  async list(q: GetAdminScreeningResultsQuery): Promise<GetAdminScreeningResultsResponse> {
+    const limit = q.limit ?? DEFAULT_LIMIT;
+    const where: Prisma.ScreeningResultWhereInput = {};
+    if (q.verdict) where.verdict = q.verdict;
+    if (q.cursor) {
+      const at = decodeCursor(q.cursor).id;
+      if (!isUuid(at)) throw AppError.validation({ cursor: "Must be a cursor from a previous page." });
+      where.id = { lt: at };
+    }
+    const rows = await this.db.screeningResult.findMany({ where, orderBy: { id: "desc" }, take: limit + 1 });
+    const page = toPage(rows, limit, (r) => ({ key: r.id, id: r.id }));
+    return { items: page.items.map(screeningView), nextCursor: page.nextCursor };
+  }
 
   /** The staff queue: held files (verdict review) not yet decided, oldest first. */
   async queue(limit = 50): Promise<ScreeningResult[]> {

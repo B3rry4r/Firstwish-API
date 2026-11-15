@@ -8,6 +8,7 @@ import type { UserPrincipal } from "../../common/auth/principal";
 import { Clock } from "../../common/ports/clock.port";
 import { CodeGenerator, IdGenerator } from "../../common/ports/ids.port";
 import { StoragePort } from "../../common/ports/storage.port";
+import { lockAccount } from "../../common/db/account-lock";
 import { toWireInstant } from "../../common/time/time";
 import type { DeleteUploadsByIdBody, PostUploadsBody, StoredFile, UploadTicket } from "../../contracts";
 import {
@@ -15,38 +16,30 @@ import {
   GB,
   isImage,
   isUuid,
+  looksLikeSvg,
   MAX_VOICE_SECONDS,
+  mediaKindOf,
   normaliseType,
   purposeOf,
+  purposeOnWire,
   PurposeRule,
+  STAGING_SWEEP_AFTER_SECONDS,
+  stagingKeyOf,
+  typeFromBytes,
   UPLOAD_TTL_SECONDS,
   variantsOf,
 } from "./file-rules";
 import { ScreeningService } from "./screening.service";
 
-/**
- * The answer to E-182: the registry's UploadTicket plus the signed PUT itself (HALT reported: the registry types E-182's answer as
- * VoiceNote and UploadTicket has no url; this extends the contract type and re-declares none of it).
- */
-export interface UploadTicketView extends UploadTicket {
-  id: string;
-  fileId: string;
-  status: StoredFile["status"];
-  bytes: number;
-  contentType: string;
-  subjectId: string;
-  upload: { url: string; method: "PUT"; headers: Record<string, string>; expiresAt: string };
-}
-
 type Tx = Prisma.TransactionClient;
 
 const refused = (message: string) => new AppError(HttpStatus.UNPROCESSABLE_ENTITY, "upload_refused", message, { fileId: message });
+const WAIT_FOR_OTHER_CONFIRM_MS = 25_000;
 
-/** True for a database error raised by the stored-file link triggers (SQLSTATE 23503). */
-function isStillUsed(e: unknown): boolean {
-  const s = e instanceof Error ? e.message : String(e);
-  return (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2003") || s.includes("23503") || s.includes("still used") || s.includes("Foreign key");
-}
+/** X23: a file still named by a row with a real foreign key (a wish, a card, a render, a request) cannot be deleted. */
+const isStillUsed = (e: unknown) => e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2003";
+
+const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 
 /** Vault space: the plan's GB plus every live pack's GB (entitlements.pro; DEC-96 price book). */
 export async function vaultLimitBytes(tx: Tx, biz: Pick<Business, "plan" | "pack" | "packEnds">, now: Date): Promise<number> {
@@ -70,6 +63,7 @@ export class StoredFilesService {
     private readonly clock: Clock,
     @Inject(ENV) private readonly env: Env,
   ) {}
+
 
   /** The caller's business (owner), or 403. */
   private async businessOf(tx: Tx, p: UserPrincipal): Promise<Business> {
@@ -97,41 +91,55 @@ export class StoredFilesService {
     }
   }
 
-  /** E-182: checks kind, type, size and entitlement, then issues a signed PUT for one server-made key, good for 15 minutes. */
-  async createTicket(p: UserPrincipal, body: PostUploadsBody): Promise<UploadTicketView> {
+  /**
+   * E-182: checks purpose, type, size and entitlement, then issues a signed PUT for one STAGING key (Y1), good for 15 minutes and
+   * bound to the type and the exact length (X26). The file's own key is made here too but is never signed for a PUT.
+   */
+  async createTicket(p: UserPrincipal, body: PostUploadsBody): Promise<UploadTicket> {
     const rule = purposeOf(body.purpose);
-    if (!rule) throw AppError.validation({ purpose: "Must be one of photo, voice, clip or vault." });
+    if (!rule) throw AppError.validation({ purpose: "Must be one of photo, voice, clip, vault, studio or brand." });
     const contentType = normaliseType(body.contentType);
-    if (!contentType || !rule.types.includes(contentType)) throw AppError.validation({ contentType: `Not a type taken for ${rule.purpose}.` });
-    if (body.kind !== undefined && rule.kinds.length && !rule.kinds.includes(body.kind)) {
-      throw AppError.validation({ kind: "Does not match the purpose." });
+    if (!contentType || !rule.types.includes(contentType)) {
+      throw AppError.validation({ contentType: contentType === "image/svg+xml" ? "An SVG is not taken as a picture." : `Not a type taken for ${rule.purpose}.` });
     }
+    // X25: kind is the media kind (image, sound, model, video) and must agree with the type.
+    if (body.kind !== undefined && body.kind !== mediaKindOf(contentType)) throw AppError.validation({ kind: "Does not match the type." });
     const bytes = body.bytes;
     if (typeof bytes !== "number" || !Number.isInteger(bytes) || bytes <= 0) throw AppError.validation({ bytes: "Must be the file's size in bytes." });
     if (bytes > rule.maxBytes) throw AppError.validation({ bytes: `Too large: at most ${rule.maxBytes / (1024 * 1024)} MB.` });
     if (body.seconds !== undefined && (rule.purpose !== "voice-note" || !(body.seconds > 0 && body.seconds <= MAX_VOICE_SECONDS))) {
       throw AppError.validation({ seconds: `A voice note is 1 to ${MAX_VOICE_SECONDS} seconds.` });
     }
+    if (rule.purpose === "studio-asset" && body.styleId !== undefined && !isUuid(body.styleId)) throw AppError.validation({ styleId: "Must be a style id." });
 
     const id = this.ids.id();
     const objectKey = `${rule.purpose}/${id}/${this.codes.token(16)}`;
     const now = this.clock.now();
+    const wishFile = rule.purpose === "wish-photo" || rule.purpose === "voice-note" || rule.purpose === "video-clip";
     await this.db.$transaction(async (tx) => {
+      await lockAccount(tx, p.accountId);
       let businessId: string | null = null;
-      if (rule.purpose === "vault-file") {
+      let styleId: string | null = null;
+      if (rule.purpose === "vault-file" || rule.purpose === "brand-logo") {
         const biz = await this.businessOf(tx, p);
         businessId = biz.id;
-        const limit = await vaultLimitBytes(tx, biz, now);
-        if (limit <= 0) throw AppError.forbidden("Your business has no Vault space.");
-        if (Number(biz.vault ?? 0n) + bytes > limit) throw AppError.conflict("vault_full", "This file would go over your Vault space.");
-      } else {
+        if (rule.purpose === "vault-file") {
+          const limit = await vaultLimitBytes(tx, biz, now);
+          if (limit <= 0) throw AppError.forbidden("Your business has no Vault space.");
+          if (Number(biz.vault ?? 0n) + bytes > limit) throw AppError.conflict("vault_full", "This file would go over your Vault space.");
+        }
+      } else if (wishFile) {
         await this.checkWish(tx, p, rule, body.subjectId);
+      } else if (body.styleId !== undefined) {
+        if (!(await tx.style.findUnique({ where: { id: body.styleId }, select: { id: true } }))) throw AppError.validation({ styleId: "No such style." });
+        styleId = body.styleId;
       }
       await tx.storedFile.create({
         data: {
           id,
           ownerAccountId: p.accountId,
           businessId,
+          styleId,
           purpose: rule.db,
           objectKey,
           contentType,
@@ -140,25 +148,21 @@ export class StoredFilesService {
           variants: [],
           driver: this.env.STORAGE_DRIVER ?? "r2",
           fileId: id,
+          kind: mediaKindOf(contentType),
           createdAt: now,
         },
       });
-      await tx.uploadTicket.create({ data: { id, bytes: BigInt(bytes), contentType, purpose: rule.purpose, subjectId: body.subjectId ?? null } });
+      await tx.uploadTicket.create({ data: { id, bytes: BigInt(bytes), contentType, purpose: rule.purpose, subjectId: wishFile ? (body.subjectId ?? null) : null } });
       if (rule.purpose === "voice-note") {
         await tx.voiceNote.create({
           data: { id, wishId: body.subjectId ?? null, seconds: body.seconds === undefined ? null : Math.round(body.seconds), audio: { fileId: id }, sound: "voice" },
         });
       }
     });
-    const signed = await this.storage.signUpload({ key: objectKey, contentType, contentLength: bytes, expiresInSeconds: UPLOAD_TTL_SECONDS });
+    const signed = await this.storage.signUpload({ key: stagingKeyOf(objectKey), contentType, contentLength: bytes, expiresInSeconds: UPLOAD_TTL_SECONDS });
     return {
       id,
-      fileId: id,
-      status: "pending",
-      bytes,
-      contentType,
-      purpose: rule.purpose,
-      subjectId: body.subjectId ?? "",
+      purpose: purposeOnWire(rule.db),
       upload: { url: signed.url, method: signed.method, headers: signed.headers, expiresAt: toWireInstant(signed.expiresAt) },
     };
   }
@@ -169,41 +173,107 @@ export class StoredFilesService {
     await tx.storedFile.delete({ where: { id } });
   }
 
+  /**
+   * Y1: a signed PUT for a staging key stays good for 15 minutes, also after the file is confirmed, refused or deleted. One job per
+   * key removes whatever lands there once every such PUT has expired (the upload-cleanup handler, FileJobs.cleanupUnconfirmed).
+   */
+  private async sweepStagingLater(tx: Tx, objectKey: string): Promise<void> {
+    const at = new Date(this.clock.now().getTime() + STAGING_SWEEP_AFTER_SECONDS * 1000);
+    await tx.job.create({ data: { id: this.ids.id(), type: "upload_cleanup", subjectId: stagingKeyOf(objectKey), runAt: at, status: "scheduled", attempts: 0 } });
+  }
+
   private async lockOwn(tx: Tx, id: string, accountId: string): Promise<FileRow> {
     const rows = await tx.$queryRaw<{ id: string }[]>`SELECT id FROM stored_file WHERE id = ${id}::uuid AND "ownerAccountId" = ${accountId}::uuid FOR UPDATE`;
     if (!rows.length) throw AppError.notFound("No such file.");
     return tx.storedFile.findUniqueOrThrow({ where: { id } });
   }
 
+  /** A confirm in flight on another request: wait for it to finish, then answer what it made (Y4). */
+  private async awaitOtherConfirm(p: UserPrincipal, id: string): Promise<StoredFile> {
+    const until = Date.now() + WAIT_FOR_OTHER_CONFIRM_MS;
+    for (;;) {
+      const row = await this.db.storedFile.findFirst({ where: { id, ownerAccountId: p.accountId } });
+      if (!row) throw refused("The file was refused.");
+      if (row.status === "ready" || row.status === "screening" || row.status === "rejected") return fileView(row);
+      if (row.status === "pending") return this.confirm(p, id, id);
+      if (row.status !== "uploaded") throw AppError.notFound("No such file.");
+      if (Date.now() > until) throw AppError.conflict("confirm_in_progress", "This file is still being checked. Try again in a moment.");
+      await sleep(100);
+    }
+  }
+
+  /** Refuses an upload: the rows go in one short transaction, the objects after it. */
+  private async refuse(id: string, objectKey: string, error: AppError): Promise<never> {
+    await this.db.$transaction(async (tx) => {
+      await this.sweepStagingLater(tx, objectKey);
+      await this.removeRows(tx, id).catch((e: unknown) => {
+        if (!(e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2025")) throw e;
+      });
+    });
+    await this.storage.delete(objectKey);
+    await this.storage.delete(stagingKeyOf(objectKey));
+    throw error;
+  }
+
   /**
-   * E-184: reads the object's real size and type from storage, screens it, and only then makes it usable. A file larger than
-   * asked, of another type, or never uploaded is refused and removed. Confirming twice answers the same row.
+   * E-184 (Y1, Y3, Y4). The upload row is claimed by ONE conditional UPDATE (pending to uploaded), so one request does the work.
+   * Storage is then worked outside any transaction: the staged object is copied to the file's own key (which no signed PUT ever
+   * pointed at) and everything after reads that copy, so nothing sent later can change what was screened. The type comes from the
+   * file's first bytes, the size is the real one. A short transaction finishes it. A file larger than asked, not what its type says,
+   * or never uploaded is refused and removed. Confirming twice answers the same row.
    */
   async confirm(p: UserPrincipal, id: string, fileId: string): Promise<StoredFile> {
     if (!isUuid(id)) throw AppError.notFound("No such file.");
     if (fileId !== id) throw AppError.validation({ fileId: "Must be the id in the path." });
-    type Outcome = { row: FileRow; removeKeys: string[]; error?: AppError };
-    const out: Outcome = await this.db.$transaction(
-      async (tx): Promise<Outcome> => {
-        const row = await this.lockOwn(tx, id, p.accountId);
-        if (row.status === "ready" || row.status === "screening" || row.status === "rejected") return { row, removeKeys: [] };
-        if (row.status !== "pending") throw AppError.notFound("No such file.");
-        const obj = await this.storage.head(row.objectKey);
-        const type = normaliseType(obj?.contentType ?? null);
-        let why: string | null = null;
-        if (!obj) why = "The file was never uploaded.";
-        else if (obj.size <= 0) why = "The file is empty.";
-        else if (obj.size > Number(row.bytes)) why = "The file is larger than asked.";
-        else if (type !== row.contentType) why = "The file is not of the type asked.";
-        if (why || !obj) {
-          await this.removeRows(tx, id);
-          return { row, removeKeys: [row.objectKey], error: refused(why ?? "Refused.") };
-        }
-        const head = (await this.storage.readStart(row.objectKey, 64)) ?? Buffer.alloc(0);
-        const { verdict } = await this.screening.screenFile(tx, row, obj.size, head);
-        if (verdict === "reject") {
-          const rejected = await tx.storedFile.update({ where: { id }, data: { status: "rejected", bytes: BigInt(obj.size) } });
-          return { row: rejected, removeKeys: [row.objectKey] };
+    const claimed = await this.db.storedFile.updateMany({ where: { id, ownerAccountId: p.accountId, status: "pending" }, data: { status: "uploaded" } });
+    const row = await this.db.storedFile.findFirst({ where: { id, ownerAccountId: p.accountId } });
+    if (!row || row.status === "deleted") throw AppError.notFound("No such file.");
+    if (claimed.count === 0) {
+      if (row.status === "uploaded") return this.awaitOtherConfirm(p, id);
+      return fileView(row);
+    }
+    try {
+      return await this.finishConfirm(p, row);
+    } catch (e) {
+      if (!(e instanceof AppError)) {
+        // A storage or database failure: give the claim back so the person can confirm again; the cleanup job removes it if they do not.
+        await this.db.storedFile.updateMany({ where: { id, status: "uploaded" }, data: { status: "pending" } });
+      }
+      throw e;
+    }
+  }
+
+  private async finishConfirm(p: UserPrincipal, row: FileRow): Promise<StoredFile> {
+    const { id, objectKey } = row;
+    const staging = stagingKeyOf(objectKey);
+    const asked = Number(row.bytes);
+    const staged = await this.storage.head(staging);
+    if (!staged) return this.refuse(id, objectKey, refused("The file was never uploaded."));
+    if (staged.size <= 0) return this.refuse(id, objectKey, refused("The file is empty."));
+    if (staged.size > asked) return this.refuse(id, objectKey, refused("The file is larger than asked."));
+    await this.storage.copy(staging, objectKey);
+    const obj = await this.storage.head(objectKey);
+    if (!obj || obj.size <= 0) return this.refuse(id, objectKey, refused("The file was never uploaded."));
+    if (obj.size > asked) return this.refuse(id, objectKey, refused("The file is larger than asked."));
+    const head = (await this.storage.readStart(objectKey, 64)) ?? Buffer.alloc(0);
+    const type = typeFromBytes(head, row.contentType);
+    if (!type) {
+      return this.refuse(id, objectKey, refused(looksLikeSvg(head) ? "An SVG is not taken as a picture." : "The file is not of the type asked."));
+    }
+    const screened = await this.screening.screen({ objectKey, contentType: type }, obj.size, head);
+
+    type Done = { row: FileRow; removeKeys: string[]; error?: AppError };
+    const done: Done = await this.db.$transaction(
+      async (tx): Promise<Done> => {
+        await lockAccount(tx, p.accountId);
+        const locked = await tx.$queryRaw<{ id: string }[]>`SELECT id FROM stored_file WHERE id = ${id}::uuid AND status = 'uploaded' FOR UPDATE`;
+        if (!locked.length) return { row, removeKeys: [objectKey, staging], error: refused("The file was removed.") };
+        await this.screening.record(tx, id, screened);
+        await this.sweepStagingLater(tx, objectKey);
+        const kind = mediaKindOf(type);
+        if (screened.verdict === "reject") {
+          const rejected = await tx.storedFile.update({ where: { id }, data: { status: "rejected", bytes: BigInt(obj.size), kind } });
+          return { row: rejected, removeKeys: [objectKey, staging] };
         }
         if (row.businessId && row.purpose === "vault_file") {
           const biz = await tx.business.findUniqueOrThrow({ where: { id: row.businessId } });
@@ -214,46 +284,41 @@ export class StoredFilesService {
             RETURNING id`;
           if (!counted.length) {
             await this.removeRows(tx, id);
-            return { row, removeKeys: [row.objectKey], error: AppError.conflict("vault_full", "This file would go over your Vault space.") };
+            return { row, removeKeys: [objectKey, staging], error: AppError.conflict("vault_full", "This file would go over your Vault space.") };
           }
         }
-        const done = await tx.storedFile.update({
+        const ready = await tx.storedFile.update({
           where: { id },
-          data: { status: verdict === "pass" ? "ready" : "screening", bytes: BigInt(obj.size) },
+          data: { status: screened.verdict === "pass" ? "ready" : "screening", bytes: BigInt(obj.size), kind },
         });
-        if (isImage(row.contentType)) {
+        if (isImage(type)) {
           await tx.job.create({ data: { id: this.ids.id(), type: "make_image_sizes", subjectId: id, runAt: this.clock.now(), status: "scheduled", attempts: 0 } });
         }
-        return { row: done, removeKeys: [] };
+        return { row: ready, removeKeys: [staging] };
       },
       { maxWait: 15_000, timeout: 20_000 },
     );
-    for (const k of out.removeKeys) await this.storage.delete(k);
-    if (out.error) throw out.error;
-    return fileView(out.row);
+    for (const k of done.removeKeys) await this.storage.delete(k);
+    if (done.error) throw done.error;
+    return fileView(done.row);
   }
 
-  /** True when a sealed, live or resting wish still uses this file (its photos, voices or content, or a voice note on it). */
-  private async usedBySealedWish(tx: Tx, id: string): Promise<boolean> {
-    const like = `%${id}%`;
-    const rows = await tx.$queryRaw<{ n: number }[]>`
-      SELECT 1 AS n FROM wish w
-      WHERE w.status::text IN ('sealed', 'live', 'resting')
-        AND (COALESCE(w.photos::text, '') LIKE ${like} OR COALESCE(w.voices::text, '') LIKE ${like} OR COALESCE(w.content::text, '') LIKE ${like}
-             OR EXISTS (SELECT 1 FROM voice_note v WHERE v.id = ${id}::uuid AND v."wishId" = w.id)
-             OR EXISTS (SELECT 1 FROM upload_ticket t WHERE t.id = ${id}::uuid AND t."subjectId" = w.id::text))
-      LIMIT 1`;
-    return rows.length > 0;
-  }
-
-  /** E-183: removes the row and the object (and its sizes); a file still used by a sealed wish is 409. */
-  async remove(p: UserPrincipal, id: string, body: DeleteUploadsByIdBody): Promise<StoredFile> {
+  /** E-183 (Y5, X23): removes the row, then the objects (and sizes). A file a wish or a card names (a real foreign key) is 409. */
+  async remove(p: UserPrincipal, id: string, body: DeleteUploadsByIdBody): Promise<void> {
     if (!isUuid(id)) throw AppError.notFound("No such file.");
     if (body.fileId !== undefined && body.fileId !== id) throw AppError.validation({ fileId: "Must be the id in the path." });
     const row = await this.db.$transaction(
       async (tx) => {
+        await lockAccount(tx, p.accountId);
         const r = await this.lockOwn(tx, id, p.accountId);
-        if (await this.usedBySealedWish(tx, id)) throw AppError.conflict("file_in_use", "A sealed wish still uses this file.");
+        // Lock the wishes that name the file, so a seal cannot land between this check and the delete.
+        const wishes = await tx.$queryRaw<{ id: string; status: string }[]>`
+          SELECT w.id, w.status::text AS status FROM wish w
+          WHERE w.id IN (SELECT "wishId" FROM wish_file WHERE "fileId" = ${id}::uuid)
+             OR w.id IN (SELECT "wishId" FROM voice_note WHERE id = ${id}::uuid AND "wishId" IS NOT NULL)
+          FOR UPDATE`;
+        if (wishes.some((w) => w.status !== "draft")) throw AppError.conflict("file_in_use", "A sealed wish still uses this file.");
+        await tx.$executeRaw`DELETE FROM wish_file WHERE "fileId" = ${id}::uuid`;
         if (r.businessId && r.purpose === "vault_file" && (r.status === "ready" || r.status === "screening")) {
           await tx.$executeRaw`UPDATE business SET vault = GREATEST(COALESCE(vault, 0) - ${r.bytes}, 0), version = version + 1 WHERE id = ${r.businessId}::uuid`;
         }
@@ -263,11 +328,11 @@ export class StoredFilesService {
           if (isStillUsed(e)) throw AppError.conflict("file_in_use", "This file is still used.");
           throw e;
         }
-        for (const k of [r.objectKey, ...variantsOf(r).map((v) => v.key)]) await this.storage.delete(k);
+        await this.sweepStagingLater(tx, r.objectKey);
         return r;
       },
       { maxWait: 15_000, timeout: 20_000 },
     );
-    return { ...fileView(row), status: "deleted" };
+    for (const k of [row.objectKey, stagingKeyOf(row.objectKey), ...variantsOf(row).map((v) => v.key)]) await this.storage.delete(k);
   }
 }

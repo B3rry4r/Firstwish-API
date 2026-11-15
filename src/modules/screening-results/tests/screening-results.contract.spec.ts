@@ -1,7 +1,7 @@
 import { PrismaService } from "../../../common/db/prisma.service";
 import type { TestApp } from "../../../../test/kit/app";
 import { seedRoleTable } from "../../staff-accounts/tests/staff-kit";
-import { filesApp, ids, JPEG, makeAccount, makeBusiness, ScoredScreening } from "../../stored-files/tests/files-kit";
+import { filesApp, ids, JPEG, makeAccount, makeBusiness, ScoredScreening, stage } from "../../stored-files/tests/files-kit";
 import { ScreeningResultsService } from "../screening-results.service";
 
 describe("E-157 screening decision (contract)", () => {
@@ -27,7 +27,7 @@ describe("E-157 screening decision (contract)", () => {
     expect(r.status).toBe(201);
     const fileId = r.body.id as string;
     const key = (await db.storedFile.findUniqueOrThrow({ where: { id: fileId } })).objectKey;
-    t.storage.put(key, JPEG(700), contentType);
+    await stage(t, db, fileId, JPEG(700), contentType);
     scored.next.push(0.7);
     const c = await t.http().post(`/v1/uploads/${fileId}/confirm`).set(auth(me.token)).send({ fileId });
     expect(c.body.status).toBe("screening");
@@ -84,5 +84,31 @@ describe("E-157 screening decision (contract)", () => {
     const [a, b] = await Promise.all([decide(h.resultId, { finalVerdict: "pass", reason: "first one" }), decide(h.resultId, { finalVerdict: "reject", reason: "second one" })]);
     expect([a.status, b.status].sort()).toEqual([200, 409]);
     expect(await db.auditEntry.count({ where: { subjectId: h.resultId } })).toBe(1);
+  });
+
+  it("X24: GET /v1/admin/screening-results answers owner, ops and moderator; others 403; no token 401; filter by verdict; paged", async () => {
+    t.tokens.set("ops", { kind: "staff", staffId: ids.next(), roles: ["ops"] });
+    t.tokens.set("owner", { kind: "staff", staffId: ids.next(), roles: ["owner"] });
+    const a = await held();
+    const b = await held();
+    for (const who of ["mod", "ops", "owner"]) {
+      const r = await t.http().get("/v1/admin/screening-results?verdict=review&limit=50").set(auth(who));
+      expect(r.status).toBe(200);
+      expect((r.body.items as { id: string }[]).map((i) => i.id)).toEqual(expect.arrayContaining([a.resultId, b.resultId]));
+      expect(r.body.items[0]).toMatchObject({ verdict: "review", labels: ["stand-in label", "stand-in reason"] });
+    }
+    expect((await t.http().get("/v1/admin/screening-results").set(auth("support"))).status).toBe(403);
+    expect((await t.http().get("/v1/admin/screening-results").set(auth(me.token))).status).toBe(403);
+    expect((await t.http().get("/v1/admin/screening-results")).status).toBe(401);
+    expect((await t.http().get("/v1/admin/screening-results?verdict=maybe").set(auth("mod"))).status).toBe(422);
+    const p1 = await t.http().get("/v1/admin/screening-results?limit=1").set(auth("mod"));
+    expect(p1.body.items).toHaveLength(1);
+    expect(p1.body.nextCursor).not.toBeNull();
+    const p2 = await t.http().get(`/v1/admin/screening-results?limit=1&cursor=${p1.body.nextCursor as string}`).set(auth("mod"));
+    expect(p2.body.items[0].id).not.toBe(p1.body.items[0].id);
+    expect((await t.http().get("/v1/admin/screening-results?cursor=zzz").set(auth("mod"))).status).toBe(422);
+    await decide(a.resultId, { finalVerdict: "reject", reason: "Not allowed here" });
+    const rejected = await t.http().get("/v1/admin/screening-results?verdict=review&limit=50").set(auth("mod"));
+    expect((rejected.body.items as { id: string }[]).find((i) => i.id === a.resultId)).toMatchObject({ finalVerdict: "reject" });
   });
 });

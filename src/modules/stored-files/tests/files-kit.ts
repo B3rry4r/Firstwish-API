@@ -2,22 +2,28 @@ import type { WishStatus, WishTicket } from "@prisma/client";
 import { PrismaService } from "../../../common/db/prisma.service";
 import { UuidV7Maker } from "../../../common/ids/uuidv7";
 import { ScreenInput, ScreenResult, UploadScreeningPort } from "../../../common/ports/screening.port";
+import { stagingKeyOf } from "../file-rules";
 import { createTestApp, TestApp } from "../../../../test/kit/app";
 
 export const ids = new UuidV7Maker();
 export const JPEG = (n: number) => Buffer.concat([Buffer.from([0xff, 0xd8, 0xff, 0xe0]), Buffer.alloc(Math.max(0, n - 4), 1)]);
 export const WEBM = (n: number) => Buffer.concat([Buffer.from([0x1a, 0x45, 0xdf, 0xa3]), Buffer.alloc(Math.max(0, n - 4), 2)]);
+export const PNG = (n: number) => Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), Buffer.alloc(Math.max(0, n - 8), 3)]);
+export const SVG = (n: number) => Buffer.concat([Buffer.from('<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>'), Buffer.alloc(Math.max(0, n - 70), 32)]).subarray(0, n);
 export const MB = 1024 * 1024;
 export const GB = 1024 * MB;
 
 /** A screening stand-in that answers the scores a test queues (default 0, clean). */
 export class ScoredScreening extends UploadScreeningPort {
   readonly next: number[] = [];
+  /** Labels for the next answers (X21), in step with `next`. */
+  readonly nextLabels: string[][] = [];
   readonly screened: ScreenInput[] = [];
   screen(input: ScreenInput): Promise<ScreenResult> {
     this.screened.push(input);
     const score = this.next.shift() ?? 0;
-    const r = score >= 0.5 ? { verdict: "rejected" as const, reason: "stand-in label", score, labels: ["stand-in label"] } : { verdict: "clean" as const, score, labels: [] };
+    const labels = this.nextLabels.shift() ?? (score >= 0.5 ? ["stand-in label"] : []);
+    const r = score >= 0.5 ? { verdict: "rejected" as const, reason: "stand-in reason", score, labels } : { verdict: "clean" as const, score, labels };
     return Promise.resolve(r);
   }
 }
@@ -71,4 +77,11 @@ export async function makeWish(db: PrismaService, accountId: string, status: Wis
     data: { id, accountId, status, ticket, kind: "birthday", occasion: "birthday", styleSlug: "classic", timeZone: "Africa/Lagos", photos: photos === undefined ? undefined : (photos as object) },
   });
   return id;
+}
+
+/** Puts bytes where the browser's signed PUT would: on the file's STAGING key (Y1), as storage takes it (type and length bound, X26). */
+export async function stage(t: TestApp, db: PrismaService, id: string, bytes: Buffer, contentType: string): Promise<string> {
+  const key = stagingKeyOf((await db.storedFile.findUniqueOrThrow({ where: { id } })).objectKey);
+  if (!t.storage.putSigned(key, bytes, contentType)) t.storage.put(key, bytes, contentType);
+  return key;
 }

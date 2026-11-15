@@ -2,7 +2,7 @@ BUILDER API-0 | TIER T1 | tasks API-0a the NestJS skeleton and shared kernel; AP
 Budget 170 steps. Machine: 4 CPUs, 15 GB; you are a heavy agent (three others run): a heavy job only at 5 GB available.
 Read /home/user/Firstwish-API/build/common-rules.md, .pipeline/conventions.md, .pipeline/framework-decision.json, .pipeline/env-manifest.json,
 and the test-kit paragraph of the skill (/root/.claude/skills/synced/f85b4e60-1876-4137-a2c7-d7d119745a79_8f677423-0744-4c12-8d0d-331ba6815a77/contract-driven-backend/SKILL.md line 195 and its references/framework-profiles.md, NestJS).
-Owner's words: > "Back end Nest.js." (R1) > "Follow the workflows, my workflows, properly and accurately." (R10). Storage: R2. Email: Resend (R12).
+Owner's words: > "Back end Nest.js." (R1) > "Follow the workflows, my workflows, properly and accurately." (R10). Storage behind one port with two adapters, Cloudflare R2 and DigitalOcean Spaces (ruling R2). Email: Resend (R12).
 Covers: the empty, running API that every later builder stands on. Does not cover: any resource of the registry (no Account, Wish, Payment
 modules, no Prisma models beyond a migrations table check): those come in Phase 4 and 5 from .pipeline/registry.json once it is frozen.
 Cases (input -> expected):

@@ -23,7 +23,9 @@
         "pro-home: number: wishes left from wish packs",
         "pro-people: number: wishes left from wish packs"
       ],
-      "noWriter": true
+      "noWriter": true,
+      "owed": true,
+      "owedEvent": "pro.pack / pro plan fulfilment on a verified payment, and the plan-period job (rollover)"
     },
     {
       "metric": "Business.rolled",
@@ -44,128 +46,9 @@
         "pro-home: number: unused wishes carried in",
         "pro-people: number: unused wishes carried in"
       ],
-      "noWriter": true
-    },
-    {
-      "metric": "Coming.days",
-      "shownOn": [
-        "pro-people"
-      ],
-      "writerPath": [],
-      "formula": [],
-      "wording": [
-        "pro-people: number"
-      ],
-      "noWriter": true
-    },
-    {
-      "metric": "Coming.years",
-      "shownOn": [
-        "pro-people"
-      ],
-      "writerPath": [],
-      "formula": [
-        "T-29",
-        "T-70"
-      ],
-      "wording": [
-        "pro-people: number"
-      ],
-      "noWriter": true
-    },
-    {
-      "metric": "ConciergeOffer.price",
-      "shownOn": [
-        "site-business",
-        "site-home",
-        "site-pricing"
-      ],
-      "writerPath": [
-        "price book (S-14: the web reads GET /v1/prices)"
-      ],
-      "formula": [
-        "T-26",
-        "T-27",
-        "T-28",
-        "T-32"
-      ],
-      "wording": [
-        "site-business: string ('₦15,000')",
-        "site-home: string ('₦15,000')",
-        "site-pricing: string ('₦15,000')"
-      ],
-      "noWriter": false
-    },
-    {
-      "metric": "ConciergeOffer.was",
-      "shownOn": [
-        "site-business",
-        "site-home",
-        "site-pricing"
-      ],
-      "writerPath": [
-        "price book (S-14: the web reads GET /v1/prices)"
-      ],
-      "formula": [],
-      "wording": [
-        "site-business: string ('₦25,000')",
-        "site-home: string ('₦25,000')",
-        "site-pricing: string ('₦25,000')"
-      ],
-      "noWriter": false
-    },
-    {
-      "metric": "ConciergeSinglePrice.conciergeDeliveryHours",
-      "shownOn": [
-        "site-contact"
-      ],
-      "writerPath": [],
-      "formula": [
-        "T-27",
-        "T-36",
-        "T-69"
-      ],
-      "wording": [
-        "site-contact: number 3 (in copy)"
-      ],
-      "noWriter": true
-    },
-    {
-      "metric": "ConciergeSinglePrice.conciergeSingleWish",
-      "shownOn": [
-        "site-contact"
-      ],
-      "writerPath": [
-        "price book (S-14: the web reads GET /v1/prices)"
-      ],
-      "formula": [
-        "T-27",
-        "T-36",
-        "T-69"
-      ],
-      "wording": [
-        "site-contact: naira text '₦15,000' (in copy)"
-      ],
-      "noWriter": false
-    },
-    {
-      "metric": "ConciergeSinglePrice.price",
-      "shownOn": [
-        "site-make"
-      ],
-      "writerPath": [
-        "price book (S-14: the web reads GET /v1/prices)"
-      ],
-      "formula": [
-        "T-26",
-        "T-27",
-        "T-28",
-        "T-32"
-      ],
-      "wording": [
-        "site-make: string '₦15,000' typed in JSX line 32, not from catalog.concierge"
-      ],
-      "noWriter": false
+      "noWriter": true,
+      "owed": true,
+      "owedEvent": "pro.pack / pro plan fulfilment on a verified payment, and the plan-period job (rollover)"
     },
     {
       "metric": "CreatorOffer.addons",
@@ -249,7 +132,9 @@
       "wording": [
         "site-creators: number (20, in copy text)"
       ],
-      "noWriter": true
+      "noWriter": true,
+      "owed": true,
+      "owedEvent": "price book: staff publish a price-book version (POST /v1/admin/price-book-versions/:id/publish-version)"
     },
     {
       "metric": "CreatorState.credits",
@@ -258,7 +143,9 @@
         "studio-home",
         "studio-new"
       ],
-      "writerPath": [],
+      "writerPath": [
+        "server:ai-writing"
+      ],
       "formula": [
         "T-41"
       ],
@@ -267,7 +154,7 @@
         "studio-home: number",
         "studio-new: number (shown as 'you have N')"
       ],
-      "noWriter": true
+      "noWriter": false
     },
     {
       "metric": "CreatorState.extraReviews",
@@ -286,7 +173,9 @@
         "studio-editor: number",
         "studio-home: number"
       ],
-      "noWriter": true
+      "noWriter": true,
+      "owed": true,
+      "owedEvent": "credit-pack / creator-plan / extra-review fulfilment, AI spend (studio draft 4, change 1), a submission spending a review, the monthly reset job"
     },
     {
       "metric": "CreatorState.packs",
@@ -303,7 +192,9 @@
         "studio-editor: number (1 from the UI)",
         "studio-home: number (always 1 from this screen)"
       ],
-      "noWriter": true
+      "noWriter": true,
+      "owed": true,
+      "owedEvent": "credit-pack / creator-plan / extra-review fulfilment, AI spend (studio draft 4, change 1), a submission spending a review, the monthly reset job"
     },
     {
       "metric": "CreatorState.reviewsLeft",
@@ -319,7 +210,9 @@
         "studio-editor: number",
         "studio-home: number"
       ],
-      "noWriter": true
+      "noWriter": true,
+      "owed": true,
+      "owedEvent": "credit-pack / creator-plan / extra-review fulfilment, AI spend (studio draft 4, change 1), a submission spending a review, the monthly reset job"
     },
     {
       "metric": "DateRow.count",
@@ -334,37 +227,40 @@
       "wording": [
         "app-you: number = account.dates.length"
       ],
-      "noWriter": true
+      "noWriter": true,
+      "owed": true,
+      "owedEvent": "date added or removed (POST/DELETE /v1/me/dates); days and years worked out from the date on read"
     },
     {
-      "metric": "Earnings.rows",
+      "metric": "DateRow.days",
       "shownOn": [
-        "studio-home"
+        "pro-people"
       ],
-      "writerPath": [
-        "price book (S-14: the web reads GET /v1/prices)"
-      ],
+      "writerPath": [],
       "formula": [],
       "wording": [
-        "studio-home: EarningsRow[] {id,name,level:Standard|Premium,uses:number,paid:number,earned:number (naira)}"
+        "pro-people: number"
       ],
-      "noWriter": false
+      "noWriter": true,
+      "owed": true,
+      "owedEvent": "date added or removed (POST/DELETE /v1/me/dates); days and years worked out from the date on read"
     },
     {
-      "metric": "Earnings.total",
+      "metric": "DateRow.years",
       "shownOn": [
-        "studio-home"
+        "pro-people"
       ],
-      "writerPath": [
-        "price book (S-14: the web reads GET /v1/prices)"
-      ],
+      "writerPath": [],
       "formula": [
-        "T-40"
+        "T-29",
+        "T-70"
       ],
       "wording": [
-        "studio-home: number (naira, e.g. 14880)"
+        "pro-people: number"
       ],
-      "noWriter": false
+      "noWriter": true,
+      "owed": true,
+      "owedEvent": "date added or removed (POST/DELETE /v1/me/dates); days and years worked out from the date on read"
     },
     {
       "metric": "Extra.price",
@@ -431,7 +327,9 @@
         "app-wish-detail: 365 (lib/account.ts:114)",
         "app-wishes: number 365"
       ],
-      "noWriter": true
+      "noWriter": true,
+      "owed": true,
+      "owedEvent": "price book: staff publish a price-book version (POST /v1/admin/price-book-versions/:id/publish-version)"
     },
     {
       "metric": "LifecycleConfig.KEEPS",
@@ -467,7 +365,9 @@
       "wording": [
         "app-wish-detail: 0.4 discount on tickets/extras, never keeps (wish.ts:83)"
       ],
-      "noWriter": true
+      "noWriter": true,
+      "owed": true,
+      "owedEvent": "price book: staff publish a price-book version (POST /v1/admin/price-book-versions/:id/publish-version)"
     },
     {
       "metric": "LifecycleConfig.RESTORE_DAYS",
@@ -481,7 +381,94 @@
         "app-wish-detail: 30 (lib/account.ts:115)",
         "app-wishes: number 30"
       ],
-      "noWriter": true
+      "noWriter": true,
+      "owed": true,
+      "owedEvent": "price book: staff publish a price-book version (POST /v1/admin/price-book-versions/:id/publish-version)"
+    },
+    {
+      "metric": "LifecycleConfig.friendMessagesMax",
+      "shownOn": [
+        "site-pricing"
+      ],
+      "writerPath": [],
+      "formula": [
+        "T-70"
+      ],
+      "wording": [
+        "site-pricing: number 10 (prose)"
+      ],
+      "noWriter": true,
+      "owed": true,
+      "owedEvent": "price book: staff publish a price-book version (POST /v1/admin/price-book-versions/:id/publish-version)"
+    },
+    {
+      "metric": "LifecycleConfig.keepsakeExtrasCeiling",
+      "shownOn": [
+        "site-pricing"
+      ],
+      "writerPath": [
+        "price book (S-14: the web reads GET /v1/prices)"
+      ],
+      "formula": [
+        "T-26",
+        "T-27",
+        "T-29",
+        "T-30"
+      ],
+      "wording": [
+        "site-pricing: string '₦7,500' (catalog.ts:415)"
+      ],
+      "noWriter": false
+    },
+    {
+      "metric": "LifecycleConfig.maxPhotos",
+      "shownOn": [
+        "site-pricing"
+      ],
+      "writerPath": [],
+      "formula": [
+        "T-30",
+        "T-70"
+      ],
+      "wording": [
+        "site-pricing: number 20 (prose line ~86)"
+      ],
+      "noWriter": true,
+      "owed": true,
+      "owedEvent": "price book: staff publish a price-book version (POST /v1/admin/price-book-versions/:id/publish-version)"
+    },
+    {
+      "metric": "LifecycleConfig.restingHoldMonths",
+      "shownOn": [
+        "site-privacy"
+      ],
+      "writerPath": [],
+      "formula": [
+        "T-29",
+        "T-37",
+        "T-38",
+        "T-39"
+      ],
+      "wording": [
+        "site-privacy: number 12 (in copy)"
+      ],
+      "noWriter": true,
+      "owed": true,
+      "owedEvent": "price book: staff publish a price-book version (POST /v1/admin/price-book-versions/:id/publish-version)"
+    },
+    {
+      "metric": "LifecycleConfig.restoreWindowDays",
+      "shownOn": [
+        "site-privacy"
+      ],
+      "writerPath": [],
+      "formula": [],
+      "wording": [
+        "site-privacy: number 30 (in copy)"
+      ],
+      "noWriter": true,
+      "owed": true,
+      "owedEvent": "price book: staff publish a price-book version (POST /v1/admin/price-book-versions/:id/publish-version)"
     },
     {
       "metric": "PassMembership.amount",
@@ -511,7 +498,9 @@
       "wording": [
         "app-pass: number: hardcoded 0 (page.tsx:352)"
       ],
-      "noWriter": true
+      "noWriter": true,
+      "owed": true,
+      "owedEvent": "a wish sealed or upgraded under the Pass (POST /v1/wishes/:id/seal)"
     },
     {
       "metric": "PassMembership.wishesUsed",
@@ -527,7 +516,9 @@
       "wording": [
         "app-pass: number: hardcoded 0 (page.tsx:351)"
       ],
-      "noWriter": true
+      "noWriter": true,
+      "owed": true,
+      "owedEvent": "a wish sealed or upgraded under the Pass (POST /v1/wishes/:id/seal)"
     },
     {
       "metric": "PassOffer.price",
@@ -564,7 +555,9 @@
         "app-pass: 4 (Signature upgrades)",
         "site-pricing: number (4)"
       ],
-      "noWriter": true
+      "noWriter": true,
+      "owed": true,
+      "owedEvent": "price book: staff publish a price-book version (POST /v1/admin/price-book-versions/:id/publish-version)"
     },
     {
       "metric": "PassOffer.was",
@@ -596,15 +589,17 @@
         "app-pass: 20 (Keepsake fair use)",
         "site-pricing: number (20)"
       ],
-      "noWriter": true
+      "noWriter": true,
+      "owed": true,
+      "owedEvent": "price book: staff publish a price-book version (POST /v1/admin/price-book-versions/:id/publish-version)"
     },
     {
-      "metric": "Payment.amount",
+      "metric": "Payment.amountKobo",
       "shownOn": [
         "app-wish-detail"
       ],
       "writerPath": [
-        "E-84",
+        "server:payments",
         "price book (S-14: the web reads GET /v1/prices)"
       ],
       "formula": [],
@@ -614,22 +609,47 @@
       "noWriter": false
     },
     {
-      "metric": "PricingRules.friendMessagesMax",
+      "metric": "Price.conciergeDeliveryHours",
       "shownOn": [
-        "site-pricing"
+        "site-contact"
       ],
       "writerPath": [],
       "formula": [
-        "T-70"
+        "T-27",
+        "T-36",
+        "T-69"
       ],
       "wording": [
-        "site-pricing: number 10 (prose)"
+        "site-contact: number 3 (in copy)"
       ],
-      "noWriter": true
+      "noWriter": true,
+      "owed": true,
+      "owedEvent": "price book: staff publish a price-book version (POST /v1/admin/price-book-versions/:id/publish-version)"
     },
     {
-      "metric": "PricingRules.keepsakeExtrasCeiling",
+      "metric": "Price.conciergeSingleWish",
       "shownOn": [
+        "site-contact"
+      ],
+      "writerPath": [
+        "price book (S-14: the web reads GET /v1/prices)"
+      ],
+      "formula": [
+        "T-27",
+        "T-36",
+        "T-69"
+      ],
+      "wording": [
+        "site-contact: naira text '₦15,000' (in copy)"
+      ],
+      "noWriter": false
+    },
+    {
+      "metric": "Price.price",
+      "shownOn": [
+        "site-business",
+        "site-home",
+        "site-make",
         "site-pricing"
       ],
       "writerPath": [
@@ -638,28 +658,33 @@
       "formula": [
         "T-26",
         "T-27",
-        "T-29",
-        "T-30"
+        "T-28",
+        "T-32"
       ],
       "wording": [
-        "site-pricing: string '₦7,500' (catalog.ts:415)"
+        "site-business: string ('₦15,000')",
+        "site-home: string ('₦15,000')",
+        "site-make: string '₦15,000' typed in JSX line 32, not from catalog.concierge"
       ],
       "noWriter": false
     },
     {
-      "metric": "PricingRules.maxPhotos",
+      "metric": "Price.was",
       "shownOn": [
+        "site-business",
+        "site-home",
         "site-pricing"
       ],
-      "writerPath": [],
-      "formula": [
-        "T-30",
-        "T-70"
+      "writerPath": [
+        "price book (S-14: the web reads GET /v1/prices)"
       ],
+      "formula": [],
       "wording": [
-        "site-pricing: number 20 (prose line ~86)"
+        "site-business: string ('₦25,000')",
+        "site-home: string ('₦25,000')",
+        "site-pricing: string ('₦25,000')"
       ],
-      "noWriter": true
+      "noWriter": false
     },
     {
       "metric": "ProPlan.logins",
@@ -678,7 +703,9 @@
         "pro-home: number",
         "pro-plan: number"
       ],
-      "noWriter": true
+      "noWriter": true,
+      "owed": true,
+      "owedEvent": "price book: staff publish a price-book version (POST /v1/admin/price-book-versions/:id/publish-version)"
     },
     {
       "metric": "ProPlan.price",
@@ -726,7 +753,9 @@
         "pro-home: number GB",
         "pro-plan: number GB"
       ],
-      "noWriter": true
+      "noWriter": true,
+      "owed": true,
+      "owedEvent": "price book: staff publish a price-book version (POST /v1/admin/price-book-versions/:id/publish-version)"
     },
     {
       "metric": "ProPlan.was",
@@ -768,7 +797,9 @@
         "pro-home: number",
         "pro-plan: number"
       ],
-      "noWriter": true
+      "noWriter": true,
+      "owed": true,
+      "owedEvent": "price book: staff publish a price-book version (POST /v1/admin/price-book-versions/:id/publish-version)"
     },
     {
       "metric": "ProPricingCopy.marginPerWish",
@@ -857,7 +888,9 @@
         "pro-reveal-new: number",
         "pro-vault-shoot-reveal: number"
       ],
-      "noWriter": true
+      "noWriter": true,
+      "owed": true,
+      "owedEvent": "client wish created (POST /v1/business/client-wishes) and the plan-period job (monthly reset and one month of rollover); pack fulfilment"
     },
     {
       "metric": "ProUsage.left",
@@ -873,7 +906,9 @@
         "pro-reveal-new: number",
         "pro-vault-shoot-reveal: number"
       ],
-      "noWriter": true
+      "noWriter": true,
+      "owed": true,
+      "owedEvent": "client wish created (POST /v1/business/client-wishes) and the plan-period job (monthly reset and one month of rollover); pack fulfilment"
     },
     {
       "metric": "ProUsage.pack",
@@ -893,7 +928,9 @@
         "pro-plan: number",
         "pro-reveal-new: number"
       ],
-      "noWriter": true
+      "noWriter": true,
+      "owed": true,
+      "owedEvent": "client wish created (POST /v1/business/client-wishes) and the plan-period job (monthly reset and one month of rollover); pack fulfilment"
     },
     {
       "metric": "ProUsage.rolled",
@@ -909,7 +946,9 @@
         "pro-reveal-new: number",
         "pro-vault-shoot-reveal: number"
       ],
-      "noWriter": true
+      "noWriter": true,
+      "owed": true,
+      "owedEvent": "client wish created (POST /v1/business/client-wishes) and the plan-period job (monthly reset and one month of rollover); pack fulfilment"
     },
     {
       "metric": "ProUsage.total",
@@ -927,7 +966,9 @@
         "pro-reveal-new: number",
         "pro-vault-shoot-reveal: number"
       ],
-      "noWriter": true
+      "noWriter": true,
+      "owed": true,
+      "owedEvent": "client wish created (POST /v1/business/client-wishes) and the plan-period job (monthly reset and one month of rollover); pack fulfilment"
     },
     {
       "metric": "ProUsage.used",
@@ -946,7 +987,9 @@
         "pro-reveal-new: number",
         "pro-vault-shoot-reveal: number"
       ],
-      "noWriter": true
+      "noWriter": true,
+      "owed": true,
+      "owedEvent": "client wish created (POST /v1/business/client-wishes) and the plan-period job (monthly reset and one month of rollover); pack fulfilment"
     },
     {
       "metric": "Promotion.percentOff",
@@ -970,33 +1013,34 @@
       "noWriter": false
     },
     {
-      "metric": "RetentionRules.restingHoldMonths",
+      "metric": "RoyaltyAccrual.rows",
       "shownOn": [
-        "site-privacy"
+        "studio-home"
       ],
-      "writerPath": [],
-      "formula": [
-        "T-29",
-        "T-37",
-        "T-38",
-        "T-39"
+      "writerPath": [
+        "price book (S-14: the web reads GET /v1/prices)"
       ],
-      "wording": [
-        "site-privacy: number 12 (in copy)"
-      ],
-      "noWriter": true
-    },
-    {
-      "metric": "RetentionRules.restoreWindowDays",
-      "shownOn": [
-        "site-privacy"
-      ],
-      "writerPath": [],
       "formula": [],
       "wording": [
-        "site-privacy: number 30 (in copy)"
+        "studio-home: EarningsRow[] {id,name,level:Standard|Premium,uses:number,paid:number,earned:number (naira)}"
       ],
-      "noWriter": true
+      "noWriter": false
+    },
+    {
+      "metric": "RoyaltyAccrual.total",
+      "shownOn": [
+        "studio-home"
+      ],
+      "writerPath": [
+        "price book (S-14: the web reads GET /v1/prices)"
+      ],
+      "formula": [
+        "T-40"
+      ],
+      "wording": [
+        "studio-home: number (naira, e.g. 14880)"
+      ],
+      "noWriter": false
     },
     {
       "metric": "StudioStyle.scenes[k].span",
@@ -1008,120 +1052,9 @@
       "wording": [
         "studio-editor: number ms (1500..12000)"
       ],
-      "noWriter": true
-    },
-    {
-      "metric": "StyleLevelCounts.premium",
-      "shownOn": [
-        "site-styles"
-      ],
-      "writerPath": [],
-      "formula": [
-        "T-30",
-        "T-35",
-        "T-41",
-        "T-65"
-      ],
-      "wording": [
-        "site-styles: number"
-      ],
-      "noWriter": true
-    },
-    {
-      "metric": "StyleLevelCounts.standard",
-      "shownOn": [
-        "site-styles"
-      ],
-      "writerPath": [],
-      "formula": [
-        "T-68"
-      ],
-      "wording": [
-        "site-styles: number"
-      ],
-      "noWriter": true
-    },
-    {
-      "metric": "StyleLevelCounts.starter",
-      "shownOn": [
-        "site-styles"
-      ],
-      "writerPath": [],
-      "formula": [
-        "T-37",
-        "T-66"
-      ],
-      "wording": [
-        "site-styles: number"
-      ],
-      "noWriter": true
-    },
-    {
-      "metric": "StyleRecording.h",
-      "shownOn": [
-        "site-showing",
-        "site-style-detail",
-        "site-styles"
-      ],
-      "writerPath": [],
-      "formula": [],
-      "wording": [
-        "site-showing: number",
-        "site-style-detail: number",
-        "site-styles: number"
-      ],
-      "noWriter": true
-    },
-    {
-      "metric": "StyleRecording.kb",
-      "shownOn": [
-        "site-showing",
-        "site-style-detail",
-        "site-styles"
-      ],
-      "writerPath": [],
-      "formula": [],
-      "wording": [
-        "site-showing: number",
-        "site-style-detail: number",
-        "site-styles: number"
-      ],
-      "noWriter": true
-    },
-    {
-      "metric": "StyleRecording.seconds",
-      "shownOn": [
-        "site-showing",
-        "site-style-detail",
-        "site-styles"
-      ],
-      "writerPath": [],
-      "formula": [
-        "T-30",
-        "T-70"
-      ],
-      "wording": [
-        "site-showing: number",
-        "site-style-detail: number",
-        "site-styles: number"
-      ],
-      "noWriter": true
-    },
-    {
-      "metric": "StyleRecording.w",
-      "shownOn": [
-        "site-showing",
-        "site-style-detail",
-        "site-styles"
-      ],
-      "writerPath": [],
-      "formula": [],
-      "wording": [
-        "site-showing: number",
-        "site-style-detail: number",
-        "site-styles: number"
-      ],
-      "noWriter": true
+      "noWriter": true,
+      "owed": true,
+      "owedEvent": "PATCH /v1/studio/styles/:id (the editor saves the whole document)"
     },
     {
       "metric": "Ticket.price",
@@ -1181,7 +1114,9 @@
       "wording": [
         "maker-ticket: number"
       ],
-      "noWriter": true
+      "noWriter": true,
+      "owed": true,
+      "owedEvent": "worked out on read from the price book and the wish (quote)"
     },
     {
       "metric": "TicketOffer.was",
@@ -1212,7 +1147,9 @@
       "wording": [
         "site-terms: number 7 (in copy)"
       ],
-      "noWriter": true
+      "noWriter": true,
+      "owed": true,
+      "owedEvent": "price book: staff publish a price-book version (POST /v1/admin/price-book-versions/:id/publish-version)"
     },
     {
       "metric": "VaultFile.size",
@@ -1224,7 +1161,9 @@
       "wording": [
         "pro-vault-shoot: number (bytes)"
       ],
-      "noWriter": true
+      "noWriter": true,
+      "owed": true,
+      "owedEvent": "upload confirmed (POST /v1/uploads/:id/confirm records bytes)"
     },
     {
       "metric": "VaultPricing.block",
@@ -1242,7 +1181,9 @@
         "site-business: number (GB)",
         "site-pricing: number (GB)"
       ],
-      "noWriter": true
+      "noWriter": true,
+      "owed": true,
+      "owedEvent": "price book: staff publish a price-book version (POST /v1/admin/price-book-versions/:id/publish-version)"
     },
     {
       "metric": "VaultPricing.bulkFrom",
@@ -1258,7 +1199,9 @@
         "site-business: number (GB 1000)",
         "site-pricing: number (GB 1000)"
       ],
-      "noWriter": true
+      "noWriter": true,
+      "owed": true,
+      "owedEvent": "price book: staff publish a price-book version (POST /v1/admin/price-book-versions/:id/publish-version)"
     },
     {
       "metric": "VaultPricing.bulkPrice",
@@ -1300,7 +1243,9 @@
         "site-business: number",
         "site-pricing: number"
       ],
-      "noWriter": true
+      "noWriter": true,
+      "owed": true,
+      "owedEvent": "price book: staff publish a price-book version (POST /v1/admin/price-book-versions/:id/publish-version)"
     },
     {
       "metric": "VaultPricing.price",
@@ -1339,7 +1284,9 @@
         "pro-home: number",
         "pro-vault: number"
       ],
-      "noWriter": true
+      "noWriter": true,
+      "owed": true,
+      "owedEvent": "upload confirmed or file deleted (POST /v1/uploads/:id/confirm, DELETE /v1/uploads/:id) and the monthly Vault billing job"
     },
     {
       "metric": "VaultStorage.cost",
@@ -1372,7 +1319,9 @@
         "pro-home: number bytes",
         "pro-vault: number bytes"
       ],
-      "noWriter": true
+      "noWriter": true,
+      "owed": true,
+      "owedEvent": "upload confirmed or file deleted (POST /v1/uploads/:id/confirm, DELETE /v1/uploads/:id) and the monthly Vault billing job"
     },
     {
       "metric": "VaultStorage.included",
@@ -1390,7 +1339,9 @@
         "pro-plan: number GB",
         "pro-vault: number GB"
       ],
-      "noWriter": true
+      "noWriter": true,
+      "owed": true,
+      "owedEvent": "upload confirmed or file deleted (POST /v1/uploads/:id/confirm, DELETE /v1/uploads/:id) and the monthly Vault billing job"
     },
     {
       "metric": "VaultStorage.over",
@@ -1404,7 +1355,9 @@
         "pro-home: number bytes",
         "pro-vault: number bytes"
       ],
-      "noWriter": true
+      "noWriter": true,
+      "owed": true,
+      "owedEvent": "upload confirmed or file deleted (POST /v1/uploads/:id/confirm, DELETE /v1/uploads/:id) and the monthly Vault billing job"
     },
     {
       "metric": "VaultStorage.packGB",
@@ -1422,7 +1375,9 @@
         "pro-home: number",
         "pro-vault: number"
       ],
-      "noWriter": true
+      "noWriter": true,
+      "owed": true,
+      "owedEvent": "upload confirmed or file deleted (POST /v1/uploads/:id/confirm, DELETE /v1/uploads/:id) and the monthly Vault billing job"
     },
     {
       "metric": "VaultStorage.peak",
@@ -1436,7 +1391,9 @@
         "pro-home: number bytes",
         "pro-vault: number bytes"
       ],
-      "noWriter": true
+      "noWriter": true,
+      "owed": true,
+      "owedEvent": "upload confirmed or file deleted (POST /v1/uploads/:id/confirm, DELETE /v1/uploads/:id) and the monthly Vault billing job"
     },
     {
       "metric": "VaultStorage.planGB",
@@ -1455,7 +1412,9 @@
         "pro-home: number",
         "pro-vault: number"
       ],
-      "noWriter": true
+      "noWriter": true,
+      "owed": true,
+      "owedEvent": "upload confirmed or file deleted (POST /v1/uploads/:id/confirm, DELETE /v1/uploads/:id) and the monthly Vault billing job"
     },
     {
       "metric": "VaultStorage.used",
@@ -1472,7 +1431,9 @@
         "pro-home: number bytes",
         "pro-vault: number bytes"
       ],
-      "noWriter": true
+      "noWriter": true,
+      "owed": true,
+      "owedEvent": "upload confirmed or file deleted (POST /v1/uploads/:id/confirm, DELETE /v1/uploads/:id) and the monthly Vault billing job"
     },
     {
       "metric": "VoiceNote.seconds",
@@ -1488,7 +1449,9 @@
         "maker-ask: number",
         "maker-ask: number"
       ],
-      "noWriter": true
+      "noWriter": true,
+      "owed": true,
+      "owedEvent": "upload confirmed (POST /v1/uploads/:id/confirm records the length)"
     },
     {
       "metric": "Wish.amount",
@@ -1497,7 +1460,7 @@
         "maker-ticket"
       ],
       "writerPath": [
-        "E-197",
+        "E-182",
         "price book (S-14: the web reads GET /v1/prices)"
       ],
       "formula": [],
@@ -1546,7 +1509,9 @@
         "app-wish-detail: number epoch ms last changed",
         "app-wishes: number (epoch ms last changed)"
       ],
-      "noWriter": true
+      "noWriter": true,
+      "owed": true,
+      "owedEvent": "server stamp on every write (S-22 updatedAt), keep fulfilment (extraDays), voice-note upload confirmed (makerNote.voice)"
     },
     {
       "metric": "Wish.days",
@@ -1554,7 +1519,7 @@
         "app-wish-detail"
       ],
       "writerPath": [
-        "E-195"
+        "E-179"
       ],
       "formula": [],
       "wording": [
@@ -1578,7 +1543,9 @@
       "wording": [
         "app-wish-detail: 7 if openedAt (TERM_DAYS.keepsake - TERM_DAYS.moment)"
       ],
-      "noWriter": true
+      "noWriter": true,
+      "owed": true,
+      "owedEvent": "server stamp on every write (S-22 updatedAt), keep fulfilment (extraDays), voice-note upload confirmed (makerNote.voice)"
     },
     {
       "metric": "Wish.makerNote.voice",
@@ -1616,7 +1583,9 @@
         "maker-ask: number seconds",
         "maker-call: number seconds"
       ],
-      "noWriter": true
+      "noWriter": true,
+      "owed": true,
+      "owedEvent": "server stamp on every write (S-22 updatedAt), keep fulfilment (extraDays), voice-note upload confirmed (makerNote.voice)"
     },
     {
       "metric": "Wish.price",
@@ -1624,7 +1593,7 @@
         "app-wish-detail"
       ],
       "writerPath": [
-        "E-195",
+        "E-179",
         "price book (S-14: the web reads GET /v1/prices)"
       ],
       "formula": [
@@ -1670,7 +1639,7 @@
         "receiver-wish-mine"
       ],
       "writerPath": [
-        "E-191"
+        "E-176"
       ],
       "formula": [],
       "wording": [
@@ -1684,24 +1653,25 @@
   "noWriter": [
     "Business.pack",
     "Business.rolled",
-    "Coming.days",
-    "Coming.years",
-    "ConciergeSinglePrice.conciergeDeliveryHours",
     "CreatorOffer.royaltyPercent",
-    "CreatorState.credits",
     "CreatorState.extraReviews",
     "CreatorState.packs",
     "CreatorState.reviewsLeft",
     "DateRow.count",
+    "DateRow.days",
+    "DateRow.years",
     "LifecycleConfig.HOLD_DAYS",
     "LifecycleConfig.OFF",
     "LifecycleConfig.RESTORE_DAYS",
+    "LifecycleConfig.friendMessagesMax",
+    "LifecycleConfig.maxPhotos",
+    "LifecycleConfig.restingHoldMonths",
+    "LifecycleConfig.restoreWindowDays",
     "PassMembership.upgradesUsed",
     "PassMembership.wishesUsed",
     "PassOffer.upgrades",
     "PassOffer.wishes",
-    "PricingRules.friendMessagesMax",
-    "PricingRules.maxPhotos",
+    "Price.conciergeDeliveryHours",
     "ProPlan.logins",
     "ProPlan.vault",
     "ProPlan.wishes",
@@ -1711,16 +1681,7 @@
     "ProUsage.rolled",
     "ProUsage.total",
     "ProUsage.used",
-    "RetentionRules.restingHoldMonths",
-    "RetentionRules.restoreWindowDays",
     "StudioStyle.scenes[k].span",
-    "StyleLevelCounts.premium",
-    "StyleLevelCounts.standard",
-    "StyleLevelCounts.starter",
-    "StyleRecording.h",
-    "StyleRecording.kb",
-    "StyleRecording.seconds",
-    "StyleRecording.w",
     "TicketOffer.total",
     "TicketTerms.momentDays",
     "VaultFile.size",
@@ -1739,5 +1700,80 @@
     "Wish.at",
     "Wish.extraDays",
     "Wish.makerNote.voice"
-  ]
+  ],
+  "owedByEvent": {
+    "PATCH /v1/studio/styles/:id (the editor saves the whole document)": [
+      "StudioStyle.scenes[k].span"
+    ],
+    "a wish sealed or upgraded under the Pass (POST /v1/wishes/:id/seal)": [
+      "PassMembership.upgradesUsed",
+      "PassMembership.wishesUsed"
+    ],
+    "client wish created (POST /v1/business/client-wishes) and the plan-period job (monthly reset and one month of rollover); pack fulfilment": [
+      "ProUsage.allowance",
+      "ProUsage.left",
+      "ProUsage.pack",
+      "ProUsage.rolled",
+      "ProUsage.total",
+      "ProUsage.used"
+    ],
+    "credit-pack / creator-plan / extra-review fulfilment, AI spend (studio draft 4, change 1), a submission spending a review, the monthly reset job": [
+      "CreatorState.extraReviews",
+      "CreatorState.packs",
+      "CreatorState.reviewsLeft"
+    ],
+    "date added or removed (POST/DELETE /v1/me/dates); days and years worked out from the date on read": [
+      "DateRow.count",
+      "DateRow.days",
+      "DateRow.years"
+    ],
+    "price book: staff publish a price-book version (POST /v1/admin/price-book-versions/:id/publish-version)": [
+      "CreatorOffer.royaltyPercent",
+      "LifecycleConfig.HOLD_DAYS",
+      "LifecycleConfig.OFF",
+      "LifecycleConfig.RESTORE_DAYS",
+      "LifecycleConfig.friendMessagesMax",
+      "LifecycleConfig.maxPhotos",
+      "LifecycleConfig.restingHoldMonths",
+      "LifecycleConfig.restoreWindowDays",
+      "PassOffer.upgrades",
+      "PassOffer.wishes",
+      "Price.conciergeDeliveryHours",
+      "ProPlan.logins",
+      "ProPlan.vault",
+      "ProPlan.wishes",
+      "TicketTerms.momentDays",
+      "VaultPricing.block",
+      "VaultPricing.bulkFrom",
+      "VaultPricing.packDays"
+    ],
+    "pro.pack / pro plan fulfilment on a verified payment, and the plan-period job (rollover)": [
+      "Business.pack",
+      "Business.rolled"
+    ],
+    "server stamp on every write (S-22 updatedAt), keep fulfilment (extraDays), voice-note upload confirmed (makerNote.voice)": [
+      "Wish.at",
+      "Wish.extraDays",
+      "Wish.makerNote.voice"
+    ],
+    "upload confirmed (POST /v1/uploads/:id/confirm records bytes)": [
+      "VaultFile.size"
+    ],
+    "upload confirmed (POST /v1/uploads/:id/confirm records the length)": [
+      "VoiceNote.seconds"
+    ],
+    "upload confirmed or file deleted (POST /v1/uploads/:id/confirm, DELETE /v1/uploads/:id) and the monthly Vault billing job": [
+      "VaultStorage.blocks",
+      "VaultStorage.free",
+      "VaultStorage.included",
+      "VaultStorage.over",
+      "VaultStorage.packGB",
+      "VaultStorage.peak",
+      "VaultStorage.planGB",
+      "VaultStorage.used"
+    ],
+    "worked out on read from the price book and the wish (quote)": [
+      "TicketOffer.total"
+    ]
+  }
 }

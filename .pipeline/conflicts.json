@@ -10,21 +10,15 @@
         {
           "src": "app-home",
           "quote": "FeedWish"
-        },
-        {
-          "src": "receiver-wish-showcase",
-          "quote": "ShowcaseWish"
-        },
-        {
-          "src": "site-home",
-          "quote": "ShowcaseWish"
         }
       ],
       "options": [
         "same thing: add an alias",
         "different things: keep both"
       ],
-      "status": "open"
+      "status": "closed",
+      "closedBy": "DEC-63",
+      "round1Id": "C-1"
     },
     {
       "id": "C-2",
@@ -54,7 +48,9 @@
         "same thing: add an alias",
         "different things: keep both"
       ],
-      "status": "open"
+      "status": "closed",
+      "closedBy": "DEC-64",
+      "round1Id": "C-2"
     },
     {
       "id": "C-3",
@@ -80,7 +76,9 @@
         "same thing: add an alias",
         "different things: keep both"
       ],
-      "status": "open"
+      "status": "closed",
+      "closedBy": "DEC-65",
+      "round1Id": "C-3"
     },
     {
       "id": "C-4",
@@ -94,15 +92,15 @@
           "quote": "CreditBalance"
         },
         {
+          "src": "ai-writing",
+          "quote": "CreatorState"
+        },
+        {
           "src": "studio-editor",
           "quote": "CreatorState"
         },
         {
           "src": "studio-home",
-          "quote": "CreatorState"
-        },
-        {
-          "src": "studio-new",
           "quote": "CreatorState"
         }
       ],
@@ -110,7 +108,9 @@
         "same thing: add an alias",
         "different things: keep both"
       ],
-      "status": "open"
+      "status": "closed",
+      "closedBy": "DEC-66",
+      "round1Id": "C-4"
     },
     {
       "id": "C-5",
@@ -126,13 +126,19 @@
         {
           "src": "royalties-payouts",
           "quote": "RoyaltyAccrual"
+        },
+        {
+          "src": "studio-home",
+          "quote": "RoyaltyAccrual"
         }
       ],
       "options": [
         "same thing: add an alias",
         "different things: keep both"
       ],
-      "status": "open"
+      "status": "closed",
+      "closedBy": "DEC-67",
+      "round1Id": "C-5"
     },
     {
       "id": "C-6",
@@ -142,15 +148,15 @@
       "key": "possible-alias|Style ~ FeedStyle|lib/styles.ts styles vs feed-api styles; overlapping slug, name, level, kinds",
       "sources": [
         {
+          "src": "app-home",
+          "quote": "Style"
+        },
+        {
           "src": "app-style-detail",
           "quote": "Style"
         },
         {
-          "src": "pro-reveal-new",
-          "quote": "Style"
-        },
-        {
-          "src": "pro-vault-shoot-reveal",
+          "src": "app-styles",
           "quote": "Style"
         },
         {
@@ -170,7 +176,9 @@
         "same thing: add an alias",
         "different things: keep both"
       ],
-      "status": "open"
+      "status": "closed",
+      "closedBy": "DEC-68",
+      "round1Id": "C-6"
     },
     {
       "id": "C-7",
@@ -180,35 +188,25 @@
       "key": "possible-alias|Style ~ StyleManifest|lib/styles.ts vs registered package manifests; overlapping slug, name, level, occasions",
       "sources": [
         {
+          "src": "app-home",
+          "quote": "Style"
+        },
+        {
           "src": "app-style-detail",
           "quote": "Style"
         },
         {
-          "src": "pro-reveal-new",
+          "src": "app-styles",
           "quote": "Style"
-        },
-        {
-          "src": "pro-vault-shoot-reveal",
-          "quote": "Style"
-        },
-        {
-          "src": "maker-style",
-          "quote": "StyleManifest"
-        },
-        {
-          "src": "receiver-wish-showcase",
-          "quote": "StyleManifest"
-        },
-        {
-          "src": "studio-editor",
-          "quote": "StyleManifest"
         }
       ],
       "options": [
         "same thing: add an alias",
         "different things: keep both"
       ],
-      "status": "open"
+      "status": "closed",
+      "closedBy": "DEC-69",
+      "round1Id": "C-7"
     },
     {
       "id": "C-8",
@@ -228,13 +226,19 @@
         {
           "src": "app-wishes",
           "quote": "LifecycleConfig"
+        },
+        {
+          "src": "site-pricing",
+          "quote": "LifecycleConfig"
         }
       ],
       "options": [
         "same thing: add an alias",
         "different things: keep both"
       ],
-      "status": "open"
+      "status": "closed",
+      "closedBy": "DEC-70",
+      "round1Id": "C-8"
     },
     {
       "id": "C-9",
@@ -254,13 +258,19 @@
         {
           "src": "app-wishes",
           "quote": "LifecycleConfig"
+        },
+        {
+          "src": "site-pricing",
+          "quote": "LifecycleConfig"
         }
       ],
       "options": [
         "same thing: add an alias",
         "different things: keep both"
       ],
-      "status": "open"
+      "status": "closed",
+      "closedBy": "DEC-70",
+      "round1Id": "C-9"
     },
     {
       "id": "C-10",
@@ -268,33 +278,14 @@
       "entity": "ConciergeOffer ~ ConciergeSinglePrice",
       "detail": "both show a Concierge price",
       "key": "possible-alias|ConciergeOffer ~ ConciergeSinglePrice|both show a Concierge price",
-      "sources": [
-        {
-          "src": "site-business",
-          "quote": "ConciergeOffer"
-        },
-        {
-          "src": "site-home",
-          "quote": "ConciergeOffer"
-        },
-        {
-          "src": "site-pricing",
-          "quote": "ConciergeOffer"
-        },
-        {
-          "src": "site-contact",
-          "quote": "ConciergeSinglePrice"
-        },
-        {
-          "src": "site-make",
-          "quote": "ConciergeSinglePrice"
-        }
-      ],
+      "sources": [],
       "options": [
         "same thing: add an alias",
         "different things: keep both"
       ],
-      "status": "open"
+      "status": "closed",
+      "closedBy": "DEC-71",
+      "round1Id": "C-10"
     },
     {
       "id": "C-11",
@@ -305,7 +296,7 @@
       "sources": [
         {
           "src": "app-you",
-          "quote": "PlanReference"
+          "quote": "ProPlan"
         },
         {
           "src": "pro-brand",
@@ -314,17 +305,15 @@
         {
           "src": "pro-home",
           "quote": "ProPlan"
-        },
-        {
-          "src": "pro-plan",
-          "quote": "ProPlan"
         }
       ],
       "options": [
         "same thing: add an alias",
         "different things: keep both"
       ],
-      "status": "open"
+      "status": "closed",
+      "closedBy": "DEC-72",
+      "round1Id": "C-11"
     },
     {
       "id": "C-12",
@@ -334,19 +323,15 @@
       "key": "possible-alias|KindOccasionLabel ~ Kind|name, slug of a kind or an occasion",
       "sources": [
         {
-          "src": "app-style-detail",
-          "quote": "KindOccasionLabel"
-        },
-        {
           "src": "app-styles",
           "quote": "Kind"
         },
         {
-          "src": "maker-cover",
+          "src": "site-showing",
           "quote": "Kind"
         },
         {
-          "src": "maker-kind",
+          "src": "site-style-detail",
           "quote": "Kind"
         }
       ],
@@ -354,7 +339,9 @@
         "same thing: add an alias",
         "different things: keep both"
       ],
-      "status": "open"
+      "status": "closed",
+      "closedBy": "DEC-73",
+      "round1Id": "C-12"
     },
     {
       "id": "C-13",
@@ -364,19 +351,15 @@
       "key": "possible-alias|KindOccasionLabel ~ Occasion|name, slug of a kind or an occasion",
       "sources": [
         {
-          "src": "app-style-detail",
-          "quote": "KindOccasionLabel"
-        },
-        {
           "src": "app-styles",
           "quote": "Occasion"
         },
         {
-          "src": "maker-when",
+          "src": "site-business-cat",
           "quote": "Occasion"
         },
         {
-          "src": "pro-reveal-new",
+          "src": "site-make",
           "quote": "Occasion"
         }
       ],
@@ -384,7 +367,9 @@
         "same thing: add an alias",
         "different things: keep both"
       ],
-      "status": "open"
+      "status": "closed",
+      "closedBy": "DEC-73",
+      "round1Id": "C-13"
     },
     {
       "id": "C-14",
@@ -414,7 +399,9 @@
         "same thing: add an alias",
         "different things: keep both"
       ],
-      "status": "open"
+      "status": "closed",
+      "closedBy": "DEC-74",
+      "round1Id": "C-14"
     },
     {
       "id": "C-15",
@@ -423,10 +410,6 @@
       "detail": "recorded loop by slug vs StyleRecording src/poster",
       "key": "possible-alias|StylePreview ~ StyleRecording|recorded loop by slug vs StyleRecording src/poster",
       "sources": [
-        {
-          "src": "app-styles",
-          "quote": "StylePreview"
-        },
         {
           "src": "site-showing",
           "quote": "StyleRecording"
@@ -444,7 +427,9 @@
         "same thing: add an alias",
         "different things: keep both"
       ],
-      "status": "open"
+      "status": "closed",
+      "closedBy": "DEC-75",
+      "round1Id": "C-15"
     },
     {
       "id": "C-16",
@@ -478,7 +463,9 @@
         "same thing: add an alias",
         "different things: keep both"
       ],
-      "status": "open"
+      "status": "closed",
+      "closedBy": "DEC-76",
+      "round1Id": "C-16"
     },
     {
       "id": "C-17",
@@ -500,7 +487,7 @@
           "quote": "DateRow"
         },
         {
-          "src": "welcome",
+          "src": "pro-people",
           "quote": "DateRow"
         }
       ],
@@ -508,32 +495,12 @@
         "same thing: add an alias",
         "different things: keep both"
       ],
-      "status": "open"
+      "status": "closed",
+      "closedBy": "DEC-77",
+      "round1Id": "C-17"
     },
     {
       "id": "C-18",
-      "kind": "possible-alias",
-      "entity": "AiRequest",
-      "detail": "AiRequest fields style / styleId may be one field",
-      "key": "possible-alias|AiRequest|AiRequest fields style / styleId may be one field",
-      "sources": [
-        {
-          "src": "studio-editor",
-          "quote": "style: StyleSpec (whole style minus status, seen, at; name trimmed)"
-        },
-        {
-          "src": "ai-writing",
-          "quote": "styleId: string?"
-        }
-      ],
-      "options": [
-        "same field: add a field alias",
-        "different fields"
-      ],
-      "status": "open"
-    },
-    {
-      "id": "C-19",
       "kind": "type-mismatch",
       "entity": "Moment",
       "detail": "Moment.fields is seen as array vs object",
@@ -552,10 +519,12 @@
         "array",
         "object"
       ],
-      "status": "open"
+      "status": "closed",
+      "closedBy": "DEC-82",
+      "round1Id": "C-19"
     },
     {
-      "id": "C-20",
+      "id": "C-19",
       "kind": "type-mismatch",
       "entity": "PassOffer",
       "detail": "PassOffer.items is seen as array vs object",
@@ -574,62 +543,54 @@
         "array",
         "object"
       ],
+      "status": "closed",
+      "closedBy": "DEC-82",
+      "round1Id": "C-20"
+    },
+    {
+      "id": "C-20",
+      "kind": "type-mismatch",
+      "entity": "QrCard",
+      "detail": "QrCard.wishIds is seen as array vs string",
+      "key": "type-mismatch|QrCard|QrCard.wishIds is seen as array vs string",
+      "sources": [
+        {
+          "src": "qr-card",
+          "quote": "wishIds: array<string>"
+        },
+        {
+          "src": "qr-card",
+          "quote": "wishIds: string"
+        },
+        {
+          "src": "qr-card",
+          "quote": "wishIds: string"
+        }
+      ],
+      "options": [
+        "array",
+        "string"
+      ],
       "status": "open"
     },
     {
       "id": "C-21",
-      "kind": "possible-alias",
-      "entity": "Payment",
-      "detail": "Payment fields amount / amountKobo may be one field",
-      "key": "possible-alias|Payment|Payment fields amount / amountKobo may be one field",
-      "sources": [
-        {
-          "src": "app-wish-detail",
-          "quote": "amount: string naira text"
-        },
-        {
-          "src": "payments",
-          "quote": "amountKobo: integer"
-        }
-      ],
-      "options": [
-        "same field: add a field alias",
-        "different fields"
-      ],
-      "status": "open"
-    },
-    {
-      "id": "C-22",
-      "kind": "possible-alias",
-      "entity": "QrCard",
-      "detail": "QrCard fields wishId / wishIds may be one field",
-      "key": "possible-alias|QrCard|QrCard fields wishId / wishIds may be one field",
-      "sources": [
-        {
-          "src": "qr-card",
-          "quote": "wishId: string"
-        },
-        {
-          "src": "qr-card",
-          "quote": "wishIds: array<string>"
-        }
-      ],
-      "options": [
-        "same field: add a field alias",
-        "different fields"
-      ],
-      "status": "open"
-    },
-    {
-      "id": "C-23",
-      "kind": "possible-alias",
+      "kind": "type-mismatch",
       "entity": "StoredFile",
-      "detail": "StoredFile fields file / fileId may be one field",
-      "key": "possible-alias|StoredFile|StoredFile fields file / fileId may be one field",
+      "detail": "StoredFile.fileId is seen as binary vs string",
+      "key": "type-mismatch|StoredFile|StoredFile.fileId is seen as binary vs string",
       "sources": [
         {
           "src": "studio-editor",
-          "quote": "file: File (image png/jpeg/webp/svg, sound mp3/mp4/aac/ogg/wav, model .glb/.riv)"
+          "quote": "fileId: File (image png/jpeg/webp/svg, sound mp3/mp4/aac/ogg/wav, model .glb/.riv)"
+        },
+        {
+          "src": "studio-editor",
+          "quote": "fileId: File (image, <= 400KB)"
+        },
+        {
+          "src": "storage",
+          "quote": "fileId: string"
         },
         {
           "src": "storage",
@@ -637,13 +598,13 @@
         }
       ],
       "options": [
-        "same field: add a field alias",
-        "different fields"
+        "binary",
+        "string"
       ],
       "status": "open"
     },
     {
-      "id": "C-24",
+      "id": "C-22",
       "kind": "type-mismatch",
       "entity": "VaultStorage",
       "detail": "VaultStorage.packUntil is seen as string vs time",
@@ -666,10 +627,12 @@
         "string",
         "time"
       ],
-      "status": "open"
+      "status": "closed",
+      "closedBy": "DEC-83",
+      "round1Id": "C-24"
     },
     {
-      "id": "C-25",
+      "id": "C-23",
       "kind": "possible-alias",
       "entity": "WebhookEvent",
       "detail": "WebhookEvent fields event / eventId may be one field",
@@ -688,10 +651,12 @@
         "same field: add a field alias",
         "different fields"
       ],
-      "status": "open"
+      "status": "closed",
+      "closedBy": "DEC-81",
+      "round1Id": "C-25"
     },
     {
-      "id": "C-26",
+      "id": "C-24",
       "kind": "type-mismatch",
       "entity": "Wish",
       "detail": "Wish.at is seen as number vs time",
@@ -718,10 +683,12 @@
         "number",
         "time"
       ],
-      "status": "open"
+      "status": "closed",
+      "closedBy": "DEC-83",
+      "round1Id": "C-26"
     },
     {
-      "id": "C-27",
+      "id": "C-25",
       "kind": "type-mismatch",
       "entity": "Wish",
       "detail": "Wish.content.details is seen as array vs object",
@@ -744,10 +711,12 @@
         "array",
         "object"
       ],
-      "status": "open"
+      "status": "closed",
+      "closedBy": "DEC-82",
+      "round1Id": "C-27"
     },
     {
-      "id": "C-28",
+      "id": "C-26",
       "kind": "type-mismatch",
       "entity": "Wish",
       "detail": "Wish.keep is seen as boolean vs string",
@@ -766,10 +735,12 @@
         "boolean",
         "string"
       ],
-      "status": "open"
+      "status": "closed",
+      "closedBy": "DEC-84",
+      "round1Id": "C-28"
     },
     {
-      "id": "C-29",
+      "id": "C-27",
       "kind": "type-mismatch",
       "entity": "Wish",
       "detail": "Wish.makerNote.wedding is seen as string vs time",
@@ -796,102 +767,40 @@
         "string",
         "time"
       ],
-      "status": "open"
+      "status": "closed",
+      "closedBy": "DEC-85",
+      "round1Id": "C-29"
     },
     {
-      "id": "C-30",
-      "kind": "possible-alias",
-      "entity": "Wish",
-      "detail": "Wish fields style / styleSlug may be one field",
-      "key": "possible-alias|Wish|Wish fields style / styleSlug may be one field",
-      "sources": [
-        {
-          "src": "app-home",
-          "quote": "style: string"
-        },
-        {
-          "src": "wish-lifecycle",
-          "quote": "styleSlug: string"
-        }
-      ],
-      "options": [
-        "same field: add a field alias",
-        "different fields"
-      ],
-      "status": "open"
-    },
-    {
-      "id": "C-31",
-      "kind": "possible-alias",
-      "entity": "Wish",
-      "detail": "Wish fields wish / wishId may be one field",
-      "key": "possible-alias|Wish|Wish fields wish / wishId may be one field",
-      "sources": [
-        {
-          "src": "app-wishes",
-          "quote": "wish: Wish (whole previous object)"
-        },
-        {
-          "src": "creator-published",
-          "quote": "wishId: string"
-        }
-      ],
-      "options": [
-        "same field: add a field alias",
-        "different fields"
-      ],
-      "status": "open"
-    },
-    {
-      "id": "C-32",
-      "kind": "format-canon",
-      "entity": "StudioStyle",
-      "detail": "StudioStyle.at: time must be ISO-8601 UTC on the wire (conventions.md canon); no supersede covers epoch numbers",
-      "key": "format-canon|StudioStyle|StudioStyle.at: time must be ISO-8601 UTC on the wire (conventions.md canon); no supersede covers epoch numbers",
-      "sources": [
-        {
-          "src": "studio-editor",
-          "quote": "at: number epoch ms"
-        },
-        {
-          "src": "studio-home",
-          "quote": "at: number ms epoch"
-        }
-      ],
-      "options": [
-        "ISO-8601 UTC string per canon (needs a supersede for the as-built form)",
-        "keep as built"
-      ],
-      "status": "open"
-    },
-    {
-      "id": "C-33",
+      "id": "C-28",
       "kind": "format-canon",
       "entity": "Wish",
       "detail": "Wish.at: time must be ISO-8601 UTC on the wire (conventions.md canon); no supersede covers epoch numbers",
       "key": "format-canon|Wish|Wish.at: time must be ISO-8601 UTC on the wire (conventions.md canon); no supersede covers epoch numbers",
       "sources": [
         {
-          "src": "app-home",
-          "quote": "at: number (epoch ms last changed)"
+          "src": "maker-ending-scene",
+          "quote": "at: number"
         },
         {
-          "src": "app-wish-detail",
-          "quote": "at: number epoch ms last changed"
+          "src": "maker-ending",
+          "quote": "at: number"
         },
         {
-          "src": "app-wishes",
-          "quote": "at: number (epoch ms last changed)"
+          "src": "maker-sealed",
+          "quote": "at: number"
         }
       ],
       "options": [
         "ISO-8601 UTC string per canon (needs a supersede for the as-built form)",
         "keep as built"
       ],
-      "status": "open"
+      "status": "closed",
+      "closedBy": "DEC-83",
+      "round1Id": "C-33"
     },
     {
-      "id": "C-34",
+      "id": "C-29",
       "kind": "truth-mismatch",
       "entity": "money",
       "detail": "₦80,000 shown or sent by a screen is in no product truth and not in the price book seed",
@@ -910,10 +819,12 @@
         "owner gives the figure",
         "screen literal is stale (supersede)"
       ],
-      "status": "open"
+      "status": "closed",
+      "closedBy": "DEC-86",
+      "round1Id": "C-34"
     },
     {
-      "id": "C-35",
+      "id": "C-30",
       "kind": "client-only-action",
       "entity": "DateRow",
       "detail": "DateRow.makeWishForDate asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that names the server need",
@@ -928,28 +839,12 @@
         "stays client-only (ruling)",
         "needs an endpoint"
       ],
-      "status": "open"
+      "status": "closed",
+      "closedBy": "DEC-88",
+      "round1Id": "C-35"
     },
     {
-      "id": "C-36",
-      "kind": "client-only-action",
-      "entity": "Wish",
-      "detail": "Wish draft.useThisStyle asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that names the server need",
-      "key": "client-only-action|Wish|Wish draft.useThisStyle asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that names ",
-      "sources": [
-        {
-          "src": "app-styles",
-          "quote": "link only, no server write"
-        }
-      ],
-      "options": [
-        "stays client-only (ruling)",
-        "needs an endpoint"
-      ],
-      "status": "open"
-    },
-    {
-      "id": "C-37",
+      "id": "C-31",
       "kind": "unparseable-action",
       "entity": "Wish",
       "detail": "action name '(defined, not reached on this page) sheets: share, keep/wake, video, publish' is not one action",
@@ -963,64 +858,12 @@
       "options": [
         "split into actions in the fragment"
       ],
-      "status": "open"
+      "status": "closed",
+      "closedBy": "DEC-95",
+      "round1Id": "C-37"
     },
     {
-      "id": "C-38",
-      "kind": "client-only-action",
-      "entity": "Wish",
-      "detail": "Wish.shareLink asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that names the server need",
-      "key": "client-only-action|Wish|Wish.shareLink asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that names the serve",
-      "sources": [
-        {
-          "src": "maker-sealed",
-          "quote": "Share (navigator.share) and Copy (clipboard) are browser-only; no server call. Link built as `${origin}/w/mine?id=${wish.id}` (Seal.tsx Sealed) - a wish's public link slug is server-issued per conventions."
-        }
-      ],
-      "options": [
-        "stays client-only (ruling)",
-        "needs an endpoint"
-      ],
-      "status": "open"
-    },
-    {
-      "id": "C-39",
-      "kind": "client-only-action",
-      "entity": "Wish",
-      "detail": "Wish.sealIt asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that names the server need",
-      "key": "client-only-action|Wish|Wish.sealIt asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that names the server n",
-      "sources": [
-        {
-          "src": "maker-watch",
-          "quote": "'Seal it' button only advances to the 'when' screen (next()); nothing is written beyond the step save (land sets step=4)."
-        }
-      ],
-      "options": [
-        "stays client-only (ruling)",
-        "needs an endpoint"
-      ],
-      "status": "open"
-    },
-    {
-      "id": "C-40",
-      "kind": "client-only-action",
-      "entity": "Wish",
-      "detail": "Wish.saveChanges asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that names the server need",
-      "key": "client-only-action|Wish|Wish.saveChanges asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that names the ser",
-      "sources": [
-        {
-          "src": "maker-watch",
-          "quote": "for an already sealed wish being edited: link to /app/wishes/<id>, flush() only"
-        }
-      ],
-      "options": [
-        "stays client-only (ruling)",
-        "needs an endpoint"
-      ],
-      "status": "open"
-    },
-    {
-      "id": "C-41",
+      "id": "C-32",
       "kind": "client-only-action",
       "entity": "(local clipboard)",
       "detail": "(local clipboard).copyNames asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that names the server need",
@@ -1035,10 +878,12 @@
         "stays client-only (ruling)",
         "needs an endpoint"
       ],
-      "status": "open"
+      "status": "closed",
+      "closedBy": "DEC-90",
+      "round1Id": "C-42"
     },
     {
-      "id": "C-42",
+      "id": "C-33",
       "kind": "client-only-action",
       "entity": "(local clipboard)",
       "detail": "(local clipboard).copyNames asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that names the server need",
@@ -1053,28 +898,12 @@
         "stays client-only (ruling)",
         "needs an endpoint"
       ],
-      "status": "open"
+      "status": "closed",
+      "closedBy": "DEC-90",
+      "round1Id": "C-42"
     },
     {
-      "id": "C-43",
-      "kind": "client-only-action",
-      "entity": "Wish",
-      "detail": "Wish.wakeWish asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that names the server need",
-      "key": "client-only-action|Wish|Wish.wakeWish asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that names the server",
-      "sources": [
-        {
-          "src": "receiver-wish-mine",
-          "quote": "link on the resting screen to /app/wishes/<id> (sender-side screen); not performed here"
-        }
-      ],
-      "options": [
-        "stays client-only (ruling)",
-        "needs an endpoint"
-      ],
-      "status": "open"
-    },
-    {
-      "id": "C-44",
+      "id": "C-34",
       "kind": "client-only-action",
       "entity": "(navigation)",
       "detail": "(navigation).messageUs asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that names the server need",
@@ -1089,10 +918,12 @@
         "stays client-only (ruling)",
         "needs an endpoint"
       ],
-      "status": "open"
+      "status": "closed",
+      "closedBy": "DEC-88",
+      "round1Id": "C-44"
     },
     {
-      "id": "C-45",
+      "id": "C-35",
       "kind": "client-only-action",
       "entity": "(navigation)",
       "detail": "(navigation).startWish asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that names the server need",
@@ -1107,10 +938,12 @@
         "stays client-only (ruling)",
         "needs an endpoint"
       ],
-      "status": "open"
+      "status": "closed",
+      "closedBy": "DEC-88",
+      "round1Id": "C-45"
     },
     {
-      "id": "C-46",
+      "id": "C-36",
       "kind": "client-only-action",
       "entity": "(navigation)",
       "detail": "(navigation).chooseTicket asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that names the server need",
@@ -1125,134 +958,12 @@
         "stays client-only (ruling)",
         "needs an endpoint"
       ],
-      "status": "open"
+      "status": "closed",
+      "closedBy": "DEC-88",
+      "round1Id": "C-46"
     },
     {
-      "id": "C-47",
-      "kind": "client-only-action",
-      "entity": "PassOffer",
-      "detail": "Pass.getPass asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that names the server need",
-      "key": "client-only-action|PassOffer|Pass.getPass asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that names the server ",
-      "sources": [
-        {
-          "src": "site-pricing",
-          "quote": "navigates to /app/pass; purchase happens off-screen"
-        }
-      ],
-      "options": [
-        "stays client-only (ruling)",
-        "needs an endpoint"
-      ],
-      "status": "open"
-    },
-    {
-      "id": "C-48",
-      "kind": "static-ruling",
-      "entity": "ComingSoonAudience",
-      "detail": "ComingSoonAudience is read only by static screens (scan-map); serve from the API or keep local in the web app",
-      "key": "static-ruling|ComingSoonAudience|ComingSoonAudience is read only by static screens (scan-map); serve from the API or keep local in the web app",
-      "sources": [
-        {
-          "src": "site-business",
-          "quote": "dataProvenance static"
-        }
-      ],
-      "options": [
-        "serve from the API",
-        "keep local"
-      ],
-      "status": "open"
-    },
-    {
-      "id": "C-49",
-      "kind": "static-ruling",
-      "entity": "ConciergeOffer",
-      "detail": "ConciergeOffer is read only by static screens (scan-map); serve from the API or keep local in the web app",
-      "key": "static-ruling|ConciergeOffer|ConciergeOffer is read only by static screens (scan-map); serve from the API or keep local in the web app",
-      "sources": [
-        {
-          "src": "site-business",
-          "quote": "dataProvenance static"
-        },
-        {
-          "src": "site-home",
-          "quote": "dataProvenance static"
-        },
-        {
-          "src": "site-pricing",
-          "quote": "dataProvenance static"
-        }
-      ],
-      "options": [
-        "serve from the API",
-        "keep local"
-      ],
-      "status": "open"
-    },
-    {
-      "id": "C-50",
-      "kind": "static-ruling",
-      "entity": "ConciergeSinglePrice",
-      "detail": "ConciergeSinglePrice is read only by static screens (scan-map); serve from the API or keep local in the web app",
-      "key": "static-ruling|ConciergeSinglePrice|ConciergeSinglePrice is read only by static screens (scan-map); serve from the API or keep local in the web app",
-      "sources": [
-        {
-          "src": "site-contact",
-          "quote": "dataProvenance static"
-        },
-        {
-          "src": "site-make",
-          "quote": "dataProvenance static"
-        }
-      ],
-      "options": [
-        "serve from the API",
-        "keep local"
-      ],
-      "status": "open"
-    },
-    {
-      "id": "C-51",
-      "kind": "static-ruling",
-      "entity": "ContactChannels",
-      "detail": "ContactChannels is read only by static screens (scan-map); serve from the API or keep local in the web app",
-      "key": "static-ruling|ContactChannels|ContactChannels is read only by static screens (scan-map); serve from the API or keep local in the web app",
-      "sources": [
-        {
-          "src": "site-contact",
-          "quote": "dataProvenance static"
-        }
-      ],
-      "options": [
-        "serve from the API",
-        "keep local"
-      ],
-      "status": "open"
-    },
-    {
-      "id": "C-52",
-      "kind": "static-ruling",
-      "entity": "CreativeLabel",
-      "detail": "CreativeLabel is read only by static screens (scan-map); serve from the API or keep local in the web app",
-      "key": "static-ruling|CreativeLabel|CreativeLabel is read only by static screens (scan-map); serve from the API or keep local in the web app",
-      "sources": [
-        {
-          "src": "site-business",
-          "quote": "dataProvenance static"
-        },
-        {
-          "src": "site-business-cat",
-          "quote": "dataProvenance static"
-        }
-      ],
-      "options": [
-        "serve from the API",
-        "keep local"
-      ],
-      "status": "open"
-    },
-    {
-      "id": "C-53",
+      "id": "C-37",
       "kind": "static-ruling",
       "entity": "CreatorOffer",
       "detail": "CreatorOffer is read only by static screens (scan-map); serve from the API or keep local in the web app",
@@ -1267,46 +978,12 @@
         "serve from the API",
         "keep local"
       ],
-      "status": "open"
+      "status": "closed",
+      "closedBy": "DEC-96",
+      "round1Id": "C-53"
     },
     {
-      "id": "C-54",
-      "kind": "static-ruling",
-      "entity": "EndingEvent",
-      "detail": "EndingEvent is read only by static screens (scan-map); serve from the API or keep local in the web app",
-      "key": "static-ruling|EndingEvent|EndingEvent is read only by static screens (scan-map); serve from the API or keep local in the web app",
-      "sources": [
-        {
-          "src": "receiver-wish-showcase",
-          "quote": "dataProvenance static"
-        }
-      ],
-      "options": [
-        "serve from the API",
-        "keep local"
-      ],
-      "status": "open"
-    },
-    {
-      "id": "C-55",
-      "kind": "static-ruling",
-      "entity": "PricingRules",
-      "detail": "PricingRules is read only by static screens (scan-map); serve from the API or keep local in the web app",
-      "key": "static-ruling|PricingRules|PricingRules is read only by static screens (scan-map); serve from the API or keep local in the web app",
-      "sources": [
-        {
-          "src": "site-pricing",
-          "quote": "dataProvenance static"
-        }
-      ],
-      "options": [
-        "serve from the API",
-        "keep local"
-      ],
-      "status": "open"
-    },
-    {
-      "id": "C-56",
+      "id": "C-38",
       "kind": "static-ruling",
       "entity": "ProPricingCopy",
       "detail": "ProPricingCopy is read only by static screens (scan-map); serve from the API or keep local in the web app",
@@ -1321,112 +998,12 @@
         "serve from the API",
         "keep local"
       ],
-      "status": "open"
+      "status": "closed",
+      "closedBy": "DEC-96",
+      "round1Id": "C-56"
     },
     {
-      "id": "C-57",
-      "kind": "static-ruling",
-      "entity": "RetentionRules",
-      "detail": "RetentionRules is read only by static screens (scan-map); serve from the API or keep local in the web app",
-      "key": "static-ruling|RetentionRules|RetentionRules is read only by static screens (scan-map); serve from the API or keep local in the web app",
-      "sources": [
-        {
-          "src": "site-privacy",
-          "quote": "dataProvenance static"
-        }
-      ],
-      "options": [
-        "serve from the API",
-        "keep local"
-      ],
-      "status": "open"
-    },
-    {
-      "id": "C-58",
-      "kind": "static-ruling",
-      "entity": "SampleReveal",
-      "detail": "SampleReveal is read only by static screens (scan-map); serve from the API or keep local in the web app",
-      "key": "static-ruling|SampleReveal|SampleReveal is read only by static screens (scan-map); serve from the API or keep local in the web app",
-      "sources": [
-        {
-          "src": "site-business-cat",
-          "quote": "dataProvenance static"
-        }
-      ],
-      "options": [
-        "serve from the API",
-        "keep local"
-      ],
-      "status": "open"
-    },
-    {
-      "id": "C-59",
-      "kind": "static-ruling",
-      "entity": "ShowcaseWish",
-      "detail": "ShowcaseWish is read only by static screens (scan-map); serve from the API or keep local in the web app",
-      "key": "static-ruling|ShowcaseWish|ShowcaseWish is read only by static screens (scan-map); serve from the API or keep local in the web app",
-      "sources": [
-        {
-          "src": "receiver-wish-showcase",
-          "quote": "dataProvenance static"
-        },
-        {
-          "src": "site-home",
-          "quote": "dataProvenance static"
-        }
-      ],
-      "options": [
-        "serve from the API",
-        "keep local"
-      ],
-      "status": "open"
-    },
-    {
-      "id": "C-60",
-      "kind": "static-ruling",
-      "entity": "StyleLevelCounts",
-      "detail": "StyleLevelCounts is read only by static screens (scan-map); serve from the API or keep local in the web app",
-      "key": "static-ruling|StyleLevelCounts|StyleLevelCounts is read only by static screens (scan-map); serve from the API or keep local in the web app",
-      "sources": [
-        {
-          "src": "site-styles",
-          "quote": "dataProvenance static"
-        }
-      ],
-      "options": [
-        "serve from the API",
-        "keep local"
-      ],
-      "status": "open"
-    },
-    {
-      "id": "C-61",
-      "kind": "static-ruling",
-      "entity": "StyleRecording",
-      "detail": "StyleRecording is read only by static screens (scan-map); serve from the API or keep local in the web app",
-      "key": "static-ruling|StyleRecording|StyleRecording is read only by static screens (scan-map); serve from the API or keep local in the web app",
-      "sources": [
-        {
-          "src": "site-showing",
-          "quote": "dataProvenance static"
-        },
-        {
-          "src": "site-style-detail",
-          "quote": "dataProvenance static"
-        },
-        {
-          "src": "site-styles",
-          "quote": "dataProvenance static"
-        }
-      ],
-      "options": [
-        "serve from the API",
-        "keep local"
-      ],
-      "status": "open"
-    },
-    {
-      "id": "C-62",
+      "id": "C-39",
       "kind": "static-ruling",
       "entity": "TicketTerms",
       "detail": "TicketTerms is read only by static screens (scan-map); serve from the API or keep local in the web app",
@@ -1441,10 +1018,12 @@
         "serve from the API",
         "keep local"
       ],
-      "status": "open"
+      "status": "closed",
+      "closedBy": "DEC-96",
+      "round1Id": "C-62"
     },
     {
-      "id": "C-63",
+      "id": "C-40",
       "kind": "static-ruling",
       "entity": "VaultPricing",
       "detail": "VaultPricing is read only by static screens (scan-map); serve from the API or keep local in the web app",
@@ -1467,136 +1046,386 @@
         "serve from the API",
         "keep local"
       ],
-      "status": "open"
+      "status": "closed",
+      "closedBy": "DEC-96",
+      "round1Id": "C-63"
     },
     {
-      "id": "C-64",
-      "kind": "role-contradiction",
-      "entity": "Account",
-      "detail": "GET /v1/accounts/:id: public and owner-only on one record",
-      "key": "role-contradiction|Account|GET /v1/accounts/:id: public and owner-only on one record",
-      "sources": [
-        {
-          "src": "sign-in",
-          "quote": "public"
-        },
-        {
-          "src": "app-home",
-          "quote": "role:business"
-        },
-        {
-          "src": "app-you",
-          "quote": "role:business"
-        },
-        {
-          "src": "app-home",
-          "quote": "role:creator"
-        },
-        {
-          "src": "app-you",
-          "quote": "role:creator"
-        },
-        {
-          "src": "app-home",
-          "quote": "user"
-        },
-        {
-          "src": "app-pass",
-          "quote": "user"
-        },
-        {
-          "src": "app-wish-detail",
-          "quote": "user:owner"
-        }
-      ],
-      "options": [
-        "public",
-        "role:business",
-        "role:creator",
-        "user",
-        "user:owner"
-      ],
-      "status": "open"
+      "id": "C-41",
+      "kind": "possible-alias",
+      "entity": "AiRequest",
+      "detail": "AiRequest fields style / styleId may be one field",
+      "key": "possible-alias|AiRequest|AiRequest fields style / styleId may be one field",
+      "sources": [],
+      "options": [],
+      "status": "closed",
+      "closedBy": "DEC-78",
+      "round1Id": "C-18",
+      "note": "no longer raised: the ruling was applied to the inputs"
     },
     {
-      "id": "C-65",
-      "kind": "role-contradiction",
+      "id": "C-42",
+      "kind": "possible-alias",
+      "entity": "StoredFile",
+      "detail": "StoredFile fields file / fileId may be one field",
+      "key": "possible-alias|StoredFile|StoredFile fields file / fileId may be one field",
+      "sources": [],
+      "options": [],
+      "status": "closed",
+      "closedBy": "DEC-78",
+      "round1Id": "C-23",
+      "note": "no longer raised: the ruling was applied to the inputs"
+    },
+    {
+      "id": "C-43",
+      "kind": "possible-alias",
       "entity": "Wish",
-      "detail": "GET /v1/wishes/:id: public and owner-only on one record",
-      "key": "role-contradiction|Wish|GET /v1/wishes/:id: public and owner-only on one record",
-      "sources": [
-        {
-          "src": "receiver-wish-mine",
-          "quote": "public"
-        },
-        {
-          "src": "site-creators",
-          "quote": "public"
-        },
-        {
-          "src": "maker-call",
-          "quote": "role:business"
-        },
-        {
-          "src": "maker-ending",
-          "quote": "role:business"
-        },
-        {
-          "src": "maker-ask",
-          "quote": "user"
-        },
-        {
-          "src": "maker-ask-voices-gather",
-          "quote": "user"
-        },
-        {
-          "src": "app-wish-detail",
-          "quote": "user:owner"
-        }
-      ],
-      "options": [
-        "public",
-        "role:business",
-        "user",
-        "user:owner"
-      ],
-      "status": "open"
+      "detail": "Wish fields style / styleSlug may be one field",
+      "key": "possible-alias|Wish|Wish fields style / styleSlug may be one field",
+      "sources": [],
+      "options": [],
+      "status": "closed",
+      "closedBy": "DEC-78",
+      "round1Id": "C-30",
+      "note": "no longer raised: the ruling was applied to the inputs"
     },
     {
-      "id": "C-66",
+      "id": "C-44",
+      "kind": "possible-alias",
+      "entity": "Wish",
+      "detail": "Wish fields wish / wishId may be one field",
+      "key": "possible-alias|Wish|Wish fields wish / wishId may be one field",
+      "sources": [],
+      "options": [],
+      "status": "closed",
+      "closedBy": "DEC-78",
+      "round1Id": "C-31",
+      "note": "no longer raised: the ruling was applied to the inputs"
+    },
+    {
+      "id": "C-45",
+      "kind": "possible-alias",
+      "entity": "Payment",
+      "detail": "Payment fields amount / amountKobo may be one field",
+      "key": "possible-alias|Payment|Payment fields amount / amountKobo may be one field",
+      "sources": [],
+      "options": [],
+      "status": "closed",
+      "closedBy": "DEC-79",
+      "round1Id": "C-21",
+      "note": "no longer raised: the ruling was applied to the inputs"
+    },
+    {
+      "id": "C-46",
+      "kind": "possible-alias",
+      "entity": "QrCard",
+      "detail": "QrCard fields wishId / wishIds may be one field",
+      "key": "possible-alias|QrCard|QrCard fields wishId / wishIds may be one field",
+      "sources": [],
+      "options": [],
+      "status": "closed",
+      "closedBy": "DEC-80",
+      "round1Id": "C-22",
+      "note": "no longer raised: the ruling was applied to the inputs"
+    },
+    {
+      "id": "C-47",
+      "kind": "format-canon",
+      "entity": "StudioStyle",
+      "detail": "StudioStyle.at: time must be ISO-8601 UTC on the wire (conventions.md canon); no supersede covers epoch numbers",
+      "key": "format-canon|StudioStyle|StudioStyle.at: time must be ISO-8601 UTC on the wire (conventions.md canon); no supersede covers epoch numbers",
+      "sources": [],
+      "options": [],
+      "status": "closed",
+      "closedBy": "DEC-83",
+      "round1Id": "C-32",
+      "note": "no longer raised: the ruling was applied to the inputs"
+    },
+    {
+      "id": "C-48",
       "kind": "entitlement-without-endpoint",
       "entity": "pro.starter",
       "detail": "sold or promised (price-book) but no endpoint delivers it (it can be bought: POST /v1/payments)",
       "key": "entitlement-without-endpoint|pro.starter|sold or promised (price-book) but no endpoint delivers it",
-      "sources": [
-        {
-          "src": "price-book",
-          "quote": "Pro Starter, a month (VAT included) pro starter"
-        }
-      ],
-      "options": [
-        "build the endpoint",
-        "stop selling it"
-      ],
-      "status": "open"
+      "sources": [],
+      "options": [],
+      "status": "closed",
+      "closedBy": "DEC-87",
+      "round1Id": "C-66",
+      "note": "no longer raised: the ruling was applied to the inputs"
     },
     {
-      "id": "C-67",
+      "id": "C-49",
       "kind": "entitlement-without-endpoint",
       "entity": "pro.pack",
       "detail": "sold or promised (price-book) but no endpoint delivers it (it can be bought: POST /v1/payments)",
       "key": "entitlement-without-endpoint|pro.pack|sold or promised (price-book) but no endpoint delivers it",
-      "sources": [
-        {
-          "src": "price-book",
-          "quote": "Wish pack, 5 Signature wishes (VAT included) pro pack"
-        }
-      ],
-      "options": [
-        "build the endpoint",
-        "stop selling it"
-      ],
-      "status": "open"
+      "sources": [],
+      "options": [],
+      "status": "closed",
+      "closedBy": "DEC-87",
+      "round1Id": "C-67",
+      "note": "no longer raised: the ruling was applied to the inputs"
+    },
+    {
+      "id": "C-50",
+      "kind": "client-only-action",
+      "entity": "Wish",
+      "detail": "Wish.shareLink asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that names the server need",
+      "key": "client-only-action|Wish|Wish.shareLink asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that names the serve",
+      "sources": [],
+      "options": [],
+      "status": "closed",
+      "closedBy": "DEC-89",
+      "round1Id": "C-38",
+      "note": "no longer raised: the ruling was applied to the inputs"
+    },
+    {
+      "id": "C-51",
+      "kind": "client-only-action",
+      "entity": "Wish",
+      "detail": "Wish draft.useThisStyle asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that names the server need",
+      "key": "client-only-action|Wish|Wish draft.useThisStyle asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that names ",
+      "sources": [],
+      "options": [],
+      "status": "closed",
+      "closedBy": "DEC-91",
+      "round1Id": "C-36",
+      "note": "no longer raised: the ruling was applied to the inputs"
+    },
+    {
+      "id": "C-52",
+      "kind": "client-only-action",
+      "entity": "Wish",
+      "detail": "Wish.saveChanges asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that names the server need",
+      "key": "client-only-action|Wish|Wish.saveChanges asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that names the ser",
+      "sources": [],
+      "options": [],
+      "status": "closed",
+      "closedBy": "DEC-91",
+      "round1Id": "C-40",
+      "note": "no longer raised: the ruling was applied to the inputs"
+    },
+    {
+      "id": "C-53",
+      "kind": "client-only-action",
+      "entity": "Wish",
+      "detail": "Wish.sealIt asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that names the server need",
+      "key": "client-only-action|Wish|Wish.sealIt asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that names the server n",
+      "sources": [],
+      "options": [],
+      "status": "closed",
+      "closedBy": "DEC-92",
+      "round1Id": "C-39",
+      "note": "no longer raised: the ruling was applied to the inputs"
+    },
+    {
+      "id": "C-54",
+      "kind": "client-only-action",
+      "entity": "Wish",
+      "detail": "Wish.wakeWish asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that names the server need",
+      "key": "client-only-action|Wish|Wish.wakeWish asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that names the server",
+      "sources": [],
+      "options": [],
+      "status": "closed",
+      "closedBy": "DEC-93",
+      "round1Id": "C-43",
+      "note": "no longer raised: the ruling was applied to the inputs"
+    },
+    {
+      "id": "C-55",
+      "kind": "client-only-action",
+      "entity": "PassOffer",
+      "detail": "Pass.getPass asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that names the server need",
+      "key": "client-only-action|PassOffer|Pass.getPass asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that names the server ",
+      "sources": [],
+      "options": [],
+      "status": "closed",
+      "closedBy": "DEC-94",
+      "round1Id": "C-47",
+      "note": "no longer raised: the ruling was applied to the inputs"
+    },
+    {
+      "id": "C-56",
+      "kind": "static-ruling",
+      "entity": "ConciergeOffer",
+      "detail": "ConciergeOffer is read only by static screens (scan-map); serve from the API or keep local in the web app",
+      "key": "static-ruling|ConciergeOffer|ConciergeOffer is read only by static screens (scan-map); serve from the API or keep local in the web app",
+      "sources": [],
+      "options": [],
+      "status": "closed",
+      "closedBy": "DEC-96",
+      "round1Id": "C-49",
+      "note": "no longer raised: the ruling was applied to the inputs"
+    },
+    {
+      "id": "C-57",
+      "kind": "static-ruling",
+      "entity": "ConciergeSinglePrice",
+      "detail": "ConciergeSinglePrice is read only by static screens (scan-map); serve from the API or keep local in the web app",
+      "key": "static-ruling|ConciergeSinglePrice|ConciergeSinglePrice is read only by static screens (scan-map); serve from the API or keep local in the web app",
+      "sources": [],
+      "options": [],
+      "status": "closed",
+      "closedBy": "DEC-96",
+      "round1Id": "C-50",
+      "note": "no longer raised: the ruling was applied to the inputs"
+    },
+    {
+      "id": "C-58",
+      "kind": "static-ruling",
+      "entity": "PricingRules",
+      "detail": "PricingRules is read only by static screens (scan-map); serve from the API or keep local in the web app",
+      "key": "static-ruling|PricingRules|PricingRules is read only by static screens (scan-map); serve from the API or keep local in the web app",
+      "sources": [],
+      "options": [],
+      "status": "closed",
+      "closedBy": "DEC-96",
+      "round1Id": "C-55",
+      "note": "no longer raised: the ruling was applied to the inputs"
+    },
+    {
+      "id": "C-59",
+      "kind": "static-ruling",
+      "entity": "RetentionRules",
+      "detail": "RetentionRules is read only by static screens (scan-map); serve from the API or keep local in the web app",
+      "key": "static-ruling|RetentionRules|RetentionRules is read only by static screens (scan-map); serve from the API or keep local in the web app",
+      "sources": [],
+      "options": [],
+      "status": "closed",
+      "closedBy": "DEC-96",
+      "round1Id": "C-57",
+      "note": "no longer raised: the ruling was applied to the inputs"
+    },
+    {
+      "id": "C-60",
+      "kind": "static-ruling",
+      "entity": "ShowcaseWish",
+      "detail": "ShowcaseWish is read only by static screens (scan-map); serve from the API or keep local in the web app",
+      "key": "static-ruling|ShowcaseWish|ShowcaseWish is read only by static screens (scan-map); serve from the API or keep local in the web app",
+      "sources": [],
+      "options": [],
+      "status": "closed",
+      "closedBy": "DEC-97",
+      "round1Id": "C-59",
+      "note": "no longer raised: the ruling was applied to the inputs"
+    },
+    {
+      "id": "C-61",
+      "kind": "static-ruling",
+      "entity": "StyleLevelCounts",
+      "detail": "StyleLevelCounts is read only by static screens (scan-map); serve from the API or keep local in the web app",
+      "key": "static-ruling|StyleLevelCounts|StyleLevelCounts is read only by static screens (scan-map); serve from the API or keep local in the web app",
+      "sources": [],
+      "options": [],
+      "status": "closed",
+      "closedBy": "DEC-98",
+      "round1Id": "C-60",
+      "note": "no longer raised: the ruling was applied to the inputs"
+    },
+    {
+      "id": "C-62",
+      "kind": "static-ruling",
+      "entity": "ComingSoonAudience",
+      "detail": "ComingSoonAudience is read only by static screens (scan-map); serve from the API or keep local in the web app",
+      "key": "static-ruling|ComingSoonAudience|ComingSoonAudience is read only by static screens (scan-map); serve from the API or keep local in the web app",
+      "sources": [],
+      "options": [],
+      "status": "closed",
+      "closedBy": "DEC-99",
+      "round1Id": "C-48",
+      "note": "no longer raised: the ruling was applied to the inputs"
+    },
+    {
+      "id": "C-63",
+      "kind": "static-ruling",
+      "entity": "ContactChannels",
+      "detail": "ContactChannels is read only by static screens (scan-map); serve from the API or keep local in the web app",
+      "key": "static-ruling|ContactChannels|ContactChannels is read only by static screens (scan-map); serve from the API or keep local in the web app",
+      "sources": [],
+      "options": [],
+      "status": "closed",
+      "closedBy": "DEC-99",
+      "round1Id": "C-51",
+      "note": "no longer raised: the ruling was applied to the inputs"
+    },
+    {
+      "id": "C-64",
+      "kind": "static-ruling",
+      "entity": "CreativeLabel",
+      "detail": "CreativeLabel is read only by static screens (scan-map); serve from the API or keep local in the web app",
+      "key": "static-ruling|CreativeLabel|CreativeLabel is read only by static screens (scan-map); serve from the API or keep local in the web app",
+      "sources": [],
+      "options": [],
+      "status": "closed",
+      "closedBy": "DEC-99",
+      "round1Id": "C-52",
+      "note": "no longer raised: the ruling was applied to the inputs"
+    },
+    {
+      "id": "C-65",
+      "kind": "static-ruling",
+      "entity": "EndingEvent",
+      "detail": "EndingEvent is read only by static screens (scan-map); serve from the API or keep local in the web app",
+      "key": "static-ruling|EndingEvent|EndingEvent is read only by static screens (scan-map); serve from the API or keep local in the web app",
+      "sources": [],
+      "options": [],
+      "status": "closed",
+      "closedBy": "DEC-99",
+      "round1Id": "C-54",
+      "note": "no longer raised: the ruling was applied to the inputs"
+    },
+    {
+      "id": "C-66",
+      "kind": "static-ruling",
+      "entity": "SampleReveal",
+      "detail": "SampleReveal is read only by static screens (scan-map); serve from the API or keep local in the web app",
+      "key": "static-ruling|SampleReveal|SampleReveal is read only by static screens (scan-map); serve from the API or keep local in the web app",
+      "sources": [],
+      "options": [],
+      "status": "closed",
+      "closedBy": "DEC-99",
+      "round1Id": "C-58",
+      "note": "no longer raised: the ruling was applied to the inputs"
+    },
+    {
+      "id": "C-67",
+      "kind": "static-ruling",
+      "entity": "StyleRecording",
+      "detail": "StyleRecording is read only by static screens (scan-map); serve from the API or keep local in the web app",
+      "key": "static-ruling|StyleRecording|StyleRecording is read only by static screens (scan-map); serve from the API or keep local in the web app",
+      "sources": [],
+      "options": [],
+      "status": "closed",
+      "closedBy": "DEC-99",
+      "round1Id": "C-61",
+      "note": "no longer raised: the ruling was applied to the inputs"
+    },
+    {
+      "id": "C-68",
+      "kind": "role-contradiction",
+      "entity": "Account",
+      "detail": "GET /v1/accounts/:id: public and owner-only on one record",
+      "key": "role-contradiction|Account|GET /v1/accounts/:id: public and owner-only on one record",
+      "sources": [],
+      "options": [],
+      "status": "closed",
+      "closedBy": "DEC-100",
+      "round1Id": "C-64",
+      "note": "no longer raised: the ruling was applied to the inputs"
+    },
+    {
+      "id": "C-69",
+      "kind": "role-contradiction",
+      "entity": "Wish",
+      "detail": "GET /v1/wishes/:id: public and owner-only on one record",
+      "key": "role-contradiction|Wish|GET /v1/wishes/:id: public and owner-only on one record",
+      "sources": [],
+      "options": [],
+      "status": "closed",
+      "closedBy": "DEC-101",
+      "round1Id": "C-65",
+      "note": "no longer raised: the ruling was applied to the inputs"
     }
   ],
   "countsByKind": {
@@ -1607,7 +1436,9 @@
     "role-contradiction": 2,
     "static-ruling": 16,
     "truth-mismatch": 1,
-    "type-mismatch": 7,
+    "type-mismatch": 9,
     "unparseable-action": 1
-  }
+  },
+  "open": 2,
+  "closed": 67
 }

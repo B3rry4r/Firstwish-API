@@ -1,0 +1,24 @@
+{
+  "about": "The event that would write each displayed number that has no writer today (law 14). Read by reconcile.py; it invents no writer: a metric listed here is 'owed', not written.",
+  "byResource": {
+    "LifecycleConfig": "price book: staff publish a price-book version (POST /v1/admin/price-book-versions/:id/publish-version)",
+    "PassOffer": "price book: staff publish a price-book version (POST /v1/admin/price-book-versions/:id/publish-version)",
+    "ProPlan": "price book: staff publish a price-book version (POST /v1/admin/price-book-versions/:id/publish-version)",
+    "VaultPricing": "price book: staff publish a price-book version (POST /v1/admin/price-book-versions/:id/publish-version)",
+    "TicketTerms": "price book: staff publish a price-book version (POST /v1/admin/price-book-versions/:id/publish-version)",
+    "CreatorOffer": "price book: staff publish a price-book version (POST /v1/admin/price-book-versions/:id/publish-version)",
+    "Price": "price book: staff publish a price-book version (POST /v1/admin/price-book-versions/:id/publish-version)",
+    "ProUsage": "client wish created (POST /v1/business/client-wishes) and the plan-period job (monthly reset and one month of rollover); pack fulfilment",
+    "Business": "pro.pack / pro plan fulfilment on a verified payment, and the plan-period job (rollover)",
+    "CreatorState": "credit-pack / creator-plan / extra-review fulfilment, AI spend (studio draft 4, change 1), a submission spending a review, the monthly reset job",
+    "PassMembership": "a wish sealed or upgraded under the Pass (POST /v1/wishes/:id/seal)",
+    "VaultStorage": "upload confirmed or file deleted (POST /v1/uploads/:id/confirm, DELETE /v1/uploads/:id) and the monthly Vault billing job",
+    "VaultFile": "upload confirmed (POST /v1/uploads/:id/confirm records bytes)",
+    "DateRow": "date added or removed (POST/DELETE /v1/me/dates); days and years worked out from the date on read",
+    "TicketOffer": "worked out on read from the price book and the wish (quote)",
+    "StudioStyle": "PATCH /v1/studio/styles/:id (the editor saves the whole document)",
+    "VoiceNote": "upload confirmed (POST /v1/uploads/:id/confirm records the length)",
+    "Wish": "server stamp on every write (S-22 updatedAt), keep fulfilment (extraDays), voice-note upload confirmed (makerNote.voice)"
+  },
+  "byMetric": {}
+}

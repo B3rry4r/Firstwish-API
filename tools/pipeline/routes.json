@@ -1,0 +1,775 @@
+{
+  "about": "Route table read by reconcile.py: the routes the Phase 3 rulings name and the cleaner names for clumsy mechanical routes. Every entry cites the decision (decisions.json) or the convention it follows. 'bases' rename a resource's route base (singleton: no :id; idParam: the id's name). 'actions' and 'reads' are keyed by canonical Resource.action / Resource, or screen:RawEntity(.action) for one screen, or screen:* for every read of a screen. A read set to {drop: decision} makes no endpoint; an action set to {ruling: decision} maps to that ruling.",
+  "bases": {
+    "Account": {
+      "base": "/v1/me",
+      "singleton": true,
+      "decision": "DEC-100"
+    },
+    "Business": {
+      "base": "/v1/business",
+      "singleton": true,
+      "decision": "DEC-87"
+    },
+    "ProUsage": {
+      "base": "/v1/business/usage",
+      "singleton": true,
+      "decision": "conventions naming"
+    },
+    "VaultStorage": {
+      "base": "/v1/business/vault/space",
+      "singleton": true,
+      "decision": "conventions naming"
+    },
+    "PassMembership": {
+      "base": "/v1/me/pass",
+      "singleton": true,
+      "decision": "conventions naming"
+    },
+    "NoticePrefs": {
+      "base": "/v1/me/notice-prefs",
+      "singleton": true,
+      "decision": "conventions naming"
+    },
+    "DateRow": {
+      "base": "/v1/me/dates",
+      "decision": "conventions naming"
+    },
+    "CreatorState": {
+      "base": "/v1/studio/me",
+      "singleton": true,
+      "decision": "DEC-66"
+    },
+    "StudioPrefs": {
+      "base": "/v1/studio/prefs",
+      "singleton": true,
+      "decision": "conventions naming"
+    },
+    "StudioStyle": {
+      "base": "/v1/studio/styles",
+      "decision": "DEC-65"
+    },
+    "Template": {
+      "base": "/v1/studio/templates",
+      "decision": "conventions naming"
+    },
+    "ClientWish": {
+      "base": "/v1/business/client-wishes",
+      "decision": "conventions naming"
+    },
+    "Person": {
+      "base": "/v1/business/people",
+      "decision": "conventions naming"
+    },
+    "Login": {
+      "base": "/v1/business/logins",
+      "decision": "conventions naming"
+    },
+    "Shoot": {
+      "base": "/v1/business/shoots",
+      "decision": "conventions naming"
+    },
+    "Invoice": {
+      "base": "/v1/business/invoices",
+      "decision": "conventions naming"
+    },
+    "ApprovedDate": {
+      "base": "/v1/business/approved-dates",
+      "decision": "conventions naming"
+    },
+    "VaultFile": {
+      "base": "/v1/business/vault-files",
+      "decision": "conventions naming"
+    },
+    "RevealLink": {
+      "base": "/v1/business/reveal-links",
+      "decision": "conventions naming"
+    },
+    "PublishedWish": {
+      "base": "/v1/showing",
+      "decision": "DEC-63"
+    },
+    "Creator": {
+      "base": "/v1/creators",
+      "idParam": ":handle",
+      "decision": "DEC-76"
+    },
+    "RoyaltyAccrual": {
+      "base": "/v1/creator/earnings",
+      "decision": "DEC-67"
+    },
+    "StoredFile": {
+      "base": "/v1/uploads",
+      "decision": "conventions naming"
+    },
+    "AiRequest": {
+      "base": "/v1/ai",
+      "decision": "conventions naming"
+    }
+  },
+  "actions": {
+    "Reaction.react": {
+      "method": "PUT",
+      "path": "/v1/feed/wishes/:id/reaction",
+      "decision": "conventions naming"
+    },
+    "Reaction.unreact": {
+      "method": "DELETE",
+      "path": "/v1/feed/wishes/:id/reaction",
+      "decision": "conventions naming"
+    },
+    "SavedWish.save": {
+      "method": "PUT",
+      "path": "/v1/feed/wishes/:id/save",
+      "decision": "conventions naming"
+    },
+    "SavedWish.unsave": {
+      "method": "DELETE",
+      "path": "/v1/feed/wishes/:id/save",
+      "decision": "conventions naming"
+    },
+    "Follow.follow": {
+      "method": "PUT",
+      "path": "/v1/creators/:handle/follow",
+      "decision": "conventions naming"
+    },
+    "Follow.unfollow": {
+      "method": "DELETE",
+      "path": "/v1/creators/:handle/follow",
+      "decision": "conventions naming"
+    },
+    "Share.share": {
+      "method": "POST",
+      "path": "/v1/feed/wishes/:id/shares",
+      "decision": "conventions naming"
+    },
+    "Account.addBusiness": {
+      "method": "POST",
+      "path": "/v1/me/business",
+      "decision": "conventions naming"
+    },
+    "Account.closeBusiness": {
+      "method": "DELETE",
+      "path": "/v1/me/business",
+      "decision": "conventions naming"
+    },
+    "Account.openCreatorProfile": {
+      "method": "POST",
+      "path": "/v1/me/creator",
+      "decision": "conventions naming"
+    },
+    "Account.closeCreatorProfile": {
+      "method": "DELETE",
+      "path": "/v1/me/creator",
+      "decision": "conventions naming"
+    },
+    "Account.checkHandle": {
+      "method": "GET",
+      "path": "/v1/handles/:handle",
+      "decision": "conventions naming"
+    },
+    "app-you:none.setTheme": {
+      "method": "PATCH",
+      "path": "/v1/me",
+      "decision": "DEC-103",
+      "resource": "Account"
+    },
+    "site-home:(local).toggleTheme": {
+      "ruling": "DEC-103"
+    },
+    "Wish.restoreWish": {
+      "method": "POST",
+      "path": "/v1/wishes/:id/restore",
+      "decision": "conventions naming"
+    },
+    "Wish.undoRestore": {
+      "method": "DELETE",
+      "path": "/v1/wishes/:id",
+      "decision": "conventions naming"
+    },
+    "Wish.eraseNow": {
+      "method": "POST",
+      "path": "/v1/wishes/:id/erase",
+      "decision": "conventions naming"
+    },
+    "Wish.undoTakeDown": {
+      "method": "POST",
+      "path": "/v1/wishes/:id/publish-requests",
+      "decision": "DEC-95",
+      "resource": "PublishRequest"
+    },
+    "Wish.wakeWish": {
+      "method": "POST",
+      "path": "/v1/wishes/:id/wake",
+      "decision": "DEC-93"
+    },
+    "Wish.useThisStyle": {
+      "method": "PATCH",
+      "path": "/v1/wishes/:id",
+      "decision": "DEC-91"
+    },
+    "Wish.saveChanges": {
+      "method": "PATCH",
+      "path": "/v1/wishes/:id",
+      "decision": "DEC-91"
+    },
+    "Wish.sealIt": {
+      "method": "POST",
+      "path": "/v1/wishes/:id/seal",
+      "decision": "DEC-92"
+    },
+    "Wish.answerRing": {
+      "method": "POST",
+      "path": "/v1/w/:slug/reaction",
+      "decision": "DEC-101",
+      "auth": [
+        "public"
+      ],
+      "resource": "PublicWishView"
+    },
+    "PublishRequest.requestPublish": {
+      "method": "POST",
+      "path": "/v1/wishes/:id/publish-requests",
+      "decision": "DEC-95"
+    },
+    "PublishRequest.withdraw": {
+      "method": "DELETE",
+      "path": "/v1/wishes/:id/publish-requests",
+      "decision": "DEC-95"
+    },
+    "RenderJob.requestStatusVideo": {
+      "method": "POST",
+      "path": "/v1/wishes/:id/video",
+      "decision": "DEC-95"
+    },
+    "RenderJob.getRender": {
+      "method": "GET",
+      "path": "/v1/wishes/:id/video",
+      "decision": "DEC-95"
+    },
+    "StyleSubmission.submitStyle": {
+      "method": "POST",
+      "path": "/v1/studio/styles/:id/submissions",
+      "decision": "DEC-65"
+    },
+    "StudioStyle.withdrawStyle": {
+      "method": "POST",
+      "path": "/v1/studio/styles/:id/withdraw",
+      "decision": "DEC-65"
+    },
+    "PassOffer.getPass": {
+      "method": "POST",
+      "path": "/v1/payments",
+      "decision": "DEC-94",
+      "resource": "Payment"
+    },
+    "AuthCode.requestCode": {
+      "method": "POST",
+      "path": "/v1/auth/codes",
+      "decision": "DEC-104",
+      "auth": [
+        "public"
+      ]
+    },
+    "AuthCode.verifyCode": {
+      "method": "POST",
+      "path": "/v1/auth/codes/verify",
+      "decision": "DEC-104",
+      "auth": [
+        "public"
+      ]
+    },
+    "ExternalIdentity.startGoogle": {
+      "method": "POST",
+      "path": "/v1/auth/google/start",
+      "decision": "DEC-104",
+      "auth": [
+        "public"
+      ]
+    },
+    "ExternalIdentity.googleCallback": {
+      "method": "GET",
+      "path": "/v1/auth/google/callback",
+      "decision": "DEC-104",
+      "auth": [
+        "public"
+      ]
+    },
+    "ExternalIdentity.linkGoogle": {
+      "method": "POST",
+      "path": "/v1/me/google",
+      "decision": "conventions naming",
+      "auth": [
+        "user"
+      ]
+    },
+    "ExternalIdentity.unlinkGoogle": {
+      "method": "DELETE",
+      "path": "/v1/me/google",
+      "decision": "conventions naming",
+      "auth": [
+        "user"
+      ]
+    },
+    "Session.signOut": {
+      "method": "POST",
+      "path": "/v1/auth/sign-out",
+      "decision": "conventions naming",
+      "auth": [
+        "user"
+      ]
+    },
+    "Session.signOutEverywhere": {
+      "method": "POST",
+      "path": "/v1/auth/sign-out-everywhere",
+      "decision": "conventions naming",
+      "auth": [
+        "user"
+      ]
+    },
+    "Session.listMySessions": {
+      "method": "GET",
+      "path": "/v1/sessions",
+      "decision": "conventions naming",
+      "auth": [
+        "user"
+      ]
+    },
+    "StaffAccount.staffSignIn": {
+      "method": "POST",
+      "path": "/v1/admin/auth/codes/verify",
+      "decision": "DEC-24",
+      "auth": [
+        "public"
+      ]
+    },
+    "RoyaltyAccrual.getEarnings": {
+      "method": "GET",
+      "path": "/v1/creator/earnings",
+      "decision": "DEC-67",
+      "auth": [
+        "role:creator"
+      ]
+    },
+    "Payout.getPayouts": {
+      "method": "GET",
+      "path": "/v1/creator/payouts",
+      "decision": "conventions naming",
+      "auth": [
+        "role:creator"
+      ]
+    },
+    "ClientWish.sendFavourites": {
+      "method": "POST",
+      "path": "/v1/w/:slug/favourites",
+      "decision": "DEC-101",
+      "auth": [
+        "public"
+      ],
+      "resource": "PublicWishView"
+    },
+    "StoredFile.createUpload": {
+      "method": "POST",
+      "path": "/v1/uploads",
+      "decision": "DEC-10"
+    },
+    "StoredFile.confirmUpload": {
+      "method": "POST",
+      "path": "/v1/uploads/:id/confirm",
+      "decision": "DEC-10"
+    },
+    "StoredFile.deleteFile": {
+      "method": "DELETE",
+      "path": "/v1/uploads/:id",
+      "decision": "DEC-10"
+    },
+    "Notice.listMyNotices": {
+      "method": "GET",
+      "path": "/v1/me/notices",
+      "decision": "conventions naming",
+      "auth": [
+        "user"
+      ]
+    },
+    "Price.getPrices": {
+      "method": "GET",
+      "path": "/v1/price-book",
+      "resource": "Price",
+      "auth": [
+        "public"
+      ],
+      "decision": "DEC-96"
+    },
+    "WishData.unlockOpening": {
+      "method": "POST",
+      "path": "/v1/w/:slug/unlock",
+      "decision": "DEC-101",
+      "auth": [
+        "public"
+      ],
+      "resource": "PublicWishView"
+    },
+    "WebhookEvent.refundWebhook": {
+      "method": "POST",
+      "path": "/v1/webhooks/paystack",
+      "decision": "conventions naming (Paystack posts every event to one signed URL)"
+    },
+    "WishOpen.recordOpen": {
+      "method": "POST",
+      "path": "/v1/w/:slug/opens",
+      "decision": "DEC-101",
+      "auth": [
+        "public"
+      ],
+      "resource": "PublicWishView"
+    },
+    "EarningsSummary.earningsByLine": {
+      "method": "GET",
+      "path": "/v1/admin/earnings",
+      "decision": "conventions naming"
+    },
+    "StyleRate.previewToPaid": {
+      "method": "GET",
+      "path": "/v1/admin/styles/preview-to-paid",
+      "decision": "conventions naming"
+    },
+    "Reconciliation.runReconciliation": {
+      "method": "POST",
+      "path": "/v1/admin/reconciliations",
+      "decision": "conventions naming"
+    },
+    "Payout.approvePayoutRun": {
+      "method": "POST",
+      "path": "/v1/admin/payout-runs/:id/approve",
+      "decision": "conventions naming"
+    },
+    "Job.retryJob": {
+      "method": "POST",
+      "path": "/v1/admin/jobs/:id/retry",
+      "decision": "conventions naming"
+    },
+    "UploadTicket.createUpload": {
+      "method": "POST",
+      "path": "/v1/uploads",
+      "decision": "DEC-10",
+      "resource": "StoredFile"
+    },
+    "Invoice.getInvoiceFile": {
+      "method": "GET",
+      "path": "/v1/business/invoices/:id/file",
+      "decision": "conventions naming"
+    },
+    "AiRequest.letterFromVoice": {
+      "method": "POST",
+      "path": "/v1/ai/letter",
+      "decision": "DEC-106"
+    },
+    "AiRequest.reasonsFromVoice": {
+      "method": "POST",
+      "path": "/v1/ai/reasons",
+      "decision": "DEC-106"
+    },
+    "AiRequest.pickPhotos": {
+      "method": "POST",
+      "path": "/v1/ai/pick-photos",
+      "decision": "conventions naming"
+    },
+    "AiRequest.studioDraft": {
+      "method": "POST",
+      "path": "/v1/ai/studio-draft",
+      "decision": "conventions naming"
+    },
+    "AiRequest.studioChange": {
+      "method": "POST",
+      "path": "/v1/ai/studio-change",
+      "decision": "conventions naming"
+    },
+    "StyleLevel.moveStyle": {
+      "method": "POST",
+      "path": "/v1/admin/styles/:slug/level",
+      "decision": "conventions naming"
+    },
+    "Report.takeDownThisIsMe": {
+      "method": "POST",
+      "path": "/v1/w/:slug/take-down",
+      "decision": "DEC-101",
+      "auth": [
+        "public"
+      ],
+      "resource": "PublicWishView"
+    },
+    "PublishRequest.reviewPublish": {
+      "method": "POST",
+      "path": "/v1/admin/publish-requests/:id/decision",
+      "decision": "conventions naming"
+    },
+    "StyleSubmission.decideSubmission": {
+      "method": "POST",
+      "path": "/v1/admin/style-submissions/:id/decision",
+      "decision": "conventions naming"
+    },
+    "Report.decideReport": {
+      "method": "POST",
+      "path": "/v1/admin/reports/:id/decision",
+      "decision": "conventions naming"
+    },
+    "ConciergeOrder.quoteOrder": {
+      "method": "POST",
+      "path": "/v1/admin/concierge-orders/:id/quote",
+      "decision": "conventions naming"
+    },
+    "ConciergeOrder.assignMaker": {
+      "method": "POST",
+      "path": "/v1/admin/concierge-orders/:id/maker",
+      "decision": "conventions naming"
+    },
+    "ConciergeOrder.deliverOrder": {
+      "method": "POST",
+      "path": "/v1/admin/concierge-orders/:id/delivery",
+      "decision": "conventions naming"
+    },
+    "StaffAccount.changeStaffRoles": {
+      "method": "PATCH",
+      "path": "/v1/admin/staff-accounts/:id",
+      "decision": "conventions naming"
+    },
+    "StaffAccount.suspendStaff": {
+      "method": "POST",
+      "path": "/v1/admin/staff-accounts/:id/suspend",
+      "decision": "conventions naming"
+    },
+    "CreatorState.setSigned": {
+      "method": "PATCH",
+      "path": "/v1/studio/me",
+      "decision": "conventions naming"
+    },
+    "Person.importPeople": {
+      "method": "POST",
+      "path": "/v1/business/people/import",
+      "decision": "conventions naming"
+    },
+    "ClientWish.approveDate": {
+      "method": "POST",
+      "path": "/v1/business/client-wishes/:id/approve-date",
+      "decision": "conventions naming"
+    },
+    "PriceBookVersion.publishVersion": {
+      "method": "POST",
+      "path": "/v1/admin/price-book-versions/:id/publish",
+      "decision": "conventions naming"
+    },
+    "ScreeningResult.reviewScreening": {
+      "method": "POST",
+      "path": "/v1/admin/screening-results/:id/decision",
+      "decision": "conventions naming"
+    },
+    "SupportThread.assign": {
+      "method": "POST",
+      "path": "/v1/admin/support-threads/:id/assignee",
+      "decision": "conventions naming"
+    },
+    "Shoot.uploadFiles": {
+      "method": "POST",
+      "path": "/v1/business/shoots/:id/files",
+      "decision": "conventions naming"
+    },
+    "Shoot.uploadFinals": {
+      "method": "POST",
+      "path": "/v1/business/shoots/:id/finals",
+      "decision": "conventions naming"
+    },
+    "Wish.shareLink": {
+      "method": "GET",
+      "path": "/v1/wishes/:id/link",
+      "decision": "DEC-89"
+    }
+  },
+  "reads": {
+    "sign-in:Account": {
+      "drop": "DEC-100"
+    },
+    "Price": {
+      "method": "GET",
+      "path": "/v1/price-book",
+      "resource": "Price",
+      "auth": [
+        "public"
+      ],
+      "decision": "DEC-96"
+    },
+    "Ticket": {
+      "method": "GET",
+      "path": "/v1/price-book",
+      "resource": "Price",
+      "auth": [
+        "public"
+      ],
+      "decision": "DEC-96"
+    },
+    "Extra": {
+      "method": "GET",
+      "path": "/v1/price-book",
+      "resource": "Price",
+      "auth": [
+        "public"
+      ],
+      "decision": "DEC-96"
+    },
+    "PassOffer": {
+      "method": "GET",
+      "path": "/v1/price-book",
+      "resource": "Price",
+      "auth": [
+        "public"
+      ],
+      "decision": "DEC-96"
+    },
+    "ProPlan": {
+      "method": "GET",
+      "path": "/v1/price-book",
+      "resource": "Price",
+      "auth": [
+        "public"
+      ],
+      "decision": "DEC-96"
+    },
+    "Promotion": {
+      "method": "GET",
+      "path": "/v1/price-book",
+      "resource": "Price",
+      "auth": [
+        "public"
+      ],
+      "decision": "DEC-96"
+    },
+    "LifecycleConfig": {
+      "method": "GET",
+      "path": "/v1/price-book",
+      "resource": "Price",
+      "auth": [
+        "public"
+      ],
+      "decision": "DEC-96"
+    },
+    "CreatorOffer": {
+      "method": "GET",
+      "path": "/v1/price-book",
+      "resource": "Price",
+      "auth": [
+        "public"
+      ],
+      "decision": "DEC-96"
+    },
+    "ProPricingCopy": {
+      "method": "GET",
+      "path": "/v1/price-book",
+      "resource": "Price",
+      "auth": [
+        "public"
+      ],
+      "decision": "DEC-96"
+    },
+    "TicketTerms": {
+      "method": "GET",
+      "path": "/v1/price-book",
+      "resource": "Price",
+      "auth": [
+        "public"
+      ],
+      "decision": "DEC-96"
+    },
+    "VaultPricing": {
+      "method": "GET",
+      "path": "/v1/price-book",
+      "resource": "Price",
+      "auth": [
+        "public"
+      ],
+      "decision": "DEC-96"
+    },
+    "receiver-wish-mine:*": {
+      "method": "GET",
+      "path": "/v1/w/:slug",
+      "resource": "PublicWishView",
+      "auth": [
+        "public"
+      ],
+      "decision": "DEC-101"
+    },
+    "receiver-wish-showcase:*": {
+      "method": "GET",
+      "path": "/v1/w/:slug",
+      "resource": "PublicWishView",
+      "auth": [
+        "public"
+      ],
+      "decision": "DEC-101"
+    },
+    "maker-ending-scene:WishData (preview, derived client-side)": {
+      "method": "GET",
+      "path": "/v1/wishes/:id",
+      "resource": "Wish",
+      "decision": "DEC-101"
+    },
+    "PublishedWish": {
+      "method": "GET",
+      "path": "/v1/showing",
+      "resource": "PublishedWish",
+      "auth": [
+        "public"
+      ],
+      "decision": "DEC-97"
+    }
+  },
+  "endpointAuth": {
+    "GET /v1/wishes/:id": {
+      "auth": [
+        "user:owner",
+        "staff:any"
+      ],
+      "decision": "DEC-101"
+    },
+    "GET /v1/price-book": {
+      "auth": [
+        "public"
+      ],
+      "decision": "DEC-96"
+    },
+    "GET /v1/showing": {
+      "auth": [
+        "public"
+      ],
+      "decision": "DEC-97"
+    },
+    "GET /v1/showing/:id": {
+      "auth": [
+        "public"
+      ],
+      "decision": "DEC-97"
+    }
+  },
+  "extraEndpoints": [
+    {
+      "resource": "Business",
+      "method": "GET",
+      "path": "/v1/business/plan",
+      "auth": [
+        "role:business"
+      ],
+      "decision": "DEC-87",
+      "delivers": [
+        "pro.starter",
+        "pro.studio",
+        "pro.pack"
+      ]
+    }
+  ],
+  "fulfilment": {
+    "decision": "DEC-87",
+    "resource": "Payment",
+    "tests": {
+      "pro.starter": "pay -> plan active; replayed webhook adds nothing",
+      "pro.pack": "pay -> pack added; replayed webhook adds nothing"
+    }
+  }
+}

@@ -181,6 +181,13 @@ def main():
     scan = load("scan-map.json")
     conventions = open(os.path.join(PIPE, "conventions.md"), encoding="utf-8").read()
     framework = load("framework-decision.json")
+    routes = json.load(open(os.path.join(HERE, "routes.json"), encoding="utf-8"))
+    owed_tab = json.load(open(os.path.join(HERE, "metrics-owed.json"), encoding="utf-8"))
+    sup_all = sup
+    sup = [x for x in sup_all if not x.get("supersededBy")]
+    dec_all = decisions
+    decisions = [x for x in dec_all if not x.get("supersededBy")]
+    deferred = []
 
     sources = {}  # id -> dict(kind, data, text)
     order = []
@@ -192,6 +199,9 @@ def main():
     for path in sorted(glob.glob(os.path.join(PIPE, "declared", "*.json"))):
         d = json.load(open(path, encoding="utf-8"))
         sid = d.get("resource") or os.path.basename(path)[:-5]
+        if d.get("status") == "deferred-by-owner":
+            deferred.append((sid, d.get("deferredBy", "")))
+            continue
         sources[sid] = {"kind": "declaration", "data": d, "text": json.dumps(d, ensure_ascii=False), "file": "declared/" + os.path.basename(path)}
         order.append(sid)
     screens = {s["id"]: s for s in scan["screens"]}
@@ -209,7 +219,7 @@ def main():
 
     # alias table sanity: every alias names two sources that exist
     alias_errors = []
-    for section in ("entities", "actions"):
+    for section in ("entities", "actions", "fields"):
         for raw, e in sorted(aliases.get(section, {}).items()):
             for s in e.get("sources", []):
                 if s not in sources:
@@ -220,8 +230,9 @@ def main():
         print("ALIAS TABLE ERRORS:\n" + "\n".join(alias_errors))
         sys.exit(2)
 
-    def canon_entity(raw):
-        e = aliases["entities"].get(raw)
+    def canon_entity(raw, sid=None):
+        e = aliases["entities"].get("%s:%s" % (sid, raw)) if sid else None
+        e = e or aliases["entities"].get(raw)
         if e:
             if "embeddedIn" in e:
                 return e["embeddedIn"]["resource"], e["embeddedIn"]["field"], e
@@ -235,7 +246,7 @@ def main():
     sup_class = {}  # canon class -> supersede id that authorises the transform
     for s in sup:
         tgt = s["targetState"]
-        for cls, key in (("money", "kobo"), ("id", "UUIDv7"), ("phone", "E.164")):
+        for cls, key in (("money", "kobo"), ("id", "UUIDv7"), ("phone", "E.164"), ("time", "ISO-8601")):
             if key.lower() in tgt.lower():
                 if cls in sup_class and sup_class[cls][1] != key:
                     print("HALT: supersedes %s and %s contradict on %s" % (sup_class[cls][0], s["id"], cls))
@@ -269,13 +280,19 @@ def main():
         return res[name]
 
     def add_field(rname, fname, typ, nullable, sid, note=None):
+        fa = aliases.get("fields", {}).get("%s.%s" % (rname, fname))
+        if fa:
+            fname = fa["canonical"]
         r = R(rname)
         f = r["fields"].setdefault(fname, {"seen": [], "supersedes": set(), "nullable": set()})
         cls = tclass(fname, typ)
         ck = canon_kind(fname)
         applied = None
         if sources[sid]["kind"] == "screen":
-            if cls in ("money-naira", "money-number") and "money" in sup_class:
+            if cls == "time-epoch" and "time" in sup_class:
+                applied = sup_class["time"][0]
+                cls = "time-iso"
+            elif cls in ("money-naira", "money-number") and "money" in sup_class:
                 applied = sup_class["money"][0]
                 cls = "money-kobo"
             elif ck == "id" and "id" in sup_class:
@@ -295,11 +312,11 @@ def main():
         src = sources[sid]
         d = src["data"]
         for rd in d.get("reads", []):
-            rname, emb, ali = canon_entity(rd["entity"])
+            rname, emb, ali = canon_entity(rd["entity"], sid)
             if rname is None:
                 unclassified[rd["entity"]].add(sid)
                 continue
-            if rname == "@client":
+            if rname in ("@client", "@web"):
                 continue
             r = R(rname)
             (r["screens"] if src["kind"] == "screen" else r["decls"]).add(sid)
@@ -313,10 +330,10 @@ def main():
                                   "src": sid, "entity": rd["entity"], "pagination": rd.get("pagination"),
                                   "filters": rd.get("filtersOrSort", [])})
         for a in d.get("actions", []):
-            rname, emb, ali = canon_entity(a["entity"])
+            rname, emb, ali = canon_entity(a["entity"], sid)
             if rname is None:
                 unclassified[a["entity"]].add(sid)
-            elif rname != "@client":
+            elif rname not in ("@client", "@web"):
                 r = R(rname)
                 (r["screens"] if src["kind"] == "screen" else r["decls"]).add(sid)
                 prefix = (emb + ".") if emb else ""
@@ -330,11 +347,20 @@ def main():
         conflict("unclassified-entity", raw, "entity name is not in tools/pipeline/aliases.json and is not a plain resource name",
                  [{"src": s, "quote": raw} for s in sorted(sids)], ["add an alias entry", "rename in the fragment"])
 
+    def srcs_of(name):
+        out = set()
+        for sid_ in order:
+            d_ = sources[sid_]["data"]
+            for x in d_.get("reads", []) + d_.get("actions", []):
+                if x["entity"] == name or canon_entity(x["entity"], sid_)[0] == name:
+                    out.add(sid_)
+        return out
+
     # possible aliases from the table
     for pa in aliases.get("possibleAliases", []):
         conflict("possible-alias", pa["a"] + " ~ " + pa["b"], pa["why"],
-                 [{"src": s, "quote": pa["a"]} for s in sorted(R(pa["a"])["screens"] | R(pa["a"])["decls"])][:3] +
-                 [{"src": s, "quote": pa["b"]} for s in sorted(R(pa["b"])["screens"] | R(pa["b"])["decls"])][:3],
+                 [{"src": s, "quote": pa["a"]} for s in sorted(srcs_of(pa["a"]))][:3] +
+                 [{"src": s, "quote": pa["b"]} for s in sorted(srcs_of(pa["b"]))][:3],
                  ["same thing: add an alias", "different things: keep both"])
 
     # field type conflicts and possible field aliases
@@ -439,14 +465,14 @@ def main():
         if sources[sid]["kind"] != "declaration":
             continue
         for a in sources[sid]["data"].get("actions", []):
-            rname, emb, _ = canon_entity(a["entity"])
-            if rname and rname != "@client":
+            rname, emb, _ = canon_entity(a["entity"], sid)
+            if rname and rname not in ("@client", "@web"):
                 decl_actions.setdefault((rname, a["name"]), (sid, a))
     named_kind = {}
     for sid in order:
         for a in sources[sid]["data"].get("actions", []):
-            rname, emb, _ = canon_entity(a["entity"])
-            if rname and rname != "@client" and not emb:
+            rname, emb, _ = canon_entity(a["entity"], sid)
+            if rname and rname not in ("@client", "@web") and not emb:
                 named_kind.setdefault((rname, strip_paren(a["name"])), a.get("kind", "custom"))
     endpoints = {}  # (method, path) -> ep
     mapping = []  # every action -> result
@@ -480,6 +506,25 @@ def main():
         if not out:
             out.add("user" if ac.get("requiresAuth", True) else "public")
         return out
+
+    def rebase(rname, path):
+        b = routes.get("bases", {}).get(rname)
+        if not b or path.startswith("port:") or "#" in path:
+            return path
+        for old in (route_base(rname), "/v1/admin" + route_base(rname)[3:]):
+            if path == old or path.startswith(old + "/"):
+                if path.startswith("/v1/admin"):
+                    return path
+                rest = path[len(old):]
+                if b.get("singleton"):
+                    rest = re.sub(r"^/:id", "", rest)
+                elif b.get("idParam"):
+                    rest = re.sub(r"^/:id", "/" + b["idParam"], rest)
+                return b["base"] + rest
+        return path
+
+    def route_auth(names):
+        return set(names)
 
     def ep_for(rname, aname, kind, sid, a):
         note = a.get("note") or ""
@@ -529,6 +574,8 @@ def main():
                 method, path = "GET", base + "/" + rest
         else:
             method, path = "POST", base + "/:id/" + kebab(aname)
+        if not m:
+            path = rebase(rname, path)
         return method, path, auth
 
     def add_ep(rname, method, path, auth, sid, label, body=None, response=None, status=None):
@@ -562,7 +609,32 @@ def main():
             raw_entity, raw_name = a["entity"], a["name"]
             ref = {"src": sid, "entity": raw_entity, "action": raw_name, "provenance": src["kind"]}
             note = a.get("note") or ""
-            rname, emb, ali = canon_entity(raw_entity)
+            rname, emb, ali = canon_entity(raw_entity, sid)
+            rt = routes.get("actions", {}).get("%s:%s.%s" % (sid, raw_entity, raw_name))
+            if rt is None and rname and rname not in ("@client", "@web"):
+                aal0 = aliases["actions"].get("%s.%s" % (rname, raw_name))
+                ck = aal0["canonical"] if aal0 else "%s.%s" % (rname, strip_paren(raw_name))
+                rt = routes.get("actions", {}).get(ck)
+            if rt and rt.get("ruling"):
+                mapping.append(dict(ref, result="ruling", target=rt["ruling"]))
+                continue
+            if rname == "@web" and ali and ali.get("decision"):
+                mapping.append(dict(ref, result="ruling", target=ali["decision"]))
+                continue
+            if rt:
+                aal0 = aliases["actions"].get("%s.%s" % (rname, raw_name)) if rname else None
+                res_rt = rt.get("resource") or ((aal0["canonical"].split(".")[0]) if aal0 else rname)
+                if res_rt in (None, "@client", "@web"):
+                    res_rt = "Account"
+                _, _, auth_rt = ep_for(res_rt, strip_paren(raw_name), a.get("kind", "custom"), sid, a)
+                if rt.get("auth"):
+                    auth_rt = route_auth(rt["auth"])
+                body = [dict(p, name=((emb + ".") if emb and not p["name"].startswith(emb) else "") + p["name"]) for p in a.get("payload", [])]
+                key = add_ep(res_rt, rt["method"], rt["path"], auth_rt, sid, "action:%s (route %s)" % (raw_name, rt.get("decision", "")),
+                             body=body, response=a.get("expectedResponse"))
+                endpoints[key]["notes"].add("route by " + rt.get("decision", "routes.json"))
+                mapping.append(dict(ref, result="endpoint", target=key))
+                continue
             # ruled by a decision through a localStorage key it names
             keys = set(re.findall(r"fw-[a-z\-]+", note))
             ruled = None
@@ -579,7 +651,7 @@ def main():
                 c = [x for x in conflicts if x["kind"] == "unclassified-entity" and x["entity"] == raw_entity]
                 mapping.append(dict(ref, result="conflict", target=c[0]))
                 continue
-            if rname == "@client" or (CLIENT_ONLY.search(note) and not re.search(r"\btoday\b", note)):
+            if rname in ("@client", "@web") or (CLIENT_ONLY.search(note) and not re.search(r"\btoday\b", note)):
                 c = conflict("client-only-action", rname if rname != "@client" else raw_entity,
                              "%s.%s asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that names the server need" % (raw_entity, raw_name),
                              [{"src": sid, "quote": note or raw_entity}], ["stays client-only (ruling)", "needs an endpoint"])
@@ -623,17 +695,54 @@ def main():
     for (m_, p_), ep in endpoints.items():
         if m_ == "GET" and any(sources[s["src"]]["kind"] == "declaration" for s in ep["sources"]):
             declared_gets[ep["resource"]].append((m_, p_))
+    read_drops = []
     for rq in read_reqs:
         rname = rq["resource"]
         single = rq["cardinality"] == "single"
+        rr = routes.get("reads", {})
+        rt = rr.get("%s:%s" % (rq["src"], rq["entity"])) or rr.get("%s:*" % rq["src"]) or rr.get(rname)
+        if rt and rt.get("drop"):
+            read_drops.append((rq["src"], rq["entity"], rt["drop"]))
+            continue
+        auth = side_auth(rq["src"])
+        if rt:
+            if rt.get("auth"):
+                auth = route_auth(rt["auth"])
+            k_ = add_ep(rt.get("resource", rname), rt["method"], rt["path"], auth, rq["src"], "read:%s (route %s)" % (rq["entity"], rt.get("decision", "")),
+                        response={"entity": rname, "cardinality": rq["cardinality"]})
+            endpoints[k_]["notes"].add("route by " + rt.get("decision", "routes.json"))
+            continue
         if declared_gets.get(rname):
             key = sorted(declared_gets[rname])[0]
             method, path = key
         else:
-            method, path = "GET", route_base(rname) + ("/:id" if single else "")
-        auth = side_auth(rq["src"])
+            method, path = "GET", rebase(rname, route_base(rname) + ("/:id" if single else ""))
         add_ep(rname, method, path, auth, rq["src"], "read:" + rq["entity"],
                response={"entity": rname, "cardinality": rq["cardinality"]})
+
+    for ek, ov in sorted(routes.get("endpointAuth", {}).items()):
+        m_, p_ = ek.split(" ", 1)
+        if (m_, p_) in endpoints:
+            ep = endpoints[(m_, p_)]
+            ep["auth"] = route_auth(ov["auth"])
+            ep["authBy"] = defaultdict(set, {x: {ov["decision"]} for x in ov["auth"]})
+            ep["notes"].add("auth by " + ov["decision"])
+    delivers = defaultdict(list)
+    for x in routes.get("extraEndpoints", []):
+        if x["decision"] not in [d_["id"] for d_ in decisions]:
+            continue
+        R(x["resource"])
+        k_ = add_ep(x["resource"], x["method"], x["path"], route_auth(x["auth"]), x["decision"], "ruling:" + x["decision"])
+        sources.setdefault(x["decision"], {"kind": "decision", "data": {}, "text": ""})
+        for it in x.get("delivers", []):
+            delivers[it].append(k_)
+    ful = routes.get("fulfilment")
+    if ful and ful["decision"] in [d_["id"] for d_ in decisions]:
+        sources.setdefault(ful["decision"], {"kind": "decision", "data": {}, "text": ""})
+        for p in sources.get("price-book", {}).get("data", {}).get("seed", {}).get("prices", []):
+            k_ = add_ep(ful["resource"], "INTERNAL", "port:fulfilment#" + p["sku"], {"internal"}, ful["decision"], "ruling:%s fulfilment of %s" % (ful["decision"], p["sku"]))
+            endpoints[k_]["notes"].add("runs on a verified payment (webhook); a replayed webhook adds nothing")
+            delivers[p["sku"]].append(k_)
 
     # supersedes that name a route rule the endpoint they cover
     sup_routes = {}
@@ -752,8 +861,8 @@ def main():
     for d in IDENTITY_DECL + MONEY_DECL:
         if d in sources:
             for rd in sources[d]["data"].get("reads", []):
-                n, _, _ = canon_entity(rd["entity"])
-                if n and n != "@client":
+                n, _, _ = canon_entity(rd["entity"], d)
+                if n and n not in ("@client", "@web"):
                     first.add(n)
     if "Account" in res:
         first.add("Account")
@@ -788,6 +897,10 @@ def main():
     conflicts_out = [dict([("id", c["id"])] + [(k, v) for k, v in c.items() if k != "id"]) for c in conflicts]
 
     # ------------------------------------------------------------ registry
+    field_types = {}
+    for d_ in decisions:
+        for fk, ft in sorted((d_.get("fieldTypes") or {}).items()):
+            field_types[fk] = (ft, d_["id"])
     ep_keys = sorted(endpoints, key=lambda k: (endpoints[k]["resource"], k[1], k[0]))
     ep_id = {k: "E-%d" % i for i, k in enumerate(ep_keys, 1)}
 
@@ -822,9 +935,12 @@ def main():
             ann = []
             for sid_ in sorted(f["supersedes"]):
                 ann.append("%s: %s" % (sid_, sup_by_id[sid_]["targetState"]))
-            fields.append({"name": fname, "type": (fams[0] if fams else classes[0]) if len(fams) <= 1 else "CONFLICT:" + "|".join(fams),
-                           "classes": classes, "nullable": (True in f["nullable"]),
-                           "provenance": sorted(set(s["src"] for s in f["seen"])), "supersedes": ann})
+            row_f = {"name": fname, "type": (fams[0] if fams else classes[0]) if len(fams) <= 1 else "CONFLICT:" + "|".join(fams),
+                     "classes": classes, "nullable": (True in f["nullable"]),
+                     "provenance": sorted(set(s["src"] for s in f["seen"])), "supersedes": ann}
+            if "%s.%s" % (rname, fname) in field_types:
+                row_f["type"], row_f["typeBy"] = field_types["%s.%s" % (rname, fname)]
+            fields.append(row_f)
         eps = []
         for k in ep_keys:
             ep = endpoints[k]
@@ -872,6 +988,9 @@ def main():
             for t in sources[sid]["data"].get("truths") or []:
                 decl_truth[t].add(sid)
 
+    def k_is_ruled(k):
+        return any(s_["via"].startswith("ruling:") for s_ in endpoints[k]["sources"])
+
     def match_eps(text, decls):
         words = joined(text)
         hits = []
@@ -890,11 +1009,13 @@ def main():
     items = [(t["id"], "truth", t["statement"]) for t in truths if t["kind"] == "entitlement"]
     items += [(p["sku"], "price-book", p["name"] + " " + p["sku"].replace(".", " ")) for p in pb.get("prices", [])]
     for iid, kind, text in items:
-        hits = match_eps(text, decl_truth.get(iid, set()))
+        hits = [(0, 0, ep_id[k], k, [], True) for k in sorted(delivers.get(iid, []))] + match_eps(text, decl_truth.get(iid, set()))
         words = joined(text)
         buy = sorted("%s %s" % k for k, pt in purchase_toks.items() if (words & pt) - WEAK)
         row = {"id": iid, "source": kind, "statement": text, "purchase": buy,
-               "endpoints": [{"endpoint": h[2], "route": "%s %s" % h[3], "matchedBy": "declaration cites it" if h[5] else "words: " + ", ".join(h[4])} for h in hits]}
+               "endpoints": [{"endpoint": h[2], "route": "%s %s" % h[3], "matchedBy": ("ruling " + ful["decision"] if ful and k_is_ruled(h[3]) else "declaration cites it") if h[5] else "words: " + ", ".join(h[4])} for h in hits]}
+        if ful and iid in (ful.get("tests") or {}):
+            row["proves"] = ful["tests"][iid]
         if hits:
             res0 = endpoints[hits[0][3]]["resource"]
             row["test"] = "src/%s/tests/%s.contract.spec.ts > entitlement %s" % (kebab(res0), kebab(res0), iid)
@@ -902,7 +1023,7 @@ def main():
             c = conflict("entitlement-without-endpoint", iid, "sold or promised (%s) but no endpoint delivers it%s" % (kind, (" (it can be bought: %s)" % ", ".join(buy)) if buy else ""),
                          [{"src": "price-book" if kind == "price-book" else "product-truths.json", "quote": text[:200]}],
                          ["build the endpoint", "stop selling it"])
-            c["id"] = "C-%d" % len(conflicts)
+            c["id"] = "C-%d" % (len(conflicts_out) + 1)
             conflicts_out.append(dict([("id", c["id"])] + [(k2, v) for k2, v in c.items() if k2 != "id"]))
             row["conflict"] = c["id"]
         ents.append(row)
@@ -963,8 +1084,12 @@ def main():
                 wp = writers[:]
                 if "money-kobo" in classes and any(s_ in f["supersedes"] for s_ in [sup_class.get("money", ("",))[0]]):
                     wp.append("price book (S-14: the web reads GET /v1/prices)")
-                metrics.append({"metric": "%s.%s" % (rname, fname), "shownOn": readers, "writerPath": wp,
-                                "formula": formula, "wording": wording[:3], "noWriter": not wp})
+                mrow = {"metric": "%s.%s" % (rname, fname), "shownOn": readers, "writerPath": wp,
+                        "formula": formula, "wording": wording[:3], "noWriter": not wp}
+                if not wp:
+                    mrow["owed"] = True
+                    mrow["owedEvent"] = owed_tab.get("byMetric", {}).get(mrow["metric"]) or owed_tab.get("byResource", {}).get(rname)
+                metrics.append(mrow)
 
     # ------------------------------------------------------------ mapping check
     def tgt_id(m):
@@ -978,8 +1103,28 @@ def main():
         m["target"] = tgt_id(m)
 
     # ------------------------------------------------------------ write outputs
+    closed_log = []
+    by_key = {}
     for row in conflicts_out:
-        pass
+        by_key.setdefault(row["key"], []).append(row)
+    for d_ in decisions:
+        for cl in d_.get("closes") or []:
+            rows = by_key.get(cl["key"])
+            if rows:
+                for row in rows:
+                    row["status"] = "closed"
+                    row["closedBy"] = d_["id"]
+                    row["round1Id"] = cl.get("conflict")
+                closed_log.append((cl.get("conflict"), d_["id"], "raised and closed"))
+            else:
+                kind_, ent_, det_ = cl["key"].split("|", 2)
+                row = {"id": "C-%d" % (len(conflicts_out) + 1), "kind": kind_, "entity": ent_, "detail": cl.get("detail", det_),
+                       "key": cl["key"], "sources": [], "options": [], "status": "closed", "closedBy": d_["id"],
+                       "round1Id": cl.get("conflict"), "note": "no longer raised: the ruling was applied to the inputs"}
+                conflicts_out.append(row)
+                by_key[cl["key"]] = [row]
+                closed_log.append((cl.get("conflict"), d_["id"], "applied, no longer raised"))
+    open_rows = [c for c in conflicts_out if c["status"] == "open"]
     by_kind = defaultdict(int)
     for c in conflicts_out:
         by_kind[c["kind"]] += 1
@@ -987,7 +1132,8 @@ def main():
     dump("dep-graph.json", {"edges": [{"from": n, "to": sorted(edges[n])} for n in sorted(edges)],
                             "waves": waves, "firstGroup": sorted(first),
                             "rule": "identity and money resources (declarations %s) and what they reference come first; then topological layers" % ", ".join(IDENTITY_DECL + MONEY_DECL)})
-    dump("conflicts.json", {"conflicts": conflicts_out, "countsByKind": dict(sorted(by_kind.items()))})
+    dump("conflicts.json", {"conflicts": conflicts_out, "countsByKind": dict(sorted(by_kind.items())),
+                            "open": len(open_rows), "closed": len(conflicts_out) - len(open_rows)})
     tk = defaultdict(int)
     for t in tasks:
         tk[t["kind"]] += 1
@@ -995,7 +1141,12 @@ def main():
     dump("entitlements.json", {"entitlements": ents, "withoutEndpoint": sorted(e["id"] for e in ents if not e["endpoints"])})
     dump("field-flow.json", {"fields": flows, "crossActor": sum(1 for f in flows if f["crossActor"]),
                              "noWriter": sum(1 for f in flows if f["noWriter"])})
-    dump("metrics.json", {"metrics": metrics, "noWriter": sorted(m["metric"] for m in metrics if m["noWriter"])})
+    owed_groups = defaultdict(list)
+    for m in metrics:
+        if m.get("owed"):
+            owed_groups[m["owedEvent"] or "NO EVENT NAMED"].append(m["metric"])
+    dump("metrics.json", {"metrics": metrics, "noWriter": sorted(m["metric"] for m in metrics if m["noWriter"]),
+                          "owedByEvent": {k: sorted(v) for k, v in sorted(owed_groups.items())}})
 
     n_ep = len(endpoints)
     L = ["# Reconcile log", "", "Generated by tools/pipeline/reconcile.py. Deterministic; re-run after fragments change.", "",
@@ -1010,7 +1161,13 @@ def main():
          "- actions: %d; to endpoint %d, to conflict %d, to ruling %d; unmapped %d" % (
              len(mapping), sum(1 for m in mapping if m["result"] == "endpoint"), sum(1 for m in mapping if m["result"] == "conflict"),
              sum(1 for m in mapping if m["result"] == "ruling"), len(unmapped)),
+         "- open conflicts: %d; closed by a decision: %d" % (len(open_rows), len(conflicts_out) - len(open_rows)),
+         "- declarations deferred by the owner (skipped): %s" % (", ".join("%s (%s)" % d_ for d_ in deferred) or "none"),
+         "- reads dropped by a ruling: %s" % (", ".join("%s %s (%s)" % x for x in read_drops) or "none"),
          "", "## Supersedes", ""]
+    for s in sup_all:
+        if s.get("supersededBy"):
+            L.append("- %s replaced by %s (not applied)" % (s["id"], s["supersededBy"]))
     for s in sup:
         hits = sup_match[s["id"]]
         st = "applied" if hits or sup_field_apply.get(s["id"]) else "UNMATCHED"
@@ -1024,6 +1181,12 @@ def main():
     L += ["", "## Action map", "", "| source | entity | action | result |", "|---|---|---|---|"]
     for m in mapping:
         L.append("| %s | %s | %s | %s %s |" % (m["src"], m["entity"].replace("|", "/"), m["action"].replace("|", "/"), m["result"], m["target"]))
+    L += ["", "## Conflicts closed by decisions", ""]
+    for c_, d_, how in closed_log:
+        L.append("- %s -> %s (%s)" % (c_, d_, how))
+    L += ["", "## Owed metrics (no writer yet)", ""]
+    for k, v in sorted(owed_groups.items()):
+        L.append("- %s: %s" % (k, ", ".join(sorted(v))))
     L += ["", "## Waves", ""]
     for i, w in enumerate(waves, 1):
         L.append("- wave %d: %s" % (i, ", ".join(w)))
@@ -1037,7 +1200,11 @@ def main():
     print("entitlements without endpoint: %d; metrics without writer: %d" % (sum(1 for e in ents if not e["endpoints"]), sum(1 for m in metrics if m["noWriter"])))
     print("UNMAPPED ACTIONS: %d" % len(unmapped))
     print("ENDPOINTS WITHOUT AUTH: %d" % len(no_auth))
-    return 0 if not unmapped and not no_auth else 1
+    print("OPEN CONFLICTS: %d" % len(open_rows))
+    for c in open_rows:
+        print("  open %s %s %s: %s" % (c["id"], c["kind"], c["entity"], c["detail"][:110]))
+    no_ent = [e["id"] for e in ents if not e["endpoints"]]
+    return 0 if not unmapped and not no_auth and not open_rows and not no_ent else 1
 
 
 if __name__ == "__main__":

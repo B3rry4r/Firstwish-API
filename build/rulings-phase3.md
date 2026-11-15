@@ -221,3 +221,20 @@ X10 (B02) Erasing an account also removes its stored files (a job through the st
    public links answer "gone"; B09 and B10 each do their part; INT-2 joins the erase service to the files job.
 X11 (B02) E-5 (is this handle free?) needs a signed-in user, not the creator side.
 X12 (B02) Business keeps the registry's fields; "kind" in the B02 brief was the lead's slip.
+X13 (B04) E-213 (ticket offer) takes `ticket` and repeatable `extras` and answers ONE quote: lines in kobo, total, the version used.
+X14 (B04) The public price book's response is {version, items: Price[], promotion|null, lifecycle, entitlements, nextCursor}.
+X15 (B04) Price.value is kobo for kind naira and an ISO time for kind date; fields that belong to other screens are optional.
+X16 (B04) Ops may read /admin/prices (the role table gains it, read only); only owner and finance change a price (A9).
+X17 (B04) The offer's end can be moved sooner, never later (product truth T-26: the offer is not extended). Listed to the owner.
+X18 (B04, Phase 6) The admin Prices screen uses the keys promotion.endsAt and payout.thresholdKobo.
+X19 (B04) A change of the payout threshold made by the owner role clears its PROVISIONAL mark.
+X20 (B09) E-182 answers UploadTicket {id, purpose, upload: {url, method, headers, expiresAt}}; E-183 answers 204; SignedUrl is
+    {url, expiresAt}.
+X21 (B09) The screening port's result carries score (0 to 1) and labels.
+X22 (B09) The image-sizes port moves to the kernel; its real adapter (resize with sharp, read and write through the storage port)
+    is built in the wave that merges the jobs frame (B06), where the job that calls it runs.
+X23 (B09) Every *FileId column is a uuid with a real foreign key to stored_file (schema change in INT-2; the triggers go).
+X24 (B09) Staff read the screening queue at GET /v1/admin/screening-results (owner, ops, moderator), feeding Moderation's flagged photos.
+X25 (B09) StoredFile.kind stays the media kind (image|sound|model|video); E-182's body gains `purpose` (photo|voice|clip|vault|studio).
+X26 (B09, kernel) A signed upload binds the content length; the stand-in token generator is random where it makes storage keys.
+X27 (B09) Vault files are read by the business's owner AND its logins (members), never by anyone else.

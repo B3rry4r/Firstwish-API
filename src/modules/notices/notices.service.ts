@@ -12,10 +12,11 @@ import { isPortTimeout } from "../../common/ports/time-limit";
 import { ProviderError } from "../../common/ports/adapters/http";
 import { JobContext, JobResult, JobsService } from "../jobs/jobs.service";
 import {
-  DELIVERY_TRIES, fill, isTemplateKey, MissingValueError, missingValues, NOTICE_HOUR_LOCAL, RETRY_WAIT_MS, scrubEmails, TEMPLATES, TemplateKey,
+  DELIVERY_TRIES, fill, fillSubject, scrubReason, isTemplateKey, MissingValueError, missingValues, NOTICE_HOUR_LOCAL, RETRY_WAIT_MS, scrubEmails, TEMPLATES, TemplateKey,
 } from "./catalog";
 import { atLocalHour, dayText } from "./zoned";
 
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export type Tx = Prisma.TransactionClient;
 const DAY = 86_400_000;
 /** B06 schedules the "resting soon" job this long before a term ends. */
@@ -172,24 +173,37 @@ export class NoticesService implements OnModuleInit {
 
   private async sendMessageJob(c: JobContext): Promise<JobResult> {
     const r = await this.deliver(c.subjectId);
-    if (r.outcome === "skipped") return { skipped: true };
+    if (r.outcome === "skipped") return r.busy ? { skipped: true, again: new Date(c.now.getTime() + RETRY_WAIT_MS[0]) } : { skipped: true };
     return { changed: { outcome: r.outcome, ...(r.reason ? { reason: r.reason } : {}) }, ...(r.again ? { again: r.again } : {}) };
   }
 
-  /** One try at one delivery. Safe to run twice at once: the try is claimed in one statement. */
-  async deliver(deliveryId: string): Promise<{ outcome: "delivered" | "failed" | "undeliverable" | "retry" | "skipped"; reason?: string; again?: Date }> {
-    const row = await this.prisma.messageDelivery.findUnique({ where: { id: deliveryId } });
-    if (!row || row.status !== "queued") return { outcome: "skipped" };
-    const claimed = await this.prisma.messageDelivery.updateMany({ where: { id: row.id, status: "queued", attempts: row.attempts }, data: { attempts: row.attempts + 1 } });
-    if (claimed.count === 0) return { outcome: "skipped" };
-    const tries = row.attempts + 1;
+  /**
+   * One try at one delivery. Safe to run twice at once: the try is claimed by ONE conditional UPDATE (queued, or "sent" with no
+   * settle for 5 minutes because its caller died, and fewer than 3 tries made); the caller whose UPDATE took the row is the only one
+   * that calls the provider. "sent" is the delivery's in-flight state.
+   */
+  async deliver(deliveryId: string): Promise<{ outcome: "delivered" | "failed" | "undeliverable" | "retry" | "skipped"; reason?: string; again?: Date; busy?: boolean }> {
+    if (!UUID.test(deliveryId)) return { outcome: "skipped" };
+    const got = await this.prisma.$queryRaw<{ attempts: number }[]>`
+      UPDATE message_delivery SET status = 'sent', attempts = attempts + 1, "updatedAt" = now()
+      WHERE id = ${deliveryId}::uuid AND attempts < ${DELIVERY_TRIES}
+        AND (status = 'queued' OR (status = 'sent' AND "updatedAt" < now() - interval '5 minutes'))
+      RETURNING attempts`;
+    if (got.length === 0) {
+      const cur = await this.prisma.messageDelivery.findUnique({ where: { id: deliveryId }, select: { status: true } });
+      return cur?.status === "sent" ? { outcome: "skipped", busy: true } : { outcome: "skipped" };
+    }
+    const tries = got[0].attempts;
+    const row = await this.prisma.messageDelivery.findUniqueOrThrow({ where: { id: deliveryId } });
+    // An erased account's row has its address and values blanked: the delivery is dropped, never sent.
+    if (row.to === "" || row.vars === null) return this.settle(row.id, row.templateKey as TemplateKey, "undeliverable", "Dropped: the account was erased.");
     const vars = (row.vars ?? { data: {} }) as unknown as Vars;
     const key = row.templateKey as TemplateKey;
 
     let to = row.to;
     if (vars.accountId) {
       const a = await this.prisma.account.findUnique({ where: { id: vars.accountId }, select: { contact: true, erasedAt: true } });
-      if (!a || a.erasedAt) return this.settle(row.id, key, "undeliverable", "The account was erased.");
+      if (!a || a.erasedAt) return this.settle(row.id, key, "undeliverable", "Dropped: the account was erased.");
       to = normaliseEmail(a.contact ?? "") ?? row.to;
     }
     const t = await this.template(this.prisma, key);
@@ -197,7 +211,7 @@ export class NoticesService implements OnModuleInit {
     let subject: string;
     let text: string;
     try {
-      subject = fill(t.subject, vars.data);
+      subject = fillSubject(t.subject, vars.data);
       text = fill(t.body, vars.data);
     } catch (e) {
       if (e instanceof MissingValueError) return this.settle(row.id, key, "failed", `No value for ${e.names.map((n) => `{${n}}`).join(", ")}.`);
@@ -210,7 +224,7 @@ export class NoticesService implements OnModuleInit {
     } catch (e) {
       const { forGood, reason } = classify(e);
       if (forGood || tries >= DELIVERY_TRIES) return this.settle(row.id, key, "failed", reason);
-      await this.prisma.messageDelivery.update({ where: { id: row.id }, data: { error: reason } });
+      await this.prisma.messageDelivery.updateMany({ where: { id: row.id, status: "sent" }, data: { status: "queued", error: reason } });
       return { outcome: "retry", reason, again: new Date(this.clock.now().getTime() + RETRY_WAIT_MS[Math.min(tries - 1, RETRY_WAIT_MS.length - 1)]) };
     }
   }
@@ -262,7 +276,7 @@ export function classify(e: unknown): { forGood: boolean; reason: string } {
   if (isPortTimeout(e)) return { forGood: false, reason: "The email service did not answer in time." };
   if (e instanceof ProviderError) {
     const forGood = e.status >= 400 && e.status < 500 && e.status !== 408 && e.status !== 429;
-    return { forGood, reason: scrubEmails(e.message).slice(0, 300) };
+    return { forGood, reason: scrubReason(e.message).slice(0, 300) };
   }
-  return { forGood: false, reason: scrubEmails(e instanceof Error ? e.message : String(e)).slice(0, 300) };
+  return { forGood: false, reason: scrubReason(e instanceof Error ? e.message : String(e)).slice(0, 300) };
 }

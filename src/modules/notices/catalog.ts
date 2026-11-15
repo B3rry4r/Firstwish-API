@@ -83,6 +83,18 @@ export function fill(text: string, data: Record<string, unknown>): string {
   return text.replace(PLACEHOLDER, (_m, n: string) => String(data[n]));
 }
 
+/** A value that goes into a subject: line breaks (and other line separators) become one space, so a subject is one line. */
+export function oneLine(value: string): string {
+  return value.replace(/[\r\n\u2028\u2029\u0085]+/g, " ").replace(/\s{2,}/g, " ").trim();
+}
+
+/** Fills a subject: the values are made one-line first. */
+export function fillSubject(text: string, data: Record<string, unknown>): string {
+  const clean: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(data)) clean[k] = typeof v === "string" ? oneLine(v) : v;
+  return oneLine(fill(text, clean));
+}
+
 export class MissingValueError extends Error {
   constructor(readonly names: string[]) {
     super(`No value for ${names.join(", ")}.`);
@@ -101,6 +113,21 @@ export function wordingProblem(text: string): string | null {
   return hit ? `Do not use the word "${hit}".` : null;
 }
 
+export const SUBJECT_MAX = 150;
+export const BODY_MAX = 4000;
+const TAG = /<\/?[a-zA-Z!][^>]*>?/;
+const ZERO_WIDTH = /[\u200b-\u200f\u2060-\u2064\ufeff\u00ad\u202a-\u202e\u2066-\u2069]/;
+// eslint-disable-next-line no-control-regex
+const CONTROL = /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f-\u009f]/;
+
+/** Length, tags, zero-width and control characters in staff wording (emails are plain text). Null when fine. */
+export function shapeProblem(text: string, max: number): string | null {
+  if (text.length > max) return `Keep it to ${max} characters or fewer.`;
+  if (TAG.test(text)) return "Plain text only: leave out tags.";
+  if (ZERO_WIDTH.test(text) || CONTROL.test(text)) return "Leave out hidden and control characters.";
+  return null;
+}
+
 /** Why edited wording is not allowed, as field messages (422), or null when it is fine. */
 export function wordingProblems(key: TemplateKey, subject: string, body: string): Record<string, string> | null {
   const spec = TEMPLATES[key];
@@ -115,6 +142,10 @@ export function wordingProblems(key: TemplateKey, subject: string, body: string)
   const bp = wordingProblem(body);
   if (bp) fields.body = bp;
   if (/[\r\n]/.test(subject)) fields.subject = "The subject is one line.";
+  const sl = shapeProblem(subject, SUBJECT_MAX);
+  if (sl) fields.subject = sl;
+  const bl = shapeProblem(body, BODY_MAX);
+  if (bl) fields.body = bl;
   return Object.keys(fields).length ? fields : null;
 }
 
@@ -122,6 +153,11 @@ const EMAIL_LIKE = /[^\s<>"'(),;:]+@[^\s<>"'(),;:]+/g;
 /** Any email address in a text becomes a masked one (no address is ever written to a log, an audit row or a reason). */
 export function scrubEmails(text: string): string {
   return text.replace(EMAIL_LIKE, (m) => maskEmail(m));
+}
+
+/** Provider error text with addresses masked and any six-digit code (spaced or dashed too) removed. */
+export function scrubReason(text: string): string {
+  return scrubEmails(text).replace(/(?<![\d])\d{3}[ -]?\d{3}(?![\d])/g, "******");
 }
 
 export function maskEmail(email: string): string {

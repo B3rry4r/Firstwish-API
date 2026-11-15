@@ -8,7 +8,7 @@ import { decodeCursor, Page, toPage } from "../../common/pagination/cursor";
 import { toWireInstant } from "../../common/time/time";
 import type { MessageDelivery, Notice } from "../../contracts";
 import { AuditActor, AuditService, requireReason } from "../audit/audit.service";
-import { isTemplateKey, maskEmail, scrubEmails, TEMPLATES, TemplateKey, wordingProblems } from "./catalog";
+import { isTemplateKey, maskEmail, scrubEmails, scrubReason, TEMPLATES, TemplateKey, wordingProblems } from "./catalog";
 import { LANG, NoticesService } from "./notices.service";
 
 const SECTION = "/admin/messages";
@@ -66,12 +66,12 @@ export class NoticesAdminService {
   /** Wire shape of a delivery for staff: the address masked, the sign-in code never shown. */
   wire(r: DeliveryRow, resent: string | null): MessageDelivery {
     const vars = (r.vars ?? {}) as { wishId?: string; data?: Record<string, unknown> };
-    const data = { ...(vars.data ?? {}) };
-    delete data.code;
+    const data: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(vars.data ?? {})) if (k !== "code") data[k] = typeof v === "string" ? scrubEmails(v) : v;
     const spec = TEMPLATES[r.templateKey as TemplateKey];
     return {
       id: r.id, templateKey: r.templateKey, channel: "email", to: maskEmail(r.to), purpose: purposeWire(r.purpose), status: r.status, state: r.status,
-      providerMessageId: r.providerMessageId, error: r.error ? scrubEmails(r.error) : null, reason: r.error ? scrubEmails(r.error) : "", attempts: r.attempts,
+      providerMessageId: r.providerMessageId, error: r.error ? scrubReason(r.error) : null, reason: r.error ? scrubReason(r.error) : "", attempts: r.attempts,
       costKobo: null, createdAt: toWireInstant(r.createdAt), updatedAt: toWireInstant(r.updatedAt), at: toWireInstant(r.updatedAt),
       idempotencyKey: scrubEmails(r.idempotencyKey ?? ""), vars: data, what: spec?.label ?? r.templateKey, wish: vars.wishId ?? null, resent,
     };

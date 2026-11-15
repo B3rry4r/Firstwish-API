@@ -23,15 +23,17 @@ model Account {
   creator                   Boolean?
   dates                     Json?
   handle                    String?
+  mode                      AccountMode        @default(system)
   phone                     String?
   pro                       Json?
   side                      Json?
   space                     AccountSpace?
   createdAt                 DateTime           @default(now()) @db.Timestamptz(3)
+  erasedAt                  DateTime?          @db.Timestamptz(3)
   aiRequestByAccount        AiRequest[]        @relation("AiRequest_accountId")
   banByAccount              Ban[]              @relation("Ban_accountId")
   conciergeOrderByAccount   ConciergeOrder[]   @relation("ConciergeOrder_accountId")
-  creatorStateByAccount     CreatorState[]     @relation("CreatorState_accountId")
+  creatorStateByAccount     CreatorState?      @relation("CreatorState_accountId")
   eventByAccount            Event[]            @relation("Event_accountId")
   externalIdentityByAccount ExternalIdentity[] @relation("ExternalIdentity_accountId")
   noticeByAccount           Notice[]           @relation("Notice_accountId")
@@ -51,6 +53,7 @@ model Account {
   shareByAccount            Share[]            @relation("Share_accountId")
   studioPrefsByAccount      StudioPrefs?       @relation("StudioPrefs_accountId")
   studioStyleByAccount      StudioStyle[]      @relation("StudioStyle_accountId")
+  storedFileByOwnerAccount  StoredFile[]       @relation("StoredFile_ownerAccountId")
 
   @@unique([contact])
   @@unique([handle])
@@ -105,7 +108,7 @@ model ApprovedDate {
 model AuditEntry {
   id          String              @id @db.Uuid
   actorType   AuditEntryActorType
-  actorId     String?
+  actorId     String?             @db.Uuid
   action      String
   subjectType String
   subjectId   String
@@ -114,6 +117,7 @@ model AuditEntry {
   ip          String?
   requestId   String
   createdAt   DateTime            @default(now()) @db.Timestamptz(3)
+  actor       StaffAccount?       @relation("AuditEntry_actorId", fields: [actorId], references: [id], onDelete: Restrict, onUpdate: Restrict)
 
   @@index([actorId, id])
   @@index([subjectType, id])
@@ -190,6 +194,7 @@ model Business {
   vault                    BigInt?
   vaultUsedGb              Int?
   wishes                   Json?
+  version                  Int              @default(0)
   accountId                String?          @db.Uuid
   account                  Account?         @relation("Business_accountId", fields: [accountId], references: [id])
   conciergeOrderByBusiness ConciergeOrder[] @relation("ConciergeOrder_businessId")
@@ -226,7 +231,7 @@ model ClientWish {
   id         String         @id @db.Uuid
   client     String?
   createdAt  DateTime       @default(now()) @db.Timestamptz(3)
-  day        DateTime?      @db.Timestamptz(3)
+  day        DateTime?      @db.Date
   endsAt     DateTime?      @db.Timestamptz(3)
   from       String?
   hearts     Json?
@@ -260,7 +265,7 @@ model ConciergeOrder {
   brief        String
   namesFileId  String?
   quoteKobo    BigInt?
-  makerId      String?
+  makerId      String?              @db.Uuid
   status       ConciergeOrderStatus
   deliverBy    DateTime?            @db.Timestamptz(3)
   reportFileId String?
@@ -270,10 +275,12 @@ model ConciergeOrder {
   account      Account              @relation("ConciergeOrder_accountId", fields: [accountId], references: [id])
   business     Business?            @relation("ConciergeOrder_businessId", fields: [businessId], references: [id])
   invoice      Invoice?             @relation("ConciergeOrder_invoiceId", fields: [invoiceId], references: [id])
+  maker        StaffAccount?        @relation("ConciergeOrder_makerId", fields: [makerId], references: [id])
 
   @@index([accountId, id])
   @@index([businessId, id])
   @@index([invoiceId, id])
+  @@index([makerId, id])
   @@index([status, id])
   @@map("concierge_order")
 }
@@ -285,7 +292,6 @@ model Creator {
   credits                  Int?
   earned                   BigInt?
   following                Boolean?
-  handle                   String?
   house                    Boolean?
   href                     String?
   img                      String?
@@ -296,6 +302,7 @@ model Creator {
   plan                     String?
   signed                   Boolean?
   styles                   Json?
+  version                  Int               @default(0)
   accountId                String?           @db.Uuid
   account                  Account?          @relation("Creator_accountId", fields: [accountId], references: [id])
   payoutByCreator          Payout[]          @relation("Payout_creatorId")
@@ -303,7 +310,6 @@ model Creator {
   styleSubmissionByCreator StyleSubmission[] @relation("StyleSubmission_creatorId")
   bankAccountByCreator     BankAccount[]     @relation("BankAccount_creatorId")
 
-  @@unique([handle])
   @@unique([accountId])
   @@index([accountId, id])
   @@map("creator")
@@ -322,8 +328,10 @@ model CreatorState {
   renews       DateTime? @db.Timestamptz(3)
   reviewsLeft  Int?
   signed       Boolean?
+  version      Int       @default(0)
   account      Account?  @relation("CreatorState_accountId", fields: [accountId], references: [id])
 
+  @@unique([accountId])
   @@index([accountId, id])
   @@map("creator_state")
 }
@@ -332,7 +340,7 @@ model CreatorState {
 model DateRow {
   id              String    @id @db.Uuid
   count           Int?
-  date            DateTime? @db.Timestamptz(3)
+  date            DateTime? @db.Date
   days            Int?
   for             Json?
   key             String?
@@ -352,7 +360,7 @@ model DateRow {
 /// table: written by E-49 (staff pick for a day on Now showing)
 model DayPick {
   id   String    @id @db.Uuid
-  date DateTime? @db.Timestamptz(3)
+  date DateTime? @db.Date
   pick Json?
   wish String?
 
@@ -496,9 +504,9 @@ model LedgerEntry {
   payoutId   String?              @db.Uuid
   memo       String
   createdAt  DateTime             @default(now()) @db.Timestamptz(3)
-  payment    Payment?             @relation("LedgerEntry_paymentId", fields: [paymentId], references: [id])
-  payout     Payout?              @relation("LedgerEntry_payoutId", fields: [payoutId], references: [id])
-  refund     Refund?              @relation("LedgerEntry_refundId", fields: [refundId], references: [id])
+  payment    Payment?             @relation("LedgerEntry_paymentId", fields: [paymentId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  payout     Payout?              @relation("LedgerEntry_payoutId", fields: [payoutId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  refund     Refund?              @relation("LedgerEntry_refundId", fields: [refundId], references: [id], onDelete: Restrict, onUpdate: Restrict)
 
   @@index([paymentId, id])
   @@index([payoutId, id])
@@ -558,6 +566,7 @@ model MessageDelivery {
   updatedAt         DateTime               @updatedAt @db.Timestamptz(3)
   idempotencyKey    String?
   vars              Json?
+  noticeByDelivery  Notice[]               @relation("Notice_deliveryId")
 
   @@index([status, id])
   @@index([createdAt, id])
@@ -573,6 +582,7 @@ model MessageTemplate {
   body        String
   version     Int
   approvedRef String?
+  subject     String?
 
   @@map("message_template")
 }
@@ -600,25 +610,27 @@ model Moment {
 
 /// table: written by E-76 and server:notices
 model Notice {
-  id         String       @id @db.Uuid
+  id         String           @id @db.Uuid
   kind       NoticeKind
-  accountId  String?      @db.Uuid
-  wishId     String?      @db.Uuid
-  dateRowId  String?      @db.Uuid
-  dueAt      DateTime     @db.Timestamptz(3)
+  accountId  String?          @db.Uuid
+  wishId     String?          @db.Uuid
+  dateRowId  String?          @db.Uuid
+  dueAt      DateTime         @db.Timestamptz(3)
   status     NoticeStatus
-  deliveryId String?
-  createdAt  DateTime     @default(now()) @db.Timestamptz(3)
+  deliveryId String?          @db.Uuid
+  createdAt  DateTime         @default(now()) @db.Timestamptz(3)
   body       String?
   key        String?
   subject    String?
-  account    Account?     @relation("Notice_accountId", fields: [accountId], references: [id])
-  dateRow    DateRow?     @relation("Notice_dateRowId", fields: [dateRowId], references: [id])
-  wish       Wish?        @relation("Notice_wishId", fields: [wishId], references: [id])
+  account    Account?         @relation("Notice_accountId", fields: [accountId], references: [id])
+  dateRow    DateRow?         @relation("Notice_dateRowId", fields: [dateRowId], references: [id])
+  wish       Wish?            @relation("Notice_wishId", fields: [wishId], references: [id])
+  delivery   MessageDelivery? @relation("Notice_deliveryId", fields: [deliveryId], references: [id])
 
   @@index([accountId, id])
   @@index([dateRowId, id])
   @@index([wishId, id])
+  @@index([deliveryId, id])
   @@index([status, id])
   @@index([createdAt, id])
   @@map("notice")
@@ -643,10 +655,12 @@ model NumbersTarget {
   line       NumbersTargetLine
   period     NumbersTargetPeriod
   setAt      DateTime            @db.Timestamptz(3)
-  setBy      String
+  setBy      String              @db.Uuid
   targetKobo BigInt
+  setByRef   StaffAccount        @relation("NumbersTarget_setBy", fields: [setBy], references: [id])
 
   @@unique([line, period])
+  @@index([setBy, id])
   @@map("numbers_target")
 }
 
@@ -663,17 +677,23 @@ model OpeningDef {
 
 /// table: a Pass bought by an account, granted by payment fulfilment E-104 (DEC-94); read by E-83
 model PassMembership {
-  id           String    @id @db.Uuid
+  id           String              @id @db.Uuid
   amount       BigInt?
-  since        DateTime? @db.Timestamptz(3)
+  since        DateTime?           @db.Timestamptz(3)
   upgradesUsed Int?
   validUntil   Json?
   way          String?
   wishesUsed   Int?
-  accountId    String?   @db.Uuid
-  account      Account?  @relation("PassMembership_accountId", fields: [accountId], references: [id])
+  paymentId    String              @db.Uuid
+  state        PassMembershipState @default(active)
+  version      Int                 @default(0)
+  accountId    String?             @db.Uuid
+  account      Account?            @relation("PassMembership_accountId", fields: [accountId], references: [id])
+  payment      Payment             @relation("PassMembership_paymentId", fields: [paymentId], references: [id])
 
+  @@unique([paymentId])
   @@index([accountId, id])
+  @@index([paymentId, id])
   @@map("pass_membership")
 }
 
@@ -699,11 +719,13 @@ model Payment {
   createdAt               DateTime         @default(now()) @db.Timestamptz(3)
   updatedAt               DateTime         @updatedAt @db.Timestamptz(3)
   options                 Json?
+  fulfilledAt             DateTime?        @db.Timestamptz(3)
   account                 Account?         @relation("Payment_accountId", fields: [accountId], references: [id])
   business                Business?        @relation("Payment_businessId", fields: [businessId], references: [id])
   ledgerEntryByPayment    LedgerEntry[]    @relation("LedgerEntry_paymentId")
   refundByPayment         Refund[]         @relation("Refund_paymentId")
   royaltyAccrualByPayment RoyaltyAccrual[] @relation("RoyaltyAccrual_paymentId")
+  passMembershipByPayment PassMembership?  @relation("PassMembership_paymentId")
 
   @@unique([providerReference])
   @@unique([idempotencyKey])
@@ -728,6 +750,8 @@ model Payout {
   creator             Creator       @relation("Payout_creatorId", fields: [creatorId], references: [id])
   ledgerEntryByPayout LedgerEntry[] @relation("LedgerEntry_payoutId")
 
+  @@unique([creatorId, month])
+  @@unique([providerReference])
   @@index([bankAccountId, id])
   @@index([creatorId, id])
   @@index([status, id])
@@ -737,11 +761,11 @@ model Payout {
 /// table: written by E-118..E-121 (a business's client people)
 model Person {
   id             String    @id @db.Uuid
-  birthday       DateTime? @db.Timestamptz(3)
+  birthday       DateTime? @db.Date
   name           String?
   phone          String?
   rows           Json?
-  start          DateTime? @db.Timestamptz(3)
+  start          DateTime? @db.Date
   team           String?
   businessId     String?   @db.Uuid
   business       Business? @relation("Person_businessId", fields: [businessId], references: [id])
@@ -762,7 +786,6 @@ model Price {
   vatIncluded  Boolean
   version      Int
   key          String?
-  value        BigInt?
 
   @@unique([sku, version])
   @@map("price")
@@ -916,15 +939,20 @@ model Refund {
   amountKobo          BigInt
   reason              RefundReason
   status              RefundStatus
-  requestedBy         String
-  approvedBy          String?
+  requestedBy         String        @db.Uuid
+  approvedBy          String?       @db.Uuid
   providerReference   String?
   createdAt           DateTime      @default(now()) @db.Timestamptz(3)
   updatedAt           DateTime      @updatedAt @db.Timestamptz(3)
   payment             Payment       @relation("Refund_paymentId", fields: [paymentId], references: [id])
+  requestedByRef      StaffAccount  @relation("Refund_requestedBy", fields: [requestedBy], references: [id])
+  approvedByRef       StaffAccount? @relation("Refund_approvedBy", fields: [approvedBy], references: [id])
   ledgerEntryByRefund LedgerEntry[] @relation("LedgerEntry_refundId")
 
+  @@unique([providerReference])
   @@index([paymentId, id])
+  @@index([requestedBy, id])
+  @@index([approvedBy, id])
   @@index([status, id])
   @@map("refund")
 }
@@ -958,7 +986,7 @@ model Report {
   reason          ReportReason
   reporterContact String?
   status          ReportStatus
-  decidedBy       String?
+  decidedBy       String?         @db.Uuid
   decidedAt       DateTime?       @db.Timestamptz(3)
   createdAt       DateTime        @default(now()) @db.Timestamptz(3)
   contact         String?
@@ -970,11 +998,13 @@ model Report {
   person          Person?         @relation("Report_personId", fields: [personId], references: [id])
   style           Style?          @relation("Report_styleId", fields: [styleId], references: [id])
   wish            Wish?           @relation("Report_wishId", fields: [wishId], references: [id])
+  decidedByRef    StaffAccount?   @relation("Report_decidedBy", fields: [decidedBy], references: [id])
 
   @@index([accountId, id])
   @@index([personId, id])
   @@index([styleId, id])
   @@index([wishId, id])
+  @@index([decidedBy, id])
   @@index([status, id])
   @@map("report")
 }
@@ -1013,6 +1043,7 @@ model RoyaltyAccrual {
   creator    Creator             @relation("RoyaltyAccrual_creatorId", fields: [creatorId], references: [id])
   payment    Payment             @relation("RoyaltyAccrual_paymentId", fields: [paymentId], references: [id])
 
+  @@unique([paymentId, creatorId])
   @@index([creatorId, id])
   @@index([paymentId, id])
   @@map("royalty_accrual")
@@ -1055,21 +1086,23 @@ model ScreeningResult {
 
 /// table: written by server:sessions and E-159..E-161 (rotating refresh tokens)
 model Session {
-  id               String    @id @db.Uuid
-  accountId        String?   @db.Uuid
-  staffId          String?
+  id               String        @id @db.Uuid
+  accountId        String?       @db.Uuid
+  staffId          String?       @db.Uuid
   familyId         String
   refreshTokenHash String
-  rotatedAt        DateTime? @db.Timestamptz(3)
-  revokedAt        DateTime? @db.Timestamptz(3)
+  rotatedAt        DateTime?     @db.Timestamptz(3)
+  revokedAt        DateTime?     @db.Timestamptz(3)
   revokeReason     String?
   userAgent        String?
   ip               String?
-  expiresAt        DateTime  @db.Timestamptz(3)
-  createdAt        DateTime  @default(now()) @db.Timestamptz(3)
-  account          Account?  @relation("Session_accountId", fields: [accountId], references: [id])
+  expiresAt        DateTime      @db.Timestamptz(3)
+  createdAt        DateTime      @default(now()) @db.Timestamptz(3)
+  account          Account?      @relation("Session_accountId", fields: [accountId], references: [id])
+  staff            StaffAccount? @relation("Session_staffId", fields: [staffId], references: [id])
 
   @@index([accountId, id])
+  @@index([staffId, id])
   @@map("session")
 }
 
@@ -1103,7 +1136,7 @@ model Shoot {
   id           String    @id @db.Uuid
   client       String?
   createdAt    DateTime  @default(now()) @db.Timestamptz(3)
-  date         DateTime? @db.Timestamptz(3)
+  date         DateTime? @db.Date
   files        Json?
   finals       Json?
   finalsReveal Json?
@@ -1131,14 +1164,22 @@ model SignedUrl {
 
 /// table: written by E-174..E-181 and server:staff-accounts
 model StaffAccount {
-  id           String              @id @db.Uuid
-  email        String
-  name         String
-  roles        StaffAccountRoles[] @default([])
-  status       StaffAccountStatus
-  lastSignInAt DateTime?           @db.Timestamptz(3)
-  createdAt    DateTime            @default(now()) @db.Timestamptz(3)
-  updatedAt    DateTime            @updatedAt @db.Timestamptz(3)
+  id                      String              @id @db.Uuid
+  email                   String
+  name                    String
+  roles                   StaffAccountRoles[] @default([])
+  status                  StaffAccountStatus
+  lastSignInAt            DateTime?           @db.Timestamptz(3)
+  createdAt               DateTime            @default(now()) @db.Timestamptz(3)
+  updatedAt               DateTime            @updatedAt @db.Timestamptz(3)
+  auditEntryByActor       AuditEntry[]        @relation("AuditEntry_actorId")
+  conciergeOrderByMaker   ConciergeOrder[]    @relation("ConciergeOrder_makerId")
+  numbersTargetBySetBy    NumbersTarget[]     @relation("NumbersTarget_setBy")
+  refundByRequestedBy     Refund[]            @relation("Refund_requestedBy")
+  refundByApprovedBy      Refund[]            @relation("Refund_approvedBy")
+  reportByDecidedBy       Report[]            @relation("Report_decidedBy")
+  sessionByStaff          Session[]           @relation("Session_staffId")
+  supportThreadByAssignee SupportThread[]     @relation("SupportThread_assigneeId")
 
   @@unique([email])
   @@index([status, id])
@@ -1148,7 +1189,7 @@ model StaffAccount {
 /// table: written by E-182..E-184 and server:storage
 model StoredFile {
   id             String            @id @db.Uuid
-  ownerAccountId String?
+  ownerAccountId String?           @db.Uuid
   businessId     String?           @db.Uuid
   purpose        StoredFilePurpose
   objectKey      String
@@ -1165,9 +1206,11 @@ model StoredFile {
   styleId        String?           @db.Uuid
   business       Business?         @relation("StoredFile_businessId", fields: [businessId], references: [id])
   style          Style?            @relation("StoredFile_styleId", fields: [styleId], references: [id])
+  ownerAccount   Account?          @relation("StoredFile_ownerAccountId", fields: [ownerAccountId], references: [id])
 
   @@index([businessId, id])
   @@index([styleId, id])
+  @@index([ownerAccountId, id])
   @@index([status, id])
   @@map("stored_file")
 }
@@ -1279,31 +1322,36 @@ model StyleSubmission {
 /// table: written by E-203 and server:support-threads
 model SupportMessage {
   id        String             @id @db.Uuid
-  threadId  String
+  threadId  String             @db.Uuid
   from      SupportMessageFrom
   body      String
   fileIds   String[]           @default([])
   createdAt DateTime           @default(now()) @db.Timestamptz(3)
+  thread    SupportThread      @relation("SupportMessage_threadId", fields: [threadId], references: [id])
 
+  @@index([threadId, id])
   @@map("support_message")
 }
 
 /// table: written by E-204, E-208..E-211 and server:support-threads
 model SupportThread {
-  id         String                @id @db.Uuid
-  accountId  String?               @db.Uuid
-  contact    String
-  subject    String
-  status     SupportThreadStatus
-  assigneeId String?
-  priority   SupportThreadPriority
-  createdAt  DateTime              @default(now()) @db.Timestamptz(3)
-  updatedAt  DateTime              @updatedAt @db.Timestamptz(3)
-  body       String?
-  text       String?
-  account    Account?              @relation("SupportThread_accountId", fields: [accountId], references: [id])
+  id                     String                @id @db.Uuid
+  accountId              String?               @db.Uuid
+  contact                String
+  subject                String
+  status                 SupportThreadStatus
+  assigneeId             String?               @db.Uuid
+  priority               SupportThreadPriority
+  createdAt              DateTime              @default(now()) @db.Timestamptz(3)
+  updatedAt              DateTime              @updatedAt @db.Timestamptz(3)
+  body                   String?
+  text                   String?
+  account                Account?              @relation("SupportThread_accountId", fields: [accountId], references: [id])
+  assignee               StaffAccount?         @relation("SupportThread_assigneeId", fields: [assigneeId], references: [id])
+  supportMessageByThread SupportMessage[]      @relation("SupportMessage_threadId")
 
   @@index([accountId, id])
+  @@index([assigneeId, id])
   @@index([status, id])
   @@map("support_thread")
 }
@@ -1419,6 +1467,8 @@ model Wish {
   timeline             Json?
   type                 Json?
   voices               Json?
+  version              Int              @default(0)
+  passcodeHash         String?
   account              Account          @relation("Wish_accountId", fields: [accountId], references: [id])
   business             Business?        @relation("Wish_businessId", fields: [businessId], references: [id])
   aiRequestByWish      AiRequest[]      @relation("AiRequest_wishId")
@@ -1441,12 +1491,14 @@ model Wish {
 
 /// table: written by server:wish-link (a wish's public slug)
 model WishLink {
-  id        String   @id @db.Uuid
-  slug      String
-  wishId    String   @db.Uuid
-  active    Boolean
-  createdAt DateTime @default(now()) @db.Timestamptz(3)
-  wish      Wish     @relation("WishLink_wishId", fields: [wishId], references: [id])
+  id          String    @id @db.Uuid
+  slug        String    @db.VarChar(32)
+  wishId      String    @db.Uuid
+  active      Boolean
+  createdAt   DateTime  @default(now()) @db.Timestamptz(3)
+  tries       Int       @default(0)
+  lockedUntil DateTime? @db.Timestamptz(3)
+  wish        Wish      @relation("WishLink_wishId", fields: [wishId], references: [id])
 
   @@unique([slug])
   @@index([wishId, id])
@@ -1494,6 +1546,12 @@ enum AccountSides {
   business
 }
 
+enum AccountMode {
+  light
+  dark
+  system
+}
+
 enum AccountSpace {
   me
   business
@@ -1526,7 +1584,6 @@ enum AuthCodeChannel {
 
 enum AuthCodePurpose {
   sign_in       @map("sign-in")
-  confirm_phone @map("confirm-phone")
   confirm_email @map("confirm-email")
   staff_sign_in @map("staff-sign-in")
 }
@@ -1537,7 +1594,6 @@ enum AuthCodeMode {
 }
 
 enum AuthCodeVia {
-  phone
   email
 }
 
@@ -1724,6 +1780,12 @@ enum NumbersTargetLine {
 
 enum NumbersTargetPeriod {
   month
+}
+
+enum PassMembershipState {
+  active
+  expired
+  refunded
 }
 
 enum PaymentPurpose {

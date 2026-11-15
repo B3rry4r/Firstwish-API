@@ -1,6 +1,6 @@
 {
  "phase": "SCHEMA (Phase 4)",
- "registrySha256": "288e25d2476086ceb304738ed50cc2f0d4dd30a31d89b8f04203d06624a7d26e",
+ "registrySha256": "9894ab0e4ccb67d8ed2dcc9d191a92b210cf4669b110342ee322b1d56926a27d",
  "rules": [
   "table: something writes it (a POST, PUT, PATCH, DELETE or INTERNAL route, or a server:* declaration). A GET's query parameters are not writers.",
   "view: read only, worked out on read from the tables named in 'of'. No table of its own.",
@@ -12,7 +12,8 @@
   "Storage nullability: a declared field keeps its declared nullability; a screen-only field is nullable in storage (no writer guarantees it at insert), while the contract keeps the registry's nullability.",
   "Relations: one foreign key per dep-graph.json edge between two stored models.",
   "Ownership: a stored resource that the dep-graph leaves without an owner but whose routes are scoped to the signed-in account (/v1/me, /v1/feed, /v1/studio, /v1/creator) or to the member's business (/v1/business) gets one foreign key to Account or Business ('owner'), because conventions.md (Who can do what) asks for the ownership check. Listed per resource.",
-  "An admin action's reason and action are written to the audit row (DEC-125), not to the subject, unless a declaration lists them as fields."
+  "An admin action's reason and action are written to the audit row (DEC-125), not to the subject, unless a declaration lists them as fields.",
+  "Erase (Q9): 'erase' names every column holding personal data with rule blank (set to null or '' when the account is erased) or keep (with the reason). test/schema/schema.rulings.spec.ts checks each named column exists."
  ],
  "resources": {
   "Account": {
@@ -44,6 +45,58 @@
    ],
    "keep": {
     "phone": "an optional plain detail stored E.164 when given (R11, S-27)"
+   },
+   "required": [
+    "mode"
+   ],
+   "dbTypes": {
+    "mode": "@default(system)"
+   },
+   "columns": {
+    "erasedAt": {
+     "type": "DateTime",
+     "attrs": "@db.Timestamptz(3)",
+     "opt": true,
+     "why": "Q9: when erase ran; personal columns are blanked by the erase rules"
+    }
+   },
+   "erase": {
+    "name": {
+     "rule": "blank",
+     "why": "personal"
+    },
+    "contact": {
+     "rule": "blank",
+     "why": "the email"
+    },
+    "phone": {
+     "rule": "blank",
+     "why": "personal"
+    },
+    "bio": {
+     "rule": "blank",
+     "why": "personal"
+    },
+    "handle": {
+     "rule": "blank",
+     "why": "frees the handle"
+    },
+    "dates": {
+     "rule": "blank",
+     "why": "the person's dates"
+    },
+    "business": {
+     "rule": "blank",
+     "why": "a business name the person typed"
+    },
+    "side": {
+     "rule": "keep",
+     "why": "no personal value"
+    },
+    "erasedAt": {
+     "rule": "keep",
+     "why": "when erase ran"
+    }
    }
   },
   "AiRequest": {
@@ -52,13 +105,36 @@
   },
   "ApprovedDate": {
    "class": "config",
-   "reason": "the dates a business may make wishes for, served by GET /v1/business/approved-dates; no route writes it, staff keep the list"
+   "reason": "the dates a business may make wishes for, served by GET /v1/business/approved-dates; no route writes it, staff keep the list",
+   "seedFrom": {
+    "repo": "Firstwish-web",
+    "file": null,
+    "halt": "Q11 cannot seed it: the web app holds no list of approved dates; a business approves a coming date per business (lib/pro-api.ts approveDate, lib/pro-data.ts approved: [] per business). It is business data, not a catalogue."
+   }
   },
   "AuditEntry": {
    "class": "table",
    "reason": "written by server:audit-log in the same transaction as every staff change (DEC-117); append-only, no update (database trigger)",
    "omit": {
     "from": "query parameter of E-18, not stored"
+   },
+   "onDelete": "Restrict",
+   "refs": {
+    "actorId": "StaffAccount"
+   },
+   "erase": {
+    "before": {
+     "rule": "keep",
+     "why": "Q9: holds the names of changed fields and ids, never personal values; append-only"
+    },
+    "after": {
+     "rule": "keep",
+     "why": "Q9: holds the names of changed fields and ids, never personal values; append-only"
+    },
+    "ip": {
+     "rule": "keep",
+     "why": "the staff member's address at a staff change, not the subject's; append-only (Q9)"
+    }
    }
   },
   "AuthCode": {
@@ -69,6 +145,16 @@
    },
    "alias": {
     "contact": "destination"
+   },
+   "erase": {
+    "destination": {
+     "rule": "blank",
+     "why": "the email a code went to"
+    },
+    "ip": {
+     "rule": "blank",
+     "why": "personal"
+    }
    }
   },
   "Ban": {
@@ -80,25 +166,68 @@
    "reason": "written by E-22 (a creator's payout bank account)",
    "owner": [
     "Creator"
-   ]
+   ],
+   "erase": {
+    "accountNumber": {
+     "rule": "blank",
+     "why": "personal"
+    }
+   }
   },
   "Business": {
    "class": "table",
    "reason": "written by E-9 (set up) and E-26 (brand); a business side of an account; brand is embedded JSON (Brand)",
    "owner": [
     "Account"
-   ]
+   ],
+   "columns": {
+    "version": {
+     "type": "Int",
+     "attrs": "@default(0)",
+     "opt": false,
+     "why": "Q5: a counter lives on this row; a write checks and bumps version so two writers cannot both spend it"
+    }
+   },
+   "erase": {
+    "ownerName": {
+     "rule": "blank",
+     "why": "personal"
+    },
+    "person": {
+     "rule": "blank",
+     "why": "personal"
+    }
+   }
   },
   "ChapterSpec": {
    "class": "config",
-   "reason": "the chapter catalogue served by GET /v1/chapter-specs; staff keep it"
+   "reason": "the chapter catalogue served by GET /v1/chapter-specs; staff keep it",
+   "seedFrom": {
+    "repo": "Firstwish-web",
+    "file": "lib/occasions.ts (RECIPES[].chapters)",
+    "export": "scripts/export-seed-data.mjs",
+    "data": "prisma/seed-data/ChapterSpec.json"
+   }
   },
   "ClientWish": {
    "class": "table",
    "reason": "written by E-30, E-32, E-33 (a business's wish for a client)",
    "owner": [
     "Business"
-   ]
+   ],
+   "dates": [
+    "day"
+   ],
+   "erase": {
+    "from": {
+     "rule": "blank",
+     "why": "personal"
+    },
+    "client": {
+     "rule": "blank",
+     "why": "personal"
+    }
+   }
   },
   "ConciergeOrder": {
    "class": "table",
@@ -108,6 +237,9 @@
    },
    "omit": {
     "to": "date-only query window of 'Due this week', not a field of the order (DEC-128)"
+   },
+   "refs": {
+    "makerId": "StaffAccount"
    }
   },
   "Creator": {
@@ -115,15 +247,33 @@
    "reason": "the public creator profile, 1:1 with an account (DEC-76); credits, plan and signed are written by payment fulfilment (E-91, E-93, E-94)",
    "unique": [
     [
-     "handle"
-    ],
-    [
      "accountId"
     ]
    ],
    "owner": [
     "Account"
-   ]
+   ],
+   "columns": {
+    "version": {
+     "type": "Int",
+     "attrs": "@default(0)",
+     "opt": false,
+     "why": "Q5: a counter lives on this row; a write checks and bumps version so two writers cannot both spend it"
+    }
+   },
+   "omit": {
+    "handle": "Q7: one handle namespace; the handle lives on Account and the creator profile reads it"
+   },
+   "erase": {
+    "name": {
+     "rule": "blank",
+     "why": "personal"
+    },
+    "person": {
+     "rule": "blank",
+     "why": "personal"
+    }
+   }
   },
   "CreatorOffer": {
    "class": "view",
@@ -136,14 +286,48 @@
   },
   "CreatorState": {
    "class": "table",
-   "reason": "written by E-44 and server:ai-writing (a creator's credits and reviews left)"
+   "reason": "written by E-44 and server:ai-writing (a creator's credits and reviews left)",
+   "unique": [
+    [
+     "accountId"
+    ]
+   ],
+   "columns": {
+    "version": {
+     "type": "Int",
+     "attrs": "@default(0)",
+     "opt": false,
+     "why": "Q5: a counter lives on this row; a write checks and bumps version so two writers cannot both spend it"
+    }
+   }
   },
   "DateRow": {
    "class": "table",
    "reason": "written by E-46, E-47 (a person's remembered dates)",
    "owner": [
     "Account"
-   ]
+   ],
+   "dates": [
+    "date"
+   ],
+   "erase": {
+    "name": {
+     "rule": "blank",
+     "why": "personal"
+    },
+    "who": {
+     "rule": "blank",
+     "why": "personal"
+    },
+    "person": {
+     "rule": "blank",
+     "why": "personal"
+    },
+    "for": {
+     "rule": "blank",
+     "why": "personal"
+    }
+   }
   },
   "DayPick": {
    "class": "table",
@@ -152,6 +336,9 @@
     [
      "date"
     ]
+   ],
+   "dates": [
+    "date"
    ]
   },
   "EarningsSummary": {
@@ -164,7 +351,13 @@
   },
   "EndingPurpose": {
    "class": "config",
-   "reason": "the ending catalogue served by GET /v1/ending-purposes; staff keep it"
+   "reason": "the ending catalogue served by GET /v1/ending-purposes; staff keep it",
+   "seedFrom": {
+    "repo": "Firstwish-web",
+    "file": "lib/engine/types.ts (EndingPurpose)",
+    "export": "scripts/export-seed-data.mjs",
+    "data": "prisma/seed-data/EndingPurpose.json"
+   }
   },
   "Entitlements": {
    "class": "config",
@@ -180,6 +373,16 @@
    "omit": {
     "code": "OAuth query parameter of E-53, never stored",
     "state": "OAuth query parameter of E-53, never stored"
+   },
+   "erase": {
+    "email": {
+     "rule": "blank",
+     "why": "personal"
+    },
+    "subject": {
+     "rule": "blank",
+     "why": "the provider's id for the person"
+    }
    }
   },
   "Extra": {
@@ -233,6 +436,13 @@
    "omit": {
     "from": "query parameter of E-64",
     "to": "query parameter of E-64"
+   },
+   "onDelete": "Restrict",
+   "erase": {
+    "memo": {
+     "rule": "keep",
+     "why": "names a price-book line, nothing personal; a ledger row loses nothing (append-only)"
+    }
    }
   },
   "LifecycleConfig": {
@@ -244,7 +454,13 @@
    "reason": "written by E-67, E-68 (a business's member logins)",
    "owner": [
     "Business"
-   ]
+   ],
+   "erase": {
+    "contact": {
+     "rule": "blank",
+     "why": "personal"
+    }
+   }
   },
   "Maker": {
    "class": "view",
@@ -256,19 +472,62 @@
   },
   "MessageDelivery": {
    "class": "table",
-   "reason": "written by E-70, E-72, E-73 and server:messages-email"
+   "reason": "written by E-70, E-72, E-73 and server:messages-email",
+   "erase": {
+    "to": {
+     "rule": "blank",
+     "why": "the address a message went to"
+    },
+    "vars": {
+     "rule": "blank",
+     "why": "filled names and links"
+    }
+   }
   },
   "MessageTemplate": {
    "class": "config",
-   "reason": "message wording kept by staff (messages-email declaration)"
+   "reason": "message wording kept by staff (messages-email declaration)",
+   "seedFrom": {
+    "repo": "Firstwish-web",
+    "file": "lib/admin/d-fixtures.ts (templates)",
+    "export": "scripts/export-seed-data.mjs",
+    "data": "prisma/seed-data/MessageTemplate.json"
+   },
+   "columns": {
+    "subject": {
+     "type": "String",
+     "attrs": "",
+     "opt": true,
+     "why": "Q11: the email subject the web app holds beside each body"
+    }
+   }
   },
   "Moment": {
    "class": "config",
-   "reason": "the opening and ending scene catalogue served by GET /v1/moments; field definitions stay in the web app (DEC-82)"
+   "reason": "the opening and ending scene catalogue served by GET /v1/moments; field definitions stay in the web app (DEC-82)",
+   "seedFrom": {
+    "repo": "Firstwish-web",
+    "file": "lib/engine/moments.ts (momentManifests())",
+    "export": "scripts/export-seed-data.mjs",
+    "data": "prisma/seed-data/Moment.json"
+   }
   },
   "Notice": {
    "class": "table",
-   "reason": "written by E-76 and server:notices"
+   "reason": "written by E-76 and server:notices",
+   "refs": {
+    "deliveryId": "MessageDelivery"
+   },
+   "erase": {
+    "body": {
+     "rule": "blank",
+     "why": "names in the notice"
+    },
+    "subject": {
+     "rule": "blank",
+     "why": "names in the notice"
+    }
+   }
   },
   "NoticePrefs": {
    "class": "table",
@@ -308,11 +567,20 @@
     "targetKobo",
     "setBy",
     "setAt"
-   ]
+   ],
+   "refs": {
+    "setBy": "StaffAccount"
+   }
   },
   "OpeningDef": {
    "class": "config",
-   "reason": "the opening catalogue served by GET /v1/opening-defs; staff keep it"
+   "reason": "the opening catalogue served by GET /v1/opening-defs; staff keep it",
+   "seedFrom": {
+    "repo": "Firstwish-web",
+    "file": "lib/engine/registry.ts (OPENINGS)",
+    "export": "scripts/export-seed-data.mjs",
+    "data": "prisma/seed-data/OpeningDef.json"
+   }
   },
   "Overview": {
    "class": "view",
@@ -332,6 +600,34 @@
    "reason": "a Pass bought by an account, granted by payment fulfilment E-104 (DEC-94); read by E-83",
    "owner": [
     "Account"
+   ],
+   "columns": {
+    "paymentId": {
+     "type": "String",
+     "attrs": "@db.Uuid",
+     "opt": false,
+     "why": "Q5: the payment that granted this Pass; one Pass per payment"
+    },
+    "state": {
+     "type": "enum(active|expired|refunded)",
+     "attrs": "@default(active)",
+     "opt": false,
+     "why": "Q5: Default (lead), owner may override: active, expired, refunded"
+    },
+    "version": {
+     "type": "Int",
+     "attrs": "@default(0)",
+     "opt": false,
+     "why": "Q5: a counter lives on this row; a write checks and bumps version so two writers cannot both spend it"
+    }
+   },
+   "refs": {
+    "paymentId": "Payment"
+   },
+   "unique": [
+    [
+     "paymentId"
+    ]
    ]
   },
   "PassOffer": {
@@ -370,21 +666,66 @@
     [
      "idempotencyKey"
     ]
-   ]
+   ],
+   "columns": {
+    "fulfilledAt": {
+     "type": "DateTime",
+     "attrs": "@db.Timestamptz(3)",
+     "opt": true,
+     "why": "Q5: set once, when fulfilment ran (a trigger refuses changing it after)"
+    }
+   },
+   "erase": {
+    "payerContact": {
+     "rule": "blank",
+     "why": "the payer's contact"
+    },
+    "amountKobo": {
+     "rule": "keep",
+     "why": "money record: the amount stays, nothing personal"
+    }
+   }
   },
   "Payout": {
    "class": "table",
    "reason": "written by E-114, E-115 and server:royalties-payouts",
    "alias": {
     "creator": "creatorId"
-   }
+   },
+   "unique": [
+    [
+     "creatorId",
+     "month"
+    ],
+    [
+     "providerReference"
+    ]
+   ]
   },
   "Person": {
    "class": "table",
    "reason": "written by E-118..E-121 (a business's client people)",
    "owner": [
     "Business"
-   ]
+   ],
+   "dates": [
+    "birthday",
+    "start"
+   ],
+   "erase": {
+    "name": {
+     "rule": "blank",
+     "why": "personal"
+    },
+    "phone": {
+     "rule": "blank",
+     "why": "personal"
+    },
+    "birthday": {
+     "rule": "blank",
+     "why": "personal"
+    }
+   }
   },
   "PersonDetail": {
    "class": "view",
@@ -457,7 +798,13 @@
   },
   "Provider": {
    "class": "config",
-   "reason": "the provider list shown on admin settings; which adapter is on comes from Settings"
+   "reason": "the provider list shown on admin settings; which adapter is on comes from Settings",
+   "seedFrom": {
+    "repo": "Firstwish-web",
+    "file": "lib/admin/d-fixtures.ts (settings.providers)",
+    "export": "scripts/export-seed-data.mjs",
+    "data": "prisma/seed-data/Provider.json"
+   }
   },
   "PublicWishView": {
    "class": "view",
@@ -474,11 +821,31 @@
   },
   "PublishedWish": {
    "class": "table",
-   "reason": "a wish listed on Now showing (DEC-63, house wishes are seeded rows); written by E-139"
+   "reason": "a wish listed on Now showing (DEC-63, house wishes are seeded rows); written by E-139",
+   "erase": {
+    "forName": {
+     "rule": "blank",
+     "why": "personal"
+    },
+    "from": {
+     "rule": "blank",
+     "why": "personal"
+    },
+    "name": {
+     "rule": "blank",
+     "why": "personal"
+    }
+   }
   },
   "QrCard": {
    "class": "table",
-   "reason": "written by E-141 and server:qr-card"
+   "reason": "written by E-141 and server:qr-card",
+   "erase": {
+    "names": {
+     "rule": "blank",
+     "why": "personal"
+    }
+   }
   },
   "Queue": {
    "class": "view",
@@ -516,7 +883,16 @@
   },
   "Refund": {
    "class": "table",
-   "reason": "written by E-145, E-146 and server:refunds"
+   "reason": "written by E-145, E-146 and server:refunds",
+   "unique": [
+    [
+     "providerReference"
+    ]
+   ],
+   "refs": {
+    "requestedBy": "StaffAccount",
+    "approvedBy": "StaffAccount"
+   }
   },
   "RenderJob": {
    "class": "table",
@@ -527,6 +903,23 @@
    "reason": "written by E-150, E-151 and server:moderation",
    "alias": {
     "wish": "wishId"
+   },
+   "refs": {
+    "decidedBy": "StaffAccount"
+   },
+   "erase": {
+    "contact": {
+     "rule": "blank",
+     "why": "personal"
+    },
+    "reporterContact": {
+     "rule": "blank",
+     "why": "personal"
+    },
+    "note": {
+     "rule": "blank",
+     "why": "what the reporter wrote"
+    }
    }
   },
   "RevealLink": {
@@ -551,11 +944,23 @@
   },
   "RoyaltyAccrual": {
    "class": "table",
-   "reason": "written by server:royalties-payouts on each paid wish in a creator's style"
+   "reason": "written by server:royalties-payouts on each paid wish in a creator's style",
+   "unique": [
+    [
+     "paymentId",
+     "creatorId"
+    ]
+   ]
   },
   "SavedReply": {
    "class": "config",
-   "reason": "support saved replies that staff keep"
+   "reason": "support saved replies that staff keep",
+   "seedFrom": {
+    "repo": "Firstwish-web",
+    "file": "lib/admin/d-fixtures.ts (savedReplies)",
+    "export": "scripts/export-seed-data.mjs",
+    "data": "prisma/seed-data/SavedReply.json"
+   }
   },
   "SavedWish": {
    "class": "table",
@@ -576,7 +981,20 @@
   },
   "Session": {
    "class": "table",
-   "reason": "written by server:sessions and E-159..E-161 (rotating refresh tokens)"
+   "reason": "written by server:sessions and E-159..E-161 (rotating refresh tokens)",
+   "refs": {
+    "staffId": "StaffAccount"
+   },
+   "erase": {
+    "ip": {
+     "rule": "blank",
+     "why": "personal"
+    },
+    "userAgent": {
+     "rule": "blank",
+     "why": "device detail"
+    }
+   }
   },
   "Settings": {
    "class": "config",
@@ -594,6 +1012,9 @@
    "reason": "written by E-168, E-169, E-171, E-172 (a business's Vault shoot)",
    "owner": [
     "Business"
+   ],
+   "dates": [
+    "date"
    ]
   },
   "SignedUrl": {
@@ -613,6 +1034,16 @@
    },
    "alias": {
     "role": "roles"
+   },
+   "erase": {
+    "email": {
+     "rule": "blank",
+     "why": "personal"
+    },
+    "name": {
+     "rule": "blank",
+     "why": "personal"
+    }
    }
   },
   "StaffSession": {
@@ -625,7 +1056,10 @@
   },
   "StoredFile": {
    "class": "table",
-   "reason": "written by E-182..E-184 and server:storage"
+   "reason": "written by E-182..E-184 and server:storage",
+   "refs": {
+    "ownerAccountId": "Account"
+   }
   },
   "StudioPrefs": {
    "class": "document",
@@ -684,18 +1118,54 @@
   },
   "SupportMessage": {
    "class": "table",
-   "reason": "written by E-203 and server:support-threads"
+   "reason": "written by E-203 and server:support-threads",
+   "refs": {
+    "threadId": "SupportThread"
+   },
+   "erase": {
+    "body": {
+     "rule": "blank",
+     "why": "what the person or staff wrote"
+    }
+   }
   },
   "SupportThread": {
    "class": "table",
    "reason": "written by E-204, E-208..E-211 and server:support-threads",
    "alias": {
     "state": "status"
+   },
+   "refs": {
+    "assigneeId": "StaffAccount"
+   },
+   "erase": {
+    "contact": {
+     "rule": "blank",
+     "why": "personal"
+    },
+    "body": {
+     "rule": "blank",
+     "why": "what the person wrote"
+    },
+    "text": {
+     "rule": "blank",
+     "why": "what the person wrote"
+    },
+    "subject": {
+     "rule": "blank",
+     "why": "what the person wrote"
+    }
    }
   },
   "Template": {
    "class": "config",
-   "reason": "house Studio templates served by GET /v1/studio/templates; staff keep them"
+   "reason": "house Studio templates served by GET /v1/studio/templates; staff keep them",
+   "seedFrom": {
+    "repo": "Firstwish-web",
+    "file": "lib/studio.ts (HOUSE)",
+    "export": "scripts/export-seed-data.mjs",
+    "data": "prisma/seed-data/Template.json"
+   }
   },
   "ThreadCounts": {
    "class": "view",
@@ -810,6 +1280,38 @@
    ],
    "types": {
     "content": "Json"
+   },
+   "columns": {
+    "version": {
+     "type": "Int",
+     "attrs": "@default(0)",
+     "opt": false,
+     "why": "Q5: a counter lives on this row; a write checks and bumps version so two writers cannot both spend it"
+    },
+    "passcodeHash": {
+     "type": "String",
+     "attrs": "",
+     "opt": true,
+     "why": "Q8: the hashed passcode (or answer); never in content, never returned to the receiver"
+    }
+   },
+   "erase": {
+    "name": {
+     "rule": "blank",
+     "why": "personal"
+    },
+    "letter": {
+     "rule": "blank",
+     "why": "personal"
+    },
+    "content": {
+     "rule": "blank",
+     "why": "the wish itself"
+    },
+    "passcodeHash": {
+     "rule": "blank",
+     "why": "secret"
+    }
    }
   },
   "WishData": {
@@ -834,7 +1336,24 @@
     [
      "slug"
     ]
-   ]
+   ],
+   "dbTypes": {
+    "slug": "@db.VarChar(32)"
+   },
+   "columns": {
+    "tries": {
+     "type": "Int",
+     "attrs": "@default(0)",
+     "opt": false,
+     "why": "Q8: wrong passcode tries counted by E-134"
+    },
+    "lockedUntil": {
+     "type": "DateTime",
+     "attrs": "@db.Timestamptz(3)",
+     "opt": true,
+     "why": "Q8: E-134 refuses tries until this time"
+    }
+   }
   },
   "WishNumberSequence": {
    "class": "table",

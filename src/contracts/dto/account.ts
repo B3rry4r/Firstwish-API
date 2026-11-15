@@ -76,8 +76,8 @@ export class PatchMeBodyDto implements PatchMeBody {
   @IsIn(["someone"])
   here?: "someone";
   @IsOptional()
-  @IsIn(["dark", "light"])
-  mode?: "dark" | "light";
+  @IsIn(["light", "dark", "system"])
+  mode?: "light" | "dark" | "system";
   @IsOptional()
   @IsString()
   @MinTrimmed(1)

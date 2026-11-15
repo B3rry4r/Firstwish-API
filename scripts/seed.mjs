@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // Reference rows only: the price book (version 1, its lines in kobo, the promotion, entitlements), the staff roles and the
-// sections each opens, the lifecycle terms and the PROVISIONAL payout threshold. Never people, accounts or wishes.
+// sections each opens, the lifecycle terms and the PROVISIONAL payout threshold, and the catalogues the web app holds as
+// constants (prisma/seed-data/*.json, written by scripts/export-seed-data.mjs; ruling Q11). Never people, accounts or wishes.
 // Running it twice gives the same rows: every row has a fixed id made from its natural key and is upserted.
 //   DATABASE_URL=... node scripts/seed.mjs
 import { createHash } from "node:crypto";
@@ -77,6 +78,21 @@ const LIFECYCLE = {
   restoreWindowDays: 30,
 };
 
+/* Q11: the config tables no route writes, from the web app's constants (prisma/seed-data, named in schema-map seedFrom). */
+const SEED_DATA = ["EndingPurpose", "OpeningDef", "ChapterSpec", "Moment", "Template", "SavedReply", "Provider", "MessageTemplate"];
+
+async function seedCatalogues(db) {
+  for (const table of SEED_DATA) {
+    const doc = JSON.parse(readFileSync(join(ROOT, `prisma/seed-data/${table}.json`), "utf8"));
+    const model = db[table[0].toLowerCase() + table.slice(1)];
+    for (const { seedKey, ...r } of doc.rows) {
+      const row = Object.fromEntries(Object.entries(r).filter(([, v]) => v !== null && v !== undefined));
+      const id = seedId(`${table}:${seedKey}`);
+      await model.upsert({ where: { id }, create: { id, ...row }, update: row });
+    }
+  }
+}
+
 export async function seed(db) {
   const version = 1;
   const effectiveFrom = new Date(SEED_MS);
@@ -119,6 +135,7 @@ export async function seed(db) {
     create: { id: seedId("setting:payout.thresholdKobo"), key: "payout.thresholdKobo", choice },
     update: { key: "payout.thresholdKobo", choice },
   });
+  await seedCatalogues(db);
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {

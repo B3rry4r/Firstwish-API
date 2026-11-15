@@ -1,5 +1,5 @@
 {
-  "about": "Route table read by reconcile.py: the routes the Phase 3 rulings name and the cleaner names for clumsy mechanical routes. Every entry cites the decision (decisions.json) or the convention it follows. 'bases' rename a resource's route base (singleton: no :id; idParam: the id's name). 'actions' and 'reads' are keyed by canonical Resource.action / Resource, or screen:RawEntity(.action) for one screen, or screen:* for every read of a screen. A read set to {drop: decision} makes no endpoint; an action set to {ruling: decision} maps to that ruling. 'endpointBody' (keyed 'METHOD /path') applies a decision to one endpoint's body: drop names fields removed, set adds or retypes fields, response names what it returns. 'extraFields' adds the fields (and so the resource) a decision names when no screen or declaration carries them.",
+  "about": "Route table read by reconcile.py: the routes the Phase 3 rulings name and the cleaner names for clumsy mechanical routes. Every entry cites the decision (decisions.json) or the convention it follows. 'bases' rename a resource's route base (singleton: no :id; idParam: the id's name). 'actions' and 'reads' are keyed by canonical Resource.action / Resource, or screen:RawEntity(.action) for one screen, or screen:* for every read of a screen. A read set to {drop: decision} makes no endpoint; an action set to {ruling: decision} maps to that ruling. 'endpointBody' (keyed 'METHOD /path') applies a decision to one endpoint's body: drop names fields removed, set adds or retypes fields, response names what it returns. 'extraFields' adds the fields (and so the resource) a decision names when no screen or declaration carries them. dropFields: a field a decision takes off a resource's shape.",
   "bases": {
     "Account": {
       "base": "/v1/me",
@@ -1582,6 +1582,20 @@
       "type": "enum(light|dark|system)",
       "nullable": false,
       "decision": "DEC-137"
+    }
+  ],
+  "dropFields": [
+    {
+      "resource": "PublicWishView",
+      "name": "passcode",
+      "decision": "DEC-144",
+      "why": "Q8: the receiver's read never returns the passcode or its hash"
+    },
+    {
+      "resource": "PublicWishView",
+      "name": "answer",
+      "decision": "DEC-144",
+      "why": "Q8: the answer to a question opening is a secret like the passcode"
     }
   ]
 }

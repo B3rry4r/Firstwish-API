@@ -33,6 +33,26 @@ export interface ErrorEnvelope {
 }
 /** A response with no body fields. */
 export type Empty = Record<string, never>;
+/** 204 No Content: an endpoint whose registry response is null answers with no body (Q12). */
+export type NoContent = void;
+/** What every payment start returns about the payment it opened (Q12, DEC-139). */
+export interface PaymentStart {
+  reference: string;
+  state: Payment["status"];
+  amountKobo: Kobo;
+  /** The provider's checkout page the payer goes to. */
+  authorizationUrl: string;
+}
+/** A payment start: the payment, beside what it buys (null until the verified payment fulfils it). */
+export interface PaymentStarted<T> {
+  payment: PaymentStart;
+  item: T | null;
+}
+/** A start that may cost nothing (E-228: the Pass covers the keep): payment is null then. */
+export interface PaymentStartedOrCovered<T> {
+  payment: PaymentStart | null;
+  item: T | null;
+}
 
 /** E-5. */
 export interface HandleCheck {
@@ -106,6 +126,7 @@ export interface Account {
   id: string;
   joined: string;
   lastSide: string;
+  mode: "light" | "dark" | "system";
   name: string;
   pass?: { active: boolean; endsAt: Instant } | null;
   phone: string;
@@ -187,8 +208,8 @@ export interface AuthCode {
   id: string;
   ip?: string | null;
   mode: "up" | "in";
-  purpose: "sign-in" | "confirm-phone" | "confirm-email" | "staff-sign-in";
-  via: "phone" | "email";
+  purpose: "sign-in" | "confirm-email" | "staff-sign-in";
+  via: "email";
 }
 
 /** Ban: table. written by E-21 and server:moderation */
@@ -248,7 +269,7 @@ export interface ChapterSpec {
 export interface ClientWish {
   client: string;
   createdAt: Instant;
-  day: Instant;
+  day: DateOnly;
   endsAt?: Instant | null;
   from: string;
   hearts: unknown[];
@@ -350,7 +371,7 @@ export interface CreatorState {
 /** DateRow: table. written by E-46, E-47 (a person's remembered dates) */
 export interface DateRow {
   count: number;
-  date: Instant;
+  date: DateOnly;
   days: number;
   for: unknown;
   id: string;
@@ -364,7 +385,7 @@ export interface DateRow {
 
 /** DayPick: table. written by E-49 (staff pick for a day on Now showing) */
 export interface DayPick {
-  date: Instant;
+  date: DateOnly;
   pick?: Record<string, unknown> | null;
   reason: string;
   wish: string;
@@ -636,8 +657,8 @@ export interface NumbersTarget {
   line: "tickets" | "extras" | "keeps" | "pass" | "pro_plans" | "vault_space" | "concierge" | "creator_plans";
   period: "month";
   setAt: Instant;
-  setBy: unknown;
-  targetKobo: unknown;
+  setBy: string;
+  targetKobo: Kobo;
 }
 
 /** OpeningDef: config. the opening catalogue served by GET /v1/opening-defs; staff keep it */
@@ -699,7 +720,7 @@ export interface Payment {
   payerContact?: string | null;
   person: string;
   personName: string;
-  priceBookVersion: Kobo;
+  priceBookVersion: number;
   provider: "paystack";
   providerReference: string;
   purpose: "ticket" | "extra" | "upgrade" | "keep" | "pass" | "pro-plan" | "wish-pack" | "vault-space" | "concierge" | "creator-plan" | "signed" | "credit-pack" | "extra-review";
@@ -743,12 +764,12 @@ export interface Payout {
 
 /** Person: table. written by E-118..E-121 (a business's client people) */
 export interface Person {
-  birthday: Instant;
+  birthday: DateOnly;
   id: string;
   name: string;
   phone: string;
   rows: unknown[];
-  start: Instant;
+  start: DateOnly;
   team: string;
 }
 
@@ -775,7 +796,7 @@ export interface Price {
   group: string;
   items: unknown[];
   key: string;
-  kind: Kobo;
+  kind: "naira" | "date";
   lead: string;
   listKobo?: number | null;
   name: string;
@@ -865,13 +886,11 @@ export interface Provider {
 
 /** PublicWishView: view. what the public link returns (DEC-64), worked out from the wish, its link and its opens; the POST routes on /v1/w/:slug write WishOpen, Report and Wish, never this shape */
 export interface PublicWishView {
-  answer: string;
   content?: Record<string, unknown> | null;
   keepOffer?: Record<string, unknown> | null;
   kind: string;
   occasion: string;
   opensAt?: Instant | null;
-  passcode: string;
   prompt?: string | null;
   receiverName?: string | null;
   serverTime: Instant;
@@ -1132,7 +1151,7 @@ export interface Share {
 export interface Shoot {
   client: string;
   createdAt: Instant;
-  date: Instant;
+  date: DateOnly;
   files: unknown[];
   finals: unknown[];
   finalsReveal?: Record<string, unknown> | null;
@@ -1474,7 +1493,7 @@ export interface VoiceNote {
 export interface WebhookEvent {
   createdAt: Instant;
   event: unknown;
-  eventId: unknown;
+  eventId: string;
   id: string;
   payload: Record<string, unknown>;
   processedAt?: Instant | null;
@@ -1658,7 +1677,8 @@ export interface PostAdminPeopleByIdContactRevealBody {
   reason: string;
 }
 export type PostAdminPeopleByIdContactRevealHeaders = Record<string, never>;
-export type PostAdminPeopleByIdContactRevealResponse = void;
+/** 204 No Content: the response has no body (Q12). */
+export type PostAdminPeopleByIdContactRevealResponse = NoContent;
 
 /** E-5 GET /v1/handles/:handle. Auth: creator. */
 export interface GetHandlesByHandleParams {
@@ -1687,8 +1707,8 @@ export interface PatchMeBody {
   handle?: string;
   /** 'someone' */
   here?: "someone";
-  /** 'dark'|'light' */
-  mode?: "dark" | "light";
+  /** 'light'|'dark'|'system' (DEC-137) */
+  mode?: "light" | "dark" | "system";
   /** string trimmed, non-empty, differs */
   name?: string;
   /** 'me'|'business'|'creator' */
@@ -1846,12 +1866,12 @@ export type GetAdminAuditResponse = PaginatedList<AuditEntry>;
 /** E-19 POST /v1/auth/codes. Auth: public. */
 export type PostAuthCodesParams = Record<string, never>;
 export interface PostAuthCodesBody {
-  /** string (phone as '<cc> <digits>' e.g. '+234 803 000 0000', or email trimmed); phone needs >= 7 digits, email /^\S+@\S+\.\S+$/ */
-  contact: string;
+  /** string (email, trimmed and lowercased; /^\S+@\S+\.\S+$/; DEC-140) */
+  contact?: string;
   /** 'up'|'in' (the flow; the UI behaves the same) */
   mode?: "up" | "in";
-  /** 'phone'|'email' */
-  via?: "phone" | "email";
+  /** 'email' (DEC-140) */
+  via?: "email";
 }
 export type PostAuthCodesHeaders = Record<string, never>;
 export type PostAuthCodesResponse = SignInCode;
@@ -1927,7 +1947,8 @@ export type PatchBusinessResponse = Business["brand"];
 export type GetBusinessPlanParams = Record<string, never>;
 export type GetBusinessPlanQuery = Record<string, never>;
 export type GetBusinessPlanHeaders = Record<string, never>;
-export type GetBusinessPlanResponse = void;
+/** 204 No Content: the response has no body (Q12). */
+export type GetBusinessPlanResponse = NoContent;
 
 /** E-28 GET /v1/chapter-specs. Auth: signed in. */
 export type GetChapterSpecsParams = Record<string, never>;
@@ -2148,7 +2169,8 @@ export interface DeleteMeDatesByIdParams {
 }
 export type DeleteMeDatesByIdBody = Record<string, never>;
 export type DeleteMeDatesByIdHeaders = Record<string, never>;
-export type DeleteMeDatesByIdResponse = void;
+/** 204 No Content: the response has no body (Q12). */
+export type DeleteMeDatesByIdResponse = NoContent;
 
 /** E-48 GET /v1/me/dates/:id. Auth: business; creator; signed in. */
 export interface GetMeDatesByIdParams {
@@ -2354,7 +2376,8 @@ export interface DeleteBusinessLoginsByIdParams {
 }
 export type DeleteBusinessLoginsByIdBody = Record<string, never>;
 export type DeleteBusinessLoginsByIdHeaders = Record<string, never>;
-export type DeleteBusinessLoginsByIdResponse = void;
+/** 204 No Content: the response has no body (Q12). */
+export type DeleteBusinessLoginsByIdResponse = NoContent;
 
 /** E-69 GET /v1/admin/concierge/makers. Auth: maker,ops,owner. */
 export type GetAdminConciergeMakersParams = Record<string, never>;
@@ -2477,7 +2500,7 @@ export interface PutAdminNumbersTargetsBody {
   /** string (4 or more characters; written to the audit row) */
   reason: string;
   /** integer (kobo) */
-  targetKobo: number;
+  targetKobo: Kobo;
 }
 export type PutAdminNumbersTargetsHeaders = Record<string, never>;
 export type PutAdminNumbersTargetsResponse = NumbersTarget;
@@ -2560,7 +2583,7 @@ export interface PostPaymentsBody {
 export interface PostPaymentsHeaders {
   "idempotency-key": string;
 }
-export type PostPaymentsResponse = PassMembership;
+export type PostPaymentsResponse = PaymentStarted<PassMembership>;
 
 /** E-88 GET /v1/payments/:reference. Auth: own records. */
 export interface GetPaymentsByReferenceParams {
@@ -2837,7 +2860,8 @@ export interface DeleteBusinessPeopleByIdParams {
 }
 export type DeleteBusinessPeopleByIdBody = Record<string, never>;
 export type DeleteBusinessPeopleByIdHeaders = Record<string, never>;
-export type DeleteBusinessPeopleByIdResponse = void;
+/** 204 No Content: the response has no body (Q12). */
+export type DeleteBusinessPeopleByIdResponse = NoContent;
 
 /** E-120 PATCH /v1/business/people/:id. Auth: business. */
 export interface PatchBusinessPeopleByIdParams {
@@ -2889,10 +2913,16 @@ export interface PutAdminPricesByKeyParams {
   key: string;
 }
 export interface PutAdminPricesByKeyBody {
+  /** integer (kobo, optional; at least one of priceKobo, listKobo, promotionEndsAt) */
+  listKobo?: Kobo;
+  /** integer (kobo, optional; at least one of priceKobo, listKobo, promotionEndsAt) */
+  priceKobo?: Kobo;
+  /** time (ISO-8601, optional; at least one of priceKobo, listKobo, promotionEndsAt) */
+  promotionEndsAt?: Instant;
   /** string (trimmed, 4 or more characters; the Confirm dialog disables the button below 4, the seam throws 'failed') */
   reason: string;
-  /** number (whole naira, > 0 and <= 10,000,000, typed with optional ₦ and commas) or YYYY-MM-DD string for the date row (the UI accepts 'YYYY-MM-DD' or 'D Mon YYYY') */
-  value?: DateOnly;
+  /** string (the price-book line, DEC-138) */
+  sku: string;
 }
 export type PutAdminPricesByKeyHeaders = Record<string, never>;
 export type PutAdminPricesByKeyResponse = Price;
@@ -2959,7 +2989,8 @@ export interface PostWBySlugFavouritesBody {
   no: string;
 }
 export type PostWBySlugFavouritesHeaders = Record<string, never>;
-export type PostWBySlugFavouritesResponse = void;
+/** 204 No Content: the response has no body (Q12). */
+export type PostWBySlugFavouritesResponse = NoContent;
 
 /** E-131 POST /v1/w/:slug/opens. Auth: public. */
 export interface PostWBySlugOpensParams {
@@ -3135,11 +3166,11 @@ export type PostAdminReconciliationsResponse = Reconciliation;
 /** E-145 POST /v1/admin/refunds. Auth: finance,owner,support. */
 export type PostAdminRefundsParams = Record<string, never>;
 export interface PostAdminRefundsBody {
-  /** integer */
-  amountKobo: number;
+  /** integer (kobo, positive; at most the payment's amount, checked in the service) */
+  amountKobo: Kobo;
   /** string */
   paymentId: string;
-  /** string */
+  /** string (4 or more characters; DEC-125) */
   reason: string;
 }
 export type PostAdminRefundsHeaders = Record<string, never>;
@@ -3173,7 +3204,7 @@ export interface PostWishesByIdVideoBody {
   wishId?: string;
 }
 export type PostWishesByIdVideoHeaders = Record<string, never>;
-export type PostWishesByIdVideoResponse = RenderJob;
+export type PostWishesByIdVideoResponse = PaymentStarted<RenderJob>;
 
 /** E-149 GET /v1/admin/moderation. Auth: moderator,ops,owner. */
 export type GetAdminModerationParams = Record<string, never>;
@@ -3294,7 +3325,8 @@ export type PostAuthRefreshResponse = Session;
 export type PostAuthSignOutParams = Record<string, never>;
 export type PostAuthSignOutBody = Record<string, never>;
 export type PostAuthSignOutHeaders = Record<string, never>;
-export type PostAuthSignOutResponse = void;
+/** 204 No Content: the response has no body (Q12). */
+export type PostAuthSignOutResponse = NoContent;
 
 /** E-161 POST /v1/auth/sign-out-everywhere. Auth: signed in. */
 export type PostAuthSignOutEverywhereParams = Record<string, never>;
@@ -3326,7 +3358,8 @@ export interface PutAdminSettingsStorageBody {
   reason: string;
 }
 export type PutAdminSettingsStorageHeaders = Record<string, never>;
-export type PutAdminSettingsStorageResponse = void;
+/** 204 No Content: the response has no body (Q12). */
+export type PutAdminSettingsStorageResponse = NoContent;
 
 /** E-165 PUT /v1/admin/settings/switches/:key. Auth: owner. */
 export interface PutAdminSettingsSwitchesByKeyParams {
@@ -3339,7 +3372,8 @@ export interface PutAdminSettingsSwitchesByKeyBody {
   reason: string;
 }
 export type PutAdminSettingsSwitchesByKeyHeaders = Record<string, never>;
-export type PutAdminSettingsSwitchesByKeyResponse = void;
+/** 204 No Content: the response has no body (Q12). */
+export type PutAdminSettingsSwitchesByKeyResponse = NoContent;
 
 /** E-166 POST /v1/feed/wishes/:id/shares. Auth: business; creator; signed in. */
 export interface PostFeedWishesByIdSharesParams {
@@ -3382,7 +3416,8 @@ export interface DeleteBusinessShootsByIdParams {
 }
 export type DeleteBusinessShootsByIdBody = Record<string, never>;
 export type DeleteBusinessShootsByIdHeaders = Record<string, never>;
-export type DeleteBusinessShootsByIdResponse = void;
+/** 204 No Content: the response has no body (Q12). */
+export type DeleteBusinessShootsByIdResponse = NoContent;
 
 /** E-170 GET /v1/business/shoots/:id. Auth: business. */
 export interface GetBusinessShootsByIdParams {
@@ -3442,13 +3477,15 @@ export interface PostAdminAuthCodeBody {
   email: string;
 }
 export type PostAdminAuthCodeHeaders = Record<string, never>;
-export type PostAdminAuthCodeResponse = void;
+/** 204 No Content: the response has no body (Q12). */
+export type PostAdminAuthCodeResponse = NoContent;
 
 /** E-175 POST /v1/admin/auth/sign-out. Auth: finance,maker,moderator,ops,owner,reviewer,support. */
 export type PostAdminAuthSignOutParams = Record<string, never>;
 export type PostAdminAuthSignOutBody = Record<string, never>;
 export type PostAdminAuthSignOutHeaders = Record<string, never>;
-export type PostAdminAuthSignOutResponse = void;
+/** 204 No Content: the response has no body (Q12). */
+export type PostAdminAuthSignOutResponse = NoContent;
 
 /** E-176 POST /v1/admin/auth/verify. Auth: public. */
 export type PostAdminAuthVerifyParams = Record<string, never>;
@@ -3503,7 +3540,8 @@ export interface PostAdminTeamByIdRemoveBody {
   reason: string;
 }
 export type PostAdminTeamByIdRemoveHeaders = Record<string, never>;
-export type PostAdminTeamByIdRemoveResponse = void;
+/** 204 No Content: the response has no body (Q12). */
+export type PostAdminTeamByIdRemoveResponse = NoContent;
 
 /** E-181 POST /v1/admin/team/invite. Auth: owner. */
 export type PostAdminTeamInviteParams = Record<string, never>;
@@ -3841,7 +3879,8 @@ export type PostSupportThreadsResponse = SupportThread;
 export type PostWebhooksEmailInboundParams = Record<string, never>;
 export type PostWebhooksEmailInboundBody = Record<string, never>;
 export type PostWebhooksEmailInboundHeaders = Record<string, never>;
-export type PostWebhooksEmailInboundResponse = void;
+/** 204 No Content: the response has no body (Q12). */
+export type PostWebhooksEmailInboundResponse = NoContent;
 
 /** E-212 GET /v1/studio/templates. Auth: creator. */
 export type GetStudioTemplatesParams = Record<string, never>;
@@ -4047,7 +4086,8 @@ export interface PatchWishesByIdBody {
   wishId?: string;
 }
 export type PatchWishesByIdHeaders = Record<string, never>;
-export type PatchWishesByIdResponse = void;
+/** 204 No Content: the response has no body (Q12). */
+export type PatchWishesByIdResponse = NoContent;
 
 /** E-226 POST /v1/wishes/:id/add-photos. Auth: signed in. */
 export interface PostWishesByIdAddPhotosParams {
@@ -4071,7 +4111,8 @@ export interface PostWishesByIdEraseBody {
   wishId?: string;
 }
 export type PostWishesByIdEraseHeaders = Record<string, never>;
-export type PostWishesByIdEraseResponse = void;
+/** 204 No Content: the response has no body (Q12). */
+export type PostWishesByIdEraseResponse = NoContent;
 
 /** E-228 POST /v1/wishes/:id/keep. Auth: business; signed in. */
 export interface PostWishesByIdKeepParams {
@@ -4092,7 +4133,7 @@ export interface PostWishesByIdKeepBody {
 export interface PostWishesByIdKeepHeaders {
   "idempotency-key": string;
 }
-export type PostWishesByIdKeepResponse = Wish;
+export type PostWishesByIdKeepResponse = PaymentStartedOrCovered<Wish>;
 
 /** E-229 GET /v1/wishes/:id/link. Auth: business; own records. */
 export interface GetWishesByIdLinkParams {
@@ -4138,7 +4179,7 @@ export interface PostWishesByIdSealBody {
   wishId?: string;
 }
 export type PostWishesByIdSealHeaders = Record<string, never>;
-export type PostWishesByIdSealResponse = Wish;
+export type PostWishesByIdSealResponse = PaymentStarted<Wish>;
 
 /** E-232 POST /v1/wishes/:id/wake. Auth: public; business; signed in. */
 export interface PostWishesByIdWakeParams {
@@ -4149,7 +4190,8 @@ export interface PostWishesByIdWakeBody {
   wishId: string;
 }
 export type PostWishesByIdWakeHeaders = Record<string, never>;
-export type PostWishesByIdWakeResponse = void;
+/** 204 No Content: the response has no body (Q12). */
+export type PostWishesByIdWakeResponse = NoContent;
 
 /** E-233 INTERNAL port:wishes#issueNumber. Auth: internal. */
 export interface InternalWishesIssueNumberParams {

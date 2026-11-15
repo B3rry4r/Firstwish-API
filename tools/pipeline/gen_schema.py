@@ -215,6 +215,19 @@ def model_columns(name: str):
             cols[target] = {"type": typ, "attrs": attrs, "opt": target != "createdAt", "kind": kind}
     if m["class"] == "document":
         cols["document"] = {"type": "Json", "attrs": "", "opt": False, "kind": "json"}
+    # storage columns a ruling adds that no registry field carries (schema-map 'columns': type, attrs, opt, why)
+    for c, v in m.get("columns", {}).items():
+        typ = v["type"]
+        if ENUM_IN.match(typ):
+            typ = enum_name(name, c, ENUM_IN.match(typ).group(1).split("|"))
+        cols[c] = {"type": typ, "attrs": v.get("attrs", ""), "opt": v.get("opt", True), "kind": v.get("kind", "ruled")}
+    # calendar dates are DATE columns (C-29, Q4)
+    for c in m.get("dates", []):
+        assert c in cols, f"{name}.{c}: schema-map dates names a column the model does not have"
+        cols[c].update(type="DateTime", attrs="@db.Date", kind="date")
+    for c, a in m.get("dbTypes", {}).items():
+        assert c in cols, f"{name}.{c}: schema-map dbTypes names a column the model does not have"
+        cols[c]["attrs"] = a
     return cols
 
 
@@ -247,6 +260,16 @@ for a, m in MAP.items():
         cols = MODELS[a]
         if col not in cols:
             cols[col] = {"type": "String", "attrs": "@db.Uuid", "opt": not m.get("ownerRequired", False), "kind": "fk"}
+        cols[col]["attrs"] = "@db.Uuid"
+        cols[col]["kind"] = "fk"
+        if (a, b, col) not in RELS:
+            RELS.append((a, b, col))
+# id columns that point at another table under their own name (schema-map 'refs': column -> model; Q10)
+for a, m in MAP.items():
+    for col, b in m.get("refs", {}).items():
+        cols = MODELS[a]
+        assert col in cols and b in MODELS, f"{a}.{col} -> {b}: schema-map refs names a missing column or model"
+        cols[col]["type"] = "String"
         cols[col]["attrs"] = "@db.Uuid"
         cols[col]["kind"] = "fk"
         if (a, b, col) not in RELS:
@@ -310,12 +333,16 @@ def render_schema() -> str:
             if a != n:
                 continue
             rel = f'"{a}_{col}"'
-            field = col[:-2] if col[:-2] not in cols else col[:-2] + "Ref"
+            stem = col[:-2] if col.endswith("Id") else col + "Ref"
+            field = stem if stem not in cols else stem + "Ref"
             q = "?" if cols[col]["opt"] else ""
-            out.append(f"  {field} {b}{q} @relation({rel}, fields: [{col}], references: [id])")
+            od = m.get("onDelete")
+            rule = f", onDelete: {od}, onUpdate: {od}" if od else ""
+            out.append(f"  {field} {b}{q} @relation({rel}, fields: [{col}], references: [id]{rule})")
         for a, col in back[n]:
             one = [col] in MAP[a].get("unique", [])
-            out.append(f'  {camel(a)}By{pascal(col[:-2])} {a}{"?" if one else "[]"} @relation("{a}_{col}")')
+            stem = col[:-2] if col.endswith("Id") else col
+            out.append(f'  {camel(a)}By{pascal(stem)} {a}{"?" if one else "[]"} @relation("{a}_{col}")')
         for u in m.get("unique", []):
             out.append(f"  @@unique([{', '.join(u)}])")
         seen = set()
@@ -352,6 +379,14 @@ TS_SCALAR = {
 
 def ts_field_type(res: str, f: dict) -> str:
     t = f["type"]
+    if f["name"] in MAP[res].get("dates", []):
+        return "DateOnly"  # a calendar date (C-29, Q4)
+    if t.startswith("integer (kobo"):
+        return "Kobo"
+    if t.startswith("integer ("):
+        return "number"
+    if t.startswith("string ("):
+        return "string"
     if t.startswith("time"):
         return "Instant"
     if t in TS_SCALAR:
@@ -450,6 +485,26 @@ export interface ErrorEnvelope {
 }
 /** A response with no body fields. */
 export type Empty = Record<string, never>;
+/** 204 No Content: an endpoint whose registry response is null answers with no body (Q12). */
+export type NoContent = void;
+/** What every payment start returns about the payment it opened (Q12, DEC-139). */
+export interface PaymentStart {
+  reference: string;
+  state: Payment["status"];
+  amountKobo: Kobo;
+  /** The provider's checkout page the payer goes to. */
+  authorizationUrl: string;
+}
+/** A payment start: the payment, beside what it buys (null until the verified payment fulfils it). */
+export interface PaymentStarted<T> {
+  payment: PaymentStart;
+  item: T | null;
+}
+/** A start that may cost nothing (E-228: the Pass covers the keep): payment is null then. */
+export interface PaymentStartedOrCovered<T> {
+  payment: PaymentStart | null;
+  item: T | null;
+}
 
 /** E-5. */
 export interface HandleCheck {
@@ -532,6 +587,10 @@ def body_field(name: str, typ: str, required: bool):
         ts, decos = "string", ["IsCanonHandle()"]
     elif name in ("phone",) and low.startswith("string"):
         ts, decos = "string", ["IsCanonPhone()"]
+    elif name == "contact" and low.startswith("string (email"):
+        ts, decos = "string", ["IsCanonEmail()"]
+    elif low.startswith("integer (kobo"):
+        ts, decos = "Kobo", ["IsKobo()"] + (["Min(1)"] if "positive" in low else [])
     elif "yyyy-mm-dd" in low or core in ("date", "date?"):
         ts, decos = "DateOnly", ["IsDateOnly()"]
         if "''" in t:
@@ -575,6 +634,10 @@ def body_field(name: str, typ: str, required: bool):
         ts, decos = "unknown", ["Allow()"]
     if optional:
         decos.insert(0, "IsOptional()")
+    m = re.search(r"at least one of ([A-Za-z, ]+)\)", t)
+    if m:
+        group = [x.strip() for x in m.group(1).split(",")]
+        decos.append(f"RequireOneOf({json.dumps(group)})")
     return ts, decos, optional, t
 
 
@@ -609,6 +672,9 @@ def response_type(e: dict) -> str:
     resp = e["response"] or {}
     ent = resp.get("entity")
     card = resp.get("cardinality") or ""
+    if resp.get("paymentStart"):
+        inner = ent if ent in RES else SPECIAL_RESP[ent]
+        return f"PaymentStarted<{inner}>" if resp["paymentStart"] == "required" else f"PaymentStartedOrCovered<{inner}>"
     if ent is None:
         return "void"
     base = ent if ent in RES else SPECIAL_RESP.get(ent)
@@ -667,8 +733,13 @@ for r in REG["resources"]:
         TYPE_LINES.append(f"export interface {bodyname} {{")
         dto = [f"/** {e['id']} {e['method']} {e['path']} ({'query' if is_query else 'body'}). */", f"export class {bodyname}Dto implements {bodyname} {{"]
         used_decos = set()
+        # a group of optional fields of which one must be sent: checked on the first field that is always sent
+        one_of = sorted({d for n, t, req in flat.values() for d in body_field(n, t, req)[1] if d.startswith("RequireOneOf(")})
+        anchor = next((n for n, t, req in flat.values() if not body_field(n, t, req)[2]), None)
+        assert not one_of or anchor, f"{e['id']}: RequireOneOf needs a field that is always sent"
         for n, t, req in flat.values():
             ts, decos, opt, orig = body_field(n, t, req)
+            decos = [d for d in decos if not d.startswith("RequireOneOf(")] + (one_of if n == anchor else [])
             q = "?" if opt else ""
             TYPE_LINES.append(f"  /** {orig.replace('*/', '*\\/')[:300]} */")
             TYPE_LINES.append(f"  {prop(n)}{q}: {ts};")
@@ -693,10 +764,15 @@ for r in REG["resources"]:
         for h in headers:
             TYPE_LINES.append(f"  {json.dumps(h.lower())}: string;")
         TYPE_LINES.append("}")
-        TYPE_LINES.append(f"export type {op}Response = {response_type(e)};")
+        rtype = response_type(e)
+        no_content = rtype == "void" and e["method"] != "INTERNAL"
+        if no_content:
+            TYPE_LINES.append("/** 204 No Content: the response has no body (Q12). */")
+            rtype = "NoContent"
+        TYPE_LINES.append(f"export type {op}Response = {rtype};")
         TYPE_LINES.append("")
         DTO_FILES[group].append(("\n".join(dto), used_decos))
-        ENDPOINT_ROWS.append((e["id"], e["method"], e["path"], op, bodyname, r["name"], raw, bool(params)))
+        ENDPOINT_ROWS.append((e["id"], e["method"], e["path"], op, bodyname, r["name"], raw, no_content))
 
 def collapse_empty(lines):
     out, i = [], 0
@@ -728,7 +804,7 @@ for old in (C / "dto").glob("*.ts"):
 (C / "types.ts").write_text("\n".join(TYPE_LINES) + "\n")
 
 CV = {"IsOptional", "IsString", "IsInt", "IsNumber", "IsBoolean", "IsArray", "IsObject", "IsIn", "Equals", "MaxLength", "Min", "Max", "Allow", "ValidateIf"}
-OWN = {"IsCanonEmail", "IsCanonHandle", "IsCanonPhone", "IsDateOnly", "IsInstant", "MinTrimmed"}
+OWN = {"IsCanonEmail", "IsCanonHandle", "IsCanonPhone", "IsDateOnly", "IsInstant", "MinTrimmed", "IsKobo", "RequireOneOf"}
 for group, items in DTO_FILES.items():
     used = set().union(*(u for _, u in items))
     types = sorted(set(re.findall(r"implements (\w+)", "\n".join(d for d, _ in items))))
@@ -739,7 +815,7 @@ for group, items in DTO_FILES.items():
         head.append('import { Type } from "class-transformer";')
     if used & OWN:
         head.append(f'import {{ {", ".join(sorted(used & OWN))} }} from "../../common/validation/decorators";')
-    extra = sorted({t for t in ("DateOnly", "Instant") if re.search(rf"\b{t}\b", "\n".join(d for d, _ in items))})
+    extra = sorted({t for t in ("DateOnly", "Instant", "Kobo") if re.search(rf"\b{t}\b", "\n".join(d for d, _ in items))})
     head.append(f'import type {{ {", ".join(types + extra)} }} from "../types";')
     (C / "dto" / f"{group}.ts").write_text("\n".join(head) + "\n\n" + "\n\n".join(d for d, _ in items) + "\n")
 
@@ -750,9 +826,9 @@ for group in sorted(DTO_FILES):
 
 ep = ["// Every registry endpoint with its contract names. Generated by tools/pipeline/gen_schema.py; do not edit by hand.",
       "export interface EndpointRow {", "  id: string;", "  method: string;", "  path: string;", "  resource: string;", "  operation: string;",
-      "  request: string;", "  rawBody: boolean;", "}", "", "export const ENDPOINTS: readonly EndpointRow[] = ["]
+      "  request: string;", "  rawBody: boolean;", "  /** 204 with no body (Q12). */", "  noContent: boolean;", "}", "", "export const ENDPOINTS: readonly EndpointRow[] = ["]
 for eid, method, path, op, bodyname, res, raw, hp in ENDPOINT_ROWS:
-    ep.append(f'  {{ id: "{eid}", method: "{method}", path: {json.dumps(path)}, resource: "{res}", operation: "{op}", request: "{bodyname}Dto", rawBody: {str(raw).lower()} }},')
+    ep.append(f'  {{ id: "{eid}", method: "{method}", path: {json.dumps(path)}, resource: "{res}", operation: "{op}", request: "{bodyname}Dto", rawBody: {str(raw).lower()}, noContent: {str(hp).lower()} }},')
 ep.append("];")
 (C / "endpoints.ts").write_text("\n".join(ep) + "\n")
 

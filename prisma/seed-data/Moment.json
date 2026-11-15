@@ -1,0 +1,1896 @@
+{
+ "table": "Moment",
+ "from": "Firstwish-web lib/engine/moments.ts (momentManifests())",
+ "rows": [
+  {
+   "seedKey": "wax-seal",
+   "dimension": "drawn",
+   "kind": "opening",
+   "level": "starter",
+   "line": "A wax seal that cracks under the finger and falls away in pieces.",
+   "name": "A wax seal",
+   "quiet": true,
+   "serves": [
+    "time",
+    "countdown",
+    "secret"
+   ],
+   "slug": "wax-seal",
+   "tags": {
+    "family": "Paper",
+    "mood": [
+     "warm",
+     "tender",
+     "nostalgic",
+     "quiet"
+    ],
+    "palette": "wax in the accent colour on warm dark paper",
+    "tech": [
+     "canvas"
+    ]
+   }
+  },
+  {
+   "seedKey": "vault-dial",
+   "dimension": "drawn",
+   "kind": "opening",
+   "level": "standard",
+   "line": "A vault door with a dial that turns as they type, bolts that draw back, and a door that swings open.",
+   "name": "A vault",
+   "quiet": true,
+   "serves": [
+    "secret",
+    "time"
+   ],
+   "slug": "vault-dial",
+   "tags": {
+    "family": "Night",
+    "mood": [
+     "bold",
+     "playful",
+     "luxurious"
+    ],
+    "palette": "brushed steel and brass on near-black",
+    "tech": [
+     "css",
+     "svg"
+    ]
+   }
+  },
+  {
+   "seedKey": "curtain",
+   "dimension": "drawn",
+   "kind": "opening",
+   "level": "standard",
+   "line": "A heavy stage curtain to pull apart, cloth that bunches and swings.",
+   "name": "A curtain",
+   "serves": [
+    "title",
+    "time",
+    "countdown"
+   ],
+   "slug": "curtain",
+   "tags": {
+    "family": "Stage",
+    "mood": [
+     "festive",
+     "bold",
+     "luxurious"
+    ],
+    "palette": "theatre red cloth, gold light",
+    "tech": [
+     "canvas"
+    ]
+   }
+  },
+  {
+   "seedKey": "fuse",
+   "dimension": "drawn",
+   "kind": "opening",
+   "level": "standard",
+   "line": "A fuse that burns down to the moment, then the receiver lights the last of it.",
+   "name": "A fuse to midnight",
+   "serves": [
+    "countdown",
+    "time"
+   ],
+   "slug": "fuse",
+   "tags": {
+    "family": "Night",
+    "mood": [
+     "festive",
+     "playful",
+     "bold"
+    ],
+    "palette": "a hot spark on a night sky",
+    "tech": [
+     "canvas"
+    ]
+   }
+  },
+  {
+   "seedKey": "envelope-flap",
+   "dimension": "drawn",
+   "kind": "opening",
+   "level": "starter",
+   "line": "An envelope whose flap you lift; the letter slides out and opens into the wish.",
+   "name": "An envelope",
+   "quiet": true,
+   "serves": [
+    "time",
+    "countdown",
+    "secret",
+    "title"
+   ],
+   "slug": "envelope-flap",
+   "tags": {
+    "family": "Paper",
+    "mood": [
+     "tender",
+     "warm",
+     "nostalgic",
+     "quiet"
+    ],
+    "palette": "cream paper, a seal in the accent colour",
+    "tech": [
+     "css"
+    ]
+   }
+  },
+  {
+   "seedKey": "film-leader",
+   "dimension": "flat",
+   "kind": "opening",
+   "level": "standard",
+   "line": "A title card that says who presents it, then a film leader counts three, two, one.",
+   "name": "A film leader",
+   "serves": [
+    "title"
+   ],
+   "slug": "film-leader",
+   "tags": {
+    "family": "Film",
+    "mood": [
+     "editorial",
+     "bold",
+     "nostalgic"
+    ],
+    "palette": "black and projector white, scratched",
+    "tech": [
+     "css",
+     "canvas",
+     "webgl"
+    ]
+   }
+  },
+  {
+   "seedKey": "candle",
+   "dimension": "drawn",
+   "kind": "ending",
+   "level": "starter",
+   "line": "A candle with a real flame that leans from a breath and goes out to smoke.",
+   "name": "A candle",
+   "serves": [
+    "wish"
+   ],
+   "slug": "candle",
+   "tags": {
+    "family": "Night",
+    "mood": [
+     "warm",
+     "tender",
+     "faith",
+     "calm"
+    ],
+    "palette": "one flame in a dark room",
+    "tech": [
+     "webgl",
+     "audio"
+    ]
+   }
+  },
+  {
+   "seedKey": "fireworks",
+   "dimension": "drawn",
+   "kind": "ending",
+   "level": "standard",
+   "line": "Fireworks the receiver sends up themselves, then the sky answers.",
+   "name": "Fireworks",
+   "serves": [
+    "wish"
+   ],
+   "slug": "fireworks",
+   "tags": {
+    "family": "Night",
+    "mood": [
+     "festive",
+     "bold",
+     "playful"
+    ],
+    "palette": "a night sky, every colour",
+    "tech": [
+     "canvas"
+    ]
+   }
+  },
+  {
+   "seedKey": "balloon",
+   "dimension": "drawn",
+   "kind": "ending",
+   "level": "starter",
+   "line": "A balloon on a string to drag about and pop.",
+   "name": "A balloon",
+   "serves": [
+    "wish"
+   ],
+   "slug": "balloon",
+   "tags": {
+    "family": "Party",
+    "mood": [
+     "playful",
+     "festive",
+     "warm"
+    ],
+    "palette": "one balloon in the accent colour",
+    "tech": [
+     "svg",
+     "canvas",
+     "webgl"
+    ]
+   }
+  },
+  {
+   "seedKey": "envelope-tear",
+   "dimension": "drawn",
+   "kind": "ending",
+   "level": "starter",
+   "line": "An envelope torn open along its edge, on one last line.",
+   "name": "An envelope to tear",
+   "quiet": true,
+   "serves": [
+    "reveal",
+    "wish"
+   ],
+   "slug": "envelope-tear",
+   "tags": {
+    "family": "Paper",
+    "mood": [
+     "tender",
+     "quiet",
+     "warm",
+     "nostalgic"
+    ],
+    "palette": "paper in the style's own ground",
+    "tech": [
+     "css",
+     "svg"
+    ]
+   }
+  },
+  {
+   "seedKey": "ring-box",
+   "dimension": "3d",
+   "fields": [
+    {
+     "key": "after",
+     "kind": "text",
+     "label": "What it says after Yes",
+     "optional": true
+    }
+   ],
+   "kind": "ending",
+   "level": "premium",
+   "line": "A ring box in real depth that opens on the question. Yes reaches the sender; No runs away.",
+   "name": "A ring box",
+   "serves": [
+    "question"
+   ],
+   "slug": "ring-box",
+   "tags": {
+    "family": "Gold",
+    "mood": [
+     "tender",
+     "luxurious",
+     "bold"
+    ],
+    "palette": "velvet, gold and one stone",
+    "tech": [
+     "three",
+     "webgl"
+    ]
+   }
+  },
+  {
+   "seedKey": "scratch-foil",
+   "dimension": "drawn",
+   "kind": "ending",
+   "level": "starter",
+   "line": "A card of foil that shifts in the light and scratches away in flakes.",
+   "name": "A scratch card",
+   "serves": [
+    "reveal"
+   ],
+   "slug": "scratch-foil",
+   "tags": {
+    "family": "Party",
+    "mood": [
+     "playful",
+     "warm",
+     "bold"
+    ],
+    "palette": "silver foil with colour in it",
+    "tech": [
+     "canvas",
+     "sensors"
+    ]
+   }
+  },
+  {
+   "seedKey": "gift-box",
+   "dimension": "3d",
+   "kind": "ending",
+   "level": "premium",
+   "line": "A gift box in real depth: pull the ribbon, the lid flies off, light comes out.",
+   "name": "A gift box",
+   "serves": [
+    "reveal"
+   ],
+   "slug": "gift-box",
+   "tags": {
+    "family": "Party",
+    "mood": [
+     "festive",
+     "playful",
+     "warm"
+    ],
+    "palette": "paper in the accent colour, a pale ribbon",
+    "tech": [
+     "three",
+     "webgl"
+    ]
+   }
+  },
+  {
+   "seedKey": "calendar-leaf",
+   "dimension": "drawn",
+   "kind": "ending",
+   "level": "starter",
+   "line": "A tear-off calendar: pull the leaf away and the day is under it, ready to save.",
+   "name": "A calendar leaf",
+   "quiet": true,
+   "serves": [
+    "date"
+   ],
+   "slug": "calendar-leaf",
+   "tags": {
+    "family": "Paper",
+    "mood": [
+     "warm",
+     "editorial",
+     "calm"
+    ],
+    "palette": "calendar paper and a red numeral",
+    "tech": [
+     "css"
+    ]
+   }
+  },
+  {
+   "seedKey": "film-credits",
+   "dimension": "flat",
+   "kind": "ending",
+   "level": "standard",
+   "line": "Every name, rolling like the end of a film.",
+   "name": "Film credits",
+   "quiet": true,
+   "serves": [
+    "credits"
+   ],
+   "slug": "film-credits",
+   "tags": {
+    "family": "Film",
+    "mood": [
+     "editorial",
+     "nostalgic",
+     "warm"
+    ],
+    "palette": "white on black, with grain",
+    "tech": [
+     "css",
+     "webgl"
+    ]
+   }
+  },
+  {
+   "seedKey": "sign-off",
+   "dimension": "flat",
+   "kind": "ending",
+   "level": "starter",
+   "line": "A quiet close: the signature writes itself, and that is all.",
+   "name": "A signature",
+   "quiet": true,
+   "serves": [
+    "close"
+   ],
+   "slug": "sign-off",
+   "tags": {
+    "family": "Paper",
+    "mood": [
+     "quiet",
+     "calm",
+     "tender",
+     "editorial"
+    ],
+    "palette": "ink in the style's own colour",
+    "tech": [
+     "svg"
+    ]
+   }
+  },
+  {
+   "seedKey": "aso-ebi-cinched-warp",
+   "from": "aso-ebi",
+   "kind": "opening",
+   "level": "premium",
+   "line": "Threads drawn tight on a loom part to let the wish through.",
+   "name": "A cinched warp",
+   "serves": [
+    "time",
+    "countdown",
+    "secret",
+    "title"
+   ],
+   "slug": "aso-ebi-cinched-warp",
+   "tags": {
+    "mood": [
+     "luxurious",
+     "warm",
+     "editorial",
+     "festive"
+    ],
+    "palette": "etu indigo and one alaari thread on sanyan silk, or the colours the day names",
+    "tech": [
+     "css",
+     "canvas"
+    ]
+   }
+  },
+  {
+   "seedKey": "bloom-bud-at-night",
+   "from": "bloom",
+   "kind": "opening",
+   "level": "premium",
+   "line": "A ring of seeds keeps the time; the bud opens into a red hibiscus.",
+   "name": "A bud at night",
+   "serves": [
+    "time",
+    "countdown",
+    "secret",
+    "title"
+   ],
+   "slug": "bloom-bud-at-night",
+   "tags": {
+    "mood": [
+     "tender",
+     "warm",
+     "calm",
+     "luxurious"
+    ],
+    "palette": "sumi ink and one madder rose on warm paper",
+    "tech": [
+     "css",
+     "canvas"
+    ]
+   }
+  },
+  {
+   "seedKey": "cap-toss-cap-flick",
+   "from": "cap-toss",
+   "kind": "opening",
+   "level": "premium",
+   "line": "A graduation cap is flicked up, turns over, and its board fills the screen.",
+   "name": "A cap flicked up",
+   "serves": [
+    "time",
+    "countdown",
+    "secret",
+    "title"
+   ],
+   "slug": "cap-toss-cap-flick",
+   "tags": {
+    "mood": [
+     "proud",
+     "bright",
+     "luxurious",
+     "warm"
+    ],
+    "palette": "ink caps and one gold tassel on a pale morning sky",
+    "tech": [
+     "css",
+     "canvas"
+    ]
+   }
+  },
+  {
+   "seedKey": "cinema-ticket",
+   "from": "cinema",
+   "kind": "opening",
+   "level": "premium",
+   "line": "Tear the stub off a ticket; a flip board counts down; a lamp opens on the wish.",
+   "name": "A cinema ticket",
+   "serves": [
+    "time",
+    "countdown",
+    "secret",
+    "title"
+   ],
+   "slug": "cinema-ticket",
+   "tags": {
+    "mood": [
+     "tender",
+     "nostalgic",
+     "luxurious"
+    ],
+    "palette": "cream type and one marquee amber on screen black, lit by a warm lamp",
+    "tech": [
+     "css",
+     "canvas"
+    ]
+   }
+  },
+  {
+   "seedKey": "harvest-light-shutters",
+   "from": "harvest-light",
+   "kind": "opening",
+   "level": "standard",
+   "line": "Draw a finger down: the blades tilt, swing, and light floods the room.",
+   "name": "The shutters give",
+   "serves": [
+    "time",
+    "countdown",
+    "secret",
+    "title"
+   ],
+   "slug": "harvest-light-shutters",
+   "tags": {
+    "mood": [
+     "warm",
+     "faith",
+     "calm",
+     "tender"
+    ],
+    "palette": "late sun on a shaded wall: umber, straw and one amber light, brown ink",
+    "tech": [
+     "css",
+     "canvas"
+    ]
+   }
+  },
+  {
+   "seedKey": "midnight-twelve-strikes",
+   "from": "midnight",
+   "kind": "opening",
+   "level": "premium",
+   "line": "A ring of sixty marks is clock and lock; drag it to twelve and it goes off like a firework.",
+   "name": "Twelve strikes",
+   "serves": [
+    "time",
+    "countdown",
+    "secret",
+    "title"
+   ],
+   "slug": "midnight-twelve-strikes",
+   "tags": {
+    "mood": [
+     "festive",
+     "luxurious",
+     "bold",
+     "warm"
+    ],
+    "palette": "gold fire and ivory type on a midnight-blue city",
+    "tech": [
+     "css",
+     "canvas"
+    ]
+   }
+  },
+  {
+   "seedKey": "milestone-counter",
+   "from": "milestone",
+   "kind": "opening",
+   "level": "premium",
+   "line": "Slide the mark: the wheel winds on and the ink splits open.",
+   "name": "A counter at nought",
+   "serves": [
+    "time",
+    "countdown",
+    "secret",
+    "title"
+   ],
+   "slug": "milestone-counter",
+   "tags": {
+    "mood": [
+     "proud",
+     "editorial",
+     "nostalgic"
+    ],
+    "palette": "ink numerals on bone paper, one vermilion mark, ink title cards",
+    "tech": [
+     "css",
+     "canvas"
+    ]
+   }
+  },
+  {
+   "seedKey": "runway-light-down",
+   "from": "runway",
+   "kind": "opening",
+   "level": "premium",
+   "line": "A title card on a dark runway, opened by drawing the light down.",
+   "name": "Draw the light down",
+   "serves": [
+    "time",
+    "countdown",
+    "secret",
+    "title"
+   ],
+   "slug": "runway-light-down",
+   "tags": {
+    "mood": [
+     "editorial",
+     "luxurious",
+     "bold",
+     "calm"
+    ],
+    "palette": "bone type and one tungsten light on house black",
+    "tech": [
+     "css",
+     "canvas"
+    ]
+   }
+  },
+  {
+   "seedKey": "screening-screen-curtain",
+   "from": "screening",
+   "kind": "opening",
+   "level": "premium",
+   "line": "Cloth on springs, parted by a finger; it falls shut on a wrong answer.",
+   "name": "A cinema curtain",
+   "serves": [
+    "time",
+    "countdown",
+    "secret",
+    "title"
+   ],
+   "slug": "screening-screen-curtain",
+   "tags": {
+    "mood": [
+     "luxurious",
+     "calm",
+     "editorial",
+     "quiet"
+    ],
+    "palette": "lamp white on screening-room black, with one wine velvet",
+    "tech": [
+     "css",
+     "canvas"
+    ]
+   }
+  },
+  {
+   "seedKey": "ink-and-wash-rolled-letter",
+   "from": "ink-and-wash",
+   "kind": "opening",
+   "level": "standard",
+   "line": "A letter rolled in a paper band under a red seal, unrolled by hand.",
+   "name": "A rolled letter",
+   "serves": [
+    "time",
+    "countdown",
+    "secret",
+    "title"
+   ],
+   "slug": "ink-and-wash-rolled-letter",
+   "tags": {
+    "mood": [
+     "calm",
+     "tender",
+     "quiet",
+     "faith"
+    ],
+    "palette": "indigo wash and sumi ink on warm paper, one cinnabar seal",
+    "tech": [
+     "css",
+     "canvas"
+    ]
+   }
+  },
+  {
+   "seedKey": "constellation-star-dial",
+   "from": "constellation",
+   "kind": "opening",
+   "level": "premium",
+   "line": "A dial keeps the time, takes an answer, and opens as rings fly past.",
+   "name": "A star-finder dial",
+   "serves": [
+    "time",
+    "countdown",
+    "secret",
+    "title"
+   ],
+   "slug": "constellation-star-dial",
+   "tags": {
+    "mood": [
+     "tender",
+     "calm",
+     "luxurious",
+     "wonder"
+    ],
+    "palette": "starlight ivory and star gold on a deep indigo night",
+    "tech": [
+     "css",
+     "canvas"
+    ]
+   }
+  },
+  {
+   "seedKey": "contact-sheet-light-box",
+   "from": "contact-sheet",
+   "kind": "opening",
+   "level": "standard",
+   "line": "A dark light box with the shoot on its glass; throw the switch and the tubes catch one by one.",
+   "name": "The light box",
+   "serves": [
+    "time",
+    "countdown",
+    "secret",
+    "title"
+   ],
+   "slug": "contact-sheet-light-box",
+   "tags": {
+    "mood": [
+     "editorial",
+     "calm",
+     "luxurious",
+     "nostalgic"
+    ],
+    "palette": "film black and one grease-pencil red on a lit white light box",
+    "tech": [
+     "css",
+     "canvas"
+    ]
+   }
+  },
+  {
+   "seedKey": "gold-card-card-sleeve",
+   "from": "gold-card",
+   "kind": "opening",
+   "level": "premium",
+   "line": "A dark sleeve held by a foil band; draw the card out by the notch.",
+   "name": "A card in its sleeve",
+   "serves": [
+    "time",
+    "countdown",
+    "secret",
+    "title"
+   ],
+   "slug": "gold-card-card-sleeve",
+   "tags": {
+    "mood": [
+     "calm",
+     "luxurious",
+     "exact",
+     "warm"
+    ],
+    "palette": "satin champagne gold and espresso ink on a warm near-black",
+    "tech": [
+     "css"
+    ]
+   }
+  },
+  {
+   "seedKey": "invitation-sealed-card",
+   "from": "invitation",
+   "kind": "opening",
+   "level": "premium",
+   "line": "A card tied with ribbon under a gold wax seal; press and the wax cracks.",
+   "name": "The sealed card",
+   "serves": [
+    "time",
+    "countdown",
+    "secret",
+    "title"
+   ],
+   "slug": "invitation-sealed-card",
+   "tags": {
+    "mood": [
+     "luxurious",
+     "tender",
+     "calm",
+     "editorial"
+    ],
+    "palette": "ivory cotton card and gold foil on deep emerald",
+    "tech": [
+     "css",
+     "canvas"
+    ]
+   }
+  },
+  {
+   "seedKey": "lullaby-music-box",
+   "from": "lullaby",
+   "kind": "opening",
+   "level": "standard",
+   "line": "Wind the key three turns and let go; a clock hand sweeps the wall.",
+   "name": "A music box",
+   "serves": [
+    "time",
+    "countdown",
+    "secret",
+    "title"
+   ],
+   "slug": "lullaby-music-box",
+   "tags": {
+    "mood": [
+     "tender",
+     "calm",
+     "warm",
+     "quiet"
+    ],
+    "palette": "warm umber and one brass on milk-white morning light",
+    "tech": [
+     "css"
+    ]
+   }
+  },
+  {
+   "seedKey": "mosaic-face-down-wall",
+   "from": "mosaic",
+   "kind": "opening",
+   "level": "premium",
+   "line": "A wall of tiles face down; press the glazed tile and the wall turns.",
+   "name": "The face-down wall",
+   "serves": [
+    "time",
+    "countdown",
+    "secret",
+    "title"
+   ],
+   "slug": "mosaic-face-down-wall",
+   "tags": {
+    "mood": [
+     "warm",
+     "bold",
+     "editorial",
+     "festive"
+    ],
+    "palette": "a dark wall of photo tiles, ivory tablets and one turquoise glaze",
+    "tech": [
+     "css",
+     "canvas"
+    ]
+   }
+  },
+  {
+   "seedKey": "owambe-cloth-parcel",
+   "from": "owambe",
+   "kind": "opening",
+   "level": "premium",
+   "line": "The seal turns like a coin, the band is cut, the cloth gathers apart.",
+   "name": "The cloth parcel",
+   "serves": [
+    "time",
+    "countdown",
+    "secret",
+    "title"
+   ],
+   "slug": "owambe-cloth-parcel",
+   "tags": {
+    "mood": [
+     "festive",
+     "luxurious",
+     "bold",
+     "warm"
+    ],
+    "palette": "gold thread on aso-ebi in the colours of the day, in a hall at night",
+    "tech": [
+     "css",
+     "canvas"
+    ]
+   }
+  },
+  {
+   "seedKey": "pinboard-notice-sheet",
+   "from": "pinboard",
+   "kind": "opening",
+   "level": "standard",
+   "line": "A sheet pinned on a board; pull the pin and it swings, tears free and falls.",
+   "name": "The notice sheet",
+   "serves": [
+    "time",
+    "countdown",
+    "secret",
+    "title"
+   ],
+   "slug": "pinboard-notice-sheet",
+   "tags": {
+    "mood": [
+     "warm",
+     "calm",
+     "editorial"
+    ],
+    "palette": "cream paper on green baize in window light, brass pins",
+    "tech": [
+     "css"
+    ]
+   }
+  },
+  {
+   "seedKey": "polaroid-table-print-face-down",
+   "from": "polaroid-table",
+   "kind": "opening",
+   "level": "standard",
+   "line": "A print turned over by hand; its grey front becomes the first frame.",
+   "name": "One print face down",
+   "serves": [
+    "time",
+    "countdown",
+    "secret",
+    "title"
+   ],
+   "slug": "polaroid-table-print-face-down",
+   "tags": {
+    "mood": [
+     "nostalgic",
+     "warm",
+     "tender"
+    ],
+    "palette": "instant prints and ivory paper on dark walnut, one red pencil",
+    "tech": [
+     "css",
+     "canvas"
+    ]
+   }
+  },
+  {
+   "seedKey": "showroom-doors",
+   "from": "showroom",
+   "kind": "opening",
+   "level": "premium",
+   "line": "Two charcoal doors on a seam of daylight swing away in depth.",
+   "name": "The showroom doors",
+   "serves": [
+    "time",
+    "countdown",
+    "secret",
+    "title"
+   ],
+   "slug": "showroom-doors",
+   "tags": {
+    "mood": [
+     "luxurious",
+     "calm",
+     "editorial"
+    ],
+    "palette": "plaster and bone under daylight, charcoal doors and ink, one brass",
+    "tech": [
+     "css"
+    ]
+   }
+  },
+  {
+   "seedKey": "the-question-ring-of-light",
+   "from": "the-question",
+   "kind": "opening",
+   "level": "premium",
+   "line": "One gold ring; press and hold, it fills with light and floods out.",
+   "name": "A ring of light",
+   "serves": [
+    "time",
+    "countdown",
+    "secret",
+    "title"
+   ],
+   "slug": "the-question-ring-of-light",
+   "tags": {
+    "mood": [
+     "tender",
+     "luxurious",
+     "calm"
+    ],
+    "palette": "candle gold and cream on night plum",
+    "tech": [
+     "css"
+    ]
+   }
+  },
+  {
+   "seedKey": "tinsel-bulb-on-wire",
+   "from": "tinsel",
+   "kind": "opening",
+   "level": "premium",
+   "line": "A bulb drops on its cord; touch it and lamp light floods the frame.",
+   "name": "A bulb on a wire",
+   "serves": [
+    "time",
+    "countdown",
+    "secret",
+    "title"
+   ],
+   "slug": "tinsel-bulb-on-wire",
+   "tags": {
+    "mood": [
+     "festive",
+     "warm",
+     "luxurious",
+     "calm"
+    ],
+    "palette": "warm lamp gold on fir-green night, ivory paper tags",
+    "tech": [
+     "css"
+    ]
+   }
+  },
+  {
+   "seedKey": "first-day-staff-pass",
+   "from": "first-day",
+   "kind": "opening",
+   "level": "standard",
+   "line": "Sign the back of a staff pass by finger; it turns on its strap.",
+   "name": "Sign for your pack",
+   "serves": [
+    "time",
+    "countdown",
+    "secret",
+    "title"
+   ],
+   "slug": "first-day-staff-pass",
+   "tags": {
+    "mood": [
+     "warm",
+     "bold",
+     "calm",
+     "editorial"
+    ],
+    "palette": "white passes and black ink on a stone wall, one persimmon lanyard",
+    "tech": [
+     "css",
+     "canvas"
+    ]
+   }
+  },
+  {
+   "seedKey": "group-chat-chat-lock",
+   "from": "group-chat",
+   "kind": "opening",
+   "level": "standard",
+   "line": "A chat in hidden ink; pull the thread down and the bubbles drop away.",
+   "name": "The thread behind a lock",
+   "serves": [
+    "time",
+    "countdown",
+    "secret",
+    "title"
+   ],
+   "slug": "group-chat-chat-lock",
+   "tags": {
+    "mood": [
+     "warm",
+     "playful",
+     "tender",
+     "editorial"
+    ],
+    "palette": "white bubbles and one cobalt blue on pale daylight grey, with an ink-blue night",
+    "tech": [
+     "css",
+     "canvas"
+    ]
+   }
+  },
+  {
+   "seedKey": "pidgin-gist-typing-dots",
+   "from": "pidgin-gist",
+   "kind": "opening",
+   "level": "standard",
+   "line": "Three dots in a bubble merge, swell and flood the screen.",
+   "name": "Somebody is typing",
+   "serves": [
+    "time",
+    "countdown",
+    "secret",
+    "title"
+   ],
+   "slug": "pidgin-gist-typing-dots",
+   "tags": {
+    "mood": [
+     "bold",
+     "warm",
+     "festive"
+    ],
+    "palette": "one green dot on near-black and warm cream",
+    "tech": [
+     "css",
+     "canvas"
+    ]
+   }
+  },
+  {
+   "seedKey": "before-and-after-light-crosses",
+   "from": "before-and-after",
+   "kind": "opening",
+   "level": "standard",
+   "line": "A dark sheet carries the cover; drag a line of light across to open it.",
+   "name": "Light crosses the sheet",
+   "serves": [
+    "time",
+    "countdown",
+    "secret",
+    "title"
+   ],
+   "slug": "before-and-after-light-crosses",
+   "tags": {
+    "mood": [
+     "editorial",
+     "luxurious",
+     "calm",
+     "bold"
+    ],
+    "palette": "espresso ink and one line of warm light on bone paper",
+    "tech": [
+     "css"
+    ]
+   }
+  },
+  {
+   "seedKey": "boarding-pass-gate",
+   "from": "boarding-pass",
+   "kind": "opening",
+   "level": "standard",
+   "line": "A shutter, a departures board and a boarding pass with a stub to tear.",
+   "name": "The gate",
+   "serves": [
+    "time",
+    "countdown",
+    "secret",
+    "title"
+   ],
+   "slug": "boarding-pass-gate",
+   "tags": {
+    "mood": [
+     "warm",
+     "calm",
+     "editorial",
+     "hopeful"
+    ],
+    "palette": "ink navy and one signal orange on pale chart blue, with white passes",
+    "tech": [
+     "css"
+    ]
+   }
+  },
+  {
+   "seedKey": "lookbook-cover-ajar",
+   "from": "lookbook",
+   "kind": "opening",
+   "level": "standard",
+   "line": "Two sprung boards pulled apart onto clear glass.",
+   "name": "A cover ajar",
+   "serves": [
+    "time",
+    "countdown",
+    "secret",
+    "title"
+   ],
+   "slug": "lookbook-cover-ajar",
+   "tags": {
+    "mood": [
+     "editorial",
+     "luxurious",
+     "calm",
+     "bold"
+    ],
+    "palette": "carbon ink and one sienna thread on stone-grey paper, bound in charcoal board",
+    "tech": [
+     "css"
+    ]
+   }
+  },
+  {
+   "seedKey": "mixtape-paper-strip",
+   "from": "mixtape",
+   "kind": "opening",
+   "level": "standard",
+   "line": "Pull a torn strip and the record sleeve is thrown up and away.",
+   "name": "Pull the paper strip",
+   "serves": [
+    "time",
+    "countdown",
+    "secret",
+    "title"
+   ],
+   "slug": "mixtape-paper-strip",
+   "tags": {
+    "mood": [
+     "warm",
+     "tender",
+     "nostalgic",
+     "editorial"
+    ],
+    "palette": "black vinyl and one oxblood red on cream paper",
+    "tech": [
+     "css"
+    ]
+   }
+  },
+  {
+   "seedKey": "quiet-roller-slip",
+   "from": "quiet",
+   "kind": "opening",
+   "level": "starter",
+   "line": "A typed slip held in a typewriter’s roller, fed out by hand.",
+   "name": "A slip in the roller",
+   "serves": [
+    "time",
+    "countdown",
+    "secret",
+    "title"
+   ],
+   "slug": "quiet-roller-slip",
+   "tags": {
+    "mood": [
+     "quiet",
+     "calm",
+     "tender",
+     "plain"
+    ],
+    "palette": "soft black ink and one ribbon red on typing paper, in a dark room",
+    "tech": [
+     "css",
+     "canvas"
+    ]
+   }
+  },
+  {
+   "seedKey": "scrapbook-string-button",
+   "from": "scrapbook",
+   "kind": "opening",
+   "level": "premium",
+   "line": "A cloth cover with gilt rules; pull the string and the cover lifts.",
+   "name": "String and button",
+   "serves": [
+    "time",
+    "countdown",
+    "secret",
+    "title"
+   ],
+   "slug": "scrapbook-string-button",
+   "tags": {
+    "mood": [
+     "warm",
+     "nostalgic",
+     "tender",
+     "calm"
+    ],
+    "palette": "cream album paper and sepia ink on a walnut table, one burgundy cloth",
+    "tech": [
+     "css"
+    ]
+   }
+  },
+  {
+   "seedKey": "tailored-zip-bag",
+   "from": "tailored",
+   "kind": "opening",
+   "level": "standard",
+   "line": "A garment bag with a zip pull and a tag.",
+   "name": "The zip",
+   "serves": [
+    "time",
+    "countdown",
+    "secret",
+    "title"
+   ],
+   "slug": "tailored-zip-bag",
+   "tags": {
+    "mood": [
+     "editorial",
+     "luxurious",
+     "calm",
+     "warm"
+    ],
+    "palette": "chalk and one brass on midnight pinstripe",
+    "tech": [
+     "css",
+     "canvas"
+    ]
+   }
+  },
+  {
+   "seedKey": "the-aisle-aisle-doors",
+   "from": "the-aisle",
+   "kind": "opening",
+   "level": "premium",
+   "line": "Two doors that turn in depth under a drag as daylight comes in.",
+   "name": "The chapel doors",
+   "serves": [
+    "time",
+    "countdown",
+    "secret",
+    "title"
+   ],
+   "slug": "the-aisle-aisle-doors",
+   "tags": {
+    "mood": [
+     "tender",
+     "calm",
+     "luxurious",
+     "editorial"
+    ],
+    "palette": "ivory stone in daylight, charcoal ink, one deep green",
+    "tech": [
+     "css"
+    ]
+   }
+  },
+  {
+   "seedKey": "cinema-candle",
+   "from": "cinema",
+   "kind": "ending",
+   "level": "premium",
+   "line": "A live flame that leans from the finger and goes out to smoke.",
+   "name": "A cinema candle",
+   "serves": [
+    "wish"
+   ],
+   "slug": "cinema-candle",
+   "tags": {
+    "mood": [
+     "tender",
+     "nostalgic",
+     "luxurious"
+    ],
+    "tech": [
+     "css",
+     "canvas"
+    ]
+   }
+  },
+  {
+   "seedKey": "cinema-awards-envelope",
+   "from": "cinema",
+   "kind": "ending",
+   "level": "premium",
+   "line": "Lift the flap of an awards envelope on one last line.",
+   "name": "The awards envelope",
+   "quiet": true,
+   "serves": [
+    "reveal"
+   ],
+   "slug": "cinema-awards-envelope",
+   "tags": {
+    "mood": [
+     "tender",
+     "nostalgic",
+     "luxurious"
+    ],
+    "tech": [
+     "css"
+    ]
+   }
+  },
+  {
+   "seedKey": "cinema-ring",
+   "from": "cinema",
+   "kind": "ending",
+   "level": "premium",
+   "line": "A ring turns in the light; Yes reaches you, No runs away.",
+   "name": "A turning ring",
+   "serves": [
+    "question"
+   ],
+   "slug": "cinema-ring",
+   "tags": {
+    "mood": [
+     "tender",
+     "nostalgic",
+     "luxurious"
+    ],
+    "tech": [
+     "css",
+     "canvas"
+    ]
+   }
+  },
+  {
+   "seedKey": "cinema-film-can",
+   "from": "cinema",
+   "kind": "ending",
+   "level": "premium",
+   "line": "Turn the lid off a film can to find the gift.",
+   "name": "A film can",
+   "serves": [
+    "reveal"
+   ],
+   "slug": "cinema-film-can",
+   "tags": {
+    "mood": [
+     "tender",
+     "nostalgic",
+     "luxurious"
+    ],
+    "tech": [
+     "css"
+    ]
+   }
+  },
+  {
+   "seedKey": "cinema-black-film",
+   "from": "cinema",
+   "kind": "ending",
+   "level": "premium",
+   "line": "Rub the black film clear; at half it burns away.",
+   "name": "Black film rubbed clear",
+   "serves": [
+    "reveal"
+   ],
+   "slug": "cinema-black-film",
+   "tags": {
+    "mood": [
+     "tender",
+     "nostalgic",
+     "luxurious"
+    ],
+    "tech": [
+     "css",
+     "canvas"
+    ]
+   }
+  },
+  {
+   "seedKey": "tailored-cufflink",
+   "from": "tailored",
+   "kind": "ending",
+   "level": "standard",
+   "line": "Drag the cufflink through and fasten it to make the wish.",
+   "name": "Fasten the cufflink",
+   "serves": [
+    "wish"
+   ],
+   "slug": "tailored-cufflink",
+   "tags": {
+    "mood": [
+     "editorial",
+     "luxurious",
+     "calm",
+     "warm"
+    ],
+    "tech": [
+     "css"
+    ]
+   }
+  },
+  {
+   "seedKey": "tailored-pocket-card",
+   "from": "tailored",
+   "kind": "ending",
+   "level": "standard",
+   "line": "Draw a card up out of a jacket pocket.",
+   "name": "The pocket card",
+   "quiet": true,
+   "serves": [
+    "reveal"
+   ],
+   "slug": "tailored-pocket-card",
+   "tags": {
+    "mood": [
+     "editorial",
+     "luxurious",
+     "calm",
+     "warm"
+    ],
+    "tech": [
+     "css"
+    ]
+   }
+  },
+  {
+   "seedKey": "tailored-tissue-seal",
+   "from": "tailored",
+   "kind": "ending",
+   "level": "standard",
+   "line": "Break the seal and the tissue leaves fold back on the gift.",
+   "name": "The tissue seal",
+   "serves": [
+    "reveal"
+   ],
+   "slug": "tailored-tissue-seal",
+   "tags": {
+    "mood": [
+     "editorial",
+     "luxurious",
+     "calm",
+     "warm"
+    ],
+    "tech": [
+     "css"
+    ]
+   }
+  },
+  {
+   "seedKey": "mixtape-candle",
+   "from": "mixtape",
+   "kind": "ending",
+   "level": "standard",
+   "line": "A canvas flame that leans from the finger and gutters out with smoke.",
+   "name": "A candle by the record",
+   "serves": [
+    "wish"
+   ],
+   "slug": "mixtape-candle",
+   "tags": {
+    "mood": [
+     "warm",
+     "tender",
+     "nostalgic",
+     "editorial"
+    ],
+    "tech": [
+     "css",
+     "canvas"
+    ]
+   }
+  },
+  {
+   "seedKey": "mixtape-sleeve-note",
+   "from": "mixtape",
+   "kind": "ending",
+   "level": "standard",
+   "line": "A note drawn out of a record's inner sleeve, opening along its fold.",
+   "name": "A note in the sleeve",
+   "quiet": true,
+   "serves": [
+    "reveal"
+   ],
+   "slug": "mixtape-sleeve-note",
+   "tags": {
+    "mood": [
+     "warm",
+     "tender",
+     "nostalgic",
+     "editorial"
+    ],
+    "tech": [
+     "css"
+    ]
+   }
+  },
+  {
+   "seedKey": "pinboard-wrapped-gift",
+   "from": "pinboard",
+   "kind": "ending",
+   "level": "standard",
+   "line": "A gatefold wrap held by a paper band; pull a flap and the gift is set letter by letter.",
+   "name": "The wrapped gift",
+   "serves": [
+    "reveal"
+   ],
+   "slug": "pinboard-wrapped-gift",
+   "tags": {
+    "mood": [
+     "warm",
+     "calm",
+     "editorial"
+    ],
+    "tech": [
+     "css"
+    ]
+   }
+  },
+  {
+   "seedKey": "pinboard-scratch-card",
+   "from": "pinboard",
+   "kind": "ending",
+   "level": "standard",
+   "line": "Brass foil scratched by finger; the flakes fall down the board.",
+   "name": "A brass scratch card",
+   "serves": [
+    "reveal"
+   ],
+   "slug": "pinboard-scratch-card",
+   "tags": {
+    "mood": [
+     "warm",
+     "calm",
+     "editorial"
+    ],
+    "tech": [
+     "css",
+     "canvas"
+    ]
+   }
+  },
+  {
+   "seedKey": "pinboard-lined-envelope",
+   "from": "pinboard",
+   "kind": "ending",
+   "level": "standard",
+   "line": "Lift the flap; the note comes out, is pinned up and falls open on its fold.",
+   "name": "A lined envelope",
+   "quiet": true,
+   "serves": [
+    "reveal"
+   ],
+   "slug": "pinboard-lined-envelope",
+   "tags": {
+    "mood": [
+     "warm",
+     "calm",
+     "editorial"
+    ],
+    "tech": [
+     "css"
+    ]
+   }
+  },
+  {
+   "seedKey": "first-day-gift-wrap",
+   "from": "first-day",
+   "kind": "ending",
+   "level": "standard",
+   "line": "The wrap folds off a corner that follows the finger, then tears away.",
+   "name": "Peel the gift wrap",
+   "serves": [
+    "reveal"
+   ],
+   "slug": "first-day-gift-wrap",
+   "tags": {
+    "mood": [
+     "warm",
+     "bold",
+     "calm",
+     "editorial"
+    ],
+    "tech": [
+     "css",
+     "canvas"
+    ]
+   }
+  },
+  {
+   "seedKey": "first-day-foil",
+   "from": "first-day",
+   "kind": "ending",
+   "level": "standard",
+   "line": "Foil scratched by finger; the rest crumbles and falls as flakes.",
+   "name": "Scratch the foil",
+   "serves": [
+    "reveal"
+   ],
+   "slug": "first-day-foil",
+   "tags": {
+    "mood": [
+     "warm",
+     "bold",
+     "calm",
+     "editorial"
+    ],
+    "tech": [
+     "css",
+     "canvas"
+    ]
+   }
+  },
+  {
+   "seedKey": "lullaby-lamp-cord",
+   "from": "lullaby",
+   "kind": "ending",
+   "level": "standard",
+   "line": "Pull the cord and the room goes to dusk on the last line.",
+   "name": "Pull the lamp cord",
+   "quiet": true,
+   "serves": [
+    "wish"
+   ],
+   "slug": "lullaby-lamp-cord",
+   "tags": {
+    "mood": [
+     "tender",
+     "calm",
+     "warm",
+     "quiet"
+    ],
+    "tech": [
+     "css"
+    ]
+   }
+  },
+  {
+   "seedKey": "invitation-struck-date",
+   "from": "invitation",
+   "kind": "ending",
+   "level": "premium",
+   "line": "The date is struck one line per blow, then the names and a count to the day.",
+   "name": "The date struck by a die",
+   "serves": [
+    "date"
+   ],
+   "slug": "invitation-struck-date",
+   "tags": {
+    "mood": [
+     "luxurious",
+     "tender",
+     "calm",
+     "editorial"
+    ],
+    "tech": [
+     "css"
+    ]
+   }
+  },
+  {
+   "seedKey": "polaroid-print-turned",
+   "from": "polaroid-table",
+   "kind": "ending",
+   "level": "standard",
+   "line": "The first print turned face up by hand, the last line written on its back.",
+   "name": "The print turned over",
+   "quiet": true,
+   "serves": [
+    "reveal"
+   ],
+   "slug": "polaroid-print-turned",
+   "tags": {
+    "mood": [
+     "nostalgic",
+     "warm",
+     "tender"
+    ],
+    "tech": [
+     "css"
+    ]
+   }
+  },
+  {
+   "seedKey": "polaroid-develop",
+   "from": "polaroid-table",
+   "kind": "ending",
+   "level": "standard",
+   "line": "Hold a finger on the grey and the picture comes up from it in soft patches.",
+   "name": "Develop it with a finger",
+   "serves": [
+    "wish"
+   ],
+   "slug": "polaroid-develop",
+   "tags": {
+    "mood": [
+     "nostalgic",
+     "warm",
+     "tender"
+    ],
+    "tech": [
+     "css",
+     "canvas"
+    ]
+   }
+  },
+  {
+   "seedKey": "scrapbook-album",
+   "from": "scrapbook",
+   "kind": "ending",
+   "level": "premium",
+   "line": "Drag a print into its corners; the line is written word by word.",
+   "name": "One more for the album",
+   "serves": [
+    "wish"
+   ],
+   "slug": "scrapbook-album",
+   "tags": {
+    "mood": [
+     "warm",
+     "nostalgic",
+     "tender",
+     "calm"
+    ],
+    "tech": [
+     "css"
+    ]
+   }
+  },
+  {
+   "seedKey": "scrapbook-pocket",
+   "from": "scrapbook",
+   "kind": "ending",
+   "level": "premium",
+   "line": "A string between two buttons; the flap folds back and a card rises.",
+   "name": "The album pocket",
+   "quiet": true,
+   "serves": [
+    "reveal"
+   ],
+   "slug": "scrapbook-pocket",
+   "tags": {
+    "mood": [
+     "warm",
+     "nostalgic",
+     "tender",
+     "calm"
+    ],
+    "tech": [
+     "css"
+    ]
+   }
+  },
+  {
+   "seedKey": "tinsel-star",
+   "from": "tinsel",
+   "kind": "ending",
+   "level": "premium",
+   "line": "Hold and a gold line charges round the star; it catches and its rays turn.",
+   "name": "Light the star",
+   "serves": [
+    "wish"
+   ],
+   "slug": "tinsel-star",
+   "tags": {
+    "mood": [
+     "festive",
+     "warm",
+     "luxurious",
+     "calm"
+    ],
+    "tech": [
+     "css",
+     "canvas"
+    ]
+   }
+  },
+  {
+   "seedKey": "quiet-folded-note",
+   "from": "quiet",
+   "kind": "ending",
+   "level": "starter",
+   "line": "A typed note folded in three; open it and the line is there in red.",
+   "name": "The folded note",
+   "quiet": true,
+   "serves": [
+    "reveal",
+    "close"
+   ],
+   "slug": "quiet-folded-note",
+   "tags": {
+    "mood": [
+     "quiet",
+     "calm",
+     "tender",
+     "plain"
+    ],
+    "tech": [
+     "css"
+    ]
+   }
+  },
+  {
+   "seedKey": "showroom-closing-time",
+   "from": "showroom",
+   "kind": "ending",
+   "level": "premium",
+   "line": "The doors shut with a knock and the studio's line rises across the seam.",
+   "name": "Closing time",
+   "quiet": true,
+   "serves": [
+    "close"
+   ],
+   "slug": "showroom-closing-time",
+   "tags": {
+    "mood": [
+     "luxurious",
+     "calm",
+     "editorial"
+    ],
+    "tech": [
+     "css"
+    ]
+   }
+  }
+ ]
+}

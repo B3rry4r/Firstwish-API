@@ -993,10 +993,14 @@ def main():
                 "generatedBy": "tools/pipeline/reconcile.py", "resources": [], "sharedShapes": {
                     "PaginatedList<T>": "{ items: T[], nextCursor: string | null } with ?cursor=&limit= (conventions.md)",
                     "ErrorEnvelope": "{ error: { code, message, fields?, requestId } } (conventions.md)"}}
+    # fields a decision takes off a resource's shape (routes.json dropFields: a secret the reader must never get)
+    dropped = set("%s.%s" % (x["resource"], x["name"]) for x in routes.get("dropFields", []) if x["decision"] in dec_ids)
     for rname in sorted(res):
         r = res[rname]
         fields = []
         for fname in sorted(r["fields"]):
+            if "%s.%s" % (rname, fname) in dropped:
+                continue
             f = r["fields"][fname]
             classes = sorted(set(s["class"] for s in f["seen"]))
             fams = families(classes, fname)

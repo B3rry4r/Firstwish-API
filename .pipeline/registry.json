@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "frozenAt": "2026-11-15T16:45:10Z",
+  "frozenAt": "2026-11-15T16:48:55Z",
   "framework": "nestjs",
   "generatedBy": "tools/pipeline/reconcile.py",
   "resources": [
@@ -13710,18 +13710,6 @@
       "embedded": [],
       "fields": [
         {
-          "name": "answer",
-          "type": "string",
-          "classes": [
-            "string"
-          ],
-          "nullable": false,
-          "provenance": [
-            "wish-link"
-          ],
-          "supersedes": []
-        },
-        {
           "name": "content",
           "type": "object",
           "classes": [
@@ -13776,18 +13764,6 @@
             "time-iso"
           ],
           "nullable": true,
-          "provenance": [
-            "wish-link"
-          ],
-          "supersedes": []
-        },
-        {
-          "name": "passcode",
-          "type": "string",
-          "classes": [
-            "string"
-          ],
-          "nullable": false,
           "provenance": [
             "wish-link"
           ],

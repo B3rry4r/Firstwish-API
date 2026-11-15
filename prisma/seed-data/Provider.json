@@ -1,0 +1,38 @@
+{
+ "table": "Provider",
+ "from": "Firstwish-web lib/admin/d-fixtures.ts (settings.providers)",
+ "rows": [
+  {
+   "seedKey": "payments",
+   "key": "payments",
+   "line": "Waiting for the test keys. Payments are stand-ins until then.",
+   "name": "Payments",
+   "state": "waiting",
+   "who": "Paystack"
+  },
+  {
+   "seedKey": "email",
+   "key": "email",
+   "line": "Waiting for the sending address and its DNS records.",
+   "name": "Email",
+   "state": "waiting",
+   "who": "Resend"
+  },
+  {
+   "seedKey": "ai",
+   "key": "ai",
+   "line": "Waiting for the key. Nothing is drafted by AI until it is in.",
+   "name": "AI",
+   "state": "waiting",
+   "who": "Anthropic"
+  },
+  {
+   "seedKey": "storage",
+   "key": "storage",
+   "line": "One is used at a time. The owner decides at the end of November.",
+   "name": "Storage",
+   "state": "waiting",
+   "who": ""
+  }
+ ]
+}

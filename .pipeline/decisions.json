@@ -2477,14 +2477,24 @@
       }
     },
     {
-      "id": "DEC-143",
+      "id": "DEC-144",
+      "topic": "the wish passcode",
+      "closes": [],
+      "decision": "Q8: the passcode (and the answer of a question opening) is never in the content JSON: the server keeps Wish.passcodeHash (hashed) and counts tries and lockedUntil on the WishLink (E-134). The receiver's read (PublicWishView, E-130) never returns the passcode, the answer or a hash: both fields are taken off its shape. The link slug is varchar(32), issued by the server.",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (Registry reopened a second time) Q8",
+      "decidedAt": "2026-11-15T16:40:00Z"
+    },
+    {
+      "id": "DEC-145",
       "topic": "registry re-freeze (second reopen)",
       "closes": [],
-      "decision": "The registry is re-frozen after Q1, Q3, Q6, Q12, Q13 and Q14 (DEC-137..142) by tools/pipeline/freeze.py; reconcile.py was run twice with --reopen \"Q1,Q3,Q12,Q13\" (identical outputs, 0 open conflicts). Frozen at 106 resources, 233 endpoints. Q4, Q5, Q7 to Q11 change storage only and are ruled in .pipeline/schema-map.json.",
+      "decision": "The registry is re-frozen after Q1, Q3, Q6, Q8, Q12, Q13 and Q14 (DEC-137..142, DEC-144) by tools/pipeline/freeze.py; reconcile.py was run twice with --reopen \"Q1,Q3,Q12,Q13\" (identical outputs, 0 open conflicts). Frozen at 106 resources, 233 endpoints. Q4, Q5, Q7, Q9 to Q11 change storage only and are ruled in .pipeline/schema-map.json.",
       "approvedBy": "lead default, owner may override",
       "confidence": "high",
       "source": "build/rulings-phase3.md (Registry reopened a second time)",
-      "decidedAt": "2026-11-15T16:45:10Z"
+      "decidedAt": "2026-11-15T16:48:55Z"
     }
   ]
 }

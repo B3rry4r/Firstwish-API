@@ -1,0 +1,36 @@
+{
+ "table": "EndingPurpose",
+ "from": "Firstwish-web lib/engine/types.ts (EndingPurpose)",
+ "rows": [
+  {
+   "seedKey": "wish",
+   "line": "a last act the receiver completes: blow, pop, light, tear open",
+   "name": "wish"
+  },
+  {
+   "seedKey": "question",
+   "line": "ask and take the answer: yes or no",
+   "name": "question"
+  },
+  {
+   "seedKey": "reveal",
+   "line": "something hidden comes out: a gift, a line",
+   "name": "reveal"
+  },
+  {
+   "seedKey": "date",
+   "line": "a day to keep, saved to their calendar",
+   "name": "date"
+  },
+  {
+   "seedKey": "credits",
+   "line": "every name, rolling",
+   "name": "credits"
+  },
+  {
+   "seedKey": "close",
+   "line": "",
+   "name": "close"
+  }
+ ]
+}

@@ -28,7 +28,7 @@
 
 ## Identity and format canon (the server normalises on ingest; it never trusts the client's spelling)
 - Phone: E.164 (`+2348031472093`). `08031472093` and `2348031472093` resolve to the same account. Default country Nigeria.
-- Email: trimmed, lowercased. Handle: lowercased, `[a-z0-9._]{3,30}`.
+- Email: trimmed, lowercased. Handle: lowercased, a leading @ dropped, `[a-z0-9._]{3,20}`, starts and ends with a letter or number, no two dots or underscores together, reserved words refused (the app's rule, components/app/feed/spaces.ts; R5).
 - Money: integer kobo, currency `NGN`, never a float, never a formatted string on the wire. Prices are read from configuration tables, never hardcoded.
 - Time: ISO-8601 UTC on the wire. A wish's opening moment is stored as an instant plus the receiver's IANA time zone.
 - Ids: UUIDv7 strings. A wish also has a public link slug (a readable part plus 4 random characters) and a wish number (issued in order by the server).

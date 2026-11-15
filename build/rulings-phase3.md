@@ -397,3 +397,14 @@ KK2 (medium) Staff wording: a subject is at most 150 characters and a body 4,000
 KK3 (low) Line breaks are stripped from any value that goes into a subject. KK4 (low) The staff log masks an address wherever
     it appears, inside values too. KK5 (low) An erased account's queued deliveries end "dropped", not failed. KK6 (low) Provider
     error text is scrubbed of codes as well as addresses.
+
+## From B10's halts (15 Nov). Default (lead), owner may override. Applied in the next shared base (INT-4).
+LL1 WishOpen (wishId, kind, first, session, createdAt), wish_reaction, wish_favourite and link_hit become models in the schema.
+LL2 E-132 (react) answers {reaction, counts}, never the sender's Wish. E-134 (unlock) answers {ok: true, token, expiresAt} or
+    {ok: false, error}; the token goes back in the x-unlock-token header. PublicWishView gains `files` (the signed links) and,
+    while sealed, `opening` {id, scene}; nothing else of the content while sealed.
+LL3 A question opening keeps its text at content.opening.values.question; the contract says so.
+LL4 Old link_hit rows are removed by a timed job. PROVISIONAL limits: 60 reads a minute per address; 10 passcode tries an hour
+    per link and address; 30 wrong tries lock a link for an hour.
+LL5 Owed: the owner's wish detail (B06) shows opens, plays, reactions, favourites and shares through
+    ReceiverActivityService.summary (joined in INT-4); "This is me, take it down" (E-133) is B13's.

@@ -30,6 +30,11 @@ import { ScreeningResultsModule } from "./modules/screening-results/screening-re
 import { VoiceNotesModule } from "./modules/voice-notes/voice-notes.module";
 import { VaultFilesModule } from "./modules/vault-files/vault-files.module";
 // end B09
+// B12: dates and saved things
+import { DatesModule } from "./modules/dates/dates.module";
+import { PeopleModule } from "./modules/people/people.module";
+import { SavedWishesModule } from "./modules/saved-wishes/saved-wishes.module";
+// end B12
 
 /** Registration entry: each resource module adds one import line here. */
 @Module({
@@ -65,6 +70,11 @@ import { VaultFilesModule } from "./modules/vault-files/vault-files.module";
     VoiceNotesModule,
     VaultFilesModule,
     // end B09
+    // B12
+    PeopleModule,
+    DatesModule,
+    SavedWishesModule,
+    // end B12
   ],
 })
 export class AppModule {}

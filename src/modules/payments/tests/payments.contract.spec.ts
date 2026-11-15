@@ -123,7 +123,7 @@ describe("payments core E-87, E-88, E-217 (contract)", () => {
     const key = `key-${ids.next()}`;
     const first = await start(a.token, KEEPSAKE, key);
     const again = await start(a.token, KEEPSAKE, key);
-    expect(again.status).toBe(201);
+    expect(again.status).toBe(201); // still waiting: the same answer
     expect(again.body).toEqual(first.body);
     expect(await db.payment.count({ where: { accountId: a.id } })).toBe(1);
     expect(t.payments.started.filter((s) => s.reference === first.body.payment.reference)).toHaveLength(1);
@@ -213,10 +213,11 @@ describe("payments core E-87, E-88, E-217 (contract)", () => {
   });
 
   it("an event for an unknown reference is stored and flagged, not dropped", async () => {
-    const body = charge(`fw-${ids.next()}`, { amount: 5000 });
-    expect((await signedHook(body)).status).toBe(200);
-    const ev = await db.webhookEvent.findFirstOrThrow({ where: { eventId: { startsWith: "charge.success:" }, payload: { path: ["data", "amount"], equals: 5000 }, event: { path: ["outcome"], equals: "unknown_reference" } } });
-    expect(ev.event).toMatchObject({ outcome: "unknown_reference", flagged: true });
+    const ref = `fw-${ids.next()}`;
+    expect((await signedHook(charge(ref, { amount: 5000 }))).status).toBe(200);
+    const ev = await db.webhookEvent.findFirstOrThrow({ where: { payload: { path: ["data", "reference"], equals: ref } } });
+    expect(ev.outcome).toBe("unknown_reference");
+    expect(ev.event).toBeNull();
     expect(ev.processedAt).not.toBeNull();
   });
 
@@ -231,9 +232,9 @@ describe("payments core E-87, E-88, E-217 (contract)", () => {
       expect(row.fulfilledAt).toBeNull();
       expect(await ledgerOf(row.id)).toHaveLength(0);
       expect(calls).toHaveLength(0);
-      expect(JSON.stringify(row.options)).toContain("amount_mismatch");
+      expect(row.flags).toEqual(["amount_mismatch"]);
       const ev = await db.webhookEvent.findFirstOrThrow({ where: { payload: { path: ["data", "reference"], equals: p.reference } } });
-      expect(ev.event).toMatchObject({ outcome: "amount_mismatch", flagged: true });
+      expect(ev.outcome).toBe("amount_mismatch");
     }
     const a = await payer();
     const p = await started(a.token);
@@ -315,17 +316,17 @@ describe("payments core E-87, E-88, E-217 (contract)", () => {
     const old = await started(a.token);
     t.clock.advance((PAYMENTS_ABANDON_AFTER_MINUTES - 1) * 60_000);
     const fresh = await started(a.token, { purpose: "extra", id: "five-photos" });
-    expect(await abandonPendingPayments(db, t.clock.now())).toBe(0);
-    t.clock.advance(2 * 60_000);
-    const marked = await abandonPendingPayments(db, t.clock.now());
-    expect(marked).toBeGreaterThanOrEqual(1);
+    await abandonPendingPayments(db, t.clock.now()); // sweeps every spec payment that is 60 minutes or older, none of ours yet
+    expect((await rows(old.reference)).status).toBe("pending");
+    t.clock.advance(60_000);
+    expect(await abandonPendingPayments(db, t.clock.now())).toBeGreaterThanOrEqual(1);
     expect((await rows(old.reference)).status).toBe("abandoned");
     expect((await rows(fresh.reference)).status).toBe("pending");
     const body = await successBody(old.reference);
     expect((await signedHook(body)).status).toBe(200);
     const row = await rows(old.reference);
     expect(row.status).toBe("succeeded");
-    expect(JSON.stringify(row.options)).toContain("late_success_after_abandoned");
+    expect(row.flags).toEqual(["late_success_after_abandoned"]);
     expect(calls).toHaveLength(1);
     expect(await abandonPendingPayments(db, t.clock.now())).toBeGreaterThanOrEqual(0);
     expect((await rows(old.reference)).status).toBe("succeeded");
@@ -374,7 +375,7 @@ describe("payments core E-87, E-88, E-217 (contract)", () => {
     expect((await signedHook(await successBody(p.reference))).status).toBe(200);
     const row = await rows(p.reference);
     expect(row).toMatchObject({ status: "succeeded", fulfilledAt: null });
-    expect(JSON.stringify(row.options)).toContain("account_erased");
+    expect(row.flags).toContain("account_erased");
     expect(calls).toHaveLength(0);
     expect(unbalanced(await ledgerOf(row.id))).toEqual([]);
     expect((await start(a.token, KEEPSAKE)).status).toBe(401);

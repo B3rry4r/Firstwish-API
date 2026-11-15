@@ -68,7 +68,7 @@ export class PaymentsService {
    * then asks the payments port to initialise (outside the transaction). The same Idempotency-Key and body gives the same payment;
    * the same key with another body is 409. Everything is under the account lock.
    */
-  async start(accountId: string, body: PostPaymentsBody, idempotencyKey: string | undefined): Promise<PaymentStarted<null>> {
+  async start(accountId: string, body: PostPaymentsBody, idempotencyKey: string | undefined): Promise<{ started: PaymentStarted<null>; status: 200 | 201 }> {
     const req = parseRequest(body);
     if (idempotencyKey !== undefined && !KEY.test(idempotencyKey)) {
       throw AppError.validation({ "Idempotency-Key": "Must be 8 to 100 letters, digits or . _ : -" });
@@ -104,7 +104,7 @@ export class PaymentsService {
           providerReference: `fw-${id}`,
           idempotencyKey: storedKey,
           channel: req.way,
-          options: writeOptions({ request: req.info, server: { fingerprint: req.fingerprint, flags: [] } }),
+          options: writeOptions({ request: req.info, server: { fingerprint: req.fingerprint } }),
           createdAt: now,
           updatedAt: now,
         },
@@ -117,7 +117,9 @@ export class PaymentsService {
       if (opts.server.fingerprint !== req.fingerprint) {
         throw AppError.conflict("idempotency_key_reused", "This Idempotency-Key was already used for a different payment.");
       }
-      return this.started(await this.waitForCheckout(created.row));
+      // FF4: a repeat of a payment that is no longer waiting answers 200 with it as it stands and no checkout address.
+      const cur = await this.waitForCheckout(created.row);
+      return { started: this.started(cur), status: cur.status === "pending" ? 201 : 200 };
     }
 
     let authorizationUrl: string;
@@ -136,7 +138,7 @@ export class PaymentsService {
     const opts = readOptions(created.row.options);
     opts.server.authorizationUrl = authorizationUrl;
     const row = await this.db.payment.update({ where: { id: created.row.id }, data: { options: writeOptions(opts), updatedAt: this.clock.now() } });
-    return this.started(row);
+    return { started: this.started(row), status: 201 };
   }
 
   /** A repeat that arrives while the first is still asking the provider waits for the checkout address (a few seconds at most). */
@@ -153,7 +155,7 @@ export class PaymentsService {
   }
 
   private started(p: Payment): PaymentStarted<null> {
-    return { payment: { reference: p.providerReference, state: wireState(p.status), amountKobo: Number(p.amountKobo), authorizationUrl: readOptions(p.options).server.authorizationUrl ?? "" }, item: null };
+    return { payment: { reference: p.providerReference, state: wireState(p.status), amountKobo: Number(p.amountKobo), authorizationUrl: p.status === "pending" ? (readOptions(p.options).server.authorizationUrl ?? "") : "" }, item: null };
   }
 
   /**
@@ -176,6 +178,8 @@ export class PaymentsService {
       const v = await this.port.verify(reference);
       return { reference, status: v.status, amountKobo: BigInt(v.amount.kobo), currency: "NGN", paidAt: v.paidAt };
     } catch {
+      // FF1: the port is time-limited, so a provider that never answers arrives here as a PortTimeoutError within the limit. It
+      // grants nothing: the caller answers the payment as it stands.
       return null;
     }
   }

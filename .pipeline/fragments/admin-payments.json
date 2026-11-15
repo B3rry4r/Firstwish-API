@@ -1,0 +1,282 @@
+{
+ "reads": [
+  {
+   "entity": "Payment (row)",
+   "fields": [
+    {
+     "name": "ref",
+     "type": "string (Paystack reference e.g. FW-PSK-24A6B5)",
+     "nullable": false
+    },
+    {
+     "name": "what",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "line",
+     "type": "'tickets'|'extras'|'keeps'|'pass'|'pro'|'vault'|'concierge'|'creator'",
+     "nullable": false
+    },
+    {
+     "name": "amount",
+     "type": "number (whole naira, fixture figure)",
+     "nullable": false
+    },
+    {
+     "name": "state",
+     "type": "'paid'|'failed'|'refunding'|'refunded'",
+     "nullable": false
+    },
+    {
+     "name": "at",
+     "type": "ISO datetime without zone (YYYY-MM-DDTHH:mm:ss)",
+     "nullable": false
+    },
+    {
+     "name": "person",
+     "type": "string (Person.id)",
+     "nullable": false
+    },
+    {
+     "name": "wish",
+     "type": "string wish number",
+     "nullable": true
+    },
+    {
+     "name": "personName",
+     "type": "string (joined from the person; '' when unknown)",
+     "nullable": false
+    }
+   ],
+   "cardinality": "list",
+   "filtersOrSort": [
+    "q: matches Paystack reference (substring), wish number (exact or zero-padded to 4), or last 3+ digits of payer phone (last four compared)",
+    "state: ''|paid|failed|refunding|refunded",
+    "default sort at descending; client sorts columns; client pages 10 rows",
+    "list read a second time unfiltered only to count each state chip"
+   ],
+   "pagination": "none from the seam (full array); the Table pages 10 rows client side",
+   "evidence": "GET /v1/admin/payments?q=&state= -> PaymentRow[]. q matches a Paystack reference, a wish number, or the last 3+ digits of the payer's phone."
+  },
+  {
+   "entity": "Payment (single) with its record",
+   "fields": [
+    {
+     "name": "ref",
+     "type": "string (Paystack reference e.g. FW-PSK-24A6B5)",
+     "nullable": false
+    },
+    {
+     "name": "what",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "line",
+     "type": "'tickets'|'extras'|'keeps'|'pass'|'pro'|'vault'|'concierge'|'creator'",
+     "nullable": false
+    },
+    {
+     "name": "amount",
+     "type": "number (whole naira, fixture figure)",
+     "nullable": false
+    },
+    {
+     "name": "state",
+     "type": "'paid'|'failed'|'refunding'|'refunded'",
+     "nullable": false
+    },
+    {
+     "name": "at",
+     "type": "ISO datetime without zone (YYYY-MM-DDTHH:mm:ss)",
+     "nullable": false
+    },
+    {
+     "name": "person",
+     "type": "string (Person.id)",
+     "nullable": false
+    },
+    {
+     "name": "wish",
+     "type": "string wish number",
+     "nullable": true
+    },
+    {
+     "name": "personName",
+     "type": "string (joined from the person; '' when unknown)",
+     "nullable": false
+    },
+    {
+     "name": "record",
+     "type": "Event[] {at,what,by?,reason?}: provider line first ('Paid at the provider' or 'Payment failed at the provider') then staff events like 'Refunded in full, \u20a6\u2026'",
+     "nullable": false
+    }
+   ],
+   "cardinality": "single",
+   "filtersOrSort": [
+    "by ref from ?ref= in the address"
+   ],
+   "pagination": "none",
+   "evidence": "GET /v1/admin/payments/:ref -> { payment, record }"
+  },
+  {
+   "entity": "LedgerDay",
+   "fields": [
+    {
+     "name": "day",
+     "type": "YYYY-MM-DD",
+     "nullable": false
+    },
+    {
+     "name": "ours",
+     "type": "number (whole naira sum of non-failed payments that day)",
+     "nullable": false
+    },
+    {
+     "name": "oursCount",
+     "type": "number",
+     "nullable": false
+    },
+    {
+     "name": "theirs",
+     "type": "number (provider settlement sum)",
+     "nullable": false
+    },
+    {
+     "name": "theirsCount",
+     "type": "number",
+     "nullable": false
+    },
+    {
+     "name": "diffs",
+     "type": "LedgerDiff[] {ref:string, gap:'not_at_provider'|'not_in_ours'|'amount', ours:number|null, theirs:number|null, what:string}",
+     "nullable": false
+    }
+   ],
+   "cardinality": "single",
+   "filtersOrSort": [
+    "day chosen from LEDGER_DAYS: a client constant of seven days, newest first, default first"
+   ],
+   "pagination": "none",
+   "note": "our side counts refunded payments too (a refund is its own line later); failed payments excluded. The provider side (Paystack settlement per day) must be read from Paystack; today it is fixture (providerOnly/providerMissing/providerAmount).",
+   "evidence": "GET /v1/admin/ledger?day=YYYY-MM-DD -> LedgerDay. Our payments that day beside the provider's settlement for it."
+  }
+ ],
+ "actions": [
+  {
+   "name": "refund",
+   "kind": "custom",
+   "entity": "Payment",
+   "payload": [
+    {
+     "name": "ref",
+     "type": "string (path)",
+     "nullable": false
+    },
+    {
+     "name": "reason",
+     "type": "string (trimmed, 4 or more characters; the Confirm dialog disables the button below 4, the seam throws 'failed')",
+     "nullable": false
+    }
+   ],
+   "expectedResponse": {
+    "entity": "Payment (new state)",
+    "cardinality": "single"
+   },
+   "note": "offered when state==='paid' (label Refund); also performed for state 'refunding' (label Send the refund, started from a wish). Sample sets state 'refunded' at once; the code comment says the payment should read Refunded only when the provider confirms. Full amount only, no partial. Writes a staff event on the payment record and on the wish's timeline; audit log. Failing states: not_found, not_allowed (state not paid/refunding).",
+   "evidence": "POST /v1/admin/payments/:ref/refund { reason } -> Payment. The server asks the provider for a full refund; the payment reads Refunded when the provider confirms. Written to the audit log, and to the wish's life."
+  }
+ ],
+ "authContext": {
+  "requiresAuth": true,
+  "side": "staff",
+  "rolesObserved": [
+   "owner",
+   "ops",
+   "finance"
+  ],
+  "note": "Roles from lib/admin/d-fixtures.ts access table (marked 'Default (lead), owner may override'). Staff sign-in is a six-digit code (admin-api.ts verifyCode accepts any six digits in sample), kept in memory only."
+ },
+ "special": {
+  "realtime": false,
+  "uploads": false,
+  "downloads": false,
+  "paging": "client side 10 rows over a full list",
+  "notes": [
+   "view, ref and the day are held in the address (?view=ledger&ref=...) and local state",
+   "re-read after any staff change via an in-process listener (not polling)",
+   "payment drawer links to /admin/people/:id and /admin/wishes/:no"
+  ]
+ },
+ "uiStatesHandled": [
+  {
+   "state": "loading (list, drawer, ledger)",
+   "entersWhen": "!data (list/ledger) or !p (drawer): Loading skeleton",
+   "reachable": "no today (the seam is an async function over in-memory data and resolves in a microtask); yes once a real request exists"
+  },
+  {
+   "state": "error",
+   "entersWhen": "useAdmin read rejects: Problem with the error text and a retry (again)",
+   "reachable": "list/ledger: no today; drawer: yes for an unknown ?ref= (not_found 'That is not here.')"
+  },
+  {
+   "state": "empty (list)",
+   "entersWhen": "data.length===0: 'No payment found' with query/state text",
+   "reachable": "yes (filter with no match)"
+  },
+  {
+   "state": "empty (ledger diffs)",
+   "entersWhen": "data.diffs.length===0: 'Both sides agree' and Agrees pill",
+   "reachable": "yes (a day with no gaps)"
+  },
+  {
+   "state": "loaded",
+   "entersWhen": "rows / ledger stats",
+   "reachable": "yes"
+  },
+  {
+   "state": "updating",
+   "entersWhen": "loading with data present: '\u00b7 updating' suffix on the count",
+   "reachable": "yes after a staff change"
+  },
+  {
+   "state": "refund confirm failing",
+   "entersWhen": "Confirm onConfirm throws: 'That did not go through. Try again.'",
+   "reachable": "yes (not_allowed when state changed)"
+  }
+ ],
+ "uiStatesDesigned": [
+  "loading",
+  "empty",
+  "error",
+  "loaded"
+ ],
+ "stubsObserved": [
+  {
+   "file": "lib/admin-api.ts:3-8 and lib/admin/c-api.ts:3-8",
+   "evidence": "Header: 'NOT CONNECTED YET ... the bodies read marked sample data ... keep staff changes in memory on this page: a reload starts again from the sample'; CONNECTED=false (admin-api.ts:17)",
+   "standsInFor": "the /v1/admin server for payments and the ledger",
+   "consequence": "every figure and every change is fixture/in-memory; a reload loses staff changes; the header says 'Sample data'"
+  },
+  {
+   "file": "lib/admin/c-api.ts:140-165 and lib/admin/c-fixtures.ts:16-26",
+   "evidence": "getLedger builds the provider side from F.payments minus providerMissing, with providerAmount overrides and providerOnly lines; screen copy: 'Paystack's side here is sample data until the server reads it'",
+   "standsInFor": "Paystack settlement for a day",
+   "consequence": "ledger differences are invented, not real reconciliation"
+  },
+  {
+   "file": "lib/admin/c-api.ts:84-96",
+   "evidence": "refundPayment sets p.state='refunded' immediately; doc says reads Refunded when the provider confirms",
+   "standsInFor": "Paystack refund call and confirmation webhook",
+   "consequence": "no refunding->refunded transition by provider; refund money never moves"
+  },
+  {
+   "file": "components/admin/c/Payments.tsx:14-15,LEDGER_DAYS in c-fixtures.ts:26",
+   "evidence": "ledger day chips are the constant LEDGER_DAYS (2026-11-09..15)",
+   "standsInFor": "a server-supplied window of days / today",
+   "consequence": "the day list never moves with the date"
+  }
+ ],
+ "screenId": "admin-payments"
+}

@@ -1,0 +1,173 @@
+{
+ "reads": [
+  {
+   "entity": "Business (row)",
+   "fields": [
+    {
+     "name": "id",
+     "type": "string (b_...)",
+     "nullable": false
+    },
+    {
+     "name": "name",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "person",
+     "type": "string (Person.id of the owner; '' when not one of the sample people)",
+     "nullable": false
+    },
+    {
+     "name": "ownerName",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "plan",
+     "type": "PlanKey from lib/pro-data (starter|studio|pack|... as PLANS keys)",
+     "nullable": false
+    },
+    {
+     "name": "since",
+     "type": "YYYY-MM-DD",
+     "nullable": false
+    },
+    {
+     "name": "renews",
+     "type": "YYYY-MM-DD",
+     "nullable": true
+    },
+    {
+     "name": "packEnds",
+     "type": "YYYY-MM-DD",
+     "nullable": true
+    },
+    {
+     "name": "used",
+     "type": "number (wishes made this month or from the pack)",
+     "nullable": false
+    },
+    {
+     "name": "rolled",
+     "type": "number (unused wishes brought over)",
+     "nullable": false
+    },
+    {
+     "name": "vaultUsedGb",
+     "type": "number (GB)",
+     "nullable": false
+    },
+    {
+     "name": "logins",
+     "type": "BizLogin[] {id,contact (masked),role:'owner'|'team',status:'invited'|'active',lastIn?:ISO}",
+     "nullable": false
+    },
+    {
+     "name": "invoices",
+     "type": "BizInvoice[] {no,date,what,amount:number naira,vat:number naira,state:'paid'|'due'|'failed'} newest first; the UI reads invoices[0] as the last invoice",
+     "nullable": false
+    },
+    {
+     "name": "record",
+     "type": "Event[] {at,what,by?,reason?}",
+     "nullable": false
+    },
+    {
+     "name": "allowance",
+     "type": "number (derived: plan wishes + rolled for monthly plans)",
+     "nullable": false
+    },
+    {
+     "name": "vault",
+     "type": "VaultBill {included:number GB,over:number GB,blocks:number,amount:number naira}",
+     "nullable": false
+    }
+   ],
+   "cardinality": "list",
+   "filtersOrSort": [
+    "q: business name or owner name, substring",
+    "sorted by name; client column sort; no paging (Table default)",
+    "a second unfiltered read feeds the stat tiles: count, monthly-plan count, total used, total space billed, count with a failed invoice"
+   ],
+   "pagination": "none (full list)",
+   "note": "allowance and vault are computed client-side in the seam from PLANS/VAULT in lib/pro-data.ts; the UI also reads PLANS[b.plan].monthly/.logins/.name directly. The server must either send allowance and vault or the plan table must stay a shared constant.",
+   "evidence": "GET /v1/admin/businesses?q= -> BusinessRow[]. q matches the business or its owner."
+  }
+ ],
+ "actions": [],
+ "authContext": {
+  "requiresAuth": true,
+  "side": "staff",
+  "rolesObserved": [
+   "owner",
+   "ops",
+   "finance"
+  ],
+  "note": "Roles from lib/admin/d-fixtures.ts access table (marked 'Default (lead), owner may override'). Staff sign-in is a six-digit code (admin-api.ts verifyCode accepts any six digits in sample), kept in memory only."
+ },
+ "special": {
+  "realtime": false,
+  "uploads": false,
+  "downloads": false,
+  "paging": "none",
+  "notes": [
+   "read-only screen: no actions",
+   "row links to /admin/businesses/:id"
+  ]
+ },
+ "uiStatesHandled": [
+  {
+   "state": "loading",
+   "entersWhen": "!data: Loading",
+   "reachable": "no today (the seam is an async function over in-memory data and resolves in a microtask); yes once a real request exists"
+  },
+  {
+   "state": "error",
+   "entersWhen": "read rejects: Problem + retry",
+   "reachable": "no today (in-memory read never throws)"
+  },
+  {
+   "state": "empty",
+   "entersWhen": "data.length===0: 'No business found' (Nothing matches q)",
+   "reachable": "yes (a query with no match)"
+  },
+  {
+   "state": "loaded",
+   "entersWhen": "stat tiles (only once the unfiltered read arrives) and the table",
+   "reachable": "yes"
+  },
+  {
+   "state": "updating",
+   "entersWhen": "'\u00b7 updating' on the count while a re-read runs",
+   "reachable": "yes"
+  }
+ ],
+ "uiStatesDesigned": [
+  "loading",
+  "empty",
+  "error",
+  "loaded"
+ ],
+ "stubsObserved": [
+  {
+   "file": "lib/admin-api.ts:3-8 and lib/admin/c-api.ts:3-8",
+   "evidence": "Header: 'NOT CONNECTED YET ... the bodies read marked sample data ... keep staff changes in memory on this page: a reload starts again from the sample'; CONNECTED=false (admin-api.ts:17)",
+   "standsInFor": "the /v1/admin server for businesses",
+   "consequence": "every figure and every change is fixture/in-memory; a reload loses staff changes; the header says 'Sample data'"
+  },
+  {
+   "file": "lib/admin/c-api.ts:107-114",
+   "evidence": "vaultBill and row() compute allowance and Vault overage with PLANS/VAULT constants in the browser",
+   "standsInFor": "server-side billing of Vault space and plan allowances",
+   "consequence": "billing arithmetic duplicated on the client; 'Space billed' is a display figure, not an invoice"
+  },
+  {
+   "file": "lib/admin/c-fixtures.ts:1-4",
+   "evidence": "'Every record here is made up ... Counts, dates and names are SAMPLE (PROVISIONAL)'",
+   "standsInFor": "real Pro businesses",
+   "consequence": "all businesses, logins, invoices are fixture"
+  }
+ ],
+ "screenId": "admin-businesses"
+}

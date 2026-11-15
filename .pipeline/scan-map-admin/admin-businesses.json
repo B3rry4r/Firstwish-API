@@ -1,0 +1,34 @@
+{
+ "id": "admin-businesses",
+ "title": "Admin: Businesses",
+ "uiFiles": [
+  "app/admin/businesses/page.tsx",
+  "components/admin/c/Businesses.tsx",
+  "components/admin/ui.tsx"
+ ],
+ "dataFiles": [
+  "lib/admin/c-api.ts",
+  "lib/admin/c-types.ts",
+  "lib/admin/c-fixtures.ts",
+  "lib/admin-api.ts",
+  "lib/admin-types.ts",
+  "lib/admin-fixtures.ts"
+ ],
+ "dataProvenance": "inline",
+ "localStore": {
+  "reads": "in-memory cdb.businesses (clone of c-fixtures businesses)",
+  "populatedBy": null
+ },
+ "inlineLiterals": [
+  {
+   "file": "lib/admin/c-fixtures.ts",
+   "description": "businesses: sample Pro businesses (Bakare Events, Lumen Studio Lagos, Mara Photography, Halden and Co, Nairobi Brew Co...) with logins and invoices"
+  },
+  {
+   "file": "lib/pro-data.ts",
+   "description": "PLANS (name, price, wishes, vault, logins, monthly), VAULT (block, price, bulkFrom, bulkPrice): plan sizes and prices read client side, not from the seam"
+  }
+ ],
+ "route": "/admin/businesses",
+ "area": "admin"
+}

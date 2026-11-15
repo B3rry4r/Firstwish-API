@@ -1,0 +1,228 @@
+{
+ "reads": [
+  {
+   "entity": "Price",
+   "fields": [
+    {
+     "name": "key",
+     "type": "string (ticket.<slug>, extra.<slug>, keep.<slug>, pass, pro.<planKey>, vault.block, vault.bulk, studio.creator, studio.signed, studio.pack, studio.review, offer.ends)",
+     "nullable": false
+    },
+    {
+     "name": "group",
+     "type": "'tickets'|'extras'|'keeps'|'pass'|'pro'|'pack'|'vault'|'studio'|'offer'",
+     "nullable": false
+    },
+    {
+     "name": "name",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "per",
+     "type": "string ('a wish', 'a month', 'once', 'list price', 'never discounted', 'last day')",
+     "nullable": false
+    },
+    {
+     "name": "kind",
+     "type": "'naira'|'date'",
+     "nullable": false
+    },
+    {
+     "name": "value",
+     "type": "number (whole naira) when kind naira; YYYY-MM-DD string when kind date",
+     "nullable": false
+    },
+    {
+     "name": "list",
+     "type": "number (whole naira, the was/list price)",
+     "nullable": true
+    },
+    {
+     "name": "from",
+     "type": "string (sample provenance: the lib file the figure was read from)",
+     "nullable": false
+    },
+    {
+     "name": "changed",
+     "type": "boolean",
+     "nullable": true
+    }
+   ],
+   "cardinality": "list",
+   "filtersOrSort": [
+    "grouped client-side in fixed order offer, tickets, extras, keeps, pass, pro, pack, vault, studio"
+   ],
+   "pagination": "none",
+   "note": "The screen also computes notes client side: extras show '\u20a6X with 40% off' using OFF from lib/maker.ts; others show 'List \u20a6X' from list. The 'The 40% off ends' row is a date price. Prices are currently constants in the web app's lib files, so the server must become their source (conventions: prices are read from configuration tables).",
+   "evidence": "GET /v1/admin/prices -> Price[]"
+  },
+  {
+   "entity": "PriceChange (audit entries, area prices)",
+   "fields": [
+    {
+     "name": "at",
+     "type": "ISO datetime",
+     "nullable": false
+    },
+    {
+     "name": "by",
+     "type": "string (staff name)",
+     "nullable": false
+    },
+    {
+     "name": "key",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "name",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "from",
+     "type": "string (formatted old value e.g. \u20a67,000 or '31 Jan 2027')",
+     "nullable": false
+    },
+    {
+     "name": "to",
+     "type": "string (formatted new value)",
+     "nullable": false
+    },
+    {
+     "name": "reason",
+     "type": "string",
+     "nullable": false
+    }
+   ],
+   "cardinality": "list",
+   "filtersOrSort": [
+    "newest first"
+   ],
+   "pagination": "none",
+   "note": "from/to arrive as formatted display strings in the sample; the screen prints them as is",
+   "evidence": "GET /v1/admin/audit?area=prices -> PriceChange[], newest first"
+  }
+ ],
+ "actions": [
+  {
+   "name": "set-price",
+   "kind": "update",
+   "entity": "Price",
+   "payload": [
+    {
+     "name": "key",
+     "type": "string (path)",
+     "nullable": false
+    },
+    {
+     "name": "value",
+     "type": "number (whole naira, > 0 and <= 10,000,000, typed with optional \u20a6 and commas) or YYYY-MM-DD string for the date row (the UI accepts 'YYYY-MM-DD' or 'D Mon YYYY')",
+     "nullable": false
+    },
+    {
+     "name": "reason",
+     "type": "string (trimmed, 4 or more characters; the Confirm dialog disables the button below 4, the seam throws 'failed')",
+     "nullable": false
+    }
+   ],
+   "expectedResponse": {
+    "entity": "Price",
+    "cardinality": "single"
+   },
+   "note": "Seam refuses (failed) an empty value, a value equal to the current one, or a value whose type differs from the price's; not_found for an unknown key. 'The new price holds for every payment after it'. Writes an audit entry with old and new value, who and why. The UI also blocks 'That is the price now.' and malformed input before the dialog button enables.",
+   "evidence": "PUT /v1/admin/prices/:key { value, reason } -> Price. The new price holds for every payment after it; it is written to the audit log with the old and new value, who and why."
+  }
+ ],
+ "authContext": {
+  "requiresAuth": true,
+  "side": "staff",
+  "rolesObserved": [
+   "owner",
+   "finance"
+  ],
+  "note": "Roles from lib/admin/d-fixtures.ts access table (marked 'Default (lead), owner may override'). Staff sign-in is a six-digit code (admin-api.ts verifyCode accepts any six digits in sample), kept in memory only."
+ },
+ "special": {
+  "realtime": false,
+  "uploads": false,
+  "downloads": false,
+  "paging": "none",
+  "notes": [
+   "ops is excluded from /admin/prices in the access table",
+   "the date price (offer end) is a calendar date, not a timestamp",
+   "input parsing (readPrice/parseDay) lives in the client"
+  ]
+ },
+ "uiStatesHandled": [
+  {
+   "state": "loading",
+   "entersWhen": "!data: Loading (prices); the changes block has its own Loading while log is null",
+   "reachable": "no today (the seam is an async function over in-memory data and resolves in a microtask); yes once a real request exists"
+  },
+  {
+   "state": "error",
+   "entersWhen": "prices read rejects: Problem + retry (the changes log has no error state)",
+   "reachable": "no today (in-memory read never throws)"
+  },
+  {
+   "state": "empty (changes)",
+   "entersWhen": "log.length===0: 'No price has been changed on this page yet.'",
+   "reachable": "yes (before any change)"
+  },
+  {
+   "state": "empty (prices)",
+   "entersWhen": "none coded; a group with no rows is skipped",
+   "reachable": "no"
+  },
+  {
+   "state": "loaded",
+   "entersWhen": "grouped price lists with Change buttons",
+   "reachable": "yes"
+  },
+  {
+   "state": "changed marker",
+   "entersWhen": "p.changed shows a 'Changed' pill",
+   "reachable": "yes after a change this session"
+  },
+  {
+   "state": "invalid input",
+   "entersWhen": "raw typed and not ok: 'Write a whole naira amount, like 7000.' / 'Write a day like 31 Jan 2027.' / 'That is the price now.'",
+   "reachable": "yes"
+  }
+ ],
+ "uiStatesDesigned": [
+  "loading",
+  "empty",
+  "error",
+  "loaded"
+ ],
+ "stubsObserved": [
+  {
+   "file": "lib/admin-api.ts:3-8 and lib/admin/c-api.ts:3-8",
+   "evidence": "Header: 'NOT CONNECTED YET ... the bodies read marked sample data ... keep staff changes in memory on this page: a reload starts again from the sample'; CONNECTED=false (admin-api.ts:17)",
+   "standsInFor": "the /v1/admin server for prices",
+   "consequence": "every figure and every change is fixture/in-memory; a reload loses staff changes; the header says 'Sample data'"
+  },
+  {
+   "file": "lib/admin/c-api.ts:223-248",
+   "evidence": "basePrices() reads prices from lib/catalog.ts, lib/pro-data.ts, lib/studio.ts; comment 'A change staff make is kept here (in memory) until the server holds prices'",
+   "standsInFor": "a prices configuration table",
+   "consequence": "a price change on this screen changes nothing the site charges; the site still uses its own constants"
+  },
+  {
+   "file": "lib/admin/c-api.ts:225",
+   "evidence": "const OFFER_ENDS = \"2027-01-31\"; // the site says '40% off until 31 January'",
+   "standsInFor": "the offer end date from configuration",
+   "consequence": "the offer end is a literal; changing it here does not move the site's copy"
+  },
+  {
+   "file": "lib/admin/c-api.ts:250-258 priceLog",
+   "evidence": "price change log kept in module memory, 'No price has been changed on this page yet'",
+   "standsInFor": "the audit log",
+   "consequence": "log is lost on reload; shows only this session's changes"
+  }
+ ],
+ "screenId": "admin-prices"
+}

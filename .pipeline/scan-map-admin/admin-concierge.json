@@ -1,0 +1,36 @@
+{
+ "id": "admin-concierge",
+ "title": "Admin: Concierge orders",
+ "uiFiles": [
+  "app/admin/concierge/page.tsx",
+  "app/admin/concierge/[id]/page.tsx",
+  "components/admin/c/Concierge.tsx",
+  "components/admin/Wishes.tsx",
+  "components/admin/ui.tsx"
+ ],
+ "dataFiles": [
+  "lib/admin/c-api.ts",
+  "lib/admin/c-types.ts",
+  "lib/admin/c-fixtures.ts",
+  "lib/admin-api.ts",
+  "lib/admin-types.ts",
+  "lib/admin-fixtures.ts"
+ ],
+ "dataProvenance": "inline",
+ "localStore": {
+  "reads": "in-memory cdb.orders and cdb.makers (clones of c-fixtures)",
+  "populatedBy": null
+ },
+ "inlineLiterals": [
+  {
+   "file": "lib/admin/c-fixtures.ts",
+   "description": "makers (mk_ngozi, mk_femi, mk_sade) and orders C-0010..C-0013 with names; amounts built from CONCIERGE_ONE (lib/catalog concierge price)"
+  },
+  {
+   "file": "lib/admin-fixtures.ts",
+   "description": "SAMPLE_DAY used as the sample 'today' (CONCIERGE_TODAY)"
+  }
+ ],
+ "route": "/admin/concierge and /admin/concierge/[id]",
+ "area": "admin"
+}

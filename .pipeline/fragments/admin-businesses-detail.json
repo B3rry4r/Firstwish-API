@@ -1,0 +1,164 @@
+{
+ "reads": [
+  {
+   "entity": "Business (single)",
+   "fields": [
+    {
+     "name": "id",
+     "type": "string (b_...)",
+     "nullable": false
+    },
+    {
+     "name": "name",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "person",
+     "type": "string (Person.id of the owner; '' when not one of the sample people)",
+     "nullable": false
+    },
+    {
+     "name": "ownerName",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "plan",
+     "type": "PlanKey from lib/pro-data (starter|studio|pack|... as PLANS keys)",
+     "nullable": false
+    },
+    {
+     "name": "since",
+     "type": "YYYY-MM-DD",
+     "nullable": false
+    },
+    {
+     "name": "renews",
+     "type": "YYYY-MM-DD",
+     "nullable": true
+    },
+    {
+     "name": "packEnds",
+     "type": "YYYY-MM-DD",
+     "nullable": true
+    },
+    {
+     "name": "used",
+     "type": "number (wishes made this month or from the pack)",
+     "nullable": false
+    },
+    {
+     "name": "rolled",
+     "type": "number (unused wishes brought over)",
+     "nullable": false
+    },
+    {
+     "name": "vaultUsedGb",
+     "type": "number (GB)",
+     "nullable": false
+    },
+    {
+     "name": "logins",
+     "type": "BizLogin[] {id,contact (masked),role:'owner'|'team',status:'invited'|'active',lastIn?:ISO}",
+     "nullable": false
+    },
+    {
+     "name": "invoices",
+     "type": "BizInvoice[] {no,date,what,amount:number naira,vat:number naira,state:'paid'|'due'|'failed'} newest first; the UI reads invoices[0] as the last invoice",
+     "nullable": false
+    },
+    {
+     "name": "record",
+     "type": "Event[] {at,what,by?,reason?}",
+     "nullable": false
+    },
+    {
+     "name": "allowance",
+     "type": "number (derived: plan wishes + rolled for monthly plans)",
+     "nullable": false
+    },
+    {
+     "name": "vault",
+     "type": "VaultBill {included:number GB,over:number GB,blocks:number,amount:number naira}",
+     "nullable": false
+    }
+   ],
+   "cardinality": "single",
+   "filtersOrSort": [
+    "by id from the route"
+   ],
+   "pagination": "none; logins, invoices and record are embedded lists",
+   "note": "Plan facts shown (Price, wishes per month, logins allowed, 'More space' copy) come from lib/pro-data.ts PLANS/VAULT/VAULT_MORE, not from the seam. Owner links to /admin/people/:person when person is non-empty.",
+   "evidence": "GET /v1/admin/businesses/:id -> BusinessRow"
+  }
+ ],
+ "actions": [],
+ "authContext": {
+  "requiresAuth": true,
+  "side": "staff",
+  "rolesObserved": [
+   "owner",
+   "ops",
+   "finance"
+  ],
+  "note": "Roles from lib/admin/d-fixtures.ts access table (marked 'Default (lead), owner may override'). Staff sign-in is a six-digit code (admin-api.ts verifyCode accepts any six digits in sample), kept in memory only."
+ },
+ "special": {
+  "realtime": false,
+  "uploads": false,
+  "downloads": false,
+  "paging": "none",
+  "notes": [
+   "read-only; no invoice actions (no retry or refund of a failed invoice)"
+  ]
+ },
+ "uiStatesHandled": [
+  {
+   "state": "loading",
+   "entersWhen": "!b and no error: back link, Head and Loading",
+   "reachable": "no today (the seam is an async function over in-memory data and resolves in a microtask); yes once a real request exists"
+  },
+  {
+   "state": "error",
+   "entersWhen": "read rejects: Problem + retry",
+   "reachable": "yes for an unknown id (not_found 'That is not here.')"
+  },
+  {
+   "state": "loaded",
+   "entersWhen": "stat tiles, plan facts, logins, record, invoices",
+   "reachable": "yes"
+  },
+  {
+   "state": "empty (invoices/logins/record)",
+   "entersWhen": "none coded: lists render empty; Timeline handles its own empty",
+   "reachable": "no (every sample business has at least one of each)"
+  },
+  {
+   "state": "last charge failed vs good standing",
+   "entersWhen": "invoices[0].state==='failed' selects pill",
+   "reachable": "yes (Bakare Events sample)"
+  }
+ ],
+ "uiStatesDesigned": [
+  "loading",
+  "empty",
+  "error",
+  "loaded"
+ ],
+ "stubsObserved": [
+  {
+   "file": "lib/admin-api.ts:3-8 and lib/admin/c-api.ts:3-8",
+   "evidence": "Header: 'NOT CONNECTED YET ... the bodies read marked sample data ... keep staff changes in memory on this page: a reload starts again from the sample'; CONNECTED=false (admin-api.ts:17)",
+   "standsInFor": "the /v1/admin server for business detail",
+   "consequence": "every figure and every change is fixture/in-memory; a reload loses staff changes; the header says 'Sample data'"
+  },
+  {
+   "file": "lib/admin/c-fixtures.ts:1-4",
+   "evidence": "'Every record here is made up'",
+   "standsInFor": "real business, logins, invoices",
+   "consequence": "all fixture; invoice 'VAT included' comes from vatIn() in lib/pro-data.ts, not a ledger"
+  }
+ ],
+ "screenId": "admin-businesses-detail"
+}

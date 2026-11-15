@@ -1,0 +1,30 @@
+{
+ "id": "admin-prices",
+ "title": "Admin: Prices",
+ "uiFiles": [
+  "app/admin/prices/page.tsx",
+  "components/admin/c/Prices.tsx",
+  "components/admin/ui.tsx"
+ ],
+ "dataFiles": [
+  "lib/admin/c-api.ts",
+  "lib/admin/c-types.ts",
+  "lib/admin/c-fixtures.ts",
+  "lib/admin-api.ts",
+  "lib/admin-types.ts",
+  "lib/admin-fixtures.ts"
+ ],
+ "dataProvenance": "inline",
+ "localStore": {
+  "reads": "in-memory BASE (built at load), priceSet overrides and priceLog (module-level in c-api.ts)",
+  "populatedBy": null
+ },
+ "inlineLiterals": [
+  {
+   "file": "lib/admin/c-api.ts",
+   "description": "basePrices() builds the price list from lib/catalog.ts (tickets, extras, pass), lib/pro-data.ts (plans, Vault), lib/studio.ts (creator plan, signed, credit pack, extra review) and the constant OFFER_ENDS 2027-01-31 ('site copy')"
+  }
+ ],
+ "route": "/admin/prices",
+ "area": "admin"
+}

@@ -1,0 +1,348 @@
+{
+ "reads": [
+  {
+   "entity": "Order (row)",
+   "fields": [
+    {
+     "name": "id",
+     "type": "string C-0012",
+     "nullable": false
+    },
+    {
+     "name": "from",
+     "type": "string (a person or a business display name)",
+     "nullable": false
+    },
+    {
+     "name": "person",
+     "type": "string Person.id",
+     "nullable": true
+    },
+    {
+     "name": "kind",
+     "type": "string (catalog kind slug)",
+     "nullable": false
+    },
+    {
+     "name": "occasion",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "shape",
+     "type": "'single'|'list'",
+     "nullable": false
+    },
+    {
+     "name": "placed",
+     "type": "ISO datetime",
+     "nullable": false
+    },
+    {
+     "name": "maker",
+     "type": "string Maker.id",
+     "nullable": true
+    },
+    {
+     "name": "amount",
+     "type": "number (whole naira: one wish = catalog price; a list = the quote)",
+     "nullable": false
+    },
+    {
+     "name": "names",
+     "type": "OrderName[] {id,name,date:YYYY-MM-DD,state:'waiting'|'made'|'delivered'|'opened',deliveredAt?:ISO,openedAt?:ISO}",
+     "nullable": false
+    },
+    {
+     "name": "record",
+     "type": "Event[] {at,what,by?,reason?}",
+     "nullable": false
+    },
+    {
+     "name": "state",
+     "type": "'new'|'making'|'delivering'|'delivered' (derived: no maker=new; all names delivered/opened=delivered; some=delivering; else making)",
+     "nullable": false
+    },
+    {
+     "name": "makerName",
+     "type": "string ('' when none)",
+     "nullable": false
+    },
+    {
+     "name": "nextDate",
+     "type": "YYYY-MM-DD",
+     "nullable": true
+    }
+   ],
+   "cardinality": "list",
+   "filtersOrSort": [
+    "q: order number, who ordered, or a name on the order (substring)",
+    "shape: ''|single|list",
+    "sorted by id descending; client column sort",
+    "an unfiltered read feeds the stat tiles (open, no maker, opened of delivered)"
+   ],
+   "pagination": "none (full list)",
+   "evidence": "GET /v1/admin/concierge/orders?q=&shape= -> OrderRow[]. q matches the order number, who ordered, or a name on it."
+  },
+  {
+   "entity": "Due (this week)",
+   "fields": [
+    {
+     "name": "from",
+     "type": "YYYY-MM-DD (window start)",
+     "nullable": false
+    },
+    {
+     "name": "to",
+     "type": "YYYY-MM-DD (start + 6 days)",
+     "nullable": false
+    },
+    {
+     "name": "due",
+     "type": "Due[] {order:string,from:string,name:OrderName,makerName:string} names in state waiting|made whose date is within the window, sorted by date",
+     "nullable": false
+    }
+   ],
+   "cardinality": "single",
+   "filtersOrSort": [
+    "from: the client passes CONCIERGE_TODAY (a sample constant, F.SAMPLE_DAY); days=7"
+   ],
+   "pagination": "none",
+   "note": "the screen never passes a day; the real server must use today",
+   "evidence": "GET /v1/admin/concierge/due?from=YYYY-MM-DD&days=7 -> Due[]: every name not yet delivered whose date falls in the 7 days from that day"
+  },
+  {
+   "entity": "Order (single, order detail route)",
+   "fields": [
+    {
+     "name": "id",
+     "type": "string C-0012",
+     "nullable": false
+    },
+    {
+     "name": "from",
+     "type": "string (a person or a business display name)",
+     "nullable": false
+    },
+    {
+     "name": "person",
+     "type": "string Person.id",
+     "nullable": true
+    },
+    {
+     "name": "kind",
+     "type": "string (catalog kind slug)",
+     "nullable": false
+    },
+    {
+     "name": "occasion",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "shape",
+     "type": "'single'|'list'",
+     "nullable": false
+    },
+    {
+     "name": "placed",
+     "type": "ISO datetime",
+     "nullable": false
+    },
+    {
+     "name": "maker",
+     "type": "string Maker.id",
+     "nullable": true
+    },
+    {
+     "name": "amount",
+     "type": "number (whole naira: one wish = catalog price; a list = the quote)",
+     "nullable": false
+    },
+    {
+     "name": "names",
+     "type": "OrderName[] {id,name,date:YYYY-MM-DD,state:'waiting'|'made'|'delivered'|'opened',deliveredAt?:ISO,openedAt?:ISO}",
+     "nullable": false
+    },
+    {
+     "name": "record",
+     "type": "Event[] {at,what,by?,reason?}",
+     "nullable": false
+    },
+    {
+     "name": "state",
+     "type": "'new'|'making'|'delivering'|'delivered' (derived: no maker=new; all names delivered/opened=delivered; some=delivering; else making)",
+     "nullable": false
+    },
+    {
+     "name": "makerName",
+     "type": "string ('' when none)",
+     "nullable": false
+    },
+    {
+     "name": "nextDate",
+     "type": "YYYY-MM-DD",
+     "nullable": true
+    }
+   ],
+   "cardinality": "single",
+   "filtersOrSort": [
+    "by id from the route"
+   ],
+   "pagination": "none; names and record embedded (names table pages 12 client side)",
+   "note": "detail shows delivered/opened counts and 'opened report' derived from names[].deliveredAt/openedAt; kindName(o.kind) comes from the catalog client side",
+   "evidence": "GET /v1/admin/concierge/orders/:id -> OrderRow"
+  },
+  {
+   "entity": "Maker",
+   "fields": [
+    {
+     "name": "id",
+     "type": "string mk_...",
+     "nullable": false
+    },
+    {
+     "name": "name",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "open",
+     "type": "number (open orders held: orders with this maker whose state is not delivered)",
+     "nullable": false
+    }
+   ],
+   "cardinality": "list",
+   "filtersOrSort": [
+    "none; the picker hides the order's current maker"
+   ],
+   "pagination": "none",
+   "evidence": "GET /v1/admin/concierge/makers -> Maker[] with the open orders each holds"
+  }
+ ],
+ "actions": [
+  {
+   "name": "assign-maker",
+   "kind": "custom",
+   "entity": "Order",
+   "payload": [
+    {
+     "name": "id",
+     "type": "string (path: order id)",
+     "nullable": false
+    },
+    {
+     "name": "maker",
+     "type": "string Maker.id (required: the button is disabled until one is picked)",
+     "nullable": false
+    },
+    {
+     "name": "reason",
+     "type": "string (trimmed, 4 or more characters; the Confirm dialog disables the button below 4, the seam throws 'failed')",
+     "nullable": false
+    }
+   ],
+   "expectedResponse": {
+    "entity": "OrderRow",
+    "cardinality": "single"
+   },
+   "note": "label 'Assign a maker' (no maker) or 'Change the maker'; offered unless state==='delivered'. One maker per order. Refused (not_allowed) when the maker is unchanged or the order is delivered; not_found for an unknown order or maker. Appends an Event 'Maker assigned: <name>' or 'Maker changed: <old> to <new>' with by and reason; audit log.",
+   "evidence": "POST /v1/admin/concierge/orders/:id/maker { maker, reason } -> OrderRow. One maker per order. Written to the audit log."
+  }
+ ],
+ "authContext": {
+  "requiresAuth": true,
+  "side": "staff",
+  "rolesObserved": [
+   "owner",
+   "ops",
+   "maker"
+  ],
+  "note": "Roles from lib/admin/d-fixtures.ts access table (marked 'Default (lead), owner may override'). Staff sign-in is a six-digit code (admin-api.ts verifyCode accepts any six digits in sample), kept in memory only."
+ },
+ "special": {
+  "realtime": false,
+  "uploads": false,
+  "downloads": false,
+  "paging": "none from the seam; the names table pages 12 rows client side",
+  "notes": [
+   "role maker is described in the Team table as 'Concierge orders given to them' but the screen lists every order, not only the maker's own; a ruling is needed on whether a maker sees only assigned orders",
+   "re-read after a staff change via an in-process listener"
+  ]
+ },
+ "uiStatesHandled": [
+  {
+   "state": "loading (list, due, detail)",
+   "entersWhen": "!data / !o: Loading",
+   "reachable": "no today (the seam is an async function over in-memory data and resolves in a microtask); yes once a real request exists"
+  },
+  {
+   "state": "error",
+   "entersWhen": "read rejects: Problem + retry",
+   "reachable": "list: no today; detail: yes for an unknown id (not_found)"
+  },
+  {
+   "state": "empty (orders)",
+   "entersWhen": "data.length===0: 'No order found'",
+   "reachable": "yes (a query with no match)"
+  },
+  {
+   "state": "empty (due)",
+   "entersWhen": "due.due.length===0: 'Nothing is due in the next seven days.'",
+   "reachable": "yes (a window with none)"
+  },
+  {
+   "state": "empty (opened report)",
+   "entersWhen": "delivered.length===0: 'Nothing delivered yet.'",
+   "reachable": "yes (a new order)"
+  },
+  {
+   "state": "loaded",
+   "entersWhen": "stat tiles, due block, table; detail with names and record",
+   "reachable": "yes"
+  },
+  {
+   "state": "no action offered",
+   "entersWhen": "state==='delivered' hides the assign button",
+   "reachable": "yes"
+  },
+  {
+   "state": "maker picker empty",
+   "entersWhen": "makers not loaded: picker shows no options (no loading state)",
+   "reachable": "no today"
+  }
+ ],
+ "uiStatesDesigned": [
+  "loading",
+  "empty",
+  "error",
+  "loaded"
+ ],
+ "stubsObserved": [
+  {
+   "file": "lib/admin-api.ts:3-8 and lib/admin/c-api.ts:3-8",
+   "evidence": "Header: 'NOT CONNECTED YET ... the bodies read marked sample data ... keep staff changes in memory on this page: a reload starts again from the sample'; CONNECTED=false (admin-api.ts:17)",
+   "standsInFor": "the /v1/admin server for concierge orders and makers",
+   "consequence": "every figure and every change is fixture/in-memory; a reload loses staff changes; the header says 'Sample data'"
+  },
+  {
+   "file": "lib/admin/c-api.ts:195-196",
+   "evidence": "const CONCIERGE_TODAY = F.SAMPLE_DAY; comment 'the sample's today: the server will use the real day'",
+   "standsInFor": "the real current date",
+   "consequence": "'due this week' is computed from a fixed sample day, not now"
+  },
+  {
+   "file": "lib/admin/c-api.ts:157-163",
+   "evidence": "state (new/making/delivering/delivered), makerName, nextDate and open counts are derived in the browser",
+   "standsInFor": "server-side order state",
+   "consequence": "derived values must be made consistent with real delivery events"
+  },
+  {
+   "file": "lib/admin/c-fixtures.ts:1-4",
+   "evidence": "all orders, names and makers are made up",
+   "standsInFor": "real Concierge orders",
+   "consequence": "opened/delivered reports are fixture"
+  }
+ ],
+ "screenId": "admin-concierge"
+}

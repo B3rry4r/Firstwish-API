@@ -114,6 +114,83 @@ describe("jobs frame", () => {
     t.clock.set(NOW);
   });
 
+  it("CC4 thirty schedules at once for one kind and key leave one row, waiting for the latest call's time", async () => {
+    const k = subject();
+    await Promise.all(Array.from({ length: 30 }, (_, i) => jobs.schedule("send-message", new Date(NOW.getTime() + 1000 + i), k)));
+    const rows = await db.job.findMany({ where: { subjectId: k } });
+    expect(rows).toHaveLength(1);
+    expect(rows[0].status).toBe("scheduled");
+  });
+
+  it("EE1 a handler that never returns is recorded failed (timeout) and retried with backoff; the worker goes on: 199 normal jobs all run", async () => {
+    const run = subject();
+    const stuck = `${run}-stuck`;
+    const keys = Array.from({ length: 199 }, (_, i) => `${run}-ok-${i}`);
+    const all = [stuck, ...keys];
+    await db.jobKindConfig.upsert({
+      where: { kind: "send-message" }, create: { id: nid(), kind: "send-message", timeLimitSeconds: 1 }, update: { timeLimitSeconds: 1 },
+    });
+    let ok = 0;
+    let stuckCalls = 0;
+    let aborted = false;
+    jobs.register("send-message", (c) => {
+      if (!all.includes(c.subjectId)) return { skipped: true };
+      if (c.subjectId === stuck) {
+        stuckCalls++;
+        c.signal.addEventListener("abort", () => (aborted = true));
+        return new Promise<never>(() => undefined);
+      }
+      ok++;
+      return { changed: {} };
+    });
+    try {
+      await Promise.all(all.map((x) => jobs.schedule("send-message", NOW, x)));
+      const ran = await jobs.runDue(500, all);
+      expect(ran).toBe(200);
+      expect(ok).toBe(199);
+      expect(aborted).toBe(true);
+      const job = await db.job.findFirstOrThrow({ where: { subjectId: stuck } });
+      expect(job).toMatchObject({ status: "failed", attempts: 1 });
+      const wait = job.runAt.getTime() - t.clock.now().getTime();
+      expect(wait).toBeGreaterThan(0);
+      const runs = await db.jobRun.findMany({ where: { jobId: job.id } });
+      expect(runs).toEqual([expect.objectContaining({ outcome: "failed", error: expect.stringMatching(/^timeout/) })]);
+      expect(runs[0].finishedAt).not.toBeNull();
+      expect(await db.job.count({ where: { subjectId: { in: keys }, status: "succeeded" } })).toBe(199);
+      // before the backoff nothing runs; after it, the stuck job is tried again (and times out again)
+      expect(await jobs.runDue(500, all)).toBe(0);
+      t.clock.advance(wait + 1);
+      expect(await jobs.runDue(500, all)).toBe(1);
+      expect(stuckCalls).toBe(2);
+      expect((await db.job.findUniqueOrThrow({ where: { id: job.id } })).attempts).toBe(2);
+    } finally {
+      jobs.register("send-message", () => ({ skipped: true }));
+      await db.jobKindConfig.deleteMany({ where: { kind: "send-message" } });
+      t.clock.set(NOW);
+    }
+  }, 60_000);
+
+  it("two workers and 200 due jobs: each job runs once", async () => {
+    const run = subject();
+    const keys = Array.from({ length: 200 }, (_, i) => `${run}-w-${i}`);
+    const counts = new Map<string, number>();
+    const worker2 = new JobsService(db, t.app.get(Clock), t.app.get(IdGenerator), t.app.get(QueueService));
+    const handler = (c: { subjectId: string }) => {
+      if (keys.includes(c.subjectId)) counts.set(c.subjectId, (counts.get(c.subjectId) ?? 0) + 1);
+      return { changed: {} };
+    };
+    jobs.register("send-message", handler);
+    worker2.register("send-message", handler);
+    await Promise.all(keys.map((x) => jobs.schedule("send-message", NOW, x)));
+    const [a, b] = await Promise.all([jobs.runDue(500, keys), worker2.runDue(500, keys)]);
+    expect(a + b).toBe(200);
+    expect(a).toBeGreaterThan(0);
+    expect(b).toBeGreaterThan(0);
+    expect([...counts.values()].every((n) => n === 1)).toBe(true);
+    expect(counts.size).toBe(200);
+    expect(await db.jobRun.count({ where: { job: { subjectId: { in: keys } } } })).toBe(200);
+  }, 60_000);
+
   it("the BullMQ tick runs due jobs from the queue", async () => {
     const k = subject();
     let ran = false;

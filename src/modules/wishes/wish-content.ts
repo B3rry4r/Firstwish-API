@@ -10,11 +10,8 @@ export const CONTENT_KEYS = [
 /** The keys that are chapters (a body of the wish the receiver reads); a kind's rules say which it needs. */
 export const CHAPTER_KEYS = ["blessing", "finale", "gift", "letter", "memory", "note", "reasons", "story", "timeline", "voices"] as const;
 
-/** Default: 256 KB of JSON; WISH_CONTENT_MAX_BYTES changes it. */
-export function contentMaxBytes(): number {
-  const n = Number(process.env.WISH_CONTENT_MAX_BYTES);
-  return Number.isInteger(n) && n >= 1024 ? n : 256 * 1024;
-}
+/** The size limit when the lifecycle config has no row (CC3: the config's wishContentMaxBytes is what applies). */
+export const DEFAULT_CONTENT_MAX_BYTES = 262144;
 
 export type FileRole = "photo" | "voice" | "clip" | "cover" | "sound" | "model";
 export interface FileRef {
@@ -22,48 +19,119 @@ export interface FileRef {
   role: FileRole;
 }
 
-const ROLE_KEYS: Record<string, FileRole> = {
-  photoId: "photo", voiceId: "voice", clipId: "clip", coverId: "cover", soundId: "sound", modelId: "model",
-};
-const ROLES = new Set<string>(Object.values(ROLE_KEYS));
-const PASSCODE = /^(pass[\s_-]?(code|word)|pin)$/i;
+/** The closed shape of the content document (EE3): every level lists the keys it may hold; anything else is 422. */
+type Shape =
+  | { t: "str" }
+  | { t: "bool" }
+  | { t: "file"; role: FileRole }
+  | { t: "list"; of: Shape; max: number }
+  | { t: "obj"; keys: Record<string, Shape> }
+  | { t: "map" }
+  | { t: "either"; of: Shape[] };
+
+const str: Shape = { t: "str" };
+const list = (of: Shape, max = 200): Shape => ({ t: "list", of, max });
+const obj = (keys: Record<string, Shape>): Shape => ({ t: "obj", keys });
+const file = (role: FileRole): Shape => ({ t: "file", role });
+const titleText = obj({ title: str, text: str });
 
 /**
- * The files a content document names: a property photoId, voiceId, clipId, coverId, soundId or modelId holding a file id, or a
- * property fileId beside a `role`. Also refuses (422) a passcode held in content: the passcode is Wish.passcodeHash (Q8).
+ * Where a file may be named, and nowhere else: cover.photoId and cover.coverId, story.photos[].photoId, story.clips[].clipId,
+ * story.modelId, voices.items[].voiceId, opening.soundId and ending.soundId. A file id under any other key is refused, so the
+ * receiver's links can come from the wish_file rows alone (the rows are written from exactly these places).
  */
-export function fileRefsOf(content: unknown): FileRef[] {
-  const out = new Map<string, FileRef>();
-  const bad: string[] = [];
-  const walk = (v: unknown, path: string, depth: number): void => {
-    if (depth > 12) throw AppError.validation({ content: "Nested too deep." });
-    if (Array.isArray(v)) return v.forEach((x, i) => walk(x, `${path}[${i}]`, depth + 1));
-    if (!v || typeof v !== "object") return;
-    const o = v as Record<string, unknown>;
-    for (const [k, val] of Object.entries(o)) {
-      if (PASSCODE.test(k)) bad.push(`${path}.${k}`);
-      const role = ROLE_KEYS[k] ?? (k === "fileId" && typeof o.role === "string" && ROLES.has(o.role) ? (o.role as FileRole) : undefined);
-      if (role) {
-        if (!isUuidV7(val)) bad.push(`${path}.${k}`);
-        else out.set(`${val}:${role}`, { fileId: val, role });
+const SHAPE: Record<(typeof CONTENT_KEYS)[number], Shape> = {
+  blessing: obj({ verse: str, cite: str }),
+  cover: obj({ from: str, title: str, more: list(str, 20), photoId: file("photo"), coverId: file("cover") }),
+  credits: list(obj({ role: str, name: str, handle: str }), 50),
+  details: { t: "either", of: [list(obj({ label: str, value: str }), 50), { t: "map" }] },
+  ending: obj({ id: str, scene: str, values: { t: "map" }, soundId: file("sound") }),
+  finale: obj({ title: str, text: str, sign: str }),
+  gift: titleText,
+  letter: obj({ paras: list(str, 200) }),
+  links: obj({ files: str, book: str }),
+  memory: titleText,
+  note: obj({ from: str, text: str }),
+  off: list(str, 30),
+  on: list(str, 30),
+  opening: obj({ id: str, scene: str, values: { t: "map" }, soundId: file("sound") }),
+  partner: str,
+  reasons: list(obj({ title: str }), 50),
+  story: obj({
+    title: str, text: str, captions: list(str, 60), modelId: file("model"),
+    photos: list(obj({ photoId: file("photo"), caption: str }), 200),
+    clips: list(obj({ clipId: file("clip"), caption: str }), 50),
+  }),
+  studio: str,
+  timeline: list(obj({ when: str, what: str }), 100),
+  voices: obj({ ask: str, items: list(obj({ name: str, text: str, role: str, voiceId: file("voice") }), 100) }),
+};
+
+const isPlain = (v: unknown): v is Record<string, unknown> => !!v && typeof v === "object" && !Array.isArray(v);
+
+/** Walks `v` against `shape`; adds a message per fault (at most 3 are kept) and the files it finds. */
+function walk(v: unknown, shape: Shape, path: string, bad: string[], refs: Map<string, FileRef>): boolean {
+  switch (shape.t) {
+    case "str":
+      if (typeof v !== "string") return bad.push(`${path} must be text`), false;
+      return true;
+    case "bool":
+      if (typeof v !== "boolean") return bad.push(`${path} must be true or false`), false;
+      return true;
+    case "file":
+      if (!isUuidV7(v)) return bad.push(`${path} is not a file id`), false;
+      refs.set(`${v}:${shape.role}`, { fileId: v, role: shape.role });
+      return true;
+    case "map":
+      if (!isPlain(v) || !Object.values(v).every((x) => typeof x === "string")) return bad.push(`${path} must be names with text values`), false;
+      return true;
+    case "list":
+      if (!Array.isArray(v) || v.length > shape.max) return bad.push(`${path} must be a list of at most ${shape.max}`), false;
+      return v.map((x, i) => walk(x, shape.of, `${path}[${i}]`, bad, refs)).every(Boolean);
+    case "obj": {
+      if (!isPlain(v)) return bad.push(`${path} must be an object`), false;
+      let ok = true;
+      for (const [k, val] of Object.entries(v)) {
+        const sub = Object.prototype.hasOwnProperty.call(shape.keys, k) ? shape.keys[k] : undefined;
+        if (!sub) {
+          bad.push(`${path}.${k} is not allowed`);
+          ok = false;
+        } else if (!walk(val, sub, `${path}.${k}`, bad, refs)) ok = false;
       }
-      walk(val, `${path}.${k}`, depth + 1);
+      return ok;
     }
-  };
-  walk(content, "content", 0);
-  if (bad.length) throw AppError.validation({ content: `Not allowed or not a file id: ${bad.slice(0, 3).join(", ")}.` });
-  return [...out.values()];
+    case "either": {
+      for (const option of shape.of) {
+        const tryBad: string[] = [];
+        const tryRefs = new Map<string, FileRef>();
+        if (walk(v, option, path, tryBad, tryRefs)) {
+          tryRefs.forEach((r, k) => refs.set(k, r));
+          return true;
+        }
+      }
+      return bad.push(`${path} has the wrong shape`), false;
+    }
+  }
 }
 
-/** Checks a whole content document: an object, known keys, size. Answers it unchanged. */
-export function checkContent(content: unknown): Record<string, unknown> {
-  if (!content || typeof content !== "object" || Array.isArray(content)) throw AppError.validation({ content: "Must be an object." });
-  const unknown = Object.keys(content).filter((k) => !(CONTENT_KEYS as readonly string[]).includes(k));
-  if (unknown.length) throw AppError.validation({ content: `Unknown parts: ${unknown.slice(0, 5).join(", ")}.` });
-  if (Buffer.byteLength(JSON.stringify(content), "utf8") > contentMaxBytes()) {
-    throw new AppError(422, "validation_failed", "Some fields need fixing.", { content: `Too large: most ${contentMaxBytes()} bytes.` });
+/**
+ * Checks a whole content document (EE3): an object, only the known keys, the closed shape under each key at every level, and the
+ * size against `maxBytes` (the lifecycle config's wishContentMaxBytes, CC3). Answers the document and the files it names.
+ */
+export function readContent(content: unknown, maxBytes: number): { content: Record<string, unknown>; refs: FileRef[] } {
+  if (!isPlain(content)) throw AppError.validation({ content: "Must be an object." });
+  const bad: string[] = [];
+  const refs = new Map<string, FileRef>();
+  for (const [k, v] of Object.entries(content)) {
+    const shape = (CONTENT_KEYS as readonly string[]).includes(k) ? SHAPE[k as keyof typeof SHAPE] : undefined;
+    if (!shape) bad.push(`${k} is not a part of a wish`);
+    else walk(v, shape, k, bad, refs);
   }
-  return content as Record<string, unknown>;
+  if (bad.length) throw AppError.validation({ content: `Not allowed: ${bad.slice(0, 3).join("; ")}.` });
+  if (Buffer.byteLength(JSON.stringify(content), "utf8") > maxBytes) {
+    throw new AppError(422, "validation_failed", "Some fields need fixing.", { content: `Too large: most ${maxBytes} bytes.` });
+  }
+  return { content, refs: [...refs.values()] };
 }
 
 /** What a kind needs before it can be sealed: at least one of these chapters has something in it. Default for every kind. */

@@ -3,7 +3,11 @@ import { Prisma } from "@prisma/client";
 import { PrismaService } from "../../common/db/prisma.service";
 import { AppError } from "../../common/errors/app-error";
 import { Clock } from "../../common/ports/clock.port";
+import { isUuidV7 } from "../../common/ids/uuidv7";
 import { IdGenerator } from "../../common/ports/ids.port";
+import { StoragePort } from "../../common/ports/storage.port";
+import { stagingKeyOf, variantsOf } from "../stored-files/file-rules";
+import { localToUtc } from "./local-time";
 import { EntitlementsService, grantOf } from "../price-book/entitlements.service";
 import { JobsService, JobContext, JobResult } from "../jobs/jobs.service";
 import { SavedWishesService } from "../saved-wishes/saved-wishes.service";
@@ -13,6 +17,10 @@ type Tx = Prisma.TransactionClient;
 const DAY = 24 * 60 * 60 * 1000;
 /** The notice goes out three days before the term ends (conventions: Timed work). */
 export const NOTICE_DAYS = 3;
+/** A sealed wish nobody opens rests this long after its open time (EE9, PROVISIONAL). */
+export const UNOPENED_DAYS = 365;
+/** The upload-cleanup jobs that remove one file a erased wish named (EE4): the subject is this prefix and the file's id. */
+export const ERASE_WISH_FILE_PREFIX = "erase-wish-file:";
 
 interface Locked {
   id: string;
@@ -20,6 +28,9 @@ interface Locked {
   erasedAt: Date | null;
   ticket: string | null;
   opensAt: Date | null;
+  openedAt: Date | null;
+  timeZone: string;
+  weddingDate: Date | null;
   endsAt: Date | null;
   restingSince: Date | null;
   eraseAfter: Date | null;
@@ -55,6 +66,7 @@ export class WishLifecycleService implements OnModuleInit {
     private readonly jobs: JobsService,
     private readonly saved: SavedWishesService,
     private readonly entitlements: EntitlementsService,
+    private readonly storage: StoragePort,
   ) {}
 
   onModuleInit(): void {
@@ -63,13 +75,14 @@ export class WishLifecycleService implements OnModuleInit {
     this.jobs.register("erase-wish", (c) => this.eraseJob(c));
     this.jobs.register("erase-now", (c) => this.eraseJob(c, true));
     this.jobs.register("restore-window-end", (c) => this.windowEndJob(c));
+    this.jobs.registerSubject("upload-cleanup", ERASE_WISH_FILE_PREFIX, (c) => this.eraseWishFileJob(c));
   }
 
   /** Locks the wish row. A missing wish or an id that is not a uuid is a 404. */
   async lock(tx: Tx, wishId: string): Promise<Locked> {
     if (!/^[0-9a-f-]{36}$/i.test(wishId)) throw AppError.notFound("No such wish.");
     const rows = await tx.$queryRaw<Locked[]>`
-      SELECT id::text AS id, status::text AS status, "erasedAt", ticket::text AS ticket, "opensAt", "endsAt", "restingSince", "eraseAfter"
+      SELECT id::text AS id, status::text AS status, "erasedAt", ticket::text AS ticket, "opensAt", "openedAt", "timeZone", "weddingDate", "endsAt", "restingSince", "eraseAfter"
         FROM wish WHERE id = ${wishId}::uuid FOR UPDATE`;
     if (!rows[0]) throw AppError.notFound("No such wish.");
     return rows[0];
@@ -97,7 +110,7 @@ export class WishLifecycleService implements OnModuleInit {
     if (outOfSight(to)) {
       await this.saved.forgetForWishes(tx, [wish.id]);
       await tx.wishLink.updateMany({ where: { wishId: wish.id }, data: { active: false } });
-      if (to === "erased") await tx.wishFile.deleteMany({ where: { wishId: wish.id } });
+      if (to === "erased") await this.releaseFiles(tx, wish.id, now);
       for (const kind of ["open-wish", "rest-wish", "erase-wish", "restore-window-end", "send-notice"]) await this.jobs.cancel(kind, wish.id, tx);
     }
     return from;
@@ -161,35 +174,55 @@ export class WishLifecycleService implements OnModuleInit {
     return (ticket && terms[ticket]) || 7;
   }
 
-  /** At the open time a sealed wish becomes live; its term starts now and its end and notice are scheduled. */
-  async openJob(c: JobContext): Promise<JobResult> {
-    return this.prisma.$transaction(async (tx) => {
-      const w = await this.lock(tx, c.subjectId);
-      if (stateOf(w) !== "sealed") return { skipped: true };
-      if (w.opensAt && w.opensAt.getTime() > c.now.getTime()) {
-        return { skipped: true, again: w.opensAt };
-      }
-      const endsAt = new Date(c.now.getTime() + (await this.termDays(tx, w.ticket)) * DAY);
-      await this.move(tx, w, "live", { cause: "job.open", jobRunId: c.jobRunId, data: { openedAt: c.now, endsAt } });
-      await this.jobs.schedule("rest-wish", endsAt, w.id, tx);
-      await this.jobs.schedule("send-notice", new Date(endsAt.getTime() - NOTICE_DAYS * DAY), w.id, tx);
-      return { changed: { from: "sealed", to: "live", endsAt: endsAt.toISOString() } };
-    });
+  /**
+   * EE7: the first opening by the receiver (B10 calls it in its own transaction when it serves the first read at or after the open
+   * time). In that one transaction: openedAt is set once, the wish becomes live, endsAt = openedAt + the ticket's term (EE8: a
+   * wedding wish counts from its wedding date, never ending before it was opened), and the rest job and the notice are scheduled.
+   * Answers `opened: false` when it was already opened or is not open yet; any number of calls at once change the row once
+   * (the row is locked, and a trigger keeps openedAt from moving).
+   */
+  async markOpened(tx: Tx, wishId: string, at: Date): Promise<{ opened: boolean; openedAt: Date | null; endsAt: Date | null }> {
+    const w = await this.lock(tx, wishId);
+    if (w.openedAt || stateOf(w) !== "sealed" || !w.opensAt || w.opensAt.getTime() > at.getTime()) {
+      return { opened: false, openedAt: w.openedAt, endsAt: w.endsAt };
+    }
+    const term = (await this.termDays(tx, w.ticket)) * DAY;
+    let endsAt = new Date(at.getTime() + term);
+    if (w.weddingDate) {
+      const day = localToUtc(`${w.weddingDate.toISOString().slice(0, 10)}T00:00`, w.timeZone);
+      if (day) endsAt = new Date(Math.max(at.getTime(), day.getTime() + term));
+    }
+    await this.move(tx, w, "live", { cause: "receiver.open", data: { openedAt: at, endsAt } });
+    await this.jobs.schedule("rest-wish", endsAt, w.id, tx);
+    await this.jobs.schedule("send-notice", new Date(endsAt.getTime() - NOTICE_DAYS * DAY), w.id, tx);
+    return { opened: true, openedAt: at, endsAt };
   }
 
-  /** At term end live becomes resting. A term made longer meanwhile (a keep) moves the job instead. */
+  /** At the open time a sealed wish becomes openable and nothing else changes (EE7); the term starts at the first opening. */
+  async openJob(c: JobContext): Promise<JobResult> {
+    const w = await this.prisma.wish.findUnique({ where: { id: c.subjectId }, select: { status: true, erasedAt: true, opensAt: true } });
+    if (!w || stateOf(w) !== "sealed") return { skipped: true };
+    if (w.opensAt && w.opensAt.getTime() > c.now.getTime()) return { skipped: true, again: w.opensAt };
+    return { changed: { openable: true } };
+  }
+
+  /**
+   * At term end live becomes resting. A term made longer meanwhile (a keep) moves the job instead. A sealed wish nobody has opened
+   * rests 365 days after its open time (EE9).
+   */
   async restJob(c: JobContext): Promise<JobResult> {
     return this.prisma.$transaction(async (tx) => {
       const w = await this.lock(tx, c.subjectId);
-      if (stateOf(w) !== "live") return { skipped: true };
-      if (w.endsAt && w.endsAt.getTime() > c.now.getTime()) {
-        return { skipped: true, again: w.endsAt };
-      }
+      const state = stateOf(w);
+      if (state !== "live" && state !== "sealed") return { skipped: true };
+      const due = state === "sealed" ? (w.opensAt ? new Date(w.opensAt.getTime() + UNOPENED_DAYS * DAY) : null) : w.endsAt;
+      if (state === "sealed" && !due) return { skipped: true };
+      if (due && due.getTime() > c.now.getTime()) return { skipped: true, again: due };
       const eraseAfter = new Date(c.now.getTime() + (await this.holdDays(tx)) * DAY);
-      await this.move(tx, w, "resting", { cause: "job.rest", jobRunId: c.jobRunId, data: { restingSince: c.now, eraseAfter } });
+      await this.move(tx, w, "resting", { cause: state === "sealed" ? "job.rest-unopened" : "job.rest", jobRunId: c.jobRunId, data: { restingSince: c.now, eraseAfter } });
       await this.jobs.schedule("erase-wish", eraseAfter, w.id, tx);
       await this.jobs.schedule("restore-window-end", new Date(c.now.getTime() + (await this.restoreDays(tx)) * DAY), w.id, tx);
-      return { changed: { from: "live", to: "resting", eraseAfter: eraseAfter.toISOString() } };
+      return { changed: { from: state, to: "resting", eraseAfter: eraseAfter.toISOString() } };
     });
   }
 
@@ -215,5 +248,42 @@ export class WishLifecycleService implements OnModuleInit {
     const w = await this.prisma.wish.findUnique({ where: { id: c.subjectId }, select: { status: true, erasedAt: true } });
     if (!w || stateOf(w) !== "resting") return { skipped: true };
     return { changed: { restoreWindow: "closed" } };
+  }
+
+  /**
+   * EE4: an erased wish's file rows go, and one upload-cleanup job per file no other wish names removes the file's objects (the
+   * job checks again when it runs). The jobs are written in the erase's own transaction; storage is called by the job (Y4).
+   */
+  private async releaseFiles(tx: Tx, wishId: string, now: Date): Promise<void> {
+    const mine = [...new Set((await tx.wishFile.findMany({ where: { wishId }, select: { fileId: true } })).map((r) => r.fileId))];
+    await tx.wishFile.deleteMany({ where: { wishId } });
+    if (!mine.length) return;
+    const shared = new Set((await tx.wishFile.findMany({ where: { fileId: { in: mine }, wishId: { not: wishId } }, select: { fileId: true } })).map((r) => r.fileId));
+    for (const fileId of mine) if (!shared.has(fileId)) await this.jobs.schedule("upload-cleanup", now, `${ERASE_WISH_FILE_PREFIX}${fileId}`, tx);
+  }
+
+  /** The job for one file of an erased wish: its objects first (safe to repeat), then its rows; a file another wish names stays. */
+  async eraseWishFileJob(c: JobContext): Promise<JobResult> {
+    const id = c.subjectId.slice(ERASE_WISH_FILE_PREFIX.length);
+    if (!isUuidV7(id)) return { skipped: true };
+    const f = await this.prisma.storedFile.findUnique({ where: { id } });
+    if (!f) return { skipped: true };
+    if ((await this.prisma.wishFile.count({ where: { fileId: id } })) > 0) return { skipped: true, changed: { kept: "another wish names it" } };
+    for (const key of [f.objectKey, stagingKeyOf(f.objectKey), ...variantsOf(f).map((v) => v.key)]) await this.storage.delete(key);
+    const removed = await this.prisma.$transaction(async (tx) => {
+      const rows = await tx.$queryRaw<{ id: string }[]>`SELECT id::text AS id FROM stored_file WHERE id = ${id}::uuid FOR UPDATE`;
+      if (!rows.length || (await tx.wishFile.count({ where: { fileId: id } })) > 0) return false;
+      await tx.aiRequest.updateMany({ where: { inputFileId: id }, data: { inputFileId: null } });
+      await tx.aiRequest.updateMany({ where: { voiceFileId: id }, data: { voiceFileId: null } });
+      await tx.conciergeOrder.updateMany({ where: { namesFileId: id }, data: { namesFileId: null } });
+      await tx.conciergeOrder.updateMany({ where: { reportFileId: id }, data: { reportFileId: null } });
+      await tx.qrCard.updateMany({ where: { fileId: id }, data: { fileId: null } });
+      await tx.renderJob.updateMany({ where: { outputFileId: id }, data: { outputFileId: null } });
+      await tx.voiceNote.deleteMany({ where: { id } });
+      await tx.uploadTicket.deleteMany({ where: { id } });
+      await tx.storedFile.deleteMany({ where: { id } });
+      return true;
+    });
+    return { changed: { removed: removed ? 1 : 0 } };
   }
 }

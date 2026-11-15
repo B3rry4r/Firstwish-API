@@ -5,6 +5,7 @@ import { PrismaService } from "../../../common/db/prisma.service";
 import { IdGenerator } from "../../../common/ports/ids.port";
 import { createTestApp, TestApp } from "../../../../test/kit/app";
 import { JobsService } from "../../jobs/jobs.service";
+import { StoragePort } from "../../../common/ports/storage.port";
 import { SavedWishesService } from "../../saved-wishes/saved-wishes.service";
 import { WishLifecycleService } from "../wish-lifecycle.service";
 import { WishesService } from "../wishes.service";
@@ -51,10 +52,15 @@ describe("wishes E-221 E-222 E-224 E-225 E-229 E-231 (contract)", () => {
     return r.body as { id: string; version: number };
   }
   const save = (u: { token: string }, id: string, body: Record<string, unknown>) => t.http().patch(`/v1/wishes/${id}`).set(bearer(u.token)).send(body);
+  /** Seals with the wish's current version; no extras means "open now". */
+  async function sealIt(u: { token: string }, id: string, extra: Record<string, unknown> = { openNow: true }) {
+    const row = await db.wish.findUniqueOrThrow({ where: { id }, select: { version: true } });
+    return t.http().post(`/v1/wishes/${id}/seal`).set(bearer(u.token)).send({ version: row.version, ...extra });
+  }
   const letter = { letter: { paras: ["Happy birthday."] } };
   async function ready(u: { token: string; accountId: string }, ticket: "moment" | "keepsake" | "signature" | "premiere" = "moment") {
     const w = await draft(u);
-    expect((await save(u, w.id, { version: w.version, content: letter })).status).toBe(204);
+    expect((await save(u, w.id, { version: w.version, content: letter })).status).toBe(200);
     await wishes.fulfilTicket(w.id, ticket);
     return w.id;
   }
@@ -88,14 +94,15 @@ describe("wishes E-221 E-222 E-224 E-225 E-229 E-231 (contract)", () => {
     expect(Object.keys(bad2.body.error.fields)).toEqual(expect.arrayContaining(["from", "name"]));
   });
 
-  it("E-225 saves parts, answers 204 with the new version, and a stale write is 409 with the current version", async () => {
+  it("E-225 saves parts, answers 200 with the new version (CC1), and a stale write is 409 with the current version", async () => {
     const u = await user();
     const w = await draft(u);
     const r1 = await save(u, w.id, { version: 0, name: "Chidi O", occasion: "Anniversary", opensAt: "2027-02-14T09:00", timeZone: "Africa/Lagos", content: letter });
-    expect(r1.status).toBe(204);
-    expect(r1.headers.etag).toBe('"1"');
+    expect(r1.status).toBe(200);
+    expect(Object.keys(r1.body).sort()).toEqual(["updatedAt", "version"]);
+    expect(r1.body.version).toBe(1);
     const r2 = await save(u, w.id, { version: 1, content: { memory: { title: "Lagos", text: "The beach." }, letter: null } });
-    expect(r2.headers.etag).toBe('"2"');
+    expect(r2.body.version).toBe(2);
     const got = (await t.http().get(`/v1/wishes/${w.id}`).set(bearer(u.token))).body;
     expect(got).toMatchObject({ name: "Chidi O", occasion: "anniversary", version: 2, opensAt: "2027-02-14T08:00:00.000Z", timeZone: "Africa/Lagos" });
     expect(got.content).toEqual({ cover: { from: "Ada" }, memory: { title: "Lagos", text: "The beach." } });
@@ -108,21 +115,22 @@ describe("wishes E-221 E-222 E-224 E-225 E-229 E-231 (contract)", () => {
   it("E-225 saved at once with one version: exactly one wins", async () => {
     const u = await user();
     const w = await draft(u);
-    const all = await Promise.all(Array.from({ length: 8 }, (_, i) => save(u, w.id, { version: 0, name: `N${i}` })));
-    expect(all.filter((r) => r.status === 204)).toHaveLength(1);
-    expect(all.filter((r) => r.status === 409)).toHaveLength(7);
+    const all = await Promise.all(Array.from({ length: 20 }, (_, i) => save(u, w.id, { version: 0, name: `N${i}` })));
+    expect(all.filter((r) => r.status === 200)).toHaveLength(1);
+    expect(all.filter((r) => r.status === 409)).toHaveLength(19);
   });
 
-  it("E-225 refuses a bad document: unknown parts, a passcode in content, too large, not an object (422), a bad version, someone else's wish (404)", async () => {
+  it("CC3 E-225 refuses a bad document (the size limit is the lifecycle config's): unknown parts, a passcode in content, too large, not an object (422), a bad version, someone else's wish (404)", async () => {
     const u = await user();
     const w = await draft(u);
     const unknown = await save(u, w.id, { version: 0, content: { extra: 1 } });
     expect(unknown.status).toBe(422);
     expect(unknown.body.error.fields.content).toMatch(/extra/);
     expect((await save(u, w.id, { version: 0, content: { note: { text: "x", passcode: "1234" } } })).status).toBe(422);
-    process.env.WISH_CONTENT_MAX_BYTES = "2048";
+    const cfg = await db.lifecycleConfig.findFirstOrThrow({ orderBy: { id: "desc" } });
+    await db.lifecycleConfig.update({ where: { id: cfg.id }, data: { wishContentMaxBytes: 2048 } });
     const big = await save(u, w.id, { version: 0, content: { letter: { paras: ["x".repeat(3000)] } } });
-    delete process.env.WISH_CONTENT_MAX_BYTES;
+    await db.lifecycleConfig.update({ where: { id: cfg.id }, data: { wishContentMaxBytes: cfg.wishContentMaxBytes } });
     expect(big.status).toBe(422);
     expect(big.body.error.fields.content).toMatch(/2048/);
     expect((await save(u, w.id, { version: 0, content: "text" })).status).toBe(422);
@@ -139,7 +147,7 @@ describe("wishes E-221 E-222 E-224 E-225 E-229 E-231 (contract)", () => {
   it("the passcode is hashed into Wish.passcodeHash, never into content or the answer", async () => {
     const u = await user();
     const w = await draft(u);
-    expect((await save(u, w.id, { version: 0, passcode: "2468" })).status).toBe(204);
+    expect((await save(u, w.id, { version: 0, passcode: "2468" })).status).toBe(200);
     const row = await db.wish.findUniqueOrThrow({ where: { id: w.id } });
     expect(row.passcodeHash).toMatch(/^scrypt\$/);
     expect(JSON.stringify(row.content)).not.toContain("2468");
@@ -154,7 +162,7 @@ describe("wishes E-221 E-222 E-224 E-225 E-229 E-231 (contract)", () => {
     const w = await draft(u);
     const mine = await file(u.accountId);
     const ok = await save(u, w.id, { version: 0, content: { story: { photos: [{ photoId: mine }] } } });
-    expect(ok.status).toBe(204);
+    expect(ok.status).toBe(200);
     expect(await db.wishFile.findMany({ where: { wishId: w.id } })).toEqual([expect.objectContaining({ fileId: mine, role: "photo" })]);
     expect((await save(u, w.id, { version: 1, content: { story: { photos: [{ photoId: await file(other.accountId) }] } } })).status).toBe(422);
     expect((await save(u, w.id, { version: 1, content: { story: { photos: [{ photoId: await file(u.accountId, "pending") }] } } })).status).toBe(422);
@@ -162,7 +170,7 @@ describe("wishes E-221 E-222 E-224 E-225 E-229 E-231 (contract)", () => {
     expect((await save(u, w.id, { version: 1, content: { story: { photos: [{ photoId: "x" }] } } })).status).toBe(422);
     // the failed saves left the join table as it was; removing the file from the content removes the row
     expect(await db.wishFile.count({ where: { wishId: w.id } })).toBe(1);
-    expect((await save(u, w.id, { version: 1, content: { story: null } })).status).toBe(204);
+    expect((await save(u, w.id, { version: 1, content: { story: null } })).status).toBe(200);
     expect(await db.wishFile.count({ where: { wishId: w.id } })).toBe(0);
     await expect(db.storedFile.delete({ where: { id: mine } })).resolves.toBeDefined();
   });
@@ -179,13 +187,13 @@ describe("wishes E-221 E-222 E-224 E-225 E-229 E-231 (contract)", () => {
     const u = await user();
     const w = await draft(u);
     const photos = async (n: number) => ({ story: { photos: await Promise.all(Array.from({ length: n }, async () => ({ photoId: await file(u.accountId) }))) } });
-    expect((await save(u, w.id, { version: 0, content: await photos(6) })).status).toBe(204);
+    expect((await save(u, w.id, { version: 0, content: await photos(6) })).status).toBe(200);
     const over = await save(u, w.id, { version: 1, content: await photos(7) });
     expect(over.status).toBe(422);
     expect(over.body.error.fields.photos).toMatch(/6 photos/);
     await wishes.fulfilTicket(w.id, "keepsake");
     const v = (await db.wish.findUniqueOrThrow({ where: { id: w.id } })).version;
-    expect((await save(u, w.id, { version: v, content: await photos(15) })).status).toBe(204);
+    expect((await save(u, w.id, { version: v, content: await photos(15) })).status).toBe(200);
     const v2 = (await db.wish.findUniqueOrThrow({ where: { id: w.id } })).version;
     const over2 = await save(u, w.id, { version: v2, content: await photos(16) });
     expect(over2.status).toBe(422);
@@ -198,12 +206,12 @@ describe("wishes E-221 E-222 E-224 E-225 E-229 E-231 (contract)", () => {
     const u = await user();
     const w = await draft(u);
     await save(u, w.id, { version: 0, content: letter });
-    const unpaid = await t.http().post(`/v1/wishes/${w.id}/seal`).set(bearer(u.token)).send({});
+    const unpaid = await sealIt(u, w.id);
     expect(unpaid.status).toBe(402);
     expect(unpaid.body.error.code).toBe("payment_required");
     const w2 = await draft(u);
     await wishes.fulfilTicket(w2.id, "moment");
-    const empty = await t.http().post(`/v1/wishes/${w2.id}/seal`).set(bearer(u.token)).send({});
+    const empty = await sealIt(u, w2.id);
     expect(empty.status).toBe(422);
     expect(empty.body.error.fields.content).toBeDefined();
     expect((await db.wish.findUniqueOrThrow({ where: { id: w2.id } })).status).toBe("draft");
@@ -212,7 +220,7 @@ describe("wishes E-221 E-222 E-224 E-225 E-229 E-231 (contract)", () => {
   it("E-231 seals a paid wish: number, link, transition, the open time in UTC from the local time and zone; sealed words are locked", async () => {
     const u = await user();
     const id = await ready(u);
-    const r = await t.http().post(`/v1/wishes/${id}/seal`).set(bearer(u.token)).send({ opensAt: "2027-02-14T09:00", timeZone: "Africa/Lagos" });
+    const r = await sealIt(u, id, { opensAt: "2027-02-14T09:00", timeZone: "Africa/Lagos" });
     expect(r.status).toBe(200);
     expect(r.body).toMatchObject({ status: "sealed", state: "sealed", opensAt: "2027-02-14T08:00:00.000Z", timeZone: "Africa/Lagos" });
     expect(r.body.no).toMatch(/^\d{4,}$/);
@@ -225,32 +233,25 @@ describe("wishes E-221 E-222 E-224 E-225 E-229 E-231 (contract)", () => {
     expect(await db.job.count({ where: { subjectId: id, type: "open_wish", status: "scheduled" } })).toBe(1);
     expect((await t.http().get(`/v1/wishes/${id}/link`).set(bearer(u.token))).body).toEqual({ link: `/w/${slug}`, slug });
     expect((await save(u, id, { version: r.body.version, name: "Late" })).status).toBe(409);
-    expect((await t.http().post(`/v1/wishes/${id}/seal`).set(bearer(u.token)).send({})).status).toBe(409);
+    expect((await sealIt(u, id)).status).toBe(409);
   });
 
-  it("a wish sealed with a time in the past, or none, opens now by the server's clock", async () => {
-    const u = await user();
-    const id = await ready(u);
-    const r = await t.http().post(`/v1/wishes/${id}/seal`).set(bearer(u.token)).send({ opensAt: "2020-01-01T00:00:00Z" });
-    expect(r.body.opensAt).toBe(NOW.toISOString());
-  });
-
-  it("20 wishes sealed at once get 20 different, gapless numbers and 20 different links", async () => {
+  it("50 wishes sealed at once get 50 different, gapless numbers and 50 different links", async () => {
     const us: Awaited<ReturnType<typeof user>>[] = [];
-    for (let i = 0; i < 20; i++) us.push(await user());
+    for (let i = 0; i < 50; i++) us.push(await user());
     const idsOf: string[] = [];
     for (const u of us) idsOf.push(await ready(u));
     const before = await db.wish.count({ where: { no: { not: null } } });
-    const out = await Promise.all(us.map((u, i) => t.http().post(`/v1/wishes/${idsOf[i]}/seal`).set(bearer(u.token)).send({})));
+    const out = await Promise.all(us.map((u, i) => sealIt(u, idsOf[i])));
     expect(out.every((r) => r.status === 200)).toBe(true);
     const nums = out.map((r) => Number(r.body.no)).sort((a, b) => a - b);
-    expect(new Set(nums).size).toBe(20);
-    expect(nums[19] - nums[0]).toBe(19);
-    expect(before + 20).toBe(await db.wish.count({ where: { no: { not: null } } }));
-    expect(new Set(out.map((r) => (r.body as { link: string }).link)).size).toBe(20);
+    expect(new Set(nums).size).toBe(50);
+    expect(nums[49] - nums[0]).toBe(49);
+    expect(before + 50).toBe(await db.wish.count({ where: { no: { not: null } } }));
+    expect(new Set(out.map((r) => (r.body as { link: string }).link)).size).toBe(50);
     const seqRow = await db.wishNumberSequence.findMany();
     expect(seqRow).toHaveLength(1);
-    expect(seqRow[0].next).toBe(nums[19] + 1);
+    expect(seqRow[0].next).toBe(nums[49] + 1);
   });
 
   it("the state machine refuses any move that is not in its table, and every move writes a transition with its cause", async () => {
@@ -261,8 +262,7 @@ describe("wishes E-221 E-222 E-224 E-225 E-229 E-231 (contract)", () => {
     await expect(lock("live")).rejects.toMatchObject({ response: { code: "not_allowed" } });
     await expect(lock("resting")).rejects.toMatchObject({ response: { code: "not_allowed" } });
     expect(await db.wishTransition.count({ where: { wishId: id } })).toBe(0);
-    await t.http().post(`/v1/wishes/${id}/seal`).set(bearer(u.token)).send({});
-    await expect(lock("resting")).rejects.toMatchObject({ response: { code: "not_allowed" } });
+    await sealIt(u, id);
     await lock("live");
     await lock("resting");
     await lock("erased");
@@ -275,11 +275,14 @@ describe("wishes E-221 E-222 E-224 E-225 E-229 E-231 (contract)", () => {
     const u = await user();
     const id = await ready(u, "moment");
     const open = new Date(NOW.getTime() + 2 * DAY);
-    await t.http().post(`/v1/wishes/${id}/seal`).set(bearer(u.token)).send({ opensAt: open.toISOString() });
-    await jobs.runDue();
+    await sealIt(u, id, { opensAt: open.toISOString() });
+    await jobs.runDue(100, [id]);
     expect((await db.wish.findUniqueOrThrow({ where: { id } })).status).toBe("sealed");
     t.clock.set(new Date(open.getTime() + 1000));
-    await jobs.runDue();
+    // EE7: the open time only makes it openable; the receiver's first read starts the term
+    await jobs.runDue(100, [id]);
+    expect((await db.wish.findUniqueOrThrow({ where: { id } })).status).toBe("sealed");
+    await db.$transaction((tx) => life.markOpened(tx, id, t.clock.now()));
     let w = await db.wish.findUniqueOrThrow({ where: { id } });
     expect(w.status).toBe("live");
     expect(w.endsAt?.getTime()).toBe(w.openedAt!.getTime() + 7 * DAY);
@@ -309,10 +312,10 @@ describe("wishes E-221 E-222 E-224 E-225 E-229 E-231 (contract)", () => {
     expect(w.kind).toBe("love");
     const causes = (await db.wishTransition.findMany({ where: { wishId: id }, orderBy: { id: "asc" } })).map((x) => `${x.from}>${x.to}:${x.cause}`);
     expect(causes).toEqual([
-      "draft>sealed:owner.seal", "sealed>live:job.open", "live>resting:job.rest", "resting>live:owner.restore", "live>resting:job.rest", "resting>erased:job.erase",
+      "draft>sealed:owner.seal", "sealed>live:receiver.open", "live>resting:job.rest", "resting>live:owner.restore", "live>resting:job.rest", "resting>erased:job.erase",
     ]);
     const jobMoves = await db.wishTransition.count({ where: { wishId: id, jobRunId: { not: null } } });
-    expect(jobMoves).toBe(4);
+    expect(jobMoves).toBe(3);
     t.clock.set(NOW);
   });
 
@@ -320,7 +323,7 @@ describe("wishes E-221 E-222 E-224 E-225 E-229 E-231 (contract)", () => {
     const u = await user();
     const fan = await user();
     const id = await ready(u);
-    await t.http().post(`/v1/wishes/${id}/seal`).set(bearer(u.token)).send({ opensAt: new Date(NOW.getTime() + DAY).toISOString() });
+    await sealIt(u, id, { opensAt: new Date(NOW.getTime() + DAY).toISOString() });
     await db.savedWish.create({ data: { id: nid(), wish: id, accountId: fan.accountId } });
     await life.takeDown(id, "staff.take-down");
     expect(await db.savedWish.count({ where: { wish: id } })).toBe(0);
@@ -333,6 +336,8 @@ describe("wishes E-221 E-222 E-224 E-225 E-229 E-231 (contract)", () => {
     const mine = await file(u.accountId);
     const w2 = await db.wish.findUniqueOrThrow({ where: { id: id2 } });
     await save(u, id2, { version: w2.version, content: { cover: { coverId: mine }, letter: { paras: ["x"] } } });
+    expect((await t.http().post(`/v1/wishes/${id2}/erase`).set(bearer(u.token)).send({})).status).toBe(409);
+    expect((await sealIt(u, id2)).status).toBe(200);
     await db.savedWish.create({ data: { id: nid(), wish: id2, accountId: fan.accountId } });
     expect((await t.http().post(`/v1/wishes/${id2}/erase`).set(bearer(u.token)).send({})).status).toBe(204);
     expect(await db.savedWish.count({ where: { wish: id2 } })).toBe(0);
@@ -367,10 +372,10 @@ describe("wishes E-221 E-222 E-224 E-225 E-229 E-231 (contract)", () => {
         erase,
       ]);
       expect([201, 401]).toContain(a.status);
-      expect([204, 401]).toContain(b.status);
+      expect([200, 401]).toContain(b.status);
       expect((await t.http().post("/v1/wishes").set(bearer(u.token)).send(draftBody)).status).toBe(401);
       expect((await save(u, id, { version: 5, name: "After" })).status).toBe(401);
-      expect((await t.http().post(`/v1/wishes/${id}/seal`).set(bearer(u.token)).send({})).status).toBe(401);
+      expect((await sealIt(u, id)).status).toBe(401);
     }
   });
 
@@ -399,7 +404,255 @@ describe("wishes E-221 E-222 E-224 E-225 E-229 E-231 (contract)", () => {
     expect((await t.http().get(`/v1/wishes/${ids3[0].id}`).set(bearer(owner.token))).status).toBe(404);
   });
 
-  it("the saved-wishes service is what clears saves (BB6)", () => {
-    expect(t.app.get(SavedWishesService)).toBeDefined();
+  // ---- the patch: rulings EE1 to EE9, CC1 to CC4, BB6, E-226 ----
+
+  const sealOn = async (u: { token: string; accountId: string }, opensAt: Date, ticket: "moment" | "keepsake" = "moment") => {
+    const id = await ready(u, ticket);
+    const r = await sealIt(u, id, { opensAt: opensAt.toISOString() });
+    expect(r.status).toBe(200);
+    return id;
+  };
+  const opened = (id: string, at: Date) => db.$transaction((tx) => life.markOpened(tx, id, at));
+
+  it("EE7 the open time only makes a wish openable; ten first reads at once set openedAt once: one transition, one rest job", async () => {
+    const u = await user();
+    const open = new Date(NOW.getTime() + DAY);
+    const id = await sealOn(u, open);
+    t.clock.set(new Date(open.getTime() + 5000));
+    await jobs.runDue(100, [id]);
+    let got = (await t.http().get(`/v1/wishes/${id}`).set(bearer(u.token))).body;
+    expect(got).toMatchObject({ state: "sealed", openable: true, openedAt: null, endsAt: null });
+    expect((await t.http().get(`/v1/wishes/${id}`).set(bearer(u.token))).body.openable).toBe(true);
+    const before = await opened(id, new Date(open.getTime() - 1000));
+    expect(before.opened).toBe(false);
+    const ats = Array.from({ length: 10 }, (_, i) => new Date(open.getTime() + 10_000 + i * 1000));
+    const all = await Promise.all(ats.map((at) => opened(id, at)));
+    expect(all.filter((r) => r.opened)).toHaveLength(1);
+    const row = await db.wish.findUniqueOrThrow({ where: { id } });
+    expect(ats.map((a) => a.getTime())).toContain(row.openedAt!.getTime());
+    expect(new Set(all.map((r) => r.openedAt!.getTime())).size).toBe(1);
+    expect(row.status).toBe("live");
+    expect(row.endsAt!.getTime()).toBe(row.openedAt!.getTime() + 7 * DAY);
+    expect(await db.wishTransition.count({ where: { wishId: id, to: "live" } })).toBe(1);
+    const rest = await db.job.findMany({ where: { subjectId: id, type: "rest_wish" } });
+    expect(rest).toHaveLength(1);
+    expect(rest[0].runAt.getTime()).toBe(row.endsAt!.getTime());
+    got = (await t.http().get(`/v1/wishes/${id}`).set(bearer(u.token))).body;
+    expect(got).toMatchObject({ state: "live", openable: true, openedAt: row.openedAt!.toISOString(), endsAt: row.endsAt!.toISOString() });
+    // the database keeps openedAt from moving, even for a direct write
+    await expect(db.wish.update({ where: { id }, data: { openedAt: new Date(row.openedAt!.getTime() + 1) } })).rejects.toBeDefined();
+    t.clock.set(NOW);
+  });
+
+  it("EE8 a wedding wish ends at its wedding date plus the term, whenever it was opened", async () => {
+    const u = await user();
+    const open = new Date(NOW.getTime() + DAY);
+    const w = await draft(u);
+    expect((await save(u, w.id, { version: 0, content: letter, makerNote: { wedding: "2027-06-12" }, timeZone: "Africa/Lagos" })).status).toBe(200);
+    expect((await save(u, w.id, { version: 1, makerNote: { wedding: "2027-13-45" } })).status).toBe(422);
+    await wishes.fulfilTicket(w.id, "moment");
+    expect((await sealIt(u, w.id, { opensAt: open.toISOString() })).status).toBe(200);
+    t.clock.set(new Date(open.getTime() + 1000));
+    const r = await opened(w.id, t.clock.now());
+    expect(r.endsAt!.toISOString()).toBe(new Date(Date.UTC(2027, 5, 11, 23, 0, 0) + 7 * DAY).toISOString());
+    expect((await db.job.findFirstOrThrow({ where: { subjectId: w.id, type: "rest_wish" } })).runAt.getTime()).toBe(r.endsAt!.getTime());
+    t.clock.set(NOW);
+  });
+
+  it("EE9 a sealed wish nobody opens rests 365 days after its open time", async () => {
+    const u = await user();
+    const open = new Date(NOW.getTime() + DAY);
+    const id = await sealOn(u, open);
+    t.clock.set(new Date(open.getTime() + 364 * DAY));
+    await jobs.runDue(100, [id]);
+    expect((await db.wish.findUniqueOrThrow({ where: { id } })).status).toBe("sealed");
+    t.clock.set(new Date(open.getTime() + 365 * DAY + 1000));
+    await jobs.runDue(100, [id]);
+    const w = await db.wish.findUniqueOrThrow({ where: { id } });
+    expect(w.status).toBe("resting");
+    expect(w.openedAt).toBeNull();
+    expect((await db.wishTransition.findMany({ where: { wishId: id, to: "resting" } })).map((x) => x.cause)).toEqual(["job.rest-unopened"]);
+    t.clock.set(NOW);
+  });
+
+  it("EE3 content is checked against a closed shape at every level; a file is named only under the known keys", async () => {
+    const u = await user();
+    const w = await draft(u);
+    const mine = await file(u.accountId);
+    const bad: Record<string, unknown>[] = [
+      { story: { photos: [{ photoId: mine, src: mine }] } },
+      { story: { photos: [{ url: mine }] } },
+      { story: { fileIds: [mine] } },
+      { cover: { photo: { fileId: mine, role: "photo" } } },
+      { voices: { items: [{ name: "A", text: "x", voiceFileId: mine }] } },
+      { note: { text: "x", extra: { deep: { id: mine } } } },
+      { letter: { paras: [mine, 5] } },
+      { links: { files: ["a"] } },
+      { memory: "text" },
+      { ending: { id: "a", scene: "b", values: { k: 1 } } },
+    ];
+    for (const content of bad) {
+      const r = await save(u, w.id, { version: 0, content });
+      expect([JSON.stringify(content), r.status]).toEqual([JSON.stringify(content), 422]);
+      expect(r.body.error.fields.content).toBeDefined();
+    }
+    expect(await db.wishFile.count({ where: { wishId: w.id } })).toBe(0);
+    const voice = await file(u.accountId);
+    const ok = await save(u, w.id, { version: 0, content: { cover: { photoId: mine, more: ["Ada"] }, voices: { ask: "q", items: [{ name: "A", text: "x", voiceId: voice }] } } });
+    expect(ok.status).toBe(200);
+    expect((await db.wishFile.findMany({ where: { wishId: w.id } })).map((r) => `${r.role}`).sort()).toEqual(["photo", "voice"]);
+  });
+
+  it("EE4 erasing a wish queues the removal of the file objects no other wish names", async () => {
+    const u = await user();
+    const alone = await file(u.accountId);
+    const shared = await file(u.accountId);
+    const first = await sealOn(u, new Date(NOW.getTime() + DAY));
+    const second = await ready(u);
+    const named = (fileA: string, fileB?: string) => ({ story: { photos: [{ photoId: fileA }, ...(fileB ? [{ photoId: fileB }] : [])] }, ...letter });
+    const v1 = (await db.wish.findUniqueOrThrow({ where: { id: second } })).version;
+    expect((await save(u, second, { version: v1, content: named(shared) })).status).toBe(200);
+    // the first wish is sealed, so name the files in a draft first, then seal
+    const third = await ready(u);
+    const v3 = (await db.wish.findUniqueOrThrow({ where: { id: third } })).version;
+    expect((await save(u, third, { version: v3, content: named(alone, shared) })).status).toBe(200);
+    expect((await sealIt(u, third)).status).toBe(200);
+    void first;
+    const storage = t.app.get(StoragePort);
+    const del = jest.spyOn(storage, "delete");
+    expect((await t.http().post(`/v1/wishes/${third}/erase`).set(bearer(u.token)).send({})).status).toBe(204);
+    const queued = await db.job.findMany({ where: { type: "upload_cleanup", subjectId: { startsWith: "erase-wish-file:" }, status: "scheduled" } });
+    const mineQueued = queued.filter((j) => [alone, shared].some((f) => j.subjectId.endsWith(f)));
+    expect(mineQueued.map((j) => j.subjectId)).toEqual([`erase-wish-file:${alone}`]);
+    await jobs.runDue(100, [`erase-wish-file:${alone}`]);
+    expect(del).toHaveBeenCalledWith(`k/${alone}`);
+    expect(await db.storedFile.count({ where: { id: alone } })).toBe(0);
+    expect(await db.storedFile.count({ where: { id: shared } })).toBe(1);
+    del.mockRestore();
+  });
+
+  it("EE5 seal needs an open time a minute ahead or openNow; past, missing or over 5 years is 422; a new zone moves the instant", async () => {
+    const u = await user();
+    const id = await ready(u);
+    const at = (ms: number) => new Date(NOW.getTime() + ms).toISOString();
+    for (const extra of [{}, { opensAt: at(-DAY) }, { opensAt: at(30_000) }, { opensAt: at(5 * 366 * DAY) }, { opensAt: "soon" }, { opensAt: 12 }]) {
+      const r = await sealIt(u, id, extra);
+      expect([JSON.stringify(extra), r.status]).toEqual([JSON.stringify(extra), 422]);
+      expect(r.body.error.fields.opensAt).toBeDefined();
+    }
+    expect((await db.wish.findUniqueOrThrow({ where: { id } })).status).toBe("draft");
+    // a stored time in the past is refused too
+    const w = await draft(u);
+    await save(u, w.id, { version: 0, content: letter, opensAt: "2020-01-01T09:00", timeZone: "Africa/Lagos" });
+    await wishes.fulfilTicket(w.id, "moment");
+    expect((await sealIt(u, w.id, {})).status).toBe(422);
+    const ok = await sealIt(u, w.id, { openNow: true });
+    expect(ok.status).toBe(200);
+    expect(ok.body.opensAt).toBe(NOW.toISOString());
+    // a zone change recomputes the instant from the stored local time, in the draft and at the seal
+    const z = await draft(u);
+    await save(u, z.id, { version: 0, content: letter, opensAt: "2027-03-01T09:00", timeZone: "Africa/Lagos" });
+    expect((await db.wish.findUniqueOrThrow({ where: { id: z.id } })).opensAt!.toISOString()).toBe("2027-03-01T08:00:00.000Z");
+    await save(u, z.id, { version: 1, timeZone: "Asia/Tokyo" });
+    expect((await db.wish.findUniqueOrThrow({ where: { id: z.id } })).opensAt!.toISOString()).toBe("2027-03-01T00:00:00.000Z");
+    await wishes.fulfilTicket(z.id, "moment");
+    const sealed = await sealIt(u, z.id, { timeZone: "Europe/London" });
+    expect(sealed.body).toMatchObject({ timeZone: "Europe/London", opensAt: "2027-03-01T09:00:00.000Z" });
+    // nothing else moves a sealed wish's open time: another seal, a save, a header, a zone
+    const row = await db.wish.findUniqueOrThrow({ where: { id: z.id } });
+    expect((await t.http().post(`/v1/wishes/${z.id}/seal`).set(bearer(u.token)).set("x-opens-at", at(DAY)).send({ version: row.version, opensAt: at(DAY), timeZone: "Asia/Tokyo" })).status).toBe(409);
+    expect((await save(u, z.id, { version: row.version, opensAt: at(DAY), timeZone: "Asia/Tokyo" })).status).toBe(409);
+    expect((await t.http().post(`/v1/wishes/${z.id}/seal`).set(bearer(u.token)).send({ version: row.version, opensAt: at(DAY), ticket: "premiere", status: "live" })).status).toBe(422);
+    expect((await db.wish.findUniqueOrThrow({ where: { id: z.id } })).opensAt!.toISOString()).toBe("2027-03-01T09:00:00.000Z");
+  });
+
+  it("EE6 a draft cannot be erased, only removed by its owner", async () => {
+    const u = await user();
+    const w = await draft(u);
+    const e = await t.http().post(`/v1/wishes/${w.id}/erase`).set(bearer(u.token)).send({});
+    expect(e.status).toBe(409);
+    expect(e.body.error.code).toBe("not_allowed");
+    await expect(db.$transaction(async (tx) => life.move(tx, await life.lock(tx, w.id), "erased", { cause: "test" }))).rejects.toMatchObject({ response: { code: "not_allowed" } });
+    const gone = await t.http().delete(`/v1/wishes/${w.id}`).set(bearer(u.token)).send({});
+    expect(gone.status).toBe(200);
+    expect(gone.body.state).toBe("taken_down");
+  });
+
+  it("CC1 CC2 save and seal take the contract's body: version is required, keep is null, month, half or year, a zone must be a zone", async () => {
+    const u = await user();
+    const w = await draft(u);
+    expect((await save(u, w.id, { version: 0, keep: "week" })).status).toBe(422);
+    const k = await save(u, w.id, { version: 0, keep: "half", content: letter });
+    expect(k.body.version).toBe(1);
+    expect((await save(u, w.id, { version: 1, keep: null })).status).toBe(200);
+    expect((await db.wish.findUniqueOrThrow({ where: { id: w.id } })).keep).toBeNull();
+    await wishes.fulfilTicket(w.id, "moment");
+    expect((await t.http().post(`/v1/wishes/${w.id}/seal`).set(bearer(u.token)).send({ openNow: true })).status).toBe(422);
+    const stale = await t.http().post(`/v1/wishes/${w.id}/seal`).set(bearer(u.token)).send({ version: 0, openNow: true });
+    expect(stale.status).toBe(409);
+    expect(stale.body.error.code).toBe("stale_version");
+    expect((await sealIt(u, w.id, { openNow: true, timeZone: "Mars/Base" })).status).toBe(422);
+    expect((await sealIt(u, w.id, { openNow: true })).status).toBe(200);
+  });
+
+  it("BB6 every move that takes a wish out of sight calls SavedWishesService.forgetForWishes in its transaction", async () => {
+    const saved = t.app.get(SavedWishesService);
+    const spy = jest.spyOn(saved, "forgetForWishes");
+    const u = await user();
+    const fan = await user();
+    const fanSave = (wish: string) => db.savedWish.create({ data: { id: nid(), wish, accountId: fan.accountId } });
+    const removed = await ready(u);
+    await fanSave(removed);
+    expect((await t.http().delete(`/v1/wishes/${removed}`).set(bearer(u.token)).send({})).status).toBe(200);
+    const erased = await sealOn(u, new Date(NOW.getTime() + DAY));
+    await fanSave(erased);
+    expect((await t.http().post(`/v1/wishes/${erased}/erase`).set(bearer(u.token)).send({})).status).toBe(204);
+    const down = await sealOn(u, new Date(NOW.getTime() + DAY));
+    await fanSave(down);
+    await life.takeDown(down, "staff.take-down");
+    const rested = await sealOn(u, new Date(NOW.getTime() + DAY));
+    await db.$transaction((tx) => life.markOpened(tx, rested, new Date(NOW.getTime() + DAY)));
+    await fanSave(rested);
+    t.clock.set(new Date(NOW.getTime() + 400 * DAY));
+    await jobs.runDue(100, [rested]);
+    expect((await db.wish.findUniqueOrThrow({ where: { id: rested } })).status).toBe("resting");
+    t.clock.set(new Date(NOW.getTime() + 800 * DAY));
+    await jobs.runDue(100, [rested]);
+    expect((await db.wish.findUniqueOrThrow({ where: { id: rested } })).erasedAt).not.toBeNull();
+    for (const id of [removed, erased, down, rested]) {
+      expect(spy.mock.calls.some((c) => (c[1]).includes(id))).toBe(true);
+      expect(await db.savedWish.count({ where: { wish: id } })).toBe(0);
+    }
+    spy.mockRestore();
+    t.clock.set(NOW);
+  });
+
+  it("E-226 adds confirmed photos to a draft under the ticket's limit; a sealed wish refuses (409)", async () => {
+    const u = await user();
+    const other = await user();
+    const w = await draft(u);
+    const add = (id: string, files: unknown[], who = u) => t.http().post(`/v1/wishes/${id}/add-photos`).set(bearer(who.token)).send({ files, result: null });
+    const a = await file(u.accountId);
+    const b = await file(u.accountId);
+    const r = await add(w.id, [a, b]);
+    expect(r.status).toBe(200);
+    expect(r.body.content.story.photos).toEqual([{ photoId: a }, { photoId: b }]);
+    expect(r.body.version).toBe(1);
+    expect((await add(w.id, [a])).body.content.story.photos).toHaveLength(2);
+    expect((await db.wishFile.findMany({ where: { wishId: w.id } })).map((x) => x.fileId).sort()).toEqual([a, b].sort());
+    expect((await add(w.id, [await file(other.accountId)])).status).toBe(422);
+    expect((await add(w.id, [await file(u.accountId, "pending")])).status).toBe(422);
+    expect((await add(w.id, ["x"])).status).toBe(422);
+    expect((await add(w.id, [])).status).toBe(422);
+    expect((await add(w.id, [a], other)).status).toBe(404);
+    expect((await t.http().post(`/v1/wishes/${w.id}/add-photos`).send({ files: [a], result: null })).status).toBe(401);
+    const many = await Promise.all(Array.from({ length: 5 }, () => file(u.accountId)));
+    const over = await add(w.id, many);
+    expect(over.status).toBe(422);
+    expect(over.body.error.fields.photos).toMatch(/6 photos/);
+    await save(u, w.id, { version: 1, content: letter });
+    await wishes.fulfilTicket(w.id, "moment");
+    expect((await sealIt(u, w.id)).status).toBe(200);
+    expect((await add(w.id, [await file(u.accountId)])).status).toBe(409);
   });
 });

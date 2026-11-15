@@ -30,3 +30,9 @@ export function parseOpening(input: string, zone: string): Date | null {
   }
   return localToUtc(v, zone);
 }
+
+/** The wall-clock reading of an instant in a zone, as "YYYY-MM-DDTHH:mm:ss" (what localToUtc takes back). */
+export function utcToLocal(at: Date, zone: string): string {
+  const wall = new Date(at.getTime() + offsetMs(zone, at.getTime()));
+  return wall.toISOString().slice(0, 19);
+}

@@ -32,6 +32,9 @@ export interface UploadTicketView extends UploadTicket {
   id: string;
   fileId: string;
   status: StoredFile["status"];
+  bytes: number;
+  contentType: string;
+  subjectId: string;
   upload: { url: string; method: "PUT"; headers: Record<string, string>; expiresAt: string };
 }
 
@@ -147,7 +150,7 @@ export class StoredFilesService {
         });
       }
     });
-    const signed = await this.storage.signUpload({ key: objectKey, contentType, expiresInSeconds: UPLOAD_TTL_SECONDS });
+    const signed = await this.storage.signUpload({ key: objectKey, contentType, contentLength: bytes, expiresInSeconds: UPLOAD_TTL_SECONDS });
     return {
       id,
       fileId: id,

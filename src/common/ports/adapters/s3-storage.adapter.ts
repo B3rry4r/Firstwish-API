@@ -1,4 +1,4 @@
-import { DeleteObjectCommand, GetObjectCommand, HeadObjectCommand, PutObjectCommand, S3Client, S3ServiceException } from "@aws-sdk/client-s3";
+import { CopyObjectCommand, DeleteObjectCommand, GetObjectCommand, HeadObjectCommand, PutObjectCommand, S3Client, S3ServiceException } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import type { Env } from "../../env/env";
 import { SignUpload, SignedUpload, StoragePort, StoredObject } from "../storage.port";
@@ -58,9 +58,11 @@ export class S3Storage extends StoragePort {
   }
 
   async signUpload(input: SignUpload): Promise<SignedUpload> {
-    const cmd = new PutObjectCommand({ Bucket: this.config.bucket, Key: input.key, ContentType: input.contentType });
-    const url = await getSignedUrl(this.client, cmd, { expiresIn: input.expiresInSeconds });
-    return { url, method: "PUT", headers: { "content-type": input.contentType }, expiresAt: new Date(this.clock.now().getTime() + input.expiresInSeconds * 1000) };
+    // X26: the signature covers the content type and the exact length, so the PUT cannot carry another type or size.
+    const cmd = new PutObjectCommand({ Bucket: this.config.bucket, Key: input.key, ContentType: input.contentType, ContentLength: input.contentLength });
+    const url = await getSignedUrl(this.client, cmd, { expiresIn: input.expiresInSeconds, signableHeaders: new Set(["content-type", "content-length"]) });
+    const headers = { "content-type": input.contentType, "content-length": String(input.contentLength) };
+    return { url, method: "PUT", headers, expiresAt: new Date(this.clock.now().getTime() + input.expiresInSeconds * 1000) };
   }
 
   async signDownload(key: string, expiresInSeconds: number): Promise<string> {
@@ -90,6 +92,11 @@ export class S3Storage extends StoragePort {
 
   async delete(key: string): Promise<void> {
     await this.client.send(new DeleteObjectCommand({ Bucket: this.config.bucket, Key: key }));
+  }
+
+  async copy(fromKey: string, toKey: string): Promise<void> {
+    const source = `${this.config.bucket}/${fromKey.split("/").map(encodeURIComponent).join("/")}`;
+    await this.client.send(new CopyObjectCommand({ Bucket: this.config.bucket, Key: toKey, CopySource: source }));
   }
 }
 

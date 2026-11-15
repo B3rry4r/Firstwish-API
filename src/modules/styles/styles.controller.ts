@@ -3,7 +3,7 @@ import type { Response } from "express";
 import { createHash } from "node:crypto";
 import { Public } from "../../common/auth/decorators";
 import type { Page } from "../../common/pagination/cursor";
-import { GetStylesByIdParamsDto, GetStylesLevelsQueryDto, GetStylesQueryDto, type GetStylesLevelsResponse } from "../../contracts";
+import { GetStylesByIdParamsDto, GetStylesLevelsQueryDto, GetStylesQueryDto, type StyleLevel } from "../../contracts";
 import type { StyleOut } from "./style-view";
 import { StylesService } from "./styles.service";
 
@@ -18,7 +18,7 @@ export class StylesController {
    */
   @Public()
   @Get("levels")
-  async levels(@Query() q: GetStylesLevelsQueryDto, @Res({ passthrough: true }) res: Response): Promise<GetStylesLevelsResponse> {
+  async levels(@Query() q: GetStylesLevelsQueryDto, @Res({ passthrough: true }) res: Response): Promise<Page<StyleLevel>> {
     const page = await this.styles.levels(q);
     res.setHeader("Cache-Control", "public, max-age=0, must-revalidate");
     res.setHeader("ETag", `"${createHash("sha256").update(JSON.stringify(page)).digest("base64url").slice(0, 32)}"`);

@@ -17,8 +17,8 @@ export type Reader = { type: "owner"; accountId: string } | { type: "allowed" };
 
 /** E-173's SignedUrl plus the signed GET itself (HALT reported: the registry's SignedUrl has no url). */
 export interface SignedRead extends SignedUrl {
-  url: string;
-  expiresAt: string;
+  fileId: string;
+  variant: string;
 }
 
 /** E-173 port:signed-urls#signedRead: a signed GET good for 10 minutes, for someone allowed to see the file. */

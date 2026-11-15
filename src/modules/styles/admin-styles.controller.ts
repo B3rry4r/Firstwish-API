@@ -1,5 +1,4 @@
 import { Body, Controller, Get, HttpCode, Param, Post, Put, Query } from "@nestjs/common";
-import { IsOptional, IsString, MaxLength } from "class-validator";
 import type { Page } from "../../common/pagination/cursor";
 import {
   GetAdminStylesPreviewToPaidQueryDto,
@@ -14,13 +13,8 @@ import { AdminRoute, StaffActor } from "../role-access/staff-section.guard";
 import type { StyleOut } from "./style-view";
 import { StyleRateOut, StylesService } from "./styles.service";
 
-/** E-193's query plus the level filter the staff Styles page uses (brief case 5; asked of the lead for the contract). */
-export class AdminStylesQueryDto extends GetAdminStylesQueryDto {
-  @IsOptional()
-  @IsString()
-  @MaxLength(16)
-  level?: string;
-}
+/** E-193's query: the level filter is in the contract now (X2, DEC-155). */
+export class AdminStylesQueryDto extends GetAdminStylesQueryDto {}
 
 @Controller("admin/styles")
 export class AdminStylesController {

@@ -60,7 +60,7 @@ export function promotionLineOf(p: PromotionRow, book: BookVersion, reason = "",
   return {
     ...settingBase(PROMOTION_KEY, `The ${p.percentOff}% off ends`, "promotion", book.version),
     kind: "date",
-    value: toWireInstant(p.endsAt) as unknown as number,
+    value: toWireInstant(p.endsAt),
     lead: p.label,
     reason,
     changed,

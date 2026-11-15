@@ -77,6 +77,14 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export const isUuid = (v: unknown): v is string => typeof v === "string" && UUID.test(v);
 
 /** Purpose names on the wire, from the database enum. */
+/** X25: the media kind of a stored file, from its content type, for a row that has none recorded. */
+export function mediaKindOf(contentType: string): StoredFile["kind"] {
+  if (contentType.startsWith("audio/")) return "sound";
+  if (contentType.startsWith("video/")) return "video";
+  if (contentType.startsWith("model/")) return "model";
+  return "image";
+}
+
 export function purposeOnWire(p: StoredFilePurpose): StoredFile["purpose"] {
   return p.replace(/_/g, "-") as StoredFile["purpose"];
 }
@@ -100,7 +108,7 @@ export function fileView(row: FileRow): StoredFile {
     ownerAccountId: row.ownerAccountId,
     businessId: row.businessId,
     purpose: purposeOnWire(row.purpose),
-    kind: row.kind ?? null,
+    kind: row.kind ?? mediaKindOf(row.contentType),
     objectKey: row.objectKey,
     contentType: row.contentType,
     bytes: Number(row.bytes),

@@ -32,10 +32,11 @@ export class BasicScreening extends UploadScreeningPort {
   screen(input: ScreenInput): Promise<ScreenResult> {
     const type = input.contentType.toLowerCase().split(";")[0].trim();
     const sniff = SIGNATURES[type];
-    if (!sniff) return Promise.resolve({ verdict: "rejected", reason: `Files of type ${type} are not taken.` });
-    if (input.size <= 0) return Promise.resolve({ verdict: "rejected", reason: "The file is empty." });
-    if (input.size > MAX_UPLOAD_BYTES) return Promise.resolve({ verdict: "rejected", reason: "The file is too large." });
-    if (!sniff(input.head)) return Promise.resolve({ verdict: "rejected", reason: "The file is not what its type says." });
-    return Promise.resolve({ verdict: "clean" });
+    const no = (label: string, reason: string): Promise<ScreenResult> => Promise.resolve({ verdict: "rejected", score: 1, labels: [label], reason });
+    if (!sniff) return no("type not taken", `Files of type ${type} are not taken.`);
+    if (input.size <= 0) return no("empty", "The file is empty.");
+    if (input.size > MAX_UPLOAD_BYTES) return no("too large", "The file is too large.");
+    if (!sniff(input.head)) return no("type mismatch", "The file is not what its type says.");
+    return Promise.resolve({ verdict: "clean", score: 0, labels: [] });
   }
 }

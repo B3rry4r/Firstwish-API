@@ -1,25 +1,43 @@
 import { Body, Controller, Get, HttpCode, Param, Post, Put, Query, Res } from "@nestjs/common";
 import type { Response } from "express";
 import { createHash } from "node:crypto";
+import { Type } from "class-transformer";
+import { IsInt, IsOptional, IsString, Max, Min } from "class-validator";
+import type { Page } from "../../common/pagination/cursor";
 import { Public, Roles, StaffRoles } from "../../common/auth/decorators";
 import {
   GetAdminPricesQueryDto,
   GetPriceBookQueryDto,
-  GetTicketOffersQueryDto,
   PostAdminPriceBookVersionsBodyDto,
   PostAdminPriceBookVersionsByIdPublishBodyDto,
   PostAdminPriceBookVersionsByIdPublishParamsDto,
   PutAdminPricesByKeyBodyDto,
   PutAdminPricesByKeyParamsDto,
   type GetAdminPricesResponse,
-  type GetTicketOffersResponse,
   type Price,
   type PriceBookVersion,
+  type TicketOffer,
 } from "../../contracts";
 import type { AuditActor } from "../audit/audit.service";
 import { AdminRoute, StaffActor } from "../role-access/staff-section.guard";
 import { PriceAdminService } from "./price-admin.service";
 import { PublicBook, PublicBookService } from "./public-book.service";
+
+/**
+ * INT-2: E-213's contract is now one TicketQuote for ?ticket=&extras= (X13, DEC-160); B04's patch moves this route onto it.
+ * Until then the route keeps B04's paged list, read with this query.
+ */
+export class TicketOffersPageQueryDto {
+  @IsOptional()
+  @IsString()
+  cursor?: string;
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(50)
+  limit?: number;
+}
 
 @Controller()
 export class PriceBookController {
@@ -42,7 +60,7 @@ export class PriceBookController {
   /** E-213 */
   @Roles("business")
   @Get("ticket-offers")
-  offers(@Query() q: GetTicketOffersQueryDto): Promise<GetTicketOffersResponse> {
+  offers(@Query() q: TicketOffersPageQueryDto): Promise<Page<TicketOffer & { adds: Record<string, unknown> }>> {
     return this.pub.ticketOffers(q);
   }
 

@@ -33,7 +33,7 @@ describe("storage: one S3 port, r2 and spaces differ only by config", () => {
 
   it("signs uploads locally against the configured endpoint (no network)", async () => {
     const s = new S3Storage(s3ConfigFor(spaces));
-    const up = await s.signUpload({ key: "u/1/photo.jpg", contentType: "image/jpeg", expiresInSeconds: 300 });
+    const up = await s.signUpload({ key: "u/1/photo.jpg", contentType: "image/jpeg", contentLength: 2048, expiresInSeconds: 300 });
     expect(up.method).toBe("PUT");
     expect(new URL(up.url).host).toBe("wishes.spaces.test");
     expect(up.url).toContain("X-Amz-Signature=");
@@ -91,7 +91,7 @@ describe("basic screening", () => {
   const s = new BasicScreening();
   const png = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0]);
   it("passes a file whose bytes match its type", async () => {
-    expect(await s.screen({ key: "a.png", contentType: "image/png", size: 10, head: png })).toEqual({ verdict: "clean" });
+    expect(await s.screen({ key: "a.png", contentType: "image/png", size: 10, head: png })).toEqual({ verdict: "clean", score: 0, labels: [] });
   });
   it("rejects a file that is not what its type says, or a type the app does not take", async () => {
     expect((await s.screen({ key: "a.jpg", contentType: "image/jpeg", size: 10, head: png })).verdict).toBe("rejected");
@@ -120,7 +120,7 @@ describe("stand-ins", () => {
   });
   it("storage signs, stores and expires by the stand-in clock", async () => {
     const s = new StandinStorage(clock);
-    const up = await s.signUpload({ key: "k/1", contentType: "image/png", expiresInSeconds: 60 });
+    const up = await s.signUpload({ key: "k/1", contentType: "image/png", contentLength: 4, expiresInSeconds: 60 });
     expect(up.expiresAt.toISOString()).toBe("2026-01-01T00:01:00.000Z");
     expect(await s.head("k/1")).toBeNull();
     s.put("k/1", Buffer.from("abc"), "image/png");
@@ -136,6 +136,42 @@ describe("stand-ins", () => {
   it("screening rejects keys containing reject", async () => {
     const s = new StandinScreening();
     expect((await s.screen({ key: "x/reject.png", contentType: "image/png", size: 1, head: Buffer.alloc(1) })).verdict).toBe("rejected");
+  });
+  it("screening results carry score and labels (X21)", async () => {
+    const s = new StandinScreening();
+    expect(await s.screen({ key: "x/ok.png", contentType: "image/png", size: 1, head: Buffer.alloc(1) })).toEqual({ verdict: "clean", score: 0, labels: [] });
+    const r = await s.screen({ key: "x/reject.png", contentType: "image/png", size: 1, head: Buffer.alloc(1) });
+    expect(r).toMatchObject({ verdict: "rejected", score: 1, labels: ["stand-in"] });
+    const b = await new BasicScreening().screen({ key: "a.exe", contentType: "application/x-msdownload", size: 10, head: Buffer.alloc(4) });
+    expect(b).toMatchObject({ verdict: "rejected", score: 1 });
+    expect((b as { labels: string[] }).labels.length).toBeGreaterThan(0);
+  });
+  it("a signed upload binds length and type: another length or type is refused, nothing stored (X26)", async () => {
+    const s = new StandinStorage(clock);
+    const up = await s.signUpload({ key: "k/2", contentType: "image/png", contentLength: 3, expiresInSeconds: 60 });
+    expect(up.headers).toMatchObject({ "content-type": "image/png", "content-length": "3" });
+    expect(s.putSigned("k/2", Buffer.from("abcd"), "image/png")).toBe(false);
+    expect(s.putSigned("k/2", Buffer.from("abc"), "image/jpeg")).toBe(false);
+    expect(await s.head("k/2")).toBeNull();
+    expect(s.putSigned("k/2", Buffer.from("abc"), "image/png")).toBe(true);
+    expect(await s.head("k/2")).toEqual({ size: 3, contentType: "image/png" });
+    const other = await s.signUpload({ key: "k/2", contentType: "image/png", contentLength: 4, expiresInSeconds: 60 });
+    expect(other.url).not.toBe(up.url);
+  });
+  it("the real adapter's signed PUT covers content-length and content-type (X26)", async () => {
+    const s = new S3Storage(s3ConfigFor({ ...standinEnv(), STORAGE_DRIVER: "spaces", SPACES_ENDPOINT: "http://spaces.test", SPACES_REGION: "fra1", SPACES_ACCESS_KEY_ID: "k", SPACES_SECRET_ACCESS_KEY: "s", SPACES_BUCKET: "wishes" } as never));
+    const up = await s.signUpload({ key: "u/1/p.png", contentType: "image/png", contentLength: 99, expiresInSeconds: 60 });
+    const signed = new URL(up.url).searchParams.get("X-Amz-SignedHeaders") ?? "";
+    expect(signed).toContain("content-length");
+    expect(signed).toContain("content-type");
+    expect(up.headers["content-length"]).toBe("99");
+  });
+  it("the stand-in token is random: two generators never repeat a token (X26)", async () => {
+    const { StandinCodeGenerator } = await import("../ids.port");
+    const a = new StandinCodeGenerator();
+    const b = new StandinCodeGenerator();
+    expect(a.token()).not.toBe(b.token());
+    expect(a.token(16)).toHaveLength(Buffer.alloc(16).toString("base64url").length);
   });
   it("the clock moves only when told", () => {
     const c = new StandinClock(new Date("2026-01-01T00:00:00Z"));

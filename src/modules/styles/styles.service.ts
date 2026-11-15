@@ -182,7 +182,7 @@ export class StylesService {
     const counts = await this.countsFor(page.items.map((r) => r.slug ?? ""), bounds);
     const items = page.items.map((r): StyleRateOut => {
       const c = counts.get(r.slug ?? "") ?? zero();
-      return { quarter, styleSlug: r.slug ?? "", name: r.name ?? "", level: r.level ?? "", previews: c.previews, paid: c.paid, rate: rateOf(c) };
+      return { quarter, styleSlug: r.slug ?? "", name: r.name ?? "", level: (r.level ?? "") as StyleRate["level"], previews: c.previews, paid: c.paid, rate: rateOf(c) };
     });
     return { items, nextCursor: page.nextCursor };
   }

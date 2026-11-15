@@ -3,7 +3,7 @@ import { PrismaService } from "../../common/db/prisma.service";
 import { Clock } from "../../common/ports/clock.port";
 import { StoragePort } from "../../common/ports/storage.port";
 import { IMAGE_WIDTHS, isImage, UNCONFIRMED_MAX_AGE_MS, Variant, variantsOf } from "./file-rules";
-import { ImageSizesPort } from "./image-sizes.port";
+import { ImageSizesPort } from "../../common/ports/image-sizes.port";
 
 /**
  * The file jobs, exported for the jobs frame (B06, not merged when this was built): it runs them from the queue with a recorded run.

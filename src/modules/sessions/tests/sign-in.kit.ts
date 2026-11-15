@@ -2,7 +2,7 @@ import type { Response } from "supertest";
 import { PrismaService } from "../../../common/db/prisma.service";
 import { SessionFamilies } from "../../../common/auth/session-families";
 import { IdGenerator } from "../../../common/ports/ids.port";
-import { createTestApp, TestApp } from "../../../../test/kit/app";
+import { createTestApp, TestApp, uniqueAddress } from "../../../../test/kit/app";
 
 /*
  * Test helpers for the sign-in bundle. The app runs with the kernel's real verifier (not the kit's token map), so tokens the
@@ -24,9 +24,9 @@ const run = `${process.pid}${Date.now() % 100000}`;
 export function uniqueEmail(tag: string): string {
   return `${tag}-${run}-${++seq}@example.com`;
 }
+/** AA6: the kit's per-worker address block, so two specs never share a per-address limit. */
 export function uniqueIp(): string {
-  seq++;
-  return `10.${(Number(run) + seq) % 250}.${Math.floor(seq / 250) % 250}.${seq % 250}`;
+  return uniqueAddress();
 }
 
 /** The code in the last email the stand-in captured for this address. */

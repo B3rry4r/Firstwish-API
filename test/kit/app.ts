@@ -92,3 +92,14 @@ export async function createTestApp(opts: TestAppOptions = {}): Promise<TestApp>
     close: () => app.close(),
   };
 }
+
+let addressSeq = 0;
+/**
+ * AA6: a client address of its own for a test that counts per address (the API trusts one proxy in tests, so send it as
+ * X-Forwarded-For). Each jest worker owns a block of 4096 addresses picked by its process id and walks it with a counter, so two
+ * workers never hand out the same address in one run and per-address limits never leak between specs.
+ */
+export function uniqueAddress(): string {
+  const n = (process.pid % 4096) * 4096 + (addressSeq++ % 4096);
+  return `10.${(n >> 16) & 255}.${(n >> 8) & 255}.${n & 255}`;
+}

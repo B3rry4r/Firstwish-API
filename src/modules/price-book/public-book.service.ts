@@ -2,7 +2,8 @@ import { Injectable } from "@nestjs/common";
 import { PrismaService } from "../../common/db/prisma.service";
 import { AppError } from "../../common/errors/app-error";
 import { decodeCursor, DEFAULT_LIMIT, toPage } from "../../common/pagination/cursor";
-import type { Entitlements, GetPriceBookQuery, GetTicketOffersQuery, GetTicketOffersResponse, LifecycleConfig, Price, Promotion, TicketOffer } from "../../contracts";
+import type { Page } from "../../common/pagination/cursor";
+import type { Entitlements, GetPriceBookQuery, LifecycleConfig, Price, Promotion, TicketOffer } from "../../contracts";
 import { EntitlementsService, grantOf } from "./entitlements.service";
 import { BookVersion, PriceBookService, safe } from "./price-book.service";
 import { priceOf, promotionOf } from "./price-view";
@@ -111,7 +112,7 @@ export class PublicBookService {
   }
 
   /** E-213: each ticket's offer from the book, with the extras it takes and their prices now. */
-  async ticketOffers(q: GetTicketOffersQuery): Promise<GetTicketOffersResponse> {
+  async ticketOffers(q: { cursor?: string; limit?: number }): Promise<Page<TicketOffer & { adds: Record<string, unknown> }>> {
     const book = await this.book.versionAt(this.book.now());
     const tickets = book.lines.filter((l) => l.sku.startsWith("ticket.")).sort((a, b) => Number(a.listKobo - b.listKobo));
     const limit = q.limit ?? DEFAULT_LIMIT;

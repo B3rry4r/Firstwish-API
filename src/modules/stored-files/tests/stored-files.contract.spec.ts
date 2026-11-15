@@ -3,7 +3,8 @@ import { R2_HOST_SUFFIX, S3Storage, s3ConfigFor } from "../../../common/ports/ad
 import type { Env } from "../../../common/env/env";
 import type { TestApp } from "../../../../test/kit/app";
 import { FileJobs } from "../file-jobs";
-import { ImageSizesPort, StandinImageSizes } from "../image-sizes.port";
+import { ImageSizesPort } from "../../../common/ports/image-sizes.port";
+import { StandinImageSizes } from "../../../common/ports/adapters/standins";
 import { SignedUrlsService } from "../signed-urls.service";
 import { scoreOf, verdictOf } from "../screening.service";
 import { filesApp, GB, ids, JPEG, makeAccount, makeBusiness, makeWish, MB, ScoredScreening, WEBM } from "./files-kit";
@@ -16,8 +17,8 @@ describe("storage adapters (case 1: one port, two adapters)", () => {
       s3ConfigFor({ ...base, STORAGE_DRIVER: "spaces", SPACES_ENDPOINT: "https://fra1.spaces.standin.invalid", SPACES_REGION: "fra1", SPACES_BUCKET: "fw", SPACES_ACCESS_KEY_ID: "k", SPACES_SECRET_ACCESS_KEY: "s" }),
     );
     const key = "wish-photo/019a0000-0000-7000-8000-000000000001/abc";
-    const a = new URL((await r2.signUpload({ key, contentType: "image/jpeg", expiresInSeconds: 900 })).url);
-    const b = new URL((await sp.signUpload({ key, contentType: "image/jpeg", expiresInSeconds: 900 })).url);
+    const a = new URL((await r2.signUpload({ key, contentType: "image/jpeg", contentLength: 1000, expiresInSeconds: 900 })).url);
+    const b = new URL((await sp.signUpload({ key, contentType: "image/jpeg", contentLength: 1000, expiresInSeconds: 900 })).url);
     expect(a.host.endsWith(`acct.${R2_HOST_SUFFIX}`)).toBe(true);
     expect(b.host).toMatch(/(^|\.)fra1\.spaces\.standin\.invalid$/);
     expect(a.pathname.endsWith(`/${key}`)).toBe(true);
@@ -32,8 +33,8 @@ describe("storage adapters (case 1: one port, two adapters)", () => {
     expect(verdictOf(0.89)).toBe("review");
     expect(verdictOf(0.5)).toBe("review");
     expect(verdictOf(0.49)).toBe("pass");
-    expect(scoreOf({ verdict: "rejected", reason: "x" })).toBe(1);
-    expect(scoreOf({ verdict: "clean" })).toBe(0);
+    expect(scoreOf({ verdict: "rejected", reason: "x", score: 1, labels: ["x"] })).toBe(1);
+    expect(scoreOf({ verdict: "clean", score: 0, labels: [] })).toBe(0);
   });
 });
 

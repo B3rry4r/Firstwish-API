@@ -87,9 +87,9 @@ export class StandinCodeGenerator extends CodeGenerator {
     this.counter++;
     return String(this.counter % 10 ** n).padStart(n, "0");
   }
+  /** Random, like the real one (X26): tokens make storage keys and links, which must never repeat across test apps. */
   token(bytes = 32): string {
-    this.counter++;
-    return Buffer.from(`standin-token-${this.counter}`.padEnd(bytes, ".")).toString("base64url");
+    return randomBytes(bytes).toString("base64url");
   }
   slugSuffix(): string {
     this.counter++;

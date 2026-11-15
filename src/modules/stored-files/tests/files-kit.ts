@@ -17,7 +17,7 @@ export class ScoredScreening extends UploadScreeningPort {
   screen(input: ScreenInput): Promise<ScreenResult> {
     this.screened.push(input);
     const score = this.next.shift() ?? 0;
-    const r = score >= 0.5 ? { verdict: "rejected" as const, reason: "stand-in label", score } : { verdict: "clean" as const, score };
+    const r = score >= 0.5 ? { verdict: "rejected" as const, reason: "stand-in label", score, labels: ["stand-in label"] } : { verdict: "clean" as const, score, labels: [] };
     return Promise.resolve(r);
   }
 }

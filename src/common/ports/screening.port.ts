@@ -5,7 +5,14 @@ export interface ScreenInput {
   /** The first bytes of the file. */
   head: Buffer;
 }
-export type ScreenResult = { verdict: "clean" } | { verdict: "rejected"; reason: string };
+
+/**
+ * What screening found (X21). score is from 0 (nothing found) to 1 (certainly not allowed); labels name what was found, in a few
+ * plain words each. A rejected file also says why, for the person who sent it.
+ */
+export type ScreenResult =
+  | { verdict: "clean"; score: number; labels: string[] }
+  | { verdict: "rejected"; score: number; labels: string[]; reason: string };
 
 /** Upload screening: runs on every confirmed upload before the file is used. */
 export abstract class UploadScreeningPort {

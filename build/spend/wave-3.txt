@@ -1,0 +1,27 @@
+SPEND  prices: worked-example rates, NOT current prices (pass --prices)  agents 96  $202  models {'sonnet': 72, 'opus': 24}
+  cache-read share of agent cost 51%   start context median 57k tokens
+BY LENGTH   steps      n   $total   $/step  avg max ctx
+    0-100         93      175    0.051      155k
+  100-200          3       27    0.066      342k
+BY ROUND (a build and its checks count together)   n   $total  share
+  round 1                                     93      195    96%
+  round 2                                      2        7     3%
+  round 3                                      1        1     0%
+  build: n 65  sum $162  median $1.9
+  check: n 31  sum $40  median $1.2
+IDLE  gaps past the cache window (300 s) 3, cache written again after 3, extra $1 (0% of agent spend)
+TOP TASKS  (cost, agents, highest round)
+  INT-1                       $    14    3 agents  round 1
+  INT-2                       $    10    2 agents  round 1
+  INT-3                       $     9    1 agents  round 1
+  Reconcile Phase 3 draft     $     7    1 agents  round 1
+  Patch Schema round 2        $     6    1 agents  round 2
+  Build Phase 4 schema        $     5    1 agents  round 1
+TOP AGENTS  (cost, steps, max context)
+  Build INT-1 identity joined         $  10.8   138 steps  355k
+  Build INT-3 wave 3 shared base      $   8.8   148 steps  368k
+  Build INT-2 wave 2 shared base      $   7.8   127 steps  304k
+  Reconcile Phase 3 draft             $   7.1    64 steps  346k
+  Patch Schema round 2                $   5.9    93 steps  246k
+  Build Phase 4 schema                $   5.5    78 steps  244k
+EXIT 0

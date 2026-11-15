@@ -428,3 +428,5 @@ NN6 (listed to the owner) 30 wrong passcode tries lock a link for an hour for ev
 MM3 (P-B07) HH5 is closed in the wave join (the settle's erased-account branch also sets refund_due). HH8 needs the contract:
     the start body's `ticket` takes every ticket id (INT-4 registry). Tests that run due jobs in a shared database pass the job
     keys they mean (`only`), so one spec never runs another's jobs (the cause of HH9; the join fixes the two specs that do not).
+NN7 (P-B10) E-131 (POST /v1/w/:slug/opens) answers PublicWishView in the registry (INT-4). A reaction may hold the zero-width
+    joiner that emoji sequences need; direction overrides and the other invisible characters stay refused (wave join).

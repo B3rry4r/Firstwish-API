@@ -337,3 +337,18 @@ FF3 (low) A stored event's id is type : provider id : reference, so two events f
 FF4 (low) The same idempotency key after the payment succeeded answers 200 with the payment as it stands and no checkout address.
 FF5 (low) A pending payment is abandoned at 60 minutes or older (not strictly older).
 FF6 (low, kernel) In live mode PAYSTACK_SECRET_KEY must be at least 20 characters; boot refuses a shorter one.
+
+## From B07's halts (15 Nov). Default (lead), owner may override. Applied in the next shared base (INT-4).
+GG1 purchase_grant becomes a model in the schema (what was granted, from which payment, its end date, revoked or not).
+GG2 The wish bundle exports fulfilTicketIn(tx, wishId, ticket) and the ticket handler uses it (one way to give a wish its ticket).
+GG3 Starting a payment calls PurchasesService.assertStartable (the Keepsake extras ceiling, the wish is the payer's and can
+    take the line). A wish that already has a ticket cannot be sold another: the app sells no paid upgrade (lib/catalog.ts has
+    upgrades only inside the Pass: four Signature upgrades). So a ticket line for a ticketed wish is 422 at start. A Pass
+    upgrade turns a Pass wish into a Signature by drawing one upgrade (no money). Listed to the owner: a paid upgrade has no
+    price in the app or the documents, so it is not sold.
+GG4 business.pack is wishes left from packs (as lib/pro-data.ts has it), never a count of packs. Vault space is the plan's GB
+    plus the GB of live grants (a pack's 20 GB for 90 days, bought Vault space): the files bundle reads it from the grants.
+GG5 Seal can draw from the Pass in place of a ticket payment: the seal body takes usePass: true and draws one wish in the seal
+    transaction (20 at once with 1 left: one seals). Business client wishes draw from the business (B17).
+GG6 Owed by others: Pro plan logins and invoices (an Invoice row with its VAT part for every plan and pack payment, T-40) by B17,
+    called from the plan handlers; the end of a creator's Signed period by a timed job in B16.

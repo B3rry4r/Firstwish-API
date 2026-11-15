@@ -241,3 +241,15 @@ X27 (B09) Vault files are read by the business's owner AND its logins (members),
 X28 (Verify B14, low) The public levels read returns every style in ONE answer (no paging: there are tens, not thousands) and its
     ETag covers the whole answer.
 X29 (Verify B14, low) An event for a style that is switched off is refused (422), not counted.
+
+## From Verify B09 (15 Nov): how each finding is closed. Default (lead), owner may override.
+Y1 (high) An upload lands on a staging key (incoming/...). On confirm the server copies it to its final key, which no signed PUT
+   ever pointed at, and removes the staging object. The signed PUT binds content type and length (X26). So nothing the owner sends
+   after confirm can change a screened file or dodge the Vault count; stray staging objects are removed by the cleanup job.
+Y2 (medium) The file-link triggers are replaced by real foreign keys (X23); no trigger fires on unrelated updates.
+Y3 (low) At confirm the server reads the file's first bytes and decides the type itself (the storage header is not trusted); an
+   SVG is not accepted as a photo; the stored size is the real size.
+Y4 (low) Storage calls happen outside the database transaction: the upload row is claimed in one conditional UPDATE, storage is
+   read, then a short transaction finishes it.
+Y5 (low, for B06) The files a wish names live in a join table with foreign keys (wish, file, role), written when the content is
+   saved, so a file in a sealed wish cannot be deleted by any race.

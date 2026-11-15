@@ -238,3 +238,6 @@ X24 (B09) Staff read the screening queue at GET /v1/admin/screening-results (own
 X25 (B09) StoredFile.kind stays the media kind (image|sound|model|video); E-182's body gains `purpose` (photo|voice|clip|vault|studio).
 X26 (B09, kernel) A signed upload binds the content length; the stand-in token generator is random where it makes storage keys.
 X27 (B09) Vault files are read by the business's owner AND its logins (members), never by anyone else.
+X28 (Verify B14, low) The public levels read returns every style in ONE answer (no paging: there are tens, not thousands) and its
+    ETag covers the whole answer.
+X29 (Verify B14, low) An event for a style that is switched off is refused (422), not counted.

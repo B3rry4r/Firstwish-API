@@ -64,3 +64,20 @@ it must work at 360 and 390 wide with no sideways page scroll (tables scroll ins
 - Shared change wanted, not made: export useMode from components/app/Switcher.tsx; Shell.tsx has a copy of it (14 lines).
 - Proof: tsc, check-css and a Playwright walk (360/390/1440, light and dark, the four cases, no sideways scroll, zero console errors;
   /app, /app/pro, /app/creator/studio same layout after /admin). Pictures: scratchpad build/verify/adm-a/.
+- ADM-C: screen built (front end only, sample data), web branch `adm-c` (5b5cdab). Payments `/admin/payments` (list, find by
+  reference / wish number / phone's last digits, drawer per payment via ?ref=, refund; Ledger view ?view=ledger), Businesses
+  `/admin/businesses` + `/[id]`, Concierge `/admin/concierge` + `/[id]`, Prices `/admin/prices`. Seam lib/admin/c-api.ts (types
+  lib/admin/c-types.ts, re-exported from lib/admin-types; fixtures lib/admin/c-fixtures.ts); lib/admin-api.ts gains only `cSeam`
+  (ADM-C block). Confirm (components/admin/ui.tsx) gained an optional `ready` prop.
+- Default (lead), owner may override (ADM-C): a refund is always the full amount; Refund on a paid payment, or "Send the refund" on
+  one started from a wish, marks it Refunded (the server will wait for Paystack's confirmation). The ledger counts every payment
+  taken that day (refunded or not) against Paystack's settlement for that day; Paystack's side and its three differences are SAMPLE.
+- Default (lead), owner may override (ADM-C): businesses, logins, invoices, Vault use, Concierge orders, makers, names and dates are
+  SAMPLE (PROVISIONAL); plan sizes, Vault blocks and prices come from lib/pro-data. A Concierge list's amount is a sample quote (the
+  one-wish price per name). "This week" is the 7 days from the sample day (15 Nov 2026). Businesses has no actions yet (none asked).
+- Default (lead), owner may override (ADM-C): Prices edits the price charged now (the list price is shown, not edited); extras show
+  their 40% off price beside, keeps and Vault space are never discounted. The 40% off end date is not a constant anywhere in code
+  (only "until 31 January" in copy): shown as 31 Jan 2027. PREMIUM_PRICE (lib/studio) is not listed again: it is the "A premium
+  style" extra. A price change does not yet reach the site's own pages (they read lib/catalog until the server holds prices).
+- Proof (ADM-C): tsc, check-css, Playwright walk (360/390/1440, light and dark, four cases, no sideways scroll, zero console errors;
+  /app and /app/pro same layout after /admin by client-side moves). Pictures: scratchpad build/verify/adm-c/.

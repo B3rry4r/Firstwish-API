@@ -45,7 +45,7 @@ R13 (owner, 15 Nov 2026): "We're not using AI to, we're not selling audios to AI
 R14 (owner, 15 Nov 2026): "payout threshold for creators ... you have to suggest on that one. Suggest what is going to work properly."
    Default (lead), owner may override: ₦5,000. Paid on the 5th of each month for what was earned up to the end of the month before; less than
    ₦5,000 rolls on to the next month. PROVISIONAL until the owner says yes; changeable in admin Prices.
-R15 (owner, 15 Nov 2026): contact on the site: email "motionafrica@gmail.com. You know the way I spell motion" = moxnafrica@gmail.com (lead's reading,
-   to confirm); WhatsApp "+234 810 534 0452".
+R15 (owner, 15 Nov 2026): contact on the site: email "motionafrica@gmail.com. You know the way I spell motion" = moxnafrica@gmail.com (owner confirmed
+   the spelling in writing, 15 Nov 2026); WhatsApp "+234 810 534 0452".
 R16 (owner, 15 Nov 2026): owner will give Paystack test keys "when that time has reached" and the Anthropic key; has a DigitalOcean account; needs a
    walkthrough to get the Google sign-in client. Until then: stand-ins behind the same ports, marked NOT RUN against the real provider.

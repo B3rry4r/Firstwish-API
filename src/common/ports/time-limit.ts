@@ -84,7 +84,7 @@ export function withTimeLimit<T extends object>(port: T, name: LimitedPort, limi
             },
             (e: unknown) => {
               clearTimeout(timer);
-              reject(e);
+              reject(e instanceof Error ? e : new Error(String(e)));
             },
           );
         });

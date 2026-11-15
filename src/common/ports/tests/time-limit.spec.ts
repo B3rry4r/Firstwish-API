@@ -55,10 +55,8 @@ describe("withTimeLimit", () => {
     const calls: string[] = [];
     const port = withTimeLimit(
       {
-        ok: async (x: number) => x + 1,
-        bad: async () => {
-          throw new Error("provider said no");
-        },
+        ok: (x: number) => Promise.resolve(x + 1),
+        bad: () => Promise.reject(new Error("provider said no")),
         label: "kept",
         note(): string {
           calls.push("note");
@@ -81,8 +79,8 @@ describe("withTimeLimit", () => {
   it("keeps `this` on the real object (a #private field works)", async () => {
     class Holder {
       #secret = 7;
-      async read(): Promise<number> {
-        return this.#secret;
+      read(): Promise<number> {
+        return Promise.resolve(this.#secret);
       }
     }
     await expect(withTimeLimit(new Holder(), "storage", 1000).read()).resolves.toBe(7);

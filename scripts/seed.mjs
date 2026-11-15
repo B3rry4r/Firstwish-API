@@ -210,7 +210,17 @@ export async function seed(db) {
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   const db = new PrismaClient();
-  (process.argv[2] === "styles" ? seedStyles(db) : seed(db))
+  // One seeder at a time: specs seed the same database from several processes, and an upsert is a read then a write, so two at
+  // once race on the same new row. The transaction-level advisory lock makes the second wait for the first to commit.
+  const run = () =>
+    db.$transaction(
+      async (tx) => {
+        await tx.$executeRaw`SELECT pg_advisory_xact_lock(748201)`;
+        return process.argv[2] === "styles" ? seedStyles(tx) : seed(tx);
+      },
+      { timeout: 120_000, maxWait: 120_000 },
+    );
+  run()
     .then(() => console.log("seed: reference rows in place"))
     .catch((e) => {
       console.error(e);

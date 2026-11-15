@@ -1,23 +1,27 @@
 import { PrismaService } from "../../../common/db/prisma.service";
 import { StandinImageSizes } from "../../../common/ports/adapters/standins";
 import { ImageSizesPort } from "../../../common/ports/image-sizes.port";
+import { UploadScreeningPort } from "../../../common/ports/screening.port";
 import { createTestApp, TestApp } from "../../../../test/kit/app";
 import { AccountErasureService } from "../../accounts/account-erasure.service";
 import { JobsService } from "../../jobs/jobs.service";
-import { ScoredScreening, ids, makeAccount, makeBusiness, makeWish, PNG, stage, ensureEntitlements } from "../../stored-files/tests/files-kit";
-import { ERASE_FILES_PREFIX } from "../../stored-files/file-jobs";
+import { ERASE_FILES_PREFIX, FileJobs } from "../../stored-files/file-jobs";
 import { stagingKeyOf } from "../../stored-files/file-rules";
-import { UploadScreeningPort } from "../../../common/ports/screening.port";
+import { ensureEntitlements, ids, makeAccount, makeBusiness, makeWish, PNG, ScoredScreening, stage } from "../../stored-files/tests/files-kit";
 import { ABANDON_EVERY_MS, JobHandlers, SWEEP_KEY, UPLOAD_CLEANUP_EVERY_MS } from "../job-handlers.service";
 
 /* INT-3: the joins only the merged base can make. Every handler a bundle exported is registered with the jobs frame and the tick
    (JobsService.runDue, the body of the BullMQ tick) really runs it; erasing an account and the signed PUT are re-proved with B06's wishes.
-   The clock stands at a time no other spec uses, so this spec's runDue never takes another spec's job. */
+   Specs share one database and one job table, so every run here is restricted to this spec's own subjects (runDue's `only`), and the
+   two clocks are chosen so that no other spec's tick or cleanup sees this spec's rows:
+     NOW    before every other spec's clock: the two global sweeps (abandon, unconfirmed uploads) find only this spec's old rows;
+     LATER  after every other spec's clock: rows made here are not yet due for anyone else. */
 const NOW = new Date("2025-06-01T09:00:00.000Z");
+const LATER = new Date("2099-06-01T09:00:00.000Z");
+const FAR = new Date("2100-01-01T00:00:00.000Z");
 const MIN = 60_000;
-const FAR = new Date("2099-01-01T00:00:00.000Z");
 
-/** Removes this spec's job rows and their recorded runs, so no job of ours is left for another spec's tick. */
+/** Removes this spec's job rows and their recorded runs, so no job of ours is left behind. */
 async function dropJobs(db: PrismaService, where: object): Promise<void> {
   const found = await db.job.findMany({ where, select: { id: true } });
   const jobId = { in: found.map((j) => j.id) };
@@ -25,25 +29,23 @@ async function dropJobs(db: PrismaService, where: object): Promise<void> {
   await db.job.deleteMany({ where: { id: jobId } });
 }
 
-describe("INT-3: the jobs frame runs the handlers other bundles exported", () => {
+let k = 0;
+const subject = () => `int3-${process.pid}-${Date.now()}-${++k}`;
+
+describe("INT-3: the global sweeps run by the jobs frame (a clock before every other spec's)", () => {
   let t: TestApp;
   let db: PrismaService;
   let jobs: JobsService;
-  const auth = (token: string) => ({ authorization: `Bearer ${token}` });
-  let k = 0;
-  const subject = () => `int3-${process.pid}-${Date.now()}-${++k}`;
 
   beforeAll(async () => {
-    const scored = new ScoredScreening();
-    t = await createTestApp({ now: NOW, configure: (b) => b.overrideProvider(UploadScreeningPort).useValue(scored) });
+    t = await createTestApp({ now: NOW });
     db = t.app.get(PrismaService);
     jobs = t.app.get(JobsService);
     t.app.get(JobHandlers).registerAll();
-    await ensureEntitlements(db);
   });
   afterAll(() => t.close());
 
-  const jobOf = (type: "abandon_payment" | "upload_cleanup" | "make_image_sizes", subjectId: string) => db.job.findUniqueOrThrow({ where: { type_subjectId: { type, subjectId } } });
+  const jobOf = (type: "abandon_payment" | "upload_cleanup", subjectId: string) => db.job.findUniqueOrThrow({ where: { type_subjectId: { type, subjectId } } });
   const runsOf = (jobId: string) => db.jobRun.findMany({ where: { jobId }, orderBy: { id: "asc" } });
 
   async function payment(accountId: string, createdAt: Date, status: "pending" | "started" | "succeeded" = "pending"): Promise<string> {
@@ -65,7 +67,7 @@ describe("INT-3: the jobs frame runs the handlers other bundles exported", () =>
     const paid = await payment(me.id, new Date(NOW.getTime() - 300 * MIN), "succeeded");
     const key = subject();
     await jobs.schedule("abandon-payment", NOW, key);
-    expect(await jobs.runDue()).toBeGreaterThanOrEqual(1);
+    expect(await jobs.runDue(100, [key])).toBe(1);
     const status = async (id: string) => (await db.payment.findUniqueOrThrow({ where: { id } })).status;
     expect([await status(old), await status(started), await status(young), await status(paid)]).toEqual(["abandoned", "abandoned", "pending", "succeeded"]);
     const job = await jobOf("abandon_payment", key);
@@ -76,29 +78,33 @@ describe("INT-3: the jobs frame runs the handlers other bundles exported", () =>
     expect(runs[0]).toMatchObject({ outcome: "succeeded", error: null });
     expect((runs[0].changed as { abandoned: number }).abandoned).toBeGreaterThanOrEqual(2);
     await dropJobs(db, { id: job.id });
+    // payments older than any other spec's clock are counted by that spec's own abandon sweep: leave none behind
+    await db.payment.deleteMany({ where: { id: { in: [old, started, young, paid] } } });
   });
 
   it("the recurring jobs are put on the table once: scheduling twice moves one row each", async () => {
     const handlers = t.app.get(JobHandlers);
-    const before = await db.job.count({ where: { subjectId: SWEEP_KEY, type: { in: ["abandon_payment", "upload_cleanup"] } } });
+    const sweeps = { subjectId: SWEEP_KEY, type: { in: ["abandon_payment" as const, "upload_cleanup" as const] } };
+    await dropJobs(db, sweeps);
     await handlers.scheduleRecurring();
     await handlers.scheduleRecurring();
-    expect(await db.job.count({ where: { subjectId: SWEEP_KEY, type: { in: ["abandon_payment", "upload_cleanup"] } } })).toBe(Math.max(before, 2));
-    expect(await db.job.count({ where: { subjectId: SWEEP_KEY, type: "abandon_payment" } })).toBe(1);
-    expect(await db.job.count({ where: { subjectId: SWEEP_KEY, type: "upload_cleanup" } })).toBe(1);
-    await dropJobs(db, { subjectId: SWEEP_KEY, type: { in: ["abandon_payment", "upload_cleanup"] } });
+    expect(await db.job.count({ where: { subjectId: SWEEP_KEY, type: "abandon_payment", status: "scheduled" } })).toBe(1);
+    expect(await db.job.count({ where: { subjectId: SWEEP_KEY, type: "upload_cleanup", status: "scheduled" } })).toBe(1);
+    await dropJobs(db, sweeps);
   });
 
   it("upload-cleanup (B09), the recurring sweep: the tick removes an upload never confirmed in 24 hours (rows and objects) and comes back in an hour", async () => {
     const me = await makeAccount(db, t);
     const id = ids.next();
     const objectKey = `files/${id}`;
-    await db.storedFile.create({ data: { id, ownerAccountId: me.id, purpose: "wish_photo", objectKey, contentType: "image/png", bytes: BigInt(10), status: "pending", variants: [], driver: "r2", createdAt: new Date(NOW.getTime() - 25 * 60 * MIN) } });
+    await db.storedFile.create({
+      data: { id, ownerAccountId: me.id, purpose: "wish_photo", objectKey, contentType: "image/png", bytes: BigInt(10), status: "pending", variants: [], driver: "r2", createdAt: new Date(NOW.getTime() - 25 * 60 * MIN) },
+    });
     await db.uploadTicket.create({ data: { id, bytes: BigInt(10), contentType: "image/png", purpose: "wish-photo" } });
     t.storage.put(objectKey, PNG(10), "image/png");
     const key = subject();
     await jobs.schedule("upload-cleanup", NOW, key);
-    await jobs.runDue();
+    expect(await jobs.runDue(100, [key])).toBe(1);
     expect(await db.storedFile.count({ where: { id } })).toBe(0);
     expect(await db.uploadTicket.count({ where: { id } })).toBe(0);
     expect(await t.storage.head(objectKey)).toBeNull();
@@ -107,60 +113,9 @@ describe("INT-3: the jobs frame runs the handlers other bundles exported", () =>
     expect(await runsOf(job.id)).toEqual([expect.objectContaining({ outcome: "succeeded" })]);
     await dropJobs(db, { id: job.id });
   });
-
-  it("upload-cleanup (B09), a staging key and an erased account's files: the tick runs the job whose subject is the key or erase-files:<account>", async () => {
-    const me = await makeAccount(db, t);
-    const stray = `incoming/files/${ids.next()}`;
-    t.storage.put(stray, PNG(20), "image/png");
-    await t.app.get(JobHandlers)["files"].scheduleCleanup(stray, NOW);
-    const fileId = ids.next();
-    const objectKey = `files/${fileId}`;
-    t.storage.put(objectKey, PNG(30), "image/png");
-    await db.storedFile.create({ data: { id: fileId, ownerAccountId: me.id, purpose: "wish_photo", objectKey, contentType: "image/png", bytes: BigInt(30), status: "ready", variants: [], driver: "r2" } });
-    await t.app.get(JobHandlers)["files"].removeAccountFiles(me.id);
-    await jobs.runDue();
-    expect(await t.storage.head(stray)).toBeNull();
-    expect(await t.storage.head(objectKey)).toBeNull();
-    expect(await db.storedFile.count({ where: { id: fileId } })).toBe(0);
-    for (const subjectId of [stray, `${ERASE_FILES_PREFIX}${me.id}`]) {
-      const job = await jobOf("upload_cleanup", subjectId);
-      expect(job.status).toBe("succeeded");
-      expect(await runsOf(job.id)).toEqual([expect.objectContaining({ outcome: "succeeded" })]);
-    }
-    // a second erase request for the same account moves the same row (CC4): no second row, no unique violation
-    await t.app.get(JobHandlers)["files"].removeAccountFiles(me.id);
-    expect(await db.job.count({ where: { type: "upload_cleanup", subjectId: `${ERASE_FILES_PREFIX}${me.id}` } })).toBe(1);
-    await dropJobs(db, { type: "upload_cleanup", subjectId: { in: [stray, `${ERASE_FILES_PREFIX}${me.id}`] } });
-  });
-
-  it("make-image-sizes (B09): a confirmed image writes the job; the tick makes widths 320, 768 and 1600 through the image-sizes port", async () => {
-    const me = await makeAccount(db, t);
-    const sizes = t.app.get<ImageSizesPort, StandinImageSizes>(ImageSizesPort);
-    const ticket = await t.http().post("/v1/uploads").set(auth(me.token)).send({ purpose: "photo", contentType: "image/png", bytes: 300 });
-    const id = ticket.body.id as string;
-    await stage(t, db, id, PNG(300), "image/png");
-    const c = await t.http().post(`/v1/uploads/${id}/confirm`).set(auth(me.token)).send({ fileId: id });
-    expect(c.status).toBe(200);
-    expect((await jobOf("make_image_sizes", id)).status).toBe("scheduled");
-    const madeBefore = sizes.made.length;
-    const objectKey = (await db.storedFile.findUniqueOrThrow({ where: { id } })).objectKey;
-    await jobs.runDue();
-    expect(sizes.made.slice(madeBefore).filter((m) => m.sourceKey === objectKey).map((m) => m.width).sort((a, b) => a - b)).toEqual([320, 768, 1600]);
-    const row = await db.storedFile.findUniqueOrThrow({ where: { id } });
-    expect((row.variants as { width: number }[]).map((v) => v.width).sort((a, b) => a - b)).toEqual([320, 768, 1600]);
-    const job = await jobOf("make_image_sizes", id);
-    expect(job.status).toBe("succeeded");
-    expect(await runsOf(job.id)).toEqual([expect.objectContaining({ outcome: "succeeded", changed: { made: 3 } })]);
-    // run again by hand: nothing left to make, recorded as skipped
-    await jobs.schedule("make-image-sizes", NOW, id);
-    await jobs.runDue();
-    const again = await runsOf(job.id);
-    expect(again).toHaveLength(2);
-    expect(again[1]).toMatchObject({ outcome: "skipped" });
-  });
 });
 
-describe("INT-3: X10, J1, J2 and Y1 on the merged base (B06's wishes with the account erase and the signed upload)", () => {
+describe("INT-3: the jobs of one subject, and X10, J1, J2 and Y1 on the merged base (a clock after every other spec's)", () => {
   let t: TestApp;
   let db: PrismaService;
   let jobs: JobsService;
@@ -168,13 +123,16 @@ describe("INT-3: X10, J1, J2 and Y1 on the merged base (B06's wishes with the ac
   const auth = (token: string) => ({ authorization: `Bearer ${token}` });
 
   beforeAll(async () => {
-    t = await createTestApp({ now: NOW });
+    t = await createTestApp({ now: LATER, configure: (b) => b.overrideProvider(UploadScreeningPort).useValue(new ScoredScreening()) });
     db = t.app.get(PrismaService);
     jobs = t.app.get(JobsService);
     t.app.get(JobHandlers).registerAll();
     await ensureEntitlements(db);
   });
   afterAll(() => t.close());
+
+  const jobOf = (type: "upload_cleanup" | "make_image_sizes", subjectId: string) => db.job.findUniqueOrThrow({ where: { type_subjectId: { type, subjectId } } });
+  const runsOf = (jobId: string) => db.jobRun.findMany({ where: { jobId }, orderBy: { id: "asc" } });
 
   async function fileOf(accountId: string, businessId?: string): Promise<{ id: string; keys: string[] }> {
     const id = ids.next();
@@ -187,6 +145,57 @@ describe("INT-3: X10, J1, J2 and Y1 on the merged base (B06's wishes with the ac
     });
     return { id, keys: [objectKey, sized] };
   }
+
+  it("upload-cleanup (B09), a staging key and an erased account's files: the tick runs the job whose subject is the key or erase-files:<account>", async () => {
+    const me = await makeAccount(db, t);
+    const files = t.app.get(FileJobs);
+    const stray = `incoming/files/${ids.next()}`;
+    t.storage.put(stray, PNG(20), "image/png");
+    await files.scheduleCleanup(stray, LATER);
+    const f = await fileOf(me.id);
+    await files.removeAccountFiles(me.id);
+    const subjects = [stray, `${ERASE_FILES_PREFIX}${me.id}`];
+    expect(await jobs.runDue(100, subjects)).toBe(2);
+    expect(await t.storage.head(stray)).toBeNull();
+    for (const key of f.keys) expect(await t.storage.head(key)).toBeNull();
+    expect(await db.storedFile.count({ where: { id: f.id } })).toBe(0);
+    for (const subjectId of subjects) {
+      const job = await jobOf("upload_cleanup", subjectId);
+      expect(job.status).toBe("succeeded");
+      expect(await runsOf(job.id)).toEqual([expect.objectContaining({ outcome: "succeeded" })]);
+    }
+    // a second erase request for the same account moves the same row (CC4): no second row, no unique violation
+    await files.removeAccountFiles(me.id);
+    expect(await db.job.count({ where: { type: "upload_cleanup", subjectId: subjects[1] } })).toBe(1);
+    await dropJobs(db, { type: "upload_cleanup", subjectId: { in: subjects } });
+  });
+
+  it("make-image-sizes (B09): a confirmed image writes the job; the tick makes widths 320, 768 and 1600 through the image-sizes port", async () => {
+    const me = await makeAccount(db, t);
+    const sizes = t.app.get<ImageSizesPort, StandinImageSizes>(ImageSizesPort);
+    const ticket = await t.http().post("/v1/uploads").set(auth(me.token)).send({ purpose: "photo", contentType: "image/png", bytes: 300 });
+    const id = ticket.body.id as string;
+    await stage(t, db, id, PNG(300), "image/png");
+    const c = await t.http().post(`/v1/uploads/${id}/confirm`).set(auth(me.token)).send({ fileId: id });
+    expect(c.status).toBe(200);
+    expect((await jobOf("make_image_sizes", id)).status).toBe("scheduled");
+    const objectKey = (await db.storedFile.findUniqueOrThrow({ where: { id } })).objectKey;
+    const madeBefore = sizes.made.length;
+    expect(await jobs.runDue(100, [id])).toBe(1);
+    expect(sizes.made.slice(madeBefore).filter((m) => m.sourceKey === objectKey).map((m) => m.width).sort((a, b) => a - b)).toEqual([320, 768, 1600]);
+    const row = await db.storedFile.findUniqueOrThrow({ where: { id } });
+    expect((row.variants as { width: number }[]).map((v) => v.width).sort((a, b) => a - b)).toEqual([320, 768, 1600]);
+    const job = await jobOf("make_image_sizes", id);
+    expect(job.status).toBe("succeeded");
+    expect(await runsOf(job.id)).toEqual([expect.objectContaining({ outcome: "succeeded", changed: { made: 3 } })]);
+    // asked again: nothing is left to make, recorded as skipped
+    await jobs.schedule("make-image-sizes", LATER, id);
+    await jobs.runDue(100, [id]);
+    const again = await runsOf(job.id);
+    expect(again).toHaveLength(2);
+    expect(again[1]).toMatchObject({ outcome: "skipped" });
+    await dropJobs(db, { id: job.id });
+  });
 
   it("X10, J1, J2: erasing an account kills its wishes' links, waiting jobs, files and saves, and nothing of anyone else's", async () => {
     const me = await makeAccount(db, t, ["person", "business"]);
@@ -203,7 +212,6 @@ describe("INT-3: X10, J1, J2 and Y1 on the merged base (B06's wishes with the ac
     await db.wishFile.create({ data: { id: ids.next(), wishId: sealed, fileId: f1.id, role: "photo" } as never });
     await db.wishFile.create({ data: { id: ids.next(), wishId: theirs, fileId: fTheirs.id, role: "photo" } as never });
     for (const w of [sealed, live, theirs]) await db.wishLink.create({ data: { id: ids.next(), slug: `int3${ids.next().slice(-12)}`, wishId: w, active: true } });
-    // far ahead of any clock another spec uses, so no other spec's tick takes these waiting jobs
     await jobs.schedule("open-wish", FAR, sealed);
     await jobs.schedule("rest-wish", FAR, live);
     await jobs.schedule("send-notice", FAR, live);
@@ -226,10 +234,11 @@ describe("INT-3: X10, J1, J2 and Y1 on the merged base (B06's wishes with the ac
     // saves
     expect(await db.savedWish.count({ where: { OR: [{ accountId: me.id }, { wish: { in: [sealed, live] } }] } })).toBe(0);
     expect(await db.savedWish.count({ where: { accountId: fan.id, wish: theirs } })).toBe(1);
-    // files: the erase wrote one job row, nothing was removed inside its transaction; the tick removes rows and objects
-    expect(await db.job.count({ where: { type: "upload_cleanup", subjectId: `${ERASE_FILES_PREFIX}${me.id}`, status: "scheduled" } })).toBe(1);
+    // files: the erase wrote one job row and removed nothing inside its transaction; the tick removes rows and objects
+    const erase = `${ERASE_FILES_PREFIX}${me.id}`;
+    expect(await db.job.count({ where: { type: "upload_cleanup", subjectId: erase, status: "scheduled" } })).toBe(1);
     expect(await t.storage.head(f1.keys[0])).not.toBeNull();
-    await jobs.runDue();
+    expect(await jobs.runDue(100, [erase])).toBe(1);
     expect(await db.storedFile.count({ where: { id: { in: [f1.id, f2.id] } } })).toBe(0);
     expect(await db.wishFile.count({ where: { wishId: sealed } })).toBe(0);
     for (const key of [...f1.keys, ...f2.keys]) expect(await t.storage.head(key)).toBeNull();
@@ -239,7 +248,7 @@ describe("INT-3: X10, J1, J2 and Y1 on the merged base (B06's wishes with the ac
     // the wishes themselves: erased, content gone
     const w = await db.wish.findMany({ where: { id: { in: [sealed, live] } } });
     expect(w.every((x) => x.erasedAt !== null && x.status === "removed" && x.content === null)).toBe(true);
-    await dropJobs(db, { subjectId: { in: [theirs, `${ERASE_FILES_PREFIX}${me.id}`] } });
+    await dropJobs(db, { subjectId: { in: [theirs, erase] } });
   });
 
   it("Y1: a PUT with an old signed URL cannot change a file a sealed wish names; the stray it leaves is swept by the tick", async () => {
@@ -265,14 +274,16 @@ describe("INT-3: X10, J1, J2 and Y1 on the merged base (B06's wishes with the ac
     // the file the wish names cannot be deleted from under it
     await expect(db.storedFile.delete({ where: { id } })).rejects.toThrow();
     // the tick, once every signed PUT for the key has expired, removes the stray and nothing else
+    expect(await jobs.runDue(100, [staging])).toBe(0);
+    expect(await t.storage.head(staging)).not.toBeNull();
     t.clock.advance(16 * MIN);
-    await jobs.runDue();
+    expect(await jobs.runDue(100, [staging])).toBe(1);
     expect(await t.storage.head(staging)).toBeNull();
     expect((await t.storage.readStart(finalKey, 1000))?.equals(good)).toBe(true);
     expect(await db.storedFile.count({ where: { id, status: "ready" } })).toBe(1);
     expect(await db.wishFile.count({ where: { wishId: wish, fileId: id } })).toBe(1);
-    const job = await db.job.findUniqueOrThrow({ where: { type_subjectId: { type: "upload_cleanup", subjectId: staging } } });
+    const job = await jobOf("upload_cleanup", staging);
     expect(job.status).toBe("succeeded");
-    await dropJobs(db, { id: job.id });
+    await dropJobs(db, { subjectId: { in: [staging, id] } });
   });
 });

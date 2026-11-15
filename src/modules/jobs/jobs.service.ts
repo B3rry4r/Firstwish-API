@@ -80,11 +80,14 @@ export class JobsService implements OnApplicationBootstrap {
     await db.$executeRaw`DELETE FROM job WHERE type = ${dbType(kind)}::"JobType" AND "subjectId" = ${key} AND status = 'scheduled'`;
   }
 
-  /** Runs every due job this process can claim, one after another. Answers how many ran. */
-  async runDue(limit = 100): Promise<number> {
+  /**
+   * Runs every due job this process can claim, one after another. Answers how many ran. `only` restricts the run to jobs with these
+   * subject keys (a spec that shares a database with others runs just its own rows; the tick passes nothing).
+   */
+  async runDue(limit = 100, only?: string[]): Promise<number> {
     let ran = 0;
     while (ran < limit) {
-      const job = await this.claim();
+      const job = await this.claim(only);
       if (!job) break;
       await this.execute(job);
       ran++;
@@ -92,7 +95,7 @@ export class JobsService implements OnApplicationBootstrap {
     return ran;
   }
 
-  private async claim(): Promise<Claimed | null> {
+  private async claim(only?: string[]): Promise<Claimed | null> {
     const types = [...this.handlers.keys()];
     if (!types.length) return null;
     const now = this.clock.now();
@@ -104,6 +107,7 @@ export class JobsService implements OnApplicationBootstrap {
          WHERE id = (
            SELECT id FROM job
             WHERE status IN ('scheduled', 'failed', 'running') AND "runAt" <= ${now} AND type::text = ANY(${types}::text[])
+              AND (${only ?? null}::text[] IS NULL OR "subjectId" = ANY(${only ?? null}::text[]))
             ORDER BY "runAt", id FOR UPDATE SKIP LOCKED LIMIT 1)
         RETURNING id::text AS id, type::text AS type, "subjectId", attempts`;
       const r = rows[0];

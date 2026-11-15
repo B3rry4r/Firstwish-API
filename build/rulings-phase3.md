@@ -412,3 +412,16 @@ MM1 (P-B11) The delivery status enum gains `sending` and `dropped` (INT-4), repl
     undeliverable with a "Dropped" reason.
 MM2 (Verify P-B11) A delivery left in flight past its stale time with all three tries used is marked failed for staff by the
     same sweep that picks up stale ones; a retry is taken only once its wait has passed. (Wave 3 join.)
+
+## From Verify B10 (15 Nov): how each finding is closed. Default (lead), owner may override.
+NN1 (high) A published wish can be played or shared from the feed only when its own wish is live and its open time has passed;
+    a sealed or future wish is 404 there, whoever asks.
+NN2 (medium, and wider than the finding) Reading a link never starts the term. Before the first opening a GET answers only the
+    opening view, with openable true once the open time has passed. The receiver's opening gesture calls POST /v1/w/:slug/opens
+    (E-131): that call, and only it, starts the term once and answers the full view (after the passcode step where there is
+    one). After that a GET answers the full view. HEAD and OPTIONS never write anything. So a link-preview robot or a prefetch
+    that GETs the link when the sender shares it cannot start the receiver's term.
+NN3 (low) A slug with a control character or a bad escape is 404. NN4 (low) The keys kept for limits and the fallback session
+    are HMACs with a server secret, never a bare hash of an address. NN5 (low) A reaction is 1 to 40 characters of ordinary
+    text: direction-override and other invisible characters are refused.
+NN6 (listed to the owner) 30 wrong passcode tries lock a link for an hour for everyone, the real receiver included.

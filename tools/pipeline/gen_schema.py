@@ -296,6 +296,9 @@ for n in MODELS:
     for c in ("status", "state"):
         if c in MODELS[n] and MODELS[n][c]["kind"] == "enum":
             INDEXES[n].append([c, "id"])
+    for ix in MAP[n].get("indexes", []):  # indexes a ruling asks for (schema-map 'indexes')
+        assert all(c in MODELS[n] for c in ix), f"{n}: schema-map indexes names a column the model does not have"
+        INDEXES[n].append(list(ix))
     if "createdAt" in MODELS[n] and n in ("LedgerEntry", "AuditEntry", "Event", "Payment", "MessageDelivery", "Notice", "JobRun", "WishTransition", "WebhookEvent"):
         INDEXES[n].append(["createdAt", "id"])
 
@@ -455,6 +458,7 @@ SPECIAL_RESP = {
     "{shoot:Shoot, wish:ClientWish}": "{ shoot: Shoot; wish: ClientWish }", "{shoot:Shoot, added:number, previews:number}": "ShootFilesAdded",
     "ok | {ok:false,error}": "UnlockResult", "none (navigation to /app/new)": "void",
     "StudioStyle (withdraw, back to draft) | SubmittedStyle (template)": "StudioStyle | SubmittedStyle",
+    "AuthResult": "AuthResult", "StaffAuthResult": "StaffAuthResult", "GoogleStart": "GoogleStart",
 }
 
 SHARED_TYPES = '''/** A UUIDv7 id issued by the server. */
@@ -557,6 +561,27 @@ export interface StyleChange {
   ops?: unknown[];
   said: string[];
   credits: number;
+}
+/** E-20, E-53, E-159 (T1, DEC-150): a sign-in or a refresh. The refresh token is only in the httpOnly cookie. */
+export interface AuthResult {
+  /** The access token the web app keeps in memory only (R10). */
+  accessToken: string;
+  accessExpiresAt: Instant;
+  /** true when this sign-in made the account (the web app shows Welcome). */
+  isNew: boolean;
+  session: { id: Id; expiresAt: Instant };
+  /** E-53 only: the path the Google sign-in started from. */
+  returnTo?: string;
+}
+/** E-176, E-234 (S5, DEC-148): a staff sign-in or a staff refresh. The refresh token is only in the httpOnly staff cookie. */
+export interface StaffAuthResult {
+  staff: StaffAccount;
+  accessToken: string;
+  accessTokenExpiresAt: Instant;
+}
+/** E-54 (T2, DEC-151): where the browser goes to sign in with Google. */
+export interface GoogleStart {
+  url: string;
 }
 /** E-19: the registry names the response SignInCode and gives no fields. */
 export type SignInCode = Record<string, unknown>;

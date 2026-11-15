@@ -186,6 +186,7 @@ export const ENDPOINTS: readonly EndpointRow[] = [
   { id: "E-172", method: "POST", path: "/v1/business/shoots/:id/finals", resource: "Shoot", operation: "PostBusinessShootsByIdFinals", request: "PostBusinessShootsByIdFinalsBodyDto", rawBody: false, noContent: false },
   { id: "E-173", method: "INTERNAL", path: "port:signed-urls#signedRead", resource: "SignedUrl", operation: "InternalSignedUrlsSignedRead", request: "InternalSignedUrlsSignedReadBodyDto", rawBody: false, noContent: false },
   { id: "E-174", method: "POST", path: "/v1/admin/auth/code", resource: "StaffAccount", operation: "PostAdminAuthCode", request: "PostAdminAuthCodeBodyDto", rawBody: false, noContent: true },
+  { id: "E-234", method: "POST", path: "/v1/admin/auth/refresh", resource: "StaffAccount", operation: "PostAdminAuthRefresh", request: "PostAdminAuthRefreshBodyDto", rawBody: false, noContent: false },
   { id: "E-175", method: "POST", path: "/v1/admin/auth/sign-out", resource: "StaffAccount", operation: "PostAdminAuthSignOut", request: "PostAdminAuthSignOutBodyDto", rawBody: false, noContent: true },
   { id: "E-176", method: "POST", path: "/v1/admin/auth/verify", resource: "StaffAccount", operation: "PostAdminAuthVerify", request: "PostAdminAuthVerifyBodyDto", rawBody: false, noContent: false },
   { id: "E-177", method: "PATCH", path: "/v1/admin/staff-accounts/:id", resource: "StaffAccount", operation: "PatchAdminStaffAccountsById", request: "PatchAdminStaffAccountsByIdBodyDto", rawBody: false, noContent: false },

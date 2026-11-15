@@ -117,8 +117,11 @@ model AuditEntry {
   ip          String?
   requestId   String
   createdAt   DateTime            @default(now()) @db.Timestamptz(3)
+  section     String              @default("")
+  reason      String?
 
   @@index([actorId, id])
+  @@index([section, id])
   @@index([subjectType, id])
   @@index([createdAt, id])
   @@map("audit_entry")
@@ -138,7 +141,10 @@ model AuthCode {
   createdAt   DateTime        @default(now()) @db.Timestamptz(3)
   mode        AuthCodeMode?
   via         AuthCodeVia?
+  canonical   String?
 
+  @@index([canonical, createdAt])
+  @@index([ip, createdAt])
   @@map("auth_code")
 }
 
@@ -1095,11 +1101,13 @@ model Session {
   ip               String?
   expiresAt        DateTime      @db.Timestamptz(3)
   createdAt        DateTime      @default(now()) @db.Timestamptz(3)
+  replacedById     String?       @db.Uuid
   account          Account?      @relation("Session_accountId", fields: [accountId], references: [id])
   staff            StaffAccount? @relation("Session_staffId", fields: [staffId], references: [id])
 
   @@index([accountId, id])
   @@index([staffId, id])
+  @@index([familyId, revokedAt])
   @@map("session")
 }
 
@@ -1954,6 +1962,7 @@ enum StaffAccountStatus {
   invited
   active
   suspended
+  removed
 }
 
 enum StoredFilePurpose {

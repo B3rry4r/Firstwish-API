@@ -10,6 +10,9 @@ export class PostAdminAuthCodeBodyDto implements PostAdminAuthCodeBody {
   email!: string;
 }
 
+/** E-234 POST /v1/admin/auth/refresh (body). */
+export class PostAdminAuthRefreshBodyDto {}
+
 /** E-175 POST /v1/admin/auth/sign-out (body). */
 export class PostAdminAuthSignOutBodyDto {}
 

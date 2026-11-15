@@ -1,6 +1,6 @@
 {
  "phase": "SCHEMA (Phase 4)",
- "registrySha256": "b9b5122181e76e376fc24e879a33e5ef7cf3e8bc75ef2fe29aa41b0e42155a4a",
+ "registrySha256": "b29dc0385a59de5e431d5313d780b7f91c1204246c15956be68a8afbc5ab4915",
  "rules": [
   "table: something writes it (a POST, PUT, PATCH, DELETE or INTERNAL route, or a server:* declaration). A GET's query parameters are not writers.",
   "view: read only, worked out on read from the tables named in 'of'. No table of its own.",
@@ -13,7 +13,9 @@
   "Relations: one foreign key per dep-graph.json edge between two stored models.",
   "Ownership: a stored resource that the dep-graph leaves without an owner but whose routes are scoped to the signed-in account (/v1/me, /v1/feed, /v1/studio, /v1/creator) or to the member's business (/v1/business) gets one foreign key to Account or Business ('owner'), because conventions.md (Who can do what) asks for the ownership check. Listed per resource.",
   "An admin action's reason and action are written to the audit row (DEC-125), not to the subject, unless a declaration lists them as fields.",
-  "Erase (Q9): 'erase' names every column holding personal data with rule blank (set to null or '' when the account is erased) or keep (with the reason). test/schema/schema.rulings.spec.ts checks each named column exists."
+  "Erase (Q9): 'erase' names every column holding personal data with rule blank (set to null or '' when the account is erased) or keep (with the reason). test/schema/schema.rulings.spec.ts checks each named column exists.",
+  "Indexes (INT-1): 'indexes' lists extra indexes a ruling asks for, each a list of columns.",
+  "U7 (INT-1): a staff account can never be deleted at the database (trigger staff_account_no_delete); a removed member stays, status removed (S3)."
  ],
  "resources": {
   "Account": {
@@ -131,12 +133,30 @@
     "ip": {
      "rule": "keep",
      "why": "the staff member's address at a staff change, not the subject's; append-only (Q9)"
+    },
+    "reason": {
+     "rule": "keep",
+     "why": "S2: staff-written text; staff are told on the sheet not to put a customer's details in it; append-only"
     }
    },
    "dbTypes": {
     "actorId": "@db.Uuid"
    },
-   "actorIdNote": "Q10 HALT for this column: actorId names a staff account, an account or nothing (actorType staff|account|system, audit-log declaration), so no single foreign key can hold it; it is a uuid with an index, checked by the writer."
+   "actorIdNote": "Q10 HALT for this column: actorId names a staff account, an account or nothing (actorType staff|account|system, audit-log declaration), so no single foreign key can hold it; it is a uuid with an index, checked by the writer.",
+   "columns": {
+    "section": {
+     "type": "String",
+     "attrs": "@default(\"\")",
+     "opt": false,
+     "why": "S2: the admin section of the action (the role table's name, such as /admin/team); E-18 filters by it (S4)"
+    },
+    "reason": {
+     "type": "String",
+     "attrs": "",
+     "opt": true,
+     "why": "S2: the staff member's reason (4 to 500 characters, U6); staff-written text, kept; null for sign-in routes and system work"
+    }
+   }
   },
   "AuthCode": {
    "class": "table",
@@ -155,8 +175,30 @@
     "ip": {
      "rule": "blank",
      "why": "personal"
+    },
+    "canonical": {
+     "rule": "blank",
+     "why": "personal"
     }
-   }
+   },
+   "columns": {
+    "canonical": {
+     "type": "String",
+     "attrs": "",
+     "opt": true,
+     "why": "V5: the email's canonical form (lowercased, the +tag dropped); per-email limits count on it, the destination stays as typed"
+    }
+   },
+   "indexes": [
+    [
+     "canonical",
+     "createdAt"
+    ],
+    [
+     "ip",
+     "createdAt"
+    ]
+   ]
   },
   "Ban": {
    "class": "table",
@@ -996,7 +1038,21 @@
      "rule": "blank",
      "why": "device detail"
     }
-   }
+   },
+   "columns": {
+    "replacedById": {
+     "type": "String",
+     "attrs": "@db.Uuid",
+     "opt": true,
+     "why": "V2: the grace record: the child a rotated refresh token was replaced by; inside 10 seconds the same old token gets that same child"
+    }
+   },
+   "indexes": [
+    [
+     "familyId",
+     "revokedAt"
+    ]
+   ]
   },
   "Settings": {
    "class": "config",

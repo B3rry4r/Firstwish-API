@@ -301,3 +301,9 @@ CC5 (B06) Owed by others: E-232 wake and E-228 keep by B07 (what a payment buys)
     E-218 to E-220 and admin jobs E-61, E-62 by B21, using the lifecycle and jobs services B06 exports. E-226 (add photos) is
     B06's own and is closed in its patch.
 CC6 (B06) Restoring a resting wish makes it live again for the restore window. Listed to the owner.
+DD1 (B05) Paying needs a signed-in account (any side); nothing about a payment is public. Listed to the owner: a receiver who
+    wants to pay (to keep a wish) signs in with an email code first.
+DD2 (B05) GET /v1/payments (the payer's own, newest first, cursor) is added to the registry.
+DD3 (B05) Staff flags get their own columns: payment.flags (text list) and webhook_event.outcome; they move out of the options JSON.
+DD4 (B05) A payment that is not the caller's is 404. `upgrade` is not a purpose yet (422) until B07 defines it.
+DD5 (B05) VAT is as the documents say (T-40): 7.5% inside Pro and invoiced prices; the rate is a price-book value, never a constant.

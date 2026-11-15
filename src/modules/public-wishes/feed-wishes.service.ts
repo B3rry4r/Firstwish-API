@@ -6,6 +6,7 @@ import { AppError } from "../../common/errors/app-error";
 import { isUuidV7 } from "../../common/ids/uuidv7";
 import type { Env } from "../../common/env/env";
 import { ENV } from "../../common/env/env.module";
+import { Clock } from "../../common/ports/clock.port";
 import { IdGenerator } from "../../common/ports/ids.port";
 import type { PlayWish, ReactResponse, ShareResponse } from "../../contracts";
 import { SignedUrlsService } from "../stored-files/signed-urls.service";
@@ -25,7 +26,7 @@ interface Feed {
 
 /**
  * The signed-in side of a published wish: react (E-143, E-142), share (E-166) and play (E-122). A feed wish is a published_wish
- * row; it is gone (not found) when the wish behind it is removed, erased or resting, or has a passcode. A share row holds no
+ * row; it is not found unless the wish behind it is live (NN1: opened, its open time passed), and not removed, erased or resting, with no passcode. A share row holds no
  * account and no address: only which feed wish and which style.
  */
 @Injectable()
@@ -33,6 +34,7 @@ export class FeedWishesService {
   constructor(
     private readonly db: PrismaService,
     private readonly ids: IdGenerator,
+    private readonly clock: Clock,
     private readonly signed: SignedUrlsService,
     @Inject(ENV) private readonly env: Env,
   ) {}
@@ -98,11 +100,13 @@ export class FeedWishesService {
   /** The feed row, or 404 when it is not listed (same words for a wrong id, a taken-down wish and a resting one). */
   private async feed(db: Db, id: string): Promise<Feed & { slug: string }> {
     const none = AppError.notFound("That wish is not in the feed.");
+    const now = this.clock.now();
     if (!isUuidV7(id)) throw none;
     const rows = await db.$queryRaw<Feed[]>`
       SELECT pw.id::text AS id, w.id::text AS "wishId", pw.title, w.kind, pw.style, l.slug,
-             (w.status IN ('sealed', 'live') AND w."erasedAt" IS NULL AND w."removedAt" IS NULL AND w."passcodeHash" IS NULL
-              AND NOT (w.status = 'live' AND (w."endsAt" IS NULL OR w."endsAt" <= now()))
+             (w.status = 'live' AND w."opensAt" IS NOT NULL AND w."opensAt" <= ${now}
+              AND w."erasedAt" IS NULL AND w."removedAt" IS NULL AND w."passcodeHash" IS NULL
+              AND w."endsAt" IS NOT NULL AND w."endsAt" > ${now}
               AND l.active AND a."erasedAt" IS NULL) AS ok
         FROM published_wish pw
         JOIN wish w ON w.id = COALESCE(pw."wishId", CASE WHEN pw.wish ~ '^[0-9a-f-]{36}$' THEN pw.wish::uuid END)

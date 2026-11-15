@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Headers, HttpCode, Param, Post, Req, Res } from "@nestjs/common";
+import { Body, Controller, Get, Headers, HttpCode, Param, Post, Req, Res, UseFilters } from "@nestjs/common";
 import type { Request, Response } from "express";
 import {
   GetWBySlugParamsDto,
@@ -13,18 +13,20 @@ import {
 import type { PublicWishView } from "../../contracts";
 import { Public } from "../../common/auth/decorators";
 import { withRetryAfter } from "../../common/errors/rate-limited";
+import { SlugControlFilter } from "./slug-escapes";
 import { Caller, PublicWishesService } from "./public-wishes.service";
 
 /**
  * The receiver's link: E-129 read, E-134 unlock, E-131 opens, E-132 reaction, E-130 favourites. No sign-in. The unlock token
  * travels in x-unlock-token and the opening session in x-wish-session (both held in the page's memory only, R10).
  */
+@UseFilters(SlugControlFilter)
 @Controller("w/:slug")
 export class PublicWishesController {
   constructor(private readonly wishes: PublicWishesService) {}
 
   private caller(req: Request, token?: string, session?: string): Caller {
-    return { address: req.ip ?? null, userAgent: req.headers["user-agent"] ?? null, token, session };
+    return { address: req.ip ?? null, head: req.method === "HEAD", userAgent: req.headers["user-agent"] ?? null, token, session };
   }
 
   @Public()
@@ -45,9 +47,9 @@ export class PublicWishesController {
   @Public()
   @Post("opens")
   @HttpCode(200)
-  async opens(@Param() p: PostWBySlugOpensParamsDto, @Req() req: Request, @Res({ passthrough: true }) res: Response, @Headers("x-unlock-token") token?: string, @Headers("x-wish-session") session?: string): Promise<Record<string, never>> {
-    await this.wishes.played(p.slug, this.caller(req, token, session)).catch((e: unknown) => withRetryAfter(res, e));
-    return {};
+  async opens(@Param() p: PostWBySlugOpensParamsDto, @Req() req: Request, @Res({ passthrough: true }) res: Response, @Headers("x-unlock-token") token?: string, @Headers("x-wish-session") session?: string): Promise<PublicWishView> {
+    res.setHeader("Cache-Control", "no-store");
+    return this.wishes.open(p.slug, this.caller(req, token, session)).catch((e: unknown) => withRetryAfter(res, e));
   }
 
   @Public()

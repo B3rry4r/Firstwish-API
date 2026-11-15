@@ -76,6 +76,12 @@ export const MANIFEST_VARS: readonly VarSpec[] = [
     purpose: "proxies in front of the API trusted for the client address (V4); 0 reads the socket address, 1 behind one load balancer",
     default: "0",
   },
+  {
+    name: "PORT_TIMEOUTS_MS",
+    need: "optional",
+    kind: "string",
+    purpose: "time limit of one call to a provider port, as port=milliseconds pairs (FF1); payments 10000 unless changed",
+  },
 ];
 
 /**

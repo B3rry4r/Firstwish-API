@@ -73,4 +73,35 @@ describe("env schema", () => {
       "STORAGE_DRIVER",
     ]);
   });
+
+  describe("FF6: the live Paystack key", () => {
+    const live = { ...standinEnv(), PROVIDERS: "live" };
+    const rest = {
+      PAYSTACK_PUBLIC_KEY: "pk", PAYSTACK_CALLBACK_URL: "http://localhost/cb", GOOGLE_CLIENT_ID: "x", GOOGLE_CLIENT_SECRET: "x", GOOGLE_REDIRECT_URI: "http://localhost/g",
+      SCREENING_PROVIDER: "basic", ANTHROPIC_API_KEY: "x", ANTHROPIC_MODEL: "m", RESEND_API_KEY: "x", STORAGE_DRIVER: "r2", R2_ACCOUNT_ID: "a", R2_ACCESS_KEY_ID: "k",
+      R2_SECRET_ACCESS_KEY: "s", R2_BUCKET: "b",
+    };
+    it("refuses a key shorter than 20 characters in live mode, naming it", () => {
+      expect(problemsOf({ ...live, ...rest, PAYSTACK_SECRET_KEY: "sk_live_short" })).toEqual(["PAYSTACK_SECRET_KEY"]);
+      expect(() => loadEnv({ ...live, ...rest, PAYSTACK_SECRET_KEY: "x".repeat(19) })).toThrow(/PAYSTACK_SECRET_KEY: must be at least 20 characters in live mode/);
+    });
+    it("boots with 20 characters or more", () => {
+      expect(problemsOf({ ...live, ...rest, PAYSTACK_SECRET_KEY: "x".repeat(20) })).toEqual([]);
+    });
+    it("leaves stand-in mode alone (the stand-in signs with whatever key the test gives)", () => {
+      expect(problemsOf({ ...standinEnv(), PAYSTACK_SECRET_KEY: "short" })).toEqual([]);
+    });
+  });
+
+  describe("FF1: PORT_TIMEOUTS_MS", () => {
+    it("is optional, and takes port=milliseconds pairs", () => {
+      expect(loadEnv(standinEnv()).PORT_TIMEOUTS_MS).toBeUndefined();
+      expect(loadEnv({ ...standinEnv(), PORT_TIMEOUTS_MS: "payments=8000, storage=45000" }).PORT_TIMEOUTS_MS).toBe("payments=8000, storage=45000");
+    });
+    it("refuses an unknown port, a zero and text, naming the variable", () => {
+      for (const bad of ["fax=1000", "payments=0", "payments=soon", "payments", "payments=700000"]) {
+        expect(problemsOf({ ...standinEnv(), PORT_TIMEOUTS_MS: bad })).toEqual(["PORT_TIMEOUTS_MS"]);
+      }
+    });
+  });
 });

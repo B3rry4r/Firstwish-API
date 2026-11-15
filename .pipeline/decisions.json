@@ -2928,10 +2928,24 @@
       "decidedAt": "2026-11-17T12:00:00Z"
     },
     {
+      "id": "DEC-188",
+      "topic": "delivery purpose and status",
+      "closes": [],
+      "decision": "II5, MM1: MessageDelivery.purpose gains `sealed` and `opens` (the two messages that had no purpose of their own). MessageDelivery.status is enum(queued|sending|sent|delivered|failed|dropped): `sending` is a try in flight (the stand-in `sent` of wave 3), `sent` is handed to the provider and waiting for its receipt, `dropped` is a message never sent because the account was erased or the address is gone (the stand-in `undeliverable` with a `Dropped` reason). `undeliverable` is no longer a status.",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md II5, MM1",
+      "decidedAt": "2026-11-17T12:00:00Z",
+      "fieldTypes": {
+        "MessageDelivery.purpose": "enum(auth-code|wish-delivery|opened|term-notice|anniversary|date-reminder|publish-notice|pass|plan|invite|receipt|support|sealed|opens)",
+        "MessageDelivery.status": "enum(queued|sending|sent|delivered|failed|dropped)"
+      }
+    },
+    {
       "id": "DEC-187",
       "topic": "registry re-freeze (sixth reopen)",
       "closes": [],
-      "decision": "The registry is re-frozen after GG3, GG5, GG7, HH8, II2, II4, LL2, LL3, LL5 and NN7 (DEC-176..186) by tools/pipeline/freeze.py; reconcile.py was run twice with --reopen (identical outputs, EXIT 0, 0 open conflicts, both admin gate lines 0). Endpoint ids already issued are unchanged (new: E-241 POST /v1/wishes/:id/pass-upgrade). The other wave 4 shared rulings (GG1, GG2, GG4, II3, II5, MM1, JJ1, LL1, LL4) change storage, code or the seed only.",
+      "decision": "The registry is re-frozen after GG3, GG5, GG7, HH8, II2, II4, II5, LL2, LL3, LL5, MM1 and NN7 (DEC-176..186 and DEC-188) by tools/pipeline/freeze.py; reconcile.py was run twice with --reopen (identical outputs, EXIT 0, 0 open conflicts, both admin gate lines 0). Endpoint ids already issued are unchanged (new: E-241 POST /v1/wishes/:id/pass-upgrade). The other wave 4 shared rulings (GG1, GG2, GG4, II3, JJ1, LL1, LL4) change storage, code or the seed only. The enum values II5 and MM1 add are on the wire (the staff delivery log), so they went into the same freeze.",
       "approvedBy": "lead default, owner may override",
       "confidence": "high",
       "source": "build/rulings-phase3.md (INT-4)",

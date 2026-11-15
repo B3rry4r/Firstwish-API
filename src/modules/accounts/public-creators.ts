@@ -1,5 +1,15 @@
 import { Prisma } from "@prisma/client";
 import type { Creator } from "../../contracts";
+import { canonicalHandle, handleProblem, RESERVED_HANDLES } from "../../common/normalise/handle";
+
+/**
+ * The handle to look a public page up by, or null when it cannot be one. A reserved word is a good lookup: the house
+ * creator holds "firstwish" (X8), which no person can take.
+ */
+export function lookupHandle(raw: string): string | null {
+  const h = canonicalHandle(raw);
+  return handleProblem(h) === null || RESERVED_HANDLES.has(h) ? h : null;
+}
 
 /** A creator as anyone may see it: public fields only (no email, phone, dates, credits or money). */
 export type PublicCreator = Pick<Creator, "id" | "handle" | "name" | "line" | "href" | "following"> & {
@@ -18,6 +28,7 @@ export interface PublicCreatorRow {
   line: string | null;
   bio: string | null;
   img: string | null;
+  house: boolean | null;
   followers: bigint;
 }
 
@@ -33,7 +44,7 @@ const VISIBLE = (now: Date) => Prisma.sql`
   AND NOT EXISTS (SELECT 1 FROM ban b WHERE b."accountId" = a.id AND b.scope = 'account' AND (b.until IS NULL OR b.until > ${now}))`;
 
 const SELECT = Prisma.sql`
-  SELECT c.id AS "creatorId", a.id AS "accountId", a.handle, c.name, a.name AS "accountName", c.line, a.bio, c.img,
+  SELECT c.id AS "creatorId", a.id AS "accountId", a.handle, c.name, c.house, a.name AS "accountName", c.line, a.bio, c.img,
     (SELECT count(*) FROM follow f JOIN account fa ON fa.id = f."accountId" WHERE f.handle = a.handle AND fa."erasedAt" IS NULL) AS followers
   FROM creator c JOIN account a ON a.id = c."accountId"`;
 
@@ -56,7 +67,7 @@ export function toPublicCreator(r: PublicCreatorRow, viewer: { accountId: string
     line: r.line ?? r.bio ?? "",
     href: `/creators/${r.handle}`,
     img: r.img,
-    house: false,
+    house: r.house === true,
     own: viewer.accountId === r.accountId,
     following: viewer.follows.has(r.handle),
     counts: { followers: Number(r.followers), wishes: null, styles: null },

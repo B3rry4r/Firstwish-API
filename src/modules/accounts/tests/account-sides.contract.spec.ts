@@ -143,7 +143,7 @@ describe("account sides E-5, E-8 to E-11 and the handle (contract)", () => {
     });
   });
 
-  it("401 without a token, 403 for staff, 403 on E-5 without the creator side", async () => {
+  it("401 without a token, 403 for staff, E-5 is open to a person without the creator side (X11)", async () => {
     const routes: [string, string][] = [["post", "/v1/me/creator"], ["delete", "/v1/me/creator"], ["post", "/v1/me/business"], ["delete", "/v1/me/business"], ["get", "/v1/handles/abcd"]];
     const staff = await staffToken(t);
     for (const [m, path] of routes) {
@@ -153,6 +153,6 @@ describe("account sides E-5, E-8 to E-11 and the handle (contract)", () => {
       expect((await asStaff).status).toBe(403);
     }
     const person = await signIn(t, uniqueEmail("nocr"));
-    expect((await check(person.accessToken, "abcd")).status).toBe(403);
+    expect((await check(person.accessToken, "abcd")).status).toBe(200);
   });
 });

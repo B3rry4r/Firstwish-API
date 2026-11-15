@@ -1,5 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
+import { lockAccount } from "../../common/db/account-lock";
 import { PrismaService } from "../../common/db/prisma.service";
 import { AppError } from "../../common/errors/app-error";
 import { Clock } from "../../common/ports/clock.port";
@@ -70,7 +71,7 @@ export class AccountErasureService {
 
   async erase(accountId: string, req: EraseRequest): Promise<void> {
     await this.prisma.$transaction(async (tx) => {
-      await tx.$queryRaw`SELECT id FROM account WHERE id = ${accountId}::uuid FOR UPDATE`;
+      await lockAccount(tx, accountId, { allowErased: true });
       const account = await tx.account.findUnique({ where: { id: accountId } });
       if (!account) throw AppError.notFound();
       if (account.erasedAt) return;
@@ -88,7 +89,7 @@ export class AccountErasureService {
   }
 
   private async requireFreshSignIn(tx: Db, accountId: string, familyId: string): Promise<void> {
-    const first = await tx.session.findFirst({ where: { accountId, familyId }, orderBy: { createdAt: "asc" }, select: { createdAt: true } });
+    const first = familyId === "" ? null : await tx.session.findFirst({ where: { accountId, familyId }, orderBy: { createdAt: "asc" }, select: { createdAt: true } });
     const age = first ? this.clock.now().getTime() - first.createdAt.getTime() : Number.POSITIVE_INFINITY;
     if (!(age >= 0 && age < FRESH_SIGN_IN_MS)) {
       throw new AppError(403, "fresh_sign_in_needed", "Sign in again first: erasing your account needs a sign-in from the last 10 minutes.");
@@ -165,6 +166,8 @@ export class AccountErasureService {
         status: "removed", erasedAt: now,
       },
     });
+    // X10: the wishes' public links answer "gone" (the link row stays as a key; it is no longer active).
+    if (wishIds.length) await tx.wishLink.updateMany({ where: { wishId: { in: wishIds } }, data: { active: false } });
     await tx.follow.deleteMany({ where: { accountId } });
     if (handle) await tx.follow.deleteMany({ where: { handle } });
   }

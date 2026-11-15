@@ -5,6 +5,8 @@ import { lockAccount } from "../../common/db/account-lock";
 import { PrismaService } from "../../common/db/prisma.service";
 import { AppError, ErrorFields } from "../../common/errors/app-error";
 import { linkProblem, normaliseLink } from "../../common/normalise/link";
+import { StoragePort } from "../../common/ports/storage.port";
+import { isImage, typeFromBytes } from "../stored-files/file-rules";
 
 type Brand = NonNullable<Business["brand"]>;
 
@@ -20,10 +22,31 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
  */
 @Injectable()
 export class BusinessService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly storage: StoragePort,
+  ) {}
+
+  /**
+   * AA5: a logo is a stored file that is the caller's, purpose brand-logo, ready, and an image by its own first bytes (never SVG).
+   * The bytes are read from storage here, outside any transaction (Y4); the caller re-checks the row inside its own.
+   */
+  private async logoProblem(accountId: string, businessId: string, logo: string): Promise<boolean> {
+    const file = await this.prisma.storedFile.findFirst({
+      where: { id: logo, purpose: "brand_logo", status: "ready", OR: [{ ownerAccountId: accountId }, { businessId }] },
+      select: { objectKey: true, contentType: true },
+    });
+    if (!file || !isImage(file.contentType)) return true;
+    const head = await this.storage.readStart(file.objectKey, 64);
+    return !head || typeFromBytes(head, file.contentType) === null;
+  }
 
   async patchBrand(accountId: string, body: PatchBusinessBody): Promise<Brand> {
     const { patch, logo } = this.readBrand(body.brand ?? {});
+    if (logo) {
+      const mine = await this.prisma.business.findFirst({ where: { accountId }, orderBy: { id: "asc" }, select: { id: true } });
+      if (mine && (await this.logoProblem(accountId, mine.id, logo))) throw AppError.validation({ "brand.logo": "Must be a logo you uploaded with purpose brand." });
+    }
     return this.prisma.$transaction(async (tx) => {
       await lockAccount(tx, accountId);
       const rows = await tx.$queryRaw<{ id: string }[]>`

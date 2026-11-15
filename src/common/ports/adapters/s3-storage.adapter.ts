@@ -54,6 +54,9 @@ export class S3Storage extends StoragePort {
       region: config.region,
       credentials: { accessKeyId: config.accessKeyId, secretAccessKey: config.secretAccessKey },
       forcePathStyle: false,
+      // J5: R2 and Spaces do not take the SDK's default CRC32 checksum; a presigned PUT must not carry x-amz-checksum-* parameters.
+      requestChecksumCalculation: "WHEN_REQUIRED",
+      responseChecksumValidation: "WHEN_REQUIRED",
     });
   }
 

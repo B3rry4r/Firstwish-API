@@ -49,7 +49,7 @@ describe("B12 patch", () => {
       const wish = await feedWish();
       const [res] = await Promise.all([t.http().put(`/v1/feed/wishes/${wish}/save`).set(bearer(w.token)).send({ wish }), erase(w.accountId)]);
       expect([200, 401]).toContain(res.status);
-      expect(await t.db.savedWish.count({ where: { accountId: w.accountId } })).toBe(res.status === 200 ? 1 : 0);
+      expect(await t.db.savedWish.count({ where: { accountId: w.accountId } })).toBe(0); // BB6: a save that won the race is dropped by the erase itself
       const before = await t.db.savedWish.count({ where: { accountId: w.accountId } });
       expect((await t.http().put(`/v1/feed/wishes/${wish}/save`).set(bearer(w.token)).send({ wish })).status).toBe(401);
       expect(await t.db.savedWish.count({ where: { accountId: w.accountId } })).toBe(before);

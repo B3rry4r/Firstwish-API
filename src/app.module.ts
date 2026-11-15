@@ -19,6 +19,11 @@ import { TemplatesModule } from "./modules/templates/templates.module";
 // B04: the price book
 import { PriceBookModule } from "./modules/price-book/price-book.module";
 // end B04
+// B02: account sides, creators, business profile, follow
+import { BusinessModule } from "./modules/business/business.module";
+import { CreatorsModule } from "./modules/creators/creators.module";
+import { FollowsModule } from "./modules/follows/follows.module";
+// end B02
 
 /** Registration entry: each resource module adds one import line here. */
 @Module({
@@ -43,6 +48,11 @@ import { PriceBookModule } from "./modules/price-book/price-book.module";
     // B04
     PriceBookModule,
     // end B04
+    // B02
+    CreatorsModule,
+    FollowsModule,
+    BusinessModule,
+    // end B02
   ],
 })
 export class AppModule {}

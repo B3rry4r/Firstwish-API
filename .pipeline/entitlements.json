@@ -10,7 +10,7 @@
       ],
       "endpoints": [
         {
-          "endpoint": "E-222",
+          "endpoint": "E-225",
           "route": "PATCH /v1/wishes/:id",
           "matchedBy": "words: photo, style, ticket"
         }
@@ -27,7 +27,7 @@
       ],
       "endpoints": [
         {
-          "endpoint": "E-222",
+          "endpoint": "E-225",
           "route": "PATCH /v1/wishes/:id",
           "matchedBy": "words: photo, style"
         }
@@ -43,7 +43,7 @@
       ],
       "endpoints": [
         {
-          "endpoint": "E-222",
+          "endpoint": "E-225",
           "route": "PATCH /v1/wishes/:id",
           "matchedBy": "words: note, photo, style, voice"
         }
@@ -57,17 +57,17 @@
       "purchase": [],
       "endpoints": [
         {
-          "endpoint": "E-138",
+          "endpoint": "E-141",
           "route": "POST /v1/qr-cards",
           "matchedBy": "declaration cites it"
         },
         {
-          "endpoint": "E-145",
+          "endpoint": "E-148",
           "route": "POST /v1/wishes/:id/video",
           "matchedBy": "declaration cites it"
         },
         {
-          "endpoint": "E-222",
+          "endpoint": "E-225",
           "route": "PATCH /v1/wishes/:id",
           "matchedBy": "words: note, photo, style, voice"
         }
@@ -84,12 +84,12 @@
       ],
       "endpoints": [
         {
-          "endpoint": "E-145",
+          "endpoint": "E-148",
           "route": "POST /v1/wishes/:id/video",
           "matchedBy": "declaration cites it"
         },
         {
-          "endpoint": "E-222",
+          "endpoint": "E-225",
           "route": "PATCH /v1/wishes/:id",
           "matchedBy": "words: photo, style, ticket"
         }
@@ -107,12 +107,12 @@
       ],
       "endpoints": [
         {
-          "endpoint": "E-222",
+          "endpoint": "E-225",
           "route": "PATCH /v1/wishes/:id",
           "matchedBy": "words: style, ticket"
         },
         {
-          "endpoint": "E-96",
+          "endpoint": "E-99",
           "route": "INTERNAL port:fulfilment#extra.premium-style",
           "matchedBy": "words: premium, style"
         }
@@ -130,7 +130,7 @@
       ],
       "endpoints": [
         {
-          "endpoint": "E-222",
+          "endpoint": "E-225",
           "route": "PATCH /v1/wishes/:id",
           "matchedBy": "words: style, ticket"
         }
@@ -148,27 +148,27 @@
       ],
       "endpoints": [
         {
-          "endpoint": "E-33",
+          "endpoint": "E-34",
           "route": "POST /v1/admin/concierge-orders/:id/delivery",
           "matchedBy": "declaration cites it"
         },
         {
-          "endpoint": "E-34",
+          "endpoint": "E-35",
           "route": "POST /v1/admin/concierge-orders/:id/quote",
           "matchedBy": "declaration cites it"
         },
         {
-          "endpoint": "E-38",
+          "endpoint": "E-39",
           "route": "POST /v1/admin/concierge/orders/:id/maker",
           "matchedBy": "declaration cites it"
         },
         {
-          "endpoint": "E-39",
+          "endpoint": "E-40",
           "route": "POST /v1/concierge-orders",
           "matchedBy": "declaration cites it"
         },
         {
-          "endpoint": "E-222",
+          "endpoint": "E-225",
           "route": "PATCH /v1/wishes/:id",
           "matchedBy": "words: maker, ticket"
         }
@@ -185,32 +185,32 @@
       ],
       "endpoints": [
         {
-          "endpoint": "E-33",
+          "endpoint": "E-34",
           "route": "POST /v1/admin/concierge-orders/:id/delivery",
           "matchedBy": "declaration cites it"
         },
         {
-          "endpoint": "E-34",
+          "endpoint": "E-35",
           "route": "POST /v1/admin/concierge-orders/:id/quote",
           "matchedBy": "declaration cites it"
         },
         {
-          "endpoint": "E-38",
+          "endpoint": "E-39",
           "route": "POST /v1/admin/concierge/orders/:id/maker",
           "matchedBy": "declaration cites it"
         },
         {
-          "endpoint": "E-39",
+          "endpoint": "E-40",
           "route": "POST /v1/concierge-orders",
           "matchedBy": "declaration cites it"
         },
         {
-          "endpoint": "E-108",
+          "endpoint": "E-111",
           "route": "INTERNAL port:fulfilment#ticket.signature",
           "matchedBy": "words: signature"
         },
         {
-          "endpoint": "E-86",
+          "endpoint": "E-89",
           "route": "INTERNAL port:fulfilment#concierge.rush",
           "matchedBy": "words: rush"
         }
@@ -228,12 +228,12 @@
       ],
       "endpoints": [
         {
-          "endpoint": "E-76",
+          "endpoint": "E-78",
           "route": "PATCH /v1/me/notice-prefs",
           "matchedBy": "declaration cites it"
         },
         {
-          "endpoint": "E-222",
+          "endpoint": "E-225",
           "route": "PATCH /v1/wishes/:id",
           "matchedBy": "words: off, style, use"
         }
@@ -251,7 +251,7 @@
       ],
       "endpoints": [
         {
-          "endpoint": "E-225",
+          "endpoint": "E-228",
           "route": "POST /v1/wishes/:id/keep",
           "matchedBy": "words: keep, pass"
         }
@@ -269,22 +269,22 @@
       ],
       "endpoints": [
         {
-          "endpoint": "E-132",
+          "endpoint": "E-135",
           "route": "POST /v1/admin/showing/requests/:id/decide",
           "matchedBy": "declaration cites it"
         },
         {
-          "endpoint": "E-133",
+          "endpoint": "E-136",
           "route": "DELETE /v1/wishes/:id/publish-requests",
           "matchedBy": "declaration cites it"
         },
         {
-          "endpoint": "E-134",
+          "endpoint": "E-137",
           "route": "POST /v1/wishes/:id/publish-requests",
           "matchedBy": "declaration cites it"
         },
         {
-          "endpoint": "E-225",
+          "endpoint": "E-228",
           "route": "POST /v1/wishes/:id/keep",
           "matchedBy": "words: keep, pass"
         }
@@ -302,27 +302,27 @@
       ],
       "endpoints": [
         {
-          "endpoint": "E-200",
+          "endpoint": "E-203",
           "route": "POST /v1/support-messages",
           "matchedBy": "declaration cites it"
         },
         {
-          "endpoint": "E-201",
+          "endpoint": "E-204",
           "route": "POST /v1/admin/support-threads/:id/assignee",
           "matchedBy": "declaration cites it"
         },
         {
-          "endpoint": "E-207",
+          "endpoint": "E-210",
           "route": "POST /v1/support-threads",
           "matchedBy": "declaration cites it"
         },
         {
-          "endpoint": "E-222",
+          "endpoint": "E-225",
           "route": "PATCH /v1/wishes/:id",
           "matchedBy": "words: name, studio"
         },
         {
-          "endpoint": "E-32",
+          "endpoint": "E-33",
           "route": "POST /v1/business/client-wishes/:id/send-reveal",
           "matchedBy": "words: client, vault"
         }
@@ -340,12 +340,12 @@
       ],
       "endpoints": [
         {
-          "endpoint": "E-177",
+          "endpoint": "E-180",
           "route": "POST /v1/admin/team/:id/remove",
           "matchedBy": "words: member, staff"
         },
         {
-          "endpoint": "E-178",
+          "endpoint": "E-181",
           "route": "POST /v1/admin/team/invite",
           "matchedBy": "words: member, staff"
         }
@@ -362,42 +362,42 @@
       ],
       "endpoints": [
         {
-          "endpoint": "E-108",
+          "endpoint": "E-111",
           "route": "INTERNAL port:fulfilment#ticket.signature",
           "matchedBy": "words: signature"
         },
         {
-          "endpoint": "E-12",
+          "endpoint": "E-13",
           "route": "POST /v1/ai/pick-photos",
           "matchedBy": "words: photo"
         },
         {
-          "endpoint": "E-155",
+          "endpoint": "E-158",
           "route": "INTERNAL port:screening-results#screenFile",
           "matchedBy": "words: screen"
         },
         {
-          "endpoint": "E-222",
+          "endpoint": "E-225",
           "route": "PATCH /v1/wishes/:id",
           "matchedBy": "words: photo"
         },
         {
-          "endpoint": "E-223",
+          "endpoint": "E-226",
           "route": "POST /v1/wishes/:id/add-photos",
           "matchedBy": "words: photo"
         },
         {
-          "endpoint": "E-225",
+          "endpoint": "E-228",
           "route": "POST /v1/wishes/:id/keep",
           "matchedBy": "words: keep"
         },
         {
-          "endpoint": "E-29",
+          "endpoint": "E-30",
           "route": "POST /v1/business/client-wishes",
           "matchedBy": "words: client"
         },
         {
-          "endpoint": "E-31",
+          "endpoint": "E-32",
           "route": "POST /v1/business/client-wishes/:id/approve-date",
           "matchedBy": "words: client"
         }
@@ -415,37 +415,37 @@
       ],
       "endpoints": [
         {
-          "endpoint": "E-15",
+          "endpoint": "E-16",
           "route": "POST /v1/ai/studio-draft",
           "matchedBy": "declaration cites it"
         },
         {
-          "endpoint": "E-14",
+          "endpoint": "E-15",
           "route": "POST /v1/ai/studio-change",
           "matchedBy": "declaration cites it"
         },
         {
-          "endpoint": "E-11",
+          "endpoint": "E-12",
           "route": "POST /v1/ai/letter",
           "matchedBy": "declaration cites it"
         },
         {
-          "endpoint": "E-12",
+          "endpoint": "E-13",
           "route": "POST /v1/ai/pick-photos",
           "matchedBy": "declaration cites it"
         },
         {
-          "endpoint": "E-13",
+          "endpoint": "E-14",
           "route": "POST /v1/ai/reasons",
           "matchedBy": "declaration cites it"
         },
         {
-          "endpoint": "E-10",
+          "endpoint": "E-11",
           "route": "POST /v1/me/creator",
           "matchedBy": "words: creator, open, profile"
         },
         {
-          "endpoint": "E-222",
+          "endpoint": "E-225",
           "route": "PATCH /v1/wishes/:id",
           "matchedBy": "words: draft, open, style"
         }
@@ -462,42 +462,42 @@
       ],
       "endpoints": [
         {
-          "endpoint": "E-15",
+          "endpoint": "E-16",
           "route": "POST /v1/ai/studio-draft",
           "matchedBy": "declaration cites it"
         },
         {
-          "endpoint": "E-14",
+          "endpoint": "E-15",
           "route": "POST /v1/ai/studio-change",
           "matchedBy": "declaration cites it"
         },
         {
-          "endpoint": "E-11",
+          "endpoint": "E-12",
           "route": "POST /v1/ai/letter",
           "matchedBy": "declaration cites it"
         },
         {
-          "endpoint": "E-12",
+          "endpoint": "E-13",
           "route": "POST /v1/ai/pick-photos",
           "matchedBy": "declaration cites it"
         },
         {
-          "endpoint": "E-13",
+          "endpoint": "E-14",
           "route": "POST /v1/ai/reasons",
           "matchedBy": "declaration cites it"
         },
         {
-          "endpoint": "E-198",
+          "endpoint": "E-201",
           "route": "POST /v1/admin/styles/review/:id/decide",
           "matchedBy": "words: style, submission"
         },
         {
-          "endpoint": "E-222",
+          "endpoint": "E-225",
           "route": "PATCH /v1/wishes/:id",
           "matchedBy": "words: draft, style"
         },
         {
-          "endpoint": "E-88",
+          "endpoint": "E-91",
           "route": "INTERNAL port:fulfilment#creator.credit-pack",
           "matchedBy": "words: credit, pack"
         }
@@ -515,12 +515,12 @@
       ],
       "endpoints": [
         {
-          "endpoint": "E-189",
+          "endpoint": "E-192",
           "route": "POST /v1/studio/styles/:id/withdraw",
           "matchedBy": "words: style, template"
         },
         {
-          "endpoint": "E-96",
+          "endpoint": "E-99",
           "route": "INTERNAL port:fulfilment#extra.premium-style",
           "matchedBy": "words: premium, style"
         }
@@ -537,7 +537,7 @@
       ],
       "endpoints": [
         {
-          "endpoint": "E-10",
+          "endpoint": "E-11",
           "route": "POST /v1/me/creator",
           "matchedBy": "words: creator, open, profile, up"
         }
@@ -555,22 +555,22 @@
       ],
       "endpoints": [
         {
-          "endpoint": "E-132",
+          "endpoint": "E-135",
           "route": "POST /v1/admin/showing/requests/:id/decide",
           "matchedBy": "declaration cites it"
         },
         {
-          "endpoint": "E-133",
+          "endpoint": "E-136",
           "route": "DELETE /v1/wishes/:id/publish-requests",
           "matchedBy": "declaration cites it"
         },
         {
-          "endpoint": "E-134",
+          "endpoint": "E-137",
           "route": "POST /v1/wishes/:id/publish-requests",
           "matchedBy": "declaration cites it"
         },
         {
-          "endpoint": "E-10",
+          "endpoint": "E-11",
           "route": "POST /v1/me/creator",
           "matchedBy": "words: creator, open, profile"
         }
@@ -587,17 +587,17 @@
       ],
       "endpoints": [
         {
-          "endpoint": "E-106",
+          "endpoint": "E-109",
           "route": "INTERNAL port:fulfilment#ticket.moment",
           "matchedBy": "ruling DEC-87"
         },
         {
-          "endpoint": "E-106",
+          "endpoint": "E-109",
           "route": "INTERNAL port:fulfilment#ticket.moment",
           "matchedBy": "words: moment"
         },
         {
-          "endpoint": "E-222",
+          "endpoint": "E-225",
           "route": "PATCH /v1/wishes/:id",
           "matchedBy": "words: ticket"
         }
@@ -614,17 +614,17 @@
       ],
       "endpoints": [
         {
-          "endpoint": "E-105",
+          "endpoint": "E-108",
           "route": "INTERNAL port:fulfilment#ticket.keepsake",
           "matchedBy": "ruling DEC-87"
         },
         {
-          "endpoint": "E-105",
+          "endpoint": "E-108",
           "route": "INTERNAL port:fulfilment#ticket.keepsake",
           "matchedBy": "words: keepsake"
         },
         {
-          "endpoint": "E-222",
+          "endpoint": "E-225",
           "route": "PATCH /v1/wishes/:id",
           "matchedBy": "words: ticket"
         }
@@ -641,17 +641,17 @@
       ],
       "endpoints": [
         {
-          "endpoint": "E-108",
+          "endpoint": "E-111",
           "route": "INTERNAL port:fulfilment#ticket.signature",
           "matchedBy": "ruling DEC-87"
         },
         {
-          "endpoint": "E-108",
+          "endpoint": "E-111",
           "route": "INTERNAL port:fulfilment#ticket.signature",
           "matchedBy": "words: signature"
         },
         {
-          "endpoint": "E-222",
+          "endpoint": "E-225",
           "route": "PATCH /v1/wishes/:id",
           "matchedBy": "words: ticket"
         }
@@ -668,17 +668,17 @@
       ],
       "endpoints": [
         {
-          "endpoint": "E-107",
+          "endpoint": "E-110",
           "route": "INTERNAL port:fulfilment#ticket.premiere",
           "matchedBy": "ruling DEC-87"
         },
         {
-          "endpoint": "E-107",
+          "endpoint": "E-110",
           "route": "INTERNAL port:fulfilment#ticket.premiere",
           "matchedBy": "words: premiere"
         },
         {
-          "endpoint": "E-222",
+          "endpoint": "E-225",
           "route": "PATCH /v1/wishes/:id",
           "matchedBy": "words: ticket"
         }
@@ -695,12 +695,12 @@
       ],
       "endpoints": [
         {
-          "endpoint": "E-94",
+          "endpoint": "E-97",
           "route": "INTERNAL port:fulfilment#extra.five-photos",
           "matchedBy": "ruling DEC-87"
         },
         {
-          "endpoint": "E-94",
+          "endpoint": "E-97",
           "route": "INTERNAL port:fulfilment#extra.five-photos",
           "matchedBy": "words: five, photo"
         }
@@ -717,12 +717,12 @@
       ],
       "endpoints": [
         {
-          "endpoint": "E-96",
+          "endpoint": "E-99",
           "route": "INTERNAL port:fulfilment#extra.premium-style",
           "matchedBy": "ruling DEC-87"
         },
         {
-          "endpoint": "E-96",
+          "endpoint": "E-99",
           "route": "INTERNAL port:fulfilment#extra.premium-style",
           "matchedBy": "words: premium, style"
         }
@@ -739,17 +739,17 @@
       ],
       "endpoints": [
         {
-          "endpoint": "E-95",
+          "endpoint": "E-98",
           "route": "INTERNAL port:fulfilment#extra.portrait-video",
           "matchedBy": "ruling DEC-87"
         },
         {
-          "endpoint": "E-145",
+          "endpoint": "E-148",
           "route": "POST /v1/wishes/:id/video",
           "matchedBy": "words: statu, video"
         },
         {
-          "endpoint": "E-95",
+          "endpoint": "E-98",
           "route": "INTERNAL port:fulfilment#extra.portrait-video",
           "matchedBy": "words: portrait, video"
         }
@@ -766,12 +766,12 @@
       ],
       "endpoints": [
         {
-          "endpoint": "E-97",
+          "endpoint": "E-100",
           "route": "INTERNAL port:fulfilment#extra.qr-card",
           "matchedBy": "ruling DEC-87"
         },
         {
-          "endpoint": "E-138",
+          "endpoint": "E-141",
           "route": "POST /v1/qr-cards",
           "matchedBy": "words: card, qr, qrcard"
         }
@@ -788,12 +788,12 @@
       ],
       "endpoints": [
         {
-          "endpoint": "E-92",
+          "endpoint": "E-95",
           "route": "INTERNAL port:fulfilment#extra.clip-15s",
           "matchedBy": "ruling DEC-87"
         },
         {
-          "endpoint": "E-92",
+          "endpoint": "E-95",
           "route": "INTERNAL port:fulfilment#extra.clip-15s",
           "matchedBy": "words: 15s, clip"
         }
@@ -810,12 +810,12 @@
       ],
       "endpoints": [
         {
-          "endpoint": "E-93",
+          "endpoint": "E-96",
           "route": "INTERNAL port:fulfilment#extra.clip-60s",
           "matchedBy": "ruling DEC-87"
         },
         {
-          "endpoint": "E-93",
+          "endpoint": "E-96",
           "route": "INTERNAL port:fulfilment#extra.clip-60s",
           "matchedBy": "words: 60s, clip"
         }
@@ -832,12 +832,12 @@
       ],
       "endpoints": [
         {
-          "endpoint": "E-99",
+          "endpoint": "E-102",
           "route": "INTERNAL port:fulfilment#keep.month",
           "matchedBy": "ruling DEC-87"
         },
         {
-          "endpoint": "E-225",
+          "endpoint": "E-228",
           "route": "POST /v1/wishes/:id/keep",
           "matchedBy": "words: keep"
         }
@@ -854,19 +854,19 @@
       ],
       "endpoints": [
         {
-          "endpoint": "E-98",
+          "endpoint": "E-101",
           "route": "INTERNAL port:fulfilment#keep.half",
           "matchedBy": "ruling DEC-87"
         },
         {
-          "endpoint": "E-225",
-          "route": "POST /v1/wishes/:id/keep",
-          "matchedBy": "words: keep"
-        },
-        {
-          "endpoint": "E-98",
+          "endpoint": "E-101",
           "route": "INTERNAL port:fulfilment#keep.half",
           "matchedBy": "words: half"
+        },
+        {
+          "endpoint": "E-228",
+          "route": "POST /v1/wishes/:id/keep",
+          "matchedBy": "words: keep"
         }
       ],
       "test": "src/payment/tests/payment.contract.spec.ts > entitlement keep.half"
@@ -881,12 +881,12 @@
       ],
       "endpoints": [
         {
-          "endpoint": "E-100",
+          "endpoint": "E-103",
           "route": "INTERNAL port:fulfilment#keep.year",
           "matchedBy": "ruling DEC-87"
         },
         {
-          "endpoint": "E-225",
+          "endpoint": "E-228",
           "route": "POST /v1/wishes/:id/keep",
           "matchedBy": "words: keep"
         }
@@ -904,12 +904,12 @@
       ],
       "endpoints": [
         {
-          "endpoint": "E-101",
+          "endpoint": "E-104",
           "route": "INTERNAL port:fulfilment#pass.year",
           "matchedBy": "ruling DEC-87"
         },
         {
-          "endpoint": "E-225",
+          "endpoint": "E-228",
           "route": "POST /v1/wishes/:id/keep",
           "matchedBy": "words: pass"
         }
@@ -926,32 +926,32 @@
       ],
       "endpoints": [
         {
-          "endpoint": "E-87",
+          "endpoint": "E-90",
           "route": "INTERNAL port:fulfilment#concierge.single",
           "matchedBy": "ruling DEC-87"
         },
         {
-          "endpoint": "E-33",
+          "endpoint": "E-34",
           "route": "POST /v1/admin/concierge-orders/:id/delivery",
           "matchedBy": "words: concierge"
         },
         {
-          "endpoint": "E-34",
+          "endpoint": "E-35",
           "route": "POST /v1/admin/concierge-orders/:id/quote",
           "matchedBy": "words: concierge"
         },
         {
-          "endpoint": "E-38",
+          "endpoint": "E-39",
           "route": "POST /v1/admin/concierge/orders/:id/maker",
           "matchedBy": "words: concierge"
         },
         {
-          "endpoint": "E-39",
+          "endpoint": "E-40",
           "route": "POST /v1/concierge-orders",
           "matchedBy": "words: concierge"
         },
         {
-          "endpoint": "E-87",
+          "endpoint": "E-90",
           "route": "INTERNAL port:fulfilment#concierge.single",
           "matchedBy": "words: single"
         }
@@ -968,32 +968,32 @@
       ],
       "endpoints": [
         {
-          "endpoint": "E-86",
+          "endpoint": "E-89",
           "route": "INTERNAL port:fulfilment#concierge.rush",
           "matchedBy": "ruling DEC-87"
         },
         {
-          "endpoint": "E-33",
+          "endpoint": "E-34",
           "route": "POST /v1/admin/concierge-orders/:id/delivery",
           "matchedBy": "words: concierge"
         },
         {
-          "endpoint": "E-34",
+          "endpoint": "E-35",
           "route": "POST /v1/admin/concierge-orders/:id/quote",
           "matchedBy": "words: concierge"
         },
         {
-          "endpoint": "E-38",
+          "endpoint": "E-39",
           "route": "POST /v1/admin/concierge/orders/:id/maker",
           "matchedBy": "words: concierge"
         },
         {
-          "endpoint": "E-39",
+          "endpoint": "E-40",
           "route": "POST /v1/concierge-orders",
           "matchedBy": "words: concierge"
         },
         {
-          "endpoint": "E-86",
+          "endpoint": "E-89",
           "route": "INTERNAL port:fulfilment#concierge.rush",
           "matchedBy": "words: rush"
         }
@@ -1010,17 +1010,17 @@
       ],
       "endpoints": [
         {
-          "endpoint": "E-26",
+          "endpoint": "E-27",
           "route": "GET /v1/business/plan",
           "matchedBy": "ruling DEC-87"
         },
         {
-          "endpoint": "E-103",
+          "endpoint": "E-106",
           "route": "INTERNAL port:fulfilment#pro.starter",
           "matchedBy": "ruling DEC-87"
         },
         {
-          "endpoint": "E-103",
+          "endpoint": "E-106",
           "route": "INTERNAL port:fulfilment#pro.starter",
           "matchedBy": "words: starter"
         }
@@ -1038,52 +1038,52 @@
       ],
       "endpoints": [
         {
-          "endpoint": "E-26",
+          "endpoint": "E-27",
           "route": "GET /v1/business/plan",
           "matchedBy": "ruling DEC-87"
         },
         {
-          "endpoint": "E-104",
+          "endpoint": "E-107",
           "route": "INTERNAL port:fulfilment#pro.studio",
           "matchedBy": "ruling DEC-87"
         },
         {
-          "endpoint": "E-104",
+          "endpoint": "E-107",
           "route": "INTERNAL port:fulfilment#pro.studio",
           "matchedBy": "words: studio"
         },
         {
-          "endpoint": "E-14",
+          "endpoint": "E-15",
           "route": "POST /v1/ai/studio-change",
           "matchedBy": "words: studio"
         },
         {
-          "endpoint": "E-15",
+          "endpoint": "E-16",
           "route": "POST /v1/ai/studio-draft",
           "matchedBy": "words: studio"
         },
         {
-          "endpoint": "E-183",
+          "endpoint": "E-186",
           "route": "PATCH /v1/studio/prefs",
           "matchedBy": "words: studio"
         },
         {
-          "endpoint": "E-185",
+          "endpoint": "E-188",
           "route": "POST /v1/studio/styles",
           "matchedBy": "words: studio"
         },
         {
-          "endpoint": "E-186",
+          "endpoint": "E-189",
           "route": "DELETE /v1/studio/styles/:id",
           "matchedBy": "words: studio"
         },
         {
-          "endpoint": "E-188",
+          "endpoint": "E-191",
           "route": "PATCH /v1/studio/styles/:id",
           "matchedBy": "words: studio"
         },
         {
-          "endpoint": "E-189",
+          "endpoint": "E-192",
           "route": "POST /v1/studio/styles/:id/withdraw",
           "matchedBy": "words: studio"
         }
@@ -1100,27 +1100,27 @@
       ],
       "endpoints": [
         {
-          "endpoint": "E-26",
+          "endpoint": "E-27",
           "route": "GET /v1/business/plan",
           "matchedBy": "ruling DEC-87"
         },
         {
-          "endpoint": "E-102",
+          "endpoint": "E-105",
           "route": "INTERNAL port:fulfilment#pro.pack",
           "matchedBy": "ruling DEC-87"
         },
         {
-          "endpoint": "E-102",
+          "endpoint": "E-105",
           "route": "INTERNAL port:fulfilment#pro.pack",
           "matchedBy": "words: pack"
         },
         {
-          "endpoint": "E-108",
+          "endpoint": "E-111",
           "route": "INTERNAL port:fulfilment#ticket.signature",
           "matchedBy": "words: signature"
         },
         {
-          "endpoint": "E-88",
+          "endpoint": "E-91",
           "route": "INTERNAL port:fulfilment#creator.credit-pack",
           "matchedBy": "words: pack"
         }
@@ -1138,22 +1138,22 @@
       ],
       "endpoints": [
         {
-          "endpoint": "E-109",
+          "endpoint": "E-112",
           "route": "INTERNAL port:fulfilment#vault.block",
           "matchedBy": "ruling DEC-87"
         },
         {
-          "endpoint": "E-109",
+          "endpoint": "E-112",
           "route": "INTERNAL port:fulfilment#vault.block",
           "matchedBy": "words: block"
         },
         {
-          "endpoint": "E-110",
+          "endpoint": "E-113",
           "route": "INTERNAL port:fulfilment#vault.block-bulk",
           "matchedBy": "words: block"
         },
         {
-          "endpoint": "E-32",
+          "endpoint": "E-33",
           "route": "POST /v1/business/client-wishes/:id/send-reveal",
           "matchedBy": "words: vault"
         }
@@ -1170,12 +1170,12 @@
       ],
       "endpoints": [
         {
-          "endpoint": "E-110",
+          "endpoint": "E-113",
           "route": "INTERNAL port:fulfilment#vault.block-bulk",
           "matchedBy": "ruling DEC-87"
         },
         {
-          "endpoint": "E-110",
+          "endpoint": "E-113",
           "route": "INTERNAL port:fulfilment#vault.block-bulk",
           "matchedBy": "words: block, bulk"
         }
@@ -1193,32 +1193,32 @@
       ],
       "endpoints": [
         {
-          "endpoint": "E-90",
+          "endpoint": "E-93",
           "route": "INTERNAL port:fulfilment#creator.plan",
           "matchedBy": "ruling DEC-87"
         },
         {
           "endpoint": "E-10",
-          "route": "POST /v1/me/creator",
-          "matchedBy": "words: creator"
-        },
-        {
-          "endpoint": "E-29",
-          "route": "POST /v1/business/client-wishes",
-          "matchedBy": "words: plan"
-        },
-        {
-          "endpoint": "E-43",
-          "route": "PATCH /v1/studio/me",
-          "matchedBy": "words: creator"
-        },
-        {
-          "endpoint": "E-9",
           "route": "DELETE /v1/me/creator",
           "matchedBy": "words: creator"
         },
         {
-          "endpoint": "E-90",
+          "endpoint": "E-11",
+          "route": "POST /v1/me/creator",
+          "matchedBy": "words: creator"
+        },
+        {
+          "endpoint": "E-30",
+          "route": "POST /v1/business/client-wishes",
+          "matchedBy": "words: plan"
+        },
+        {
+          "endpoint": "E-44",
+          "route": "PATCH /v1/studio/me",
+          "matchedBy": "words: creator"
+        },
+        {
+          "endpoint": "E-93",
           "route": "INTERNAL port:fulfilment#creator.plan",
           "matchedBy": "words: plan"
         }
@@ -1235,12 +1235,12 @@
       ],
       "endpoints": [
         {
-          "endpoint": "E-91",
+          "endpoint": "E-94",
           "route": "INTERNAL port:fulfilment#creator.signed",
           "matchedBy": "ruling DEC-87"
         },
         {
-          "endpoint": "E-43",
+          "endpoint": "E-44",
           "route": "PATCH /v1/studio/me",
           "matchedBy": "words: creator, signed"
         }
@@ -1257,12 +1257,12 @@
       ],
       "endpoints": [
         {
-          "endpoint": "E-88",
+          "endpoint": "E-91",
           "route": "INTERNAL port:fulfilment#creator.credit-pack",
           "matchedBy": "ruling DEC-87"
         },
         {
-          "endpoint": "E-88",
+          "endpoint": "E-91",
           "route": "INTERNAL port:fulfilment#creator.credit-pack",
           "matchedBy": "words: credit, pack"
         }
@@ -1279,12 +1279,12 @@
       ],
       "endpoints": [
         {
-          "endpoint": "E-89",
+          "endpoint": "E-92",
           "route": "INTERNAL port:fulfilment#creator.extra-review",
           "matchedBy": "ruling DEC-87"
         },
         {
-          "endpoint": "E-89",
+          "endpoint": "E-92",
           "route": "INTERNAL port:fulfilment#creator.extra-review",
           "matchedBy": "words: extra, review"
         }

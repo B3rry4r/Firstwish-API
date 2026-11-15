@@ -539,7 +539,9 @@
         "boolean",
         "object"
       ],
-      "status": "open"
+      "status": "closed",
+      "closedBy": "DEC-126",
+      "round1Id": "C-18"
     },
     {
       "id": "C-19",
@@ -565,7 +567,9 @@
         "array",
         "object"
       ],
-      "status": "open"
+      "status": "closed",
+      "closedBy": "DEC-127",
+      "round1Id": "C-19"
     },
     {
       "id": "C-20",
@@ -591,32 +595,12 @@
         "string",
         "time"
       ],
-      "status": "open"
+      "status": "closed",
+      "closedBy": "DEC-128",
+      "round1Id": "C-20"
     },
     {
       "id": "C-21",
-      "kind": "possible-alias",
-      "entity": "ConciergeOrder",
-      "detail": "ConciergeOrder fields maker / makerId may be one field",
-      "key": "possible-alias|ConciergeOrder|ConciergeOrder fields maker / makerId may be one field",
-      "sources": [
-        {
-          "src": "admin-concierge",
-          "quote": "maker: string Maker.id"
-        },
-        {
-          "src": "concierge-orders",
-          "quote": "makerId: string"
-        }
-      ],
-      "options": [
-        "same field: add a field alias",
-        "different fields"
-      ],
-      "status": "open"
-    },
-    {
-      "id": "C-22",
       "kind": "type-mismatch",
       "entity": "Moment",
       "detail": "Moment.fields is seen as array vs object",
@@ -640,7 +624,7 @@
       "round1Id": "C-19"
     },
     {
-      "id": "C-23",
+      "id": "C-22",
       "kind": "type-mismatch",
       "entity": "PassOffer",
       "detail": "PassOffer.items is seen as array vs object",
@@ -664,29 +648,7 @@
       "round1Id": "C-20"
     },
     {
-      "id": "C-24",
-      "kind": "possible-alias",
-      "entity": "Payout",
-      "detail": "Payout fields creator / creatorId may be one field",
-      "key": "possible-alias|Payout|Payout fields creator / creatorId may be one field",
-      "sources": [
-        {
-          "src": "admin-creators",
-          "quote": "creator: string (CreatorRow.id)"
-        },
-        {
-          "src": "royalties-payouts",
-          "quote": "creatorId: string"
-        }
-      ],
-      "options": [
-        "same field: add a field alias",
-        "different fields"
-      ],
-      "status": "open"
-    },
-    {
-      "id": "C-25",
+      "id": "C-23",
       "kind": "type-mismatch",
       "entity": "QrCard",
       "detail": "QrCard.wishIds is seen as array vs string",
@@ -714,7 +676,7 @@
       "round1Id": "C-20"
     },
     {
-      "id": "C-26",
+      "id": "C-24",
       "kind": "possible-alias",
       "entity": "Report",
       "detail": "Report fields decided / decidedAt may be one field",
@@ -733,32 +695,12 @@
         "same field: add a field alias",
         "different fields"
       ],
-      "status": "open"
+      "status": "closed",
+      "closedBy": "DEC-129",
+      "round1Id": "C-26"
     },
     {
-      "id": "C-27",
-      "kind": "possible-alias",
-      "entity": "Report",
-      "detail": "Report fields wish / wishId may be one field",
-      "key": "possible-alias|Report|Report fields wish / wishId may be one field",
-      "sources": [
-        {
-          "src": "admin-moderation",
-          "quote": "wish: string (Wish.no)"
-        },
-        {
-          "src": "moderation",
-          "quote": "wishId: string"
-        }
-      ],
-      "options": [
-        "same field: add a field alias",
-        "different fields"
-      ],
-      "status": "open"
-    },
-    {
-      "id": "C-28",
+      "id": "C-25",
       "kind": "type-mismatch",
       "entity": "StoredFile",
       "detail": "StoredFile.fileId is seen as binary vs string",
@@ -790,7 +732,7 @@
       "round1Id": "C-21"
     },
     {
-      "id": "C-29",
+      "id": "C-26",
       "kind": "type-mismatch",
       "entity": "VaultStorage",
       "detail": "VaultStorage.packUntil is seen as string vs time",
@@ -818,7 +760,7 @@
       "round1Id": "C-24"
     },
     {
-      "id": "C-30",
+      "id": "C-27",
       "kind": "possible-alias",
       "entity": "WebhookEvent",
       "detail": "WebhookEvent fields event / eventId may be one field",
@@ -842,7 +784,7 @@
       "round1Id": "C-25"
     },
     {
-      "id": "C-31",
+      "id": "C-28",
       "kind": "type-mismatch",
       "entity": "Wish",
       "detail": "Wish.at is seen as number vs time",
@@ -874,7 +816,7 @@
       "round1Id": "C-26"
     },
     {
-      "id": "C-32",
+      "id": "C-29",
       "kind": "type-mismatch",
       "entity": "Wish",
       "detail": "Wish.content.details is seen as array vs object",
@@ -902,7 +844,7 @@
       "round1Id": "C-27"
     },
     {
-      "id": "C-33",
+      "id": "C-30",
       "kind": "type-mismatch",
       "entity": "Wish",
       "detail": "Wish.keep is seen as boolean vs string",
@@ -926,7 +868,7 @@
       "round1Id": "C-28"
     },
     {
-      "id": "C-34",
+      "id": "C-31",
       "kind": "type-mismatch",
       "entity": "Wish",
       "detail": "Wish.makerNote.wedding is seen as string vs time",
@@ -958,7 +900,7 @@
       "round1Id": "C-29"
     },
     {
-      "id": "C-35",
+      "id": "C-32",
       "kind": "format-canon",
       "entity": "Wish",
       "detail": "Wish.at: time must be ISO-8601 UTC on the wire (conventions.md canon); no supersede covers epoch numbers",
@@ -986,7 +928,7 @@
       "round1Id": "C-33"
     },
     {
-      "id": "C-36",
+      "id": "C-33",
       "kind": "truth-mismatch",
       "entity": "money",
       "detail": "₦80,000 shown or sent by a screen is in no product truth and not in the price book seed",
@@ -1010,7 +952,7 @@
       "round1Id": "C-34"
     },
     {
-      "id": "C-37",
+      "id": "C-34",
       "kind": "client-only-action",
       "entity": "DateRow",
       "detail": "DateRow.makeWishForDate asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that names the server need",
@@ -1030,7 +972,7 @@
       "round1Id": "C-35"
     },
     {
-      "id": "C-38",
+      "id": "C-35",
       "kind": "unparseable-action",
       "entity": "Wish",
       "detail": "action name '(defined, not reached on this page) sheets: share, keep/wake, video, publish' is not one action",
@@ -1049,7 +991,7 @@
       "round1Id": "C-37"
     },
     {
-      "id": "C-39",
+      "id": "C-36",
       "kind": "client-only-action",
       "entity": "(local clipboard)",
       "detail": "(local clipboard).copyNames asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that names the server need",
@@ -1069,7 +1011,7 @@
       "round1Id": "C-42"
     },
     {
-      "id": "C-40",
+      "id": "C-37",
       "kind": "client-only-action",
       "entity": "(local clipboard)",
       "detail": "(local clipboard).copyNames asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that names the server need",
@@ -1089,7 +1031,7 @@
       "round1Id": "C-42"
     },
     {
-      "id": "C-41",
+      "id": "C-38",
       "kind": "client-only-action",
       "entity": "(navigation)",
       "detail": "(navigation).messageUs asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that names the server need",
@@ -1109,7 +1051,7 @@
       "round1Id": "C-44"
     },
     {
-      "id": "C-42",
+      "id": "C-39",
       "kind": "client-only-action",
       "entity": "(navigation)",
       "detail": "(navigation).startWish asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that names the server need",
@@ -1129,7 +1071,7 @@
       "round1Id": "C-45"
     },
     {
-      "id": "C-43",
+      "id": "C-40",
       "kind": "client-only-action",
       "entity": "(navigation)",
       "detail": "(navigation).chooseTicket asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that names the server need",
@@ -1149,7 +1091,7 @@
       "round1Id": "C-46"
     },
     {
-      "id": "C-44",
+      "id": "C-41",
       "kind": "static-ruling",
       "entity": "CreatorOffer",
       "detail": "CreatorOffer is read only by static screens (scan-map); serve from the API or keep local in the web app",
@@ -1169,7 +1111,7 @@
       "round1Id": "C-53"
     },
     {
-      "id": "C-45",
+      "id": "C-42",
       "kind": "static-ruling",
       "entity": "ProPricingCopy",
       "detail": "ProPricingCopy is read only by static screens (scan-map); serve from the API or keep local in the web app",
@@ -1189,7 +1131,7 @@
       "round1Id": "C-56"
     },
     {
-      "id": "C-46",
+      "id": "C-43",
       "kind": "static-ruling",
       "entity": "TicketTerms",
       "detail": "TicketTerms is read only by static screens (scan-map); serve from the API or keep local in the web app",
@@ -1209,7 +1151,7 @@
       "round1Id": "C-62"
     },
     {
-      "id": "C-47",
+      "id": "C-44",
       "kind": "static-ruling",
       "entity": "VaultPricing",
       "detail": "VaultPricing is read only by static screens (scan-map); serve from the API or keep local in the web app",
@@ -1237,7 +1179,7 @@
       "round1Id": "C-63"
     },
     {
-      "id": "C-48",
+      "id": "C-45",
       "kind": "possible-alias",
       "entity": "AiRequest",
       "detail": "AiRequest fields style / styleId may be one field",
@@ -1250,7 +1192,7 @@
       "note": "no longer raised: the ruling was applied to the inputs"
     },
     {
-      "id": "C-49",
+      "id": "C-46",
       "kind": "possible-alias",
       "entity": "StoredFile",
       "detail": "StoredFile fields file / fileId may be one field",
@@ -1263,7 +1205,7 @@
       "note": "no longer raised: the ruling was applied to the inputs"
     },
     {
-      "id": "C-50",
+      "id": "C-47",
       "kind": "possible-alias",
       "entity": "Wish",
       "detail": "Wish fields style / styleSlug may be one field",
@@ -1276,7 +1218,7 @@
       "note": "no longer raised: the ruling was applied to the inputs"
     },
     {
-      "id": "C-51",
+      "id": "C-48",
       "kind": "possible-alias",
       "entity": "Wish",
       "detail": "Wish fields wish / wishId may be one field",
@@ -1289,7 +1231,7 @@
       "note": "no longer raised: the ruling was applied to the inputs"
     },
     {
-      "id": "C-52",
+      "id": "C-49",
       "kind": "possible-alias",
       "entity": "Payment",
       "detail": "Payment fields amount / amountKobo may be one field",
@@ -1302,7 +1244,7 @@
       "note": "no longer raised: the ruling was applied to the inputs"
     },
     {
-      "id": "C-53",
+      "id": "C-50",
       "kind": "possible-alias",
       "entity": "QrCard",
       "detail": "QrCard fields wishId / wishIds may be one field",
@@ -1315,7 +1257,7 @@
       "note": "no longer raised: the ruling was applied to the inputs"
     },
     {
-      "id": "C-54",
+      "id": "C-51",
       "kind": "format-canon",
       "entity": "StudioStyle",
       "detail": "StudioStyle.at: time must be ISO-8601 UTC on the wire (conventions.md canon); no supersede covers epoch numbers",
@@ -1328,7 +1270,7 @@
       "note": "no longer raised: the ruling was applied to the inputs"
     },
     {
-      "id": "C-55",
+      "id": "C-52",
       "kind": "entitlement-without-endpoint",
       "entity": "pro.starter",
       "detail": "sold or promised (price-book) but no endpoint delivers it (it can be bought: POST /v1/payments)",
@@ -1341,7 +1283,7 @@
       "note": "no longer raised: the ruling was applied to the inputs"
     },
     {
-      "id": "C-56",
+      "id": "C-53",
       "kind": "entitlement-without-endpoint",
       "entity": "pro.pack",
       "detail": "sold or promised (price-book) but no endpoint delivers it (it can be bought: POST /v1/payments)",
@@ -1354,7 +1296,7 @@
       "note": "no longer raised: the ruling was applied to the inputs"
     },
     {
-      "id": "C-57",
+      "id": "C-54",
       "kind": "client-only-action",
       "entity": "Wish",
       "detail": "Wish.shareLink asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that names the server need",
@@ -1367,7 +1309,7 @@
       "note": "no longer raised: the ruling was applied to the inputs"
     },
     {
-      "id": "C-58",
+      "id": "C-55",
       "kind": "client-only-action",
       "entity": "Wish",
       "detail": "Wish draft.useThisStyle asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that names the server need",
@@ -1380,7 +1322,7 @@
       "note": "no longer raised: the ruling was applied to the inputs"
     },
     {
-      "id": "C-59",
+      "id": "C-56",
       "kind": "client-only-action",
       "entity": "Wish",
       "detail": "Wish.saveChanges asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that names the server need",
@@ -1393,7 +1335,7 @@
       "note": "no longer raised: the ruling was applied to the inputs"
     },
     {
-      "id": "C-60",
+      "id": "C-57",
       "kind": "client-only-action",
       "entity": "Wish",
       "detail": "Wish.sealIt asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that names the server need",
@@ -1406,7 +1348,7 @@
       "note": "no longer raised: the ruling was applied to the inputs"
     },
     {
-      "id": "C-61",
+      "id": "C-58",
       "kind": "client-only-action",
       "entity": "Wish",
       "detail": "Wish.wakeWish asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that names the server need",
@@ -1419,7 +1361,7 @@
       "note": "no longer raised: the ruling was applied to the inputs"
     },
     {
-      "id": "C-62",
+      "id": "C-59",
       "kind": "client-only-action",
       "entity": "PassOffer",
       "detail": "Pass.getPass asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that names the server need",
@@ -1432,7 +1374,7 @@
       "note": "no longer raised: the ruling was applied to the inputs"
     },
     {
-      "id": "C-63",
+      "id": "C-60",
       "kind": "static-ruling",
       "entity": "ConciergeOffer",
       "detail": "ConciergeOffer is read only by static screens (scan-map); serve from the API or keep local in the web app",
@@ -1445,7 +1387,7 @@
       "note": "no longer raised: the ruling was applied to the inputs"
     },
     {
-      "id": "C-64",
+      "id": "C-61",
       "kind": "static-ruling",
       "entity": "ConciergeSinglePrice",
       "detail": "ConciergeSinglePrice is read only by static screens (scan-map); serve from the API or keep local in the web app",
@@ -1458,7 +1400,7 @@
       "note": "no longer raised: the ruling was applied to the inputs"
     },
     {
-      "id": "C-65",
+      "id": "C-62",
       "kind": "static-ruling",
       "entity": "PricingRules",
       "detail": "PricingRules is read only by static screens (scan-map); serve from the API or keep local in the web app",
@@ -1471,7 +1413,7 @@
       "note": "no longer raised: the ruling was applied to the inputs"
     },
     {
-      "id": "C-66",
+      "id": "C-63",
       "kind": "static-ruling",
       "entity": "RetentionRules",
       "detail": "RetentionRules is read only by static screens (scan-map); serve from the API or keep local in the web app",
@@ -1484,7 +1426,7 @@
       "note": "no longer raised: the ruling was applied to the inputs"
     },
     {
-      "id": "C-67",
+      "id": "C-64",
       "kind": "static-ruling",
       "entity": "ShowcaseWish",
       "detail": "ShowcaseWish is read only by static screens (scan-map); serve from the API or keep local in the web app",
@@ -1497,7 +1439,7 @@
       "note": "no longer raised: the ruling was applied to the inputs"
     },
     {
-      "id": "C-68",
+      "id": "C-65",
       "kind": "static-ruling",
       "entity": "StyleLevelCounts",
       "detail": "StyleLevelCounts is read only by static screens (scan-map); serve from the API or keep local in the web app",
@@ -1510,7 +1452,7 @@
       "note": "no longer raised: the ruling was applied to the inputs"
     },
     {
-      "id": "C-69",
+      "id": "C-66",
       "kind": "static-ruling",
       "entity": "ComingSoonAudience",
       "detail": "ComingSoonAudience is read only by static screens (scan-map); serve from the API or keep local in the web app",
@@ -1523,7 +1465,7 @@
       "note": "no longer raised: the ruling was applied to the inputs"
     },
     {
-      "id": "C-70",
+      "id": "C-67",
       "kind": "static-ruling",
       "entity": "ContactChannels",
       "detail": "ContactChannels is read only by static screens (scan-map); serve from the API or keep local in the web app",
@@ -1536,7 +1478,7 @@
       "note": "no longer raised: the ruling was applied to the inputs"
     },
     {
-      "id": "C-71",
+      "id": "C-68",
       "kind": "static-ruling",
       "entity": "CreativeLabel",
       "detail": "CreativeLabel is read only by static screens (scan-map); serve from the API or keep local in the web app",
@@ -1549,7 +1491,7 @@
       "note": "no longer raised: the ruling was applied to the inputs"
     },
     {
-      "id": "C-72",
+      "id": "C-69",
       "kind": "static-ruling",
       "entity": "EndingEvent",
       "detail": "EndingEvent is read only by static screens (scan-map); serve from the API or keep local in the web app",
@@ -1562,7 +1504,7 @@
       "note": "no longer raised: the ruling was applied to the inputs"
     },
     {
-      "id": "C-73",
+      "id": "C-70",
       "kind": "static-ruling",
       "entity": "SampleReveal",
       "detail": "SampleReveal is read only by static screens (scan-map); serve from the API or keep local in the web app",
@@ -1575,7 +1517,7 @@
       "note": "no longer raised: the ruling was applied to the inputs"
     },
     {
-      "id": "C-74",
+      "id": "C-71",
       "kind": "static-ruling",
       "entity": "StyleRecording",
       "detail": "StyleRecording is read only by static screens (scan-map); serve from the API or keep local in the web app",
@@ -1588,7 +1530,7 @@
       "note": "no longer raised: the ruling was applied to the inputs"
     },
     {
-      "id": "C-75",
+      "id": "C-72",
       "kind": "role-contradiction",
       "entity": "Account",
       "detail": "GET /v1/accounts/:id: public and owner-only on one record",
@@ -1601,7 +1543,7 @@
       "note": "no longer raised: the ruling was applied to the inputs"
     },
     {
-      "id": "C-76",
+      "id": "C-73",
       "kind": "role-contradiction",
       "entity": "Wish",
       "detail": "GET /v1/wishes/:id: public and owner-only on one record",
@@ -1614,7 +1556,7 @@
       "note": "no longer raised: the ruling was applied to the inputs"
     },
     {
-      "id": "C-77",
+      "id": "C-74",
       "kind": "unclassified-entity",
       "entity": "AuditRow (unfiltered, for the filter chips)",
       "detail": "entity name is not in tools/pipeline/aliases.json and is not a plain resource name",
@@ -1627,7 +1569,7 @@
       "note": "no longer raised: the ruling was applied to the inputs"
     },
     {
-      "id": "C-78",
+      "id": "C-75",
       "kind": "unclassified-entity",
       "entity": "Business (row)",
       "detail": "entity name is not in tools/pipeline/aliases.json and is not a plain resource name",
@@ -1640,7 +1582,7 @@
       "note": "no longer raised: the ruling was applied to the inputs"
     },
     {
-      "id": "C-79",
+      "id": "C-76",
       "kind": "unclassified-entity",
       "entity": "Business (single)",
       "detail": "entity name is not in tools/pipeline/aliases.json and is not a plain resource name",
@@ -1653,7 +1595,7 @@
       "note": "no longer raised: the ruling was applied to the inputs"
     },
     {
-      "id": "C-80",
+      "id": "C-77",
       "kind": "unclassified-entity",
       "entity": "Due (this week)",
       "detail": "entity name is not in tools/pipeline/aliases.json and is not a plain resource name",
@@ -1666,7 +1608,7 @@
       "note": "no longer raised: the ruling was applied to the inputs"
     },
     {
-      "id": "C-81",
+      "id": "C-78",
       "kind": "unclassified-entity",
       "entity": "Order (row)",
       "detail": "entity name is not in tools/pipeline/aliases.json and is not a plain resource name",
@@ -1679,7 +1621,7 @@
       "note": "no longer raised: the ruling was applied to the inputs"
     },
     {
-      "id": "C-82",
+      "id": "C-79",
       "kind": "unclassified-entity",
       "entity": "Order (single, order detail route)",
       "detail": "entity name is not in tools/pipeline/aliases.json and is not a plain resource name",
@@ -1692,7 +1634,7 @@
       "note": "no longer raised: the ruling was applied to the inputs"
     },
     {
-      "id": "C-83",
+      "id": "C-80",
       "kind": "unclassified-entity",
       "entity": "Payment (row)",
       "detail": "entity name is not in tools/pipeline/aliases.json and is not a plain resource name",
@@ -1705,7 +1647,7 @@
       "note": "no longer raised: the ruling was applied to the inputs"
     },
     {
-      "id": "C-84",
+      "id": "C-81",
       "kind": "unclassified-entity",
       "entity": "Payment (single) with its record",
       "detail": "entity name is not in tools/pipeline/aliases.json and is not a plain resource name",
@@ -1718,7 +1660,7 @@
       "note": "no longer raised: the ruling was applied to the inputs"
     },
     {
-      "id": "C-85",
+      "id": "C-82",
       "kind": "unclassified-entity",
       "entity": "Person (as used here: id, name)",
       "detail": "entity name is not in tools/pipeline/aliases.json and is not a plain resource name",
@@ -1731,7 +1673,7 @@
       "note": "no longer raised: the ruling was applied to the inputs"
     },
     {
-      "id": "C-86",
+      "id": "C-83",
       "kind": "unclassified-entity",
       "entity": "Person (list row)",
       "detail": "entity name is not in tools/pipeline/aliases.json and is not a plain resource name",
@@ -1744,7 +1686,7 @@
       "note": "no longer raised: the ruling was applied to the inputs"
     },
     {
-      "id": "C-87",
+      "id": "C-84",
       "kind": "unclassified-entity",
       "entity": "PriceChange (audit entries, area prices)",
       "detail": "entity name is not in tools/pipeline/aliases.json and is not a plain resource name",
@@ -1757,7 +1699,7 @@
       "note": "no longer raised: the ruling was applied to the inputs"
     },
     {
-      "id": "C-88",
+      "id": "C-85",
       "kind": "unclassified-entity",
       "entity": "Submission (count only)",
       "detail": "entity name is not in tools/pipeline/aliases.json and is not a plain resource name",
@@ -1770,7 +1712,7 @@
       "note": "no longer raised: the ruling was applied to the inputs"
     },
     {
-      "id": "C-89",
+      "id": "C-86",
       "kind": "unclassified-entity",
       "entity": "Wish (as used here: no, forName, kind, occasion, opensAt, state)",
       "detail": "entity name is not in tools/pipeline/aliases.json and is not a plain resource name",
@@ -1783,7 +1725,7 @@
       "note": "no longer raised: the ruling was applied to the inputs"
     },
     {
-      "id": "C-90",
+      "id": "C-87",
       "kind": "unclassified-entity",
       "entity": "Wish (list row)",
       "detail": "entity name is not in tools/pipeline/aliases.json and is not a plain resource name",
@@ -1796,7 +1738,7 @@
       "note": "no longer raised: the ruling was applied to the inputs"
     },
     {
-      "id": "C-91",
+      "id": "C-88",
       "kind": "possible-alias",
       "entity": "Price",
       "detail": "Price fields list / listKobo may be one field",
@@ -1809,7 +1751,7 @@
       "note": "no longer raised: the ruling was applied to the inputs"
     },
     {
-      "id": "C-92",
+      "id": "C-89",
       "kind": "truth-mismatch",
       "entity": "money",
       "detail": "₦17 shown or sent by a screen is in no product truth and not in the price book seed",
@@ -1822,7 +1764,7 @@
       "note": "no longer raised: the ruling was applied to the inputs"
     },
     {
-      "id": "C-93",
+      "id": "C-90",
       "kind": "truth-mismatch",
       "entity": "money",
       "detail": "₦7,000 shown or sent by a screen is in no product truth and not in the price book seed",
@@ -1835,7 +1777,7 @@
       "note": "no longer raised: the ruling was applied to the inputs"
     },
     {
-      "id": "C-94",
+      "id": "C-91",
       "kind": "unparseable-action",
       "entity": "Order",
       "detail": "action name 'assign-maker' is not one action",
@@ -1848,7 +1790,7 @@
       "note": "no longer raised: the ruling was applied to the inputs"
     },
     {
-      "id": "C-95",
+      "id": "C-92",
       "kind": "unparseable-action",
       "entity": "Price",
       "detail": "action name 'set-price' is not one action",
@@ -1861,7 +1803,7 @@
       "note": "no longer raised: the ruling was applied to the inputs"
     },
     {
-      "id": "C-96",
+      "id": "C-93",
       "kind": "role-contradiction",
       "entity": "Payment",
       "detail": "GET /v1/payments/:reference: public and staff-only",
@@ -1871,6 +1813,45 @@
       "status": "closed",
       "closedBy": "DEC-116",
       "round1Id": "C-60",
+      "note": "no longer raised: the ruling was applied to the inputs"
+    },
+    {
+      "id": "C-94",
+      "kind": "possible-alias",
+      "entity": "ConciergeOrder",
+      "detail": "ConciergeOrder fields maker / makerId may be one field",
+      "key": "possible-alias|ConciergeOrder|ConciergeOrder fields maker / makerId may be one field",
+      "sources": [],
+      "options": [],
+      "status": "closed",
+      "closedBy": "DEC-129",
+      "round1Id": "C-21",
+      "note": "no longer raised: the ruling was applied to the inputs"
+    },
+    {
+      "id": "C-95",
+      "kind": "possible-alias",
+      "entity": "Payout",
+      "detail": "Payout fields creator / creatorId may be one field",
+      "key": "possible-alias|Payout|Payout fields creator / creatorId may be one field",
+      "sources": [],
+      "options": [],
+      "status": "closed",
+      "closedBy": "DEC-129",
+      "round1Id": "C-24",
+      "note": "no longer raised: the ruling was applied to the inputs"
+    },
+    {
+      "id": "C-96",
+      "kind": "possible-alias",
+      "entity": "Report",
+      "detail": "Report fields wish / wishId may be one field",
+      "key": "possible-alias|Report|Report fields wish / wishId may be one field",
+      "sources": [],
+      "options": [],
+      "status": "closed",
+      "closedBy": "DEC-129",
+      "round1Id": "C-27",
       "note": "no longer raised: the ruling was applied to the inputs"
     }
   ],
@@ -1886,6 +1867,6 @@
     "unclassified-entity": 14,
     "unparseable-action": 3
   },
-  "open": 7,
-  "closed": 89
+  "open": 0,
+  "closed": 96
 }

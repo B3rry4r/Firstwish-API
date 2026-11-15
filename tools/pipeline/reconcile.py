@@ -32,6 +32,11 @@ PATH_RE = re.compile(r"\b(GET|POST|PUT|PATCH|DELETE) (/v1/[A-Za-z0-9_:\-/]+)")
 FILE_RE = re.compile(r"((?:[\w\-\[\]]+/)*[\w\-\[\]]+\.(?:tsx|ts|js|mjs))")
 NAIRA_RE = re.compile(r"₦\s?(\d[\d,]*)")
 IDENT = re.compile(r"^[A-Z][A-Za-z0-9]*$")
+# A14 (DEC-125): every changing /v1/admin request carries `reason`, except the three staff sign-in routes;
+# code and verify are the only /v1/admin routes allowed without a staff role (public, before sign-in).
+REASON_DECISION = "DEC-125"
+ADMIN_SIGNIN = {("POST", "/v1/admin/auth/code"), ("POST", "/v1/admin/auth/verify"), ("POST", "/v1/admin/auth/sign-out")}
+ADMIN_PUBLIC = {("POST", "/v1/admin/auth/code"), ("POST", "/v1/admin/auth/verify")}
 VIEW_RE = re.compile(r"^([A-Z][A-Za-z0-9]*) \(")
 STOP = set("a an the and or of to on in for one set save get list create update delete start make add remove by "
            "with is it its no not all every each from as at be can only any wish page per".split())
@@ -758,6 +763,17 @@ def main():
             endpoints[k_]["notes"].add("runs on a verified payment (webhook); a replayed webhook adds nothing")
             delivers[p["sku"]].append(k_)
 
+    # A14: reason on every changing admin request
+    if REASON_DECISION not in [d_["id"] for d_ in decisions]:
+        print("HALT: %s (the admin reason rule) is not in decisions.json" % REASON_DECISION)
+        sys.exit(4)
+    for key in sorted(endpoints):
+        if key[1].startswith("/v1/admin") and key[0] not in ("GET", "INTERNAL") and key not in ADMIN_SIGNIN:
+            ep = endpoints[key]
+            if "reason" not in ep["body"]:
+                ep["body"]["reason"] = {"type": "string (4 or more characters; written to the audit row)", "from": {REASON_DECISION}}
+                ep["notes"].add("reason by " + REASON_DECISION)
+
     # supersedes that name a route rule the endpoint they cover
     sup_routes = {}
     for s in sup:
@@ -1222,7 +1238,13 @@ def main():
     for c in open_rows:
         print("  open %s %s %s: %s" % (c["id"], c["kind"], c["entity"], c["detail"][:110]))
     no_ent = [e["id"] for e in ents if not e["endpoints"]]
-    return 0 if not unmapped and not no_auth and not open_rows and not no_ent else 1
+    adm_keys = [k for k in ep_keys if k[1].startswith("/v1/admin")]
+    no_reason = ["%s %s" % k for k in adm_keys if k[0] not in ("GET", "INTERNAL") and k not in ADMIN_SIGNIN and "reason" not in endpoints[k]["body"]]
+    no_staff = ["%s %s" % k for k in adm_keys if k not in ADMIN_PUBLIC and not (
+        endpoints[k]["auth"] and all(x.startswith("staff:") for x in endpoints[k]["auth"]))]
+    print("ADMIN ACTIONS WITHOUT REASON: %d%s" % (len(no_reason), (" (" + ", ".join(no_reason) + ")") if no_reason else ""))
+    print("ADMIN ENDPOINTS WITHOUT STAFF ROLE: %d%s" % (len(no_staff), (" (" + ", ".join(no_staff) + ")") if no_staff else ""))
+    return 0 if not unmapped and not no_auth and not open_rows and not no_ent and not no_reason and not no_staff else 1
 
 
 if __name__ == "__main__":

@@ -2221,6 +2221,114 @@
       "confidence": "high",
       "source": "build/rulings-phase3.md (Admin screens joined)",
       "decidedAt": "2026-11-15T20:00:00Z"
+    },
+    {
+      "id": "DEC-125",
+      "topic": "admin reason rule",
+      "closes": [],
+      "decision": "A14: Every /v1/admin request that changes something carries reason (string, 4 or more characters), written to the audit row, including the declared ones that lacked it. Only the staff sign-in routes (code, verify, sign-out) take none; code and verify are public by nature (before sign-in), rate-limited.",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (Admin join, leftovers)",
+      "decidedAt": "2026-11-15T22:00:00Z"
+    },
+    {
+      "id": "DEC-126",
+      "topic": "Account.pass",
+      "closes": [
+        {
+          "conflict": "C-18",
+          "key": "type-mismatch|Account|Account.pass is seen as boolean vs object",
+          "detail": "Account.pass is seen as boolean vs object"
+        }
+      ],
+      "decision": "A15: Account.pass is an object or null: {active: boolean, endsAt: time}. A staff list's boolean is pass.active.",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (Admin join, leftovers)",
+      "decidedAt": "2026-11-15T22:00:00Z",
+      "fieldTypes": {
+        "Account.pass": "object {active: boolean, endsAt: time} | null"
+      }
+    },
+    {
+      "id": "DEC-127",
+      "topic": "Account.sides",
+      "closes": [
+        {
+          "conflict": "C-19",
+          "key": "type-mismatch|Account|Account.sides is seen as array vs object",
+          "detail": "Account.sides is seen as array vs object"
+        }
+      ],
+      "decision": "A16: Account.sides is an array of enum(person|creator|business); each side's details live on Creator and Business.",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (Admin join, leftovers)",
+      "decidedAt": "2026-11-15T22:00:00Z",
+      "fieldTypes": {
+        "Account.sides": "array<enum(person|creator|business)>"
+      }
+    },
+    {
+      "id": "DEC-128",
+      "topic": "ConciergeOrder.from",
+      "closes": [
+        {
+          "conflict": "C-20",
+          "key": "type-mismatch|ConciergeOrder|ConciergeOrder.from is seen as string vs time",
+          "detail": "ConciergeOrder.from is seen as string vs time"
+        }
+      ],
+      "decision": "A17: ConciergeOrder.from is a string (who ordered). Due this week is a read over ConciergeOrder with date-only query parameters from and to; the window is not a field of the order.",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (Admin join, leftovers)",
+      "decidedAt": "2026-11-15T22:00:00Z",
+      "fieldTypes": {
+        "ConciergeOrder.from": "string"
+      }
+    },
+    {
+      "id": "DEC-129",
+      "topic": "admin field aliases",
+      "closes": [
+        {
+          "conflict": "C-21",
+          "key": "possible-alias|ConciergeOrder|ConciergeOrder fields maker / makerId may be one field",
+          "detail": "ConciergeOrder fields maker / makerId may be one field"
+        },
+        {
+          "conflict": "C-24",
+          "key": "possible-alias|Payout|Payout fields creator / creatorId may be one field",
+          "detail": "Payout fields creator / creatorId may be one field"
+        },
+        {
+          "conflict": "C-26",
+          "key": "possible-alias|Report|Report fields decided / decidedAt may be one field",
+          "detail": "Report fields decided / decidedAt may be one field"
+        },
+        {
+          "conflict": "C-27",
+          "key": "possible-alias|Report|Report fields wish / wishId may be one field",
+          "detail": "Report fields wish / wishId may be one field"
+        }
+      ],
+      "decision": "A18: Same field: ConciergeOrder.maker = makerId; Payout.creator = creatorId; Report.wish = wishId. Different: Report.decided is the decision taken (enum), Report.decidedAt is when.",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (Admin join, leftovers)",
+      "decidedAt": "2026-11-15T22:00:00Z"
+    },
+    {
+      "id": "DEC-130",
+      "topic": "endpoints the rulings ask for",
+      "closes": [],
+      "decision": "A19: Built though no screen names them: GET /v1/admin/support/counts, POST /v1/webhooks/email/inbound (signature checked), a daily settlement job (internal), PUT /v1/admin/numbers/targets (owner, finance; reason), POST /v1/admin/people/:id/contact-reveal (reason; audited; returns the full phone and email once).",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (Admin join, leftovers)",
+      "decidedAt": "2026-11-15T22:00:00Z"
     }
   ]
 }

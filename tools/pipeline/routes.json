@@ -1387,6 +1387,37 @@
         "webhook-signature"
       ],
       "decision": "DEC-123"
+    },
+    {
+      "resource": "LedgerEntry",
+      "method": "INTERNAL",
+      "path": "port:ledger#daily-settlement",
+      "auth": [
+        "internal"
+      ],
+      "decision": "DEC-130"
+    },
+    {
+      "resource": "Numbers",
+      "method": "PUT",
+      "path": "/v1/admin/numbers/targets",
+      "auth": [
+        "staff:owner",
+        "staff:finance"
+      ],
+      "decision": "DEC-130"
+    },
+    {
+      "resource": "Account",
+      "method": "POST",
+      "path": "/v1/admin/people/:id/contact-reveal",
+      "auth": [
+        "staff:owner",
+        "staff:ops",
+        "staff:moderator",
+        "staff:support"
+      ],
+      "decision": "DEC-130"
     }
   ],
   "fulfilment": {

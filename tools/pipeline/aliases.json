@@ -1481,6 +1481,33 @@
       ],
       "why": "A3: the was/list price is one field, listKobo",
       "decision": "DEC-114"
+    },
+    "ConciergeOrder.maker": {
+      "canonical": "makerId",
+      "sources": [
+        "admin-concierge",
+        "concierge-orders"
+      ],
+      "why": "A18: same field",
+      "decision": "DEC-129"
+    },
+    "Payout.creator": {
+      "canonical": "creatorId",
+      "sources": [
+        "admin-creators",
+        "royalties-payouts"
+      ],
+      "why": "A18: same field",
+      "decision": "DEC-129"
+    },
+    "Report.wish": {
+      "canonical": "wishId",
+      "sources": [
+        "admin-moderation",
+        "moderation"
+      ],
+      "why": "A18: same field",
+      "decision": "DEC-129"
     }
   },
   "possibleAliases": [

@@ -320,7 +320,7 @@
         },
         {
           "name": "pass",
-          "type": "CONFLICT:boolean|object",
+          "type": "object {active: boolean, endsAt: time} | null",
           "classes": [
             "boolean",
             "object"
@@ -337,7 +337,8 @@
             "sign-in",
             "welcome"
           ],
-          "supersedes": []
+          "supersedes": [],
+          "typeBy": "DEC-126"
         },
         {
           "name": "phone",
@@ -480,7 +481,7 @@
         },
         {
           "name": "sides",
-          "type": "CONFLICT:array|object",
+          "type": "array<enum(person|creator|business)>",
           "classes": [
             "array",
             "object"
@@ -491,7 +492,8 @@
             "admin-people-detail",
             "sessions"
           ],
-          "supersedes": []
+          "supersedes": [],
+          "typeBy": "DEC-127"
         },
         {
           "name": "space",
@@ -671,6 +673,41 @@
         },
         {
           "id": "E-4",
+          "method": "POST",
+          "path": "/v1/admin/people/:id/contact-reveal",
+          "auth": [
+            {
+              "kind": "staff role",
+              "roles": [
+                "moderator",
+                "ops",
+                "owner",
+                "support"
+              ]
+            }
+          ],
+          "body": [
+            {
+              "name": "reason",
+              "type": "string (4 or more characters; written to the audit row)",
+              "from": [
+                "DEC-125"
+              ]
+            }
+          ],
+          "response": null,
+          "sources": [
+            {
+              "src": "DEC-130",
+              "via": "ruling:DEC-130"
+            }
+          ],
+          "notes": [
+            "reason by DEC-125"
+          ]
+        },
+        {
+          "id": "E-5",
           "method": "GET",
           "path": "/v1/handles/:handle",
           "auth": [
@@ -703,7 +740,7 @@
           ]
         },
         {
-          "id": "E-5",
+          "id": "E-6",
           "method": "GET",
           "path": "/v1/me",
           "auth": [
@@ -870,7 +907,7 @@
           "notes": []
         },
         {
-          "id": "E-6",
+          "id": "E-7",
           "method": "PATCH",
           "path": "/v1/me",
           "auth": [
@@ -983,7 +1020,7 @@
           ]
         },
         {
-          "id": "E-7",
+          "id": "E-8",
           "method": "DELETE",
           "path": "/v1/me/business",
           "auth": [
@@ -1028,7 +1065,7 @@
           ]
         },
         {
-          "id": "E-8",
+          "id": "E-9",
           "method": "POST",
           "path": "/v1/me/business",
           "auth": [
@@ -1108,7 +1145,7 @@
           ]
         },
         {
-          "id": "E-9",
+          "id": "E-10",
           "method": "DELETE",
           "path": "/v1/me/creator",
           "auth": [
@@ -1145,7 +1182,7 @@
           ]
         },
         {
-          "id": "E-10",
+          "id": "E-11",
           "method": "POST",
           "path": "/v1/me/creator",
           "auth": [
@@ -1537,7 +1574,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-11",
+          "id": "E-12",
           "method": "POST",
           "path": "/v1/ai/letter",
           "auth": [
@@ -1581,7 +1618,7 @@
           ]
         },
         {
-          "id": "E-12",
+          "id": "E-13",
           "method": "POST",
           "path": "/v1/ai/pick-photos",
           "auth": [
@@ -1625,7 +1662,7 @@
           ]
         },
         {
-          "id": "E-13",
+          "id": "E-14",
           "method": "POST",
           "path": "/v1/ai/reasons",
           "auth": [
@@ -1669,7 +1706,7 @@
           ]
         },
         {
-          "id": "E-14",
+          "id": "E-15",
           "method": "POST",
           "path": "/v1/ai/studio-change",
           "auth": [
@@ -1740,7 +1777,7 @@
           ]
         },
         {
-          "id": "E-15",
+          "id": "E-16",
           "method": "POST",
           "path": "/v1/ai/studio-draft",
           "auth": [
@@ -1845,7 +1882,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-16",
+          "id": "E-17",
           "method": "GET",
           "path": "/v1/business/approved-dates",
           "auth": [
@@ -2105,7 +2142,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-17",
+          "id": "E-18",
           "method": "GET",
           "path": "/v1/admin/audit",
           "auth": [
@@ -2359,7 +2396,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-18",
+          "id": "E-19",
           "method": "POST",
           "path": "/v1/auth/codes",
           "auth": [
@@ -2435,7 +2472,7 @@
           ]
         },
         {
-          "id": "E-19",
+          "id": "E-20",
           "method": "POST",
           "path": "/v1/auth/codes/verify",
           "auth": [
@@ -2584,7 +2621,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-20",
+          "id": "E-21",
           "method": "POST",
           "path": "/v1/admin/bans",
           "auth": [
@@ -2668,7 +2705,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-21",
+          "id": "E-22",
           "method": "POST",
           "path": "/v1/bank-accounts",
           "auth": [
@@ -3160,7 +3197,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-22",
+          "id": "E-23",
           "method": "GET",
           "path": "/v1/admin/businesses",
           "auth": [
@@ -3189,7 +3226,7 @@
           ]
         },
         {
-          "id": "E-23",
+          "id": "E-24",
           "method": "GET",
           "path": "/v1/admin/businesses/:id",
           "auth": [
@@ -3218,7 +3255,7 @@
           ]
         },
         {
-          "id": "E-24",
+          "id": "E-25",
           "method": "GET",
           "path": "/v1/business",
           "auth": [
@@ -3277,7 +3314,7 @@
           "notes": []
         },
         {
-          "id": "E-25",
+          "id": "E-26",
           "method": "PATCH",
           "path": "/v1/business",
           "auth": [
@@ -3336,7 +3373,7 @@
           "notes": []
         },
         {
-          "id": "E-26",
+          "id": "E-27",
           "method": "GET",
           "path": "/v1/business/plan",
           "auth": [
@@ -3455,7 +3492,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-27",
+          "id": "E-28",
           "method": "GET",
           "path": "/v1/chapter-specs",
           "auth": [
@@ -3907,7 +3944,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-28",
+          "id": "E-29",
           "method": "GET",
           "path": "/v1/business/client-wishes",
           "auth": [
@@ -3938,7 +3975,7 @@
           "notes": []
         },
         {
-          "id": "E-29",
+          "id": "E-30",
           "method": "POST",
           "path": "/v1/business/client-wishes",
           "auth": [
@@ -4029,7 +4066,7 @@
           "notes": []
         },
         {
-          "id": "E-30",
+          "id": "E-31",
           "method": "GET",
           "path": "/v1/business/client-wishes/:id",
           "auth": [
@@ -4064,7 +4101,7 @@
           "notes": []
         },
         {
-          "id": "E-31",
+          "id": "E-32",
           "method": "POST",
           "path": "/v1/business/client-wishes/:id/approve-date",
           "auth": [
@@ -4126,7 +4163,7 @@
           ]
         },
         {
-          "id": "E-32",
+          "id": "E-33",
           "method": "POST",
           "path": "/v1/business/client-wishes/:id/send-reveal",
           "auth": [
@@ -4289,7 +4326,7 @@
         },
         {
           "name": "from",
-          "type": "CONFLICT:string|time",
+          "type": "string",
           "classes": [
             "string",
             "time-iso"
@@ -4298,7 +4335,8 @@
           "provenance": [
             "admin-concierge"
           ],
-          "supersedes": []
+          "supersedes": [],
+          "typeBy": "DEC-128"
         },
         {
           "name": "id",
@@ -4342,18 +4380,6 @@
           "supersedes": []
         },
         {
-          "name": "maker",
-          "type": "string",
-          "classes": [
-            "string"
-          ],
-          "nullable": true,
-          "provenance": [
-            "admin-concierge"
-          ],
-          "supersedes": []
-        },
-        {
           "name": "makerId",
           "type": "string",
           "classes": [
@@ -4361,9 +4387,12 @@
           ],
           "nullable": true,
           "provenance": [
+            "admin-concierge",
             "concierge-orders"
           ],
-          "supersedes": []
+          "supersedes": [
+            "S-2: server-issued UUIDv7 ids"
+          ]
         },
         {
           "name": "makerName",
@@ -4574,7 +4603,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-33",
+          "id": "E-34",
           "method": "POST",
           "path": "/v1/admin/concierge-orders/:id/delivery",
           "auth": [
@@ -4592,6 +4621,13 @@
               "from": [
                 "concierge-orders"
               ]
+            },
+            {
+              "name": "reason",
+              "type": "string (4 or more characters; written to the audit row)",
+              "from": [
+                "DEC-125"
+              ]
             }
           ],
           "response": {
@@ -4605,11 +4641,12 @@
             }
           ],
           "notes": [
+            "reason by DEC-125",
             "route by conventions naming"
           ]
         },
         {
-          "id": "E-34",
+          "id": "E-35",
           "method": "POST",
           "path": "/v1/admin/concierge-orders/:id/quote",
           "auth": [
@@ -4635,6 +4672,13 @@
               "from": [
                 "concierge-orders"
               ]
+            },
+            {
+              "name": "reason",
+              "type": "string (4 or more characters; written to the audit row)",
+              "from": [
+                "DEC-125"
+              ]
             }
           ],
           "response": {
@@ -4648,11 +4692,12 @@
             }
           ],
           "notes": [
+            "reason by DEC-125",
             "route by conventions naming"
           ]
         },
         {
-          "id": "E-35",
+          "id": "E-36",
           "method": "GET",
           "path": "/v1/admin/concierge/due",
           "auth": [
@@ -4681,7 +4726,7 @@
           ]
         },
         {
-          "id": "E-36",
+          "id": "E-37",
           "method": "GET",
           "path": "/v1/admin/concierge/orders",
           "auth": [
@@ -4710,7 +4755,7 @@
           ]
         },
         {
-          "id": "E-37",
+          "id": "E-38",
           "method": "GET",
           "path": "/v1/admin/concierge/orders/:id",
           "auth": [
@@ -4739,7 +4784,7 @@
           ]
         },
         {
-          "id": "E-38",
+          "id": "E-39",
           "method": "POST",
           "path": "/v1/admin/concierge/orders/:id/maker",
           "auth": [
@@ -4801,7 +4846,7 @@
           ]
         },
         {
-          "id": "E-39",
+          "id": "E-40",
           "method": "POST",
           "path": "/v1/concierge-orders",
           "auth": [
@@ -5072,7 +5117,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-40",
+          "id": "E-41",
           "method": "GET",
           "path": "/v1/admin/creators",
           "auth": [
@@ -5110,7 +5155,7 @@
           ]
         },
         {
-          "id": "E-41",
+          "id": "E-42",
           "method": "GET",
           "path": "/v1/creators",
           "auth": [
@@ -5410,7 +5455,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-42",
+          "id": "E-43",
           "method": "GET",
           "path": "/v1/studio/me",
           "auth": [
@@ -5441,7 +5486,7 @@
           "notes": []
         },
         {
-          "id": "E-43",
+          "id": "E-44",
           "method": "PATCH",
           "path": "/v1/studio/me",
           "auth": [
@@ -5637,7 +5682,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-44",
+          "id": "E-45",
           "method": "GET",
           "path": "/v1/me/dates",
           "auth": [
@@ -5668,7 +5713,7 @@
           "notes": []
         },
         {
-          "id": "E-45",
+          "id": "E-46",
           "method": "POST",
           "path": "/v1/me/dates",
           "auth": [
@@ -5743,7 +5788,7 @@
           "notes": []
         },
         {
-          "id": "E-46",
+          "id": "E-47",
           "method": "DELETE",
           "path": "/v1/me/dates/:id",
           "auth": [
@@ -5774,7 +5819,7 @@
           "notes": []
         },
         {
-          "id": "E-47",
+          "id": "E-48",
           "method": "GET",
           "path": "/v1/me/dates/:id",
           "auth": [
@@ -5865,7 +5910,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-48",
+          "id": "E-49",
           "method": "PUT",
           "path": "/v1/admin/showing/day/:date",
           "auth": [
@@ -6001,7 +6046,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-49",
+          "id": "E-50",
           "method": "GET",
           "path": "/v1/admin/earnings",
           "auth": [
@@ -6094,7 +6139,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-50",
+          "id": "E-51",
           "method": "GET",
           "path": "/v1/ending-purposes",
           "auth": [
@@ -6357,7 +6402,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-51",
+          "id": "E-52",
           "method": "POST",
           "path": "/v1/events",
           "auth": [
@@ -6527,7 +6572,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-52",
+          "id": "E-53",
           "method": "GET",
           "path": "/v1/auth/google/callback",
           "auth": [
@@ -6566,7 +6611,7 @@
           ]
         },
         {
-          "id": "E-53",
+          "id": "E-54",
           "method": "POST",
           "path": "/v1/auth/google/start",
           "auth": [
@@ -6607,7 +6652,7 @@
           ]
         },
         {
-          "id": "E-54",
+          "id": "E-55",
           "method": "DELETE",
           "path": "/v1/me/google",
           "auth": [
@@ -6640,7 +6685,7 @@
           ]
         },
         {
-          "id": "E-55",
+          "id": "E-56",
           "method": "POST",
           "path": "/v1/me/google",
           "auth": [
@@ -6811,7 +6856,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-56",
+          "id": "E-57",
           "method": "DELETE",
           "path": "/v1/creators/:handle/follow",
           "auth": [
@@ -6852,7 +6897,7 @@
           ]
         },
         {
-          "id": "E-57",
+          "id": "E-58",
           "method": "PUT",
           "path": "/v1/creators/:handle/follow",
           "auth": [
@@ -7007,7 +7052,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-58",
+          "id": "E-59",
           "method": "GET",
           "path": "/v1/business/invoices",
           "auth": [
@@ -7030,7 +7075,7 @@
           "notes": []
         },
         {
-          "id": "E-59",
+          "id": "E-60",
           "method": "GET",
           "path": "/v1/business/invoices/:id/file",
           "auth": [
@@ -7162,7 +7207,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-60",
+          "id": "E-61",
           "method": "GET",
           "path": "/v1/admin/jobs",
           "auth": [
@@ -7203,7 +7248,7 @@
           "notes": []
         },
         {
-          "id": "E-61",
+          "id": "E-62",
           "method": "POST",
           "path": "/v1/admin/jobs/:id/retry",
           "auth": [
@@ -7222,6 +7267,13 @@
               "from": [
                 "jobs"
               ]
+            },
+            {
+              "name": "reason",
+              "type": "string (4 or more characters; written to the audit row)",
+              "from": [
+                "DEC-125"
+              ]
             }
           ],
           "response": {
@@ -7235,6 +7287,7 @@
             }
           ],
           "notes": [
+            "reason by DEC-125",
             "route by conventions naming"
           ]
         }
@@ -7420,7 +7473,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-62",
+          "id": "E-63",
           "method": "GET",
           "path": "/v1/admin/ledger",
           "auth": [
@@ -7618,7 +7671,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-63",
+          "id": "E-64",
           "method": "GET",
           "path": "/v1/admin/ledger-entries",
           "auth": [
@@ -7661,6 +7714,26 @@
             {
               "src": "ledger",
               "via": "action:listEntries"
+            }
+          ],
+          "notes": []
+        },
+        {
+          "id": "E-65",
+          "method": "INTERNAL",
+          "path": "port:ledger#daily-settlement",
+          "auth": [
+            {
+              "kind": "internal",
+              "note": "queue job or port; no HTTP route"
+            }
+          ],
+          "body": [],
+          "response": null,
+          "sources": [
+            {
+              "src": "DEC-130",
+              "via": "ruling:DEC-130"
             }
           ],
           "notes": []
@@ -7918,7 +7991,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-64",
+          "id": "E-66",
           "method": "GET",
           "path": "/v1/business/logins",
           "auth": [
@@ -7941,7 +8014,7 @@
           "notes": []
         },
         {
-          "id": "E-65",
+          "id": "E-67",
           "method": "POST",
           "path": "/v1/business/logins",
           "auth": [
@@ -7972,7 +8045,7 @@
           "notes": []
         },
         {
-          "id": "E-66",
+          "id": "E-68",
           "method": "DELETE",
           "path": "/v1/business/logins/:id",
           "auth": [
@@ -8053,7 +8126,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-67",
+          "id": "E-69",
           "method": "GET",
           "path": "/v1/admin/concierge/makers",
           "auth": [
@@ -8375,7 +8448,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-68",
+          "id": "E-70",
           "method": "POST",
           "path": "/v1/admin/messages/:id/resend",
           "auth": [
@@ -8420,7 +8493,7 @@
           ]
         },
         {
-          "id": "E-69",
+          "id": "E-71",
           "method": "GET",
           "path": "/v1/admin/messages/log",
           "auth": [
@@ -8449,7 +8522,7 @@
           ]
         },
         {
-          "id": "E-70",
+          "id": "E-72",
           "method": "POST",
           "path": "/v1/webhooks/email",
           "auth": [
@@ -8486,7 +8559,7 @@
           "notes": []
         },
         {
-          "id": "E-71",
+          "id": "E-73",
           "method": "INTERNAL",
           "path": "port:message-deliveries#send",
           "auth": [
@@ -8837,7 +8910,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-72",
+          "id": "E-74",
           "method": "GET",
           "path": "/v1/moments",
           "auth": [
@@ -9097,7 +9170,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-73",
+          "id": "E-75",
           "method": "GET",
           "path": "/v1/admin/messages/templates",
           "auth": [
@@ -9126,7 +9199,7 @@
           ]
         },
         {
-          "id": "E-74",
+          "id": "E-76",
           "method": "PUT",
           "path": "/v1/admin/messages/templates/:key",
           "auth": [
@@ -9184,7 +9257,7 @@
           ]
         },
         {
-          "id": "E-75",
+          "id": "E-77",
           "method": "GET",
           "path": "/v1/me/notices",
           "auth": [
@@ -9245,7 +9318,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-76",
+          "id": "E-78",
           "method": "PATCH",
           "path": "/v1/me/notice-prefs",
           "auth": [
@@ -9417,7 +9490,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-77",
+          "id": "E-79",
           "method": "GET",
           "path": "/v1/admin/numbers",
           "auth": [
@@ -9443,6 +9516,39 @@
           ],
           "notes": [
             "route by DEC-112"
+          ]
+        },
+        {
+          "id": "E-80",
+          "method": "PUT",
+          "path": "/v1/admin/numbers/targets",
+          "auth": [
+            {
+              "kind": "staff role",
+              "roles": [
+                "finance",
+                "owner"
+              ]
+            }
+          ],
+          "body": [
+            {
+              "name": "reason",
+              "type": "string (4 or more characters; written to the audit row)",
+              "from": [
+                "DEC-125"
+              ]
+            }
+          ],
+          "response": null,
+          "sources": [
+            {
+              "src": "DEC-130",
+              "via": "ruling:DEC-130"
+            }
+          ],
+          "notes": [
+            "reason by DEC-125"
           ]
         }
       ]
@@ -9520,7 +9626,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-78",
+          "id": "E-81",
           "method": "GET",
           "path": "/v1/opening-defs",
           "auth": [
@@ -9627,7 +9733,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-79",
+          "id": "E-82",
           "method": "GET",
           "path": "/v1/admin/overview",
           "auth": [
@@ -9758,7 +9864,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-80",
+          "id": "E-83",
           "method": "GET",
           "path": "/v1/me/pass",
           "auth": [
@@ -10353,7 +10459,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-81",
+          "id": "E-84",
           "method": "GET",
           "path": "/v1/admin/payments",
           "auth": [
@@ -10382,7 +10488,7 @@
           ]
         },
         {
-          "id": "E-82",
+          "id": "E-85",
           "method": "GET",
           "path": "/v1/admin/payments/:reference",
           "auth": [
@@ -10411,7 +10517,7 @@
           ]
         },
         {
-          "id": "E-83",
+          "id": "E-86",
           "method": "POST",
           "path": "/v1/admin/payments/:reference/refund",
           "auth": [
@@ -10455,7 +10561,7 @@
           ]
         },
         {
-          "id": "E-84",
+          "id": "E-87",
           "method": "POST",
           "path": "/v1/payments",
           "auth": [
@@ -10635,7 +10741,7 @@
           ]
         },
         {
-          "id": "E-85",
+          "id": "E-88",
           "method": "GET",
           "path": "/v1/payments/:reference",
           "auth": [
@@ -10668,7 +10774,7 @@
           ]
         },
         {
-          "id": "E-86",
+          "id": "E-89",
           "method": "INTERNAL",
           "path": "port:fulfilment#concierge.rush",
           "auth": [
@@ -10690,7 +10796,7 @@
           ]
         },
         {
-          "id": "E-87",
+          "id": "E-90",
           "method": "INTERNAL",
           "path": "port:fulfilment#concierge.single",
           "auth": [
@@ -10712,7 +10818,7 @@
           ]
         },
         {
-          "id": "E-88",
+          "id": "E-91",
           "method": "INTERNAL",
           "path": "port:fulfilment#creator.credit-pack",
           "auth": [
@@ -10734,7 +10840,7 @@
           ]
         },
         {
-          "id": "E-89",
+          "id": "E-92",
           "method": "INTERNAL",
           "path": "port:fulfilment#creator.extra-review",
           "auth": [
@@ -10756,7 +10862,7 @@
           ]
         },
         {
-          "id": "E-90",
+          "id": "E-93",
           "method": "INTERNAL",
           "path": "port:fulfilment#creator.plan",
           "auth": [
@@ -10778,7 +10884,7 @@
           ]
         },
         {
-          "id": "E-91",
+          "id": "E-94",
           "method": "INTERNAL",
           "path": "port:fulfilment#creator.signed",
           "auth": [
@@ -10800,7 +10906,7 @@
           ]
         },
         {
-          "id": "E-92",
+          "id": "E-95",
           "method": "INTERNAL",
           "path": "port:fulfilment#extra.clip-15s",
           "auth": [
@@ -10822,7 +10928,7 @@
           ]
         },
         {
-          "id": "E-93",
+          "id": "E-96",
           "method": "INTERNAL",
           "path": "port:fulfilment#extra.clip-60s",
           "auth": [
@@ -10844,7 +10950,7 @@
           ]
         },
         {
-          "id": "E-94",
+          "id": "E-97",
           "method": "INTERNAL",
           "path": "port:fulfilment#extra.five-photos",
           "auth": [
@@ -10866,7 +10972,7 @@
           ]
         },
         {
-          "id": "E-95",
+          "id": "E-98",
           "method": "INTERNAL",
           "path": "port:fulfilment#extra.portrait-video",
           "auth": [
@@ -10888,7 +10994,7 @@
           ]
         },
         {
-          "id": "E-96",
+          "id": "E-99",
           "method": "INTERNAL",
           "path": "port:fulfilment#extra.premium-style",
           "auth": [
@@ -10910,7 +11016,7 @@
           ]
         },
         {
-          "id": "E-97",
+          "id": "E-100",
           "method": "INTERNAL",
           "path": "port:fulfilment#extra.qr-card",
           "auth": [
@@ -10932,7 +11038,7 @@
           ]
         },
         {
-          "id": "E-98",
+          "id": "E-101",
           "method": "INTERNAL",
           "path": "port:fulfilment#keep.half",
           "auth": [
@@ -10954,7 +11060,7 @@
           ]
         },
         {
-          "id": "E-99",
+          "id": "E-102",
           "method": "INTERNAL",
           "path": "port:fulfilment#keep.month",
           "auth": [
@@ -10976,7 +11082,7 @@
           ]
         },
         {
-          "id": "E-100",
+          "id": "E-103",
           "method": "INTERNAL",
           "path": "port:fulfilment#keep.year",
           "auth": [
@@ -10998,7 +11104,7 @@
           ]
         },
         {
-          "id": "E-101",
+          "id": "E-104",
           "method": "INTERNAL",
           "path": "port:fulfilment#pass.year",
           "auth": [
@@ -11020,7 +11126,7 @@
           ]
         },
         {
-          "id": "E-102",
+          "id": "E-105",
           "method": "INTERNAL",
           "path": "port:fulfilment#pro.pack",
           "auth": [
@@ -11042,7 +11148,7 @@
           ]
         },
         {
-          "id": "E-103",
+          "id": "E-106",
           "method": "INTERNAL",
           "path": "port:fulfilment#pro.starter",
           "auth": [
@@ -11064,7 +11170,7 @@
           ]
         },
         {
-          "id": "E-104",
+          "id": "E-107",
           "method": "INTERNAL",
           "path": "port:fulfilment#pro.studio",
           "auth": [
@@ -11086,7 +11192,7 @@
           ]
         },
         {
-          "id": "E-105",
+          "id": "E-108",
           "method": "INTERNAL",
           "path": "port:fulfilment#ticket.keepsake",
           "auth": [
@@ -11108,7 +11214,7 @@
           ]
         },
         {
-          "id": "E-106",
+          "id": "E-109",
           "method": "INTERNAL",
           "path": "port:fulfilment#ticket.moment",
           "auth": [
@@ -11130,7 +11236,7 @@
           ]
         },
         {
-          "id": "E-107",
+          "id": "E-110",
           "method": "INTERNAL",
           "path": "port:fulfilment#ticket.premiere",
           "auth": [
@@ -11152,7 +11258,7 @@
           ]
         },
         {
-          "id": "E-108",
+          "id": "E-111",
           "method": "INTERNAL",
           "path": "port:fulfilment#ticket.signature",
           "auth": [
@@ -11174,7 +11280,7 @@
           ]
         },
         {
-          "id": "E-109",
+          "id": "E-112",
           "method": "INTERNAL",
           "path": "port:fulfilment#vault.block",
           "auth": [
@@ -11196,7 +11302,7 @@
           ]
         },
         {
-          "id": "E-110",
+          "id": "E-113",
           "method": "INTERNAL",
           "path": "port:fulfilment#vault.block-bulk",
           "auth": [
@@ -11280,18 +11386,6 @@
           "supersedes": []
         },
         {
-          "name": "creator",
-          "type": "string",
-          "classes": [
-            "string"
-          ],
-          "nullable": false,
-          "provenance": [
-            "admin-creators"
-          ],
-          "supersedes": []
-        },
-        {
           "name": "creatorId",
           "type": "string",
           "classes": [
@@ -11299,9 +11393,12 @@
           ],
           "nullable": false,
           "provenance": [
+            "admin-creators",
             "royalties-payouts"
           ],
-          "supersedes": []
+          "supersedes": [
+            "S-2: server-issued UUIDv7 ids"
+          ]
         },
         {
           "name": "earned",
@@ -11481,7 +11578,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-111",
+          "id": "E-114",
           "method": "POST",
           "path": "/v1/admin/creators/payouts/:creator/paid",
           "auth": [
@@ -11532,7 +11629,7 @@
           ]
         },
         {
-          "id": "E-112",
+          "id": "E-115",
           "method": "POST",
           "path": "/v1/admin/payout-runs/:id/approve",
           "auth": [
@@ -11551,6 +11648,13 @@
               "from": [
                 "royalties-payouts"
               ]
+            },
+            {
+              "name": "reason",
+              "type": "string (4 or more characters; written to the audit row)",
+              "from": [
+                "DEC-125"
+              ]
             }
           ],
           "response": {
@@ -11564,11 +11668,12 @@
             }
           ],
           "notes": [
+            "reason by DEC-125",
             "route by conventions naming"
           ]
         },
         {
-          "id": "E-113",
+          "id": "E-116",
           "method": "GET",
           "path": "/v1/creator/payouts",
           "auth": [
@@ -11700,7 +11805,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-114",
+          "id": "E-117",
           "method": "GET",
           "path": "/v1/business/people",
           "auth": [
@@ -11727,7 +11832,7 @@
           "notes": []
         },
         {
-          "id": "E-115",
+          "id": "E-118",
           "method": "POST",
           "path": "/v1/business/people",
           "auth": [
@@ -11786,7 +11891,7 @@
           "notes": []
         },
         {
-          "id": "E-116",
+          "id": "E-119",
           "method": "DELETE",
           "path": "/v1/business/people/:id",
           "auth": [
@@ -11817,7 +11922,7 @@
           "notes": []
         },
         {
-          "id": "E-117",
+          "id": "E-120",
           "method": "PATCH",
           "path": "/v1/business/people/:id",
           "auth": [
@@ -11883,7 +11988,7 @@
           "notes": []
         },
         {
-          "id": "E-118",
+          "id": "E-121",
           "method": "POST",
           "path": "/v1/business/people/import",
           "auth": [
@@ -11999,7 +12104,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-119",
+          "id": "E-122",
           "method": "GET",
           "path": "/v1/play-wishes/:id",
           "auth": [
@@ -12354,7 +12459,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-120",
+          "id": "E-123",
           "method": "GET",
           "path": "/v1/admin/prices",
           "auth": [
@@ -12383,7 +12488,7 @@
           ]
         },
         {
-          "id": "E-121",
+          "id": "E-124",
           "method": "PUT",
           "path": "/v1/admin/prices/:key",
           "auth": [
@@ -12433,7 +12538,7 @@
           ]
         },
         {
-          "id": "E-122",
+          "id": "E-125",
           "method": "GET",
           "path": "/v1/price-book",
           "auth": [
@@ -12776,7 +12881,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-123",
+          "id": "E-126",
           "method": "POST",
           "path": "/v1/admin/price-book-versions",
           "auth": [
@@ -12809,6 +12914,13 @@
               "from": [
                 "price-book"
               ]
+            },
+            {
+              "name": "reason",
+              "type": "string (4 or more characters; written to the audit row)",
+              "from": [
+                "DEC-125"
+              ]
             }
           ],
           "response": {
@@ -12821,10 +12933,12 @@
               "via": "action:draftVersion"
             }
           ],
-          "notes": []
+          "notes": [
+            "reason by DEC-125"
+          ]
         },
         {
-          "id": "E-124",
+          "id": "E-127",
           "method": "POST",
           "path": "/v1/admin/price-book-versions/:id/publish",
           "auth": [
@@ -12836,6 +12950,13 @@
             }
           ],
           "body": [
+            {
+              "name": "reason",
+              "type": "string (4 or more characters; written to the audit row)",
+              "from": [
+                "DEC-125"
+              ]
+            },
             {
               "name": "version",
               "type": "integer",
@@ -12855,6 +12976,7 @@
             }
           ],
           "notes": [
+            "reason by DEC-125",
             "route by conventions naming"
           ]
         }
@@ -13256,7 +13378,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-125",
+          "id": "E-128",
           "method": "GET",
           "path": "/v1/business/usage",
           "auth": [
@@ -13644,7 +13766,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-126",
+          "id": "E-129",
           "method": "GET",
           "path": "/v1/w/:slug",
           "auth": [
@@ -13704,7 +13826,7 @@
           ]
         },
         {
-          "id": "E-127",
+          "id": "E-130",
           "method": "POST",
           "path": "/v1/w/:slug/favourites",
           "auth": [
@@ -13743,7 +13865,7 @@
           ]
         },
         {
-          "id": "E-128",
+          "id": "E-131",
           "method": "POST",
           "path": "/v1/w/:slug/opens",
           "auth": [
@@ -13775,7 +13897,7 @@
           ]
         },
         {
-          "id": "E-129",
+          "id": "E-132",
           "method": "POST",
           "path": "/v1/w/:slug/reaction",
           "auth": [
@@ -13814,7 +13936,7 @@
           ]
         },
         {
-          "id": "E-130",
+          "id": "E-133",
           "method": "POST",
           "path": "/v1/w/:slug/take-down",
           "auth": [
@@ -13853,7 +13975,7 @@
           ]
         },
         {
-          "id": "E-131",
+          "id": "E-134",
           "method": "POST",
           "path": "/v1/w/:slug/unlock",
           "auth": [
@@ -14100,7 +14222,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-132",
+          "id": "E-135",
           "method": "POST",
           "path": "/v1/admin/showing/requests/:id/decide",
           "auth": [
@@ -14159,7 +14281,7 @@
           ]
         },
         {
-          "id": "E-133",
+          "id": "E-136",
           "method": "DELETE",
           "path": "/v1/wishes/:id/publish-requests",
           "auth": [
@@ -14220,7 +14342,7 @@
           ]
         },
         {
-          "id": "E-134",
+          "id": "E-137",
           "method": "POST",
           "path": "/v1/wishes/:id/publish-requests",
           "auth": [
@@ -14727,7 +14849,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-135",
+          "id": "E-138",
           "method": "GET",
           "path": "/v1/admin/showing",
           "auth": [
@@ -14764,7 +14886,7 @@
           ]
         },
         {
-          "id": "E-136",
+          "id": "E-139",
           "method": "POST",
           "path": "/v1/admin/showing/listed/:no/unlist",
           "auth": [
@@ -14809,7 +14931,7 @@
           ]
         },
         {
-          "id": "E-137",
+          "id": "E-140",
           "method": "GET",
           "path": "/v1/showing",
           "auth": [
@@ -14960,7 +15082,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-138",
+          "id": "E-141",
           "method": "POST",
           "path": "/v1/qr-cards",
           "auth": [
@@ -15126,7 +15248,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-139",
+          "id": "E-142",
           "method": "DELETE",
           "path": "/v1/feed/wishes/:id/reaction",
           "auth": [
@@ -15167,7 +15289,7 @@
           ]
         },
         {
-          "id": "E-140",
+          "id": "E-143",
           "method": "PUT",
           "path": "/v1/feed/wishes/:id/reaction",
           "auth": [
@@ -15323,7 +15445,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-141",
+          "id": "E-144",
           "method": "POST",
           "path": "/v1/admin/reconciliations",
           "auth": [
@@ -15342,6 +15464,13 @@
               "from": [
                 "ledger"
               ]
+            },
+            {
+              "name": "reason",
+              "type": "string (4 or more characters; written to the audit row)",
+              "from": [
+                "DEC-125"
+              ]
             }
           ],
           "response": {
@@ -15355,6 +15484,7 @@
             }
           ],
           "notes": [
+            "reason by DEC-125",
             "route by conventions naming"
           ]
         }
@@ -15492,7 +15622,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-142",
+          "id": "E-145",
           "method": "POST",
           "path": "/v1/admin/refunds",
           "auth": [
@@ -15541,7 +15671,7 @@
           "notes": []
         },
         {
-          "id": "E-143",
+          "id": "E-146",
           "method": "POST",
           "path": "/v1/admin/refunds/:id/approve-refund",
           "auth": [
@@ -15560,6 +15690,13 @@
               "from": [
                 "refunds"
               ]
+            },
+            {
+              "name": "reason",
+              "type": "string (4 or more characters; written to the audit row)",
+              "from": [
+                "DEC-125"
+              ]
             }
           ],
           "response": {
@@ -15572,7 +15709,9 @@
               "via": "action:approveRefund"
             }
           ],
-          "notes": []
+          "notes": [
+            "reason by DEC-125"
+          ]
         }
       ]
     },
@@ -15719,7 +15858,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-144",
+          "id": "E-147",
           "method": "GET",
           "path": "/v1/wishes/:id/video",
           "auth": [
@@ -15752,7 +15891,7 @@
           ]
         },
         {
-          "id": "E-145",
+          "id": "E-148",
           "method": "POST",
           "path": "/v1/wishes/:id/video",
           "auth": [
@@ -16155,18 +16294,6 @@
           "supersedes": []
         },
         {
-          "name": "wish",
-          "type": "string",
-          "classes": [
-            "string"
-          ],
-          "nullable": false,
-          "provenance": [
-            "admin-moderation"
-          ],
-          "supersedes": []
-        },
-        {
           "name": "wishId",
           "type": "string",
           "classes": [
@@ -16174,9 +16301,12 @@
           ],
           "nullable": true,
           "provenance": [
+            "admin-moderation",
             "moderation"
           ],
-          "supersedes": []
+          "supersedes": [
+            "S-2: server-issued UUIDv7 ids"
+          ]
         },
         {
           "name": "wishState",
@@ -16193,7 +16323,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-146",
+          "id": "E-149",
           "method": "GET",
           "path": "/v1/admin/moderation",
           "auth": [
@@ -16222,7 +16352,7 @@
           ]
         },
         {
-          "id": "E-147",
+          "id": "E-150",
           "method": "POST",
           "path": "/v1/admin/moderation/:id/decide",
           "auth": [
@@ -16280,7 +16410,7 @@
           ]
         },
         {
-          "id": "E-148",
+          "id": "E-151",
           "method": "POST",
           "path": "/v1/reports",
           "auth": [
@@ -16360,7 +16490,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-149",
+          "id": "E-152",
           "method": "GET",
           "path": "/v1/business/reveal-links/:id",
           "auth": [
@@ -16383,7 +16513,7 @@
           "notes": []
         },
         {
-          "id": "E-150",
+          "id": "E-153",
           "method": "POST",
           "path": "/v1/business/reveal-links/:id/copy-link",
           "auth": [
@@ -16671,7 +16801,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-151",
+          "id": "E-154",
           "method": "GET",
           "path": "/v1/creator/earnings",
           "auth": [
@@ -16773,7 +16903,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-152",
+          "id": "E-155",
           "method": "DELETE",
           "path": "/v1/feed/wishes/:id/save",
           "auth": [
@@ -16814,7 +16944,7 @@
           ]
         },
         {
-          "id": "E-153",
+          "id": "E-156",
           "method": "PUT",
           "path": "/v1/feed/wishes/:id/save",
           "auth": [
@@ -16963,7 +17093,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-154",
+          "id": "E-157",
           "method": "POST",
           "path": "/v1/admin/screening-results/:id/decision",
           "auth": [
@@ -16988,6 +17118,13 @@
               "from": [
                 "upload-screening"
               ]
+            },
+            {
+              "name": "reason",
+              "type": "string (4 or more characters; written to the audit row)",
+              "from": [
+                "DEC-125"
+              ]
             }
           ],
           "response": {
@@ -17001,11 +17138,12 @@
             }
           ],
           "notes": [
+            "reason by DEC-125",
             "route by conventions naming"
           ]
         },
         {
-          "id": "E-155",
+          "id": "E-158",
           "method": "INTERNAL",
           "path": "port:screening-results#screenFile",
           "auth": [
@@ -17225,7 +17363,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-156",
+          "id": "E-159",
           "method": "POST",
           "path": "/v1/auth/refresh",
           "auth": [
@@ -17248,7 +17386,7 @@
           "notes": []
         },
         {
-          "id": "E-157",
+          "id": "E-160",
           "method": "POST",
           "path": "/v1/auth/sign-out",
           "auth": [
@@ -17281,7 +17419,7 @@
           ]
         },
         {
-          "id": "E-158",
+          "id": "E-161",
           "method": "POST",
           "path": "/v1/auth/sign-out-everywhere",
           "auth": [
@@ -17306,7 +17444,7 @@
           ]
         },
         {
-          "id": "E-159",
+          "id": "E-162",
           "method": "GET",
           "path": "/v1/sessions",
           "auth": [
@@ -17427,7 +17565,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-160",
+          "id": "E-163",
           "method": "GET",
           "path": "/v1/admin/settings",
           "auth": [
@@ -17458,7 +17596,7 @@
           ]
         },
         {
-          "id": "E-161",
+          "id": "E-164",
           "method": "PUT",
           "path": "/v1/admin/settings/storage",
           "auth": [
@@ -17501,7 +17639,7 @@
           ]
         },
         {
-          "id": "E-162",
+          "id": "E-165",
           "method": "PUT",
           "path": "/v1/admin/settings/switches/:key",
           "auth": [
@@ -17587,7 +17725,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-163",
+          "id": "E-166",
           "method": "POST",
           "path": "/v1/feed/wishes/:id/shares",
           "auth": [
@@ -17861,7 +17999,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-164",
+          "id": "E-167",
           "method": "GET",
           "path": "/v1/business/shoots",
           "auth": [
@@ -17888,7 +18026,7 @@
           "notes": []
         },
         {
-          "id": "E-165",
+          "id": "E-168",
           "method": "POST",
           "path": "/v1/business/shoots",
           "auth": [
@@ -17933,7 +18071,7 @@
           "notes": []
         },
         {
-          "id": "E-166",
+          "id": "E-169",
           "method": "DELETE",
           "path": "/v1/business/shoots/:id",
           "auth": [
@@ -17964,7 +18102,7 @@
           "notes": []
         },
         {
-          "id": "E-167",
+          "id": "E-170",
           "method": "GET",
           "path": "/v1/business/shoots/:id",
           "auth": [
@@ -17995,7 +18133,7 @@
           "notes": []
         },
         {
-          "id": "E-168",
+          "id": "E-171",
           "method": "POST",
           "path": "/v1/business/shoots/:id/files",
           "auth": [
@@ -18042,7 +18180,7 @@
           ]
         },
         {
-          "id": "E-169",
+          "id": "E-172",
           "method": "POST",
           "path": "/v1/business/shoots/:id/finals",
           "auth": [
@@ -18125,7 +18263,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-170",
+          "id": "E-173",
           "method": "INTERNAL",
           "path": "port:signed-urls#signedRead",
           "auth": [
@@ -18350,7 +18488,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-171",
+          "id": "E-174",
           "method": "POST",
           "path": "/v1/admin/auth/code",
           "auth": [
@@ -18383,7 +18521,7 @@
           ]
         },
         {
-          "id": "E-172",
+          "id": "E-175",
           "method": "POST",
           "path": "/v1/admin/auth/sign-out",
           "auth": [
@@ -18416,7 +18554,7 @@
           ]
         },
         {
-          "id": "E-173",
+          "id": "E-176",
           "method": "POST",
           "path": "/v1/admin/auth/verify",
           "auth": [
@@ -18486,7 +18624,7 @@
           ]
         },
         {
-          "id": "E-174",
+          "id": "E-177",
           "method": "PATCH",
           "path": "/v1/admin/staff-accounts/:id",
           "auth": [
@@ -18503,6 +18641,13 @@
               "type": "string",
               "from": [
                 "staff-accounts"
+              ]
+            },
+            {
+              "name": "reason",
+              "type": "string (4 or more characters; written to the audit row)",
+              "from": [
+                "DEC-125"
               ]
             },
             {
@@ -18524,11 +18669,12 @@
             }
           ],
           "notes": [
+            "reason by DEC-125",
             "route by conventions naming"
           ]
         },
         {
-          "id": "E-175",
+          "id": "E-178",
           "method": "POST",
           "path": "/v1/admin/staff-accounts/:id/suspend",
           "auth": [
@@ -18546,6 +18692,13 @@
               "from": [
                 "staff-accounts"
               ]
+            },
+            {
+              "name": "reason",
+              "type": "string (4 or more characters; written to the audit row)",
+              "from": [
+                "DEC-125"
+              ]
             }
           ],
           "response": {
@@ -18559,11 +18712,12 @@
             }
           ],
           "notes": [
+            "reason by DEC-125",
             "route by conventions naming"
           ]
         },
         {
-          "id": "E-176",
+          "id": "E-179",
           "method": "GET",
           "path": "/v1/admin/team",
           "auth": [
@@ -18594,7 +18748,7 @@
           ]
         },
         {
-          "id": "E-177",
+          "id": "E-180",
           "method": "POST",
           "path": "/v1/admin/team/:id/remove",
           "auth": [
@@ -18637,7 +18791,7 @@
           ]
         },
         {
-          "id": "E-178",
+          "id": "E-181",
           "method": "POST",
           "path": "/v1/admin/team/invite",
           "auth": [
@@ -18947,7 +19101,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-179",
+          "id": "E-182",
           "method": "POST",
           "path": "/v1/uploads",
           "auth": [
@@ -19063,7 +19217,7 @@
           ]
         },
         {
-          "id": "E-180",
+          "id": "E-183",
           "method": "DELETE",
           "path": "/v1/uploads/:id",
           "auth": [
@@ -19115,7 +19269,7 @@
           ]
         },
         {
-          "id": "E-181",
+          "id": "E-184",
           "method": "POST",
           "path": "/v1/uploads/:id/confirm",
           "auth": [
@@ -19264,7 +19418,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-182",
+          "id": "E-185",
           "method": "GET",
           "path": "/v1/studio/prefs",
           "auth": [
@@ -19287,7 +19441,7 @@
           "notes": []
         },
         {
-          "id": "E-183",
+          "id": "E-186",
           "method": "PATCH",
           "path": "/v1/studio/prefs",
           "auth": [
@@ -19923,7 +20077,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-184",
+          "id": "E-187",
           "method": "GET",
           "path": "/v1/studio/styles",
           "auth": [
@@ -19962,7 +20116,7 @@
           "notes": []
         },
         {
-          "id": "E-185",
+          "id": "E-188",
           "method": "POST",
           "path": "/v1/studio/styles",
           "auth": [
@@ -19998,7 +20152,7 @@
           "notes": []
         },
         {
-          "id": "E-186",
+          "id": "E-189",
           "method": "DELETE",
           "path": "/v1/studio/styles/:id",
           "auth": [
@@ -20034,7 +20188,7 @@
           "notes": []
         },
         {
-          "id": "E-187",
+          "id": "E-190",
           "method": "GET",
           "path": "/v1/studio/styles/:id",
           "auth": [
@@ -20057,7 +20211,7 @@
           "notes": []
         },
         {
-          "id": "E-188",
+          "id": "E-191",
           "method": "PATCH",
           "path": "/v1/studio/styles/:id",
           "auth": [
@@ -20107,7 +20261,7 @@
           "notes": []
         },
         {
-          "id": "E-189",
+          "id": "E-192",
           "method": "POST",
           "path": "/v1/studio/styles/:id/withdraw",
           "auth": [
@@ -20716,7 +20870,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-190",
+          "id": "E-193",
           "method": "GET",
           "path": "/v1/admin/styles",
           "auth": [
@@ -20745,7 +20899,7 @@
           ]
         },
         {
-          "id": "E-191",
+          "id": "E-194",
           "method": "POST",
           "path": "/v1/admin/styles/:slug/switch",
           "auth": [
@@ -20797,7 +20951,7 @@
           ]
         },
         {
-          "id": "E-192",
+          "id": "E-195",
           "method": "GET",
           "path": "/v1/styles",
           "auth": [
@@ -20867,7 +21021,7 @@
           "notes": []
         },
         {
-          "id": "E-193",
+          "id": "E-196",
           "method": "GET",
           "path": "/v1/styles/:id",
           "auth": [
@@ -21023,7 +21177,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-194",
+          "id": "E-197",
           "method": "PUT",
           "path": "/v1/admin/styles/:slug/level",
           "auth": [
@@ -21088,7 +21242,7 @@
           ]
         },
         {
-          "id": "E-195",
+          "id": "E-198",
           "method": "GET",
           "path": "/v1/styles/levels",
           "auth": [
@@ -21174,7 +21328,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-196",
+          "id": "E-199",
           "method": "GET",
           "path": "/v1/admin/styles/preview-to-paid",
           "auth": [
@@ -21383,7 +21537,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-197",
+          "id": "E-200",
           "method": "GET",
           "path": "/v1/admin/styles/review",
           "auth": [
@@ -21416,7 +21570,7 @@
           ]
         },
         {
-          "id": "E-198",
+          "id": "E-201",
           "method": "POST",
           "path": "/v1/admin/styles/review/:id/decide",
           "auth": [
@@ -21488,7 +21642,7 @@
           ]
         },
         {
-          "id": "E-199",
+          "id": "E-202",
           "method": "POST",
           "path": "/v1/studio/styles/:id/submissions",
           "auth": [
@@ -21805,7 +21959,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-200",
+          "id": "E-203",
           "method": "POST",
           "path": "/v1/support-messages",
           "auth": [
@@ -22109,7 +22263,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-201",
+          "id": "E-204",
           "method": "POST",
           "path": "/v1/admin/support-threads/:id/assignee",
           "auth": [
@@ -22135,6 +22289,13 @@
               "from": [
                 "support-threads"
               ]
+            },
+            {
+              "name": "reason",
+              "type": "string (4 or more characters; written to the audit row)",
+              "from": [
+                "DEC-125"
+              ]
             }
           ],
           "response": {
@@ -22148,11 +22309,12 @@
             }
           ],
           "notes": [
+            "reason by DEC-125",
             "route by conventions naming"
           ]
         },
         {
-          "id": "E-202",
+          "id": "E-205",
           "method": "GET",
           "path": "/v1/admin/support/counts",
           "auth": [
@@ -22181,7 +22343,7 @@
           ]
         },
         {
-          "id": "E-203",
+          "id": "E-206",
           "method": "GET",
           "path": "/v1/admin/support/threads",
           "auth": [
@@ -22210,7 +22372,7 @@
           ]
         },
         {
-          "id": "E-204",
+          "id": "E-207",
           "method": "GET",
           "path": "/v1/admin/support/threads/:id",
           "auth": [
@@ -22251,7 +22413,7 @@
           ]
         },
         {
-          "id": "E-205",
+          "id": "E-208",
           "method": "POST",
           "path": "/v1/admin/support/threads/:id/reply",
           "auth": [
@@ -22302,7 +22464,7 @@
           ]
         },
         {
-          "id": "E-206",
+          "id": "E-209",
           "method": "POST",
           "path": "/v1/admin/support/threads/:id/state",
           "auth": [
@@ -22353,7 +22515,7 @@
           ]
         },
         {
-          "id": "E-207",
+          "id": "E-210",
           "method": "POST",
           "path": "/v1/support-threads",
           "auth": [
@@ -22391,7 +22553,7 @@
           "notes": []
         },
         {
-          "id": "E-208",
+          "id": "E-211",
           "method": "POST",
           "path": "/v1/webhooks/email/inbound",
           "auth": [
@@ -22583,7 +22745,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-209",
+          "id": "E-212",
           "method": "GET",
           "path": "/v1/studio/templates",
           "auth": [
@@ -22961,7 +23123,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-210",
+          "id": "E-213",
           "method": "GET",
           "path": "/v1/ticket-offers",
           "auth": [
@@ -23166,7 +23328,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-211",
+          "id": "E-214",
           "method": "GET",
           "path": "/v1/business/vault-files",
           "auth": [
@@ -23443,7 +23605,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-212",
+          "id": "E-215",
           "method": "GET",
           "path": "/v1/business/vault/space",
           "auth": [
@@ -23563,7 +23725,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-213",
+          "id": "E-216",
           "method": "GET",
           "path": "/v1/voice-notes/:id",
           "auth": [
@@ -23715,7 +23877,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-214",
+          "id": "E-217",
           "method": "POST",
           "path": "/v1/webhooks/paystack",
           "auth": [
@@ -26052,7 +26214,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-215",
+          "id": "E-218",
           "method": "GET",
           "path": "/v1/admin/wishes",
           "auth": [
@@ -26082,7 +26244,7 @@
           ]
         },
         {
-          "id": "E-216",
+          "id": "E-219",
           "method": "GET",
           "path": "/v1/admin/wishes/:no",
           "auth": [
@@ -26128,7 +26290,7 @@
           ]
         },
         {
-          "id": "E-217",
+          "id": "E-220",
           "method": "POST",
           "path": "/v1/admin/wishes/:no/actions",
           "auth": [
@@ -26180,7 +26342,7 @@
           ]
         },
         {
-          "id": "E-218",
+          "id": "E-221",
           "method": "GET",
           "path": "/v1/wishes",
           "auth": [
@@ -26227,7 +26389,7 @@
           "notes": []
         },
         {
-          "id": "E-219",
+          "id": "E-222",
           "method": "POST",
           "path": "/v1/wishes",
           "auth": [
@@ -26307,7 +26469,7 @@
           "notes": []
         },
         {
-          "id": "E-220",
+          "id": "E-223",
           "method": "DELETE",
           "path": "/v1/wishes/:id",
           "auth": [
@@ -26380,7 +26542,7 @@
           ]
         },
         {
-          "id": "E-221",
+          "id": "E-224",
           "method": "GET",
           "path": "/v1/wishes/:id",
           "auth": [
@@ -26626,7 +26788,7 @@
           ]
         },
         {
-          "id": "E-222",
+          "id": "E-225",
           "method": "PATCH",
           "path": "/v1/wishes/:id",
           "auth": [
@@ -27318,7 +27480,7 @@
           ]
         },
         {
-          "id": "E-223",
+          "id": "E-226",
           "method": "POST",
           "path": "/v1/wishes/:id/add-photos",
           "auth": [
@@ -27356,7 +27518,7 @@
           "notes": []
         },
         {
-          "id": "E-224",
+          "id": "E-227",
           "method": "POST",
           "path": "/v1/wishes/:id/erase",
           "auth": [
@@ -27413,7 +27575,7 @@
           ]
         },
         {
-          "id": "E-225",
+          "id": "E-228",
           "method": "POST",
           "path": "/v1/wishes/:id/keep",
           "auth": [
@@ -27506,7 +27668,7 @@
           "notes": []
         },
         {
-          "id": "E-226",
+          "id": "E-229",
           "method": "GET",
           "path": "/v1/wishes/:id/link",
           "auth": [
@@ -27539,7 +27701,7 @@
           ]
         },
         {
-          "id": "E-227",
+          "id": "E-230",
           "method": "POST",
           "path": "/v1/wishes/:id/restore",
           "auth": [
@@ -27606,7 +27768,7 @@
           ]
         },
         {
-          "id": "E-228",
+          "id": "E-231",
           "method": "POST",
           "path": "/v1/wishes/:id/seal",
           "auth": [
@@ -27701,7 +27863,7 @@
           ]
         },
         {
-          "id": "E-229",
+          "id": "E-232",
           "method": "POST",
           "path": "/v1/wishes/:id/wake",
           "auth": [
@@ -27738,7 +27900,7 @@
           ]
         },
         {
-          "id": "E-230",
+          "id": "E-233",
           "method": "INTERNAL",
           "path": "port:wishes#issueNumber",
           "auth": [

@@ -11,6 +11,11 @@ import { AuditModule } from "./modules/audit/audit.module";
 import { RoleAccessModule } from "./modules/role-access/role-access.module";
 import { StaffAccountsModule } from "./modules/staff-accounts/staff-accounts.module";
 // end B03
+// B02: account sides, creators, business profile, follow
+import { BusinessModule } from "./modules/business/business.module";
+import { CreatorsModule } from "./modules/creators/creators.module";
+import { FollowsModule } from "./modules/follows/follows.module";
+// end B02
 
 /** Registration entry: each resource module adds one import line here. */
 @Module({
@@ -27,6 +32,11 @@ import { StaffAccountsModule } from "./modules/staff-accounts/staff-accounts.mod
     RoleAccessModule,
     StaffAccountsModule,
     // end B03
+    // B02
+    CreatorsModule,
+    FollowsModule,
+    BusinessModule,
+    // end B02
   ],
 })
 export class AppModule {}

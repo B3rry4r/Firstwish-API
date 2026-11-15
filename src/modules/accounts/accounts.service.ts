@@ -5,8 +5,7 @@ import { PrismaService } from "../../common/db/prisma.service";
 import { AppError, ErrorFields } from "../../common/errors/app-error";
 import { IdGenerator } from "../../common/ports/ids.port";
 import { Clock } from "../../common/ports/clock.port";
-import { normaliseEmail } from "../../common/normalise/email";
-import { normalisePhone } from "../../common/normalise/phone";
+import { HANDLE_TAKEN, isUniqueViolation, readContact, setHandle, sidesOf } from "./account-rules";
 import { dateOnlyOf, normaliseDateOnly, toWireInstant } from "../../common/time/time";
 
 /** A date row as /v1/me shows it. */
@@ -88,17 +87,9 @@ export class AccountsService {
       data.bio = bio === "" ? null : bio;
     }
     if (body.contact !== undefined) {
-      // The sign-in email is proved by a code and is not changed here; a phone is kept as a plain detail (R11).
-      const asEmail = normaliseEmail(body.contact);
-      if (asEmail !== null) {
-        if (asEmail !== current.contact) fields.contact = "The sign-in email cannot be changed here.";
-      } else {
-        const phone = normalisePhone(body.contact);
-        if (phone === null) fields.contact = "Must be a phone number or your sign-in email.";
-        else data.phone = phone;
-      }
+      const phone = readContact(body.contact, current.contact, fields);
+      if (phone !== undefined) data.phone = phone;
     }
-    if (body.handle !== undefined) data.handle = body.handle;
     if (body.space !== undefined) {
       const side: Side = body.space === "me" ? "person" : body.space;
       if (!this.sidesOf(current).includes(side)) fields.space = "You do not have that side.";
@@ -113,6 +104,10 @@ export class AccountsService {
     try {
       await this.prisma.$transaction(async (tx) => {
         if (Object.keys(data).length) await tx.account.update({ where: { id: accountId }, data });
+        if (body.handle !== undefined) {
+          const locked = await tx.$queryRaw<{ handle: string | null }[]>`SELECT handle FROM account WHERE id = ${accountId}::uuid FOR UPDATE`;
+          await setHandle(tx, accountId, locked[0]?.handle ?? null, body.handle);
+        }
         if (newDates.length) {
           await tx.dateRow.createMany({
             data: newDates.map((d) => ({ id: this.ids.id(), accountId, name: d.name, who: d.who, what: d.what, date: new Date(`${d.date}T00:00:00.000Z`) })),
@@ -120,9 +115,7 @@ export class AccountsService {
         }
       });
     } catch (e) {
-      if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
-        throw AppError.conflict("handle_taken", "That handle is taken. Try another.");
-      }
+      if (isUniqueViolation(e)) throw HANDLE_TAKEN();
       throw e;
     }
     return this.me(accountId);
@@ -156,8 +149,7 @@ export class AccountsService {
   }
 
   private sidesOf(row: AccountRow): Side[] {
-    const sides = row.sides as Side[];
-    return sides.includes("person") ? sides : ["person", ...sides];
+    return sidesOf(row.sides);
   }
 
   private readDates(raw: unknown[], fields: ErrorFields): { name: string; who: string | null; what: string | null; date: string }[] {

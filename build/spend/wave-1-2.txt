@@ -1,0 +1,40 @@
+SPEND  prices: worked-example rates, NOT current prices (pass --prices)  agents 63  $141  models {'sonnet': 39, 'opus': 24}
+  lead: claude-fable-5-2 285 steps $0, <synthetic> 1 steps $0
+  cache-read share of agent cost 47%   start context median 57k tokens
+BY LENGTH   steps      n   $total   $/step  avg max ctx
+    0-100         61      122    0.056      154k
+  100-200          2       19    0.070      330k
+BY ROUND (a build and its checks count together)   n   $total  share
+  round 1                                     60      134    95%
+  round 2                                      2        7     5%
+  round 3                                      1        1     0%
+  build: n 47  sum $117  median $0.8
+  check: n 16  sum $24  median $1.6
+IDLE  gaps past the cache window (300 s) 2, cache written again after 2, extra $0 (0% of agent spend)
+TOP TASKS  (cost, agents, highest round)
+  INT-1                       $    14    3 agents  round 1
+  INT-2                       $     8    2 agents  round 1
+  Reconcile Phase 3 draft     $     7    1 agents  round 1
+  Patch Schema round 2        $     6    1 agents  round 2
+  Build Phase 4 schema        $     5    1 agents  round 1
+  Build B09 files             $     5    1 agents  round 1
+  Build B02 account and sides $     5    1 agents  round 1
+  Build B01 sign-in           $     5    1 agents  round 1
+  API-0                       $     4    3 agents  round 1
+  Recheck inventory against live$     4    1 agents  round 1
+  Build B04 price book        $     4    1 agents  round 1
+  Build ADM-B                 $     4    1 agents  round 1
+TOP AGENTS  (cost, steps, max context)
+  Build INT-1 identity joined         $  10.8   138 steps  355k
+  Build INT-2 wave 2 shared base      $   7.8   127 steps  304k
+  Reconcile Phase 3 draft             $   7.1    64 steps  346k
+  Patch Schema round 2                $   5.9    93 steps  246k
+  Build Phase 4 schema                $   5.5    78 steps  244k
+  Build B09 files                     $   5.0    75 steps  223k
+  Build B02 account and sides         $   4.9    84 steps  203k
+  Build B01 sign-in                   $   4.8    69 steps  216k
+  Recheck inventory against live doc  $   4.4    56 steps  277k
+  Build B04 price book                $   4.3    63 steps  211k
+  Build ADM-B                         $   4.3    58 steps  227k
+  Build ADM-A                         $   4.2    66 steps  205k
+EXIT 0

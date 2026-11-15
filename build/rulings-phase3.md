@@ -261,3 +261,17 @@ Z2 (medium) concierge.rush is removed from the seed: it is in no web app file, a
    Listed to the owner (it can be added as a price line when the app sells it).
 Z3 (low) A change that changes nothing answers 409 not_allowed ("That is the price now") and writes no version and no audit row.
 Z4 (low) Changing a line's list price never rewrites its price-now; each is changed only when the request names it.
+
+## From Verify B02 (15 Nov): how each finding is closed. Default (lead), owner may override. AA1 to AA4 bind EVERY bundle.
+AA1 (high) Nothing can be written to an account after it is erased. One kernel helper locks the account row and checks erasedAt
+    INSIDE the transaction; every write that belongs to an account (profile, handle, sides, follow, brand, and later wishes,
+    files, dates) goes through it; erase takes the same lock. Tests race erase against each write, 10 times each.
+AA2 (high) Erase rules are complete and enforced by a gate: schema-map.json carries blank or keep (with the reason) for EVERY
+    text and json column of every table that has an owner key, and scripts/check-contracts.mjs fails when one has none. Added now:
+    business.business, business.name, business.brand, date_row.what (all blank).
+AA3 (medium) Text with a NUL byte or other control characters (tab and newline aside) is refused with 422 by one global check,
+    never a 500.
+AA4 (medium) A link is stored as the parsed URL's own text (new URL(v).href), https only, at most 2048 characters.
+AA5 (low) A brand logo is a stored file (purpose "brand", through the files bundle: screened, typed by its bytes, no SVG), not a
+    data URL. Free text is stored as typed and is always shown as text by the web app, never as HTML (Phase 6 rule).
+AA6 (kit) Tests that count per address use their own address each, so limits never leak between specs (the flaky auth-codes test).

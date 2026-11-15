@@ -410,3 +410,5 @@ LL5 Owed: the owner's wish detail (B06) shows opens, plays, reactions, favourite
     ReceiverActivityService.summary (joined in INT-4); "This is me, take it down" (E-133) is B13's.
 MM1 (P-B11) The delivery status enum gains `sending` and `dropped` (INT-4), replacing the stand-ins "sent" (in flight) and
     undeliverable with a "Dropped" reason.
+MM2 (Verify P-B11) A delivery left in flight past its stale time with all three tries used is marked failed for staff by the
+    same sweep that picks up stale ones; a retry is taken only once its wait has passed. (Wave 3 join.)

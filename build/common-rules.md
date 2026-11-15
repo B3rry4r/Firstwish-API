@@ -36,5 +36,5 @@
 - Plain short words. Say "kind" for kinds of wish. Never "forever", "launch", "coming soon", "abroad", "diaspora" in customer copy. No emojis.
 - No native browser controls (select, date input, alert, confirm): the app's own. No dead controls. Portrait and Landscape, never "sideways".
 - Nothing faked: where a server will answer one day, an API-seam file that says what it will ask and returns marked sample data. AI is never faked.
-- Brand accent is copper #c8693a (var(--accent)). Nothing is "done" until it works against the real backend: say "screen built".
+- Copper accent #c8693a (var(--accent)). Never "done" before it works against the real backend: say "screen built". Nothing is stored in the browser (no localStorage, sessionStorage, IndexedDB: R10). Firstwish sends email only; draw nothing about SMS or WhatsApp sending (R11).
 - No questions to the owner: pick the default the design, rulings or safest behaviour give, write "Default (lead), owner may override", go on.

@@ -25,16 +25,12 @@ async function addStyle(over: { level?: string; house?: boolean; on?: boolean; s
   return slug;
 }
 
-/** Every page of the public levels read, as slug -> level. */
+/** The public levels read (one answer, X28), as slug -> level. */
 async function allLevels(): Promise<Record<string, string>> {
   const out: Record<string, string> = {};
-  let cursor: string | null = null;
-  do {
-    const r = await t.http().get("/v1/styles/levels").query({ limit: 50, ...(cursor ? { cursor } : {}) });
-    expect(r.status).toBe(200);
-    for (const i of r.body.items as Body[]) out[i.slug as string] = i.level as string;
-    cursor = r.body.nextCursor as string | null;
-  } while (cursor);
+  const r = await t.http().get("/v1/styles/levels");
+  expect(r.status).toBe(200);
+  for (const i of r.body.items as Body[]) out[i.slug as string] = i.level as string;
   return out;
 }
 
@@ -86,22 +82,25 @@ describe("E-198 GET /v1/styles/levels (case 1)", () => {
     expect(b.status).toBe(304);
   });
 
-  it("a cursor the server did not make is 422; a bad limit is 422", async () => {
+  it("is one answer (X28): no paging, a stray cursor or limit is refused", async () => {
     expect((await t.http().get("/v1/styles/levels").query({ cursor: "nope" })).status).toBe(422);
     expect((await t.http().get("/v1/styles/levels").query({ limit: 99 })).status).toBe(422);
+    const r = await t.http().get("/v1/styles/levels");
+    expect(r.body.nextCursor).toBeNull();
+    expect((r.body.items as Body[]).length).toBeGreaterThanOrEqual(43);
   });
 });
 
 describe("E-197 PUT /v1/admin/styles/:slug/level (case 2)", () => {
   it("moves the level: the public read and its ETag change at once; one audit row; a record entry", async () => {
     const slug = await addStyle({ level: "standard" });
-    const before = await t.http().get("/v1/styles/levels").query({ limit: 50 });
+    const before = await t.http().get("/v1/styles/levels");
     const r = await t.http().put(`/v1/admin/styles/${slug}/level`).set(auth("reviewer")).send({ level: "premium", reason: "  sells well  " });
     expect(r.status).toBe(200);
     expect(r.body).toMatchObject({ slug, level: "premium", tier: "Premium", on: true });
     expect((r.body.record as Body[]).at(-1)).toMatchObject({ what: "Moved from Standard to Premium", reason: "sells well" });
     expect((await allLevels())[slug]).toBe("premium");
-    const after = await t.http().get("/v1/styles/levels").query({ limit: 50 });
+    const after = await t.http().get("/v1/styles/levels");
     expect(after.headers.etag).not.toBe(before.headers.etag);
     const audit = await auditRows(slug);
     expect(audit).toHaveLength(1);
@@ -109,7 +108,7 @@ describe("E-197 PUT /v1/admin/styles/:slug/level (case 2)", () => {
     const moved = await db.styleLevel.findMany({ where: { styleSlug: slug }, orderBy: { since: "desc" } });
     expect(moved[0]).toMatchObject({ level: "premium", by: staffIds.reviewer });
     // the public read says staff set it, never who or why
-    const pub = ((await t.http().get("/v1/styles/levels").query({ limit: 50 })).body.items as Body[]).find((i) => i.slug === slug);
+    const pub = ((await t.http().get("/v1/styles/levels")).body.items as Body[]).find((i) => i.slug === slug);
     expect(pub).toMatchObject({ by: "staff", reason: null });
   });
 
@@ -208,7 +207,7 @@ describe("E-193 GET /v1/admin/styles (case 5)", () => {
     let cursor: string | null = null;
     let pages = 0;
     do {
-      const r = await t.http().get("/v1/admin/styles").set(auth("ops")).query({ level: "PREMIUM", limit: 5, ...(cursor ? { cursor } : {}) });
+      const r = await t.http().get("/v1/admin/styles").set(auth("ops")).query({ level: "premium", limit: 5, ...(cursor ? { cursor } : {}) });
       expect(r.status).toBe(200);
       seen.push(...(r.body.items as Body[]));
       cursor = r.body.nextCursor as string | null;

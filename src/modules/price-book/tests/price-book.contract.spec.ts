@@ -67,7 +67,7 @@ describe("price book (contract)", () => {
       const r = await t.http().get("/v1/price-book").query({ limit: 50 });
       expect(r.status).toBe(200);
       expect(r.body.version).toBe(1);
-      expect(r.body.items).toHaveLength(25);
+      expect(r.body.items).toHaveLength(24);
       expect(r.body.nextCursor).toBeNull();
       const moment = (r.body.items as Line[]).find((l) => l.sku === "ticket.moment");
       expect(moment).toMatchObject({ key: "ticket.moment", price: 300000, value: 300000, listKobo: 500000, was: 500000, promoKobo: 300000, kind: "naira", version: 1 });
@@ -89,8 +89,8 @@ describe("price book (contract)", () => {
 
     it("pages with a cursor and refuses a bad limit or cursor with fields", async () => {
       const all = await readAll();
-      expect(all).toHaveLength(25);
-      expect(new Set(all.map((l) => l.sku)).size).toBe(25);
+      expect(all).toHaveLength(24);
+      expect(new Set(all.map((l) => l.sku)).size).toBe(24);
       const bad = await t.http().get("/v1/price-book").query({ limit: 0 });
       expect(bad.status).toBe(422);
       expect(bad.body.error.fields.limit).toBeDefined();
@@ -195,7 +195,7 @@ describe("price book (contract)", () => {
       for (const who of ["owner", "finance", "ops"]) {
         const r = await t.http().get("/v1/admin/prices").set(bearer(who)).query({ limit: 50 });
         expect(r.status).toBe(200);
-        expect(r.body.items).toHaveLength(27);
+        expect(r.body.items).toHaveLength(26);
         const payout = (r.body.items as Line[]).find((l) => l.sku === "payout.thresholdKobo");
         expect(payout).toMatchObject({ kind: "naira", value: 500000, lead: "PROVISIONAL", group: "payout" });
         const end = (r.body.items as Line[]).find((l) => l.sku === "promotion.endsAt");

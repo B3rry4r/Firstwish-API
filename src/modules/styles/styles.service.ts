@@ -38,6 +38,9 @@ export interface ListQuery {
 /** One quarter's preview-to-paid row (E-199): the StyleRate view with the figures it is worked out from. */
 export type StyleRateOut = StyleRate & { styleSlug: string; name: string; level: string; previews: number; paid: number; rate: number | null };
 
+/** X28: a ceiling far above the number of styles, so the levels read is never cut. */
+const ALL_LEVELS_LIMIT = 5000;
+
 @Injectable()
 export class StylesService {
   constructor(
@@ -49,10 +52,10 @@ export class StylesService {
 
   // ------------------------------------------------------------------ public reads
 
-  /** E-198: the level of every style that is on, by slug, cursor pages in slug order. */
-  async levels(q: { cursor?: string; limit?: number }): Promise<Page<StyleLevel>> {
-    const limit = q.limit ?? DEFAULT_LIMIT;
-    const after = this.slugCursor(q.cursor);
+  /** E-198: the level of every style that is on, by slug, in ONE answer (X28: there are tens, not thousands; no paging). */
+  async levels(_q: object = {}): Promise<Page<StyleLevel>> {
+    const limit = ALL_LEVELS_LIMIT;
+    const after: string | null = null;
     const rows = await this.db.style.findMany({
       where: { on: true, slug: after === null ? { not: null } : { gt: after } },
       orderBy: { slug: "asc" },

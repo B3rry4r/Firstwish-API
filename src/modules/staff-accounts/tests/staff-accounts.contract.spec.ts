@@ -1,4 +1,6 @@
 import type { StaffAccount as StaffRow } from "@prisma/client";
+import { execFileSync } from "node:child_process";
+import { join } from "node:path";
 import { StaffAccountsService } from "../staff-accounts.service";
 import { createStaffApp, makeStaff, signIn, StaffApp, tag, tokenFor } from "./staff-kit";
 
@@ -9,14 +11,25 @@ describe("staff accounts and staff sign-in (contract)", () => {
   const auditFor = (subjectId: string) => t.db.auditEntry.findMany({ where: { subjectId } });
   const bearer = (token: string) => ({ authorization: `Bearer ${token}` });
 
+  // The last-owner rule counts every active owner, so this spec runs on a database of its own: another spec running at the same
+  // time (the integration rulings sign owners in) would otherwise make "the only owner" false. A copy of the migrated template.
+  const script = join(__dirname, "../../../../scripts/db.mjs");
+  const ownDb = `${process.env.TEST_DB_PREFIX || "fw"}_test_owners_${process.pid}`;
+  const savedUrl = process.env.DATABASE_URL;
+
   beforeAll(async () => {
+    process.env.DATABASE_URL = execFileSync("node", [script, "create", ownDb, process.env.TEST_DB_PREFIX || "fw"], { encoding: "utf8" }).trim();
     t = await createStaffApp();
     owner = await makeStaff(t.db, ["owner"]);
     const r = await signIn(t, owner.email);
     ownerToken = r.body.accessToken;
     t.users.set("user-token", { kind: "user", accountId: "0190f3c4-0000-7000-8000-000000000001", sides: ["person"] });
   });
-  afterAll(() => t.close());
+  afterAll(async () => {
+    await t.close();
+    process.env.DATABASE_URL = savedUrl;
+    execFileSync("node", [script, "drop", ownDb]);
+  });
 
   describe("E-174 code", () => {
     it("sends a code only to a staff email; any other email gets the same answer and no email", async () => {

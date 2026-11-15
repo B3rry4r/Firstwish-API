@@ -93,10 +93,12 @@ describe("erase on request (Q9): every 'blank' column in schema-map, in one tran
     const threadId = await seed("SupportThread", { accountId });
     const where: Record<string, Record<string, unknown>> = {
       Account: { id: accountId },
+      AiRequest: { accountId },
       AuthCode: { OR: [{ destination: email }, { canonical: email }, { destination: "" }] },
       BankAccount: { creatorId },
       Business: { accountId },
       ClientWish: { businessId },
+      ConciergeOrder: { accountId },
       Creator: { accountId },
       DateRow: { accountId },
       ExternalIdentity: { accountId },
@@ -108,10 +110,14 @@ describe("erase on request (Q9): every 'blank' column in schema-map, in one tran
       QrCard: { wishId },
       Report: { accountId },
       Session: { accountId },
+      Shoot: { businessId },
       SupportMessage: { threadId },
       SupportThread: { accountId },
       Wish: { accountId },
     };
+    await seed("AiRequest", { accountId });
+    await seed("ConciergeOrder", { accountId });
+    await seed("Shoot", { businessId });
     await seed("BankAccount", { creatorId });
     await seed("ClientWish", { businessId });
     await seed("DateRow", { accountId });

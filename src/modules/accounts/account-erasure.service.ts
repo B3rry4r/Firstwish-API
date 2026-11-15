@@ -16,10 +16,12 @@ export const FRESH_SIGN_IN_MS = 10 * 60 * 1000;
  */
 export const ERASE_LINKS = {
   Account: "the account row",
+  AiRequest: "accountId",
   AuthCode: "destination or canonical is the account's email",
   BankAccount: "creatorId is the account's creator row",
   Business: "accountId",
   ClientWish: "businessId is one of the account's businesses",
+  ConciergeOrder: "accountId",
   Creator: "accountId",
   DateRow: "accountId",
   ExternalIdentity: "accountId",
@@ -32,6 +34,7 @@ export const ERASE_LINKS = {
   QrCard: "wishId is one of the account's wishes",
   Report: "accountId (the reporter)",
   Session: "accountId",
+  Shoot: "businessId is one of the account's businesses",
   SupportMessage: "threadId is one of the account's support threads",
   SupportThread: "accountId",
   Wish: "accountId",
@@ -117,15 +120,24 @@ export class AccountErasureService {
       await tx.messageDelivery.updateMany({ where: { to: email }, data: { to: "", vars: Prisma.DbNull } });
     }
     await tx.externalIdentity.updateMany({ where: { accountId }, data: { email: null, subject: "" } });
-    await tx.creator.updateMany({ where: { accountId }, data: { name: null, person: null } });
+    await tx.creator.updateMany({ where: { accountId }, data: { name: null, person: null, line: null, href: null, img: null } });
     if (creatorIds.length) await tx.bankAccount.updateMany({ where: { creatorId: { in: creatorIds } }, data: { accountNumber: null } });
-    await tx.business.updateMany({ where: { accountId }, data: { ownerName: null, person: null } });
+    await tx.business.updateMany({ where: { accountId }, data: { ownerName: null, person: null, business: null, name: null, brand: Prisma.DbNull } });
     if (businessIds.length) {
-      await tx.clientWish.updateMany({ where: inBusiness, data: { from: null, client: null } });
+      await tx.clientWish.updateMany({ where: inBusiness, data: { from: null, client: null, wish: null } });
       await tx.login.updateMany({ where: inBusiness, data: { contact: null } });
-      await tx.person.updateMany({ where: inBusiness, data: { name: null, phone: null, birthday: null } });
+      await tx.person.updateMany({ where: inBusiness, data: { name: null, phone: null, birthday: null, rows: Prisma.DbNull } });
+      await tx.shoot.updateMany({ where: inBusiness, data: { client: null, title: null } });
     }
-    await tx.dateRow.updateMany({ where: { accountId }, data: { name: null, who: null, person: Prisma.DbNull, for: Prisma.DbNull } });
+    await tx.aiRequest.updateMany({
+      where: { accountId },
+      data: {
+        transcript: null, ask: null, description: null, instruction: null, prompt: null,
+        output: Prisma.DbNull, made: Prisma.DbNull, target: Prisma.DbNull,
+      },
+    });
+    await tx.conciergeOrder.updateMany({ where: { accountId }, data: { brief: "" } });
+    await tx.dateRow.updateMany({ where: { accountId }, data: { name: null, who: null, what: null, person: Prisma.DbNull, for: Prisma.DbNull } });
     await tx.notice.updateMany({ where: { accountId }, data: { body: null, subject: null } });
     await tx.payment.updateMany({ where: { OR: [{ accountId }, inBusiness] }, data: { payerContact: null } });
     await tx.report.updateMany({ where: { accountId }, data: { reporterContact: null, contact: null, note: null } });
@@ -145,7 +157,13 @@ export class AccountErasureService {
     await tx.wish.updateMany({ where: { accountId, removedAt: null }, data: { removedAt: now } });
     await tx.wish.updateMany({
       where: { accountId },
-      data: { name: null, letter: null, content: Prisma.DbNull, passcodeHash: null, status: "removed", erasedAt: now },
+      data: {
+        name: null, letter: null, content: Prisma.DbNull, passcodeHash: null, call: null, note: null,
+        blessing: Prisma.DbNull, captions: Prisma.DbNull, chapter: Prisma.DbNull, details: Prisma.DbNull, finale: Prisma.DbNull,
+        links: Prisma.DbNull, makerNote: Prisma.DbNull, memory: Prisma.DbNull, photos: Prisma.DbNull, reasons: Prisma.DbNull,
+        timeline: Prisma.DbNull, voices: Prisma.DbNull,
+        status: "removed", erasedAt: now,
+      },
     });
     await tx.follow.deleteMany({ where: { accountId } });
     if (handle) await tx.follow.deleteMany({ where: { handle } });

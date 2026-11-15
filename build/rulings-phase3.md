@@ -143,3 +143,15 @@ Q12 Every payment start returns {payment: {reference, state, amountKobo, authori
     registry response is null answers 204 with no body, stated in its contract.
 Q13 (K1, R11) Sign-in is by email only: AuthCodeVia is email only, the purpose confirm-phone is removed, E-19's contact is an email.
 Q14 Loose contract types are fixed where the verifier named them (NumbersTarget.targetKobo is kobo; Price.kind is its enum).
+
+## From B03's halts (15 Nov). Default (lead), owner may override. To be applied in ONE reopen together with B01's halts, if any.
+S1 Kernel: one composite token verifier in src/common: a token with audience "staff" is checked by the staff verifier, any other by
+   the user verifier, and each refuses the other's audience. (A kernel task after B01 and B03 are both merged.)
+S2 audit_entry gains `section` and `reason` columns (the contract has them). A reason is staff-written text and is kept; staff are
+   told on the sheet not to put a customer's details in it (Q9 stands for the changed values).
+S3 StaffAccountStatus gains `removed` (a removed member is kept for the audit trail, cannot sign in, has no roles).
+S4 E-18 (GET /v1/admin/audit): query gains `section`; roles are owner and ops only (A1).
+S5 Staff refresh: POST /v1/admin/auth/refresh (by the staff cookie; rotates it; 12 h life; a reused old cookie ends the session).
+   E-176's response is {staff: StaffAccount, accessToken, accessTokenExpiresAt}.
+S6 E-174 always answers the same (204) whoever asks; the registry note "refuse not_staff" is wrong and is removed. An invited member
+   gets a code (that is how they first sign in) and becomes active on their first verify.

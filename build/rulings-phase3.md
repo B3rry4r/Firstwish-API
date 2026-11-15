@@ -372,3 +372,15 @@ HH7 (low) A draw takes from the month's allowance only while the plan is live (r
 HH8 (low, payments) The start body's `ticket` field takes every ticket id.
 HH9 The builder's "two keeps at once" test failed once in four runs (endsAt came out as now + 30 days): find the cause and fix
     it (a test that passes three times in four is a finding, never noise).
+
+## From B11's halts (15 Nov). Default (lead), owner may override. Applied in the next shared base (INT-4).
+II1 The email webhook (E-72: delivery receipts and inbound mail) is built with Support (B20), with its own signing secret in
+    env (RESEND_WEBHOOK_SECRET). Until then "delivered" means the provider accepted it.
+II2 E-75 and E-76 get a real MessageTemplate shape in the registry (key, name, subject, body, placeholders, version, editedAt,
+    editedBy), not the Notice or Studio Template shape.
+II3 message_delivery.idempotencyKey gets a unique index (the advisory lock goes).
+II4 An account gets a timeZone (set at sign-up from the browser, changeable in /v1/me); notices use it; until it exists the
+    wish's zone is used (PROVISIONAL).
+II5 MessageDeliveryPurpose gains sealed and opens.
+II6 Identity sends its sign-in code through notices.send and deliverNow (one path for every email); a failed send no longer
+    undoes the code, and the person can ask again.

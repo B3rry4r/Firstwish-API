@@ -284,3 +284,8 @@ BB3 (B12) "Today" is the calendar date in Africa/Lagos (PROVISIONAL; an account'
     marked on 28 February in a year without one.
 BB4 (B12) PATCH /v1/me `dates` goes through the dates service (the one-row rule); E-118 and E-120 take an empty phone as none.
 BB5 (B12, Phase 6) The web app sends a UUIDv7 as the client id on E-46.
+BB6 (Verify B12, medium) A wish that is taken down, removed or erased leaves every saved list: whoever changes a wish to one of
+    those states calls SavedWishesService.forget() in the same transaction. Owed by: the erase service (joined when b12 merges
+    into the wave), B06 (the state machine's moves to resting-erased and taken down), B13 (staff take-down).
+BB7 (Verify B12, low) The dates list pages in the database, not in memory; its cursor is the row's month-day and id, so a paging
+    run that crosses midnight neither repeats nor skips. A POST naming someone else's id answers 404, not 409.

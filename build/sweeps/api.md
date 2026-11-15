@@ -5,3 +5,5 @@
 - Schema (low): NumbersTarget.setBy is a plain string with no foreign key (an earlier spec stores a target with no staff row): give it the FK and fix that spec in B21.
 - Schema: *FileId columns are not linked to stored_file: B09 (Files) adds the foreign keys in its own migration.
 - Audit (Q9, verifier disputes keeping the IP): the audit helper (B03) stores the address cut to its network (IPv4 /24, IPv6 /48), never the full address.
+- B12 (BB7): dates list pages in memory and its cursor is `days` (shifts across midnight Lagos); a POST naming another account's id answers 409 (tells the caller the id exists): page in the database with a stable cursor; answer 404.
+- B12 (import): 500 people with one bad row adds 499 and skips the bad one: say so in the response (a `skipped` list with row numbers and reasons) so the page can show it.

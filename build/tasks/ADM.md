@@ -100,3 +100,25 @@ it must work at 360 and 390 wide with no sideways page scroll (tables scroll ins
   DigitalOcean Spaces; switches: the 40% off (lib/maker OFF) on, sample wishes off in production on. Provider keys are not shown.
 - Proof (ADM-D): tsc, check-css, Playwright walk (360/390/1440, light and dark, all D cases, no sideways scroll, zero console
   errors; /app and /app/pro same layout after /admin by client-side moves). Pictures: scratchpad build/verify/adm-d/.
+- ADM-B: screen built (front end only, sample data), web branch `adm-b` (head 0ed2280). Moderation `/admin/moderation`, Now Showing
+  `/admin/showing`, Styles `/admin/styles`, Style review `/admin/styles/review`, Creators `/admin/creators`. Seam lib/admin/b-api.ts
+  (types b-types.ts, fixtures b-fixtures.ts); lib/admin-api.ts ADM-B block calls `bWire` (shared copy, actOnWish, actOnPerson) and
+  re-exports b-api; admin-types re-exports b-types; admin-fixtures block pushes wishes 0201 to 0206 and people p_b_*; styles/admin.css
+  ADM-B block (fo-b-). No shared part changed.
+- Default (lead), owner may override (ADM-B): Moderation "Take down" and "Ban the account" go through the Wishes/People actions (ban
+  also takes the wish down); "Keep" changes nothing. Clock: 24 hours from coming in; under 4 hours outlined, late filled. Flagged
+  photos open blurred, "Show it" reveals. Sample items are timed relative to page load so the clocks read the same any day.
+- Default (lead), owner may override (ADM-B): a flagged publish request can still be approved (a person decides, with a reason).
+  Unlisting drops the wish's future days; a day pick whose wish is no longer listed shows "Not listed now". Wish of the day: staff
+  pick for the next 7 days from listed wishes (payment for the place is not drawn).
+- Default (lead), owner may override (ADM-B): a creator's style moves between Standard and Premium only (Starter is Firstwish's own);
+  approve places at Standard by default, Premium on choice; send back uses the reason as the creator's notes. Moving a style changes
+  the admin page's copy only (PUT /v1/styles/levels/:slug is the server's; lib/levels.ts untouched), so the app is unchanged. Styles
+  lists the 43 registry styles plus styles approved in the session; creators' existing live styles show on Creators only until the
+  server lists them. Automatic checks are the real lib/studio checks() run on the submitted style; the preview still is SAMPLE.
+- Default (lead), owner may override (ADM-B): earnings per paid use = PREMIUM_PRICE.now x SHARE (₦480 while the 40% off runs, per
+  spec); payout threshold ₦5,000 paid on the 5th (R14, PROVISIONAL, not yet editable in Prices); the run shown is last month's.
+  Use, previews, paid, credits and earnings are SAMPLE (PROVISIONAL). Overview queue sizes stay ADM-A's fixed sample (they match
+  the starting counts 3/5/1/8/2 but do not move with decisions: lead to wire at merge).
+- Proof (ADM-B): tsc, check-css, Playwright walk (360/390/1440, light and dark, all B cases incl. decisions showing on Wishes and
+  People, no sideways scroll, zero console errors; /app and /app/pro same layout after /admin). Pictures: scratchpad build/verify/adm-b/.

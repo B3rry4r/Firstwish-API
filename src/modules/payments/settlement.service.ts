@@ -112,7 +112,7 @@ export class SettlementService {
     }
     const erased = p.accountId ? (await tx.account.findUnique({ where: { id: p.accountId }, select: { erasedAt: true } }))?.erasedAt != null : false;
     if (erased) {
-      flags = withFlag(flags, "account_erased");
+      flags = withFlag(withFlag(flags, "account_erased"), "refund_due");
       flagged = true;
     }
 

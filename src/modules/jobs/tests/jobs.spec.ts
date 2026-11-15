@@ -5,7 +5,8 @@ import { QueueService } from "../../../common/queue/queue.service";
 import { createTestApp, TestApp } from "../../../../test/kit/app";
 import { JobsService, MAX_TRIES } from "../jobs.service";
 
-const NOW = new Date("2027-01-10T09:00:00.000Z");
+// A clock no other spec reaches, and every runDue names the keys it means (the join closes HH9's cause).
+const NOW = new Date("2061-02-03T09:00:00.000Z");
 
 describe("jobs frame", () => {
   let t: TestApp;
@@ -44,8 +45,8 @@ describe("jobs frame", () => {
       return c.subjectId === k ? { changed: { done: true } } : { skipped: true };
     });
     await jobs.schedule("send-message", NOW, k);
-    await jobs.runDue();
-    await jobs.runDue();
+    await jobs.runDue(100, [k]);
+    await jobs.runDue(100, [k]);
     expect(ran).toBe(1);
     const job = await db.job.findFirstOrThrow({ where: { subjectId: k } });
     expect(job.status).toBe("succeeded");
@@ -69,7 +70,7 @@ describe("jobs frame", () => {
     worker2.register("send-message", handler);
     const keys = Array.from({ length: 12 }, (_, i) => `b06-two-${k}-${i}`);
     await Promise.all(keys.map((x) => jobs.schedule("send-message", NOW, x)));
-    const [a, b] = await Promise.all([jobs.runDue(), worker2.runDue()]);
+    const [a, b] = await Promise.all([jobs.runDue(100, keys), worker2.runDue(100, keys)]);
     expect(a + b).toBeGreaterThanOrEqual(12);
     expect(seen.sort()).toEqual([...keys].sort());
     expect(await db.jobRun.count({ where: { job: { subjectId: { in: keys } } } })).toBe(12);
@@ -89,7 +90,7 @@ describe("jobs frame", () => {
     const job = await db.job.findFirstOrThrow({ where: { subjectId: k } });
     let last = 0;
     for (let i = 1; i <= MAX_TRIES; i++) {
-      await jobs.runDue();
+      await jobs.runDue(100, [k]);
       const row = await db.job.findUniqueOrThrow({ where: { id: job.id } });
       expect(row.attempts).toBe(i);
       if (i < MAX_TRIES) {
@@ -97,19 +98,19 @@ describe("jobs frame", () => {
         const wait = row.runAt.getTime() - t.clock.now().getTime();
         expect(wait).toBeGreaterThan(last);
         last = wait;
-        await jobs.runDue();
+        await jobs.runDue(100, [k]);
         expect(calls).toBe(i);
         t.clock.advance(wait + 1);
       }
     }
     expect((await db.job.findUniqueOrThrow({ where: { id: job.id } })).status).toBe("dead");
     t.clock.advance(24 * 3600 * 1000);
-    await jobs.runDue();
+    await jobs.runDue(100, [k]);
     expect(calls).toBe(MAX_TRIES);
     expect(await db.jobRun.count({ where: { jobId: job.id, outcome: "failed", error: "provider down" } })).toBe(MAX_TRIES);
     fail = false;
     expect(await jobs.retryParked(job.id)).toBe(true);
-    await jobs.runDue();
+    await jobs.runDue(100, [k]);
     expect((await db.job.findUniqueOrThrow({ where: { id: job.id } })).status).toBe("succeeded");
     t.clock.set(NOW);
   });

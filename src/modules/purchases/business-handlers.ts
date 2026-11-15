@@ -69,13 +69,13 @@ export class BusinessHandlers {
     return { ...b, month: key, used: 0, rolled };
   }
 
-  /** The business named on a payment is the payer's own: its owner, or someone with a login on it that is not removed (HH6). */
+  /** The business named on a payment is the payer's own: its owner, or someone with an active login on it (HH6; invited and removed logins do not count). */
   private async isPayers(tx: Tx, b: Biz, accountId: string | null): Promise<boolean> {
     if (!accountId || !UUID.test(accountId)) return false;
     if (b.accountId === accountId) return true;
     const rows = await tx.$queryRaw<{ n: number }[]>`
       SELECT count(*)::int AS n FROM login l JOIN account a ON a.id = ${accountId}::uuid
-       WHERE l."businessId" = ${b.id}::uuid AND a.contact IS NOT NULL AND lower(trim(l.contact)) = lower(a.contact) AND coalesce(l.status, '') <> 'removed'`;
+       WHERE l."businessId" = ${b.id}::uuid AND a.contact IS NOT NULL AND lower(trim(l.contact)) = lower(a.contact) AND l.status = 'active'`;
     return (rows[0]?.n ?? 0) > 0;
   }
 

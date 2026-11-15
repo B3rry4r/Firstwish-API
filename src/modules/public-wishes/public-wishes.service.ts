@@ -59,6 +59,8 @@ export interface Resolved {
 const gone = () => new AppError(HttpStatus.GONE, "gone", "This wish is no longer here.");
 const plain = (v: unknown): v is Record<string, unknown> => !!v && typeof v === "object" && !Array.isArray(v);
 const INVISIBLE = /[\p{Cf}\p{Zl}\p{Zp}\p{Co}\p{Cn}]/u;
+/** NN7: the one invisible character an emoji sequence needs: a zero-width joiner with an emoji (and its variation selector) before and an emoji after. */
+const EMOJI_JOINER = /(?<=\p{Extended_Pictographic}(?:\u{FE0F}|\p{Emoji_Modifier})?)\u200D(?=\p{Extended_Pictographic})/gu;
 const SLUG_LOOKS = /^[A-Za-z0-9_-]{1,64}$/;
 
 function questionOf(content: unknown): string | null {
@@ -188,7 +190,7 @@ export class PublicWishesService {
     const reaction = input.reaction.trim();
     if (!reaction || reaction.length > 40 || [...reaction].some((ch) => ch.charCodeAt(0) < 32)) throw AppError.validation({ reaction: "Use 1 to 40 characters." });
     // NN5: no direction-override, zero-width or other invisible (format) character, and no line or paragraph separator
-    if (INVISIBLE.test(input.reaction)) throw AppError.validation({ reaction: "Use ordinary text, with no hidden characters." });
+    if (INVISIBLE.test(input.reaction.replace(EMOJI_JOINER, ""))) throw AppError.validation({ reaction: "Use ordinary text, with no hidden characters." });
     const row = await this.showing(slug, c);
     this.sameWish(row, slug, input.wishId, "wishId");
     const now = this.clock.now();

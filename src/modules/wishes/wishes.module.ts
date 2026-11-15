@@ -1,5 +1,6 @@
 import { Module } from "@nestjs/common";
 import { PeopleModule } from "../people/people.module";
+import { ReceiverActivityService } from "../public-wishes/receiver-activity.service";
 import { SavedWishesModule } from "../saved-wishes/saved-wishes.module";
 import { WishLifecycleService } from "./wish-lifecycle.service";
 import { WishesController } from "./wishes.controller";
@@ -9,7 +10,8 @@ import { WishesService } from "./wishes.service";
 @Module({
   imports: [PeopleModule, SavedWishesModule],
   controllers: [WishesController],
-  providers: [WishesService, WishLifecycleService],
+  // ReceiverActivityService holds no state and needs only the database: PublicWishesModule imports this module, so it is listed here too (no import cycle).
+  providers: [WishesService, WishLifecycleService, ReceiverActivityService],
   exports: [WishesService, WishLifecycleService],
 })
 export class WishesModule {}

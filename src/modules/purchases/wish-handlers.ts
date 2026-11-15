@@ -11,6 +11,13 @@ import { NOTICE_DAYS, WishLifecycleService } from "../wishes/wish-lifecycle.serv
 import { addDays, DAY_MS, GrantStore, num, type GrantRow, type Tx } from "./grants";
 import { assessExtra, assessKeep, assessTicket, readWish, TICKET_ORDER, type WishFacts } from "./wish-rules";
 
+const KEEP_RANK: Record<string, number> = { month: 1, half: 2, year: 3 };
+/** The longest of these keeps (null when none is a keep). */
+function longest(lengths: (string | null)[]): $Enums.WishKeep | null {
+  let best: string | null = null;
+  for (const l of lengths) if (l && KEEP_RANK[l] && (!best || KEEP_RANK[l] > KEEP_RANK[best])) best = l;
+  return best as $Enums.WishKeep | null;
+}
 const SLUG = /^[a-z0-9][a-z0-9-]{0,63}$/;
 type TicketName = (typeof TICKET_ORDER)[number];
 
@@ -97,7 +104,9 @@ export class WishHandlers {
     // From its end while it is showing; a resting wish wakes now (E-232). Two keeps at once queue on the wish row: the second adds to the first.
     const from = resting || !w.endsAt || w.endsAt.getTime() < now.getTime() ? now : w.endsAt;
     const endsAt = addDays(from, days);
-    const data = { endsAt, keep: length, keptUntil: endsAt, keptBy: "keep" as const };
+    // The label is the longest keep that remains: a month keep bought after a year keep does not shorten it.
+    const label = before.keptBy === "keep" && before.keptUntil && before.keptUntil.getTime() > now.getTime() ? longest([before.keep, length]) : length;
+    const data = { endsAt, keep: label, keptUntil: endsAt, keptBy: "keep" as const };
     if (resting) {
       const locked = await this.lifecycle.lock(tx, w.id);
       await this.lifecycle.move(tx, locked, "live", { cause: "purchase.keep", data: { ...data, restingSince: null, eraseAfter: null } });
@@ -153,7 +162,7 @@ export class WishHandlers {
          ORDER BY "createdAt" DESC, id DESC`;
       let marks: { keep: $Enums.WishKeep | null; keptBy: $Enums.WishKeptBy | null; keptUntil: Date | null };
       if (rest.length) {
-        marks = { keep: (typeof rest[0].detail.length === "string" ? rest[0].detail.length : null) as $Enums.WishKeep | null, keptBy: "keep", keptUntil: endsAt };
+        marks = { keep: longest(rest.map((r) => (typeof r.detail.length === "string" ? r.detail.length : null))), keptBy: "keep", keptUntil: endsAt };
       } else {
         // No keep left: what the wish carried before its first keep (revoked ones included) is what it carries again.
         const first = await tx.$queryRaw<{ detail: Record<string, unknown> }[]>`

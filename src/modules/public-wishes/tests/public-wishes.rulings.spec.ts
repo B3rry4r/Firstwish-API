@@ -218,6 +218,19 @@ describe("B10 rulings NN1 NN2 NN3 NN4 NN5 and the proofs that stay (real databas
       expect(Number((await db.$queryRaw<{ n: bigint }[]>`SELECT count(*)::bigint AS n FROM wish_reaction WHERE "wishId" = ${w.id}::uuid`)[0].n)).toBe(0);
       expect((await post("Café, merci.")).status).toBe(200);
     });
+
+    it("NN7: a joiner inside an emoji sequence passes; a joiner with no emoji, an override and a zero-width space stay 422", async () => {
+      const w = await wish({ opensAt: new Date(NOW.getTime() - 1000) });
+      await open(w.slug);
+      const post = (reaction: string) => http().post(`/v1/w/${w.slug}/reaction`).send({ reaction, wishId: w.id });
+      const family = "\u{1F468}\u200D\u{1F469}\u200D\u{1F467}";
+      expect((await post(family)).status).toBe(200);
+      expect((await post("\u{1F3F3}\uFE0F\u200D\u{1F308}")).status).toBe(200);
+      expect((await post("\u{1F469}\u{1F3FD}\u200D\u{1F4BB}")).status).toBe(200);
+      for (const bad of ["a\u200Db", "\u200D\u{1F600}", "\u{1F600}\u200D", `${family}\u200B`, `${family}\u202E`, "\u{1F600}\u200D\u200D\u{1F600}"]) {
+        expect([JSON.stringify(bad), (await post(bad)).status]).toEqual([JSON.stringify(bad), 422]);
+      }
+    });
   });
 
   describe("proofs that stay", () => {

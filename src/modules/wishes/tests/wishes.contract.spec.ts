@@ -11,7 +11,8 @@ import { WishLifecycleService } from "../wish-lifecycle.service";
 import { WishesService } from "../wishes.service";
 
 const ROOT = join(__dirname, "../../../..");
-const NOW = new Date("2027-01-10T09:00:00.000Z");
+// A start no other spec uses (the dates below need 2027); every runDue names the keys it means.
+const NOW = new Date("2027-01-09T09:00:00.000Z");
 const DAY = 24 * 60 * 60 * 1000;
 const bearer = (token: string) => ({ authorization: `Bearer ${token}` });
 
@@ -71,6 +72,23 @@ describe("wishes E-221 E-222 E-224 E-225 E-229 E-231 (contract)", () => {
     });
     return id;
   }
+
+  it("J4 (LL5) the owner's wish detail shows what receivers did; another account's wish stays 404", async () => {
+    const u = await user();
+    const id = await ready(u, "moment");
+    const other = await user();
+    const empty = await t.http().get(`/v1/wishes/${id}`).set(bearer(u.token));
+    expect(empty.status).toBe(200);
+    expect(empty.body.activity).toEqual({ opens: 0, plays: 0, reactions: {}, favourites: 0, shares: 0 });
+    await db.$executeRaw`INSERT INTO wish_open (id, slug, "wishId", kind, first, session, "createdAt") VALUES (${nid()}::uuid, 'j4', ${id}::uuid, 'read', true, 's1-aaaaaaaa', ${NOW}), (${nid()}::uuid, 'j4', ${id}::uuid, 'read', false, 's2-aaaaaaaa', ${NOW}), (${nid()}::uuid, 'j4', ${id}::uuid, 'play', false, 's1-aaaaaaaa', ${NOW})`;
+    await db.$executeRaw`INSERT INTO wish_reaction (id, "wishId", session, reaction, "createdAt", "updatedAt") VALUES (${nid()}::uuid, ${id}::uuid, 's1-aaaaaaaa', 'Yes.', ${NOW}, ${NOW}), (${nid()}::uuid, ${id}::uuid, 's2-aaaaaaaa', 'Yes.', ${NOW}, ${NOW})`;
+    await db.$executeRaw`INSERT INTO wish_favourite (id, "wishId", session, hearts, "updatedAt") VALUES (${nid()}::uuid, ${id}::uuid, 's1-aaaaaaaa', ARRAY[0, 2]::int[], ${NOW})`;
+    const shown = await t.http().get(`/v1/wishes/${id}`).set(bearer(u.token));
+    expect(shown.status).toBe(200);
+    expect(shown.body.activity).toMatchObject({ opens: 2, plays: 1, reactions: { "Yes.": 2 }, favourites: 1, shares: 0 });
+    expect((await t.http().get(`/v1/wishes/${id}`).set(bearer(other.token))).status).toBe(404);
+    expect((await t.http().get(`/v1/wishes/${id}`)).status).toBe(401);
+  });
 
   it("E-222 makes a draft owned by the caller, normalising what was typed", async () => {
     const u = await user();
@@ -288,7 +306,7 @@ describe("wishes E-221 E-222 E-224 E-225 E-229 E-231 (contract)", () => {
     expect(w.endsAt?.getTime()).toBe(w.openedAt!.getTime() + 7 * DAY);
     expect(await db.job.count({ where: { subjectId: id, type: "send_notice", status: "scheduled" } })).toBe(1);
     t.clock.set(new Date(w.endsAt!.getTime() + 1000));
-    await jobs.runDue();
+    await jobs.runDue(100, [id]);
     w = await db.wish.findUniqueOrThrow({ where: { id } });
     expect(w.status).toBe("resting");
     expect(w.eraseAfter?.getTime()).toBe(w.restingSince!.getTime() + 365 * DAY);
@@ -297,14 +315,14 @@ describe("wishes E-221 E-222 E-224 E-225 E-229 E-231 (contract)", () => {
     expect(back.status).toBe(200);
     expect(back.body.state).toBe("live");
     t.clock.advance(31 * DAY);
-    await jobs.runDue();
+    await jobs.runDue(100, [id]);
     expect((await db.wish.findUniqueOrThrow({ where: { id } })).status).toBe("resting");
     // the window is over
     t.clock.advance(31 * DAY);
     const late = await t.http().post(`/v1/wishes/${id}/restore`).set(bearer(u.token)).send({});
     expect(late.status).toBe(409);
     t.clock.advance(366 * DAY);
-    await jobs.runDue();
+    await jobs.runDue(100, [id]);
     w = await db.wish.findUniqueOrThrow({ where: { id } });
     expect(w).toMatchObject({ status: "removed", content: null, name: null, passcodeHash: null });
     expect(w.erasedAt).not.toBeNull();

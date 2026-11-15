@@ -88,6 +88,38 @@ describe("P-B11 notices patch", () => {
     expect((await row(id)).attempts).toBe(2);
   });
 
+  it("J1 (MM2) a sender that dies on its third try ends failed for staff, never in flight for good", async () => {
+    const a = await account();
+    const id = await queue(a);
+    await db.$executeRaw`UPDATE message_delivery SET status = 'sent', attempts = 3 WHERE id = ${id}::uuid`;
+    expect((await notices.deliver(id)).outcome).toBe("skipped"); // fresh: its caller may still be working
+    await db.$executeRaw`UPDATE message_delivery SET "updatedAt" = now() - interval '6 minutes' WHERE id = ${id}::uuid`;
+    const spy = jest.spyOn(t.email, "send");
+    await jobs.runDue(100, [id]); // the same sweep that picks up stale ones
+    expect(spy).not.toHaveBeenCalled();
+    expect(await row(id)).toMatchObject({ status: "failed", attempts: 3 });
+    expect((await row(id)).error).toBeTruthy();
+    expect((await notices.deliver(id)).outcome).toBe("skipped");
+  });
+
+  it("J1 (MM2) a retry is taken only once its wait has passed", async () => {
+    const a = await account();
+    const id = await queue(a);
+    await db.$executeRaw`UPDATE message_delivery SET status = 'queued', attempts = 1, "updatedAt" = ${t.clock.now()} WHERE id = ${id}::uuid`;
+    const spy = jest.spyOn(t.email, "send");
+    await jobs.runDue(100, [id]);
+    expect(spy).not.toHaveBeenCalled();
+    expect(await row(id)).toMatchObject({ status: "queued", attempts: 1 });
+    expect((await db.job.findFirstOrThrow({ where: { subjectId: id } })).status).not.toBe("dead");
+    t.clock.advance(59_000);
+    await jobs.runDue(100, [id]);
+    expect(spy).not.toHaveBeenCalled();
+    t.clock.advance(1_000);
+    await jobs.runDue(100, [id]);
+    expect(spy).toHaveBeenCalledTimes(1);
+    expect(await row(id)).toMatchObject({ status: "delivered", attempts: 2 });
+  });
+
   // The 200 cases are checked on the rule itself (an edit would add an audit row the sibling spec counts); every 422 goes over HTTP.
   it("KK2 staff wording: subject 150, body 4000; a tag, a zero-width or a control character is 422", async () => {
     const good = { subject: "{for}'s wish opens", body: "Hi {name}, here is {for}'s wish: {link}", reason: "Wording check" };
@@ -120,11 +152,19 @@ describe("P-B11 notices patch", () => {
     const a = await account();
     const typed = "typed-in@example.test";
     const id = await queue(a, { name: typed, for: `see ${typed} now`, link: "https://example.test/w/x" });
-    const res = await t.http().get("/v1/admin/messages/log").set(bearer("ops"));
-    expect(res.status).toBe(200);
-    const mine = (res.body as { items: { id: string; vars: unknown }[] }).items.find((i) => i.id === id);
+    // Other specs write sign-in deliveries into the same database: page on until this row is found, never assume it is on the first page.
+    let res = await t.http().get("/v1/admin/messages/log").set(bearer("ops"));
+    let mine: { id: string; vars: unknown } | undefined;
+    let text = "";
+    for (let page = 0; page < 200; page++) {
+      expect(res.status).toBe(200);
+      const body = res.body as { items: { id: string; vars: unknown }[]; nextCursor?: string | null };
+      text += JSON.stringify(body);
+      mine = body.items.find((i) => i.id === id);
+      if (mine || !body.nextCursor) break;
+      res = await t.http().get(`/v1/admin/messages/log?cursor=${encodeURIComponent(body.nextCursor)}`).set(bearer("ops"));
+    }
     expect(mine).toBeDefined();
-    const text = JSON.stringify(res.body);
     expect(text).not.toContain(typed);
     expect(text).not.toContain(a.email);
     expect(JSON.stringify(mine?.vars)).toContain("t***@example.test");

@@ -13,13 +13,14 @@ lib/catalog.ts, lib/pro-data.ts, lib/studio.ts, lib/levels.ts are read from ther
 For anything unclear pick the safest default, write "Default (lead), owner may override" in ADM.md's Current state and go on. Ask nobody.
 
 Cases (input -> expected):
-  D1: /admin/support: inbox of WhatsApp and email threads tied to a wish or a person; open one, reply, use a saved reply, close it.
+  D1: /admin/support: inbox of email threads tied to a wish or a person; open one, reply, use a saved reply, close it (ruling R11: no
+      WhatsApp inbox; nothing about SMS or WhatsApp is drawn anywhere in your sections; messages go by email only).
   D2: /admin/messages: each message Firstwish sends (sealed, opens today, opened, resting soon, code) with its wording to edit and where
       it goes; a delivery log with failures and resend.
   D3: /admin/numbers: the eight earning lines against targets, preview to paid, opens, by kind, occasion and style, keeps; a period switch.
       Charts are drawn in SVG with the page's tokens (no chart library), readable at 360 wide, with the figures also in a table.
   D4: /admin/team: staff and roles (owner, ops, moderator, reviewer, support, finance, maker), what each role may open, invite and remove.
-      /admin/audit: who did what, when, why; filter by person and section. /admin/settings: providers connected (payments, messages, email,
+      /admin/audit: who did what, when, why; filter by person and section. /admin/settings: providers connected (payments, email,
       AI, storage: Cloudflare R2 or DigitalOcean Spaces, one chosen) and switches (the 40% off, sample wishes off in production).
 Files (touch nothing else): app/admin/support/**, app/admin/messages/**, app/admin/numbers/**, app/admin/team/**, app/admin/audit/**, app/admin/settings/**, components/admin/d/**, lib/admin/d-*.ts, and the additive blocks named above.
 Out of scope: other bundles' sections; any file outside the list (need a shared change? say so in the hand-back).

@@ -23,3 +23,29 @@ R8 (owner, standing): plain short words; say "kind" (never format, category, typ
    tied to money; no dead controls; nothing faked: where a server will answer, an API-seam file; AI is never faked.
 R9 (owner, 15 Nov 2026): "Use the Aisha copper" (brand accent #c8693a). "leave the preview videos quality as is". Levels table approved "for now",
    changeable in the admin dashboard.
+R10 (owner, 15 Nov 2026): "you kept on building it on the browser ... You don't just leave some things to be stored on the browser. Nothing should be
+   stored on the browser. Follow the workflows, my workflows, properly and accurately."
+   Covers: the web app keeps NOTHING in localStorage, sessionStorage or IndexedDB; every piece of data lives on the server. Phase 6 is not
+   finished while one such call remains: a gate (exit code) fails the build on those words anywhere in app/, components/, lib/.
+   Default (lead), owner may override: staying signed in uses one cookie the server sets and page code cannot read (httpOnly); the short
+   access token lives in memory only; the light/dark choice is saved on the account and follows the device when signed out; a choice made
+   before sign-in travels in the link. Does not cover: the browser's own cache of files (pictures, scripts, fonts).
+R11 (owner, 15 Nov 2026): "we're not using SMS or WhatsApp providers for now. Their process is too messy, it's too long."
+   Covers: every message Firstwish sends goes by email. Sign-in is a code to an email, or Google; a phone number is a plain detail, never
+   verified, never the key of an account. The SMS and WhatsApp ports stay declared with no adapter ("deferred by owner").
+   Consequence (named): a receiver gets the link because the sender shares it (share sheet, their own WhatsApp) or by email when the sender
+   gives the receiver's email. Admin Support is an email inbox; WhatsApp is a plain link to the owner's number.
+R12 (owner, 15 Nov 2026): "Email sending provider and domain. Yeah, so it's going to be resend."
+   Covers: Resend is the email adapter. Does not cover: the sending address (default: a firstwish address on moxnafrica.com; needs DNS records the owner adds).
+R13 (owner, 15 Nov 2026): "We're not using AI to, we're not selling audios to AI ... It's basically text to speech [speech turned to text by the device,
+   as the Claude app and websites do]. Then the AI figures out what the user is saying accurately."
+   Covers: speaking a letter uses the browser's own dictation; only the text goes to the AI; no audio is sent to any AI and no transcription
+   provider is used. Default (lead): where a browser has no dictation, the person types. Does not cover: voices recorded to PLAY inside a
+   wish; those are still kept as sound files in storage.
+R14 (owner, 15 Nov 2026): "payout threshold for creators ... you have to suggest on that one. Suggest what is going to work properly."
+   Default (lead), owner may override: ₦5,000. Paid on the 5th of each month for what was earned up to the end of the month before; less than
+   ₦5,000 rolls on to the next month. PROVISIONAL until the owner says yes; changeable in admin Prices.
+R15 (owner, 15 Nov 2026): contact on the site: email "motionafrica@gmail.com. You know the way I spell motion" = moxnafrica@gmail.com (lead's reading,
+   to confirm); WhatsApp "+234 810 534 0452".
+R16 (owner, 15 Nov 2026): owner will give Paystack test keys "when that time has reached" and the Anthropic key; has a DigitalOcean account; needs a
+   walkthrough to get the Google sign-in client. Until then: stand-ins behind the same ports, marked NOT RUN against the real provider.

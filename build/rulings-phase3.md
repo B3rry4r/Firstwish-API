@@ -253,3 +253,11 @@ Y4 (low) Storage calls happen outside the database transaction: the upload row i
    read, then a short transaction finishes it.
 Y5 (low, for B06) The files a wish names live in a join table with foreign keys (wish, file, role), written when the content is
    saved, so a file in a sealed wish cannot be deleted by any race.
+
+## From Verify B04 (15 Nov): how each finding is closed. Default (lead), owner may override.
+Z1 (medium) A staff price change always takes effect now. A version dated in the future is not offered (no screen asks for it):
+   a draft with a future start is refused (422), so nothing can silently hold back later changes.
+Z2 (medium) concierge.rush is removed from the seed: it is in no web app file, and by R5 the app is the truth for what is sold.
+   Listed to the owner (it can be added as a price line when the app sells it).
+Z3 (low) A change that changes nothing answers 409 not_allowed ("That is the price now") and writes no version and no audit row.
+Z4 (low) Changing a line's list price never rewrites its price-now; each is changed only when the request names it.

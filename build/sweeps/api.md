@@ -9,3 +9,5 @@
 - B12 (import): 500 people with one bad row adds 499 and skips the bad one: say so in the response (a `skipped` list with row numbers and reasons) so the page can show it.
 - B04 (Verify P, low): after the offer ends the public line still carries the stored promoKobo while price equals list: drop promoKobo from the public line once the promotion is null.
 - B05 (Verify P, note): a start that timed out leaves a failed payment; a late signed success for it is granted once and flagged late_success_after_failed for staff (kept: the money was taken). An upper-case hex signature is accepted (needs the secret; harmless).
+- B07 (Verify P, low): with a month keep and a year keep bought at once the wish's keep label follows apply order, not the longer keep (src/modules/purchases/wish-handlers.ts:100): label = the longest keep that remains.
+- B07 (Verify P, low): a login with status "invited" counts as the business's own for a plan or pack payment (isPayers in business-handlers.ts): only an active login counts.

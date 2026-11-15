@@ -23,10 +23,12 @@ describe("UUIDv7", () => {
     expect(isUuidV7(new UuidV7Maker().next().toUpperCase())).toBe(false);
   });
 
-  it("stand-in ids are deterministic and follow the stand-in clock", () => {
+  it("stand-in ids follow the stand-in clock and a counter, and never repeat across generators (T6)", () => {
     const a = new StandinIdGenerator(new StandinClock(new Date("2026-01-01T00:00:00Z")));
     const b = new StandinIdGenerator(new StandinClock(new Date("2026-01-01T00:00:00Z")));
-    expect([a.id(), a.id()]).toEqual([b.id(), b.id()]);
+    const [a1, a2] = [a.id(), a.id()];
+    expect(a2 > a1).toBe(true);
+    expect([a1, a2]).not.toContain(b.id());
     expect(uuidV7Time(a.id())).toBe(Date.parse("2026-01-01T00:00:00Z"));
   });
 });

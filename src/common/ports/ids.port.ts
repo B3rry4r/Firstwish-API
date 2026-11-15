@@ -46,9 +46,14 @@ export class SystemCodeGenerator extends CodeGenerator {
   }
 }
 
-/** Deterministic ids: real UUIDv7 shape and order, with counter bytes in place of randomness. */
+/**
+ * Stand-in ids: real UUIDv7 shape and order, with counter bytes in place of most of the randomness. Each generator also
+ * carries 4 random bytes of its own (T6), so two test apps sharing one database (same frozen clock, same counter) never
+ * give the same id.
+ */
 export class StandinIdGenerator extends IdGenerator {
   private n = 0;
+  private readonly salt = randomBytes(4);
   private readonly maker: UuidV7Maker;
   constructor(clock: Clock) {
     super();
@@ -56,6 +61,7 @@ export class StandinIdGenerator extends IdGenerator {
       () => clock.now().getTime(),
       (size) => {
         const b = Buffer.alloc(size);
+        if (size >= 8) this.salt.copy(b, 0);
         const len = Math.min(4, size);
         b.writeUIntBE(this.n++ % 2 ** (8 * len), size - len, len);
         return b;

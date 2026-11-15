@@ -1,9 +1,11 @@
 #!/usr/bin/env node
 // Runs specs against a fresh database copied from the migrated template, then drops it.
 //   npm test                                  every spec
-//   npm run test:affected -- <paths...>       only those specs; a source file runs the specs that import it
+//   npm run test:affected -- <paths...>       only those specs; a directory runs every spec under it (U8); a source file runs
+//                                             the specs that import it
 // TEST_DB_PREFIX (default fw) names the databases: <prefix>_test_run_<pid>. Extra jest flags (starting with -) pass through.
 import { spawnSync } from "node:child_process";
+import { readdirSync, statSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createDb, dropDb } from "./db.mjs";
@@ -13,7 +15,22 @@ const prefix = process.env.TEST_DB_PREFIX || "fw";
 const name = `${prefix}_test_run_${process.pid}`;
 const args = process.argv.slice(2);
 const flags = args.filter((a) => a.startsWith("-"));
-const paths = args.filter((a) => !a.startsWith("-"));
+const specsUnder = (dir) =>
+  readdirSync(dir, { withFileTypes: true }).flatMap((d) =>
+    d.name === "node_modules" ? [] : d.isDirectory() ? specsUnder(join(dir, d.name)) : d.name.endsWith(".spec.ts") ? [join(dir, d.name)] : [],
+  );
+const isDir = (p) => {
+  try {
+    return statSync(p).isDirectory();
+  } catch {
+    return false;
+  }
+};
+const paths = args.filter((a) => !a.startsWith("-")).flatMap((p) => (isDir(p) ? specsUnder(p) : [p]));
+if (args.some((a) => !a.startsWith("-")) && !paths.length) {
+  console.error("No spec files under the paths given.");
+  process.exit(1);
+}
 
 const jestArgs = [];
 if (paths.length) jestArgs.push(paths.every((p) => p.endsWith(".spec.ts")) ? "--runTestsByPath" : "--findRelatedTests", ...paths);

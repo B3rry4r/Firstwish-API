@@ -72,6 +72,10 @@ export class ErrorEnvelopeFilter implements ExceptionFilter {
       if (status === 404) message = `No route ${req.method} ${req.path}.`;
       return { status, body: envelope(code, message, requestId) };
     }
+    // U2: the database cannot answer (down, unreachable, pool timed out): 503, so nothing is let through on a guess.
+    if (databaseUnavailable(exception)) {
+      return { status: 503, body: envelope(CODES[503], MESSAGES[503], requestId) };
+    }
     // body-parser and other express middleware errors carry a status and an expose flag
     const e = exception as { status?: unknown; statusCode?: unknown; expose?: unknown; type?: unknown } | null;
     const raw = e && typeof e === "object" ? (e.status ?? e.statusCode) : undefined;
@@ -87,4 +91,14 @@ export class ErrorEnvelopeFilter implements ExceptionFilter {
 
 function envelope(code: string, message: string, requestId: string, fields?: ErrorFields): ErrorEnvelope {
   return { error: fields && Object.keys(fields).length ? { code, message, fields, requestId } : { code, message, requestId } };
+}
+
+/** Prisma's errors for a database it cannot reach: connection refused, timed out, closed, or no connection from the pool. */
+const UNREACHABLE = new Set(["P1001", "P1002", "P1008", "P1017", "P2024"]);
+export function databaseUnavailable(e: unknown): boolean {
+  if (!e || typeof e !== "object") return false;
+  const name = (e as { name?: unknown }).name;
+  const code = (e as { errorCode?: unknown; code?: unknown }).errorCode ?? (e as { code?: unknown }).code;
+  if (name === "PrismaClientInitializationError") return true;
+  return typeof code === "string" && UNREACHABLE.has(code) && typeof name === "string" && name.startsWith("PrismaClient");
 }

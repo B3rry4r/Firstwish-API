@@ -1,4 +1,4 @@
-import { createHash } from "node:crypto";
+import { createHash, createHmac, timingSafeEqual } from "node:crypto";
 import { Money } from "../../money/money";
 import { AiWritingPort, WriteRequest, WriteResult } from "../ai.port";
 import { EmailPort, OutgoingEmail, SentEmail } from "../email.port";
@@ -7,6 +7,9 @@ import { ScreenInput, ScreenResult, UploadScreeningPort } from "../screening.por
 import { hmacSha512Hex, signatureMatches } from "../signature";
 import { SignUpload, SignedUpload, StoragePort, StoredObject } from "../storage.port";
 import { Clock } from "../clock.port";
+import { GoogleAuthorizationRequest, GoogleIdClaims, GoogleIdentityPort } from "../google.port";
+import { decodePart } from "./google.adapter";
+import { ProviderError } from "./http";
 
 /*
  * In-process stand-ins for every provider. They never make a network call. Each keeps what it was asked to do,
@@ -150,5 +153,51 @@ export class StandinScreening extends UploadScreeningPort {
   screen(input: ScreenInput): Promise<ScreenResult> {
     this.screened.push(input);
     return Promise.resolve(input.key.includes("reject") ? { verdict: "rejected", reason: "Rejected by the stand-in." } : { verdict: "clean" });
+  }
+}
+
+/**
+ * The stand-in: ID tokens are signed with a local test key (HS256). Tests make a token with signToken(), or a code with
+ * issueCode() that exchangeCode() later trades for that token. No network.
+ */
+export class StandinGoogle extends GoogleIdentityPort {
+  static readonly KEY = "standin-google-signing-key";
+  private readonly codes = new Map<string, string>();
+  readonly exchanged: { code: string; codeVerifier: string; redirectUri: string }[] = [];
+  private seq = 0;
+
+  authorizationUrl(r: GoogleAuthorizationRequest): string {
+    const q = new URLSearchParams({ client_id: r.clientId, redirect_uri: r.redirectUri, state: r.state, code_challenge: r.codeChallenge });
+    return `http://google.standin.local/authorize?${q.toString()}`;
+  }
+
+  signToken(claims: Record<string, unknown>, key = StandinGoogle.KEY): string {
+    const head = Buffer.from(JSON.stringify({ alg: "HS256", typ: "JWT" })).toString("base64url");
+    const body = Buffer.from(JSON.stringify(claims)).toString("base64url");
+    return `${head}.${body}.${createHmac("sha256", key).update(`${head}.${body}`).digest("base64url")}`;
+  }
+
+  /** A one-time code that exchangeCode() trades for a token with these claims. */
+  issueCode(claims: Record<string, unknown>, key?: string): string {
+    const code = `standin-google-code-${++this.seq}`;
+    this.codes.set(code, this.signToken(claims, key));
+    return code;
+  }
+
+  exchangeCode(p: { code: string; codeVerifier: string; redirectUri: string }): Promise<{ idToken: string }> {
+    this.exchanged.push(p);
+    const idToken = this.codes.get(p.code);
+    this.codes.delete(p.code);
+    if (!idToken) return Promise.reject(new ProviderError("google", 400, "invalid_grant"));
+    return Promise.resolve({ idToken });
+  }
+
+  verifySignature(idToken: string): Promise<GoogleIdClaims | null> {
+    const [h, p, s] = idToken.split(".");
+    if (!h || !p || !s) return Promise.resolve(null);
+    const want = Buffer.from(createHmac("sha256", StandinGoogle.KEY).update(`${h}.${p}`).digest("base64url"));
+    const given = Buffer.from(s);
+    if (want.length !== given.length || !timingSafeEqual(want, given)) return Promise.resolve(null);
+    return Promise.resolve(decodePart<GoogleIdClaims>(p));
   }
 }

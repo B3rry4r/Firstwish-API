@@ -39,6 +39,8 @@ export interface Env {
   RENDER_CONCURRENCY: number;
   RESEND_API_KEY?: string;
   MAIL_FROM?: string;
+  /** V4: proxies trusted for the client address; 0 reads the socket address. */
+  TRUST_PROXY_HOPS: number;
 }
 
 /** Raised when the environment is incomplete or wrong. The message names every bad variable. */

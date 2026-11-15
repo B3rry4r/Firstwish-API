@@ -9,6 +9,7 @@ import type { Principal, Side, StaffRole, WebhookProvider } from "./principal";
  *   @StaffRoles("ops")         staff with one of these roles (owner passes every staff check).
  *   @WebhookSignature("paystack")  no user; the provider's signature on the raw body must match.
  *   @Internal()                only from this machine (job runner, ops scripts), never through a proxy.
+ *   @CookieAuth()              no bearer; the route itself checks its httpOnly refresh cookie (T3, DEC-152: the refresh routes).
  */
 export const ACCESS = "fw:access";
 export type Access =
@@ -16,12 +17,14 @@ export type Access =
   | { kind: "user"; sides?: Side[] }
   | { kind: "staff"; roles: StaffRole[] }
   | { kind: "webhook"; provider: WebhookProvider }
-  | { kind: "internal" };
+  | { kind: "internal" }
+  | { kind: "cookie" };
 
 export const Public = () => SetMetadata(ACCESS, { kind: "public" } satisfies Access);
 export const Roles = (...sides: Side[]) => SetMetadata(ACCESS, { kind: "user", sides } satisfies Access);
 export const StaffRoles = (...roles: StaffRole[]) => SetMetadata(ACCESS, { kind: "staff", roles } satisfies Access);
 export const WebhookSignature = (provider: WebhookProvider) => SetMetadata(ACCESS, { kind: "webhook", provider } satisfies Access);
+export const CookieAuth = () => SetMetadata(ACCESS, { kind: "cookie" } satisfies Access);
 export const Internal = () => SetMetadata(ACCESS, { kind: "internal" } satisfies Access);
 
 /** The caller, as set by the access guard. Undefined on public, webhook and internal routes. */

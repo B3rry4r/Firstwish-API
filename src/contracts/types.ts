@@ -105,6 +105,27 @@ export interface StyleChange {
   said: string[];
   credits: number;
 }
+/** E-20, E-53, E-159 (T1, DEC-150): a sign-in or a refresh. The refresh token is only in the httpOnly cookie. */
+export interface AuthResult {
+  /** The access token the web app keeps in memory only (R10). */
+  accessToken: string;
+  accessExpiresAt: Instant;
+  /** true when this sign-in made the account (the web app shows Welcome). */
+  isNew: boolean;
+  session: { id: Id; expiresAt: Instant };
+  /** E-53 only: the path the Google sign-in started from. */
+  returnTo?: string;
+}
+/** E-176, E-234 (S5, DEC-148): a staff sign-in or a staff refresh. The refresh token is only in the httpOnly staff cookie. */
+export interface StaffAuthResult {
+  staff: StaffAccount;
+  accessToken: string;
+  accessTokenExpiresAt: Instant;
+}
+/** E-54 (T2, DEC-151): where the browser goes to sign in with Google. */
+export interface GoogleStart {
+  url: string;
+}
 /** E-19: the registry names the response SignInCode and gives no fields. */
 export type SignInCode = Record<string, unknown>;
 /** E-202 (DEC-65): a read view of a live StudioStyle with its submission. */
@@ -1184,7 +1205,7 @@ export interface StaffAccount {
   seen?: Instant | null;
   since: Instant;
   state: string;
-  status: "invited" | "active" | "suspended";
+  status: "invited" | "active" | "suspended" | "removed";
   updatedAt: Instant;
 }
 
@@ -1848,13 +1869,15 @@ export interface GetBusinessApprovedDatesQuery {
 export type GetBusinessApprovedDatesHeaders = Record<string, never>;
 export type GetBusinessApprovedDatesResponse = PaginatedList<ApprovedDate>;
 
-/** E-18 GET /v1/admin/audit. Auth: finance,ops,owner. */
+/** E-18 GET /v1/admin/audit. Auth: ops,owner. */
 export type GetAdminAuditParams = Record<string, never>;
 export interface GetAdminAuditQuery {
   /** string? */
   actorId?: string;
   /** date? */
   from?: DateOnly;
+  /** string? (an admin section of the role table, such as /admin/team; DEC-147) */
+  section?: string;
   /** string? */
   subjectType?: string;
   cursor?: string;
@@ -1885,7 +1908,7 @@ export interface PostAuthCodesVerifyBody {
   contact: string;
 }
 export type PostAuthCodesVerifyHeaders = Record<string, never>;
-export type PostAuthCodesVerifyResponse = Session;
+export type PostAuthCodesVerifyResponse = AuthResult;
 
 /** E-21 POST /v1/admin/bans. Auth: moderator,owner. */
 export type PostAdminBansParams = Record<string, never>;
@@ -2235,7 +2258,7 @@ export interface GetAuthGoogleCallbackQuery {
   state: string;
 }
 export type GetAuthGoogleCallbackHeaders = Record<string, never>;
-export type GetAuthGoogleCallbackResponse = Session;
+export type GetAuthGoogleCallbackResponse = AuthResult;
 
 /** E-54 POST /v1/auth/google/start. Auth: public. */
 export type PostAuthGoogleStartParams = Record<string, never>;
@@ -2244,7 +2267,7 @@ export interface PostAuthGoogleStartBody {
   returnTo?: string;
 }
 export type PostAuthGoogleStartHeaders = Record<string, never>;
-export type PostAuthGoogleStartResponse = Session;
+export type PostAuthGoogleStartResponse = GoogleStart;
 
 /** E-55 DELETE /v1/me/google. Auth: signed in. */
 export type DeleteMeGoogleParams = Record<string, never>;
@@ -3315,11 +3338,11 @@ export interface InternalScreeningResultsScreenFileBody {
 export type InternalScreeningResultsScreenFileHeaders = Record<string, never>;
 export type InternalScreeningResultsScreenFileResponse = ScreeningResult;
 
-/** E-159 POST /v1/auth/refresh. Auth: signed in. */
+/** E-159 POST /v1/auth/refresh. Auth: cookie. */
 export type PostAuthRefreshParams = Record<string, never>;
 export type PostAuthRefreshBody = Record<string, never>;
 export type PostAuthRefreshHeaders = Record<string, never>;
-export type PostAuthRefreshResponse = Session;
+export type PostAuthRefreshResponse = AuthResult;
 
 /** E-160 POST /v1/auth/sign-out. Auth: signed in. */
 export type PostAuthSignOutParams = Record<string, never>;
@@ -3480,6 +3503,12 @@ export type PostAdminAuthCodeHeaders = Record<string, never>;
 /** 204 No Content: the response has no body (Q12). */
 export type PostAdminAuthCodeResponse = NoContent;
 
+/** E-234 POST /v1/admin/auth/refresh. Auth: cookie. */
+export type PostAdminAuthRefreshParams = Record<string, never>;
+export type PostAdminAuthRefreshBody = Record<string, never>;
+export type PostAdminAuthRefreshHeaders = Record<string, never>;
+export type PostAdminAuthRefreshResponse = StaffAuthResult;
+
 /** E-175 POST /v1/admin/auth/sign-out. Auth: finance,maker,moderator,ops,owner,reviewer,support. */
 export type PostAdminAuthSignOutParams = Record<string, never>;
 export type PostAdminAuthSignOutBody = Record<string, never>;
@@ -3496,7 +3525,7 @@ export interface PostAdminAuthVerifyBody {
   email: string;
 }
 export type PostAdminAuthVerifyHeaders = Record<string, never>;
-export type PostAdminAuthVerifyResponse = StaffAccount;
+export type PostAdminAuthVerifyResponse = StaffAuthResult;
 
 /** E-177 PATCH /v1/admin/staff-accounts/:id. Auth: owner. */
 export interface PatchAdminStaffAccountsByIdParams {
@@ -4380,6 +4409,7 @@ export interface EndpointContracts {
   "E-172": { params: PostBusinessShootsByIdFinalsParams; body: PostBusinessShootsByIdFinalsBody; headers: PostBusinessShootsByIdFinalsHeaders; response: PostBusinessShootsByIdFinalsResponse };
   "E-173": { params: InternalSignedUrlsSignedReadParams; body: InternalSignedUrlsSignedReadBody; headers: InternalSignedUrlsSignedReadHeaders; response: InternalSignedUrlsSignedReadResponse };
   "E-174": { params: PostAdminAuthCodeParams; body: PostAdminAuthCodeBody; headers: PostAdminAuthCodeHeaders; response: PostAdminAuthCodeResponse };
+  "E-234": { params: PostAdminAuthRefreshParams; body: PostAdminAuthRefreshBody; headers: PostAdminAuthRefreshHeaders; response: PostAdminAuthRefreshResponse };
   "E-175": { params: PostAdminAuthSignOutParams; body: PostAdminAuthSignOutBody; headers: PostAdminAuthSignOutHeaders; response: PostAdminAuthSignOutResponse };
   "E-176": { params: PostAdminAuthVerifyParams; body: PostAdminAuthVerifyBody; headers: PostAdminAuthVerifyHeaders; response: PostAdminAuthVerifyResponse };
   "E-177": { params: PatchAdminStaffAccountsByIdParams; body: PatchAdminStaffAccountsByIdBody; headers: PatchAdminStaffAccountsByIdHeaders; response: PatchAdminStaffAccountsByIdResponse };

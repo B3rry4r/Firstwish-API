@@ -1362,6 +1362,19 @@
         "user:owner"
       ],
       "decision": "DEC-116"
+    },
+    "GET /v1/admin/audit": {
+      "auth": [
+        "staff:owner",
+        "staff:ops"
+      ],
+      "decision": "DEC-147"
+    },
+    "POST /v1/auth/refresh": {
+      "auth": [
+        "cookie"
+      ],
+      "decision": "DEC-152"
     }
   },
   "extraEndpoints": [
@@ -1418,6 +1431,15 @@
         "staff:support"
       ],
       "decision": "DEC-130"
+    },
+    {
+      "resource": "StaffAccount",
+      "method": "POST",
+      "path": "/v1/admin/auth/refresh",
+      "auth": [
+        "cookie"
+      ],
+      "decision": "DEC-148"
     }
   ],
   "fulfilment": {
@@ -1530,6 +1552,68 @@
       "set": {
         "amountKobo": "integer (kobo, positive; at most the payment's amount, checked in the service)",
         "reason": "string (4 or more characters; DEC-125)"
+      }
+    },
+    "GET /v1/admin/audit": {
+      "decision": "DEC-147",
+      "set": {
+        "section": "string? (an admin section of the role table, such as /admin/team; DEC-147)"
+      }
+    },
+    "POST /v1/admin/auth/code": {
+      "decision": "DEC-149",
+      "response": {
+        "entity": null,
+        "cardinality": "none",
+        "note": "204 with no body for every email, whoever asks; a code goes only to an active or invited member (DEC-149)"
+      }
+    },
+    "POST /v1/admin/auth/verify": {
+      "decision": "DEC-148",
+      "response": {
+        "entity": "StaffAuthResult",
+        "cardinality": "single",
+        "note": "{staff, accessToken, accessTokenExpiresAt}; the refresh token only in the httpOnly staff cookie (DEC-148)"
+      }
+    },
+    "POST /v1/admin/auth/refresh": {
+      "decision": "DEC-148",
+      "response": {
+        "entity": "StaffAuthResult",
+        "cardinality": "single",
+        "note": "{staff, accessToken, accessTokenExpiresAt}; rotates the staff cookie, 10-second grace, a reused old cookie ends the family (DEC-148)"
+      }
+    },
+    "POST /v1/auth/codes/verify": {
+      "decision": "DEC-150",
+      "response": {
+        "entity": "AuthResult",
+        "cardinality": "single",
+        "note": "AuthResult; the refresh token only in the httpOnly cookie (DEC-150)"
+      }
+    },
+    "GET /v1/auth/google/callback": {
+      "decision": "DEC-150",
+      "response": {
+        "entity": "AuthResult",
+        "cardinality": "single",
+        "note": "AuthResult with returnTo; the refresh token only in the httpOnly cookie (DEC-150)"
+      }
+    },
+    "POST /v1/auth/refresh": {
+      "decision": "DEC-150",
+      "response": {
+        "entity": "AuthResult",
+        "cardinality": "single",
+        "note": "AuthResult; rotates the cookie, 10-second grace, a reused old cookie ends its family (DEC-150)"
+      }
+    },
+    "POST /v1/auth/google/start": {
+      "decision": "DEC-151",
+      "response": {
+        "entity": "GoogleStart",
+        "cardinality": "single",
+        "note": "{url}: where the browser goes next; sets the httpOnly Google state cookie (DEC-151)"
       }
     }
   },

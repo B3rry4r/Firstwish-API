@@ -197,6 +197,36 @@
       "introducedBy": "messages-email",
       "purpose": "sender address for every email (R12)",
       "secret": false
+    },
+    {
+      "name": "NODE_ENV",
+      "introducedBy": "api-0",
+      "purpose": "process mode: development, test or production",
+      "secret": false
+    },
+    {
+      "name": "PORT",
+      "introducedBy": "api-0",
+      "purpose": "HTTP port",
+      "secret": false
+    },
+    {
+      "name": "PROVIDERS",
+      "introducedBy": "api-0",
+      "purpose": "live uses real providers; standin uses in-process stand-ins (refused when NODE_ENV=production)",
+      "secret": false
+    },
+    {
+      "name": "INTERNAL_TOKEN",
+      "introducedBy": "api-0",
+      "purpose": "shared secret an internal route needs in the x-internal-token header (32 or more characters)",
+      "secret": true
+    },
+    {
+      "name": "TRUST_PROXY_HOPS",
+      "introducedBy": "int-1",
+      "purpose": "how many proxies in front of the API are trusted for the client address (V4); 0 reads the socket address",
+      "secret": false
     }
   ]
 }

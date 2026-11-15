@@ -2495,6 +2495,89 @@
       "confidence": "high",
       "source": "build/rulings-phase3.md (Registry reopened a second time)",
       "decidedAt": "2026-11-15T16:55:02Z"
+    },
+    {
+      "id": "DEC-146",
+      "topic": "staff status removed",
+      "closes": [],
+      "decision": "S3: StaffAccount.status gains `removed`: a removed member is kept for the audit trail, cannot sign in and holds no roles. status is enum(invited|active|suspended|removed); a removed member may be invited again (U5) and returns as invited.",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (From B03's halts) S3, (From Verify B03) U5",
+      "decidedAt": "2026-11-15T21:00:00Z",
+      "fieldTypes": {
+        "StaffAccount.status": "enum(invited|active|suspended|removed)"
+      }
+    },
+    {
+      "id": "DEC-147",
+      "topic": "audit log read (E-18)",
+      "closes": [],
+      "decision": "S4: GET /v1/admin/audit takes an optional `section` filter (the admin section of the row, such as /admin/team) beside actorId, subjectType and from; its roles are owner and ops only (A1, the role table opens /admin/audit to owner and ops; finance is removed).",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (From B03's halts) S4",
+      "decidedAt": "2026-11-15T21:00:00Z"
+    },
+    {
+      "id": "DEC-148",
+      "topic": "staff refresh",
+      "closes": [],
+      "decision": "S5: POST /v1/admin/auth/refresh is public by the staff refresh cookie (fw_staff_refresh, httpOnly, Secure, SameSite=Lax, Path=/v1/admin/auth): it rotates the cookie (12 h staff session life, counted from sign-in), and a reused old cookie past the 10-second grace ends that session family (T4, V2). It and E-176 answer StaffAuthResult {staff: StaffAccount, accessToken, accessTokenExpiresAt}. It is a staff sign-in route: no reason and no staff role (A14 exception, like code, verify and sign-out).",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (From B03's halts) S5, (From Verify B01) V1, V2",
+      "decidedAt": "2026-11-15T21:00:00Z"
+    },
+    {
+      "id": "DEC-149",
+      "topic": "staff code request answers the same",
+      "closes": [],
+      "decision": "S6: POST /v1/admin/auth/code always answers 204 with no body, whoever asks; the note 'refuse not_staff' is wrong and removed (A8, C-64). A code goes only to an active or invited member; an invited member becomes active on their first verify.",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (From B03's halts) S6",
+      "decidedAt": "2026-11-15T21:00:00Z"
+    },
+    {
+      "id": "DEC-150",
+      "topic": "sign-in answer",
+      "closes": [],
+      "decision": "T1: E-20 (verify a code), E-53 (Google callback) and E-159 (refresh) answer AuthResult {accessToken, accessExpiresAt, isNew, session: {id, expiresAt}} (E-53 adds returnTo, the path the sign-in started from). The refresh token is only ever in the httpOnly cookie; no response carries a token or its hash.",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (From B01's halts) T1",
+      "decidedAt": "2026-11-15T21:00:00Z"
+    },
+    {
+      "id": "DEC-151",
+      "topic": "Google start answer",
+      "closes": [],
+      "decision": "T2: E-54 (start Google) answers {url}: where the browser goes next. It also sets the httpOnly Google state cookie (V3).",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (From B01's halts) T2, (From Verify B01) V3",
+      "decidedAt": "2026-11-15T21:00:00Z"
+    },
+    {
+      "id": "DEC-152",
+      "topic": "refresh auth",
+      "closes": [],
+      "decision": "T3: E-159 POST /v1/auth/refresh is public by its cookie (fw_refresh), no bearer: its auth in the registry is \"cookie\". The same for the staff refresh (S5).",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (From B01's halts) T3",
+      "decidedAt": "2026-11-15T21:00:00Z"
+    },
+    {
+      "id": "DEC-153",
+      "topic": "registry re-freeze (third reopen)",
+      "closes": [],
+      "decision": "The registry is re-frozen after S3 to S6 and T1 to T3 (DEC-146..152) by tools/pipeline/freeze.py; reconcile.py was run twice with --reopen \"S3,S4,S5,S6,T1,T2,T3\" (identical outputs, EXIT 0, 0 open conflicts, both admin gate lines 0). Endpoint ids are now stable across a reopen: the new staff refresh takes E-234. Frozen at 106 resources, 234 endpoints. S1, S2, T4 to T6 and V1 to V9 change code, storage or conventions only.",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (From B03's halts; From B01's halts)",
+      "decidedAt": "2026-11-15T21:05:00Z"
     }
   ]
 }

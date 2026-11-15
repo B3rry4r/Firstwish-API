@@ -61,6 +61,14 @@ Each outside service sits behind a port in `src/common/ports`, with a real adapt
 `PROVIDERS=standin` uses the stand-ins: no network calls, a clock tests can move, and a record of every call.
 It is refused when `NODE_ENV=production`. Tests always run on stand-ins.
 
+## Behind a load balancer (the client address)
+
+Sign-in limits count per client address, so the API must read the right one. `TRUST_PROXY_HOPS` (default 0) is how many
+proxies in front of the API are trusted: with 0 the address is the socket's, and `X-Forwarded-For` is ignored. Behind
+DigitalOcean's load balancer (App Platform or a Load Balancer in front of a Droplet), set `TRUST_PROXY_HOPS=1`, and let only the
+load balancer reach the API (a firewall on the Droplet), or a client could write its own `X-Forwarded-For`. Add one per extra
+proxy you put in front (a CDN before the load balancer: 2).
+
 ## How the code is laid out
 
 - `src/common/`: the shared kernel. Environment schema, error envelope, request ids, validation, access guard, ports,

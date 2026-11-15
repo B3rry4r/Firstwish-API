@@ -37,8 +37,10 @@ IDENT = re.compile(r"^[A-Z][A-Za-z0-9]*$")
 # A14 (DEC-125): every changing /v1/admin request carries `reason`, except the three staff sign-in routes;
 # code and verify are the only /v1/admin routes allowed without a staff role (public, before sign-in).
 REASON_DECISION = "DEC-125"
-ADMIN_SIGNIN = {("POST", "/v1/admin/auth/code"), ("POST", "/v1/admin/auth/verify"), ("POST", "/v1/admin/auth/sign-out")}
-ADMIN_PUBLIC = {("POST", "/v1/admin/auth/code"), ("POST", "/v1/admin/auth/verify")}
+# S5 (DEC-148): the staff refresh is a fourth sign-in route, public by the staff refresh cookie.
+ADMIN_SIGNIN = {("POST", "/v1/admin/auth/code"), ("POST", "/v1/admin/auth/verify"), ("POST", "/v1/admin/auth/sign-out"),
+                ("POST", "/v1/admin/auth/refresh")}
+ADMIN_PUBLIC = {("POST", "/v1/admin/auth/code"), ("POST", "/v1/admin/auth/verify"), ("POST", "/v1/admin/auth/refresh")}
 VIEW_RE = re.compile(r"^([A-Z][A-Za-z0-9]*) \(")
 STOP = set("a an the and or of to on in for one set save get list create update delete start make add remove by "
            "with is it its no not all every each from as at be can only any wish page per".split())
@@ -968,7 +970,19 @@ def main():
         for fk, ft in sorted((d_.get("fieldTypes") or {}).items()):
             field_types[fk] = (ft, d_["id"])
     ep_keys = sorted(endpoints, key=lambda k: (endpoints[k]["resource"], k[1], k[0]))
-    ep_id = {k: "E-%d" % i for i, k in enumerate(ep_keys, 1)}
+    # Endpoint ids are stable across a reopen (INT-1): an endpoint keeps the id the registry gave it; a new endpoint takes the
+    # next free number, in sorted order. A first run (no registry yet) numbers in sorted order.
+    old_ids = {}
+    if os.path.exists(os.path.join(PIPE, "registry.json")):
+        for r_ in load("registry.json").get("resources", []):
+            for e_ in r_.get("endpoints", []):
+                old_ids[(e_["method"], e_["path"])] = e_["id"]
+    ep_id = {k: old_ids[k] for k in ep_keys if k in old_ids}
+    next_n = max([int(v[2:]) for v in ep_id.values()] + [0]) + 1
+    for k in ep_keys:
+        if k not in ep_id:
+            ep_id[k] = "E-%d" % next_n
+            next_n += 1
 
     def auth_label(a):
         out = []
@@ -988,6 +1002,8 @@ def main():
                 out.append({"kind": "webhook signature"})
             elif x == "internal":
                 out.append({"kind": "internal", "note": "queue job or port; no HTTP route"})
+            elif x == "cookie":
+                out.append({"kind": "cookie", "note": "public by its httpOnly refresh cookie; no bearer (DEC-152)"})
         return out
 
     registry = {"version": 1, "frozenAt": None, "framework": framework.get("framework"),

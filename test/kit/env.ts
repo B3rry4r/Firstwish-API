@@ -17,5 +17,7 @@ export function standinEnv(): Record<string, string> {
     PUBLIC_SITE_URL: "http://localhost:3000",
     API_PUBLIC_URL: "http://localhost:4000",
     MAIL_FROM: "wishes@example.test",
+    // Tests send X-Forwarded-For as if one proxy stood in front (V4); a spec that proves 0 sets it itself.
+    TRUST_PROXY_HOPS: "1",
   };
 }

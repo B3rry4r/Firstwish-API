@@ -14,6 +14,9 @@ export class GetAdminAuditQueryDto implements GetAdminAuditQuery {
   from?: DateOnly;
   @IsOptional()
   @IsString()
+  section?: string;
+  @IsOptional()
+  @IsString()
   subjectType?: string;
   @IsOptional()
   @IsString()

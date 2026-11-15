@@ -259,7 +259,7 @@ export interface AiRequest {
     voiceFileId: string;
     wishId: string;
 }
-/** ApprovedDate: table. the dates a business has approved for its people, read by GET /v1/business/approved-dates and written by POST and DELETE /v1/business/approved-dates (BB1, DEC-168); each row belongs to a business */
+/** ApprovedDate: table. the dates a business has approved for its people, read by GET /v1/business/approved-dates and written by POST and DELETE /v1/business/approved-dates (BB1, DEC-168); each row is one business's */
 export interface ApprovedDate {
     key: string;
 }

@@ -173,7 +173,7 @@
   },
   "ApprovedDate": {
    "class": "table",
-   "reason": "the dates a business has approved for its people, read by GET /v1/business/approved-dates and written by POST and DELETE /v1/business/approved-dates (BB1, DEC-168); each row belongs to a business",
+   "reason": "the dates a business has approved for its people, read by GET /v1/business/approved-dates and written by POST and DELETE /v1/business/approved-dates (BB1, DEC-168); each row is one business's",
    "columns": {
     "businessId": {
      "type": "String",

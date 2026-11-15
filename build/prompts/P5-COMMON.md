@@ -18,6 +18,11 @@
   count < limit RETURNING), never read-then-write; limits are counted in the database and fail closed (a dead Redis or database
   refuses the request, never lets it through); a unique violation is a 409, never a 500; an id that is not a uuid is a 404 or 401,
   never a 500; anything two requests can do at once has a test that really runs them at once.
+- From the second wave's checks (binding): every write that belongs to an account goes through the kernel's account-lock helper
+  (locks the row, checks erasedAt inside the transaction: nothing lands on an erased account; rulings AA1); every text or json
+  column you add to an owned table gets an erase rule in schema-map.json (a gate fails without it; AA2); a signed upload never
+  points at a file's final key (Y1); a file's type is decided from its bytes (Y3); storage and other slow calls happen outside
+  a database transaction (Y4); a link is stored as new URL(v).href, https only (AA4).
 - A gap you notice is a task, not a comment: no "out of scope", "later", "this wave", TODO in src (the gate refuses them). Say it in the hand-back.
 - Checks (quiet logs, EXIT lines): build, typecheck, lint on changed files, `npm run test:affected -- <your paths>`, scripts/gates.sh,
   scripts/check-contracts.mjs; T2: `scripts/stack.sh up <prefix> <port>` and the cases by real HTTP (curl), then down.

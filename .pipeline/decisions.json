@@ -1505,11 +1505,11 @@
       "closes": [
         {
           "conflict": "C-34",
-          "key": "truth-mismatch|money|₦80,000 shown or sent by a screen is in no product truth and not in the price book seed",
-          "detail": "₦80,000 shown or sent by a screen is in no product truth and not in the price book seed"
+          "key": "truth-mismatch|money|\u20a680,000 shown or sent by a screen is in no product truth and not in the price book seed",
+          "detail": "\u20a680,000 shown or sent by a screen is in no product truth and not in the price book seed"
         }
       ],
-      "decision": "not a new figure: ₦80,000 = 100 wishes x the ₦800 royalty at list (T-65); the page works it out from the served price book (S-25). Listed to the owner.",
+      "decision": "not a new figure: \u20a680,000 = 100 wishes x the \u20a6800 royalty at list (T-65); the page works it out from the served price book (S-25). Listed to the owner.",
       "approvedBy": "lead default, owner may override",
       "confidence": "medium",
       "source": "build/rulings-phase3.md",
@@ -2083,13 +2083,13 @@
         },
         {
           "conflict": "C-44",
-          "key": "truth-mismatch|money|₦17 shown or sent by a screen is in no product truth and not in the price book seed",
-          "detail": "₦17 shown or sent by a screen is in no product truth and not in the price book seed"
+          "key": "truth-mismatch|money|\u20a617 shown or sent by a screen is in no product truth and not in the price book seed",
+          "detail": "\u20a617 shown or sent by a screen is in no product truth and not in the price book seed"
         },
         {
           "conflict": "C-45",
-          "key": "truth-mismatch|money|₦7,000 shown or sent by a screen is in no product truth and not in the price book seed",
-          "detail": "₦7,000 shown or sent by a screen is in no product truth and not in the price book seed"
+          "key": "truth-mismatch|money|\u20a67,000 shown or sent by a screen is in no product truth and not in the price book seed",
+          "detail": "\u20a67,000 shown or sent by a screen is in no product truth and not in the price book seed"
         }
       ],
       "decision": "A3: Figures in admin fixtures are sample data, not prices: the money truth check skips screens whose data files are the admin fixtures. Price.list and Price.listKobo are one field, listKobo.",
@@ -2339,6 +2339,71 @@
       "confidence": "medium",
       "source": "build/rulings.md R4, R10",
       "decidedAt": "2026-11-15T17:45:00Z"
+    },
+    {
+      "id": "DEC-132",
+      "topic": "Numbers targets",
+      "closes": [],
+      "decision": "P1 (HALT-1): PUT /v1/admin/numbers/targets takes {line: enum(tickets|extras|keeps|pass|pro_plans|vault_space|concierge|creator_plans), period: \"month\", targetKobo: integer kobo, reason}. Targets are stored in a config table NumbersTarget (line, period, targetKobo, setBy, setAt), one row per line and period; Numbers stays a view that reads it, and a line with no target set reads target null (\"No target set\").",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (Registry reopened once) P1",
+      "decidedAt": "2026-11-15T23:30:00Z",
+      "fieldTypes": {
+        "NumbersTarget.line": "enum(tickets|extras|keeps|pass|pro_plans|vault_space|concierge|creator_plans)",
+        "NumbersTarget.period": "enum(month)",
+        "NumbersTarget.targetKobo": "integer (kobo)",
+        "NumbersTarget.setBy": "string (the staff account id that set it)",
+        "NumbersTarget.setAt": "time",
+        "Numbers.targets": "object {<line>: integer kobo | null} (null: No target set)"
+      }
+    },
+    {
+      "id": "DEC-133",
+      "topic": "WebhookEvent.eventId",
+      "closes": [],
+      "decision": "P2 (HALT-2): WebhookEvent does not link to Event. WebhookEvent.eventId is the provider's event id (string, unique with provider). The dep-graph edge WebhookEvent to Event is dropped.",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (Registry reopened once) P2",
+      "decidedAt": "2026-11-15T23:30:00Z",
+      "fieldTypes": {
+        "WebhookEvent.eventId": "string (the provider's event id; unique with provider)"
+      }
+    },
+    {
+      "id": "DEC-134",
+      "topic": "payment start bodies",
+      "closes": [],
+      "decision": "P3: E-87 and every other payment start (E-148 buy a video, E-228 keep longer, E-231 pay and seal) carry no amount or price in the body; the server prices from the price book (S-24). The optional client amount and price fields are removed from the contracts, so a body that sends one is refused as an unknown field.",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (Registry reopened once) P3; S-24",
+      "decidedAt": "2026-11-15T23:30:00Z"
+    },
+    {
+      "id": "DEC-135",
+      "topic": "email is the only channel",
+      "closes": [],
+      "decision": "P4: E-19 (ask for a sign-in code): the only channel is email (R11), so channel is removed from the body. The same for every contract still naming sms or whatsapp as something Firstwish sends: E-78 (notice choices) loses channel too, and the stored AuthCode.channel and NoticePrefs.channel are enum(email). A later ruling that adds a channel brings it back as enum(email).",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings.md R11; build/rulings-phase3.md (Registry reopened once) P4",
+      "decidedAt": "2026-11-15T23:30:00Z",
+      "fieldTypes": {
+        "AuthCode.channel": "enum(email)",
+        "NoticePrefs.channel": "enum(email)"
+      }
+    },
+    {
+      "id": "DEC-136",
+      "topic": "registry re-freeze",
+      "closes": [],
+      "decision": "The registry is re-frozen after P1 to P4 (DEC-132..135) by tools/pipeline/freeze.py, which sets registry.json frozenAt and writes .pipeline/registry.lock.json. reconcile.py refuses to run while the lock exists unless called with --reopen naming the rulings that reopen it.",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (Registry reopened once)",
+      "decidedAt": "2026-11-15T23:30:00Z"
     }
   ]
 }

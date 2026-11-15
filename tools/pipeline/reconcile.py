@@ -10,6 +10,8 @@ Steps (SKILL.md Phase 3): 1 apply supersedes, 2 group by entity (aliases), 3 mer
 5 derive endpoints, 6 collisions, 7 ui-align tasks, 8 format canon, 9 outputs. Never resolves a conflict:
 a decision or supersede is applied and cited by id; anything else is a conflict row quoting its sources.
 Re-run it whenever fragments change; nothing is edited by hand afterwards.
+While .pipeline/registry.lock.json exists the registry is frozen and this refuses to run (exit 2) unless called
+with --reopen "<ruling ids>" naming the rulings that reopen it; tools/pipeline/freeze.py locks it again (DEC-136).
 """
 import fnmatch
 import glob
@@ -180,6 +182,14 @@ def conflict_key(kind, entity, detail):
 
 # ---------------------------------------------------------------- main
 def main():
+    lock_path = os.path.join(PIPE, "registry.lock.json")
+    reopen = sys.argv[sys.argv.index("--reopen") + 1] if "--reopen" in sys.argv[1:-1] else None
+    if os.path.exists(lock_path) and not (reopen and reopen.strip()):
+        print("REFUSED: .pipeline/registry.lock.json exists, so the registry is frozen (%s). A change needs a new ruling: "
+              "run with --reopen \"<ruling ids>\" naming it, then tools/pipeline/freeze.py to lock again." % load("registry.lock.json").get("decision"))
+        return 2
+    if reopen:
+        print("REOPENED by %s" % reopen.strip())
     aliases = json.load(open(os.path.join(HERE, "aliases.json"), encoding="utf-8"))
     sup = load("supersedes.json")["entries"]
     truths = load("product-truths.json")["truths"]
@@ -357,6 +367,13 @@ def main():
     for raw, sids in sorted(unclassified.items()):
         conflict("unclassified-entity", raw, "entity name is not in tools/pipeline/aliases.json and is not a plain resource name",
                  [{"src": s, "quote": raw} for s in sorted(sids)], ["add an alias entry", "rename in the fragment"])
+
+    # resources and fields a decision names (routes.json extraFields: the field table)
+    dec_ids = set(d_["id"] for d_ in decisions)
+    for x in routes.get("extraFields", []):
+        if x["decision"] in dec_ids:
+            sources.setdefault(x["decision"], {"kind": "decision", "data": {}, "text": ""})
+            add_field(x["resource"], x["name"], x["type"], x.get("nullable"), x["decision"])
 
     def srcs_of(name):
         out = set()
@@ -763,6 +780,23 @@ def main():
             endpoints[k_]["notes"].add("runs on a verified payment (webhook); a replayed webhook adds nothing")
             delivers[p["sku"]].append(k_)
 
+    # bodies a decision rules (routes.json endpointBody): drop fields, set fields, name the response
+    for ek, ov in sorted(routes.get("endpointBody", {}).items()):
+        if ov["decision"] not in dec_ids:
+            continue
+        m_, p_ = ek.split(" ", 1)
+        if (m_, p_) not in endpoints:
+            print("HALT: routes.json endpointBody names %s, which no source makes" % ek)
+            sys.exit(3)
+        ep = endpoints[(m_, p_)]
+        for n in ov.get("drop", []):
+            ep["body"].pop(n, None)
+        for n, t in ov.get("set", {}).items():
+            ep["body"][n] = {"type": t, "from": {ov["decision"]}}
+        if "response" in ov:
+            ep["response"] = ov["response"]
+        ep["notes"].add("body by " + ov["decision"])
+
     # A14: reason on every changing admin request
     if REASON_DECISION not in [d_["id"] for d_ in decisions]:
         print("HALT: %s (the admin reason rule) is not in decisions.json" % REASON_DECISION)
@@ -883,7 +917,8 @@ def main():
     for rname in sorted(res):
         for fname in res[rname]["fields"]:
             m = re.match(r"^([a-z][A-Za-z]*?)Ids?$", fname.split(".")[-1])
-            if m:
+            nr = aliases.get("notReferences", {}).get("%s.%s" % (rname, fname))
+            if m and not (nr and nr["decision"] in dec_ids):
                 tgt = lower.get(m.group(1).lower())
                 if tgt and tgt != rname:
                     edges[rname].add(tgt)

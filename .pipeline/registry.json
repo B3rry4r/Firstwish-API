@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "frozenAt": "2026-11-15T17:45:00Z",
+  "frozenAt": null,
   "framework": "nestjs",
   "generatedBy": "tools/pipeline/reconcile.py",
   "resources": [
@@ -2231,7 +2231,7 @@
         },
         {
           "name": "channel",
-          "type": "string",
+          "type": "enum(email)",
           "classes": [
             "enum"
           ],
@@ -2241,7 +2241,8 @@
             "sign-in",
             "sign-up"
           ],
-          "supersedes": []
+          "supersedes": [],
+          "typeBy": "DEC-135"
         },
         {
           "name": "code",
@@ -2406,15 +2407,6 @@
           ],
           "body": [
             {
-              "name": "channel",
-              "type": "'sms'|'whatsapp'|'email' (WhatsApp button is only shown for phone)",
-              "from": [
-                "auth-codes",
-                "sign-in",
-                "sign-up"
-              ]
-            },
-            {
               "name": "contact",
               "type": "string (phone as '<cc> <digits>' e.g. '+234 803 000 0000', or email trimmed); phone needs >= 7 digits, email /^\\S+@\\S+\\.\\S+$/",
               "from": [
@@ -2468,6 +2460,7 @@
             }
           ],
           "notes": [
+            "body by DEC-135",
             "route by DEC-104"
           ]
         },
@@ -9293,7 +9286,7 @@
       "fields": [
         {
           "name": "channel",
-          "type": "string",
+          "type": "enum(email)",
           "classes": [
             "enum"
           ],
@@ -9301,7 +9294,8 @@
           "provenance": [
             "notices"
           ],
-          "supersedes": []
+          "supersedes": [],
+          "typeBy": "DEC-135"
         },
         {
           "name": "muted",
@@ -9329,13 +9323,6 @@
           ],
           "body": [
             {
-              "name": "channel",
-              "type": "enum(sms|whatsapp|email)",
-              "from": [
-                "notices"
-              ]
-            },
-            {
               "name": "muted",
               "type": "array<string>",
               "from": [
@@ -9353,7 +9340,9 @@
               "via": "action:setNoticePrefs"
             }
           ],
-          "notes": []
+          "notes": [
+            "body by DEC-135"
+          ]
         }
       ]
     },
@@ -9486,6 +9475,19 @@
             "admin-numbers"
           ],
           "supersedes": []
+        },
+        {
+          "name": "targets",
+          "type": "object {<line>: integer kobo | null} (null: No target set)",
+          "classes": [
+            "money-kobo"
+          ],
+          "nullable": false,
+          "provenance": [
+            "DEC-132"
+          ],
+          "supersedes": [],
+          "typeBy": "DEC-132"
         }
       ],
       "endpoints": [
@@ -9533,14 +9535,39 @@
           ],
           "body": [
             {
+              "name": "line",
+              "type": "enum(tickets|extras|keeps|pass|pro_plans|vault_space|concierge|creator_plans)",
+              "from": [
+                "DEC-132"
+              ]
+            },
+            {
+              "name": "period",
+              "type": "enum(month)",
+              "from": [
+                "DEC-132"
+              ]
+            },
+            {
               "name": "reason",
               "type": "string (4 or more characters; written to the audit row)",
               "from": [
                 "DEC-125"
               ]
+            },
+            {
+              "name": "targetKobo",
+              "type": "integer (kobo)",
+              "from": [
+                "DEC-132"
+              ]
             }
           ],
-          "response": null,
+          "response": {
+            "entity": "NumbersTarget",
+            "cardinality": "single",
+            "note": "the target as stored (DEC-132)"
+          },
           "sources": [
             {
               "src": "DEC-130",
@@ -9548,10 +9575,85 @@
             }
           ],
           "notes": [
+            "body by DEC-132",
             "reason by DEC-125"
           ]
         }
       ]
+    },
+    {
+      "name": "NumbersTarget",
+      "sourceScreens": [],
+      "sourceDeclarations": [],
+      "embedded": [],
+      "fields": [
+        {
+          "name": "line",
+          "type": "enum(tickets|extras|keeps|pass|pro_plans|vault_space|concierge|creator_plans)",
+          "classes": [
+            "enum"
+          ],
+          "nullable": false,
+          "provenance": [
+            "DEC-132"
+          ],
+          "supersedes": [],
+          "typeBy": "DEC-132"
+        },
+        {
+          "name": "period",
+          "type": "enum(month)",
+          "classes": [
+            "enum"
+          ],
+          "nullable": false,
+          "provenance": [
+            "DEC-132"
+          ],
+          "supersedes": [],
+          "typeBy": "DEC-132"
+        },
+        {
+          "name": "setAt",
+          "type": "time",
+          "classes": [
+            "time-iso"
+          ],
+          "nullable": false,
+          "provenance": [
+            "DEC-132"
+          ],
+          "supersedes": [],
+          "typeBy": "DEC-132"
+        },
+        {
+          "name": "setBy",
+          "type": "string (the staff account id that set it)",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "DEC-132"
+          ],
+          "supersedes": [],
+          "typeBy": "DEC-132"
+        },
+        {
+          "name": "targetKobo",
+          "type": "integer (kobo)",
+          "classes": [
+            "money-kobo"
+          ],
+          "nullable": false,
+          "provenance": [
+            "DEC-132"
+          ],
+          "supersedes": [],
+          "typeBy": "DEC-132"
+        }
+      ],
+      "endpoints": []
     },
     {
       "name": "OpeningDef",
@@ -10590,14 +10692,6 @@
               ]
             },
             {
-              "name": "amount",
-              "type": "string '₦20,000'",
-              "from": [
-                "app-pass",
-                "app-wish-detail"
-              ]
-            },
-            {
               "name": "extraDays",
               "type": "7 if openedAt (TERM_DAYS.keepsake - TERM_DAYS.moment)",
               "from": [
@@ -10639,13 +10733,6 @@
               "from": [
                 "studio-editor",
                 "studio-home"
-              ]
-            },
-            {
-              "name": "price",
-              "type": "₦3,000 (keepsake minus moment, client computed)",
-              "from": [
-                "app-wish-detail"
               ]
             },
             {
@@ -10737,6 +10824,7 @@
             }
           ],
           "notes": [
+            "body by DEC-134",
             "route by DEC-94"
           ]
         },
@@ -15906,13 +15994,6 @@
           ],
           "body": [
             {
-              "name": "amount",
-              "type": "string ₦2,100 discounted",
-              "from": [
-                "app-wish-detail"
-              ]
-            },
-            {
               "name": "id",
               "type": "string",
               "from": [
@@ -15946,6 +16027,7 @@
             }
           ],
           "notes": [
+            "body by DEC-134",
             "route by DEC-95"
           ]
         }
@@ -23792,7 +23874,7 @@
         },
         {
           "name": "eventId",
-          "type": "string",
+          "type": "string (the provider's event id; unique with provider)",
           "classes": [
             "string"
           ],
@@ -23800,7 +23882,8 @@
           "provenance": [
             "payments"
           ],
-          "supersedes": []
+          "supersedes": [],
+          "typeBy": "DEC-133"
         },
         {
           "name": "id",
@@ -27632,13 +27715,6 @@
               ]
             },
             {
-              "name": "price",
-              "type": "string ₦1,500|₦4,000|₦6,000",
-              "from": [
-                "app-wish-detail"
-              ]
-            },
-            {
               "name": "wishId",
               "type": "string",
               "from": [
@@ -27665,7 +27741,9 @@
               "via": "action:keep"
             }
           ],
-          "notes": []
+          "notes": [
+            "body by DEC-134"
+          ]
         },
         {
           "id": "E-229",
@@ -27790,13 +27868,6 @@
               ]
             },
             {
-              "name": "amount",
-              "type": "number naira (money(total)) - shown only",
-              "from": [
-                "maker-ticket"
-              ]
-            },
-            {
               "name": "content",
               "type": "WishContent with note.from and finale.sign finalised (noteFrom, finaleOf)",
               "from": [
@@ -27859,6 +27930,7 @@
             }
           ],
           "notes": [
+            "body by DEC-134",
             "route by DEC-92"
           ]
         },

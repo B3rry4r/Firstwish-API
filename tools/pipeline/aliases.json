@@ -1,5 +1,5 @@
 {
-  "about": "Alias table read by reconcile.py. The only judgment in Phase 3. Each entry: raw name -> canonical, with two sources (screen ids or declaration ids) that show they are the same thing, and why. canonical '@client' means the fragment names something that is not server data (browser-only). 'embeddedIn' means the raw entity is a nested shape of another resource (field named), read and written through that resource. Anything unsure stays separate and goes to possibleAliases, which the script writes to conflicts.json as kind possible-alias.",
+  "about": "Alias table read by reconcile.py. The only judgment in Phase 3. Each entry: raw name -> canonical, with two sources (screen ids or declaration ids) that show they are the same thing, and why. canonical '@client' means the fragment names something that is not server data (browser-only). 'embeddedIn' means the raw entity is a nested shape of another resource (field named), read and written through that resource. Anything unsure stays separate and goes to possibleAliases, which the script writes to conflicts.json as kind possible-alias. 'notReferences' names an id-looking field that is not a link to the resource its name suggests (no dep-graph edge), with the decision that says so.",
   "entities": {
     "(local clipboard)": {
       "canonical": "@client",
@@ -1596,5 +1596,12 @@
       "b": "DateRow",
       "why": "upcoming dates (date, person, what) vs DateRow (date, who, what)"
     }
-  ]
+  ],
+  "notReferences": {
+    "WebhookEvent.eventId": {
+      "not": "Event",
+      "is": "the payment provider's event id (string, unique with provider)",
+      "decision": "DEC-133"
+    }
+  }
 }

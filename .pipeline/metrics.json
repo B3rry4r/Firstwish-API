@@ -2066,7 +2066,6 @@
         "maker-ticket"
       ],
       "writerPath": [
-        "E-231",
         "price book (S-14: the web reads GET /v1/prices)"
       ],
       "formula": [],
@@ -2199,7 +2198,6 @@
         "app-wish-detail"
       ],
       "writerPath": [
-        "E-228",
         "price book (S-14: the web reads GET /v1/prices)"
       ],
       "formula": [

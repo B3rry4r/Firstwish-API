@@ -1,5 +1,5 @@
 {
-  "about": "Route table read by reconcile.py: the routes the Phase 3 rulings name and the cleaner names for clumsy mechanical routes. Every entry cites the decision (decisions.json) or the convention it follows. 'bases' rename a resource's route base (singleton: no :id; idParam: the id's name). 'actions' and 'reads' are keyed by canonical Resource.action / Resource, or screen:RawEntity(.action) for one screen, or screen:* for every read of a screen. A read set to {drop: decision} makes no endpoint; an action set to {ruling: decision} maps to that ruling.",
+  "about": "Route table read by reconcile.py: the routes the Phase 3 rulings name and the cleaner names for clumsy mechanical routes. Every entry cites the decision (decisions.json) or the convention it follows. 'bases' rename a resource's route base (singleton: no :id; idParam: the id's name). 'actions' and 'reads' are keyed by canonical Resource.action / Resource, or screen:RawEntity(.action) for one screen, or screen:* for every read of a screen. A read set to {drop: decision} makes no endpoint; an action set to {ruling: decision} maps to that ruling. 'endpointBody' (keyed 'METHOD /path') applies a decision to one endpoint's body: drop names fields removed, set adds or retypes fields, response names what it returns. 'extraFields' adds the fields (and so the resource) a decision names when no screen or declaration carries them.",
   "bases": {
     "Account": {
       "base": "/v1/me",
@@ -1427,5 +1427,101 @@
       "pro.starter": "pay -> plan active; replayed webhook adds nothing",
       "pro.pack": "pay -> pack added; replayed webhook adds nothing"
     }
-  }
+  },
+  "endpointBody": {
+    "PUT /v1/admin/numbers/targets": {
+      "decision": "DEC-132",
+      "set": {
+        "line": "enum(tickets|extras|keeps|pass|pro_plans|vault_space|concierge|creator_plans)",
+        "period": "enum(month)",
+        "targetKobo": "integer (kobo)"
+      },
+      "response": {
+        "entity": "NumbersTarget",
+        "cardinality": "single",
+        "note": "the target as stored (DEC-132)"
+      }
+    },
+    "POST /v1/payments": {
+      "decision": "DEC-134",
+      "drop": [
+        "amount",
+        "price"
+      ]
+    },
+    "POST /v1/wishes/:id/video": {
+      "decision": "DEC-134",
+      "drop": [
+        "amount"
+      ]
+    },
+    "POST /v1/wishes/:id/keep": {
+      "decision": "DEC-134",
+      "drop": [
+        "price"
+      ]
+    },
+    "POST /v1/wishes/:id/seal": {
+      "decision": "DEC-134",
+      "drop": [
+        "amount"
+      ]
+    },
+    "POST /v1/auth/codes": {
+      "decision": "DEC-135",
+      "drop": [
+        "channel"
+      ]
+    },
+    "PATCH /v1/me/notice-prefs": {
+      "decision": "DEC-135",
+      "drop": [
+        "channel"
+      ]
+    }
+  },
+  "extraFields": [
+    {
+      "resource": "NumbersTarget",
+      "name": "line",
+      "type": "enum(tickets|extras|keeps|pass|pro_plans|vault_space|concierge|creator_plans)",
+      "nullable": false,
+      "decision": "DEC-132"
+    },
+    {
+      "resource": "NumbersTarget",
+      "name": "period",
+      "type": "enum(month)",
+      "nullable": false,
+      "decision": "DEC-132"
+    },
+    {
+      "resource": "NumbersTarget",
+      "name": "targetKobo",
+      "type": "integer (kobo)",
+      "nullable": false,
+      "decision": "DEC-132"
+    },
+    {
+      "resource": "NumbersTarget",
+      "name": "setBy",
+      "type": "string (the staff account id that set it)",
+      "nullable": false,
+      "decision": "DEC-132"
+    },
+    {
+      "resource": "NumbersTarget",
+      "name": "setAt",
+      "type": "time (ISO-8601)",
+      "nullable": false,
+      "decision": "DEC-132"
+    },
+    {
+      "resource": "Numbers",
+      "name": "targets",
+      "type": "object {<line>: integer kobo | null}",
+      "nullable": false,
+      "decision": "DEC-132"
+    }
+  ]
 }

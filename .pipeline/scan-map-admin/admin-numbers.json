@@ -1,0 +1,25 @@
+{
+ "id": "admin-numbers",
+ "title": "Admin: Numbers",
+ "uiFiles": [
+  "app/admin/numbers/page.tsx",
+  "components/admin/d/Numbers.tsx",
+  "components/admin/d/Charts.tsx"
+ ],
+ "dataFiles": [
+  "lib/admin-api.ts",
+  "lib/admin/d-api.ts",
+  "lib/admin/d-types.ts",
+  "lib/admin/d-fixtures.ts",
+  "lib/admin-types.ts",
+  "components/admin/d/Charts.tsx"
+ ],
+ "dataProvenance": "repository-direct",
+ "localStore": {
+  "reads": "in-memory store in lib/admin/d-api.ts cloned from marked sample fixtures lib/admin/d-fixtures.ts (SAMPLE = true); sample data until /v1/admin exists; changes live only until reload; figures and targets are PROVISIONAL fixture numbers (d-fixtures.ts numbers())",
+  "populatedBy": null
+ },
+ "inlineLiterals": [],
+ "route": "/admin/numbers",
+ "area": "admin"
+}

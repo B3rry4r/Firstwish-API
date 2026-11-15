@@ -1,0 +1,23 @@
+{
+ "id": "admin-messages",
+ "title": "Admin: Messages and delivery log",
+ "uiFiles": [
+  "app/admin/messages/page.tsx",
+  "components/admin/d/Messages.tsx"
+ ],
+ "dataFiles": [
+  "lib/admin-api.ts",
+  "lib/admin/d-api.ts",
+  "lib/admin/d-types.ts",
+  "lib/admin/d-fixtures.ts",
+  "lib/admin-types.ts"
+ ],
+ "dataProvenance": "repository-direct",
+ "localStore": {
+  "reads": "in-memory store in lib/admin/d-api.ts cloned from marked sample fixtures lib/admin/d-fixtures.ts (SAMPLE = true); sample data until /v1/admin exists; changes live only until reload",
+  "populatedBy": null
+ },
+ "inlineLiterals": [],
+ "route": "/admin/messages",
+ "area": "admin"
+}

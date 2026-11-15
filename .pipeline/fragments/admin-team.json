@@ -1,0 +1,190 @@
+{
+ "screenId": "admin-team",
+ "reads": [
+  {
+   "entity": "Member",
+   "fields": [
+    {
+     "name": "id",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "name",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "email",
+     "type": "string (masked, e.g. 'ow\u2022\u2022\u2022@gmail.com')",
+     "nullable": false
+    },
+    {
+     "name": "role",
+     "type": "Role: owner|ops|moderator|reviewer|support|finance|maker",
+     "nullable": false
+    },
+    {
+     "name": "state",
+     "type": "active|invited|removed",
+     "nullable": false
+    },
+    {
+     "name": "since",
+     "type": "date YYYY-MM-DD",
+     "nullable": false
+    },
+    {
+     "name": "seen",
+     "type": "datetime (ISO, no zone in fixture)",
+     "nullable": true
+    }
+   ],
+   "cardinality": "list",
+   "filtersOrSort": [
+    "client sort by name, role, state, seen (Table); initial role"
+   ],
+   "pagination": "none",
+   "evidence": "GET /v1/admin/team -> { members, access }"
+  },
+  {
+   "entity": "RoleAccess",
+   "fields": [
+    {
+     "name": "role",
+     "type": "Role",
+     "nullable": false
+    },
+    {
+     "name": "sections",
+     "type": "string[] (admin section hrefs from components/admin/nav.ts, e.g. '/admin/payments')",
+     "nullable": false
+    }
+   ],
+   "cardinality": "list",
+   "filtersOrSort": [],
+   "pagination": "none",
+   "evidence": "GET /v1/admin/team -> { members, access }; access is Record<Role,string[]>. Fixture is marked 'Default (lead), owner may override'. Fixture: owner all 18 hrefs; ops all but team, settings, prices; moderator 5; reviewer 4; support 5; finance 6; maker 2. The screen shows 'Every section' when length equals SECTIONS.length"
+  }
+ ],
+ "actions": [
+  {
+   "name": "inviteMember",
+   "kind": "create",
+   "entity": "Member",
+   "payload": [
+    {
+     "name": "email",
+     "type": "string (trimmed lowercased; /^\\S+@\\S+\\.\\S+$/)"
+    },
+    {
+     "name": "role",
+     "type": "Role excluding owner"
+    },
+    {
+     "name": "reason",
+     "type": "string"
+    }
+   ],
+   "expectedResponse": {
+    "entity": "Member",
+    "cardinality": "single",
+    "note": "seam returns void; header says -> Member. Server sends a sign-in code to the email. Owner only. Reason min 4 chars after trim. Sample builds name from the email local part and masks the email, state invited, since today"
+   },
+   "evidence": "POST /v1/admin/team/invite { email, role, reason } -> Member. A sign-in code goes to that email. Owner only."
+  },
+  {
+   "name": "removeMember",
+   "kind": "update",
+   "entity": "Member",
+   "payload": [
+    {
+     "name": "id",
+     "type": "string"
+    },
+    {
+     "name": "reason",
+     "type": "string"
+    }
+   ],
+   "expectedResponse": {
+    "entity": "none",
+    "cardinality": "single",
+    "note": "seam returns void; member becomes state removed. Refused for the owner role or an already removed member (not_allowed). Owner only"
+   },
+   "evidence": "POST /v1/admin/team/:id/remove { reason }. They cannot sign in after this. Owner only; the owner cannot be removed."
+  }
+ ],
+ "authContext": {
+  "requiresAuth": true,
+  "side": "staff",
+  "rolesObserved": [
+   "owner (invite, remove, see action column)",
+   "every staff role may open the screen in the code (no route guard seen); the Team section is in the access table for owner only (ops excluded)"
+  ]
+ },
+ "special": {
+  "realtime": false,
+  "uploads": false,
+  "downloads": false,
+  "note": "every write also writes an audit row (section /admin/team) and re-reads the screen via listeners; the invite and Confirm modal take the reason"
+ },
+ "uiStatesHandled": [
+  {
+   "state": "loading",
+   "entersWhen": "data == null and no error (useAdmin starts loading:true)",
+   "reachable": "no today (async over in-memory reads resolves in a microtask); yes once a network call exists"
+  },
+  {
+   "state": "error",
+   "entersWhen": "useAdmin read() rejects; Problem shows adminProblem(e) with retry",
+   "reachable": "no today (nothing rejects on reads); yes once a network call exists. Write errors (not_allowed, failed, not_found) reject in onConfirm"
+  },
+  {
+   "state": "loaded",
+   "entersWhen": "data present",
+   "reachable": "yes"
+  },
+  {
+   "state": "empty",
+   "entersWhen": "no explicit empty state: Table is given data.members (always has the owner)",
+   "reachable": "no"
+  },
+  {
+   "state": "owner-only blocks",
+   "entersWhen": "useStaff().role === 'owner' shows the Invite block and the Action column",
+   "reachable": "yes in sample (any sign-in is the owner)"
+  },
+  {
+   "state": "confirm",
+   "entersWhen": "ask set by Remove or Invite click; Confirm asks for the reason",
+   "reachable": "yes"
+  }
+ ],
+ "uiStatesDesigned": [
+  "loading",
+  "empty",
+  "error",
+  "loaded"
+ ],
+ "stubsObserved": [
+  {
+   "file": "lib/admin/d-api.ts:1-6",
+   "evidence": "lib/admin/d-api.ts header: 'NOT CONNECTED YET: the bodies read lib/admin/d-fixtures.ts (marked sample data) and keep staff changes in memory'; lib/admin-api.ts:15 CONNECTED = false",
+   "standsInFor": "the /v1/admin server",
+   "consequence": "every figure and row is fixture data; changes vanish on reload; loading and error states are not reachable from a network"
+  },
+  {
+   "file": "lib/admin/d-api.ts:23",
+   "evidence": "const owner = () => { if (dBridge.role() !== 'owner') throw ... }; role comes from readMe() in lib/admin-api.ts",
+   "standsInFor": "server-side role check",
+   "consequence": "role is the in-memory Staff set by sample sign-in (lib/admin-api.ts:54-60, any six digits pass, as the owner); the server must enforce owner-only"
+  },
+  {
+   "file": "lib/admin/d-fixtures.ts:99-131",
+   "evidence": "members, access and ROLE_LINE are fixture literals; ROLES and ROLE_LINE are read from dSample in lib/admin-fixtures.ts and stay local",
+   "standsInFor": "staff list and role-to-section table (a server table); role descriptions may stay local text",
+   "consequence": "sample names and emails are made up; nothing is invited for real"
+  }
+ ]
+}

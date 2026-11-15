@@ -1,0 +1,134 @@
+{
+ "screenId": "admin-audit",
+ "reads": [
+  {
+   "entity": "AuditRow",
+   "fields": [
+    {
+     "name": "id",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "at",
+     "type": "datetime (ISO, no zone in fixture)",
+     "nullable": false
+    },
+    {
+     "name": "by",
+     "type": "string (staff name, not an id)",
+     "nullable": false
+    },
+    {
+     "name": "section",
+     "type": "string (admin section href, e.g. '/admin/wishes')",
+     "nullable": false
+    },
+    {
+     "name": "what",
+     "type": "string (sentence)",
+     "nullable": false
+    },
+    {
+     "name": "reason",
+     "type": "string",
+     "nullable": true
+    },
+    {
+     "name": "href",
+     "type": "string (admin link to the subject)",
+     "nullable": true
+    }
+   ],
+   "cardinality": "list",
+   "filtersOrSort": [
+    "by (exact staff name)",
+    "section (href)",
+    "newest first; client sort by what, by, section, at; initial at descending"
+   ],
+   "pagination": "paged (client Table pageSize 12 over the full list; no server paging in the seam)",
+   "evidence": "GET /v1/admin/audit?by=&section= -> AuditRow[], newest first. Every staff action with its reason. Sample also derives rows from each wish timeline event with a staff actor and each person record event with a staff actor"
+  },
+  {
+   "entity": "AuditRow (unfiltered, for the filter chips)",
+   "fields": [
+    {
+     "name": "by",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "section",
+     "type": "string",
+     "nullable": false
+    }
+   ],
+   "cardinality": "list",
+   "filtersOrSort": [],
+   "pagination": "none",
+   "evidence": "the screen calls the same list a second time with no filter to build the Who and Section chips; the chip lists need the distinct staff names and sections in the log"
+  }
+ ],
+ "actions": [],
+ "authContext": {
+  "requiresAuth": true,
+  "side": "staff",
+  "rolesObserved": [
+   "any staff role in the code; the access table lists Audit for owner and ops only"
+  ]
+ },
+ "special": {
+  "realtime": false,
+  "uploads": false,
+  "downloads": false,
+  "note": "read-only: 'Nothing here can be changed'; refetches when any staff change happens (in-memory listener) and when filters change"
+ },
+ "uiStatesHandled": [
+  {
+   "state": "loading",
+   "entersWhen": "data == null and no error (useAdmin starts loading:true)",
+   "reachable": "no today (async over in-memory reads resolves in a microtask); yes once a network call exists"
+  },
+  {
+   "state": "error",
+   "entersWhen": "useAdmin read() rejects; Problem shows adminProblem(e) with retry",
+   "reachable": "no today (nothing rejects on reads); yes once a network call exists. Write errors (not_allowed, failed, not_found) reject in onConfirm"
+  },
+  {
+   "state": "empty",
+   "entersWhen": "data.length === 0 after filters: 'Nothing here'",
+   "reachable": "yes (a filter combination with no rows)"
+  },
+  {
+   "state": "loaded",
+   "entersWhen": "data.length > 0",
+   "reachable": "yes"
+  }
+ ],
+ "uiStatesDesigned": [
+  "loading",
+  "empty",
+  "error",
+  "loaded"
+ ],
+ "stubsObserved": [
+  {
+   "file": "lib/admin/d-api.ts:1-6",
+   "evidence": "lib/admin/d-api.ts header: 'NOT CONNECTED YET: the bodies read lib/admin/d-fixtures.ts (marked sample data) and keep staff changes in memory'; lib/admin-api.ts:15 CONNECTED = false",
+   "standsInFor": "the /v1/admin server",
+   "consequence": "every figure and row is fixture data; changes vanish on reload; loading and error states are not reachable from a network"
+  },
+  {
+   "file": "lib/admin/d-api.ts:154-160",
+   "evidence": "listAudit merges store.audit with rows derived from dBridge.db wishes and people timelines",
+   "standsInFor": "one server audit table that every staff action writes to",
+   "consequence": "the server must record every staff action (all admin sections) as an audit row with the actor, section, reason and link"
+  },
+  {
+   "file": "lib/admin/d-fixtures.ts:133-141",
+   "evidence": "six fixture audit rows",
+   "standsInFor": "history",
+   "consequence": "sample only"
+  }
+ ]
+}

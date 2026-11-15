@@ -1,0 +1,30 @@
+{
+ "id": "admin-audit",
+ "title": "Admin: Audit",
+ "uiFiles": [
+  "app/admin/audit/page.tsx",
+  "components/admin/d/Audit.tsx",
+  "components/admin/nav.ts"
+ ],
+ "dataFiles": [
+  "lib/admin-api.ts",
+  "lib/admin/d-api.ts",
+  "lib/admin/d-types.ts",
+  "lib/admin/d-fixtures.ts",
+  "lib/admin-types.ts",
+  "lib/admin-fixtures.ts"
+ ],
+ "dataProvenance": "inline",
+ "localStore": {
+  "reads": "in-memory store in lib/admin/d-api.ts cloned from lib/admin/d-fixtures.ts (marked sample data); lost on reload",
+  "populatedBy": null
+ },
+ "inlineLiterals": [
+  {
+   "file": "lib/admin/d-fixtures.ts",
+   "description": "audit rows before today (lines 133-141); also derives rows from wish timelines and person records in lib/admin-api.ts"
+  }
+ ],
+ "route": "/admin/audit",
+ "area": "admin"
+}

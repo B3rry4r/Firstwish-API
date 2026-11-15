@@ -1,0 +1,158 @@
+{
+ "reads": [
+  {
+   "entity": "Thread",
+   "fields": [
+    {
+     "name": "id",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "subject",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "name",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "email",
+     "type": "string (masked)",
+     "nullable": false
+    },
+    {
+     "name": "person",
+     "type": "string (Person.id)",
+     "nullable": true
+    },
+    {
+     "name": "wish",
+     "type": "string (Wish.no)",
+     "nullable": true
+    },
+    {
+     "name": "state",
+     "type": "'open'|'waiting'|'closed'",
+     "nullable": false
+    },
+    {
+     "name": "last",
+     "type": "string (time of the newest note, derived)",
+     "nullable": false
+    },
+    {
+     "name": "wishFor",
+     "type": "string (the tied wish's forName)",
+     "nullable": true
+    }
+   ],
+   "cardinality": "list",
+   "filtersOrSort": [
+    "q: matches subject, name, email or a wish number (leading # or \u2116 dropped), case-insensitive",
+    "state: open|waiting|closed|all",
+    "newest last-note first"
+   ],
+   "pagination": "paged (client-side table pageSize 10; the seam returns the full list)",
+   "evidence": "GET /v1/admin/support/threads?q=&state= -> ThreadRow[], newest first. q matches the subject, the name, the email or a wish number."
+  },
+  {
+   "entity": "ThreadCounts",
+   "fields": [
+    {
+     "name": "open",
+     "type": "number",
+     "nullable": false
+    },
+    {
+     "name": "waiting",
+     "type": "number",
+     "nullable": false
+    },
+    {
+     "name": "closed",
+     "type": "number",
+     "nullable": false
+    },
+    {
+     "name": "all",
+     "type": "number",
+     "nullable": false
+    }
+   ],
+   "cardinality": "single",
+   "filtersOrSort": [],
+   "pagination": "none",
+   "evidence": "threadCounts() has no request comment; computed synchronously from the in-memory threads, not a separate request. Chip counts ignore the search text."
+  }
+ ],
+ "actions": [],
+ "authContext": {
+  "requiresAuth": true,
+  "side": "staff",
+  "rolesObserved": [
+   "owner",
+   "ops",
+   "support"
+  ]
+ },
+ "special": {
+  "realtime": false,
+  "uploads": false,
+  "downloads": false,
+  "note": "refetches on query/state change and after any staff change (useAdmin listener)"
+ },
+ "uiStatesHandled": [
+  {
+   "state": "loading",
+   "entersWhen": "!data (no error)",
+   "reachable": "yes",
+   "note": "async fixture read; real request will make it perceptible; also re-entered on every q/state change"
+  },
+  {
+   "state": "empty",
+   "entersWhen": "data.length === 0 (copy differs when q is set)",
+   "reachable": "yes"
+  },
+  {
+   "state": "error",
+   "entersWhen": "error string set (read rejected)",
+   "reachable": "no",
+   "note": "the fixture list never rejects today; a real request can"
+  },
+  {
+   "state": "loaded",
+   "entersWhen": "data.length > 0: count line and table, click row opens thread",
+   "reachable": "yes"
+  }
+ ],
+ "uiStatesDesigned": [
+  "loading",
+  "empty",
+  "error",
+  "loaded"
+ ],
+ "stubsObserved": [
+  {
+   "file": "lib/admin/d-api.ts:1-8",
+   "evidence": "/* NOT CONNECTED YET: the bodies read lib/admin/d-fixtures.ts (marked sample data) and keep staff changes in memory */",
+   "standsInFor": "the /v1/admin API",
+   "consequence": "sample data until /v1/admin exists; staff changes vanish on reload and cross-screen effects are simulated in one in-memory copy"
+  },
+  {
+   "file": "components/admin/d/Support.tsx:19",
+   "evidence": "useState<ThreadState | ''>('open')",
+   "standsInFor": "default filter",
+   "consequence": "none"
+  },
+  {
+   "file": "lib/admin/d-api.ts:34",
+   "evidence": "threadCounts = () => ({...store.threads.filter...})",
+   "standsInFor": "synchronous count; not awaited, chips counts do not refresh while search typed",
+   "consequence": "real server needs counts as a read (summary of all threads regardless of q)"
+  }
+ ],
+ "screenId": "admin-support"
+}

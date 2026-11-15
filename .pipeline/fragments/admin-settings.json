@@ -1,0 +1,189 @@
+{
+ "screenId": "admin-settings",
+ "reads": [
+  {
+   "entity": "Settings",
+   "fields": [
+    {
+     "name": "providers",
+     "type": "Provider[]",
+     "nullable": false
+    },
+    {
+     "name": "storage",
+     "type": "StorageChoice: r2|spaces",
+     "nullable": false
+    },
+    {
+     "name": "switches",
+     "type": "{ off40: boolean, samplesOff: boolean }",
+     "nullable": false
+    }
+   ],
+   "cardinality": "single",
+   "filtersOrSort": [],
+   "pagination": "none",
+   "evidence": "GET /v1/admin/settings -> Settings"
+  },
+  {
+   "entity": "Provider",
+   "fields": [
+    {
+     "name": "key",
+     "type": "payments|email|ai|storage",
+     "nullable": false
+    },
+    {
+     "name": "name",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "who",
+     "type": "string (provider name; blank for storage, the chosen storage name is shown instead)",
+     "nullable": false
+    },
+    {
+     "name": "state",
+     "type": "connected|stand_in|waiting",
+     "nullable": false
+    },
+    {
+     "name": "line",
+     "type": "string",
+     "nullable": false
+    }
+   ],
+   "cardinality": "list",
+   "filtersOrSort": [],
+   "pagination": "none",
+   "evidence": "nested in Settings.providers. Fixture: Payments/Paystack, Email/Resend, AI/Anthropic, Storage; all state waiting"
+  }
+ ],
+ "actions": [
+  {
+   "name": "setStorage",
+   "kind": "update",
+   "entity": "Settings",
+   "payload": [
+    {
+     "name": "choice",
+     "type": "r2|spaces"
+    },
+    {
+     "name": "reason",
+     "type": "string"
+    }
+   ],
+   "expectedResponse": {
+    "entity": "none",
+    "cardinality": "single",
+    "note": "seam returns void; no-op when unchanged. Owner only. One is used at a time"
+   },
+   "evidence": "PUT /v1/admin/settings/storage { choice, reason }. One is used at a time. Owner only."
+  },
+  {
+   "name": "setSwitch",
+   "kind": "update",
+   "entity": "Settings",
+   "payload": [
+    {
+     "name": "key",
+     "type": "off40|samplesOff"
+    },
+    {
+     "name": "on",
+     "type": "boolean"
+    },
+    {
+     "name": "reason",
+     "type": "string"
+    }
+   ],
+   "expectedResponse": {
+    "entity": "none",
+    "cardinality": "single",
+    "note": "seam returns void. Owner only. off40 is the 40% off on tickets and extras (OFF = 0.4 in lib/maker.ts, until 31 January per its comment); samplesOff hides sample wishes in production. The screen text also names the percentage, taken from OFF in lib/maker.ts"
+   },
+   "evidence": "PUT /v1/admin/settings/switches/:key { on, reason }. Owner only."
+  }
+ ],
+ "authContext": {
+  "requiresAuth": true,
+  "side": "staff",
+  "rolesObserved": [
+   "owner (changes)",
+   "non-owner staff see read-only Pills; access table lists Settings for owner only"
+  ]
+ },
+ "special": {
+  "realtime": false,
+  "uploads": false,
+  "downloads": false,
+  "note": "every change writes an audit row (section /admin/settings); the off40 and storage values must also drive the live site's prices and file storage (the screen's own text says so)"
+ },
+ "uiStatesHandled": [
+  {
+   "state": "loading",
+   "entersWhen": "data == null and no error (useAdmin starts loading:true)",
+   "reachable": "no today (async over in-memory reads resolves in a microtask); yes once a network call exists"
+  },
+  {
+   "state": "error",
+   "entersWhen": "useAdmin read() rejects; Problem shows adminProblem(e) with retry",
+   "reachable": "no today (nothing rejects on reads); yes once a network call exists. Write errors (not_allowed, failed, not_found) reject in onConfirm"
+  },
+  {
+   "state": "loaded",
+   "entersWhen": "data present",
+   "reachable": "yes"
+  },
+  {
+   "state": "empty",
+   "entersWhen": "none coded",
+   "reachable": "no"
+  },
+  {
+   "state": "read-only",
+   "entersWhen": "useStaff().role !== 'owner': storage buttons disabled except the current, switches show Pills",
+   "reachable": "no in sample (any sign-in is the owner); yes with real roles"
+  },
+  {
+   "state": "confirm",
+   "entersWhen": "ask set; Confirm asks for the reason",
+   "reachable": "yes"
+  }
+ ],
+ "uiStatesDesigned": [
+  "loading",
+  "empty",
+  "error",
+  "loaded"
+ ],
+ "stubsObserved": [
+  {
+   "file": "lib/admin/d-api.ts:1-6",
+   "evidence": "lib/admin/d-api.ts header: 'NOT CONNECTED YET: the bodies read lib/admin/d-fixtures.ts (marked sample data) and keep staff changes in memory'; lib/admin-api.ts:15 CONNECTED = false",
+   "standsInFor": "the /v1/admin server",
+   "consequence": "every figure and row is fixture data; changes vanish on reload; loading and error states are not reachable from a network"
+  },
+  {
+   "file": "lib/admin/d-api.ts:23",
+   "evidence": "const owner = () => { if (dBridge.role() !== 'owner') throw ... }; role comes from readMe() in lib/admin-api.ts",
+   "standsInFor": "server-side role check",
+   "consequence": "role is the in-memory Staff set by sample sign-in (lib/admin-api.ts:54-60, any six digits pass, as the owner); the server must enforce owner-only"
+  },
+  {
+   "file": "lib/admin/d-fixtures.ts:143-153",
+   "evidence": "providers all 'waiting'; line text 'Waiting for the test keys...', 'The owner decides at the end of November'",
+   "standsInFor": "live provider connection state (payments, email, AI, storage)",
+   "consequence": "the state of each provider must be derived by the server from real configuration and health, not stored text"
+  },
+  {
+   "file": "lib/admin/d-api.ts:186",
+   "evidence": "SWITCH_WORD built from OFF in lib/maker.ts",
+   "standsInFor": "the discount percentage as configuration",
+   "consequence": "the percentage is a client constant today; the server holds prices from configuration"
+  }
+ ]
+}

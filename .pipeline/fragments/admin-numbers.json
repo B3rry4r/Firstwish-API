@@ -1,0 +1,133 @@
+{
+ "reads": [
+  {
+   "entity": "Numbers",
+   "fields": [
+    {
+     "name": "period",
+     "type": "'7d'|'30d'|'quarter'",
+     "nullable": false
+    },
+    {
+     "name": "days",
+     "type": "number",
+     "nullable": false
+    },
+    {
+     "name": "lines",
+     "type": "{line:Line, amount:number, target:number}[] over the eight lines tickets, extras, keeps, pass, pro, vault, concierge, creator; amount and target in naira numbers",
+     "nullable": false
+    },
+    {
+     "name": "previews",
+     "type": "number",
+     "nullable": false
+    },
+    {
+     "name": "paid",
+     "type": "number",
+     "nullable": false
+    },
+    {
+     "name": "opens",
+     "type": "{day:string YYYY-MM-DD, count:number}[]",
+     "nullable": false
+    },
+    {
+     "name": "kinds",
+     "type": "Count[]",
+     "nullable": false
+    },
+    {
+     "name": "occasions",
+     "type": "Count[]",
+     "nullable": false
+    },
+    {
+     "name": "styles",
+     "type": "Count[]",
+     "nullable": false
+    },
+    {
+     "name": "keeps",
+     "type": "Count[] (key,name,count; no paid)",
+     "nullable": false
+    }
+   ],
+   "cardinality": "single",
+   "filtersOrSort": [
+    "period: 7d|30d|quarter (default 30d)"
+   ],
+   "pagination": "none",
+   "evidence": "GET /v1/admin/numbers?period=7d|30d|quarter -> Numbers. Count = {key:string, name:string, count:number, paid?:number}. Derived in UI: takings = sum amount, target sum, percentages, opens per day, preview-to-paid rate. Money shown as naira numbers/'\u20a6' text (big() gives \u20a617.4m), all fixture figures."
+  }
+ ],
+ "actions": [],
+ "authContext": {
+  "requiresAuth": true,
+  "side": "staff",
+  "rolesObserved": [
+   "owner",
+   "ops",
+   "finance"
+  ]
+ },
+ "special": {
+  "realtime": false,
+  "uploads": false,
+  "downloads": false,
+  "note": "every block toggles chart or table (view state local); refetch on period change"
+ },
+ "uiStatesHandled": [
+  {
+   "state": "loading",
+   "entersWhen": "!data (no error)",
+   "reachable": "yes",
+   "note": "re-entered on each period change"
+  },
+  {
+   "state": "error",
+   "entersWhen": "error string set",
+   "reachable": "no",
+   "note": "fixture never rejects"
+  },
+  {
+   "state": "loaded",
+   "entersWhen": "data present",
+   "reachable": "yes"
+  },
+  {
+   "state": "empty",
+   "entersWhen": "not coded: zero counts render zeros/0%",
+   "reachable": "no",
+   "note": "no empty branch exists; a period with no previews shows 0%"
+  }
+ ],
+ "uiStatesDesigned": [
+  "loading",
+  "empty",
+  "error",
+  "loaded"
+ ],
+ "stubsObserved": [
+  {
+   "file": "lib/admin/d-api.ts:1-8",
+   "evidence": "/* NOT CONNECTED YET: the bodies read lib/admin/d-fixtures.ts (marked sample data) and keep staff changes in memory */",
+   "standsInFor": "the /v1/admin API",
+   "consequence": "sample data until /v1/admin exists; staff changes vanish on reload and cross-screen effects are simulated in one in-memory copy"
+  },
+  {
+   "file": "components/admin/d/Numbers.tsx:48",
+   "evidence": "Sample figures, PROVISIONAL: the targets and the figures are made up until the server answers.",
+   "standsInFor": "the metrics source and the target table",
+   "consequence": "every number and every target on the page is invented; targets have no owner-set source yet"
+  },
+  {
+   "file": "lib/admin/d-fixtures.ts:58",
+   "evidence": "numbers (PROVISIONAL) numbers(period)",
+   "standsInFor": "analytics aggregation",
+   "consequence": "figures are generated per period from constants"
+  }
+ ],
+ "screenId": "admin-numbers"
+}

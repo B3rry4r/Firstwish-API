@@ -1,0 +1,268 @@
+{
+ "reads": [
+  {
+   "entity": "Thread",
+   "fields": [
+    {
+     "name": "id",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "subject",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "name",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "email",
+     "type": "string (masked)",
+     "nullable": false
+    },
+    {
+     "name": "person",
+     "type": "string (Person.id)",
+     "nullable": true
+    },
+    {
+     "name": "wish",
+     "type": "string (Wish.no)",
+     "nullable": true
+    },
+    {
+     "name": "state",
+     "type": "'open'|'waiting'|'closed'",
+     "nullable": false
+    },
+    {
+     "name": "notes",
+     "type": "Note[] oldest first: {at:string, from:'them'|'staff', by?:string, text:string}",
+     "nullable": false
+    }
+   ],
+   "cardinality": "single",
+   "filtersOrSort": [
+    "by id from the route"
+   ],
+   "pagination": "none",
+   "evidence": "GET /v1/admin/support/threads/:id -> ThreadDetail (with the saved replies)"
+  },
+  {
+   "entity": "Person",
+   "fields": [
+    {
+     "name": "id",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "name",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "joined",
+     "type": "string",
+     "nullable": false
+    }
+   ],
+   "cardinality": "single",
+   "filtersOrSort": [
+    "the account the thread email is on; null when none"
+   ],
+   "pagination": "none",
+   "evidence": "part of ThreadDetail.person (Person | null)"
+  },
+  {
+   "entity": "Wish",
+   "fields": [
+    {
+     "name": "no",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "forName",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "kind",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "occasion",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "state",
+     "type": "'draft'|'sealed'|'live'|'resting'|'down'|'erased'",
+     "nullable": false
+    },
+    {
+     "name": "opensAt",
+     "type": "string",
+     "nullable": false
+    }
+   ],
+   "cardinality": "single",
+   "filtersOrSort": [
+    "the wish the thread names; null when none"
+   ],
+   "pagination": "none",
+   "evidence": "part of ThreadDetail.wish (Wish | null)"
+  },
+  {
+   "entity": "SavedReply",
+   "fields": [
+    {
+     "name": "id",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "name",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "text",
+     "type": "string",
+     "nullable": false
+    }
+   ],
+   "cardinality": "list",
+   "filtersOrSort": [],
+   "pagination": "none",
+   "evidence": "part of ThreadDetail.replies; same GET as Thread"
+  }
+ ],
+ "actions": [
+  {
+   "name": "replyThread",
+   "kind": "custom",
+   "entity": "Thread",
+   "payload": [
+    {
+     "name": "id",
+     "type": "string (route)",
+     "nullable": false
+    },
+    {
+     "name": "text",
+     "type": "string, non-empty after trim",
+     "nullable": false
+    },
+    {
+     "name": "reason",
+     "type": "string, at least 4 chars after trim",
+     "nullable": false
+    }
+   ],
+   "expectedResponse": {
+    "entity": "ThreadDetail",
+    "cardinality": "single"
+   },
+   "evidence": "POST /v1/admin/support/threads/:id/reply { text, reason } -> ThreadDetail. Sent by email; the thread then waits on them.",
+   "effects": "appends a staff note (by = staff name), state becomes waiting, an email Message row (what 'Support reply: <subject>', channel email, to the thread email, state sent, wish) joins the delivery log, an audit row is written (section /admin/support)"
+  },
+  {
+   "name": "setThreadState",
+   "kind": "update",
+   "entity": "Thread",
+   "payload": [
+    {
+     "name": "id",
+     "type": "string (route)",
+     "nullable": false
+    },
+    {
+     "name": "state",
+     "type": "'closed'|'open'",
+     "nullable": false
+    },
+    {
+     "name": "reason",
+     "type": "string, at least 4 chars",
+     "nullable": false
+    }
+   ],
+   "expectedResponse": {
+    "entity": "ThreadDetail",
+    "cardinality": "single"
+   },
+   "evidence": "POST /v1/admin/support/threads/:id/state { state: \"closed\" | \"open\", reason } -> ThreadDetail",
+   "effects": "audit row written; the Confirm copy says a new email from them reopens a closed thread (not coded in the seam)"
+  }
+ ],
+ "authContext": {
+  "requiresAuth": true,
+  "side": "staff",
+  "rolesObserved": [
+   "owner",
+   "ops",
+   "support"
+  ]
+ },
+ "special": {
+  "realtime": false,
+  "uploads": false,
+  "downloads": false
+ },
+ "uiStatesHandled": [
+  {
+   "state": "loading",
+   "entersWhen": "!data (no error)",
+   "reachable": "yes"
+  },
+  {
+   "state": "error",
+   "entersWhen": "error string set, e.g. not_found for an unknown id",
+   "reachable": "yes",
+   "note": "unknown thread id throws AdminError not_found in the seam"
+  },
+  {
+   "state": "loaded",
+   "entersWhen": "data present; Reply block hidden when thread closed; Tied to block shows a quiet line when no person and no wish",
+   "reachable": "yes"
+  },
+  {
+   "state": "empty",
+   "entersWhen": "no list: thread with no person and no wish shows 'not on an account' note",
+   "reachable": "yes"
+  },
+  {
+   "state": "action-error",
+   "entersWhen": "Confirm onConfirm rejection (reason under 4 chars, empty text, not_found)",
+   "reachable": "yes",
+   "note": "shown by the shared Confirm component, not in this file"
+  }
+ ],
+ "uiStatesDesigned": [
+  "loading",
+  "empty",
+  "error",
+  "loaded"
+ ],
+ "stubsObserved": [
+  {
+   "file": "lib/admin/d-api.ts:1-8",
+   "evidence": "/* NOT CONNECTED YET: the bodies read lib/admin/d-fixtures.ts (marked sample data) and keep staff changes in memory */",
+   "standsInFor": "the /v1/admin API",
+   "consequence": "sample data until /v1/admin exists; staff changes vanish on reload and cross-screen effects are simulated in one in-memory copy"
+  },
+  {
+   "file": "lib/admin/d-api.ts:80",
+   "evidence": "dBridge.db.messages.push(...)",
+   "standsInFor": "the mail port: email goes out on reply",
+   "consequence": "no email is sent; only a log row"
+  }
+ ],
+ "screenId": "admin-support-detail"
+}

@@ -1,0 +1,234 @@
+{
+ "reads": [
+  {
+   "entity": "Template",
+   "fields": [
+    {
+     "name": "key",
+     "type": "'sealed'|'opens'|'opened'|'resting'|'code'",
+     "nullable": false
+    },
+    {
+     "name": "name",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "when",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "to",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "subject",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "body",
+     "type": "string with {name} {for} {link} {date} {code}",
+     "nullable": false
+    },
+    {
+     "name": "edited",
+     "type": "{at,by,reason}",
+     "nullable": true
+    }
+   ],
+   "cardinality": "list",
+   "filtersOrSort": [],
+   "pagination": "none",
+   "evidence": "GET /v1/admin/messages/templates -> Template[]"
+  },
+  {
+   "entity": "Message",
+   "fields": [
+    {
+     "name": "id",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "what",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "channel",
+     "type": "'email'",
+     "nullable": false
+    },
+    {
+     "name": "to",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "state",
+     "type": "'sent'|'delivered'|'failed'",
+     "nullable": false
+    },
+    {
+     "name": "at",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "wish",
+     "type": "string (Wish.no)",
+     "nullable": true
+    },
+    {
+     "name": "resent",
+     "type": "Resend {id,newId,at,by}",
+     "nullable": true
+    }
+   ],
+   "cardinality": "list",
+   "filtersOrSort": [
+    "state: failed|delivered|sent|all",
+    "newest first (at desc, then id)"
+   ],
+   "pagination": "paged (client-side pageSize 10; full list returned)",
+   "evidence": "GET /v1/admin/messages/log?state= -> Delivery[], newest first. The screen also reads the unfiltered list to count failed-and-not-resent messages for the header pill."
+  }
+ ],
+ "actions": [
+  {
+   "name": "saveTemplate",
+   "kind": "update",
+   "entity": "Template",
+   "payload": [
+    {
+     "name": "key",
+     "type": "MessageKey",
+     "nullable": false
+    },
+    {
+     "name": "subject",
+     "type": "string non-empty",
+     "nullable": false
+    },
+    {
+     "name": "body",
+     "type": "string non-empty",
+     "nullable": false
+    },
+    {
+     "name": "reason",
+     "type": "string, at least 4 chars",
+     "nullable": false
+    }
+   ],
+   "expectedResponse": {
+    "entity": "Template",
+    "cardinality": "single"
+   },
+   "evidence": "PUT /v1/admin/messages/templates/:key { subject, body, reason } -> Template",
+   "effects": "sets edited {at,by,reason}; audit row"
+  },
+  {
+   "name": "resendMessage",
+   "kind": "custom",
+   "entity": "Message",
+   "payload": [
+    {
+     "name": "id",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "reason",
+     "type": "string, at least 4 chars",
+     "nullable": false
+    }
+   ],
+   "expectedResponse": {
+    "entity": "Delivery",
+    "cardinality": "single",
+    "note": "seam returns void"
+   },
+   "evidence": "POST /v1/admin/messages/:id/resend { reason } -> Delivery. Only a failed message, once.",
+   "effects": "new Message row (state sent) and a Resend link; audit row; a second resend or a non-failed message is refused (not_allowed)"
+  }
+ ],
+ "authContext": {
+  "requiresAuth": true,
+  "side": "staff",
+  "rolesObserved": [
+   "owner",
+   "ops",
+   "support"
+  ]
+ },
+ "special": {
+  "realtime": false,
+  "uploads": false,
+  "downloads": false,
+  "note": "three reads on one screen (templates, filtered log, unfiltered log); each refetches after any staff change"
+ },
+ "uiStatesHandled": [
+  {
+   "state": "loading",
+   "entersWhen": "!tpl.data / !log.data (separate for templates and log)",
+   "reachable": "yes"
+  },
+  {
+   "state": "empty",
+   "entersWhen": "log.data.length === 0 (copy names the filter)",
+   "reachable": "yes"
+  },
+  {
+   "state": "error",
+   "entersWhen": "tpl.error or log.error set (separate)",
+   "reachable": "no",
+   "note": "fixture reads never reject"
+  },
+  {
+   "state": "loaded",
+   "entersWhen": "data present",
+   "reachable": "yes"
+  },
+  {
+   "state": "editing",
+   "entersWhen": "TemplateCard editing true; Save disabled until wording differs",
+   "reachable": "yes"
+  },
+  {
+   "state": "none-failing",
+   "entersWhen": "failed count 0: 'None failing' pill",
+   "reachable": "yes"
+  }
+ ],
+ "uiStatesDesigned": [
+  "loading",
+  "empty",
+  "error",
+  "loaded"
+ ],
+ "stubsObserved": [
+  {
+   "file": "lib/admin/d-api.ts:1-8",
+   "evidence": "/* NOT CONNECTED YET: the bodies read lib/admin/d-fixtures.ts (marked sample data) and keep staff changes in memory */",
+   "standsInFor": "the /v1/admin API",
+   "consequence": "sample data until /v1/admin exists; staff changes vanish on reload and cross-screen effects are simulated in one in-memory copy"
+  },
+  {
+   "file": "lib/admin/d-api.ts:131",
+   "evidence": "dBridge.db.messages.push({ ...m, id: newId, state: 'sent' })",
+   "standsInFor": "the mail provider resend",
+   "consequence": "resend always succeeds as 'sent'; no real send"
+  },
+  {
+   "file": "components/admin/d/Messages.tsx:92",
+   "evidence": "Template wording edit",
+   "standsInFor": "template store",
+   "consequence": "edited wording is in memory only; sends elsewhere do not use it"
+  }
+ ],
+ "screenId": "admin-messages"
+}

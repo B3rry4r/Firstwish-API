@@ -337,8 +337,8 @@
     },
     "StaffAccount.staffSignIn": {
       "method": "POST",
-      "path": "/v1/admin/auth/codes/verify",
-      "decision": "DEC-24",
+      "path": "/v1/admin/auth/verify",
+      "decision": "DEC-24, DEC-112",
       "auth": [
         "public"
       ]
@@ -485,9 +485,9 @@
       "decision": "conventions naming"
     },
     "StyleLevel.moveStyle": {
-      "method": "POST",
+      "method": "PUT",
       "path": "/v1/admin/styles/:slug/level",
-      "decision": "conventions naming"
+      "decision": "DEC-112"
     },
     "Report.takeDownThisIsMe": {
       "method": "POST",
@@ -500,18 +500,18 @@
     },
     "PublishRequest.reviewPublish": {
       "method": "POST",
-      "path": "/v1/admin/publish-requests/:id/decision",
-      "decision": "conventions naming"
+      "path": "/v1/admin/showing/requests/:id/decide",
+      "decision": "DEC-112"
     },
     "StyleSubmission.decideSubmission": {
       "method": "POST",
-      "path": "/v1/admin/style-submissions/:id/decision",
-      "decision": "conventions naming"
+      "path": "/v1/admin/styles/review/:id/decide",
+      "decision": "DEC-112"
     },
     "Report.decideReport": {
       "method": "POST",
-      "path": "/v1/admin/reports/:id/decision",
-      "decision": "conventions naming"
+      "path": "/v1/admin/moderation/:id/decide",
+      "decision": "DEC-112"
     },
     "ConciergeOrder.quoteOrder": {
       "method": "POST",
@@ -520,8 +520,8 @@
     },
     "ConciergeOrder.assignMaker": {
       "method": "POST",
-      "path": "/v1/admin/concierge-orders/:id/maker",
-      "decision": "conventions naming"
+      "path": "/v1/admin/concierge/orders/:id/maker",
+      "decision": "DEC-112"
     },
     "ConciergeOrder.deliverOrder": {
       "method": "POST",
@@ -582,6 +582,271 @@
       "method": "GET",
       "path": "/v1/wishes/:id/link",
       "decision": "DEC-89"
+    },
+    "admin-concierge:Order.assign-maker": {
+      "method": "POST",
+      "path": "/v1/admin/concierge/orders/:id/maker",
+      "resource": "ConciergeOrder",
+      "auth": [
+        "staff:owner",
+        "staff:ops"
+      ],
+      "decision": "DEC-112"
+    },
+    "admin-creators:PayoutRow.markPayoutPaid": {
+      "method": "POST",
+      "path": "/v1/admin/creators/payouts/:creator/paid",
+      "resource": "Payout",
+      "auth": [
+        "staff:owner",
+        "staff:finance"
+      ],
+      "decision": "DEC-112"
+    },
+    "admin-messages:Template.saveTemplate": {
+      "method": "PUT",
+      "path": "/v1/admin/messages/templates/:key",
+      "resource": "Notice",
+      "auth": [
+        "staff:owner",
+        "staff:ops",
+        "staff:support"
+      ],
+      "decision": "DEC-112"
+    },
+    "admin-messages:Message.resendMessage": {
+      "method": "POST",
+      "path": "/v1/admin/messages/:id/resend",
+      "resource": "MessageDelivery",
+      "auth": [
+        "staff:owner",
+        "staff:ops",
+        "staff:support"
+      ],
+      "decision": "DEC-112"
+    },
+    "admin-moderation:ModItem.decideModeration": {
+      "method": "POST",
+      "path": "/v1/admin/moderation/:id/decide",
+      "resource": "Report",
+      "auth": [
+        "staff:owner",
+        "staff:ops",
+        "staff:moderator"
+      ],
+      "decision": "DEC-112"
+    },
+    "admin-payments:Payment.refund": {
+      "method": "POST",
+      "path": "/v1/admin/payments/:reference/refund",
+      "resource": "Payment",
+      "auth": [
+        "staff:owner",
+        "staff:ops",
+        "staff:finance"
+      ],
+      "decision": "DEC-112"
+    },
+    "admin-people-detail:Person.actOnPerson": {
+      "method": "POST",
+      "path": "/v1/admin/people/:id/actions",
+      "resource": "Account",
+      "auth": [
+        "staff:owner",
+        "staff:ops",
+        "staff:moderator",
+        "staff:support"
+      ],
+      "decision": "DEC-112"
+    },
+    "admin-prices:Price.set-price": {
+      "method": "PUT",
+      "path": "/v1/admin/prices/:key",
+      "resource": "Price",
+      "auth": [
+        "staff:owner",
+        "staff:finance"
+      ],
+      "decision": "DEC-112"
+    },
+    "admin-settings:Settings.setStorage": {
+      "method": "PUT",
+      "path": "/v1/admin/settings/storage",
+      "resource": "Settings",
+      "auth": [
+        "staff:owner"
+      ],
+      "decision": "DEC-112"
+    },
+    "admin-settings:Settings.setSwitch": {
+      "method": "PUT",
+      "path": "/v1/admin/settings/switches/:key",
+      "resource": "Settings",
+      "auth": [
+        "staff:owner"
+      ],
+      "decision": "DEC-112"
+    },
+    "admin-showing:PublishRequest.decidePublish": {
+      "method": "POST",
+      "path": "/v1/admin/showing/requests/:id/decide",
+      "resource": "PublishRequest",
+      "auth": [
+        "staff:owner",
+        "staff:ops",
+        "staff:moderator"
+      ],
+      "decision": "DEC-112"
+    },
+    "admin-showing:Listed.unlistWish": {
+      "method": "POST",
+      "path": "/v1/admin/showing/listed/:no/unlist",
+      "resource": "PublishedWish",
+      "auth": [
+        "staff:owner",
+        "staff:ops",
+        "staff:moderator"
+      ],
+      "decision": "DEC-112"
+    },
+    "admin-showing:DayPick.pickWishOfDay": {
+      "method": "PUT",
+      "path": "/v1/admin/showing/day/:date",
+      "resource": "DayPick",
+      "auth": [
+        "staff:owner",
+        "staff:ops",
+        "staff:moderator"
+      ],
+      "decision": "DEC-112"
+    },
+    "admin-sign-in:StaffSession.requestCode": {
+      "method": "POST",
+      "path": "/v1/admin/auth/code",
+      "resource": "StaffAccount",
+      "auth": [
+        "public"
+      ],
+      "decision": "DEC-119"
+    },
+    "admin-sign-in:StaffSession.verifyCode": {
+      "method": "POST",
+      "path": "/v1/admin/auth/verify",
+      "resource": "StaffAccount",
+      "auth": [
+        "public"
+      ],
+      "decision": "DEC-119"
+    },
+    "admin-sign-in:StaffSession.signOut": {
+      "method": "POST",
+      "path": "/v1/admin/auth/sign-out",
+      "resource": "StaffAccount",
+      "auth": [
+        "staff:owner",
+        "staff:ops",
+        "staff:moderator",
+        "staff:reviewer",
+        "staff:support",
+        "staff:finance",
+        "staff:maker"
+      ],
+      "decision": "DEC-112"
+    },
+    "admin-styles-review:Submission.decideSubmission": {
+      "method": "POST",
+      "path": "/v1/admin/styles/review/:id/decide",
+      "resource": "StyleSubmission",
+      "auth": [
+        "staff:owner",
+        "staff:ops",
+        "staff:reviewer"
+      ],
+      "decision": "DEC-112"
+    },
+    "admin-styles:StyleRow.moveStyle": {
+      "method": "PUT",
+      "path": "/v1/admin/styles/:slug/level",
+      "resource": "StyleLevel",
+      "auth": [
+        "staff:owner",
+        "staff:ops",
+        "staff:reviewer"
+      ],
+      "decision": "DEC-112"
+    },
+    "admin-styles:StyleRow.switchStyle": {
+      "method": "POST",
+      "path": "/v1/admin/styles/:slug/switch",
+      "resource": "Style",
+      "auth": [
+        "staff:owner",
+        "staff:ops",
+        "staff:reviewer"
+      ],
+      "decision": "DEC-112"
+    },
+    "admin-support-detail:Thread.replyThread": {
+      "method": "POST",
+      "path": "/v1/admin/support/threads/:id/reply",
+      "resource": "SupportThread",
+      "auth": [
+        "staff:owner",
+        "staff:ops",
+        "staff:support"
+      ],
+      "decision": "DEC-112"
+    },
+    "admin-support-detail:Thread.setThreadState": {
+      "method": "POST",
+      "path": "/v1/admin/support/threads/:id/state",
+      "resource": "SupportThread",
+      "auth": [
+        "staff:owner",
+        "staff:ops",
+        "staff:support"
+      ],
+      "decision": "DEC-112"
+    },
+    "admin-team:Member.inviteMember": {
+      "method": "POST",
+      "path": "/v1/admin/team/invite",
+      "resource": "StaffAccount",
+      "auth": [
+        "staff:owner"
+      ],
+      "decision": "DEC-112"
+    },
+    "admin-team:Member.removeMember": {
+      "method": "POST",
+      "path": "/v1/admin/team/:id/remove",
+      "resource": "StaffAccount",
+      "auth": [
+        "staff:owner"
+      ],
+      "decision": "DEC-112"
+    },
+    "admin-wishes-detail:Wish.actOnWish": {
+      "method": "POST",
+      "path": "/v1/admin/wishes/:no/actions",
+      "resource": "Wish",
+      "auth": [
+        "staff:owner",
+        "staff:ops",
+        "staff:moderator",
+        "staff:support"
+      ],
+      "decision": "DEC-112"
+    },
+    "StaffAccount.inviteStaff": {
+      "method": "POST",
+      "path": "/v1/admin/team/invite",
+      "decision": "DEC-112"
+    },
+    "AuditEntry.listAudit": {
+      "method": "GET",
+      "path": "/v1/admin/audit",
+      "decision": "DEC-112"
     }
   },
   "reads": {
@@ -719,6 +984,351 @@
         "public"
       ],
       "decision": "DEC-97"
+    },
+    "admin-audit:*": {
+      "method": "GET",
+      "path": "/v1/admin/audit",
+      "resource": "AuditEntry",
+      "auth": [
+        "staff:owner",
+        "staff:ops"
+      ],
+      "decision": "DEC-112"
+    },
+    "admin-prices:PriceChange (audit entries, area prices)": {
+      "method": "GET",
+      "path": "/v1/admin/audit",
+      "resource": "AuditEntry",
+      "auth": [
+        "staff:owner",
+        "staff:ops",
+        "staff:finance"
+      ],
+      "decision": "DEC-112"
+    },
+    "admin-prices:Price": {
+      "method": "GET",
+      "path": "/v1/admin/prices",
+      "resource": "Price",
+      "auth": [
+        "staff:owner",
+        "staff:ops",
+        "staff:finance"
+      ],
+      "decision": "DEC-112"
+    },
+    "admin-businesses:*": {
+      "method": "GET",
+      "path": "/v1/admin/businesses",
+      "resource": "Business",
+      "auth": [
+        "staff:owner",
+        "staff:ops",
+        "staff:finance"
+      ],
+      "decision": "DEC-112"
+    },
+    "admin-businesses-detail:*": {
+      "method": "GET",
+      "path": "/v1/admin/businesses/:id",
+      "resource": "Business",
+      "auth": [
+        "staff:owner",
+        "staff:ops",
+        "staff:finance"
+      ],
+      "decision": "DEC-112"
+    },
+    "admin-concierge:Order (row)": {
+      "method": "GET",
+      "path": "/v1/admin/concierge/orders",
+      "resource": "ConciergeOrder",
+      "auth": [
+        "staff:owner",
+        "staff:ops",
+        "staff:maker"
+      ],
+      "decision": "DEC-112"
+    },
+    "admin-concierge:Order (single, order detail route)": {
+      "method": "GET",
+      "path": "/v1/admin/concierge/orders/:id",
+      "resource": "ConciergeOrder",
+      "auth": [
+        "staff:owner",
+        "staff:ops",
+        "staff:maker"
+      ],
+      "decision": "DEC-112"
+    },
+    "admin-concierge:Due (this week)": {
+      "method": "GET",
+      "path": "/v1/admin/concierge/due",
+      "resource": "ConciergeOrder",
+      "auth": [
+        "staff:owner",
+        "staff:ops",
+        "staff:maker"
+      ],
+      "decision": "DEC-112"
+    },
+    "admin-concierge:Maker": {
+      "method": "GET",
+      "path": "/v1/admin/concierge/makers",
+      "resource": "Maker",
+      "auth": [
+        "staff:owner",
+        "staff:ops",
+        "staff:maker"
+      ],
+      "decision": "DEC-112"
+    },
+    "admin-creators:*": {
+      "method": "GET",
+      "path": "/v1/admin/creators",
+      "resource": "Creator",
+      "auth": [
+        "staff:owner",
+        "staff:ops",
+        "staff:reviewer",
+        "staff:finance"
+      ],
+      "decision": "DEC-112"
+    },
+    "admin-messages:Template": {
+      "method": "GET",
+      "path": "/v1/admin/messages/templates",
+      "resource": "Notice",
+      "auth": [
+        "staff:owner",
+        "staff:ops",
+        "staff:support"
+      ],
+      "decision": "DEC-112"
+    },
+    "admin-messages:Message": {
+      "method": "GET",
+      "path": "/v1/admin/messages/log",
+      "resource": "MessageDelivery",
+      "auth": [
+        "staff:owner",
+        "staff:ops",
+        "staff:support"
+      ],
+      "decision": "DEC-112"
+    },
+    "admin-moderation:*": {
+      "method": "GET",
+      "path": "/v1/admin/moderation",
+      "resource": "Report",
+      "auth": [
+        "staff:owner",
+        "staff:ops",
+        "staff:moderator"
+      ],
+      "decision": "DEC-112"
+    },
+    "admin-numbers:*": {
+      "method": "GET",
+      "path": "/v1/admin/numbers",
+      "resource": "Numbers",
+      "auth": [
+        "staff:owner",
+        "staff:ops",
+        "staff:finance"
+      ],
+      "decision": "DEC-112"
+    },
+    "admin-overview:*": {
+      "method": "GET",
+      "path": "/v1/admin/overview",
+      "resource": "Overview",
+      "auth": [
+        "staff:owner",
+        "staff:ops",
+        "staff:moderator",
+        "staff:reviewer",
+        "staff:support",
+        "staff:finance",
+        "staff:maker"
+      ],
+      "decision": "DEC-112"
+    },
+    "admin-payments:Payment (row)": {
+      "method": "GET",
+      "path": "/v1/admin/payments",
+      "resource": "Payment",
+      "auth": [
+        "staff:owner",
+        "staff:ops",
+        "staff:finance"
+      ],
+      "decision": "DEC-112"
+    },
+    "admin-payments:Payment (single) with its record": {
+      "method": "GET",
+      "path": "/v1/admin/payments/:reference",
+      "resource": "Payment",
+      "auth": [
+        "staff:owner",
+        "staff:ops",
+        "staff:finance"
+      ],
+      "decision": "DEC-112"
+    },
+    "admin-payments:LedgerDay": {
+      "method": "GET",
+      "path": "/v1/admin/ledger",
+      "resource": "LedgerDay",
+      "auth": [
+        "staff:owner",
+        "staff:ops",
+        "staff:finance"
+      ],
+      "decision": "DEC-112"
+    },
+    "admin-people:*": {
+      "method": "GET",
+      "path": "/v1/admin/people",
+      "resource": "Account",
+      "auth": [
+        "staff:owner",
+        "staff:ops",
+        "staff:moderator",
+        "staff:support"
+      ],
+      "decision": "DEC-112"
+    },
+    "admin-people-detail:*": {
+      "method": "GET",
+      "path": "/v1/admin/people/:id",
+      "resource": "Account",
+      "auth": [
+        "staff:owner",
+        "staff:ops",
+        "staff:moderator",
+        "staff:support"
+      ],
+      "decision": "DEC-112"
+    },
+    "admin-settings:*": {
+      "method": "GET",
+      "path": "/v1/admin/settings",
+      "resource": "Settings",
+      "auth": [
+        "staff:owner"
+      ],
+      "decision": "DEC-112"
+    },
+    "admin-showing:*": {
+      "method": "GET",
+      "path": "/v1/admin/showing",
+      "resource": "PublishedWish",
+      "auth": [
+        "staff:owner",
+        "staff:ops",
+        "staff:moderator"
+      ],
+      "decision": "DEC-112"
+    },
+    "admin-styles:StyleRow": {
+      "method": "GET",
+      "path": "/v1/admin/styles",
+      "resource": "Style",
+      "auth": [
+        "staff:owner",
+        "staff:ops",
+        "staff:reviewer"
+      ],
+      "decision": "DEC-112"
+    },
+    "admin-styles:Submission (count only)": {
+      "method": "GET",
+      "path": "/v1/admin/styles/review",
+      "resource": "StyleSubmission",
+      "auth": [
+        "staff:owner",
+        "staff:ops",
+        "staff:reviewer"
+      ],
+      "decision": "DEC-112"
+    },
+    "admin-styles-review:*": {
+      "method": "GET",
+      "path": "/v1/admin/styles/review",
+      "resource": "StyleSubmission",
+      "auth": [
+        "staff:owner",
+        "staff:ops",
+        "staff:reviewer"
+      ],
+      "decision": "DEC-112"
+    },
+    "admin-support:Thread": {
+      "method": "GET",
+      "path": "/v1/admin/support/threads",
+      "resource": "SupportThread",
+      "auth": [
+        "staff:owner",
+        "staff:ops",
+        "staff:support"
+      ],
+      "decision": "DEC-112"
+    },
+    "admin-support:ThreadCounts": {
+      "method": "GET",
+      "path": "/v1/admin/support/counts",
+      "resource": "SupportThread",
+      "auth": [
+        "staff:owner",
+        "staff:ops",
+        "staff:support"
+      ],
+      "decision": "DEC-123"
+    },
+    "admin-support-detail:*": {
+      "method": "GET",
+      "path": "/v1/admin/support/threads/:id",
+      "resource": "SupportThread",
+      "auth": [
+        "staff:owner",
+        "staff:ops",
+        "staff:support"
+      ],
+      "decision": "DEC-112"
+    },
+    "admin-team:*": {
+      "method": "GET",
+      "path": "/v1/admin/team",
+      "resource": "StaffAccount",
+      "auth": [
+        "staff:owner"
+      ],
+      "decision": "DEC-112"
+    },
+    "admin-wishes:*": {
+      "method": "GET",
+      "path": "/v1/admin/wishes",
+      "resource": "Wish",
+      "auth": [
+        "staff:owner",
+        "staff:ops",
+        "staff:moderator",
+        "staff:support"
+      ],
+      "decision": "DEC-112"
+    },
+    "admin-wishes-detail:*": {
+      "method": "GET",
+      "path": "/v1/admin/wishes/:no",
+      "resource": "Wish",
+      "auth": [
+        "staff:owner",
+        "staff:ops",
+        "staff:moderator",
+        "staff:support"
+      ],
+      "decision": "DEC-112"
     }
   },
   "endpointAuth": {
@@ -746,6 +1356,12 @@
         "public"
       ],
       "decision": "DEC-97"
+    },
+    "GET /v1/payments/:reference": {
+      "auth": [
+        "user:owner"
+      ],
+      "decision": "DEC-116"
     }
   },
   "extraEndpoints": [
@@ -762,6 +1378,15 @@
         "pro.studio",
         "pro.pack"
       ]
+    },
+    {
+      "resource": "SupportThread",
+      "method": "POST",
+      "path": "/v1/webhooks/email/inbound",
+      "auth": [
+        "webhook-signature"
+      ],
+      "decision": "DEC-123"
     }
   ],
   "fulfilment": {

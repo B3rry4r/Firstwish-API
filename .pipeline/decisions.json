@@ -1980,6 +1980,247 @@
       "confidence": "high",
       "source": "build/rulings-phase3.md",
       "decidedAt": "2026-11-15T16:20:00Z"
+    },
+    {
+      "id": "DEC-112",
+      "topic": "admin routes and staff roles",
+      "closes": [],
+      "decision": "A1: Every staff request lives under /v1/admin with auth staff role and the roles of the Team access table (lib/admin/d-fixtures.ts); the server enforces it on every route. A seam header's /v1/admin route is used (tools/pipeline/routes.json). PUT /v1/styles/levels/:slug becomes PUT /v1/admin/styles/:slug/level; the public read stays GET /v1/styles/levels.",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (Admin screens joined)",
+      "decidedAt": "2026-11-15T20:00:00Z"
+    },
+    {
+      "id": "DEC-113",
+      "topic": "admin view names",
+      "closes": [
+        {
+          "conflict": "C-1",
+          "key": "unclassified-entity|AuditRow (unfiltered, for the filter chips)|entity name is not in tools/pipeline/aliases.json and is not a plain resource name",
+          "detail": "entity name is not in tools/pipeline/aliases.json and is not a plain resource name"
+        },
+        {
+          "conflict": "C-2",
+          "key": "unclassified-entity|Business (row)|entity name is not in tools/pipeline/aliases.json and is not a plain resource name",
+          "detail": "entity name is not in tools/pipeline/aliases.json and is not a plain resource name"
+        },
+        {
+          "conflict": "C-3",
+          "key": "unclassified-entity|Business (single)|entity name is not in tools/pipeline/aliases.json and is not a plain resource name",
+          "detail": "entity name is not in tools/pipeline/aliases.json and is not a plain resource name"
+        },
+        {
+          "conflict": "C-4",
+          "key": "unclassified-entity|Due (this week)|entity name is not in tools/pipeline/aliases.json and is not a plain resource name",
+          "detail": "entity name is not in tools/pipeline/aliases.json and is not a plain resource name"
+        },
+        {
+          "conflict": "C-5",
+          "key": "unclassified-entity|Order (row)|entity name is not in tools/pipeline/aliases.json and is not a plain resource name",
+          "detail": "entity name is not in tools/pipeline/aliases.json and is not a plain resource name"
+        },
+        {
+          "conflict": "C-6",
+          "key": "unclassified-entity|Order (single, order detail route)|entity name is not in tools/pipeline/aliases.json and is not a plain resource name",
+          "detail": "entity name is not in tools/pipeline/aliases.json and is not a plain resource name"
+        },
+        {
+          "conflict": "C-7",
+          "key": "unclassified-entity|Payment (row)|entity name is not in tools/pipeline/aliases.json and is not a plain resource name",
+          "detail": "entity name is not in tools/pipeline/aliases.json and is not a plain resource name"
+        },
+        {
+          "conflict": "C-8",
+          "key": "unclassified-entity|Payment (single) with its record|entity name is not in tools/pipeline/aliases.json and is not a plain resource name",
+          "detail": "entity name is not in tools/pipeline/aliases.json and is not a plain resource name"
+        },
+        {
+          "conflict": "C-9",
+          "key": "unclassified-entity|Person (as used here: id, name)|entity name is not in tools/pipeline/aliases.json and is not a plain resource name",
+          "detail": "entity name is not in tools/pipeline/aliases.json and is not a plain resource name"
+        },
+        {
+          "conflict": "C-10",
+          "key": "unclassified-entity|Person (list row)|entity name is not in tools/pipeline/aliases.json and is not a plain resource name",
+          "detail": "entity name is not in tools/pipeline/aliases.json and is not a plain resource name"
+        },
+        {
+          "conflict": "C-11",
+          "key": "unclassified-entity|PriceChange (audit entries, area prices)|entity name is not in tools/pipeline/aliases.json and is not a plain resource name",
+          "detail": "entity name is not in tools/pipeline/aliases.json and is not a plain resource name"
+        },
+        {
+          "conflict": "C-12",
+          "key": "unclassified-entity|Submission (count only)|entity name is not in tools/pipeline/aliases.json and is not a plain resource name",
+          "detail": "entity name is not in tools/pipeline/aliases.json and is not a plain resource name"
+        },
+        {
+          "conflict": "C-13",
+          "key": "unclassified-entity|Wish (as used here: no, forName, kind, occasion, opensAt, state)|entity name is not in tools/pipeline/aliases.json and is not a plain resource name",
+          "detail": "entity name is not in tools/pipeline/aliases.json and is not a plain resource name"
+        },
+        {
+          "conflict": "C-14",
+          "key": "unclassified-entity|Wish (list row)|entity name is not in tools/pipeline/aliases.json and is not a plain resource name",
+          "detail": "entity name is not in tools/pipeline/aliases.json and is not a plain resource name"
+        }
+      ],
+      "decision": "A2: Admin entity names with a note in brackets are staff views of the resource named before the bracket. Person = Account, Order and Due = ConciergeOrder, AuditRow = AuditEntry, Submission = StyleSubmission, PriceChange = PriceBookVersion's change record, Member = StaffAccount, ModView = Report, PublishView and Listed = PublishedWish, StyleRow = Style, CreatorRow = Creator, PayoutRun and PayoutRow = Payout, Thread = SupportThread, Template = Notice wording, Message = MessageDelivery. Numbers and Overview are reads worked out by the server.",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (Admin screens joined)",
+      "decidedAt": "2026-11-15T20:00:00Z"
+    },
+    {
+      "id": "DEC-114",
+      "topic": "admin sample figures",
+      "closes": [
+        {
+          "conflict": "C-34",
+          "key": "possible-alias|Price|Price fields list / listKobo may be one field",
+          "detail": "Price fields list / listKobo may be one field"
+        },
+        {
+          "conflict": "C-44",
+          "key": "truth-mismatch|money|₦17 shown or sent by a screen is in no product truth and not in the price book seed",
+          "detail": "₦17 shown or sent by a screen is in no product truth and not in the price book seed"
+        },
+        {
+          "conflict": "C-45",
+          "key": "truth-mismatch|money|₦7,000 shown or sent by a screen is in no product truth and not in the price book seed",
+          "detail": "₦7,000 shown or sent by a screen is in no product truth and not in the price book seed"
+        }
+      ],
+      "decision": "A3: Figures in admin fixtures are sample data, not prices: the money truth check skips screens whose data files are the admin fixtures. Price.list and Price.listKobo are one field, listKobo.",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (Admin screens joined)",
+      "decidedAt": "2026-11-15T20:00:00Z",
+      "fieldTypes": {
+        "Price.listKobo": "integer"
+      },
+      "truthSkipDataFiles": [
+        "lib/admin-fixtures.ts",
+        "lib/admin/*-fixtures.ts"
+      ]
+    },
+    {
+      "id": "DEC-115",
+      "topic": "hyphenated action names",
+      "closes": [
+        {
+          "conflict": "C-47",
+          "key": "unparseable-action|Order|action name 'assign-maker' is not one action",
+          "detail": "action name 'assign-maker' is not one action"
+        },
+        {
+          "conflict": "C-48",
+          "key": "unparseable-action|Price|action name 'set-price' is not one action",
+          "detail": "action name 'set-price' is not one action"
+        }
+      ],
+      "decision": "A4: Hyphenated action names ('assign-maker', 'set-price') are single actions; the parser accepts hyphens.",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (Admin screens joined)",
+      "decidedAt": "2026-11-15T20:00:00Z"
+    },
+    {
+      "id": "DEC-116",
+      "topic": "payment read",
+      "closes": [
+        {
+          "conflict": "C-60",
+          "key": "role-contradiction|Payment|GET /v1/payments/:reference: public and staff-only",
+          "detail": "GET /v1/payments/:reference: public and staff-only"
+        }
+      ],
+      "decision": "A5: GET /v1/payments/:reference is the payer's own (user:owner); staff read GET /v1/admin/payments/:reference; nothing about a payment is public.",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (Admin screens joined)",
+      "decidedAt": "2026-11-15T20:00:00Z"
+    },
+    {
+      "id": "DEC-117",
+      "topic": "audit actor",
+      "closes": [],
+      "decision": "A6: An audit row's actor is a staff id (name joined on read); every staff action writes one, in the same transaction as the change.",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (Admin screens joined)",
+      "decidedAt": "2026-11-15T20:00:00Z"
+    },
+    {
+      "id": "DEC-118",
+      "topic": "server-offered actions and masking",
+      "closes": [],
+      "decision": "A7: The server decides which actions a wish, person, payment or order offers (the response carries actions); it masks phone and email for staff (the full value only with a reason, audited).",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (Admin screens joined)",
+      "decidedAt": "2026-11-15T20:00:00Z"
+    },
+    {
+      "id": "DEC-119",
+      "topic": "staff sign-in",
+      "closes": [],
+      "decision": "A8: Staff sign-in: a code to an email that is already a staff member in Team; no self sign-up; staff refresh life 12 h (as declared). The code and verify routes are the only public /v1/admin routes.",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (Admin screens joined)",
+      "decidedAt": "2026-11-15T20:00:00Z"
+    },
+    {
+      "id": "DEC-120",
+      "topic": "maker and price access",
+      "closes": [],
+      "decision": "A9: A maker sees only the Concierge orders given to them; owner and ops see all. Ops may read Prices; only owner and finance change them.",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (Admin screens joined)",
+      "decidedAt": "2026-11-15T20:00:00Z"
+    },
+    {
+      "id": "DEC-121",
+      "topic": "price change",
+      "closes": [],
+      "decision": "A10: A price change carries typed old and new values in kobo and takes effect as a new price-book version; the 40% and its end date live in the price book's Promotion, never a page constant. The payout threshold is a price-book setting (R14).",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (Admin screens joined)",
+      "decidedAt": "2026-11-15T20:00:00Z"
+    },
+    {
+      "id": "DEC-122",
+      "topic": "refund and settlement",
+      "closes": [],
+      "decision": "A11: A refund goes through the payments port and reads 'Refund started' until the provider's webhook confirms it; the ledger's provider side comes from a daily settlement job; differences are rows staff can see, never auto-corrected.",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (Admin screens joined)",
+      "decidedAt": "2026-11-15T20:00:00Z"
+    },
+    {
+      "id": "DEC-123",
+      "topic": "numbers and support",
+      "closes": [],
+      "decision": "A12: Numbers' targets are a staff-set setting (none set: 'No target set'); thread counts are their own read (GET /v1/admin/support/counts); a reply really sends an email; an inbound email (the email provider's inbound webhook, signature checked: POST /v1/webhooks/email/inbound) opens or reopens a thread.",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (Admin screens joined)",
+      "decidedAt": "2026-11-15T20:00:00Z"
+    },
+    {
+      "id": "DEC-124",
+      "topic": "style use counts and checks",
+      "closes": [],
+      "decision": "A13: Style use counts (previews, paid uses) are written by events from the app, never invented; a wish records the style it was made in (Wish.style). Automatic checks on a submitted style run in the page and are re-run by the reviewer's page; the server stores the result with who ran it.",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (Admin screens joined)",
+      "decidedAt": "2026-11-15T20:00:00Z"
     }
   ]
 }

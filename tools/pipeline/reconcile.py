@@ -11,6 +11,7 @@ Steps (SKILL.md Phase 3): 1 apply supersedes, 2 group by entity (aliases), 3 mer
 a decision or supersede is applied and cited by id; anything else is a conflict row quoting its sources.
 Re-run it whenever fragments change; nothing is edited by hand afterwards.
 """
+import fnmatch
 import glob
 import json
 import os
@@ -31,6 +32,7 @@ PATH_RE = re.compile(r"\b(GET|POST|PUT|PATCH|DELETE) (/v1/[A-Za-z0-9_:\-/]+)")
 FILE_RE = re.compile(r"((?:[\w\-\[\]]+/)*[\w\-\[\]]+\.(?:tsx|ts|js|mjs))")
 NAIRA_RE = re.compile(r"₦\s?(\d[\d,]*)")
 IDENT = re.compile(r"^[A-Z][A-Za-z0-9]*$")
+VIEW_RE = re.compile(r"^([A-Z][A-Za-z0-9]*) \(")
 STOP = set("a an the and or of to on in for one set save get list create update delete start make add remove by "
            "with is it its no not all every each from as at be can only any wish page per".split())
 WEAK = set("included more day month year account sign space person pay opening upload file paid list "
@@ -239,6 +241,10 @@ def main():
             return e["canonical"], None, e
         if IDENT.match(raw):
             return raw, None, None
+        # a name with a note in brackets is a view of the resource named before the bracket (DEC-113)
+        vm = VIEW_RE.match(raw)
+        if vm:
+            return canon_entity(vm.group(1), sid)
         return None, None, None
 
     # ------------------------------------------------------------ step 1: supersedes
@@ -424,8 +430,14 @@ def main():
             if p.get(k):
                 truth_naira.add(p[k] // 100)
     naira_seen = defaultdict(list)
+    skip_files = [(pat, d_["id"]) for d_ in decisions for pat in (d_.get("truthSkipDataFiles") or [])]
+    truth_skipped = []
     for sid in order:
         if sources[sid]["kind"] != "screen":
+            continue
+        by = sorted(set(did for pat, did in skip_files for f in screens.get(sid, {}).get("dataFiles", []) if fnmatch.fnmatch(f, pat)))
+        if by:
+            truth_skipped.append((sid, by[0]))
             continue
         for m in NAIRA_RE.findall(sources[sid]["text"]):
             v = int(m.replace(",", ""))
@@ -663,6 +675,8 @@ def main():
                 rname2, aname = aal["canonical"].split(".", 1)
             else:
                 rname2, aname = rname, strip_paren(raw_name)
+            if re.match(r"^[a-z][a-z0-9]*(-[a-z0-9]+)+$", aname):  # hyphenated is one action (DEC-115)
+                aname = re.sub(r"-([a-z0-9])", lambda m_: m_.group(1).upper(), aname)
             if not re.match(r"^[A-Za-z][A-Za-z0-9]*$", aname):
                 c = conflict("unparseable-action", rname, "action name %r is not one action" % raw_name,
                              [{"src": sid, "quote": raw_name + ": " + note[:160]}], ["split into actions in the fragment"])
@@ -906,6 +920,7 @@ def main():
 
     def auth_label(a):
         out = []
+        staff = sorted(set(r_ for x in a if x.startswith("staff:") for r_ in (STAFF_ROLES if x == "staff:any" else [x[6:]])))
         for x in sorted(a):
             if x == "public":
                 out.append({"kind": "public"})
@@ -914,7 +929,9 @@ def main():
             elif x.startswith("role:"):
                 out.append({"kind": "role", "role": x[5:]})
             elif x.startswith("staff:"):
-                out.append({"kind": "staff role", "role": x[6:]})
+                if staff:
+                    out.append({"kind": "staff role", "roles": staff})
+                    staff = []
             elif x == "webhook-signature":
                 out.append({"kind": "webhook signature"})
             elif x == "internal":
@@ -1164,6 +1181,7 @@ def main():
          "- open conflicts: %d; closed by a decision: %d" % (len(open_rows), len(conflicts_out) - len(open_rows)),
          "- declarations deferred by the owner (skipped): %s" % (", ".join("%s (%s)" % d_ for d_ in deferred) or "none"),
          "- reads dropped by a ruling: %s" % (", ".join("%s %s (%s)" % x for x in read_drops) or "none"),
+         "- screens skipped by the money truth check (sample data): %s" % (", ".join("%s (%s)" % x for x in truth_skipped) or "none"),
          "", "## Supersedes", ""]
     for s in sup_all:
         if s.get("supersededBy"):

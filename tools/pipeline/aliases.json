@@ -888,6 +888,231 @@
       ],
       "why": "C-48..C-61 rulings: kept in the web app (wording and files only)",
       "decision": "DEC-99"
+    },
+    "admin-audit:AuditRow": {
+      "canonical": "AuditEntry",
+      "sources": [
+        "admin-audit",
+        "audit-log"
+      ],
+      "why": "staff view (A2): the staff audit list (GET /v1/admin/audit) is the audit log",
+      "decision": "DEC-113"
+    },
+    "admin-prices:PriceChange": {
+      "canonical": "PriceBookVersion",
+      "sources": [
+        "admin-prices",
+        "price-book"
+      ],
+      "why": "staff view (A2): a price change is the price-book version's change record (A10)",
+      "decision": "DEC-113"
+    },
+    "admin-concierge:Order": {
+      "canonical": "ConciergeOrder",
+      "sources": [
+        "admin-concierge",
+        "concierge-orders"
+      ],
+      "why": "staff view (A2): staff view of Concierge orders",
+      "decision": "DEC-113"
+    },
+    "admin-concierge:Due": {
+      "canonical": "ConciergeOrder",
+      "sources": [
+        "admin-concierge",
+        "concierge-orders"
+      ],
+      "why": "staff view (A2): a read over Concierge orders: names due in the next 7 days",
+      "decision": "DEC-113"
+    },
+    "admin-people:Person": {
+      "canonical": "Account",
+      "sources": [
+        "admin-people",
+        "sessions"
+      ],
+      "why": "staff view (A2): staff view of a person's account",
+      "decision": "DEC-113"
+    },
+    "admin-people-detail:Person": {
+      "canonical": "Account",
+      "sources": [
+        "admin-people-detail",
+        "sessions"
+      ],
+      "why": "staff view (A2): staff view of a person's account",
+      "decision": "DEC-113"
+    },
+    "admin-wishes-detail:Person": {
+      "canonical": "Account",
+      "sources": [
+        "admin-wishes-detail",
+        "sessions"
+      ],
+      "why": "staff view (A2): the wish's sender: an account",
+      "decision": "DEC-113"
+    },
+    "admin-support-detail:Person": {
+      "canonical": "Account",
+      "sources": [
+        "admin-support-detail",
+        "sessions"
+      ],
+      "why": "staff view (A2): the thread's person: an account",
+      "decision": "DEC-113"
+    },
+    "admin-styles:Submission": {
+      "canonical": "StyleSubmission",
+      "sources": [
+        "admin-styles",
+        "style-review"
+      ],
+      "why": "staff view (A2): creators' style submissions",
+      "decision": "DEC-113"
+    },
+    "admin-styles-review:Submission": {
+      "canonical": "StyleSubmission",
+      "sources": [
+        "admin-styles-review",
+        "style-review"
+      ],
+      "why": "staff view (A2): creators' style submissions",
+      "decision": "DEC-113"
+    },
+    "admin-team:Member": {
+      "canonical": "StaffAccount",
+      "sources": [
+        "admin-team",
+        "staff-accounts"
+      ],
+      "why": "staff view (A2): a team member is a staff account",
+      "decision": "DEC-113"
+    },
+    "admin-moderation:ModView": {
+      "canonical": "Report",
+      "sources": [
+        "admin-moderation",
+        "moderation"
+      ],
+      "why": "staff view (A2): moderation items: reports, flagged files, takedown requests",
+      "decision": "DEC-113"
+    },
+    "admin-moderation:ModItem": {
+      "canonical": "Report",
+      "sources": [
+        "admin-moderation",
+        "moderation"
+      ],
+      "why": "staff view (A2): one item of ModView (a report, flagged file or takedown request)",
+      "decision": "DEC-113"
+    },
+    "admin-showing:PublishView": {
+      "canonical": "PublishedWish",
+      "sources": [
+        "admin-showing",
+        "now-showing-review"
+      ],
+      "why": "staff view (A2): published wishes and their requests",
+      "decision": "DEC-113"
+    },
+    "admin-showing:Listed": {
+      "canonical": "PublishedWish",
+      "sources": [
+        "admin-showing",
+        "now-showing-review"
+      ],
+      "why": "staff view (A2): wishes listed in Now Showing",
+      "decision": "DEC-113"
+    },
+    "admin-styles:StyleRow": {
+      "canonical": "Style",
+      "sources": [
+        "admin-styles",
+        "style-levels"
+      ],
+      "why": "staff view (A2): staff view of a style in the registry",
+      "decision": "DEC-113"
+    },
+    "admin-creators:CreatorRow": {
+      "canonical": "Creator",
+      "sources": [
+        "admin-creators",
+        "royalties-payouts"
+      ],
+      "why": "staff view (A2): staff view of a creator",
+      "decision": "DEC-113"
+    },
+    "admin-creators:PayoutRun": {
+      "canonical": "Payout",
+      "sources": [
+        "admin-creators",
+        "royalties-payouts"
+      ],
+      "why": "staff view (A2): last month's payout run",
+      "decision": "DEC-113"
+    },
+    "admin-creators:PayoutRow": {
+      "canonical": "Payout",
+      "sources": [
+        "admin-creators",
+        "royalties-payouts"
+      ],
+      "why": "staff view (A2): one creator's payout in the run",
+      "decision": "DEC-113"
+    },
+    "admin-support:Thread": {
+      "canonical": "SupportThread",
+      "sources": [
+        "admin-support",
+        "support-threads"
+      ],
+      "why": "staff view (A2): support inbox threads",
+      "decision": "DEC-113"
+    },
+    "admin-support-detail:Thread": {
+      "canonical": "SupportThread",
+      "sources": [
+        "admin-support-detail",
+        "support-threads"
+      ],
+      "why": "staff view (A2): one support thread",
+      "decision": "DEC-113"
+    },
+    "admin-messages:Template": {
+      "canonical": "Notice",
+      "sources": [
+        "admin-messages",
+        "notices"
+      ],
+      "why": "staff view (A2): the wording of what Firstwish sends",
+      "decision": "DEC-113"
+    },
+    "admin-messages:Message": {
+      "canonical": "MessageDelivery",
+      "sources": [
+        "admin-messages",
+        "messages-email"
+      ],
+      "why": "staff view (A2): the send log: email deliveries",
+      "decision": "DEC-113"
+    },
+    "admin-overview:Message": {
+      "canonical": "MessageDelivery",
+      "sources": [
+        "admin-overview",
+        "messages-email"
+      ],
+      "why": "staff view (A2): recent email deliveries",
+      "decision": "DEC-113"
+    },
+    "admin-wishes-detail:Message": {
+      "canonical": "MessageDelivery",
+      "sources": [
+        "admin-wishes-detail",
+        "messages-email"
+      ],
+      "why": "staff view (A2): emails sent about this wish",
+      "decision": "DEC-113"
     }
   },
   "actions": {
@@ -1247,6 +1472,15 @@
       ],
       "why": "C-22 ruling: a single card is a list of one",
       "decision": "DEC-80"
+    },
+    "Price.list": {
+      "canonical": "listKobo",
+      "sources": [
+        "admin-prices",
+        "price-book"
+      ],
+      "why": "A3: the was/list price is one field, listKobo",
+      "decision": "DEC-114"
     }
   },
   "possibleAliases": [

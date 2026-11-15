@@ -5,12 +5,12 @@
       "source": "truth",
       "statement": "A ticket is exactly three meters: a term (how long it lives), what it carries (photos, and video on Premiere only) and one style picked by the sender.",
       "purchase": [
-        "POST /v1/admin/payments/:id/refund",
+        "POST /v1/admin/payments/:reference/refund",
         "POST /v1/payments"
       ],
       "endpoints": [
         {
-          "endpoint": "E-223",
+          "endpoint": "E-222",
           "route": "PATCH /v1/wishes/:id",
           "matchedBy": "words: photo, style, ticket"
         }
@@ -22,12 +22,12 @@
       "source": "truth",
       "statement": "Moment: 7 days, cannot be kept, 6 photos, no video, one starter style, no extras; its only option is to become a Keepsake for the difference.",
       "purchase": [
-        "POST /v1/admin/payments/:id/refund",
+        "POST /v1/admin/payments/:reference/refund",
         "POST /v1/payments"
       ],
       "endpoints": [
         {
-          "endpoint": "E-223",
+          "endpoint": "E-222",
           "route": "PATCH /v1/wishes/:id",
           "matchedBy": "words: photo, style"
         }
@@ -38,10 +38,12 @@
       "id": "T-03",
       "source": "truth",
       "statement": "Keepsake: 2 weeks, can be kept, 15 photos, no video, one standard style, plus a voice note or song link, a notice to the sender when opened, and a reaction from the receiver.",
-      "purchase": [],
+      "purchase": [
+        "POST /v1/admin/messages/:id/resend"
+      ],
       "endpoints": [
         {
-          "endpoint": "E-223",
+          "endpoint": "E-222",
           "route": "PATCH /v1/wishes/:id",
           "matchedBy": "words: note, photo, style, voice"
         }
@@ -55,17 +57,17 @@
       "purchase": [],
       "endpoints": [
         {
-          "endpoint": "E-139",
+          "endpoint": "E-138",
           "route": "POST /v1/qr-cards",
           "matchedBy": "declaration cites it"
         },
         {
-          "endpoint": "E-147",
+          "endpoint": "E-145",
           "route": "POST /v1/wishes/:id/video",
           "matchedBy": "declaration cites it"
         },
         {
-          "endpoint": "E-223",
+          "endpoint": "E-222",
           "route": "PATCH /v1/wishes/:id",
           "matchedBy": "words: note, photo, style, voice"
         }
@@ -77,17 +79,17 @@
       "source": "truth",
       "statement": "Premiere: 2 months, can be kept, 20 photos, three video clips of 15 seconds, one premium style made for video; it is the only ticket with video.",
       "purchase": [
-        "POST /v1/admin/payments/:id/refund",
+        "POST /v1/admin/payments/:reference/refund",
         "POST /v1/payments"
       ],
       "endpoints": [
         {
-          "endpoint": "E-147",
+          "endpoint": "E-145",
           "route": "POST /v1/wishes/:id/video",
           "matchedBy": "declaration cites it"
         },
         {
-          "endpoint": "E-223",
+          "endpoint": "E-222",
           "route": "PATCH /v1/wishes/:id",
           "matchedBy": "words: photo, style, ticket"
         }
@@ -99,17 +101,18 @@
       "source": "truth",
       "statement": "A ticket's style comes from the ticket's level or a level below (Starter on Moment, Standard on Keepsake, Premium on Signature and Premiere); no ticket gives every style, and only the Pass includes every style.",
       "purchase": [
-        "POST /v1/admin/payments/:id/refund",
+        "POST /v1/admin/messages/:id/resend",
+        "POST /v1/admin/payments/:reference/refund",
         "POST /v1/payments"
       ],
       "endpoints": [
         {
-          "endpoint": "E-223",
+          "endpoint": "E-222",
           "route": "PATCH /v1/wishes/:id",
           "matchedBy": "words: style, ticket"
         },
         {
-          "endpoint": "E-93",
+          "endpoint": "E-96",
           "route": "INTERNAL port:fulfilment#extra.premium-style",
           "matchedBy": "words: premium, style"
         }
@@ -121,12 +124,13 @@
       "source": "truth",
       "statement": "The preview is always free: the sender watches the whole wish in its style before paying anything, and the preview is never gated by any ticket or plan.",
       "purchase": [
-        "POST /v1/admin/payments/:id/refund",
+        "POST /v1/admin/messages/:id/resend",
+        "POST /v1/admin/payments/:reference/refund",
         "POST /v1/payments"
       ],
       "endpoints": [
         {
-          "endpoint": "E-223",
+          "endpoint": "E-222",
           "route": "PATCH /v1/wishes/:id",
           "matchedBy": "words: style, ticket"
         }
@@ -138,32 +142,33 @@
       "source": "truth",
       "statement": "Concierge is a service, not a ticket: Firstwish's team makes the wishes for many at once, priced by how many are sent, one maker owns the order, and delivery comes with a report of what was opened and one VAT invoice.",
       "purchase": [
-        "POST /v1/admin/payments/:id/refund",
+        "POST /v1/admin/messages/:id/resend",
+        "POST /v1/admin/payments/:reference/refund",
         "POST /v1/payments"
       ],
       "endpoints": [
         {
-          "endpoint": "E-29",
+          "endpoint": "E-33",
           "route": "POST /v1/admin/concierge-orders/:id/delivery",
           "matchedBy": "declaration cites it"
         },
         {
-          "endpoint": "E-30",
-          "route": "POST /v1/admin/concierge-orders/:id/maker",
-          "matchedBy": "declaration cites it"
-        },
-        {
-          "endpoint": "E-31",
+          "endpoint": "E-34",
           "route": "POST /v1/admin/concierge-orders/:id/quote",
           "matchedBy": "declaration cites it"
         },
         {
-          "endpoint": "E-32",
+          "endpoint": "E-38",
+          "route": "POST /v1/admin/concierge/orders/:id/maker",
+          "matchedBy": "declaration cites it"
+        },
+        {
+          "endpoint": "E-39",
           "route": "POST /v1/concierge-orders",
           "matchedBy": "declaration cites it"
         },
         {
-          "endpoint": "E-223",
+          "endpoint": "E-222",
           "route": "PATCH /v1/wishes/:id",
           "matchedBy": "words: maker, ticket"
         }
@@ -175,37 +180,37 @@
       "source": "truth",
       "statement": "One wish made for one customer by Concierge is a Signature wish delivered within 3 hours; a rush within 1 hour adds a surcharge.",
       "purchase": [
-        "POST /v1/admin/payments/:id/refund",
+        "POST /v1/admin/payments/:reference/refund",
         "POST /v1/payments"
       ],
       "endpoints": [
         {
-          "endpoint": "E-29",
+          "endpoint": "E-33",
           "route": "POST /v1/admin/concierge-orders/:id/delivery",
           "matchedBy": "declaration cites it"
         },
         {
-          "endpoint": "E-30",
-          "route": "POST /v1/admin/concierge-orders/:id/maker",
-          "matchedBy": "declaration cites it"
-        },
-        {
-          "endpoint": "E-31",
+          "endpoint": "E-34",
           "route": "POST /v1/admin/concierge-orders/:id/quote",
           "matchedBy": "declaration cites it"
         },
         {
-          "endpoint": "E-32",
+          "endpoint": "E-38",
+          "route": "POST /v1/admin/concierge/orders/:id/maker",
+          "matchedBy": "declaration cites it"
+        },
+        {
+          "endpoint": "E-39",
           "route": "POST /v1/concierge-orders",
           "matchedBy": "declaration cites it"
         },
         {
-          "endpoint": "E-105",
+          "endpoint": "E-108",
           "route": "INTERNAL port:fulfilment#ticket.signature",
           "matchedBy": "words: signature"
         },
         {
-          "endpoint": "E-83",
+          "endpoint": "E-86",
           "route": "INTERNAL port:fulfilment#concierge.rush",
           "matchedBy": "words: rush"
         }
@@ -217,17 +222,18 @@
       "source": "truth",
       "statement": "The Pass is paid once a year, does not renew on its own, and gives Keepsake wishes all year (fair use 20), four Signature upgrades, every style including new ones, reminders for everyone in People and dates (7 days and 1 day before, with a wish already started), 20% off Concierge, and keeps every wish its holder made live while the Pass is active.",
       "purchase": [
-        "POST /v1/admin/payments/:id/refund",
+        "POST /v1/admin/messages/:id/resend",
+        "POST /v1/admin/payments/:reference/refund",
         "POST /v1/payments"
       ],
       "endpoints": [
         {
-          "endpoint": "E-75",
+          "endpoint": "E-76",
           "route": "PATCH /v1/me/notice-prefs",
           "matchedBy": "declaration cites it"
         },
         {
-          "endpoint": "E-223",
+          "endpoint": "E-222",
           "route": "PATCH /v1/wishes/:id",
           "matchedBy": "words: off, style, use"
         }
@@ -239,12 +245,13 @@
       "source": "truth",
       "statement": "Pass holders pay for no keeps, and the Pass is the only way to keep every wish a person has made.",
       "purchase": [
-        "POST /v1/admin/payments/:id/refund",
+        "POST /v1/admin/messages/:id/resend",
+        "POST /v1/admin/payments/:reference/refund",
         "POST /v1/payments"
       ],
       "endpoints": [
         {
-          "endpoint": "E-226",
+          "endpoint": "E-225",
           "route": "POST /v1/wishes/:id/keep",
           "matchedBy": "words: keep, pass"
         }
@@ -256,27 +263,28 @@
       "source": "truth",
       "statement": "Three things keep a wish live past its term without a keep: the Pass (every wish its holder made, while active), being published on Now Showing (while public), and a Pro plan (the wishes on a business's page, while the plan is active).",
       "purchase": [
-        "POST /v1/admin/payments/:id/refund",
+        "POST /v1/admin/messages/:id/resend",
+        "POST /v1/admin/payments/:reference/refund",
         "POST /v1/payments"
       ],
       "endpoints": [
         {
-          "endpoint": "E-134",
-          "route": "POST /v1/admin/publish-requests/:id/decision",
+          "endpoint": "E-132",
+          "route": "POST /v1/admin/showing/requests/:id/decide",
           "matchedBy": "declaration cites it"
         },
         {
-          "endpoint": "E-135",
+          "endpoint": "E-133",
           "route": "DELETE /v1/wishes/:id/publish-requests",
           "matchedBy": "declaration cites it"
         },
         {
-          "endpoint": "E-136",
+          "endpoint": "E-134",
           "route": "POST /v1/wishes/:id/publish-requests",
           "matchedBy": "declaration cites it"
         },
         {
-          "endpoint": "E-226",
+          "endpoint": "E-225",
           "route": "POST /v1/wishes/:id/keep",
           "matchedBy": "words: keep, pass"
         }
@@ -288,32 +296,33 @@
       "source": "truth",
       "statement": "Pro Starter: 10 Signature wishes a month, 1 login, 100 GB Vault, business name on the last screen, client dashboard, unused wishes roll over one month; Pro Studio: 35 Signature wishes a month, 3 logins, 500 GB Vault, own logo and colours, priority support; Wish pack: 5 Signature wishes that never expire, no subscription, 20 GB Vault for 90 days.",
       "purchase": [
-        "POST /v1/admin/payments/:id/refund",
+        "POST /v1/admin/messages/:id/resend",
+        "POST /v1/admin/payments/:reference/refund",
         "POST /v1/payments"
       ],
       "endpoints": [
         {
-          "endpoint": "E-203",
+          "endpoint": "E-200",
           "route": "POST /v1/support-messages",
           "matchedBy": "declaration cites it"
         },
         {
-          "endpoint": "E-204",
+          "endpoint": "E-201",
           "route": "POST /v1/admin/support-threads/:id/assignee",
           "matchedBy": "declaration cites it"
         },
         {
-          "endpoint": "E-205",
+          "endpoint": "E-207",
           "route": "POST /v1/support-threads",
           "matchedBy": "declaration cites it"
         },
         {
-          "endpoint": "E-223",
+          "endpoint": "E-222",
           "route": "PATCH /v1/wishes/:id",
           "matchedBy": "words: name, studio"
         },
         {
-          "endpoint": "E-28",
+          "endpoint": "E-32",
           "route": "POST /v1/business/client-wishes/:id/send-reveal",
           "matchedBy": "words: client, vault"
         }
@@ -325,100 +334,71 @@
       "source": "truth",
       "statement": "Adding a business side is free and it pays per wish from a pack until a Pro plan is chosen; a staff member on Pro Studio signs in with their own account and sees the business in their switcher, never the owner's personal side.",
       "purchase": [
-        "POST /v1/admin/payments/:id/refund",
+        "POST /v1/admin/messages/:id/resend",
+        "POST /v1/admin/payments/:reference/refund",
         "POST /v1/payments"
       ],
       "endpoints": [
         {
-          "endpoint": "E-101",
-          "route": "INTERNAL port:fulfilment#pro.studio",
-          "matchedBy": "words: studio"
-        },
-        {
-          "endpoint": "E-11",
-          "route": "POST /v1/ai/studio-change",
-          "matchedBy": "words: studio"
-        },
-        {
-          "endpoint": "E-12",
-          "route": "POST /v1/ai/studio-draft",
-          "matchedBy": "words: studio"
-        },
-        {
-          "endpoint": "E-173",
-          "route": "POST /v1/admin/auth/codes/verify",
-          "matchedBy": "words: staff"
-        },
-        {
-          "endpoint": "E-174",
-          "route": "POST /v1/admin/staff-accounts",
-          "matchedBy": "words: staff"
-        },
-        {
-          "endpoint": "E-175",
-          "route": "PATCH /v1/admin/staff-accounts/:id",
-          "matchedBy": "words: staff"
-        },
-        {
-          "endpoint": "E-176",
-          "route": "POST /v1/admin/staff-accounts/:id/suspend",
-          "matchedBy": "words: staff"
-        },
-        {
           "endpoint": "E-177",
-          "route": "POST /v1/staff-sessions/:id/request-code",
-          "matchedBy": "words: staff"
+          "route": "POST /v1/admin/team/:id/remove",
+          "matchedBy": "words: member, staff"
+        },
+        {
+          "endpoint": "E-178",
+          "route": "POST /v1/admin/team/invite",
+          "matchedBy": "words: member, staff"
         }
       ],
-      "test": "src/payment/tests/payment.contract.spec.ts > entitlement T-18"
+      "test": "src/staff-account/tests/staff-account.contract.spec.ts > entitlement T-18"
     },
     {
       "id": "T-19",
       "source": "truth",
       "statement": "A Pro wish lives its Signature term of a month, its resting screen still shows 'Photos by' or 'Arranged by' and the booking button, and the client is offered the keep, paid to Firstwish.",
       "purchase": [
-        "POST /v1/admin/payments/:id/refund",
+        "POST /v1/admin/payments/:reference/refund",
         "POST /v1/payments"
       ],
       "endpoints": [
         {
-          "endpoint": "E-105",
+          "endpoint": "E-108",
           "route": "INTERNAL port:fulfilment#ticket.signature",
           "matchedBy": "words: signature"
         },
         {
-          "endpoint": "E-158",
+          "endpoint": "E-12",
+          "route": "POST /v1/ai/pick-photos",
+          "matchedBy": "words: photo"
+        },
+        {
+          "endpoint": "E-155",
           "route": "INTERNAL port:screening-results#screenFile",
           "matchedBy": "words: screen"
         },
         {
-          "endpoint": "E-223",
+          "endpoint": "E-222",
           "route": "PATCH /v1/wishes/:id",
           "matchedBy": "words: photo"
         },
         {
-          "endpoint": "E-224",
+          "endpoint": "E-223",
           "route": "POST /v1/wishes/:id/add-photos",
           "matchedBy": "words: photo"
         },
         {
-          "endpoint": "E-226",
+          "endpoint": "E-225",
           "route": "POST /v1/wishes/:id/keep",
           "matchedBy": "words: keep"
         },
         {
-          "endpoint": "E-25",
+          "endpoint": "E-29",
           "route": "POST /v1/business/client-wishes",
           "matchedBy": "words: client"
         },
         {
-          "endpoint": "E-27",
+          "endpoint": "E-31",
           "route": "POST /v1/business/client-wishes/:id/approve-date",
-          "matchedBy": "words: client"
-        },
-        {
-          "endpoint": "E-28",
-          "route": "POST /v1/business/client-wishes/:id/send-reveal",
           "matchedBy": "words: client"
         }
       ],
@@ -429,44 +409,45 @@
       "source": "truth",
       "statement": "Creator plans: Open (free, by application) gives a public profile and handle, one style draft, 3 AI credits once and 1 review a month, with Scroll, Swipe and Stories styles only; Creator (₦7,500 a month) gives unlimited drafts, 10 credits a month, 2 reviews a month, premium styles as templates, and Film, Stage, Drawn and 3D styles plus the creator's own artwork, models and sound; Signed (₦5,000 a month, added to either plan) puts the creator's byline on the last screen of every wish made in their styles with a link to their page.",
       "purchase": [
-        "POST /v1/admin/payments/:id/refund",
+        "POST /v1/admin/messages/:id/resend",
+        "POST /v1/admin/payments/:reference/refund",
         "POST /v1/payments"
       ],
       "endpoints": [
         {
-          "endpoint": "E-12",
+          "endpoint": "E-15",
           "route": "POST /v1/ai/studio-draft",
           "matchedBy": "declaration cites it"
         },
         {
-          "endpoint": "E-11",
+          "endpoint": "E-14",
           "route": "POST /v1/ai/studio-change",
           "matchedBy": "declaration cites it"
         },
         {
-          "endpoint": "E-10",
-          "route": "POST /v1/ai/reasons",
-          "matchedBy": "declaration cites it"
-        },
-        {
-          "endpoint": "E-8",
+          "endpoint": "E-11",
           "route": "POST /v1/ai/letter",
           "matchedBy": "declaration cites it"
         },
         {
-          "endpoint": "E-9",
+          "endpoint": "E-12",
           "route": "POST /v1/ai/pick-photos",
           "matchedBy": "declaration cites it"
         },
         {
-          "endpoint": "E-223",
-          "route": "PATCH /v1/wishes/:id",
-          "matchedBy": "words: draft, open, style"
+          "endpoint": "E-13",
+          "route": "POST /v1/ai/reasons",
+          "matchedBy": "declaration cites it"
         },
         {
-          "endpoint": "E-7",
+          "endpoint": "E-10",
           "route": "POST /v1/me/creator",
           "matchedBy": "words: creator, open, profile"
+        },
+        {
+          "endpoint": "E-222",
+          "route": "PATCH /v1/wishes/:id",
+          "matchedBy": "words: draft, open, style"
         }
       ],
       "test": "src/ai-request/tests/ai-request.contract.spec.ts > entitlement T-21"
@@ -476,47 +457,47 @@
       "source": "truth",
       "statement": "Credit pack is ₦3,000 for 5 AI credits; an extra review is ₦2,500 for one more submission in a month; a full AI style draft costs 4 credits and an AI change costs 1 credit; 1 credit equals about ₦200 of AI.",
       "purchase": [
-        "POST /v1/admin/payments/:id/refund",
+        "POST /v1/admin/payments/:reference/refund",
         "POST /v1/payments"
       ],
       "endpoints": [
         {
-          "endpoint": "E-12",
+          "endpoint": "E-15",
           "route": "POST /v1/ai/studio-draft",
           "matchedBy": "declaration cites it"
         },
         {
-          "endpoint": "E-11",
+          "endpoint": "E-14",
           "route": "POST /v1/ai/studio-change",
           "matchedBy": "declaration cites it"
         },
         {
-          "endpoint": "E-10",
-          "route": "POST /v1/ai/reasons",
-          "matchedBy": "declaration cites it"
-        },
-        {
-          "endpoint": "E-8",
+          "endpoint": "E-11",
           "route": "POST /v1/ai/letter",
           "matchedBy": "declaration cites it"
         },
         {
-          "endpoint": "E-9",
+          "endpoint": "E-12",
           "route": "POST /v1/ai/pick-photos",
           "matchedBy": "declaration cites it"
         },
         {
-          "endpoint": "E-199",
-          "route": "POST /v1/admin/style-submissions/:id/decision",
+          "endpoint": "E-13",
+          "route": "POST /v1/ai/reasons",
+          "matchedBy": "declaration cites it"
+        },
+        {
+          "endpoint": "E-198",
+          "route": "POST /v1/admin/styles/review/:id/decide",
           "matchedBy": "words: style, submission"
         },
         {
-          "endpoint": "E-223",
+          "endpoint": "E-222",
           "route": "PATCH /v1/wishes/:id",
           "matchedBy": "words: draft, style"
         },
         {
-          "endpoint": "E-85",
+          "endpoint": "E-88",
           "route": "INTERNAL port:fulfilment#creator.credit-pack",
           "matchedBy": "words: credit, pack"
         }
@@ -528,17 +509,18 @@
       "source": "truth",
       "statement": "Style templates: Firstwish's own starter templates are free to every creator, opening a Premium style as a template needs a paid creator plan, and the original creator decides whether their style can be a template.",
       "purchase": [
-        "POST /v1/admin/payments/:id/refund",
+        "POST /v1/admin/messages/:id/resend",
+        "POST /v1/admin/payments/:reference/refund",
         "POST /v1/payments"
       ],
       "endpoints": [
         {
-          "endpoint": "E-190",
+          "endpoint": "E-189",
           "route": "POST /v1/studio/styles/:id/withdraw",
           "matchedBy": "words: style, template"
         },
         {
-          "endpoint": "E-93",
+          "endpoint": "E-96",
           "route": "INTERNAL port:fulfilment#extra.premium-style",
           "matchedBy": "words: premium, style"
         }
@@ -550,12 +532,12 @@
       "source": "truth",
       "statement": "Every account is one kind of account with up to three sides: Personal (always), Business (added with a name; set up on its own, not requiring a creator profile) and Creator (a handle and one line); nothing moves between sides and the app opens on the side used last.",
       "purchase": [
-        "POST /v1/admin/payments/:id/refund",
+        "POST /v1/admin/payments/:reference/refund",
         "POST /v1/payments"
       ],
       "endpoints": [
         {
-          "endpoint": "E-7",
+          "endpoint": "E-10",
           "route": "POST /v1/me/creator",
           "matchedBy": "words: creator, open, profile, up"
         }
@@ -567,27 +549,28 @@
       "source": "truth",
       "statement": "Publishing a wish needs a creator profile with a confirmed phone number; building a style needs a creator profile; the first publish asks a personal account for a handle and opens the creator side.",
       "purchase": [
-        "POST /v1/admin/payments/:id/refund",
+        "POST /v1/admin/messages/:id/resend",
+        "POST /v1/admin/payments/:reference/refund",
         "POST /v1/payments"
       ],
       "endpoints": [
         {
-          "endpoint": "E-134",
-          "route": "POST /v1/admin/publish-requests/:id/decision",
+          "endpoint": "E-132",
+          "route": "POST /v1/admin/showing/requests/:id/decide",
           "matchedBy": "declaration cites it"
         },
         {
-          "endpoint": "E-135",
+          "endpoint": "E-133",
           "route": "DELETE /v1/wishes/:id/publish-requests",
           "matchedBy": "declaration cites it"
         },
         {
-          "endpoint": "E-136",
+          "endpoint": "E-134",
           "route": "POST /v1/wishes/:id/publish-requests",
           "matchedBy": "declaration cites it"
         },
         {
-          "endpoint": "E-7",
+          "endpoint": "E-10",
           "route": "POST /v1/me/creator",
           "matchedBy": "words: creator, open, profile"
         }
@@ -599,22 +582,22 @@
       "source": "price-book",
       "statement": "Moment ticket moment",
       "purchase": [
-        "POST /v1/admin/payments/:id/refund",
+        "POST /v1/admin/payments/:reference/refund",
         "POST /v1/payments"
       ],
       "endpoints": [
         {
-          "endpoint": "E-103",
+          "endpoint": "E-106",
           "route": "INTERNAL port:fulfilment#ticket.moment",
           "matchedBy": "ruling DEC-87"
         },
         {
-          "endpoint": "E-103",
+          "endpoint": "E-106",
           "route": "INTERNAL port:fulfilment#ticket.moment",
           "matchedBy": "words: moment"
         },
         {
-          "endpoint": "E-223",
+          "endpoint": "E-222",
           "route": "PATCH /v1/wishes/:id",
           "matchedBy": "words: ticket"
         }
@@ -626,22 +609,22 @@
       "source": "price-book",
       "statement": "Keepsake ticket keepsake",
       "purchase": [
-        "POST /v1/admin/payments/:id/refund",
+        "POST /v1/admin/payments/:reference/refund",
         "POST /v1/payments"
       ],
       "endpoints": [
         {
-          "endpoint": "E-102",
+          "endpoint": "E-105",
           "route": "INTERNAL port:fulfilment#ticket.keepsake",
           "matchedBy": "ruling DEC-87"
         },
         {
-          "endpoint": "E-102",
+          "endpoint": "E-105",
           "route": "INTERNAL port:fulfilment#ticket.keepsake",
           "matchedBy": "words: keepsake"
         },
         {
-          "endpoint": "E-223",
+          "endpoint": "E-222",
           "route": "PATCH /v1/wishes/:id",
           "matchedBy": "words: ticket"
         }
@@ -653,22 +636,22 @@
       "source": "price-book",
       "statement": "Signature ticket signature",
       "purchase": [
-        "POST /v1/admin/payments/:id/refund",
+        "POST /v1/admin/payments/:reference/refund",
         "POST /v1/payments"
       ],
       "endpoints": [
         {
-          "endpoint": "E-105",
+          "endpoint": "E-108",
           "route": "INTERNAL port:fulfilment#ticket.signature",
           "matchedBy": "ruling DEC-87"
         },
         {
-          "endpoint": "E-105",
+          "endpoint": "E-108",
           "route": "INTERNAL port:fulfilment#ticket.signature",
           "matchedBy": "words: signature"
         },
         {
-          "endpoint": "E-223",
+          "endpoint": "E-222",
           "route": "PATCH /v1/wishes/:id",
           "matchedBy": "words: ticket"
         }
@@ -680,22 +663,22 @@
       "source": "price-book",
       "statement": "Premiere ticket premiere",
       "purchase": [
-        "POST /v1/admin/payments/:id/refund",
+        "POST /v1/admin/payments/:reference/refund",
         "POST /v1/payments"
       ],
       "endpoints": [
         {
-          "endpoint": "E-104",
+          "endpoint": "E-107",
           "route": "INTERNAL port:fulfilment#ticket.premiere",
           "matchedBy": "ruling DEC-87"
         },
         {
-          "endpoint": "E-104",
+          "endpoint": "E-107",
           "route": "INTERNAL port:fulfilment#ticket.premiere",
           "matchedBy": "words: premiere"
         },
         {
-          "endpoint": "E-223",
+          "endpoint": "E-222",
           "route": "PATCH /v1/wishes/:id",
           "matchedBy": "words: ticket"
         }
@@ -707,17 +690,17 @@
       "source": "price-book",
       "statement": "Five more photos extra five-photos",
       "purchase": [
-        "POST /v1/admin/payments/:id/refund",
+        "POST /v1/admin/payments/:reference/refund",
         "POST /v1/payments"
       ],
       "endpoints": [
         {
-          "endpoint": "E-91",
+          "endpoint": "E-94",
           "route": "INTERNAL port:fulfilment#extra.five-photos",
           "matchedBy": "ruling DEC-87"
         },
         {
-          "endpoint": "E-91",
+          "endpoint": "E-94",
           "route": "INTERNAL port:fulfilment#extra.five-photos",
           "matchedBy": "words: five, photo"
         }
@@ -729,17 +712,17 @@
       "source": "price-book",
       "statement": "A premium style extra premium-style",
       "purchase": [
-        "POST /v1/admin/payments/:id/refund",
+        "POST /v1/admin/payments/:reference/refund",
         "POST /v1/payments"
       ],
       "endpoints": [
         {
-          "endpoint": "E-93",
+          "endpoint": "E-96",
           "route": "INTERNAL port:fulfilment#extra.premium-style",
           "matchedBy": "ruling DEC-87"
         },
         {
-          "endpoint": "E-93",
+          "endpoint": "E-96",
           "route": "INTERNAL port:fulfilment#extra.premium-style",
           "matchedBy": "words: premium, style"
         }
@@ -751,22 +734,22 @@
       "source": "price-book",
       "statement": "Portrait video for WhatsApp status extra portrait-video",
       "purchase": [
-        "POST /v1/admin/payments/:id/refund",
+        "POST /v1/admin/payments/:reference/refund",
         "POST /v1/payments"
       ],
       "endpoints": [
         {
-          "endpoint": "E-92",
+          "endpoint": "E-95",
           "route": "INTERNAL port:fulfilment#extra.portrait-video",
           "matchedBy": "ruling DEC-87"
         },
         {
-          "endpoint": "E-147",
+          "endpoint": "E-145",
           "route": "POST /v1/wishes/:id/video",
           "matchedBy": "words: statu, video"
         },
         {
-          "endpoint": "E-92",
+          "endpoint": "E-95",
           "route": "INTERNAL port:fulfilment#extra.portrait-video",
           "matchedBy": "words: portrait, video"
         }
@@ -778,17 +761,17 @@
       "source": "price-book",
       "statement": "Print-ready QR card extra qr-card",
       "purchase": [
-        "POST /v1/admin/payments/:id/refund",
+        "POST /v1/admin/payments/:reference/refund",
         "POST /v1/payments"
       ],
       "endpoints": [
         {
-          "endpoint": "E-94",
+          "endpoint": "E-97",
           "route": "INTERNAL port:fulfilment#extra.qr-card",
           "matchedBy": "ruling DEC-87"
         },
         {
-          "endpoint": "E-139",
+          "endpoint": "E-138",
           "route": "POST /v1/qr-cards",
           "matchedBy": "words: card, qr, qrcard"
         }
@@ -800,17 +783,17 @@
       "source": "price-book",
       "statement": "One more video clip, 15 seconds extra clip-15s",
       "purchase": [
-        "POST /v1/admin/payments/:id/refund",
+        "POST /v1/admin/payments/:reference/refund",
         "POST /v1/payments"
       ],
       "endpoints": [
         {
-          "endpoint": "E-89",
+          "endpoint": "E-92",
           "route": "INTERNAL port:fulfilment#extra.clip-15s",
           "matchedBy": "ruling DEC-87"
         },
         {
-          "endpoint": "E-89",
+          "endpoint": "E-92",
           "route": "INTERNAL port:fulfilment#extra.clip-15s",
           "matchedBy": "words: 15s, clip"
         }
@@ -822,17 +805,17 @@
       "source": "price-book",
       "statement": "A long clip, up to 60 seconds extra clip-60s",
       "purchase": [
-        "POST /v1/admin/payments/:id/refund",
+        "POST /v1/admin/payments/:reference/refund",
         "POST /v1/payments"
       ],
       "endpoints": [
         {
-          "endpoint": "E-90",
+          "endpoint": "E-93",
           "route": "INTERNAL port:fulfilment#extra.clip-60s",
           "matchedBy": "ruling DEC-87"
         },
         {
-          "endpoint": "E-90",
+          "endpoint": "E-93",
           "route": "INTERNAL port:fulfilment#extra.clip-60s",
           "matchedBy": "words: 60s, clip"
         }
@@ -844,17 +827,17 @@
       "source": "price-book",
       "statement": "Keep it one more month (30 days) keep month",
       "purchase": [
-        "POST /v1/admin/payments/:id/refund",
+        "POST /v1/admin/payments/:reference/refund",
         "POST /v1/payments"
       ],
       "endpoints": [
         {
-          "endpoint": "E-96",
+          "endpoint": "E-99",
           "route": "INTERNAL port:fulfilment#keep.month",
           "matchedBy": "ruling DEC-87"
         },
         {
-          "endpoint": "E-226",
+          "endpoint": "E-225",
           "route": "POST /v1/wishes/:id/keep",
           "matchedBy": "words: keep"
         }
@@ -866,22 +849,22 @@
       "source": "price-book",
       "statement": "Keep it six months (182 days) keep half",
       "purchase": [
-        "POST /v1/admin/payments/:id/refund",
+        "POST /v1/admin/payments/:reference/refund",
         "POST /v1/payments"
       ],
       "endpoints": [
         {
-          "endpoint": "E-95",
+          "endpoint": "E-98",
           "route": "INTERNAL port:fulfilment#keep.half",
           "matchedBy": "ruling DEC-87"
         },
         {
-          "endpoint": "E-226",
+          "endpoint": "E-225",
           "route": "POST /v1/wishes/:id/keep",
           "matchedBy": "words: keep"
         },
         {
-          "endpoint": "E-95",
+          "endpoint": "E-98",
           "route": "INTERNAL port:fulfilment#keep.half",
           "matchedBy": "words: half"
         }
@@ -893,17 +876,17 @@
       "source": "price-book",
       "statement": "Keep it a year (365 days) keep year",
       "purchase": [
-        "POST /v1/admin/payments/:id/refund",
+        "POST /v1/admin/payments/:reference/refund",
         "POST /v1/payments"
       ],
       "endpoints": [
         {
-          "endpoint": "E-97",
+          "endpoint": "E-100",
           "route": "INTERNAL port:fulfilment#keep.year",
           "matchedBy": "ruling DEC-87"
         },
         {
-          "endpoint": "E-226",
+          "endpoint": "E-225",
           "route": "POST /v1/wishes/:id/keep",
           "matchedBy": "words: keep"
         }
@@ -915,17 +898,18 @@
       "source": "price-book",
       "statement": "Firstwish Pass, a year pass year",
       "purchase": [
-        "POST /v1/admin/payments/:id/refund",
+        "POST /v1/admin/messages/:id/resend",
+        "POST /v1/admin/payments/:reference/refund",
         "POST /v1/payments"
       ],
       "endpoints": [
         {
-          "endpoint": "E-98",
+          "endpoint": "E-101",
           "route": "INTERNAL port:fulfilment#pass.year",
           "matchedBy": "ruling DEC-87"
         },
         {
-          "endpoint": "E-226",
+          "endpoint": "E-225",
           "route": "POST /v1/wishes/:id/keep",
           "matchedBy": "words: pass"
         }
@@ -937,37 +921,37 @@
       "source": "price-book",
       "statement": "Concierge, one wish concierge single",
       "purchase": [
-        "POST /v1/admin/payments/:id/refund",
+        "POST /v1/admin/payments/:reference/refund",
         "POST /v1/payments"
       ],
       "endpoints": [
         {
-          "endpoint": "E-84",
+          "endpoint": "E-87",
           "route": "INTERNAL port:fulfilment#concierge.single",
           "matchedBy": "ruling DEC-87"
         },
         {
-          "endpoint": "E-29",
+          "endpoint": "E-33",
           "route": "POST /v1/admin/concierge-orders/:id/delivery",
           "matchedBy": "words: concierge"
         },
         {
-          "endpoint": "E-30",
-          "route": "POST /v1/admin/concierge-orders/:id/maker",
-          "matchedBy": "words: concierge"
-        },
-        {
-          "endpoint": "E-31",
+          "endpoint": "E-34",
           "route": "POST /v1/admin/concierge-orders/:id/quote",
           "matchedBy": "words: concierge"
         },
         {
-          "endpoint": "E-32",
+          "endpoint": "E-38",
+          "route": "POST /v1/admin/concierge/orders/:id/maker",
+          "matchedBy": "words: concierge"
+        },
+        {
+          "endpoint": "E-39",
           "route": "POST /v1/concierge-orders",
           "matchedBy": "words: concierge"
         },
         {
-          "endpoint": "E-84",
+          "endpoint": "E-87",
           "route": "INTERNAL port:fulfilment#concierge.single",
           "matchedBy": "words: single"
         }
@@ -979,37 +963,37 @@
       "source": "price-book",
       "statement": "Concierge rush within 1 hour concierge rush",
       "purchase": [
-        "POST /v1/admin/payments/:id/refund",
+        "POST /v1/admin/payments/:reference/refund",
         "POST /v1/payments"
       ],
       "endpoints": [
         {
-          "endpoint": "E-83",
+          "endpoint": "E-86",
           "route": "INTERNAL port:fulfilment#concierge.rush",
           "matchedBy": "ruling DEC-87"
         },
         {
-          "endpoint": "E-29",
+          "endpoint": "E-33",
           "route": "POST /v1/admin/concierge-orders/:id/delivery",
           "matchedBy": "words: concierge"
         },
         {
-          "endpoint": "E-30",
-          "route": "POST /v1/admin/concierge-orders/:id/maker",
-          "matchedBy": "words: concierge"
-        },
-        {
-          "endpoint": "E-31",
+          "endpoint": "E-34",
           "route": "POST /v1/admin/concierge-orders/:id/quote",
           "matchedBy": "words: concierge"
         },
         {
-          "endpoint": "E-32",
+          "endpoint": "E-38",
+          "route": "POST /v1/admin/concierge/orders/:id/maker",
+          "matchedBy": "words: concierge"
+        },
+        {
+          "endpoint": "E-39",
           "route": "POST /v1/concierge-orders",
           "matchedBy": "words: concierge"
         },
         {
-          "endpoint": "E-83",
+          "endpoint": "E-86",
           "route": "INTERNAL port:fulfilment#concierge.rush",
           "matchedBy": "words: rush"
         }
@@ -1021,22 +1005,22 @@
       "source": "price-book",
       "statement": "Pro Starter, a month (VAT included) pro starter",
       "purchase": [
-        "POST /v1/admin/payments/:id/refund",
+        "POST /v1/admin/payments/:reference/refund",
         "POST /v1/payments"
       ],
       "endpoints": [
         {
-          "endpoint": "E-22",
+          "endpoint": "E-26",
           "route": "GET /v1/business/plan",
           "matchedBy": "ruling DEC-87"
         },
         {
-          "endpoint": "E-100",
+          "endpoint": "E-103",
           "route": "INTERNAL port:fulfilment#pro.starter",
           "matchedBy": "ruling DEC-87"
         },
         {
-          "endpoint": "E-100",
+          "endpoint": "E-103",
           "route": "INTERNAL port:fulfilment#pro.starter",
           "matchedBy": "words: starter"
         }
@@ -1049,57 +1033,57 @@
       "source": "price-book",
       "statement": "Pro Studio, a month (VAT included) pro studio",
       "purchase": [
-        "POST /v1/admin/payments/:id/refund",
+        "POST /v1/admin/payments/:reference/refund",
         "POST /v1/payments"
       ],
       "endpoints": [
         {
-          "endpoint": "E-22",
+          "endpoint": "E-26",
           "route": "GET /v1/business/plan",
           "matchedBy": "ruling DEC-87"
         },
         {
-          "endpoint": "E-101",
+          "endpoint": "E-104",
           "route": "INTERNAL port:fulfilment#pro.studio",
           "matchedBy": "ruling DEC-87"
         },
         {
-          "endpoint": "E-101",
+          "endpoint": "E-104",
           "route": "INTERNAL port:fulfilment#pro.studio",
           "matchedBy": "words: studio"
         },
         {
-          "endpoint": "E-11",
+          "endpoint": "E-14",
           "route": "POST /v1/ai/studio-change",
           "matchedBy": "words: studio"
         },
         {
-          "endpoint": "E-12",
+          "endpoint": "E-15",
           "route": "POST /v1/ai/studio-draft",
           "matchedBy": "words: studio"
         },
         {
-          "endpoint": "E-184",
+          "endpoint": "E-183",
           "route": "PATCH /v1/studio/prefs",
           "matchedBy": "words: studio"
         },
         {
-          "endpoint": "E-186",
+          "endpoint": "E-185",
           "route": "POST /v1/studio/styles",
           "matchedBy": "words: studio"
         },
         {
-          "endpoint": "E-187",
+          "endpoint": "E-186",
           "route": "DELETE /v1/studio/styles/:id",
           "matchedBy": "words: studio"
         },
         {
-          "endpoint": "E-189",
+          "endpoint": "E-188",
           "route": "PATCH /v1/studio/styles/:id",
           "matchedBy": "words: studio"
         },
         {
-          "endpoint": "E-190",
+          "endpoint": "E-189",
           "route": "POST /v1/studio/styles/:id/withdraw",
           "matchedBy": "words: studio"
         }
@@ -1111,33 +1095,33 @@
       "source": "price-book",
       "statement": "Wish pack, 5 Signature wishes (VAT included) pro pack",
       "purchase": [
-        "POST /v1/admin/payments/:id/refund",
+        "POST /v1/admin/payments/:reference/refund",
         "POST /v1/payments"
       ],
       "endpoints": [
         {
-          "endpoint": "E-22",
+          "endpoint": "E-26",
           "route": "GET /v1/business/plan",
           "matchedBy": "ruling DEC-87"
         },
         {
-          "endpoint": "E-99",
+          "endpoint": "E-102",
           "route": "INTERNAL port:fulfilment#pro.pack",
           "matchedBy": "ruling DEC-87"
         },
         {
-          "endpoint": "E-105",
+          "endpoint": "E-102",
+          "route": "INTERNAL port:fulfilment#pro.pack",
+          "matchedBy": "words: pack"
+        },
+        {
+          "endpoint": "E-108",
           "route": "INTERNAL port:fulfilment#ticket.signature",
           "matchedBy": "words: signature"
         },
         {
-          "endpoint": "E-85",
+          "endpoint": "E-88",
           "route": "INTERNAL port:fulfilment#creator.credit-pack",
-          "matchedBy": "words: pack"
-        },
-        {
-          "endpoint": "E-99",
-          "route": "INTERNAL port:fulfilment#pro.pack",
           "matchedBy": "words: pack"
         }
       ],
@@ -1149,27 +1133,27 @@
       "source": "price-book",
       "statement": "Vault space, 100 GB a month vault block",
       "purchase": [
-        "POST /v1/admin/payments/:id/refund",
+        "POST /v1/admin/payments/:reference/refund",
         "POST /v1/payments"
       ],
       "endpoints": [
         {
-          "endpoint": "E-106",
+          "endpoint": "E-109",
           "route": "INTERNAL port:fulfilment#vault.block",
           "matchedBy": "ruling DEC-87"
         },
         {
-          "endpoint": "E-106",
+          "endpoint": "E-109",
           "route": "INTERNAL port:fulfilment#vault.block",
           "matchedBy": "words: block"
         },
         {
-          "endpoint": "E-107",
+          "endpoint": "E-110",
           "route": "INTERNAL port:fulfilment#vault.block-bulk",
           "matchedBy": "words: block"
         },
         {
-          "endpoint": "E-28",
+          "endpoint": "E-32",
           "route": "POST /v1/business/client-wishes/:id/send-reveal",
           "matchedBy": "words: vault"
         }
@@ -1181,17 +1165,17 @@
       "source": "price-book",
       "statement": "Vault space past 1 TB, 100 GB a month vault block-bulk",
       "purchase": [
-        "POST /v1/admin/payments/:id/refund",
+        "POST /v1/admin/payments/:reference/refund",
         "POST /v1/payments"
       ],
       "endpoints": [
         {
-          "endpoint": "E-107",
+          "endpoint": "E-110",
           "route": "INTERNAL port:fulfilment#vault.block-bulk",
           "matchedBy": "ruling DEC-87"
         },
         {
-          "endpoint": "E-107",
+          "endpoint": "E-110",
           "route": "INTERNAL port:fulfilment#vault.block-bulk",
           "matchedBy": "words: block, bulk"
         }
@@ -1203,37 +1187,38 @@
       "source": "price-book",
       "statement": "Creator plan, a month creator plan",
       "purchase": [
-        "POST /v1/admin/payments/:id/refund",
+        "POST /v1/admin/messages/:id/resend",
+        "POST /v1/admin/payments/:reference/refund",
         "POST /v1/payments"
       ],
       "endpoints": [
         {
-          "endpoint": "E-87",
+          "endpoint": "E-90",
           "route": "INTERNAL port:fulfilment#creator.plan",
           "matchedBy": "ruling DEC-87"
         },
         {
-          "endpoint": "E-25",
-          "route": "POST /v1/business/client-wishes",
-          "matchedBy": "words: plan"
-        },
-        {
-          "endpoint": "E-36",
-          "route": "PATCH /v1/studio/me",
-          "matchedBy": "words: creator"
-        },
-        {
-          "endpoint": "E-6",
-          "route": "DELETE /v1/me/creator",
-          "matchedBy": "words: creator"
-        },
-        {
-          "endpoint": "E-7",
+          "endpoint": "E-10",
           "route": "POST /v1/me/creator",
           "matchedBy": "words: creator"
         },
         {
-          "endpoint": "E-87",
+          "endpoint": "E-29",
+          "route": "POST /v1/business/client-wishes",
+          "matchedBy": "words: plan"
+        },
+        {
+          "endpoint": "E-43",
+          "route": "PATCH /v1/studio/me",
+          "matchedBy": "words: creator"
+        },
+        {
+          "endpoint": "E-9",
+          "route": "DELETE /v1/me/creator",
+          "matchedBy": "words: creator"
+        },
+        {
+          "endpoint": "E-90",
           "route": "INTERNAL port:fulfilment#creator.plan",
           "matchedBy": "words: plan"
         }
@@ -1245,17 +1230,17 @@
       "source": "price-book",
       "statement": "Signed, a month creator signed",
       "purchase": [
-        "POST /v1/admin/payments/:id/refund",
+        "POST /v1/admin/payments/:reference/refund",
         "POST /v1/payments"
       ],
       "endpoints": [
         {
-          "endpoint": "E-88",
+          "endpoint": "E-91",
           "route": "INTERNAL port:fulfilment#creator.signed",
           "matchedBy": "ruling DEC-87"
         },
         {
-          "endpoint": "E-36",
+          "endpoint": "E-43",
           "route": "PATCH /v1/studio/me",
           "matchedBy": "words: creator, signed"
         }
@@ -1267,17 +1252,17 @@
       "source": "price-book",
       "statement": "Credit pack, 5 AI credits creator credit-pack",
       "purchase": [
-        "POST /v1/admin/payments/:id/refund",
+        "POST /v1/admin/payments/:reference/refund",
         "POST /v1/payments"
       ],
       "endpoints": [
         {
-          "endpoint": "E-85",
+          "endpoint": "E-88",
           "route": "INTERNAL port:fulfilment#creator.credit-pack",
           "matchedBy": "ruling DEC-87"
         },
         {
-          "endpoint": "E-85",
+          "endpoint": "E-88",
           "route": "INTERNAL port:fulfilment#creator.credit-pack",
           "matchedBy": "words: credit, pack"
         }
@@ -1289,17 +1274,17 @@
       "source": "price-book",
       "statement": "One more review this month creator extra-review",
       "purchase": [
-        "POST /v1/admin/payments/:id/refund",
+        "POST /v1/admin/payments/:reference/refund",
         "POST /v1/payments"
       ],
       "endpoints": [
         {
-          "endpoint": "E-86",
+          "endpoint": "E-89",
           "route": "INTERNAL port:fulfilment#creator.extra-review",
           "matchedBy": "ruling DEC-87"
         },
         {
-          "endpoint": "E-86",
+          "endpoint": "E-89",
           "route": "INTERNAL port:fulfilment#creator.extra-review",
           "matchedBy": "words: extra, review"
         }

@@ -44,6 +44,7 @@ import { WishesModule } from "./modules/wishes/wishes.module";
 import { PaymentsModule } from "./modules/payments/payments.module";
 // end B05
 // INT-3: the joins (handlers other bundles exported, registered with the jobs frame)
+import { PurchasesModule } from "./modules/purchases/purchases.module";
 import { JobHandlersModule } from "./modules/job-handlers/job-handlers.module";
 // end INT-3
 
@@ -93,6 +94,9 @@ import { JobHandlersModule } from "./modules/job-handlers/job-handlers.module";
     JobsModule,
     WishesModule,
     // end B06
+    // B07
+    PurchasesModule,
+    // end B07
     // INT-3
     JobHandlersModule,
     // end INT-3

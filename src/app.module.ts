@@ -43,6 +43,9 @@ import { WishesModule } from "./modules/wishes/wishes.module";
 // B05: payments core
 import { PaymentsModule } from "./modules/payments/payments.module";
 // end B05
+// INT-3: the joins (handlers other bundles exported, registered with the jobs frame)
+import { JobHandlersModule } from "./modules/job-handlers/job-handlers.module";
+// end INT-3
 
 /** Registration entry: each resource module adds one import line here. */
 @Module({
@@ -90,6 +93,9 @@ import { PaymentsModule } from "./modules/payments/payments.module";
     JobsModule,
     WishesModule,
     // end B06
+    // INT-3
+    JobHandlersModule,
+    // end INT-3
   ],
 })
 export class AppModule {}

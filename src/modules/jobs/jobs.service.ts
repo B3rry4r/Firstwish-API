@@ -61,29 +61,18 @@ export class JobsService implements OnApplicationBootstrap {
   }
 
   /**
-   * Schedules `kind` for `key` (the subject: a wish id, a payment id) at `at`. Safe to call twice: while a job for the same kind
-   * and key is waiting or failing, its time is moved to `at` and no second job is made. Pass the caller's transaction
-   * to make the job commit with the caller's write.
+   * Schedules `kind` for `key` (the subject: a wish id, a payment id) at `at`. There is one job row per kind and key (CC4: a unique
+   * index), so scheduling twice, or again after the job ran, moves the same row to `at` and makes it waiting again, in ONE statement
+   * that two callers cannot race. A run in flight finishes as a recorded run; the row stays waiting for the new time. Pass the
+   * caller's transaction to make the job commit with the caller's write.
    */
-  async schedule(kind: string, at: Date, key: string, db?: Db): Promise<string> {
-    const run = async (tx: Prisma.TransactionClient): Promise<string> => {
-      const type = dbType(kind);
-      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`job:${type}:${key}`}, 0))`;
-      const found = await tx.$queryRaw<{ id: string }[]>`
-        SELECT id::text AS id FROM job WHERE type = ${type}::"JobType" AND "subjectId" = ${key} AND status IN ('scheduled', 'failed')
-         ORDER BY id LIMIT 1`;
-      if (found[0]) {
-        await tx.$executeRaw`UPDATE job SET "runAt" = ${at}, status = 'scheduled' WHERE id = ${found[0].id}::uuid`;
-        return found[0].id;
-      }
-      const id = this.ids.id();
-      await tx.$executeRaw`
-        INSERT INTO job (id, type, "subjectId", "runAt", status, attempts, "createdAt")
-        VALUES (${id}::uuid, ${type}::"JobType", ${key}, ${at}, 'scheduled', 0, ${this.clock.now()})`;
-      return id;
-    };
-    if (db && !("$transaction" in db)) return run(db);
-    return this.prisma.$transaction(run);
+  async schedule(kind: string, at: Date, key: string, db: Db = this.prisma): Promise<string> {
+    const rows = await db.$queryRaw<{ id: string }[]>`
+      INSERT INTO job (id, type, "subjectId", "runAt", status, attempts, "createdAt")
+      VALUES (${this.ids.id()}::uuid, ${dbType(kind)}::"JobType", ${key}, ${at}, 'scheduled', 0, ${this.clock.now()})
+      ON CONFLICT (type, "subjectId") DO UPDATE SET "runAt" = EXCLUDED."runAt", status = 'scheduled', attempts = 0
+      RETURNING id::text AS id`;
+    return rows[0].id;
   }
 
   /** Takes a waiting job for `kind` and `key` off the table (a wish taken down no longer opens). */

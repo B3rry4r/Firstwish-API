@@ -47,6 +47,9 @@ export const NOT_THIS_ACCOUNT: Record<string, string> = {
   StaffAccount: "staff are separate from accounts (conventions: Who can do what); a staff member is never erased by an account erase",
 };
 
+/** The job kinds that wait on one wish (its id is the job's subject): the lifecycle's timed moves and its notice. */
+const WISH_JOB_KINDS = ["open_wish", "rest_wish", "erase_wish", "erase_now", "restore_window_end", "send_notice"] as const;
+
 export interface EraseRequest {
   /** Who asked: the person themselves (needs a fresh sign-in) or a staff member (B21, E-3, with a reason). */
   actor: AuditActor;
@@ -172,6 +175,12 @@ export class AccountErasureService {
     });
     // X10: the wishes' public links answer "gone" (the link row stays as a key; it is no longer active).
     if (wishIds.length) await tx.wishLink.updateMany({ where: { wishId: { in: wishIds } }, data: { active: false } });
+    // INT-3 (J1): the erased wishes' waiting jobs go (nothing may open, rest or notify an erased wish), and the files they named are
+    // no longer named (the files themselves go with the account's file job below).
+    if (wishIds.length) {
+      await tx.job.deleteMany({ where: { subjectId: { in: wishIds }, type: { in: [...WISH_JOB_KINDS] }, status: "scheduled" } });
+      await tx.wishFile.deleteMany({ where: { wishId: { in: wishIds } } });
+    }
     // BB6: every saved list drops the wishes (a feed row's id too); the account's own saved rows go with it.
     await this.savedWishes.forgetForWishes(tx, wishIds);
     await tx.savedWish.deleteMany({ where: { accountId } });

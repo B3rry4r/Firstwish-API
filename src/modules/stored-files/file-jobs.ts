@@ -26,12 +26,10 @@ export class FileJobs {
   ) {}
 
   /**
-   * The upload-cleanup handler. It removes (1) uploads never confirmed within 24 hours, and an upload a failed confirm left claimed:
-   * the objects first, then the rows; (2) the strays a signed PUT left on a staging key after its file was confirmed, refused or
-   * deleted (Y1): one scheduled upload-cleanup job per key, due once every signed PUT for it has expired. Each row is claimed by
-   * one conditional UPDATE, so two runs at once remove each thing once. Storage is never called inside a transaction (Y4).
+   * Part 1 of the cleanup alone (INT-3: the jobs frame runs one job per staging key and per erased account, so the recurring job
+   * only needs this): uploads never confirmed within 24 hours, objects first, then rows. Answers how many files it removed.
    */
-  async cleanupUnconfirmed(batch = 100): Promise<{ removed: number; swept: number }> {
+  async sweepUnconfirmed(batch = 100): Promise<number> {
     const now = this.clock.now();
     const before = new Date(now.getTime() - UNCONFIRMED_MAX_AGE_MS);
     const old = await this.db.storedFile.findMany({
@@ -60,6 +58,23 @@ export class FileJobs {
       if (gone) removed++;
     }
 
+    return removed;
+  }
+
+  /** One staging key's job (Y1): removes whatever a signed PUT left there. Safe to run twice (deleting nothing is fine). */
+  async sweepStagingKey(key: string): Promise<void> {
+    await this.storage.delete(key);
+  }
+
+  /**
+   * The upload-cleanup handler. It removes (1) uploads never confirmed within 24 hours, and an upload a failed confirm left claimed:
+   * the objects first, then the rows; (2) the strays a signed PUT left on a staging key after its file was confirmed, refused or
+   * deleted (Y1): one scheduled upload-cleanup job per key, due once every signed PUT for it has expired. Each row is claimed by
+   * one conditional UPDATE, so two runs at once remove each thing once. Storage is never called inside a transaction (Y4).
+   */
+  async cleanupUnconfirmed(batch = 100): Promise<{ removed: number; swept: number }> {
+    const now = this.clock.now();
+    let removed = await this.sweepUnconfirmed(batch);
     let swept = 0;
     const due = await this.db.job.findMany({
       where: { type: "upload_cleanup", status: "scheduled", runAt: { lte: now }, subjectId: { startsWith: STAGING_PREFIX } },
@@ -106,13 +121,20 @@ export class FileJobs {
    * upload-cleanup handler does the storage calls after that, never inside a transaction (Y4). Safe to call twice.
    */
   async removeAccountFiles(accountId: string, tx: Prisma.TransactionClient = this.db): Promise<void> {
-    await tx.job.create({
-      data: { id: this.ids.id(), type: "upload_cleanup", subjectId: `${ERASE_FILES_PREFIX}${accountId}`, runAt: this.clock.now(), status: "scheduled", attempts: 0 },
+    await this.scheduleCleanup(`${ERASE_FILES_PREFIX}${accountId}`, this.clock.now(), tx);
+  }
+
+  /** One upload-cleanup row per subject (CC4: a unique index on type and subject): a second call moves the same row, never a second row. */
+  async scheduleCleanup(subjectId: string, runAt: Date, tx: Prisma.TransactionClient | PrismaService = this.db): Promise<void> {
+    await tx.job.upsert({
+      where: { type_subjectId: { type: "upload_cleanup", subjectId } },
+      create: { id: this.ids.id(), type: "upload_cleanup", subjectId, runAt, status: "scheduled", attempts: 0 },
+      update: { runAt, status: "scheduled", attempts: 0 },
     });
   }
 
   /** The handler for one erase-files job: objects first (idempotent), then each file's rows. Answers how many files it removed. */
-  private async eraseFilesOf(accountId: string, batch: number): Promise<number> {
+  async eraseFilesOf(accountId: string, batch = 100): Promise<number> {
     const businessIds = (await this.db.business.findMany({ where: { accountId }, select: { id: true } })).map((b) => b.id);
     const owned: Prisma.StoredFileWhereInput = { OR: [{ ownerAccountId: accountId }, ...(businessIds.length ? [{ businessId: { in: businessIds } }] : [])] };
     let removed = 0;

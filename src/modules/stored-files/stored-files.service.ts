@@ -180,7 +180,12 @@ export class StoredFilesService {
    */
   private async sweepStagingLater(tx: Tx, objectKey: string): Promise<void> {
     const at = new Date(this.clock.now().getTime() + STAGING_SWEEP_AFTER_SECONDS * 1000);
-    await tx.job.create({ data: { id: this.ids.id(), type: "upload_cleanup", subjectId: stagingKeyOf(objectKey), runAt: at, status: "scheduled", attempts: 0 } });
+    const subjectId = stagingKeyOf(objectKey);
+    await tx.job.upsert({
+      where: { type_subjectId: { type: "upload_cleanup", subjectId } },
+      create: { id: this.ids.id(), type: "upload_cleanup", subjectId, runAt: at, status: "scheduled", attempts: 0 },
+      update: { runAt: at, status: "scheduled", attempts: 0 },
+    });
   }
 
   private async lockOwn(tx: Tx, id: string, accountId: string): Promise<FileRow> {
@@ -292,7 +297,12 @@ export class StoredFilesService {
           data: { status: screened.verdict === "pass" ? "ready" : "screening", bytes: BigInt(obj.size), kind },
         });
         if (isImage(type)) {
-          await tx.job.create({ data: { id: this.ids.id(), type: "make_image_sizes", subjectId: id, runAt: this.clock.now(), status: "scheduled", attempts: 0 } });
+          const at = this.clock.now();
+          await tx.job.upsert({
+            where: { type_subjectId: { type: "make_image_sizes", subjectId: id } },
+            create: { id: this.ids.id(), type: "make_image_sizes", subjectId: id, runAt: at, status: "scheduled", attempts: 0 },
+            update: { runAt: at, status: "scheduled", attempts: 0 },
+          });
         }
         return { row: ready, removeKeys: [staging] };
       },

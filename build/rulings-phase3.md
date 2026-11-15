@@ -290,3 +290,14 @@ BB6 (Verify B12, medium) A wish that is taken down, removed or erased leaves eve
 BB7 (Verify B12, low) The dates list pages in the database, not in memory; its cursor is the row's month-day and id, so a paging
     run that crosses midnight neither repeats nor skips. A POST naming someone else's id answers 404, not 409.
 BB8 (P-B12) E-121 (import people) answers {added, skipped: [{row, reason}]}; the contract's `number` is replaced at the next reopen.
+CC1 (B06) E-225 (save a draft) body gains `version` (required) and `timeZone`; `keep` is null | month | half | year (DEC-84). It
+    answers 200 {version, updatedAt} (not 204 with a header), so the page always holds the version to send next.
+CC2 (B06) E-231 (seal) body gains `version` and `timeZone`.
+CC3 (B06) The size limit of a wish's content is a config value in the price book's lifecycle config (wishContentMaxBytes,
+    262144, PROVISIONAL), not an env variable. A chapters limit applies only if the web app's catalog gives one per ticket (the
+    seed export reads it; none found means no limit).
+CC4 (B06) job has a unique index on (type, subject key); the advisory lock goes.
+CC5 (B06) Owed by others: E-232 wake and E-228 keep by B07 (what a payment buys); the send-notice handler by B11; admin wishes
+    E-218 to E-220 and admin jobs E-61, E-62 by B21, using the lifecycle and jobs services B06 exports. E-226 (add photos) is
+    B06's own and is closed in its patch.
+CC6 (B06) Restoring a resting wish makes it live again for the restore window. Listed to the owner.

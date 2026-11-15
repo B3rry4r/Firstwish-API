@@ -26,12 +26,12 @@
 - Your own dev server: `NEXT_DIST=.next-<prefix> npx next dev -p <your port>` inside your worktree; stop it by PID.
 - Screens are proved in a browser (Playwright: require('/opt/node-tools/node_modules/playwright'), chromium.launch()), narrowest first:
   360 x 740, then 390 x 844, then 1440 x 900; `documentElement.scrollWidth <= innerWidth`; zero console errors; light and dark.
-## Pushing and hand-back
-- Commit as Claude <noreply@anthropic.com>. Trailers on every commit:
+## Committing and hand-back
+- Commit as Claude <noreply@anthropic.com> on the local branch your brief names, in your own worktree. Trailers on every commit:
   Co-Authored-By: Claude <noreply@anthropic.com>
   Claude-Session: https://claude.ai/code/session_01Ji5DsgbRbxW8JX4EbGEa5o
-- Push only your named branch, with retries (5, 10, 20, 40 s); confirm with `git ls-remote origin refs/heads/<branch>`; hand back right after.
-- Stop every process you started, by PID.
+- Do NOT push: this session may push only one branch, and the lead does it after merging yours. Commit at each milestone, hand back
+  with the head sha. Stop every process you started, by PID.
 ## Owner rules you will meet (build/rulings.md in the API repo has the exact words)
 - Plain short words. Say "kind" for kinds of wish. Never "forever", "launch", "coming soon", "abroad", "diaspora" in customer copy. No emojis.
 - No native browser controls (select, date input, alert, confirm): the app's own. No dead controls. Portrait and Landscape, never "sideways".

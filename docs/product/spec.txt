@@ -1,0 +1,192 @@
+# Firstwish: Terms, Now Showing and the Style Studio
+2026-11-09 · @Excel
+Approved on 9 November 2026 and part of the product. This is the specification for three additions: tickets that keep a wish for a term, Now Showing, and Style Studio. The words are defined in the Wish Catalogue, the money is in the Product Plan, and the website shows all three.
+## The short version
+| Part | What it is | What it earns |
+| Tickets by term | A ticket keeps a wish for a short term, from 7 days to 2 months. When the term ends the wish rests, and it can be kept. A ticket buys a term, a number of photos and one style. Video comes only with the top ticket, Premiere. | Keeps, Premiere, extras |
+| Now Showing | A sender can publish a wish once it has been opened. Public wishes form a gallery on the site. | More wishes from "Make one like this", business pages, Wish of the day, gifts later |
+| Style Studio | Creators build styles with a motion tool and AI. Firstwish reviews and places every one. | Creator plans and credits, more premium styles to sell, the signed style, commissions |
+## One account, three things it can become
+There is one kind of account. It gains abilities; nobody opens a second one.
+| The account | What turns it on | What it adds |
+| Sender (every account) | Signing up | Make and send wishes. Everything private. |
+| Creator | Switching on a public profile and accepting the publishing terms | A public page with a handle, the wishes they publish to Now Showing, reactions, and the styles they build |
+| Business | A Pro plan on top of a creator profile | A badge, a booking or contact button, "Arranged by" on their wishes, their public work as a portfolio |
+Publishing a wish needs a creator profile. Building a style needs a creator profile. A business page is a creator profile with a Pro plan.
+## Tickets
+A buyer understands three meters, so a ticket is exactly three things:
+- How long it lives. The term.
+- How much it carries. Photos, and on Premiere only, video clips.
+- How it looks. One style, the sender's pick.
+| Ticket | Lives for | Can be kept | Photos | Video | Style | List price | Until 31 Jan |
+| Moment | 7 days | No | 6 | None | One starter style | ₦5,000 | ₦3,000 |
+| Keepsake | 2 weeks | Yes | 15 | None | One standard style | ₦10,000 | ₦6,000 |
+| Signature | 1 month | Yes | 15 | None | One premium style | ₦20,000 | ₦12,000 |
+| Premiere | 2 months | Yes | 20 | Three clips of 15 seconds | One premium style made for video | ₦35,000 | ₦21,000 |
+Terms are short on purpose. The offer to keep a wish lands while people still care. It also matches what buyers already pay for: in the Product Plan's competitor table, sites sell a 24 or 48 hour page and charge about ₦2,700 to ₦5,800 more to keep it.
+The rules behind the table:
+- The clock starts when the wish is first opened, not when it is bought or sealed.
+- Wedding wishes count from the wedding date. A Save the date lives until the day, and then for its ticket's term.
+- Moment cannot be kept. Its one option is to become a Keepsake for the difference. Keepsake, Signature and Premiere can be kept.
+- One style per wish. The sender picks it from the ticket's level or a level below. No ticket gives every style.
+- Video is Premiere only. No other ticket includes a clip, and no extra adds one to them.
+- A wish holds 20 of the sender's photos at most.
+- Keepsake adds a voice note or song link, a notice when the wish is opened, and a reaction from the receiver.
+- Signature adds the portrait video for WhatsApp status, a print-ready QR card, and up to ten friends who each add a message, a voice note and one photo.
+- Premiere adds three video clips inside the wish, in premium styles made for video.
+- Firstwish Concierge is a service, not a ticket. Our team makes the wishes. It is built for many at once, a team, a guest list or a client list, and priced by how many are sent. One wish made for a customer is a Signature wish, delivered within three hours: ₦25,000 at list, ₦15,000 until 31 January.
+### Extras
+Extras appear in two places. The pricing page lists them once, under the tickets. In the app they are offered at the moment they matter: the sixteenth photo, the day a wish rests.
+An extra is never a cheaper way to reach the next ticket:
+- Moment has no extras, and it cannot be kept. Its one option is to become a Keepsake for the difference.
+- Keepsake has a ceiling of ₦7,500 in extras. Past that the app offers Signature for the difference, and extras already paid count toward it. A keep does not count toward the ceiling.
+- Signature has no ceiling, and no video. To add clips it becomes a Premiere for the difference.
+- Video extras exist on Premiere only.
+- A keep is paid by the sender or the receiver. It wakes a resting wish, or extends a live one.
+| Extra | List price | Moment | Keepsake | Signature | Premiere |
+| Become the next ticket | The difference | Yes | Yes | Yes |  |
+| Five more photos | ₦2,000 | No | Yes | Yes | No |
+| A premium style | ₦4,000 | No | Yes | Included | Included |
+| Portrait video for WhatsApp status | ₦3,500 | No | Yes | Included | Included |
+| Print-ready QR card | ₦2,500 | No | Yes | Included | Included |
+| One more video clip, 15 seconds | ₦2,500 | No | No | No | Yes |
+| A long clip, up to 60 seconds | ₦5,000 | No | No | No | Yes |
+| Keep it one more month | ₦1,500, no discount | No | Yes | Yes | Yes |
+| Keep it six months | ₦4,000, no discount | No | Yes | Yes | Yes |
+| Keep it a year | ₦6,000, no discount | No | Yes | Yes | Yes |
+The 40% off until 31 January applies to extras as it does to tickets, except the three keeps, which are never discounted.
+### When a term ends
+- Three days before the term ends, the sender gets a message: "Aisha's wish rests on Saturday. Keep it."
+- On the last day the wish rests. Anyone who opens the link sees the seal and one line: "This wish is resting. Wake it." A Pro wish's resting screen still shows "Photos by" or "Arranged by" and the booking button.
+- The wish stays in the sender's account under Resting. Either person can pay to wake it, for a month, six months or a year. The receiver has the strongest reason to keep it, and is usually not a customer yet. Keeping it makes them one.
+- A resting wish is held for 12 months, then erased. Before that, both people are offered the wish as a video file.
+- On the wish's anniversary the sender gets a message to wake it. That is also the best day to sell this year's wish.
+The Firstwish Pass keeps every wish its holder has made alive for as long as the Pass is active. That makes the Pass the only way to keep everything.
+A published wish stays live while it is public, and the wishes on a business's page stay live while its Pro plan is active.
+Delete is soft. A deleted wish leaves the account and the link at once, can be restored for 30 days, and is then erased. Erase now removes it for good within 24 hours.
+### Why video sits at the top
+Cost is not the reason. At Cloudflare Stream's published rates a 15-second clip costs about ₦20 a year to keep and under ₦1 each time it is watched (Cloudflare Stream pricing, converted at $1 = ₦1,346.79, the rate in the Product Plan). The reasons are the product: a wish has to stay fast on any phone, and clips need styles built to hold them. So video is the top ticket, with its own styles, and not an extra on a cheaper one.
+### What keeps could earn
+For every 1,000 Keepsake wishes, if a quarter are kept, that is ₦375,000 if each takes one month and ₦1,500,000 if each takes a year. The quarter is an assumption, not a measured rate: nobody has data for this product. The first weeks of real sales will show the real figure.
+## Now Showing
+Every wish is private by default. A sender can choose to publish one, and it joins a gallery on the site called Now Showing. A public wish is the best advertisement Firstwish can have, because it is real.
+### Who can publish, and who can stop it
+A wish is about someone else's face and name. The sender is the publisher and carries the responsibility, and these rules back that up:
+- A known publisher. Only a creator profile with a confirmed phone number can publish.
+- After it opens, never before. A sealed wish cannot be public. The surprise belongs to the receiver first.
+- The publisher's promise. At the moment of publishing, the sender confirms they have the consent of everyone shown. The terms make that their responsibility.
+- The receiver is told, and can stop it. Firstwish messages the receiver directly, at the number or email the wish was delivered to, not through the sender. They can refuse, or take it down later.
+- Anyone shown can take it down. Every public wish has a "This is me, take it down" button. It comes down at once and is reviewed after.
+- A public cut. The sender chooses which chapters show. The letter can stay private while the photos and the finale are public.
+- Reviewed before it is listed. Automatic screening, then a person, before anything reaches the gallery.
+- No public wishes about children. Reactions only, no comments.
+No system stops a sender who lies about whose number it is. What protects Firstwish is a known publisher, the promise, a takedown that works in minutes, and removing publishing from anyone who abuses it.
+### Three levels of sharing
+| Level | Who can open it | Where it appears |
+| Private (default) | Anyone with the link | Nowhere |
+| Public link | Anyone, and it can be shared openly | The creator's own page |
+| Now Showing | Everyone | The gallery, by kind, occasion and style, and on its style's page |
+### What a visitor sees
+Every public wish has its own page with four things: the wish, its number, the style it was made in with the creator who built that style, and one button, Make one like this. That button opens the same kind and style, ready for the visitor's own photos.
+Every wish has a number. Wish № 0001 is Aisha's.
+Showcase wishes are public wishes Firstwish makes with our model's photos, so that every style can be seen as a real wish. Each style's page shows its showcase wishes first, then public wishes made in that style.
+### How it earns
+| Line | Who pays | How |
+| Make one like this | A new sender | The gallery turns viewers into buyers. This is the main return, and it costs nothing to run. |
+| A page for a business | Pro partners | A business is a creator profile with a Pro plan: a badge, a booking button and their public work as a portfolio. |
+| Wish of the day | Senders and businesses | A paid place at the top of the gallery for a day. Reviewed like any other. |
+| Open Group wishes | Organisers | Priced above the ten-friend Group. |
+| Gifts on a public wish | Viewers | Friends send the person a gift from the wish page, and Firstwish keeps a percentage. It needs payouts and identity checks, so it comes last. |
+### Open Group wishes
+A Group wish is private: the organiser invites up to ten friends by link. An open Group wish is the same wish for one person, with a public invitation in place of the ten private ones. The organiser shares the invitation anywhere, anyone who knows the person adds a message, and the organiser approves each one. It suits a teacher's retirement or a pastor's anniversary, where far more than ten people want to speak.
+### Music
+A private wish can link to the sender's song on a streaming service, or use their voice note. A public wish cannot carry that song. Public cuts play music from a licensed library.
+## Style Studio
+Style Studio is where creators build styles for Firstwish: designers, motion designers and developers. Firstwish stops being the only source of styles, and the catalogue grows without our team drawing each one.
+### How powerful the builder is
+It is a motion tool, close to what an animator uses, not a set of sliders. A timeline with keyframes for every moment of a wish. Layers and masks. Type that animates by letter, word and line. Triggers on scroll, tap and hold. A creator's own artwork, animation files and sound. AI builds a scene from a description and changes it when told to. Every AI action spends credits.
+The limits protect the wish, not the creator's range. Three things are checked when a style is submitted: every chapter of each kind the style claims must be present, type must stay readable, and the style must run smoothly on a budget phone.
+### Three ways in
+| Level | Who | How they build | When |
+| Remix | Anyone with taste | Describe a mood. AI proposes colours, type and motion. Adjust on the timeline and preview on sample wishes. | First |
+| Artwork | Designers and motion designers | Remix, plus their own illustration, animation files and sound | First |
+| Code | Invited developers | Their own motion as code, through a kit we publish, reviewed line by line | Later |
+### Templates
+A creator can open an existing style as a template and build on it.
+- Firstwish's own starter templates are free to every creator.
+- Opening a Premium style as a template needs a paid creator plan.
+- The creator of the original decides whether their style can be a template. When a style built from it earns, the original creator gets a quarter of that royalty.
+### From idea to catalogue
+- Build. In Style Studio, from nothing or from a template.
+- Preview. The style plays on sample wishes for each kind it claims.
+- Submit. With a name, a poster and the kinds it is made for.
+- Automatic checks. Speed on a budget phone, contrast, every chapter present, reduced motion.
+- Review by us. Taste, originality, rights to every font, image and sound.
+- Placement. Firstwish decides the level, never the creator. Accepted styles enter as Standard.
+- Live. In the catalogue, tagged with its kinds and its creator.
+### Where a style is placed, and what its creator earns
+Creators do not set prices. Firstwish sets one price for a premium style, and the creator of a Premium style gets 20% of it each time a paid wish uses that style.
+| Level | Who places it | What the creator gets |
+| Starter | Firstwish only. Starter styles are ours |  |
+| Standard | Firstwish, on acceptance | Their byline on the style's page. No payment. It can be promoted |
+| Premium | Firstwish, on evidence | 20% of the premium style price on every paid wish that uses it, paid monthly once earnings pass a threshold |
+- The sum. A premium style is ₦4,000 at list price, so each paid wish pays the creator ₦800: a hundred in a month is ₦80,000. While the 40% off runs the style is ₦2,400 and the share is ₦480.
+- Review moves styles. Every quarter, styles move between Standard and Premium on evidence: how often a preview in that style becomes a paid wish.
+- Made for video. A premium style can be built to hold clips. Premiere wishes use those.
+- Two words kept apart. A byline is the creator's name on a style. Credits are what AI actions cost.
+Creators earn as well as pay because a programme where creators only pay attracts hobbyists. Canva is reported to pay template creators from a pool of its subscription revenue by how often their templates are used, and Envato Elements is reported to share 50% of net subscription revenue with its authors. Neither company's own page would open, so treat both as reported (see Sources).
+### What creators pay
+| Line | Price | What it buys |
+| Free | ₦0 | A public profile, one style draft, a small credit allowance, no submission |
+| Creator plan | ₦7,500 a month | Unlimited drafts, a monthly credit allowance, two reviews a month, premium templates |
+| Credit pack | ₦3,000 | More AI actions. Priced at three to five times what the AI call costs us |
+| Extra review | ₦2,500 | One more submission in a month. It also keeps out careless entries |
+| Signed style | ₦5,000 a month | The creator's byline on the last screen of every wish made in their styles, with a link to their page |
+The byline on a style's own catalogue page is free. The byline on the last screen of every wish is the paid one, because every receiver sees it.
+### More ways it earns
+- More premium styles to sell. Each is a ₦4,000 extra on a Keepsake. Styles made for one kind solve the problem that seven styles cannot cover six kinds.
+- Collections. A Valentine's collection or a wedding collection, released on a date, gives every past customer a reason to come back.
+- Commissions. A company or a planner pays a creator for a private style in their own colours. Firstwish takes a share and guarantees it passes the checks.
+- Challenges. A themed contest with a prize brings in creators and is marketing in itself.
+### What protects the brand
+- Review is the product. A weak style is not listed, whoever paid for the plan.
+- Creators keep ownership and license the style to Firstwish. A wish already made keeps working if a style is later withdrawn.
+- Creators warrant that fonts, images and sounds are theirs to use. We remove anything disputed.
+## How the three connect
+<embed> 
+Creators add styles. Styles sell wishes. Some wishes go public, and every public wish names its style and carries a Make one like this button, which sends viewers back to wishes. The more a style is seen and paid for, the more creators build.
+## Every revenue line
+Four lines existed before these three parts. They add ten, and six of the ten need no new customer.
+| Line | Who pays | For what | From | Can start |
+| Tickets | Senders | One wish | The base | With the web app |
+| Extras | Senders | Photos, a premium style, the portrait video, a QR card | The base | With the web app |
+| Pass | Senders | A year of wishes, kept alive while active | The base | With the web app |
+| Pro plans | Businesses | Wishes for staff and clients | The base | With the web app |
+| Keeps | Senders and receivers | A month, six months or a year | Tickets by term | With the web app |
+| Premiere and video clips | Senders | Video inside a wish | Tickets by term | With the web app |
+| Business pages | Pro partners | A public page of their work | Now Showing | Second |
+| Wish of the day | Senders and businesses | A day at the top of the gallery | Now Showing | Second |
+| Open Group wishes | Organisers | A public wish anyone can add to | Now Showing | Second |
+| Gifts | Viewers | A gift to the person in a public wish | Now Showing | Last |
+| Creator plans and credits | Creators | Building styles with AI | Style Studio | Third |
+| Extra reviews | Creators | More submissions | Style Studio | Third |
+| Signed style | Creators | Their byline on every wish made in their styles | Style Studio | Third |
+| Commissions | Businesses | A private style from a creator | Style Studio | Third |
+## Build order
+- With the web app: terms, keeps and Premiere. Tickets carry a short term. A wish rests when its term ends, stays in the sender's account, and either person can pay to keep it. Premiere carries video. Every new style is built on the same kit a creator will later use.
+- Next: Now Showing, small. Publishing with the rules above, a page for each public wish with its number and its style, Make one like this, and a gallery we choose by hand. Business pages for Pro partners follow.
+- Then: Style Studio, by invitation. Ten to twenty designers we choose, brought in by hand, with royalties. Plans and credits open once their styles are selling.
+Gifts on public wishes and the code level for developers come after all three.
+## Still open
+- Publishing terms. The terms and the privacy policy must be drafted by a lawyer for publishing. They limit our liability, but a host still has to act when asked to take something down.
+- The hold and soft delete. The terms and the privacy policy must state that a resting wish is held for 12 months and a deleted one for 30 days, and that Erase now removes a wish within 24 hours. This goes to the lawyer with the publishing terms.
+- Music. A licensed library has to be signed before Now Showing opens.
+- Styles made for video. Premiere needs premium styles built to hold clips. None of the seven styles is yet.
+- More styles. Seven will not be enough, because some styles belong to one kind. How many more is not settled.
+- The creator's share on Pass and Pro wishes. A Pro wish can cost a partner as little as ₦1,150, so a flat ₦800 per wish cannot apply there. The rule for those wishes is not set.
+- Untested numbers. The creator prices, the keep prices and the 25% keep rate are our own starting figures, not researched ones.
+## Sources
+- Cloudflare Stream pricing: $5 a month per 1,000 minutes stored, $1 per 1,000 minutes delivered, encoding free. Page opened 9 November 2026.
+- Envato Elements, Subscriber Share: authors reported to receive 50% of net revenue from individual and team subscriptions. From a search summary; the page refused to open, so confirm before quoting it.
+- Canva Creators programme: creators reported to be paid from a pool of subscription revenue by template usage, after an application. From a search summary; the page refused to open, so confirm before quoting it.
+- Firstwish Product Plan: the exchange rate ($1 = ₦1,346.79) and the cost of an AI action.

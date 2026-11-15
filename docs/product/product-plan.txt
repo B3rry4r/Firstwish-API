@@ -1,0 +1,297 @@
+# Firstwish Product Plan
+2026-11-10 · @Excel
+Firstwish (firstwish.moxnafrica.com) is where people and businesses make wishes. A wish is anything sent to someone that should land as a moment: a birthday surprise for someone you love, a thank-you from a whole team, or a creative's finished work (a shoot, a look, an outfit, a design), presented to the client and downloaded from our Vault. People use it for the people in their lives, businesses use it as a professional tool to present and deliver their work, and creators build the styles wishes are made in. Eight lines earn: tickets, extras, keeps, the yearly Pass, Pro plans, Vault space, Concierge, and creator plans in Style Studio. Everything opens together on 15 November 2026. In the expected case the first year (November 2026 to October 2027) brings about ₦222 million, within a range of ₦52 million to ₦926 million.
+## What a wish is
+The name stays, and it covers everything: a wish is the moment of receiving. Whatever is sent through Firstwish arrives the same way, shaped and paced, sealed until it should be seen, opened on a phone. That is what makes it a wish rather than a file or a link, whether it is a gift or a delivery.
+| For | A wish is | It ends on |
+| People | A surprise for someone they love: a birthday, an anniversary, a send-off | A candle to blow out |
+| Teams | A thank-you or a welcome from everyone at once | A gift to open |
+| Creatives | How their work is delivered: proofs to choose from, then the finals to download | Favourites sent back, then Download all |
+| Planners | Save the date, Our story and Thank-you for a couple's guests | The date, then the credits |
+For creatives Firstwish is a working tool as much as a gift. The Vault holds the shoot, a Shoot Reveal presents the proofs, the client's favourites come back, and the finals go out as a second reveal with the download. No Drive link anywhere. Each new kind of work can be added the same way, as a pattern the same styles dress. On business pages the site never calls a wish a surprise or a celebration; there a wish is "your work, presented and delivered".
+## The words we use
+The Firstwish Wish Catalogue is the source of truth for kinds, occasions, styles and prices. This plan uses its words:
+- Kind: the type of wish, which sets its pattern. Six: Love, Celebration, Group, Wedding, Team, Shoot Reveal.
+- Style: how a wish looks and moves. Each style is made for some kinds only.
+- Ticket: what a person buys for one wish: Moment, Keepsake, Signature, Premiere.
+- Term: how long a wish stays live once it is first opened. Then it rests, and can be kept or woken for a month, six months or a year.
+- Pass: a year of wishes for one person, paid once. Pro: the plans a business buys.
+- Concierge: our team makes the wishes. A service, not a ticket.
+- Side: personal, business or creator, the three spaces one account can hold.
+- Creator: a person with a public profile who publishes wishes and builds styles in Style Studio. Now Showing is the public gallery.
+Inside the company the 40%-off price is the launch price. Customers read "40% off until 31 January", never the word launch, and never abroad or diaspora.
+## The product
+Every wish is built the same way: the sender's photos and words poured into a style, sealed until the moment chosen, opened on a phone. We say wish because it sounds like a gift; page sounds technical and delivery sounds like a courier. You make a wish for someone, and you send them a wish.
+Firstwish is a web app that installs from the browser, so it works on any phone without an app store. Built so far: the website, the app with its three sides, the wish maker, the player that plays every kind, and the seven styles. Accounts, payments and photo storage still run on the device for testing; the server, Paystack and photo storage are the next build.
+### Making a wish
+One question per screen, asked by the kind, so a wish can be made on the go in a few minutes:
+- Who it is for. Their name and what you call them. The kind and the occasion come from where the sender started.
+- Their photos. As many as the kind wants: 6 to 15 for Love, up to 20 for a Wedding.
+- The kind's own questions, one at a time. A letter and three reasons for Love; a few words, photo captions and other people's lines for a Celebration; dated moments and the details for a Wedding; only a note, the credits and two links for a Shoot Reveal. Optional chapters can be skipped.
+- A style, from the ones made for that kind.
+- Watch it whole, in that style, before paying anything. The preview is always free.
+- Seal and pay. When it opens, the ticket, then card, transfer or USSD. The sender gets the link, a QR code and a ready message to send.
+The sender is told when it is opened, and the receiver can send a reaction back. AI joins the maker next: the sender talks instead of typing, and Firstwish writes from the voice note and places the photos (see AI).
+### How a wish is built: kind, then style
+The kind sets the pattern of a wish: its chapters in order, how it opens and how it ends. The style dresses that pattern with ground, type and motion, and each style is made for some kinds only. Love is not the template for the rest.
+| Kind | How it opens | Chapters, in order (* can be left out) | How it ends | Styles made for it |
+| Love | Sealed until a moment | The letter · the reasons, each with a photo · a memory* · a blessing* | A candle to blow out | Studio Noir, Love Letter, Golden Hour, Cinema |
+| Celebration | Sealed until a moment | A few words · the photo story · voices from family and friends* · a blessing* | A candle | Owambe, Pidgin Gist, Grace, Studio Noir |
+| Group | Sealed until a moment | The voices, added by friends through one link · a note from the organiser · from all of us | A candle | Pidgin Gist, Owambe |
+| Wedding | Sealed until a moment | How we met, dated · the photo story · the details (venue, time, dress code) | The date, large, and confetti | Golden Hour, Owambe |
+| Team | Opens straight away | From the team · from the company | A gift to open | Cinema |
+| Shoot Reveal | "<studio> presents" | The film, frame by frame · favourites to heart · a note · credits · get your photos and book again | The studio's close | Studio Noir, Golden Hour, Cinema |
+Planners make Wedding wishes, and a vendor's card in the box uses the Love letter, so neither needs a pattern of its own. A style can move one chapter forward: Grace opens on the blessing.
+The maker asks one question per screen, and the questions come from the kind: a Wedding asks for dated moments and the details, a Shoot Reveal only for a note, the credits and the links. Only the styles made for that kind are offered. Every style's showcase can be watched in each kind it is made for.
+### The seven styles
+A style is designed once, by hand, and every wish made in it pours the sender's words and photos into it. That is how one style serves thousands of wishes, how every style can be previewed free, and how one fix reaches every wish.
+| Style | Feel | Level | Made for (kinds) |
+| Studio Noir | Dark, warm, editorial, copper | Starter | Love, Celebration, Shoot Reveal |
+| Love Letter | Paper, ink, a wax seal | Starter | Love |
+| Golden Hour | Sunset light that falls as you scroll | Starter | Love, Wedding, Shoot Reveal |
+| Grace | Calm and light, the blessing first | Standard | Celebration |
+| Pidgin Gist | Bright, funny, stickers | Standard | Celebration, Group |
+| Owambe | Gold, rich fabric, celebration | Premium | Celebration, Group, Wedding |
+| Cinema | Title cards, credits, a film about them | Premium | Love, Team, Shoot Reveal |
+A ticket comes with one style, the sender's pick, from its level or below: Starter on Moment, Standard on Keepsake, Premium on Signature and Premiere. A Keepsake can add a premium style as an extra. Premiere needs premium styles made for video, and none of the seven holds video clips yet.
+Seven is not enough. Team has one style and Group two, so the next styles go to those kinds first. The house adds a style a month, and creators add theirs through Style Studio from the start. Every new style is a reason to message every past customer.
+Every style has a showcase wish made with our model's photos, playable in each kind it is made for. Inside the maker the sender sees their own wish in a style before paying. Languages: English and Pidgin first; Yoruba, Igbo and Hausa next, for the words and the screens.
+Motion and what it runs on. The website moves with GSAP. The player's motion is plain CSS, so wishes stay smooth on cheap phones; Rive is the plan for interactive finales such as the candle. Rules every style follows: animate position, size, rotation and fading only; one heavy moment at a time; pause what is off screen; photos as separate files at the right size. Before release every style is scrolled fast in both directions, and through its finale, on a flagship Android, an iPhone and a budget Android. The site and app are hosted on Vercel; photos will be stored on Cloudflare ($0.015 per GB a month, delivery free); payments go through Paystack.
+### Accounts: one person, up to three sides
+One account and one sign in carry up to three sides. Personal is always there; a business and a creator profile are added when the person sets them up, never toggled on and off. Each side has its own space with its own tabs, and the app opens on the side used last.
+| Side | How you get it | Phone tabs | The + button makes | Closing it |
+| Personal | From sign up, always | Home · Styles · + · Wishes · You | A wish for someone | Delete the account |
+| Business | Add a business: its name, then Set up. It pays per wish until a Pro plan is chosen in Plan and invoices | Overview · Clients · + · People · Brand | A client wish in the business's brand, billed to the business | Close the business. Client wishes already sent play to the end of their term |
+| Creator | Open a creator profile: a handle and one line | Home · Published · + · Profile | A wish to publish to Now Showing | Close the profile. Published wishes become private |
+- Switching. Tap your picture in the top bar on a phone, or your name at the top of the side bar on a desktop. It lists your sides with a tick on the open one, then Add a business or Open a creator profile for any you do not have, then account settings, light or dark, and sign out.
+- Sign up. "What brings you here" decides which side is set up first: For someone sets up Personal only; For a business asks the business name; To create styles asks for a handle. Personal is made in every case.
+- Two or three sides. All of them sit in the switcher and nothing moves between them: personal wishes stay personal, client wishes stay with the business, published wishes stay with the profile. A business does not need a creator profile.
+- Teams. On Pro Studio, a staff member signs in with their own account and sees the business in their switcher, never the owner's personal side.
+- Publishing. Publishing a personal wish needs a public name, so the first publish asks for a handle and opens the creator side.
+Home and Styles are shared by every side, so a business or a creator still sees the feed. Style Studio sits on the creator side and opens with everything else.
+## Who it's for
+Anyone who wants one person to feel celebrated, and any business that presents its work or thanks its people. The site sorts them behind two doors, For you and For business; both make the same six kinds.
+| Kind | Who sends | Who receives | Occasions | Door |
+| Love | Partners and spouses | Their partner | Birthday, anniversary, Valentine's, proposal, apology, long distance, just because | For you |
+| Celebration | Children, parents, siblings, friends | One person | Birthdays, Mother's and Father's Day, graduation, new baby, thanksgiving, Christmas, New Year, send-off | For you |
+| Group | An organiser and up to 10 friends | One person | Birthday, send-off, proud of you, end of year, a parent's milestone | For you |
+| Wedding | A couple, or their planner | The guests | Save the date, Our story, Thank-you | For you and For business |
+| Team | HR teams, managers, owners | Staff and clients | Staff birthdays, work anniversaries, client thank-yous, farewells, season's greetings, welcomes | For business |
+| Shoot Reveal | Creatives of every kind | Their client | A shoot, a bridal look, a finished outfit, film stills | For business |
+Under For business, pages are by who the customer is, and each makes a kind that exists:
+| Who it's for | Kind they make | Status |
+| Companies and teams | Team | Live |
+| Creatives | Shoot Reveal | Live |
+| Wedding and event planners | Wedding, for their couples | Live |
+| Gift vendors and venues | Love or Celebration, opened from a QR card in the box or on the table | Live |
+| Churches and communities | Group and Team | Planned |
+| Schools and alumni | Group | Planned |
+Creatives means everyone whose finished work is a set of images or clips, and the site lists them so each sees themselves: photographers, videographers and filmmakers, makeup artists, hairstylists and braiders, nail technicians, fashion designers and tailors, stylists, event decorators and florists, cake designers, interior designers, tattoo artists, illustrators and painters, graphic designers, models and agencies. Each presents and delivers through Shoot Reveal and the Vault.
+Buyers outside Nigeria are not a separate audience: they make the same kinds, pay in their own currency, and the wish opens at midnight in the receiver's time zone. Companies need three things others do not: VAT invoices, many wishes in one payment, and one admin over several senders. Planned beyond the six: Remembrance, a kind for someone who has passed.
+### Shoot Reveal: a client becomes a customer
+A creative usually ends a job with a Google Drive folder. A Shoot Reveal opens instead: "<studio> presents", a title card with the client's name, the film frame by frame, favourites the client hearts and sends back as a list (no more "send me the numbers of the ones you like"), the creative's note, credits for every hand with their handles, then the download and Book again. It works the same for every creative in the list above, from a makeup artist's finished look to a tailor's finished outfit.
+Next, the client gets one more button: turn these photos into a wish for someone they love, paid to Firstwish. Every shoot can then bring a new customer.
+## The market
+Self-serve love pages sell for about ₦2,600 to ₦13,200 one-time, with a cheap short-lived page and a pricier one to keep. Made-for-you pages on Fiverr cost ₦6,700 to ₦27,000. The subscriptions that work in this space are yearly e-card memberships (about ₦48,500 a year) and business plans (about ₦400,000 a year). Rates used: $1 = ₦1,346.79 (7 Nov 2026) and R$1 = ₦265.38 (20 Oct 2026).
+| Product | Where | What you get | Price | In naira | Billing |
+| LovePanda, 24 hours | Brazil | Couple's page with music, up to 15 photos, live 24 hours | R$19.90 | ₦5,280 | One-time |
+| LovePanda, kept | Brazil | The same page, kept and editable | R$29.90 | ₦7,940 | One-time |
+| LovePanda, Complete | Brazil | Kept page plus a printable QR card and frames | R$39.90 | ₦10,590 | One-time |
+| DearYou | Brazil | 1 day, or kept | R$19.90–34.90 | ₦5,280–9,260 | One-time |
+| LoveHistory | Brazil | 48 hours, or kept with a retrospective | R$27.90–49.90 | ₦7,400–13,240 | One-time |
+| inamorei | Brazil | One plan, kept, up to 6 photos | R$9.90 | ₦2,630 | One-time |
+| Fiverr gig (Zulian) | Global | Made-for-you page, music, up to 18 photos, 1 day | $5 | ₦6,730 | One-time |
+| Fiverr gig (inagaraj143) | Global | Made-for-you page with countdown and preview, 1 day | $20 | ₦26,940 | One-time |
+| Kudoboard, single boards | US | A group card many people post to | $5.99–19.99 | ₦8,070–26,920 | One-time |
+| Kudoboard, Business | US | Unlimited boards for a company | about $299 a year | about ₦402,690 a year | Subscription |
+| Jacquie Lawson | UK | Unlimited animated e-cards, birthday reminders | $8 a month or $36 a year | ₦10,770 or ₦48,480 | Subscription |
+What it tells us:
+- A short page plus a kept page is the proven model. People pay about 50% more to keep it. Our terms and keeps follow it.
+- The QR card is already a paid upsell. LovePanda charges about ₦2,650 for one; ours is ₦2,500 at list.
+- Made-for-you sells at 3 to 4 times the self-serve price. That gap is Concierge.
+- At list prices Firstwish is the premium choice. A Keepsake (₦10,000) sits just above the Brazilian kept pages, and a Keepsake kept a year (₦16,000) well above them.
+- The Brazilian prices come from LovePanda's own blog (1 October 2026), a competitor's summary rather than each site's live list. Nigerian surprise vendors do not publish prices.
+## Pricing
+Every price has a list price and a price 40% lower that runs until 31 January 2027; list prices start on 1 February, as the Valentine's rush begins. The end date is real and is never extended, or the next offer will not be believed. Keeps are never discounted.
+### Tickets and terms
+| Ticket | Live for | List | 40% off (to 31 Jan) | International, list → 40% off | What it gives |
+| Moment | 7 days, cannot be kept | ₦5,000 | ₦3,000 | $6.99 → $3.99 | Up to 6 photos, one starter style, the midnight seal, a free preview. No extras; it can become a Keepsake for the difference |
+| Keepsake | 2 weeks, can be kept | ₦10,000 | ₦6,000 | $12.99 → $7.99 | Up to 15 photos, one standard style, a voice note or song link, told when it is opened, a reaction back. Extras up to ₦7,500 |
+| Signature | 1 month, can be kept | ₦20,000 | ₦12,000 | $24.99 → $14.99 | Everything in Keepsake, one premium style, the portrait video for WhatsApp status, a print-ready QR card, up to 10 friends adding messages |
+| Premiere | 2 months, can be kept | ₦35,000 | ₦21,000 | $44.99 → $26.99 | Everything in Signature, up to 20 photos and three 15-second clips, in a premium style made for video. The only ticket with video |
+No ticket is measured in years. The clock starts when the wish is first opened, not when it is bought; a Wedding counts from the wedding date. Terms are short because the offer to keep lands while people still care.
+When the term ends the wish rests: the link shows its seal and "This wish is resting. Wake it.", and it stays in the sender's account. The sender or the receiver can keep it for one more month (₦1,500), six months (₦4,000) or a year (₦6,000). The sender hears three days before it rests, and again on its anniversary. A resting wish is held for 12 months, then erased; before that both people are offered it as a video file. A Moment cannot be kept; it can only become a Keepsake for the difference.
+Three things keep a wish live past its term without a keep: the Pass, for every wish its holder made while it is active; being on Now Showing, while it is published; and a Pro plan, for the wishes on a business's page while the plan is active.
+Delete is soft: a deleted wish leaves the account and the link at once, can be restored for 30 days, then is erased. Erase now removes it and its photos within 24 hours. If Firstwish ever closes, every customer gets 90 days' notice and a download of their wish as a video and a photo folder.
+### Extras
+Extras sit once on the pricing page and are offered in the app at the moment they matter. An extra is never a cheaper road to the next ticket: a Keepsake's extras stop at ₦7,500, after which the app offers Signature for the difference and counts what was paid; keeps do not count toward that ceiling; video lives on Premiere only.
+| Extra | List | 40% off | Moment | Keepsake | Signature | Premiere |
+| Become the next ticket | The difference | The difference | Yes | Yes | Yes |  |
+| Five more photos | ₦2,000 | ₦1,200 | No | Yes | Yes | No |
+| A premium style | ₦4,000 | ₦2,400 | No | Yes | Included | Included |
+| Portrait video for WhatsApp status | ₦3,500 | ₦2,100 | No | Yes | Included | Included |
+| Print-ready QR card | ₦2,500 | ₦1,500 | No | Yes | Included | Included |
+| One more video clip, 15 seconds | ₦2,500 | ₦1,500 | No | No | No | Yes |
+| A long clip, up to 60 seconds | ₦5,000 | ₦3,000 | No | No | No | Yes |
+| Keep it one more month | ₦1,500 | Not discounted | No | Yes | Yes | Yes |
+| Keep it six months | ₦4,000 | Not discounted | No | Yes | Yes | Yes |
+| Keep it a year | ₦6,000 | Not discounted | No | Yes | Yes | Yes |
+A premium style is sold per wish, never as access to all of them; only the Pass includes every style, because it is priced for a year. The QR card is a print-ready file the sender prints anywhere, slipped into a real gift so the gift opens the wish. A landscape video for a TV or projector is planned as a second paid format.
+### Concierge
+Firstwish Concierge is our team making the wishes, for many at once: a company's whole staff, a guest list or a client list. One maker owns the order, a sheet of names becomes a wish for each person, each is delivered on its date, with a report of what was opened and one VAT invoice. It is priced per order by how many are sent; the model counts bulk wishes at about ₦8,000 each.
+One wish made for one person is a Signature delivered within 3 hours: ₦25,000 list, ₦15,000 at 40% off ($39 → $23). A rush within 1 hour adds ₦8,000 (₦4,800). It is not the main product. It is for three buyers: people abroad, for whom $23 is an easy spend; busy people who pay rather than spend ten minutes; and anyone who remembers at 11:40 p.m. It also makes a ₦12,000 Signature look reasonable beside it.
+### The Pass
+A monthly subscription does not work for people: someone makes three to six wishes a year, so a monthly charge feels like a trap, and Paystack can only repeat a charge on a saved card while many pay by transfer. So the Pass is paid once a year: ₦35,000 list, ₦20,000 at 40% off ($39.99 → $24.99). It does not renew on its own.
+- Keepsake wishes all year (fair use: 20)
+- Four Signature upgrades
+- Every style, including new ones
+- Reminders for everyone in People and dates, 7 days and 1 day before, with a wish already started
+- 20% off Concierge
+- Every wish its holder made stays live while the Pass is active
+At 40% off it pays for itself by the fourth Keepsake (₦24,000). Pass holders pay for no keeps, so the model counts their wishes apart from paid tickets. The reminders are the other reason to buy it: they turn "I forgot" into a wish ready on time.
+### Firstwish Pro
+For companies, creatives, wedding and event planners, gift vendors and venues. A Pro wish is a Signature wish made for a client, priced at about ₦3,500 at 40% off so it stays well below what a person pays for one (₦12,000) while a partner can still resell it at a profit. These prices were set on 10 November.
+| Plan | List | 40% off | Wishes | Each, at 40% off | What's included |
+| Pro Starter | ₦58,000 a month | ₦35,000 a month | 10 a month | ₦3,500 | The business name on the last screen, a client dashboard, unused wishes roll over one month, 1 login |
+| Pro Studio | ₦175,000 a month | ₦105,000 a month | 35 a month | ₦3,000 | Everything in Starter, the business's own logo and colours, 3 logins, priority support |
+| Wish pack | ₦29,000 once | ₦17,500 once | 5, never expire | ₦3,500 | For a business that wants to try it first. No subscription |
+Adding a business side is free; it makes wishes from a pack until a plan is chosen. Card holders pay monthly; anyone else prepays three months by transfer. A business that joins before 31 January keeps its price for 12 months. A Pro wish lives a month; its resting screen keeps "Photos by" or "Arranged by" and the booking button, and the client is offered the keep, paid to Firstwish.
+### The Vault
+The Vault is a business's storage on Firstwish, and it replaces the Drive link. The creative uploads the whole set once; the proofs go out as a Shoot Reveal; the client's favourites come back to the shoot; the edited finals are uploaded beside them and go out as a second reveal, "Your finals", that ends with Download all. The client downloads from Firstwish, for as long as the files stay in the Vault.
+| Plan | Vault included | Our cost if it is full | Share of the plan's price at 40% off |
+| Pro Starter | 100 GB | about ₦2,000 a month | 6% |
+| Pro Studio | 500 GB | about ₦10,100 a month | 10% |
+| Wish pack | 20 GB for 90 days | about ₦400 a month | 7% |
+More space is ₦3,000 a month per 100 GB, billed by the 100 GB blocks used that month, and ₦2,500 per 100 GB beyond 1 TB. Vault space is never discounted.
+Why these numbers. Cloudflare R2 charges $0.015 per GB a month (about ₦20) and nothing for downloads. DigitalOcean Spaces is $5 a month for 250 GB and 1 TB of transfer, then about $0.02 per GB stored and $0.01 per GB downloaded. Clients download whole sets, so the Vault runs on R2. Extra space at ₦30 a GB leaves us a third after storage; it sits beside Google One in Nigeria (100 GB for ₦2,950 a month) and well under gallery services creatives pay for, such as Pixieset (100 GB for about $20 a month, 1 TB for about $30), which come without wishes. Most businesses will fill part of their Vault, so the space included costs us less than the table: it is a reason to choose Pro, not a profit line, and the model counts it that way.
+## Creators, Now Showing and Style Studio
+Creators are the third side of an account: a public handle, a profile and the wishes they publish. A creator profile is separate from a business; one person can have both.
+- Now Showing is the public gallery. A creator publishes a wish after it has been opened; the sender is the publisher and carries the responsibility; the receiver is told and can stop it; anyone shown can take it down at once. Reactions only, no comments. Every public wish shows its number, its style and Make one like this.
+- Showcase wishes are wishes we make with our model's photos, so every style can be seen as a real wish. Wish № 0001 is the first.
+- Style Studio is where creators build styles with a motion editor and AI (see AI). We review every style and place it. Starter styles stay ours; a standard style earns its creator a byline; a premium style earns a royalty. Creators do not set prices.
+- Templates. A style can be opened as a template; when a style built from it earns, the original creator gets a quarter of that royalty.
+| Creator plan | Price | What it gives |
+| Open | Free, by application | A public profile and handle, one style draft, 3 AI credits to start |
+| Creator | ₦7,500 a month | Unlimited drafts, 10 AI credits a month, two reviews a month, premium styles as templates |
+| Signed | ₦5,000 a month | The creator's name on the last screen of every wish made in their styles, with a link to their page |
+| Credit pack | ₦3,000 | 5 AI credits |
+| Extra review | ₦2,500 | One more review in a month |
+Royalties. On a person's paid wish in a creator's premium style, the creator earns 20% of the premium style's list price: ₦800. On a Pro wish they earn 20% of what the business paid for that wish: ₦700 on Pro Starter at 40% off. Paid monthly once earnings pass a payout threshold, still to be set.
+Other lines that come with Now Showing are not in the money model yet: business pages for Pro partners, wish of the day, open Group wishes anyone can join, commissions from businesses to creators, and gifts on a public wish (last, as it needs payouts and identity checks). Before Now Showing opens: terms and a privacy policy drafted by a lawyer for publishing, including the 12-month hold on resting wishes and the 30-day hold on deleted ones, and a licensed music library, since a public wish cannot carry the sender's own song.
+## Partners
+Partners are businesses that already have the customers we want. They make wishes for their clients on Pro at about ₦3,500 each, charge more, keep the difference, and their name travels on every wish. Each one sells for us without ads.
+| Partner | What they do | What the client gets | What the partner earns | What we get |
+| Creatives | Deliver the best images as a Shoot Reveal, not only a Drive folder | Their work shown like a film, ready to send on | Sells it as a ₦8,000–12,000 add-on, pays us about ₦3,500 | A Pro plan, and "Photos by" on a wish that gets shared |
+| Gift vendors and venues | Add a digital surprise: the cake, flowers or hamper arrives with a QR card that opens the wish; restaurants put the card on the table | The surprise, plus a wish that outlasts it | ₦7,000–12,000 more per package, nothing extra to deliver | A Pro plan and a steady flow of new viewers |
+| Wedding and event planners | Make a Save the date, an Our story and a Thank-you for each couple | Three wishes for one wedding, in one style | Bundles them into planning fees | Pro Studio, and every guest sees Firstwish |
+| Companies and teams | Send Team wishes to staff and clients from one admin | A birthday or thank-you from the whole team | Nothing to resell: a staff and client benefit | A plan paid every month |
+| Influencers | Share a referral link (not a Pro plan) | 10% off their first wish | 20% of every first purchase through the link | Reach without paying upfront |
+Before pitching a partner, we make one finished demo wish in their world: a Shoot Reveal from the creative's own work, with permission; a wish tied to one of the vendor's real packages.
+## The money
+In the expected case Firstwish brings about ₦222 million in its first year (November 2026 to October 2027), and keeps about ₦206 million of it after the costs that grow with each sale. Tickets and their extras are 62% of it; the Pass, Pro and Concierge carry most of the rest. These are targets built from stated assumptions, not a forecast: the first two months of real sales will show which case we are in.
+| Revenue line | Low | Expected | High |
+| Tickets (2,900 / 11,600 / 46,400 paid wishes) | ₦31.2m | ₦124.9m | ₦499.8m |
+| Extras | ₦3.1m | ₦12.5m | ₦50.0m |
+| Keeps | ₦0.3m | ₦2.8m | ₦18.6m |
+| The Pass (200 / 1,000 / 5,000) | ₦6.4m | ₦31.9m | ₦159.4m |
+| Pro (10 / 40 / 150 businesses on average) | ₦6.8m | ₦27.3m | ₦102.3m |
+| Vault space beyond the plans | ₦0.2m | ₦0.6m | ₦2.3m |
+| Concierge | ₦3.3m | ₦19.8m | ₦81.3m |
+| Creator plans and credits | ₦0.4m | ₦2.5m | ₦12.4m |
+| Total | ₦51.8m | ₦222.2m | ₦926.1m |
+| Costs that grow with each sale, Vault storage and creator royalties included | ₦3.8m | ₦16.5m | ₦69.7m |
+| Left before people and marketing | ₦48.0m | ₦205.7m | ₦856.4m |
+<embed> 
+February beats December because it is the first month at list prices and the Valentine's month. From March, Pro and the Pass give a floor that does not depend on a season.
+### What each sale leaves us
+A sale costs us about ₦240 in AI, photo storage and delivery, ₦100 more for a Signature or Premiere's portrait video, ₦300 more for Premiere's clips, and Paystack's fee (1.5% plus ₦100 on local payments, capped at ₦2,000; 3.9% on international cards). A creator's premium style adds their royalty.
+| Sale | Price at 40% off | Left to us | With a creator's style | At list price, left to us |
+| Moment | ₦3,000 | ₦2,615 (87%) | — | ₦4,585 (92%) |
+| Keepsake | ₦6,000 | ₦5,570 (93%) | — | ₦9,510 (95%) |
+| Signature | ₦12,000 | ₦11,380 (95%) | ₦10,580 (88%) | ₦19,260 (96%) |
+| Premiere | ₦21,000 | ₦19,945 (95%) | ₦19,145 (91%) | ₦33,735 (96%) |
+| A Pro Starter wish | ₦3,500 | ₦3,050 (87%) | ₦2,350 (67%) | ₦5,330 (92%) |
+| A Pass used for 8 wishes | ₦20,000 | ₦17,280 (86%) | — | ₦32,055 (92%) |
+The product's own costs are small; what decides profit is the cost of people and marketing, which this model leaves out. Marketing will be the largest cost by far.
+### The assumptions
+- Volume. 2,900, 11,600 or 46,400 paid tickets in the year (8, 32 or 127 a day), growing 3% a month. November is half a month; December runs at 1.6 times a normal month and February at 2 times.
+- Ticket mix. 30% Moment, 45% Keepsake, 20% Signature, 5% Premiere: about ₦7,050 a ticket at 40% off and ₦11,750 at list. Extras add 10%.
+- Keeps. 6%, 12% or 20% of Keepsake, Signature and Premiere wishes are kept, half for a month, 30% for six months, 20% for a year (₦3,150 on average), about a month after they are sent.
+- The Pass. 200, 1,000 or 5,000 sold across the year, at ₦20,000 to 31 January and ₦35,000 after. Holders make about 6 wishes each, not counted as tickets.
+- Pro. 10, 40 or 150 businesses on average: 70% on Starter, 15% on Studio, 15% buying a pack every two months. Those who join before 31 January keep the 40%-off price for 12 months.
+- Concierge. 100, 600 or 2,500 single wishes, and 5, 30 or 120 orders of about 25 wishes at about ₦8,000 each. Our makers' time: about ₦1,200 for a single wish, ₦300 a wish in an order.
+- Creators. Style Studio opens on 15 November with everything else. 5, 30 or 150 paying creators at about ₦8,000 a month with credits, building up over the first four months. 10%, 20% or 35% of premium wishes use a creator's style once their styles have passed review, from December.
+- Referrals. Links cost about 3% of ticket revenue.
+- Customers abroad. 10%, 15% or 20% of sales, which only changes the payment fee.
+Vault. A quarter of businesses go past their included space, by about 200 GB (₦6,000 a month). A business fills about 40% of its included space on average; all storage costs ₦20 a GB a month.
+Not in the model: the Now Showing lines (business pages, wish of the day, open Group wishes, gifts, commissions), markets beyond Nigeria and people abroad, and the cost of people, marketing and offices.
+### Price decisions taken on 10 November
+A review of every price against the others found four gaps. Each was decided as follows, and the site and app follow these prices.
+| Gap found | Decision |
+| A Pro wish (a Signature) cost a business ₦1,500 on Starter and ₦1,700 in a pack, against ₦12,000 for a person. Anyone could type a business name and pay ₦1,500. | Pro prices raised to about ₦3,500 a wish at 40% off: Starter ₦35,000 a month, Studio ₦105,000, pack ₦17,500. Partners still resell at ₦8,000–12,000. |
+| A creator's ₦800 royalty on a Pro Studio wish would have left us nothing on it. | On a Pro wish a creator earns 20% of what the business paid for that wish. On a person's ticket it stays ₦800. |
+| The plan said the Pass pays for itself by the second Signature; it gives Keepsakes. | The Pass is unchanged. It pays for itself by the fourth Keepsake. |
+| Style Studio's AI credits had no allowances. | 1 credit = ₦200 of AI. A full style draft takes 4 credits, an edit 1. Credits sell at about three times their AI cost: Open gets 3 to start, Creator 10 a month, a pack is 5 for ₦3,000. |
+## AI
+AI has three users: the sender, inside every wish; our makers, on Concierge orders; and creators, building styles in Style Studio. It never designs a person's wish from scratch. Styles are made by hand, by us or by creators and reviewed by us, and AI fills them, which keeps a wish at about ₦200 of AI and every wish as good as its showcase.
+### In every wish
+This joins the maker next. The sender talks; Firstwish writes and arranges.
+| Job | What it does | Model | Cost per wish |
+| Listen | Turns about 3 minutes of voice notes into text | Speech-to-text, about $0.003 a minute | about ₦12 |
+| See | Picks the opening photo, finds faces so crops never cut a head, matches photos to the chapters | Claude Sonnet 5.5, about 10 photos | about ₦43 |
+| Write | Drafts each chapter the kind asks for from the sender's words, asks a follow-up only when something is missing, makes the changes asked for (about 3 rounds) | Claude Sonnet 5.5, $2 in and $10 out per million tokens | about ₦145 |
+| Arrange | Suggests the style, from those made for the kind, and an accent from the photos | Part of Write | included |
+| Total |  |  | about ₦200 ($0.15) |
+The rules: AI may use only what the sender said, keeps their exact phrases, never invents a memory or a fact, avoids a list of clichés, and the sender approves every line. Claude Haiku 5.5 ($0.10 in, $0.50 out) can take the simple steps; the words stay on the stronger model, because the words are what make someone cry.
+### For our makers
+On a Concierge order a sheet of names becomes a wish for each person: AI drafts each one from the order's brief and that person's line, and a maker checks every wish before it is sent. About ₦200 a wish, the same as a person's, plus the maker's time.
+### For creators, in Style Studio
+A creator describes the style they want and AI writes its first draft in the motion editor; they refine it by hand or by asking. A full draft is about 30,000 tokens of code from the strongest model, about ₦860; a smaller edit is about ₦200. So Studio AI is sold as credits: 1 credit is ₦200 of AI, a draft takes 4 credits and an edit 1, and credits sell at about three times their AI cost (a ₦3,000 pack is 5 credits, ₦1,000 of AI; Creator is ₦7,500 with 10 credits a month). Every style still passes our review and the release test before any wish uses it, because a style is code that thousands of wishes will run.
+### Why not let AI design each wish
+| Approach | Cost per wish | Quality and risk |
+| Hand-made styles, AI fills them (what we do) | about ₦200 | Every style is tested before release; previews are free; every wish looks like its showcase |
+| AI writes each wish's whole design as new code | about ₦3,450 (about 4 attempts) | Untested code in every wish, no reliable preview, more than half a ₦6,000 Keepsake |
+| AI adjusts a hand-made style within limits (later) | about ₦220 | Colours, an approved font pairing, motion strength, a layout variant: each wish feels its own and stays safe |
+We start with the first and add the third later. Model prices come from a third-party tracker checked on 10 October 2026 and the speech-to-text rate is partly estimated; both are confirmed on the providers' own pages before AI goes live.
+## Risks and how we handle them
+The three that could sink the product are words that sound generic, private photos leaking, and wishes that fail on cheap phones. Each has a fix built into the product, not a promise.
+| Risk | What could happen | How we handle it |
+| Generic AI words | Every letter sounds the same, and the receiver can tell | The sender's own words come first; AI may use only what they said, keeps their phrases, never invents; the sender approves every line |
+| Private photos leaking | Intimate photos or words seen by strangers or found on Google | Links end in a random code; wishes are hidden from search; an optional passcode; photo addresses expire; encrypted storage; soft delete for 30 days and Erase now within 24 hours; customer photos and words never train AI |
+| A wish not playing | It fails on someone's phone | The motion rules and the release test on three phones, and error reports from every wish |
+| The lock cheated | Someone changes their phone's clock to open early | The server holds the wish back until the moment in the receiver's time zone |
+| Prices that undercut each other | A cheaper plan becomes the way to buy a ticket | Every price is checked against the others; the four gaps found were closed on 10 November |
+| A creator's style | It breaks wishes, or uses a font, image or sound it has no right to | Review and the release test before release; creators confirm their rights; a withdrawn style keeps working in wishes already made |
+| Publishing without consent | A public wish shows someone who did not agree | The sender confirms everyone agrees; the receiver is told and can stop it; anyone shown can take it down at once |
+| Abuse | Wishes used to harass or share explicit images | Content rules at sign up, screening of uploaded photos, a report button, takedown within 24 hours, banned accounts |
+| Music copyright | Hosting songs we have no licence for | Senders link their song or record a voice note; we host only licensed music |
+| Payment trouble | Paid, but no wish arrives | The wish unlocks the moment Paystack confirms; the preview is free; a refund if a paid wish fails |
+| Seasonal income | Huge December and February, quiet between | Birthdays happen all year; the Pass reminders bring people back; Pro pays every month |
+| Copycats | The idea is cloned in a week | Compete on what is hard to copy: styles, creators, partners, the brand, speed to a finished wish |
+| Data protection | The Nigeria Data Protection Act covers the photos and details we hold | Terms and a privacy policy reviewed by a lawyer before payments open |
+One more: Vault storage outgrows its price. Space beyond a plan is billed by the 100 GB actually used, so storage we pay for is always paid for; files a business deletes leave the Vault the same day.
+## Beyond Nigeria
+People abroad come first, because they know the culture, pay in dollars and pounds, and surprise people back home across a distance; Paystack takes international cards at 3.9%, so they can buy from the start. African markets follow in the order Paystack supports them.
+| Market | When | Why | Payments | What changes |
+| Nigeria | From the start | Home market, the midnight-wish culture, partners in reach | Paystack: card, transfer, USSD | Nothing, it is the base |
+| UK, US, Canada | From the start | Pays in dollars or pounds; distance makes a digital surprise the best option | Paystack international cards | Dollar prices, the opening time in the receiver's time zone |
+| Ghana | Q1 2027 | Close culture, strong mobile money | Paystack, cedis | Prices in cedis, Twi phrases, Ghanaian occasions |
+| Kenya | Q2 2027 | Large, mobile-first | Paystack, shillings | Prices in shillings, Swahili |
+| South Africa | Q2 2027 | Highest card use on the continent | Paystack, rand | Prices in rand |
+| Côte d'Ivoire | Later | Opens francophone West Africa | Paystack, CFA francs | French screens and words |
+Brazil proves people pay for this category, with at least a dozen sites competing, which makes it a crowded market to enter rather than a target. Local prices for Ghana, Kenya and South Africa need their own check before each opens.
+## Sources
+- Best website to create a digital gift in 2026, LovePanda: Brazilian competitor prices, as of 1 Oct 2026
+- Is Kudoboard worth it? Pricing explained, Reco Cards
+- Single card or annual plan, GroupGreeting help centre
+- Membership, Jacquie Lawson
+- Romantic surprise website gig, Fiverr (Zulian)
+- Personalized Valentine's or anniversary website gig, Fiverr (inagaraj143)
+- Dollar to naira today, 7 November 2026, Within Nigeria
+- BRL to NGN, FXFeed, 20 Oct 2026
+- Transaction charges and Subscriptions, Paystack
+- Claude API prices, Costbench, checked 10 Oct 2026
+- Speech-to-text API prices, DIY AI, checked 24 Aug 2026
+- Cloudflare Images pricing, Cloudflare, and Cloudflare R2 pricing, Filebase
+- GSAP 3.15 readme, GreenSock, and Rive vs Lottie, Toolradar
+Prices for Firstwish itself are those on the site and in the app on 10 November 2026.

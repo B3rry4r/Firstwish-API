@@ -1,0 +1,230 @@
+# Firstwish Wish Catalogue
+2026-11-08 · @Excel
+## The words we use
+One meaning per word. This section is the source of truth: the website, the Product Plan and the Partner Brief all follow it.
+| Word | Meaning | How many |
+| Kind | The wish format: a fixed arrangement of chapters, a finale and a default style | Six: Love, Celebration, Group, Wedding, Team, Shoot Reveal |
+| Occasion | A reason inside a kind, like Birthday or Apology | Varies by kind |
+| Style | The look and motion | Seven so far, more to come |
+| Level | Where a style sits: Starter, Standard or Premium. Firstwish decides it | Three |
+| Made for video | A premium style built to hold video clips. Premiere wishes use these | None yet |
+| Ticket | What a person buys for one wish: Moment, Keepsake, Signature, Premiere | Four |
+| Concierge | Firstwish Concierge. A service, not a ticket. Our team makes the wishes, for many at once: a team, a guest list, a client list. One wish made for a customer is a Signature wish | One |
+| Term | How long a ticket keeps a wish live. The clock starts when the wish is first opened | 7 days, 2 weeks, 1 month, 2 months |
+| Keep | Paying to wake a resting wish or extend a live one: a month, six months or a year. The sender or the receiver can pay |  |
+| Resting | A wish whose term has ended. Sealed, held 12 months, in the sender's account, and it can be woken | Held 12 months |
+| Extra | Something added to one wish: photos, a premium style, the portrait video, a QR card, a keep. On Premiere only, more video clips |  |
+| Plan | What is paid for over time: the Pass for people; Pro Starter, Pro Studio and the Wish pack for businesses; the creator plan in Style Studio |  |
+| For you / For business | The two doors into the site. Navigation only, never called a kind | Two |
+| Who it's for | Under For business, the type of customer. Not a kind | Four today, two more marked Soon |
+| Sender | Every account. Private |  |
+| Creator | An account with a public profile. Needed to publish a wish or to build a style |  |
+| Business | A creator profile with a Pro plan |  |
+| Now Showing | The public gallery of wishes on the site |  |
+| Showcase wish | A wish Firstwish made with our model's photos to show a style. It is public |  |
+| Wish number | Every wish has one. Wish № 0001 is Aisha's |  |
+| Style Studio | Where creators build styles |  |
+| Template | A style opened as the starting point for a new one |  |
+| Byline | A creator's name on a style |  |
+| Credits | What AI actions cost in Style Studio. Never used to mean a byline |  |
+| Launch price | Our internal name for the 40%-off price that runs to 31 January 2027 | Customers see "40% off until 31 January" |
+Rules for anything a customer reads:
+- Say kind. Never format, category or type.
+- Celebration is the kind's name. "For family and friends" is its line.
+- Never say abroad or diaspora. The feature is stated once: every wish opens at midnight in their time zone.
+- Never say launch, coming or a release date. The only exception is the Soon tag on a greyed entry.
+- Firstwish is not a product for one country. Outside the style names, copy avoids words only one country would know.
+- Never say forever about how long a wish is kept. A wish has a term. When it ends the wish rests, and it can be kept.
+## How to read this
+Firstwish ships six kinds of wish. A kind is a fixed arrangement of chapters, a finale, a default style and a sender. Within a kind, each occasion changes the words, the timing and sometimes one chapter, never the engine. This is the catalogue of all of it: what each occasion is, who sends it, what plays, which style it opens in, and what it sells for.
+Two rules hold everywhere:
+- The sender picks the kind, then the occasion. Firstwish arranges the chapters. The sender can switch any chapter on or off in the app and change the style with one tap.
+- Every kind ends with the same two things: the moment the receiver reacts (the candle, the ring box, the scratch card), and the Firstwish mark. That is how a wish spreads.
+Tickets, so each table reads. A ticket buys a term, a number of photos and one style of the sender's choice. Launch prices run to 31 January 2027. Full rules are under Tickets, terms and extras.
+| Ticket | Lives for | Can be kept | Photos | Video | Style | List price | Launch price |
+| Moment | 7 days | No | 6 | None | One starter style | ₦5,000 | ₦3,000 |
+| Keepsake | 2 weeks | Yes | 15 | None | One standard style | ₦10,000 | ₦6,000 |
+| Signature | 1 month | Yes | 15 | None | One premium style | ₦20,000 | ₦12,000 |
+| Premiere | 2 months | Yes | 20 | Three clips of 15 seconds | One premium style made for video | ₦35,000 | ₦21,000 |
+| Kind | Who sends | Who receives | Default style | Door |
+| Love | A partner | Their partner | Studio Noir | For you |
+| Celebration | A family member or a friend | One person | Owambe (family), Pidgin Gist (friends) | For you |
+| Group | An organiser, with up to 10 friends | One person | Pidgin Gist | For you |
+| Wedding | A couple, or their planner | The guests | Golden Hour | For you (couples) and For business (planners) |
+| Team | A company (HR, a manager) | Staff or a client | Cinema | For business |
+| Shoot Reveal | A photographer or another creative | Their client | Studio Noir | For business |
+## Who it's for, under For business
+For business is Firstwish Pro. Its pages are organised by who the customer is, and each one makes a kind that already exists. None of these is a kind.
+| Who it's for | Kind they make | What it looks like | Status |
+| Companies & teams | Team | Staff birthdays, work anniversaries, client thank-yous, season's greetings | Live |
+| Photographers & creatives | Shoot Reveal | A shoot, a bridal look, a finished outfit or film stills, delivered as a film | Live |
+| Wedding & event planners | Wedding | Save the date, Our story and Thank-you for each couple, plus table cards | Live |
+| Gift vendors & venues | Love or Celebration | A print-ready QR card in the cake box, the bouquet or the hamper, or on the table at a restaurant or hotel | Live |
+| Churches & communities | Group and Team | A pastor's anniversary, a thanksgiving, a member's milestone | Soon: greyed on the site, no page |
+| Schools & alumni | Group | Graduations, a teacher's send-off, class reunions | Soon: greyed on the site, no page |
+Planned, not on the site: Remembrance, a seventh kind for someone who has passed. It needs its own tone, with no candle and no confetti. Until it is built, the site says six kinds.
+## Tickets, terms and extras
+No ticket is measured in years. Moment lives 7 days, Keepsake 2 weeks, Signature 1 month and Premiere 2 months. The clock starts when the wish is first opened, not when it is bought or sealed. Wedding wishes count their term from the wedding date, so a Save the date lives until the day and then for its ticket's term.
+Moment cannot be kept; its one option is to become a Keepsake for the difference. Keepsake, Signature and Premiere can be kept, by the sender or by the receiver. A keep is one more month, six months or a year.
+A ticket comes with one style, the sender's pick, from the ticket's level or a level below: Starter on Moment, Standard on Keepsake, Premium on Signature and Premiere. No ticket gives every style. Video clips come only with Premiere, in premium styles made for video. A wish holds 20 of the sender's photos at most.
+What each ticket adds: Keepsake, a voice note or song link, a notice when the wish is opened, and a reaction from the receiver. Signature, the portrait video for WhatsApp status, a print-ready QR card, and up to ten friends who each add a message, a voice note and one photo. Premiere, three video clips inside the wish.
+Firstwish Concierge is a service, not a ticket. Our team makes the wishes. It is built for many at once, a team, a guest list or a client list, and priced by how many are sent. One wish made for a customer is a Signature wish, delivered within three hours: ₦25,000 at list, ₦15,000 at the launch price.
+What happens when a term ends:
+- Three days before the term ends, the sender is told and offered a keep.
+- On the last day the wish rests. Anyone opening the link sees the seal and "This wish is resting. Wake it." A Pro wish's resting screen still shows "Photos by" or "Arranged by" and the booking button.
+- The wish stays in the sender's account under Resting. Either person can pay to wake it.
+- A resting wish is held for 12 months, then erased. Before that, both are offered the video file.
+- On the wish's anniversary the sender gets a message to wake it.
+The Pass keeps every wish its holder has made live for as long as the Pass is active. A published wish stays live while it is public, and the wishes on a business's page stay live while its Pro plan is active.
+Delete is soft. A deleted wish leaves the account and the link at once, can be restored for 30 days, and is then erased. Erase now removes it for good within 24 hours.
+Extras are listed once on the pricing page and offered in the app at the moment they matter. An extra is never a cheaper way to reach the next ticket:
+- Moment has no extras, and it cannot be kept. Its one option is to become a Keepsake for the difference.
+- Keepsake has a ceiling of ₦7,500 in extras. Past that the app offers Signature for the difference, and extras already paid count toward it. A keep does not count toward the ceiling.
+- Signature has no ceiling, and no video. To add clips it becomes a Premiere for the difference.
+- Video extras exist on Premiere only.
+- A keep is paid by the sender or the receiver. It wakes a resting wish, or extends a live one.
+| Extra | List price | Moment | Keepsake | Signature | Premiere |
+| Become the next ticket | The difference | Yes | Yes | Yes |  |
+| Five more photos | ₦2,000 | No | Yes | Yes | No |
+| A premium style | ₦4,000 | No | Yes | Included | Included |
+| Portrait video for WhatsApp status | ₦3,500 | No | Yes | Included | Included |
+| Print-ready QR card | ₦2,500 | No | Yes | Included | Included |
+| One more video clip, 15 seconds | ₦2,500 | No | No | No | Yes |
+| A long clip, up to 60 seconds | ₦5,000 | No | No | No | Yes |
+| Keep it one more month | ₦1,500, no discount | No | Yes | Yes | Yes |
+| Keep it six months | ₦4,000, no discount | No | Yes | Yes | Yes |
+| Keep it a year | ₦6,000, no discount | No | Yes | Yes | Yes |
+The 40% off until 31 January 2027 applies to extras as it does to tickets, except the three keeps, which are never discounted.
+## Accounts
+There is one kind of account. It gains abilities; nobody opens a second one.
+| The account | What turns it on | What it adds |
+| Sender | Signing up | Make and send wishes. Everything private. |
+| Creator | Switching on a public profile and accepting the publishing terms | A public page with a handle, the wishes they publish, reactions, and the styles they build |
+| Business | A Pro plan on top of a creator profile | A badge, a booking or contact button, "Arranged by" on their wishes, their public work as a portfolio |
+## Now Showing
+Every wish is private by default. A creator can publish a wish to Now Showing, the public gallery.
+- The sender is the publisher. Only a creator profile with a confirmed phone can publish, and at that moment the sender confirms they have the consent of everyone shown.
+- The receiver is told and can stop it. Firstwish messages the receiver directly, and they can refuse or take it down later.
+- Anyone shown can take it down. Every public wish has a "This is me, take it down" button. It comes down at once and is reviewed after.
+- A public cut. The sender chooses which chapters show. The letter can stay private.
+- After it opens, never before. No public wishes about children. Reactions only, no comments.
+- Music. A public wish plays music from a licensed library, never the sender's own song.
+| Level of sharing | Who can open it | Where it appears |
+| Private (default) | Anyone with the link | Nowhere |
+| Public link | Anyone, and it can be shared openly | The creator's own page |
+| Now Showing | Everyone | The gallery, by kind, occasion and style, and on its style's page |
+Every public wish shows its number, its style and the style's creator, with one button: Make one like this.
+Showcase wishes are public wishes Firstwish makes with our model's photos, so that every style can be seen as a real wish. Each style's page shows its showcase wishes first, then public wishes made in that style. Wish № 0001 is the first.
+An open Group wish is a Group wish with a public invitation in place of ten private ones. It is still sent to one person, and the organiser approves each voice.
+## Style Studio
+Style Studio is where creators build styles: designers, motion designers and developers. It is a motion tool with a timeline, keyframes, layers, masks, animated type, triggers, the creator's own artwork and sound, and AI that builds and changes scenes from a description. The limits protect the wish: every chapter present, readable type, smooth on a budget phone.
+From idea to catalogue: build, preview on sample wishes, submit with the kinds it is made for, automatic checks, review by Firstwish, placement, live.
+| Level | Who places it | What the creator gets |
+| Starter | Firstwish only. Starter styles are ours |  |
+| Standard | Firstwish, on acceptance | Their byline on the style's page. No payment. It can be promoted |
+| Premium | Firstwish, on evidence | 20% of the premium style price each time a paid wish uses it, paid monthly past a threshold |
+Creators do not set prices. Every quarter, styles move between Standard and Premium on how often a preview in that style becomes a paid wish.
+A premium style is ₦4,000 at list price, so each paid wish in a creator's Premium style pays them ₦800, or ₦480 while the 40% off runs. A premium style can be made for video, built to hold clips; Premiere wishes use those. The creator's share on Pass and Pro wishes is not set yet.
+Templates: Firstwish's own starter templates are free to every creator. Opening a Premium style as a template needs a paid creator plan. The original creator decides whether their style can be a template, and gets a quarter of the royalty when a style built from it earns.
+| What creators pay | Starting price | What it buys |
+| Free | ₦0 | One draft, a small credit allowance, no submission |
+| Creator plan | ₦7,500 a month | Unlimited drafts, a monthly credit allowance, two reviews a month, premium templates |
+| Credit pack | ₦3,000 | More AI actions |
+| Extra review | ₦2,500 | One more submission in a month |
+| Signed style | ₦5,000 a month | Their byline on the last screen of every wish made in their styles |
+The creator prices are starting points and have not been tested.
+## Love
+The original. One person to the person they love, sealed until midnight. Chapters: Seal, Title, Letter, Reasons, Memory, Timeline, Sound, Blessing, Finale. Default style Studio Noir. This is Aisha's wish, and it is the film on the home page.
+What the sender gives: who it's for and what they call them, 6 to 15 photos, one voice note. Firstwish writes the letter and the reasons from the voice note and asks only when something is missing.
+| Occasion | What it is | What changes | Opens | Finale | Suggested ticket |
+| Birthday | The midnight wish. Their day begins with it. | Title says "It's your day". A candle to blow out. | 12:00 am on the day | Candle | Keepsake |
+| Anniversary | The years, in order. | Timeline chapter on by default: first photo to this one, dated. | 12:00 am on the date | Envelope that tears open | Keepsake |
+| Valentine's | One night when everyone sends one. | Love Letter is the default style. Letter leads; Reasons short. | 12:00 am, 14 Feb | Envelope | Signature (the night runs at list price from 1 Feb) |
+| Proposal | Ends on the question. | Finale is the ring box; a Yes sends the sender a reaction instantly. Memory chapter required. | When the sender chooses, often not midnight | Ring box, the runaway No button | Signature |
+| Apology | Said properly, once. | Love Letter style. Reasons becomes "What I should have said". No Timeline, no confetti. Quiet finale. | Right away, or a chosen time | Envelope, no candle | Keepsake |
+| Long distance | Midnight where they are. | Opens at midnight in their time zone. Sound chapter leads (your voice, their morning). | 12:00 am in their time zone | Candle | Keepsake |
+| Just because | No date. Tonight. | Shortest arrangement: Title, Letter, three Reasons, Finale. | Right away | Candle | Moment |
+What ships 15 November: all seven occasions. What is template-only (no new engineering): everything above except the ring box finale and the runaway No button, which are two new finales to build.
+## Celebration
+One person to one person, where the love is family or friendship rather than romance. Chapters: Seal, Title, Letter, Photo story, Voices, Blessing, Finale. The Photo story replaces Love's Reasons and Memory: more pictures, fewer words, because a mother wants to see the years, not read about them. Voices is optional and lets a few family members add a line. Default style Owambe for family, Pidgin Gist for friends.
+| Occasion | For | What changes | Opens | Finale | Suggested ticket |
+| Birthday | Mum, dad, a sibling, a grandparent, a child, a friend | The standard arrangement | 12:00 am on the day | Candle | Keepsake |
+| Mother's Day | Mum | Blessing on by default (a verse or a prayer). Grace style suggested. Photo story leads with the oldest photo. | 12:00 am, the day | Envelope | Keepsake |
+| Father's Day | Dad | Same as above; Studio Noir suggested. | 12:00 am, the day | Envelope | Keepsake |
+| Graduation | A graduate | Photo story runs first day of school to today. Title says the degree or school. | The morning of | Confetti and a cap toss (new finale) | Keepsake |
+| New baby | New parents, or the baby | Title is the baby's name and date. Voices from the family on by default. | Right away | Candle (one) | Keepsake |
+| Thanksgiving | Anyone | Grace style. Blessing is the centre chapter. | Any time | Envelope | Moment |
+| Christmas | Family, often the whole family chat | One wish, many names in the title. Owambe style. | 12:00 am, 25 Dec | Candle | Keepsake |
+| New Year | Family or friends | Opens exactly as the clock turns. | 12:00 am, 1 Jan | Confetti | Moment |
+| Proud of you | A friend | Letter leads; three Reasons borrowed from Love. | Right away | Scratch card | Moment |
+| Send-off | A friend leaving for a new city | Photo story is the years together. Voices on, so others add a line. | The night before they leave | Envelope | Keepsake |
+| Wedding wishes | A friend getting married | Something to watch on the morning. Short. | 6:00 am on the day | Confetti | Moment |
+| Get well | A friend or relative | Short, warm. No seal: opens when they open it. | Right away | Candle | Moment |
+| End of year | A friend | The year in the photos you took together. | 31 Dec | Confetti | Moment |
+December carries this kind: Christmas and New Year for families, End of year for friends. Those three are the ones to market from 1 December. New finales to build: confetti and cap toss, scratch card.
+## Group
+Many people to one person. The organiser starts the wish; up to 10 friends add a message, a voice note up to 60 seconds, and one photo each, through one private link. Nobody needs an account. Friends never see the wish or each other's pieces. Chapters: Seal, Title, Voices wall, a note from the organiser, Finale. Default style Pidgin Gist; Owambe for a parent's big birthday done by the children.
+How it runs: the organiser sets a deadline (default 6 hours before it opens) and one question ("Your favourite memory with her"). Firstwish makes the link and a ready WhatsApp message. The organiser sees pieces arrive, hides or reorders them, nudges whoever is late. At midnight the pieces play as one film.
+| Occasion | Who organises | What changes | Opens | Finale | Ticket |
+| Birthday | A friend, a sibling, the children | The standard arrangement | 12:00 am on the day | Candle, then every friend's name rolls | Signature (friends adding theirs is a Signature feature) |
+| Send-off | The group chat | Question defaults to "What we'll miss". | The night before | Envelope | Signature |
+| Wedding wishes | The bride's girls, the groom's boys | Voices wall plays over the couple's photos. | 6:00 am on the day | Confetti | Signature |
+| Proud of you | A class, a church group, a team | Question defaults to "What you did for us". | Right away | Scratch card | Signature |
+| End of year | The group, for the one who held it together | Photos from the year, one per friend. | 31 Dec | Confetti | Signature |
+| A parent's milestone | The children | Owambe style. Voices from grandchildren too. | 12:00 am on the day | Candle | Signature |
+Group is sold on Signature because the contributor link is the expensive part to run. It is also the kind most likely to spread: every friend who adds a piece sees Firstwish, and every one who ticks "tell me when she opens it" gets a message with a Make-a-wish button.
+## Team
+A company to its people and its clients. Chapters: Title, Messages from colleagues, A note from the company, Gift reveal. No seal by default (a staff birthday opens at midnight, a client thank-you opens when it lands). Default style Cinema; the company's logo and colours on Pro Studio. Sold on Pro plans, with VAT invoices and one admin for many senders.
+How it runs for HR: upload the team once (name, phone, team, birthday, start date). Seven days before a date, that person's team gets one link to add a message. The day before, HR approves. It opens signed "From all of us at [company]".
+| Occasion | To | What changes | Opens | Finale | Plan |
+| Staff birthday | One employee | Messages from their team; the company note is a template HR edits once. | 12:00 am on the day | Gift reveal (a voucher, a day off, the hamper on its way) | Pro Starter or Studio |
+| Work anniversary | One employee | Title says the years. Photos from the archive if HR adds them. | 12:00 am on the date | Gift reveal | Pro |
+| Client thank-you | One client, by name | No colleague messages; a note from the account lead and the company. Logo on the last screen. | When sent | Gift reveal or a plain close | Pro |
+| Farewell | Someone leaving | Messages from the whole office, remote staff included, through the link. | Their last day | Envelope | Pro |
+| Season's greetings | Every client and every staff member, by name | One design, many wishes: a sheet of names makes a wish each. | 12:00 am, 25 Dec or 1 Jan | Candle | Pro Studio (volume) |
+| Welcome | A new hire | Messages from their new team before day one. | Their first morning | Scratch card ("your desk is…") | Pro |
+What needs building for Team beyond the wish engine: the people sheet import, the 7-day invite and 1-day approval schedule, the one-design-many-names batch, and VAT invoices. Those are the business features the plan says to build from day one.
+## Wedding
+A couple, or their planner, to the guests. Three wishes for one wedding, in one style, on links guests can find again. Their term counts from the wedding date. Default style Golden Hour; Owambe for a traditional wedding. Couples make it themselves under For you. Planners make it for their couples under For business, on Pro Studio.
+| Wish | When it's sent | Chapters | What changes | Finale | Ticket |
+| Save the date | Months before | Countdown seal, the date, a map link, a short line | The seal counts down to the wedding day, not to midnight. | The date, large | Signature |
+| Our story | Weeks before | How they met (Timeline from Love), Photo story, the Details chapter: venue, time, dress code, colours, map | The Details chapter is new and only exists here. Change the venue and every guest's link updates. The bridal party can add Voices. | Confetti | Signature |
+| Thank-you | The week after | Photo story of the best photos, a note from the couple, Credits for the vendors | Credits chapter borrowed from Shoot Reveal: planner, photographer, caterer, each with a handle. | Candle, then the couple's names | Signature |
+What needs building: the Details chapter, the countdown-to-a-date seal, QR cards at table size, and a planner dashboard view that keeps a wedding's three wishes together.
+## Shoot Reveal
+A photographer, or another creative, to a client. It replaces the Google Drive link. Chapters: Cover, Film, Favourites, From the day, Get your photos, Credits, Book again, and the Firstwish close ("This was a wish. Make one."). The sample built for Fima shot is the reference: an opening that plays once, then the viewer scrolls through the film at their own pace.
+The photographer fills ten fields and writes one note: frames (6 to 15), client name, shoot type, city, date, one note, credits (name and handle per role), the full-set link, a booking link, a style. Firstwish reads lens, shutter and aperture from the files. Ninety seconds from upload to a link.
+Who uses it: photographers first. The same format serves anyone whose finished work is a set of images: makeup artists and hairstylists (the bridal look), designers and tailors (the finished outfit), videographers (stills from the film), decorators. The credits chapter already names them on every reveal, so each one sees the product with their own name on it.
+| What is revealed | Who makes it | What changes | Opens | Who it reaches next |
+| Birthday shoot | Photographer | Default. Can be sealed to midnight on the birthday so the reveal is the first thing they see. | Midnight, or when sent | The client turns it into a Love wish for someone, or sends it as-is |
+| Couple | Photographer | Two names on the cover. Favourites split by person. | When sent | Becomes an anniversary or proposal wish |
+| Pre-wedding | Photographer | Cover carries the wedding date. | When sent | Becomes the couple's Save the date |
+| Maternity | Photographer | Softest motion; Golden Hour suggested. | When sent | Becomes a New baby wish months later |
+| Graduation | Photographer | Cover carries the school. | When sent | Sent to the whole family |
+| Family portrait | Photographer | Many names on the cover; favourites per person. | When sent | Christmas wish |
+| Bridal look | Makeup artist or hairstylist | The finished look, revealed before the wedding photos arrive. | When sent | The bride sends it to her girls |
+| Finished outfit | Designer or tailor | The outfit, shot and revealed before the fitting. | When sent | The client's birthday or wedding wish |
+| Film stills | Videographer | Stills from the film, while the full film is still in the edit. | When sent | The couple's Thank-you |
+Styles made for this kind: Studio Noir (the sample), Golden Hour and Cinema. An Editorial white style is planned. The photographer's taste shows in the frames and the style choice, not in writing.
+What needs building: the ten-field form on the dashboard, EXIF reading, the favourites list back to the photographer, and its styles. Sold on Pro plans; the client's follow-on wish is paid to Firstwish directly.
+## Styles
+Seven so far, each designed once by hand and tested on real phones. A style is a complete motion system: how the seal breaks, how the name arrives, how photos move, what the finale looks like. The sender's words and photos are poured in, so switching style is one tap and nothing written is lost.
+| Style | Feel | Signature motion | Fits best | Level |
+| Studio Noir | Dark, warm, editorial, copper | The name rises letter by letter over the portrait | Love birthdays, Shoot Reveal, Father's Day | Starter |
+| Love Letter | Paper, ink, a wax seal | The seal breaks and the letter unfolds | Anniversary, apology, Valentine's, long distance | Starter |
+| Golden Hour | Warm sunset, soft | The light warms as you scroll | Couples, proposals, weddings, maternity reveals | Starter |
+| Grace | Calm, light, scripture at the centre | Verses fade in like candlelight | Mother's Day, thanksgiving, faith-first families | Standard |
+| Pidgin Gist | Bright, funny, stickers | Stickers pop in with sound | Friends, Group, send-offs | Standard |
+| Owambe | Gold, rich fabric, celebration | Fabric sweeps across, gold confetti | Parents' birthdays, Christmas, traditional weddings | Premium |
+| Cinema | Title cards, credits, a trailer | A "Starring…" credits sequence | Proposals, milestones, Team, Shoot Reveal | Premium |
+A ticket comes with one style, the sender's pick, from its level or a level below: Starter on Moment, Standard on Keepsake, Premium on Signature and Premiere. A Keepsake can take a premium style as an extra, ₦4,000 at list price. Premiere uses premium styles made for video, and none of the seven is built to hold clips yet. One new style every month; each is a reason to message every past customer. Seven will not be enough, because some styles belong to one kind. How many more are needed is an open item. Languages at launch: English and Pidgin for the letter and the interface.
+## Build order
+Every kind goes live on 15 November 2026, because December is the strongest month for families, end-of-year groups and company greetings. What differs is how much of each kind is template (ready once the engine and seven styles exist) and how much is new work.
+| Kind | Template only | Needs building before 15 Nov | Can follow in December |
+| Love | All seven occasions | Ring box and runaway No finales (proposal) | — |
+| Celebration | Eleven of thirteen occasions | Confetti and cap toss, scratch card finales | — |
+| Group | The arrangement | The contributor link, deadline, nudge, hide and reorder (the whole organiser flow) | — |
+| Team | The arrangement | People sheet import, 7-day invite and 1-day approval, VAT invoices, one admin many senders | One design, many names batch |
+| Wedding | Save the date, Thank-you | The Details chapter, countdown-to-a-date seal | Table-size QR cards, planner view |
+| Shoot Reveal | Studio Noir (built) | Ten-field form, EXIF reading, favourites back to the photographer | Golden Hour and Cinema for Shoot Reveal |
+Marketing calendar from this catalogue: November is Love birthdays and the first Pro partners; December is Christmas, New Year and End of year (Celebration, Group, Team); January is the last month of launch prices; February is Valentine's at list price, the biggest single night of the year.

@@ -179,3 +179,20 @@ U4 (medium) Asking for a code takes the same time whoever asks: the answer is se
 U5 (medium) A removed member can be invited again: they return as invited with the new role; one audit row.
 U6 (low) `reason` is 4 to 500 characters everywhere. U7 (low) A staff account can never be deleted at the database (a trigger).
 U8 (kit) `npm run test:affected -- <directory>` runs the specs under that directory.
+
+## From Verify B01 (15 Nov): how each finding is closed. Default (lead), owner may override. V1, V2 bind staff sessions too.
+V1 (medium) An access token names its session FAMILY and is good while that family lives: rotating the refresh token does not kill
+   the access tokens already given (a second tab and parallel requests keep working). Sign-out and theft still kill at once.
+V2 (medium) Refresh has a grace of 10 seconds: the same rotated token sent again inside it gets the SAME new child (one rotation,
+   many identical answers), never a 401 and never a cleared cookie. After the grace a reused old token ends the family (T4).
+   6 refreshes at once with one cookie: 6 successes, one live child.
+V3 (medium) The Google state is bound to the browser that started it: start sets an httpOnly, Secure, SameSite=Lax cookie scoped to
+   the Google routes holding a nonce; the callback refuses a state whose nonce cookie is missing or different.
+V4 (low) The client address: the number of trusted proxy hops is an env setting (TRUST_PROXY_HOPS, default 0); the address is read
+   accordingly, never the raw last X-Forwarded-For when 0. README says what to set behind DigitalOcean's load balancer.
+V5 (low) Per-email limits count on a canonical form (the +tag dropped; the account's email stays as typed).
+V6 (low) Ids in tokens and paths that are not uuids answer 401 or 404 in the envelope, never 500.
+V7 (low) No Date.now() outside the clock port (Google adapter). V8 (low) Reserved handles also include api, root, settings, staff,
+   moderator, wish, w, v1, me, sign-in, sign-up, pricing, terms, privacy, contact.
+V9 (low) Verifying a code is also limited per address (60 an hour, PROVISIONAL).
+Not changed (sweep): an old code sent after a new one costs the new code a try.

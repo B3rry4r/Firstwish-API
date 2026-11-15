@@ -1,0 +1,52 @@
+{
+  "name": "firstwish-api",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Firstwish API (NestJS)",
+  "engines": {
+    "node": ">=22 <23"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "start": "node dist/main.js",
+    "lint": "eslint \"src/**/*.ts\" \"test/**/*.ts\"",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "node scripts/test-runner.mjs",
+    "test:affected": "node scripts/test-runner.mjs",
+    "migrate": "prisma migrate deploy",
+    "prisma:generate": "prisma generate",
+    "gates": "bash scripts/gates.sh",
+    "postinstall": "prisma generate"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.1169.0",
+    "@aws-sdk/s3-request-presigner": "^3.1169.0",
+    "@nestjs/common": "^11.2.10",
+    "@nestjs/core": "^11.2.10",
+    "@nestjs/platform-express": "^11.2.10",
+    "@prisma/client": "^6.19.3",
+    "bullmq": "^5.81.5",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.4",
+    "ioredis": "^5.11.1",
+    "libphonenumber-js": "^1.13.16",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.2"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@nestjs/testing": "^11.2.10",
+    "@types/express": "^5.0.6",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^22.20.5",
+    "@types/supertest": "^6.0.3",
+    "eslint": "^10.15.0",
+    "globals": "^17.14.0",
+    "jest": "^30.5.2",
+    "prisma": "^6.19.3",
+    "supertest": "^7.3.2",
+    "ts-jest": "^29.4.15",
+    "typescript": "~5.9",
+    "typescript-eslint": "^8.72.2"
+  }
+}

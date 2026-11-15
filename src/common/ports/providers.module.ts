@@ -1,0 +1,56 @@
+import { Global, Module, Provider } from "@nestjs/common";
+import { ENV } from "../env/env.module";
+import type { Env } from "../env/env";
+import { AiWritingPort } from "./ai.port";
+import { Clock, StandinClock, SystemClock } from "./clock.port";
+import { EmailPort } from "./email.port";
+import { CodeGenerator, IdGenerator, StandinCodeGenerator, StandinIdGenerator, SystemCodeGenerator, SystemIdGenerator } from "./ids.port";
+import { PaymentsPort } from "./payments.port";
+import { UploadScreeningPort } from "./screening.port";
+import { StoragePort } from "./storage.port";
+import { AnthropicWriting } from "./adapters/anthropic.adapter";
+import { BasicScreening } from "./adapters/basic-screening.adapter";
+import { PaystackPayments } from "./adapters/paystack.adapter";
+import { ResendEmail } from "./adapters/resend.adapter";
+import { S3Storage, s3ConfigFor } from "./adapters/s3-storage.adapter";
+import { StandinAiWriting, StandinEmail, StandinPayments, StandinScreening, StandinStorage } from "./adapters/standins";
+
+const standin = (env: Env) => env.PROVIDERS === "standin";
+const need = (v: string | undefined): string => v as string; // presence is checked by loadEnv for PROVIDERS=live
+
+/** Every port, picked by PROVIDERS (and STORAGE_DRIVER for storage). Inject the abstract class. */
+const providers: Provider[] = [
+  { provide: Clock, inject: [ENV], useFactory: (env: Env) => (standin(env) ? new StandinClock() : new SystemClock()) },
+  {
+    provide: IdGenerator,
+    inject: [ENV, Clock],
+    useFactory: (env: Env, clock: Clock) => (standin(env) ? new StandinIdGenerator(clock) : new SystemIdGenerator(clock)),
+  },
+  { provide: CodeGenerator, inject: [ENV], useFactory: (env: Env) => (standin(env) ? new StandinCodeGenerator() : new SystemCodeGenerator()) },
+  {
+    provide: PaymentsPort,
+    inject: [ENV, Clock],
+    useFactory: (env: Env, clock: Clock) =>
+      standin(env) ? new StandinPayments(clock, env.PAYSTACK_SECRET_KEY) : new PaystackPayments(need(env.PAYSTACK_SECRET_KEY), env.PAYSTACK_CALLBACK_URL),
+  },
+  {
+    provide: EmailPort,
+    inject: [ENV],
+    useFactory: (env: Env) => (standin(env) ? new StandinEmail() : new ResendEmail(need(env.RESEND_API_KEY), need(env.MAIL_FROM))),
+  },
+  {
+    provide: StoragePort,
+    inject: [ENV, Clock],
+    useFactory: (env: Env, clock: Clock) => (standin(env) ? new StandinStorage(clock) : new S3Storage(s3ConfigFor(env))),
+  },
+  {
+    provide: AiWritingPort,
+    inject: [ENV],
+    useFactory: (env: Env) => (standin(env) ? new StandinAiWriting() : new AnthropicWriting(need(env.ANTHROPIC_API_KEY), need(env.ANTHROPIC_MODEL))),
+  },
+  { provide: UploadScreeningPort, inject: [ENV], useFactory: (env: Env) => (standin(env) ? new StandinScreening() : new BasicScreening()) },
+];
+
+@Global()
+@Module({ providers, exports: [Clock, IdGenerator, CodeGenerator, PaymentsPort, EmailPort, StoragePort, AiWritingPort, UploadScreeningPort] })
+export class ProvidersModule {}

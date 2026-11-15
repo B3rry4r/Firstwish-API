@@ -2810,6 +2810,132 @@
       "confidence": "high",
       "source": "build/rulings-phase3.md (Wave 3 list; From Verify B06; From Verify B05)",
       "decidedAt": "2026-11-16T09:05:00Z"
+    },
+    {
+      "id": "DEC-176",
+      "topic": "Pass upgrade of a draft",
+      "closes": [],
+      "decision": "GG3: POST /v1/wishes/:id/pass-upgrade (signed in, the wish is the caller's own) turns a draft into a Signature wish by drawing one of the Pass's four upgrades. No money moves. It answers the wish (Wish). A draft with no ticket, a Moment or a Keepsake ticket may take it; a wish that is already a Signature or better, a wish that is not a draft, and an account with no live Pass or no upgrade left are refused (409 or 422). The draw is one conditional statement, so 20 at once with 1 left give one yes. A paid upgrade is not sold: the app and the documents give it no price (listed to the owner).",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md GG3",
+      "decidedAt": "2026-11-17T12:00:00Z"
+    },
+    {
+      "id": "DEC-177",
+      "topic": "seal from the Pass",
+      "closes": [],
+      "decision": "GG5: E-231 POST /v1/wishes/:id/seal body gains `usePass` (boolean, optional). usePass: true draws one wish from the Pass in the seal transaction, in place of a ticket payment (a wish with no ticket becomes a Keepsake; one that took a Pass upgrade stays a Signature); a wish that already holds a paid ticket is refused (422), an account with no live Pass wish left is refused (402). 20 at once with 1 left: one seals.",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md GG5",
+      "decidedAt": "2026-11-17T12:00:00Z"
+    },
+    {
+      "id": "DEC-178",
+      "topic": "save a draft: passcode in, legacy fields out",
+      "closes": [],
+      "decision": "GG7: E-225 PATCH /v1/wishes/:id body gains `passcode` (string, 4 to 64 characters, write only: hashed on the server, never returned; null clears it) and loses the legacy whole-wish fields the old app wrote (letter, blessing, ticket, photos, voices, reasons, details, note, links and the like, and the whole `wish` and `patch` objects). A draft is saved through `content` and the named fields only: kind, occasion, name, style, content, makerNote, opensAt, timeZone, keep, step, version, passcode.",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md GG7",
+      "decidedAt": "2026-11-17T12:00:00Z"
+    },
+    {
+      "id": "DEC-179",
+      "topic": "start body: every ticket id",
+      "closes": [],
+      "decision": "HH8: the start body's `ticket` field (E-87 POST /v1/payments) takes every ticket id: moment, keepsake, signature, premiere.",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md HH8",
+      "decidedAt": "2026-11-17T12:00:00Z"
+    },
+    {
+      "id": "DEC-180",
+      "topic": "message wording shape",
+      "closes": [],
+      "decision": "II2: E-75 GET /v1/admin/messages/templates answers a list of MessageTemplate, and E-76 PUT /v1/admin/messages/templates/:key answers one MessageTemplate: {key, name, subject, body, placeholders, version, editedAt, editedBy}. placeholders are the names the wording may use. editedAt and editedBy are null until staff first edit it. It is no longer the Notice shape.",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md II2",
+      "decidedAt": "2026-11-17T12:00:00Z"
+    },
+    {
+      "id": "DEC-181",
+      "topic": "Account.timeZone",
+      "closes": [],
+      "decision": "II4: an Account has a timeZone (an IANA zone name such as Africa/Lagos, null until it is set). It is read through GET /v1/me (E-6) and set through PATCH /v1/me (E-7); the web app sends the browser's zone at sign-up. Notices use the account's zone; until the account has one the wish's zone is used (PROVISIONAL).",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md II4",
+      "decidedAt": "2026-11-17T12:00:00Z",
+      "fieldTypes": {
+        "Account.timeZone": "string (IANA time zone name, e.g. Africa/Lagos)"
+      }
+    },
+    {
+      "id": "DEC-182",
+      "topic": "receiver's reaction and unlock answers",
+      "closes": [],
+      "decision": "LL2: E-132 POST /v1/w/:slug/reaction answers ReactionResult {reaction, counts}: the reaction as kept and the count of each reaction on the wish, never the sender's Wish. E-134 POST /v1/w/:slug/unlock answers UnlockResult: {ok: true, token, expiresAt} (token and expiresAt only when the wish has a passcode or a question) or {ok: false, error}; the page sends the token back in the x-unlock-token header.",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md LL2",
+      "decidedAt": "2026-11-17T12:00:00Z"
+    },
+    {
+      "id": "DEC-183",
+      "topic": "receiver's view: files and opening",
+      "closes": [],
+      "decision": "LL2: PublicWishView gains `files` ([{fileId, role, url, expiresAt}]: the signed links, only once the wish is open, [] before) and `opening` ({id, scene}: the opening scene, shown while the wish is sealed, counting down or locked; null once it is open). Nothing else of the content shows while it is sealed.",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md LL2",
+      "decidedAt": "2026-11-17T12:00:00Z"
+    },
+    {
+      "id": "DEC-184",
+      "topic": "question text place",
+      "closes": [],
+      "decision": "LL3: a question opening keeps its text at content.opening.values.question. PublicWishView.prompt is that text while the link waits for the answer, and null otherwise.",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md LL3",
+      "decidedAt": "2026-11-17T12:00:00Z",
+      "fieldTypes": {
+        "PublicWishView.prompt": "string (the question opening's text, kept at content.opening.values.question; null when there is none)"
+      }
+    },
+    {
+      "id": "DEC-185",
+      "topic": "first opening answers the view",
+      "closes": [],
+      "decision": "NN7: E-131 POST /v1/w/:slug/opens answers PublicWishView (the full view of an open wish, the first opening included), not Empty.",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md NN7",
+      "decidedAt": "2026-11-17T12:00:00Z"
+    },
+    {
+      "id": "DEC-186",
+      "topic": "owner's wish detail: receiver activity",
+      "closes": [],
+      "decision": "LL5: GET /v1/wishes/:id (E-224) carries `activity` {opens, plays, reactions: {<reaction>: n}, favourites, shares}, counted from rows by ReceiverActivityService.summary, for the wish's owner only.",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md LL5",
+      "decidedAt": "2026-11-17T12:00:00Z"
+    },
+    {
+      "id": "DEC-187",
+      "topic": "registry re-freeze (sixth reopen)",
+      "closes": [],
+      "decision": "The registry is re-frozen after GG3, GG5, GG7, HH8, II2, II4, LL2, LL3, LL5 and NN7 (DEC-176..186) by tools/pipeline/freeze.py; reconcile.py was run twice with --reopen (identical outputs, EXIT 0, 0 open conflicts, both admin gate lines 0). Endpoint ids already issued are unchanged (new: E-241 POST /v1/wishes/:id/pass-upgrade). The other wave 4 shared rulings (GG1, GG2, GG4, II3, II5, MM1, JJ1, LL1, LL4) change storage, code or the seed only.",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (INT-4)",
+      "decidedAt": "2026-11-17T12:00:00Z"
     }
   ]
 }

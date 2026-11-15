@@ -1502,6 +1502,16 @@
         "user:owner"
       ],
       "decision": "DEC-172"
+    },
+    {
+      "resource": "Wish",
+      "method": "POST",
+      "path": "/v1/wishes/:id/pass-upgrade",
+      "auth": [
+        "role:business",
+        "user"
+      ],
+      "decision": "DEC-176"
     }
   ],
   "fulfilment": {
@@ -1526,19 +1536,27 @@
         "note": "the target as stored (DEC-132)"
       }
     },
-    "POST /v1/payments": {
-      "decision": "DEC-134",
-      "drop": [
-        "amount",
-        "price"
-      ],
-      "response": {
-        "entity": "PassMembership",
-        "cardinality": "single",
-        "paymentStart": "required",
-        "note": "{payment, item}: item is what the payment buys, null until the verified payment fulfils it (DEC-139)"
+    "POST /v1/payments": [
+      {
+        "decision": "DEC-134",
+        "drop": [
+          "amount",
+          "price"
+        ],
+        "response": {
+          "entity": "PassMembership",
+          "cardinality": "single",
+          "paymentStart": "required",
+          "note": "{payment, item}: item is what the payment buys, null until the verified payment fulfils it (DEC-139)"
+        }
+      },
+      {
+        "decision": "DEC-179",
+        "set": {
+          "ticket": "'moment'|'keepsake'|'signature'|'premiere'"
+        }
       }
-    },
+    ],
     "POST /v1/wishes/:id/video": {
       "decision": "DEC-134",
       "drop": [
@@ -1591,6 +1609,12 @@
         "set": {
           "openNow": "boolean (optional; true opens the wish as soon as it is paid)"
         }
+      },
+      {
+        "decision": "DEC-177",
+        "set": {
+          "usePass": "boolean (optional; true draws one wish from the Pass in place of a ticket payment)"
+        }
       }
     ],
     "POST /v1/auth/codes": {
@@ -1609,12 +1633,20 @@
         "channel"
       ]
     },
-    "PATCH /v1/me": {
-      "decision": "DEC-137",
-      "set": {
-        "mode": "'light'|'dark'|'system' (DEC-137)"
+    "PATCH /v1/me": [
+      {
+        "decision": "DEC-137",
+        "set": {
+          "mode": "'light'|'dark'|'system' (DEC-137)"
+        }
+      },
+      {
+        "decision": "DEC-181",
+        "set": {
+          "timeZone": "string (an IANA zone name such as Africa/Lagos)"
+        }
       }
-    },
+    ],
     "PUT /v1/admin/prices/:key": {
       "decision": "DEC-138",
       "drop": [
@@ -1825,28 +1857,109 @@
         "note": "{added, skipped: [{row, reason}]} (DEC-169)"
       }
     },
-    "PATCH /v1/wishes/:id": {
-      "decision": "DEC-170",
-      "set": {
-        "version": "integer (the version the page last read; the write is refused 409 when it is older)",
-        "timeZone": "string (optional; an IANA zone name such as Africa/Lagos)",
-        "keep": "'month'|'half'|'year'|null (optional; null clears it, DEC-84)"
+    "PATCH /v1/wishes/:id": [
+      {
+        "decision": "DEC-170",
+        "set": {
+          "version": "integer (the version the page last read; the write is refused 409 when it is older)",
+          "timeZone": "string (optional; an IANA zone name such as Africa/Lagos)",
+          "keep": "'month'|'half'|'year'|null (optional; null clears it, DEC-84)"
+        },
+        "require": [
+          "version"
+        ],
+        "response": {
+          "entity": "WishSaved",
+          "cardinality": "single",
+          "note": "200 {version, updatedAt} (DEC-170)"
+        }
       },
-      "require": [
-        "version"
-      ],
-      "response": {
-        "entity": "WishSaved",
-        "cardinality": "single",
-        "note": "200 {version, updatedAt} (DEC-170)"
+      {
+        "decision": "DEC-178",
+        "drop": [
+          "blessing",
+          "call",
+          "captions",
+          "chapter",
+          "credits",
+          "details",
+          "effect",
+          "finale",
+          "letter",
+          "links",
+          "memory",
+          "note",
+          "off",
+          "patch",
+          "photos",
+          "reasons",
+          "ticket",
+          "timeline",
+          "type",
+          "voices",
+          "wish",
+          "wishId",
+          "voices.ask"
+        ],
+        "set": {
+          "passcode": "string, at least 4 chars, max 64 (write only: stored hashed, never returned; null clears it)"
+        }
       }
-    },
+    ],
     "GET /v1/payments": {
       "decision": "DEC-172",
       "response": {
         "entity": "Payment",
         "cardinality": "list",
         "note": "the payer's own, newest first (DEC-172)"
+      }
+    },
+    "POST /v1/wishes/:id/pass-upgrade": {
+      "decision": "DEC-176",
+      "response": {
+        "entity": "Wish",
+        "cardinality": "single",
+        "note": "the draft as a Signature wish; one Pass upgrade drawn (DEC-176)"
+      }
+    },
+    "GET /v1/admin/messages/templates": {
+      "decision": "DEC-180",
+      "response": {
+        "entity": "MessageTemplate",
+        "cardinality": "list",
+        "note": "the wording now in force for each message (DEC-180)"
+      }
+    },
+    "PUT /v1/admin/messages/templates/:key": {
+      "decision": "DEC-180",
+      "response": {
+        "entity": "MessageTemplate",
+        "cardinality": "single",
+        "note": "the wording as saved (DEC-180)"
+      }
+    },
+    "POST /v1/w/:slug/reaction": {
+      "decision": "DEC-182",
+      "response": {
+        "entity": "ReactionResult",
+        "cardinality": "single",
+        "note": "{reaction, counts} (DEC-182)"
+      }
+    },
+    "POST /v1/w/:slug/unlock": {
+      "decision": "DEC-182",
+      "response": {
+        "entity": "UnlockResult",
+        "cardinality": "single",
+        "note": "{ok: true, token?, expiresAt?} or {ok: false, error} (DEC-182)"
+      }
+    },
+    "POST /v1/w/:slug/opens": {
+      "decision": "DEC-185",
+      "response": {
+        "entity": "PublicWishView",
+        "cardinality": "single",
+        "note": "the full view of the open wish (DEC-185)"
       }
     }
   },
@@ -2004,6 +2117,69 @@
       "type": "boolean",
       "nullable": false,
       "decision": "DEC-174"
+    },
+    {
+      "resource": "Account",
+      "name": "timeZone",
+      "type": "string (IANA time zone name, e.g. Africa/Lagos)",
+      "nullable": true,
+      "decision": "DEC-181"
+    },
+    {
+      "resource": "MessageTemplate",
+      "name": "name",
+      "type": "string (the plain label staff see)",
+      "nullable": false,
+      "decision": "DEC-180"
+    },
+    {
+      "resource": "MessageTemplate",
+      "name": "subject",
+      "type": "string",
+      "nullable": false,
+      "decision": "DEC-180"
+    },
+    {
+      "resource": "MessageTemplate",
+      "name": "placeholders",
+      "type": "array (the names the wording may use)",
+      "nullable": false,
+      "decision": "DEC-180"
+    },
+    {
+      "resource": "MessageTemplate",
+      "name": "editedAt",
+      "type": "time (ISO-8601)",
+      "nullable": true,
+      "decision": "DEC-180"
+    },
+    {
+      "resource": "MessageTemplate",
+      "name": "editedBy",
+      "type": "string (the staff account id)",
+      "nullable": true,
+      "decision": "DEC-180"
+    },
+    {
+      "resource": "PublicWishView",
+      "name": "files",
+      "type": "array ({fileId, role, url, expiresAt}: signed links, once the wish is open)",
+      "nullable": false,
+      "decision": "DEC-183"
+    },
+    {
+      "resource": "PublicWishView",
+      "name": "opening",
+      "type": "object ({id, scene}: the opening scene while the wish is not open)",
+      "nullable": true,
+      "decision": "DEC-183"
+    },
+    {
+      "resource": "Wish",
+      "name": "activity",
+      "type": "object ({opens, plays, reactions, favourites, shares})",
+      "nullable": true,
+      "decision": "DEC-186"
     }
   ],
   "dropFields": [

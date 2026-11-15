@@ -81,3 +81,22 @@ it must work at 360 and 390 wide with no sideways page scroll (tables scroll ins
   style" extra. A price change does not yet reach the site's own pages (they read lib/catalog until the server holds prices).
 - Proof (ADM-C): tsc, check-css, Playwright walk (360/390/1440, light and dark, four cases, no sideways scroll, zero console errors;
   /app and /app/pro same layout after /admin by client-side moves). Pictures: scratchpad build/verify/adm-c/.
+- ADM-D: screen built (front end only, sample data), web branch `adm-d`: Support `/admin/support` and `/admin/support/[id]` (email
+  inbox, threads tied to a wish or a person, reply, saved replies, close/open again), Messages `/admin/messages` (five messages with
+  wording edited in place and where each goes; delivery log with failures and send again), Numbers `/admin/numbers` (eight lines vs
+  targets, preview to paid, opens, by kind/occasion/style, keeps; period switch; SVG charts each with a table view), Team, Audit,
+  Settings. Seam in lib/admin/d-api.ts (types d-types.ts, fixtures d-fixtures.ts); lib/admin-api.ts ADM-D block adds `dBridge` and
+  re-exports d-api; admin-types and admin-fixtures blocks re-export; styles/admin.css ADM-D block (fo-d-). No shared part changed.
+- Default (lead), owner may override (ADM-D): replying, closing, editing wording, resending, inviting, removing and every settings
+  change opens the confirm sheet with a reason and lands in the Audit. A reply sets the thread to "Waiting on them" and shows in the
+  delivery log. Only a failed message can be sent again, once. The five messages are Sealed, Opens today, Opened, Resting soon
+  (2 days before the term ends), Sign-in code; their wording is lead's draft. Nothing about SMS or WhatsApp is drawn (R11).
+- Default (lead), owner may override (ADM-D): role access (owner all; ops all but team, settings, prices; moderator, reviewer,
+  support, finance, maker as listed on Team). Only the owner invites, removes, and changes settings; the owner cannot be removed;
+  a removed person stays listed as Removed. Audit gathers ADM-D actions plus staff events on wishes and people; ADM-B/ADM-C actions
+  show only once they write to the same log (lead to join at merge).
+- Default (lead), owner may override (ADM-D): numbers and targets are SAMPLE (PROVISIONAL); quarter = 1 Oct to 15 Nov. Settings
+  shows Paystack, Resend, Anthropic as not connected (R12, R16); storage Cloudflare R2 chosen by default (R2), switchable to
+  DigitalOcean Spaces; switches: the 40% off (lib/maker OFF) on, sample wishes off in production on. Provider keys are not shown.
+- Proof (ADM-D): tsc, check-css, Playwright walk (360/390/1440, light and dark, all D cases, no sideways scroll, zero console
+  errors; /app and /app/pro same layout after /admin by client-side moves). Pictures: scratchpad build/verify/adm-d/.

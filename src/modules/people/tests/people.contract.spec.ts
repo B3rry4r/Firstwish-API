@@ -70,7 +70,7 @@ describe("people E-117..E-121 and approved dates E-17 /v1/business (contract)", 
     expect((await t.http().get("/v1/business/people").set(bearer(member.token))).body.items).toHaveLength(1);
   });
 
-  it("import adds the readable rows once and answers how many were added", async () => {
+  it("import adds the readable rows once and answers what was added and what was skipped", async () => {
     const o = await businessOwner(t);
     const rows = [
       { name: "Kemi", phone: "08031472094", team: "Ops", birthday: "1992-03-04", start: "" },
@@ -81,9 +81,10 @@ describe("people E-117..E-121 and approved dates E-17 /v1/business (contract)", 
     ];
     const res = await t.http().post("/v1/business/people/import").set(bearer(o.token)).send({ rows });
     expect(res.status).toBe(200);
-    expect(res.body).toBe(2);
+    expect(res.body.added).toBe(2);
+    expect((res.body as { skipped: { row: number }[] }).skipped.map((x) => x.row)).toEqual([2, 3, 4]);
     const again = await t.http().post("/v1/business/people/import").set(bearer(o.token)).send({ rows });
-    expect(again.body).toBe(0);
+    expect(again.body.added).toBe(0);
     expect(await t.db.person.count({ where: { businessId: o.businessId } })).toBe(2);
     expect((await t.http().post("/v1/business/people/import").set(bearer(o.token)).send({ rows: "x" })).status).toBe(422);
   });

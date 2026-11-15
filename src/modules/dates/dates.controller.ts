@@ -13,7 +13,6 @@ import { CurrentPrincipal, Roles } from "../../common/auth/decorators";
 import type { Principal } from "../../common/auth/principal";
 import { DEFAULT_LIMIT, Page } from "../../common/pagination/cursor";
 import { accountOf, BusinessOf } from "../people/business-of";
-import { PeopleService } from "../people/people.service";
 import { DatesService } from "./dates.service";
 
 /**
@@ -26,7 +25,6 @@ export class DatesController {
   constructor(
     private readonly dates: DatesService,
     private readonly business: BusinessOf,
-    private readonly people: PeopleService,
   ) {}
 
   @Roles("person", "creator", "business")
@@ -34,7 +32,7 @@ export class DatesController {
   async list(@Query() q: GetMeDatesQueryDto, @CurrentPrincipal() p: Principal | undefined): Promise<Page<DateRow>> {
     const accountId = accountOf(p);
     const businessId = p?.kind === "user" && p.sides.includes("business") ? await this.business.find(accountId) : null;
-    return this.dates.list(accountId, businessId, this.people, q.cursor, q.limit ?? DEFAULT_LIMIT);
+    return this.dates.list(accountId, businessId, q.cursor, q.limit ?? DEFAULT_LIMIT);
   }
 
   @Roles("person", "creator", "business")

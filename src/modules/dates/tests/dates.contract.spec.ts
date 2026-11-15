@@ -89,14 +89,14 @@ describe("dates E-45..E-48 /v1/me/dates (contract)", () => {
     expect(back.body.id).toBe(made.body.id);
   });
 
-  it("another account cannot read, change or remove a row: 404, and its id is a 409", async () => {
+  it("another account cannot read, change or remove a row: and its id answers 404 (BB7)", async () => {
     const owner = await account(t);
     const other = await account(t);
     const made = await post(owner, mum);
     expect((await t.http().get(`/v1/me/dates/${made.body.id}`).set(bearer(other.token))).status).toBe(404);
     expect((await t.http().delete(`/v1/me/dates/${made.body.id}`).set(bearer(other.token))).status).toBe(404);
     const steal = await post(other, { ...mum, id: made.body.id, name: "Mine" });
-    expect(steal.status).toBe(409);
+    expect(steal.status).toBe(404);
     expect((await t.db.dateRow.findUnique({ where: { id: made.body.id } }))?.name).toBe("Mum");
     expect((await list(other)).body.items).toEqual([]);
   });

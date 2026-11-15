@@ -57,7 +57,7 @@ describe("saved wishes E-155, E-156 /v1/feed/wishes/:id/save (contract)", () => 
     const taken = await feedWish();
     await put(a, taken);
     await t.db.publishedWish.delete({ where: { id: taken } });
-    expect(await t.app.get(SavedWishesService).forget([taken])).toBe(1);
+    expect(await t.db.$transaction((tx) => t.app.get(SavedWishesService).forgetForWishes(tx, [taken]))).toBe(1);
     expect(await t.db.savedWish.count({ where: { wish: taken } })).toBe(0);
     expect((await put(a, taken)).status).toBe(404);
     expect((await put(a, await feedWish({ status: "removed" }))).status).toBe(404);

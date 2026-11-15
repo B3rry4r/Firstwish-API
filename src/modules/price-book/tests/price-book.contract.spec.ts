@@ -7,7 +7,6 @@ import { createTestApp, TestApp } from "../../../../test/kit/app";
 import { EntitlementsService, grantOf } from "../entitlements.service";
 import { PriceAdminService } from "../price-admin.service";
 import { PriceBookService } from "../price-book.service";
-import { PublicBookService } from "../public-book.service";
 
 const ROOT = join(__dirname, "../../../..");
 const NOW = new Date("2026-12-01T09:00:00.000Z");
@@ -79,6 +78,25 @@ describe("price book (contract)", () => {
       expect(r.body.entitlements).toMatchObject({ passWishes: 20, keepsakeExtrasCeilingKobo: 750000 });
       expect(r.headers.etag).toBeDefined();
       expect(r.headers["cache-control"]).toMatch(/public, max-age=60/);
+    });
+
+    it("every seeded price equals the web app's, in kobo (the verifier's table); concierge.rush is gone (Z2)", async () => {
+      const web: Record<string, [number, number | null]> = {
+        "ticket.moment": [500000, 300000], "ticket.keepsake": [1000000, 600000], "ticket.signature": [2000000, 1200000], "ticket.premiere": [3500000, 2100000],
+        "extra.five-photos": [200000, 120000], "extra.premium-style": [400000, 240000], "extra.portrait-video": [350000, 210000],
+        "extra.qr-card": [250000, 150000], "extra.clip-15s": [250000, 150000], "extra.clip-60s": [500000, 300000],
+        "keep.month": [150000, null], "keep.half": [400000, null], "keep.year": [600000, null],
+        "pass.year": [3500000, 2000000], "concierge.single": [2500000, 1500000],
+        "pro.starter": [5800000, 3500000], "pro.studio": [17500000, 10500000], "pro.pack": [2900000, 1750000],
+        "vault.block": [300000, null], "vault.block-bulk": [250000, null],
+        "creator.plan": [750000, null], "creator.signed": [500000, null], "creator.credit-pack": [300000, null], "creator.extra-review": [250000, null],
+      };
+      const all = await readAll();
+      expect(all.map((l) => l.sku).sort()).toEqual(Object.keys(web).sort());
+      for (const l of all) {
+        expect([l.sku, l.listKobo, l.promoKobo]).toEqual([l.sku, web[l.sku][0], web[l.sku][1]]);
+        expect(l.price).toBe(web[l.sku][1] ?? web[l.sku][0]);
+      }
     });
 
     it("answers 304 to the same ETag", async () => {
@@ -159,34 +177,52 @@ describe("price book (contract)", () => {
   });
 
   describe("E-213 GET /v1/ticket-offers", () => {
+    const offer = (q: string) => t.http().get(`/v1/ticket-offers${q}`).set(bearer("business"));
+
     it("401 without a token, 403 for a person or staff", async () => {
-      expect((await t.http().get("/v1/ticket-offers")).status).toBe(401);
-      expect((await t.http().get("/v1/ticket-offers").set(bearer("person"))).status).toBe(403);
-      expect((await t.http().get("/v1/ticket-offers").set(bearer("owner"))).status).toBe(403);
+      expect((await t.http().get("/v1/ticket-offers?ticket=ticket.moment")).status).toBe(401);
+      expect((await t.http().get("/v1/ticket-offers?ticket=ticket.moment").set(bearer("person"))).status).toBe(403);
+      expect((await t.http().get("/v1/ticket-offers?ticket=ticket.moment").set(bearer("owner"))).status).toBe(403);
     });
 
-    it("gives each ticket's total from the book with the extras it takes", async () => {
-      const r = await t.http().get("/v1/ticket-offers").set(bearer("business"));
+    it("X13: a ticket and repeated extras answer ONE quote from the book: lines in kobo, the total, the version used", async () => {
+      const r = await offer("?ticket=ticket.keepsake&extras=extra.five-photos&extras=extra.qr-card");
       expect(r.status).toBe(200);
-      expect((r.body.items as { adds: { ticket: string } }[]).map((o) => o.adds.ticket)).toEqual(["ticket.moment", "ticket.keepsake", "ticket.signature", "ticket.premiere"]);
-      expect(r.body.items[0]).toMatchObject({ ok: true, total: 300000, was: 500000 });
-      expect((r.body.items as { adds: { takes: { sku: string }[] } }[])[1].adds.takes.map((x) => x.sku)).toContain("extra.qr-card");
-      const p = await t.http().get("/v1/ticket-offers").set(bearer("business")).query({ limit: 2 });
-      expect(p.body.items).toHaveLength(2);
-      const p2 = await t.http().get("/v1/ticket-offers").set(bearer("business")).query({ limit: 2, cursor: p.body.nextCursor });
-      expect(p2.body.items[0].adds.ticket).toBe("ticket.signature");
+      expect(Object.keys(r.body).sort()).toEqual(["lines", "listTotalKobo", "totalKobo", "version", "versionId"]);
+      expect(r.body.version).toBe(1);
+      expect((r.body.lines as { sku: string }[]).map((l) => l.sku)).toEqual(["ticket.keepsake", "extra.five-photos", "extra.qr-card"]);
+      expect(r.body.lines[0]).toMatchObject({ qty: 1, listKobo: 1000000, unitKobo: 600000, totalKobo: 600000, discounted: true });
+      expect(r.body.totalKobo).toBe(600000 + 120000 + 150000);
+      expect(r.body.listTotalKobo).toBe(1000000 + 200000 + 250000);
+      expect(r.body.totalKobo).toBe((r.body.lines as { totalKobo: number }[]).reduce((s, l) => s + l.totalKobo, 0));
+      const one = await offer("?ticket=ticket.keepsake&extras=extra.qr-card");
+      expect(one.body.totalKobo).toBe(750000);
+      const bare = await offer("?ticket=ticket.moment");
+      expect(bare.body).toMatchObject({ totalKobo: 300000, listTotalKobo: 500000 });
+      t.clock.set(new Date("2027-02-01T00:00:00Z"));
+      const later = await offer("?ticket=ticket.moment");
+      t.clock.set(NOW);
+      expect(later.body.totalKobo).toBe(500000);
+      // the price never comes from the request: a price in the query is refused
+      const sneaky = await offer("?ticket=ticket.moment&totalKobo=1&price=1");
+      expect(sneaky.status).toBe(422);
     });
 
-    it("a ticket plus extras is totalled from the book; an unknown line is 422; a Keepsake past its ceiling is not ok", async () => {
-      const pub = t.app.get(PublicBookService);
-      const o = await pub.offerFor("ticket.keepsake", ["extra.five-photos", "extra.qr-card"]);
-      expect(o).toMatchObject({ ok: true, total: 600000 + 120000 + 150000, was: 1000000 + 200000 + 250000 });
-      await expect(pub.offerFor("ticket.keepsake", ["extra.nope"])).rejects.toMatchObject({ status: 422 });
-      await expect(pub.offerFor("keep.year", [])).rejects.toMatchObject({ status: 422 });
-      const ceiling = await pub.offerFor("ticket.keepsake", ["extra.five-photos", "extra.premium-style", "extra.portrait-video"]);
-      expect(ceiling).toMatchObject({ ok: false, why: "Too many extras for a Keepsake." });
-      const notTaken = await pub.offerFor("ticket.moment", ["extra.five-photos"]);
-      expect(notTaken.ok).toBe(false);
+    it("X13: an unknown line, a missing ticket, an extra the ticket does not take, a repeat or a Keepsake past its ceiling is 422 with the field", async () => {
+      const unknown = await offer("?ticket=ticket.nope");
+      expect(unknown.status).toBe(422);
+      expect(unknown.body.error.fields.ticket).toBeDefined();
+      expect((await offer("?ticket=keep.year")).status).toBe(422);
+      expect((await offer("")).status).toBe(422);
+      const extra = await offer("?ticket=ticket.keepsake&extras=extra.nope");
+      expect(extra.status).toBe(422);
+      expect(extra.body.error.fields["extras[0]"]).toBeDefined();
+      expect((await offer("?ticket=ticket.moment&extras=extra.five-photos")).status).toBe(422);
+      const twice = await offer("?ticket=ticket.keepsake&extras=extra.qr-card&extras=extra.qr-card");
+      expect(twice.status).toBe(422);
+      const ceiling = await offer("?ticket=ticket.keepsake&extras=extra.five-photos&extras=extra.premium-style&extras=extra.portrait-video");
+      expect(ceiling.status).toBe(422);
+      expect(ceiling.body.error.fields.extras).toBe("Too many extras for a Keepsake.");
     });
   });
 
@@ -227,10 +263,10 @@ describe("price book (contract)", () => {
       expect((list.body.items as Line[]).find((l) => l.sku === "extra.qr-card")).toMatchObject({ changed: true, reason: "Printer costs fell" });
     });
 
-    it("a new list price on a discountable line sets the promoted price at the promotion's percent; a keep's price is its list price", async () => {
+    it("Z4: a new list price leaves the price now alone; a keep's price is its list price", async () => {
       const r = await put("owner", "ticket.moment", { listKobo: 600001 });
       expect(r.status).toBe(200);
-      expect(r.body).toMatchObject({ listKobo: 600001, promoKobo: 360001, price: 360001 });
+      expect(r.body).toMatchObject({ listKobo: 600001, promoKobo: 300000, price: 300000 });
       const k = await put("owner", "keep.month", { priceKobo: 160000 });
       expect(k.body).toMatchObject({ listKobo: 160000, promoKobo: null, price: 160000 });
     });
@@ -287,7 +323,7 @@ describe("price book (contract)", () => {
       }
     });
 
-    it("the payout threshold changes through the same book and stays PROVISIONAL", async () => {
+    it("the payout threshold changes through the same book; finance leaves it PROVISIONAL", async () => {
       const r = await put("finance", "payout.thresholdKobo", { priceKobo: 600000 });
       expect(r.status).toBe(200);
       expect(r.body).toMatchObject({ value: 600000, lead: "PROVISIONAL" });
@@ -318,7 +354,7 @@ describe("price book (contract)", () => {
 
     it("finance drafts a version (201, one audit row); bad lines are 422 with fields", async () => {
       const bad = await t.http().post("/v1/admin/price-book-versions").set(bearer("finance"))
-        .send({ effectiveFrom: "2026-12-05T00:00:00Z", note: "x", prices: [{ sku: "ticket.nope", listKobo: 1 }], reason: "New year prices" });
+        .send({ effectiveFrom: "2026-11-29T00:00:00Z", note: "x", prices: [{ sku: "ticket.nope", listKobo: 1 }], reason: "New year prices" });
       expect(bad.status).toBe(422);
       expect(bad.body.error.fields["prices[0].sku"]).toBeDefined();
       const r = await t.http().post("/v1/admin/price-book-versions").set(bearer("finance"))
@@ -344,6 +380,158 @@ describe("price book (contract)", () => {
       expect((await pub("owner", draftId, draftVersion)).status).toBe(409);
       const sig = await line("ticket.signature");
       expect(sig).toMatchObject({ listKobo: 2100000, version: draftVersion });
+    });
+  });
+
+  describe("rulings of the B04 patch", () => {
+    const counts = async () => ({ versions: await db.priceBookVersion.count(), audit: await db.auditEntry.count({ where: { action: "price.change" } }) });
+    const list = async (who = "owner") => (await t.http().get("/v1/admin/prices").set(bearer(who)).query({ limit: 50 })).body.items as Line[];
+    const get = async (sku: string) => (await list()).find((l) => l.sku === sku) as Line;
+
+    it("X14: the public book is {version, items, promotion, lifecycle, entitlements, nextCursor}; items are Price lines", async () => {
+      const r = await t.http().get("/v1/price-book").query({ limit: 5 });
+      expect(r.status).toBe(200);
+      expect(Object.keys(r.body).sort()).toEqual(["entitlements", "items", "lifecycle", "nextCursor", "promotion", "version"]);
+      expect(typeof r.body.version).toBe("number");
+      expect(r.body.items).toHaveLength(5);
+      expect(typeof r.body.nextCursor).toBe("string");
+      for (const l of r.body.items as Line[]) expect(l).toMatchObject({ key: expect.any(String), sku: expect.any(String), kind: "naira", value: expect.any(Number), version: expect.any(Number) });
+      expect(r.body.promotion).toMatchObject({ percentOff: 40 });
+      expect(r.body.lifecycle).toMatchObject({ HOLD_DAYS: 365 });
+      expect(r.body.entitlements).toMatchObject({ passWishes: 20 });
+    });
+
+    it("X15: value is kobo for kind naira and an ISO time for kind date; the date line carries no kobo fields", async () => {
+      const items = await list();
+      for (const l of items) {
+        if (l.kind === "naira") expect(Number.isSafeInteger(l.value)).toBe(true);
+        else expect(String(l.value)).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/);
+      }
+      const end = items.find((l) => l.sku === "promotion.endsAt") as Line & { was: unknown };
+      expect(end).toMatchObject({ kind: "date", price: null, was: null });
+      expect(items.filter((l) => l.kind === "date")).toHaveLength(1);
+      const payout = items.find((l) => l.sku === "payout.thresholdKobo") as Line;
+      expect(payout).toMatchObject({ kind: "naira", value: payout.price });
+      const q = items.find((l) => l.sku === "ticket.moment") as Line;
+      expect(q.value).toBe(q.price);
+    });
+
+    it("X16: ops reads the prices and cannot change one, draft or publish; owner and finance change", async () => {
+      expect((await t.http().get("/v1/admin/prices").set(bearer("ops"))).status).toBe(200);
+      expect((await put("ops", "extra.qr-card", { priceKobo: 100000 })).status).toBe(403);
+      expect((await t.http().post("/v1/admin/price-book-versions").set(bearer("ops")).send({})).status).toBe(403);
+      expect((await put("finance", "extra.qr-card", { priceKobo: 145000 })).status).toBe(200);
+      expect((await put("owner", "extra.qr-card", { priceKobo: 146000 })).status).toBe(200);
+    });
+
+    it("X17: the offer's end moves sooner only: later is 422, the same end is 409, a past end is 422; old versions keep their end", async () => {
+      const cur = (await get("promotion.endsAt")).value as string;
+      const c0 = await counts();
+      const later = await put("owner", "promotion.endsAt", { promotionEndsAt: new Date(Date.parse(cur) + 1000).toISOString() });
+      expect(later.status).toBe(422);
+      expect(later.body.error.fields.promotionEndsAt).toBeDefined();
+      expect((await put("owner", "promotion.endsAt", { promotionEndsAt: "2026-11-30T00:00:00Z" })).status).toBe(422);
+      const same = await put("owner", "promotion.endsAt", { promotionEndsAt: cur });
+      expect(same.status).toBe(409);
+      expect(same.body.error.code).toBe("not_allowed");
+      expect(await counts()).toEqual(c0);
+      const before = (await book.latestPublished()).version;
+      const sooner = await put("finance", "promotion.endsAt", { promotionEndsAt: "2026-12-15T23:00:00Z" });
+      expect(sooner.status).toBe(200);
+      expect(sooner.body).toMatchObject({ kind: "date", value: "2026-12-15T23:00:00.000Z", version: before + 1 });
+      expect((await book.quote([{ sku: "ticket.moment" }], new Date("2026-12-16T00:00:00Z"))).totalKobo).toBe(600001);
+      expect((await book.quote([{ sku: "ticket.moment" }], new Date("2026-12-16T00:00:00Z"), { version: before })).totalKobo).toBe(300000);
+    });
+
+    it("X18: the keys the admin Prices screen reads are promotion.endsAt and payout.thresholdKobo", async () => {
+      const keys = (await list()).map((l) => l.sku);
+      expect(keys).toEqual(expect.arrayContaining(["promotion.endsAt", "payout.thresholdKobo"]));
+    });
+
+    it("X19: an owner's change of the payout threshold clears PROVISIONAL; finance's does not", async () => {
+      const admin = t.app.get(PriceAdminService);
+      expect((await admin.payoutThreshold()).status).toBe("PROVISIONAL");
+      const f = await put("finance", "payout.thresholdKobo", { priceKobo: 620000 });
+      expect(f.status).toBe(200);
+      expect(f.body.lead).toBe("PROVISIONAL");
+      const o = await put("owner", "payout.thresholdKobo", { priceKobo: 650000 });
+      expect(o.status).toBe(200);
+      expect(o.body).toMatchObject({ value: 650000, lead: "CONFIRMED" });
+      expect(await admin.payoutThreshold()).toMatchObject({ valueKobo: 650000, status: "CONFIRMED" });
+      expect(await get("payout.thresholdKobo")).toMatchObject({ lead: "CONFIRMED", value: 650000 });
+      const f2 = await put("finance", "payout.thresholdKobo", { priceKobo: 660000 });
+      expect(f2.body.lead).toBe("CONFIRMED");
+    });
+
+    it("Z1: a draft dated ahead is 422; a change takes effect now even when an older version is dated ahead", async () => {
+      const bad = await t.http().post("/v1/admin/price-book-versions").set(bearer("finance"))
+        .send({ effectiveFrom: "2026-12-02T00:00:00Z", note: "x", prices: [{ sku: "ticket.signature", listKobo: 2200000 }], reason: "Future prices" });
+      expect(bad.status).toBe(422);
+      expect(bad.body.error.fields.effectiveFrom).toBeDefined();
+      const latest = await book.latestPublished();
+      await db.priceBookVersion.update({ where: { version: latest.version }, data: { effectiveFrom: new Date("2027-06-01T00:00:00Z") } });
+      const r = await put("owner", "extra.clip-60s", { priceKobo: 290000 });
+      expect(r.status).toBe(200);
+      const row = await db.priceBookVersion.findUnique({ where: { version: r.body.version } });
+      expect(row?.effectiveFrom.toISOString()).toBe(NOW.toISOString());
+      expect((await line("extra.clip-60s")).price).toBe(290000);
+      expect((await book.versionAt(NOW)).version).toBe(r.body.version);
+    });
+
+    it("Z3: a change that changes nothing is 409 not_allowed with no version and no audit row, one at a time or at once", async () => {
+      const cur = (await get("extra.five-photos")).price;
+      const c0 = await counts();
+      const same = await put("owner", "extra.five-photos", { priceKobo: cur });
+      expect(same.status).toBe(409);
+      expect(same.body.error).toMatchObject({ code: "not_allowed", message: "That is the price now." });
+      const sameList = await put("owner", "keep.year", { listKobo: 600000 });
+      expect(sameList.status).toBe(409);
+      expect((await put("finance", "payout.thresholdKobo", { priceKobo: 660000 })).status).toBe(409);
+      expect(await counts()).toEqual(c0);
+      const [a, b] = await Promise.all([put("owner", "extra.five-photos", { priceKobo: cur + 7 }), put("finance", "extra.five-photos", { priceKobo: cur + 7 })]);
+      expect([a.status, b.status].sort()).toEqual([200, 409]);
+      expect(await counts()).toEqual({ versions: c0.versions + 1, audit: c0.audit + 1 });
+    });
+
+    it("Z4: list and price now change only when named", async () => {
+      const before = await line("extra.premium-style");
+      expect(before).toMatchObject({ listKobo: 400000, promoKobo: 240000 });
+      const p = await put("owner", "extra.premium-style", { priceKobo: 230000 });
+      expect(p.body).toMatchObject({ listKobo: 400000, promoKobo: 230000, price: 230000 });
+      const l = await put("owner", "extra.premium-style", { listKobo: 450000 });
+      expect(l.body).toMatchObject({ listKobo: 450000, promoKobo: 230000, price: 230000 });
+      const both = await put("owner", "extra.premium-style", { listKobo: 500000, priceKobo: 250000 });
+      expect(both.body).toMatchObject({ listKobo: 500000, promoKobo: 250000 });
+      const low = await put("owner", "extra.premium-style", { listKobo: 200000 });
+      expect(low.status).toBe(422);
+      expect(low.body.error.fields.listKobo).toBeDefined();
+      expect((await line("extra.premium-style")).listKobo).toBe(500000);
+      const above = await put("owner", "extra.premium-style", { priceKobo: 600000 });
+      expect(above.status).toBe(422);
+      expect(above.body.error.fields.priceKobo).toBeDefined();
+    });
+
+    it("parallel: eight changes to eight lines at once land one after the other; no version mixes two", async () => {
+      const skus = ["ticket.signature", "ticket.premiere", "extra.portrait-video", "extra.clip-15s", "pro.pack", "pass.year", "concierge.single", "pro.starter"];
+      const start = (await book.latestPublished()).version;
+      const res = await Promise.all(skus.map((sku, i) => put(i % 2 ? "owner" : "finance", sku, { priceKobo: 100000 + i })));
+      expect(res.every((r) => r.status === 200 || r.status === 409)).toBe(true);
+      const landed = res.filter((r) => r.status === 200).length;
+      expect(landed).toBeGreaterThan(0);
+      const latest = await book.latestPublished();
+      expect(latest.version).toBe(start + landed);
+      for (let v = start + 1; v <= latest.version; v++) {
+        const prev = await book.load(v - 1);
+        const cur = await book.load(v);
+        const diff = cur.lines.filter((l) => {
+          const x = prev.lines.find((o) => o.sku === l.sku)!;
+          return x.listKobo !== l.listKobo || x.promoKobo !== l.promoKobo;
+        });
+        expect(diff).toHaveLength(1);
+      }
+      res.forEach((r, i) => {
+        if (r.status === 200) expect(latest.lines.find((l) => l.sku === skus[i])!.promoKobo).toBe(BigInt(100000 + i));
+      });
     });
   });
 });

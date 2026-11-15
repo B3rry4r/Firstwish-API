@@ -2,6 +2,7 @@ import { DeleteObjectCommand, GetObjectCommand, HeadObjectCommand, PutObjectComm
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import type { Env } from "../../env/env";
 import { SignUpload, SignedUpload, StoragePort, StoredObject } from "../storage.port";
+import { Clock, SystemClock } from "../clock.port";
 
 export const R2_HOST_SUFFIX = "r2.cloudflarestorage.com";
 
@@ -43,7 +44,10 @@ export function s3ConfigFor(env: Env): S3Config {
 export class S3Storage extends StoragePort {
   private readonly client: S3Client;
 
-  constructor(readonly config: S3Config) {
+  constructor(
+    readonly config: S3Config,
+    private readonly clock: Clock = new SystemClock(),
+  ) {
     super();
     this.client = new S3Client({
       endpoint: config.endpoint,
@@ -56,7 +60,7 @@ export class S3Storage extends StoragePort {
   async signUpload(input: SignUpload): Promise<SignedUpload> {
     const cmd = new PutObjectCommand({ Bucket: this.config.bucket, Key: input.key, ContentType: input.contentType });
     const url = await getSignedUrl(this.client, cmd, { expiresIn: input.expiresInSeconds });
-    return { url, method: "PUT", headers: { "content-type": input.contentType }, expiresAt: new Date(Date.now() + input.expiresInSeconds * 1000) };
+    return { url, method: "PUT", headers: { "content-type": input.contentType }, expiresAt: new Date(this.clock.now().getTime() + input.expiresInSeconds * 1000) };
   }
 
   async signDownload(key: string, expiresInSeconds: number): Promise<string> {

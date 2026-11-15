@@ -43,7 +43,7 @@ const providers: Provider[] = [
   {
     provide: StoragePort,
     inject: [ENV, Clock],
-    useFactory: (env: Env, clock: Clock) => (standin(env) ? new StandinStorage(clock) : new S3Storage(s3ConfigFor(env))),
+    useFactory: (env: Env, clock: Clock) => (standin(env) ? new StandinStorage(clock) : new S3Storage(s3ConfigFor(env), clock)),
   },
   {
     provide: AiWritingPort,

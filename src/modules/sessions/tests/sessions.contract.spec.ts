@@ -19,28 +19,33 @@ describe("sessions E-159..E-162 (contract)", () => {
       t.clock.advance(60_000);
       const res = await refresh(s.cookie);
       expect(res.status).toBe(200);
-      expect(res.body).toMatchObject({ accountId: s.accountId, familyId: s.body.familyId, isNew: false, accessToken: expect.any(String) });
-      expect(res.body).not.toHaveProperty("refreshTokenHash");
+      expect(res.body).toMatchObject({ isNew: false, accessToken: expect.any(String), session: { id: expect.any(String) } });
+      expect(Object.keys(res.body as object).sort()).toEqual(["accessExpiresAt", "accessToken", "isNew", "session"]);
+      const child = await t.db.session.findUniqueOrThrow({ where: { id: res.body.session.id as string } });
+      const parent = await t.db.session.findUniqueOrThrow({ where: { id: s.sessionId } });
+      expect(child.familyId).toBe(parent.familyId);
       const next = refreshCookieOf(res)!;
       expect(next).toBeTruthy();
       expect(next).not.toBe(s.cookie);
       expect((await me(res.body.accessToken as string)).status).toBe(200);
-      const old = await t.db.session.findUniqueOrThrow({ where: { id: s.body.id as string } });
+      const old = await t.db.session.findUniqueOrThrow({ where: { id: s.sessionId } });
       expect(old.rotatedAt).not.toBeNull();
     });
 
-    it("a dead refresh token used again ends the whole session family (theft)", async () => {
+    it("T4: a dead refresh token used again after the grace ends that session family only (theft)", async () => {
       const email = uniqueEmail("theft");
       const s = await signIn(t, email);
       const other = await signIn(t, email);
       const r1 = await refresh(s.cookie);
       expect(r1.status).toBe(200);
+      t.clock.advance(11_000);
       const stolen = await refresh(s.cookie);
       expect(stolen.status).toBe(401);
       expect(stolen.body.error.code).toBe("unauthorized");
       expect((await refresh(refreshCookieOf(r1)!)).status).toBe(401);
       expect((await me(r1.body.accessToken as string)).status).toBe(401);
-      const family = await t.db.session.findMany({ where: { familyId: s.body.familyId as string } });
+      const fam = (await t.db.session.findUniqueOrThrow({ where: { id: s.sessionId } })).familyId;
+      const family = await t.db.session.findMany({ where: { familyId: fam } });
       expect(family.every((f) => f.revokedAt !== null)).toBe(true);
       expect((await me(other.accessToken)).status).toBe(200);
     });
@@ -124,14 +129,14 @@ describe("sessions E-159..E-162 (contract)", () => {
       const res = await t.http().get("/v1/sessions").set(bearer(b.accessToken));
       expect(res.status).toBe(200);
       expect(res.body.nextCursor).toBeNull();
-      expect((res.body.items as { id: string }[]).map((i) => i.id)).toEqual([c.body.id, b.body.id]);
+      expect((res.body.items as { id: string }[]).map((i) => i.id)).toEqual([c.sessionId, b.sessionId]);
       expect(res.body.items[1].current).toBe(true);
       expect(res.body.items[0].current).toBe(false);
       expect(res.body.items[0]).not.toHaveProperty("refreshTokenHash");
       const p1 = await t.http().get("/v1/sessions?limit=1").set(bearer(b.accessToken));
       expect(p1.body.items).toHaveLength(1);
       const p2 = await t.http().get(`/v1/sessions?limit=1&cursor=${p1.body.nextCursor as string}`).set(bearer(b.accessToken));
-      expect(p2.body.items[0].id).toBe(b.body.id);
+      expect(p2.body.items[0].id).toBe(b.sessionId);
       expect(p2.body.nextCursor).toBeNull();
     });
 

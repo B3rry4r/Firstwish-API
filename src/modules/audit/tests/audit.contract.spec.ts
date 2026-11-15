@@ -51,7 +51,9 @@ describe("audit helper and E-18 (contract)", () => {
     const rows = await db.auditEntry.findMany({ where: { subjectId } });
     expect(rows).toHaveLength(1);
     expect(rows[0]).toMatchObject({ actorType: "staff", actorId, action: "team.test", subjectType: "Probe", ip: "203.0.113.0/24", requestId: "req-b03-audit" });
-    expect(rows[0].after).toEqual({ section: "/admin/team", reason: "because", fields: ["roles"] });
+    // S2: section and reason are columns; after holds the field names only
+    expect(rows[0]).toMatchObject({ section: "/admin/team", reason: "because" });
+    expect(rows[0].after).toEqual({ fields: ["roles"] });
   });
 
   it("a rolled-back change leaves no audit row", async () => {

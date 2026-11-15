@@ -1,4 +1,4 @@
-import { codeFor, refreshCookieOf, signIn, SignInApp, signInApp, uniqueEmail, uniqueIp } from "../../sessions/tests/sign-in.kit";
+import { codeFor, refreshCookieOf, signIn, SignInApp, signInApp, subOf, uniqueEmail, uniqueIp } from "../../sessions/tests/sign-in.kit";
 
 describe("auth codes E-19, E-20 (contract)", () => {
   let t: SignInApp;
@@ -119,10 +119,12 @@ describe("auth codes E-19, E-20 (contract)", () => {
       await ask(email, ip);
       const res = await verify(` ${email.toUpperCase()} `, codeFor(t, email), ip);
       expect(res.status).toBe(200);
-      expect(res.body).toMatchObject({ isNew: true, contact: email, accountId: expect.any(String), familyId: expect.any(String), id: expect.any(String) });
+      // T1: AuthResult {accessToken, accessExpiresAt, isNew, session: {id, expiresAt}}, nothing else.
+      expect(Object.keys(res.body as object).sort()).toEqual(["accessExpiresAt", "accessToken", "isNew", "session"]);
+      expect(res.body).toMatchObject({ isNew: true, session: { id: expect.any(String), expiresAt: expect.any(String) } });
       expect(res.body.accessToken).toMatch(/^[\w-]+\.[\w-]+\.[\w-]+$/);
       expect(new Date(res.body.accessExpiresAt as string).getTime() - t.clock.now().getTime()).toBe(15 * 60 * 1000);
-      expect(new Date(res.body.expiresAt as string).getTime() - t.clock.now().getTime()).toBe(30 * 24 * 3600 * 1000);
+      expect(new Date(res.body.session.expiresAt as string).getTime() - t.clock.now().getTime()).toBe(30 * 24 * 3600 * 1000);
       expect(res.body).not.toHaveProperty("refreshTokenHash");
       const cookie = (res.headers["set-cookie"] as unknown as string[]).find((c) => c.startsWith("fw_refresh="))!;
       expect(cookie).toContain("HttpOnly");
@@ -135,7 +137,7 @@ describe("auth codes E-19, E-20 (contract)", () => {
       t.clock.advance(61_000);
       const again = await signIn(t, email);
       expect(again.body.isNew).toBe(false);
-      expect(again.accountId).toBe(res.body.accountId);
+      expect(again.accountId).toBe(subOf(res.body.accessToken as string));
       expect(await t.db.account.count({ where: { contact: email } })).toBe(1);
       const me = await t.http().get("/v1/me").set("Authorization", `Bearer ${again.accessToken}`);
       expect(me.status).toBe(200);

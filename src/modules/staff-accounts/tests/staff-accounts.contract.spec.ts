@@ -23,11 +23,13 @@ describe("staff accounts and staff sign-in (contract)", () => {
       const s = await makeStaff(t.db, ["support"]);
       const before = t.email.sent.length;
       const a = await t.http().post("/v1/admin/auth/code").send({ email: s.email });
+      await t.settle(); // U4: the email goes after the answer
       expect(a.status).toBe(204);
       expect(t.email.sent.length).toBe(before + 1);
       expect(t.email.lastTo(s.email)?.text).toMatch(/\d{6}/);
       const stranger = `nobody-${tag()}@example.test`;
       const b = await t.http().post("/v1/admin/auth/code").send({ email: stranger });
+      await t.settle(); // U4: the email goes after the answer
       expect(b.status).toBe(204);
       expect(b.text).toBe(a.text);
       expect(t.email.lastTo(stranger)).toBeUndefined();
@@ -37,12 +39,14 @@ describe("staff accounts and staff sign-in (contract)", () => {
     it("a suspended member gets no code", async () => {
       const s = await makeStaff(t.db, ["support"], "suspended");
       expect((await t.http().post("/v1/admin/auth/code").send({ email: s.email })).status).toBe(204);
+      await t.settle(); // U4: the email goes after the answer
       expect(t.email.lastTo(s.email)).toBeUndefined();
     });
 
     it("normalises a non-canonical email and refuses a bad one with fields", async () => {
       const s = await makeStaff(t.db, ["support"]);
       const r = await t.http().post("/v1/admin/auth/code").send({ email: `  ${s.email.toUpperCase()} ` });
+      await t.settle(); // U4: the email goes after the answer
       expect(r.status).toBe(204);
       expect(t.email.lastTo(s.email)).toBeDefined();
       const bad = await t.http().post("/v1/admin/auth/code").send({ email: "not-an-email" });
@@ -56,7 +60,9 @@ describe("staff accounts and staff sign-in (contract)", () => {
       const s = await makeStaff(t.db, ["moderator"], "invited");
       const r = await signIn(t, s.email);
       expect(r.status).toBe(200);
-      expect(r.body).toMatchObject({ id: s.id, email: s.email, roles: ["moderator"], status: "active", state: "active" });
+      // S5: E-176 answers {staff, accessToken, accessTokenExpiresAt}
+      expect(Object.keys(r.body as object).sort()).toEqual(["accessToken", "accessTokenExpiresAt", "staff"]);
+      expect(r.body.staff).toMatchObject({ id: s.id, email: s.email, roles: ["moderator"], status: "active", state: "active" });
       expect(typeof r.body.accessToken).toBe("string");
       const cookie = String(r.headers["set-cookie"]);
       expect(cookie).toMatch(/fw_staff_refresh=/);
@@ -77,6 +83,7 @@ describe("staff accounts and staff sign-in (contract)", () => {
     it("a wrong code counts a try; after five, even the right code is refused", async () => {
       const s = await makeStaff(t.db, ["support"]);
       await t.http().post("/v1/admin/auth/code").send({ email: s.email });
+      await t.settle(); // U4: the email goes after the answer
       const right = /(\d{6})/.exec(t.email.lastTo(s.email)!.text)![1];
       const wrong = right === "999999" ? "999998" : "999999";
       for (let i = 0; i < 5; i++) {
@@ -143,6 +150,7 @@ describe("staff accounts and staff sign-in (contract)", () => {
         .set(bearer(ownerToken))
         .set("x-forwarded-for", "198.51.100.23")
         .send({ email: ` ${email.toUpperCase()}`, roles: ["support"], reason: "  new support hire  " });
+        await t.settle(); // U4: the email goes after the answer
       expect(r.status).toBe(201);
       expect(r.body).toMatchObject({ email, status: "invited", state: "invited", roles: ["support"] });
       expect(t.email.lastTo(email)?.text).toMatch(/\d{6}/);
@@ -150,7 +158,8 @@ describe("staff accounts and staff sign-in (contract)", () => {
       expect(rows).toHaveLength(1);
       expect(rows[0]).toMatchObject({ actorType: "staff", actorId: owner.id, action: "team.invite", subjectType: "StaffAccount", ip: "198.51.100.0/24" });
       expect(JSON.stringify(rows[0])).not.toContain(email);
-      expect(rows[0].after).toEqual({ section: "/admin/team", reason: "new support hire", fields: ["email", "name", "roles", "status"] });
+      expect(rows[0]).toMatchObject({ section: "/admin/team", reason: "new support hire" });
+      expect(rows[0].after).toEqual({ fields: ["email", "name", "roles", "status"] });
       // the invited member can sign in with the code from the invite email
       const code = /(\d{6})/.exec(t.email.lastTo(email)!.text)![1];
       expect((await t.http().post("/v1/admin/auth/verify").send({ email, code })).status).toBe(200);
@@ -223,6 +232,7 @@ describe("staff accounts and staff sign-in (contract)", () => {
       expect((await t.http().post("/v1/admin/auth/sign-out").set(bearer(m.token))).status).toBe(401);
       const mailsBefore = t.email.sent.length;
       expect((await t.http().post("/v1/admin/auth/code").send({ email: m.staff.email })).status).toBe(204);
+      await t.settle(); // U4: the email goes after the answer
       expect(t.email.sent.length).toBe(mailsBefore);
       expect((await auditFor(m.staff.id)).filter((a) => a.action === "team.remove")).toHaveLength(1);
       const again = await t.http().post(`/v1/admin/team/${m.staff.id}/remove`).set(bearer(ownerToken)).send({ reason: "left the team" });

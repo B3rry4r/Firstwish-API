@@ -109,7 +109,7 @@ export class SessionFamilies {
     return r.count;
   }
 
-  /** The holder a row belongs to. */
+  /** Whose session a row is (an account or a staff member). */
   holderOf(row: Pick<SessionRow, "accountId" | "staffId">): Holder | null {
     if (row.accountId && !row.staffId) return { kind: "user", accountId: row.accountId };
     if (row.staffId && !row.accountId) return { kind: "staff", staffId: row.staffId };

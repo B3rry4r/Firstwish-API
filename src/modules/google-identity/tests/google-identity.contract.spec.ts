@@ -1,6 +1,6 @@
-import { bearer, refreshCookieOf, signIn, SignInApp, signInApp, staffToken, uniqueEmail } from "../../sessions/tests/sign-in.kit";
-import { GOOGLE_ISSUERS, StandinGoogle } from "../google.adapters";
-import { GoogleIdentityPort } from "../google.port";
+import { bearer, refreshCookieOf, signIn, SignInApp, signInApp, staffToken, subOf, uniqueEmail } from "../../sessions/tests/sign-in.kit";
+import { StandinGoogle } from "../../../common/ports/adapters/standins";
+import { GOOGLE_ISSUERS, GoogleIdentityPort } from "../../../common/ports/google.port";
 import { STANDIN_GOOGLE_CLIENT_ID } from "../google-identity.service";
 
 describe("Google sign-in E-53..E-56 (contract)", () => {
@@ -22,12 +22,19 @@ describe("Google sign-in E-53..E-56 (contract)", () => {
     exp: Math.floor(t.clock.now().getTime() / 1000) + 600,
     ...over,
   });
+  // V3: start sets the nonce cookie; the browser that started sends it back.
+  const nonces = new Map<string, string>();
   const start = async (returnTo = "/app/wishes") => {
     const res = await t.http().post("/v1/auth/google/start").send({ returnTo });
     expect(res.status).toBe(200);
-    return new URL(res.body.url as string).searchParams.get("state")!;
+    const state = new URL(res.body.url as string).searchParams.get("state")!;
+    const set = ([] as string[]).concat((res.headers["set-cookie"] as unknown as string[]) ?? []);
+    const nonce = /fw_google=([^;]+)/.exec(set.find((c) => c.startsWith("fw_google=")) ?? "")?.[1];
+    if (nonce) nonces.set(state, nonce);
+    return state;
   };
-  const callback = (code: string, state: string) => t.http().get("/v1/auth/google/callback").query({ code, state });
+  const nonceCookie = (state: string) => `fw_google=${nonces.get(state) ?? "none"}`;
+  const callback = (code: string, state: string) => t.http().get("/v1/auth/google/callback").set("Cookie", nonceCookie(state)).query({ code, state });
 
   describe("E-54 start", () => {
     it("answers Google's page with state and a PKCE challenge", async () => {
@@ -54,12 +61,12 @@ describe("Google sign-in E-53..E-56 (contract)", () => {
       const state = await start();
       const res = await callback(google.issueCode(c), state);
       expect(res.status).toBe(200);
-      expect(res.body).toMatchObject({ isNew: true, contact: email, returnTo: "/app/wishes", accessToken: expect.any(String) });
+      expect(res.body).toMatchObject({ isNew: true, returnTo: "/app/wishes", accessToken: expect.any(String), session: { id: expect.any(String) } });
       expect(refreshCookieOf(res)).toBeTruthy();
       expect(google.exchanged[google.exchanged.length - 1].codeVerifier).toMatch(/^[\w-]{40,}$/);
       const ext = await t.db.externalIdentity.findMany({ where: { subject: c.sub } });
       expect(ext).toHaveLength(1);
-      expect(ext[0]).toMatchObject({ accountId: res.body.accountId, provider: "google", email, emailVerified: true });
+      expect(ext[0]).toMatchObject({ accountId: subOf(res.body.accessToken as string), provider: "google", email, emailVerified: true });
       const me = await t.http().get("/v1/me").set(bearer(res.body.accessToken as string));
       expect(me.body.email).toBe(email);
     });
@@ -70,12 +77,12 @@ describe("Google sign-in E-53..E-56 (contract)", () => {
       const c = claims(email);
       const res = await callback(google.issueCode(c), await start());
       expect(res.status).toBe(200);
-      expect(res.body.accountId).toBe(coded.accountId);
+      expect(subOf(res.body.accessToken as string)).toBe(coded.accountId);
       expect(res.body.isNew).toBe(false);
       expect(await t.db.account.count({ where: { contact: email } })).toBe(1);
       expect(await t.db.externalIdentity.count({ where: { subject: c.sub, accountId: coded.accountId } })).toBe(1);
       const again = await callback(google.issueCode(c), await start());
-      expect(again.body.accountId).toBe(coded.accountId);
+      expect(subOf(again.body.accessToken as string)).toBe(coded.accountId);
       expect(await t.db.externalIdentity.count({ where: { subject: c.sub } })).toBe(1);
     });
 
@@ -110,14 +117,16 @@ describe("Google sign-in E-53..E-56 (contract)", () => {
     it("links a Google account to the signed-in account, then unlinks it", async () => {
       const s = await signIn(t, uniqueEmail("link"));
       const c = claims(uniqueEmail("gmail"));
-      const res = await t.http().post("/v1/me/google").set(bearer(s.accessToken)).send({ code: google.issueCode(c), state: await start() });
+      const stres = await start();
+      const res = await t.http().post("/v1/me/google").set(bearer(s.accessToken)).set("Cookie", nonceCookie(stres)).send({ code: google.issueCode(c), state: stres });
       expect(res.status).toBe(200);
       expect(res.body).toMatchObject({ accountId: s.accountId, provider: "google", subject: c.sub, emailVerified: true });
       const signedIn = await callback(google.issueCode(c), await start());
-      expect(signedIn.body.accountId).toBe(s.accountId);
+      expect(subOf(signedIn.body.accessToken as string)).toBe(s.accountId);
 
       const other = await signIn(t, uniqueEmail("other"));
-      const clash = await t.http().post("/v1/me/google").set(bearer(other.accessToken)).send({ code: google.issueCode(c), state: await start() });
+      const stclash = await start();
+      const clash = await t.http().post("/v1/me/google").set(bearer(other.accessToken)).set("Cookie", nonceCookie(stclash)).send({ code: google.issueCode(c), state: stclash });
       expect(clash.status).toBe(409);
 
       expect((await t.http().delete("/v1/me/google").set(bearer(other.accessToken)).send({ id: res.body.id as string })).status).toBe(404);

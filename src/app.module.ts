@@ -16,6 +16,9 @@ import { EventsModule } from "./modules/events/events.module";
 import { StylesModule } from "./modules/styles/styles.module";
 import { TemplatesModule } from "./modules/templates/templates.module";
 // end B14
+// B04: the price book
+import { PriceBookModule } from "./modules/price-book/price-book.module";
+// end B04
 
 /** Registration entry: each resource module adds one import line here. */
 @Module({
@@ -37,6 +40,9 @@ import { TemplatesModule } from "./modules/templates/templates.module";
     EventsModule,
     TemplatesModule,
     // end B14
+    // B04
+    PriceBookModule,
+    // end B04
   ],
 })
 export class AppModule {}

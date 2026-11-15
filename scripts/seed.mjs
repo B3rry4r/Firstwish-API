@@ -44,11 +44,26 @@ const ROLE_SECTIONS = {
 
 /* Entitlements, from the price-book declaration's behaviour (the app's account.ts, catalog.ts, pro-data.ts, studio.ts). */
 const ENTITLEMENTS = {
+  // Each ticket: term, photos, clips, style level and the extras it may take (catalog.ts extras table, "Yes" cells).
+  // Then what each extra, keep and Concierge line grants (catalog.ts:397-413; product-plan T-36 for the rush).
   tickets: {
-    moment: { termDays: 7, photos: 6, clips: 0, keepable: false },
-    keepsake: { termDays: 14, photos: 15, clips: 0, keepable: true },
-    signature: { termDays: 30, photos: 15, clips: 0, keepable: true },
-    premiere: { termDays: 60, photos: 20, clips: 3, clipSeconds: 15, keepable: true },
+    moment: { termDays: 7, photos: 6, clips: 0, keepable: false, styleLevel: "starter", takes: [] },
+    keepsake: { termDays: 14, photos: 15, clips: 0, keepable: true, styleLevel: "standard",
+      takes: ["extra.five-photos", "extra.premium-style", "extra.portrait-video", "extra.qr-card"] },
+    signature: { termDays: 30, photos: 15, clips: 0, keepable: true, styleLevel: "premium", portraitVideo: true, qrCard: true,
+      friendMessagesMax: 10, takes: ["extra.five-photos"] },
+    premiere: { termDays: 60, photos: 20, clips: 3, clipSeconds: 15, keepable: true, styleLevel: "premium", video: true,
+      portraitVideo: true, qrCard: true, takes: ["extra.clip-15s", "extra.clip-60s"] },
+    extras: {
+      "five-photos": { photos: 5 },
+      "premium-style": { styleLevel: "premium" },
+      "portrait-video": { portraitVideo: true },
+      "qr-card": { qrCard: true },
+      "clip-15s": { clips: 1, clipSeconds: 15, video: true },
+      "clip-60s": { clips: 1, clipSeconds: 60, video: true },
+    },
+    keeps: { month: { termDays: 30 }, half: { termDays: 182 }, year: { termDays: 365 } },
+    concierge: { single: { wishes: 1 }, rush: { deliveryHours: 1 } },
   },
   keepsakeExtrasCeilingKobo: 750000n,
   passWishes: 20,
@@ -58,6 +73,9 @@ const ENTITLEMENTS = {
   creator: {
     open: { creditsOnce: 3, reviewsPerMonth: 1 },
     creator: { credits: 10, reviewsPerMonth: 2 },
+    signed: { signed: true, days: 30 },
+    creditPack: { credits: 5 },
+    extraReview: { reviews: 1 },
     costs: { draft: 4, change: 1 },
     sharePercent: 20,
     templateRoyaltyPercent: 25,
@@ -66,6 +84,7 @@ const ENTITLEMENTS = {
     starter: { wishes: 10, logins: 1, vaultGb: 100 },
     studio: { wishes: 35, logins: 3, vaultGb: 500 },
     pack: { wishes: 5, vaultGb: 20, days: 90 },
+    vault: { block: { vaultGb: 100, days: 30 }, "block-bulk": { vaultGb: 100, days: 30, fromGb: 1000 } },
   },
 };
 

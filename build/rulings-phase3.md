@@ -307,3 +307,24 @@ DD2 (B05) GET /v1/payments (the payer's own, newest first, cursor) is added to t
 DD3 (B05) Staff flags get their own columns: payment.flags (text list) and webhook_event.outcome; they move out of the options JSON.
 DD4 (B05) A payment that is not the caller's is 404. `upgrade` is not a purpose yet (422) until B07 defines it.
 DD5 (B05) VAT is as the documents say (T-40): 7.5% inside Pro and invoiced prices; the rate is a price-book value, never a constant.
+
+## From Verify B06 (15 Nov) and the lead's own re-read of the documents. Default (lead), owner may override, unless it cites T-..
+EE1 (high) Every job run has a time limit (60 s, per kind in config). A run that passes it is recorded as failed (timeout), retried
+    with backoff, and the worker moves on; one stuck handler can never stop the others or the tick. Handlers get an abort signal.
+EE2 (medium, kernel) Ill-formed text (a lone surrogate) is 422 by the same global check as control characters, never a 500.
+EE3 (medium) A wish's content is checked against a closed shape at EVERY level, not only the top: a file can be named only under
+    the known keys, and the receiver's read (B10) signs links only from the wish-to-file rows, never from ids found in content.
+EE4 (low) Erasing a wish queues removal of its file objects that no other wish names (through the files job).
+EE5 (low) Seal needs either an open time at least one minute ahead or an explicit openNow: true; a past or missing time is 422.
+    An open time more than 5 years ahead is 422 (PROVISIONAL). Changing the zone recomputes the instant from the stored local time.
+EE6 (low) A draft is removed by its owner, never "erased" (that move is refused).
+EE7 (THE TERM, T-44; the lead's brief for B06 was wrong here) The term starts when the wish is FIRST OPENED by its receiver, not
+    at its open time. At the open time a sealed wish becomes openable and nothing else changes. On the first successful receiver
+    read at or after the open time (B10), in one transaction: openedAt is set once, the state becomes live, endsAt = openedAt +
+    the ticket's term (7, 14, 30, 60 days), and the rest job is scheduled. B06 exports lifecycle.markOpened(tx, wishId, at) for it.
+    Two first reads at the same moment set openedAt once.
+EE8 (T-45) A wedding wish counts its term from the wedding date: endsAt = the wedding date + the term (a Save the date lives
+    until the day, then for its term), whenever it was first opened.
+EE9 A sealed wish that nobody opens stays openable; 365 days after its open time it rests (PROVISIONAL, listed to the owner).
+Stale in the verdict (already fixed on the wave 2 branch after B06 branched): erase now kills the links, jobs, files and saves
+(X10, J1, J2); uploads go to a staging key (Y1). The wave 3 base re-proves both once B06 is on it.

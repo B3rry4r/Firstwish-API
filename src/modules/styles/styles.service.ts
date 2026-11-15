@@ -6,7 +6,7 @@ import { decodeCursor, DEFAULT_LIMIT, Page, toPage } from "../../common/paginati
 import { Clock } from "../../common/ports/clock.port";
 import { IdGenerator } from "../../common/ports/ids.port";
 import { toWireInstant } from "../../common/time/time";
-import type { PostAdminStylesBySlugSwitchBody, PutAdminStylesBySlugLevelBody, StyleLevel, StyleRate } from "../../contracts";
+import type { AllList, GetAdminStylesPreviewToPaidQuery, GetAdminStylesQuery, PostAdminStylesBySlugSwitchBody, PutAdminStylesBySlugLevelBody, StyleLevel, StyleRate } from "../../contracts";
 import { AuditActor, AuditService, requireReason } from "../audit/audit.service";
 import {
   canonSlug,
@@ -29,18 +29,6 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const notAllowed = (message: string) => new AppError(HttpStatus.CONFLICT, "not_allowed", message);
 const cap = (l: Level) => LEVEL_NAME[l];
 
-export interface ListQuery {
-  cursor?: string;
-  limit?: number;
-  level?: string;
-}
-
-/** One quarter's preview-to-paid row (E-199): the StyleRate view with the figures it is worked out from. */
-export type StyleRateOut = StyleRate & { styleSlug: string; name: string; level: string; previews: number; paid: number; rate: number | null };
-
-/** X28: a ceiling far above the number of styles, so the levels read is never cut. */
-const ALL_LEVELS_LIMIT = 5000;
-
 @Injectable()
 export class StylesService {
   constructor(
@@ -53,29 +41,22 @@ export class StylesService {
   // ------------------------------------------------------------------ public reads
 
   /** E-198: the level of every style that is on, by slug, in ONE answer (X28: there are tens, not thousands; no paging). */
-  async levels(_q: object = {}): Promise<Page<StyleLevel>> {
-    const limit = ALL_LEVELS_LIMIT;
-    const after: string | null = null;
-    const rows = await this.db.style.findMany({
-      where: { on: true, slug: after === null ? { not: null } : { gt: after } },
-      orderBy: { slug: "asc" },
-      take: limit + 1,
-    });
-    const page = toPage(rows, limit, (r) => ({ key: r.slug ?? "", id: r.id }));
-    const slugs = page.items.map((r) => r.slug ?? "");
+  async levels(): Promise<AllList<StyleLevel>> {
+    const rows = await this.db.style.findMany({ where: { on: true, slug: { not: null } }, orderBy: { slug: "asc" } });
+    const slugs = rows.map((r) => r.slug ?? "");
     const moves = slugs.length
       ? await this.db.styleLevel.findMany({ where: { styleSlug: { in: slugs } }, orderBy: [{ since: "desc" }, { id: "desc" }] })
       : [];
     const latest = new Map<string, (typeof moves)[number]>();
     for (const m of moves) if (!latest.has(m.styleSlug)) latest.set(m.styleSlug, m);
-    const items = page.items.map((r): StyleLevel => {
+    const items = rows.map((r): StyleLevel => {
       const slug = r.slug ?? "";
       const m = latest.get(slug);
       const level = isLevel(r.level) ? r.level : "starter";
       // Who moved it and why stay in the audit log and the staff list; the public read says only whether staff set it.
       return { slug, styleSlug: slug, level, since: toWireInstant(m?.since ?? r.addedAt ?? new Date(0)), by: m && m.by !== "seed" ? "staff" : "seed", reason: null };
     });
-    return { items, nextCursor: page.nextCursor };
+    return { items, nextCursor: null };
   }
 
   /** E-195: the styles that are on, in slug order. */
@@ -105,14 +86,9 @@ export class StylesService {
   // ------------------------------------------------------------------ staff
 
   /** E-193: every style, on or off, in slug order; filtered by level; this quarter's counts and rate. */
-  async adminList(q: ListQuery): Promise<Page<StyleOut>> {
+  async adminList(q: GetAdminStylesQuery): Promise<Page<StyleOut>> {
     const limit = q.limit ?? DEFAULT_LIMIT;
-    let level: Level | undefined;
-    if (q.level !== undefined) {
-      const l = q.level.trim().toLowerCase();
-      if (!isLevel(l)) throw AppError.validation({ level: "Must be starter, standard or premium." });
-      level = l;
-    }
+    const level = q.level;
     const after = this.slugCursor(q.cursor);
     const rows = await this.db.style.findMany({
       where: { slug: after === null ? { not: null } : { gt: after }, ...(level ? { level } : {}) },
@@ -170,7 +146,7 @@ export class StylesService {
   }
 
   /** E-199: preview-to-paid per style for a quarter ("2026-Q4"); the rate is null under the PROVISIONAL 200 previews. */
-  async previewToPaid(q: { quarter: string; cursor?: string; limit?: number }): Promise<Page<StyleRateOut>> {
+  async previewToPaid(q: GetAdminStylesPreviewToPaidQuery): Promise<Page<StyleRate>> {
     const bounds = quarterBounds(q.quarter);
     if (!bounds) throw AppError.validation({ quarter: "Must be a quarter such as 2026-Q4." });
     const quarter = q.quarter.trim().toUpperCase();
@@ -183,9 +159,9 @@ export class StylesService {
     });
     const page = toPage(rows, limit, (r) => ({ key: r.slug ?? "", id: r.id }));
     const counts = await this.countsFor(page.items.map((r) => r.slug ?? ""), bounds);
-    const items = page.items.map((r): StyleRateOut => {
+    const items = page.items.map((r): StyleRate => {
       const c = counts.get(r.slug ?? "") ?? zero();
-      return { quarter, styleSlug: r.slug ?? "", name: r.name ?? "", level: (r.level ?? "") as StyleRate["level"], previews: c.previews, paid: c.paid, rate: rateOf(c) };
+      return { quarter, styleSlug: r.slug ?? "", name: r.name ?? "", level: isLevel(r.level) ? r.level : "starter", previews: c.previews, paid: c.paid, rate: rateOf(c) };
     });
     return { items, nextCursor: page.nextCursor };
   }

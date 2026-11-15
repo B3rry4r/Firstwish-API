@@ -7,14 +7,12 @@ import {
   PostAdminStylesBySlugSwitchParamsDto,
   PutAdminStylesBySlugLevelBodyDto,
   PutAdminStylesBySlugLevelParamsDto,
+  type StyleRate,
 } from "../../contracts";
 import type { AuditActor } from "../audit/audit.service";
 import { AdminRoute, StaffActor } from "../role-access/staff-section.guard";
 import type { StyleOut } from "./style-view";
-import { StyleRateOut, StylesService } from "./styles.service";
-
-/** E-193's query: the level filter is in the contract now (X2, DEC-155). */
-export class AdminStylesQueryDto extends GetAdminStylesQueryDto {}
+import { StylesService } from "./styles.service";
 
 @Controller("admin/styles")
 export class AdminStylesController {
@@ -23,14 +21,14 @@ export class AdminStylesController {
   /** E-193 */
   @AdminRoute("/admin/styles", "ops", "owner", "reviewer")
   @Get()
-  list(@Query() q: AdminStylesQueryDto): Promise<Page<StyleOut>> {
+  list(@Query() q: GetAdminStylesQueryDto): Promise<Page<StyleOut>> {
     return this.styles.adminList(q);
   }
 
   /** E-199 */
   @AdminRoute("/admin/styles", "owner", "reviewer")
   @Get("preview-to-paid")
-  previewToPaid(@Query() q: GetAdminStylesPreviewToPaidQueryDto): Promise<Page<StyleRateOut>> {
+  previewToPaid(@Query() q: GetAdminStylesPreviewToPaidQueryDto): Promise<Page<StyleRate>> {
     return this.styles.previewToPaid(q);
   }
 

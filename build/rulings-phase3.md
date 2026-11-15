@@ -103,3 +103,14 @@ A18 Same field: ConciergeOrder.maker = makerId; Payout.creator = creatorId; Repo
 A19 Endpoints the rulings ask for and no screen names are built: GET /v1/admin/support/counts, POST /v1/webhooks/email/inbound
     (signature checked), a daily settlement job (internal), PUT /v1/admin/numbers/targets (owner, finance; reason), and
     POST /v1/admin/people/:id/contact-reveal (reason; audited; returns the full phone and email once).
+
+## Registry reopened once, from the schema's halts (15 Nov, night). Default (lead), owner may override, unless it cites R..
+P1 (HALT-1) PUT /v1/admin/numbers/targets body: {line: enum(tickets|extras|keeps|pass|pro_plans|vault_space|concierge|creator_plans),
+   period: "month", targetKobo: integer kobo, reason}. Stored as a config table NumbersTarget (line, period, targetKobo, setBy, setAt);
+   Numbers stays a view that reads it; no target set -> the line's target is null ("No target set").
+P2 (HALT-2) WebhookEvent does not link to Event: WebhookEvent.eventId is the provider's event id (string, unique with provider). The
+   dep-graph edge is dropped.
+P3 E-87 (and any other payment start): the body carries no amount or price; the server prices from the price book (S-24). The optional
+   client fields are removed from the contract.
+P4 E-19 (ask for a sign-in code): the only channel is email (R11); `channel` is removed from the body (or is enum(email) if a later
+   ruling adds one). The same for any contract still naming sms or whatsapp as something Firstwish sends.

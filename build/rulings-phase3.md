@@ -155,3 +155,14 @@ S5 Staff refresh: POST /v1/admin/auth/refresh (by the staff cookie; rotates it; 
    E-176's response is {staff: StaffAccount, accessToken, accessTokenExpiresAt}.
 S6 E-174 always answers the same (204) whoever asks; the registry note "refuse not_staff" is wrong and is removed. An invited member
    gets a code (that is how they first sign in) and becomes active on their first verify.
+
+## From B01's halts (15 Nov). Default (lead), owner may override. Applied in the same reopen as S1 to S6.
+T1 E-20 (verify a code), E-53 (Google callback) and E-159 (refresh) answer AuthResult: {accessToken, accessExpiresAt, isNew,
+   session: {id, expiresAt}}; the refresh token is only ever in the httpOnly cookie; no response carries a token hash.
+T2 E-54 (start Google) answers {url}.
+T3 E-159 (refresh) is public by its cookie (no bearer): its auth in the registry is "cookie".
+T4 A rotated refresh token used again ends that session family only (that device's chain); other devices stay signed in.
+   conventions.md is corrected to say so.
+T5 Kernel: the Google identity port, its real adapter and stand-in move to src/common/ports; the access-token issuer and verifier
+   move to src/common/auth and are bound in CommonModule (one verifier for user and staff tokens: S1).
+T6 Test kit: the stand-in id generator must give ids that never repeat across test apps sharing one database.

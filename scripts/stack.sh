@@ -2,7 +2,7 @@
 # A local API stack for one agent or one person: PostgreSQL + Redis (shared, started if down), a fresh database
 # <prefix>_test copied from the migrated template, and the API on <port> with stand-in providers.
 #   scripts/stack.sh up <prefix> <port>    prints BASE_URL and PIDs, and writes them to $STACKS_DIR/<prefix>.env
-#   scripts/stack.sh down <prefix>         stops the API by PID and drops <prefix>_test
+#   scripts/stack.sh down <prefix>         stops the API by PID and drops <prefix>_test and <prefix>_test_template
 # Two stacks with different prefixes and ports never collide: own database, own port, own Redis key prefix.
 # PG_ADMIN_URL: a role that can create databases (default postgresql://firstwish:firstwish@127.0.0.1:5432/postgres).
 set -euo pipefail
@@ -74,7 +74,7 @@ up() {
     cd "$ROOT"
     env NODE_ENV=development PROVIDERS=standin PORT="$port" \
       DATABASE_URL="$url" REDIS_URL="redis://127.0.0.1:$REDIS_PORT" \
-      JWT_ACCESS_SECRET="$(secret)" REFRESH_TOKEN_PEPPER="$(secret)" AUTH_CODE_PEPPER="$(secret)" \
+      INTERNAL_TOKEN="$(secret)" JWT_ACCESS_SECRET="$(secret)" REFRESH_TOKEN_PEPPER="$(secret)" AUTH_CODE_PEPPER="$(secret)" \
       COOKIE_DOMAIN=127.0.0.1 WEB_ORIGINS="${STACK_WEB_ORIGINS:-http://localhost:3000}" \
       PUBLIC_SITE_URL="${STACK_WEB_ORIGINS:-http://localhost:3000}" API_PUBLIC_URL="$base" \
       MAIL_FROM=wishes@example.test \
@@ -117,6 +117,7 @@ down() {
     kill -0 "$pid" 2>/dev/null && kill -9 "$pid"
   fi
   node "$ROOT/scripts/db.mjs" drop "$db"
+  node "$ROOT/scripts/db.mjs" drop "${prefix}_test_template"
   rm -f "$envfile"
   echo "stack $prefix down (PID $pid stopped, database $db dropped)"
 }

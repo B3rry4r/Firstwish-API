@@ -10,6 +10,7 @@ export function standinEnv(): Record<string, string> {
     REDIS_URL: process.env.REDIS_URL ?? "redis://127.0.0.1:6379",
     JWT_ACCESS_SECRET: "test-access-secret-0123456789abcdef0123",
     REFRESH_TOKEN_PEPPER: "test-refresh-pepper-0123456789abcdef012",
+    INTERNAL_TOKEN: "test-internal-token-0123456789abcdef01",
     AUTH_CODE_PEPPER: "test-code-pepper-0123456789abcdef0123456",
     COOKIE_DOMAIN: "localhost",
     WEB_ORIGINS: "http://localhost:3000",

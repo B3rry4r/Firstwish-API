@@ -1,6 +1,9 @@
-import { CanActivate, ExecutionContext, Injectable } from "@nestjs/common";
+import { CanActivate, ExecutionContext, Inject, Injectable } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
+import { timingSafeEqual } from "node:crypto";
 import type { Request } from "express";
+import { ENV } from "../env/env.module";
+import type { Env } from "../env/env";
 import { AppError } from "../errors/app-error";
 import { PaymentsPort } from "../ports/payments.port";
 import { ACCESS, Access } from "./decorators";
@@ -8,7 +11,14 @@ import { AccessTokenVerifier, Principal } from "./principal";
 
 type Req = Request & { principal?: Principal; rawBody?: Buffer };
 
-const LOOPBACK = new Set(["127.0.0.1", "::1", "::ffff:127.0.0.1"]);
+const PROXY_HEADERS = ["x-forwarded-for", "forwarded", "x-real-ip"];
+
+function sameSecret(given: string | undefined, want: string): boolean {
+  if (!given) return false;
+  const a = Buffer.from(given);
+  const b = Buffer.from(want);
+  return a.length === b.length && timingSafeEqual(a, b);
+}
 
 /** The one global guard. It reads the route's access decorator and lets the request through or refuses it. */
 @Injectable()
@@ -17,6 +27,7 @@ export class AccessGuard implements CanActivate {
     private readonly reflector: Reflector,
     private readonly tokens: AccessTokenVerifier,
     private readonly payments: PaymentsPort,
+    @Inject(ENV) private readonly env: Env,
   ) {}
 
   async canActivate(ctx: ExecutionContext): Promise<boolean> {
@@ -28,7 +39,12 @@ export class AccessGuard implements CanActivate {
       case "public":
         return true;
       case "internal":
-        if (LOOPBACK.has(req.socket.remoteAddress ?? "") && !req.headers["x-forwarded-for"]) return true;
+        // Default (lead), owner may override: a shared secret, and never through a proxy.
+        {
+          const token = req.headers["x-internal-token"];
+          const viaProxy = PROXY_HEADERS.some((h) => req.headers[h] !== undefined);
+          if (!viaProxy && sameSecret(typeof token === "string" ? token : undefined, this.env.INTERNAL_TOKEN)) return true;
+        }
         throw AppError.forbidden("Only reachable from the server itself.");
       case "webhook":
         return this.checkWebhook(access.provider, req);

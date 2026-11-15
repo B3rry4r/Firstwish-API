@@ -76,8 +76,8 @@ export class ErrorEnvelopeFilter implements ExceptionFilter {
     const e = exception as { status?: unknown; statusCode?: unknown; expose?: unknown; type?: unknown } | null;
     const raw = e && typeof e === "object" ? (e.status ?? e.statusCode) : undefined;
     if (typeof raw === "number" && raw >= 400 && raw < 500 && e?.expose === true) {
-      const code = e.type === "entity.parse.failed" ? "bad_json" : (CODES[raw] ?? `http_${raw}`);
-      const message = e.type === "entity.parse.failed" ? "The request body is not valid JSON." : (MESSAGES[raw] ?? "The request could not be read.");
+      const code = CODES[raw] ?? `http_${raw}`;
+      const message = MESSAGES[raw] ?? "The request could not be read.";
       return { status: raw, body: envelope(code, message, requestId) };
     }
     const status = HttpStatus.INTERNAL_SERVER_ERROR;

@@ -22,8 +22,13 @@ describe("env schema", () => {
   it("lists exactly the variables of .pipeline/env-manifest.json, plus the runtime-only ones", () => {
     expect(MANIFEST_VARS.map((v) => v.name)).toEqual(manifest.vars.map((v) => v.name));
     const runtime = RUNTIME_VARS.map((v) => v.name);
-    expect(runtime).toEqual(["NODE_ENV", "PORT", "PROVIDERS"]);
+    expect(runtime).toEqual(["NODE_ENV", "PORT", "PROVIDERS", "INTERNAL_TOKEN"]);
     expect(runtime.filter((n) => manifest.vars.some((v) => v.name === n))).toEqual([]);
+  });
+
+  it("refuses a missing or short INTERNAL_TOKEN, naming it", () => {
+    expect(problemsOf({ ...standinEnv(), INTERNAL_TOKEN: undefined })).toEqual(["INTERNAL_TOKEN"]);
+    expect(problemsOf({ ...standinEnv(), INTERNAL_TOKEN: "short" })).toEqual(["INTERNAL_TOKEN"]);
   });
 
   it("boots with the stand-in environment", () => {

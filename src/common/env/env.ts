@@ -5,6 +5,7 @@ export interface Env {
   NODE_ENV: "development" | "test" | "production";
   PORT: number;
   PROVIDERS: "live" | "standin";
+  INTERNAL_TOKEN: string;
   DATABASE_URL: string;
   REDIS_URL: string;
   JWT_ACCESS_SECRET: string;

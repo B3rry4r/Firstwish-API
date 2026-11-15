@@ -70,6 +70,12 @@ export const RUNTIME_VARS: readonly VarSpec[] = [
     purpose: "live uses real providers; standin uses in-process stand-ins (refused when NODE_ENV=production)",
     default: "live",
   },
+  {
+    name: "INTERNAL_TOKEN",
+    need: "always",
+    kind: "secret",
+    purpose: "shared secret an internal route needs in the x-internal-token header (32 or more characters)",
+  },
 ];
 
 export const ENV_SCHEMA: readonly VarSpec[] = [...MANIFEST_VARS, ...RUNTIME_VARS];

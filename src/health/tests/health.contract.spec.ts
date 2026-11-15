@@ -71,7 +71,7 @@ describe("health and the error envelope (contract)", () => {
   it("malformed JSON -> 400 envelope", async () => {
     const res = await t.http().post("/v1/probe/echo").set("content-type", "application/json").send('{"name":');
     expect(res.status).toBe(400);
-    expect(res.body.error).toMatchObject({ code: expect.stringMatching(/^bad_(request|json)$/), requestId: expect.stringMatching(REQUEST_ID) });
+    expect(res.body.error).toMatchObject({ code: "bad_request", requestId: expect.stringMatching(REQUEST_ID) });
   });
 
   it("thrown error -> 500 with a plain message and no stack or detail", async () => {

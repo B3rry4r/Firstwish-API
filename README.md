@@ -24,6 +24,9 @@ scripts/stack.sh down dev        # stops the API and drops dev_test
 To run the API yourself, copy `.env.example` to `.env`, fill it in, load it into your shell, then `npm run migrate` and `npm start`.
 If a variable is missing or wrong the API does not start and names each one.
 
+`INTERNAL_TOKEN` (32 or more random characters) guards internal routes: a request must send it in the `x-internal-token` header, and is
+refused if it also carries `x-forwarded-for`, `forwarded` or `x-real-ip`. Keep it out of the browser and out of any proxied path.
+
 ## Checks
 
 | Command | What it does |

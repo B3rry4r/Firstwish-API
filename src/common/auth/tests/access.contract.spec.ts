@@ -2,6 +2,7 @@ import { Controller, Get, HttpCode, Post } from "@nestjs/common";
 import { CurrentPrincipal, Internal, Public, Roles, StaffRoles, WebhookSignature } from "../decorators";
 import type { Principal } from "../principal";
 import { createTestApp, TestApp } from "../../../../test/kit/app";
+import { standinEnv } from "../../../../test/kit/env";
 
 @Controller("probe-access")
 class AccessProbe {
@@ -77,8 +78,13 @@ describe("access guard shells (contract)", () => {
     expect((await t.http().post("/v1/probe-access/webhook").send(body)).status).toBe(401);
   });
 
-  it("internal is refused through a proxy", async () => {
-    expect((await get("internal")).status).toBe(200);
-    expect((await get("internal").set("x-forwarded-for", "203.0.113.9")).status).toBe(403);
+  it("internal needs the shared token and no proxy header", async () => {
+    const token = standinEnv().INTERNAL_TOKEN;
+    expect((await get("internal")).status).toBe(403);
+    expect((await get("internal").set("x-internal-token", "wrong-token-wrong-token-wrong-token-xx")).status).toBe(403);
+    expect((await get("internal").set("x-internal-token", token).set("x-forwarded-for", "203.0.113.9")).status).toBe(403);
+    expect((await get("internal").set("x-internal-token", token).set("x-real-ip", "203.0.113.9")).status).toBe(403);
+    expect((await get("internal").set("x-internal-token", token).set("forwarded", "for=203.0.113.9")).status).toBe(403);
+    expect((await get("internal").set("x-internal-token", token)).status).toBe(200);
   });
 });

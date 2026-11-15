@@ -55,11 +55,13 @@ export function priceOf(line: BookLine, ctx: LineContext): Price {
   };
 }
 
-/** The promotion's end as a line of kind "date": value carries the instant (ISO-8601), as the admin prices screen reads it. */
+/** The promotion's end as a line of kind "date" (X15): value is the instant (ISO-8601); the kobo fields belong to other lines and are null. */
 export function promotionLineOf(p: PromotionRow, book: BookVersion, reason = "", changed = false): Price {
   return {
     ...settingBase(PROMOTION_KEY, `The ${p.percentOff}% off ends`, "promotion", book.version),
     kind: "date",
+    price: null,
+    was: null,
     value: toWireInstant(p.endsAt),
     lead: p.label,
     reason,

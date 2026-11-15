@@ -31,7 +31,7 @@ After Phase 5: Phase 6 wires the 89 screens (bundles of 3 to 5 by area, from .pi
 store) as the exit; Phase 7 smoke; Phase 8 live gate.
 
 ## Current state
-- 15 Nov 19:30 UTC: identity MERGED (f0be0ad): B01 sign-in + B03 staff and audit, joined and re-checked (INT-1). Registry re-frozen
-  DEC-153 (106 resources, 234 endpoints). Stand-ins only for Google and email.
-- Building (opus): B04 price book, B09 files, B02 account and sides, B14 styles. Briefs ready: B05, B06, B12.
-- To write: B07, B08, B10, B11, B13, B15-B21.
+- 15 Nov ~22:50 UTC: wave 2 MERGED into the API branch (f755607): B04 prices, B09 files, B02 account, B14 styles, B12 dates,
+  on top of identity (B01, B03). 7 of 21 bundles in. Registry DEC-167: 106 resources, 237 endpoints. 459 tests.
+- Built, under check (Sonnet): B05 payments (b05-payments), B06 the wish (b06-wish-core). Both branch from int-2.
+- Every agent is Sonnet (R17). Briefs to write next: B07, B08, B10, B11, B13, B15-B21.

@@ -3,7 +3,7 @@ import type { Prisma } from "@prisma/client";
 import { Clock } from "../../common/ports/clock.port";
 import { IdGenerator } from "../../common/ports/ids.port";
 import type { FulfilmentContext } from "../payments/fulfilment.registry";
-import { readOptions, withFlag, writeOptions } from "../payments/payment-options";
+import { withFlag } from "../payments/payment-options";
 
 export type Tx = Prisma.TransactionClient;
 export type Detail = Record<string, unknown>;
@@ -77,12 +77,9 @@ export class GrantStore {
   async refuse(tx: Tx, ctx: FulfilmentContext, id: string, reason: string): Promise<void> {
     await tx.$executeRaw`UPDATE purchase_grant SET "refusedReason" = ${reason} WHERE id = ${id}::uuid`;
     const p = await tx.payment.findUniqueOrThrow({ where: { id: ctx.payment.id } });
-    const flag = `refund_due:${reason}`;
-    if (p.flags.includes(flag)) return;
-    await tx.payment.update({
-      where: { id: p.id },
-      data: { flags: [...p.flags, flag], options: writeOptions(withFlag(withFlag(readOptions(p.options), "refund_due"), flag)) },
-    });
+    const flags = withFlag(withFlag(p.flags, "refund_due"), `refund_due:${reason}`);
+    if (flags.length === p.flags.length) return;
+    await tx.payment.update({ where: { id: p.id }, data: { flags } });
   }
 
   async list(tx: Tx, paymentId: string): Promise<GrantRow[]> {

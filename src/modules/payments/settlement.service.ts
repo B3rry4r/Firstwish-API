@@ -4,7 +4,7 @@ import { PrismaService } from "../../common/db/prisma.service";
 import { lockAccount } from "../../common/db/account-lock";
 import { Clock } from "../../common/ports/clock.port";
 import { IdGenerator } from "../../common/ports/ids.port";
-import { EntitlementsService } from "../price-book/entitlements.service";
+import { EntitlementsService, grantOf } from "../price-book/entitlements.service";
 import { PriceBookService } from "../price-book/price-book.service";
 import { EventsService } from "../events/events.service";
 import { FulfilmentRegistry, type PaidLineInfo } from "./fulfilment.registry";
@@ -136,9 +136,16 @@ export class SettlementService {
     for (const line of lines) {
       const handler = this.registry.get(line.sku);
       if (!handler) throw new Error(`fulfilment: no handler registered for ${line.sku}`);
-      await handler({ tx, payment: paid, line, request: opts.request, grant: () => this.entitlements.for(line.sku) });
+      await handler({ tx, payment: paid, line, request: opts.request, grant: () => this.grantIn(tx, line.sku) });
     }
     return { outcome: "fulfilled", flagged };
+  }
+
+  /** What the book grants for a line, read on the settle transaction's own connection (never the pool: HH2). */
+  private async grantIn(tx: Prisma.TransactionClient, sku: string) {
+    const g = grantOf(await this.entitlements.row(tx), sku);
+    if (!g) throw new Error(`price book: no entitlement for ${sku}`);
+    return g;
   }
 
   private async writeLedger(tx: Prisma.TransactionClient, p: Payment, a: ProviderAnswer, lines: PaidLineInfo[]): Promise<void> {

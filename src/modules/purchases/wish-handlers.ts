@@ -1,4 +1,5 @@
 import { Injectable } from "@nestjs/common";
+import type { $Enums } from "@prisma/client";
 import { AppError } from "../../common/errors/app-error";
 import { Clock } from "../../common/ports/clock.port";
 import { EntitlementsService } from "../price-book/entitlements.service";
@@ -144,8 +145,27 @@ export class WishHandlers {
       return "revoked";
     }
     if (g.kind === "keep" && w.endsAt) {
+      // HH4: the days come off the end, and keep, keptBy and keptUntil are worked out again from the keeps that remain.
       const endsAt = new Date(w.endsAt.getTime() - num(d.days) * DAY_MS);
-      await tx.wish.update({ where: { id: w.id }, data: { endsAt, keptUntil: endsAt, version: { increment: 1 } } });
+      const rest = await tx.$queryRaw<{ detail: Record<string, unknown> }[]>`
+        SELECT detail FROM purchase_grant
+         WHERE "wishId" = ${w.id}::uuid AND kind = 'keep' AND "revokedAt" IS NULL AND "refusedReason" IS NULL AND id <> ${g.id}::uuid
+         ORDER BY "createdAt" DESC, id DESC`;
+      let marks: { keep: $Enums.WishKeep | null; keptBy: $Enums.WishKeptBy | null; keptUntil: Date | null };
+      if (rest.length) {
+        marks = { keep: (typeof rest[0].detail.length === "string" ? rest[0].detail.length : null) as $Enums.WishKeep | null, keptBy: "keep", keptUntil: endsAt };
+      } else {
+        // No keep left: what the wish carried before its first keep (revoked ones included) is what it carries again.
+        const first = await tx.$queryRaw<{ detail: Record<string, unknown> }[]>`
+          SELECT detail FROM purchase_grant WHERE "wishId" = ${w.id}::uuid AND kind = 'keep' AND "refusedReason" IS NULL ORDER BY "createdAt", id LIMIT 1`;
+        const was = first[0]?.detail ?? d;
+        marks = {
+          keep: typeof was.previousKeep === "string" ? (was.previousKeep as $Enums.WishKeep) : null,
+          keptBy: typeof was.previousKeptBy === "string" ? (was.previousKeptBy as $Enums.WishKeptBy) : null,
+          keptUntil: typeof was.previousKeptUntil === "string" ? new Date(was.previousKeptUntil) : null,
+        };
+      }
+      await tx.wish.update({ where: { id: w.id }, data: { endsAt, ...marks, version: { increment: 1 } } });
       await this.jobs.schedule("rest-wish", endsAt, w.id, tx);
       return "revoked";
     }

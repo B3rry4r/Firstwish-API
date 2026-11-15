@@ -1,0 +1,333 @@
+{
+  "edges": [
+    {
+      "from": "AiRequest",
+      "to": [
+        "Account",
+        "Style",
+        "Wish"
+      ]
+    },
+    {
+      "from": "Ban",
+      "to": [
+        "Account"
+      ]
+    },
+    {
+      "from": "ConciergeOrder",
+      "to": [
+        "Account",
+        "Business",
+        "Invoice"
+      ]
+    },
+    {
+      "from": "CreditBalance",
+      "to": [
+        "Account"
+      ]
+    },
+    {
+      "from": "Event",
+      "to": [
+        "Account",
+        "Wish"
+      ]
+    },
+    {
+      "from": "ExternalIdentity",
+      "to": [
+        "Account"
+      ]
+    },
+    {
+      "from": "JobRun",
+      "to": [
+        "Job"
+      ]
+    },
+    {
+      "from": "LedgerEntry",
+      "to": [
+        "Payment",
+        "Payout",
+        "Refund"
+      ]
+    },
+    {
+      "from": "Notice",
+      "to": [
+        "Account",
+        "DateRow",
+        "Wish"
+      ]
+    },
+    {
+      "from": "Payment",
+      "to": [
+        "Account",
+        "Business"
+      ]
+    },
+    {
+      "from": "Payout",
+      "to": [
+        "BankAccount",
+        "Creator"
+      ]
+    },
+    {
+      "from": "PublishRequest",
+      "to": [
+        "Wish"
+      ]
+    },
+    {
+      "from": "QrCard",
+      "to": [
+        "Event",
+        "Wish"
+      ]
+    },
+    {
+      "from": "Refund",
+      "to": [
+        "Payment"
+      ]
+    },
+    {
+      "from": "RenderJob",
+      "to": [
+        "Wish"
+      ]
+    },
+    {
+      "from": "Report",
+      "to": [
+        "Account",
+        "Style",
+        "Wish"
+      ]
+    },
+    {
+      "from": "RoyaltyAccrual",
+      "to": [
+        "Creator",
+        "Payment"
+      ]
+    },
+    {
+      "from": "Session",
+      "to": [
+        "Account"
+      ]
+    },
+    {
+      "from": "StoredFile",
+      "to": [
+        "Business",
+        "Style"
+      ]
+    },
+    {
+      "from": "StyleSubmission",
+      "to": [
+        "Creator",
+        "Style"
+      ]
+    },
+    {
+      "from": "SupportThread",
+      "to": [
+        "Account"
+      ]
+    },
+    {
+      "from": "VoiceNote",
+      "to": [
+        "Wish"
+      ]
+    },
+    {
+      "from": "WebhookEvent",
+      "to": [
+        "Event"
+      ]
+    },
+    {
+      "from": "Wish",
+      "to": [
+        "Account",
+        "Business"
+      ]
+    },
+    {
+      "from": "WishLink",
+      "to": [
+        "Wish"
+      ]
+    },
+    {
+      "from": "WishTransition",
+      "to": [
+        "JobRun",
+        "Wish"
+      ]
+    }
+  ],
+  "waves": [
+    [
+      "Account",
+      "AuthCode",
+      "BankAccount",
+      "Business",
+      "Creator",
+      "Entitlements",
+      "Price",
+      "PriceBookVersion",
+      "Promotion",
+      "Reconciliation",
+      "StaffAccount"
+    ],
+    [
+      "ExternalIdentity",
+      "Payment",
+      "Payout",
+      "Session",
+      "Wish"
+    ],
+    [
+      "Event",
+      "Refund",
+      "RoyaltyAccrual"
+    ],
+    [
+      "LedgerEntry",
+      "WebhookEvent"
+    ],
+    [
+      "ApprovedDate",
+      "AuditEntry",
+      "Ban",
+      "ChapterSpec",
+      "ClientWish",
+      "Coming",
+      "ComingSoonAudience",
+      "ConciergeOffer",
+      "ConciergeSinglePrice",
+      "ContactChannels",
+      "CreativeLabel",
+      "CreatorOffer",
+      "CreatorState",
+      "CreditBalance",
+      "DateRow",
+      "Earnings",
+      "EarningsSummary",
+      "EndingEvent",
+      "EndingPurpose",
+      "Extra",
+      "FeedStyle",
+      "FeedWish",
+      "Follow",
+      "Invoice",
+      "Job",
+      "Kind",
+      "KindOccasionLabel",
+      "LifecycleConfig",
+      "Login",
+      "MessageDelivery",
+      "MessageTemplate",
+      "Moment",
+      "NoticePrefs",
+      "Occasion",
+      "OpeningDef",
+      "PassMembership",
+      "PassOffer",
+      "Person",
+      "PlanReference",
+      "PlayWish",
+      "PricingRules",
+      "ProPlan",
+      "ProPricingCopy",
+      "ProUsage",
+      "PublicWishView",
+      "PublishRequest",
+      "QrCard",
+      "Reaction",
+      "RenderJob",
+      "RetentionRules",
+      "RevealLink",
+      "RevealPlay",
+      "SampleReveal",
+      "SavedWish",
+      "ScreeningResult",
+      "SentReveal",
+      "Share",
+      "Shoot",
+      "ShowcaseWish",
+      "SignedUrl",
+      "StudioPrefs",
+      "StudioStyle",
+      "Style",
+      "StyleLevel",
+      "StyleLevelCounts",
+      "StyleManifest",
+      "StylePreview",
+      "StyleRate",
+      "StyleRecording",
+      "SubmittedStyle",
+      "SupportMessage",
+      "SupportThread",
+      "Template",
+      "Ticket",
+      "TicketOffer",
+      "TicketTerms",
+      "UploadTicket",
+      "VaultFile",
+      "VaultPricing",
+      "VaultStorage",
+      "VoiceNote",
+      "WishData",
+      "WishLink",
+      "WishNumberSequence",
+      "WishOpen"
+    ],
+    [
+      "AiRequest",
+      "ConciergeOrder",
+      "JobRun",
+      "Notice",
+      "Report",
+      "StoredFile",
+      "StyleSubmission"
+    ],
+    [
+      "WishTransition"
+    ]
+  ],
+  "firstGroup": [
+    "Account",
+    "AuthCode",
+    "BankAccount",
+    "Business",
+    "Creator",
+    "Entitlements",
+    "Event",
+    "ExternalIdentity",
+    "LedgerEntry",
+    "Payment",
+    "Payout",
+    "Price",
+    "PriceBookVersion",
+    "Promotion",
+    "Reconciliation",
+    "Refund",
+    "RoyaltyAccrual",
+    "Session",
+    "StaffAccount",
+    "WebhookEvent",
+    "Wish"
+  ],
+  "rule": "identity and money resources (declarations auth-codes, sessions, google-identity, staff-accounts, payments, ledger, refunds, price-book, royalties-payouts) and what they reference come first; then topological layers"
+}

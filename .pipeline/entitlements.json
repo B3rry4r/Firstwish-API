@@ -1,0 +1,1152 @@
+{
+  "entitlements": [
+    {
+      "id": "T-01",
+      "source": "truth",
+      "statement": "A ticket is exactly three meters: a term (how long it lives), what it carries (photos, and video on Premiere only) and one style picked by the sender.",
+      "purchase": [
+        "POST /v1/payments"
+      ],
+      "endpoints": [
+        {
+          "endpoint": "E-191",
+          "route": "PATCH /v1/wishes/:id",
+          "matchedBy": "words: photo, style, ticket"
+        }
+      ],
+      "test": "src/wish/tests/wish.contract.spec.ts > entitlement T-01"
+    },
+    {
+      "id": "T-02",
+      "source": "truth",
+      "statement": "Moment: 7 days, cannot be kept, 6 photos, no video, one starter style, no extras; its only option is to become a Keepsake for the difference.",
+      "purchase": [
+        "POST /v1/payments"
+      ],
+      "endpoints": [
+        {
+          "endpoint": "E-191",
+          "route": "PATCH /v1/wishes/:id",
+          "matchedBy": "words: photo, style"
+        }
+      ],
+      "test": "src/wish/tests/wish.contract.spec.ts > entitlement T-02"
+    },
+    {
+      "id": "T-03",
+      "source": "truth",
+      "statement": "Keepsake: 2 weeks, can be kept, 15 photos, no video, one standard style, plus a voice note or song link, a notice to the sender when opened, and a reaction from the receiver.",
+      "purchase": [],
+      "endpoints": [
+        {
+          "endpoint": "E-191",
+          "route": "PATCH /v1/wishes/:id",
+          "matchedBy": "words: note, photo, style, voice"
+        }
+      ],
+      "test": "src/wish/tests/wish.contract.spec.ts > entitlement T-03"
+    },
+    {
+      "id": "T-04",
+      "source": "truth",
+      "statement": "Signature: 1 month, can be kept, 15 photos, no video, one premium style, plus the portrait video for WhatsApp status, a print-ready QR card, and up to ten friends who each add a message, a voice note and one photo.",
+      "purchase": [],
+      "endpoints": [
+        {
+          "endpoint": "E-108",
+          "route": "POST /v1/qr-cards",
+          "matchedBy": "declaration cites it"
+        },
+        {
+          "endpoint": "E-114",
+          "route": "POST /v1/render-jobs",
+          "matchedBy": "declaration cites it"
+        },
+        {
+          "endpoint": "E-191",
+          "route": "PATCH /v1/wishes/:id",
+          "matchedBy": "words: note, photo, style, voice"
+        }
+      ],
+      "test": "src/qr-card/tests/qr-card.contract.spec.ts > entitlement T-04"
+    },
+    {
+      "id": "T-05",
+      "source": "truth",
+      "statement": "Premiere: 2 months, can be kept, 20 photos, three video clips of 15 seconds, one premium style made for video; it is the only ticket with video.",
+      "purchase": [
+        "POST /v1/payments"
+      ],
+      "endpoints": [
+        {
+          "endpoint": "E-114",
+          "route": "POST /v1/render-jobs",
+          "matchedBy": "declaration cites it"
+        },
+        {
+          "endpoint": "E-191",
+          "route": "PATCH /v1/wishes/:id",
+          "matchedBy": "words: photo, style, ticket"
+        }
+      ],
+      "test": "src/render-job/tests/render-job.contract.spec.ts > entitlement T-05"
+    },
+    {
+      "id": "T-06",
+      "source": "truth",
+      "statement": "A ticket's style comes from the ticket's level or a level below (Starter on Moment, Standard on Keepsake, Premium on Signature and Premiere); no ticket gives every style, and only the Pass includes every style.",
+      "purchase": [
+        "POST /v1/payments"
+      ],
+      "endpoints": [
+        {
+          "endpoint": "E-191",
+          "route": "PATCH /v1/wishes/:id",
+          "matchedBy": "words: style, ticket"
+        }
+      ],
+      "test": "src/wish/tests/wish.contract.spec.ts > entitlement T-06"
+    },
+    {
+      "id": "T-10",
+      "source": "truth",
+      "statement": "The preview is always free: the sender watches the whole wish in its style before paying anything, and the preview is never gated by any ticket or plan.",
+      "purchase": [
+        "POST /v1/payments"
+      ],
+      "endpoints": [
+        {
+          "endpoint": "E-191",
+          "route": "PATCH /v1/wishes/:id",
+          "matchedBy": "words: style, ticket"
+        }
+      ],
+      "test": "src/wish/tests/wish.contract.spec.ts > entitlement T-10"
+    },
+    {
+      "id": "T-12",
+      "source": "truth",
+      "statement": "Concierge is a service, not a ticket: Firstwish's team makes the wishes for many at once, priced by how many are sent, one maker owns the order, and delivery comes with a report of what was opened and one VAT invoice.",
+      "purchase": [
+        "POST /v1/payments"
+      ],
+      "endpoints": [
+        {
+          "endpoint": "E-31",
+          "route": "POST /v1/admin/concierge-orders/:id/assign-maker",
+          "matchedBy": "declaration cites it"
+        },
+        {
+          "endpoint": "E-32",
+          "route": "POST /v1/admin/concierge-orders/:id/deliver-order",
+          "matchedBy": "declaration cites it"
+        },
+        {
+          "endpoint": "E-33",
+          "route": "POST /v1/admin/concierge-orders/:id/quote-order",
+          "matchedBy": "declaration cites it"
+        },
+        {
+          "endpoint": "E-34",
+          "route": "POST /v1/concierge-orders",
+          "matchedBy": "declaration cites it"
+        },
+        {
+          "endpoint": "E-191",
+          "route": "PATCH /v1/wishes/:id",
+          "matchedBy": "words: maker, ticket"
+        }
+      ],
+      "test": "src/concierge-order/tests/concierge-order.contract.spec.ts > entitlement T-12"
+    },
+    {
+      "id": "T-13",
+      "source": "truth",
+      "statement": "One wish made for one customer by Concierge is a Signature wish delivered within 3 hours; a rush within 1 hour adds a surcharge.",
+      "purchase": [
+        "POST /v1/payments"
+      ],
+      "endpoints": [
+        {
+          "endpoint": "E-31",
+          "route": "POST /v1/admin/concierge-orders/:id/assign-maker",
+          "matchedBy": "declaration cites it"
+        },
+        {
+          "endpoint": "E-32",
+          "route": "POST /v1/admin/concierge-orders/:id/deliver-order",
+          "matchedBy": "declaration cites it"
+        },
+        {
+          "endpoint": "E-33",
+          "route": "POST /v1/admin/concierge-orders/:id/quote-order",
+          "matchedBy": "declaration cites it"
+        },
+        {
+          "endpoint": "E-34",
+          "route": "POST /v1/concierge-orders",
+          "matchedBy": "declaration cites it"
+        }
+      ],
+      "test": "src/concierge-order/tests/concierge-order.contract.spec.ts > entitlement T-13"
+    },
+    {
+      "id": "T-14",
+      "source": "truth",
+      "statement": "The Pass is paid once a year, does not renew on its own, and gives Keepsake wishes all year (fair use 20), four Signature upgrades, every style including new ones, reminders for everyone in People and dates (7 days and 1 day before, with a wish already started), 20% off Concierge, and keeps every wish its holder made live while the Pass is active.",
+      "purchase": [
+        "POST /v1/payments"
+      ],
+      "endpoints": [
+        {
+          "endpoint": "E-79",
+          "route": "PATCH /v1/notice-prefs/:id",
+          "matchedBy": "declaration cites it"
+        },
+        {
+          "endpoint": "E-191",
+          "route": "PATCH /v1/wishes/:id",
+          "matchedBy": "words: off, style, use"
+        }
+      ],
+      "test": "src/notice-prefs/tests/notice-prefs.contract.spec.ts > entitlement T-14"
+    },
+    {
+      "id": "T-15",
+      "source": "truth",
+      "statement": "Pass holders pay for no keeps, and the Pass is the only way to keep every wish a person has made.",
+      "purchase": [
+        "POST /v1/payments"
+      ],
+      "endpoints": [
+        {
+          "endpoint": "E-195",
+          "route": "POST /v1/wishes/:id/keep",
+          "matchedBy": "words: keep, pass"
+        }
+      ],
+      "test": "src/wish/tests/wish.contract.spec.ts > entitlement T-15"
+    },
+    {
+      "id": "T-16",
+      "source": "truth",
+      "statement": "Three things keep a wish live past its term without a keep: the Pass (every wish its holder made, while active), being published on Now Showing (while public), and a Pro plan (the wishes on a business's page, while the plan is active).",
+      "purchase": [
+        "POST /v1/payments"
+      ],
+      "endpoints": [
+        {
+          "endpoint": "E-105",
+          "route": "POST /v1/admin/publish-requests/:id/review-publish",
+          "matchedBy": "declaration cites it"
+        },
+        {
+          "endpoint": "E-106",
+          "route": "POST /v1/publish-requests",
+          "matchedBy": "declaration cites it"
+        },
+        {
+          "endpoint": "E-107",
+          "route": "POST /v1/publish-requests/:id/withdraw",
+          "matchedBy": "declaration cites it"
+        },
+        {
+          "endpoint": "E-195",
+          "route": "POST /v1/wishes/:id/keep",
+          "matchedBy": "words: keep, pass"
+        }
+      ],
+      "test": "src/publish-request/tests/publish-request.contract.spec.ts > entitlement T-16"
+    },
+    {
+      "id": "T-17",
+      "source": "truth",
+      "statement": "Pro Starter: 10 Signature wishes a month, 1 login, 100 GB Vault, business name on the last screen, client dashboard, unused wishes roll over one month; Pro Studio: 35 Signature wishes a month, 3 logins, 500 GB Vault, own logo and colours, priority support; Wish pack: 5 Signature wishes that never expire, no subscription, 20 GB Vault for 90 days.",
+      "purchase": [
+        "POST /v1/payments"
+      ],
+      "endpoints": [
+        {
+          "endpoint": "E-173",
+          "route": "POST /v1/support-messages",
+          "matchedBy": "declaration cites it"
+        },
+        {
+          "endpoint": "E-174",
+          "route": "POST /v1/admin/support-threads/:id/assign",
+          "matchedBy": "declaration cites it"
+        },
+        {
+          "endpoint": "E-175",
+          "route": "POST /v1/support-threads",
+          "matchedBy": "declaration cites it"
+        },
+        {
+          "endpoint": "E-191",
+          "route": "PATCH /v1/wishes/:id",
+          "matchedBy": "words: name, studio"
+        },
+        {
+          "endpoint": "E-27",
+          "route": "POST /v1/client-wishes/:id/send-reveal",
+          "matchedBy": "words: client, vault"
+        }
+      ],
+      "test": "src/support-message/tests/support-message.contract.spec.ts > entitlement T-17"
+    },
+    {
+      "id": "T-18",
+      "source": "truth",
+      "statement": "Adding a business side is free and it pays per wish from a pack until a Pro plan is chosen; a staff member on Pro Studio signs in with their own account and sees the business in their switcher, never the owner's personal side.",
+      "purchase": [
+        "POST /v1/payments"
+      ],
+      "endpoints": [
+        {
+          "endpoint": "E-11",
+          "route": "POST /v1/ai-requests/:id/studio-change",
+          "matchedBy": "words: studio"
+        },
+        {
+          "endpoint": "E-12",
+          "route": "POST /v1/ai-requests/:id/studio-draft",
+          "matchedBy": "words: studio"
+        },
+        {
+          "endpoint": "E-143",
+          "route": "POST /v1/admin/staff-accounts",
+          "matchedBy": "words: staff"
+        },
+        {
+          "endpoint": "E-144",
+          "route": "POST /v1/admin/staff-accounts/:id/change-staff-roles",
+          "matchedBy": "words: staff"
+        },
+        {
+          "endpoint": "E-145",
+          "route": "POST /v1/admin/staff-accounts/:id/suspend-staff",
+          "matchedBy": "words: staff"
+        },
+        {
+          "endpoint": "E-146",
+          "route": "POST /v1/staff-accounts/:id/staff-sign-in",
+          "matchedBy": "words: staff"
+        },
+        {
+          "endpoint": "E-152",
+          "route": "PATCH /v1/studio-prefs/:id",
+          "matchedBy": "words: studio"
+        },
+        {
+          "endpoint": "E-154",
+          "route": "POST /v1/studio-styles",
+          "matchedBy": "words: studio"
+        }
+      ],
+      "test": "src/ai-request/tests/ai-request.contract.spec.ts > entitlement T-18"
+    },
+    {
+      "id": "T-19",
+      "source": "truth",
+      "statement": "A Pro wish lives its Signature term of a month, its resting screen still shows 'Photos by' or 'Arranged by' and the booking button, and the client is offered the keep, paid to Firstwish.",
+      "purchase": [
+        "POST /v1/payments"
+      ],
+      "endpoints": [
+        {
+          "endpoint": "E-128",
+          "route": "INTERNAL port:screening-results#screenFile",
+          "matchedBy": "words: screen"
+        },
+        {
+          "endpoint": "E-191",
+          "route": "PATCH /v1/wishes/:id",
+          "matchedBy": "words: photo"
+        },
+        {
+          "endpoint": "E-192",
+          "route": "POST /v1/wishes/:id/add-photos",
+          "matchedBy": "words: photo"
+        },
+        {
+          "endpoint": "E-195",
+          "route": "POST /v1/wishes/:id/keep",
+          "matchedBy": "words: keep"
+        },
+        {
+          "endpoint": "E-23",
+          "route": "POST /v1/client-wishes",
+          "matchedBy": "words: client"
+        },
+        {
+          "endpoint": "E-25",
+          "route": "POST /v1/client-wishes/:id/approve-date",
+          "matchedBy": "words: client"
+        },
+        {
+          "endpoint": "E-26",
+          "route": "POST /v1/client-wishes/:id/send-favourites",
+          "matchedBy": "words: client"
+        },
+        {
+          "endpoint": "E-27",
+          "route": "POST /v1/client-wishes/:id/send-reveal",
+          "matchedBy": "words: client"
+        }
+      ],
+      "test": "src/screening-result/tests/screening-result.contract.spec.ts > entitlement T-19"
+    },
+    {
+      "id": "T-21",
+      "source": "truth",
+      "statement": "Creator plans: Open (free, by application) gives a public profile and handle, one style draft, 3 AI credits once and 1 review a month, with Scroll, Swipe and Stories styles only; Creator (₦7,500 a month) gives unlimited drafts, 10 credits a month, 2 reviews a month, premium styles as templates, and Film, Stage, Drawn and 3D styles plus the creator's own artwork, models and sound; Signed (₦5,000 a month, added to either plan) puts the creator's byline on the last screen of every wish made in their styles with a link to their page.",
+      "purchase": [
+        "POST /v1/payments"
+      ],
+      "endpoints": [
+        {
+          "endpoint": "E-12",
+          "route": "POST /v1/ai-requests/:id/studio-draft",
+          "matchedBy": "declaration cites it"
+        },
+        {
+          "endpoint": "E-11",
+          "route": "POST /v1/ai-requests/:id/studio-change",
+          "matchedBy": "declaration cites it"
+        },
+        {
+          "endpoint": "E-10",
+          "route": "POST /v1/ai-requests/:id/reasons-from-voice",
+          "matchedBy": "declaration cites it"
+        },
+        {
+          "endpoint": "E-8",
+          "route": "POST /v1/ai-requests/:id/letter-from-voice",
+          "matchedBy": "declaration cites it"
+        },
+        {
+          "endpoint": "E-9",
+          "route": "POST /v1/ai-requests/:id/pick-photos",
+          "matchedBy": "declaration cites it"
+        },
+        {
+          "endpoint": "E-191",
+          "route": "PATCH /v1/wishes/:id",
+          "matchedBy": "words: draft, open, style"
+        },
+        {
+          "endpoint": "E-7",
+          "route": "POST /v1/accounts/:id/open-creator-profile",
+          "matchedBy": "words: creator, open, profile"
+        }
+      ],
+      "test": "src/ai-request/tests/ai-request.contract.spec.ts > entitlement T-21"
+    },
+    {
+      "id": "T-22",
+      "source": "truth",
+      "statement": "Credit pack is ₦3,000 for 5 AI credits; an extra review is ₦2,500 for one more submission in a month; a full AI style draft costs 4 credits and an AI change costs 1 credit; 1 credit equals about ₦200 of AI.",
+      "purchase": [
+        "POST /v1/payments"
+      ],
+      "endpoints": [
+        {
+          "endpoint": "E-12",
+          "route": "POST /v1/ai-requests/:id/studio-draft",
+          "matchedBy": "declaration cites it"
+        },
+        {
+          "endpoint": "E-11",
+          "route": "POST /v1/ai-requests/:id/studio-change",
+          "matchedBy": "declaration cites it"
+        },
+        {
+          "endpoint": "E-10",
+          "route": "POST /v1/ai-requests/:id/reasons-from-voice",
+          "matchedBy": "declaration cites it"
+        },
+        {
+          "endpoint": "E-8",
+          "route": "POST /v1/ai-requests/:id/letter-from-voice",
+          "matchedBy": "declaration cites it"
+        },
+        {
+          "endpoint": "E-9",
+          "route": "POST /v1/ai-requests/:id/pick-photos",
+          "matchedBy": "declaration cites it"
+        },
+        {
+          "endpoint": "E-167",
+          "route": "POST /v1/admin/style-submissions/:id/decide-submission",
+          "matchedBy": "words: style, submission"
+        },
+        {
+          "endpoint": "E-191",
+          "route": "PATCH /v1/wishes/:id",
+          "matchedBy": "words: draft, style"
+        }
+      ],
+      "test": "src/ai-request/tests/ai-request.contract.spec.ts > entitlement T-22"
+    },
+    {
+      "id": "T-23",
+      "source": "truth",
+      "statement": "Style templates: Firstwish's own starter templates are free to every creator, opening a Premium style as a template needs a paid creator plan, and the original creator decides whether their style can be a template.",
+      "purchase": [
+        "POST /v1/payments"
+      ],
+      "endpoints": [
+        {
+          "endpoint": "E-172",
+          "route": "POST /v1/submitted-styles/:id/withdraw-style",
+          "matchedBy": "words: style, template"
+        }
+      ],
+      "test": "src/submitted-style/tests/submitted-style.contract.spec.ts > entitlement T-23"
+    },
+    {
+      "id": "T-24",
+      "source": "truth",
+      "statement": "Every account is one kind of account with up to three sides: Personal (always), Business (added with a name; set up on its own, not requiring a creator profile) and Creator (a handle and one line); nothing moves between sides and the app opens on the side used last.",
+      "purchase": [
+        "POST /v1/payments"
+      ],
+      "endpoints": [
+        {
+          "endpoint": "E-7",
+          "route": "POST /v1/accounts/:id/open-creator-profile",
+          "matchedBy": "words: creator, open, profile, up"
+        }
+      ],
+      "test": "src/account/tests/account.contract.spec.ts > entitlement T-24"
+    },
+    {
+      "id": "T-25",
+      "source": "truth",
+      "statement": "Publishing a wish needs a creator profile with a confirmed phone number; building a style needs a creator profile; the first publish asks a personal account for a handle and opens the creator side.",
+      "purchase": [
+        "POST /v1/payments"
+      ],
+      "endpoints": [
+        {
+          "endpoint": "E-105",
+          "route": "POST /v1/admin/publish-requests/:id/review-publish",
+          "matchedBy": "declaration cites it"
+        },
+        {
+          "endpoint": "E-106",
+          "route": "POST /v1/publish-requests",
+          "matchedBy": "declaration cites it"
+        },
+        {
+          "endpoint": "E-107",
+          "route": "POST /v1/publish-requests/:id/withdraw",
+          "matchedBy": "declaration cites it"
+        },
+        {
+          "endpoint": "E-7",
+          "route": "POST /v1/accounts/:id/open-creator-profile",
+          "matchedBy": "words: creator, open, profile"
+        }
+      ],
+      "test": "src/publish-request/tests/publish-request.contract.spec.ts > entitlement T-25"
+    },
+    {
+      "id": "ticket.moment",
+      "source": "price-book",
+      "statement": "Moment ticket moment",
+      "purchase": [
+        "POST /v1/payments"
+      ],
+      "endpoints": [
+        {
+          "endpoint": "E-191",
+          "route": "PATCH /v1/wishes/:id",
+          "matchedBy": "words: ticket"
+        }
+      ],
+      "test": "src/wish/tests/wish.contract.spec.ts > entitlement ticket.moment"
+    },
+    {
+      "id": "ticket.keepsake",
+      "source": "price-book",
+      "statement": "Keepsake ticket keepsake",
+      "purchase": [
+        "POST /v1/payments"
+      ],
+      "endpoints": [
+        {
+          "endpoint": "E-191",
+          "route": "PATCH /v1/wishes/:id",
+          "matchedBy": "words: ticket"
+        }
+      ],
+      "test": "src/wish/tests/wish.contract.spec.ts > entitlement ticket.keepsake"
+    },
+    {
+      "id": "ticket.signature",
+      "source": "price-book",
+      "statement": "Signature ticket signature",
+      "purchase": [
+        "POST /v1/payments"
+      ],
+      "endpoints": [
+        {
+          "endpoint": "E-191",
+          "route": "PATCH /v1/wishes/:id",
+          "matchedBy": "words: ticket"
+        }
+      ],
+      "test": "src/wish/tests/wish.contract.spec.ts > entitlement ticket.signature"
+    },
+    {
+      "id": "ticket.premiere",
+      "source": "price-book",
+      "statement": "Premiere ticket premiere",
+      "purchase": [
+        "POST /v1/payments"
+      ],
+      "endpoints": [
+        {
+          "endpoint": "E-191",
+          "route": "PATCH /v1/wishes/:id",
+          "matchedBy": "words: ticket"
+        }
+      ],
+      "test": "src/wish/tests/wish.contract.spec.ts > entitlement ticket.premiere"
+    },
+    {
+      "id": "extra.five-photos",
+      "source": "price-book",
+      "statement": "Five more photos extra five-photos",
+      "purchase": [
+        "POST /v1/payments"
+      ],
+      "endpoints": [
+        {
+          "endpoint": "E-191",
+          "route": "PATCH /v1/wishes/:id",
+          "matchedBy": "words: photo"
+        },
+        {
+          "endpoint": "E-192",
+          "route": "POST /v1/wishes/:id/add-photos",
+          "matchedBy": "words: photo"
+        },
+        {
+          "endpoint": "E-9",
+          "route": "POST /v1/ai-requests/:id/pick-photos",
+          "matchedBy": "words: photo"
+        }
+      ],
+      "test": "src/wish/tests/wish.contract.spec.ts > entitlement extra.five-photos"
+    },
+    {
+      "id": "extra.premium-style",
+      "source": "price-book",
+      "statement": "A premium style extra premium-style",
+      "purchase": [
+        "POST /v1/payments"
+      ],
+      "endpoints": [
+        {
+          "endpoint": "E-11",
+          "route": "POST /v1/ai-requests/:id/studio-change",
+          "matchedBy": "words: style"
+        },
+        {
+          "endpoint": "E-12",
+          "route": "POST /v1/ai-requests/:id/studio-draft",
+          "matchedBy": "words: style"
+        },
+        {
+          "endpoint": "E-160",
+          "route": "POST /v1/admin/style-levels/:id/move-style",
+          "matchedBy": "words: style"
+        },
+        {
+          "endpoint": "E-165",
+          "route": "POST /v1/admin/style-rates/:id/preview-to-paid",
+          "matchedBy": "words: style"
+        },
+        {
+          "endpoint": "E-167",
+          "route": "POST /v1/admin/style-submissions/:id/decide-submission",
+          "matchedBy": "words: style"
+        },
+        {
+          "endpoint": "E-168",
+          "route": "POST /v1/style-submissions",
+          "matchedBy": "words: style"
+        },
+        {
+          "endpoint": "E-171",
+          "route": "POST /v1/submitted-styles/:id/submit-style",
+          "matchedBy": "words: style"
+        },
+        {
+          "endpoint": "E-172",
+          "route": "POST /v1/submitted-styles/:id/withdraw-style",
+          "matchedBy": "words: style"
+        }
+      ],
+      "test": "src/ai-request/tests/ai-request.contract.spec.ts > entitlement extra.premium-style"
+    },
+    {
+      "id": "extra.portrait-video",
+      "source": "price-book",
+      "statement": "Portrait video for WhatsApp status extra portrait-video",
+      "purchase": [
+        "POST /v1/payments"
+      ],
+      "endpoints": [
+        {
+          "endpoint": "E-114",
+          "route": "POST /v1/render-jobs",
+          "matchedBy": "words: statu, video"
+        }
+      ],
+      "test": "src/render-job/tests/render-job.contract.spec.ts > entitlement extra.portrait-video"
+    },
+    {
+      "id": "extra.qr-card",
+      "source": "price-book",
+      "statement": "Print-ready QR card extra qr-card",
+      "purchase": [
+        "POST /v1/payments"
+      ],
+      "endpoints": [
+        {
+          "endpoint": "E-108",
+          "route": "POST /v1/qr-cards",
+          "matchedBy": "words: card, qr, qrcard"
+        }
+      ],
+      "test": "src/qr-card/tests/qr-card.contract.spec.ts > entitlement extra.qr-card"
+    },
+    {
+      "id": "extra.clip-15s",
+      "source": "price-book",
+      "statement": "One more video clip, 15 seconds extra clip-15s",
+      "purchase": [
+        "POST /v1/payments"
+      ],
+      "endpoints": [
+        {
+          "endpoint": "E-114",
+          "route": "POST /v1/render-jobs",
+          "matchedBy": "words: video"
+        }
+      ],
+      "test": "src/render-job/tests/render-job.contract.spec.ts > entitlement extra.clip-15s"
+    },
+    {
+      "id": "extra.clip-60s",
+      "source": "price-book",
+      "statement": "A long clip, up to 60 seconds extra clip-60s",
+      "purchase": [
+        "POST /v1/payments"
+      ],
+      "endpoints": [
+        {
+          "endpoint": "E-3",
+          "route": "POST /v1/accounts/:id/add-business",
+          "matchedBy": "words: up"
+        },
+        {
+          "endpoint": "E-7",
+          "route": "POST /v1/accounts/:id/open-creator-profile",
+          "matchedBy": "words: up"
+        }
+      ],
+      "test": "src/account/tests/account.contract.spec.ts > entitlement extra.clip-60s"
+    },
+    {
+      "id": "keep.month",
+      "source": "price-book",
+      "statement": "Keep it one more month (30 days) keep month",
+      "purchase": [
+        "POST /v1/payments"
+      ],
+      "endpoints": [
+        {
+          "endpoint": "E-195",
+          "route": "POST /v1/wishes/:id/keep",
+          "matchedBy": "words: keep"
+        }
+      ],
+      "test": "src/wish/tests/wish.contract.spec.ts > entitlement keep.month"
+    },
+    {
+      "id": "keep.half",
+      "source": "price-book",
+      "statement": "Keep it six months (182 days) keep half",
+      "purchase": [
+        "POST /v1/payments"
+      ],
+      "endpoints": [
+        {
+          "endpoint": "E-195",
+          "route": "POST /v1/wishes/:id/keep",
+          "matchedBy": "words: keep"
+        }
+      ],
+      "test": "src/wish/tests/wish.contract.spec.ts > entitlement keep.half"
+    },
+    {
+      "id": "keep.year",
+      "source": "price-book",
+      "statement": "Keep it a year (365 days) keep year",
+      "purchase": [
+        "POST /v1/payments"
+      ],
+      "endpoints": [
+        {
+          "endpoint": "E-195",
+          "route": "POST /v1/wishes/:id/keep",
+          "matchedBy": "words: keep"
+        }
+      ],
+      "test": "src/wish/tests/wish.contract.spec.ts > entitlement keep.year"
+    },
+    {
+      "id": "pass.year",
+      "source": "price-book",
+      "statement": "Firstwish Pass, a year pass year",
+      "purchase": [
+        "POST /v1/payments"
+      ],
+      "endpoints": [
+        {
+          "endpoint": "E-195",
+          "route": "POST /v1/wishes/:id/keep",
+          "matchedBy": "words: pass"
+        }
+      ],
+      "test": "src/wish/tests/wish.contract.spec.ts > entitlement pass.year"
+    },
+    {
+      "id": "concierge.single",
+      "source": "price-book",
+      "statement": "Concierge, one wish concierge single",
+      "purchase": [
+        "POST /v1/payments"
+      ],
+      "endpoints": [
+        {
+          "endpoint": "E-31",
+          "route": "POST /v1/admin/concierge-orders/:id/assign-maker",
+          "matchedBy": "words: concierge"
+        },
+        {
+          "endpoint": "E-32",
+          "route": "POST /v1/admin/concierge-orders/:id/deliver-order",
+          "matchedBy": "words: concierge"
+        },
+        {
+          "endpoint": "E-33",
+          "route": "POST /v1/admin/concierge-orders/:id/quote-order",
+          "matchedBy": "words: concierge"
+        },
+        {
+          "endpoint": "E-34",
+          "route": "POST /v1/concierge-orders",
+          "matchedBy": "words: concierge"
+        }
+      ],
+      "test": "src/concierge-order/tests/concierge-order.contract.spec.ts > entitlement concierge.single"
+    },
+    {
+      "id": "concierge.rush",
+      "source": "price-book",
+      "statement": "Concierge rush within 1 hour concierge rush",
+      "purchase": [
+        "POST /v1/payments"
+      ],
+      "endpoints": [
+        {
+          "endpoint": "E-31",
+          "route": "POST /v1/admin/concierge-orders/:id/assign-maker",
+          "matchedBy": "words: concierge"
+        },
+        {
+          "endpoint": "E-32",
+          "route": "POST /v1/admin/concierge-orders/:id/deliver-order",
+          "matchedBy": "words: concierge"
+        },
+        {
+          "endpoint": "E-33",
+          "route": "POST /v1/admin/concierge-orders/:id/quote-order",
+          "matchedBy": "words: concierge"
+        },
+        {
+          "endpoint": "E-34",
+          "route": "POST /v1/concierge-orders",
+          "matchedBy": "words: concierge"
+        }
+      ],
+      "test": "src/concierge-order/tests/concierge-order.contract.spec.ts > entitlement concierge.rush"
+    },
+    {
+      "id": "pro.starter",
+      "source": "price-book",
+      "statement": "Pro Starter, a month (VAT included) pro starter",
+      "purchase": [
+        "POST /v1/payments"
+      ],
+      "endpoints": [],
+      "conflict": "C-66"
+    },
+    {
+      "id": "pro.studio",
+      "source": "price-book",
+      "statement": "Pro Studio, a month (VAT included) pro studio",
+      "purchase": [
+        "POST /v1/payments"
+      ],
+      "endpoints": [
+        {
+          "endpoint": "E-11",
+          "route": "POST /v1/ai-requests/:id/studio-change",
+          "matchedBy": "words: studio"
+        },
+        {
+          "endpoint": "E-12",
+          "route": "POST /v1/ai-requests/:id/studio-draft",
+          "matchedBy": "words: studio"
+        },
+        {
+          "endpoint": "E-152",
+          "route": "PATCH /v1/studio-prefs/:id",
+          "matchedBy": "words: studio"
+        },
+        {
+          "endpoint": "E-154",
+          "route": "POST /v1/studio-styles",
+          "matchedBy": "words: studio"
+        },
+        {
+          "endpoint": "E-155",
+          "route": "DELETE /v1/studio-styles/:id",
+          "matchedBy": "words: studio"
+        },
+        {
+          "endpoint": "E-157",
+          "route": "PATCH /v1/studio-styles/:id",
+          "matchedBy": "words: studio"
+        },
+        {
+          "endpoint": "E-191",
+          "route": "PATCH /v1/wishes/:id",
+          "matchedBy": "words: studio"
+        }
+      ],
+      "test": "src/ai-request/tests/ai-request.contract.spec.ts > entitlement pro.studio"
+    },
+    {
+      "id": "pro.pack",
+      "source": "price-book",
+      "statement": "Wish pack, 5 Signature wishes (VAT included) pro pack",
+      "purchase": [
+        "POST /v1/payments"
+      ],
+      "endpoints": [],
+      "conflict": "C-67"
+    },
+    {
+      "id": "vault.block",
+      "source": "price-book",
+      "statement": "Vault space, 100 GB a month vault block",
+      "purchase": [
+        "POST /v1/payments"
+      ],
+      "endpoints": [
+        {
+          "endpoint": "E-27",
+          "route": "POST /v1/client-wishes/:id/send-reveal",
+          "matchedBy": "words: vault"
+        }
+      ],
+      "test": "src/client-wish/tests/client-wish.contract.spec.ts > entitlement vault.block"
+    },
+    {
+      "id": "vault.block-bulk",
+      "source": "price-book",
+      "statement": "Vault space past 1 TB, 100 GB a month vault block-bulk",
+      "purchase": [
+        "POST /v1/payments"
+      ],
+      "endpoints": [
+        {
+          "endpoint": "E-27",
+          "route": "POST /v1/client-wishes/:id/send-reveal",
+          "matchedBy": "words: vault"
+        }
+      ],
+      "test": "src/client-wish/tests/client-wish.contract.spec.ts > entitlement vault.block-bulk"
+    },
+    {
+      "id": "creator.plan",
+      "source": "price-book",
+      "statement": "Creator plan, a month creator plan",
+      "purchase": [
+        "POST /v1/payments"
+      ],
+      "endpoints": [
+        {
+          "endpoint": "E-23",
+          "route": "POST /v1/client-wishes",
+          "matchedBy": "words: plan"
+        },
+        {
+          "endpoint": "E-41",
+          "route": "PATCH /v1/creator-states/:id",
+          "matchedBy": "words: creator"
+        },
+        {
+          "endpoint": "E-42",
+          "route": "POST /v1/creator-states/:id/set-signed",
+          "matchedBy": "words: creator"
+        },
+        {
+          "endpoint": "E-6",
+          "route": "POST /v1/accounts/:id/close-creator-profile",
+          "matchedBy": "words: creator"
+        },
+        {
+          "endpoint": "E-7",
+          "route": "POST /v1/accounts/:id/open-creator-profile",
+          "matchedBy": "words: creator"
+        }
+      ],
+      "test": "src/client-wish/tests/client-wish.contract.spec.ts > entitlement creator.plan"
+    },
+    {
+      "id": "creator.signed",
+      "source": "price-book",
+      "statement": "Signed, a month creator signed",
+      "purchase": [
+        "POST /v1/payments"
+      ],
+      "endpoints": [
+        {
+          "endpoint": "E-41",
+          "route": "PATCH /v1/creator-states/:id",
+          "matchedBy": "words: creator, signed"
+        },
+        {
+          "endpoint": "E-42",
+          "route": "POST /v1/creator-states/:id/set-signed",
+          "matchedBy": "words: creator, signed"
+        }
+      ],
+      "test": "src/creator-state/tests/creator-state.contract.spec.ts > entitlement creator.signed"
+    },
+    {
+      "id": "creator.credit-pack",
+      "source": "price-book",
+      "statement": "Credit pack, 5 AI credits creator credit-pack",
+      "purchase": [
+        "POST /v1/payments"
+      ],
+      "endpoints": [
+        {
+          "endpoint": "E-10",
+          "route": "POST /v1/ai-requests/:id/reasons-from-voice",
+          "matchedBy": "words: ai"
+        },
+        {
+          "endpoint": "E-11",
+          "route": "POST /v1/ai-requests/:id/studio-change",
+          "matchedBy": "words: ai"
+        },
+        {
+          "endpoint": "E-12",
+          "route": "POST /v1/ai-requests/:id/studio-draft",
+          "matchedBy": "words: ai"
+        },
+        {
+          "endpoint": "E-41",
+          "route": "PATCH /v1/creator-states/:id",
+          "matchedBy": "words: creator"
+        },
+        {
+          "endpoint": "E-42",
+          "route": "POST /v1/creator-states/:id/set-signed",
+          "matchedBy": "words: creator"
+        },
+        {
+          "endpoint": "E-6",
+          "route": "POST /v1/accounts/:id/close-creator-profile",
+          "matchedBy": "words: creator"
+        },
+        {
+          "endpoint": "E-7",
+          "route": "POST /v1/accounts/:id/open-creator-profile",
+          "matchedBy": "words: creator"
+        },
+        {
+          "endpoint": "E-8",
+          "route": "POST /v1/ai-requests/:id/letter-from-voice",
+          "matchedBy": "words: ai"
+        }
+      ],
+      "test": "src/ai-request/tests/ai-request.contract.spec.ts > entitlement creator.credit-pack"
+    },
+    {
+      "id": "creator.extra-review",
+      "source": "price-book",
+      "statement": "One more review this month creator extra-review",
+      "purchase": [
+        "POST /v1/payments"
+      ],
+      "endpoints": [
+        {
+          "endpoint": "E-105",
+          "route": "POST /v1/admin/publish-requests/:id/review-publish",
+          "matchedBy": "words: review"
+        },
+        {
+          "endpoint": "E-118",
+          "route": "POST /v1/reports/:id/take-down-this-is-me",
+          "matchedBy": "words: thi"
+        },
+        {
+          "endpoint": "E-127",
+          "route": "POST /v1/admin/screening-results/:id/review-screening",
+          "matchedBy": "words: review"
+        },
+        {
+          "endpoint": "E-201",
+          "route": "POST /v1/wishes/:id/use-this-style",
+          "matchedBy": "words: thi"
+        },
+        {
+          "endpoint": "E-41",
+          "route": "PATCH /v1/creator-states/:id",
+          "matchedBy": "words: creator"
+        },
+        {
+          "endpoint": "E-42",
+          "route": "POST /v1/creator-states/:id/set-signed",
+          "matchedBy": "words: creator"
+        },
+        {
+          "endpoint": "E-6",
+          "route": "POST /v1/accounts/:id/close-creator-profile",
+          "matchedBy": "words: creator"
+        },
+        {
+          "endpoint": "E-7",
+          "route": "POST /v1/accounts/:id/open-creator-profile",
+          "matchedBy": "words: creator"
+        }
+      ],
+      "test": "src/publish-request/tests/publish-request.contract.spec.ts > entitlement creator.extra-review"
+    }
+  ],
+  "withoutEndpoint": [
+    "pro.pack",
+    "pro.starter"
+  ]
+}

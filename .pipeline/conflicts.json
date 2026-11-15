@@ -1,0 +1,1546 @@
+{
+  "conflicts": [
+    {
+      "id": "C-1",
+      "kind": "possible-alias",
+      "entity": "FeedWish ~ ShowcaseWish",
+      "detail": "both show house and published wishes with href, img, kind, no, occasion, pos; feed-api vs lib/catalog.ts rows",
+      "sources": [
+        {
+          "src": "app-home",
+          "quote": "FeedWish"
+        },
+        {
+          "src": "receiver-wish-showcase",
+          "quote": "ShowcaseWish"
+        },
+        {
+          "src": "site-home",
+          "quote": "ShowcaseWish"
+        }
+      ],
+      "options": [
+        "same thing: add an alias",
+        "different things: keep both"
+      ],
+      "status": "open"
+    },
+    {
+      "id": "C-2",
+      "kind": "possible-alias",
+      "entity": "PublicWishView ~ WishData",
+      "detail": "PublicWishView.content may be the WishData a style plays",
+      "sources": [
+        {
+          "src": "wish-link",
+          "quote": "PublicWishView"
+        },
+        {
+          "src": "maker-ending-scene",
+          "quote": "WishData"
+        },
+        {
+          "src": "receiver-wish-mine",
+          "quote": "WishData"
+        },
+        {
+          "src": "receiver-wish-showcase",
+          "quote": "WishData"
+        }
+      ],
+      "options": [
+        "same thing: add an alias",
+        "different things: keep both"
+      ],
+      "status": "open"
+    },
+    {
+      "id": "C-3",
+      "kind": "possible-alias",
+      "entity": "SubmittedStyle ~ StyleSubmission",
+      "detail": "both have submitStyle; SubmittedStyle carries the style and its review, StyleSubmission the review record",
+      "sources": [
+        {
+          "src": "studio-editor",
+          "quote": "SubmittedStyle"
+        },
+        {
+          "src": "studio-home",
+          "quote": "SubmittedStyle"
+        },
+        {
+          "src": "style-review",
+          "quote": "StyleSubmission"
+        }
+      ],
+      "options": [
+        "same thing: add an alias",
+        "different things: keep both"
+      ],
+      "status": "open"
+    },
+    {
+      "id": "C-4",
+      "kind": "possible-alias",
+      "entity": "CreditBalance ~ CreatorState",
+      "detail": "CreditBalance.credits (ai-writing) and CreatorState.credits (studio)",
+      "sources": [
+        {
+          "src": "ai-writing",
+          "quote": "CreditBalance"
+        },
+        {
+          "src": "studio-editor",
+          "quote": "CreatorState"
+        },
+        {
+          "src": "studio-home",
+          "quote": "CreatorState"
+        },
+        {
+          "src": "studio-new",
+          "quote": "CreatorState"
+        }
+      ],
+      "options": [
+        "same thing: add an alias",
+        "different things: keep both"
+      ],
+      "status": "open"
+    },
+    {
+      "id": "C-5",
+      "kind": "possible-alias",
+      "entity": "Earnings ~ RoyaltyAccrual",
+      "detail": "studio-home Earnings rows vs royalties-payouts getEarnings",
+      "sources": [
+        {
+          "src": "studio-home",
+          "quote": "Earnings"
+        },
+        {
+          "src": "royalties-payouts",
+          "quote": "RoyaltyAccrual"
+        }
+      ],
+      "options": [
+        "same thing: add an alias",
+        "different things: keep both"
+      ],
+      "status": "open"
+    },
+    {
+      "id": "C-6",
+      "kind": "possible-alias",
+      "entity": "Style ~ FeedStyle",
+      "detail": "lib/styles.ts styles vs feed-api styles; overlapping slug, name, level, kinds",
+      "sources": [
+        {
+          "src": "app-style-detail",
+          "quote": "Style"
+        },
+        {
+          "src": "pro-reveal-new",
+          "quote": "Style"
+        },
+        {
+          "src": "pro-vault-shoot-reveal",
+          "quote": "Style"
+        },
+        {
+          "src": "app-home",
+          "quote": "FeedStyle"
+        },
+        {
+          "src": "app-style-detail",
+          "quote": "FeedStyle"
+        },
+        {
+          "src": "app-styles",
+          "quote": "FeedStyle"
+        }
+      ],
+      "options": [
+        "same thing: add an alias",
+        "different things: keep both"
+      ],
+      "status": "open"
+    },
+    {
+      "id": "C-7",
+      "kind": "possible-alias",
+      "entity": "Style ~ StyleManifest",
+      "detail": "lib/styles.ts vs registered package manifests; overlapping slug, name, level, occasions",
+      "sources": [
+        {
+          "src": "app-style-detail",
+          "quote": "Style"
+        },
+        {
+          "src": "pro-reveal-new",
+          "quote": "Style"
+        },
+        {
+          "src": "pro-vault-shoot-reveal",
+          "quote": "Style"
+        },
+        {
+          "src": "maker-style",
+          "quote": "StyleManifest"
+        },
+        {
+          "src": "receiver-wish-showcase",
+          "quote": "StyleManifest"
+        },
+        {
+          "src": "studio-editor",
+          "quote": "StyleManifest"
+        }
+      ],
+      "options": [
+        "same thing: add an alias",
+        "different things: keep both"
+      ],
+      "status": "open"
+    },
+    {
+      "id": "C-8",
+      "kind": "possible-alias",
+      "entity": "PricingRules ~ LifecycleConfig",
+      "detail": "restoreWindow vs RESTORE_DAYS",
+      "sources": [
+        {
+          "src": "site-pricing",
+          "quote": "PricingRules"
+        },
+        {
+          "src": "app-wish-detail",
+          "quote": "LifecycleConfig"
+        },
+        {
+          "src": "app-wishes",
+          "quote": "LifecycleConfig"
+        }
+      ],
+      "options": [
+        "same thing: add an alias",
+        "different things: keep both"
+      ],
+      "status": "open"
+    },
+    {
+      "id": "C-9",
+      "kind": "possible-alias",
+      "entity": "RetentionRules ~ LifecycleConfig",
+      "detail": "restingHoldMonths/restoreWindowDays vs HOLD_DAYS/RESTORE_DAYS",
+      "sources": [
+        {
+          "src": "site-privacy",
+          "quote": "RetentionRules"
+        },
+        {
+          "src": "app-wish-detail",
+          "quote": "LifecycleConfig"
+        },
+        {
+          "src": "app-wishes",
+          "quote": "LifecycleConfig"
+        }
+      ],
+      "options": [
+        "same thing: add an alias",
+        "different things: keep both"
+      ],
+      "status": "open"
+    },
+    {
+      "id": "C-10",
+      "kind": "possible-alias",
+      "entity": "ConciergeOffer ~ ConciergeSinglePrice",
+      "detail": "both show a Concierge price",
+      "sources": [
+        {
+          "src": "site-business",
+          "quote": "ConciergeOffer"
+        },
+        {
+          "src": "site-home",
+          "quote": "ConciergeOffer"
+        },
+        {
+          "src": "site-pricing",
+          "quote": "ConciergeOffer"
+        },
+        {
+          "src": "site-contact",
+          "quote": "ConciergeSinglePrice"
+        },
+        {
+          "src": "site-make",
+          "quote": "ConciergeSinglePrice"
+        }
+      ],
+      "options": [
+        "same thing: add an alias",
+        "different things: keep both"
+      ],
+      "status": "open"
+    },
+    {
+      "id": "C-11",
+      "kind": "possible-alias",
+      "entity": "PlanReference ~ ProPlan",
+      "detail": "app-you shows a plan name",
+      "sources": [
+        {
+          "src": "app-you",
+          "quote": "PlanReference"
+        },
+        {
+          "src": "pro-brand",
+          "quote": "ProPlan"
+        },
+        {
+          "src": "pro-home",
+          "quote": "ProPlan"
+        },
+        {
+          "src": "pro-plan",
+          "quote": "ProPlan"
+        }
+      ],
+      "options": [
+        "same thing: add an alias",
+        "different things: keep both"
+      ],
+      "status": "open"
+    },
+    {
+      "id": "C-12",
+      "kind": "possible-alias",
+      "entity": "KindOccasionLabel ~ Kind",
+      "detail": "name, slug of a kind or an occasion",
+      "sources": [
+        {
+          "src": "app-style-detail",
+          "quote": "KindOccasionLabel"
+        },
+        {
+          "src": "app-styles",
+          "quote": "Kind"
+        },
+        {
+          "src": "maker-cover",
+          "quote": "Kind"
+        },
+        {
+          "src": "maker-kind",
+          "quote": "Kind"
+        }
+      ],
+      "options": [
+        "same thing: add an alias",
+        "different things: keep both"
+      ],
+      "status": "open"
+    },
+    {
+      "id": "C-13",
+      "kind": "possible-alias",
+      "entity": "KindOccasionLabel ~ Occasion",
+      "detail": "name, slug of a kind or an occasion",
+      "sources": [
+        {
+          "src": "app-style-detail",
+          "quote": "KindOccasionLabel"
+        },
+        {
+          "src": "app-styles",
+          "quote": "Occasion"
+        },
+        {
+          "src": "maker-when",
+          "quote": "Occasion"
+        },
+        {
+          "src": "pro-reveal-new",
+          "quote": "Occasion"
+        }
+      ],
+      "options": [
+        "same thing: add an alias",
+        "different things: keep both"
+      ],
+      "status": "open"
+    },
+    {
+      "id": "C-14",
+      "kind": "possible-alias",
+      "entity": "SentReveal ~ ClientWish",
+      "detail": "a reveal sent from a shoot (no, openedAt, sentAt, wish) vs the client wish it creates",
+      "sources": [
+        {
+          "src": "pro-vault-shoot",
+          "quote": "SentReveal"
+        },
+        {
+          "src": "maker-ticket",
+          "quote": "ClientWish"
+        },
+        {
+          "src": "pro-favourites",
+          "quote": "ClientWish"
+        },
+        {
+          "src": "pro-home",
+          "quote": "ClientWish"
+        }
+      ],
+      "options": [
+        "same thing: add an alias",
+        "different things: keep both"
+      ],
+      "status": "open"
+    },
+    {
+      "id": "C-15",
+      "kind": "possible-alias",
+      "entity": "StylePreview ~ StyleRecording",
+      "detail": "recorded loop by slug vs StyleRecording src/poster",
+      "sources": [
+        {
+          "src": "app-styles",
+          "quote": "StylePreview"
+        },
+        {
+          "src": "site-showing",
+          "quote": "StyleRecording"
+        },
+        {
+          "src": "site-style-detail",
+          "quote": "StyleRecording"
+        },
+        {
+          "src": "site-styles",
+          "quote": "StyleRecording"
+        }
+      ],
+      "options": [
+        "same thing: add an alias",
+        "different things: keep both"
+      ],
+      "status": "open"
+    },
+    {
+      "id": "C-16",
+      "kind": "possible-alias",
+      "entity": "Creator ~ Account",
+      "detail": "feed Creator (handle, name) vs the creator side of an Account",
+      "sources": [
+        {
+          "src": "app-home",
+          "quote": "Creator"
+        },
+        {
+          "src": "site-showing",
+          "quote": "Creator"
+        },
+        {
+          "src": "app-home",
+          "quote": "Account"
+        },
+        {
+          "src": "app-pass",
+          "quote": "Account"
+        },
+        {
+          "src": "app-wish-detail",
+          "quote": "Account"
+        }
+      ],
+      "options": [
+        "same thing: add an alias",
+        "different things: keep both"
+      ],
+      "status": "open"
+    },
+    {
+      "id": "C-17",
+      "kind": "possible-alias",
+      "entity": "Coming ~ DateRow",
+      "detail": "upcoming dates (date, person, what) vs DateRow (date, who, what)",
+      "sources": [
+        {
+          "src": "pro-people",
+          "quote": "Coming"
+        },
+        {
+          "src": "app-dates",
+          "quote": "DateRow"
+        },
+        {
+          "src": "app-you",
+          "quote": "DateRow"
+        },
+        {
+          "src": "welcome",
+          "quote": "DateRow"
+        }
+      ],
+      "options": [
+        "same thing: add an alias",
+        "different things: keep both"
+      ],
+      "status": "open"
+    },
+    {
+      "id": "C-18",
+      "kind": "possible-alias",
+      "entity": "AiRequest",
+      "detail": "AiRequest fields style / styleId may be one field",
+      "sources": [
+        {
+          "src": "studio-editor",
+          "quote": "style: StyleSpec (whole style minus status, seen, at; name trimmed)"
+        },
+        {
+          "src": "ai-writing",
+          "quote": "styleId: string?"
+        }
+      ],
+      "options": [
+        "same field: add a field alias",
+        "different fields"
+      ],
+      "status": "open"
+    },
+    {
+      "id": "C-19",
+      "kind": "type-mismatch",
+      "entity": "Moment",
+      "detail": "Moment.fields is seen as array vs object",
+      "sources": [
+        {
+          "src": "maker-opening-scene",
+          "quote": "fields: Field[]"
+        },
+        {
+          "src": "maker-ending-scene",
+          "quote": "fields: {key,label,kind:text|date|time|secret,hint?,optional?}[]"
+        }
+      ],
+      "options": [
+        "array",
+        "object"
+      ],
+      "status": "open"
+    },
+    {
+      "id": "C-20",
+      "kind": "type-mismatch",
+      "entity": "PassOffer",
+      "detail": "PassOffer.items is seen as array vs object",
+      "sources": [
+        {
+          "src": "app-pass",
+          "quote": "items: [{key,title,line}] six benefits: keepsake, signature, styles, reminders, concierge ('20% off Concierge'), live"
+        },
+        {
+          "src": "site-pricing",
+          "quote": "items: {key,title,line}[]"
+        }
+      ],
+      "options": [
+        "array",
+        "object"
+      ],
+      "status": "open"
+    },
+    {
+      "id": "C-21",
+      "kind": "possible-alias",
+      "entity": "Payment",
+      "detail": "Payment fields amount / amountKobo may be one field",
+      "sources": [
+        {
+          "src": "app-wish-detail",
+          "quote": "amount: string naira text"
+        },
+        {
+          "src": "payments",
+          "quote": "amountKobo: integer"
+        }
+      ],
+      "options": [
+        "same field: add a field alias",
+        "different fields"
+      ],
+      "status": "open"
+    },
+    {
+      "id": "C-22",
+      "kind": "possible-alias",
+      "entity": "QrCard",
+      "detail": "QrCard fields wishId / wishIds may be one field",
+      "sources": [
+        {
+          "src": "qr-card",
+          "quote": "wishId: string"
+        },
+        {
+          "src": "qr-card",
+          "quote": "wishIds: array<string>"
+        }
+      ],
+      "options": [
+        "same field: add a field alias",
+        "different fields"
+      ],
+      "status": "open"
+    },
+    {
+      "id": "C-23",
+      "kind": "possible-alias",
+      "entity": "StoredFile",
+      "detail": "StoredFile fields file / fileId may be one field",
+      "sources": [
+        {
+          "src": "studio-editor",
+          "quote": "file: File (image png/jpeg/webp/svg, sound mp3/mp4/aac/ogg/wav, model .glb/.riv)"
+        },
+        {
+          "src": "storage",
+          "quote": "fileId: string"
+        }
+      ],
+      "options": [
+        "same field: add a field alias",
+        "different fields"
+      ],
+      "status": "open"
+    },
+    {
+      "id": "C-24",
+      "kind": "type-mismatch",
+      "entity": "VaultStorage",
+      "detail": "VaultStorage.packUntil is seen as string vs time",
+      "sources": [
+        {
+          "src": "pro-home",
+          "quote": "packUntil: string date"
+        },
+        {
+          "src": "pro-plan",
+          "quote": "packUntil: string date"
+        },
+        {
+          "src": "pro-vault",
+          "quote": "packUntil: date string, '' when none"
+        }
+      ],
+      "options": [
+        "string",
+        "time"
+      ],
+      "status": "open"
+    },
+    {
+      "id": "C-25",
+      "kind": "possible-alias",
+      "entity": "WebhookEvent",
+      "detail": "WebhookEvent fields event / eventId may be one field",
+      "sources": [
+        {
+          "src": "refunds",
+          "quote": "event: refund.processed|refund.failed"
+        },
+        {
+          "src": "payments",
+          "quote": "eventId: string"
+        }
+      ],
+      "options": [
+        "same field: add a field alias",
+        "different fields"
+      ],
+      "status": "open"
+    },
+    {
+      "id": "C-26",
+      "kind": "type-mismatch",
+      "entity": "Wish",
+      "detail": "Wish.at is seen as number vs time",
+      "sources": [
+        {
+          "src": "maker-ending-scene",
+          "quote": "at: number"
+        },
+        {
+          "src": "maker-ending",
+          "quote": "at: number"
+        },
+        {
+          "src": "app-home",
+          "quote": "at: number (epoch ms last changed)"
+        },
+        {
+          "src": "app-wish-detail",
+          "quote": "at: number epoch ms last changed"
+        }
+      ],
+      "options": [
+        "number",
+        "time"
+      ],
+      "status": "open"
+    },
+    {
+      "id": "C-27",
+      "kind": "type-mismatch",
+      "entity": "Wish",
+      "detail": "Wish.content.details is seen as array vs object",
+      "sources": [
+        {
+          "src": "maker-wedding",
+          "quote": "content.details: array: when details already has entries, first row {label:'The day', value: longDay(date)} replacing any earlier 'The day' row; else left untouched"
+        },
+        {
+          "src": "maker-ask-voices-gather",
+          "quote": "content.details: {label,value}[]"
+        },
+        {
+          "src": "maker-ask",
+          "quote": "content.details: {label,value}[]"
+        }
+      ],
+      "options": [
+        "array",
+        "object"
+      ],
+      "status": "open"
+    },
+    {
+      "id": "C-28",
+      "kind": "type-mismatch",
+      "entity": "Wish",
+      "detail": "Wish.keep is seen as boolean vs string",
+      "sources": [
+        {
+          "src": "maker-chapters",
+          "quote": "keep: boolean"
+        },
+        {
+          "src": "wish-lifecycle",
+          "quote": "keep: enum(month|half|year)"
+        }
+      ],
+      "options": [
+        "boolean",
+        "string"
+      ],
+      "status": "open"
+    },
+    {
+      "id": "C-29",
+      "kind": "type-mismatch",
+      "entity": "Wish",
+      "detail": "Wish.makerNote.wedding is seen as string vs time",
+      "sources": [
+        {
+          "src": "maker-ending-scene",
+          "quote": "makerNote.wedding: string"
+        },
+        {
+          "src": "maker-ending",
+          "quote": "makerNote.wedding: string"
+        },
+        {
+          "src": "maker-ask-voices-gather",
+          "quote": "makerNote.wedding: string yyyy-mm-dd"
+        },
+        {
+          "src": "maker-ask",
+          "quote": "makerNote.wedding: string yyyy-mm-dd"
+        }
+      ],
+      "options": [
+        "string",
+        "time"
+      ],
+      "status": "open"
+    },
+    {
+      "id": "C-30",
+      "kind": "possible-alias",
+      "entity": "Wish",
+      "detail": "Wish fields style / styleSlug may be one field",
+      "sources": [
+        {
+          "src": "app-home",
+          "quote": "style: string"
+        },
+        {
+          "src": "wish-lifecycle",
+          "quote": "styleSlug: string"
+        }
+      ],
+      "options": [
+        "same field: add a field alias",
+        "different fields"
+      ],
+      "status": "open"
+    },
+    {
+      "id": "C-31",
+      "kind": "possible-alias",
+      "entity": "Wish",
+      "detail": "Wish fields wish / wishId may be one field",
+      "sources": [
+        {
+          "src": "app-wishes",
+          "quote": "wish: Wish (whole previous object)"
+        },
+        {
+          "src": "creator-published",
+          "quote": "wishId: string"
+        }
+      ],
+      "options": [
+        "same field: add a field alias",
+        "different fields"
+      ],
+      "status": "open"
+    },
+    {
+      "id": "C-32",
+      "kind": "format-canon",
+      "entity": "StudioStyle",
+      "detail": "StudioStyle.at: time must be ISO-8601 UTC on the wire (conventions.md canon); no supersede covers epoch numbers",
+      "sources": [
+        {
+          "src": "studio-editor",
+          "quote": "at: number epoch ms"
+        },
+        {
+          "src": "studio-home",
+          "quote": "at: number ms epoch"
+        }
+      ],
+      "options": [
+        "ISO-8601 UTC string per canon (needs a supersede for the as-built form)",
+        "keep as built"
+      ],
+      "status": "open"
+    },
+    {
+      "id": "C-33",
+      "kind": "format-canon",
+      "entity": "Wish",
+      "detail": "Wish.at: time must be ISO-8601 UTC on the wire (conventions.md canon); no supersede covers epoch numbers",
+      "sources": [
+        {
+          "src": "app-home",
+          "quote": "at: number (epoch ms last changed)"
+        },
+        {
+          "src": "app-wish-detail",
+          "quote": "at: number epoch ms last changed"
+        },
+        {
+          "src": "app-wishes",
+          "quote": "at: number (epoch ms last changed)"
+        }
+      ],
+      "options": [
+        "ISO-8601 UTC string per canon (needs a supersede for the as-built form)",
+        "keep as built"
+      ],
+      "status": "open"
+    },
+    {
+      "id": "C-34",
+      "kind": "truth-mismatch",
+      "entity": "money",
+      "detail": "₦80,000 shown or sent by a screen is in no product truth and not in the price book seed",
+      "sources": [
+        {
+          "src": "site-creators",
+          "quote": ", {\"name\": \"monthlyFromHundredWishes\", \"type\": \"naira text '₦80,000'\", \"nullable\": false}, {\"name\": "
+        },
+        {
+          "src": "product-truths.json",
+          "quote": "no truth states ₦80,000"
+        }
+      ],
+      "options": [
+        "owner gives the figure",
+        "screen literal is stale (supersede)"
+      ],
+      "status": "open"
+    },
+    {
+      "id": "C-35",
+      "kind": "client-only-action",
+      "entity": "DateRow",
+      "detail": "DateRow.makeWishForDate asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that names the server need",
+      "sources": [
+        {
+          "src": "app-dates",
+          "quote": "Link to /app/new?for=&what=; navigation only, no server call."
+        }
+      ],
+      "options": [
+        "stays client-only (ruling)",
+        "needs an endpoint"
+      ],
+      "status": "open"
+    },
+    {
+      "id": "C-36",
+      "kind": "client-only-action",
+      "entity": "Wish",
+      "detail": "Wish draft.useThisStyle asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that names the server need",
+      "sources": [
+        {
+          "src": "app-styles",
+          "quote": "link only, no server write"
+        }
+      ],
+      "options": [
+        "stays client-only (ruling)",
+        "needs an endpoint"
+      ],
+      "status": "open"
+    },
+    {
+      "id": "C-37",
+      "kind": "unparseable-action",
+      "entity": "Wish",
+      "detail": "action name '(defined, not reached on this page) sheets: share, keep/wake, video, publish' is not one action",
+      "sources": [
+        {
+          "src": "app-wishes",
+          "quote": "(defined, not reached on this page) sheets: share, keep/wake, video, publish: components/app/life/sheets.tsx exports ShareSheet (link /w/mine?id=<id>), KeepSheet (KEEPS), VideoSheet, PublishSheet but app/app/wishes/page.tsx only imports E"
+        }
+      ],
+      "options": [
+        "split into actions in the fragment"
+      ],
+      "status": "open"
+    },
+    {
+      "id": "C-38",
+      "kind": "client-only-action",
+      "entity": "Wish",
+      "detail": "Wish.shareLink asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that names the server need",
+      "sources": [
+        {
+          "src": "maker-sealed",
+          "quote": "Share (navigator.share) and Copy (clipboard) are browser-only; no server call. Link built as `${origin}/w/mine?id=${wish.id}` (Seal.tsx Sealed) - a wish's public link slug is server-issued per conventions."
+        }
+      ],
+      "options": [
+        "stays client-only (ruling)",
+        "needs an endpoint"
+      ],
+      "status": "open"
+    },
+    {
+      "id": "C-39",
+      "kind": "client-only-action",
+      "entity": "Wish",
+      "detail": "Wish.sealIt asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that names the server need",
+      "sources": [
+        {
+          "src": "maker-watch",
+          "quote": "'Seal it' button only advances to the 'when' screen (next()); nothing is written beyond the step save (land sets step=4)."
+        }
+      ],
+      "options": [
+        "stays client-only (ruling)",
+        "needs an endpoint"
+      ],
+      "status": "open"
+    },
+    {
+      "id": "C-40",
+      "kind": "client-only-action",
+      "entity": "Wish",
+      "detail": "Wish.saveChanges asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that names the server need",
+      "sources": [
+        {
+          "src": "maker-watch",
+          "quote": "for an already sealed wish being edited: link to /app/wishes/<id>, flush() only"
+        }
+      ],
+      "options": [
+        "stays client-only (ruling)",
+        "needs an endpoint"
+      ],
+      "status": "open"
+    },
+    {
+      "id": "C-41",
+      "kind": "client-only-action",
+      "entity": "(local clipboard)",
+      "detail": "(local clipboard).copyNames asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that names the server need",
+      "sources": [
+        {
+          "src": "pro-favourites",
+          "quote": "(local clipboard)"
+        }
+      ],
+      "options": [
+        "stays client-only (ruling)",
+        "needs an endpoint"
+      ],
+      "status": "open"
+    },
+    {
+      "id": "C-42",
+      "kind": "client-only-action",
+      "entity": "(local clipboard)",
+      "detail": "(local clipboard).copyNames asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that names the server need",
+      "sources": [
+        {
+          "src": "pro-vault-shoot",
+          "quote": "(local clipboard)"
+        }
+      ],
+      "options": [
+        "stays client-only (ruling)",
+        "needs an endpoint"
+      ],
+      "status": "open"
+    },
+    {
+      "id": "C-43",
+      "kind": "client-only-action",
+      "entity": "Wish",
+      "detail": "Wish.wakeWish asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that names the server need",
+      "sources": [
+        {
+          "src": "receiver-wish-mine",
+          "quote": "link on the resting screen to /app/wishes/<id> (sender-side screen); not performed here"
+        }
+      ],
+      "options": [
+        "stays client-only (ruling)",
+        "needs an endpoint"
+      ],
+      "status": "open"
+    },
+    {
+      "id": "C-44",
+      "kind": "client-only-action",
+      "entity": "(navigation)",
+      "detail": "(navigation).messageUs asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that names the server need",
+      "sources": [
+        {
+          "src": "site-business",
+          "quote": "links to /contact; no write on this screen"
+        }
+      ],
+      "options": [
+        "stays client-only (ruling)",
+        "needs an endpoint"
+      ],
+      "status": "open"
+    },
+    {
+      "id": "C-45",
+      "kind": "client-only-action",
+      "entity": "(navigation)",
+      "detail": "(navigation).startWish asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that names the server need",
+      "sources": [
+        {
+          "src": "site-make",
+          "quote": "links to /app/new; no write on this screen"
+        }
+      ],
+      "options": [
+        "stays client-only (ruling)",
+        "needs an endpoint"
+      ],
+      "status": "open"
+    },
+    {
+      "id": "C-46",
+      "kind": "client-only-action",
+      "entity": "(navigation)",
+      "detail": "(navigation).chooseTicket asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that names the server need",
+      "sources": [
+        {
+          "src": "site-pricing",
+          "quote": "no ticket slug is passed; all four buttons go to /make"
+        }
+      ],
+      "options": [
+        "stays client-only (ruling)",
+        "needs an endpoint"
+      ],
+      "status": "open"
+    },
+    {
+      "id": "C-47",
+      "kind": "client-only-action",
+      "entity": "PassOffer",
+      "detail": "Pass.getPass asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that names the server need",
+      "sources": [
+        {
+          "src": "site-pricing",
+          "quote": "navigates to /app/pass; purchase happens off-screen"
+        }
+      ],
+      "options": [
+        "stays client-only (ruling)",
+        "needs an endpoint"
+      ],
+      "status": "open"
+    },
+    {
+      "id": "C-48",
+      "kind": "static-ruling",
+      "entity": "ComingSoonAudience",
+      "detail": "ComingSoonAudience is read only by static screens (scan-map); serve from the API or keep local in the web app",
+      "sources": [
+        {
+          "src": "site-business",
+          "quote": "dataProvenance static"
+        }
+      ],
+      "options": [
+        "serve from the API",
+        "keep local"
+      ],
+      "status": "open"
+    },
+    {
+      "id": "C-49",
+      "kind": "static-ruling",
+      "entity": "ConciergeOffer",
+      "detail": "ConciergeOffer is read only by static screens (scan-map); serve from the API or keep local in the web app",
+      "sources": [
+        {
+          "src": "site-business",
+          "quote": "dataProvenance static"
+        },
+        {
+          "src": "site-home",
+          "quote": "dataProvenance static"
+        },
+        {
+          "src": "site-pricing",
+          "quote": "dataProvenance static"
+        }
+      ],
+      "options": [
+        "serve from the API",
+        "keep local"
+      ],
+      "status": "open"
+    },
+    {
+      "id": "C-50",
+      "kind": "static-ruling",
+      "entity": "ConciergeSinglePrice",
+      "detail": "ConciergeSinglePrice is read only by static screens (scan-map); serve from the API or keep local in the web app",
+      "sources": [
+        {
+          "src": "site-contact",
+          "quote": "dataProvenance static"
+        },
+        {
+          "src": "site-make",
+          "quote": "dataProvenance static"
+        }
+      ],
+      "options": [
+        "serve from the API",
+        "keep local"
+      ],
+      "status": "open"
+    },
+    {
+      "id": "C-51",
+      "kind": "static-ruling",
+      "entity": "ContactChannels",
+      "detail": "ContactChannels is read only by static screens (scan-map); serve from the API or keep local in the web app",
+      "sources": [
+        {
+          "src": "site-contact",
+          "quote": "dataProvenance static"
+        }
+      ],
+      "options": [
+        "serve from the API",
+        "keep local"
+      ],
+      "status": "open"
+    },
+    {
+      "id": "C-52",
+      "kind": "static-ruling",
+      "entity": "CreativeLabel",
+      "detail": "CreativeLabel is read only by static screens (scan-map); serve from the API or keep local in the web app",
+      "sources": [
+        {
+          "src": "site-business",
+          "quote": "dataProvenance static"
+        },
+        {
+          "src": "site-business-cat",
+          "quote": "dataProvenance static"
+        }
+      ],
+      "options": [
+        "serve from the API",
+        "keep local"
+      ],
+      "status": "open"
+    },
+    {
+      "id": "C-53",
+      "kind": "static-ruling",
+      "entity": "CreatorOffer",
+      "detail": "CreatorOffer is read only by static screens (scan-map); serve from the API or keep local in the web app",
+      "sources": [
+        {
+          "src": "site-creators",
+          "quote": "dataProvenance static"
+        }
+      ],
+      "options": [
+        "serve from the API",
+        "keep local"
+      ],
+      "status": "open"
+    },
+    {
+      "id": "C-54",
+      "kind": "static-ruling",
+      "entity": "EndingEvent",
+      "detail": "EndingEvent is read only by static screens (scan-map); serve from the API or keep local in the web app",
+      "sources": [
+        {
+          "src": "receiver-wish-showcase",
+          "quote": "dataProvenance static"
+        }
+      ],
+      "options": [
+        "serve from the API",
+        "keep local"
+      ],
+      "status": "open"
+    },
+    {
+      "id": "C-55",
+      "kind": "static-ruling",
+      "entity": "PricingRules",
+      "detail": "PricingRules is read only by static screens (scan-map); serve from the API or keep local in the web app",
+      "sources": [
+        {
+          "src": "site-pricing",
+          "quote": "dataProvenance static"
+        }
+      ],
+      "options": [
+        "serve from the API",
+        "keep local"
+      ],
+      "status": "open"
+    },
+    {
+      "id": "C-56",
+      "kind": "static-ruling",
+      "entity": "ProPricingCopy",
+      "detail": "ProPricingCopy is read only by static screens (scan-map); serve from the API or keep local in the web app",
+      "sources": [
+        {
+          "src": "site-business",
+          "quote": "dataProvenance static"
+        }
+      ],
+      "options": [
+        "serve from the API",
+        "keep local"
+      ],
+      "status": "open"
+    },
+    {
+      "id": "C-57",
+      "kind": "static-ruling",
+      "entity": "RetentionRules",
+      "detail": "RetentionRules is read only by static screens (scan-map); serve from the API or keep local in the web app",
+      "sources": [
+        {
+          "src": "site-privacy",
+          "quote": "dataProvenance static"
+        }
+      ],
+      "options": [
+        "serve from the API",
+        "keep local"
+      ],
+      "status": "open"
+    },
+    {
+      "id": "C-58",
+      "kind": "static-ruling",
+      "entity": "SampleReveal",
+      "detail": "SampleReveal is read only by static screens (scan-map); serve from the API or keep local in the web app",
+      "sources": [
+        {
+          "src": "site-business-cat",
+          "quote": "dataProvenance static"
+        }
+      ],
+      "options": [
+        "serve from the API",
+        "keep local"
+      ],
+      "status": "open"
+    },
+    {
+      "id": "C-59",
+      "kind": "static-ruling",
+      "entity": "ShowcaseWish",
+      "detail": "ShowcaseWish is read only by static screens (scan-map); serve from the API or keep local in the web app",
+      "sources": [
+        {
+          "src": "receiver-wish-showcase",
+          "quote": "dataProvenance static"
+        },
+        {
+          "src": "site-home",
+          "quote": "dataProvenance static"
+        }
+      ],
+      "options": [
+        "serve from the API",
+        "keep local"
+      ],
+      "status": "open"
+    },
+    {
+      "id": "C-60",
+      "kind": "static-ruling",
+      "entity": "StyleLevelCounts",
+      "detail": "StyleLevelCounts is read only by static screens (scan-map); serve from the API or keep local in the web app",
+      "sources": [
+        {
+          "src": "site-styles",
+          "quote": "dataProvenance static"
+        }
+      ],
+      "options": [
+        "serve from the API",
+        "keep local"
+      ],
+      "status": "open"
+    },
+    {
+      "id": "C-61",
+      "kind": "static-ruling",
+      "entity": "StyleRecording",
+      "detail": "StyleRecording is read only by static screens (scan-map); serve from the API or keep local in the web app",
+      "sources": [
+        {
+          "src": "site-showing",
+          "quote": "dataProvenance static"
+        },
+        {
+          "src": "site-style-detail",
+          "quote": "dataProvenance static"
+        },
+        {
+          "src": "site-styles",
+          "quote": "dataProvenance static"
+        }
+      ],
+      "options": [
+        "serve from the API",
+        "keep local"
+      ],
+      "status": "open"
+    },
+    {
+      "id": "C-62",
+      "kind": "static-ruling",
+      "entity": "TicketTerms",
+      "detail": "TicketTerms is read only by static screens (scan-map); serve from the API or keep local in the web app",
+      "sources": [
+        {
+          "src": "site-terms",
+          "quote": "dataProvenance static"
+        }
+      ],
+      "options": [
+        "serve from the API",
+        "keep local"
+      ],
+      "status": "open"
+    },
+    {
+      "id": "C-63",
+      "kind": "static-ruling",
+      "entity": "VaultPricing",
+      "detail": "VaultPricing is read only by static screens (scan-map); serve from the API or keep local in the web app",
+      "sources": [
+        {
+          "src": "site-business",
+          "quote": "dataProvenance static"
+        },
+        {
+          "src": "site-business-cat",
+          "quote": "dataProvenance static"
+        },
+        {
+          "src": "site-pricing",
+          "quote": "dataProvenance static"
+        }
+      ],
+      "options": [
+        "serve from the API",
+        "keep local"
+      ],
+      "status": "open"
+    },
+    {
+      "id": "C-64",
+      "kind": "role-contradiction",
+      "entity": "Account",
+      "detail": "GET /v1/accounts/:id: public and owner-only on one record",
+      "sources": [
+        {
+          "src": "sign-in",
+          "quote": "public"
+        },
+        {
+          "src": "app-home",
+          "quote": "role:business"
+        },
+        {
+          "src": "app-you",
+          "quote": "role:business"
+        },
+        {
+          "src": "app-home",
+          "quote": "role:creator"
+        },
+        {
+          "src": "app-you",
+          "quote": "role:creator"
+        },
+        {
+          "src": "app-home",
+          "quote": "user"
+        },
+        {
+          "src": "app-pass",
+          "quote": "user"
+        },
+        {
+          "src": "app-wish-detail",
+          "quote": "user:owner"
+        }
+      ],
+      "options": [
+        "public",
+        "role:business",
+        "role:creator",
+        "user",
+        "user:owner"
+      ],
+      "status": "open"
+    },
+    {
+      "id": "C-65",
+      "kind": "role-contradiction",
+      "entity": "Wish",
+      "detail": "GET /v1/wishes/:id: public and owner-only on one record",
+      "sources": [
+        {
+          "src": "receiver-wish-mine",
+          "quote": "public"
+        },
+        {
+          "src": "site-creators",
+          "quote": "public"
+        },
+        {
+          "src": "maker-call",
+          "quote": "role:business"
+        },
+        {
+          "src": "maker-ending",
+          "quote": "role:business"
+        },
+        {
+          "src": "maker-ask",
+          "quote": "user"
+        },
+        {
+          "src": "maker-ask-voices-gather",
+          "quote": "user"
+        },
+        {
+          "src": "app-wish-detail",
+          "quote": "user:owner"
+        }
+      ],
+      "options": [
+        "public",
+        "role:business",
+        "user",
+        "user:owner"
+      ],
+      "status": "open"
+    },
+    {
+      "id": "C-66",
+      "kind": "entitlement-without-endpoint",
+      "entity": "pro.starter",
+      "detail": "sold or promised (price-book) but no endpoint delivers it (it can be bought: POST /v1/payments)",
+      "sources": [
+        {
+          "src": "price-book",
+          "quote": "Pro Starter, a month (VAT included) pro starter"
+        }
+      ],
+      "options": [
+        "build the endpoint",
+        "stop selling it"
+      ],
+      "status": "open"
+    },
+    {
+      "id": "C-67",
+      "kind": "entitlement-without-endpoint",
+      "entity": "pro.pack",
+      "detail": "sold or promised (price-book) but no endpoint delivers it (it can be bought: POST /v1/payments)",
+      "sources": [
+        {
+          "src": "price-book",
+          "quote": "Wish pack, 5 Signature wishes (VAT included) pro pack"
+        }
+      ],
+      "options": [
+        "build the endpoint",
+        "stop selling it"
+      ],
+      "status": "open"
+    }
+  ],
+  "countsByKind": {
+    "client-only-action": 12,
+    "entitlement-without-endpoint": 2,
+    "format-canon": 2,
+    "possible-alias": 24,
+    "role-contradiction": 2,
+    "static-ruling": 16,
+    "truth-mismatch": 1,
+    "type-mismatch": 7,
+    "unparseable-action": 1
+  }
+}

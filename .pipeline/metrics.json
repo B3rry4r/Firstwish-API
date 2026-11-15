@@ -1,0 +1,1743 @@
+{
+  "metrics": [
+    {
+      "metric": "Business.pack",
+      "shownOn": [
+        "pro-brand",
+        "pro-home",
+        "pro-people",
+        "pro-plan",
+        "pro-reveal-new",
+        "pro-vault",
+        "pro-vault-shoot-reveal",
+        "pro-wish-detail",
+        "pro-wishes"
+      ],
+      "writerPath": [],
+      "formula": [
+        "T-37",
+        "T-41"
+      ],
+      "wording": [
+        "pro-brand: number: wishes left from wish packs",
+        "pro-home: number: wishes left from wish packs",
+        "pro-people: number: wishes left from wish packs"
+      ],
+      "noWriter": true
+    },
+    {
+      "metric": "Business.rolled",
+      "shownOn": [
+        "pro-brand",
+        "pro-home",
+        "pro-people",
+        "pro-plan",
+        "pro-reveal-new",
+        "pro-vault-shoot-reveal",
+        "pro-wish-detail",
+        "pro-wishes"
+      ],
+      "writerPath": [],
+      "formula": [],
+      "wording": [
+        "pro-brand: number: unused wishes carried in",
+        "pro-home: number: unused wishes carried in",
+        "pro-people: number: unused wishes carried in"
+      ],
+      "noWriter": true
+    },
+    {
+      "metric": "Coming.days",
+      "shownOn": [
+        "pro-people"
+      ],
+      "writerPath": [],
+      "formula": [],
+      "wording": [
+        "pro-people: number"
+      ],
+      "noWriter": true
+    },
+    {
+      "metric": "Coming.years",
+      "shownOn": [
+        "pro-people"
+      ],
+      "writerPath": [],
+      "formula": [
+        "T-29",
+        "T-70"
+      ],
+      "wording": [
+        "pro-people: number"
+      ],
+      "noWriter": true
+    },
+    {
+      "metric": "ConciergeOffer.price",
+      "shownOn": [
+        "site-business",
+        "site-home",
+        "site-pricing"
+      ],
+      "writerPath": [
+        "price book (S-14: the web reads GET /v1/prices)"
+      ],
+      "formula": [
+        "T-26",
+        "T-27",
+        "T-28",
+        "T-32"
+      ],
+      "wording": [
+        "site-business: string ('₦15,000')",
+        "site-home: string ('₦15,000')",
+        "site-pricing: string ('₦15,000')"
+      ],
+      "noWriter": false
+    },
+    {
+      "metric": "ConciergeOffer.was",
+      "shownOn": [
+        "site-business",
+        "site-home",
+        "site-pricing"
+      ],
+      "writerPath": [
+        "price book (S-14: the web reads GET /v1/prices)"
+      ],
+      "formula": [],
+      "wording": [
+        "site-business: string ('₦25,000')",
+        "site-home: string ('₦25,000')",
+        "site-pricing: string ('₦25,000')"
+      ],
+      "noWriter": false
+    },
+    {
+      "metric": "ConciergeSinglePrice.conciergeDeliveryHours",
+      "shownOn": [
+        "site-contact"
+      ],
+      "writerPath": [],
+      "formula": [
+        "T-27",
+        "T-36",
+        "T-69"
+      ],
+      "wording": [
+        "site-contact: number 3 (in copy)"
+      ],
+      "noWriter": true
+    },
+    {
+      "metric": "ConciergeSinglePrice.conciergeSingleWish",
+      "shownOn": [
+        "site-contact"
+      ],
+      "writerPath": [
+        "price book (S-14: the web reads GET /v1/prices)"
+      ],
+      "formula": [
+        "T-27",
+        "T-36",
+        "T-69"
+      ],
+      "wording": [
+        "site-contact: naira text '₦15,000' (in copy)"
+      ],
+      "noWriter": false
+    },
+    {
+      "metric": "ConciergeSinglePrice.price",
+      "shownOn": [
+        "site-make"
+      ],
+      "writerPath": [
+        "price book (S-14: the web reads GET /v1/prices)"
+      ],
+      "formula": [
+        "T-26",
+        "T-27",
+        "T-28",
+        "T-32"
+      ],
+      "wording": [
+        "site-make: string '₦15,000' typed in JSX line 32, not from catalog.concierge"
+      ],
+      "noWriter": false
+    },
+    {
+      "metric": "CreatorOffer.addons",
+      "shownOn": [
+        "site-creators"
+      ],
+      "writerPath": [
+        "price book (S-14: the web reads GET /v1/prices)"
+      ],
+      "formula": [],
+      "wording": [
+        "site-creators: text: 5 AI credits ₦3,000; extra review ₦2,500"
+      ],
+      "noWriter": false
+    },
+    {
+      "metric": "CreatorOffer.monthlyFromHundredWishes",
+      "shownOn": [
+        "site-creators"
+      ],
+      "writerPath": [
+        "price book (S-14: the web reads GET /v1/prices)"
+      ],
+      "formula": [
+        "T-38",
+        "T-70"
+      ],
+      "wording": [
+        "site-creators: naira text '₦80,000'"
+      ],
+      "noWriter": false
+    },
+    {
+      "metric": "CreatorOffer.plans",
+      "shownOn": [
+        "site-creators"
+      ],
+      "writerPath": [
+        "price book (S-14: the web reads GET /v1/prices)"
+      ],
+      "formula": [
+        "T-37",
+        "T-41",
+        "T-42",
+        "T-69"
+      ],
+      "wording": [
+        "site-creators: array of {admit:'Backstage',tag,name,price,items[],cta,href,hot?,pop?}: Open ₦0, Creator ₦7,500 Monthly, Signed ₦5,000 Monthly"
+      ],
+      "noWriter": false
+    },
+    {
+      "metric": "CreatorOffer.royaltyPerPaidWish",
+      "shownOn": [
+        "site-creators"
+      ],
+      "writerPath": [
+        "price book (S-14: the web reads GET /v1/prices)"
+      ],
+      "formula": [
+        "T-32",
+        "T-33",
+        "T-65",
+        "T-66"
+      ],
+      "wording": [
+        "site-creators: naira text '₦800'"
+      ],
+      "noWriter": false
+    },
+    {
+      "metric": "CreatorOffer.royaltyPercent",
+      "shownOn": [
+        "site-creators"
+      ],
+      "writerPath": [],
+      "formula": [
+        "T-65",
+        "T-67"
+      ],
+      "wording": [
+        "site-creators: number (20, in copy text)"
+      ],
+      "noWriter": true
+    },
+    {
+      "metric": "CreatorState.credits",
+      "shownOn": [
+        "studio-editor",
+        "studio-home",
+        "studio-new"
+      ],
+      "writerPath": [],
+      "formula": [
+        "T-41"
+      ],
+      "wording": [
+        "studio-editor: number (integer)",
+        "studio-home: number",
+        "studio-new: number (shown as 'you have N')"
+      ],
+      "noWriter": true
+    },
+    {
+      "metric": "CreatorState.extraReviews",
+      "shownOn": [
+        "studio-editor",
+        "studio-home"
+      ],
+      "writerPath": [],
+      "formula": [
+        "T-30",
+        "T-31",
+        "T-32",
+        "T-33"
+      ],
+      "wording": [
+        "studio-editor: number",
+        "studio-home: number"
+      ],
+      "noWriter": true
+    },
+    {
+      "metric": "CreatorState.packs",
+      "shownOn": [
+        "studio-editor",
+        "studio-home"
+      ],
+      "writerPath": [],
+      "formula": [
+        "T-37",
+        "T-41"
+      ],
+      "wording": [
+        "studio-editor: number (1 from the UI)",
+        "studio-home: number (always 1 from this screen)"
+      ],
+      "noWriter": true
+    },
+    {
+      "metric": "CreatorState.reviewsLeft",
+      "shownOn": [
+        "studio-editor",
+        "studio-home"
+      ],
+      "writerPath": [],
+      "formula": [
+        "T-41"
+      ],
+      "wording": [
+        "studio-editor: number",
+        "studio-home: number"
+      ],
+      "noWriter": true
+    },
+    {
+      "metric": "DateRow.count",
+      "shownOn": [
+        "app-you"
+      ],
+      "writerPath": [],
+      "formula": [
+        "T-32",
+        "T-33"
+      ],
+      "wording": [
+        "app-you: number = account.dates.length"
+      ],
+      "noWriter": true
+    },
+    {
+      "metric": "Earnings.rows",
+      "shownOn": [
+        "studio-home"
+      ],
+      "writerPath": [
+        "price book (S-14: the web reads GET /v1/prices)"
+      ],
+      "formula": [],
+      "wording": [
+        "studio-home: EarningsRow[] {id,name,level:Standard|Premium,uses:number,paid:number,earned:number (naira)}"
+      ],
+      "noWriter": false
+    },
+    {
+      "metric": "Earnings.total",
+      "shownOn": [
+        "studio-home"
+      ],
+      "writerPath": [
+        "price book (S-14: the web reads GET /v1/prices)"
+      ],
+      "formula": [
+        "T-40"
+      ],
+      "wording": [
+        "studio-home: number (naira, e.g. 14880)"
+      ],
+      "noWriter": false
+    },
+    {
+      "metric": "Extra.price",
+      "shownOn": [
+        "app-wish-detail",
+        "maker-ticket",
+        "site-pricing"
+      ],
+      "writerPath": [
+        "price book (S-14: the web reads GET /v1/prices)"
+      ],
+      "formula": [
+        "T-26",
+        "T-27",
+        "T-28",
+        "T-32"
+      ],
+      "wording": [
+        "app-wish-detail: string ₦3,500 for 'Portrait video for WhatsApp status'",
+        "maker-ticket: string",
+        "site-pricing: string (formatted naira text or 'The difference')"
+      ],
+      "noWriter": false
+    },
+    {
+      "metric": "Invoice.amount",
+      "shownOn": [
+        "pro-plan"
+      ],
+      "writerPath": [
+        "price book (S-14: the web reads GET /v1/prices)"
+      ],
+      "formula": [],
+      "wording": [
+        "pro-plan: number (whole naira, VAT-inclusive)"
+      ],
+      "noWriter": false
+    },
+    {
+      "metric": "Invoice.vat",
+      "shownOn": [
+        "pro-plan"
+      ],
+      "writerPath": [
+        "price book (S-14: the web reads GET /v1/prices)"
+      ],
+      "formula": [
+        "T-40"
+      ],
+      "wording": [
+        "pro-plan: number (whole naira, derived 7.5% inclusive)"
+      ],
+      "noWriter": false
+    },
+    {
+      "metric": "LifecycleConfig.HOLD_DAYS",
+      "shownOn": [
+        "app-wish-detail",
+        "app-wishes"
+      ],
+      "writerPath": [],
+      "formula": [],
+      "wording": [
+        "app-wish-detail: 365 (lib/account.ts:114)",
+        "app-wishes: number 365"
+      ],
+      "noWriter": true
+    },
+    {
+      "metric": "LifecycleConfig.KEEPS",
+      "shownOn": [
+        "app-wish-detail"
+      ],
+      "writerPath": [
+        "price book (S-14: the web reads GET /v1/prices)"
+      ],
+      "formula": [
+        "T-29",
+        "T-31",
+        "T-33",
+        "T-38"
+      ],
+      "wording": [
+        "app-wish-detail: [{key:'month',label:'One more month',days:30,price:'₦1,500'},{key:'half',label:'Six months',days:182,price:'₦4,000'},{key:'year',label:'A year',days:365,price:'₦6,000'}] (lib/account.ts:109)"
+      ],
+      "noWriter": false
+    },
+    {
+      "metric": "LifecycleConfig.OFF",
+      "shownOn": [
+        "app-wish-detail"
+      ],
+      "writerPath": [],
+      "formula": [
+        "T-27",
+        "T-28",
+        "T-31",
+        "T-36"
+      ],
+      "wording": [
+        "app-wish-detail: 0.4 discount on tickets/extras, never keeps (wish.ts:83)"
+      ],
+      "noWriter": true
+    },
+    {
+      "metric": "LifecycleConfig.RESTORE_DAYS",
+      "shownOn": [
+        "app-wish-detail",
+        "app-wishes"
+      ],
+      "writerPath": [],
+      "formula": [],
+      "wording": [
+        "app-wish-detail: 30 (lib/account.ts:115)",
+        "app-wishes: number 30"
+      ],
+      "noWriter": true
+    },
+    {
+      "metric": "PassMembership.amount",
+      "shownOn": [
+        "app-pass"
+      ],
+      "writerPath": [
+        "price book (S-14: the web reads GET /v1/prices)"
+      ],
+      "formula": [],
+      "wording": [
+        "app-pass: string '₦20,000'"
+      ],
+      "noWriter": false
+    },
+    {
+      "metric": "PassMembership.upgradesUsed",
+      "shownOn": [
+        "app-pass"
+      ],
+      "writerPath": [],
+      "formula": [
+        "T-27",
+        "T-39",
+        "T-70"
+      ],
+      "wording": [
+        "app-pass: number: hardcoded 0 (page.tsx:352)"
+      ],
+      "noWriter": true
+    },
+    {
+      "metric": "PassMembership.wishesUsed",
+      "shownOn": [
+        "app-pass"
+      ],
+      "writerPath": [],
+      "formula": [
+        "T-27",
+        "T-39",
+        "T-70"
+      ],
+      "wording": [
+        "app-pass: number: hardcoded 0 (page.tsx:351)"
+      ],
+      "noWriter": true
+    },
+    {
+      "metric": "PassOffer.price",
+      "shownOn": [
+        "app-pass",
+        "site-pricing"
+      ],
+      "writerPath": [
+        "price book (S-14: the web reads GET /v1/prices)"
+      ],
+      "formula": [
+        "T-26",
+        "T-27",
+        "T-28",
+        "T-32"
+      ],
+      "wording": [
+        "app-pass: '₦20,000' text",
+        "site-pricing: string ('₦20,000')"
+      ],
+      "noWriter": false
+    },
+    {
+      "metric": "PassOffer.upgrades",
+      "shownOn": [
+        "app-pass",
+        "site-pricing"
+      ],
+      "writerPath": [],
+      "formula": [
+        "T-70"
+      ],
+      "wording": [
+        "app-pass: 4 (Signature upgrades)",
+        "site-pricing: number (4)"
+      ],
+      "noWriter": true
+    },
+    {
+      "metric": "PassOffer.was",
+      "shownOn": [
+        "app-pass",
+        "site-pricing"
+      ],
+      "writerPath": [
+        "price book (S-14: the web reads GET /v1/prices)"
+      ],
+      "formula": [],
+      "wording": [
+        "app-pass: '₦35,000' text",
+        "site-pricing: string ('₦35,000')"
+      ],
+      "noWriter": false
+    },
+    {
+      "metric": "PassOffer.wishes",
+      "shownOn": [
+        "app-pass",
+        "site-pricing"
+      ],
+      "writerPath": [],
+      "formula": [
+        "T-70"
+      ],
+      "wording": [
+        "app-pass: 20 (Keepsake fair use)",
+        "site-pricing: number (20)"
+      ],
+      "noWriter": true
+    },
+    {
+      "metric": "Payment.amount",
+      "shownOn": [
+        "app-wish-detail"
+      ],
+      "writerPath": [
+        "E-84",
+        "price book (S-14: the web reads GET /v1/prices)"
+      ],
+      "formula": [],
+      "wording": [
+        "app-wish-detail: string naira text"
+      ],
+      "noWriter": false
+    },
+    {
+      "metric": "PricingRules.friendMessagesMax",
+      "shownOn": [
+        "site-pricing"
+      ],
+      "writerPath": [],
+      "formula": [
+        "T-70"
+      ],
+      "wording": [
+        "site-pricing: number 10 (prose)"
+      ],
+      "noWriter": true
+    },
+    {
+      "metric": "PricingRules.keepsakeExtrasCeiling",
+      "shownOn": [
+        "site-pricing"
+      ],
+      "writerPath": [
+        "price book (S-14: the web reads GET /v1/prices)"
+      ],
+      "formula": [
+        "T-26",
+        "T-27",
+        "T-29",
+        "T-30"
+      ],
+      "wording": [
+        "site-pricing: string '₦7,500' (catalog.ts:415)"
+      ],
+      "noWriter": false
+    },
+    {
+      "metric": "PricingRules.maxPhotos",
+      "shownOn": [
+        "site-pricing"
+      ],
+      "writerPath": [],
+      "formula": [
+        "T-30",
+        "T-70"
+      ],
+      "wording": [
+        "site-pricing: number 20 (prose line ~86)"
+      ],
+      "noWriter": true
+    },
+    {
+      "metric": "ProPlan.logins",
+      "shownOn": [
+        "pro-brand",
+        "pro-home",
+        "pro-plan",
+        "site-business",
+        "site-business-cat",
+        "site-pricing"
+      ],
+      "writerPath": [],
+      "formula": [],
+      "wording": [
+        "pro-brand: number",
+        "pro-home: number",
+        "pro-plan: number"
+      ],
+      "noWriter": true
+    },
+    {
+      "metric": "ProPlan.price",
+      "shownOn": [
+        "pro-brand",
+        "pro-home",
+        "pro-plan",
+        "site-business",
+        "site-business-cat",
+        "site-pricing"
+      ],
+      "writerPath": [
+        "price book (S-14: the web reads GET /v1/prices)"
+      ],
+      "formula": [
+        "T-26",
+        "T-27",
+        "T-28",
+        "T-32"
+      ],
+      "wording": [
+        "pro-brand: number (naira)",
+        "pro-home: number (naira)",
+        "pro-plan: number (naira)"
+      ],
+      "noWriter": false
+    },
+    {
+      "metric": "ProPlan.vault",
+      "shownOn": [
+        "pro-brand",
+        "pro-home",
+        "pro-plan",
+        "site-business",
+        "site-business-cat",
+        "site-pricing"
+      ],
+      "writerPath": [],
+      "formula": [
+        "T-39",
+        "T-69"
+      ],
+      "wording": [
+        "pro-brand: number GB",
+        "pro-home: number GB",
+        "pro-plan: number GB"
+      ],
+      "noWriter": true
+    },
+    {
+      "metric": "ProPlan.was",
+      "shownOn": [
+        "pro-brand",
+        "pro-home",
+        "pro-plan",
+        "site-business",
+        "site-business-cat",
+        "site-pricing"
+      ],
+      "writerPath": [
+        "price book (S-14: the web reads GET /v1/prices)"
+      ],
+      "formula": [],
+      "wording": [
+        "pro-brand: number (naira, struck-through)",
+        "pro-home: number (naira, struck-through)",
+        "pro-plan: number (naira, struck-through)"
+      ],
+      "noWriter": false
+    },
+    {
+      "metric": "ProPlan.wishes",
+      "shownOn": [
+        "pro-brand",
+        "pro-home",
+        "pro-plan",
+        "site-business",
+        "site-business-cat",
+        "site-pricing"
+      ],
+      "writerPath": [],
+      "formula": [
+        "T-70"
+      ],
+      "wording": [
+        "pro-brand: number",
+        "pro-home: number",
+        "pro-plan: number"
+      ],
+      "noWriter": true
+    },
+    {
+      "metric": "ProPricingCopy.marginPerWish",
+      "shownOn": [
+        "site-business"
+      ],
+      "writerPath": [
+        "price book (S-14: the web reads GET /v1/prices)"
+      ],
+      "formula": [],
+      "wording": [
+        "site-business: string '₦3,500 a wish on Starter' typed at :50"
+      ],
+      "noWriter": false
+    },
+    {
+      "metric": "ProPricingCopy.packagePriceRange",
+      "shownOn": [
+        "site-business"
+      ],
+      "writerPath": [
+        "price book (S-14: the web reads GET /v1/prices)"
+      ],
+      "formula": [
+        "T-26",
+        "T-27",
+        "T-28",
+        "T-32"
+      ],
+      "wording": [
+        "site-business: string '₦8,000 to ₦12,000' typed at :50 and ProPlans.tsx:21"
+      ],
+      "noWriter": false
+    },
+    {
+      "metric": "ProPricingCopy.starterWishPrice",
+      "shownOn": [
+        "site-business"
+      ],
+      "writerPath": [
+        "price book (S-14: the web reads GET /v1/prices)"
+      ],
+      "formula": [
+        "T-26",
+        "T-27",
+        "T-28",
+        "T-32"
+      ],
+      "wording": [
+        "site-business: number derived price/wishes = 3500"
+      ],
+      "noWriter": false
+    },
+    {
+      "metric": "ProPricingCopy.startingPrice",
+      "shownOn": [
+        "site-business"
+      ],
+      "writerPath": [
+        "price book (S-14: the web reads GET /v1/prices)"
+      ],
+      "formula": [
+        "T-26",
+        "T-27",
+        "T-28",
+        "T-32"
+      ],
+      "wording": [
+        "site-business: string 'From ₦35,000 a month' typed in business/page.tsx:48"
+      ],
+      "noWriter": false
+    },
+    {
+      "metric": "ProUsage.allowance",
+      "shownOn": [
+        "maker-ticket",
+        "pro-reveal-new",
+        "pro-vault-shoot-reveal"
+      ],
+      "writerPath": [],
+      "formula": [
+        "T-70"
+      ],
+      "wording": [
+        "maker-ticket: number",
+        "pro-reveal-new: number",
+        "pro-vault-shoot-reveal: number"
+      ],
+      "noWriter": true
+    },
+    {
+      "metric": "ProUsage.left",
+      "shownOn": [
+        "maker-ticket",
+        "pro-reveal-new",
+        "pro-vault-shoot-reveal"
+      ],
+      "writerPath": [],
+      "formula": [],
+      "wording": [
+        "maker-ticket: number",
+        "pro-reveal-new: number",
+        "pro-vault-shoot-reveal: number"
+      ],
+      "noWriter": true
+    },
+    {
+      "metric": "ProUsage.pack",
+      "shownOn": [
+        "maker-ticket",
+        "pro-plan",
+        "pro-reveal-new",
+        "pro-vault-shoot-reveal"
+      ],
+      "writerPath": [],
+      "formula": [
+        "T-37",
+        "T-41"
+      ],
+      "wording": [
+        "maker-ticket: number",
+        "pro-plan: number",
+        "pro-reveal-new: number"
+      ],
+      "noWriter": true
+    },
+    {
+      "metric": "ProUsage.rolled",
+      "shownOn": [
+        "maker-ticket",
+        "pro-reveal-new",
+        "pro-vault-shoot-reveal"
+      ],
+      "writerPath": [],
+      "formula": [],
+      "wording": [
+        "maker-ticket: number",
+        "pro-reveal-new: number",
+        "pro-vault-shoot-reveal: number"
+      ],
+      "noWriter": true
+    },
+    {
+      "metric": "ProUsage.total",
+      "shownOn": [
+        "maker-ticket",
+        "pro-reveal-new",
+        "pro-vault-shoot-reveal"
+      ],
+      "writerPath": [],
+      "formula": [
+        "T-40"
+      ],
+      "wording": [
+        "maker-ticket: number",
+        "pro-reveal-new: number",
+        "pro-vault-shoot-reveal: number"
+      ],
+      "noWriter": true
+    },
+    {
+      "metric": "ProUsage.used",
+      "shownOn": [
+        "maker-ticket",
+        "pro-reveal-new",
+        "pro-vault-shoot-reveal"
+      ],
+      "writerPath": [],
+      "formula": [
+        "T-27",
+        "T-39"
+      ],
+      "wording": [
+        "maker-ticket: number",
+        "pro-reveal-new: number",
+        "pro-vault-shoot-reveal: number"
+      ],
+      "noWriter": true
+    },
+    {
+      "metric": "Promotion.percentOff",
+      "shownOn": [
+        "site-business",
+        "site-pricing"
+      ],
+      "writerPath": [
+        "server:price-book"
+      ],
+      "formula": [
+        "T-27",
+        "T-28",
+        "T-31",
+        "T-36"
+      ],
+      "wording": [
+        "site-business: number (text '40%')",
+        "site-pricing: number (text '40%')"
+      ],
+      "noWriter": false
+    },
+    {
+      "metric": "RetentionRules.restingHoldMonths",
+      "shownOn": [
+        "site-privacy"
+      ],
+      "writerPath": [],
+      "formula": [
+        "T-29",
+        "T-37",
+        "T-38",
+        "T-39"
+      ],
+      "wording": [
+        "site-privacy: number 12 (in copy)"
+      ],
+      "noWriter": true
+    },
+    {
+      "metric": "RetentionRules.restoreWindowDays",
+      "shownOn": [
+        "site-privacy"
+      ],
+      "writerPath": [],
+      "formula": [],
+      "wording": [
+        "site-privacy: number 30 (in copy)"
+      ],
+      "noWriter": true
+    },
+    {
+      "metric": "StudioStyle.scenes[k].span",
+      "shownOn": [
+        "studio-editor"
+      ],
+      "writerPath": [],
+      "formula": [],
+      "wording": [
+        "studio-editor: number ms (1500..12000)"
+      ],
+      "noWriter": true
+    },
+    {
+      "metric": "StyleLevelCounts.premium",
+      "shownOn": [
+        "site-styles"
+      ],
+      "writerPath": [],
+      "formula": [
+        "T-30",
+        "T-35",
+        "T-41",
+        "T-65"
+      ],
+      "wording": [
+        "site-styles: number"
+      ],
+      "noWriter": true
+    },
+    {
+      "metric": "StyleLevelCounts.standard",
+      "shownOn": [
+        "site-styles"
+      ],
+      "writerPath": [],
+      "formula": [
+        "T-68"
+      ],
+      "wording": [
+        "site-styles: number"
+      ],
+      "noWriter": true
+    },
+    {
+      "metric": "StyleLevelCounts.starter",
+      "shownOn": [
+        "site-styles"
+      ],
+      "writerPath": [],
+      "formula": [
+        "T-37",
+        "T-66"
+      ],
+      "wording": [
+        "site-styles: number"
+      ],
+      "noWriter": true
+    },
+    {
+      "metric": "StyleRecording.h",
+      "shownOn": [
+        "site-showing",
+        "site-style-detail",
+        "site-styles"
+      ],
+      "writerPath": [],
+      "formula": [],
+      "wording": [
+        "site-showing: number",
+        "site-style-detail: number",
+        "site-styles: number"
+      ],
+      "noWriter": true
+    },
+    {
+      "metric": "StyleRecording.kb",
+      "shownOn": [
+        "site-showing",
+        "site-style-detail",
+        "site-styles"
+      ],
+      "writerPath": [],
+      "formula": [],
+      "wording": [
+        "site-showing: number",
+        "site-style-detail: number",
+        "site-styles: number"
+      ],
+      "noWriter": true
+    },
+    {
+      "metric": "StyleRecording.seconds",
+      "shownOn": [
+        "site-showing",
+        "site-style-detail",
+        "site-styles"
+      ],
+      "writerPath": [],
+      "formula": [
+        "T-30",
+        "T-70"
+      ],
+      "wording": [
+        "site-showing: number",
+        "site-style-detail: number",
+        "site-styles: number"
+      ],
+      "noWriter": true
+    },
+    {
+      "metric": "StyleRecording.w",
+      "shownOn": [
+        "site-showing",
+        "site-style-detail",
+        "site-styles"
+      ],
+      "writerPath": [],
+      "formula": [],
+      "wording": [
+        "site-showing: number",
+        "site-style-detail: number",
+        "site-styles: number"
+      ],
+      "noWriter": true
+    },
+    {
+      "metric": "Ticket.price",
+      "shownOn": [
+        "app-home",
+        "app-wish-detail",
+        "maker-style",
+        "maker-ticket",
+        "site-home",
+        "site-pricing"
+      ],
+      "writerPath": [
+        "price book (S-14: the web reads GET /v1/prices)"
+      ],
+      "formula": [
+        "T-26",
+        "T-27",
+        "T-28",
+        "T-32"
+      ],
+      "wording": [
+        "app-home: string naira text e.g. '₦3,000'",
+        "app-wish-detail: string naira text e.g. '₦6,000'",
+        "maker-style: string"
+      ],
+      "noWriter": false
+    },
+    {
+      "metric": "Ticket.was",
+      "shownOn": [
+        "app-home",
+        "maker-style",
+        "maker-ticket",
+        "site-home",
+        "site-pricing"
+      ],
+      "writerPath": [
+        "price book (S-14: the web reads GET /v1/prices)"
+      ],
+      "formula": [],
+      "wording": [
+        "app-home: string naira text e.g. '₦5,000'",
+        "maker-style: string",
+        "maker-ticket: string"
+      ],
+      "noWriter": false
+    },
+    {
+      "metric": "TicketOffer.total",
+      "shownOn": [
+        "maker-ticket"
+      ],
+      "writerPath": [],
+      "formula": [
+        "T-40"
+      ],
+      "wording": [
+        "maker-ticket: number"
+      ],
+      "noWriter": true
+    },
+    {
+      "metric": "TicketOffer.was",
+      "shownOn": [
+        "maker-ticket"
+      ],
+      "writerPath": [
+        "price book (S-14: the web reads GET /v1/prices)"
+      ],
+      "formula": [],
+      "wording": [
+        "maker-ticket: number"
+      ],
+      "noWriter": false
+    },
+    {
+      "metric": "TicketTerms.momentDays",
+      "shownOn": [
+        "site-terms"
+      ],
+      "writerPath": [],
+      "formula": [
+        "T-26",
+        "T-27",
+        "T-29",
+        "T-32"
+      ],
+      "wording": [
+        "site-terms: number 7 (in copy)"
+      ],
+      "noWriter": true
+    },
+    {
+      "metric": "VaultFile.size",
+      "shownOn": [
+        "pro-vault-shoot"
+      ],
+      "writerPath": [],
+      "formula": [],
+      "wording": [
+        "pro-vault-shoot: number (bytes)"
+      ],
+      "noWriter": true
+    },
+    {
+      "metric": "VaultPricing.block",
+      "shownOn": [
+        "site-business",
+        "site-business-cat",
+        "site-pricing"
+      ],
+      "writerPath": [],
+      "formula": [
+        "T-39"
+      ],
+      "wording": [
+        "site-business-cat: number (GB)",
+        "site-business: number (GB)",
+        "site-pricing: number (GB)"
+      ],
+      "noWriter": true
+    },
+    {
+      "metric": "VaultPricing.bulkFrom",
+      "shownOn": [
+        "site-business",
+        "site-business-cat",
+        "site-pricing"
+      ],
+      "writerPath": [],
+      "formula": [],
+      "wording": [
+        "site-business-cat: number (GB 1000)",
+        "site-business: number (GB 1000)",
+        "site-pricing: number (GB 1000)"
+      ],
+      "noWriter": true
+    },
+    {
+      "metric": "VaultPricing.bulkPrice",
+      "shownOn": [
+        "site-business",
+        "site-business-cat",
+        "site-pricing"
+      ],
+      "writerPath": [
+        "price book (S-14: the web reads GET /v1/prices)"
+      ],
+      "formula": [
+        "T-26",
+        "T-27",
+        "T-28",
+        "T-32"
+      ],
+      "wording": [
+        "site-business-cat: number (whole naira 2500)",
+        "site-business: number (whole naira 2500)",
+        "site-pricing: number (whole naira 2500)"
+      ],
+      "noWriter": false
+    },
+    {
+      "metric": "VaultPricing.packDays",
+      "shownOn": [
+        "site-business",
+        "site-business-cat",
+        "site-pricing"
+      ],
+      "writerPath": [],
+      "formula": [
+        "T-37",
+        "T-41"
+      ],
+      "wording": [
+        "site-business-cat: number",
+        "site-business: number",
+        "site-pricing: number"
+      ],
+      "noWriter": true
+    },
+    {
+      "metric": "VaultPricing.price",
+      "shownOn": [
+        "site-business",
+        "site-business-cat",
+        "site-pricing"
+      ],
+      "writerPath": [
+        "price book (S-14: the web reads GET /v1/prices)"
+      ],
+      "formula": [
+        "T-26",
+        "T-27",
+        "T-28",
+        "T-32"
+      ],
+      "wording": [
+        "site-business-cat: number (whole naira 3000)",
+        "site-business: number (whole naira 3000)",
+        "site-pricing: number (whole naira 3000)"
+      ],
+      "noWriter": false
+    },
+    {
+      "metric": "VaultStorage.blocks",
+      "shownOn": [
+        "pro-home",
+        "pro-vault"
+      ],
+      "writerPath": [],
+      "formula": [
+        "T-39"
+      ],
+      "wording": [
+        "pro-home: number",
+        "pro-vault: number"
+      ],
+      "noWriter": true
+    },
+    {
+      "metric": "VaultStorage.cost",
+      "shownOn": [
+        "pro-home",
+        "pro-vault"
+      ],
+      "writerPath": [
+        "price book (S-14: the web reads GET /v1/prices)"
+      ],
+      "formula": [
+        "T-32",
+        "T-37"
+      ],
+      "wording": [
+        "pro-home: number naira",
+        "pro-vault: number naira whole"
+      ],
+      "noWriter": false
+    },
+    {
+      "metric": "VaultStorage.free",
+      "shownOn": [
+        "pro-home",
+        "pro-vault"
+      ],
+      "writerPath": [],
+      "formula": [],
+      "wording": [
+        "pro-home: number bytes",
+        "pro-vault: number bytes"
+      ],
+      "noWriter": true
+    },
+    {
+      "metric": "VaultStorage.included",
+      "shownOn": [
+        "pro-home",
+        "pro-plan",
+        "pro-vault"
+      ],
+      "writerPath": [],
+      "formula": [
+        "T-30"
+      ],
+      "wording": [
+        "pro-home: number GB",
+        "pro-plan: number GB",
+        "pro-vault: number GB"
+      ],
+      "noWriter": true
+    },
+    {
+      "metric": "VaultStorage.over",
+      "shownOn": [
+        "pro-home",
+        "pro-vault"
+      ],
+      "writerPath": [],
+      "formula": [],
+      "wording": [
+        "pro-home: number bytes",
+        "pro-vault: number bytes"
+      ],
+      "noWriter": true
+    },
+    {
+      "metric": "VaultStorage.packGB",
+      "shownOn": [
+        "pro-home",
+        "pro-vault"
+      ],
+      "writerPath": [],
+      "formula": [
+        "T-37",
+        "T-39",
+        "T-41"
+      ],
+      "wording": [
+        "pro-home: number",
+        "pro-vault: number"
+      ],
+      "noWriter": true
+    },
+    {
+      "metric": "VaultStorage.peak",
+      "shownOn": [
+        "pro-home",
+        "pro-vault"
+      ],
+      "writerPath": [],
+      "formula": [],
+      "wording": [
+        "pro-home: number bytes",
+        "pro-vault: number bytes"
+      ],
+      "noWriter": true
+    },
+    {
+      "metric": "VaultStorage.planGB",
+      "shownOn": [
+        "pro-home",
+        "pro-vault"
+      ],
+      "writerPath": [],
+      "formula": [
+        "T-37",
+        "T-39",
+        "T-41",
+        "T-42"
+      ],
+      "wording": [
+        "pro-home: number",
+        "pro-vault: number"
+      ],
+      "noWriter": true
+    },
+    {
+      "metric": "VaultStorage.used",
+      "shownOn": [
+        "pro-home",
+        "pro-vault"
+      ],
+      "writerPath": [],
+      "formula": [
+        "T-27",
+        "T-39"
+      ],
+      "wording": [
+        "pro-home: number bytes",
+        "pro-vault: number bytes"
+      ],
+      "noWriter": true
+    },
+    {
+      "metric": "VoiceNote.seconds",
+      "shownOn": [
+        "maker-ask"
+      ],
+      "writerPath": [],
+      "formula": [
+        "T-30",
+        "T-70"
+      ],
+      "wording": [
+        "maker-ask: number",
+        "maker-ask: number"
+      ],
+      "noWriter": true
+    },
+    {
+      "metric": "Wish.amount",
+      "shownOn": [
+        "app-wish-detail",
+        "maker-ticket"
+      ],
+      "writerPath": [
+        "E-197",
+        "price book (S-14: the web reads GET /v1/prices)"
+      ],
+      "formula": [],
+      "wording": [
+        "app-wish-detail: string ₦2,100 discounted",
+        "maker-ticket: number naira (money(total)) - shown only"
+      ],
+      "noWriter": false
+    },
+    {
+      "metric": "Wish.at",
+      "shownOn": [
+        "app-home",
+        "app-wish-detail",
+        "app-wishes",
+        "creator-profile",
+        "creator-published",
+        "maker-ask",
+        "maker-ask-voices-gather",
+        "maker-call",
+        "maker-chapters",
+        "maker-cover",
+        "maker-ending",
+        "maker-ending-scene",
+        "maker-kind",
+        "maker-more",
+        "maker-name",
+        "maker-occasion",
+        "maker-opening",
+        "maker-opening-scene",
+        "maker-partner",
+        "maker-photos",
+        "maker-sealed",
+        "maker-studio",
+        "maker-style",
+        "maker-ticket",
+        "maker-watch",
+        "maker-wedding",
+        "maker-when",
+        "receiver-wish-mine"
+      ],
+      "writerPath": [],
+      "formula": [],
+      "wording": [
+        "app-home: number (epoch ms last changed)",
+        "app-wish-detail: number epoch ms last changed",
+        "app-wishes: number (epoch ms last changed)"
+      ],
+      "noWriter": true
+    },
+    {
+      "metric": "Wish.days",
+      "shownOn": [
+        "app-wish-detail"
+      ],
+      "writerPath": [
+        "E-195"
+      ],
+      "formula": [],
+      "wording": [
+        "app-wish-detail: number 30|182|365",
+        "app-wish-detail: 365"
+      ],
+      "noWriter": false
+    },
+    {
+      "metric": "Wish.extraDays",
+      "shownOn": [
+        "app-wish-detail"
+      ],
+      "writerPath": [],
+      "formula": [
+        "T-30",
+        "T-31",
+        "T-32",
+        "T-33"
+      ],
+      "wording": [
+        "app-wish-detail: 7 if openedAt (TERM_DAYS.keepsake - TERM_DAYS.moment)"
+      ],
+      "noWriter": true
+    },
+    {
+      "metric": "Wish.makerNote.voice",
+      "shownOn": [
+        "maker-ask",
+        "maker-ask-voices-gather",
+        "maker-call",
+        "maker-chapters",
+        "maker-cover",
+        "maker-ending",
+        "maker-ending-scene",
+        "maker-kind",
+        "maker-more",
+        "maker-name",
+        "maker-occasion",
+        "maker-opening",
+        "maker-opening-scene",
+        "maker-partner",
+        "maker-photos",
+        "maker-sealed",
+        "maker-studio",
+        "maker-style",
+        "maker-ticket",
+        "maker-watch",
+        "maker-wedding",
+        "maker-when",
+        "receiver-wish-mine"
+      ],
+      "writerPath": [],
+      "formula": [
+        "T-70"
+      ],
+      "wording": [
+        "maker-ask-voices-gather: number seconds",
+        "maker-ask: number seconds",
+        "maker-call: number seconds"
+      ],
+      "noWriter": true
+    },
+    {
+      "metric": "Wish.price",
+      "shownOn": [
+        "app-wish-detail"
+      ],
+      "writerPath": [
+        "E-195",
+        "price book (S-14: the web reads GET /v1/prices)"
+      ],
+      "formula": [
+        "T-26",
+        "T-27",
+        "T-28",
+        "T-32"
+      ],
+      "wording": [
+        "app-wish-detail: string ₦1,500|₦4,000|₦6,000",
+        "app-wish-detail: ₦3,000 (keepsake minus moment, client computed)"
+      ],
+      "noWriter": false
+    },
+    {
+      "metric": "Wish.step",
+      "shownOn": [
+        "app-home",
+        "app-wish-detail",
+        "app-wishes",
+        "maker-ask",
+        "maker-ask-voices-gather",
+        "maker-call",
+        "maker-chapters",
+        "maker-cover",
+        "maker-ending",
+        "maker-ending-scene",
+        "maker-kind",
+        "maker-more",
+        "maker-name",
+        "maker-occasion",
+        "maker-opening",
+        "maker-opening-scene",
+        "maker-partner",
+        "maker-photos",
+        "maker-sealed",
+        "maker-studio",
+        "maker-style",
+        "maker-ticket",
+        "maker-watch",
+        "maker-wedding",
+        "maker-when",
+        "receiver-wish-mine"
+      ],
+      "writerPath": [
+        "E-191"
+      ],
+      "formula": [],
+      "wording": [
+        "app-home: number 0-5",
+        "app-wish-detail: number 0..5",
+        "app-wishes: number 0-5"
+      ],
+      "noWriter": false
+    }
+  ],
+  "noWriter": [
+    "Business.pack",
+    "Business.rolled",
+    "Coming.days",
+    "Coming.years",
+    "ConciergeSinglePrice.conciergeDeliveryHours",
+    "CreatorOffer.royaltyPercent",
+    "CreatorState.credits",
+    "CreatorState.extraReviews",
+    "CreatorState.packs",
+    "CreatorState.reviewsLeft",
+    "DateRow.count",
+    "LifecycleConfig.HOLD_DAYS",
+    "LifecycleConfig.OFF",
+    "LifecycleConfig.RESTORE_DAYS",
+    "PassMembership.upgradesUsed",
+    "PassMembership.wishesUsed",
+    "PassOffer.upgrades",
+    "PassOffer.wishes",
+    "PricingRules.friendMessagesMax",
+    "PricingRules.maxPhotos",
+    "ProPlan.logins",
+    "ProPlan.vault",
+    "ProPlan.wishes",
+    "ProUsage.allowance",
+    "ProUsage.left",
+    "ProUsage.pack",
+    "ProUsage.rolled",
+    "ProUsage.total",
+    "ProUsage.used",
+    "RetentionRules.restingHoldMonths",
+    "RetentionRules.restoreWindowDays",
+    "StudioStyle.scenes[k].span",
+    "StyleLevelCounts.premium",
+    "StyleLevelCounts.standard",
+    "StyleLevelCounts.starter",
+    "StyleRecording.h",
+    "StyleRecording.kb",
+    "StyleRecording.seconds",
+    "StyleRecording.w",
+    "TicketOffer.total",
+    "TicketTerms.momentDays",
+    "VaultFile.size",
+    "VaultPricing.block",
+    "VaultPricing.bulkFrom",
+    "VaultPricing.packDays",
+    "VaultStorage.blocks",
+    "VaultStorage.free",
+    "VaultStorage.included",
+    "VaultStorage.over",
+    "VaultStorage.packGB",
+    "VaultStorage.peak",
+    "VaultStorage.planGB",
+    "VaultStorage.used",
+    "VoiceNote.seconds",
+    "Wish.at",
+    "Wish.extraDays",
+    "Wish.makerNote.voice"
+  ]
+}

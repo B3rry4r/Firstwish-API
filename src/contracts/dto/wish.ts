@@ -233,9 +233,6 @@ export class PostWishesByIdKeepBodyDto implements PostWishesByIdKeepBody {
   paymentWay?: "card" | "transfer" | "ussd";
   @IsOptional()
   @IsString()
-  price?: string;
-  @IsOptional()
-  @IsString()
   wishId?: string;
 }
 export class PostWishesByIdKeepParamsDto implements PostWishesByIdKeepParams {
@@ -272,9 +269,6 @@ export class PostWishesByIdSealBodyDto implements PostWishesByIdSealBody {
   @IsOptional()
   @IsString()
   adds?: string;
-  @IsOptional()
-  @IsNumber()
-  amount?: number;
   @IsOptional()
   @Allow()
   content?: unknown;

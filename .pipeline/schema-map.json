@@ -1,6 +1,6 @@
 {
  "phase": "SCHEMA (Phase 4)",
- "registrySha256": "c6aab05763d250e0066130e7a2264c521a99b5d053ca3695c3b5727396b385c8",
+ "registrySha256": "288e25d2476086ceb304738ed50cc2f0d4dd30a31d89b8f04203d06624a7d26e",
  "rules": [
   "table: something writes it (a POST, PUT, PATCH, DELETE or INTERNAL route, or a server:* declaration). A GET's query parameters are not writers.",
   "view: read only, worked out on read from the tables named in 'of'. No table of its own.",
@@ -284,12 +284,30 @@
   },
   "Numbers": {
    "class": "view",
-   "reason": "figures worked out by the server (DEC-113); see HALT-1: E-80 writes targets but no contract names a target field",
+   "reason": "figures worked out by the server (DEC-113); each line's target is read from NumbersTarget, null when no target is set (DEC-132, which closes HALT-1)",
    "of": [
     "Payment",
     "Wish",
     "Event",
-    "Style"
+    "Style",
+    "NumbersTarget"
+   ]
+  },
+  "NumbersTarget": {
+   "class": "config",
+   "reason": "monthly targets per money line that staff set by E-80 (DEC-132); one row per line and period, no seed rows (no target set reads null)",
+   "unique": [
+    [
+     "line",
+     "period"
+    ]
+   ],
+   "required": [
+    "line",
+    "period",
+    "targetKobo",
+    "setBy",
+    "setAt"
    ]
   },
   "OpeningDef": {
@@ -756,7 +774,7 @@
     ]
    ],
    "skipEdges": {
-    "Event": "HALT-2: dep-graph edge WebhookEvent to Event would take the column eventId, which the payments declaration makes the provider's event id (string, unique). One column cannot be both; the edge is left out until a ruling names it."
+    "Event": "HALT-2, ruled by DEC-133: WebhookEvent does not link to Event; eventId is the provider's event id (string, unique with provider). reconcile.py no longer draws the edge (aliases.json notReferences); kept here as the record that no foreign key is made."
    }
   },
   "Wish": {

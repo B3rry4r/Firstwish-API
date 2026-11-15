@@ -2348,7 +2348,7 @@
       "approvedBy": "lead default, owner may override",
       "confidence": "high",
       "source": "build/rulings-phase3.md (Registry reopened once) P1",
-      "decidedAt": "2026-11-15T23:30:00Z",
+      "decidedAt": "2026-11-15T16:15:00Z",
       "fieldTypes": {
         "NumbersTarget.line": "enum(tickets|extras|keeps|pass|pro_plans|vault_space|concierge|creator_plans)",
         "NumbersTarget.period": "enum(month)",
@@ -2366,7 +2366,7 @@
       "approvedBy": "lead default, owner may override",
       "confidence": "high",
       "source": "build/rulings-phase3.md (Registry reopened once) P2",
-      "decidedAt": "2026-11-15T23:30:00Z",
+      "decidedAt": "2026-11-15T16:15:00Z",
       "fieldTypes": {
         "WebhookEvent.eventId": "string (the provider's event id; unique with provider)"
       }
@@ -2379,7 +2379,7 @@
       "approvedBy": "lead default, owner may override",
       "confidence": "high",
       "source": "build/rulings-phase3.md (Registry reopened once) P3; S-24",
-      "decidedAt": "2026-11-15T23:30:00Z"
+      "decidedAt": "2026-11-15T16:15:00Z"
     },
     {
       "id": "DEC-135",
@@ -2389,7 +2389,7 @@
       "approvedBy": "lead default, owner may override",
       "confidence": "high",
       "source": "build/rulings.md R11; build/rulings-phase3.md (Registry reopened once) P4",
-      "decidedAt": "2026-11-15T23:30:00Z",
+      "decidedAt": "2026-11-15T16:15:00Z",
       "fieldTypes": {
         "AuthCode.channel": "enum(email)",
         "NoticePrefs.channel": "enum(email)"
@@ -2399,11 +2399,11 @@
       "id": "DEC-136",
       "topic": "registry re-freeze",
       "closes": [],
-      "decision": "The registry is re-frozen after P1 to P4 (DEC-132..135) by tools/pipeline/freeze.py, which sets registry.json frozenAt and writes .pipeline/registry.lock.json. reconcile.py refuses to run while the lock exists unless called with --reopen naming the rulings that reopen it.",
+      "decision": "The registry is re-frozen after P1 to P4 (DEC-132..135) by tools/pipeline/freeze.py, which sets registry.json frozenAt and writes .pipeline/registry.lock.json. reconcile.py refuses to run while the lock exists unless called with --reopen naming the rulings that reopen it. Frozen at 106 resources, 233 endpoints, 7 waves, 0 open conflicts.",
       "approvedBy": "lead default, owner may override",
       "confidence": "high",
       "source": "build/rulings-phase3.md (Registry reopened once)",
-      "decidedAt": "2026-11-15T23:30:00Z"
+      "decidedAt": "2026-11-15T16:30:11Z"
     }
   ]
 }

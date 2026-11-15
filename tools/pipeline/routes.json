@@ -1432,8 +1432,8 @@
     "PUT /v1/admin/numbers/targets": {
       "decision": "DEC-132",
       "set": {
-        "line": "enum(tickets|extras|keeps|pass|pro_plans|vault_space|concierge|creator_plans)",
-        "period": "enum(month)",
+        "line": "'tickets'|'extras'|'keeps'|'pass'|'pro_plans'|'vault_space'|'concierge'|'creator_plans' (enum, DEC-132)",
+        "period": "'month' (DEC-132)",
         "targetKobo": "integer (kobo)"
       },
       "response": {

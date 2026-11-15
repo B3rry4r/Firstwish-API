@@ -4,8 +4,6 @@ import type { PostAuthCodesBody, PostAuthCodesVerifyBody } from "../types";
 
 /** E-19 POST /v1/auth/codes (body). */
 export class PostAuthCodesBodyDto implements PostAuthCodesBody {
-  @IsIn(["sms", "whatsapp", "email"])
-  channel!: "sms" | "whatsapp" | "email";
   @IsString()
   contact!: string;
   @IsOptional()

@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "frozenAt": null,
+  "frozenAt": "2026-11-15T16:30:11Z",
   "framework": "nestjs",
   "generatedBy": "tools/pipeline/reconcile.py",
   "resources": [
@@ -9536,14 +9536,14 @@
           "body": [
             {
               "name": "line",
-              "type": "enum(tickets|extras|keeps|pass|pro_plans|vault_space|concierge|creator_plans)",
+              "type": "'tickets'|'extras'|'keeps'|'pass'|'pro_plans'|'vault_space'|'concierge'|'creator_plans' (enum, DEC-132)",
               "from": [
                 "DEC-132"
               ]
             },
             {
               "name": "period",
-              "type": "enum(month)",
+              "type": "'month' (DEC-132)",
               "from": [
                 "DEC-132"
               ]

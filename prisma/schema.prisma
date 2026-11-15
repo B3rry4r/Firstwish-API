@@ -626,15 +626,28 @@ model Notice {
 
 /// table: written by E-78 (an account's notice choices)
 model NoticePrefs {
-  id        String   @id @db.Uuid
-  channel   String?
+  id        String              @id @db.Uuid
+  channel   NoticePrefsChannel?
   muted     Json?
-  accountId String?  @db.Uuid
-  account   Account? @relation("NoticePrefs_accountId", fields: [accountId], references: [id])
+  accountId String?             @db.Uuid
+  account   Account?            @relation("NoticePrefs_accountId", fields: [accountId], references: [id])
 
   @@unique([accountId])
   @@index([accountId, id])
   @@map("notice_prefs")
+}
+
+/// config: monthly targets per money line that staff set by E-80 (DEC-132); one row per line and period, no seed rows (no target set reads null)
+model NumbersTarget {
+  id         String              @id @db.Uuid
+  line       NumbersTargetLine
+  period     NumbersTargetPeriod
+  setAt      DateTime            @db.Timestamptz(3)
+  setBy      String
+  targetKobo BigInt
+
+  @@unique([line, period])
+  @@map("numbers_target")
 }
 
 /// config: the opening catalogue served by GET /v1/opening-defs; staff keep it
@@ -1508,8 +1521,6 @@ enum AuditEntryActorType {
 }
 
 enum AuthCodeChannel {
-  sms
-  whatsapp
   email
 }
 
@@ -1651,8 +1662,6 @@ enum LedgerEntryCurrency {
 
 enum MessageDeliveryChannel {
   email
-  sms
-  whatsapp
 }
 
 enum MessageDeliveryPurpose {
@@ -1696,6 +1705,25 @@ enum NoticeStatus {
   sent
   skipped
   cancelled
+}
+
+enum NoticePrefsChannel {
+  email
+}
+
+enum NumbersTargetLine {
+  tickets
+  extras
+  keeps
+  pass
+  pro_plans
+  vault_space
+  concierge
+  creator_plans
+}
+
+enum NumbersTargetPeriod {
+  month
 }
 
 enum PaymentPurpose {

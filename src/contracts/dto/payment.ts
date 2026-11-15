@@ -38,9 +38,6 @@ export class PostAdminPaymentsByReferenceRefundParamsDto implements PostAdminPay
 /** E-87 POST /v1/payments (body). */
 export class PostPaymentsBodyDto implements PostPaymentsBody {
   @IsOptional()
-  @IsString()
-  amount?: string;
-  @IsOptional()
   @Allow()
   extraDays?: unknown;
   @IsOptional()
@@ -58,9 +55,6 @@ export class PostPaymentsBodyDto implements PostPaymentsBody {
   @IsOptional()
   @IsIn(["open", "creator"])
   plan?: "open" | "creator";
-  @IsOptional()
-  @Allow()
-  price?: unknown;
   @IsOptional()
   @IsString()
   purpose?: string;

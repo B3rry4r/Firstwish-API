@@ -30,6 +30,8 @@ assert set(MAP) == set(RES), f"schema-map must classify every resource: missing 
 DECL = defaultdict(OrderedDict)  # entity -> name -> field
 for p in sorted((P / "declared").glob("*.json")):
     d = json.loads(p.read_text())
+    if d.get("status") == "deferred-by-owner":
+        continue  # skipped as reconcile.py skips it (R11: no SMS or WhatsApp)
     for rd in d.get("reads", []):
         for f in rd.get("fields", []):
             prev = DECL[rd["entity"]].get(f["name"])
@@ -38,6 +40,13 @@ for p in sorted((P / "declared").glob("*.json")):
                 b = ENUM_IN.search(f["type"]).group(1).split("|")
                 f = dict(f, type="enum(" + "|".join(a + [x for x in b if x not in a]) + ")")
             DECL[rd["entity"]][f["name"]] = f
+
+# a field type a decision rules (registry typeBy) wins over the declared type (DEC-135: channel is enum(email))
+for _r in REG["resources"]:
+    _ent = MAP[_r["name"]].get("declaredAs", _r["name"])
+    for _f in _r["fields"]:
+        if _f.get("typeBy") and _f["name"] in DECL.get(_ent, {}) and ENUM_IN.search(_f["type"]):
+            DECL[_ent][_f["name"]] = dict(DECL[_ent][_f["name"]], type=_f["type"])
 
 # ---------------------------------------------------------------- writers (a GET's query parameters do not write)
 def is_write(w: str) -> bool:
@@ -184,6 +193,8 @@ def model_columns(name: str):
         opt = d["nullable"] if d else True
         if fn in m.get("nullable", []):
             opt = True
+        if fn in m.get("required", []):
+            opt = False  # a decision names the field as always present (schema-map 'required')
         if fn in ("createdAt", "updatedAt"):
             typ, kind = "DateTime", "time"
         if fn in ("createdAt",):

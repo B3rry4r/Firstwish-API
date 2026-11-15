@@ -13,9 +13,6 @@ export class GetWishesByIdVideoParamsDto implements GetWishesByIdVideoParams {
 export class PostWishesByIdVideoBodyDto implements PostWishesByIdVideoBody {
   @IsOptional()
   @IsString()
-  amount?: string;
-  @IsOptional()
-  @IsString()
   wishId?: string;
 }
 export class PostWishesByIdVideoParamsDto implements PostWishesByIdVideoParams {

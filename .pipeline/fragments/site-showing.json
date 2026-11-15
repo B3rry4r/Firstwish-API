@@ -1,0 +1,388 @@
+{
+  "screenId": "site-showing",
+  "reads": [
+    {
+      "entity": "Wish",
+      "fields": [
+        {
+          "name": "no",
+          "type": "string (empty for stand-in showcase wishes)",
+          "nullable": false
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "title",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "kind",
+          "type": "string (kind slug)",
+          "nullable": false
+        },
+        {
+          "name": "occasion",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "style",
+          "type": "string (style slug)",
+          "nullable": false
+        },
+        {
+          "name": "scope",
+          "type": "'showcase'|'public'",
+          "nullable": false
+        },
+        {
+          "name": "href",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "date",
+          "type": "string (display text '07 · 11 · 2026')",
+          "nullable": false
+        },
+        {
+          "name": "img",
+          "type": "string (url)",
+          "nullable": false
+        },
+        {
+          "name": "pos",
+          "type": "string (css background-position)",
+          "nullable": false
+        },
+        {
+          "name": "featured",
+          "type": "boolean",
+          "nullable": true
+        }
+      ],
+      "cardinality": "list",
+      "filtersOrSort": [
+        "featured == true (hero carousel feat)",
+        "kind filter (all or one kind slug present in wishes)",
+        "list order as stored"
+      ],
+      "pagination": "paged",
+      "note": "'Show N more' button: first 7, then +10 (FIRST=7, STEP=10), client-side slice of the full list. lib/catalog.ts:365 literal: 7 showcase wishes, 4 featured, all scope 'showcase', all featured img /img/aisha-*.webp. Per RULING in scan map: only house showcase wishes show; wishes with isPublic from the app never appear. The server need is a public-wish list (published wishes) plus showcase list; the UI reads exactly these fields. Also needs kind per wish for the filter and category(kind).kind for labels. Hero uses key={x.style} so style is assumed unique across wishes."
+    },
+    {
+      "entity": "Style",
+      "fields": [
+        {
+          "name": "slug",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "line",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "feel",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "say",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "motion",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "light",
+          "type": "boolean",
+          "nullable": false
+        },
+        {
+          "name": "look",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "level",
+          "type": "'starter'|'standard'|'premium'",
+          "nullable": false
+        },
+        {
+          "name": "tier",
+          "type": "'Starter'|'Standard'|'Premium' (derived from level)",
+          "nullable": false
+        },
+        {
+          "name": "get",
+          "type": "string (derived from level)",
+          "nullable": false
+        },
+        {
+          "name": "pace",
+          "type": "'scroll'|'swipe'|'stories'|'film'|'stage'",
+          "nullable": false
+        },
+        {
+          "name": "orientation",
+          "type": "'portrait'|'landscape'|'either'",
+          "nullable": false
+        },
+        {
+          "name": "moves",
+          "type": "string (derived: pace, orientation, dimension)",
+          "nullable": false
+        },
+        {
+          "name": "mood",
+          "type": "string[]",
+          "nullable": false
+        },
+        {
+          "name": "kinds",
+          "type": "string[] (kind slugs the style fits; madeFor)",
+          "nullable": false
+        },
+        {
+          "name": "occasions",
+          "type": "Record<kind,string[]>",
+          "nullable": true
+        }
+      ],
+      "cardinality": "list",
+      "filtersOrSort": [
+        "registry order (allStyles)"
+      ],
+      "pagination": "none",
+      "note": "Used: styleOf(slug).light, .look, .name; featured() = styles named in featuredStyles ['letter','golden','owambe','cinema'] (a hardcoded list; server should say which are featured); allStyles().length for 'All N styles' and 'N styles'. LivePoster takes slug, uses name, line and tier."
+    },
+    {
+      "entity": "StyleRecording",
+      "fields": [
+        {
+          "name": "slug",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "orientation",
+          "type": "'portrait'|'landscape'",
+          "nullable": false
+        },
+        {
+          "name": "src",
+          "type": "string (H.264 mp4 url)",
+          "nullable": false
+        },
+        {
+          "name": "poster",
+          "type": "string (webp url)",
+          "nullable": false
+        },
+        {
+          "name": "w",
+          "type": "number",
+          "nullable": false
+        },
+        {
+          "name": "h",
+          "type": "number",
+          "nullable": false
+        },
+        {
+          "name": "seconds",
+          "type": "number",
+          "nullable": false
+        },
+        {
+          "name": "kb",
+          "type": "number",
+          "nullable": false
+        },
+        {
+          "name": "blur",
+          "type": "string (tiny webp data address)",
+          "nullable": false
+        }
+      ],
+      "cardinality": "single",
+      "filtersOrSort": [
+        "by slug and orientation; falls back to the other orientation"
+      ],
+      "pagination": "none",
+      "note": "lib/previews.ts PREVIEWS literal (recordingOf). Media files; not server data today. Server need is only a media url set if recordings move off the bundle."
+    },
+    {
+      "entity": "StyleLevel",
+      "fields": [
+        {
+          "name": "<slug>",
+          "type": "'starter'|'standard'|'premium'",
+          "nullable": false
+        }
+      ],
+      "cardinality": "single",
+      "filtersOrSort": [],
+      "pagination": "none",
+      "note": "map of slug to level, as lib/levels.ts documents it: GET /v1/styles/levels -> {slug: level}. A slug left out keeps the manifest level. Read through levels() / levelOf / tierOf / stylesAt. Today answers from bundled manifests; fetch is a comment (lib/levels.ts:60)."
+    },
+    {
+      "entity": "Kind",
+      "fields": [
+        {
+          "name": "slug",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "kind",
+          "type": "string (display name)",
+          "nullable": false
+        },
+        {
+          "name": "audience",
+          "type": "'you'|'business'",
+          "nullable": false
+        },
+        {
+          "name": "isKind",
+          "type": "boolean (filtered to true)",
+          "nullable": false
+        }
+      ],
+      "cardinality": "list",
+      "filtersOrSort": [
+        "isKind"
+      ],
+      "pagination": "none",
+      "note": "lib/catalog.ts categories/kinds; href(c) = /wishes/<slug> or /business/<slug>. Reference data. Only the fields the screen uses are listed."
+    },
+    {
+      "entity": "Creator",
+      "fields": [
+        {
+          "name": "handle",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "line",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "href",
+          "type": "string",
+          "nullable": false
+        }
+      ],
+      "cardinality": "list",
+      "filtersOrSort": [],
+      "pagination": "none",
+      "note": "lib/catalog.ts:378 creators = [{handle:'firstwish', name:'Firstwish', line:'The house', href:'/styles'}]. Shelf also computes per-creator counts: styles = allStyles().length and wishes on show = wishes.length for every creator (same numbers for each; not per creator). Creator public profiles are an app side (account.handle); none shown here but the house."
+    }
+  ],
+  "actions": [],
+  "authContext": {
+    "requiresAuth": false,
+    "rolesObserved": []
+  },
+  "special": {
+    "realtime": false,
+    "uploads": false,
+    "downloads": false
+  },
+  "uiStatesHandled": [
+    {
+      "state": "loaded",
+      "entersWhen": "always",
+      "reachable": "yes"
+    },
+    {
+      "state": "loading",
+      "entersWhen": "none coded",
+      "reachable": "no",
+      "note": "all data is synchronous bundled modules"
+    },
+    {
+      "state": "empty",
+      "entersWhen": "none coded: kind filter always yields >= 1 wish because kinds are derived from wishes; feat[i] would crash if no wish were featured",
+      "reachable": "no",
+      "note": "no empty branch for wishes, styles or creators"
+    },
+    {
+      "state": "error",
+      "entersWhen": "none coded",
+      "reachable": "no"
+    },
+    {
+      "state": "load-more",
+      "entersWhen": "found.length > limit",
+      "reachable": "yes",
+      "note": "'Show N more' with 'limit of found' counter"
+    }
+  ],
+  "uiStatesDesigned": [
+    "loading",
+    "empty",
+    "error",
+    "loaded"
+  ],
+  "stubsObserved": [
+    {
+      "file": "lib/catalog.ts:365-373",
+      "evidence": "wishes[] all scope 'showcase', 6 of 7 with no: '' ; comment 'A showcase wish with no number is a stand-in ... with our model's photos'",
+      "standsInFor": "published wishes shown on Now Showing",
+      "consequence": "Wishes published from the app (Wish.isPublic) never appear; ruled in scan map"
+    },
+    {
+      "file": "lib/catalog.ts:375",
+      "evidence": "featuredStyles = [\"letter\",\"golden\",\"owambe\",\"cinema\"]",
+      "standsInFor": "an editorial pick of featured styles",
+      "consequence": "constant; no way for staff to change it"
+    },
+    {
+      "file": "components/site/ShowingGallery.tsx:131",
+      "evidence": "<b>{allStyles().length}</b> styles ... <b>{wishes.length}</b> wishes on show for every creator",
+      "standsInFor": "per-creator counts",
+      "consequence": "every creator shows the same totals; counts are not per creator"
+    },
+    {
+      "file": "lib/catalog.ts:378",
+      "evidence": "creators = [{handle:'firstwish'...}] 'Today the only creator is the house'",
+      "standsInFor": "featured creators list",
+      "consequence": "the creators shelf can only ever show the house"
+    },
+    {
+      "file": "components/site/ShowingGallery.tsx:114",
+      "evidence": "<a className=\"ns-maker open\" href=\"/creators\"> 'This place is open.'",
+      "standsInFor": "creator onboarding",
+      "consequence": "static call to action"
+    },
+    {
+      "file": "app/showing/page.tsx:23-26",
+      "evidence": "Act 01 to 04: publishing rules described in copy (maker publishes after opened; receiver told; anyone shown can take it down; reactions not comments)",
+      "standsInFor": "publish, take-down and reaction behaviours",
+      "consequence": "copy only; no publish, takedown or reaction is wired in this screen"
+    }
+  ]
+}

@@ -1,0 +1,373 @@
+{
+  "reads": [
+    {
+      "entity": "ProAccount",
+      "fields": [
+        {
+          "name": "month",
+          "type": "string yyyy-mm",
+          "nullable": false
+        },
+        {
+          "name": "rolled",
+          "type": "number: unused wishes carried in",
+          "nullable": false
+        },
+        {
+          "name": "pack",
+          "type": "number: wishes left from wish packs",
+          "nullable": false
+        },
+        {
+          "name": "business",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "plan",
+          "type": "'starter'|'studio'|'pack' (from Account.pro.plan, else 'pack' if pack>0 or business set; null->'pack')",
+          "nullable": false
+        }
+      ],
+      "cardinality": "single",
+      "filtersOrSort": [],
+      "pagination": "none"
+    },
+    {
+      "entity": "Account",
+      "fields": [
+        {
+          "name": "name",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "contact",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "pro",
+          "type": "{plan:'starter'|'studio',business:string}|null",
+          "nullable": true
+        }
+      ],
+      "cardinality": "single",
+      "filtersOrSort": [],
+      "pagination": "none",
+      "note": "Account.pro read from fw-account via useAccount(); page returns null until account and data exist"
+    },
+    {
+      "entity": "Person",
+      "fields": [
+        {
+          "name": "id",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "phone",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "team",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "birthday",
+          "type": "string yyyy-mm-dd or ''",
+          "nullable": false
+        },
+        {
+          "name": "start",
+          "type": "string yyyy-mm-dd or ''",
+          "nullable": false
+        }
+      ],
+      "cardinality": "list",
+      "filtersOrSort": [
+        "sorted by name (client-side)"
+      ],
+      "pagination": "none"
+    },
+    {
+      "entity": "ApprovedDate",
+      "fields": [
+        {
+          "name": "key",
+          "type": "string `${personId}:b|s:${year}`",
+          "nullable": false
+        }
+      ],
+      "cardinality": "list",
+      "filtersOrSort": [],
+      "pagination": "none"
+    },
+    {
+      "entity": "Coming",
+      "fields": [
+        {
+          "name": "key",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "person",
+          "type": "Person",
+          "nullable": false
+        },
+        {
+          "name": "what",
+          "type": "'Staff birthday'|'Work anniversary'",
+          "nullable": false
+        },
+        {
+          "name": "date",
+          "type": "string yyyy-mm-dd",
+          "nullable": false
+        },
+        {
+          "name": "days",
+          "type": "number",
+          "nullable": false
+        },
+        {
+          "name": "years",
+          "type": "number",
+          "nullable": false
+        }
+      ],
+      "cardinality": "list",
+      "filtersOrSort": [
+        "derived client-side: next birthday/start anniversary, years>0 for anniversaries, sorted by days, filter days<=30, first 4"
+      ],
+      "pagination": "none",
+      "note": "derivation of Coming from people is local logic, not server data"
+    }
+  ],
+  "actions": [
+    {
+      "name": "savePerson (create)",
+      "kind": "create",
+      "entity": "Person",
+      "payload": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "phone",
+          "type": "string"
+        },
+        {
+          "name": "team",
+          "type": "string"
+        },
+        {
+          "name": "birthday",
+          "type": "string yyyy-mm-dd|''"
+        },
+        {
+          "name": "start",
+          "type": "string yyyy-mm-dd|''"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "Person",
+        "cardinality": "single"
+      }
+    },
+    {
+      "name": "savePerson (update)",
+      "kind": "update",
+      "entity": "Person",
+      "payload": [
+        {
+          "name": "id",
+          "type": "string"
+        },
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "phone",
+          "type": "string"
+        },
+        {
+          "name": "team",
+          "type": "string"
+        },
+        {
+          "name": "birthday",
+          "type": "string yyyy-mm-dd or ''"
+        },
+        {
+          "name": "start",
+          "type": "string yyyy-mm-dd or ''"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "Person",
+        "cardinality": "single"
+      }
+    },
+    {
+      "name": "removePerson",
+      "kind": "delete",
+      "entity": "Person",
+      "payload": [
+        {
+          "name": "id",
+          "type": "string"
+        }
+      ],
+      "expectedResponse": {
+        "entity": null,
+        "cardinality": "none"
+      }
+    },
+    {
+      "name": "importPeople",
+      "kind": "custom",
+      "entity": "Person",
+      "payload": [
+        {
+          "name": "rows",
+          "type": "Person[] {id,name,phone,team,birthday,start}, parsed client-side from pasted text (name,phone,team,birthday,start per line; tab or comma; header row 'name' skipped; lines without name and a readable date skipped)"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "Person",
+        "cardinality": "count (returns number added)"
+      }
+    },
+    {
+      "name": "approveDate",
+      "kind": "custom",
+      "entity": "ClientWish",
+      "payload": [
+        {
+          "name": "key",
+          "type": "string"
+        },
+        {
+          "name": "client",
+          "type": "string (person name)"
+        },
+        {
+          "name": "kind",
+          "type": "'teams'"
+        },
+        {
+          "name": "occasion",
+          "type": "'Staff birthday'|'Work anniversary'"
+        },
+        {
+          "name": "day",
+          "type": "string yyyy-mm-dd"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "ClientWish",
+        "cardinality": "single",
+        "note": "also appends key to ProData.approved; counts as one wish; throws no_wishes when none left"
+      }
+    }
+  ],
+  "authContext": {
+    "requiresAuth": true,
+    "rolesObserved": [
+      "business (owner)",
+      "business member (login seat)"
+    ]
+  },
+  "special": {
+    "realtime": false,
+    "uploads": false,
+    "downloads": false,
+    "polling": false,
+    "paging": "none; whole lists in one read; refresh on page load, tab visible, after write per conventions",
+    "import": "pasted text, not a file upload; parsed in browser (parseDate accepts yyyy-mm-dd, d/m/yyyy, d Month yyyy, Month d; two-digit years pivot at 40)"
+  },
+  "uiStatesHandled": [
+    {
+      "state": "loading",
+      "entersWhen": "usePro(): data === null on first render before the mount effect runs; page returns null (no skeleton)",
+      "reachable": "no",
+      "note": "loadPro() is a synchronous localStorage read in useEffect; null for one commit only. Against a server this becomes reachable and needs the app's skeleton."
+    },
+    {
+      "state": "empty",
+      "entersWhen": "people.length === 0 -> Empty 'Nobody yet.'",
+      "reachable": "yes"
+    },
+    {
+      "state": "no-dates-soon",
+      "entersWhen": "no coming date within 30 days -> 'No dates soon'",
+      "reachable": "yes"
+    },
+    {
+      "state": "approve-available",
+      "entersWhen": "c.days <= 1 and not in approved -> Approve button",
+      "reachable": "yes"
+    },
+    {
+      "state": "import-preview",
+      "entersWhen": "pasted text non-empty -> 'N ready · M skipped'",
+      "reachable": "yes"
+    },
+    {
+      "state": "write-failure-toast",
+      "entersWhen": "any action throws -> toast",
+      "reachable": "yes"
+    },
+    {
+      "state": "error",
+      "entersWhen": "never rendered on read: usePro has no error branch; failed writes only toast proProblem(e) (codes offline|full|no_wishes|not_found|failed)",
+      "reachable": "no",
+      "note": "No read error state and no retry exist."
+    }
+  ],
+  "uiStatesDesigned": [
+    "loading",
+    "empty",
+    "error",
+    "loaded"
+  ],
+  "stubsObserved": [
+    {
+      "file": "lib/pro-api.ts:5-8",
+      "evidence": "\"Until it exists, the bodies keep the records on this device through lib/pro-data (localStorage, fw-pro)\"",
+      "standsInFor": "business data server (wishes, people, brand, logins, plan, invoices)",
+      "consequence": "all pro screens are blind to a backend; no populate path (populatedBy null)"
+    },
+    {
+      "file": "lib/pro-data.ts:197-261 (samplesFor), view() 278-293",
+      "evidence": "sample wishes/people/invoices/logins merged in while samplesOn() (any fw-account wish id starting 's-')",
+      "standsInFor": "real client rows",
+      "consequence": "seeded rows pass through the real read path and look like server data; samples are never stored unless changed"
+    },
+    {
+      "file": "lib/pro-api.ts:104 (online())",
+      "evidence": "navigator.onLine === false throws ProError('offline')",
+      "standsInFor": "network failure",
+      "consequence": "conventions say no offline mode; code maps offline/full to toasts, server errors need mapping"
+    },
+    {
+      "file": "lib/pro-data.ts:~253 (people samples)",
+      "evidence": "phones like '+234 800 555 0101' and sample Person rows",
+      "standsInFor": "real team members",
+      "consequence": "phone strings stored as typed; server must normalise to E.164"
+    }
+  ],
+  "notes": "Phone stored free text; birthday/start strings may be ''. Dates approved by key `${personId}:b|s:${year}`.",
+  "screenId": "pro-people"
+}

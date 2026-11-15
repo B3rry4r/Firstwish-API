@@ -1,0 +1,58 @@
+{
+  "screenId": "site-privacy",
+  "reads": [
+    {
+      "entity": "RetentionRules",
+      "fields": [
+        {
+          "name": "restingHoldMonths",
+          "type": "number 12 (in copy)",
+          "nullable": false
+        },
+        {
+          "name": "restoreWindowDays",
+          "type": "number 30 (in copy)",
+          "nullable": false
+        }
+      ],
+      "cardinality": "single",
+      "filtersOrSort": [],
+      "pagination": "none",
+      "note": "Static legal prose (app/privacy/page.tsx lines 15 and 19). Matches conventions: erase after 12 months at rest, restore window 30 days. Nothing is fetched; copy must be kept in step with the timed-work rules by hand."
+    }
+  ],
+  "actions": [],
+  "authContext": {
+    "requiresAuth": false,
+    "rolesObserved": []
+  },
+  "special": {
+    "realtime": false,
+    "uploads": false,
+    "downloads": false
+  },
+  "uiStatesHandled": [
+    {
+      "state": "loaded",
+      "entersWhen": "always",
+      "reachable": "yes"
+    }
+  ],
+  "uiStatesDesigned": [
+    "empty"
+  ],
+  "stubsObserved": [
+    {
+      "file": "app/privacy/page.tsx:15,19",
+      "evidence": "'we hold it for twelve months'; 'bring it back for 30 days'",
+      "standsInFor": "retention and restore rules (conventions Timed work)",
+      "consequence": "numbers in prose can drift from the server's job settings"
+    },
+    {
+      "file": "app/privacy/page.tsx",
+      "evidence": "no contact address or request mechanism visible in what was read; 'Ask us to erase it now, with the wish number' (line 19)",
+      "standsInFor": "a data-erasure request path",
+      "consequence": "asks the user to contact us while the Contact page has no channel set"
+    }
+  ]
+}

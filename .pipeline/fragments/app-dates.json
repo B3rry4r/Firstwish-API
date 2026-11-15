@@ -1,0 +1,185 @@
+{
+ "screenId": "app-dates",
+ "reads": [
+  {
+   "entity": "DateRow",
+   "fields": [
+    {
+     "name": "id",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "name",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "who",
+     "type": "'Partner'|'Family'|'Friend'|'Colleague'",
+     "nullable": false
+    },
+    {
+     "name": "what",
+     "type": "'Birthday'|'Anniversary'|'Graduation'|'Other' (also 'something else' tolerated)",
+     "nullable": false
+    },
+    {
+     "name": "date",
+     "type": "string yyyy-mm-dd (only month and day used; year ignored for next-occurrence)",
+     "nullable": false
+    }
+   ],
+   "cardinality": "list",
+   "filtersOrSort": [
+    "client sort ascending by daysUntil(date) (next occurrence); grouped by month label"
+   ],
+   "pagination": "none",
+   "note": "Account.dates[] in 'fw-account'. daysUntil/dayMonth computed client-side from device date."
+  }
+ ],
+ "actions": [
+  {
+   "name": "addDate",
+   "kind": "create",
+   "entity": "DateRow",
+   "payload": [
+    {
+     "name": "id",
+     "type": "string client uid()",
+     "nullable": false
+    },
+    {
+     "name": "name",
+     "type": "string trimmed",
+     "nullable": false
+    },
+    {
+     "name": "who",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "what",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "date",
+     "type": "string yyyy-mm-dd",
+     "nullable": false
+    }
+   ],
+   "expectedResponse": {
+    "entity": "DateRow",
+    "cardinality": "single"
+   },
+   "note": "DateForm requires name.trim() and date. Toast '<name> is added.'"
+  },
+  {
+   "name": "removeDate",
+   "kind": "delete",
+   "entity": "DateRow",
+   "payload": [
+    {
+     "name": "id",
+     "type": "string",
+     "nullable": false
+    }
+   ],
+   "expectedResponse": {
+    "entity": "none",
+    "cardinality": "single"
+   },
+   "note": "Toast Undo re-adds the same row with the same id (re-create with client id)."
+  },
+  {
+   "name": "makeWishForDate",
+   "kind": "custom",
+   "entity": "DateRow",
+   "payload": [
+    {
+     "name": "for",
+     "type": "name (query string)",
+     "nullable": false
+    },
+    {
+     "name": "what",
+     "type": "what (query string)",
+     "nullable": false
+    }
+   ],
+   "expectedResponse": {
+    "entity": "none",
+    "cardinality": "single"
+   },
+   "note": "Link to /app/new?for=&what=; navigation only, no server call."
+  }
+ ],
+ "authContext": {
+  "requiresAuth": true,
+  "rolesObserved": [
+   "person"
+  ]
+ },
+ "special": {
+  "realtime": false,
+  "uploads": false,
+  "downloads": false,
+  "note": "Screen promises reminders 'a week before, and again the day before'; no code sends them: server timed work required. Reminder channel unspecified."
+ },
+ "uiStatesHandled": [
+  {
+   "state": "loading",
+   "entersWhen": "account === undefined (useAccount before first effect); page returns null, no skeleton drawn",
+   "reachable": "no",
+   "note": "localStorage read is synchronous; `known` module cache makes it undefined only on first mount. Renders null, not a skeleton."
+  },
+  {
+   "state": "empty",
+   "entersWhen": "account.dates.length === 0 -> 'No one yet.'",
+   "reachable": "yes"
+  },
+  {
+   "state": "error",
+   "entersWhen": "never coded: no request exists",
+   "reachable": "no"
+  },
+  {
+   "state": "loaded",
+   "entersWhen": "dates.length > 0, grouped by month",
+   "reachable": "yes"
+  },
+  {
+   "state": "add sheet open",
+   "entersWhen": "adding === true",
+   "reachable": "yes"
+  }
+ ],
+ "uiStatesDesigned": [
+  "loading",
+  "empty",
+  "error",
+  "loaded"
+ ],
+ "stubsObserved": [
+  {
+   "file": "app/app/dates/page.tsx:57",
+   "evidence": "We remind you a week before, and again the day before.",
+   "standsInFor": "date reminder jobs",
+   "consequence": "User is promised reminders that nothing sends."
+  },
+  {
+   "file": "lib/account.ts:6",
+   "evidence": "Nothing here talks to a server yet",
+   "standsInFor": "persistence of dates",
+   "consequence": "Dates live in one browser only; no populate path from a server."
+  },
+  {
+   "file": "components/app/life/DateForm.tsx:111",
+   "evidence": "onAdd({ id: uid(), ...})",
+   "standsInFor": "server-issued id",
+   "consequence": "Client ids (Math.random) conflict with UUIDv7 convention; undo relies on re-creating with the same id."
+  }
+ ]
+}

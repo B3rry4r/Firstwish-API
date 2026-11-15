@@ -1,0 +1,440 @@
+{
+  "screenId": "maker-style",
+  "reads": [
+    {
+      "entity": "Wish",
+      "fields": [
+        {
+          "name": "id",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "no",
+          "type": "string",
+          "nullable": false,
+          "note": "wish number text, empty until paid/sealed (lib/account.ts:12)"
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "call",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "from",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "kind",
+          "type": "string",
+          "nullable": false,
+          "note": "slug: love|celebration|group|wedding|teams|photographers"
+        },
+        {
+          "name": "occasion",
+          "type": "string",
+          "nullable": false,
+          "note": "occasion NAME, not slug"
+        },
+        {
+          "name": "style",
+          "type": "string",
+          "nullable": false,
+          "note": "style slug, or 'studio:<id>'"
+        },
+        {
+          "name": "ticket",
+          "type": "string",
+          "nullable": false,
+          "note": "'' | moment|keepsake|signature|premiere"
+        },
+        {
+          "name": "status",
+          "type": "string",
+          "nullable": false,
+          "note": "draft|sealed|live|resting|removed"
+        },
+        {
+          "name": "step",
+          "type": "number",
+          "nullable": false,
+          "note": "0..5 maker step, drafts"
+        },
+        {
+          "name": "opensAt",
+          "type": "string",
+          "nullable": false,
+          "note": "ISO datetime; '' when unset"
+        },
+        {
+          "name": "photos",
+          "type": "string[]",
+          "nullable": false,
+          "note": "image addresses (today data-URIs)"
+        },
+        {
+          "name": "letter",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "reasons",
+          "type": "string[]",
+          "nullable": false
+        },
+        {
+          "name": "sound",
+          "type": "string",
+          "nullable": false,
+          "note": "voice|song|none"
+        },
+        {
+          "name": "at",
+          "type": "number",
+          "nullable": false,
+          "note": "last changed epoch ms"
+        },
+        {
+          "name": "content",
+          "type": "WishContent",
+          "nullable": true
+        }
+      ],
+      "cardinality": "single",
+      "filtersOrSort": [
+        "by id from URL ?id=; status in draft|sealed only (others redirect to /app/wishes/<id>)"
+      ],
+      "pagination": "none"
+    },
+    {
+      "entity": "MakerNote",
+      "fields": [
+        {
+          "name": "given",
+          "type": "{kind:boolean,occasion:boolean}",
+          "nullable": false
+        },
+        {
+          "name": "chosen",
+          "type": "{kind:boolean,occasion:boolean}",
+          "nullable": false
+        },
+        {
+          "name": "wedding",
+          "type": "string",
+          "nullable": false,
+          "note": "yyyy-mm-dd"
+        },
+        {
+          "name": "now",
+          "type": "boolean",
+          "nullable": false,
+          "note": "opens as soon as sealed"
+        },
+        {
+          "name": "voice",
+          "type": "number",
+          "nullable": false,
+          "note": "seconds of voice note"
+        }
+      ],
+      "cardinality": "single",
+      "filtersOrSort": [
+        "keyed by wish id"
+      ],
+      "pagination": "none",
+      "note": "Browser-local today (localStorage 'fw-maker', lib/maker.ts:28-32). Wish has no place for these; server must either add fields (wedding day, opens-now flag, voice seconds) or keep them as draft metadata. 'now' is derived into opensAt at seal."
+    },
+    {
+      "entity": "StyleManifest (reference data)",
+      "fields": [
+        {
+          "name": "slug",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "level",
+          "type": "string",
+          "nullable": false,
+          "note": "starter|standard|premium; read via lib/levels (GET /v1/styles/levels, currently answered from manifests)"
+        },
+        {
+          "name": "occasions",
+          "type": "Record<kind,string[]>",
+          "nullable": true,
+          "note": "made-for occasions"
+        },
+        {
+          "name": "card.line",
+          "type": "string",
+          "nullable": false
+        }
+      ],
+      "cardinality": "list",
+      "filtersOrSort": [],
+      "pagination": "none",
+      "note": "lib/engine/packages.ts stylesFor(kind,occasion), bundled in client; sorted by occasion match, level, name. Style previews are recorded loops (bundled assets) or live render of this wish."
+    },
+    {
+      "entity": "StudioStyle (creator's own drafts)",
+      "fields": [
+        {
+          "name": "id",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "status",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "base",
+          "type": "string",
+          "nullable": false,
+          "note": "registered style slug it is built on"
+        },
+        {
+          "name": "piece",
+          "type": "string",
+          "nullable": true,
+          "note": "style|opening|ending; style used"
+        },
+        {
+          "name": "made",
+          "type": "{kinds:string[],occasions?:Record<kind,string[]>}",
+          "nullable": false
+        }
+      ],
+      "cardinality": "list",
+      "filtersOrSort": [
+        "newest first (at desc)",
+        "client filters piece==style, base registered, made.kinds/occasions fit wish kind+occasion"
+      ],
+      "pagination": "none",
+      "note": "listDrafts() in lib/studio-api.ts:149, a localStorage seam documented as GET /studio/drafts. Style tile slug becomes 'studio:<id>'. Needs a signed-in creator; for a non-creator the list is empty. Other StudioStyle fields (theme, scenes, art...) are not read here."
+    },
+    {
+      "entity": "StyleLevel",
+      "fields": [
+        {
+          "name": "slug",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "level",
+          "type": "string",
+          "nullable": false,
+          "note": "starter|standard|premium"
+        }
+      ],
+      "cardinality": "list",
+      "filtersOrSort": [],
+      "pagination": "none",
+      "note": "useLevels() calls levels() -> would be GET /v1/styles/levels (lib/levels.ts:9,55); today returns manifest levels, so admin overrides never reach the picker."
+    },
+    {
+      "entity": "Ticket (pricing, read by styleCost)",
+      "fields": [
+        {
+          "name": "slug",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "price",
+          "type": "string",
+          "nullable": false,
+          "note": "naira text e.g. '₦6,000'"
+        },
+        {
+          "name": "was",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "photos",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "lives",
+          "type": "string",
+          "nullable": false
+        }
+      ],
+      "cardinality": "list",
+      "filtersOrSort": [],
+      "pagination": "none",
+      "note": "styleCost() quotes 'Premium · adds ₦X on a Keepsake' by calling offer() (lib/maker.ts:130-139); needs the extra 'A premium style' price (₦4,000 list) x (1-OFF)"
+    }
+  ],
+  "actions": [
+    {
+      "name": "saveDraft",
+      "kind": "update",
+      "entity": "Wish",
+      "payload": [
+        {
+          "name": "wishId",
+          "type": "string"
+        },
+        {
+          "name": "patch",
+          "type": "Partial<Wish> (whole Wish object is written today via saveWish/putWish, lib/maker.ts:40-46)"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "Wish",
+        "cardinality": "single"
+      },
+      "note": "Fired on every change: typing is debounced 300ms (Maker.tsx:65), choices save immediately (set(...,true)); also on pagehide/visibilitychange. Returns false (UI shows 'Not saved: no room left') when localStorage full."
+    },
+    {
+      "name": "pickStyle",
+      "kind": "update",
+      "entity": "Wish",
+      "payload": [
+        {
+          "name": "style",
+          "type": "string (slug or 'studio:<id>')"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "Wish",
+        "cardinality": "single"
+      },
+      "note": "tap saves immediately. The style sets the price tier (tierOfStyle) used by the ticket screen."
+    }
+  ],
+  "authContext": {
+    "requiresAuth": true,
+    "rolesObserved": [
+      "person (owner of the wish); business side when account.pro and (space=='business' or kind teams|photographers)"
+    ],
+    "note": "Maker.tsx:181 renders a blank busy shell if no account; no redirect inside the maker."
+  },
+  "special": {
+    "realtime": false,
+    "uploads": false,
+    "downloads": false
+  },
+  "uiStatesHandled": [
+    {
+      "state": "loading",
+      "entersWhen": "!account || !wish || !screen || !play (blank <div className='fm' aria-busy>), Maker.tsx:181,190",
+      "reachable": "no",
+      "note": "account and draft come from synchronous localStorage read in an effect; one frame at most. With a server read it becomes real and needs the app skeleton."
+    },
+    {
+      "state": "missing",
+      "entersWhen": "?id= names a wish not in account.wishes or status 'removed' (setMissing, Maker.tsx:90,182-189): 'That wish is not here.'",
+      "reachable": "yes",
+      "note": "deleted, or made on another device (copy says so; with a server the other-device case disappears)"
+    },
+    {
+      "state": "redirect",
+      "entersWhen": "wish.status not draft/sealed (live/resting) -> router.replace(/app/wishes/<id>), Maker.tsx:91",
+      "reachable": "yes"
+    },
+    {
+      "state": "error:not-saved",
+      "entersWhen": "saveWish returns false (localStorage quota) -> header text 'Not saved: no room left', Maker.tsx:57,439",
+      "reachable": "yes",
+      "note": "device-storage error; server equivalent is a failed save with retry. No retry control coded."
+    },
+    {
+      "state": "error:server",
+      "entersWhen": "none coded (no network calls on this screen)",
+      "reachable": "no",
+      "note": "designed but not handled"
+    },
+    {
+      "state": "empty",
+      "entersWhen": "not applicable: a draft always has screens",
+      "reachable": "no"
+    },
+    {
+      "state": "loaded",
+      "entersWhen": "wish, screen and play all present",
+      "reachable": "yes"
+    },
+    {
+      "state": "first-row",
+      "entersWhen": "!all: first 4 tiles (chosen first) + 'See all N styles'",
+      "reachable": "yes"
+    },
+    {
+      "state": "all-by-level",
+      "entersWhen": "user taps See all: grouped by level with chips",
+      "reachable": "yes"
+    },
+    {
+      "state": "studio-styles-empty",
+      "entersWhen": "listDrafts returns none or fails (error swallowed: .then(...,()=>{}))",
+      "reachable": "yes",
+      "note": "error is silent: no error state"
+    }
+  ],
+  "uiStatesDesigned": [
+    "loading",
+    "empty",
+    "error",
+    "loaded"
+  ],
+  "stubsObserved": [
+    {
+      "file": "lib/maker.ts:15-46",
+      "evidence": "/* A draft is a Wish in the account, saved on every step */ saveWish writes whole account JSON to localStorage 'fw-account'",
+      "standsInFor": "server draft persistence (create/update draft wish)",
+      "consequence": "drafts exist only in this browser; ?id= link fails on another device (the 'missing' state)"
+    },
+    {
+      "file": "lib/maker.ts:28-32",
+      "evidence": "localStorage 'fw-maker' keyed by wish id",
+      "standsInFor": "server storage of wedding day / opens-now / voice seconds",
+      "consequence": "values lost on another device; wedding day and 'now' have no field on Wish"
+    },
+    {
+      "file": "lib/studio-api.ts:149",
+      "evidence": "listDrafts returns local read().drafts",
+      "standsInFor": "server list of the creator's studio drafts",
+      "consequence": "creator styles cannot follow the person across devices"
+    },
+    {
+      "file": "lib/levels.ts:55-58",
+      "evidence": "/* when the server exists: fetch('/v1/styles/levels') */",
+      "standsInFor": "admin-set style levels",
+      "consequence": "price tier shown on tiles ignores admin moves"
+    },
+    {
+      "file": "lib/maker.ts:410",
+      "evidence": "export const OFF = 0.4; // 40% off until 31 January",
+      "standsInFor": "a discount from a configuration table",
+      "consequence": "tile cost text 'adds ₦X' is computed with a hardcoded 40% off, expiring date only in a comment"
+    }
+  ]
+}

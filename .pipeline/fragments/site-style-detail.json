@@ -1,0 +1,352 @@
+{
+  "screenId": "site-style-detail",
+  "reads": [
+    {
+      "entity": "Style",
+      "fields": [
+        {
+          "name": "slug",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "line",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "feel",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "say",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "motion",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "light",
+          "type": "boolean",
+          "nullable": false
+        },
+        {
+          "name": "look",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "level",
+          "type": "'starter'|'standard'|'premium'",
+          "nullable": false
+        },
+        {
+          "name": "tier",
+          "type": "'Starter'|'Standard'|'Premium' (derived from level)",
+          "nullable": false
+        },
+        {
+          "name": "get",
+          "type": "string (derived from level)",
+          "nullable": false
+        },
+        {
+          "name": "pace",
+          "type": "'scroll'|'swipe'|'stories'|'film'|'stage'",
+          "nullable": false
+        },
+        {
+          "name": "orientation",
+          "type": "'portrait'|'landscape'|'either'",
+          "nullable": false
+        },
+        {
+          "name": "moves",
+          "type": "string (derived: pace, orientation, dimension)",
+          "nullable": false
+        },
+        {
+          "name": "mood",
+          "type": "string[]",
+          "nullable": false
+        },
+        {
+          "name": "kinds",
+          "type": "string[] (kind slugs the style fits; madeFor)",
+          "nullable": false
+        },
+        {
+          "name": "occasions",
+          "type": "Record<kind,string[]>",
+          "nullable": true
+        }
+      ],
+      "cardinality": "single",
+      "filtersOrSort": [
+        "by slug route param; notFound() when absent"
+      ],
+      "pagination": "none",
+      "note": "Reads slug, name, line, feel, say, motion, light, look, tier, get, orientation, moves, plus madeFor kinds. Also allStyles() for count and the 'six more' list (same-kind styles first via madeForKind sorted by level then name, then the rest, first 6) and generateStaticParams(): the page is prebuilt per slug, dynamicParams = false, so a new style needs a rebuild."
+    },
+    {
+      "entity": "StyleRecording",
+      "fields": [
+        {
+          "name": "slug",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "orientation",
+          "type": "'portrait'|'landscape'",
+          "nullable": false
+        },
+        {
+          "name": "src",
+          "type": "string (H.264 mp4 url)",
+          "nullable": false
+        },
+        {
+          "name": "poster",
+          "type": "string (webp url)",
+          "nullable": false
+        },
+        {
+          "name": "w",
+          "type": "number",
+          "nullable": false
+        },
+        {
+          "name": "h",
+          "type": "number",
+          "nullable": false
+        },
+        {
+          "name": "seconds",
+          "type": "number",
+          "nullable": false
+        },
+        {
+          "name": "kb",
+          "type": "number",
+          "nullable": false
+        },
+        {
+          "name": "blur",
+          "type": "string (tiny webp data address)",
+          "nullable": false
+        }
+      ],
+      "cardinality": "single",
+      "filtersOrSort": [
+        "by slug and orientation; falls back to the other orientation"
+      ],
+      "pagination": "none",
+      "note": "lib/previews.ts PREVIEWS literal (recordingOf). Media files; not server data today. Server need is only a media url set if recordings move off the bundle."
+    },
+    {
+      "entity": "StyleLevel",
+      "fields": [
+        {
+          "name": "<slug>",
+          "type": "'starter'|'standard'|'premium'",
+          "nullable": false
+        }
+      ],
+      "cardinality": "single",
+      "filtersOrSort": [],
+      "pagination": "none",
+      "note": "map of slug to level, as lib/levels.ts documents it: GET /v1/styles/levels -> {slug: level}. A slug left out keeps the manifest level. Read through levels() / levelOf / tierOf / stylesAt. Today answers from bundled manifests; fetch is a comment (lib/levels.ts:60)."
+    },
+    {
+      "entity": "Kind",
+      "fields": [
+        {
+          "name": "slug",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "kind",
+          "type": "string (display name)",
+          "nullable": false
+        },
+        {
+          "name": "audience",
+          "type": "'you'|'business'",
+          "nullable": false
+        },
+        {
+          "name": "isKind",
+          "type": "boolean (filtered to true)",
+          "nullable": false
+        }
+      ],
+      "cardinality": "list",
+      "filtersOrSort": [
+        "isKind"
+      ],
+      "pagination": "none",
+      "note": "lib/catalog.ts categories/kinds; href(c) = /wishes/<slug> or /business/<slug>. Reference data. Only the fields the screen uses are listed."
+    },
+    {
+      "entity": "Wish",
+      "fields": [
+        {
+          "name": "no",
+          "type": "string (empty for stand-in showcase wishes)",
+          "nullable": false
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "title",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "kind",
+          "type": "string (kind slug)",
+          "nullable": false
+        },
+        {
+          "name": "occasion",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "style",
+          "type": "string (style slug)",
+          "nullable": false
+        },
+        {
+          "name": "scope",
+          "type": "'showcase'|'public'",
+          "nullable": false
+        },
+        {
+          "name": "href",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "date",
+          "type": "string (display text '07 · 11 · 2026')",
+          "nullable": false
+        },
+        {
+          "name": "img",
+          "type": "string (url)",
+          "nullable": false
+        },
+        {
+          "name": "pos",
+          "type": "string (css background-position)",
+          "nullable": false
+        },
+        {
+          "name": "featured",
+          "type": "boolean",
+          "nullable": true
+        }
+      ],
+      "cardinality": "list",
+      "filtersOrSort": [
+        "scope == 'public' and style == slug (publicIn)",
+        "showcase = first scope 'showcase' wish"
+      ],
+      "pagination": "none",
+      "note": "'Public wishes in <style>' shelf only if non-empty; reads no, name, kind, occasion, href. Always empty today (no public wish in the literal). WishFrames reads showcase.no, name, date; hero lead reads showcase.kind and occasion."
+    }
+  ],
+  "actions": [],
+  "authContext": {
+    "requiresAuth": false,
+    "rolesObserved": []
+  },
+  "special": {
+    "realtime": false,
+    "uploads": false,
+    "downloads": false
+  },
+  "uiStatesHandled": [
+    {
+      "state": "loaded",
+      "entersWhen": "style exists",
+      "reachable": "yes"
+    },
+    {
+      "state": "not-found",
+      "entersWhen": "styleOf(slug) is undefined (notFound())",
+      "reachable": "no",
+      "note": "dynamicParams = false returns 404 before render for slugs outside the registry"
+    },
+    {
+      "state": "loading",
+      "entersWhen": "none coded (recordings fetch inside Preview; poster then video)",
+      "reachable": "no",
+      "note": "page data is synchronous; only media streams in, handled inside Preview (poster, blur, data saver)"
+    },
+    {
+      "state": "empty",
+      "entersWhen": "pub.length === 0 hides the 'Public wishes' section",
+      "reachable": "yes",
+      "note": "always true today"
+    },
+    {
+      "state": "error",
+      "entersWhen": "none coded",
+      "reachable": "no"
+    }
+  ],
+  "uiStatesDesigned": [
+    "loading",
+    "empty",
+    "error",
+    "loaded"
+  ],
+  "stubsObserved": [
+    {
+      "file": "lib/catalog.ts:380",
+      "evidence": "publicIn = wishes.filter(scope === 'public')",
+      "standsInFor": "public wishes by style",
+      "consequence": "no wish has scope 'public', so the section never shows"
+    },
+    {
+      "file": "app/styles/[slug]/page.tsx:46",
+      "evidence": "href={`/w/${s.slug}`} 'Watch it play'",
+      "standsInFor": "a demo wish per style",
+      "consequence": "points to a house showcase wish route (not in this screen)"
+    },
+    {
+      "file": "app/styles/[slug]/page.tsx:25",
+      "evidence": "generateStaticParams over allStyles(); dynamicParams = false",
+      "standsInFor": "server-driven style list",
+      "consequence": "a style added on the server will 404 until redeployed"
+    },
+    {
+      "file": "lib/levels.ts:59-64",
+      "evidence": "fetch commented out; answers from manifests",
+      "standsInFor": "GET /v1/styles/levels",
+      "consequence": "tier and 'how to get it' follow bundled manifests, but the page is prebuilt, so even a live fetch cannot update the static HTML (levels would only apply to client islands)"
+    },
+    {
+      "file": "app/styles/[slug]/page.tsx:27",
+      "evidence": "make = `/app/new?kind=...&style=...`",
+      "standsInFor": "start a wish in this style",
+      "consequence": "a link into the app; no action here"
+    }
+  ]
+}

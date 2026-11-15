@@ -1,0 +1,424 @@
+{
+  "screenId": "maker-cover",
+  "reads": [
+    {
+      "entity": "Wish",
+      "fields": [
+        {
+          "name": "id",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "no",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "call",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "from",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "kind",
+          "type": "string (slug: love|celebration|group|wedding|teams|photographers)",
+          "nullable": false
+        },
+        {
+          "name": "occasion",
+          "type": "string (occasion name, not slug)",
+          "nullable": false
+        },
+        {
+          "name": "style",
+          "type": "string (style slug or 'studio:<id>')",
+          "nullable": false
+        },
+        {
+          "name": "ticket",
+          "type": "string enum moment|keepsake|signature|premiere|'' ",
+          "nullable": false
+        },
+        {
+          "name": "status",
+          "type": "string enum draft|sealed|live|resting|removed",
+          "nullable": false
+        },
+        {
+          "name": "step",
+          "type": "number 0-5",
+          "nullable": false
+        },
+        {
+          "name": "opensAt",
+          "type": "string ISO date-time or ''",
+          "nullable": false
+        },
+        {
+          "name": "photos",
+          "type": "string[] (image addresses; today data URLs)",
+          "nullable": false
+        },
+        {
+          "name": "letter",
+          "type": "string (mirrors content.letter for love)",
+          "nullable": false
+        },
+        {
+          "name": "reasons",
+          "type": "string[] (mirrors content.reasons for love)",
+          "nullable": false
+        },
+        {
+          "name": "content",
+          "type": "WishContent",
+          "nullable": true
+        },
+        {
+          "name": "sound",
+          "type": "string enum voice|song|none",
+          "nullable": false
+        },
+        {
+          "name": "at",
+          "type": "number (last changed ms)",
+          "nullable": false
+        }
+      ],
+      "cardinality": "single",
+      "filtersOrSort": [
+        "by id from ?id= in address; status must be draft or sealed (other statuses redirect to /app/wishes/<id>, removed or unknown shows the missing state); also reads all account wishes to find an untouched draft to reuse (untouched: status draft, step 0, no name/call/opensAt/photos/words)"
+      ],
+      "pagination": "none",
+      "note": "Held today inside the 'fw-account' localStorage Account object (Account.wishes[]). WishContent sub-fields: letter, reasons, memory, story, voices, note, blessing, timeline, details, credits, links, studio, partner, gift, finale, off, on, opening, ending, cover"
+    },
+    {
+      "entity": "WishContent",
+      "fields": [
+        {
+          "name": "letter",
+          "type": "{paras:string[],line?:string}",
+          "nullable": true
+        },
+        {
+          "name": "reasons",
+          "type": "{title:string,note?:string}[]",
+          "nullable": true
+        },
+        {
+          "name": "memory",
+          "type": "{title,text,quote?}",
+          "nullable": true
+        },
+        {
+          "name": "story",
+          "type": "{title?:string,captions:string[]}",
+          "nullable": true
+        },
+        {
+          "name": "voices",
+          "type": "{ask?:string,items:{name,role?,text}[]}",
+          "nullable": true
+        },
+        {
+          "name": "note",
+          "type": "{from,text}",
+          "nullable": true
+        },
+        {
+          "name": "blessing",
+          "type": "{verse,cite?,note?}",
+          "nullable": true
+        },
+        {
+          "name": "timeline",
+          "type": "{when,what}[]",
+          "nullable": true
+        },
+        {
+          "name": "details",
+          "type": "{label,value}[]",
+          "nullable": true
+        },
+        {
+          "name": "credits",
+          "type": "{role,name,handle?}[]",
+          "nullable": true
+        },
+        {
+          "name": "links",
+          "type": "{files?,book?}",
+          "nullable": true
+        },
+        {
+          "name": "studio",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "partner",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "gift",
+          "type": "{title,text}",
+          "nullable": true
+        },
+        {
+          "name": "finale",
+          "type": "{line?,sign?}",
+          "nullable": true
+        },
+        {
+          "name": "off",
+          "type": "ChapterType[]",
+          "nullable": true
+        },
+        {
+          "name": "on",
+          "type": "ChapterType[]",
+          "nullable": true
+        },
+        {
+          "name": "opening",
+          "type": "{id:string,values:Record<string,string>,scene?:string}",
+          "nullable": true
+        },
+        {
+          "name": "ending",
+          "type": "{id,values,scene?}",
+          "nullable": true
+        },
+        {
+          "name": "cover",
+          "type": "{more?:string[],school?,years?,born?}",
+          "nullable": true
+        }
+      ],
+      "cardinality": "single",
+      "filtersOrSort": [],
+      "pagination": "none",
+      "note": "nested in Wish.content"
+    },
+    {
+      "entity": "MakerNote",
+      "fields": [
+        {
+          "name": "given",
+          "type": "{kind:boolean,occasion:boolean}",
+          "nullable": false
+        },
+        {
+          "name": "chosen",
+          "type": "{kind:boolean,occasion:boolean}",
+          "nullable": false
+        },
+        {
+          "name": "wedding",
+          "type": "string yyyy-mm-dd",
+          "nullable": false
+        },
+        {
+          "name": "now",
+          "type": "boolean",
+          "nullable": false
+        },
+        {
+          "name": "voice",
+          "type": "number seconds",
+          "nullable": false
+        }
+      ],
+      "cardinality": "single",
+      "filtersOrSort": [
+        "keyed by wish id"
+      ],
+      "pagination": "none",
+      "note": "localStorage 'fw-maker', per wish id; wedding day and 'opens now' and voice seconds have no place on Wish; given/chosen record whether the opening link named kind/occasion"
+    },
+    {
+      "entity": "Account",
+      "fields": [
+        {
+          "name": "name",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "contact",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "pro",
+          "type": "{plan,business}",
+          "nullable": true
+        }
+      ],
+      "cardinality": "single",
+      "filtersOrSort": [],
+      "pagination": "none",
+      "note": "signed-in person; name is used as Wish.from default, pro.business as default studio"
+    },
+    {
+      "entity": "CatalogStatic",
+      "fields": [],
+      "cardinality": "list",
+      "filtersOrSort": [],
+      "pagination": "none",
+      "note": "lib/catalog.ts kinds/occasions and lib/occasions.ts recipes are static code; recipe.cover.carries decides which one of school/years/born this screen asks. Screen is in the list only when recipe.cover.carries is set (graduation: school, anniversaries: years, birthdays-type: born). Static, stays local or becomes reference data."
+    }
+  ],
+  "actions": [
+    {
+      "name": "startDraft",
+      "kind": "create",
+      "entity": "Wish",
+      "payload": [
+        {
+          "name": "kind",
+          "type": "string"
+        },
+        {
+          "name": "occasion",
+          "type": "string"
+        },
+        {
+          "name": "name",
+          "type": "string (from ?for=)"
+        },
+        {
+          "name": "from",
+          "type": "string (account.name)"
+        },
+        {
+          "name": "studio",
+          "type": "string (account.pro.business) teams/photographers only"
+        },
+        {
+          "name": "style",
+          "type": "string (default styleFor, or ?style= when it fits)"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "Wish",
+        "cardinality": "single"
+      },
+      "note": "When no ?id= is in the address; reuses an untouched draft (keeps its id) else newWish with client-generated id (Math.random base36). Then writes MakerNote with given/chosen flags."
+    },
+    {
+      "name": "setCover",
+      "kind": "update",
+      "entity": "Wish",
+      "payload": [
+        {
+          "name": "wish",
+          "type": "full Wish object (spread of previous plus patch)"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "Wish",
+        "cardinality": "single"
+      },
+      "note": "saveWish(w) writes the whole Wish into Account.wishes on every change, debounced 300ms for typing, immediate for choices, plus on pagehide/visibilitychange/unmount. Returns false when browser storage is full (then the 'Not saved: no room left' notice shows and the change is rolled back for immediate saves). Also each step change writes Wish.step."
+    },
+    {
+      "name": "saveMakerNote",
+      "kind": "update",
+      "entity": "MakerNote",
+      "payload": [
+        {
+          "name": "wishId",
+          "type": "string"
+        },
+        {
+          "name": "note",
+          "type": "MakerNote"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "MakerNote",
+        "cardinality": "single"
+      }
+    }
+  ],
+  "authContext": {
+    "requiresAuth": true,
+    "rolesObserved": [
+      "person"
+    ],
+    "note": "The maker renders blank (aria-busy) until an Account is read; there is no redirect to sign in coded in these files (app/app/new layout/page are 8 and 10 lines; not read beyond the scan map). Business wishes (account.pro and spaceOf==business, or kind teams/photographers) count on a plan."
+  },
+  "special": {
+    "realtime": false,
+    "uploads": false,
+    "downloads": false
+  },
+  "uiStatesHandled": [
+    {
+      "state": "loading",
+      "entersWhen": "account === undefined/null (useAccount) or wish/screen/play not yet set: renders <div class='fm' aria-busy>",
+      "reachable": "no",
+      "note": "Account read from localStorage synchronously in an effect; blank for one frame. After wiring to a server it becomes a real fetch of the draft."
+    },
+    {
+      "state": "missing",
+      "entersWhen": "?id= given and no wish with that id and status != removed in the account (Maker.tsx:89-90)",
+      "reachable": "yes",
+      "note": "'That wish is not here' with Start a new wish link. Reachable on another device because drafts are device-local; after wiring, also for a wish owned by someone else or deleted."
+    },
+    {
+      "state": "no-room",
+      "entersWhen": "saveWish returns false (localStorage quota) -> header says 'Not saved: no room left' (Maker.tsx:439)",
+      "reachable": "yes",
+      "note": "Disappears once the server is the store; replaced by a save failure."
+    },
+    {
+      "state": "loaded",
+      "entersWhen": "always once wish set; single text input bound to wish.content.cover.<school|years|born>"
+    },
+    {
+      "state": "continue-disabled",
+      "entersWhen": "cover value empty (ready = !!v.trim())",
+      "reachable": "yes"
+    }
+  ],
+  "uiStatesDesigned": [
+    "loading",
+    "empty",
+    "error",
+    "loaded"
+  ],
+  "stubsObserved": [
+    {
+      "where": "lib/maker.ts:40-46 saveWish and Maker.tsx:79-118",
+      "evidence": "saveWish writes the draft into localStorage 'fw-account'; the maker reads the draft from useAccount() (localStorage)",
+      "standsInFor": "a server-held draft Wish saved on every step",
+      "consequence": "drafts exist only on one device; ?id= from another device shows 'not here'"
+    },
+    {
+      "where": "lib/maker.ts:28-32 MakerNote in localStorage 'fw-maker'",
+      "evidence": "const KEY = \"fw-maker\"; readNote/writeNote",
+      "standsInFor": "server-held draft state (given/chosen flags, wedding day, opens-now, voice seconds)",
+      "consequence": "these fields have no place on the Wish; a server must store them or the Wish model must grow"
+    },
+    {
+      "where": "lib/account.ts:140 and lib/maker.ts uid()",
+      "evidence": "id: uid() = Math.random().toString(36).slice(2,8) client-side; wishNo random four digits (maker.ts:449)",
+      "standsInFor": "server-issued id (UUIDv7) and wish number issued in order",
+      "consequence": "conventions say server issues both"
+    }
+  ],
+  "note": "Payload of the screen's own write: content.cover.{school|years|born}: string (free text, e.g. 'BSc Architecture', 'Five years', '07 November 2026'; born is free text, not a date). The write is the whole Wish via saveWish."
+}

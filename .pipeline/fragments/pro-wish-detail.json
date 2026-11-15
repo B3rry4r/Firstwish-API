@@ -1,0 +1,218 @@
+{
+  "reads": [
+    {
+      "entity": "ProAccount",
+      "fields": [
+        {
+          "name": "month",
+          "type": "string yyyy-mm",
+          "nullable": false
+        },
+        {
+          "name": "rolled",
+          "type": "number: unused wishes carried in",
+          "nullable": false
+        },
+        {
+          "name": "pack",
+          "type": "number: wishes left from wish packs",
+          "nullable": false
+        },
+        {
+          "name": "business",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "plan",
+          "type": "'starter'|'studio'|'pack' (from Account.pro.plan, else 'pack' if pack>0 or business set; null->'pack')",
+          "nullable": false
+        }
+      ],
+      "cardinality": "single",
+      "filtersOrSort": [],
+      "pagination": "none"
+    },
+    {
+      "entity": "Account",
+      "fields": [
+        {
+          "name": "name",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "contact",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "pro",
+          "type": "{plan:'starter'|'studio',business:string}|null",
+          "nullable": true
+        }
+      ],
+      "cardinality": "single",
+      "filtersOrSort": [],
+      "pagination": "none",
+      "note": "Account.pro read from fw-account via useAccount(); page returns null until account and data exist"
+    },
+    {
+      "entity": "ClientWish",
+      "fields": [
+        {
+          "name": "id",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "no",
+          "type": "string",
+          "nullable": false,
+          "note": "4-digit wish number, issued client-side as max+1 from 900"
+        },
+        {
+          "name": "client",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "kind",
+          "type": "string (catalog slug)",
+          "nullable": false
+        },
+        {
+          "name": "occasion",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "day",
+          "type": "string yyyy-mm-dd (opening day)",
+          "nullable": false
+        },
+        {
+          "name": "createdAt",
+          "type": "string ISO",
+          "nullable": false
+        },
+        {
+          "name": "from",
+          "type": "'month'|'pack'",
+          "nullable": false
+        },
+        {
+          "name": "openedAt",
+          "type": "string ISO",
+          "nullable": true
+        },
+        {
+          "name": "endsAt",
+          "type": "string ISO",
+          "nullable": true
+        },
+        {
+          "name": "madeOwn",
+          "type": "boolean",
+          "nullable": true
+        },
+        {
+          "name": "reveal",
+          "type": "Reveal",
+          "nullable": true
+        },
+        {
+          "name": "sample",
+          "type": "boolean",
+          "nullable": true,
+          "note": "sample marker, local only; not a server field"
+        }
+      ],
+      "cardinality": "single",
+      "filtersOrSort": [
+        "selected by route id from the full list"
+      ],
+      "pagination": "none",
+      "note": "Reveal sub-shape: [\"frames\", \"shoot\", \"city\", \"date\", \"note\", \"credits\", \"fullSet\", \"booking\", \"style\", \"hearts\", \"vault\"]; Frame {src,file,ref?}"
+    }
+  ],
+  "actions": [],
+  "authContext": {
+    "requiresAuth": true,
+    "rolesObserved": [
+      "business (owner)",
+      "business member (login seat)"
+    ]
+  },
+  "special": {
+    "realtime": false,
+    "uploads": false,
+    "downloads": false,
+    "polling": false,
+    "paging": "none; whole lists in one read; refresh on page load, tab visible, after write per conventions",
+    "clipboard": "copies wishLink: `<origin>/w/mine?name=&occasion=&no=&kind=` built client-side"
+  },
+  "derived": [
+    "status from day/endsAt vs now",
+    "facts: Occasion, Opens|Live from (day), Opened (openedAt|'Not yet'), Rests|Rested (endsAt)",
+    "Favourites row = reveal.hearts.length of reveal.frames.length when reveal and vault.set !== 'finals'",
+    "cover = first reveal frame, via frameSrc(ref->Vault file url)"
+  ],
+  "uiStatesHandled": [
+    {
+      "state": "loading",
+      "entersWhen": "usePro(): data === null on first render before the mount effect runs; page returns null (no skeleton)",
+      "reachable": "no",
+      "note": "loadPro() is a synchronous localStorage read in useEffect; null for one commit only. Against a server this becomes reachable and needs the app's skeleton."
+    },
+    {
+      "state": "not-found",
+      "entersWhen": "no wish with id === route id -> Empty 'Not here.'",
+      "reachable": "yes"
+    },
+    {
+      "state": "loaded",
+      "entersWhen": "wish found",
+      "reachable": "yes"
+    },
+    {
+      "state": "saved-toast",
+      "entersWhen": "?saved=1 in URL on arrival",
+      "reachable": "yes"
+    },
+    {
+      "state": "error",
+      "entersWhen": "never rendered on read: usePro has no error branch; failed writes only toast proProblem(e) (codes offline|full|no_wishes|not_found|failed)",
+      "reachable": "no",
+      "note": "No read error state and no retry exist."
+    }
+  ],
+  "uiStatesDesigned": [
+    "loading",
+    "empty",
+    "error",
+    "loaded"
+  ],
+  "stubsObserved": [
+    {
+      "file": "lib/pro-api.ts:5-8",
+      "evidence": "\"Until it exists, the bodies keep the records on this device through lib/pro-data (localStorage, fw-pro)\"",
+      "standsInFor": "business data server (wishes, people, brand, logins, plan, invoices)",
+      "consequence": "all pro screens are blind to a backend; no populate path (populatedBy null)"
+    },
+    {
+      "file": "lib/pro-data.ts:197-261 (samplesFor), view() 278-293",
+      "evidence": "sample wishes/people/invoices/logins merged in while samplesOn() (any fw-account wish id starting 's-')",
+      "standsInFor": "real client rows",
+      "consequence": "seeded rows pass through the real read path and look like server data; samples are never stored unless changed"
+    },
+    {
+      "file": "components/app/pro/ui.tsx:286 (wishLink)",
+      "evidence": "link built from client name, occasion, no, kind query params at /w/mine",
+      "standsInFor": "server-issued public link slug",
+      "consequence": "conventions: link is a readable slug plus 4 random chars; a name-in-query link is not a real receiver link"
+    }
+  ],
+  "notes": "Needs a single-wish read by id, not only the list; reveal frames need signed file URLs.",
+  "screenId": "pro-wish-detail"
+}

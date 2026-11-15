@@ -1,0 +1,199 @@
+{
+  "reads": [
+    {
+      "entity": "Category (kind / business category)",
+      "fields": [
+        {
+          "name": "slug",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "audience",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "kind",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "isKind",
+          "type": "boolean",
+          "nullable": false
+        },
+        {
+          "name": "kindLine",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "eyebrow",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "line",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "nav",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "lead",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "give",
+          "type": "string[]",
+          "nullable": false
+        },
+        {
+          "name": "chapters",
+          "type": "string[]",
+          "nullable": false
+        },
+        {
+          "name": "stepsHead",
+          "type": "{eyebrow,title,lead?}",
+          "nullable": true
+        },
+        {
+          "name": "steps",
+          "type": "{num,title,body,meta?}[]",
+          "nullable": true
+        },
+        {
+          "name": "occasionsHead",
+          "type": "{eyebrow,title,lead?}",
+          "nullable": false
+        },
+        {
+          "name": "occasions",
+          "type": "Occasion[]",
+          "nullable": false
+        },
+        {
+          "name": "defaultStyle",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "note",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "closing",
+          "type": "{title,lead}",
+          "nullable": false
+        }
+      ],
+      "cardinality": "list",
+      "filtersOrSort": [
+        "isKind==true, split by audience you/business"
+      ],
+      "pagination": "none",
+      "source": "lib/catalog.ts categories[] literals (lines 49-277)"
+    },
+    {
+      "entity": "Occasion",
+      "fields": [
+        {
+          "name": "slug",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "what",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "changes",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "opens",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "finale",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "tier",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "next",
+          "type": "string",
+          "nullable": true
+        }
+      ],
+      "cardinality": "list",
+      "filtersOrSort": [
+        "by category"
+      ],
+      "pagination": "none",
+      "source": "lib/catalog.ts categories[].occasions literals"
+    }
+  ],
+  "actions": [],
+  "authContext": {
+    "requiresAuth": false,
+    "rolesObserved": []
+  },
+  "special": {
+    "realtime": false,
+    "uploads": false,
+    "downloads": false,
+    "polling": false,
+    "pagination": "none"
+  },
+  "uiStatesHandled": [
+    {
+      "state": "loading",
+      "entersWhen": "never coded; page is statically rendered / imports are synchronous",
+      "reachable": "no"
+    },
+    {
+      "state": "empty",
+      "entersWhen": "not coded for any list; arrays are non-empty constants",
+      "reachable": "no"
+    },
+    {
+      "state": "error",
+      "entersWhen": "not coded; no request is made",
+      "reachable": "no"
+    },
+    {
+      "state": "loaded",
+      "entersWhen": "always (constants imported at build time)",
+      "reachable": "yes"
+    }
+  ],
+  "uiStatesDesigned": [],
+  "note": "KindCard count=13 for 'you' kinds, default 8 for business kinds. Business kinds in the catalog today: teams only (photographers etc. are isKind false).",
+  "stubsObserved": [],
+  "screenId": "site-wishes"
+}

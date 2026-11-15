@@ -1,0 +1,283 @@
+{
+ "screenId": "app-styles",
+ "reads": [
+  {
+   "entity": "FeedStyle",
+   "fields": [
+    {
+     "name": "slug",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "name",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "level",
+     "type": "'Starter'|'Standard'|'Premium'",
+     "nullable": false
+    },
+    {
+     "name": "creator",
+     "type": "CreatorRef",
+     "nullable": false
+    },
+    {
+     "name": "pace",
+     "type": "'scroll'|'swipe'|'stories'|'film'|'stage'",
+     "nullable": false
+    },
+    {
+     "name": "orientation",
+     "type": "'portrait'|'landscape'|'either'",
+     "nullable": false
+    },
+    {
+     "name": "dimension",
+     "type": "'flat'|'drawn'|'3d'",
+     "nullable": false
+    },
+    {
+     "name": "kinds",
+     "type": "string[]",
+     "nullable": false
+    },
+    {
+     "name": "mood",
+     "type": "string[]",
+     "nullable": false
+    },
+    {
+     "name": "line",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "packaged",
+     "type": "boolean",
+     "nullable": false
+    },
+    {
+     "name": "sample",
+     "type": "{kind:string,occasion:string}",
+     "nullable": false
+    },
+    {
+     "name": "img",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "pos",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "addedAt",
+     "type": "ISO datetime",
+     "nullable": true
+    }
+   ],
+   "cardinality": "list",
+   "filtersOrSort": [
+    "newest first (client order)",
+    "client filters: kind chip via fits(manifest,kind) (falls back to FeedStyle.kinds), pattern chip (pace, orientation landscape, dimension 3d)"
+   ],
+   "pagination": "none (whole list loaded once; client-side filtering)"
+  },
+  {
+   "entity": "Style level",
+   "fields": [
+    {
+     "name": "slug",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "level",
+     "type": "'starter'|'standard'|'premium'",
+     "nullable": false
+    }
+   ],
+   "cardinality": "list",
+   "filtersOrSort": [],
+   "pagination": "none",
+   "note": "tierOf(slug) shown on every card; useLevels() asks levels() once and re-renders when it changes"
+  },
+  {
+   "entity": "Kind",
+   "fields": [
+    {
+     "name": "slug",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "kind",
+     "type": "string",
+     "nullable": false
+    }
+   ],
+   "cardinality": "list",
+   "filtersOrSort": [],
+   "pagination": "none",
+   "note": "chip list from lib/catalog kinds (static content)"
+  },
+  {
+   "entity": "Occasion",
+   "fields": [
+    {
+     "name": "slug",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "name",
+     "type": "string",
+     "nullable": false
+    }
+   ],
+   "cardinality": "list",
+   "filtersOrSort": [
+    "by kind and style fit"
+   ],
+   "pagination": "none",
+   "note": "StylePlayer pickers from lib/occasions + manifest fits (static content)"
+  },
+  {
+   "entity": "Style preview/live content",
+   "fields": [
+    {
+     "name": "slug",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "recorded loop",
+     "type": "media (Preview.tsx)",
+     "nullable": false
+    },
+    {
+     "name": "live style package",
+     "type": "client code bundle",
+     "nullable": false
+    }
+   ],
+   "cardinality": "single",
+   "filtersOrSort": [],
+   "pagination": "none",
+   "note": "Styles are code packages bundled in the web app; a static-ruling candidate. Sample wish content is built locally by sampleWish(kind,occasion,photos)"
+  }
+ ],
+ "actions": [
+  {
+   "name": "useThisStyle",
+   "kind": "custom",
+   "entity": "Wish draft",
+   "payload": [
+    {
+     "name": "kind",
+     "type": "string"
+    },
+    {
+     "name": "occasion",
+     "type": "string"
+    },
+    {
+     "name": "style",
+     "type": "string"
+    }
+   ],
+   "expectedResponse": {
+    "entity": "none (navigation to makeHref(kind,occ,style) on /app/new)",
+    "cardinality": "single"
+   },
+   "note": "link only, no server write"
+  }
+ ],
+ "authContext": {
+  "requiresAuth": true,
+  "rolesObserved": [
+   "person",
+   "creator",
+   "business (shell only)"
+  ],
+  "note": "inside AppShell; no per-screen role"
+ },
+ "special": {
+  "realtime": false,
+  "uploads": false,
+  "downloads": false,
+  "paging": "none; client filtering; address keeps kind, pattern, style query params",
+  "notes": [
+   "previews are recorded loops loaded lazily"
+  ]
+ },
+ "uiStatesHandled": [
+  {
+   "state": "loading",
+   "entersWhen": "none: all=[] before listNewStyles resolves renders the header, chips and the 'No style matches both.' empty block",
+   "reachable": "yes (briefly), but it is drawn as the empty state not a skeleton"
+  },
+  {
+   "state": "empty",
+   "entersWhen": "shown.length===0 -> 'No style matches both.' with 'Show every style'",
+   "reachable": "yes (kind x pattern with no match; also before data arrives)"
+  },
+  {
+   "state": "error",
+   "entersWhen": "none: listNewStyles().then has no catch",
+   "reachable": "no (no handling; a rejection would leave the empty block)"
+  },
+  {
+   "state": "loaded",
+   "entersWhen": "shown.length>0 grid of cards",
+   "reachable": "yes"
+  },
+  {
+   "state": "unpackaged card",
+   "entersWhen": "!s.packaged -> placeholder poster instead of Preview",
+   "reachable": "no (allStyles sets packaged:true for every package)"
+  }
+ ],
+ "uiStatesDesigned": [
+  "loading",
+  "empty",
+  "error",
+  "loaded"
+ ],
+ "stubsObserved": [
+  {
+   "file": "lib/feed-api.ts:215-217 listNewStyles()",
+   "evidence": "'return newStyles()' over PACKAGES; note in scan map: no local store, seam for GET styles",
+   "standsInFor": "server style catalogue",
+   "consequence": "list is the registry bundled in the app"
+  },
+  {
+   "file": "lib/feed-api.ts:262",
+   "evidence": "addedAt: null; 'newest first: the last package added is the newest, until the server dates them'",
+   "standsInFor": "style dates",
+   "consequence": "ordering by registry order"
+  },
+  {
+   "file": "lib/feed-api.ts:240-246",
+   "evidence": "PHOTO map reel/status/gallery hardcoded images",
+   "standsInFor": "style cover images",
+   "consequence": "covers fixed in code"
+  },
+  {
+   "file": "lib/levels.ts:46-49",
+   "evidence": "levels() answers from manifests",
+   "standsInFor": "admin levels",
+   "consequence": "none observed on screen"
+  },
+  {
+   "file": "components/app/feed/Gallery.tsx useLevels/listNewStyles",
+   "evidence": "no catch on listNewStyles()",
+   "standsInFor": "error path",
+   "consequence": "a rejection is silent"
+  }
+ ]
+}

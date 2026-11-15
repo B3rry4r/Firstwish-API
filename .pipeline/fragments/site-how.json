@@ -1,0 +1,50 @@
+{
+  "reads": [],
+  "actions": [],
+  "authContext": {
+    "requiresAuth": false,
+    "rolesObserved": []
+  },
+  "special": {
+    "realtime": false,
+    "uploads": false,
+    "downloads": false,
+    "polling": false,
+    "pagination": "none"
+  },
+  "uiStatesHandled": [
+    {
+      "state": "loading",
+      "entersWhen": "never coded; page is statically rendered / imports are synchronous",
+      "reachable": "no"
+    },
+    {
+      "state": "empty",
+      "entersWhen": "not coded for any list; arrays are non-empty constants",
+      "reachable": "no"
+    },
+    {
+      "state": "error",
+      "entersWhen": "not coded; no request is made",
+      "reachable": "no"
+    },
+    {
+      "state": "loaded",
+      "entersWhen": "always (constants imported at build time)",
+      "reachable": "yes"
+    }
+  ],
+  "uiStatesDesigned": [],
+  "mustComeFromServer": [
+    "nothing required. Prose mentions 'Seven to choose from' (styles, line ~36, now stale vs registry count), chapter list 'Seal, Title, Letter, Reasons, Memory, Timeline, Sound, Blessing, Finale', 'Both included on Signature', 'On Keepsake and above, they can send a reaction' (entitlements by ticket). All stay local copy; could drift from server entitlements."
+  ],
+  "stubsObserved": [
+    {
+      "file": "app/how/page.tsx:36",
+      "evidence": "Seven to choose from.",
+      "standsInFor": "the live style count (allStyles().length, used on home)",
+      "consequence": "copy contradicts the catalogue count"
+    }
+  ],
+  "screenId": "site-how"
+}

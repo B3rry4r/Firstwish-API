@@ -1,0 +1,201 @@
+{
+ "screenId": "creator-published",
+ "reads": [
+  {
+   "entity": "Account",
+   "fields": [
+    {
+     "name": "handle",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "creator",
+     "type": "boolean",
+     "nullable": false
+    }
+   ],
+   "cardinality": "single",
+   "filtersOrSort": [],
+   "pagination": "none"
+  },
+  {
+   "entity": "Wish",
+   "fields": [
+    {
+     "name": "id",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "no",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "name",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "kind",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "occasion",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "style",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "photos",
+     "type": "string[]",
+     "nullable": false
+    },
+    {
+     "name": "isPublic",
+     "type": "boolean",
+     "nullable": true
+    },
+    {
+     "name": "status",
+     "type": "enum draft|sealed|live|resting|removed",
+     "nullable": false
+    },
+    {
+     "name": "at",
+     "type": "number (ms epoch; sort key)",
+     "nullable": false
+    },
+    {
+     "name": "w.photos[0] fallback literal /img/aisha-1.webp",
+     "type": "string",
+     "nullable": true
+    },
+    {
+     "name": "style name via styleOf(w.style).name (catalog lookup, local)",
+     "type": "string",
+     "nullable": true
+    }
+   ],
+   "cardinality": "list",
+   "filtersOrSort": [
+    "isPublic == true",
+    "status != removed",
+    "at desc"
+   ],
+   "pagination": "none"
+  }
+ ],
+ "actions": [
+  {
+   "name": "takeDown",
+   "kind": "update",
+   "entity": "Wish",
+   "payload": [
+    {
+     "name": "wishId",
+     "type": "string"
+    },
+    {
+     "name": "isPublic",
+     "type": "boolean (false)"
+    }
+   ],
+   "expectedResponse": {
+    "entity": "Wish",
+    "cardinality": "single"
+   }
+  },
+  {
+   "name": "undoTakeDown",
+   "kind": "update",
+   "entity": "Wish",
+   "payload": [
+    {
+     "name": "wishId",
+     "type": "string"
+    },
+    {
+     "name": "isPublic",
+     "type": "boolean (true)"
+    }
+   ],
+   "expectedResponse": {
+    "entity": "Wish",
+    "cardinality": "single"
+   },
+   "note": "Toast Undo callback re-reads the account and republishes if the wish still exists."
+  }
+ ],
+ "authContext": {
+  "requiresAuth": true,
+  "rolesObserved": [
+   "creator"
+  ]
+ },
+ "special": {
+  "realtime": false,
+  "uploads": false,
+  "downloads": false
+ },
+ "uiStatesHandled": [
+  {
+   "state": "loading",
+   "entersWhen": "account === undefined; renders null",
+   "reachable": "no",
+   "note": "synchronous local read"
+  },
+  {
+   "state": "signed-out / not creator",
+   "entersWhen": "!account || !account.creator",
+   "reachable": "yes",
+   "note": "renders null"
+  },
+  {
+   "state": "empty",
+   "entersWhen": "shown.length === 0 ('Nothing published.')",
+   "reachable": "yes"
+  },
+  {
+   "state": "loaded",
+   "entersWhen": "shown.length > 0",
+   "reachable": "yes"
+  },
+  {
+   "state": "toast-with-undo",
+   "entersWhen": "after Take down",
+   "reachable": "yes"
+  },
+  {
+   "state": "error",
+   "entersWhen": "none coded",
+   "reachable": "no"
+  }
+ ],
+ "uiStatesDesigned": [
+  "loading",
+  "empty",
+  "error",
+  "loaded"
+ ],
+ "stubsObserved": [
+  {
+   "file": "lib/account.ts:1-3,60-67",
+   "evidence": "'Nothing here talks to a server yet ... held in the browser'; readAccount/writeAccount on localStorage 'fw-account'",
+   "standsInFor": "the signed-in account (handle, bio, creator flag, wishes) from a server",
+   "consequence": "profile data is per-browser; nothing populates it from a backend"
+  },
+  {
+   "file": "app/app/creator/published/page.tsx:14",
+   "evidence": "if (!account || !account.creator) return null",
+   "standsInFor": "loading and not-a-creator states",
+   "consequence": "blank page; no skeleton or error"
+  }
+ ]
+}

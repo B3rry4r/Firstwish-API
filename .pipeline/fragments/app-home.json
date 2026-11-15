@@ -1,0 +1,846 @@
+{
+ "screenId": "app-home",
+ "reads": [
+  {
+   "entity": "FeedWish",
+   "fields": [
+    {
+     "name": "id",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "no",
+     "type": "string",
+     "nullable": true
+    },
+    {
+     "name": "title",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "kind",
+     "type": "string (catalog kind slug)",
+     "nullable": false
+    },
+    {
+     "name": "occasion",
+     "type": "string (occasion slug)",
+     "nullable": false
+    },
+    {
+     "name": "occasionName",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "style",
+     "type": "string (style slug)",
+     "nullable": false
+    },
+    {
+     "name": "img",
+     "type": "string (image address)",
+     "nullable": false
+    },
+    {
+     "name": "pos",
+     "type": "string (css background-position)",
+     "nullable": false
+    },
+    {
+     "name": "creator",
+     "type": "CreatorRef {handle,name,house?}",
+     "nullable": false
+    },
+    {
+     "name": "href",
+     "type": "string (public address to watch)",
+     "nullable": false
+    },
+    {
+     "name": "publishedAt",
+     "type": "ISO datetime",
+     "nullable": true
+    },
+    {
+     "name": "own",
+     "type": "boolean",
+     "nullable": true
+    },
+    {
+     "name": "counts",
+     "type": "{reactions:number,saves:number}",
+     "nullable": false
+    },
+    {
+     "name": "mine",
+     "type": "{reaction:'love'|'joy'|'clap'|'wow'|null,saved:boolean}",
+     "nullable": false
+    }
+   ],
+   "cardinality": "list",
+   "filtersOrSort": [
+    "tab=for-you: all public wishes, featured house wish first, then viewer's own, interleaved with others",
+    "tab=following: only wishes whose creator.handle is in viewer's follows",
+    "cursor"
+   ],
+   "pagination": "infinite-scroll (cursor string, PAGE=12, next:string|null; client loads next page when active >= entries-3)"
+  },
+  {
+   "entity": "FeedStyle",
+   "fields": [
+    {
+     "name": "slug",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "name",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "level",
+     "type": "'Starter'|'Standard'|'Premium'",
+     "nullable": false
+    },
+    {
+     "name": "creator",
+     "type": "CreatorRef",
+     "nullable": false
+    },
+    {
+     "name": "pace",
+     "type": "'scroll'|'swipe'|'stories'|'film'|'stage'",
+     "nullable": false
+    },
+    {
+     "name": "orientation",
+     "type": "'portrait'|'landscape'|'either'",
+     "nullable": false
+    },
+    {
+     "name": "dimension",
+     "type": "'flat'|'drawn'|'3d'",
+     "nullable": false
+    },
+    {
+     "name": "kinds",
+     "type": "string[]",
+     "nullable": false
+    },
+    {
+     "name": "mood",
+     "type": "string[]",
+     "nullable": false
+    },
+    {
+     "name": "line",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "packaged",
+     "type": "boolean",
+     "nullable": false
+    },
+    {
+     "name": "sample",
+     "type": "{kind:string,occasion:string}",
+     "nullable": false
+    },
+    {
+     "name": "img",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "pos",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "addedAt",
+     "type": "ISO datetime",
+     "nullable": true
+    }
+   ],
+   "cardinality": "list",
+   "filtersOrSort": [
+    "tab=styles feed (paged) and listNewStyles (newest first; first 4 as story circles, 4 in aside)"
+   ],
+   "pagination": "infinite-scroll for styles tab; listNewStyles unpaged"
+  },
+  {
+   "entity": "Creator",
+   "fields": [
+    {
+     "name": "handle",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "name",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "house",
+     "type": "boolean",
+     "nullable": true
+    },
+    {
+     "name": "line",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "img",
+     "type": "string",
+     "nullable": true
+    },
+    {
+     "name": "own",
+     "type": "boolean",
+     "nullable": true
+    },
+    {
+     "name": "following",
+     "type": "boolean",
+     "nullable": false
+    },
+    {
+     "name": "counts",
+     "type": "{followers:number|null,wishes:number|null,styles:number|null}",
+     "nullable": false
+    }
+   ],
+   "cardinality": "list",
+   "filtersOrSort": [
+    "house first",
+    "viewer's own profile appended when account.creator && handle"
+   ],
+   "pagination": "none"
+  },
+  {
+   "entity": "Wish (PlayWish)",
+   "fields": [
+    {
+     "name": "wish",
+     "type": "FeedWish",
+     "nullable": false
+    },
+    {
+     "name": "data",
+     "type": "WishData (engine playable content: built via fromWish for own wishes, sampleWish otherwise)",
+     "nullable": false
+    }
+   ],
+   "cardinality": "single",
+   "filtersOrSort": [
+    "by FeedWish.id; error not_found 'This wish is no longer on show.'"
+   ],
+   "pagination": "none"
+  },
+  {
+   "entity": "Account",
+   "fields": [
+    {
+     "name": "name",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "contact",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "here",
+     "type": "'someone'|'business'|'styles'",
+     "nullable": false
+    },
+    {
+     "name": "handle",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "creator",
+     "type": "boolean",
+     "nullable": false
+    },
+    {
+     "name": "bio",
+     "type": "string",
+     "nullable": true
+    },
+    {
+     "name": "pro",
+     "type": "{plan:'starter'|'studio'|'pack',business:string}|null",
+     "nullable": true
+    },
+    {
+     "name": "space",
+     "type": "'me'|'business'|'creator'",
+     "nullable": true
+    },
+    {
+     "name": "pass",
+     "type": "boolean",
+     "nullable": false
+    },
+    {
+     "name": "dates",
+     "type": "DateRow[] {id,name,who,what,date}",
+     "nullable": false
+    },
+    {
+     "name": "wishes",
+     "type": "Wish[]",
+     "nullable": false
+    }
+   ],
+   "cardinality": "single",
+   "filtersOrSort": [
+    "read from localStorage fw-account via useAccount()"
+   ],
+   "pagination": "none",
+   "note": "Fields used by home: name, handle, creator, pass (hides Pass promo), space, pro, dates[] and wishes[] (status,at,step,name,occasion,photos[0],id,isPublic) for the 'Yours' circle (drafts, dates within 14 days, a resting wish)"
+  },
+  {
+   "entity": "Wish (viewer's own, inside Account)",
+   "fields": [
+    {
+     "name": "id",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "no",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "name",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "call",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "from",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "kind",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "occasion",
+     "type": "string (occasion name)",
+     "nullable": false
+    },
+    {
+     "name": "style",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "ticket",
+     "type": "'moment'|'keepsake'|'signature'|'premiere'|''",
+     "nullable": false
+    },
+    {
+     "name": "status",
+     "type": "'draft'|'sealed'|'live'|'resting'|'removed'",
+     "nullable": false
+    },
+    {
+     "name": "step",
+     "type": "number 0-5",
+     "nullable": false
+    },
+    {
+     "name": "opensAt",
+     "type": "ISO datetime ('' when unset)",
+     "nullable": false
+    },
+    {
+     "name": "openedAt",
+     "type": "ISO datetime",
+     "nullable": true
+    },
+    {
+     "name": "endsAt",
+     "type": "ISO datetime",
+     "nullable": true
+    },
+    {
+     "name": "photos",
+     "type": "string[]",
+     "nullable": false
+    },
+    {
+     "name": "letter",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "reasons",
+     "type": "string[]",
+     "nullable": false
+    },
+    {
+     "name": "content",
+     "type": "WishContent",
+     "nullable": true
+    },
+    {
+     "name": "sound",
+     "type": "'voice'|'song'|'none'",
+     "nullable": false
+    },
+    {
+     "name": "reaction",
+     "type": "string",
+     "nullable": true
+    },
+    {
+     "name": "isPublic",
+     "type": "boolean",
+     "nullable": true
+    },
+    {
+     "name": "removedAt",
+     "type": "ISO datetime",
+     "nullable": true
+    },
+    {
+     "name": "at",
+     "type": "number (epoch ms last changed)",
+     "nullable": false
+    }
+   ],
+   "cardinality": "list",
+   "filtersOrSort": [
+    "feed: isPublic && status!='removed', creator side only, newest first; yours.ts: drafts (2 newest), first resting"
+   ],
+   "pagination": "none"
+  },
+  {
+   "entity": "Price/offer configuration (ticket list)",
+   "fields": [
+    {
+     "name": "slug",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "name",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "price",
+     "type": "string naira text e.g. '₦3,000'",
+     "nullable": false
+    },
+    {
+     "name": "was",
+     "type": "string naira text e.g. '₦5,000'",
+     "nullable": false
+    }
+   ],
+   "cardinality": "list",
+   "filtersOrSort": [],
+   "pagination": "none",
+   "note": "Offer promo card: tickets from lib/catalog (moment ₦3,000/₦5,000, keepsake ₦6,000/₦10,000, signature ₦12,000/₦20,000, premiere ₦21,000/₦35,000); hardcoded text 'Until 31 January', '40% off'. Pass card: pass.price ₦20,000, was ₦35,000, term 'A year'. Concierge card: concierge.price/was. Prices must come from server config; offer end date must come from server."
+  },
+  {
+   "entity": "Style level",
+   "fields": [
+    {
+     "name": "slug",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "level",
+     "type": "'starter'|'standard'|'premium'",
+     "nullable": false
+    }
+   ],
+   "cardinality": "list",
+   "filtersOrSort": [],
+   "pagination": "none",
+   "note": "tierOf(slug) used by Aside and Player via lib/levels; today manifest-derived, GET styles/levels contract documented in lib/levels.ts"
+  }
+ ],
+ "actions": [
+  {
+   "name": "react",
+   "kind": "update",
+   "entity": "Reaction",
+   "payload": [
+    {
+     "name": "wish",
+     "type": "string"
+    },
+    {
+     "name": "reaction",
+     "type": "'love'|'joy'|'clap'|'wow'"
+    }
+   ],
+   "expectedResponse": {
+    "entity": "ReactResponse {reaction:Reaction|null,counts:{reactions,saves}}",
+    "cardinality": "single"
+   },
+   "note": "one reaction per person per wish; replaces previous; UI is optimistic and rolls back on failure"
+  },
+  {
+   "name": "unreact",
+   "kind": "delete",
+   "entity": "Reaction",
+   "payload": [
+    {
+     "name": "wish",
+     "type": "string"
+    }
+   ],
+   "expectedResponse": {
+    "entity": "ReactResponse",
+    "cardinality": "single"
+   }
+  },
+  {
+   "name": "save",
+   "kind": "create",
+   "entity": "SavedWish",
+   "payload": [
+    {
+     "name": "wish",
+     "type": "string"
+    }
+   ],
+   "expectedResponse": {
+    "entity": "SaveResponse {saved:true,counts}",
+    "cardinality": "single"
+   }
+  },
+  {
+   "name": "unsave",
+   "kind": "delete",
+   "entity": "SavedWish",
+   "payload": [
+    {
+     "name": "wish",
+     "type": "string"
+    }
+   ],
+   "expectedResponse": {
+    "entity": "SaveResponse {saved:false,counts}",
+    "cardinality": "single"
+   }
+  },
+  {
+   "name": "follow",
+   "kind": "create",
+   "entity": "Follow",
+   "payload": [
+    {
+     "name": "handle",
+     "type": "string"
+    }
+   ],
+   "expectedResponse": {
+    "entity": "FollowResponse {handle,following:true}",
+    "cardinality": "single"
+   },
+   "note": "UI then refetches following feed"
+  },
+  {
+   "name": "unfollow",
+   "kind": "delete",
+   "entity": "Follow",
+   "payload": [
+    {
+     "name": "handle",
+     "type": "string"
+    }
+   ],
+   "expectedResponse": {
+    "entity": "FollowResponse {handle,following:false}",
+    "cardinality": "single"
+   }
+  },
+  {
+   "name": "share",
+   "kind": "custom",
+   "entity": "Share",
+   "payload": [
+    {
+     "name": "wish",
+     "type": "string",
+     "optional": true
+    },
+    {
+     "name": "style",
+     "type": "string",
+     "optional": true
+    }
+   ],
+   "expectedResponse": {
+    "entity": "ShareResponse {url,title,text}",
+    "cardinality": "single"
+   },
+   "note": "records the share and returns link; wish not found -> not_found. Today style share url is /styles/<slug>, wish url is origin+href"
+  },
+  {
+   "name": "setActiveSpace",
+   "kind": "update",
+   "entity": "Account",
+   "payload": [
+    {
+     "name": "space",
+     "type": "'me'|'business'|'creator'"
+    }
+   ],
+   "expectedResponse": {
+    "entity": "Account",
+    "cardinality": "single"
+   },
+   "note": "AppShell + Switcher persist the last-used side via save({...account,space}); whole-blob write to fw-account"
+  },
+  {
+   "name": "addBusiness",
+   "kind": "update",
+   "entity": "Account",
+   "payload": [
+    {
+     "name": "business",
+     "type": "string (trimmed, max 48)"
+    }
+   ],
+   "expectedResponse": {
+    "entity": "Account",
+    "cardinality": "single"
+   },
+   "note": "SetUp BusinessForm: pro={plan:'pack',business}, space='business'"
+  },
+  {
+   "name": "openCreatorProfile",
+   "kind": "update",
+   "entity": "Account",
+   "payload": [
+    {
+     "name": "handle",
+     "type": "string 3-20 [a-z0-9._], no leading/trailing . or _, no doubles, not reserved"
+    },
+    {
+     "name": "bio",
+     "type": "string max 80, optional"
+    }
+   ],
+   "expectedResponse": {
+    "entity": "Account",
+    "cardinality": "single"
+   },
+   "note": "reserved handles are a client list (TAKEN) today: firstwish, admin, support ... uniqueness is not checked server-side"
+  },
+  {
+   "name": "closeBusiness",
+   "kind": "update",
+   "entity": "Account",
+   "payload": [],
+   "expectedResponse": {
+    "entity": "Account",
+    "cardinality": "single"
+   },
+   "note": "pro=null"
+  },
+  {
+   "name": "closeCreatorProfile",
+   "kind": "update",
+   "entity": "Account",
+   "payload": [],
+   "expectedResponse": {
+    "entity": "Account",
+    "cardinality": "single"
+   },
+   "note": "creator=false and every published wish becomes isPublic=false"
+  },
+  {
+   "name": "signOut",
+   "kind": "custom",
+   "entity": "Session",
+   "payload": [],
+   "expectedResponse": {
+    "entity": "none",
+    "cardinality": "single"
+   },
+   "note": "Switcher: writeAccount(null), full reload to /"
+  }
+ ],
+ "authContext": {
+  "requiresAuth": true,
+  "rolesObserved": [
+   "person",
+   "creator (when account.creator)",
+   "business (when account.pro)"
+  ],
+  "note": "AppShell redirects to /sign-up when account===null (setNext keeps the path). Layout is shared by all /app routes."
+ },
+ "special": {
+  "realtime": false,
+  "uploads": false,
+  "downloads": false,
+  "paging": "cursor, infinite scroll, 12 per page",
+  "notes": [
+   "Refetch of whole feed when account 'shape' (creator|handle|wish ids+isPublic) changes",
+   "no polling, no visibility refresh",
+   "WishPlayer fetches one wish on open; plays WishData client side",
+   "Story slides auto-advance with a client timer (DUR)"
+  ]
+ },
+ "uiStatesHandled": [
+  {
+   "state": "loading",
+   "entersWhen": "!pages[tab].loaded renders skeleton article .ff-wait",
+   "reachable": "no today (listFeed is an async function over synchronous local reads: resolves in a microtask); yes once a network call exists"
+  },
+  {
+   "state": "empty (following)",
+   "entersWhen": "tab==='following' && page.loaded && no wish items -> FollowEmpty card with creators to follow",
+   "reachable": "yes (default, no follows)"
+  },
+  {
+   "state": "empty (for-you / styles)",
+   "entersWhen": "none: no empty card; list simply ends with EndCard",
+   "reachable": "no"
+  },
+  {
+   "state": "end",
+   "entersWhen": "page.loaded && !page.next -> EndCard",
+   "reachable": "yes"
+  },
+  {
+   "state": "error",
+   "entersWhen": "initial Promise.all or load(more) rejects -> toast only 'The feed did not load. Try again.'",
+   "reachable": "no today (local reads never throw); no inline error surface or retry button even when coded"
+  },
+  {
+   "state": "wish overlay error",
+   "entersWhen": "getWish rejects -> .ff-player-err with message and Back to the feed",
+   "reachable": "yes (a wish id no longer in publicWishes e.g. unpublished)"
+  },
+  {
+   "state": "action failure",
+   "entersWhen": "react/save/follow/share rejects -> rollback + toast 'That did not go through. Try again.'",
+   "reachable": "no today (localStorage write caught silently)"
+  },
+  {
+   "state": "loaded",
+   "entersWhen": "page.loaded with items",
+   "reachable": "yes"
+  },
+  {
+   "state": "account wait",
+   "entersWhen": "account undefined/null in page.tsx and AppShell -> blank / fa-wait",
+   "reachable": "yes (first paint before localStorage read)"
+  }
+ ],
+ "uiStatesDesigned": [
+  "loading",
+  "empty",
+  "error",
+  "loaded"
+ ],
+ "stubsObserved": [
+  {
+   "file": "lib/feed-api.ts:3-12 and 136-146",
+   "evidence": "Header: 'Until it exists, the implementation serves the real house content... keeps the viewer's own reactions, saves and follows on this device (localStorage, key fw-feed)'; store()/keep()",
+   "standsInFor": "the server for reactions, saves, follows",
+   "consequence": "viewer's reactions/saves/follows never leave the device or survive a new device; counts are 0 + own"
+  },
+  {
+   "file": "lib/feed-api.ts:185-189",
+   "evidence": "countsOf(): base from samplePublicWishes() when samplesOn(), plus 1 if viewer reacted",
+   "standsInFor": "server-side counts",
+   "consequence": "counts invented locally; sample numbers (1284, 932, 2410...) appear when sample wishes are on"
+  },
+  {
+   "file": "lib/feed-fixtures.ts:10-29 and lib/vault-fixtures samplesOn()",
+   "evidence": "sampleCreators(): adaeze.frames, tobi.makes, ruth.writes; 8 samplePublicWishes; gate = any account wish id starting 's-'",
+   "standsInFor": "other creators and their public wishes",
+   "consequence": "feed is only social when sample data is on; otherwise only house wishes and viewer's own"
+  },
+  {
+   "file": "lib/feed-api.ts:262ff newStyles()",
+   "evidence": "'the last package added is the newest, until the server dates them'; addedAt: null",
+   "standsInFor": "style publication dates",
+   "consequence": "'newest' ordering is registry order reversed"
+  },
+  {
+   "file": "lib/feed-api.ts:101-104 listCreators()",
+   "evidence": "counts.followers: null always; house counts.wishes=house.length, styles=PACKAGES.length",
+   "standsInFor": "real follower/wish/style counts",
+   "consequence": "followers never shown"
+  },
+  {
+   "file": "components/app/feed/Feed.tsx:103",
+   "evidence": "hardcoded promos list [kind love, offer, pass, concierge, kind celebration, wedding, group]; gap 3 or 5",
+   "standsInFor": "promo scheduling",
+   "consequence": "fixed; pass promo hidden by account.pass"
+  },
+  {
+   "file": "components/app/feed/Cards.tsx:152-160",
+   "evidence": "'Until 31 January', '40% off every ticket', tickets prices from lib/catalog text",
+   "standsInFor": "offer window and prices from configuration",
+   "consequence": "offer never ends; prices hardcoded text"
+  },
+  {
+   "file": "components/app/feed/Cards.tsx PromoCard pass/concierge",
+   "evidence": "pass.price '₦20,000', concierge.price literals from lib/catalog",
+   "standsInFor": "prices from configuration",
+   "consequence": "hardcoded"
+  },
+  {
+   "file": "lib/feed-api.ts:163 share()",
+   "evidence": "url built from window.location.origin; style share url /styles/<slug>",
+   "standsInFor": "server-recorded share and short link",
+   "consequence": "share not recorded; no share count"
+  },
+  {
+   "file": "lib/account.ts:1-8,56-63",
+   "evidence": "'Nothing here talks to a server yet'; Account blob in localStorage fw-account; writeAccount/readAccount",
+   "standsInFor": "account, sides, wishes, dates store",
+   "consequence": "entire user state is client-owned"
+  },
+  {
+   "file": "components/app/feed/spaces.ts:~85 TAKEN set",
+   "evidence": "client-side reserved-handle list; no uniqueness check",
+   "standsInFor": "handle availability",
+   "consequence": "two accounts can pick same handle"
+  },
+  {
+   "file": "components/app/Switcher.tsx signOut",
+   "evidence": "writeAccount(null) removes localStorage",
+   "standsInFor": "session sign-out",
+   "consequence": "no server session revoked"
+  },
+  {
+   "file": "lib/levels.ts:~46",
+   "evidence": "levels() answers from manifests; 'when the server exists: fetch(/v1/styles/levels)'",
+   "standsInFor": "admin-set style levels",
+   "consequence": "level moves cannot reach the app"
+  }
+ ]
+}

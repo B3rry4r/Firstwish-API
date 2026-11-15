@@ -1,0 +1,360 @@
+{
+ "screenId": "studio-new",
+ "reads": [
+  {
+   "entity": "CreatorState",
+   "fields": [
+    {
+     "name": "credits",
+     "type": "number (shown as 'you have N')",
+     "nullable": false
+    }
+   ],
+   "cardinality": "single",
+   "filtersOrSort": [],
+   "pagination": "none"
+  },
+  {
+   "entity": "Template (creator)",
+   "fields": [
+    {
+     "name": "id",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "name",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "handle",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "house",
+     "type": "boolean (false)",
+     "nullable": false
+    },
+    {
+     "name": "base",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "pace",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "orientation",
+     "type": "portrait|landscape|either",
+     "nullable": false
+    },
+    {
+     "name": "dimension",
+     "type": "flat|drawn|3d",
+     "nullable": false
+    },
+    {
+     "name": "kinds",
+     "type": "string[]",
+     "nullable": false
+    },
+    {
+     "name": "mood",
+     "type": "string[]",
+     "nullable": false
+    },
+    {
+     "name": "line",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "theme",
+     "type": "Theme",
+     "nullable": true
+    }
+   ],
+   "cardinality": "list",
+   "filtersOrSort": [
+    "live styles whose creators allowed template"
+   ],
+   "pagination": "none",
+   "note": "Section 'From creators' hidden when empty (always empty unless samples on)."
+  },
+  {
+   "entity": "Template (house)",
+   "fields": [
+    {
+     "name": "id",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "name",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "base",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "pace",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "dimension",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "kinds",
+     "type": "string[]",
+     "nullable": false
+    },
+    {
+     "name": "orientation",
+     "type": "string",
+     "nullable": false
+    }
+   ],
+   "cardinality": "list",
+   "filtersOrSort": [
+    "grouped client-side by pace"
+   ],
+   "pagination": "none",
+   "note": "From bundled PACKAGES via HOUSE; local, not a server read today."
+  },
+  {
+   "entity": "Moment (opening/ending)",
+   "fields": [
+    {
+     "name": "id",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "name",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "kind",
+     "type": "opening|ending",
+     "nullable": false
+    },
+    {
+     "name": "line",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "level",
+     "type": "starter|standard|premium",
+     "nullable": true
+    },
+    {
+     "name": "serves",
+     "type": "string[]",
+     "nullable": true
+    },
+    {
+     "name": "from",
+     "type": "string source style name",
+     "nullable": true
+    },
+    {
+     "name": "source",
+     "type": "kit|...",
+     "nullable": false
+    }
+   ],
+   "cardinality": "list",
+   "filtersOrSort": [
+    "kind",
+    "search q via matchIds",
+    "group by serves|level|source"
+   ],
+   "pagination": "none",
+   "note": "allMoments(kind) is bundled code (kit-moments.ts), local; fields as consumed by MomentBank."
+  },
+  {
+   "entity": "Occasion",
+   "fields": [
+    {
+     "name": "slug",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "name",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "kind",
+     "type": "string",
+     "nullable": false
+    }
+   ],
+   "cardinality": "list",
+   "filtersOrSort": [
+    "kind == chosen kind"
+   ],
+   "pagination": "none",
+   "note": "occasionsOf(k) from lib/occasions.ts (static catalog)."
+  }
+ ],
+ "actions": [
+  {
+   "name": "saveDraft",
+   "kind": "create",
+   "entity": "StudioStyle (draft)",
+   "payload": [
+    {
+     "name": "style",
+     "type": "StudioStyle: from newStyle(template, brief); for a moment: name '<moment.name> remix', piece moment.kind, [moment.kind]=moment.id, poster {frame: moment.kind}; for blank: newBlankStyle({kinds,occasions,best,name:'My style'}) plus optional brief"
+    }
+   ],
+   "expectedResponse": {
+    "entity": "StudioStyle",
+    "cardinality": "single"
+   },
+   "note": "On success navigates to /app/creator/studio/<id>."
+  },
+  {
+   "name": "draftStyle",
+   "kind": "custom",
+   "entity": "StyleChange",
+   "payload": [
+    {
+     "name": "description",
+     "type": "string (trimmed, max 400)"
+    }
+   ],
+   "expectedResponse": {
+    "entity": "StyleChange",
+    "cardinality": "single"
+   },
+   "note": "4 credits; same stub as studio-home. The piece (style/opening/ending) chosen in the segmented control is NOT sent: request carries only description (gap: opening/ending drafts cannot be told apart)."
+  }
+ ],
+ "authContext": {
+  "requiresAuth": true,
+  "rolesObserved": [
+   "creator"
+  ]
+ },
+ "special": {
+  "realtime": false,
+  "uploads": false,
+  "downloads": false,
+  "note": "Previews are recorded loops or live client renders; no server needed. Text typed (max 400) is kept on the draft as brief."
+ },
+ "uiStatesHandled": [
+  {
+   "state": "loading",
+   "entersWhen": "none for credits/templates (me and theirs are undefined until the promise resolves, UI just omits 'you have N' and the From creators section)",
+   "reachable": "no",
+   "note": "no skeleton; the page blocks only on account (renders null)"
+  },
+  {
+   "state": "signed-out / not creator",
+   "entersWhen": "!account || !account.creator",
+   "reachable": "yes",
+   "note": "renders null"
+  },
+  {
+   "state": "empty",
+   "entersWhen": "theirs.length===0 hides 'From creators'; MomentBank: shown.length===0 shows 'Nothing by that name'",
+   "reachable": "yes"
+  },
+  {
+   "state": "loaded",
+   "entersWhen": "always for house templates",
+   "reachable": "yes"
+  },
+  {
+   "state": "ai-offline-note",
+   "entersWhen": "draftStyle reason 'offline'",
+   "reachable": "yes",
+   "note": "always on Draft it"
+  },
+  {
+   "state": "ai-draft-success",
+   "entersWhen": "draftStyle ok with r.data.base",
+   "reachable": "no",
+   "note": "STUB-4: unreachable"
+  },
+  {
+   "state": "error-toast",
+   "entersWhen": "saveDraft !ok -> say(why(r))",
+   "reachable": "yes",
+   "note": "only storage-full locally; no page error or retry state"
+  },
+  {
+   "state": "blank-sheet",
+   "entersWhen": "blank true",
+   "reachable": "yes"
+  }
+ ],
+ "uiStatesDesigned": [
+  "loading",
+  "empty",
+  "error",
+  "loaded"
+ ],
+ "stubsObserved": [
+  {
+   "file": "lib/studio-api.ts:1-9,64-84",
+   "evidence": "'Today the bodies keep everything on this device (localStorage, under fw-studio)'; read()/write() on Store v3",
+   "standsInFor": "all studio server state: creator plan/credits/reviews, drafts, sent styles, prefs",
+   "consequence": "state is per-browser; nothing populates it from a backend; the monthly renewal happens in read() on the client clock (studio-api.ts:70-73)"
+  },
+  {
+   "file": "lib/studio-api.ts:142",
+   "evidence": "draftStyle(...) { return no('offline'); }",
+   "standsInFor": "AI style drafting (POST /studio/ai/draft in the comment), charged COST.draft credits",
+   "consequence": "'Draft it' never produces a style; both screens show AI_LINE note; the success branch in Home.tsx/Start.tsx is unreachable"
+  },
+  {
+   "file": "components/app/studio/ctx.tsx:115",
+   "evidence": "AI_LINE = 'AI drafting switches on when Firstwish's server is connected...'",
+   "standsInFor": "the offline AI message",
+   "consequence": "user-visible copy that disappears once AI is wired"
+  },
+  {
+   "file": "lib/studio-fixtures.ts:1-3,10",
+   "evidence": "'SAMPLES, for review only ... Nothing here is real'; samplesOn = account.wishes.some(id startsWith 's-')",
+   "standsInFor": "live styles, earnings and templates from other creators",
+   "consequence": "with sample wishes on, the screen shows invented styles (Velvet Hour, Ink and Gold), earnings 14880, and templates (Paper Lanterns, Brass Section); with it off, live, earnings and templates are always empty"
+  },
+  {
+   "file": "lib/studio-api.ts:181-184,200-203",
+   "evidence": "listTemplates: ok(samples.on ? SAMPLE_TEMPLATES : []); getEarnings: samples.on ? SAMPLE_EARNINGS : {rows:[],total:0}",
+   "standsInFor": "other creators' templates; per-month earnings",
+   "consequence": "no real source"
+  },
+  {
+   "file": "app/app/creator/studio/page.tsx:12 and new/page.tsx:12",
+   "evidence": "configure({ samples: samplesOn(account), handle: account.handle }) called during render; if (!account || !account.creator) return null",
+   "standsInFor": "loading/not-creator handling; sets module-level state in studio-api",
+   "consequence": "blank page when signed out or not creator; no skeleton"
+  },
+  {
+   "file": "components/app/studio/Start.tsx:35,49",
+   "evidence": "const STAGE = 'noir'; const stage = HOUSE.find(base===STAGE)",
+   "standsInFor": "which base an opening or ending piece is started on",
+   "consequence": "every opening/ending draft is built on the noir scene set regardless of the creator's choice"
+  }
+ ],
+ "moneyLiteralsInCode": {
+  "COST.draft": 4
+ }
+}

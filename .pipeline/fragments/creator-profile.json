@@ -1,0 +1,256 @@
+{
+ "screenId": "creator-profile",
+ "reads": [
+  {
+   "entity": "Account",
+   "fields": [
+    {
+     "name": "handle",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "bio",
+     "type": "string",
+     "nullable": true
+    },
+    {
+     "name": "creator",
+     "type": "boolean",
+     "nullable": false
+    }
+   ],
+   "cardinality": "single",
+   "filtersOrSort": [],
+   "pagination": "none"
+  },
+  {
+   "entity": "Wish",
+   "fields": [
+    {
+     "name": "id",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "no",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "name",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "kind",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "occasion",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "style",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "photos",
+     "type": "string[]",
+     "nullable": false
+    },
+    {
+     "name": "isPublic",
+     "type": "boolean",
+     "nullable": true
+    },
+    {
+     "name": "status",
+     "type": "enum draft|sealed|live|resting|removed",
+     "nullable": false
+    },
+    {
+     "name": "at",
+     "type": "number (ms epoch; sort key)",
+     "nullable": false
+    },
+    {
+     "name": "w.photos[0] used as tile image; fallback literal /img/aisha-1.webp when empty",
+     "type": "string",
+     "nullable": true
+    }
+   ],
+   "cardinality": "list",
+   "filtersOrSort": [
+    "isPublic == true",
+    "status != removed"
+   ],
+   "pagination": "none (all published wishes rendered; count shown as shown.length)"
+  }
+ ],
+ "actions": [
+  {
+   "name": "saveProfile",
+   "kind": "update",
+   "entity": "Account",
+   "payload": [
+    {
+     "name": "handle",
+     "type": "string (cleaned lowercase [a-z0-9._], 3-20, UI check handleOk)"
+    },
+    {
+     "name": "bio",
+     "type": "string | undefined (trimmed, max 80, empty becomes undefined)"
+    }
+   ],
+   "expectedResponse": {
+    "entity": "Account",
+    "cardinality": "single"
+   }
+  },
+  {
+   "name": "closeCreatorProfile",
+   "kind": "custom",
+   "entity": "Account",
+   "payload": [],
+   "expectedResponse": {
+    "entity": "Account",
+    "cardinality": "single"
+   },
+   "note": "withoutCreator: creator=false, space falls back to 'me' if it was 'creator', every isPublic wish set isPublic=false (wishes stay). CloseSheet shows count of isPublic wishes (not excluding removed) before confirming."
+  },
+  {
+   "name": "openCreatorProfile",
+   "kind": "custom",
+   "entity": "Account",
+   "payload": [
+    {
+     "name": "handle",
+     "type": "string"
+    },
+    {
+     "name": "bio",
+     "type": "string (may be empty)"
+    }
+   ],
+   "expectedResponse": {
+    "entity": "Account",
+    "cardinality": "single"
+   },
+   "note": "CreatorForm/SideGate in SetUp.tsx (used by the gate, not rendered on this page); withCreator sets creator=true, space='creator'."
+  },
+  {
+   "name": "checkHandle",
+   "kind": "custom",
+   "entity": "Account",
+   "payload": [
+    {
+     "name": "handle",
+     "type": "string"
+    }
+   ],
+   "expectedResponse": {
+    "entity": "HandleCheck {free:boolean, problem?:string}",
+    "cardinality": "single"
+   },
+   "note": "Not an action today: UI states '@x is free' with no lookup (stub). The screen needs this answer as the user types."
+  }
+ ],
+ "authContext": {
+  "requiresAuth": true,
+  "rolesObserved": [
+   "creator"
+  ]
+ },
+ "special": {
+  "realtime": false,
+  "uploads": false,
+  "downloads": false,
+  "note": "Re-reads on 'fw-account' and 'storage' events (local); no polling. Wish photo URLs are plain strings."
+ },
+ "uiStatesHandled": [
+  {
+   "state": "loading",
+   "entersWhen": "account === undefined on first render (before useEffect reads localStorage); renders null, not a skeleton",
+   "reachable": "no",
+   "note": "localStorage read is synchronous inside effect; once 'known' is cached it never recurs. Blank, not designed skeleton."
+  },
+  {
+   "state": "signed-out / not creator",
+   "entersWhen": "!account || !account.creator",
+   "reachable": "yes",
+   "note": "renders null (blank); no redirect or gate here"
+  },
+  {
+   "state": "empty",
+   "entersWhen": "shown.length === 0 ('Nothing published yet.' with link to /app/wishes?show=live)",
+   "reachable": "yes"
+  },
+  {
+   "state": "empty-bio",
+   "entersWhen": "!account.bio ('No line yet.')",
+   "reachable": "yes"
+  },
+  {
+   "state": "loaded",
+   "entersWhen": "shown.length > 0",
+   "reachable": "yes"
+  },
+  {
+   "state": "edit-sheet",
+   "entersWhen": "editing true; Save disabled while !handleOk",
+   "reachable": "yes"
+  },
+  {
+   "state": "close-sheet",
+   "entersWhen": "closing true",
+   "reachable": "yes"
+  },
+  {
+   "state": "toast",
+   "entersWhen": "'Profile saved.' after save",
+   "reachable": "yes"
+  },
+  {
+   "state": "error",
+   "entersWhen": "none coded",
+   "reachable": "no",
+   "note": "no failure path exists: saves are local and cannot fail; handle clash cannot occur"
+  }
+ ],
+ "uiStatesDesigned": [
+  "loading",
+  "empty",
+  "error",
+  "loaded"
+ ],
+ "stubsObserved": [
+  {
+   "file": "lib/account.ts:1-3,60-67",
+   "evidence": "'Nothing here talks to a server yet ... held in the browser'; readAccount/writeAccount on localStorage 'fw-account'",
+   "standsInFor": "the signed-in account (handle, bio, creator flag, wishes) from a server",
+   "consequence": "profile data is per-browser; nothing populates it from a backend"
+  },
+  {
+   "file": "components/app/feed/spaces.ts:86,94",
+   "evidence": "const TAKEN = new Set([...firstwish, admin, support ...]); handleProblem checks format and this list only",
+   "standsInFor": "server-side handle uniqueness and reserved-word check",
+   "consequence": "two accounts can claim the same handle; 'is free' message at SetUp.tsx HandleField is shown without any lookup"
+  },
+  {
+   "file": "components/app/feed/spaces.ts:85,97",
+   "evidence": "cleanHandle slice(0,20); handleOk h.length>=3",
+   "standsInFor": "handle rule",
+   "consequence": "UI allows 3-20 chars; conventions.md says 3-30 (needs ruling)"
+  },
+  {
+   "file": "app/app/creator/page.tsx:12-14",
+   "evidence": "if (!account || !account.creator) return null",
+   "standsInFor": "loading and not-a-creator states",
+   "consequence": "blank page while account is undefined, signed out, or not a creator; no skeleton, no error state"
+  }
+ ]
+}

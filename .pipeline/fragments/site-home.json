@@ -1,0 +1,471 @@
+{
+  "reads": [
+    {
+      "entity": "Category (kind / business category)",
+      "fields": [
+        {
+          "name": "slug",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "audience",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "kind",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "isKind",
+          "type": "boolean",
+          "nullable": false
+        },
+        {
+          "name": "kindLine",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "eyebrow",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "line",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "nav",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "lead",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "give",
+          "type": "string[]",
+          "nullable": false
+        },
+        {
+          "name": "chapters",
+          "type": "string[]",
+          "nullable": false
+        },
+        {
+          "name": "stepsHead",
+          "type": "{eyebrow,title,lead?}",
+          "nullable": true
+        },
+        {
+          "name": "steps",
+          "type": "{num,title,body,meta?}[]",
+          "nullable": true
+        },
+        {
+          "name": "occasionsHead",
+          "type": "{eyebrow,title,lead?}",
+          "nullable": false
+        },
+        {
+          "name": "occasions",
+          "type": "Occasion[]",
+          "nullable": false
+        },
+        {
+          "name": "defaultStyle",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "note",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "closing",
+          "type": "{title,lead}",
+          "nullable": false
+        }
+      ],
+      "cardinality": "list",
+      "filtersOrSort": [
+        "isKind",
+        "audience"
+      ],
+      "pagination": "none",
+      "source": "lib/catalog.ts categories[] literals (lines 49-277)"
+    },
+    {
+      "entity": "Style",
+      "fields": [
+        {
+          "name": "slug",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "line",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "feel",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "say",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "motion",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "light",
+          "type": "boolean",
+          "nullable": false
+        },
+        {
+          "name": "look",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "level",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "tier",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "get",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "pace",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "orientation",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "moves",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "mood",
+          "type": "string[]",
+          "nullable": false
+        }
+      ],
+      "cardinality": "list",
+      "filtersOrSort": [
+        "fits kind/occasion (madeForKind)",
+        "by level then name",
+        "menuStyles first (home reel)"
+      ],
+      "pagination": "none",
+      "source": "lib/styles.ts card() = engine manifests (lib/engine/packages.ts, not in scope) + STYLE_COPY in lib/catalog.ts"
+    },
+    {
+      "entity": "Ticket",
+      "fields": [
+        {
+          "name": "slug",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "tag",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "lives",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "photos",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "video",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "style",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "price",
+          "type": "string (formatted naira text e.g. '₦3,000')",
+          "nullable": false
+        },
+        {
+          "name": "was",
+          "type": "string (formatted naira text)",
+          "nullable": false
+        },
+        {
+          "name": "items",
+          "type": "string[]",
+          "nullable": false
+        },
+        {
+          "name": "cta",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "href",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "hot",
+          "type": "boolean",
+          "nullable": true
+        }
+      ],
+      "cardinality": "list",
+      "filtersOrSort": [
+        "fixed order moment,keepsake,signature,premiere"
+      ],
+      "pagination": "none",
+      "source": "lib/catalog.ts tickets[] lines 385-390"
+    },
+    {
+      "entity": "Concierge offer",
+      "fields": [
+        {
+          "name": "name",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "title",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "lead",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "items",
+          "type": "string[]",
+          "nullable": false
+        },
+        {
+          "name": "price",
+          "type": "string ('₦15,000')",
+          "nullable": false
+        },
+        {
+          "name": "was",
+          "type": "string ('₦25,000')",
+          "nullable": false
+        }
+      ],
+      "cardinality": "single",
+      "pagination": "none",
+      "source": "lib/catalog.ts concierge lines 392-399; Concierge.tsx also hardcodes 'Custom / Priced by how many you send / delivered within 3 hours'"
+    },
+    {
+      "entity": "Wish (showcase)",
+      "fields": [
+        {
+          "name": "no",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "title",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "kind",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "occasion",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "style",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "scope",
+          "type": "string showcase|public",
+          "nullable": false
+        },
+        {
+          "name": "href",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "date",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "img",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "pos",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "featured",
+          "type": "boolean",
+          "nullable": true
+        }
+      ],
+      "cardinality": "list",
+      "pagination": "none",
+      "note": "declared in lib/catalog.ts 365-373 but NOT rendered by any in-scope file of this screen; Styles reel uses LivePoster (out of scope)"
+    }
+  ],
+  "actions": [
+    {
+      "name": "toggleTheme",
+      "kind": "custom",
+      "entity": "(local)",
+      "payload": [
+        {
+          "name": "fw-mode",
+          "type": "'light'|'dark'"
+        }
+      ],
+      "expectedResponse": null,
+      "note": "Nav.tsx:58 and lib/cinema.js:322 write localStorage 'fw-mode'; stays local per conventions"
+    }
+  ],
+  "authContext": {
+    "requiresAuth": false,
+    "rolesObserved": []
+  },
+  "special": {
+    "realtime": false,
+    "uploads": false,
+    "downloads": false,
+    "polling": false,
+    "pagination": "none",
+    "note": "Home credits roll and reveal animations are CSS/JS only (lib/cinema.js, CinemaInit); reel scrolls locally"
+  },
+  "localOnly": [
+    "theme fw-mode",
+    "nav panel open state"
+  ],
+  "mustComeFromServerIfPricesLive": [
+    "Hero/How/Pricing/Cta static marketing copy (components/cinema/Pricing.tsx 7-40 repeats the four ticket prices, was-prices and '40% off until 31 January' as JSX literals, not from catalog.tickets)",
+    "Concierge price/was via lib/catalog concierge",
+    "style count shown as allStyles().length in Styles.tsx and Proof.tsx (registry, not server)"
+  ],
+  "inlineLiterals": [
+    {
+      "file": "components/cinema/Pricing.tsx",
+      "what": "4 tickets: Moment ₦3,000/₦5,000, Keepsake ₦6,000/₦10,000, Signature ₦12,000/₦20,000, Premiere ₦21,000/₦35,000 + item lists"
+    },
+    {
+      "file": "components/cinema/Proof.tsx",
+      "what": "3 testimonials (Dayo/Lagos, Ngozi/Toronto, Emeka/Abuja) and 4 'crew' facts, each rendered twice (lines ~20-40)"
+    }
+  ],
+  "uiStatesHandled": [
+    {
+      "state": "loading",
+      "entersWhen": "never coded; page is statically rendered / imports are synchronous",
+      "reachable": "no"
+    },
+    {
+      "state": "empty",
+      "entersWhen": "not coded for any list; arrays are non-empty constants",
+      "reachable": "no"
+    },
+    {
+      "state": "error",
+      "entersWhen": "not coded; no request is made",
+      "reachable": "no"
+    },
+    {
+      "state": "loaded",
+      "entersWhen": "always (constants imported at build time)",
+      "reachable": "yes"
+    }
+  ],
+  "uiStatesDesigned": [],
+  "stubsObserved": [
+    {
+      "file": "components/cinema/Pricing.tsx:12-39",
+      "evidence": "<b>₦3,000</b><s>₦5,000</s> ... duplicated from catalog.tickets, not read from it",
+      "standsInFor": "price / promotion read from configuration tables (conventions: prices never hardcoded)",
+      "consequence": "changing a price or ending the offer needs a code deploy; text can drift from server charges"
+    },
+    {
+      "file": "components/cinema/Proof.tsx:20-26",
+      "evidence": "hardcoded quotes 'She opened it at 12:01 and called me crying' by Dayo, Ngozi, Emeka",
+      "standsInFor": "real testimonials / user-submitted reviews",
+      "consequence": "fabricated-looking social proof; needs an owner ruling whether to keep as copy or source from real reactions"
+    },
+    {
+      "file": "components/cinema/Proof.tsx:25-26",
+      "evidence": "'1 min' running time and 'Release 00:00' facts typed as constants",
+      "standsInFor": "product claims",
+      "consequence": "none functionally; copy only"
+    }
+  ],
+  "screenId": "site-home"
+}

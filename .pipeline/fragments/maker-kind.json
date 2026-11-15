@@ -1,0 +1,389 @@
+{
+  "screenId": "maker-kind",
+  "reads": [
+    {
+      "entity": "Account",
+      "fields": [
+        {
+          "name": "name",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "pro.business",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "pro (business side present?)",
+          "type": "object|null",
+          "nullable": true
+        },
+        {
+          "name": "space",
+          "type": "'me'|'business'|'creator'",
+          "nullable": true
+        }
+      ],
+      "cardinality": "single",
+      "filtersOrSort": [],
+      "pagination": "none",
+      "note": "Maker.tsx:37,98,193 useAccount(): name seeds Wish.from, pro.business seeds content.studio, pro/space decide 'biz'. Signed-in person."
+    },
+    {
+      "entity": "Wish (draft)",
+      "fields": [
+        {
+          "name": "id",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "call",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "from",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "kind",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "occasion",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "style",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "status",
+          "type": "enum draft|sealed|live|resting|removed",
+          "nullable": false
+        },
+        {
+          "name": "step",
+          "type": "number 0..5",
+          "nullable": false
+        },
+        {
+          "name": "at",
+          "type": "number (ms, last changed)",
+          "nullable": false
+        },
+        {
+          "name": "content.studio",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "content.partner",
+          "type": "string",
+          "nullable": true
+        }
+      ],
+      "cardinality": "single",
+      "filtersOrSort": [
+        "by id from ?id=; falls back to the account's first untouched draft (status draft, step 0, no name/call/opensAt/photos/words) when no id"
+      ],
+      "pagination": "none",
+      "note": "Maker.tsx:88-92,99 finds the wish in account.wishes (a list read of every wish, then .find); a server read should be one wish by id plus 'is there an untouched draft'. Shown selected only when note.chosen.kind is true (Maker.tsx:308)."
+    },
+    {
+      "entity": "MakerNote (per wish id)",
+      "fields": [
+        {
+          "name": "given.kind",
+          "type": "boolean",
+          "nullable": false
+        },
+        {
+          "name": "given.occasion",
+          "type": "boolean",
+          "nullable": false
+        },
+        {
+          "name": "chosen.kind",
+          "type": "boolean",
+          "nullable": false
+        },
+        {
+          "name": "chosen.occasion",
+          "type": "boolean",
+          "nullable": false
+        },
+        {
+          "name": "wedding",
+          "type": "string yyyy-mm-dd, '' when unset",
+          "nullable": false
+        },
+        {
+          "name": "now",
+          "type": "boolean",
+          "nullable": false
+        },
+        {
+          "name": "voice",
+          "type": "number seconds",
+          "nullable": false
+        }
+      ],
+      "cardinality": "single",
+      "filtersOrSort": [
+        "keyed by wish id"
+      ],
+      "pagination": "none",
+      "note": "lib/maker.ts:21-32. No home on Wish today; localStorage 'fw-maker'. Server must hold these (draft metadata) or the screen order/answered state is lost across devices."
+    },
+    {
+      "entity": "Kind catalog (static)",
+      "fields": [
+        {
+          "name": "slug",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "kind",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "kindLine",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "defaultStyle",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "occasions[].slug",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "occasions[].name",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "occasions[].opens",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "occasions[].tier",
+          "type": "string",
+          "nullable": false
+        }
+      ],
+      "cardinality": "list",
+      "filtersOrSort": [
+        "catalog order"
+      ],
+      "pagination": "none",
+      "note": "lib/catalog.ts kinds (build-time constants). May stay local; server must accept these slugs and occasion names."
+    }
+  ],
+  "actions": [
+    {
+      "name": "chooseKind",
+      "kind": "update",
+      "entity": "Wish (draft)",
+      "payload": [
+        {
+          "name": "wishId",
+          "type": "string"
+        },
+        {
+          "name": "kind",
+          "type": "string slug",
+          "nullable": false
+        },
+        {
+          "name": "occasion",
+          "type": "string (kept if the new kind also has an occasion of that name, else kind's first occasion)",
+          "nullable": false
+        },
+        {
+          "name": "style",
+          "type": "string (styleFor(kind, current style, occasion))",
+          "nullable": false
+        },
+        {
+          "name": "content.studio",
+          "type": "string (only for teams/photographers: existing studio or account.pro.business or '')",
+          "nullable": false
+        }
+      ],
+      "expectedResponse": {
+        "entity": "Wish (draft)",
+        "cardinality": "single"
+      },
+      "note": "Maker.tsx:212-216 one write, saved immediately; then moves on after 180ms."
+    },
+    {
+      "name": "saveMakerNote",
+      "kind": "update",
+      "entity": "MakerNote (per wish id)",
+      "payload": [
+        {
+          "name": "chosen.kind",
+          "type": "boolean (true)"
+        },
+        {
+          "name": "chosen.occasion",
+          "type": "boolean (kept only if occasion kept)"
+        },
+        {
+          "name": "given.occasion",
+          "type": "boolean"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "MakerNote (per wish id)",
+        "cardinality": "single"
+      },
+      "note": "Maker.tsx:216."
+    },
+    {
+      "name": "advanceStep",
+      "kind": "update",
+      "entity": "Wish (draft)",
+      "payload": [
+        {
+          "name": "wishId",
+          "type": "string"
+        },
+        {
+          "name": "step",
+          "type": "number 0..5"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "Wish (draft)",
+        "cardinality": "single"
+      },
+      "note": "Maker.tsx:135 land(): when moving to a screen of a different step, wish.step is written; also written on Continue (next) and browser back/forward. Saved immediately (flush)."
+    }
+  ],
+  "authContext": {
+    "requiresAuth": true,
+    "rolesObserved": [
+      "person (the signed-in account; business side adds pro.business and a plan check on the ticket step, not this one)"
+    ]
+  },
+  "special": {
+    "realtime": false,
+    "uploads": false,
+    "downloads": false,
+    "polling": false,
+    "paging": "none",
+    "note": "Typing is debounced 300ms then saved; also flushed on pagehide and visibilitychange (Maker.tsx:121-126). Every other control saves immediately (set(..., true)). Choices come from a static catalog, no server read needed."
+  },
+  "uiStatesHandled": [
+    {
+      "state": "loading",
+      "entersWhen": "account === undefined (Maker.tsx:181 renders <div class='fm' aria-busy>) or wish/screen/play not yet set (line 190)",
+      "reachable": "no",
+      "note": "Both resolve from a synchronous localStorage read in an effect; with a server read it becomes reachable and visible. Today it is one frame. No skeleton, just an empty aria-busy div."
+    },
+    {
+      "state": "signed-out blank",
+      "entersWhen": "account === null (nobody signed in): same line 181 branch returns the empty aria-busy div forever",
+      "reachable": "yes",
+      "note": "No sign-in redirect in these files; a signed-out visitor sees a blank screen. Any guard would be in app layout (not in scope)."
+    },
+    {
+      "state": "missing wish (error)",
+      "entersWhen": "?id= given and account.wishes has no wish with that id and status != removed (Maker.tsx:90, 182-189): 'That wish is not here.' + Start a new wish link",
+      "reachable": "yes",
+      "note": "Text says 'made on another device', a localStorage-only symptom; with a server it is a 404/forbidden."
+    },
+    {
+      "state": "redirect to wish page",
+      "entersWhen": "found wish status is not draft or sealed (Maker.tsx:91) -> router.replace(/app/wishes/<id>)",
+      "reachable": "yes"
+    },
+    {
+      "state": "no room (save failed)",
+      "entersWhen": "saveWish returns false because localStorage.setItem throws (lib/maker.ts:43-45); header shows 'Not saved: no room left' (Maker.tsx:439), edit is rolled back for immediate saves",
+      "reachable": "yes",
+      "note": "Only a browser quota failure. It is the only save-error UI, and it has no retry button."
+    },
+    {
+      "state": "none selected",
+      "entersWhen": "note.chosen.kind is false: Continue disabled, no tile marked",
+      "reachable": "yes"
+    },
+    {
+      "state": "screen skipped",
+      "entersWhen": "note.given.kind true (link ?kind= named it) -> screens() omits 'kind' (lib/maker.ts:219)",
+      "reachable": "yes"
+    }
+  ],
+  "uiStatesDesigned": [
+    "loading",
+    "empty",
+    "error",
+    "loaded"
+  ],
+  "stubsObserved": [
+    {
+      "file": "lib/account.ts:4-5",
+      "evidence": "/* The account, kept on this device. Nothing here talks to a server yet ... held in the browser so the whole app can be walked through. */",
+      "standsInFor": "account and wish persistence (reads and writes of drafts)",
+      "consequence": "Every read and write on these screens is localStorage 'fw-account'; no draft exists server-side, so a draft is invisible on another device (the 'not here' state)."
+    },
+    {
+      "file": "lib/maker.ts:40-46",
+      "evidence": "saveWish: readAccount(); putWish; localStorage.setItem('fw-account', ...); writeAccount(next)",
+      "standsInFor": "PATCH of the draft wish",
+      "consequence": "Save is synchronous and cannot fail except by quota; debounce is 300ms (Maker.tsx:65); there is no network failure path to design for."
+    },
+    {
+      "file": "lib/maker.ts:28-32",
+      "evidence": "const KEY = 'fw-maker'; readNote/writeNote on localStorage keyed by wish id",
+      "standsInFor": "per-draft metadata (given/chosen flags, wedding date, now, voice seconds) that the Wish type has no field for",
+      "consequence": "This state is never in the account object, so it would not reach a server if only the Wish were synced."
+    },
+    {
+      "file": "lib/account.ts:81-82",
+      "evidence": "let known: Account | null | undefined; (module cache of the account for this visit)",
+      "standsInFor": "a data cache / session",
+      "consequence": "Makes the loading state effectively unreachable after first read."
+    },
+    {
+      "file": "lib/account.ts:75 (uid)",
+      "evidence": "uid = () => Math.random().toString(36).slice(2, 10)",
+      "standsInFor": "server-issued wish id (conventions: UUIDv7)",
+      "consequence": "Draft ids are 8 char client random strings; server must issue ids or accept/replace them."
+    },
+    {
+      "file": "components/app/maker/Maker.tsx:217",
+      "evidence": "setTimeout(next, 180);",
+      "standsInFor": "waiting for the write to settle",
+      "consequence": "Advances after 180ms regardless of whether the save succeeded (set returns false on no room, still advances)."
+    },
+    {
+      "file": "lib/catalog.ts (kinds)",
+      "evidence": "static list of six kinds",
+      "standsInFor": "the kind/occasion catalog",
+      "consequence": "Choices are build-time constants; changing them needs a web release."
+    }
+  ]
+}

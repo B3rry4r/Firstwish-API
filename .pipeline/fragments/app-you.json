@@ -1,0 +1,280 @@
+{
+ "screenId": "app-you",
+ "reads": [
+  {
+   "entity": "Account",
+   "fields": [
+    {
+     "name": "name",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "contact",
+     "type": "string (phone or email)",
+     "nullable": false
+    },
+    {
+     "name": "here",
+     "type": "'someone'|'business'|'styles'",
+     "nullable": false
+    },
+    {
+     "name": "handle",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "creator",
+     "type": "boolean",
+     "nullable": false
+    },
+    {
+     "name": "bio",
+     "type": "string",
+     "nullable": true
+    },
+    {
+     "name": "pro",
+     "type": "{plan:'starter'|'studio'|'pack',business:string} | null",
+     "nullable": true
+    },
+    {
+     "name": "space",
+     "type": "'me'|'business'|'creator'",
+     "nullable": true
+    },
+    {
+     "name": "pass",
+     "type": "boolean",
+     "nullable": false
+    }
+   ],
+   "cardinality": "single",
+   "filtersOrSort": [],
+   "pagination": "none",
+   "note": "Whole blob in 'fw-account'. contact.includes('@') decides the label Email vs Phone."
+  },
+  {
+   "entity": "Wish (summary)",
+   "fields": [
+    {
+     "name": "id",
+     "type": "string (prefix 's-' marks sample)",
+     "nullable": false
+    },
+    {
+     "name": "isPublic",
+     "type": "boolean",
+     "nullable": true
+    },
+    {
+     "name": "status",
+     "type": "string",
+     "nullable": false
+    }
+   ],
+   "cardinality": "list",
+   "filtersOrSort": [
+    "published count = isPublic && status!=='removed'"
+   ],
+   "pagination": "none",
+   "note": "Used only to count published wishes and to detect sample rows."
+  },
+  {
+   "entity": "DateRow (count)",
+   "fields": [
+    {
+     "name": "count",
+     "type": "number = account.dates.length",
+     "nullable": false
+    }
+   ],
+   "cardinality": "single",
+   "filtersOrSort": [],
+   "pagination": "none"
+  },
+  {
+   "entity": "Plan (reference)",
+   "fields": [
+    {
+     "name": "name",
+     "type": "string (PLANS[pro.plan].name: Pro Starter, Pro Studio, Wish pack)",
+     "nullable": false
+    }
+   ],
+   "cardinality": "single",
+   "filtersOrSort": [
+    "by account.pro.plan"
+   ],
+   "pagination": "none",
+   "note": "lib/pro-data.ts PLANS; price numbers (35000, 105000, 17500) are whole naira numbers there but not shown on this screen."
+  }
+ ],
+ "actions": [
+  {
+   "name": "saveName",
+   "kind": "update",
+   "entity": "Account",
+   "payload": [
+    {
+     "name": "name",
+     "type": "string trimmed, non-empty, differs",
+     "nullable": false
+    }
+   ],
+   "expectedResponse": {
+    "entity": "Account",
+    "cardinality": "single"
+   }
+  },
+  {
+   "name": "setSpace",
+   "kind": "update",
+   "entity": "Account",
+   "payload": [
+    {
+     "name": "space",
+     "type": "'business'|'creator'",
+     "nullable": false
+    }
+   ],
+   "expectedResponse": {
+    "entity": "Account",
+    "cardinality": "single"
+   },
+   "note": "Remember last side; conventions: local only? currently part of the account blob."
+  },
+  {
+   "name": "setTheme",
+   "kind": "custom",
+   "entity": "none",
+   "payload": [
+    {
+     "name": "mode",
+     "type": "'dark'|'light'",
+     "nullable": false
+    }
+   ],
+   "expectedResponse": {
+    "entity": "none",
+    "cardinality": "single"
+   },
+   "note": "Stays local: localStorage 'fw-mode' and html data-mode. No server."
+  },
+  {
+   "name": "toggleSampleWishes",
+   "kind": "custom",
+   "entity": "Wish",
+   "payload": [
+    {
+     "name": "on",
+     "type": "boolean",
+     "nullable": false
+    }
+   ],
+   "expectedResponse": {
+    "entity": "Wish",
+    "cardinality": "list"
+   },
+   "note": "Inserts or removes four seeded wishes (ids s-live, s-sealed, s-rest, s-draft) in the account. Test-only; needs a ruling."
+  },
+  {
+   "name": "signOut",
+   "kind": "custom",
+   "entity": "Session",
+   "payload": [],
+   "expectedResponse": {
+    "entity": "none",
+    "cardinality": "single"
+   },
+   "note": "writeAccount(null), full navigation to '/'. No refresh-token revoke today."
+  },
+  {
+   "name": "closeBusiness",
+   "kind": "custom",
+   "entity": "Account",
+   "payload": [
+    {
+     "name": "side",
+     "type": "'business'",
+     "nullable": false
+    }
+   ],
+   "expectedResponse": {
+    "entity": "Account",
+    "cardinality": "single"
+   },
+   "note": "Delegated to CloseSheet in components/app/feed/SetUp.tsx (not in my scope; it calls save(next) on the Account). Out of scope detail."
+  }
+ ],
+ "authContext": {
+  "requiresAuth": true,
+  "rolesObserved": [
+   "person",
+   "creator",
+   "business (sides listed)"
+  ]
+ },
+ "special": {
+  "realtime": false,
+  "uploads": false,
+  "downloads": false,
+  "note": "Page links to /app/dates, /app/pass, /app/pro, /app/creator. Hash #creator scrolls to section once account loaded. Contact is read-only (no change flow)."
+ },
+ "uiStatesHandled": [
+  {
+   "state": "loading",
+   "entersWhen": "account === undefined (useAccount before first effect); page returns null, no skeleton drawn",
+   "reachable": "no",
+   "note": "localStorage read is synchronous; `known` module cache makes it undefined only on first mount. Renders null, not a skeleton."
+  },
+  {
+   "state": "empty",
+   "entersWhen": "not applicable (always shows sections); sides rows switch between 'Add' and 'Open' on account.pro / account.creator",
+   "reachable": "yes"
+  },
+  {
+   "state": "error",
+   "entersWhen": "never coded: no request exists",
+   "reachable": "no"
+  },
+  {
+   "state": "loaded",
+   "entersWhen": "account truthy",
+   "reachable": "yes"
+  }
+ ],
+ "uiStatesDesigned": [
+  "loading",
+  "empty",
+  "error",
+  "loaded"
+ ],
+ "stubsObserved": [
+  {
+   "file": "app/app/you/page.tsx:176-181",
+   "evidence": "const samples = account.wishes.some((w) => w.id.startsWith(\"s-\")); sampleWishes(account.name)",
+   "standsInFor": "seed switch ('For review.')",
+   "consequence": "Gates every seed source; once the server is the truth this must not touch the server (test affordance)."
+  },
+  {
+   "file": "app/app/you/page.tsx:182",
+   "evidence": "writeAccount(null); window.location.replace('/')",
+   "standsInFor": "server sign-out and token revoke",
+   "consequence": "Sign out is local only."
+  },
+  {
+   "file": "app/app/you/page.tsx:199",
+   "evidence": "Phone/Email label from contact.includes('@')",
+   "standsInFor": "typed contact fields",
+   "consequence": "No phone vs email distinction in data; contact cannot be changed."
+  },
+  {
+   "file": "lib/account.ts:6",
+   "evidence": "Nothing here talks to a server yet",
+   "standsInFor": "account persistence",
+   "consequence": "Profile, sides and pass flag are device-local."
+  }
+ ]
+}

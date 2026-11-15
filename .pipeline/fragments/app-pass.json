@@ -1,0 +1,205 @@
+{
+ "screenId": "app-pass",
+ "reads": [
+  {
+   "entity": "Account",
+   "fields": [
+    {
+     "name": "pass",
+     "type": "boolean",
+     "nullable": false
+    },
+    {
+     "name": "name",
+     "type": "string",
+     "nullable": false
+    }
+   ],
+   "cardinality": "single",
+   "filtersOrSort": [],
+   "pagination": "none"
+  },
+  {
+   "entity": "PassMembership",
+   "fields": [
+    {
+     "name": "since",
+     "type": "ISO datetime string (localStorage 'fw-pass-at'; not on Account)",
+     "nullable": true
+    },
+    {
+     "name": "validUntil",
+     "type": "derived: since + 365 days (client)",
+     "nullable": false
+    },
+    {
+     "name": "wishesUsed",
+     "type": "number: hardcoded 0 (page.tsx:351)",
+     "nullable": false
+    },
+    {
+     "name": "upgradesUsed",
+     "type": "number: hardcoded 0 (page.tsx:352)",
+     "nullable": false
+    }
+   ],
+   "cardinality": "single",
+   "filtersOrSort": [],
+   "pagination": "none",
+   "note": "Purchase date lives in a second localStorage key beside the account; usage counters do not exist."
+  },
+  {
+   "entity": "PassOffer (catalog)",
+   "fields": [
+    {
+     "name": "name",
+     "type": "'Firstwish Pass'",
+     "nullable": false
+    },
+    {
+     "name": "price",
+     "type": "'₦20,000' text",
+     "nullable": false
+    },
+    {
+     "name": "was",
+     "type": "'₦35,000' text",
+     "nullable": false
+    },
+    {
+     "name": "off",
+     "type": "'40% off'",
+     "nullable": false
+    },
+    {
+     "name": "term",
+     "type": "'A year'",
+     "nullable": false
+    },
+    {
+     "name": "wishes",
+     "type": "20 (Keepsake fair use)",
+     "nullable": false
+    },
+    {
+     "name": "upgrades",
+     "type": "4 (Signature upgrades)",
+     "nullable": false
+    },
+    {
+     "name": "items",
+     "type": "[{key,title,line}] six benefits: keepsake, signature, styles, reminders, concierge ('20% off Concierge'), live",
+     "nullable": false
+    }
+   ],
+   "cardinality": "single",
+   "filtersOrSort": [],
+   "pagination": "none",
+   "note": "lib/catalog.ts:419-431. Icons per key assigned locally in page.tsx."
+  }
+ ],
+ "actions": [
+  {
+   "name": "buyPass",
+   "kind": "custom",
+   "entity": "PassMembership",
+   "payload": [
+    {
+     "name": "amount",
+     "type": "string '₦20,000'",
+     "nullable": false
+    },
+    {
+     "name": "way",
+     "type": "'card'|'transfer'|'ussd' (PaySheet)",
+     "nullable": false
+    }
+   ],
+   "expectedResponse": {
+    "entity": "PassMembership",
+    "cardinality": "single",
+    "note": "pass true, since = purchase time"
+   },
+   "note": "On paid: writes localStorage fw-pass-at = now, Account.pass = true, toast."
+  }
+ ],
+ "authContext": {
+  "requiresAuth": true,
+  "rolesObserved": [
+   "person"
+  ]
+ },
+ "special": {
+  "realtime": false,
+  "uploads": false,
+  "downloads": false,
+  "note": "Payment via PaySheet (Paystack in target). No renewal ('Paid once. No automatic charge.'). Pass benefits (wish quota, upgrades, reminders, 20% off Concierge, wishes stay live) are enforced by nothing today."
+ },
+ "uiStatesHandled": [
+  {
+   "state": "loading",
+   "entersWhen": "account === undefined (useAccount before first effect); page returns null, no skeleton drawn",
+   "reachable": "no",
+   "note": "localStorage read is synchronous; `known` module cache makes it undefined only on first mount. Renders null, not a skeleton."
+  },
+  {
+   "state": "empty/inactive (not a member)",
+   "entersWhen": "account.pass === false -> price card and 'Get the Pass'",
+   "reachable": "yes"
+  },
+  {
+   "state": "error",
+   "entersWhen": "never coded: no request exists",
+   "reachable": "no"
+  },
+  {
+   "state": "loaded/active",
+   "entersWhen": "account.pass === true; until = since + 365d if since else 'Valid for a year'",
+   "reachable": "yes",
+   "note": "The 'Valid for a year' fallback shows when pass flag is true but fw-pass-at missing (e.g. other device)."
+  },
+  {
+   "state": "pay busy",
+   "entersWhen": "700ms fake",
+   "reachable": "yes"
+  }
+ ],
+ "uiStatesDesigned": [
+  "loading",
+  "empty",
+  "error",
+  "loaded"
+ ],
+ "stubsObserved": [
+  {
+   "file": "components/app/Pay.tsx:258",
+   "evidence": "setTimeout(() => { onPaid(); }, 700)",
+   "standsInFor": "Paystack charge and webhook",
+   "consequence": "Pass is 'bought' with no money moved."
+  },
+  {
+   "file": "app/app/pass/page.tsx:351-352",
+   "evidence": "<b>0</b> of {WISHES} ... style={{ width: \"0%\" }}",
+   "standsInFor": "real usage counters for Keepsake wishes and Signature upgrades",
+   "consequence": "Usage always shows 0 of 20 and 0 of 4."
+  },
+  {
+   "file": "app/app/pass/page.tsx:302,315,323",
+   "evidence": "SINCE = 'fw-pass-at' kept beside the account until the account holds it",
+   "standsInFor": "Pass purchase date from server",
+   "consequence": "Validity date is per-browser and absent on a new device."
+  },
+  {
+   "file": "app/app/pass/page.tsx:319",
+   "evidence": "since + 365 * DAY",
+   "standsInFor": "server-held expiry",
+   "consequence": "Term hardcoded in client."
+  },
+  {
+   "file": "lib/catalog.ts:419-431",
+   "evidence": "pass = { price: '₦20,000', was: '₦35,000', off: '40% off' }",
+   "standsInFor": "price configuration",
+   "consequence": "Formatted naira text; promo has no end date in code."
+  }
+ ]
+}

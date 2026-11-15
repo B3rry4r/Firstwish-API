@@ -1,0 +1,348 @@
+{
+  "reads": [
+    {
+      "entity": "Account (pro)",
+      "fields": [
+        {
+          "name": "pro.plan",
+          "type": "'starter'|'studio'",
+          "nullable": true
+        },
+        {
+          "name": "pro.business",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "contact",
+          "type": "string",
+          "nullable": false
+        }
+      ],
+      "cardinality": "single",
+      "filtersOrSort": [],
+      "pagination": "none"
+    },
+    {
+      "entity": "Shoot",
+      "fields": [
+        {
+          "name": "id",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "client",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "title",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "date",
+          "type": "date",
+          "nullable": false
+        },
+        {
+          "name": "createdAt",
+          "type": "datetime",
+          "nullable": false
+        },
+        {
+          "name": "proofs",
+          "type": "VaultFile[]",
+          "nullable": false
+        },
+        {
+          "name": "finals",
+          "type": "VaultFile[]",
+          "nullable": false
+        },
+        {
+          "name": "hearts",
+          "type": "string[] proof file ids",
+          "nullable": false
+        },
+        {
+          "name": "proofsReveal",
+          "type": "SentReveal",
+          "nullable": true
+        },
+        {
+          "name": "finalsReveal",
+          "type": "SentReveal",
+          "nullable": true
+        }
+      ],
+      "cardinality": "single",
+      "filtersOrSort": [
+        "found by id from the full list (useVault list then .find)"
+      ],
+      "pagination": "none; Grid shows first 18 files then 'Show all' client-side"
+    },
+    {
+      "entity": "VaultFile",
+      "fields": [
+        {
+          "name": "id",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "size",
+          "type": "number (bytes)",
+          "nullable": false
+        },
+        {
+          "name": "url",
+          "type": "string",
+          "nullable": true
+        }
+      ],
+      "cardinality": "list",
+      "filtersOrSort": [
+        "proofs; finals; hearted = proofs whose id is in shoot.hearts"
+      ],
+      "pagination": "none (shoots can have 1000+ files; needs a thumbnail url per file)"
+    },
+    {
+      "entity": "SentReveal",
+      "fields": [
+        {
+          "name": "wish",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "no",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "sentAt",
+          "type": "datetime",
+          "nullable": false
+        },
+        {
+          "name": "openedAt",
+          "type": "datetime",
+          "nullable": true
+        }
+      ],
+      "cardinality": "single",
+      "filtersOrSort": [],
+      "pagination": "none"
+    },
+    {
+      "entity": "RevealLink (derived)",
+      "fields": [
+        {
+          "name": "link",
+          "type": "string public url for the proofs/finals reveal, derived from wish no and client name",
+          "nullable": false
+        }
+      ],
+      "cardinality": "single",
+      "filtersOrSort": [],
+      "pagination": "none"
+    }
+  ],
+  "actions": [
+    {
+      "name": "uploadFinals",
+      "kind": "custom",
+      "entity": "Shoot",
+      "payload": [
+        {
+          "name": "shoot",
+          "type": "string id",
+          "nullable": false
+        },
+        {
+          "name": "set",
+          "type": "'finals'",
+          "nullable": false
+        },
+        {
+          "name": "files",
+          "type": "File[] image/*, many, with progress",
+          "nullable": false
+        }
+      ],
+      "expectedResponse": {
+        "entity": "{shoot:Shoot, added:number, previews:number}",
+        "cardinality": "single"
+      }
+    },
+    {
+      "name": "removeShoot",
+      "kind": "delete",
+      "entity": "Shoot",
+      "payload": [
+        {
+          "name": "id",
+          "type": "string",
+          "nullable": false
+        }
+      ],
+      "expectedResponse": {
+        "entity": "none",
+        "cardinality": "single"
+      },
+      "note": "frees space; closes finals download"
+    },
+    {
+      "name": "copyLink",
+      "kind": "custom",
+      "entity": "RevealLink",
+      "payload": [
+        {
+          "name": "set",
+          "type": "'proofs'|'finals'",
+          "nullable": false
+        }
+      ],
+      "expectedResponse": {
+        "entity": "string link (clipboard, local)",
+        "cardinality": "single"
+      }
+    },
+    {
+      "name": "copyNames",
+      "kind": "custom",
+      "entity": "(local clipboard)",
+      "payload": [
+        {
+          "name": "names",
+          "type": "string[] hearted proof file names",
+          "nullable": false
+        }
+      ],
+      "expectedResponse": {
+        "entity": "none",
+        "cardinality": "single"
+      }
+    }
+  ],
+  "authContext": {
+    "requiresAuth": true,
+    "rolesObserved": [
+      "business (owner/member; Pro account with account.pro)"
+    ]
+  },
+  "special": {
+    "realtime": false,
+    "uploads": "finals images with progress",
+    "downloads": false,
+    "pagination": "none",
+    "queryParams": "?added=&previews=&sent=proofs|finals read once for a toast then stripped"
+  },
+  "uiStatesHandled": [
+    {
+      "state": "loading",
+      "entersWhen": "!shoots && !error (skeleton)",
+      "reachable": "yes",
+      "note": "microtask today"
+    },
+    {
+      "state": "error",
+      "entersWhen": "!shoots && error",
+      "reachable": "no",
+      "note": "list never throws today"
+    },
+    {
+      "state": "not-found",
+      "entersWhen": "shoots loaded and no shoot with id ('Not in the Vault.')",
+      "reachable": "yes"
+    },
+    {
+      "state": "loaded-by-status",
+      "entersWhen": "shootStatus: uploaded (Send the proofs) | proofs (Waiting for hearts) | favourites (N favourites back, Upload finals) | finals set but not delivered (Deliver the finals) | finals delivered (Delivered)",
+      "reachable": "yes"
+    },
+    {
+      "state": "no-hearts",
+      "entersWhen": "hearts.length === 0: heart filter hidden",
+      "reachable": "yes"
+    },
+    {
+      "state": "upload-progress",
+      "entersWhen": "progress != null while uploadFinals runs",
+      "reachable": "yes"
+    },
+    {
+      "state": "upload-error",
+      "entersWhen": "uploadFinals throws",
+      "reachable": "yes"
+    },
+    {
+      "state": "remove-error",
+      "entersWhen": "removeShoot throws",
+      "reachable": "yes"
+    },
+    {
+      "state": "blank",
+      "entersWhen": "!account || !data",
+      "reachable": "yes"
+    }
+  ],
+  "uiStatesDesigned": [
+    "loading",
+    "empty",
+    "error",
+    "loaded"
+  ],
+  "stubsObserved": [
+    {
+      "file": "lib/vault-api.ts:109-123",
+      "evidence": "live.set(id, URL.createObjectURL(f)); preview() makes a 240px jpeg data URL for at most PREVIEWS=240 files; the full file is never kept; header says 'Until it exists, the implementation keeps the shoot records on this device'",
+      "standsInFor": "upload of the original file to storage, and a served file url",
+      "consequence": "An uploaded shoot has no real file anywhere; after reload only small previews (some none) exist; finals download and reveal playback have no real bytes (STUB-12)"
+    },
+    {
+      "file": "components/app/pro/vault.tsx:18-21",
+      "evidence": "revealLink = origin + /w/mine?name=&occasion=&no=<no>&kind=photographers",
+      "standsInFor": "a server-issued public link for the reveal",
+      "consequence": "Link is built on the client from the wish number and client name; no sealed/open link semantics, anyone with the number can open"
+    },
+    {
+      "file": "lib/vault-fixtures.ts:11-70",
+      "evidence": "samplesOn() true when fw-account.wishes has an id starting 's-'; sampleShoots() builds six hardcoded shoots (ids sample-*, clients Adaeze and Tobi, The Okafor family, Ruth and Daniel, Zainab Musa, Kemi Adebayo, Chioma Eze) with /img/aisha-N.webp urls",
+      "standsInFor": "server data",
+      "consequence": "Sample rows are merged into every read path while on; a human cannot tell them from real rows"
+    },
+    {
+      "file": "lib/vault-api.ts:308",
+      "evidence": "online = navigator.onLine === false -> VaultError('offline')",
+      "standsInFor": "real request failure",
+      "consequence": "'offline' is the only network error; with no network calls, failures never occur otherwise (full is a localStorage quota error)"
+    },
+    {
+      "file": "lib/vault-api.ts:287-292",
+      "evidence": "shootsHere() fills openedAt from loadPro().wishes[].openedAt",
+      "standsInFor": "server-recorded first-open of a reveal",
+      "consequence": "openedAt comes from a field in the browser's own store"
+    },
+    {
+      "file": "lib/vault-api.ts:176-198",
+      "evidence": "sendFavourites writes hearts into fw-pro and fw-vault from the same browser",
+      "standsInFor": "the client's hearts arriving from the receiver's device",
+      "consequence": "The business sees hearts only if the 'client' used the same browser; no cross-device path exists"
+    },
+    {
+      "file": "app/app/pro/vault/[id]/page.tsx:66",
+      "evidence": "'Saved. Copy the link to send it.' / Play opens revealLink in a new tab",
+      "standsInFor": "an actual send (email/WhatsApp) to the client",
+      "consequence": "Sending a reveal only creates a record; the business copies the link by hand"
+    }
+  ],
+  "screenId": "pro-vault-shoot"
+}

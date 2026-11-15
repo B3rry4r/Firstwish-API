@@ -1,0 +1,300 @@
+{
+  "screenId": "site-styles",
+  "reads": [
+    {
+      "entity": "Style",
+      "fields": [
+        {
+          "name": "slug",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "line",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "feel",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "say",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "motion",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "light",
+          "type": "boolean",
+          "nullable": false
+        },
+        {
+          "name": "look",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "level",
+          "type": "'starter'|'standard'|'premium'",
+          "nullable": false
+        },
+        {
+          "name": "tier",
+          "type": "'Starter'|'Standard'|'Premium' (derived from level)",
+          "nullable": false
+        },
+        {
+          "name": "get",
+          "type": "string (derived from level)",
+          "nullable": false
+        },
+        {
+          "name": "pace",
+          "type": "'scroll'|'swipe'|'stories'|'film'|'stage'",
+          "nullable": false
+        },
+        {
+          "name": "orientation",
+          "type": "'portrait'|'landscape'|'either'",
+          "nullable": false
+        },
+        {
+          "name": "moves",
+          "type": "string (derived: pace, orientation, dimension)",
+          "nullable": false
+        },
+        {
+          "name": "mood",
+          "type": "string[]",
+          "nullable": false
+        },
+        {
+          "name": "kinds",
+          "type": "string[] (kind slugs the style fits; madeFor)",
+          "nullable": false
+        },
+        {
+          "name": "occasions",
+          "type": "Record<kind,string[]>",
+          "nullable": true
+        }
+      ],
+      "cardinality": "list",
+      "filtersOrSort": [
+        "registry order (allStyles)"
+      ],
+      "pagination": "none",
+      "note": "StyleCatalog reads all of: slug, name, line, feel, mood[], pace (text search over name+line+feel+mood+pace), tier (level filter and badge), madeFor(slug) kinds (kind filter and tag links). StyleMarquee reads staged(): slug, name, tier, light, look, say. Page reads allStyles().length and stylesAt(level).length for three counts."
+    },
+    {
+      "entity": "StyleLevel",
+      "fields": [
+        {
+          "name": "<slug>",
+          "type": "'starter'|'standard'|'premium'",
+          "nullable": false
+        }
+      ],
+      "cardinality": "single",
+      "filtersOrSort": [],
+      "pagination": "none",
+      "note": "map of slug to level, as lib/levels.ts documents it: GET /v1/styles/levels -> {slug: level}. A slug left out keeps the manifest level. Read through levels() / levelOf / tierOf / stylesAt. Today answers from bundled manifests; fetch is a comment (lib/levels.ts:60)."
+    },
+    {
+      "entity": "StyleLevelCounts",
+      "fields": [
+        {
+          "name": "starter",
+          "type": "number",
+          "nullable": false
+        },
+        {
+          "name": "standard",
+          "type": "number",
+          "nullable": false
+        },
+        {
+          "name": "premium",
+          "type": "number",
+          "nullable": false
+        }
+      ],
+      "cardinality": "single",
+      "filtersOrSort": [],
+      "pagination": "none",
+      "note": "Derived on the client from levels (stylesAt(level).length)."
+    },
+    {
+      "entity": "Kind",
+      "fields": [
+        {
+          "name": "slug",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "kind",
+          "type": "string (display name)",
+          "nullable": false
+        },
+        {
+          "name": "audience",
+          "type": "'you'|'business'",
+          "nullable": false
+        },
+        {
+          "name": "isKind",
+          "type": "boolean (filtered to true)",
+          "nullable": false
+        }
+      ],
+      "cardinality": "list",
+      "filtersOrSort": [
+        "isKind"
+      ],
+      "pagination": "none",
+      "note": "lib/catalog.ts categories/kinds; href(c) = /wishes/<slug> or /business/<slug>. Reference data. Only the fields the screen uses are listed."
+    },
+    {
+      "entity": "StyleRecording",
+      "fields": [
+        {
+          "name": "slug",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "orientation",
+          "type": "'portrait'|'landscape'",
+          "nullable": false
+        },
+        {
+          "name": "src",
+          "type": "string (H.264 mp4 url)",
+          "nullable": false
+        },
+        {
+          "name": "poster",
+          "type": "string (webp url)",
+          "nullable": false
+        },
+        {
+          "name": "w",
+          "type": "number",
+          "nullable": false
+        },
+        {
+          "name": "h",
+          "type": "number",
+          "nullable": false
+        },
+        {
+          "name": "seconds",
+          "type": "number",
+          "nullable": false
+        },
+        {
+          "name": "kb",
+          "type": "number",
+          "nullable": false
+        },
+        {
+          "name": "blur",
+          "type": "string (tiny webp data address)",
+          "nullable": false
+        }
+      ],
+      "cardinality": "single",
+      "filtersOrSort": [
+        "by slug and orientation; falls back to the other orientation"
+      ],
+      "pagination": "none",
+      "note": "lib/previews.ts PREVIEWS literal (recordingOf). Media files; not server data today. Server need is only a media url set if recordings move off the bundle."
+    }
+  ],
+  "actions": [],
+  "authContext": {
+    "requiresAuth": false,
+    "rolesObserved": []
+  },
+  "special": {
+    "realtime": false,
+    "uploads": false,
+    "downloads": false,
+    "levelsRefresh": "useLevels() calls levels() once on mount (lib/use-levels.ts) and re-renders when the answer differs; no polling"
+  },
+  "uiStatesHandled": [
+    {
+      "state": "loaded",
+      "entersWhen": "found.length > 0",
+      "reachable": "yes"
+    },
+    {
+      "state": "empty",
+      "entersWhen": "found.length === 0 (the 'No style matches that' message)",
+      "reachable": "yes",
+      "note": "reached by search or filter returning no style; with the bundled registry the unfiltered list is never empty"
+    },
+    {
+      "state": "loading",
+      "entersWhen": "none coded: levels() resolves from manifests before paint; a style list renders from manifests immediately",
+      "reachable": "no",
+      "note": "useLevels never shows a loading UI"
+    },
+    {
+      "state": "error",
+      "entersWhen": "none coded: levels() failure is swallowed by .catch(() => {})",
+      "reachable": "no",
+      "note": "a failed levels fetch silently keeps manifest levels"
+    },
+    {
+      "state": "paged",
+      "entersWhen": "found.length > shown (Show N more)",
+      "reachable": "yes",
+      "note": "PAGE = 8 per page, client-side slice"
+    }
+  ],
+  "uiStatesDesigned": [
+    "loading",
+    "empty",
+    "error",
+    "loaded"
+  ],
+  "stubsObserved": [
+    {
+      "file": "lib/levels.ts:59-64",
+      "evidence": "/* when the server exists: const answer = await (await fetch(\"/v1/styles/levels\")).json(); */  and const answer = knownLevels();",
+      "standsInFor": "GET /v1/styles/levels (admin-set style levels)",
+      "consequence": "levels always come from bundled manifests; admin level moves never reach the page"
+    },
+    {
+      "file": "lib/levels.ts:25-27",
+      "evidence": "comment: 'Today there is no server, so levels() answers from the manifests'",
+      "standsInFor": "the levels service",
+      "consequence": "same"
+    },
+    {
+      "file": "components/site/StyleCatalog.tsx:8-9",
+      "evidence": "const PAGE = 8; LEVELS = ['Starter','Standard','Premium']",
+      "standsInFor": "pagination and level names",
+      "consequence": "client-side paging of a bundled list; with a server the list would page by cursor or be fully loaded"
+    },
+    {
+      "file": "app/styles/page.tsx:21-23",
+      "evidence": "Act copy 'On every ticket', 'From Keepsake up', 'From Signature up' with counts from stylesAt",
+      "standsInFor": "which ticket each level needs (also in LEVEL_GET in lib/catalog.ts:355)",
+      "consequence": "entitlement rule is prose copy, repeated; level-to-ticket mapping is not a data source"
+    }
+  ]
+}

@@ -1,0 +1,307 @@
+{
+  "screenId": "maker-ending",
+  "reads": [
+    {
+      "entity": "Wish",
+      "fields": [
+        {
+          "name": "id",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "no",
+          "type": "string",
+          "nullable": false,
+          "note": "wish number text, empty until paid/sealed (lib/account.ts:12)"
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "call",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "from",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "kind",
+          "type": "string",
+          "nullable": false,
+          "note": "slug: love|celebration|group|wedding|teams|photographers"
+        },
+        {
+          "name": "occasion",
+          "type": "string",
+          "nullable": false,
+          "note": "occasion NAME, not slug"
+        },
+        {
+          "name": "style",
+          "type": "string",
+          "nullable": false,
+          "note": "style slug, or 'studio:<id>'"
+        },
+        {
+          "name": "ticket",
+          "type": "string",
+          "nullable": false,
+          "note": "'' | moment|keepsake|signature|premiere"
+        },
+        {
+          "name": "status",
+          "type": "string",
+          "nullable": false,
+          "note": "draft|sealed|live|resting|removed"
+        },
+        {
+          "name": "step",
+          "type": "number",
+          "nullable": false,
+          "note": "0..5 maker step, drafts"
+        },
+        {
+          "name": "opensAt",
+          "type": "string",
+          "nullable": false,
+          "note": "ISO datetime; '' when unset"
+        },
+        {
+          "name": "photos",
+          "type": "string[]",
+          "nullable": false,
+          "note": "image addresses (today data-URIs)"
+        },
+        {
+          "name": "letter",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "reasons",
+          "type": "string[]",
+          "nullable": false
+        },
+        {
+          "name": "sound",
+          "type": "string",
+          "nullable": false,
+          "note": "voice|song|none"
+        },
+        {
+          "name": "at",
+          "type": "number",
+          "nullable": false,
+          "note": "last changed epoch ms"
+        },
+        {
+          "name": "content",
+          "type": "WishContent",
+          "nullable": true
+        }
+      ],
+      "cardinality": "single",
+      "filtersOrSort": [
+        "by id from URL ?id=; status in draft|sealed only (others redirect to /app/wishes/<id>)"
+      ],
+      "pagination": "none"
+    },
+    {
+      "entity": "MakerNote",
+      "fields": [
+        {
+          "name": "given",
+          "type": "{kind:boolean,occasion:boolean}",
+          "nullable": false
+        },
+        {
+          "name": "chosen",
+          "type": "{kind:boolean,occasion:boolean}",
+          "nullable": false
+        },
+        {
+          "name": "wedding",
+          "type": "string",
+          "nullable": false,
+          "note": "yyyy-mm-dd"
+        },
+        {
+          "name": "now",
+          "type": "boolean",
+          "nullable": false,
+          "note": "opens as soon as sealed"
+        },
+        {
+          "name": "voice",
+          "type": "number",
+          "nullable": false,
+          "note": "seconds of voice note"
+        }
+      ],
+      "cardinality": "single",
+      "filtersOrSort": [
+        "keyed by wish id"
+      ],
+      "pagination": "none",
+      "note": "Browser-local today (localStorage 'fw-maker', lib/maker.ts:28-32). Wish has no place for these; server must either add fields (wedding day, opens-now flag, voice seconds) or keep them as draft metadata. 'now' is derived into opensAt at seal."
+    },
+    {
+      "entity": "EndingPurpose (reference data)",
+      "fields": [
+        {
+          "name": "id",
+          "type": "string",
+          "nullable": false,
+          "note": "wish|question|reveal|date|credits|close"
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "line",
+          "type": "string",
+          "nullable": false
+        }
+      ],
+      "cardinality": "list",
+      "filtersOrSort": [],
+      "pagination": "none",
+      "note": "lib/engine/registry.ts:72-79 PURPOSES, static in code. Which purposes an occasion allows: recipe(kind,occasion).endings.purposes (lib/occasions) - static in code; only shown when >1."
+    }
+  ],
+  "actions": [
+    {
+      "name": "saveDraft",
+      "kind": "update",
+      "entity": "Wish",
+      "payload": [
+        {
+          "name": "wishId",
+          "type": "string"
+        },
+        {
+          "name": "patch",
+          "type": "Partial<Wish> (whole Wish object is written today via saveWish/putWish, lib/maker.ts:40-46)"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "Wish",
+        "cardinality": "single"
+      },
+      "note": "Fired on every change: typing is debounced 300ms (Maker.tsx:65), choices save immediately (set(...,true)); also on pagehide/visibilitychange. Returns false (UI shows 'Not saved: no room left') when localStorage full."
+    },
+    {
+      "name": "setEndingPurpose",
+      "kind": "update",
+      "entity": "Wish",
+      "payload": [
+        {
+          "name": "wishId",
+          "type": "string"
+        },
+        {
+          "name": "content.ending.id",
+          "type": "string",
+          "note": "registry ending id resolved from purpose via endingIdFor(kind,occasion,purpose)"
+        },
+        {
+          "name": "content.ending.values",
+          "type": "Record<string,string>",
+          "note": "ENDING_START seed (ring: question 'Will you marry me?') plus kept 'line','sign' when purpose changes"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "Wish",
+        "cardinality": "single"
+      },
+      "note": "One tap on a radio; saved immediately; scene is dropped (setEnding without scene). No separate endpoint needed beyond draft save."
+    }
+  ],
+  "authContext": {
+    "requiresAuth": true,
+    "rolesObserved": [
+      "person (owner of the wish); business side when account.pro and (space=='business' or kind teams|photographers)"
+    ],
+    "note": "Maker.tsx:181 renders a blank busy shell if no account; no redirect inside the maker."
+  },
+  "special": {
+    "realtime": false,
+    "uploads": false,
+    "downloads": false
+  },
+  "uiStatesHandled": [
+    {
+      "state": "loading",
+      "entersWhen": "!account || !wish || !screen || !play (blank <div className='fm' aria-busy>), Maker.tsx:181,190",
+      "reachable": "no",
+      "note": "account and draft come from synchronous localStorage read in an effect; one frame at most. With a server read it becomes real and needs the app skeleton."
+    },
+    {
+      "state": "missing",
+      "entersWhen": "?id= names a wish not in account.wishes or status 'removed' (setMissing, Maker.tsx:90,182-189): 'That wish is not here.'",
+      "reachable": "yes",
+      "note": "deleted, or made on another device (copy says so; with a server the other-device case disappears)"
+    },
+    {
+      "state": "redirect",
+      "entersWhen": "wish.status not draft/sealed (live/resting) -> router.replace(/app/wishes/<id>), Maker.tsx:91",
+      "reachable": "yes"
+    },
+    {
+      "state": "error:not-saved",
+      "entersWhen": "saveWish returns false (localStorage quota) -> header text 'Not saved: no room left', Maker.tsx:57,439",
+      "reachable": "yes",
+      "note": "device-storage error; server equivalent is a failed save with retry. No retry control coded."
+    },
+    {
+      "state": "error:server",
+      "entersWhen": "none coded (no network calls on this screen)",
+      "reachable": "no",
+      "note": "designed but not handled"
+    },
+    {
+      "state": "empty",
+      "entersWhen": "not applicable: a draft always has screens",
+      "reachable": "no"
+    },
+    {
+      "state": "loaded",
+      "entersWhen": "wish, screen and play all present",
+      "reachable": "yes"
+    }
+  ],
+  "uiStatesDesigned": [
+    "loading",
+    "empty",
+    "error",
+    "loaded"
+  ],
+  "stubsObserved": [
+    {
+      "file": "lib/maker.ts:15-46",
+      "evidence": "/* A draft is a Wish in the account, saved on every step */ saveWish writes whole account JSON to localStorage 'fw-account'",
+      "standsInFor": "server draft persistence (create/update draft wish)",
+      "consequence": "drafts exist only in this browser; ?id= link fails on another device (the 'missing' state)"
+    },
+    {
+      "file": "lib/maker.ts:28-32",
+      "evidence": "localStorage 'fw-maker' keyed by wish id",
+      "standsInFor": "server storage of wedding day / opens-now / voice seconds",
+      "consequence": "values lost on another device; wedding day and 'now' have no field on Wish"
+    },
+    {
+      "file": "lib/maker.ts:239",
+      "evidence": "if (r.endings.purposes.length > 1) out.push({ key: 'ending' })",
+      "standsInFor": "screen is skipped for occasions with one purpose",
+      "consequence": "server must expose per-occasion allowed purposes or ship the recipe as reference data"
+    }
+  ]
+}

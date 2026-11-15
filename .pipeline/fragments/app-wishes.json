@@ -1,0 +1,320 @@
+{
+ "screenId": "app-wishes",
+ "reads": [
+  {
+   "entity": "Wish",
+   "fields": [
+    {
+     "name": "id",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "no",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "name",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "call",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "from",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "kind",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "occasion",
+     "type": "string (occasion name)",
+     "nullable": false
+    },
+    {
+     "name": "style",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "ticket",
+     "type": "'moment'|'keepsake'|'signature'|'premiere'|''",
+     "nullable": false
+    },
+    {
+     "name": "status",
+     "type": "'draft'|'sealed'|'live'|'resting'|'removed'",
+     "nullable": false
+    },
+    {
+     "name": "step",
+     "type": "number 0-5",
+     "nullable": false
+    },
+    {
+     "name": "opensAt",
+     "type": "ISO datetime ('' when unset)",
+     "nullable": false
+    },
+    {
+     "name": "openedAt",
+     "type": "ISO datetime",
+     "nullable": true
+    },
+    {
+     "name": "endsAt",
+     "type": "ISO datetime",
+     "nullable": true
+    },
+    {
+     "name": "photos",
+     "type": "string[]",
+     "nullable": false
+    },
+    {
+     "name": "letter",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "reasons",
+     "type": "string[]",
+     "nullable": false
+    },
+    {
+     "name": "content",
+     "type": "WishContent",
+     "nullable": true
+    },
+    {
+     "name": "sound",
+     "type": "'voice'|'song'|'none'",
+     "nullable": false
+    },
+    {
+     "name": "reaction",
+     "type": "string",
+     "nullable": true
+    },
+    {
+     "name": "isPublic",
+     "type": "boolean",
+     "nullable": true
+    },
+    {
+     "name": "removedAt",
+     "type": "ISO datetime",
+     "nullable": true
+    },
+    {
+     "name": "at",
+     "type": "number (epoch ms last changed)",
+     "nullable": false
+    }
+   ],
+   "cardinality": "list",
+   "filtersOrSort": [
+    "tab filter: all (status!='removed'), draft, sealed, live, resting, deleted (status==='removed')",
+    "sort: status order live,sealed,draft,resting,removed then at desc",
+    "?show= query (also accepts 'drafts' etc, 'removed')"
+   ],
+   "pagination": "none (whole list in memory; counts per tab computed client-side)",
+   "note": "Fields the UI uses: id,no,name,call (via title),kind,occasion,status,step,opensAt,endsAt,openedAt,ticket,photos[0],at,removedAt,isPublic; WishCard links to /app/wishes/<id>"
+  },
+  {
+   "entity": "Account (flags)",
+   "fields": [
+    {
+     "name": "pass",
+     "type": "boolean",
+     "nullable": false
+    }
+   ],
+   "cardinality": "single",
+   "filtersOrSort": [],
+   "pagination": "none",
+   "note": "pass changes 'Live with your Pass' line"
+  },
+  {
+   "entity": "Configuration",
+   "fields": [
+    {
+     "name": "RESTORE_DAYS",
+     "type": "number 30",
+     "nullable": false
+    },
+    {
+     "name": "HOLD_DAYS",
+     "type": "number 365",
+     "nullable": false
+    }
+   ],
+   "cardinality": "single",
+   "filtersOrSort": [],
+   "pagination": "none",
+   "note": "restore window and resting hold shown in copy; also KEEPS prices in sheets.tsx (₦1,500/₦4,000/₦6,000), tickets and 'Portrait video' extra with 40% off until 31 January, toKeepsake difference (computed from ticket price text)"
+  }
+ ],
+ "actions": [
+  {
+   "name": "restoreWish",
+   "kind": "update",
+   "entity": "Wish",
+   "payload": [
+    {
+     "name": "id",
+     "type": "string"
+    }
+   ],
+   "expectedResponse": {
+    "entity": "Wish",
+    "cardinality": "single"
+   },
+   "note": "client sets status = before(w): draft if no 'no', sealed if never opened, resting if endsAt<=now, else live; removedAt cleared. Toast 'Wish restored.' with Undo that writes the previous wish back (re-delete)"
+  },
+  {
+   "name": "undoRestore",
+   "kind": "update",
+   "entity": "Wish",
+   "payload": [
+    {
+     "name": "wish",
+     "type": "Wish (whole previous object)"
+    }
+   ],
+   "expectedResponse": {
+    "entity": "Wish",
+    "cardinality": "single"
+   },
+   "note": "Undo within 7s writes the old removed wish back"
+  },
+  {
+   "name": "eraseWishNow",
+   "kind": "delete",
+   "entity": "Wish",
+   "payload": [
+    {
+     "name": "id",
+     "type": "string"
+    }
+   ],
+   "expectedResponse": {
+    "entity": "none",
+    "cardinality": "single"
+   },
+   "note": "permanent; after confirm sheet. Toast 'Wish erased.'"
+  },
+  {
+   "name": "(defined, not reached on this page) sheets: share, keep/wake, video, publish",
+   "kind": "custom",
+   "entity": "Wish",
+   "payload": [],
+   "expectedResponse": {
+    "entity": "none",
+    "cardinality": "single"
+   },
+   "note": "components/app/life/sheets.tsx exports ShareSheet (link /w/mine?id=<id>), KeepSheet (KEEPS), VideoSheet, PublishSheet but app/app/wishes/page.tsx only imports EraseSheet; they belong to the wish detail screen"
+  }
+ ],
+ "authContext": {
+  "requiresAuth": true,
+  "rolesObserved": [
+   "person"
+  ],
+  "note": "account owner only; whole account is localStorage"
+ },
+ "special": {
+  "realtime": false,
+  "uploads": false,
+  "downloads": false,
+  "paging": "none",
+  "notes": [
+   "wish status 'live'/'sealed'/'resting' is stored on the client; stands() computes 'Opens in N days' / 'Rests ...' from opensAt/endsAt on the device clock (convention: server decides)",
+   "'ready' = sealed && opensAt<=Date.now() uses phone clock"
+  ]
+ },
+ "uiStatesHandled": [
+  {
+   "state": "loading",
+   "entersWhen": "account falsy -> return null (blank)",
+   "reachable": "yes briefly first paint (localStorage read in effect), no skeleton"
+  },
+  {
+   "state": "empty",
+   "entersWhen": "list.length===0 per tab -> Empty with per-tab copy (No wishes yet / Nothing half made / Nothing sealed / Nothing live right now / Nothing is resting / Nothing deleted)",
+   "reachable": "yes"
+  },
+  {
+   "state": "error",
+   "entersWhen": "none coded; no network",
+   "reachable": "no"
+  },
+  {
+   "state": "loaded",
+   "entersWhen": "list.length>0 grid of WishCard",
+   "reachable": "yes"
+  },
+  {
+   "state": "erase confirm",
+   "entersWhen": "erase!=null -> EraseSheet",
+   "reachable": "yes"
+  },
+  {
+   "state": "deleted hint",
+   "entersWhen": "show==='deleted' && list.length>0",
+   "reachable": "yes"
+  }
+ ],
+ "uiStatesDesigned": [
+  "loading",
+  "empty",
+  "error",
+  "loaded"
+ ],
+ "stubsObserved": [
+  {
+   "file": "lib/account.ts:6-8,56-63",
+   "evidence": "'Nothing here talks to a server yet... wishes and dates are held in the browser'; readAccount/writeAccount over localStorage fw-account",
+   "standsInFor": "the account's wishes store",
+   "consequence": "populate path: a signed-in user on a new device sees no wishes; server must become the only source"
+  },
+  {
+   "file": "components/app/life/wish.ts:~83-97",
+   "evidence": "OFF=0.4 '40% off until 31 January'; naira()/num() parse price text; video/toKeepsake read tickets/extras text",
+   "standsInFor": "prices and offer from configuration",
+   "consequence": "money is parsed from formatted text; offer constant"
+  },
+  {
+   "file": "lib/account.ts:~84-90",
+   "evidence": "KEEPS prices '₦1,500','₦4,000','₦6,000'; TERM_DAYS, HOLD_DAYS, RESTORE_DAYS constants",
+   "standsInFor": "pricing/term configuration",
+   "consequence": "hardcoded"
+  },
+  {
+   "file": "lib/account.ts sampleWishes()",
+   "evidence": "s-live, s-sealed, s-rest, s-draft sample wishes with fixed 'no' 0412,0418,0377",
+   "standsInFor": "seed demo data into the same read path",
+   "consequence": "samples are indistinguishable from real wishes by eye and gate the feed sample mode (id starts 's-')"
+  },
+  {
+   "file": "components/app/life/wish.ts:~64-70 stands()/ready()",
+   "evidence": "status text from Date.now()",
+   "standsInFor": "server-decided opening state",
+   "consequence": "phone clock used for 'Ready for them to open'"
+  },
+  {
+   "file": "app/app/wishes/page.tsx restore()",
+   "evidence": "status recomputed on the client by before(w)",
+   "standsInFor": "server restore",
+   "consequence": "client decides lifecycle state"
+  }
+ ]
+}

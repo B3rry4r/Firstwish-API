@@ -1,0 +1,661 @@
+{
+ "screenId": "app-wish-detail",
+ "reads": [
+  {
+   "entity": "Wish",
+   "fields": [
+    {
+     "name": "id",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "no",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "name",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "call",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "from",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "kind",
+     "type": "string (kind slug)",
+     "nullable": false
+    },
+    {
+     "name": "occasion",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "style",
+     "type": "string (style slug)",
+     "nullable": false
+    },
+    {
+     "name": "ticket",
+     "type": "'moment'|'keepsake'|'signature'|'premiere'|''",
+     "nullable": false
+    },
+    {
+     "name": "status",
+     "type": "'draft'|'sealed'|'live'|'resting'|'removed'",
+     "nullable": false
+    },
+    {
+     "name": "step",
+     "type": "number 0..5",
+     "nullable": false
+    },
+    {
+     "name": "opensAt",
+     "type": "ISO datetime string (empty for new drafts)",
+     "nullable": false
+    },
+    {
+     "name": "openedAt",
+     "type": "ISO datetime string",
+     "nullable": true
+    },
+    {
+     "name": "endsAt",
+     "type": "ISO datetime string",
+     "nullable": true
+    },
+    {
+     "name": "photos",
+     "type": "string[] image addresses",
+     "nullable": false
+    },
+    {
+     "name": "letter",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "reasons",
+     "type": "string[]",
+     "nullable": false
+    },
+    {
+     "name": "content",
+     "type": "WishContent (lib/wish-model)",
+     "nullable": true
+    },
+    {
+     "name": "sound",
+     "type": "'voice'|'song'|'none'",
+     "nullable": false
+    },
+    {
+     "name": "reaction",
+     "type": "string",
+     "nullable": true
+    },
+    {
+     "name": "isPublic",
+     "type": "boolean",
+     "nullable": true
+    },
+    {
+     "name": "removedAt",
+     "type": "ISO datetime string",
+     "nullable": true
+    },
+    {
+     "name": "at",
+     "type": "number epoch ms last changed",
+     "nullable": false
+    }
+   ],
+   "cardinality": "single",
+   "filtersOrSort": [
+    "by id from route param; account.wishes.find(x=>x.id===id)"
+   ],
+   "pagination": "none",
+   "note": "Read from the whole Account blob in localStorage 'fw-account'. A missing id renders the not-found Empty. Server must return only the signed-in person's own wish."
+  },
+  {
+   "entity": "Account",
+   "fields": [
+    {
+     "name": "pass",
+     "type": "boolean",
+     "nullable": false
+    },
+    {
+     "name": "creator",
+     "type": "boolean",
+     "nullable": false
+    },
+    {
+     "name": "handle",
+     "type": "string",
+     "nullable": false
+    }
+   ],
+   "cardinality": "single",
+   "filtersOrSort": [],
+   "pagination": "none",
+   "note": "Used for passLive (pass && status live), KeepSheet pass branch, PublishSheet creator/handle."
+  },
+  {
+   "entity": "Ticket (catalog, read-only reference)",
+   "fields": [
+    {
+     "name": "slug",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "name",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "lives",
+     "type": "string e.g. '2 weeks'",
+     "nullable": false
+    },
+    {
+     "name": "price",
+     "type": "string naira text e.g. '₦6,000'",
+     "nullable": false
+    }
+   ],
+   "cardinality": "list",
+   "filtersOrSort": [
+    "by slug"
+   ],
+   "pagination": "none",
+   "note": "From lib/catalog.ts tickets (moment ₦3,000, keepsake ₦6,000, signature ₦12,000, premiere ₦21,000). Used for ticket name, 'lives' text and the Moment->Keepsake difference (₦6,000-₦3,000=₦3,000)."
+  },
+  {
+   "entity": "Extra (catalog, read-only reference)",
+   "fields": [
+    {
+     "name": "name",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "price",
+     "type": "string ₦3,500 for 'Portrait video for WhatsApp status'",
+     "nullable": false
+    },
+    {
+     "name": "moment/keepsake/signature/premiere",
+     "type": "'Yes'|'No'|'Included'",
+     "nullable": false
+    }
+   ],
+   "cardinality": "single",
+   "filtersOrSort": [
+    "name startsWith 'Portrait video'"
+   ],
+   "pagination": "none",
+   "note": "Decides video included / purchasable / not available per ticket."
+  },
+  {
+   "entity": "PriceConfig (inline constants)",
+   "fields": [
+    {
+     "name": "KEEPS",
+     "type": "[{key:'month',label:'One more month',days:30,price:'₦1,500'},{key:'half',label:'Six months',days:182,price:'₦4,000'},{key:'year',label:'A year',days:365,price:'₦6,000'}] (lib/account.ts:109)",
+     "nullable": false
+    },
+    {
+     "name": "TERM_DAYS",
+     "type": "{moment:7,keepsake:14,signature:30,premiere:60} (lib/account.ts:108)",
+     "nullable": false
+    },
+    {
+     "name": "HOLD_DAYS",
+     "type": "365 (lib/account.ts:114)",
+     "nullable": false
+    },
+    {
+     "name": "RESTORE_DAYS",
+     "type": "30 (lib/account.ts:115)",
+     "nullable": false
+    },
+    {
+     "name": "OFF",
+     "type": "0.4 discount on tickets/extras, never keeps (wish.ts:83)",
+     "nullable": false
+    },
+    {
+     "name": "OFF_LINE",
+     "type": "'40% off until 31 January' (wish.ts:84)",
+     "nullable": false
+    }
+   ],
+   "cardinality": "single",
+   "filtersOrSort": [],
+   "pagination": "none",
+   "note": "Hardcoded; conventions say prices come from configuration tables. Video discounted price computed client-side: naira(3500*0.6)=₦2,100."
+  }
+ ],
+ "actions": [
+  {
+   "name": "deleteWish",
+   "kind": "update",
+   "entity": "Wish",
+   "payload": [
+    {
+     "name": "id",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "status",
+     "type": "'removed'",
+     "nullable": false
+    },
+    {
+     "name": "removedAt",
+     "type": "ISO now",
+     "nullable": false
+    }
+   ],
+   "expectedResponse": {
+    "entity": "Wish",
+    "cardinality": "single"
+   },
+   "note": "page.tsx:68, put(removed(w)); toast Undo calls put(w) (restores whole previous wish object)."
+  },
+  {
+   "name": "restoreWish",
+   "kind": "update",
+   "entity": "Wish",
+   "payload": [
+    {
+     "name": "id",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "status",
+     "type": "before(w): 'draft' if no no; 'sealed' if no openedAt; 'resting' if endsAt<=now else 'live'",
+     "nullable": false
+    },
+    {
+     "name": "removedAt",
+     "type": "cleared",
+     "nullable": false
+    }
+   ],
+   "expectedResponse": {
+    "entity": "Wish",
+    "cardinality": "single"
+   },
+   "note": "Client computes the restored status (wish.ts before()); server should decide."
+  },
+  {
+   "name": "eraseWish",
+   "kind": "delete",
+   "entity": "Wish",
+   "payload": [
+    {
+     "name": "id",
+     "type": "string",
+     "nullable": false
+    }
+   ],
+   "expectedResponse": {
+    "entity": "none",
+    "cardinality": "single"
+   },
+   "note": "page.tsx:70 dropWish then router.replace('/app/wishes?show=deleted'). Final, copy says photos and link gone."
+  },
+  {
+   "name": "keepLonger",
+   "kind": "custom",
+   "entity": "Wish",
+   "payload": [
+    {
+     "name": "id",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "keepKey",
+     "type": "'month'|'half'|'year'",
+     "nullable": false
+    },
+    {
+     "name": "days",
+     "type": "number 30|182|365",
+     "nullable": false
+    },
+    {
+     "name": "price",
+     "type": "string ₦1,500|₦4,000|₦6,000",
+     "nullable": false
+    },
+    {
+     "name": "paymentWay",
+     "type": "'card'|'transfer'|'ussd' (PaySheet, not passed on)",
+     "nullable": false
+    }
+   ],
+   "expectedResponse": {
+    "entity": "Wish",
+    "cardinality": "single",
+    "note": "status live, endsAt = max(endsAt, now)+days for live; now+days for resting"
+   },
+   "note": "Paid. Runs after PaySheet onPaid. Also used to wake a resting wish."
+  },
+  {
+   "name": "wakeFreeWithPass",
+   "kind": "custom",
+   "entity": "Wish",
+   "payload": [
+    {
+     "name": "id",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "days",
+     "type": "365",
+     "nullable": false
+    }
+   ],
+   "expectedResponse": {
+    "entity": "Wish",
+    "cardinality": "single"
+   },
+   "note": "Pass holder, no payment: kept(w,365)."
+  },
+  {
+   "name": "upgradeToKeepsake",
+   "kind": "custom",
+   "entity": "Wish",
+   "payload": [
+    {
+     "name": "id",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "ticket",
+     "type": "'keepsake'",
+     "nullable": false
+    },
+    {
+     "name": "price",
+     "type": "₦3,000 (keepsake minus moment, client computed)",
+     "nullable": false
+    },
+    {
+     "name": "extraDays",
+     "type": "7 if openedAt (TERM_DAYS.keepsake - TERM_DAYS.moment)",
+     "nullable": false
+    }
+   ],
+   "expectedResponse": {
+    "entity": "Wish",
+    "cardinality": "single"
+   },
+   "note": "Paid. If never opened only ticket changes; if opened, endsAt also extends by 7 days via kept()."
+  },
+  {
+   "name": "buyVideo",
+   "kind": "custom",
+   "entity": "Wish",
+   "payload": [
+    {
+     "name": "id",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "amount",
+     "type": "string ₦2,100 discounted",
+     "nullable": false
+    }
+   ],
+   "expectedResponse": {
+    "entity": "VideoOrder",
+    "cardinality": "single"
+   },
+   "note": "videoPay: only a toast 'The video will be sent to you.' follows payment; nothing recorded. Needs a server order and a file delivery."
+  },
+  {
+   "name": "requestIncludedVideo",
+   "kind": "custom",
+   "entity": "Wish",
+   "payload": [
+    {
+     "name": "id",
+     "type": "string",
+     "nullable": false
+    }
+   ],
+   "expectedResponse": {
+    "entity": "VideoOrder",
+    "cardinality": "single"
+   },
+   "note": "Signature/Premiere: toast only today (page.tsx:93)."
+  },
+  {
+   "name": "publish",
+   "kind": "update",
+   "entity": "Wish",
+   "payload": [
+    {
+     "name": "id",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "isPublic",
+     "type": "true",
+     "nullable": false
+    },
+    {
+     "name": "everyoneAgrees",
+     "type": "boolean (checkbox gate, local only, not in payload today)",
+     "nullable": false
+    }
+   ],
+   "expectedResponse": {
+    "entity": "Wish",
+    "cardinality": "single"
+   },
+   "note": "Requires creator profile. Sheet says receiver 'is told, and can say no': no such state in code."
+  },
+  {
+   "name": "unpublish",
+   "kind": "update",
+   "entity": "Wish",
+   "payload": [
+    {
+     "name": "id",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "isPublic",
+     "type": "false",
+     "nullable": false
+    }
+   ],
+   "expectedResponse": {
+    "entity": "Wish",
+    "cardinality": "single"
+   },
+   "note": "Undo re-publishes."
+  },
+  {
+   "name": "payForItem",
+   "kind": "custom",
+   "entity": "Payment",
+   "payload": [
+    {
+     "name": "title",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "amount",
+     "type": "string naira text",
+     "nullable": false
+    },
+    {
+     "name": "way",
+     "type": "'card'|'transfer'|'ussd'",
+     "nullable": false
+    }
+   ],
+   "expectedResponse": {
+    "entity": "Payment",
+    "cardinality": "single"
+   },
+   "note": "PaySheet is shared; simulated (Pay.tsx:258)."
+  },
+  {
+   "name": "shareLink",
+   "kind": "custom",
+   "entity": "Wish",
+   "payload": [],
+   "expectedResponse": {
+    "entity": "link string",
+    "cardinality": "single"
+   },
+   "note": "Link is built client-side as {origin}/w/mine?id={wish.id}; preview opens same. Server should issue the public slug link."
+  }
+ ],
+ "authContext": {
+  "requiresAuth": true,
+  "rolesObserved": [
+   "person (owner of the wish)"
+  ]
+ },
+ "special": {
+  "realtime": false,
+  "uploads": false,
+  "downloads": true,
+  "note": "Downloads: portrait video file 'sent to you' (delivery channel unspecified). Payments via PaySheet (card, transfer, USSD). Clipboard copy and wa.me share are client-only. Time-driven states (sealed->live at opensAt, live->resting at endsAt, erase after HOLD_DAYS, restore window) are today computed from the phone clock in render (ready(), dayGap)."
+ },
+ "uiStatesHandled": [
+  {
+   "state": "loading",
+   "entersWhen": "account === undefined (useAccount before first effect); page returns null, no skeleton drawn",
+   "reachable": "no",
+   "note": "localStorage read is synchronous; `known` module cache makes it undefined only on first mount. Renders null, not a skeleton."
+  },
+  {
+   "state": "empty/not-found",
+   "entersWhen": "account.wishes.find(id) is undefined -> 'We could not find that wish.'",
+   "reachable": "yes"
+  },
+  {
+   "state": "error",
+   "entersWhen": "never coded: no request exists",
+   "reachable": "no"
+  },
+  {
+   "state": "loaded-draft",
+   "entersWhen": "w.status==='draft'",
+   "reachable": "yes"
+  },
+  {
+   "state": "loaded-sealed (waiting / ready)",
+   "entersWhen": "status==='sealed'; ready(w) = opensAt<=Date.now()",
+   "reachable": "yes",
+   "note": "'ready' depends on phone clock; server will own opening."
+  },
+  {
+   "state": "loaded-live (Pass / term)",
+   "entersWhen": "status==='live'; passLive = account.pass && live",
+   "reachable": "yes"
+  },
+  {
+   "state": "loaded-resting",
+   "entersWhen": "status==='resting'",
+   "reachable": "yes",
+   "note": "Nothing in code moves a live wish to resting on its own; only sample data or server time can."
+  },
+  {
+   "state": "loaded-removed",
+   "entersWhen": "status==='removed'",
+   "reachable": "yes"
+  },
+  {
+   "state": "pay sheet busy 'Confirming'",
+   "entersWhen": "busy after Pay click, 700ms timeout",
+   "reachable": "yes",
+   "note": "fake"
+  }
+ ],
+ "uiStatesDesigned": [
+  "loading",
+  "empty",
+  "error",
+  "loaded"
+ ],
+ "stubsObserved": [
+  {
+   "file": "components/app/Pay.tsx:258",
+   "evidence": "const pay = () => { setBusy(true); setTimeout(() => { onPaid(); }, 700); };",
+   "standsInFor": "Paystack charge and verification",
+   "consequence": "Every keep, upgrade, video and Pass purchase succeeds with no money moved; header says 'Nothing is charged here yet'."
+  },
+  {
+   "file": "app/app/wishes/[id]/page.tsx:92-93",
+   "evidence": "done: () => say(\"The video will be sent to you.\")",
+   "standsInFor": "video render order and file delivery",
+   "consequence": "Paying for or requesting the video records nothing and sends nothing."
+  },
+  {
+   "file": "lib/account.ts:6",
+   "evidence": "Nothing here talks to a server yet: ... held in the browser",
+   "standsInFor": "all wish storage and lifecycle",
+   "consequence": "Wish status changes (live, resting, erase) only occur through user clicks or seeded sample data, not time."
+  },
+  {
+   "file": "components/app/life/sheets.tsx:16,25",
+   "evidence": "setLink(`${window.location.origin}/w/mine?id=${wish.id}`)",
+   "standsInFor": "server-issued public wish link slug",
+   "consequence": "Shared link uses local id and points at a local-only preview; a receiver on another device sees nothing."
+  },
+  {
+   "file": "components/app/life/wish.ts:83-84,226-227",
+   "evidence": "const OFF = 0.4; OFF_LINE = '40% off until 31 January'",
+   "standsInFor": "promo configuration with an end date",
+   "consequence": "Discount copy never expires; video price hardcoded ₦3,500 * 0.6."
+  },
+  {
+   "file": "lib/account.ts:109-113",
+   "evidence": "KEEPS prices as strings '₦1,500' etc.",
+   "standsInFor": "price configuration table",
+   "consequence": "Prices as formatted text; num() strips non-digits to get numbers."
+  },
+  {
+   "file": "components/app/life/sheets.tsx:125",
+   "evidence": "is told, and can say no",
+   "standsInFor": "receiver consent step for publishing",
+   "consequence": "Copy promises a notification and veto that no code implements."
+  },
+  {
+   "file": "lib/account.ts:133-145",
+   "evidence": "sampleWishes(from) with ids s-live, s-sealed, s-rest, s-draft",
+   "standsInFor": "real wishes",
+   "consequence": "Sample wishes flow through the real read path on this screen (toggle on /app/you)."
+  }
+ ]
+}

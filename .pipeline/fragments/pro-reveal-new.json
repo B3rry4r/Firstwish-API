@@ -1,0 +1,420 @@
+{
+  "reads": [
+    {
+      "entity": "Account (pro)",
+      "fields": [
+        {
+          "name": "pro.plan",
+          "type": "'starter'|'studio'",
+          "nullable": true
+        },
+        {
+          "name": "pro.business",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "contact",
+          "type": "string",
+          "nullable": false
+        }
+      ],
+      "cardinality": "single",
+      "filtersOrSort": [],
+      "pagination": "none"
+    },
+    {
+      "entity": "ProData",
+      "fields": [
+        {
+          "name": "month",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "rolled",
+          "type": "number",
+          "nullable": false
+        },
+        {
+          "name": "pack",
+          "type": "number",
+          "nullable": false
+        },
+        {
+          "name": "business",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "brand.line",
+          "type": "string (e.g. 'Made by')",
+          "nullable": false
+        },
+        {
+          "name": "brand.booking",
+          "type": "string url",
+          "nullable": false
+        },
+        {
+          "name": "wishes",
+          "type": "ClientWish[] (to find the proofs reveal for finals)",
+          "nullable": false
+        }
+      ],
+      "cardinality": "single",
+      "filtersOrSort": [],
+      "pagination": "none"
+    },
+    {
+      "entity": "Usage",
+      "fields": [
+        {
+          "name": "allowance",
+          "type": "number",
+          "nullable": false
+        },
+        {
+          "name": "rolled",
+          "type": "number",
+          "nullable": false
+        },
+        {
+          "name": "total",
+          "type": "number",
+          "nullable": false
+        },
+        {
+          "name": "used",
+          "type": "number",
+          "nullable": false
+        },
+        {
+          "name": "left",
+          "type": "number",
+          "nullable": false
+        },
+        {
+          "name": "pack",
+          "type": "number",
+          "nullable": false
+        },
+        {
+          "name": "canMake",
+          "type": "boolean",
+          "nullable": false
+        }
+      ],
+      "cardinality": "single",
+      "filtersOrSort": [
+        "derived: allowance by plan + rolled - wishes made this month; plus pack"
+      ],
+      "pagination": "none"
+    },
+    {
+      "entity": "Style (catalog)",
+      "fields": [
+        {
+          "name": "slug",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "tier",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "line",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "feel",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "orientation",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "look",
+          "type": "string",
+          "nullable": true
+        }
+      ],
+      "cardinality": "list",
+      "filtersOrSort": [
+        "styles made for kind 'photographers'"
+      ],
+      "pagination": "none"
+    },
+    {
+      "entity": "Occasion (catalog)",
+      "fields": [
+        {
+          "name": "name",
+          "type": "string",
+          "nullable": false
+        }
+      ],
+      "cardinality": "list",
+      "filtersOrSort": [
+        "category photographers occasions"
+      ],
+      "pagination": "none"
+    },
+    {
+      "entity": "Shoot",
+      "fields": [
+        {
+          "name": "id",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "client",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "title",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "date",
+          "type": "date",
+          "nullable": false
+        },
+        {
+          "name": "proofs",
+          "type": "VaultFile[] (id,name,size,url?)",
+          "nullable": false
+        },
+        {
+          "name": "finals",
+          "type": "VaultFile[]",
+          "nullable": false
+        },
+        {
+          "name": "proofsReveal.wish",
+          "type": "string",
+          "nullable": true
+        }
+      ],
+      "cardinality": "single",
+      "filtersOrSort": [
+        "by id from ?shoot= or route id; &set=finals picks finals"
+      ],
+      "pagination": "none; set can hold 1000+ files, first 9 shown as cover tiles"
+    },
+    {
+      "entity": "ClientWish.reveal (of the proofs reveal, for finals prefill)",
+      "fields": [
+        {
+          "name": "city",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "credits",
+          "type": "Credit[]",
+          "nullable": false
+        },
+        {
+          "name": "style",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "booking",
+          "type": "string",
+          "nullable": false
+        }
+      ],
+      "cardinality": "single",
+      "filtersOrSort": [],
+      "pagination": "none"
+    }
+  ],
+  "actions": [
+    {
+      "name": "createClientWish (reveal from loose frames)",
+      "kind": "create",
+      "entity": "ClientWish",
+      "payload": [
+        {
+          "name": "client",
+          "type": "string max 60",
+          "nullable": false
+        },
+        {
+          "name": "kind",
+          "type": "'photographers'",
+          "nullable": false
+        },
+        {
+          "name": "occasion",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "day",
+          "type": "date today",
+          "nullable": false
+        },
+        {
+          "name": "reveal",
+          "type": "{frames:Frame[] (src is a ~520px jpeg data URL, file name), shoot, city, date, note, credits, fullSet, booking, style, hearts:[]}",
+          "nullable": false
+        }
+      ],
+      "expectedResponse": {
+        "entity": "ClientWish",
+        "cardinality": "single"
+      },
+      "note": "frames 6 to 15 required; counted against the month first then the pack; error no_wishes when none left"
+    },
+    {
+      "name": "sendReveal (from a Vault shoot)",
+      "kind": "custom",
+      "entity": "ClientWish",
+      "payload": [
+        {
+          "name": "shoot",
+          "type": "string id",
+          "nullable": false
+        },
+        {
+          "name": "set",
+          "type": "'proofs'|'finals'",
+          "nullable": false
+        },
+        {
+          "name": "reveal",
+          "type": "{client,occasion,city,date,note,credits (blank names dropped),booking,style}",
+          "nullable": false
+        }
+      ],
+      "expectedResponse": {
+        "entity": "{shoot:Shoot, wish:ClientWish}",
+        "cardinality": "single"
+      },
+      "note": "frames are the set's files themselves (by file id); counted as one wish; error no_wishes"
+    }
+  ],
+  "authContext": {
+    "requiresAuth": true,
+    "rolesObserved": [
+      "business (owner/member; Pro account with account.pro)"
+    ]
+  },
+  "special": {
+    "realtime": false,
+    "uploads": "loose-frame path: up to 15 images shrunk in the browser then posted inside the wish; shoot path: none (files already in the Vault)",
+    "downloads": false,
+    "pagination": "none",
+    "queryParams": "?shoot=<id>&set=finals; route param id"
+  },
+  "uiStatesHandled": [
+    {
+      "state": "loading",
+      "entersWhen": "!account || !data || from === '' (returns null, blank)",
+      "reachable": "yes",
+      "note": "from==='' while getShoot resolves; microtask today"
+    },
+    {
+      "state": "not-found",
+      "entersWhen": "getShoot rejects: lost -> 'Not in the Vault.'",
+      "reachable": "yes"
+    },
+    {
+      "state": "spent",
+      "entersWhen": "!usage(data,plan).canMake -> Spent card 'No wishes left'",
+      "reachable": "yes"
+    },
+    {
+      "state": "form-loose",
+      "entersWhen": "no ?shoot= / route id: frames chosen locally (min 6, max 15)",
+      "reachable": "yes"
+    },
+    {
+      "state": "form-from-shoot",
+      "entersWhen": "?shoot= or route id, set proofs or finals",
+      "reachable": "yes"
+    },
+    {
+      "state": "validation",
+      "entersWhen": "fewer than 6 frames / empty client / no files in the set",
+      "reachable": "yes"
+    },
+    {
+      "state": "save-error",
+      "entersWhen": "sendReveal/createClientWish throws offline|full|no_wishes|failed",
+      "reachable": "yes"
+    },
+    {
+      "state": "error",
+      "entersWhen": "none for the initial read (no load error branch)",
+      "reachable": "no"
+    }
+  ],
+  "uiStatesDesigned": [
+    "loading",
+    "error",
+    "loaded"
+  ],
+  "stubsObserved": [
+    {
+      "file": "lib/vault-api.ts:131-152",
+      "evidence": "sendReveal runs addWish() on loadPro() in the browser: client-side wish number (nextNo: max(no,900)+1 padded 4), 'from' month/pack decision, usage count, pack decrement",
+      "standsInFor": "server wish creation, numbering, allowance accounting and link slug",
+      "consequence": "Wish number, allowance and which pool it counts against are decided by the phone; reveal link is not a server slug"
+    },
+    {
+      "file": "lib/vault-fixtures.ts:11-70",
+      "evidence": "samplesOn() true when fw-account.wishes has an id starting 's-'; sampleShoots() builds six hardcoded shoots (ids sample-*, clients Adaeze and Tobi, The Okafor family, Ruth and Daniel, Zainab Musa, Kemi Adebayo, Chioma Eze) with /img/aisha-N.webp urls",
+      "standsInFor": "server data",
+      "consequence": "Sample rows are merged into every read path while on; a human cannot tell them from real rows"
+    },
+    {
+      "file": "components/app/pro/vault.tsx:18-21",
+      "evidence": "revealLink = origin + /w/mine?name=&occasion=&no=<no>&kind=photographers",
+      "standsInFor": "a server-issued public link for the reveal",
+      "consequence": "Link is built on the client from the wish number and client name; no sealed/open link semantics, anyone with the number can open"
+    },
+    {
+      "file": "lib/vault-api.ts:308",
+      "evidence": "online = navigator.onLine === false -> VaultError('offline')",
+      "standsInFor": "real request failure",
+      "consequence": "'offline' is the only network error; with no network calls, failures never occur otherwise (full is a localStorage quota error)"
+    },
+    {
+      "file": "app/app/pro/reveal/new/page.tsx:97,153",
+      "evidence": "'Use sample photos' fills SAMPLE_FRAMES (/img/aisha-1..8.webp, DSC_4801.. names) when samplesOn()",
+      "standsInFor": "real photos",
+      "consequence": "Demo-only path creates reveals from bundled images"
+    },
+    {
+      "file": "app/app/pro/reveal/new/page.tsx:81-92",
+      "evidence": "choose(): files shrunk to a 520px jpeg data URL stored inside the wish in localStorage; the original is discarded",
+      "standsInFor": "upload of the frames to storage",
+      "consequence": "Loose-frame reveals keep only a thumbnail; full-resolution images never leave the browser"
+    },
+    {
+      "file": "app/app/pro/reveal/new/page.tsx:11",
+      "evidence": "const MIN = 6, MAX = 15 frames; ROLES list hardcoded",
+      "standsInFor": "a product rule that should be server-validated",
+      "consequence": "Limits only enforced by the client"
+    }
+  ],
+  "screenId": "pro-reveal-new"
+}

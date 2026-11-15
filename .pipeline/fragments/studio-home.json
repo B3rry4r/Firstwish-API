@@ -1,0 +1,710 @@
+{
+ "screenId": "studio-home",
+ "reads": [
+  {
+   "entity": "CreatorState",
+   "fields": [
+    {
+     "name": "plan",
+     "type": "enum open|creator",
+     "nullable": false
+    },
+    {
+     "name": "signed",
+     "type": "boolean",
+     "nullable": false
+    },
+    {
+     "name": "credits",
+     "type": "number",
+     "nullable": false
+    },
+    {
+     "name": "reviewsLeft",
+     "type": "number",
+     "nullable": false
+    },
+    {
+     "name": "extraReviews",
+     "type": "number",
+     "nullable": false
+    },
+    {
+     "name": "renews",
+     "type": "ISO date",
+     "nullable": false
+    }
+   ],
+   "cardinality": "single",
+   "filtersOrSort": [],
+   "pagination": "none"
+  },
+  {
+   "entity": "StudioStyle (draft)",
+   "fields": [
+    {
+     "name": "id",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "name",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "base",
+     "type": "string (package slug)",
+     "nullable": false
+    },
+    {
+     "name": "theme",
+     "type": "Theme object (ground, ground2, ink, muted, accent, soft, line, display, body, italic, upper, track, script, scale; all optional)",
+     "nullable": false
+    },
+    {
+     "name": "seen",
+     "type": "Theme",
+     "nullable": true
+    },
+    {
+     "name": "scenes",
+     "type": "Record<sceneKey,SceneEdit>",
+     "nullable": false
+    },
+    {
+     "name": "art",
+     "type": "Asset[] {id,kind,name,size,url}",
+     "nullable": false
+    },
+    {
+     "name": "sound",
+     "type": "string asset id",
+     "nullable": true
+    },
+    {
+     "name": "soundSet",
+     "type": "{volume,fadeIn,fadeOut}",
+     "nullable": true
+    },
+    {
+     "name": "made",
+     "type": "{kinds:string[],occasions:Record<kind,string[]>,best:portrait|landscape|either}",
+     "nullable": false
+    },
+    {
+     "name": "tags",
+     "type": "{mood:string[],palette:string,family:string}",
+     "nullable": false
+    },
+    {
+     "name": "still",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "fallback",
+     "type": "string",
+     "nullable": true
+    },
+    {
+     "name": "holds",
+     "type": "Partial<Record<portrait|landscape,fills|bars|breaks>>",
+     "nullable": true
+    },
+    {
+     "name": "poster",
+     "type": "{frame:opening|cover|ending,src?,name?}",
+     "nullable": false
+    },
+    {
+     "name": "from",
+     "type": "{id,name,handle,house}",
+     "nullable": true
+    },
+    {
+     "name": "brief",
+     "type": "string",
+     "nullable": true
+    },
+    {
+     "name": "piece",
+     "type": "style|opening|ending",
+     "nullable": true
+    },
+    {
+     "name": "opening",
+     "type": "string moment slug",
+     "nullable": true
+    },
+    {
+     "name": "ending",
+     "type": "string moment slug",
+     "nullable": true
+    },
+    {
+     "name": "moments",
+     "type": "Record<string,SceneEdit>",
+     "nullable": true
+    },
+    {
+     "name": "status",
+     "type": "'draft'",
+     "nullable": false
+    },
+    {
+     "name": "at",
+     "type": "number ms epoch",
+     "nullable": false
+    }
+   ],
+   "cardinality": "list",
+   "filtersOrSort": [
+    "at desc"
+   ],
+   "pagination": "none"
+  },
+  {
+   "entity": "SubmittedStyle",
+   "fields": [
+    {
+     "name": "id",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "name",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "base",
+     "type": "string (package slug)",
+     "nullable": false
+    },
+    {
+     "name": "theme",
+     "type": "Theme object (ground, ground2, ink, muted, accent, soft, line, display, body, italic, upper, track, script, scale; all optional)",
+     "nullable": false
+    },
+    {
+     "name": "seen",
+     "type": "Theme",
+     "nullable": true
+    },
+    {
+     "name": "scenes",
+     "type": "Record<sceneKey,SceneEdit>",
+     "nullable": false
+    },
+    {
+     "name": "art",
+     "type": "Asset[] {id,kind,name,size,url}",
+     "nullable": false
+    },
+    {
+     "name": "sound",
+     "type": "string asset id",
+     "nullable": true
+    },
+    {
+     "name": "soundSet",
+     "type": "{volume,fadeIn,fadeOut}",
+     "nullable": true
+    },
+    {
+     "name": "made",
+     "type": "{kinds:string[],occasions:Record<kind,string[]>,best:portrait|landscape|either}",
+     "nullable": false
+    },
+    {
+     "name": "tags",
+     "type": "{mood:string[],palette:string,family:string}",
+     "nullable": false
+    },
+    {
+     "name": "still",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "fallback",
+     "type": "string",
+     "nullable": true
+    },
+    {
+     "name": "holds",
+     "type": "Partial<Record<portrait|landscape,fills|bars|breaks>>",
+     "nullable": true
+    },
+    {
+     "name": "poster",
+     "type": "{frame:opening|cover|ending,src?,name?}",
+     "nullable": false
+    },
+    {
+     "name": "from",
+     "type": "{id,name,handle,house}",
+     "nullable": true
+    },
+    {
+     "name": "brief",
+     "type": "string",
+     "nullable": true
+    },
+    {
+     "name": "piece",
+     "type": "style|opening|ending",
+     "nullable": true
+    },
+    {
+     "name": "opening",
+     "type": "string moment slug",
+     "nullable": true
+    },
+    {
+     "name": "ending",
+     "type": "string moment slug",
+     "nullable": true
+    },
+    {
+     "name": "moments",
+     "type": "Record<string,SceneEdit>",
+     "nullable": true
+    },
+    {
+     "name": "status",
+     "type": "review|returned|live",
+     "nullable": false
+    },
+    {
+     "name": "submittedAt",
+     "type": "ISO",
+     "nullable": false
+    },
+    {
+     "name": "review",
+     "type": "{decided:string,accepted:boolean,notes?:string[]}",
+     "nullable": true
+    },
+    {
+     "name": "level",
+     "type": "Standard|Premium",
+     "nullable": true
+    },
+    {
+     "name": "byline",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "template",
+     "type": "boolean",
+     "nullable": false
+    },
+    {
+     "name": "liveAt",
+     "type": "ISO",
+     "nullable": true
+    }
+   ],
+   "cardinality": "list",
+   "filtersOrSort": [
+    "split client-side: status!=live -> In review/Sent back, status==live -> Live",
+    "chip filter all|draft|review|live is client-side"
+   ],
+   "pagination": "none"
+  },
+  {
+   "entity": "Earnings",
+   "fields": [
+    {
+     "name": "month",
+     "type": "string YYYY-MM (request param, sent as current month)",
+     "nullable": false
+    },
+    {
+     "name": "total",
+     "type": "number (naira, e.g. 14880)",
+     "nullable": false
+    },
+    {
+     "name": "rows",
+     "type": "EarningsRow[] {id,name,level:Standard|Premium,uses:number,paid:number,earned:number (naira)}",
+     "nullable": false
+    }
+   ],
+   "cardinality": "single",
+   "filtersOrSort": [
+    "month"
+   ],
+   "pagination": "none"
+  },
+  {
+   "entity": "Template (house)",
+   "fields": [
+    {
+     "name": "id",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "name",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "handle",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "house",
+     "type": "boolean",
+     "nullable": false
+    },
+    {
+     "name": "base",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "pace",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "orientation",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "dimension",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "kinds",
+     "type": "string[]",
+     "nullable": false
+    },
+    {
+     "name": "mood",
+     "type": "string[]",
+     "nullable": false
+    },
+    {
+     "name": "line",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "theme",
+     "type": "Theme",
+     "nullable": true
+    }
+   ],
+   "cardinality": "list",
+   "filtersOrSort": [],
+   "pagination": "none",
+   "note": "HOUSE derives from the bundled PACKAGES manifests (lib/studio.ts:487), not storage; a registry the server may need to know of."
+  }
+ ],
+ "actions": [
+  {
+   "name": "saveDraft",
+   "kind": "create",
+   "entity": "StudioStyle (draft)",
+   "payload": [
+    {
+     "name": "style",
+     "type": "StudioStyle built by newStyle(template, brief): id (client uid), name '<template> remix', status 'draft', base, theme, scenes {}, art [], made, tags, still 'fade', fallback, poster {frame:'cover'}, from {id,name,handle,house}, brief?, at"
+    }
+   ],
+   "expectedResponse": {
+    "entity": "StudioStyle",
+    "cardinality": "single"
+   },
+   "note": "From a template card; on success navigates to /app/creator/studio/<id> (the id from the response). The client mints the id today."
+  },
+  {
+   "name": "deleteDraft",
+   "kind": "delete",
+   "entity": "StudioStyle (draft)",
+   "payload": [
+    {
+     "name": "id",
+     "type": "string"
+    }
+   ],
+   "expectedResponse": {
+    "entity": "true",
+    "cardinality": "single"
+   }
+  },
+  {
+   "name": "withdrawStyle",
+   "kind": "custom",
+   "entity": "SubmittedStyle",
+   "payload": [
+    {
+     "name": "id",
+     "type": "string"
+    }
+   ],
+   "expectedResponse": {
+    "entity": "StudioStyle (draft)",
+    "cardinality": "single"
+   },
+   "note": "Only non-live; review and level removed, style returns to drafts; the used review is not returned."
+  },
+  {
+   "name": "setTemplate",
+   "kind": "update",
+   "entity": "SubmittedStyle",
+   "payload": [
+    {
+     "name": "id",
+     "type": "string"
+    },
+    {
+     "name": "on",
+     "type": "boolean"
+    }
+   ],
+   "expectedResponse": {
+    "entity": "SubmittedStyle",
+    "cardinality": "single"
+   }
+  },
+  {
+   "name": "setPlan",
+   "kind": "custom",
+   "entity": "CreatorState",
+   "payload": [
+    {
+     "name": "plan",
+     "type": "open|creator"
+    }
+   ],
+   "expectedResponse": {
+    "entity": "CreatorState",
+    "cardinality": "single"
+   },
+   "note": "Creator after PaySheet (7500/month): credits += 10, reviewsLeft = max(reviewsLeft,2). Open: reviewsLeft = min(reviewsLeft,1). Open is selectable without payment."
+  },
+  {
+   "name": "setSigned",
+   "kind": "custom",
+   "entity": "CreatorState",
+   "payload": [
+    {
+     "name": "on",
+     "type": "boolean"
+    }
+   ],
+   "expectedResponse": {
+    "entity": "CreatorState",
+    "cardinality": "single"
+   },
+   "note": "On after PaySheet (5000/month); off is free."
+  },
+  {
+   "name": "buyCredits",
+   "kind": "custom",
+   "entity": "CreatorState",
+   "payload": [
+    {
+     "name": "packs",
+     "type": "number (always 1 from this screen)"
+    }
+   ],
+   "expectedResponse": {
+    "entity": "CreatorState",
+    "cardinality": "single"
+   },
+   "note": "Pack = 5 credits for 3000, after PaySheet."
+  },
+  {
+   "name": "draftStyle",
+   "kind": "custom",
+   "entity": "StyleChange",
+   "payload": [
+    {
+     "name": "description",
+     "type": "string (trimmed, max 400)"
+    }
+   ],
+   "expectedResponse": {
+    "entity": "StyleChange {base?,theme?,scenes?,made?,tags?,ops?,said:string[],credits:number}",
+    "cardinality": "single"
+   },
+   "note": "Costs COST.draft=4 credits. Failure reasons the UI handles: offline, no-credits (via why()), others. Success path picks HOUSE template whose base == data.base then saveDraft with theme = data.theme."
+  }
+ ],
+ "authContext": {
+  "requiresAuth": true,
+  "rolesObserved": [
+   "creator"
+  ]
+ },
+ "special": {
+  "realtime": false,
+  "uploads": false,
+  "downloads": false,
+  "polling": "none; data reloads on the studio-api change event (local storage event), plus ?sent query param shows 'Sent for review.' toast once and is stripped",
+  "note": "Money shown as naira text built from numbers (naira()), amounts held as whole-naira numbers: 7500, 3000, 5000, 2500, 14880 earnings. Live previews of styles are client-rendered from the style spec; no server rendering needed. Pay flow goes through PaySheet (not in scope)."
+ },
+ "uiStatesHandled": [
+  {
+   "state": "loading",
+   "entersWhen": "!drafts || !mine || !me, renders null",
+   "reachable": "no",
+   "note": "all three resolve from synchronous localStorage promises; on first paint null; no skeleton. With a server these will be genuinely pending, so the designed skeleton is needed."
+  },
+  {
+   "state": "empty",
+   "entersWhen": "count.all === 0 ('Nothing here yet...')",
+   "reachable": "yes"
+  },
+  {
+   "state": "empty-filter",
+   "entersWhen": "count[filter] === 0 with count.all>0 (per-filter messages)",
+   "reachable": "yes"
+  },
+  {
+   "state": "loaded",
+   "entersWhen": "count[filter] > 0",
+   "reachable": "yes"
+  },
+  {
+   "state": "ai-offline-note",
+   "entersWhen": "draftStyle returns reason 'offline' (note true)",
+   "reachable": "yes",
+   "note": "always entered when Draft it is pressed with text; the only reachable outcome of draft"
+  },
+  {
+   "state": "ai-draft-success",
+   "entersWhen": "draftStyle ok",
+   "reachable": "no",
+   "note": "coded but unreachable: draftStyle always returns offline (STUB)"
+  },
+  {
+   "state": "error-toast",
+   "entersWhen": "any api result !ok other than offline: say(why(r)): no-credits, no-reviews, plan, not-found, failed ('This device is out of room')",
+   "reachable": "yes",
+   "note": "only 'failed' (storage full) and not-found are reachable locally; there is no page-level error state or retry; the page cannot show an error instead of content"
+  },
+  {
+   "state": "earnings-sheet-rows",
+   "entersWhen": "earn && earn.rows.length>0",
+   "reachable": "yes",
+   "note": "only with sample fixtures"
+  },
+  {
+   "state": "live-styles",
+   "entersWhen": "mine has status live",
+   "reachable": "no",
+   "note": "no local path creates live; only fixtures"
+  },
+  {
+   "state": "sent-toast",
+   "entersWhen": "?sent in URL",
+   "reachable": "yes"
+  }
+ ],
+ "uiStatesDesigned": [
+  "loading",
+  "empty",
+  "error",
+  "loaded"
+ ],
+ "moneyLiteralsInCode": {
+  "PLANS.creator.price": 7500,
+  "PLANS.open.price": 0,
+  "PACK": {
+   "credits": 5,
+   "price": 3000
+  },
+  "SIGNED.price": 5000,
+  "EXTRA_REVIEW": 2500,
+  "PREMIUM_PRICE": {
+   "list": 4000,
+   "now": 2400
+  },
+  "SHARE": 0.2,
+  "ROYALTY": 0.25,
+  "COST": {
+   "draft": 4,
+   "change": 1
+  },
+  "OPEN_CREDITS": 3,
+  "CREATOR_CREDITS": 10,
+  "REVIEWS": {
+   "open": 1,
+   "creator": 2
+  }
+ },
+ "stubsObserved": [
+  {
+   "file": "lib/studio-api.ts:1-9,64-84",
+   "evidence": "'Today the bodies keep everything on this device (localStorage, under fw-studio)'; read()/write() on Store v3",
+   "standsInFor": "all studio server state: creator plan/credits/reviews, drafts, sent styles, prefs",
+   "consequence": "state is per-browser; nothing populates it from a backend; the monthly renewal happens in read() on the client clock (studio-api.ts:70-73)"
+  },
+  {
+   "file": "lib/studio-api.ts:142",
+   "evidence": "draftStyle(...) { return no('offline'); }",
+   "standsInFor": "AI style drafting (POST /studio/ai/draft in the comment), charged COST.draft credits",
+   "consequence": "'Draft it' never produces a style; both screens show AI_LINE note; the success branch in Home.tsx/Start.tsx is unreachable"
+  },
+  {
+   "file": "lib/studio-api.ts:145",
+   "evidence": "changeStyle(...) { return no('offline'); }",
+   "standsInFor": "AI change to a style",
+   "consequence": "not used by these two screens (editor only), recorded for reconciliation"
+  },
+  {
+   "file": "components/app/studio/ctx.tsx:115",
+   "evidence": "AI_LINE = 'AI drafting switches on when Firstwish's server is connected...'",
+   "standsInFor": "the offline AI message",
+   "consequence": "user-visible copy that disappears once AI is wired"
+  },
+  {
+   "file": "lib/studio-api.ts:121-126,194-195,214-215",
+   "evidence": "setPlan/buyCredits/setSigned/buyExtraReview mutate local counters after PaySheet onPaid; getPayouts returns ok([])",
+   "standsInFor": "Paystack charge and verification, ledger, payouts",
+   "consequence": "plan, Signed and credits change with no money moving; PaySheet (components/app/Pay, not read) is trusted to have collected payment"
+  },
+  {
+   "file": "lib/studio-fixtures.ts:1-3,10",
+   "evidence": "'SAMPLES, for review only ... Nothing here is real'; samplesOn = account.wishes.some(id startsWith 's-')",
+   "standsInFor": "live styles, earnings and templates from other creators",
+   "consequence": "with sample wishes on, the screen shows invented styles (Velvet Hour, Ink and Gold), earnings 14880, and templates (Paper Lanterns, Brass Section); with it off, live, earnings and templates are always empty"
+  },
+  {
+   "file": "lib/studio-api.ts:181-184,200-203",
+   "evidence": "listTemplates: ok(samples.on ? SAMPLE_TEMPLATES : []); getEarnings: samples.on ? SAMPLE_EARNINGS : {rows:[],total:0}",
+   "standsInFor": "other creators' templates; per-month earnings",
+   "consequence": "no real source"
+  },
+  {
+   "file": "lib/studio-api.ts:166-167",
+   "evidence": "submitStyle sets byline: samples.handle, status 'review'; no reviewer exists",
+   "standsInFor": "review decision (accepted/returned, level Standard/Premium set by Firstwish)",
+   "consequence": "a sent style stays in review forever outside the fixtures"
+  },
+  {
+   "file": "components/app/studio/Home.tsx:111-113",
+   "evidence": "'to you each time a paid wish uses your Premium style' with naira(PREMIUM_PRICE.list*SHARE); text '40% off' literal; 'A quarter' literal",
+   "standsInFor": "price, creator share, royalty and promo end read from configuration",
+   "consequence": "hardcoded money copy: 4000*0.2=800, 2400*0.2=480, 40% off, quarter"
+  },
+  {
+   "file": "app/app/creator/studio/page.tsx:12 and new/page.tsx:12",
+   "evidence": "configure({ samples: samplesOn(account), handle: account.handle }) called during render; if (!account || !account.creator) return null",
+   "standsInFor": "loading/not-creator handling; sets module-level state in studio-api",
+   "consequence": "blank page when signed out or not creator; no skeleton"
+  }
+ ]
+}

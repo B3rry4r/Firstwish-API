@@ -1,0 +1,320 @@
+{
+  "reads": [
+    {
+      "entity": "Account (pro)",
+      "fields": [
+        {
+          "name": "pro.plan",
+          "type": "'starter'|'studio'",
+          "nullable": true
+        },
+        {
+          "name": "pro.business",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "contact",
+          "type": "string",
+          "nullable": false
+        }
+      ],
+      "cardinality": "single",
+      "filtersOrSort": [],
+      "pagination": "none"
+    },
+    {
+      "entity": "Shoot",
+      "fields": [
+        {
+          "name": "id",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "client",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "title",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "date",
+          "type": "date",
+          "nullable": false
+        },
+        {
+          "name": "createdAt",
+          "type": "datetime",
+          "nullable": false
+        },
+        {
+          "name": "proofs",
+          "type": "VaultFile[]",
+          "nullable": false
+        },
+        {
+          "name": "finals",
+          "type": "VaultFile[]",
+          "nullable": false
+        },
+        {
+          "name": "hearts",
+          "type": "string[] proof file ids",
+          "nullable": false
+        },
+        {
+          "name": "proofsReveal",
+          "type": "SentReveal",
+          "nullable": true
+        },
+        {
+          "name": "finalsReveal",
+          "type": "SentReveal",
+          "nullable": true
+        }
+      ],
+      "cardinality": "list",
+      "filtersOrSort": [
+        "createdAt desc (newest first)",
+        "client-side status filter: all|uploaded|proofs|favourites|finals; status derived: finalsReveal -> finals, hearts.length -> favourites, proofsReveal -> proofs, else uploaded"
+      ],
+      "pagination": "none (all shoots; shoots can hold 1240 files each)"
+    },
+    {
+      "entity": "Storage",
+      "fields": [
+        {
+          "name": "month",
+          "type": "string yyyy-mm",
+          "nullable": false
+        },
+        {
+          "name": "used",
+          "type": "number bytes",
+          "nullable": false
+        },
+        {
+          "name": "peak",
+          "type": "number bytes",
+          "nullable": false
+        },
+        {
+          "name": "planGB",
+          "type": "number",
+          "nullable": false
+        },
+        {
+          "name": "packGB",
+          "type": "number",
+          "nullable": false
+        },
+        {
+          "name": "packUntil",
+          "type": "date string, '' when none",
+          "nullable": false
+        },
+        {
+          "name": "included",
+          "type": "number GB",
+          "nullable": false
+        },
+        {
+          "name": "over",
+          "type": "number bytes",
+          "nullable": false
+        },
+        {
+          "name": "blocks",
+          "type": "number",
+          "nullable": false
+        },
+        {
+          "name": "cost",
+          "type": "number naira whole",
+          "nullable": false
+        },
+        {
+          "name": "free",
+          "type": "number bytes",
+          "nullable": false
+        }
+      ],
+      "cardinality": "single",
+      "filtersOrSort": [],
+      "pagination": "none"
+    },
+    {
+      "entity": "ProData",
+      "fields": [
+        {
+          "name": "month",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "pack",
+          "type": "number",
+          "nullable": false
+        },
+        {
+          "name": "business",
+          "type": "string",
+          "nullable": false
+        }
+      ],
+      "cardinality": "single",
+      "filtersOrSort": [],
+      "pagination": "none"
+    }
+  ],
+  "actions": [
+    {
+      "name": "createShoot",
+      "kind": "create",
+      "entity": "Shoot",
+      "payload": [
+        {
+          "name": "client",
+          "type": "string trimmed max 60",
+          "nullable": false
+        },
+        {
+          "name": "title",
+          "type": "string max 40, default 'Shoot'",
+          "nullable": false
+        },
+        {
+          "name": "date",
+          "type": "date yyyy-mm-dd",
+          "nullable": false
+        }
+      ],
+      "expectedResponse": {
+        "entity": "Shoot",
+        "cardinality": "single"
+      }
+    },
+    {
+      "name": "uploadFiles",
+      "kind": "custom",
+      "entity": "Shoot",
+      "payload": [
+        {
+          "name": "shoot",
+          "type": "string id",
+          "nullable": false
+        },
+        {
+          "name": "set",
+          "type": "'proofs' (here)",
+          "nullable": false
+        },
+        {
+          "name": "files",
+          "type": "File[] image/* only, many, with progress {done,total,bytes,totalBytes}",
+          "nullable": false
+        }
+      ],
+      "expectedResponse": {
+        "entity": "{shoot:Shoot, added:number, previews:number}",
+        "cardinality": "single"
+      }
+    }
+  ],
+  "authContext": {
+    "requiresAuth": true,
+    "rolesObserved": [
+      "business (owner/member; Pro account with account.pro)"
+    ]
+  },
+  "special": {
+    "realtime": false,
+    "uploads": "many large images (a shoot up to ~1240 files, ~22MB each) with byte progress; a failed upload keeps the created shoot and can retry",
+    "downloads": false,
+    "pagination": "none; reloads on vault change event"
+  },
+  "uiStatesHandled": [
+    {
+      "state": "loading",
+      "entersWhen": "!shoots || !storage with no error (skeleton .fv-loading)",
+      "reachable": "yes",
+      "note": "today resolves from localStorage in a microtask, barely perceptible; becomes real with a network"
+    },
+    {
+      "state": "error",
+      "entersWhen": "error && !shoots (message + Try again)",
+      "reachable": "no",
+      "note": "listShoots/getStorage never throw (no online() call, no network); code is dead today"
+    },
+    {
+      "state": "empty",
+      "entersWhen": "shoots.length === 0 ('No shoots yet.')",
+      "reachable": "yes"
+    },
+    {
+      "state": "loaded",
+      "entersWhen": "shoots and storage present",
+      "reachable": "yes"
+    },
+    {
+      "state": "upload-error",
+      "entersWhen": "uploadFiles/createShoot throws: offline, full (device quota), failed",
+      "reachable": "yes",
+      "note": "'full' is a localStorage quota today; maps to a server storage-limit error later"
+    },
+    {
+      "state": "blank",
+      "entersWhen": "!account || !data returns null",
+      "reachable": "yes"
+    }
+  ],
+  "uiStatesDesigned": [
+    "loading",
+    "empty",
+    "error",
+    "loaded"
+  ],
+  "stubsObserved": [
+    {
+      "file": "lib/vault-api.ts:109-123",
+      "evidence": "live.set(id, URL.createObjectURL(f)); preview() makes a 240px jpeg data URL for at most PREVIEWS=240 files; the full file is never kept; header says 'Until it exists, the implementation keeps the shoot records on this device'",
+      "standsInFor": "upload of the original file to storage, and a served file url",
+      "consequence": "An uploaded shoot has no real file anywhere; after reload only small previews (some none) exist; finals download and reveal playback have no real bytes (STUB-12)"
+    },
+    {
+      "file": "lib/vault-api.ts:231-306",
+      "evidence": "storageOf computes used/peak/over/blocks/cost on the client from localStorage, VAULT price constants and PLANS[plan].vault from lib/pro-data.ts",
+      "standsInFor": "server-side storage metering and billing (peak of the month, blocks, price)",
+      "consequence": "Bill and allowance are whatever the browser computes; prices (VAULT {block:100, price:3000, bulkFrom:1000, bulkPrice:2500} naira, PLANS vault GB 100/500/20, packDays 90) are hardcoded, not read from config"
+    },
+    {
+      "file": "lib/vault-fixtures.ts:11-70",
+      "evidence": "samplesOn() true when fw-account.wishes has an id starting 's-'; sampleShoots() builds six hardcoded shoots (ids sample-*, clients Adaeze and Tobi, The Okafor family, Ruth and Daniel, Zainab Musa, Kemi Adebayo, Chioma Eze) with /img/aisha-N.webp urls",
+      "standsInFor": "server data",
+      "consequence": "Sample rows are merged into every read path while on; a human cannot tell them from real rows"
+    },
+    {
+      "file": "lib/vault-api.ts:308",
+      "evidence": "online = navigator.onLine === false -> VaultError('offline')",
+      "standsInFor": "real request failure",
+      "consequence": "'offline' is the only network error; with no network calls, failures never occur otherwise (full is a localStorage quota error)"
+    },
+    {
+      "file": "lib/vault-api.ts:287-292",
+      "evidence": "shootsHere() fills openedAt from loadPro().wishes[].openedAt",
+      "standsInFor": "server-recorded first-open of a reveal",
+      "consequence": "openedAt comes from a field in the browser's own store"
+    },
+    {
+      "file": "app/app/pro/vault/page.tsx:134-138",
+      "evidence": "footer note: bytes > freeBytes ? 'Past {included} GB: {naira(VAULT.price)} a month per {VAULT.block} GB'",
+      "standsInFor": "server price/overage rules",
+      "consequence": "Price shown comes from a client constant (3000 naira per 100 GB)"
+    }
+  ],
+  "screenId": "pro-vault"
+}

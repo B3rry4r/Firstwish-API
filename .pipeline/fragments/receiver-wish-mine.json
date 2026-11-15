@@ -1,0 +1,584 @@
+{
+ "screenId": "receiver-wish-mine",
+ "reads": [
+  {
+   "entity": "Wish (account wish; lib/account.ts)",
+   "fields": [
+    {
+     "name": "id",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "no",
+     "type": "string (empty until paid)",
+     "nullable": false
+    },
+    {
+     "name": "name",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "call",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "from",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "kind",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "occasion",
+     "type": "string (occasion NAME)",
+     "nullable": false
+    },
+    {
+     "name": "style",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "ticket",
+     "type": "'moment'|'keepsake'|'signature'|'premiere'|''",
+     "nullable": false
+    },
+    {
+     "name": "status",
+     "type": "'draft'|'sealed'|'live'|'resting'|'removed'",
+     "nullable": false
+    },
+    {
+     "name": "step",
+     "type": "number",
+     "nullable": false
+    },
+    {
+     "name": "opensAt",
+     "type": "string ISO",
+     "nullable": false
+    },
+    {
+     "name": "openedAt",
+     "type": "string ISO",
+     "nullable": true
+    },
+    {
+     "name": "endsAt",
+     "type": "string ISO",
+     "nullable": true
+    },
+    {
+     "name": "photos",
+     "type": "string[]",
+     "nullable": false
+    },
+    {
+     "name": "letter",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "reasons",
+     "type": "string[]",
+     "nullable": false
+    },
+    {
+     "name": "content",
+     "type": "WishContent",
+     "nullable": true
+    },
+    {
+     "name": "sound",
+     "type": "'voice'|'song'|'none'",
+     "nullable": false
+    },
+    {
+     "name": "reaction",
+     "type": "string",
+     "nullable": true
+    },
+    {
+     "name": "isPublic",
+     "type": "boolean",
+     "nullable": true
+    },
+    {
+     "name": "removedAt",
+     "type": "string",
+     "nullable": true
+    },
+    {
+     "name": "at",
+     "type": "number",
+     "nullable": false
+    }
+   ],
+   "cardinality": "single",
+   "filtersOrSort": [
+    "id from ?id= (empty string if absent)"
+   ],
+   "pagination": "none",
+   "note": "read from account.wishes (localStorage 'fw-account') by id. WishContent = {letter,reasons,memory,story,voices,note,blessing,timeline,details,credits,links,studio,by,partner,gift,finale{line,sign},off[],on[],opening{id,values,scene},ending{id,values,scene},cover{more,school,years,born}} (lib/wish-model.ts:147). fromWish() turns it into WishData; if no content.letter it splits w.letter on blank lines; reasons from w.reasons; sets finale.sign from w.from. strict when content.on exists."
+  },
+  {
+   "entity": "WishData",
+   "fields": [
+    {
+     "name": "no",
+     "type": "string",
+     "nullable": true
+    },
+    {
+     "name": "kind",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "occasion",
+     "type": "string (occasion slug)",
+     "nullable": false
+    },
+    {
+     "name": "occasionName",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "call",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "from",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "by",
+     "type": "string",
+     "nullable": true
+    },
+    {
+     "name": "cover",
+     "type": "{names:string[],eyebrow:string,line:string,date:string(dotted 'DD \u00b7 MM \u00b7 YYYY'),title?:string}",
+     "nullable": false
+    },
+    {
+     "name": "photos",
+     "type": "{src:string,alt?,focus?:{x,y},w?,h?}[]",
+     "nullable": false
+    },
+    {
+     "name": "clips",
+     "type": "{src:string,poster?:string}[]",
+     "nullable": true
+    },
+    {
+     "name": "sound",
+     "type": "{voice?:string(url),song?:string(url)}",
+     "nullable": true
+    },
+    {
+     "name": "chapters",
+     "type": "Chapter[] ({type,title,content,photos:number[] (indexes into photos),heading?}); content by type: {\"letter\": \"{salute?:string, paras:string[], line?:string}\", \"reasons\": \"{items:{title:string,note?:string}[]}\", \"memory\": \"{title:string,text:string,quote?:string}\", \"story\": \"{title?:string,captions:string[]}\", \"voices\": \"{ask?:string, items:{name:string,role?:string,text:string}[]}\", \"note\": \"{from:string,text:string}\", \"blessing\": \"{verse:string,cite?:string,note?:string}\", \"timeline\": \"{items:{when:string,what:string}[]}\", \"details\": \"{items:{label:string,value:string}[]}\", \"film\": \"{frames:number[]}\", \"favourites\": \"{frames:number[]}\", \"credits\": \"{items:{role:string,name:string,handle?:string}[]}\", \"links\": \"{files?:string,book?:string,download?:{count:number,size:string,files?:string[]}}\"}",
+     "nullable": false
+    },
+    {
+     "name": "opening",
+     "type": "{id:'sealed'|'countdown'|'passcode'|'question'|'presents'|'open', values:Record<string,string>, scene?:string}",
+     "nullable": false
+    },
+    {
+     "name": "ending",
+     "type": "{id:'candle'|'envelope'|'ring'|'scratch'|'gift'|'confetti'|'date'|'names'|'close', values:Record<string,string>, scene?:string}",
+     "nullable": false
+    },
+    {
+     "name": "quiet",
+     "type": "boolean",
+     "nullable": true
+    },
+    {
+     "name": "soundFirst",
+     "type": "boolean",
+     "nullable": true
+    }
+   ],
+   "cardinality": "single",
+   "filtersOrSort": [],
+   "pagination": "none",
+   "note": "what WishHost plays; built client-side by fromWish / fromContent / build() in lib/engine/adapt.ts. opening.values by id: {\"sealed\": \"at (yyyy-mm-dd), time (HH:mm, default 00:00)\", \"countdown\": \"to (yyyy-mm-dd)\", \"passcode\": \"code, hint?\", \"question\": \"question, answer\", \"presents\": \"studio\", \"open\": \"(none)\"}. ending.values by id: {\"candle\": \"line?\", \"envelope\": \"line\", \"ring\": \"question\", \"scratch\": \"line\", \"gift\": \"title, text?\", \"confetti\": \"line?\", \"date\": \"date, line?\", \"names\": \"names ('|' joined), line?\", \"close\": \"(none); all endings also carry sign\"}. Receiver needs the whole thing, including the opening secret today (stub)."
+  },
+  {
+   "entity": "MakerNote (fw-maker[id])",
+   "fields": [
+    {
+     "name": "wedding",
+     "type": "string yyyy-mm-dd (a Wedding's day; seal counts down to it)",
+     "nullable": false
+    },
+    {
+     "name": "now",
+     "type": "boolean",
+     "nullable": false
+    },
+    {
+     "name": "voice",
+     "type": "number seconds",
+     "nullable": false
+    },
+    {
+     "name": "given",
+     "type": "{kind,occasion}",
+     "nullable": false
+    },
+    {
+     "name": "chosen",
+     "type": "{kind,occasion}",
+     "nullable": false
+    }
+   ],
+   "cardinality": "single",
+   "filtersOrSort": [
+    "by wish id"
+   ],
+   "pagination": "none",
+   "note": "only .wedding is read by this screen; the rest belongs to the maker"
+  },
+  {
+   "entity": "VoiceNote (fw-voice-<id>)",
+   "fields": [
+    {
+     "name": "voice",
+     "type": "string (data/blob url of the recorded note)",
+     "nullable": true
+    }
+   ],
+   "cardinality": "single",
+   "filtersOrSort": [
+    "by wish id"
+   ],
+   "pagination": "none",
+   "note": "becomes WishData.sound.voice; falsy -> none"
+  },
+  {
+   "entity": "RevealPlay (Shoot Reveal as the client's player plays it; lib/vault-api.ts:59)",
+   "fields": [
+    {
+     "name": "no",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "style",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "date",
+     "type": "string (dotted cover date)",
+     "nullable": false
+    },
+    {
+     "name": "photos",
+     "type": "string[] (urls of frames that have a picture on this device)",
+     "nullable": false
+    },
+    {
+     "name": "content",
+     "type": "WishContent (note, credits, links.download{count,size,files}, favourites chapter etc. built by revealContent)",
+     "nullable": false
+    },
+    {
+     "name": "index",
+     "type": "number[] (photo position -> frame position in the reveal)",
+     "nullable": false
+    }
+   ],
+   "cardinality": "single",
+   "filtersOrSort": [
+    "no from ?no="
+   ],
+   "pagination": "none",
+   "note": "getReveal(no) == GET /r/:no per its own comment. Returns null when not found. Frames with no src on this device are dropped (frameSrc)."
+  },
+  {
+   "entity": "Guest query (client wish named in the address)",
+   "fields": [
+    {
+     "name": "name",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "occasion",
+     "type": "string (default 'A wish')",
+     "nullable": false
+    },
+    {
+     "name": "no",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "kind",
+     "type": "string (default 'teams')",
+     "nullable": false
+    }
+   ],
+   "cardinality": "single",
+   "filtersOrSort": [
+    "?name=&occasion=&no=&kind=&style="
+   ],
+   "pagination": "none",
+   "note": "when ?name= is present and the id matches no account wish, plays fromContent({...,fill:true}) = sample words with that name. This is the 'client wish' preview; no server holds it."
+  }
+ ],
+ "actions": [
+  {
+   "name": "sendFavourites",
+   "kind": "custom",
+   "entity": "Shoot Reveal favourites",
+   "payload": [
+    {
+     "name": "no",
+     "type": "string (reveal/wish number)"
+    },
+    {
+     "name": "hearts",
+     "type": "number[] (positions in the reveal's frames, mapped via RevealPlay.index; WishPlayer/styles call act({type:'favourites',hearts}) with photo positions)"
+    }
+   ],
+   "expectedResponse": {
+    "entity": "void (resolves) | rejects with Error whose message the UI shows; UI text on reject: 'That did not send. Try again.' or 'You are offline. Connect, then send it again.'",
+    "cardinality": "single"
+   },
+   "note": "vault-api.ts:178 says POST /r/:no/favourites; server side must record the client's hearts on the reveal and mark the shoot's proofs hearted (by frame ref). Replaces the full list each time (not a toggle)."
+  },
+  {
+   "name": "answerRing",
+   "kind": "update",
+   "entity": "Wish.reaction",
+   "payload": [
+    {
+     "name": "wishId",
+     "type": "string"
+    },
+    {
+     "name": "reaction",
+     "type": "string ('Yes.' when value=='yes'; else the raw value e.g. 'no')"
+    }
+   ],
+   "expectedResponse": {
+    "entity": "Wish",
+    "cardinality": "single"
+   },
+   "note": "Host.hear -> onReaction(value) fires on EndingEvent type 'answer'. Today written by the receiver page into the signed-in account's own wish (putWish(account,{...w,reaction}), and skipped if no account). With a server the receiver is anonymous and must reach the sender via the link. Note No also overwrites reaction with 'no'; 'reached' and 'done' events are not stored."
+  },
+  {
+   "name": "unlockOpening",
+   "kind": "custom",
+   "entity": "WishData.opening",
+   "payload": [
+    {
+     "name": "answer",
+     "type": "string"
+    }
+   ],
+   "expectedResponse": {
+    "entity": "ok | {ok:false,error}",
+    "cardinality": "single"
+   },
+   "note": "same as the showcase; preview mode lets the sender skip a time seal ('Preview it now')"
+  },
+  {
+   "name": "wakeWish",
+   "kind": "custom",
+   "entity": "Wish",
+   "payload": [
+    {
+     "name": "wishId",
+     "type": "string"
+    }
+   ],
+   "expectedResponse": null,
+   "note": "link on the resting screen to /app/wishes/<id> (sender-side screen); not performed here"
+  }
+ ],
+ "authContext": {
+  "requiresAuth": false,
+  "rolesObserved": [
+   "sender previewing own wish (preview flag, signed in, localStorage account)",
+   "receiver by link (intended; today only works in the sender's own browser, STUB-9)",
+   "business client opening a Shoot Reveal (?no=)"
+  ],
+  "note": "a receiver has no side; the page reads the signed-in account today only because the data is local"
+ },
+ "special": {
+  "realtime": false,
+  "uploads": false,
+  "downloads": "Shoot Reveal links.download (count,size,files[]) shown in the player; getDownload(no) exists in vault-api but is not called by this page",
+  "polling": "1s client timer for seals",
+  "audio": "voice note url played after a tap",
+  "paging": "none"
+ },
+ "uiStatesHandled": [
+  {
+   "state": "blank (render null)",
+   "entersWhen": "account===undefined or id===null (browser storage still being read), or guest present with reveal===undefined (getReveal pending)",
+   "reachable": "yes",
+   "note": "after the move to a server this is the loading state; today it is a blank page, not a skeleton. The getReveal wait is a promise over local data so is near instant."
+  },
+  {
+   "state": "not found",
+   "entersWhen": "!w and no guest query, or !data: 'That wish is not here. It may have been made on another phone, or erased.' + My wishes link",
+   "reachable": "yes",
+   "note": "this is the error/empty equivalent; it is exactly what any receiver sees on another device (STUB-9)"
+  },
+  {
+   "state": "resting",
+   "entersWhen": "w.status=='resting': 'This wish is resting. It was made for <name>. Wake it for a month, six months or a year, and it plays again.' with cover photo (w.photos[0] or /img/aisha-1.webp), eyebrow 'Wish \u2116 <no>' or 'A wish', Wake it link",
+   "reachable": "yes",
+   "note": "shows to anyone opening the link; the Wake it button is a sender action and should not show to a receiver"
+  },
+  {
+   "state": "playing a Shoot Reveal",
+   "entersWhen": "!w and guest and guest.reveal truthy",
+   "reachable": "yes",
+   "note": "fromContent with RevealPlay photos/content/date; onFavourites wired"
+  },
+  {
+   "state": "playing a client wish by name",
+   "entersWhen": "!w and guest and guest.reveal falsy (null: no ?no= or getReveal rejected/returned null)",
+   "reachable": "yes",
+   "note": "sample words filled with the name; style default 'cinema' for kind 'teams', else 'noir'"
+  },
+  {
+   "state": "playing own wish (preview)",
+   "entersWhen": "w found, status != 'resting'; WishHost preview, onReaction, close link to /app/wishes/<id>",
+   "reachable": "yes",
+   "note": "draft, sealed, live and removed wishes all play; status is not checked beyond 'resting'"
+  },
+  {
+   "state": "sealed (time)",
+   "entersWhen": "opening.id=='sealed' and sealTime(opening)>Date.now() (left>0); button hidden unless preview",
+   "reachable": "yes",
+   "note": "Gate shows 'Sealed until <time>, <long date>' and countdown text; unlock() ignored while left>0 unless preview"
+  },
+  {
+   "state": "countdown",
+   "entersWhen": "opening.id=='countdown' and left>0; Open it button shown regardless (unlock only blocked for lock=='time')",
+   "reachable": "yes",
+   "note": "countdown to values.to; the receiver can Open it before the day: unlock() only blocks lock=='time'"
+  },
+  {
+   "state": "passcode",
+   "entersWhen": "opening.id=='passcode'; one text field, 'Open it'",
+   "reachable": "yes",
+   "note": "errors: 'Type the code first.' (empty), 'That is not the code.'; if values.code empty it opens with no check"
+  },
+  {
+   "state": "question",
+   "entersWhen": "opening.id=='question'",
+   "reachable": "yes",
+   "note": "errors: 'Type your answer first.', 'That is not it. Try again.'; compare is tidy(): NFKD, strip accents, trim, lowercase, collapse spaces, strip . ! ? , ' \u2019 \""
+  },
+  {
+   "state": "title card (presents)",
+   "entersWhen": "opening.id=='presents' (lock 'title'); button 'Watch'",
+   "reachable": "yes",
+   "note": "no check; cover eyebrow '<studio> presents'"
+  },
+  {
+   "state": "open straight away",
+   "entersWhen": "opening.id=='open' (lock 'none'); opened and gone start true",
+   "reachable": "yes"
+  },
+  {
+   "state": "unlock error",
+   "entersWhen": "checkUnlock returns ok:false -> setError(message)",
+   "reachable": "yes"
+  }
+ ],
+ "uiStatesDesigned": [
+  "loading",
+  "empty",
+  "error",
+  "loaded"
+ ],
+ "stubsObserved": [
+  {
+   "file": "app/w/mine/page.tsx:15-24, 28",
+   "evidence": "account?.wishes.find((x)=>x.id===id) from useAccount (localStorage 'fw-account'); header comment 'until a server holds the wish itself'",
+   "standsInFor": "fetching the wish by its public link",
+   "consequence": "STUB-9: the Share link works only in the sender's own browser; any other device shows 'That wish is not here'"
+  },
+  {
+   "file": "app/w/mine/page.tsx:35-36",
+   "evidence": "'a business's client wish named in the address ... plays its occasion with that name until a server holds the wish itself' -> fromContent({..., photos: [], content: {}, fill: true})",
+   "standsInFor": "the real client wish's content",
+   "consequence": "the client sees sample words with their name, not what the business wrote, unless ?no= resolves a reveal on the same device"
+  },
+  {
+   "file": "app/w/mine/page.tsx:46",
+   "evidence": "if (w.status === 'resting') ... href=/app/wishes/${w.id} 'Wake it'",
+   "standsInFor": "a server-decided resting/gone state for a receiver",
+   "consequence": "a receiver is shown a sender's action; 'gone' (erased after HOLD_DAYS) and 'removed' are not distinguished: removed wishes still play"
+  },
+  {
+   "file": "app/w/mine/page.tsx:53",
+   "evidence": "if (!account) return; save(putWish(account, {...w, reaction}))",
+   "standsInFor": "POST of the receiver's answer to the wish's sender",
+   "consequence": "reaction is never delivered to anyone but the signed-in owner's own browser; a receiver's Yes is lost"
+  },
+  {
+   "file": "lib/vault-api.ts:178-200",
+   "evidence": "sendFavourites writes hearts into fw-vault/fw-pro on this device (loadPro/savePro)",
+   "standsInFor": "POST /r/:no/favourites",
+   "consequence": "hearts only reach the business if the client opens the reveal in the business's own browser"
+  },
+  {
+   "file": "lib/vault-api.ts:155-176",
+   "evidence": "getReveal reads loadPro()/shootsHere() and falls back to sample shoots; frames without a local src are dropped",
+   "standsInFor": "GET /r/:no",
+   "consequence": "a client elsewhere gets null and then the sample client wish; frames larger than ~200 chars of src are not kept in the record"
+  },
+  {
+   "file": "lib/maker.ts:36",
+   "evidence": "readVoice reads localStorage 'fw-voice-<id>'",
+   "standsInFor": "the stored voice note file",
+   "consequence": "voice note exists only on the sender's device"
+  },
+  {
+   "file": "lib/maker.ts:31",
+   "evidence": "readNote(w.id).wedding from 'fw-maker'",
+   "standsInFor": "the wedding day stored with the wish",
+   "consequence": "countdown target for a Wedding is lost off device; must be a field of the wish"
+  },
+  {
+   "file": "lib/engine/unlock.ts:25-33",
+   "evidence": "checkUnlock compares the typed answer to wish.opening.values.code / .answer locally; header comment: 'Today the passcode and the answer are checked against the wish's own values on this device'",
+   "standsInFor": "server-side passcode/question check (secret never sent to receiver)",
+   "consequence": "the code/answer ships to every receiver's browser inside WishData; anyone can read it. Time seal is judged by receiver's device clock (Date.now()), not server time."
+  },
+  {
+   "file": "lib/engine/unlock.ts:17-20 and components/engine/Host.tsx:153-156",
+   "evidence": "sealTime builds new Date(`${day}T${time||'00:00'}:00`) in receiver's local zone; Host ticks Date.now() every second for the countdown",
+   "standsInFor": "server-decided seal moment and time left",
+   "consequence": "changing device clock opens a sealed wish; sealed wish content is already in the page"
+  }
+ ],
+ "rulings": [
+  "Receiver by link needs a way to find a wish without the sender's account (by wish no or an unguessable slug); the front end has none. A human must rule.",
+  "Whether the passcode/answer may travel to the receiver (it does today) or is checked server-side; unlock.ts says the latter is the plan.",
+  "Whether a receiver's ring answer (Yes) and No are stored, and what they see after: only 'Yes.' is written as text today; 'no' written verbatim.",
+  "What a receiver sees for status sealed/draft/removed/gone (today only 'resting' has a screen)."
+ ]
+}

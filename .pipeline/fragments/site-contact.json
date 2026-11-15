@@ -1,0 +1,98 @@
+{
+  "screenId": "site-contact",
+  "reads": [
+    {
+      "entity": "ContactChannels",
+      "fields": [
+        {
+          "name": "whatsappUrl",
+          "type": "string (url)",
+          "nullable": true
+        },
+        {
+          "name": "email",
+          "type": "string",
+          "nullable": true
+        }
+      ],
+      "cardinality": "single",
+      "filtersOrSort": [],
+      "pagination": "none",
+      "note": "lib/config.ts WHATSAPP_URL = '' and EMAIL = ''; a button renders only when truthy. Public site configuration."
+    },
+    {
+      "entity": "Pricing",
+      "fields": [
+        {
+          "name": "conciergeSingleWish",
+          "type": "naira text '₦15,000' (in copy)",
+          "nullable": false
+        },
+        {
+          "name": "conciergeDeliveryHours",
+          "type": "number 3 (in copy)",
+          "nullable": false
+        }
+      ],
+      "cardinality": "single",
+      "filtersOrSort": [],
+      "pagination": "none",
+      "note": "Inline in app/contact/page.tsx:27 footnote. Matches lib/catalog.ts concierge.price '₦15,000'."
+    }
+  ],
+  "actions": [],
+  "authContext": {
+    "requiresAuth": false,
+    "rolesObserved": []
+  },
+  "special": {
+    "realtime": false,
+    "uploads": false,
+    "downloads": false
+  },
+  "uiStatesHandled": [
+    {
+      "state": "loaded",
+      "entersWhen": "always",
+      "reachable": "yes"
+    },
+    {
+      "state": "no-contact-buttons",
+      "entersWhen": "WHATSAPP_URL === '' and EMAIL === '' (both empty today)",
+      "reachable": "yes",
+      "note": "page head shows no button at all; the user cannot contact anyone from this page"
+    },
+    {
+      "state": "loading",
+      "entersWhen": "none coded",
+      "reachable": "no"
+    },
+    {
+      "state": "empty",
+      "entersWhen": "none coded",
+      "reachable": "no"
+    },
+    {
+      "state": "error",
+      "entersWhen": "none coded",
+      "reachable": "no"
+    }
+  ],
+  "uiStatesDesigned": [
+    "empty"
+  ],
+  "stubsObserved": [
+    {
+      "file": "lib/config.ts:2-3",
+      "evidence": "export const WHATSAPP_URL = \"\"; export const EMAIL = \"\";",
+      "standsInFor": "the real contact channels",
+      "consequence": "the Contact page, the target of every 'Apply to build' and Pro enquiry, has no way to message; a dead end"
+    },
+    {
+      "file": "app/contact/page.tsx:27",
+      "evidence": "'One wish made for you is ₦15,000'",
+      "standsInFor": "Concierge price (configuration table)",
+      "consequence": "hardcoded money in prose"
+    }
+  ]
+}

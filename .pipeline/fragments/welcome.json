@@ -1,0 +1,289 @@
+{
+  "screenId": "welcome",
+  "reads": [
+    {
+      "entity": "Account",
+      "fields": [
+        {
+          "name": "name",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "contact",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "here",
+          "type": "Here",
+          "nullable": false
+        },
+        {
+          "name": "handle",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "creator",
+          "type": "boolean",
+          "nullable": false
+        },
+        {
+          "name": "pro",
+          "type": "{plan,business}|null",
+          "nullable": true
+        },
+        {
+          "name": "space",
+          "type": "'me'|'business'|'creator'",
+          "nullable": true
+        },
+        {
+          "name": "pass",
+          "type": "boolean",
+          "nullable": false
+        },
+        {
+          "name": "dates",
+          "type": "DateRow[]",
+          "nullable": false
+        },
+        {
+          "name": "wishes",
+          "type": "Wish[]",
+          "nullable": false
+        }
+      ],
+      "cardinality": "single",
+      "filtersOrSort": [],
+      "pagination": "none",
+      "note": "readAccount() prefills name only if the account already has one; prev.dates are appended to; blank() used if none. Server need: the signed-in account (name, contact, dates)."
+    }
+  ],
+  "actions": [
+    {
+      "name": "completeWelcomeForSomeone",
+      "kind": "update",
+      "entity": "Account",
+      "payload": [
+        {
+          "name": "name",
+          "type": "string (trimmed, non-empty)"
+        },
+        {
+          "name": "contact",
+          "type": "string"
+        },
+        {
+          "name": "here",
+          "type": "'someone'"
+        },
+        {
+          "name": "space",
+          "type": "'me'"
+        },
+        {
+          "name": "dates",
+          "type": "DateRow[] (optional one new row appended)"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "Account",
+        "cardinality": "single"
+      }
+    },
+    {
+      "name": "addDate",
+      "kind": "create",
+      "entity": "DateRow",
+      "payload": [
+        {
+          "name": "name",
+          "type": "string (trimmed 'Their name')"
+        },
+        {
+          "name": "who",
+          "type": "string ('' always from this screen)"
+        },
+        {
+          "name": "what",
+          "type": "'Birthday'|'Anniversary'|'Something else' (WHAT list)"
+        },
+        {
+          "name": "date",
+          "type": "string (yyyy-mm-dd from date input; required to add)"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "DateRow",
+        "cardinality": "single",
+        "note": "id is uid() client-made today (Math.random 8 chars); server should issue the id. Copy promises reminders a week and a day before."
+      }
+    },
+    {
+      "name": "setUpBusiness",
+      "kind": "update",
+      "entity": "Account",
+      "payload": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "contact",
+          "type": "string"
+        },
+        {
+          "name": "here",
+          "type": "'business'"
+        },
+        {
+          "name": "pro",
+          "type": "{plan:'pack', business:string (trimmed, maxLength 48)}"
+        },
+        {
+          "name": "space",
+          "type": "'business'"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "Account",
+        "cardinality": "single",
+        "note": "then navigates to /app/pro; this creates the Business side with a wish pack plan (pay per wish, no monthly plan)"
+      }
+    },
+    {
+      "name": "setUpCreatorProfile",
+      "kind": "update",
+      "entity": "Account",
+      "payload": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "contact",
+          "type": "string"
+        },
+        {
+          "name": "here",
+          "type": "'styles'"
+        },
+        {
+          "name": "creator",
+          "type": "true"
+        },
+        {
+          "name": "handle",
+          "type": "string (validated client-side by handleOk in components/app/feed/spaces; its rule was not read here; conventions: lowercased [a-z0-9._]{3,30})"
+        },
+        {
+          "name": "space",
+          "type": "'creator'"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "Account",
+        "cardinality": "single",
+        "note": "then navigates to /app/creator. Handle needs to be unique: no availability check is coded in this screen, and HandleField (components/app/feed/SetUp.tsx) was not read (out of scope)"
+      }
+    }
+  ],
+  "authContext": {
+    "requiresAuth": true,
+    "rolesObserved": [
+      "person",
+      "business",
+      "creator"
+    ],
+    "note": "Reached right after a code step; today needs only sessionStorage 'fw-pending'. With a server it needs the session from verifyCode. Chooses the first side to set up; one account can add the others later."
+  },
+  "special": {
+    "realtime": false,
+    "uploads": false,
+    "downloads": false
+  },
+  "uiStatesHandled": [
+    {
+      "state": "step-0-name",
+      "entersWhen": "step === 0",
+      "reachable": "yes"
+    },
+    {
+      "state": "step-1-here",
+      "entersWhen": "step === 1",
+      "reachable": "yes"
+    },
+    {
+      "state": "step-2-someone",
+      "entersWhen": "step === 2 && here === 'someone'",
+      "reachable": "yes"
+    },
+    {
+      "state": "step-2-business",
+      "entersWhen": "step === 2 && here === 'business'",
+      "reachable": "yes"
+    },
+    {
+      "state": "step-2-styles",
+      "entersWhen": "step === 2 && here === 'styles'",
+      "reachable": "yes"
+    },
+    {
+      "state": "loading",
+      "entersWhen": "none coded: finish writes synchronously to localStorage then router.push",
+      "reachable": "no",
+      "note": "no pending state on a write"
+    },
+    {
+      "state": "error",
+      "entersWhen": "none coded: no save failure, taken handle or network failure message",
+      "reachable": "no",
+      "note": "writeAccount swallows storage errors (account.ts:62 try/catch {})"
+    },
+    {
+      "state": "empty",
+      "entersWhen": "not applicable",
+      "reachable": "no"
+    }
+  ],
+  "uiStatesDesigned": [
+    "loading",
+    "empty",
+    "error",
+    "loaded"
+  ],
+  "stubsObserved": [
+    {
+      "file": "components/app/Welcome.tsx:33-45",
+      "evidence": "finish() builds the Account and calls writeAccount(...) to localStorage 'fw-account', then router.push",
+      "standsInFor": "creating or updating the account on the server",
+      "consequence": "account exists only on this device; never reaches a server"
+    },
+    {
+      "file": "components/app/Welcome.tsx:30",
+      "evidence": "useEffect(() => { setContact(getPending()); const a = readAccount(); ... }, [])",
+      "standsInFor": "the signed-in session's contact and name",
+      "consequence": "contact comes from sessionStorage 'fw-pending'; a direct visit to /welcome with nothing pending creates an account with contact ''"
+    },
+    {
+      "file": "lib/account.ts:71",
+      "evidence": "export const uid = () => Math.random().toString(36).slice(2, 10);",
+      "standsInFor": "server-issued ids (UUIDv7)",
+      "consequence": "DateRow.id is client random, not unique or ordered"
+    },
+    {
+      "file": "components/app/Welcome.tsx:43",
+      "evidence": "pro: { plan: 'pack', business: business.trim() }",
+      "standsInFor": "choosing a Business plan",
+      "consequence": "the plan is fixed to 'pack' at sign-up; no plan choice or payment here"
+    },
+    {
+      "file": "lib/account.ts:15-18 header comment",
+      "evidence": "'Nothing here talks to a server yet: sign up, sign in, wishes and dates are held in the browser'",
+      "standsInFor": "the whole account store",
+      "consequence": "all account state is local"
+    }
+  ]
+}

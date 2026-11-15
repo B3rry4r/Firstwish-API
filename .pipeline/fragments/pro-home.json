@@ -1,0 +1,465 @@
+{
+  "reads": [
+    {
+      "entity": "ProAccount",
+      "fields": [
+        {
+          "name": "month",
+          "type": "string yyyy-mm",
+          "nullable": false
+        },
+        {
+          "name": "rolled",
+          "type": "number: unused wishes carried in",
+          "nullable": false
+        },
+        {
+          "name": "pack",
+          "type": "number: wishes left from wish packs",
+          "nullable": false
+        },
+        {
+          "name": "business",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "plan",
+          "type": "'starter'|'studio'|'pack' (from Account.pro.plan, else 'pack' if pack>0 or business set; null->'pack')",
+          "nullable": false
+        }
+      ],
+      "cardinality": "single",
+      "filtersOrSort": [],
+      "pagination": "none"
+    },
+    {
+      "entity": "Account",
+      "fields": [
+        {
+          "name": "name",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "contact",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "pro",
+          "type": "{plan:'starter'|'studio',business:string}|null",
+          "nullable": true
+        }
+      ],
+      "cardinality": "single",
+      "filtersOrSort": [],
+      "pagination": "none",
+      "note": "Account.pro read from fw-account via useAccount(); page returns null until account and data exist"
+    },
+    {
+      "entity": "ClientWish",
+      "fields": [
+        {
+          "name": "id",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "no",
+          "type": "string",
+          "nullable": false,
+          "note": "4-digit wish number, issued client-side as max+1 from 900"
+        },
+        {
+          "name": "client",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "kind",
+          "type": "string (catalog slug)",
+          "nullable": false
+        },
+        {
+          "name": "occasion",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "day",
+          "type": "string yyyy-mm-dd (opening day)",
+          "nullable": false
+        },
+        {
+          "name": "createdAt",
+          "type": "string ISO",
+          "nullable": false
+        },
+        {
+          "name": "from",
+          "type": "'month'|'pack'",
+          "nullable": false
+        },
+        {
+          "name": "openedAt",
+          "type": "string ISO",
+          "nullable": true
+        },
+        {
+          "name": "endsAt",
+          "type": "string ISO",
+          "nullable": true
+        },
+        {
+          "name": "madeOwn",
+          "type": "boolean",
+          "nullable": true
+        },
+        {
+          "name": "reveal",
+          "type": "Reveal",
+          "nullable": true
+        },
+        {
+          "name": "sample",
+          "type": "boolean",
+          "nullable": true,
+          "note": "sample marker, local only; not a server field"
+        }
+      ],
+      "cardinality": "list",
+      "filtersOrSort": [
+        "sorted createdAt desc (client-side)",
+        "status derived client-side from day/endsAt vs now: sealed|live|resting"
+      ],
+      "pagination": "none"
+    },
+    {
+      "entity": "Person",
+      "fields": [
+        {
+          "name": "id",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "phone",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "team",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "birthday",
+          "type": "string yyyy-mm-dd or ''",
+          "nullable": false
+        },
+        {
+          "name": "start",
+          "type": "string yyyy-mm-dd or ''",
+          "nullable": false
+        }
+      ],
+      "cardinality": "list",
+      "filtersOrSort": [
+        "sorted by name (client-side)"
+      ],
+      "pagination": "none"
+    },
+    {
+      "entity": "ApprovedDate",
+      "fields": [
+        {
+          "name": "key",
+          "type": "string `${personId}:b|s:${year}`",
+          "nullable": false
+        }
+      ],
+      "cardinality": "list",
+      "filtersOrSort": [],
+      "pagination": "none"
+    },
+    {
+      "entity": "Storage",
+      "fields": [
+        {
+          "name": "month",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "used",
+          "type": "number bytes",
+          "nullable": false
+        },
+        {
+          "name": "peak",
+          "type": "number bytes",
+          "nullable": false
+        },
+        {
+          "name": "planGB",
+          "type": "number",
+          "nullable": false
+        },
+        {
+          "name": "packGB",
+          "type": "number",
+          "nullable": false
+        },
+        {
+          "name": "packUntil",
+          "type": "string date",
+          "nullable": false
+        },
+        {
+          "name": "included",
+          "type": "number GB",
+          "nullable": false
+        },
+        {
+          "name": "over",
+          "type": "number bytes",
+          "nullable": false
+        },
+        {
+          "name": "blocks",
+          "type": "number",
+          "nullable": false
+        },
+        {
+          "name": "cost",
+          "type": "number naira",
+          "nullable": false
+        },
+        {
+          "name": "free",
+          "type": "number bytes",
+          "nullable": false
+        }
+      ],
+      "cardinality": "single",
+      "filtersOrSort": [],
+      "pagination": "none",
+      "source": "useVault()/getStorage() in lib/vault-api.ts (fw-vault)"
+    },
+    {
+      "entity": "Shoot",
+      "fields": [
+        {
+          "name": "id",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "client",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "title",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "date",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "createdAt",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "proofs",
+          "type": "VaultFile[] {id,name,size,url?}",
+          "nullable": false
+        },
+        {
+          "name": "finals",
+          "type": "VaultFile[]",
+          "nullable": false
+        },
+        {
+          "name": "hearts",
+          "type": "string[] file ids",
+          "nullable": false
+        },
+        {
+          "name": "proofsReveal",
+          "type": "{wish,no,sentAt,openedAt?}",
+          "nullable": true
+        },
+        {
+          "name": "finalsReveal",
+          "type": "{wish,no,sentAt,openedAt?}",
+          "nullable": true
+        }
+      ],
+      "cardinality": "list",
+      "filtersOrSort": [
+        "needs: shootStatus==='favourites' && finals.length===0, derived from hearts/proofsReveal/finalsReveal"
+      ],
+      "pagination": "none",
+      "source": "listShoots()"
+    },
+    {
+      "entity": "PlanInfo",
+      "fields": [
+        {
+          "name": "key",
+          "type": "'starter'|'studio'|'pack'",
+          "nullable": false
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "price",
+          "type": "number (naira)",
+          "nullable": false
+        },
+        {
+          "name": "was",
+          "type": "number (naira, struck-through)",
+          "nullable": false
+        },
+        {
+          "name": "wishes",
+          "type": "number",
+          "nullable": false
+        },
+        {
+          "name": "logins",
+          "type": "number",
+          "nullable": false
+        },
+        {
+          "name": "monthly",
+          "type": "boolean",
+          "nullable": false
+        },
+        {
+          "name": "vault",
+          "type": "number GB",
+          "nullable": false
+        },
+        {
+          "name": "items",
+          "type": "string[]",
+          "nullable": false
+        }
+      ],
+      "cardinality": "list",
+      "filtersOrSort": [],
+      "pagination": "none",
+      "note": "PLANS table in lib/pro-data.ts is hardcoded: price, wishes, logins, vault; PLANS.pack.wishes (5) is used as the pack figure denominator"
+    }
+  ],
+  "actions": [],
+  "authContext": {
+    "requiresAuth": true,
+    "rolesObserved": [
+      "business (owner)",
+      "business member (login seat)"
+    ]
+  },
+  "special": {
+    "realtime": false,
+    "uploads": false,
+    "downloads": false,
+    "polling": false,
+    "paging": "none; whole lists in one read; refresh on page load, tab visible, after write per conventions"
+  },
+  "derived": [
+    "usage(): allowance (plan monthly wishes), total=allowance+rolled, used (wishes created this month with from==='month'), left, canMake=left+pack>0, resets (1st of next month)",
+    "coming(people): next birthday/anniversary within days; needs list uses days<=1 and not in approved",
+    "Needs list: max three of favourites back, unopened live reveal, dates today/tomorrow"
+  ],
+  "uiStatesHandled": [
+    {
+      "state": "loading",
+      "entersWhen": "usePro(): data === null on first render before the mount effect runs; page returns null (no skeleton)",
+      "reachable": "no",
+      "note": "loadPro() is a synchronous localStorage read in useEffect; null for one commit only. Against a server this becomes reachable and needs the app's skeleton."
+    },
+    {
+      "state": "vault-figure-wait",
+      "entersWhen": "storage === null (useVault not loaded) shows an aria-busy placeholder",
+      "reachable": "no",
+      "note": "getStorage is a synchronous localStorage read wrapped in async; resolves in a microtask. Vault load errors set useVault.error which this page never reads."
+    },
+    {
+      "state": "needs-empty",
+      "entersWhen": "needs.length === 0 -> 'All clear'",
+      "reachable": "yes"
+    },
+    {
+      "state": "recent-empty",
+      "entersWhen": "data.wishes.length === 0 -> Empty 'No client wishes yet.'",
+      "reachable": "yes"
+    },
+    {
+      "state": "cannot-make",
+      "entersWhen": "!u.canMake -> 'Get wishes' button instead of 'New client wish'",
+      "reachable": "yes"
+    },
+    {
+      "state": "pack-variant",
+      "entersWhen": "plan === 'pack'",
+      "reachable": "yes"
+    },
+    {
+      "state": "error",
+      "entersWhen": "never rendered on read: usePro has no error branch; failed writes only toast proProblem(e) (codes offline|full|no_wishes|not_found|failed)",
+      "reachable": "no",
+      "note": "No read error state and no retry exist."
+    }
+  ],
+  "uiStatesDesigned": [
+    "loading",
+    "empty",
+    "error",
+    "loaded"
+  ],
+  "stubsObserved": [
+    {
+      "file": "lib/pro-api.ts:5-8",
+      "evidence": "\"Until it exists, the bodies keep the records on this device through lib/pro-data (localStorage, fw-pro)\"",
+      "standsInFor": "business data server (wishes, people, brand, logins, plan, invoices)",
+      "consequence": "all pro screens are blind to a backend; no populate path (populatedBy null)"
+    },
+    {
+      "file": "lib/pro-data.ts:197-261 (samplesFor), view() 278-293",
+      "evidence": "sample wishes/people/invoices/logins merged in while samplesOn() (any fw-account wish id starting 's-')",
+      "standsInFor": "real client rows",
+      "consequence": "seeded rows pass through the real read path and look like server data; samples are never stored unless changed"
+    },
+    {
+      "file": "lib/pro-data.ts:12-30",
+      "evidence": "PLANS, VAULT, VAT_RATE constants",
+      "standsInFor": "price/plan configuration tables",
+      "consequence": "conventions: prices read from configuration, never hardcoded; PLANS.pack.wishes also used as figure denominator"
+    },
+    {
+      "file": "app/app/pro/page.tsx:17",
+      "evidence": "if (!account || !data) return null;",
+      "standsInFor": "loading skeleton",
+      "consequence": "loading state is a blank page; also signed-out renders blank (no redirect here)"
+    }
+  ],
+  "notes": "Vault figure and favourites need come from the vault resource (shoots, storage); only fields consumed here are listed. Money: PLANS prices as whole naira numbers (35000, 105000, 17500); Storage.cost naira number.",
+  "screenId": "pro-home"
+}

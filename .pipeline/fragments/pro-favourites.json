@@ -1,0 +1,187 @@
+{
+  "reads": [
+    {
+      "entity": "Account (pro)",
+      "fields": [
+        {
+          "name": "pro.plan",
+          "type": "'starter'|'studio'",
+          "nullable": true
+        },
+        {
+          "name": "pro.business",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "contact",
+          "type": "string",
+          "nullable": false
+        }
+      ],
+      "cardinality": "single",
+      "filtersOrSort": [],
+      "pagination": "none"
+    },
+    {
+      "entity": "ClientWish (reveals only)",
+      "fields": [
+        {
+          "name": "id",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "client",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "openedAt",
+          "type": "datetime",
+          "nullable": true
+        },
+        {
+          "name": "reveal.frames",
+          "type": "Frame[] (file,src,ref?)",
+          "nullable": false
+        },
+        {
+          "name": "reveal.hearts",
+          "type": "number[] positions in frames",
+          "nullable": false
+        },
+        {
+          "name": "reveal.date",
+          "type": "date",
+          "nullable": false
+        },
+        {
+          "name": "reveal.vault.set",
+          "type": "'proofs'|'finals'",
+          "nullable": true
+        },
+        {
+          "name": "kind",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "day",
+          "type": "date",
+          "nullable": false
+        }
+      ],
+      "cardinality": "list",
+      "filtersOrSort": [
+        "screen filters client-side: reveal present and reveal.vault.set != 'finals'; split into hearts>0 and hearts==0; order as returned (newest first)"
+      ],
+      "pagination": "none (all wishes loaded)"
+    },
+    {
+      "entity": "VaultFile (picture of a frame)",
+      "fields": [
+        {
+          "name": "url",
+          "type": "string (frameSrc: frame.src or file url by ref)",
+          "nullable": true
+        }
+      ],
+      "cardinality": "list",
+      "filtersOrSort": [],
+      "pagination": "none"
+    }
+  ],
+  "actions": [
+    {
+      "name": "copyNames",
+      "kind": "custom",
+      "entity": "(local clipboard)",
+      "payload": [
+        {
+          "name": "files",
+          "type": "string[] file names of hearted frames"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "none",
+        "cardinality": "single"
+      }
+    }
+  ],
+  "authContext": {
+    "requiresAuth": true,
+    "rolesObserved": [
+      "business (owner/member; Pro account with account.pro)"
+    ]
+  },
+  "special": {
+    "realtime": false,
+    "uploads": false,
+    "downloads": false,
+    "pagination": "none; reads whole wish list",
+    "hashAnchor": "#r-<wishId> scrolls to a reveal"
+  },
+  "uiStatesHandled": [
+    {
+      "state": "loading",
+      "entersWhen": "!account || !data returns null (blank, no skeleton)",
+      "reachable": "yes",
+      "note": "usePro() sets data in an effect, so first render is null; after wiring this is a real network wait. Renders nothing, not the app skeleton"
+    },
+    {
+      "state": "empty",
+      "entersWhen": "reveals.length === 0 (Empty 'No reveals yet.' with New Shoot Reveal link)",
+      "reachable": "yes"
+    },
+    {
+      "state": "waiting-only",
+      "entersWhen": "reveals exist but none has hearts: only the 'Waiting' list shows",
+      "reachable": "yes"
+    },
+    {
+      "state": "error",
+      "entersWhen": "none coded; usePro has no error path",
+      "reachable": "no",
+      "note": "no error branch exists"
+    },
+    {
+      "state": "loaded",
+      "entersWhen": "reveals.length>0",
+      "reachable": "yes"
+    }
+  ],
+  "uiStatesDesigned": [
+    "loading",
+    "empty",
+    "error",
+    "loaded"
+  ],
+  "stubsObserved": [
+    {
+      "file": "lib/vault-fixtures.ts:11-70",
+      "evidence": "samplesOn() true when fw-account.wishes has an id starting 's-'; sampleShoots() builds six hardcoded shoots (ids sample-*, clients Adaeze and Tobi, The Okafor family, Ruth and Daniel, Zainab Musa, Kemi Adebayo, Chioma Eze) with /img/aisha-N.webp urls",
+      "standsInFor": "server data",
+      "consequence": "Sample rows are merged into every read path while on; a human cannot tell them from real rows"
+    },
+    {
+      "file": "lib/vault-api.ts:176-198",
+      "evidence": "sendFavourites writes hearts into fw-pro and fw-vault from the same browser",
+      "standsInFor": "the client's hearts arriving from the receiver's device",
+      "consequence": "The business sees hearts only if the 'client' used the same browser; no cross-device path exists"
+    },
+    {
+      "file": "lib/vault-api.ts:287-292",
+      "evidence": "shootsHere() fills openedAt from loadPro().wishes[].openedAt",
+      "standsInFor": "server-recorded first-open of a reveal",
+      "consequence": "openedAt comes from a field in the browser's own store"
+    },
+    {
+      "file": "lib/pro-api.ts:1-8",
+      "evidence": "header: 'Until it exists, the bodies keep the records on this device (localStorage, fw-pro)'; usePro reads loadPro() synchronously and refreshes on window events fw-pro/fw-account/storage",
+      "standsInFor": "GET /pro (server read with refresh on load, visibility and write)",
+      "consequence": "The screen never talks to a server; no error or retry path"
+    }
+  ],
+  "screenId": "pro-favourites"
+}

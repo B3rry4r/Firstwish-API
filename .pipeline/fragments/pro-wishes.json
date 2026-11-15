@@ -1,0 +1,295 @@
+{
+  "reads": [
+    {
+      "entity": "ProAccount",
+      "fields": [
+        {
+          "name": "month",
+          "type": "string yyyy-mm",
+          "nullable": false
+        },
+        {
+          "name": "rolled",
+          "type": "number: unused wishes carried in",
+          "nullable": false
+        },
+        {
+          "name": "pack",
+          "type": "number: wishes left from wish packs",
+          "nullable": false
+        },
+        {
+          "name": "business",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "plan",
+          "type": "'starter'|'studio'|'pack' (from Account.pro.plan, else 'pack' if pack>0 or business set; null->'pack')",
+          "nullable": false
+        }
+      ],
+      "cardinality": "single",
+      "filtersOrSort": [],
+      "pagination": "none"
+    },
+    {
+      "entity": "Account",
+      "fields": [
+        {
+          "name": "name",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "contact",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "pro",
+          "type": "{plan:'starter'|'studio',business:string}|null",
+          "nullable": true
+        }
+      ],
+      "cardinality": "single",
+      "filtersOrSort": [],
+      "pagination": "none",
+      "note": "Account.pro read from fw-account via useAccount(); page returns null until account and data exist"
+    },
+    {
+      "entity": "ClientWish",
+      "fields": [
+        {
+          "name": "id",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "no",
+          "type": "string",
+          "nullable": false,
+          "note": "4-digit wish number, issued client-side as max+1 from 900"
+        },
+        {
+          "name": "client",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "kind",
+          "type": "string (catalog slug)",
+          "nullable": false
+        },
+        {
+          "name": "occasion",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "day",
+          "type": "string yyyy-mm-dd (opening day)",
+          "nullable": false
+        },
+        {
+          "name": "createdAt",
+          "type": "string ISO",
+          "nullable": false
+        },
+        {
+          "name": "from",
+          "type": "'month'|'pack'",
+          "nullable": false
+        },
+        {
+          "name": "openedAt",
+          "type": "string ISO",
+          "nullable": true
+        },
+        {
+          "name": "endsAt",
+          "type": "string ISO",
+          "nullable": true
+        },
+        {
+          "name": "madeOwn",
+          "type": "boolean",
+          "nullable": true
+        },
+        {
+          "name": "reveal",
+          "type": "Reveal",
+          "nullable": true
+        },
+        {
+          "name": "sample",
+          "type": "boolean",
+          "nullable": true,
+          "note": "sample marker, local only; not a server field"
+        }
+      ],
+      "cardinality": "list",
+      "filtersOrSort": [
+        "sorted createdAt desc (client-side)",
+        "status derived client-side from day/endsAt vs now: sealed|live|resting"
+      ],
+      "pagination": "none"
+    },
+    {
+      "entity": "Catalog",
+      "fields": [
+        {
+          "name": "kinds[].slug",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "kinds[].kind",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "kinds[].occasions[].slug",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "kinds[].occasions[].name",
+          "type": "string",
+          "nullable": false
+        }
+      ],
+      "cardinality": "list",
+      "filtersOrSort": [],
+      "pagination": "none",
+      "source": "lib/catalog.ts static module (compile-time), conventions: slugs web app already uses"
+    }
+  ],
+  "actions": [
+    {
+      "name": "createClientWish",
+      "kind": "create",
+      "entity": "ClientWish",
+      "payload": [
+        {
+          "name": "client",
+          "type": "string"
+        },
+        {
+          "name": "kind",
+          "type": "string slug"
+        },
+        {
+          "name": "occasion",
+          "type": "string (occasion name, not slug)"
+        },
+        {
+          "name": "day",
+          "type": "string yyyy-mm-dd"
+        },
+        {
+          "name": "reveal?",
+          "type": "Reveal (only from the reveal flow, not this page)"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "ClientWish",
+        "cardinality": "single",
+        "note": "page then routes to /app/pro/wishes/{id}?saved=1; throws no_wishes when none left; client currently allocates id, no, createdAt, from (month first then pack) and decrements pack"
+      }
+    }
+  ],
+  "authContext": {
+    "requiresAuth": true,
+    "rolesObserved": [
+      "business (owner)",
+      "business member (login seat)"
+    ]
+  },
+  "special": {
+    "realtime": false,
+    "uploads": false,
+    "downloads": false,
+    "polling": false,
+    "paging": "none; whole lists in one read; refresh on page load, tab visible, after write per conventions"
+  },
+  "derived": [
+    "list filters (all|sealed|live|resting) and search over `client kindName occasion no` are client-side over the full list",
+    "counts per status client-side",
+    "Favourites row value = sum of reveal.hearts.length over wishes with reveal and vault.set !== 'finals'"
+  ],
+  "uiStatesHandled": [
+    {
+      "state": "loading",
+      "entersWhen": "usePro(): data === null on first render before the mount effect runs; page returns null (no skeleton)",
+      "reachable": "no",
+      "note": "loadPro() is a synchronous localStorage read in useEffect; null for one commit only. Against a server this becomes reachable and needs the app's skeleton."
+    },
+    {
+      "state": "empty",
+      "entersWhen": "data.wishes.length === 0 -> Empty 'No client wishes yet.'",
+      "reachable": "yes"
+    },
+    {
+      "state": "no-match",
+      "entersWhen": "filtered list empty -> 'Nothing matches.' + Show all",
+      "reachable": "yes"
+    },
+    {
+      "state": "spent",
+      "entersWhen": "!usage.canMake inside New wish sheet -> Spent",
+      "reachable": "yes"
+    },
+    {
+      "state": "write-failure-toast",
+      "entersWhen": "createClientWish throws -> toast proProblem",
+      "reachable": "yes"
+    },
+    {
+      "state": "error",
+      "entersWhen": "never rendered on read: usePro has no error branch; failed writes only toast proProblem(e) (codes offline|full|no_wishes|not_found|failed)",
+      "reachable": "no",
+      "note": "No read error state and no retry exist."
+    }
+  ],
+  "uiStatesDesigned": [
+    "loading",
+    "empty",
+    "error",
+    "loaded"
+  ],
+  "stubsObserved": [
+    {
+      "file": "lib/pro-api.ts:5-8",
+      "evidence": "\"Until it exists, the bodies keep the records on this device through lib/pro-data (localStorage, fw-pro)\"",
+      "standsInFor": "business data server (wishes, people, brand, logins, plan, invoices)",
+      "consequence": "all pro screens are blind to a backend; no populate path (populatedBy null)"
+    },
+    {
+      "file": "lib/pro-data.ts:197-261 (samplesFor), view() 278-293",
+      "evidence": "sample wishes/people/invoices/logins merged in while samplesOn() (any fw-account wish id starting 's-')",
+      "standsInFor": "real client rows",
+      "consequence": "seeded rows pass through the real read path and look like server data; samples are never stored unless changed"
+    },
+    {
+      "file": "lib/pro-api.ts:104 (online())",
+      "evidence": "navigator.onLine === false throws ProError('offline')",
+      "standsInFor": "network failure",
+      "consequence": "conventions say no offline mode; code maps offline/full to toasts, server errors need mapping"
+    },
+    {
+      "file": "lib/pro-data.ts:~135-140 (addWish, nextNo)",
+      "evidence": "nextNo = max(no)+1 from base 900; uid() = Math.random base36; from decided locally",
+      "standsInFor": "server-issued wish number, id, allowance accounting and atomic pack decrement",
+      "consequence": "numbering collides across devices; allowance enforced only in browser"
+    },
+    {
+      "file": "app/app/pro/wishes/page.tsx:119",
+      "evidence": "kind === 'photographers' routes to /app/pro/reveal/new instead of creating",
+      "standsInFor": "Shoot Reveal creation flow (another screen)",
+      "consequence": "a reveal-kind client wish is not created by this action"
+    }
+  ],
+  "notes": "Page links to /app/pro/favourites and /app/pro/vault/* (other screens).",
+  "screenId": "pro-wishes"
+}

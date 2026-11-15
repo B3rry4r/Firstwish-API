@@ -1,0 +1,243 @@
+{
+ "screenId": "app-style-detail",
+ "reads": [
+  {
+   "entity": "FeedStyle",
+   "fields": [
+    {
+     "name": "slug",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "name",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "level",
+     "type": "'Starter'|'Standard'|'Premium'",
+     "nullable": false
+    },
+    {
+     "name": "creator",
+     "type": "CreatorRef",
+     "nullable": false
+    },
+    {
+     "name": "pace",
+     "type": "'scroll'|'swipe'|'stories'|'film'|'stage'",
+     "nullable": false
+    },
+    {
+     "name": "orientation",
+     "type": "'portrait'|'landscape'|'either'",
+     "nullable": false
+    },
+    {
+     "name": "dimension",
+     "type": "'flat'|'drawn'|'3d'",
+     "nullable": false
+    },
+    {
+     "name": "kinds",
+     "type": "string[]",
+     "nullable": false
+    },
+    {
+     "name": "mood",
+     "type": "string[]",
+     "nullable": false
+    },
+    {
+     "name": "line",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "packaged",
+     "type": "boolean",
+     "nullable": false
+    },
+    {
+     "name": "sample",
+     "type": "{kind:string,occasion:string}",
+     "nullable": false
+    },
+    {
+     "name": "img",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "pos",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "addedAt",
+     "type": "ISO datetime",
+     "nullable": true
+    }
+   ],
+   "cardinality": "single",
+   "filtersOrSort": [
+    "found by slug within listNewStyles() (Gallery) ; route validated by styleOf(slug) at build time with generateStaticParams over allStyles()"
+   ],
+   "pagination": "none"
+  },
+  {
+   "entity": "Style (page metadata)",
+   "fields": [
+    {
+     "name": "slug",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "name",
+     "type": "string",
+     "nullable": false
+    }
+   ],
+   "cardinality": "single",
+   "filtersOrSort": [],
+   "pagination": "none",
+   "note": "generateMetadata title '<name> · Firstwish'; dynamicParams=false so only registered slugs exist; unknown slug -> notFound()"
+  },
+  {
+   "entity": "Style level",
+   "fields": [
+    {
+     "name": "slug",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "level",
+     "type": "'starter'|'standard'|'premium'",
+     "nullable": false
+    }
+   ],
+   "cardinality": "single",
+   "filtersOrSort": [],
+   "pagination": "none"
+  },
+  {
+   "entity": "Kind / Occasion",
+   "fields": [
+    {
+     "name": "slug",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "name",
+     "type": "string",
+     "nullable": false
+    }
+   ],
+   "cardinality": "list",
+   "filtersOrSort": [
+    "kinds and occasions the style fits"
+   ],
+   "pagination": "none",
+   "note": "static content from catalog/occasions"
+  }
+ ],
+ "actions": [
+  {
+   "name": "useThisStyle",
+   "kind": "custom",
+   "entity": "Wish draft",
+   "payload": [
+    {
+     "name": "kind",
+     "type": "string"
+    },
+    {
+     "name": "occasion",
+     "type": "string"
+    },
+    {
+     "name": "style",
+     "type": "string"
+    }
+   ],
+   "expectedResponse": {
+    "entity": "none (navigation to /app/new)",
+    "cardinality": "single"
+   }
+  }
+ ],
+ "authContext": {
+  "requiresAuth": true,
+  "rolesObserved": [
+   "person",
+   "creator",
+   "business (shell only)"
+  ]
+ },
+ "special": {
+  "realtime": false,
+  "uploads": false,
+  "downloads": false,
+  "paging": "none",
+  "notes": [
+   "slug set is static at build time (generateStaticParams): a style added on the server later would 404 until redeploy"
+  ]
+ },
+ "uiStatesHandled": [
+  {
+   "state": "loading",
+   "entersWhen": "Gallery all=[] until listNewStyles resolves; player not open until then; page shows the gallery grid behind",
+   "reachable": "yes briefly, no dedicated skeleton"
+  },
+  {
+   "state": "not found",
+   "entersWhen": "slug not in registry -> Next notFound() at build; client: hit not found -> nothing opens, gallery shows",
+   "reachable": "no (dynamicParams false)"
+  },
+  {
+   "state": "empty",
+   "entersWhen": "filtered gallery empty message",
+   "reachable": "no for this route, since kind/pattern are not set unless in the address"
+  },
+  {
+   "state": "error",
+   "entersWhen": "none: no catch",
+   "reachable": "no"
+  },
+  {
+   "state": "loaded",
+   "entersWhen": "open style plays StylePlayer full screen on sampleWish(kind,occ,photos)",
+   "reachable": "yes"
+  }
+ ],
+ "uiStatesDesigned": [
+  "loading",
+  "empty",
+  "error",
+  "loaded"
+ ],
+ "stubsObserved": [
+  {
+   "file": "components/app/feed/Player.tsx:63",
+   "evidence": "sampleWish(kind, occ, [s.img, ...SAMPLE_PHOTOS])",
+   "standsInFor": "a sample wish content for demo; this is local demo content, intentionally not server data",
+   "consequence": "none, but photos are the house aisha images"
+  },
+  {
+   "file": "app/app/styles/[slug]/page.tsx:7-10",
+   "evidence": "generateStaticParams over allStyles(), dynamicParams=false",
+   "standsInFor": "server style catalogue",
+   "consequence": "new styles require a redeploy"
+  },
+  {
+   "file": "lib/feed-api.ts:215",
+   "evidence": "listNewStyles over PACKAGES",
+   "standsInFor": "server catalogue",
+   "consequence": "same as app-styles"
+  }
+ ]
+}

@@ -1,0 +1,346 @@
+{
+  "reads": [
+    {
+      "entity": "ProAccount",
+      "fields": [
+        {
+          "name": "month",
+          "type": "string yyyy-mm",
+          "nullable": false
+        },
+        {
+          "name": "rolled",
+          "type": "number: unused wishes carried in",
+          "nullable": false
+        },
+        {
+          "name": "pack",
+          "type": "number: wishes left from wish packs",
+          "nullable": false
+        },
+        {
+          "name": "business",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "plan",
+          "type": "'starter'|'studio'|'pack' (from Account.pro.plan, else 'pack' if pack>0 or business set; null->'pack')",
+          "nullable": false
+        }
+      ],
+      "cardinality": "single",
+      "filtersOrSort": [],
+      "pagination": "none"
+    },
+    {
+      "entity": "Account",
+      "fields": [
+        {
+          "name": "name",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "contact",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "pro",
+          "type": "{plan:'starter'|'studio',business:string}|null",
+          "nullable": true
+        }
+      ],
+      "cardinality": "single",
+      "filtersOrSort": [],
+      "pagination": "none",
+      "note": "Account.pro read from fw-account via useAccount(); page returns null until account and data exist"
+    },
+    {
+      "entity": "Invoice",
+      "fields": [
+        {
+          "name": "id",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "no",
+          "type": "string",
+          "nullable": "FW-YYMM-NNNN, numbered client-side"
+        },
+        {
+          "name": "date",
+          "type": "string ISO",
+          "nullable": false
+        },
+        {
+          "name": "what",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "amount",
+          "type": "number (whole naira, VAT-inclusive)",
+          "nullable": false
+        },
+        {
+          "name": "vat",
+          "type": "number (whole naira, derived 7.5% inclusive)",
+          "nullable": false
+        },
+        {
+          "name": "lines",
+          "type": "{what:string,amount:number}[]",
+          "nullable": true
+        }
+      ],
+      "cardinality": "list",
+      "filtersOrSort": [
+        "sorted date desc"
+      ],
+      "pagination": "none",
+      "note": "displayed: date (day/month), what, no, naira(amount); file download uses lines/vat"
+    },
+    {
+      "entity": "PlanInfo",
+      "fields": [
+        {
+          "name": "key",
+          "type": "'starter'|'studio'|'pack'",
+          "nullable": false
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "price",
+          "type": "number (naira)",
+          "nullable": false
+        },
+        {
+          "name": "was",
+          "type": "number (naira, struck-through)",
+          "nullable": false
+        },
+        {
+          "name": "wishes",
+          "type": "number",
+          "nullable": false
+        },
+        {
+          "name": "logins",
+          "type": "number",
+          "nullable": false
+        },
+        {
+          "name": "monthly",
+          "type": "boolean",
+          "nullable": false
+        },
+        {
+          "name": "vault",
+          "type": "number GB",
+          "nullable": false
+        },
+        {
+          "name": "items",
+          "type": "string[]",
+          "nullable": false
+        }
+      ],
+      "cardinality": "list",
+      "filtersOrSort": [],
+      "pagination": "none",
+      "note": "hardcoded PLANS + PLAN_ORDER; displayed: price, was (struck), wishes, vault, logins, monthly; also 'for 90 days' (PACK_DAYS) for pack"
+    },
+    {
+      "entity": "Storage",
+      "fields": [
+        {
+          "name": "included",
+          "type": "number GB",
+          "nullable": false
+        },
+        {
+          "name": "packUntil",
+          "type": "string date",
+          "nullable": true
+        }
+      ],
+      "cardinality": "single",
+      "filtersOrSort": [],
+      "pagination": "none",
+      "source": "useVault().storage; 'Vault until' shows packUntil or 'None'"
+    },
+    {
+      "entity": "Usage",
+      "fields": [
+        {
+          "name": "pack",
+          "type": "number",
+          "nullable": false
+        },
+        {
+          "name": "resets",
+          "type": "string yyyy-mm-dd: 1st of next month, derived locally as 'Renews'",
+          "nullable": false
+        }
+      ],
+      "cardinality": "single",
+      "filtersOrSort": [],
+      "pagination": "none"
+    }
+  ],
+  "actions": [
+    {
+      "name": "buyPlan",
+      "kind": "custom",
+      "entity": "Invoice",
+      "payload": [
+        {
+          "name": "key",
+          "type": "'starter'|'studio'|'pack'"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "Invoice",
+        "cardinality": "single (currently void)",
+        "note": "server must charge, then: set Account.pro.plan for monthly plans (business kept), add p.wishes to pack for 'pack', create Invoice {what:`<Plan name>, <Month>` or `<name>, 5 Signature wishes`, amount:price, vat:round(price*0.075/1.075)}"
+      },
+      "idempotencyKey": "required per conventions (money)"
+    },
+    {
+      "name": "getInvoiceFile",
+      "kind": "custom",
+      "entity": "Invoice",
+      "payload": [
+        {
+          "name": "id",
+          "type": "string"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "InvoiceFile",
+        "cardinality": "single {name:'firstwish-invoice-<no>.html',type:'text/html',text}",
+        "note": "HTML built client-side from invoice, business name, account contact; VAT line; 'Paid' stamp"
+      }
+    }
+  ],
+  "authContext": {
+    "requiresAuth": true,
+    "rolesObserved": [
+      "business (owner)",
+      "business member (login seat)"
+    ]
+  },
+  "special": {
+    "realtime": false,
+    "uploads": false,
+    "downloads": true,
+    "downloadNote": "invoice as a file the browser saves (Blob download); server may return signed file or document",
+    "payment": "PaySheet offers card, bank transfer, USSD; amount passed as formatted naira text",
+    "polling": false
+  },
+  "uiStatesHandled": [
+    {
+      "state": "loading",
+      "entersWhen": "usePro(): data === null on first render before the mount effect runs; page returns null (no skeleton)",
+      "reachable": "no",
+      "note": "loadPro() is a synchronous localStorage read in useEffect; null for one commit only. Against a server this becomes reachable and needs the app's skeleton."
+    },
+    {
+      "state": "pack-variant",
+      "entersWhen": "plan === 'pack' -> Wishes left / Vault until; 'Add a wish pack' button only when pack===0",
+      "reachable": "yes"
+    },
+    {
+      "state": "monthly-variant",
+      "entersWhen": "plan monthly -> Wishes a month / Renews",
+      "reachable": "yes"
+    },
+    {
+      "state": "invoices-empty",
+      "entersWhen": "data.invoices.length === 0 -> Empty 'No invoices yet.'",
+      "reachable": "yes"
+    },
+    {
+      "state": "paying-busy",
+      "entersWhen": "PaySheet busy=true for 700ms then onPaid",
+      "reachable": "yes",
+      "note": "fake delay"
+    },
+    {
+      "state": "write-failure-toast",
+      "entersWhen": "buyPlan/getInvoiceFile throws",
+      "reachable": "yes"
+    },
+    {
+      "state": "error",
+      "entersWhen": "never rendered on read: usePro has no error branch; failed writes only toast proProblem(e) (codes offline|full|no_wishes|not_found|failed)",
+      "reachable": "no",
+      "note": "No read error state and no retry exist."
+    }
+  ],
+  "uiStatesDesigned": [
+    "loading",
+    "empty",
+    "error",
+    "loaded"
+  ],
+  "stubsObserved": [
+    {
+      "file": "lib/pro-api.ts:5-8",
+      "evidence": "\"Until it exists, the bodies keep the records on this device through lib/pro-data (localStorage, fw-pro)\"",
+      "standsInFor": "business data server (wishes, people, brand, logins, plan, invoices)",
+      "consequence": "all pro screens are blind to a backend; no populate path (populatedBy null)"
+    },
+    {
+      "file": "lib/pro-data.ts:197-261 (samplesFor), view() 278-293",
+      "evidence": "sample wishes/people/invoices/logins merged in while samplesOn() (any fw-account wish id starting 's-')",
+      "standsInFor": "real client rows",
+      "consequence": "seeded rows pass through the real read path and look like server data; samples are never stored unless changed"
+    },
+    {
+      "file": "lib/pro-api.ts:104 (online())",
+      "evidence": "navigator.onLine === false throws ProError('offline')",
+      "standsInFor": "network failure",
+      "consequence": "conventions say no offline mode; code maps offline/full to toasts, server errors need mapping"
+    },
+    {
+      "file": "components/app/Pay.tsx:~13-14, 267",
+      "evidence": "setTimeout(() => { onPaid(); }, 700); comment: \"Nothing is charged here yet: choosing a way and confirming calls onPaid\"",
+      "standsInFor": "Paystack start/verify and webhook",
+      "consequence": "any plan is granted without payment; chosen way (card/transfer/ussd) is never read or sent"
+    },
+    {
+      "file": "lib/pro-data.ts:12-30",
+      "evidence": "PLANS, VAULT, VAT_RATE=0.075, vatIn()",
+      "standsInFor": "price/plan configuration tables",
+      "consequence": "prices hardcoded on the client, in whole naira (reconciliation converts to kobo)"
+    },
+    {
+      "file": "lib/pro-data.ts:~144-146 (nextInvoiceNo)",
+      "evidence": "invoice number FW-YYMM-NNNN from max existing +1, base 40",
+      "standsInFor": "server-issued invoice numbers and ledger rows",
+      "consequence": "duplicate numbers across devices"
+    },
+    {
+      "file": "lib/pro-api.ts:~100-112 (invoiceHtml)",
+      "evidence": "invoice HTML generated in browser",
+      "standsInFor": "server-rendered invoice document",
+      "consequence": "invoice content can be edited by the client; not authoritative"
+    },
+    {
+      "file": "app/app/pro/plan/page.tsx:179",
+      "evidence": "chosen defaults: starter->studio, studio->pack, else pack",
+      "standsInFor": "n/a (UX default)",
+      "consequence": "none"
+    }
+  ],
+  "notes": "Money here is whole-naira numbers (35000, 105000, 17500, was 58000/175000/29000; Vault block 3000/2500 naira per 100 GB). 'Change plan' to a lower plan has no downgrade/proration logic; picking 'pack' while on a monthly plan adds a pack on top. Plan period and renewal date are shown as the 1st of next month, derived locally.",
+  "screenId": "pro-plan"
+}

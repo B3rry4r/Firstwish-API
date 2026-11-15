@@ -1,0 +1,293 @@
+{
+  "screenId": "site-creators",
+  "reads": [
+    {
+      "entity": "Style",
+      "fields": [
+        {
+          "name": "slug",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "line",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "feel",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "say",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "motion",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "light",
+          "type": "boolean",
+          "nullable": false
+        },
+        {
+          "name": "look",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "level",
+          "type": "'starter'|'standard'|'premium'",
+          "nullable": false
+        },
+        {
+          "name": "tier",
+          "type": "'Starter'|'Standard'|'Premium' (derived from level)",
+          "nullable": false
+        },
+        {
+          "name": "get",
+          "type": "string (derived from level)",
+          "nullable": false
+        },
+        {
+          "name": "pace",
+          "type": "'scroll'|'swipe'|'stories'|'film'|'stage'",
+          "nullable": false
+        },
+        {
+          "name": "orientation",
+          "type": "'portrait'|'landscape'|'either'",
+          "nullable": false
+        },
+        {
+          "name": "moves",
+          "type": "string (derived: pace, orientation, dimension)",
+          "nullable": false
+        },
+        {
+          "name": "mood",
+          "type": "string[]",
+          "nullable": false
+        },
+        {
+          "name": "kinds",
+          "type": "string[] (kind slugs the style fits; madeFor)",
+          "nullable": false
+        },
+        {
+          "name": "occasions",
+          "type": "Record<kind,string[]>",
+          "nullable": true
+        }
+      ],
+      "cardinality": "list",
+      "filtersOrSort": [
+        "registry order (allStyles)"
+      ],
+      "pagination": "none",
+      "note": "Only slug, name, look, light, say via styleOf and staged() (house styles with say and look) are used: hero cycles staged styles; WishFrames shows MIX = noir, banter, letter, golden. Reads Style fields slug,name,look,light."
+    },
+    {
+      "entity": "Wish",
+      "fields": [
+        {
+          "name": "no",
+          "type": "string (empty for stand-in showcase wishes)",
+          "nullable": false
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "title",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "kind",
+          "type": "string (kind slug)",
+          "nullable": false
+        },
+        {
+          "name": "occasion",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "style",
+          "type": "string (style slug)",
+          "nullable": false
+        },
+        {
+          "name": "scope",
+          "type": "'showcase'|'public'",
+          "nullable": false
+        },
+        {
+          "name": "href",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "date",
+          "type": "string (display text '07 · 11 · 2026')",
+          "nullable": false
+        },
+        {
+          "name": "img",
+          "type": "string (url)",
+          "nullable": false
+        },
+        {
+          "name": "pos",
+          "type": "string (css background-position)",
+          "nullable": false
+        },
+        {
+          "name": "featured",
+          "type": "boolean",
+          "nullable": true
+        }
+      ],
+      "cardinality": "single",
+      "filtersOrSort": [
+        "showcase = first wish with scope 'showcase' (Aisha, no 0001)"
+      ],
+      "pagination": "none",
+      "note": "WishFrames reads w.no, w.name, w.date only. lib/catalog.ts:365 literal."
+    },
+    {
+      "entity": "CreatorOffer",
+      "fields": [
+        {
+          "name": "royaltyPercent",
+          "type": "number (20, in copy text)",
+          "nullable": false
+        },
+        {
+          "name": "royaltyPerPaidWish",
+          "type": "naira text '₦800'",
+          "nullable": false
+        },
+        {
+          "name": "monthlyFromHundredWishes",
+          "type": "naira text '₦80,000'",
+          "nullable": false
+        },
+        {
+          "name": "derivativeShare",
+          "type": "text '¼'",
+          "nullable": false
+        },
+        {
+          "name": "plans",
+          "type": "array of {admit:'Backstage',tag,name,price,items[],cta,href,hot?,pop?}: Open ₦0, Creator ₦7,500 Monthly, Signed ₦5,000 Monthly",
+          "nullable": false
+        },
+        {
+          "name": "addons",
+          "type": "text: 5 AI credits ₦3,000; extra review ₦2,500",
+          "nullable": false
+        },
+        {
+          "name": "includedAiCredits",
+          "type": "text: 3 to start (Open), 10 a month (Creator)",
+          "nullable": false
+        },
+        {
+          "name": "reviewsPerMonth",
+          "type": "text: 2 (Creator)",
+          "nullable": false
+        }
+      ],
+      "cardinality": "single",
+      "filtersOrSort": [],
+      "pagination": "none",
+      "note": "All hardcoded in app/creators/page.tsx (lines ~66-70, 84-90) as copy. Money is naira text exactly as in code; they must come from the pricing tables, not stay as literals."
+    }
+  ],
+  "actions": [],
+  "authContext": {
+    "requiresAuth": false,
+    "rolesObserved": []
+  },
+  "special": {
+    "realtime": false,
+    "uploads": false,
+    "downloads": false
+  },
+  "uiStatesHandled": [
+    {
+      "state": "loaded",
+      "entersWhen": "always: no data is awaited; all content from bundled modules",
+      "reachable": "yes"
+    },
+    {
+      "state": "loading",
+      "entersWhen": "none coded",
+      "reachable": "no",
+      "note": "no loading branch exists; styles are synchronous bundled reads"
+    },
+    {
+      "state": "empty",
+      "entersWhen": "none coded: staged() empty would crash CreatorHero (styles[0].light dereference)",
+      "reachable": "no",
+      "note": "staged() is never empty with the bundled registry"
+    },
+    {
+      "state": "error",
+      "entersWhen": "none coded",
+      "reachable": "no"
+    }
+  ],
+  "uiStatesDesigned": [
+    "loading",
+    "empty",
+    "error",
+    "loaded"
+  ],
+  "stubsObserved": [
+    {
+      "file": "app/creators/page.tsx:66-70",
+      "evidence": "<b>₦800</b> ... <b>₦80,000</b> ... 20% in copy",
+      "standsInFor": "the royalty rate and the example amounts, which come from the creator payout rule",
+      "consequence": "if the rate or prices change, the page lies until edited by hand; 800 = 20% of 4,000 premium style extra is implied, never computed"
+    },
+    {
+      "file": "app/creators/page.tsx:84-90",
+      "evidence": "Ticket price=\"₦0\" / \"₦7,500\" / \"₦5,000\", copy '3 AI credits', '10 AI credits a month', 'Two reviews a month'",
+      "standsInFor": "creator plan prices and allowances (configuration tables)",
+      "consequence": "hardcoded prices; conventions say prices are read from configuration, never hardcoded"
+    },
+    {
+      "file": "app/creators/page.tsx:91",
+      "evidence": "'A pack of 5 AI credits is ₦3,000. An extra review is ₦2,500.'",
+      "standsInFor": "add-on prices",
+      "consequence": "hardcoded prices"
+    },
+    {
+      "file": "components/site/StudioTimeline.tsx:2",
+      "evidence": "TRACKS literal 'A drawing of the idea, not a screenshot'",
+      "standsInFor": "an illustration only",
+      "consequence": "not a stub of data; no server need"
+    },
+    {
+      "file": "app/creators/page.tsx:81,92",
+      "evidence": "href=\"/contact\" for 'Apply to build'; copy 'We bring the first creators in by hand'",
+      "standsInFor": "a creator application flow",
+      "consequence": "no apply action exists; the button goes to the Contact page, which (site-contact) renders no contact buttons because EMAIL and WHATSAPP_URL are empty"
+    }
+  ]
+}

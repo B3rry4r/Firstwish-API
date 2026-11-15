@@ -1,0 +1,573 @@
+{
+  "screenId": "maker-ticket",
+  "reads": [
+    {
+      "entity": "Wish",
+      "fields": [
+        {
+          "name": "id",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "no",
+          "type": "string",
+          "nullable": false,
+          "note": "wish number text, empty until paid/sealed (lib/account.ts:12)"
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "call",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "from",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "kind",
+          "type": "string",
+          "nullable": false,
+          "note": "slug: love|celebration|group|wedding|teams|photographers"
+        },
+        {
+          "name": "occasion",
+          "type": "string",
+          "nullable": false,
+          "note": "occasion NAME, not slug"
+        },
+        {
+          "name": "style",
+          "type": "string",
+          "nullable": false,
+          "note": "style slug, or 'studio:<id>'"
+        },
+        {
+          "name": "ticket",
+          "type": "string",
+          "nullable": false,
+          "note": "'' | moment|keepsake|signature|premiere"
+        },
+        {
+          "name": "status",
+          "type": "string",
+          "nullable": false,
+          "note": "draft|sealed|live|resting|removed"
+        },
+        {
+          "name": "step",
+          "type": "number",
+          "nullable": false,
+          "note": "0..5 maker step, drafts"
+        },
+        {
+          "name": "opensAt",
+          "type": "string",
+          "nullable": false,
+          "note": "ISO datetime; '' when unset"
+        },
+        {
+          "name": "photos",
+          "type": "string[]",
+          "nullable": false,
+          "note": "image addresses (today data-URIs)"
+        },
+        {
+          "name": "letter",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "reasons",
+          "type": "string[]",
+          "nullable": false
+        },
+        {
+          "name": "sound",
+          "type": "string",
+          "nullable": false,
+          "note": "voice|song|none"
+        },
+        {
+          "name": "at",
+          "type": "number",
+          "nullable": false,
+          "note": "last changed epoch ms"
+        },
+        {
+          "name": "content",
+          "type": "WishContent",
+          "nullable": true
+        }
+      ],
+      "cardinality": "single",
+      "filtersOrSort": [
+        "by id from URL ?id=; status in draft|sealed only (others redirect to /app/wishes/<id>)"
+      ],
+      "pagination": "none"
+    },
+    {
+      "entity": "MakerNote",
+      "fields": [
+        {
+          "name": "given",
+          "type": "{kind:boolean,occasion:boolean}",
+          "nullable": false
+        },
+        {
+          "name": "chosen",
+          "type": "{kind:boolean,occasion:boolean}",
+          "nullable": false
+        },
+        {
+          "name": "wedding",
+          "type": "string",
+          "nullable": false,
+          "note": "yyyy-mm-dd"
+        },
+        {
+          "name": "now",
+          "type": "boolean",
+          "nullable": false,
+          "note": "opens as soon as sealed"
+        },
+        {
+          "name": "voice",
+          "type": "number",
+          "nullable": false,
+          "note": "seconds of voice note"
+        }
+      ],
+      "cardinality": "single",
+      "filtersOrSort": [
+        "keyed by wish id"
+      ],
+      "pagination": "none",
+      "note": "Browser-local today (localStorage 'fw-maker', lib/maker.ts:28-32). Wish has no place for these; server must either add fields (wedding day, opens-now flag, voice seconds) or keep them as draft metadata. 'now' is derived into opensAt at seal."
+    },
+    {
+      "entity": "Ticket",
+      "fields": [
+        {
+          "name": "slug",
+          "type": "string",
+          "nullable": false,
+          "note": "moment|keepsake|signature|premiere"
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "price",
+          "type": "string",
+          "nullable": false,
+          "note": "naira text exactly as code: Moment '₦3,000', Keepsake '₦6,000', Signature '₦12,000', Premiere '₦21,000' (lib/catalog.ts:386-389; these are already the discounted prices)"
+        },
+        {
+          "name": "was",
+          "type": "string",
+          "nullable": false,
+          "note": "list price: '₦5,000','₦10,000','₦20,000','₦35,000'"
+        },
+        {
+          "name": "lives",
+          "type": "string",
+          "nullable": false,
+          "note": "'7 days','2 weeks','1 month','2 months'"
+        },
+        {
+          "name": "photos",
+          "type": "string",
+          "nullable": false,
+          "note": "cap as text '6','15','15','20'"
+        },
+        {
+          "name": "video",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "style",
+          "type": "string",
+          "nullable": false
+        }
+      ],
+      "cardinality": "list",
+      "filtersOrSort": [],
+      "pagination": "none",
+      "note": "tickets[] in lib/catalog.ts, hardcoded literals = the mock data. Price shown = naira(price) (strings like '₦6,000' -> 6000) plus add-ons x (1-0.4); 'was' = list price. Wire money is integer kobo, so reconciliation converts."
+    },
+    {
+      "entity": "Extra",
+      "fields": [
+        {
+          "name": "name",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "price",
+          "type": "string",
+          "nullable": false,
+          "note": "naira text; 'Five more photos' ₦2,000, 'A premium style' ₦4,000; others not used here"
+        },
+        {
+          "name": "moment",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "keepsake",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "signature",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "premiere",
+          "type": "string",
+          "nullable": false,
+          "note": "'Yes'|'No'|'Included'|''"
+        }
+      ],
+      "cardinality": "list",
+      "filtersOrSort": [],
+      "pagination": "none",
+      "note": "extras[] lib/catalog.ts:403-414. Used by offer(): 'Five more photos' (when photos exceed cap by <=5, Keepsake/Signature) and 'A premium style' (Keepsake with Premium style). Also KEEPSAKE_EXTRAS_CEILING '₦7,500' (maker rule: extras list total must not exceed it)."
+    },
+    {
+      "entity": "Offer (derived per ticket from wish + catalog)",
+      "fields": [
+        {
+          "name": "ok",
+          "type": "boolean",
+          "nullable": false
+        },
+        {
+          "name": "why",
+          "type": "string",
+          "nullable": false,
+          "note": "e.g. 'Holds 6 photos. You have 8.', 'Comes with a starter style. X is premium.', 'Too many extras for a Keepsake.'"
+        },
+        {
+          "name": "adds",
+          "type": "{name:string,now:number}[]",
+          "nullable": false,
+          "note": "now = Math.round(list naira * 0.6)"
+        },
+        {
+          "name": "total",
+          "type": "number",
+          "nullable": false,
+          "note": "naira whole number"
+        },
+        {
+          "name": "was",
+          "type": "number",
+          "nullable": false
+        }
+      ],
+      "cardinality": "list",
+      "filtersOrSort": [],
+      "pagination": "none",
+      "note": "Computed in the client (lib/maker.ts:420-439) from wish.photos.length, tierOfStyle(wish.style), ticket price. Eligibility and total are price-bearing logic that must be server-authoritative."
+    },
+    {
+      "entity": "ProPlanUsage (business only)",
+      "fields": [
+        {
+          "name": "allowance",
+          "type": "number",
+          "nullable": false
+        },
+        {
+          "name": "rolled",
+          "type": "number",
+          "nullable": false
+        },
+        {
+          "name": "total",
+          "type": "number",
+          "nullable": false
+        },
+        {
+          "name": "used",
+          "type": "number",
+          "nullable": false
+        },
+        {
+          "name": "left",
+          "type": "number",
+          "nullable": false
+        },
+        {
+          "name": "pack",
+          "type": "number",
+          "nullable": false
+        },
+        {
+          "name": "canMake",
+          "type": "boolean",
+          "nullable": false
+        }
+      ],
+      "cardinality": "single",
+      "filtersOrSort": [
+        "current month"
+      ],
+      "pagination": "none",
+      "note": "usage(loadPro(), planOf(account, loadPro())) from lib/pro-data.ts:103; shown as '<left> left this month' or '<pack> left in your wish pack'. Plan comes from account.pro.plan (starter|studio|pack). Business wish shown as 'A Signature wish. It counts as one'."
+    }
+  ],
+  "actions": [
+    {
+      "name": "saveDraft",
+      "kind": "update",
+      "entity": "Wish",
+      "payload": [
+        {
+          "name": "wishId",
+          "type": "string"
+        },
+        {
+          "name": "patch",
+          "type": "Partial<Wish> (whole Wish object is written today via saveWish/putWish, lib/maker.ts:40-46)"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "Wish",
+        "cardinality": "single"
+      },
+      "note": "Fired on every change: typing is debounced 300ms (Maker.tsx:65), choices save immediately (set(...,true)); also on pagehide/visibilitychange. Returns false (UI shows 'Not saved: no room left') when localStorage full."
+    },
+    {
+      "name": "chooseTicket",
+      "kind": "update",
+      "entity": "Wish",
+      "payload": [
+        {
+          "name": "ticket",
+          "type": "TicketSlug"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "Wish",
+        "cardinality": "single"
+      },
+      "note": "radio tap, saved at once; screen auto-sets ticket=suggest(wish) on entry when empty (Maker.tsx:174)."
+    },
+    {
+      "name": "payAndSeal",
+      "kind": "custom",
+      "entity": "Wish",
+      "payload": [
+        {
+          "name": "wishId",
+          "type": "string"
+        },
+        {
+          "name": "ticket",
+          "type": "TicketSlug"
+        },
+        {
+          "name": "adds",
+          "type": "string[] extra names e.g. 'A premium style','Five more photos' (derived, not sent today)"
+        },
+        {
+          "name": "amount",
+          "type": "number naira (money(total)) - shown only"
+        },
+        {
+          "name": "payWay",
+          "type": "card|transfer|ussd (PaySheet state, not passed out)"
+        },
+        {
+          "name": "opensAt",
+          "type": "ISO string, or now"
+        },
+        {
+          "name": "reasons",
+          "type": "string[] trimmed"
+        },
+        {
+          "name": "content",
+          "type": "WishContent with note.from and finale.sign finalised (noteFrom, finaleOf)"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "Wish",
+        "cardinality": "single"
+      },
+      "note": "Today: PaySheet onPaid() after a 700ms timeout calls sealed(): status='sealed', no=wishNo() (client random 4 digits), step=5, ticket, opensAt, content, reasons. Server must charge (Paystack, Idempotency-Key), issue wish number, and set status sealed atomically."
+    },
+    {
+      "name": "sealOnPlan",
+      "kind": "custom",
+      "entity": "ClientWish",
+      "payload": [
+        {
+          "name": "client",
+          "type": "string (wish.name trimmed)"
+        },
+        {
+          "name": "kind",
+          "type": "string"
+        },
+        {
+          "name": "occasion",
+          "type": "string"
+        },
+        {
+          "name": "day",
+          "type": "yyyy-mm-dd (ymd of opens moment)"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "ClientWish",
+        "cardinality": "single"
+      },
+      "note": "business: addWish(data, plan, ...) lib/pro-data.ts:123 records a client wish against the monthly allowance or wish pack (returns null if none left -> setFull(true)), then sealed(done.wish.no,'signature') sets Wish status sealed with ticket 'signature' and the ClientWish's no (starts 0901 + max)."
+    }
+  ],
+  "authContext": {
+    "requiresAuth": true,
+    "rolesObserved": [
+      "person (owner of the wish); business side when account.pro and (space=='business' or kind teams|photographers)"
+    ],
+    "note": "Maker.tsx:181 renders a blank busy shell if no account; no redirect inside the maker."
+  },
+  "special": {
+    "realtime": false,
+    "uploads": false,
+    "downloads": false,
+    "note": "Payment is a provider handoff (PaySheet); receipt 'at once' per copy, nothing implemented."
+  },
+  "uiStatesHandled": [
+    {
+      "state": "loading",
+      "entersWhen": "!account || !wish || !screen || !play (blank <div className='fm' aria-busy>), Maker.tsx:181,190",
+      "reachable": "no",
+      "note": "account and draft come from synchronous localStorage read in an effect; one frame at most. With a server read it becomes real and needs the app skeleton."
+    },
+    {
+      "state": "missing",
+      "entersWhen": "?id= names a wish not in account.wishes or status 'removed' (setMissing, Maker.tsx:90,182-189): 'That wish is not here.'",
+      "reachable": "yes",
+      "note": "deleted, or made on another device (copy says so; with a server the other-device case disappears)"
+    },
+    {
+      "state": "redirect",
+      "entersWhen": "wish.status not draft/sealed (live/resting) -> router.replace(/app/wishes/<id>), Maker.tsx:91",
+      "reachable": "yes"
+    },
+    {
+      "state": "error:not-saved",
+      "entersWhen": "saveWish returns false (localStorage quota) -> header text 'Not saved: no room left', Maker.tsx:57,439",
+      "reachable": "yes",
+      "note": "device-storage error; server equivalent is a failed save with retry. No retry control coded."
+    },
+    {
+      "state": "error:server",
+      "entersWhen": "none coded (no network calls on this screen)",
+      "reachable": "no",
+      "note": "designed but not handled"
+    },
+    {
+      "state": "empty",
+      "entersWhen": "not applicable: a draft always has screens",
+      "reachable": "no"
+    },
+    {
+      "state": "loaded",
+      "entersWhen": "wish, screen and play all present",
+      "reachable": "yes"
+    },
+    {
+      "state": "ticket-disabled",
+      "entersWhen": "offer(wish,t).ok false (photos over cap, style tier above Moment, extras over ceiling): button disabled, reason shown",
+      "reachable": "yes"
+    },
+    {
+      "state": "pay-sheet",
+      "entersWhen": "Continue pressed: setPay(true) -> PaySheet (card/transfer/ussd radios, 'Confirming' while busy)",
+      "reachable": "yes"
+    },
+    {
+      "state": "pay-error",
+      "entersWhen": "none coded: PaySheet has no failure branch, onPaid always called after 700ms",
+      "reachable": "no",
+      "note": "designed error state unreachable; needs declined/failed payment, retry"
+    },
+    {
+      "state": "plan-ok",
+      "entersWhen": "biz && usage.canMake",
+      "reachable": "yes"
+    },
+    {
+      "state": "plan-exhausted",
+      "entersWhen": "biz && !usage.canMake: 'No wishes left this month.' + link to /app/pro/plan",
+      "reachable": "yes"
+    }
+  ],
+  "uiStatesDesigned": [
+    "loading",
+    "empty",
+    "error",
+    "loaded"
+  ],
+  "stubsObserved": [
+    {
+      "file": "lib/maker.ts:15-46",
+      "evidence": "/* A draft is a Wish in the account, saved on every step */ saveWish writes whole account JSON to localStorage 'fw-account'",
+      "standsInFor": "server draft persistence (create/update draft wish)",
+      "consequence": "drafts exist only in this browser; ?id= link fails on another device (the 'missing' state)"
+    },
+    {
+      "file": "lib/maker.ts:28-32",
+      "evidence": "localStorage 'fw-maker' keyed by wish id",
+      "standsInFor": "server storage of wedding day / opens-now / voice seconds",
+      "consequence": "values lost on another device; wedding day and 'now' have no field on Wish"
+    },
+    {
+      "file": "components/app/Pay.tsx:18",
+      "evidence": "const pay = () => { setBusy(true); setTimeout(() => { onPaid(); }, 700); };  /* Nothing is charged here yet */",
+      "standsInFor": "Paystack payment: start, verify, webhook",
+      "consequence": "any tap on Pay seals the wish for free; no failure, no transfer account number, no USSD code (STUB-1)"
+    },
+    {
+      "file": "lib/maker.ts:449",
+      "evidence": "wishNo(): String(Math.floor(1000 + Math.random()*9000)) not in this account",
+      "standsInFor": "server-issued sequential wish number",
+      "consequence": "numbers collide across accounts and devices (STUB-8)"
+    },
+    {
+      "file": "lib/maker.ts:410, Maker.tsx:348",
+      "evidence": "OFF = 0.4; hint '40% off until 31 January.'",
+      "standsInFor": "a configured promotion with an end date",
+      "consequence": "discount and its end are hardcoded; naira price strings parsed from text; prices in catalog.ts are hardcoded (conventions: read from config tables)"
+    },
+    {
+      "file": "lib/maker.ts:422-439",
+      "evidence": "offer(): eligibility and totals computed in browser",
+      "standsInFor": "server-priced checkout",
+      "consequence": "client can send any ticket; server must reprice"
+    },
+    {
+      "file": "lib/pro-data.ts:123 (via Maker.tsx:377-384)",
+      "evidence": "addWish on loadPro() local data; nextNo = max+1 from 900",
+      "standsInFor": "server-side plan allowance accounting",
+      "consequence": "business allowance and numbers are device-local"
+    }
+  ]
+}

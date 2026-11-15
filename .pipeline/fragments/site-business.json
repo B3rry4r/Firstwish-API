@@ -1,0 +1,400 @@
+{
+  "reads": [
+    {
+      "entity": "Category (kind / business category)",
+      "fields": [
+        {
+          "name": "slug",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "audience",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "kind",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "isKind",
+          "type": "boolean",
+          "nullable": false
+        },
+        {
+          "name": "kindLine",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "eyebrow",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "line",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "nav",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "lead",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "give",
+          "type": "string[]",
+          "nullable": false
+        },
+        {
+          "name": "chapters",
+          "type": "string[]",
+          "nullable": false
+        },
+        {
+          "name": "stepsHead",
+          "type": "{eyebrow,title,lead?}",
+          "nullable": true
+        },
+        {
+          "name": "steps",
+          "type": "{num,title,body,meta?}[]",
+          "nullable": true
+        },
+        {
+          "name": "occasionsHead",
+          "type": "{eyebrow,title,lead?}",
+          "nullable": false
+        },
+        {
+          "name": "occasions",
+          "type": "Occasion[]",
+          "nullable": false
+        },
+        {
+          "name": "defaultStyle",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "note",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "closing",
+          "type": "{title,lead}",
+          "nullable": false
+        }
+      ],
+      "cardinality": "list",
+      "filtersOrSort": [
+        "audience==business"
+      ],
+      "pagination": "none",
+      "source": "lib/catalog.ts categories[] literals (lines 49-277)"
+    },
+    {
+      "entity": "ComingSoonAudience",
+      "fields": [
+        {
+          "name": "name",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "line",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "kind",
+          "type": "string",
+          "nullable": false
+        }
+      ],
+      "cardinality": "list",
+      "pagination": "none",
+      "source": "lib/catalog.ts soon[] 291-294 (Churches & communities, Schools & alumni)"
+    },
+    {
+      "entity": "Creative (profession label)",
+      "fields": [
+        {
+          "name": "name",
+          "type": "string",
+          "nullable": false
+        }
+      ],
+      "cardinality": "list",
+      "pagination": "none",
+      "source": "lib/catalog.ts creatives[] 14 strings"
+    },
+    {
+      "entity": "ProPlan",
+      "fields": [
+        {
+          "name": "key",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "tag",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "price",
+          "type": "number (whole naira: 35000/105000/17500)",
+          "nullable": false
+        },
+        {
+          "name": "was",
+          "type": "number (whole naira: 58000/175000/29000)",
+          "nullable": false
+        },
+        {
+          "name": "wishes",
+          "type": "number",
+          "nullable": false
+        },
+        {
+          "name": "logins",
+          "type": "number",
+          "nullable": false
+        },
+        {
+          "name": "monthly",
+          "type": "boolean",
+          "nullable": false
+        },
+        {
+          "name": "vault",
+          "type": "number (GB)",
+          "nullable": false
+        },
+        {
+          "name": "pop",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "items",
+          "type": "string[]",
+          "nullable": false
+        }
+      ],
+      "cardinality": "list",
+      "filtersOrSort": [
+        "order starter,studio,pack"
+      ],
+      "pagination": "none",
+      "source": "lib/pro-data.ts PLANS lines 17-21, PLAN_ORDER; rendered via naira(n)='₦'+toLocaleString"
+    },
+    {
+      "entity": "VaultPricing",
+      "fields": [
+        {
+          "name": "packDays",
+          "type": "number",
+          "nullable": false
+        },
+        {
+          "name": "block",
+          "type": "number (GB)",
+          "nullable": false
+        },
+        {
+          "name": "price",
+          "type": "number (whole naira 3000)",
+          "nullable": false
+        },
+        {
+          "name": "bulkFrom",
+          "type": "number (GB 1000)",
+          "nullable": false
+        },
+        {
+          "name": "bulkPrice",
+          "type": "number (whole naira 2500)",
+          "nullable": false
+        }
+      ],
+      "cardinality": "single",
+      "pagination": "none",
+      "source": "lib/pro-data.ts VAULT line 23, used by VAULT_MORE text"
+    },
+    {
+      "entity": "Concierge offer",
+      "fields": [
+        {
+          "name": "name",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "title",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "lead",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "items",
+          "type": "string[]",
+          "nullable": false
+        },
+        {
+          "name": "price",
+          "type": "string ('₦15,000')",
+          "nullable": false
+        },
+        {
+          "name": "was",
+          "type": "string ('₦25,000')",
+          "nullable": false
+        }
+      ],
+      "cardinality": "single",
+      "pagination": "none",
+      "source": "lib/catalog.ts concierge lines 392-399; Concierge.tsx also hardcodes 'Custom / Priced by how many you send / delivered within 3 hours'"
+    },
+    {
+      "entity": "ProPricingCopy",
+      "fields": [
+        {
+          "name": "startingPrice",
+          "type": "string 'From ₦35,000 a month' typed in business/page.tsx:48",
+          "nullable": false
+        },
+        {
+          "name": "marginPerWish",
+          "type": "string '₦3,500 a wish on Starter' typed at :50",
+          "nullable": false
+        },
+        {
+          "name": "packagePriceRange",
+          "type": "string '₦8,000 to ₦12,000' typed at :50 and ProPlans.tsx:21",
+          "nullable": false
+        },
+        {
+          "name": "starterWishPrice",
+          "type": "number derived price/wishes = 3500",
+          "nullable": false
+        }
+      ],
+      "cardinality": "single",
+      "pagination": "none"
+    },
+    {
+      "entity": "Promotion (launch offer)",
+      "fields": [
+        {
+          "name": "percentOff",
+          "type": "number (text '40%')",
+          "nullable": false
+        },
+        {
+          "name": "endsOn",
+          "type": "string (text '31 January', no year)",
+          "nullable": false
+        }
+      ],
+      "cardinality": "single",
+      "pagination": "none",
+      "source": "hardcoded in prose: app/pricing/page.tsx lines 14,21,~91,~101, components/cinema/Pricing.tsx, components/site/ProPlans.tsx line 14; also app/terms, Maker.tsx, Cards.tsx (out of scope)"
+    }
+  ],
+  "actions": [
+    {
+      "name": "messageUs",
+      "kind": "custom",
+      "entity": "(navigation)",
+      "payload": [],
+      "expectedResponse": null,
+      "note": "links to /contact; no write on this screen"
+    }
+  ],
+  "authContext": {
+    "requiresAuth": false,
+    "rolesObserved": []
+  },
+  "special": {
+    "realtime": false,
+    "uploads": false,
+    "downloads": false,
+    "polling": false,
+    "pagination": "none"
+  },
+  "uiStatesHandled": [
+    {
+      "state": "loading",
+      "entersWhen": "never coded; page is statically rendered / imports are synchronous",
+      "reachable": "no"
+    },
+    {
+      "state": "empty",
+      "entersWhen": "not coded for any list; arrays are non-empty constants",
+      "reachable": "no"
+    },
+    {
+      "state": "error",
+      "entersWhen": "not coded; no request is made",
+      "reachable": "no"
+    },
+    {
+      "state": "loaded",
+      "entersWhen": "always (constants imported at build time)",
+      "reachable": "yes"
+    }
+  ],
+  "uiStatesDesigned": [],
+  "note": "ProPlans is a client component importing lib/pro-data, which also imports lib/account (readAccount, localStorage) and vault-fixtures; this screen only uses PLANS, PLAN_ORDER, VAULT_MORE, naira. Plan money is whole naira numbers here, tickets elsewhere are formatted strings.",
+  "stubsObserved": [
+    {
+      "file": "app/business/page.tsx:48-50",
+      "evidence": "meta=\"From ₦35,000 a month\" / \"₦3,500 a wish on Starter\" / ₦8,000 to ₦12,000 and 'Ten Signature wishes a month ... thirty-five on Studio'",
+      "standsInFor": "price / promotion read from configuration tables (conventions: prices never hardcoded)",
+      "consequence": "changing a price or ending the offer needs a code deploy; text can drift from server charges"
+    },
+    {
+      "file": "lib/pro-data.ts:18-20",
+      "evidence": "price: 35000, was: 58000 ... price: 105000 ... price: 17500",
+      "standsInFor": "price / promotion read from configuration tables (conventions: prices never hardcoded)",
+      "consequence": "changing a price or ending the offer needs a code deploy; text can drift from server charges"
+    },
+    {
+      "file": "components/site/ProPlans.tsx:14",
+      "evidence": "'Up to 40% off until 31 January. Join before then and keep that price for 12 months'",
+      "standsInFor": "price / promotion read from configuration tables (conventions: prices never hardcoded)",
+      "consequence": "changing a price or ending the offer needs a code deploy; text can drift from server charges"
+    },
+    {
+      "file": "components/site/Concierge.tsx:19-22",
+      "evidence": "<b>Custom</b> Priced by how many you send; 'delivered within 3 hours'",
+      "standsInFor": "a quote flow (no quote form exists; /contact link)",
+      "consequence": "concierge bulk is quoted by hand, outside the system"
+    }
+  ],
+  "screenId": "site-business"
+}

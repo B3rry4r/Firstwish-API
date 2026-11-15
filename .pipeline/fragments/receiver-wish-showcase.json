@@ -1,0 +1,396 @@
+{
+ "screenId": "receiver-wish-showcase",
+ "reads": [
+  {
+   "entity": "WishData (the wish as a style receives it; lib/engine/types.ts)",
+   "fields": [
+    {
+     "name": "no",
+     "type": "string",
+     "nullable": true
+    },
+    {
+     "name": "kind",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "occasion",
+     "type": "string (occasion slug)",
+     "nullable": false
+    },
+    {
+     "name": "occasionName",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "call",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "from",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "by",
+     "type": "string",
+     "nullable": true
+    },
+    {
+     "name": "cover",
+     "type": "{names:string[],eyebrow:string,line:string,date:string(dotted 'DD \u00b7 MM \u00b7 YYYY'),title?:string}",
+     "nullable": false
+    },
+    {
+     "name": "photos",
+     "type": "{src:string,alt?,focus?:{x,y},w?,h?}[]",
+     "nullable": false
+    },
+    {
+     "name": "clips",
+     "type": "{src:string,poster?:string}[]",
+     "nullable": true
+    },
+    {
+     "name": "sound",
+     "type": "{voice?:string(url),song?:string(url)}",
+     "nullable": true
+    },
+    {
+     "name": "chapters",
+     "type": "Chapter[] ({type,title,content,photos:number[] (indexes into photos),heading?}); content by type: {\"letter\": \"{salute?:string, paras:string[], line?:string}\", \"reasons\": \"{items:{title:string,note?:string}[]}\", \"memory\": \"{title:string,text:string,quote?:string}\", \"story\": \"{title?:string,captions:string[]}\", \"voices\": \"{ask?:string, items:{name:string,role?:string,text:string}[]}\", \"note\": \"{from:string,text:string}\", \"blessing\": \"{verse:string,cite?:string,note?:string}\", \"timeline\": \"{items:{when:string,what:string}[]}\", \"details\": \"{items:{label:string,value:string}[]}\", \"film\": \"{frames:number[]}\", \"favourites\": \"{frames:number[]}\", \"credits\": \"{items:{role:string,name:string,handle?:string}[]}\", \"links\": \"{files?:string,book?:string,download?:{count:number,size:string,files?:string[]}}\"}",
+     "nullable": false
+    },
+    {
+     "name": "opening",
+     "type": "{id:'sealed'|'countdown'|'passcode'|'question'|'presents'|'open', values:Record<string,string>, scene?:string}",
+     "nullable": false
+    },
+    {
+     "name": "ending",
+     "type": "{id:'candle'|'envelope'|'ring'|'scratch'|'gift'|'confetti'|'date'|'names'|'close', values:Record<string,string>, scene?:string}",
+     "nullable": false
+    },
+    {
+     "name": "quiet",
+     "type": "boolean",
+     "nullable": true
+    },
+    {
+     "name": "soundFirst",
+     "type": "boolean",
+     "nullable": true
+    }
+   ],
+   "cardinality": "single",
+   "filtersOrSort": [
+    "URL: /w/[slug] where slug is a STYLE slug (not a wish id)",
+    "?kind= (only if in the style's manifest kinds)",
+    "?occasion= (slug or name, only if the style fits it)"
+   ],
+   "pagination": "none",
+   "note": "Today built client/server-side by sampleWish(kind,occasion,photos) -> build() from SAMPLES in lib/wish-model.ts + OCCASION/MORE literals in lib/engine/adapt.ts. opening.values by id: {\"sealed\": \"at (yyyy-mm-dd), time (HH:mm, default 00:00)\", \"countdown\": \"to (yyyy-mm-dd)\", \"passcode\": \"code, hint?\", \"question\": \"question, answer\", \"presents\": \"studio\", \"open\": \"(none)\"}. ending.values by id: {\"candle\": \"line?\", \"envelope\": \"line\", \"ring\": \"question\", \"scratch\": \"line\", \"gift\": \"title, text?\", \"confetti\": \"line?\", \"date\": \"date, line?\", \"names\": \"names ('|' joined), line?\", \"close\": \"(none); all endings also carry sign\"}"
+  },
+  {
+   "entity": "Wish (catalog showcase row; lib/catalog.ts:364)",
+   "fields": [
+    {
+     "name": "no",
+     "type": "string (empty for most)",
+     "nullable": false
+    },
+    {
+     "name": "name",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "title",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "kind",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "occasion",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "style",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "scope",
+     "type": "'showcase'|'public'",
+     "nullable": false
+    },
+    {
+     "name": "href",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "date",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "img",
+     "type": "string (photo url)",
+     "nullable": false
+    },
+    {
+     "name": "pos",
+     "type": "string (css object-position)",
+     "nullable": false
+    },
+    {
+     "name": "featured",
+     "type": "boolean",
+     "nullable": true
+    }
+   ],
+   "cardinality": "single",
+   "filtersOrSort": [
+    "style == slug (first match)"
+   ],
+   "pagination": "none",
+   "note": "house showcase rows hardcoded in lib/catalog.ts (wishes[]); only name/kind/occasion/style/no/img used by the page. Fallback literal in app/w/[slug]/page.tsx:22 (name 'Aisha', img /img/aisha-1.webp, kind = first of style's kinds) when none exists."
+  },
+  {
+   "entity": "StyleManifest / occasion recipes (reference data)",
+   "fields": [
+    {
+     "name": "slug",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "name",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "kinds",
+     "type": "string[]",
+     "nullable": false
+    },
+    {
+     "name": "occasions",
+     "type": "Record<kind,string[]> (optional narrowing)",
+     "nullable": false
+    },
+    {
+     "name": "pace",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "orientation",
+     "type": "portrait|landscape|either",
+     "nullable": false
+    },
+    {
+     "name": "dimension",
+     "type": "flat|drawn|3d",
+     "nullable": false
+    },
+    {
+     "name": "level",
+     "type": "starter|standard|premium",
+     "nullable": false
+    },
+    {
+     "name": "fallback",
+     "type": "string",
+     "nullable": true
+    },
+    {
+     "name": "endings",
+     "type": "string[]",
+     "nullable": true
+    },
+    {
+     "name": "openings",
+     "type": "string[]",
+     "nullable": true
+    }
+   ],
+   "cardinality": "list",
+   "filtersOrSort": [
+    "by kind and occasion (stylesFor)"
+   ],
+   "pagination": "none",
+   "note": "bundled in lib/engine/packages.ts and lib/occasions.ts; code, not data. Recipes decide which chapters a wish keeps and the default opening/ending per occasion. Needs a server only if styles/occasions become server-held."
+  }
+ ],
+ "actions": [
+  {
+   "name": "unlockOpening",
+   "kind": "custom",
+   "entity": "WishData.opening",
+   "payload": [
+    {
+     "name": "answer",
+     "type": "string (passcode or question answer; empty for time/countdown/title)"
+    }
+   ],
+   "expectedResponse": {
+    "entity": "ok | {ok:false,error:string}; the unlock.ts header says it becomes POST /w/:no/unlock returning the wish",
+    "cardinality": "single"
+   },
+   "note": "showcase wishes are sealed to yesterday or 'open', so this passes locally; no server call is made today"
+  },
+  {
+   "name": "answerEnding",
+   "kind": "custom",
+   "entity": "EndingEvent",
+   "payload": [
+    {
+     "name": "type",
+     "type": "'reached'|'done'|'answer'"
+    },
+    {
+     "name": "value",
+     "type": "'yes'|'no' (only when type=='answer')"
+    }
+   ],
+   "expectedResponse": null,
+   "note": "Host.hear forwards to onEnding/onReaction; the showcase passes neither, so every event is dropped"
+  }
+ ],
+ "authContext": {
+  "requiresAuth": false,
+  "rolesObserved": [
+   "receiver (anonymous, by link)"
+  ]
+ },
+ "special": {
+  "realtime": false,
+  "uploads": false,
+  "downloads": false,
+  "polling": "client timer: setInterval 1s of Date.now() while a time or countdown seal is on (local only)",
+  "audio": "voice note url (wish.sound.voice) played only after a tap",
+  "paging": "none"
+ },
+ "uiStatesHandled": [
+  {
+   "state": "sealed (time)",
+   "entersWhen": "opening.id=='sealed' and sealTime(opening)>Date.now() (left>0); button hidden unless preview",
+   "reachable": "yes",
+   "note": "Gate shows 'Sealed until <time>, <long date>' and countdown text; unlock() ignored while left>0 unless preview"
+  },
+  {
+   "state": "countdown",
+   "entersWhen": "opening.id=='countdown' and left>0; Open it button shown regardless (unlock only blocked for lock=='time')",
+   "reachable": "yes",
+   "note": "countdown to values.to; the receiver can Open it before the day: unlock() only blocks lock=='time'"
+  },
+  {
+   "state": "passcode",
+   "entersWhen": "opening.id=='passcode'; one text field, 'Open it'",
+   "reachable": "yes",
+   "note": "errors: 'Type the code first.' (empty), 'That is not the code.'; if values.code empty it opens with no check"
+  },
+  {
+   "state": "question",
+   "entersWhen": "opening.id=='question'",
+   "reachable": "yes",
+   "note": "errors: 'Type your answer first.', 'That is not it. Try again.'; compare is tidy(): NFKD, strip accents, trim, lowercase, collapse spaces, strip . ! ? , ' \u2019 \""
+  },
+  {
+   "state": "title card (presents)",
+   "entersWhen": "opening.id=='presents' (lock 'title'); button 'Watch'",
+   "reachable": "yes",
+   "note": "no check; cover eyebrow '<studio> presents'"
+  },
+  {
+   "state": "open straight away",
+   "entersWhen": "opening.id=='open' (lock 'none'); opened and gone start true",
+   "reachable": "yes"
+  },
+  {
+   "state": "unlock error",
+   "entersWhen": "checkUnlock returns ok:false -> setError(message)",
+   "reachable": "yes"
+  },
+  {
+   "state": "opening leaving/transition",
+   "entersWhen": "after unlock; host waits manifest.exit ms then plays a kit transition",
+   "reachable": "yes",
+   "note": "local animation only"
+  },
+  {
+   "state": "loading (style package not yet loaded)",
+   "entersWhen": "Scene not loaded: fe-poster with cover photo + names, and fe-open-wait placeholder",
+   "reachable": "yes",
+   "note": "dynamic import of the style chunk; not a data load"
+  },
+  {
+   "state": "turn your phone",
+   "entersWhen": "style orientation=='landscape' and portrait and not embedded and not chosen portrait",
+   "reachable": "yes",
+   "note": "device-only"
+  },
+  {
+   "state": "empty",
+   "entersWhen": "none: a wish always has its chapters",
+   "reachable": "no"
+  },
+  {
+   "state": "error (server)",
+   "entersWhen": "none in code: no request is made on the showcase",
+   "reachable": "no"
+  }
+ ],
+ "uiStatesDesigned": [
+  "loading",
+  "empty",
+  "error",
+  "loaded"
+ ],
+ "stubsObserved": [
+  {
+   "file": "app/w/[slug]/page.tsx:22",
+   "evidence": "fallback wish literal { no:'', name:'Aisha', ... img:'/img/aisha-1.webp' } when the style has no row in lib/catalog.ts",
+   "standsInFor": "a real showcase wish for the style",
+   "consequence": "every style without a house row plays Aisha's sample"
+  },
+  {
+   "file": "lib/engine/adapt.ts:268-282",
+   "evidence": "sampleWish sets opensAt to yesterday ('The seal is set to a moment already passed, so a showcase always opens'); SAMPLES in lib/wish-model.ts:177+; OCCASION/MORE literals adapt.ts:28-92",
+   "standsInFor": "a showcase wish stored on a server",
+   "consequence": "the showcase never exercises a real sealed state; all words are literals; wish number comes from catalog literal"
+  },
+  {
+   "file": "components/wish/Showcase.tsx:26",
+   "evidence": "no: own && w.no ? w.no : undefined",
+   "standsInFor": "a real wish number",
+   "consequence": "only the Aisha/noir row has a number (0001)"
+  },
+  {
+   "file": "lib/engine/unlock.ts:25-33",
+   "evidence": "checkUnlock compares the typed answer to wish.opening.values.code / .answer locally; header comment: 'Today the passcode and the answer are checked against the wish's own values on this device'",
+   "standsInFor": "server-side passcode/question check (secret never sent to receiver)",
+   "consequence": "the code/answer ships to every receiver's browser inside WishData; anyone can read it. Time seal is judged by receiver's device clock (Date.now()), not server time."
+  },
+  {
+   "file": "lib/engine/unlock.ts:17-20 and components/engine/Host.tsx:153-156",
+   "evidence": "sealTime builds new Date(`${day}T${time||'00:00'}:00`) in receiver's local zone; Host ticks Date.now() every second for the countdown",
+   "standsInFor": "server-decided seal moment and time left",
+   "consequence": "changing device clock opens a sealed wish; sealed wish content is already in the page"
+  }
+ ],
+ "rulings": [
+  "Per scan-map RULING: [slug] is a style slug; no route resolves a real wish by public link slug. A human must rule whether a server resolve-by-link (GET wish by no/slug, unlock) is wanted; today none exists in the front end.",
+  "The server-decided receiver states listed in uiStatesHandled are rendered client-side from the wish's own values."
+ ]
+}

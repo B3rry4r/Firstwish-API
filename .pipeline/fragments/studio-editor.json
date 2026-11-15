@@ -1,0 +1,285 @@
+{
+  "screenId": "studio-editor",
+  "route": "/app/creator/studio/[id]",
+  "reads": [
+    {
+      "entity": "StudioStyle (draft)",
+      "source": "lib/studio-api.ts getDraft/listDrafts; localStorage fw-studio drafts[]; normalize() in lib/studio.ts:520 drops unknown fields",
+      "fields": [
+        {"name": "id", "type": "string", "nullable": false, "note": "client-made by uid(): Math.random base36, 8 chars (studio.ts:480); server should issue/accept"},
+        {"name": "name", "type": "string", "nullable": false, "note": "maxLength 32 in the UI, trimmed by specOf at submit; default 'Untitled style'; newStyle default '<template name> remix'"},
+        {"name": "status", "type": "enum draft|review|returned|live", "nullable": false, "note": "a draft is always 'draft'"},
+        {"name": "base", "type": "string", "nullable": false, "note": "slug of a registered package (lib/engine/packages.ts getManifest) or the literal 'blank'; normalize returns null (draft unreadable) when the slug is unknown"},
+        {"name": "theme", "type": "Theme", "nullable": false, "note": "Partial of {ground, ground2, ink, muted, accent, soft, line, display, body, script: string; italic, upper: boolean; track, scale: number}; colours are #rrggbb or rgba(); display/body are CSS font-family strings; {} when untouched"},
+        {"name": "seen", "type": "Theme", "nullable": true, "note": "the base's own look as the canvas last read it; a client-side cache written by the canvas (update tag 'seen'), not authored; excluded by specOf at submit"},
+        {"name": "scenes", "type": "Record<sceneKey, SceneEdit>", "nullable": false, "note": "sceneKey: 'opening' | 'cover' | a chapter type (letter, reasons, memory, story, voices, note, blessing, timeline, details, film, favourites, credits, links) | 'ending' | '*' (ALL: holds on every scene)"},
+        {"name": "scenes[k].tempo", "type": "calm|steady|quick", "nullable": true},
+        {"name": "scenes[k].span", "type": "number ms (1500..12000)", "nullable": true},
+        {"name": "scenes[k].between", "type": "string (motion-kit transition id or 'own')", "nullable": true},
+        {"name": "scenes[k].ground", "type": "string colour", "nullable": true},
+        {"name": "scenes[k].grad", "type": "{stops: string[], angle: number, move?: boolean}", "nullable": true},
+        {"name": "scenes[k].texture", "type": "paper|grain|linen|dust", "nullable": true},
+        {"name": "scenes[k].backdrop", "type": "string (asset id in art[])", "nullable": true},
+        {"name": "scenes[k].layers", "type": "Record<layerKey, LayerEdit>", "nullable": false, "note": "layerKey: '<word>#<n>' or '<word>#*' (word: title, words, eyebrow, photo, ground, action, or package-specific), a bare known word (old drafts), or an added thing's id. LayerEdit = Motion {in, out: string; speed, delay, end: ms; ease: soft|even|snap|bounce|gentle|sharp|back|drift; params: Record<string,number>; curve: [n,n,n,n]; stagger: ms; loop{kind,speed,amount}; scroll{kind,amount}; touch{kind,amount}; path{d,speed,turn,loop}} + {name, hidden, locked, opacity %, font (pair key), size %, colour, align start|center|end, shape own|square|soft|arch|circle|polaroid|torn, fit fill|whole, border, borderColour, shadow, tilt, drift none|zoom|drift, colours Record<string,string>, weight, italic, kase own|upper|lower|title, track, lineH, textFx{outline,shadow,glow,highlight,grad,stamp}}"},
+        {"name": "scenes[k].added", "type": "Added[]", "nullable": false, "note": "stacking order, last on top; items without numeric x are dropped by normalize"},
+        {"name": "scenes[k].layout", "type": "SceneLayout", "nullable": true, "note": "{mode auto|free, stack{dir column|row, gap, pad[4], align start|center|end|stretch, justify start|center|end|between, wrap, max, wide(Partial stack)}, board portrait|landscape, fit contain|cover, groups Record<id,{stack, flow, name}>}; absent means free, as before"},
+        {"name": "scenes[k].look", "type": "Theme", "nullable": true, "note": "per-scene look over the style's"},
+        {"name": "art", "type": "Asset[]", "nullable": false, "note": "Asset {id, kind image|sound|model, name, size bytes, url}; normalize drops items with no url"},
+        {"name": "sound", "type": "string (asset id)", "nullable": true},
+        {"name": "soundSet", "type": "{volume %, fadeIn ms, fadeOut ms}", "nullable": true, "note": "default SOUND 70/600/900"},
+        {"name": "made", "type": "Made", "nullable": false, "note": "{kinds: string[] (lib/catalog slugs), occasions: Record<kind, occasionSlug[]> (empty list or absent kind = every occasion the base fits), best: portrait|landscape|either}"},
+        {"name": "tags", "type": "StyleTags", "nullable": false, "note": "{mood: string[], palette: string, family: string}"},
+        {"name": "still", "type": "fade|none", "nullable": false, "note": "what plays under reduced motion; anything other than 'none' normalises to 'fade'"},
+        {"name": "fallback", "type": "string (flat package slug)", "nullable": true, "note": "required by a check when base dimension is drawn or 3d; must be a flat package"},
+        {"name": "holds", "type": "{portrait?: fills|bars|breaks, landscape?: ...}", "nullable": true, "note": "written by the canvas measuring layout (update tag 'holds'); read by the 'orient' check; client-measured"},
+        {"name": "poster", "type": "{frame: opening|cover|ending, src?: string url, name?: string}", "nullable": false, "note": "src is a data URL today (uploadPoster)"},
+        {"name": "from", "type": "Origin {id, name, handle, house: boolean}", "nullable": true, "note": "what it was built on; house=true for firstwish packages, else another creator's template (25% royalty line in builtOn)"},
+        {"name": "brief", "type": "string", "nullable": true, "note": "what the creator typed to AI"},
+        {"name": "piece", "type": "style|opening|ending", "nullable": true, "note": "absent = whole style"},
+        {"name": "opening", "type": "string (moment slug)", "nullable": true},
+        {"name": "ending", "type": "string (moment slug)", "nullable": true},
+        {"name": "moments", "type": "Record<'opening|ending/<slug|own>', SceneEdit>", "nullable": true, "note": "edits to openings/endings tried and put by"},
+        {"name": "at", "type": "number epoch ms", "nullable": false, "note": "client Date.now(); saveDraft overwrites it with Date.now() and drafts list sorts by it desc"}
+      ],
+      "addedThingShape": {
+        "note": "Added (studio.ts:335), element of scenes[k].added",
+        "fields": [
+          "id string; kind shape|artwork|effect|text|model|photo|element|three; what string (bank item id, fx key, asset id for artwork/model); name string",
+          "x,y centre in % of scene; w width % (all number, required); h number? (share of width)",
+          "turn, opacity, hidden, locked, colour ('none' for no fill), stroke, strokeW, corner, blur, blend normal|multiply|screen|overlay|soft-light",
+          "text, font, size, track, align, upper; amount, speed, scale, behind; params Record<string,number>",
+          "pins {x,y: start|center|end|stretch|scale, min?, max?}; flow {order, w hug|fill|number, h?, self?, grow?, parent?, out?, at?{x,y,w..}}; bind (from cover|wish|chapter|photo + field + n?); free Partial<Record<portrait|landscape, Place>>",
+          "flipX, flipY, skew, tiltX, tiltY, group; fill {kind solid|gradient|picture, grad?, art? asset id}; drop {x,y,blur,colour}; glass; mask; dash",
+          "role heading|subheading|body|caption|quote|label; box; weight; italic; kase; lineH; textFx; curve; upright; sides; frame rect|arch|circle|polaroid|torn|film|blob|soft; set one|two|three|stack|strip|grid",
+          "three {shape text|sphere|cube|torus|heart|ring|balloon|gift|card|model, rx, ry, rz, depth, material matte|gloss|metal|glass, light front|above|side|back, spin none|spin|float, follow}; label string"
+        ],
+        "limits": "BUDGET: files 2.5 MB total, 3 non-calm effects and 10 added things per scene (checked client-side in checks()); FILE_MAX image 400KB, sound 900KB, model 900KB"
+      },
+      "cardinality": "single",
+      "filtersOrSort": ["by id"],
+      "pagination": "none",
+      "note": "The whole style is one document with open-ended nested JSON; client treats it opaquely except normalize(). Stored data is the draft exactly as above; unknown fields are dropped on read. Editor reads it once at mount (Editor.tsx:56) and never refetches; a missing id (getDraft not-found) shows the 'gone' page."
+    },
+    {
+      "entity": "CreatorState (studio account)",
+      "fields": [
+        {"name": "plan", "type": "open|creator", "nullable": false},
+        {"name": "signed", "type": "boolean", "nullable": false},
+        {"name": "credits", "type": "number (integer)", "nullable": false, "note": "AI credits left; Open gives 3 once, Creator adds 10 a month"},
+        {"name": "reviewsLeft", "type": "number", "nullable": false, "note": "open 1, creator 2 a month"},
+        {"name": "extraReviews", "type": "number", "nullable": false},
+        {"name": "renews", "type": "ISO date string", "nullable": false, "note": "when the month's credits and reviews come back"}
+      ],
+      "cardinality": "single",
+      "pagination": "none",
+      "note": "Editor.tsx:54 useLoad(getCreator) (reloads on the store's change event); shown as credit count in AiBar and used by SubmitSheet (planOk, reviewsLeft, extraReviews) and CreditsSheet text. Monthly rollover is done by the client in read() (studio-api.ts:91): reviews reset to REVIEWS[plan], creator plan adds 10 credits; the server must do this by job."
+    },
+    {
+      "entity": "StudioPrefs",
+      "fields": [
+        {"name": "coached", "type": "boolean", "nullable": true},
+        {"name": "bottom", "type": "scenes|timeline", "nullable": true},
+        {"name": "span", "type": "scene|wish", "nullable": true},
+        {"name": "looks", "type": "SavedLook[] {id, name, theme: Theme}", "nullable": true, "note": "creator's saved looks (not read in Editor.tsx itself; in Prefs type)"},
+        {"name": "recent", "type": "string[]", "nullable": true},
+        {"name": "fav", "type": "string[]", "nullable": true},
+        {"name": "addTab", "type": "string", "nullable": true}
+      ],
+      "cardinality": "single",
+      "pagination": "none",
+      "note": "Editor reads bottom, span, coached at mount (Editor.tsx:136, 355); Panels/Add tools use looks/recent/fav/addTab through the same getPrefs/setPrefs."
+    },
+    {
+      "entity": "RegisteredPackage manifest (reference data)",
+      "fields": [
+        {"name": "slug", "type": "string"}, {"name": "name", "type": "string"}, {"name": "level", "type": "Standard|Premium"}, {"name": "creator", "type": "string"},
+        {"name": "kinds", "type": "string[]"}, {"name": "occasions", "type": "Record<string,string[]>?"}, {"name": "pace", "type": "scroll|swipe|stories|film|stage"},
+        {"name": "orientation", "type": "portrait|landscape|either"}, {"name": "dimension", "type": "flat|drawn|3d"}, {"name": "tags", "type": "{mood: string[], palette?: string, family?: string}"},
+        {"name": "fallback", "type": "string?"}
+      ],
+      "cardinality": "list",
+      "pagination": "none",
+      "note": "Compiled into the web bundle (lib/engine/packages.ts PACKAGES), NOT read from storage; a style's base must be one of these slugs. The server needs the same slug list to validate base and fallback, and the plan 'needs' (film/stage/drawn/3d) derive from pace and dimension. Not a backend read today."
+    },
+    {
+      "entity": "SubmittedStyle (read by StudioHost for playing a sent style)",
+      "fields": [
+        {"name": "...StyleSpec", "type": "all StudioStyle fields except status, seen, at"},
+        {"name": "status", "type": "review|returned|live", "nullable": false},
+        {"name": "submittedAt", "type": "ISO string", "nullable": false},
+        {"name": "review", "type": "{decided: string, accepted: boolean, notes?: string[]}", "nullable": true},
+        {"name": "level", "type": "Standard|Premium", "nullable": true, "note": "set by Firstwish on acceptance"},
+        {"name": "byline", "type": "string handle", "nullable": false},
+        {"name": "template", "type": "boolean", "nullable": false},
+        {"name": "liveAt", "type": "ISO string", "nullable": true}
+      ],
+      "cardinality": "list",
+      "pagination": "none",
+      "note": "Not read by the editor screen itself; components/engine/made/StudioHost.tsx findStudioStyle(id) falls back to listMyStyles() when getDraft fails (a wish playing 'studio:<id>' reads the style by id, drafts first, then sent styles) and re-reads when the store changes. Included because the Editor's 'Preview' and the host share the style shape."
+    }
+  ],
+  "actions": [
+    {
+      "name": "saveDraft",
+      "kind": "update",
+      "entity": "StudioStyle (draft)",
+      "payload": [{"name": "style", "type": "StudioStyle (the whole document; id included, so create-or-replace by id)"}],
+      "expectedResponse": {"entity": "StudioStyle", "cardinality": "single", "note": "the stored style with at set to server time; the UI only checks ok"},
+      "note": "Autosave: Editor.tsx:77-82, fires 500 ms after every change to the style (debounced), whole document each time, including seen and holds. A failure shows a toast via why(). 'saved' indicator in header. Undo/redo (80 deep) are client-only."
+    },
+    {
+      "name": "deleteDraft",
+      "kind": "delete",
+      "entity": "StudioStyle (draft)",
+      "payload": [{"name": "id", "type": "string"}],
+      "expectedResponse": {"entity": "true", "cardinality": "single"},
+      "note": "Defined in studio-api.ts:157; not called from this screen's files (Studio home deletes)."
+    },
+    {
+      "name": "uploadAsset",
+      "kind": "create",
+      "entity": "Asset",
+      "payload": [{"name": "styleId", "type": "string"}, {"name": "file", "type": "File (image png/jpeg/webp/svg, sound mp3/mp4/aac/ogg/wav, model .glb/.riv)"}, {"name": "kind", "type": "image|sound|model (derived from file by kindOfFile)"}],
+      "expectedResponse": {"entity": "Uploaded {id, url, name, size, kind}", "cardinality": "single", "note": "Editor.tsx:294 appends {id, kind, name, size, url} to style.art; size caps FILE_MAX 400KB/900KB/900KB reported as a plain-words failure message"},
+      "note": "Files are one at a time, sequential. Today the url is a data: URL stored inline in the draft JSON."
+    },
+    {
+      "name": "uploadPoster",
+      "kind": "create",
+      "entity": "Asset",
+      "payload": [{"name": "styleId", "type": "string"}, {"name": "file", "type": "File (image, <= 400KB)"}],
+      "expectedResponse": {"entity": "Uploaded", "cardinality": "single", "note": "url and name go into style.poster.src / poster.name"}
+    },
+    {
+      "name": "changeStyle (AI change)",
+      "kind": "custom",
+      "entity": "StyleChange",
+      "payload": [
+        {"name": "instruction", "type": "string (<=240 chars)"},
+        {"name": "style", "type": "StyleSpec (whole style minus status, seen, at; name trimmed)"},
+        {"name": "target", "type": "{scene?: string, layer?: string} (selected element, else {scene: current scene})"}
+      ],
+      "expectedResponse": {"entity": "StyleChange", "cardinality": "single", "shape": "{base?: string, theme?: Theme, scenes?: Record<sceneKey, SceneEdit>, made?: Made, tags?: StyleTags, ops?: StudioOp[], said: string[], credits: number}", "note": "AiBar.tsx:41 merges: theme spread over style.theme, scenes spread over scenes (whole SceneEdit replaced per key), made and tags replaced, then ops applied; credits replaces the displayed count; said[0] is the toast ('Done.' if empty). base is in the type but AiBar ignores it. StudioOp = add {scene, bank, at?, with?: Partial<Added>} | change {scene, id, set} | animate {scene, layer, set: Partial<LayerEdit>} | remove {scene, id} | order {scene, id, to up|down|number} | layout {scene, layout} | look {theme, scene?}; 'bank' ids come from components/app/studio/bank (client bank)."},
+      "failureReasons": ["offline", "no-credits (opens the credits sheet)", "failed/others (toast)"],
+      "cost": "COST.change = 1 credit; the server must check and spend, return the remaining count"
+    },
+    {
+      "name": "draftStyle (AI full draft)",
+      "kind": "custom",
+      "entity": "StyleChange",
+      "payload": [{"name": "description", "type": "string"}, {"name": "base", "type": "string?"}, {"name": "made", "type": "Made?"}],
+      "expectedResponse": {"entity": "StyleChange", "cardinality": "single"},
+      "cost": "COST.draft = 4 credits",
+      "note": "NOT called from the editor files in scope (defined in studio-api.ts:142; used by the Start/Home screens). Included because the editor shares StyleChange. Scene set, look, each scene's motion, what it is made for."
+    },
+    {
+      "name": "submitStyle",
+      "kind": "custom",
+      "entity": "SubmittedStyle",
+      "payload": [{"name": "style", "type": "StyleSpec"}, {"name": "useExtra", "type": "boolean (true when reviewsLeft<1 and extraReviews>0, decided by the client)"}],
+      "expectedResponse": {"entity": "SubmittedStyle", "cardinality": "single", "note": "SubmitSheet onSent then goes to /app/creator/studio?sent=1"},
+      "failureReasons": ["plan (style needs Creator plan: opens plan pay sheet)", "no-reviews (opens extra review pay sheet)", "failed (toast)"],
+      "serverRules": "Today in client: needsCreator(style).length && plan!=='creator' -> plan; (useExtra ? extraReviews<1 : reviewsLeft<1) -> no-reviews; decrement the matching counter; create SubmittedStyle status 'review', submittedAt now, byline = account handle, template false; remove the draft. Submit button is only enabled when every check passes (client-computed) and a name is set; server should re-validate."
+    },
+    {
+      "name": "buyCredits",
+      "kind": "custom",
+      "entity": "CreatorState",
+      "payload": [{"name": "packs", "type": "number (1 from the UI)"}],
+      "expectedResponse": {"entity": "CreatorState", "cardinality": "single"},
+      "note": "After PaySheet 'Pay ₦3000'. PACK = 5 credits for price 3000 (naira number). Money must really move before credits are granted."
+    },
+    {
+      "name": "setPlan",
+      "kind": "custom",
+      "entity": "CreatorState",
+      "payload": [{"name": "plan", "type": "open|creator"}],
+      "expectedResponse": {"entity": "CreatorState", "cardinality": "single"},
+      "note": "Creator price 7500 a month (PLANS.creator.price), grants +10 credits and reviewsLeft=max(current,2); moving to open caps reviewsLeft at 1. Called after PaySheet from the plan sheet and from the Submit sheet."
+    },
+    {
+      "name": "setSigned",
+      "kind": "update",
+      "entity": "CreatorState",
+      "payload": [{"name": "on", "type": "boolean"}],
+      "expectedResponse": {"entity": "CreatorState", "cardinality": "single"},
+      "note": "Signed add-on: 5000 a month (SIGNED.price). Turning off needs no payment."
+    },
+    {
+      "name": "buyExtraReview",
+      "kind": "custom",
+      "entity": "CreatorState",
+      "payload": [],
+      "expectedResponse": {"entity": "CreatorState", "cardinality": "single"},
+      "note": "After PaySheet 'Pay ₦2500' (EXTRA_REVIEW); extraReviews += 1."
+    },
+    {
+      "name": "setPrefs",
+      "kind": "update",
+      "entity": "StudioPrefs",
+      "payload": [{"name": "(any of) coached, bottom, span, looks, recent, fav, addTab", "type": "partial StudioPrefs, merged over what is stored"}],
+      "expectedResponse": {"entity": "StudioPrefs", "cardinality": "single"},
+      "note": "Fire-and-forget (result ignored) on bottom/span toggle and end of the coach marks."
+    },
+    {
+      "name": "withdrawStyle / setTemplate",
+      "kind": "custom",
+      "entity": "SubmittedStyle",
+      "payload": [{"name": "id", "type": "string"}, {"name": "on (setTemplate only)", "type": "boolean"}],
+      "expectedResponse": {"entity": "StudioStyle (withdraw, back to draft) | SubmittedStyle (template)", "cardinality": "single"},
+      "note": "Defined in studio-api.ts:190,200; not called from this screen's files (Studio home). Withdraw drops review/level/byline/template/liveAt and returns a draft."
+    }
+  ],
+  "authContext": {"requiresAuth": true, "rolesObserved": ["creator"], "note": "page.tsx returns null (renders nothing) unless useAccount() has account.creator. Side: creator. handle comes from account.handle (becomes byline). configure({samples: samplesOn(account)}) is called in render."},
+  "special": {
+    "realtime": false,
+    "uploads": true,
+    "downloads": false,
+    "pagination": "none (one style; drafts list not on this screen)",
+    "autosave": "whole-document PUT 500 ms after each edit; no conflict detection, no version; another tab edits via the 'storage' event (watch) only for StudioHost, the Editor itself does not re-read",
+    "payments": "five PaySheet confirmations (credits pack 3000, Creator 7500, Signed 5000, extra review 2500) call the studio action immediately; no provider call",
+    "documentSize": "style JSON includes art[].url data URLs and poster.src: up to ~2.5 MB of files per style by BUDGET, base64 in the document today; server should move to signed uploads and store url references",
+    "ai": "changeStyle needs an AI writing port; spends credits atomically; returns structured edits (theme, scenes, made, tags, ops)"
+  },
+  "uiStatesHandled": [
+    {"state": "loading (blank wait)", "entersWhen": "!st || !wish (Editor.tsx:366): getDraft promise unresolved, or wish not yet built", "reachable": "no", "note": "getDraft resolves synchronously from localStorage so it is one microtask; with a server this becomes reachable. Renders an empty div aria-busy, no skeleton."},
+    {"state": "gone / not found", "entersWhen": "getDraft returns ok:false (any reason, not only not-found)", "reachable": "yes", "note": "text 'That style is not here. It may have been sent for review, or made on another device.' with Back to Studio; also hit for any failure, so a network error would be shown as 'not here' (no separate error or retry)"},
+    {"state": "page renders nothing", "entersWhen": "page.tsx: !account || !account.creator", "reachable": "yes", "note": "blank page, no redirect"},
+    {"state": "saved / saving indicator", "entersWhen": "saved flag false from the change until saveDraft ok", "reachable": "yes", "note": "saveDraft failure shows toast via why(), indicator stays unsaved, no retry"},
+    {"state": "save error toast", "entersWhen": "saveDraft returns ok:false (only 'device out of room' today)", "reachable": "yes"},
+    {"state": "AI offline note", "entersWhen": "changeStyle reason === 'offline'", "reachable": "yes", "note": "always, today: draftStyle/changeStyle return no('offline') unconditionally; shows AI_LINE and spends nothing. After wiring, 'offline' becomes a network failure."},
+    {"state": "AI busy", "entersWhen": "busy true while changeStyle pending", "reachable": "no", "note": "stub resolves immediately"},
+    {"state": "no-credits", "entersWhen": "changeStyle reason 'no-credits' -> opens credits sheet", "reachable": "no", "note": "stub never returns it; client does not pre-check credits"},
+    {"state": "submit blocked: not named / checks failing", "entersWhen": "!st.name.trim() or checks(st) has failing entries", "reachable": "yes", "note": "checks are client-computed (chapters shown, readable contrast, smooth, still, orient, fallback, ending, safe); server should re-validate"},
+    {"state": "submit: plan needed", "entersWhen": "needsCreator(st).length>0 && me.plan!=='creator' (local) or reason 'plan'", "reachable": "yes"},
+    {"state": "submit: no reviews", "entersWhen": "me.reviewsLeft<1 && me.extraReviews<1 (local) or reason 'no-reviews'", "reachable": "yes"},
+    {"state": "submit: uses bought review", "entersWhen": "me.reviewsLeft<1 && me.extraReviews>0", "reachable": "yes"},
+    {"state": "pay sheet confirming", "entersWhen": "PaySheet busy for 700 ms after pressing Pay", "reachable": "yes", "note": "fake delay (Pay.tsx:18)"},
+    {"state": "credits count unknown", "entersWhen": "me undefined, shown as 0", "reachable": "no", "note": "getCreator is sync local"},
+    {"state": "first-visit coach marks", "entersWhen": "rig ready and prefs.coached falsy", "reachable": "yes"},
+    {"state": "empty", "entersWhen": "none: a style always exists once loaded; scenes with nothing added just show the package", "reachable": "no"},
+    {"state": "error with retry", "entersWhen": "not coded: getDraft failure is mapped to 'gone', getCreator/getPrefs failures are ignored silently (useLoad keeps undefined)", "reachable": "no"}
+  ],
+  "uiStatesDesigned": ["loading", "empty", "error", "loaded"],
+  "stubsObserved": [
+    {"file": "lib/studio-api.ts:142", "evidence": "export function draftStyle(...) { return no(\"offline\"); }", "standsInFor": "AI full style draft (Anthropic) costing COST.draft credits", "consequence": "AI drafting never works; no credit is spent; 'no-credits' and busy states unreachable"},
+    {"file": "lib/studio-api.ts:145", "evidence": "export function changeStyle(...) { return no(\"offline\"); }", "standsInFor": "AI change of the style / selected element", "consequence": "AiBar always shows AI_LINE (ctx.tsx:115 'AI drafting switches on when Firstwish's server is connected'); the applyOps merge path in AiBar.tsx:37-42 is dead code today"},
+    {"file": "lib/studio-api.ts:173-183", "evidence": "submitStyle writes a SubmittedStyle with status 'review' into localStorage; byline: samples.handle; no reviewer exists", "standsInFor": "submission to Firstwish review queue, reviewer decision (accepted/returned/notes), level assignment, going live", "consequence": "styles sit in 'review' forever; review/level/liveAt only appear in lib/studio-fixtures.ts samples; the byline is the sample handle not the real handle"},
+    {"file": "lib/studio-api.ts:76-95", "evidence": "Store v3 in localStorage 'fw-studio' with month rollover in read()", "standsInFor": "server tables for drafts, sent styles, creator state, prefs; monthly job", "consequence": "drafts exist per browser only (the 'gone' page text admits 'made on another device'); credits and reviews can be edited by the user in devtools"},
+    {"file": "lib/studio-api.ts:91", "evidence": "if (p.month && p.month !== s.month) { reviewsLeft = REVIEWS[plan]; if creator credits += CREATOR_CREDITS; renews = nextMonth() }", "standsInFor": "a monthly job crediting Creator plan allowances", "consequence": "credit grant only happens when the page is opened; skipped months give one grant total"},
+    {"file": "lib/studio-api.ts:117-133", "evidence": "setPlan/setSigned/buyCredits/buyExtraReview mutate local state with no payment check", "standsInFor": "Paystack charge and the ledger; recurring plan billing (Creator 7500 a month, Signed 5000 a month)", "consequence": "everything is free; Creator plan never lapses or renews; no cancel path, setPlan('open') is instant"},
+    {"file": "components/app/Pay.tsx:18", "evidence": "const pay = () => { setBusy(true); setTimeout(() => { onPaid(); }, 700); };  // header: 'Nothing is charged here yet'", "standsInFor": "payment provider confirmation", "consequence": "pressing Pay always succeeds after 700 ms (read by grep only; outside this screen's file list)"},
+    {"file": "lib/studio-api.ts:107-108, app/app/creator/studio/[id]/page.tsx:13", "evidence": "configure({samples: samplesOn(account)}) where samplesOn = account.wishes.some(w => w.id.startsWith('s-')) (lib/studio-fixtures.ts:10)", "standsInFor": "real data; a demo switch", "consequence": "listMyStyles/getEarnings/listTemplates return sample rows when sample wishes exist, so findStudioStyle can find fake styles"},
+    {"file": "lib/studio-api.ts:160-165", "evidence": "uploadAsset reads the file as a data URL (FileReader.readAsDataURL) and returns it as url with id uid()", "standsInFor": "object storage upload with a signed URL", "consequence": "files live inline in the style document; FILE_MAX (400KB/900KB) and BUDGET.bytes 2.5 MB exist to fit localStorage"},
+    {"file": "lib/studio.ts:480", "evidence": "export const uid = () => Math.random().toString(36).slice(2, 10);", "standsInFor": "server-issued UUIDv7 ids", "consequence": "style, added-thing and asset ids are 8-char client random strings, not UUIDs; conventions say UUIDv7"},
+    {"file": "lib/studio.ts:15-34", "evidence": "COST {draft 4, change 1}, OPEN_CREDITS 3, CREATOR_CREDITS 10, PACK {5, 3000}, EXTRA_REVIEW 2500, REVIEWS {open 1, creator 2}, PLANS prices 0/7500, SIGNED 5000, PREMIUM_PRICE {list 4000, now 2400}, SHARE 0.2, ROYALTY 0.25", "standsInFor": "configuration tables (prices, allowances, revenue shares)", "consequence": "prices are hardcoded naira numbers in the UI bundle; must come from configuration (conventions: prices are never hardcoded); the 40% off until 31 January note is a comment"},
+    {"file": "components/app/studio/Editor.tsx:80", "evidence": "window.setTimeout(async () => { await api.saveDraft({ style: st }) }, 500)", "standsInFor": "an autosave request per edit", "consequence": "once on a server each burst of edits sends the whole document (can reach MBs with art data URLs); needs debounce kept, size control, and an in-flight guard"},
+    {"file": "lib/studio-api.ts:212,217,220", "evidence": "listTemplates returns [] unless samples; getEarnings returns zeros; getPayouts returns []", "standsInFor": "other creators' templates, earnings and payouts", "consequence": "not used by the editor but share the API file; Studio home screens will show empty"},
+    {"file": "components/app/studio/Canvas.tsx / Editor.tsx onSeen", "evidence": "style.seen and style.holds are measured in the browser and saved inside the draft", "standsInFor": "server-side knowledge of the base look and the layout check", "consequence": "the 'orient' check and readable check trust client-written fields; a hand-made request can pass them"}
+  ],
+  "notes": [
+    "The checks in lib/studio.ts:618 (checks()) and lib/studio-checks.ts are the review gate; checks() is pure over the style and runs client-side. lib/studio-checks.ts runChecks mounts scenes in a browser, so cannot run on a server. Server validation can only cover the pure parts (chapters, contrast, budget, still, fallback, safe, plan needs).",
+    "StudioHost (components/engine/made/StudioHost.tsx) is how a wish plays a 'studio:<id>' style: it needs the style by id readable by whoever opens the wish link (a receiver with no account), drafts first then sent styles. A server must serve the style document of a live style to receivers; today it only works on the creator's own device.",
+    "Layout, motion and bank 'ops' are an open JSON vocabulary; the backend should store scenes and added as validated JSON blobs, not normalised tables."
+  ]
+}

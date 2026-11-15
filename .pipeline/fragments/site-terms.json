@@ -1,0 +1,62 @@
+{
+  "screenId": "site-terms",
+  "reads": [
+    {
+      "entity": "TicketTerms",
+      "fields": [
+        {
+          "name": "momentDays",
+          "type": "number 7 (in copy)",
+          "nullable": false
+        },
+        {
+          "name": "keepsake",
+          "type": "text 'two weeks'",
+          "nullable": false
+        },
+        {
+          "name": "signature",
+          "type": "text 'a month'",
+          "nullable": false
+        },
+        {
+          "name": "premiere",
+          "type": "text 'two months'",
+          "nullable": false
+        }
+      ],
+      "cardinality": "single",
+      "filtersOrSort": [],
+      "pagination": "none",
+      "note": "Static legal prose (app/terms/page.tsx:15, 'Paying', and :20, 'Firstwish Pro' billing/rollover rules). Matches lib/catalog.ts tickets[].lives and lib/account.ts TERM_DAYS (7,14,30,60). Nothing is fetched."
+    }
+  ],
+  "actions": [],
+  "authContext": {
+    "requiresAuth": false,
+    "rolesObserved": []
+  },
+  "special": {
+    "realtime": false,
+    "uploads": false,
+    "downloads": false
+  },
+  "uiStatesHandled": [
+    {
+      "state": "loaded",
+      "entersWhen": "always",
+      "reachable": "yes"
+    }
+  ],
+  "uiStatesDesigned": [
+    "empty"
+  ],
+  "stubsObserved": [
+    {
+      "file": "app/terms/page.tsx:15,20",
+      "evidence": "ticket terms 7 days / two weeks / a month / two months; Pro billed monthly or prepaid three months; rollover rules",
+      "standsInFor": "ticket term lengths and Pro plan billing rules",
+      "consequence": "duplicated in catalog.ts, account.ts TERM_DAYS and prose; can drift"
+    }
+  ]
+}

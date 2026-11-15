@@ -1,0 +1,176 @@
+{
+  "screenId": "sign-up",
+  "reads": [],
+  "actions": [
+    {
+      "name": "requestCode",
+      "kind": "custom",
+      "entity": "SignInCode",
+      "payload": [
+        {
+          "name": "contact",
+          "type": "string (phone as '<cc> <digits>' e.g. '+234 803 000 0000', or email trimmed); phone needs >= 7 digits, email /^\\S+@\\S+\\.\\S+$/"
+        },
+        {
+          "name": "via",
+          "type": "'phone'|'email'"
+        },
+        {
+          "name": "mode",
+          "type": "'up'|'in' (the flow; the UI behaves the same)"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "SignInCode",
+        "cardinality": "single",
+        "note": "UI expects nothing back; it just advances to the code step. Needs an error for bad contact or rate limit."
+      }
+    },
+    {
+      "name": "resendCode",
+      "kind": "custom",
+      "entity": "SignInCode",
+      "payload": [
+        {
+          "name": "contact",
+          "type": "string"
+        },
+        {
+          "name": "channel",
+          "type": "'sms'|'whatsapp'|'email' (WhatsApp button is only shown for phone)"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "SignInCode",
+        "cardinality": "single",
+        "note": "UI resets a 45 s countdown only"
+      }
+    },
+    {
+      "name": "verifyCode",
+      "kind": "custom",
+      "entity": "Session",
+      "payload": [
+        {
+          "name": "contact",
+          "type": "string"
+        },
+        {
+          "name": "code",
+          "type": "string (6 digits, each of 6 boxes a digit)"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "Session",
+        "cardinality": "single",
+        "note": "UI needs only success or failure plus whether an account exists (existing -> return path or /app; new -> /welcome). No token handling coded."
+      }
+    },
+    {
+      "name": "signInWithGoogle",
+      "kind": "custom",
+      "entity": "Session",
+      "payload": [],
+      "expectedResponse": {
+        "entity": "Session",
+        "cardinality": "single",
+        "note": "today calls done('Google account') with no OAuth"
+      }
+    }
+  ],
+  "authContext": {
+    "requiresAuth": false,
+    "rolesObserved": [],
+    "note": "A public page that creates a session. Side: person only. Return path ('fw-next', only paths beginning /app) and pending contact ('fw-pending') live in sessionStorage; both stay local."
+  },
+  "special": {
+    "realtime": false,
+    "uploads": false,
+    "downloads": false,
+    "timer": "client-side 45 s resend countdown",
+    "pasteFill": "a pasted code fills all six boxes"
+  },
+  "uiStatesHandled": [
+    {
+      "state": "contact-step",
+      "entersWhen": "step === 'contact' (initial)",
+      "reachable": "yes"
+    },
+    {
+      "state": "code-step",
+      "entersWhen": "step === 'code' after a valid contact is submitted",
+      "reachable": "yes"
+    },
+    {
+      "state": "submit-disabled",
+      "entersWhen": "contact step: !ok; code step: !full",
+      "reachable": "yes"
+    },
+    {
+      "state": "resend-countdown",
+      "entersWhen": "left > 0 (shows 0:NN); then 'Send it again' button when left === 0",
+      "reachable": "yes"
+    },
+    {
+      "state": "loading",
+      "entersWhen": "none coded: no request is made, no pending state while submitting",
+      "reachable": "no",
+      "note": "nothing is awaited"
+    },
+    {
+      "state": "error",
+      "entersWhen": "none coded: no wrong code, expired code, too many tries, rate limit or network failure message",
+      "reachable": "no",
+      "note": "the server's code errors (invalid, expired, locked) have no place on screen"
+    },
+    {
+      "state": "empty",
+      "entersWhen": "not applicable",
+      "reachable": "no"
+    }
+  ],
+  "uiStatesDesigned": [
+    "loading",
+    "empty",
+    "error",
+    "loaded"
+  ],
+  "stubsObserved": [
+    {
+      "file": "components/app/AuthFlow.tsx:53",
+      "evidence": "onSubmit: if (ok) setStep(\"code\")  // sends nothing",
+      "standsInFor": "sending a one-time code by SMS, WhatsApp or email (STUB-2)",
+      "consequence": "no code is sent; the 'Sent to <contact>' text is false"
+    },
+    {
+      "file": "components/app/AuthFlow.tsx:86",
+      "evidence": "onSubmit: if (full) done(contact)  // full = six boxes non-empty",
+      "standsInFor": "verifying the code (6 digits, 10 min, 5 tries)",
+      "consequence": "any six digits are accepted (STUB-2); the 5-tries and 10-minute rules cannot occur"
+    },
+    {
+      "file": "components/app/AuthFlow.tsx:77",
+      "evidence": "onClick={() => done(\"Google account\")} 'Continue with Google'",
+      "standsInFor": "Google sign-in (OAuth) (STUB-3)",
+      "consequence": "signs in with no provider, contact becomes the text 'Google account'"
+    },
+    {
+      "file": "components/app/AuthFlow.tsx:27-30,95-96",
+      "evidence": "done(who){ setPending(who); router.push(!up && readAccount() ? takeNext() : '/welcome') }; resend buttons only setLeft(45)",
+      "standsInFor": "session creation and resend",
+      "consequence": "no token or session is created; 'signed in' means a local 'fw-account' exists. Resend and 'Send on WhatsApp' send nothing, only reset the 45 s timer"
+    },
+    {
+      "file": "components/app/AuthFlow.tsx:25",
+      "evidence": "const [left, setLeft] = useState(45) ... setInterval",
+      "standsInFor": "resend cool-down",
+      "consequence": "a client-only 45 s timer; the server's rate limit is not known to the UI"
+    },
+    {
+      "file": "components/app/AuthFlow.tsx:9",
+      "evidence": "const CODES = ['+234','+233','+254','+27','+44','+1']",
+      "standsInFor": "supported country codes",
+      "consequence": "fixed list; phone is sent as '<cc> <digits typed>' with a space, not E.164"
+    }
+  ]
+}

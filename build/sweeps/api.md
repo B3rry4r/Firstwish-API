@@ -8,3 +8,4 @@
 - B12 (BB7): dates list pages in memory and its cursor is `days` (shifts across midnight Lagos); a POST naming another account's id answers 409 (tells the caller the id exists): page in the database with a stable cursor; answer 404.
 - B12 (import): 500 people with one bad row adds 499 and skips the bad one: say so in the response (a `skipped` list with row numbers and reasons) so the page can show it.
 - B04 (Verify P, low): after the offer ends the public line still carries the stored promoKobo while price equals list: drop promoKobo from the public line once the promotion is null.
+- B05 (Verify P, note): a start that timed out leaves a failed payment; a late signed success for it is granted once and flagged late_success_after_failed for staff (kept: the money was taken). An upper-case hex signature is accepted (needs the secret; harmless).

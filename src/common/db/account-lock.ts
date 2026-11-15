@@ -18,7 +18,7 @@ export function accountErased(): AppError {
 }
 
 /**
- * AA1: the one account lock. Call it FIRST inside the transaction of every write that belongs to an account (profile, handle,
+ * AA1: the one account lock. Call it FIRST inside the transaction of every write made on an account (profile, handle,
  * sides, follow, brand, wishes, files, dates). It locks the account row (FOR UPDATE) and checks erasedAt under that lock, so a
  * write either commits before an erase or sees the erase and is refused: nothing lands on an erased account. Erase takes the
  * same lock with { allowErased: true } (erasing twice changes nothing).
@@ -34,7 +34,7 @@ export async function lockAccount(tx: LockDb, accountId: string, opts: { allowEr
 }
 
 /**
- * The same lock for a write that belongs to a business: locks the owning account (the business's accountId) and refuses when it
+ * The same lock for a write made on a business: locks the owning account (the business's accountId) and refuses when it
  * is erased. Answers the business's owner account id.
  */
 export async function lockBusinessOwner(tx: LockDb, businessId: string): Promise<LockedAccount> {

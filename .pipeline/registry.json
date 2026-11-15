@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "frozenAt": "2026-11-15T19:55:55Z",
+  "frozenAt": "2026-11-15T20:58:33Z",
   "framework": "nestjs",
   "generatedBy": "tools/pipeline/reconcile.py",
   "resources": [
@@ -1932,6 +1932,54 @@
       ],
       "endpoints": [
         {
+          "id": "E-238",
+          "method": "DELETE",
+          "path": "/v1/business/approved-dates",
+          "auth": [
+            {
+              "kind": "role",
+              "role": "business"
+            }
+          ],
+          "body": [
+            {
+              "name": "kind",
+              "type": "'b'|'s' (b: birthday, s: start)",
+              "from": [
+                "DEC-168"
+              ]
+            },
+            {
+              "name": "personId",
+              "type": "string (one of the caller's own people)",
+              "from": [
+                "DEC-168"
+              ]
+            },
+            {
+              "name": "year",
+              "type": "integer (the year approved)",
+              "from": [
+                "DEC-168"
+              ]
+            }
+          ],
+          "response": {
+            "entity": null,
+            "cardinality": "none",
+            "note": "204; taking back a date that is not approved is also 204 (DEC-168)"
+          },
+          "sources": [
+            {
+              "src": "DEC-168",
+              "via": "ruling:DEC-168"
+            }
+          ],
+          "notes": [
+            "body by DEC-168"
+          ]
+        },
+        {
           "id": "E-17",
           "method": "GET",
           "path": "/v1/business/approved-dates",
@@ -1957,6 +2005,54 @@
             }
           ],
           "notes": []
+        },
+        {
+          "id": "E-239",
+          "method": "POST",
+          "path": "/v1/business/approved-dates",
+          "auth": [
+            {
+              "kind": "role",
+              "role": "business"
+            }
+          ],
+          "body": [
+            {
+              "name": "kind",
+              "type": "'b'|'s' (b: birthday, s: start)",
+              "from": [
+                "DEC-168"
+              ]
+            },
+            {
+              "name": "personId",
+              "type": "string (one of the caller's own people)",
+              "from": [
+                "DEC-168"
+              ]
+            },
+            {
+              "name": "year",
+              "type": "integer (the year approved)",
+              "from": [
+                "DEC-168"
+              ]
+            }
+          ],
+          "response": {
+            "entity": "ApprovedDate",
+            "cardinality": "single",
+            "note": "idempotent: the same body twice answers the same row (DEC-168)"
+          },
+          "sources": [
+            {
+              "src": "DEC-168",
+              "via": "ruling:DEC-168"
+            }
+          ],
+          "notes": [
+            "body by DEC-168"
+          ]
         }
       ]
     },
@@ -10763,6 +10859,32 @@
           ]
         },
         {
+          "id": "E-240",
+          "method": "GET",
+          "path": "/v1/payments",
+          "auth": [
+            {
+              "kind": "user",
+              "scope": "own records"
+            }
+          ],
+          "body": [],
+          "response": {
+            "entity": "Payment",
+            "cardinality": "list",
+            "note": "the payer's own, newest first (DEC-172)"
+          },
+          "sources": [
+            {
+              "src": "DEC-172",
+              "via": "ruling:DEC-172"
+            }
+          ],
+          "notes": [
+            "body by DEC-172"
+          ]
+        },
+        {
           "id": "E-87",
           "method": "POST",
           "path": "/v1/payments",
@@ -12196,8 +12318,9 @@
             }
           ],
           "response": {
-            "entity": "Person",
-            "cardinality": "count (returns number added)"
+            "entity": "PeopleImportResult",
+            "cardinality": "single",
+            "note": "{added, skipped: [{row, reason}]} (DEC-169)"
           },
           "sources": [
             {
@@ -12206,6 +12329,7 @@
             }
           ],
           "notes": [
+            "body by DEC-169",
             "route by conventions naming"
           ]
         }
@@ -13811,6 +13935,18 @@
           "supersedes": []
         },
         {
+          "name": "endsAt",
+          "type": "time",
+          "classes": [
+            "time-iso"
+          ],
+          "nullable": true,
+          "provenance": [
+            "DEC-174"
+          ],
+          "supersedes": []
+        },
+        {
           "name": "keepOffer",
           "type": "object",
           "classes": [
@@ -13843,6 +13979,30 @@
           "nullable": false,
           "provenance": [
             "wish-link"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "openable",
+          "type": "boolean",
+          "classes": [
+            "boolean"
+          ],
+          "nullable": false,
+          "provenance": [
+            "DEC-174"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "openedAt",
+          "type": "time",
+          "classes": [
+            "time-iso"
+          ],
+          "nullable": true,
+          "provenance": [
+            "DEC-174"
           ],
           "supersedes": []
         },
@@ -25898,6 +26058,18 @@
           "supersedes": []
         },
         {
+          "name": "openable",
+          "type": "boolean",
+          "classes": [
+            "boolean"
+          ],
+          "nullable": false,
+          "provenance": [
+            "DEC-174"
+          ],
+          "supersedes": []
+        },
+        {
           "name": "openedAt",
           "type": "time",
           "classes": [
@@ -26448,6 +26620,18 @@
           "nullable": false,
           "provenance": [
             "wish-lifecycle"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "version",
+          "type": "number",
+          "classes": [
+            "integer"
+          ],
+          "nullable": false,
+          "provenance": [
+            "DEC-174"
           ],
           "supersedes": []
         },
@@ -27302,8 +27486,9 @@
             },
             {
               "name": "keep",
-              "type": "boolean",
+              "type": "'month'|'half'|'year'|null (optional; null clears it, DEC-84)",
               "from": [
+                "DEC-170",
                 "maker-chapters"
               ]
             },
@@ -27496,6 +27681,13 @@
               ]
             },
             {
+              "name": "timeZone",
+              "type": "string (optional; an IANA zone name such as Africa/Lagos)",
+              "from": [
+                "DEC-170"
+              ]
+            },
+            {
               "name": "timeline",
               "type": "content.timeline=[{when,what}]",
               "from": [
@@ -27507,6 +27699,36 @@
               "type": "ChapterType",
               "from": [
                 "maker-chapters"
+              ]
+            },
+            {
+              "name": "version",
+              "type": "integer (the version the page last read; the write is refused 409 when it is older)",
+              "from": [
+                "DEC-170",
+                "app-style-detail",
+                "app-styles",
+                "maker-ask",
+                "maker-ask-voices-gather",
+                "maker-call",
+                "maker-chapters",
+                "maker-cover",
+                "maker-ending",
+                "maker-ending-scene",
+                "maker-kind",
+                "maker-more",
+                "maker-name",
+                "maker-occasion",
+                "maker-opening",
+                "maker-opening-scene",
+                "maker-partner",
+                "maker-photos",
+                "maker-studio",
+                "maker-style",
+                "maker-ticket",
+                "maker-watch",
+                "maker-wedding",
+                "maker-when"
               ]
             },
             {
@@ -27558,8 +27780,9 @@
             }
           ],
           "response": {
-            "entity": "none (navigation to /app/new)",
-            "cardinality": "single"
+            "entity": "WishSaved",
+            "cardinality": "single",
+            "note": "200 {version, updatedAt} (DEC-170)"
           },
           "sources": [
             {
@@ -27816,6 +28039,7 @@
             }
           ],
           "notes": [
+            "body by DEC-170",
             "embedded by S-10",
             "route by DEC-91"
           ]
@@ -28134,6 +28358,13 @@
               ]
             },
             {
+              "name": "openNow",
+              "type": "boolean (optional; true opens the wish as soon as it is paid)",
+              "from": [
+                "DEC-173"
+              ]
+            },
+            {
               "name": "opensAt",
               "type": "ISO string, or now",
               "from": [
@@ -28159,6 +28390,23 @@
               "type": "TicketSlug",
               "from": [
                 "maker-ticket"
+              ]
+            },
+            {
+              "name": "timeZone",
+              "type": "string (optional; an IANA zone name)",
+              "from": [
+                "DEC-171"
+              ]
+            },
+            {
+              "name": "version",
+              "type": "integer (the version the page last read)",
+              "from": [
+                "DEC-171",
+                "maker-ticket",
+                "maker-watch",
+                "wish-lifecycle"
               ]
             },
             {
@@ -28192,6 +28440,8 @@
           ],
           "notes": [
             "body by DEC-134",
+            "body by DEC-171",
+            "body by DEC-173",
             "route by DEC-92"
           ]
         },

@@ -227,6 +227,12 @@
       "introducedBy": "int-1",
       "purpose": "how many proxies in front of the API are trusted for the client address (V4); 0 reads the socket address",
       "secret": false
+    },
+    {
+      "name": "PORT_TIMEOUTS_MS",
+      "introducedBy": "int-3",
+      "purpose": "time limit of one call to a provider port, as port=milliseconds pairs (FF1); payments 10000 unless changed",
+      "secret": false
     }
   ]
 }

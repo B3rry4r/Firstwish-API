@@ -100,11 +100,15 @@ model AiRequest {
   @@map("ai_request")
 }
 
-/// config: the dates a business may make wishes for, served by GET /v1/business/approved-dates; no route writes it, staff keep the list
+/// table: the dates a business has approved for its people, read by GET /v1/business/approved-dates and written by POST and DELETE /v1/business/approved-dates (BB1, DEC-168); each row is one business's
 model ApprovedDate {
-  id  String  @id @db.Uuid
-  key String?
+  id         String   @id @db.Uuid
+  key        String?
+  businessId String   @db.Uuid
+  business   Business @relation("ApprovedDate_businessId", fields: [businessId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
+  @@unique([businessId, key])
+  @@index([businessId, id])
   @@map("approved_date")
 }
 
@@ -217,6 +221,7 @@ model Business {
   personByBusiness         Person[]         @relation("Person_businessId")
   revealLinkByBusiness     RevealLink[]     @relation("RevealLink_businessId")
   shootByBusiness          Shoot[]          @relation("Shoot_businessId")
+  approvedDateByBusiness   ApprovedDate[]   @relation("ApprovedDate_businessId")
 
   @@index([accountId, id])
   @@map("business")
@@ -476,7 +481,7 @@ model Invoice {
   @@map("invoice")
 }
 
-/// table: written by E-62 and server:jobs (timed work definitions and state)
+/// table: written by E-62 and server:jobs (timed work definitions and state); one row per job type and subject key (CC4), a second schedule moves the same row
 model Job {
   id          String    @id @db.Uuid
   type        JobType
@@ -487,6 +492,7 @@ model Job {
   createdAt   DateTime  @default(now()) @db.Timestamptz(3)
   jobRunByJob JobRun[]  @relation("JobRun_jobId")
 
+  @@unique([type, subjectId])
   @@index([status, id])
   @@index([type, id])
   @@map("job")
@@ -551,6 +557,7 @@ model LifecycleConfig {
   restoreWindow         String?
   restoreWindowDays     Int?
   termRestWindow        String?
+  wishContentMaxBytes   Int     @default(262144)
 
   @@map("lifecycle_config")
 }
@@ -735,6 +742,7 @@ model Payment {
   updatedAt               DateTime         @updatedAt @db.Timestamptz(3)
   options                 Json?
   fulfilledAt             DateTime?        @db.Timestamptz(3)
+  flags                   String[]         @default([])
   account                 Account?         @relation("Payment_accountId", fields: [accountId], references: [id])
   business                Business?        @relation("Payment_businessId", fields: [businessId], references: [id])
   ledgerEntryByPayment    LedgerEntry[]    @relation("LedgerEntry_paymentId")
@@ -1452,6 +1460,7 @@ model WebhookEvent {
   processedAt    DateTime? @db.Timestamptz(3)
   createdAt      DateTime  @default(now()) @db.Timestamptz(3)
   event          Json?
+  outcome        String?
 
   @@unique([provider, eventId])
   @@index([createdAt, id])
@@ -1507,8 +1516,8 @@ model Wish {
   studio               String?
   timeline             Json?
   type                 Json?
-  voices               Json?
   version              Int              @default(0)
+  voices               Json?
   passcodeHash         String?
   account              Account          @relation("Wish_accountId", fields: [accountId], references: [id])
   business             Business?        @relation("Wish_businessId", fields: [businessId], references: [id])
@@ -1597,6 +1606,16 @@ model WishFile {
   @@index([wishId, id])
   @@index([fileId, id])
   @@map("wish_file")
+}
+
+/// table: EE1: the time limit of one run of each kind of job, in seconds (60 unless a row says otherwise); a config table, no contract shape
+model JobKindConfig {
+  id               String @id @db.Uuid
+  kind             String
+  timeLimitSeconds Int
+
+  @@unique([kind])
+  @@map("job_kind_config")
 }
 
 enum AccountSides {

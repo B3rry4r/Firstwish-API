@@ -2730,6 +2730,86 @@
       "confidence": "high",
       "source": "build/rulings-phase3.md (Wave 2 halts) X1..X28",
       "decidedAt": "2026-11-15T23:05:00Z"
+    },
+    {
+      "id": "DEC-168",
+      "topic": "approved dates written by a business",
+      "closes": [],
+      "decision": "BB1: ApprovedDate belongs to a business. POST /v1/business/approved-dates {personId, kind: b|s, year} approves one date (idempotent: the same body twice answers the same ApprovedDate) and DELETE /v1/business/approved-dates with the same body takes it back; both for a business (owner or login), the person must be one of the caller's own people (another business's person is 404). The row gains businessId (a foreign key to the business); GET E-17 is unchanged. Until now it was read only.",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (Wave 3 list BB1)",
+      "decidedAt": "2026-11-16T09:00:00Z"
+    },
+    {
+      "id": "DEC-169",
+      "topic": "people import answer",
+      "closes": [],
+      "decision": "BB8: E-121 POST /v1/business/people/import answers {added: number, skipped: [{row: number, reason: string}]} (PeopleImportResult); the contract's bare number is replaced. A skipped row is one that has no name or no readable date.",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (Wave 3 list BB8)",
+      "decidedAt": "2026-11-16T09:00:00Z"
+    },
+    {
+      "id": "DEC-170",
+      "topic": "save a draft: version, zone, keep, answer",
+      "closes": [],
+      "decision": "CC1: E-225 PATCH /v1/wishes/:id body gains `version` (integer, required: the version the page last read) and `timeZone` (optional IANA name); `keep` is 'month'|'half'|'year' or null (DEC-84), no longer a boolean. It answers 200 {version, updatedAt} (WishSaved), not 204 with a header, so the page always holds the version to send next.",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (Wave 3 list CC1)",
+      "decidedAt": "2026-11-16T09:00:00Z"
+    },
+    {
+      "id": "DEC-171",
+      "topic": "seal: version and zone",
+      "closes": [],
+      "decision": "CC2: E-231 POST /v1/wishes/:id/seal body gains `version` (integer, required) and `timeZone` (optional IANA name).",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (Wave 3 list CC2)",
+      "decidedAt": "2026-11-16T09:00:00Z"
+    },
+    {
+      "id": "DEC-172",
+      "topic": "the payer's own payments",
+      "closes": [],
+      "decision": "DD2: GET /v1/payments lists the signed-in payer's own payments, newest first, with ?cursor=&limit= (Payment list). Another account's payments are never in it.",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (From Verify B05 / Wave 3 list DD2)",
+      "decidedAt": "2026-11-16T09:00:00Z"
+    },
+    {
+      "id": "DEC-173",
+      "topic": "seal opens now or at a time",
+      "closes": [],
+      "decision": "EE5: E-231 body gains `openNow` (boolean, optional). Seal needs either opensAt at least one minute ahead (and at most 5 years ahead, PROVISIONAL) or openNow: true; a past or missing time is 422.",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (From Verify B06 EE5)",
+      "decidedAt": "2026-11-16T09:00:00Z"
+    },
+    {
+      "id": "DEC-174",
+      "topic": "wish reads carry the version and the opening",
+      "closes": [],
+      "decision": "EE7: Wish gains `version` (integer: the number to send back on a write) and `openable` (boolean: sealed, the open time has passed, and nobody has opened it yet, or opened and still within its term). PublicWishView gains `openedAt`, `endsAt` and `openable` (all read from the wish; openedAt and endsAt are null until the first opening). openedAt, endsAt and weddingDate were already on Wish.",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (From Verify B06 EE7, EE8)",
+      "decidedAt": "2026-11-16T09:00:00Z"
+    },
+    {
+      "id": "DEC-175",
+      "topic": "registry re-freeze (fifth reopen)",
+      "closes": [],
+      "decision": "The registry is re-frozen after BB1, BB8, CC1, CC2, DD2, EE5 and the wish read shapes EE7 needs (DEC-168..174) by tools/pipeline/freeze.py; reconcile.py was run twice with --reopen (identical outputs, EXIT 0, 0 open conflicts, both admin gate lines 0). Frozen at 106 resources, 240 endpoints (new: E-238 DELETE /v1/business/approved-dates, E-239 POST /v1/business/approved-dates, E-240 GET /v1/payments). Endpoint ids already issued are unchanged. The other Wave 3 and verify rulings change code, storage or the seed only.",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (Wave 3 list; From Verify B06; From Verify B05)",
+      "decidedAt": "2026-11-16T09:05:00Z"
     }
   ]
 }

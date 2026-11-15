@@ -23,7 +23,7 @@ const TEST_HOST = "http://provider.test";
 
 describe("storage: one S3 port, r2 and spaces differ only by config", () => {
   const live = { ...standinEnv(), PROVIDERS: "live" };
-  const r2 = loadEnv({ ...live, PAYSTACK_SECRET_KEY: "x", PAYSTACK_PUBLIC_KEY: "x", PAYSTACK_CALLBACK_URL: "http://localhost/cb", GOOGLE_CLIENT_ID: "x", GOOGLE_CLIENT_SECRET: "x", GOOGLE_REDIRECT_URI: "http://localhost/g", SCREENING_PROVIDER: "basic", ANTHROPIC_API_KEY: "x", ANTHROPIC_MODEL: "m", RESEND_API_KEY: "x", STORAGE_DRIVER: "r2", R2_ACCOUNT_ID: "acct", R2_ACCESS_KEY_ID: "k", R2_SECRET_ACCESS_KEY: "s", R2_BUCKET: "wishes" });
+  const r2 = loadEnv({ ...live, PAYSTACK_SECRET_KEY: "sk_test_0123456789abcdefghij", PAYSTACK_PUBLIC_KEY: "x", PAYSTACK_CALLBACK_URL: "http://localhost/cb", GOOGLE_CLIENT_ID: "x", GOOGLE_CLIENT_SECRET: "x", GOOGLE_REDIRECT_URI: "http://localhost/g", SCREENING_PROVIDER: "basic", ANTHROPIC_API_KEY: "x", ANTHROPIC_MODEL: "m", RESEND_API_KEY: "x", STORAGE_DRIVER: "r2", R2_ACCOUNT_ID: "acct", R2_ACCESS_KEY_ID: "k", R2_SECRET_ACCESS_KEY: "s", R2_BUCKET: "wishes" });
   const spaces = { ...r2, STORAGE_DRIVER: "spaces" as const, SPACES_ENDPOINT: "http://spaces.test", SPACES_REGION: "fra1", SPACES_ACCESS_KEY_ID: "k", SPACES_SECRET_ACCESS_KEY: "s", SPACES_BUCKET: "wishes" };
 
   it("builds each adapter's endpoint from its own variables", () => {

@@ -3,8 +3,8 @@ import type { SignInCode } from "../../contracts";
 import { PrismaService } from "../../common/db/prisma.service";
 import { AppError } from "../../common/errors/app-error";
 import { SignInCodes } from "../../common/auth/sign-in-codes";
-import { EmailPort } from "../../common/ports/email.port";
 import { normaliseEmail } from "../../common/normalise/email";
+import { NoticesService } from "../notices/notices.service";
 import { AccountsService } from "../accounts/accounts.service";
 import { ClientMeta, SessionsService, StartedSession } from "../sessions/sessions.service";
 import { RESEND_AFTER_SECONDS, USER_CODE_LIMITS } from "./limits";
@@ -24,26 +24,23 @@ export class AuthCodesService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly codes: SignInCodes,
-    private readonly email: EmailPort,
+    private readonly notices: NoticesService,
     private readonly accounts: AccountsService,
     private readonly sessions: SessionsService,
   ) {}
 
   /**
    * E-19. One code to the email, stored only as a peppered hash; a new code ends the email's earlier ones. Limits (resend wait,
-   * per canonical email per hour, per IP per hour) are database counts under a lock (U2, V5). If the email cannot be sent
-   * nothing is stored or counted.
+   * per canonical email per hour, per IP per hour) are database counts under a lock (U2, V5). The email goes through notices.send in
+   * the same transaction and notices.deliverNow after it; a failed send does not undo the code (II6).
    */
   async request(destination: string, mode: "up" | "in" | undefined, ip: string | null): Promise<CodeSent> {
-    await this.prisma.$transaction(async (tx) => {
+    const sent = await this.prisma.$transaction(async (tx) => {
       const { id, code } = await this.codes.issue(tx, { destination, purpose: "sign_in", address: ip, mode: mode ?? null, limits: USER_CODE_LIMITS });
-      await this.email.send({
-        to: destination,
-        subject: "Your Firstwish code",
-        text: `Your Firstwish code is ${code}. It works for 10 minutes. If you did not ask for it, you can ignore this email.`,
-        idempotencyKey: `auth-code:${id}`,
-      });
+      return this.notices.send(tx, { template: "code", toEmail: destination, data: { code }, key: `auth-code:${id}` });
     });
+    // II6: the one path for every email. The code is already stored; a failed send is the delivery's to retry and never undoes it.
+    await this.notices.deliverNow(sent.deliveryId);
     return { sent: true, resendAfter: RESEND_AFTER_SECONDS, destination: maskEmail(destination) };
   }
 

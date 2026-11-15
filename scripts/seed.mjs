@@ -116,6 +116,15 @@ const LIFECYCLE = {
   TERM_DAYS: { moment: 7, keepsake: 14, signature: 30, premiere: 60 },
   restingHoldMonths: 12,
   restoreWindowDays: 30,
+  /* CC3 (PROVISIONAL, listed to the owner): a wish's content is at most this many bytes. The web app's catalog gives no chapters
+     limit per ticket (only lists of chapter names), so none is seeded. */
+  wishContentMaxBytes: 262144,
+};
+
+/* EE1: the time limit of one run of each kind of job, in seconds. A kind with no row runs under 60. PROVISIONAL. */
+const JOB_TIME_LIMITS = {
+  "open-wish": 60, "rest-wish": 60, "erase-wish": 60, "erase-now": 60, "restore-window-end": 60, "send-notice": 60,
+  "abandon-payment": 60, "upload-cleanup": 120, "make-image-sizes": 120,
 };
 
 /* Q11: the config tables no route writes, from the web app's constants (prisma/seed-data, named in schema-map seedFrom). */
@@ -177,6 +186,10 @@ export async function seed(db) {
   await db.price.deleteMany({ where: { sku: { in: [...NOT_SOLD] }, version } });
   await db.promotion.upsert({ where: { id: seedId("promotion:launch-40") }, create: { id: seedId("promotion:launch-40"), ...promoRow }, update: promoRow });
   await db.entitlements.upsert({ where: { id: seedId("entitlements:1") }, create: { id: seedId("entitlements:1"), ...ENTITLEMENTS }, update: ENTITLEMENTS });
+  for (const [kind, timeLimitSeconds] of Object.entries(JOB_TIME_LIMITS)) {
+    const id = seedId(`job-kind:${kind}`);
+    await db.jobKindConfig.upsert({ where: { kind }, create: { id, kind, timeLimitSeconds }, update: { timeLimitSeconds } });
+  }
   await db.lifecycleConfig.upsert({ where: { id: seedId("lifecycle:1") }, create: { id: seedId("lifecycle:1"), ...LIFECYCLE }, update: LIFECYCLE });
   for (const [role, sections] of Object.entries(ROLE_SECTIONS)) {
     const id = seedId(`role:${role}`);
@@ -197,7 +210,17 @@ export async function seed(db) {
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   const db = new PrismaClient();
-  (process.argv[2] === "styles" ? seedStyles(db) : seed(db))
+  // One seeder at a time: specs seed the same database from several processes, and an upsert is a read then a write, so two at
+  // once race on the same new row. The transaction-level advisory lock makes the second wait for the first to commit.
+  const run = () =>
+    db.$transaction(
+      async (tx) => {
+        await tx.$executeRaw`SELECT pg_advisory_xact_lock(748201)`;
+        return process.argv[2] === "styles" ? seedStyles(tx) : seed(tx);
+      },
+      { timeout: 120_000, maxWait: 120_000 },
+    );
+  run()
     .then(() => console.log("seed: reference rows in place"))
     .catch((e) => {
       console.error(e);

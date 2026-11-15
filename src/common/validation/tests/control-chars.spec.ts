@@ -1,7 +1,7 @@
 import { Body, Controller, Get, Post, Query } from "@nestjs/common";
 import { IsOptional, IsString } from "class-validator";
 import { Public } from "../../auth/decorators";
-import { controlCharPath } from "../control-chars.pipe";
+import { controlCharPath, illFormedTextPath } from "../control-chars.pipe";
 import { createTestApp, TestApp } from "../../../../test/kit/app";
 
 /* AA3: control characters (tab and newline aside) are refused with 422 by one global check, never a 500. */
@@ -44,6 +44,18 @@ describe("controlCharPath", () => {
   });
 });
 
+describe("illFormedTextPath (EE2)", () => {
+  it("finds a lone surrogate, either half, in a value or a key, nested", () => {
+    expect(illFormedTextPath({ a: "x\uD800y" }, "")).toBe("a");
+    expect(illFormedTextPath({ a: { b: ["ok", "\uDC00"] } }, "")).toBe("a.b.1");
+    expect(illFormedTextPath({ ["k\uD83D"]: "ok" }, "t")).toBe("t.k\uD83D");
+    expect(illFormedTextPath("tail\uD83D", "t")).toBe("t");
+  });
+  it("lets whole pairs (an emoji) and ordinary text through", () => {
+    expect(illFormedTextPath({ a: "\uD83D\uDE00 \u{1F600} Ünïcode ✓" }, "")).toBeNull();
+  });
+});
+
 describe("the global control-character check", () => {
   let t: TestApp;
   beforeAll(async () => {
@@ -64,6 +76,18 @@ describe("the global control-character check", () => {
 
   it("takes tabs and newlines", async () => {
     const r = await t.http().post("/v1/control-chars-test").send({ text: "a\tb\nc" });
+    expect(r.status).toBe(201);
+  });
+
+  it.each(['{"text":"a\\ud800b"}', '{"text":"ok","other":"\\udc00"}', '{"text":"x\\ud83d"}'])("refuses a lone surrogate in a body (%s) with 422, never a 500", async (json) => {
+    const r = await t.http().post("/v1/control-chars-test").set("content-type", "application/json").send(json);
+    expect(r.status).toBe(422);
+    expect(r.body.error.code).toBe("validation_failed");
+    expect(JSON.stringify(r.body)).toMatch(/text|other/);
+  });
+
+  it("takes a whole pair (an emoji) in a body", async () => {
+    const r = await t.http().post("/v1/control-chars-test").send({ text: "\u{1F600} hi" });
     expect(r.status).toBe(201);
   });
 });

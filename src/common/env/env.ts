@@ -1,4 +1,5 @@
 import { ENV_SCHEMA, Kind, VarSpec } from "./env.schema";
+import { parsePortTimeouts } from "../ports/time-limit";
 
 /** The validated environment. Values are strings unless noted; absent optional values are undefined. */
 export interface Env {
@@ -41,6 +42,8 @@ export interface Env {
   MAIL_FROM?: string;
   /** V4: proxies trusted for the client address; 0 reads the socket address. */
   TRUST_PROXY_HOPS: number;
+  /** FF1: port=milliseconds pairs that change a provider port's time limit (see ports/time-limit.ts). */
+  PORT_TIMEOUTS_MS?: string;
 }
 
 /** Raised when the environment is incomplete or wrong. The message names every bad variable. */
@@ -55,6 +58,7 @@ export class EnvError extends Error {
 }
 
 const MIN_SECRET_LENGTH = 32;
+const MIN_PAYSTACK_KEY_LENGTH = 20;
 
 function checkKind(kind: Kind, value: string): string | null {
   if (typeof kind === "object") return kind.oneOf.includes(value) ? null : `must be one of ${kind.oneOf.join(", ")}`;
@@ -127,6 +131,13 @@ export function loadEnv(raw: Record<string, string | undefined> = process.env): 
     else out[spec.name] = value;
   }
 
+  // FF6: a live Paystack key is long; one shorter than 20 characters is a typo or a test key, and boot refuses it.
+  const paystack = out.PAYSTACK_SECRET_KEY;
+  if (providers === "live" && typeof paystack === "string" && paystack.length < MIN_PAYSTACK_KEY_LENGTH) {
+    problems.push({ name: "PAYSTACK_SECRET_KEY", problem: `must be at least ${MIN_PAYSTACK_KEY_LENGTH} characters in live mode` });
+  }
+  const timeouts = parsePortTimeouts(typeof out.PORT_TIMEOUTS_MS === "string" ? out.PORT_TIMEOUTS_MS : undefined);
+  if (timeouts.problem) problems.push({ name: "PORT_TIMEOUTS_MS", problem: timeouts.problem });
   if (out.NODE_ENV === "production" && providers === "standin") {
     problems.push({ name: "PROVIDERS", problem: "standin is refused when NODE_ENV=production" });
   }

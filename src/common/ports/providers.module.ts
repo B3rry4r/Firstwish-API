@@ -8,6 +8,7 @@ import { GoogleIdentityPort } from "./google.port";
 import { CodeGenerator, IdGenerator, StandinCodeGenerator, StandinIdGenerator, SystemCodeGenerator, SystemIdGenerator } from "./ids.port";
 import { PaymentsPort } from "./payments.port";
 import { ImageSizesPort, MissingImageSizes } from "./image-sizes.port";
+import { LimitedPort, portTimeouts, withTimeLimit } from "./time-limit";
 import { UploadScreeningPort } from "./screening.port";
 import { StoragePort } from "./storage.port";
 import { AnthropicWriting } from "./adapters/anthropic.adapter";
@@ -28,6 +29,8 @@ import {
 
 const standin = (env: Env) => env.PROVIDERS === "standin";
 const need = (v: string | undefined): string => v as string; // presence is checked by loadEnv for PROVIDERS=live
+/** FF1: every port that calls a provider answers within its limit (PORT_TIMEOUTS_MS; the defaults are in time-limit.ts). */
+const limited = <T extends object>(env: Env, name: LimitedPort, port: T): T => withTimeLimit(port, name, portTimeouts(env.PORT_TIMEOUTS_MS)[name]);
 
 /** Every port, picked by PROVIDERS (and STORAGE_DRIVER for storage). Inject the abstract class. */
 const providers: Provider[] = [
@@ -42,32 +45,32 @@ const providers: Provider[] = [
     provide: PaymentsPort,
     inject: [ENV, Clock],
     useFactory: (env: Env, clock: Clock) =>
-      standin(env) ? new StandinPayments(clock, env.PAYSTACK_SECRET_KEY) : new PaystackPayments(need(env.PAYSTACK_SECRET_KEY), env.PAYSTACK_CALLBACK_URL),
+      limited(env, "payments", standin(env) ? new StandinPayments(clock, env.PAYSTACK_SECRET_KEY) : new PaystackPayments(need(env.PAYSTACK_SECRET_KEY), env.PAYSTACK_CALLBACK_URL)),
   },
   {
     provide: EmailPort,
     inject: [ENV],
-    useFactory: (env: Env) => (standin(env) ? new StandinEmail() : new ResendEmail(need(env.RESEND_API_KEY), need(env.MAIL_FROM))),
+    useFactory: (env: Env) => limited(env, "email", standin(env) ? new StandinEmail() : new ResendEmail(need(env.RESEND_API_KEY), need(env.MAIL_FROM))),
   },
   {
     provide: StoragePort,
     inject: [ENV, Clock],
-    useFactory: (env: Env, clock: Clock) => (standin(env) ? new StandinStorage(clock) : new S3Storage(s3ConfigFor(env), clock)),
+    useFactory: (env: Env, clock: Clock) => limited(env, "storage", standin(env) ? new StandinStorage(clock) : new S3Storage(s3ConfigFor(env), clock)),
   },
   {
     provide: AiWritingPort,
     inject: [ENV],
-    useFactory: (env: Env) => (standin(env) ? new StandinAiWriting() : new AnthropicWriting(need(env.ANTHROPIC_API_KEY), need(env.ANTHROPIC_MODEL))),
+    useFactory: (env: Env) => limited(env, "ai", standin(env) ? new StandinAiWriting() : new AnthropicWriting(need(env.ANTHROPIC_API_KEY), need(env.ANTHROPIC_MODEL))),
   },
   {
     provide: GoogleIdentityPort,
     inject: [ENV, Clock],
     useFactory: (env: Env, clock: Clock) =>
-      standin(env) ? new StandinGoogle() : new GoogleOidc(need(env.GOOGLE_CLIENT_ID), need(env.GOOGLE_CLIENT_SECRET), clock),
+      limited(env, "google", standin(env) ? new StandinGoogle() : new GoogleOidc(need(env.GOOGLE_CLIENT_ID), need(env.GOOGLE_CLIENT_SECRET), clock)),
   },
-  { provide: UploadScreeningPort, inject: [ENV], useFactory: (env: Env) => (standin(env) ? new StandinScreening() : new BasicScreening()) },
+  { provide: UploadScreeningPort, inject: [ENV], useFactory: (env: Env) => limited(env, "screening", standin(env) ? new StandinScreening() : new BasicScreening()) },
   // X22: the image-sizes port; its real adapter comes with the jobs frame (B06)
-  { provide: ImageSizesPort, inject: [ENV], useFactory: (env: Env) => (standin(env) ? new StandinImageSizes() : new MissingImageSizes()) },
+  { provide: ImageSizesPort, inject: [ENV], useFactory: (env: Env) => limited(env, "imageSizes", standin(env) ? new StandinImageSizes() : new MissingImageSizes()) },
 ];
 
 @Global()

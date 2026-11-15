@@ -1475,6 +1475,33 @@
         "staff:moderator"
       ],
       "decision": "DEC-164"
+    },
+    {
+      "resource": "ApprovedDate",
+      "method": "POST",
+      "path": "/v1/business/approved-dates",
+      "auth": [
+        "role:business"
+      ],
+      "decision": "DEC-168"
+    },
+    {
+      "resource": "ApprovedDate",
+      "method": "DELETE",
+      "path": "/v1/business/approved-dates",
+      "auth": [
+        "role:business"
+      ],
+      "decision": "DEC-168"
+    },
+    {
+      "resource": "Payment",
+      "method": "GET",
+      "path": "/v1/payments",
+      "auth": [
+        "user:owner"
+      ],
+      "decision": "DEC-172"
     }
   ],
   "fulfilment": {
@@ -1536,18 +1563,36 @@
         "note": "{payment, item}: payment null when the Pass covers the keep; item is the wish, status live, endsAt = max(endsAt, now)+days for live; now+days for resting (DEC-139)"
       }
     },
-    "POST /v1/wishes/:id/seal": {
-      "decision": "DEC-134",
-      "drop": [
-        "amount"
-      ],
-      "response": {
-        "entity": "Wish",
-        "cardinality": "single",
-        "paymentStart": "required",
-        "note": "{payment, item}: item is the wish, sealed once the verified payment fulfils it (DEC-139)"
+    "POST /v1/wishes/:id/seal": [
+      {
+        "decision": "DEC-134",
+        "drop": [
+          "amount"
+        ],
+        "response": {
+          "entity": "Wish",
+          "cardinality": "single",
+          "paymentStart": "required",
+          "note": "{payment, item}: item is the wish, sealed once the verified payment fulfils it (DEC-139)"
+        }
+      },
+      {
+        "decision": "DEC-171",
+        "set": {
+          "version": "integer (the version the page last read)",
+          "timeZone": "string (optional; an IANA zone name)"
+        },
+        "require": [
+          "version"
+        ]
+      },
+      {
+        "decision": "DEC-173",
+        "set": {
+          "openNow": "boolean (optional; true opens the wish as soon as it is paid)"
+        }
       }
-    },
+    ],
     "POST /v1/auth/codes": {
       "decision": "DEC-140",
       "drop": [
@@ -1745,6 +1790,64 @@
         "cardinality": "all",
         "note": "every style in one answer, no paging; the ETag covers the whole answer (DEC-166)"
       }
+    },
+    "POST /v1/business/approved-dates": {
+      "decision": "DEC-168",
+      "set": {
+        "personId": "string (one of the caller's own people)",
+        "kind": "'b'|'s' (b: birthday, s: start)",
+        "year": "integer (the year approved)"
+      },
+      "response": {
+        "entity": "ApprovedDate",
+        "cardinality": "single",
+        "note": "idempotent: the same body twice answers the same row (DEC-168)"
+      }
+    },
+    "DELETE /v1/business/approved-dates": {
+      "decision": "DEC-168",
+      "set": {
+        "personId": "string (one of the caller's own people)",
+        "kind": "'b'|'s' (b: birthday, s: start)",
+        "year": "integer (the year approved)"
+      },
+      "response": {
+        "entity": null,
+        "cardinality": "none",
+        "note": "204; taking back a date that is not approved is also 204 (DEC-168)"
+      }
+    },
+    "POST /v1/business/people/import": {
+      "decision": "DEC-169",
+      "response": {
+        "entity": "PeopleImportResult",
+        "cardinality": "single",
+        "note": "{added, skipped: [{row, reason}]} (DEC-169)"
+      }
+    },
+    "PATCH /v1/wishes/:id": {
+      "decision": "DEC-170",
+      "set": {
+        "version": "integer (the version the page last read; the write is refused 409 when it is older)",
+        "timeZone": "string (optional; an IANA zone name such as Africa/Lagos)",
+        "keep": "'month'|'half'|'year'|null (optional; null clears it, DEC-84)"
+      },
+      "require": [
+        "version"
+      ],
+      "response": {
+        "entity": "WishSaved",
+        "cardinality": "single",
+        "note": "200 {version, updatedAt} (DEC-170)"
+      }
+    },
+    "GET /v1/payments": {
+      "decision": "DEC-172",
+      "response": {
+        "entity": "Payment",
+        "cardinality": "list",
+        "note": "the payer's own, newest first (DEC-172)"
+      }
     }
   },
   "extraFields": [
@@ -1866,6 +1969,41 @@
       "type": "time",
       "nullable": false,
       "decision": "DEC-163"
+    },
+    {
+      "resource": "Wish",
+      "name": "version",
+      "type": "integer",
+      "nullable": false,
+      "decision": "DEC-174"
+    },
+    {
+      "resource": "Wish",
+      "name": "openable",
+      "type": "boolean",
+      "nullable": false,
+      "decision": "DEC-174"
+    },
+    {
+      "resource": "PublicWishView",
+      "name": "openedAt",
+      "type": "time (ISO-8601)",
+      "nullable": true,
+      "decision": "DEC-174"
+    },
+    {
+      "resource": "PublicWishView",
+      "name": "endsAt",
+      "type": "time (ISO-8601)",
+      "nullable": true,
+      "decision": "DEC-174"
+    },
+    {
+      "resource": "PublicWishView",
+      "name": "openable",
+      "type": "boolean",
+      "nullable": false,
+      "decision": "DEC-174"
     }
   ],
   "dropFields": [

@@ -35,6 +35,23 @@ import { DatesModule } from "./modules/dates/dates.module";
 import { PeopleModule } from "./modules/people/people.module";
 import { SavedWishesModule } from "./modules/saved-wishes/saved-wishes.module";
 // end B12
+// B06: the wish and the jobs frame
+import { JobsModule } from "./modules/jobs/jobs.module";
+import { WishesModule } from "./modules/wishes/wishes.module";
+import { PublicWishesModule } from "./modules/public-wishes/public-wishes.module";
+// end B06
+
+// B05: payments core
+import { PaymentsModule } from "./modules/payments/payments.module";
+// end B05
+// INT-3: the joins (handlers other bundles exported, registered with the jobs frame)
+import { PurchasesModule } from "./modules/purchases/purchases.module";
+import { JobHandlersModule } from "./modules/job-handlers/job-handlers.module";
+// end INT-3
+
+// B11: email notices
+import { NoticesModule } from "./modules/notices/notices.module";
+// end B11
 
 /** Registration entry: each resource module adds one import line here. */
 @Module({
@@ -75,6 +92,25 @@ import { SavedWishesModule } from "./modules/saved-wishes/saved-wishes.module";
     DatesModule,
     SavedWishesModule,
     // end B12
+    // B05
+    PaymentsModule,
+    // end B05
+    // B06
+    JobsModule,
+    WishesModule,
+    // end B06
+    // B07
+    PurchasesModule,
+    // end B07
+    // B10
+    PublicWishesModule,
+    // end B10
+    // INT-3
+    JobHandlersModule,
+    // end INT-3
+    // B11
+    NoticesModule,
+    // end B11
   ],
 })
 export class AppModule {}

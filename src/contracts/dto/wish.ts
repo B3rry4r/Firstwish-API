@@ -123,8 +123,8 @@ export class PatchWishesByIdBodyDto implements PatchWishesByIdBody {
   @Allow()
   finale?: unknown;
   @IsOptional()
-  @IsBoolean()
-  keep?: boolean;
+  @IsIn(["month", "half", "year"])
+  keep?: "month" | "half" | "year" | null;
   @IsOptional()
   @IsString()
   kind?: string;
@@ -174,11 +174,16 @@ export class PatchWishesByIdBodyDto implements PatchWishesByIdBody {
   @Allow()
   ticket?: unknown;
   @IsOptional()
+  @IsString()
+  timeZone?: string;
+  @IsOptional()
   @Allow()
   timeline?: unknown;
   @IsOptional()
   @Allow()
   type?: unknown;
+  @IsInt()
+  version!: number;
   @IsOptional()
   @Allow()
   voices?: unknown;
@@ -273,6 +278,9 @@ export class PostWishesByIdSealBodyDto implements PostWishesByIdSealBody {
   @Allow()
   content?: unknown;
   @IsOptional()
+  @IsBoolean()
+  openNow?: boolean;
+  @IsOptional()
   @Allow()
   opensAt?: unknown;
   @IsOptional()
@@ -284,6 +292,11 @@ export class PostWishesByIdSealBodyDto implements PostWishesByIdSealBody {
   @IsOptional()
   @Allow()
   ticket?: unknown;
+  @IsOptional()
+  @IsString()
+  timeZone?: string;
+  @IsInt()
+  version!: number;
   @IsOptional()
   @IsString()
   wishId?: string;

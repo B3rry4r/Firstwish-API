@@ -49,3 +49,7 @@ R15 (owner, 15 Nov 2026): contact on the site: email "motionafrica@gmail.com. Yo
    the spelling in writing, 15 Nov 2026); WhatsApp "+234 810 534 0452".
 R16 (owner, 15 Nov 2026): owner will give Paystack test keys "when that time has reached" and the Anthropic key; has a DigitalOcean account; needs a
    walkthrough to get the Google sign-in client. Until then: stand-ins behind the same ports, marked NOT RUN against the real provider.
+R17 (owner, 15 Nov 2026): "Did the workflow not tell you to use sonnet as builders ... Opus is damn expensive"
+   Covers: EVERY agent (builders, checkers, patches, integration) runs on Sonnet, set on every spawn, as the build-orchestration
+   skill says (law 2; costs.md A10: one lead, Sonnet agents). No Opus agents, no Fable agents. An Opus agent is never resumed:
+   a fresh Sonnet agent picks up its branch. This replaces the "Opus or Sonnet" wording of R7.

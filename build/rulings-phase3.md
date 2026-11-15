@@ -275,3 +275,12 @@ AA4 (medium) A link is stored as the parsed URL's own text (new URL(v).href), ht
 AA5 (low) A brand logo is a stored file (purpose "brand", through the files bundle: screened, typed by its bytes, no SVG), not a
     data URL. Free text is stored as typed and is always shown as text by the web app, never as HTML (Phase 6 rule).
 AA6 (kit) Tests that count per address use their own address each, so limits never leak between specs (the flaky auth-codes test).
+
+## Wave 3 list (halts that arrive after INT-2 started; applied in the NEXT reopen). Default (lead), owner may override.
+BB1 (B12) ApprovedDate belongs to a business: it gains businessId, and the app's "approve this date" gets its routes:
+    POST /v1/business/approved-dates {personId, kind: b|s, year} (idempotent) and DELETE the same. Until then it is read only.
+BB2 (B12) Person stays the business's people, as the registry has it.
+BB3 (B12) "Today" is the calendar date in Africa/Lagos (PROVISIONAL; an account's own zone can replace it later). 29 February is
+    marked on 28 February in a year without one.
+BB4 (B12) PATCH /v1/me `dates` goes through the dates service (the one-row rule); E-118 and E-120 take an empty phone as none.
+BB5 (B12, Phase 6) The web app sends a UUIDv7 as the client id on E-46.

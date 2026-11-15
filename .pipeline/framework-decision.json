@@ -1,0 +1,10 @@
+{
+  "framework": "nestjs",
+  "rung": 1,
+  "rungName": "explicit directive",
+  "evidence": "Owner, 15 Nov 2026: \"front end Next.js, which is what it is currently. Back end Nest.js.\" (build/rulings.md R1)",
+  "language": "TypeScript (strict), Node 22",
+  "orm": { "choice": "Prisma + PostgreSQL 16", "by": "Default (lead), owner may override", "why": "the NestJS profile's default; schema-first fits the registry" },
+  "frozen": true,
+  "confirmedBy": "owner directive for the framework; the ORM is a recorded lead default"
+}

@@ -1,0 +1,205 @@
+{
+ "screenId": "admin-styles",
+ "reads": [
+  {
+   "entity": "StyleRow",
+   "fields": [
+    {
+     "name": "slug",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "name",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "by",
+     "type": "string (creator handle; 'firstwish' for the house)",
+     "nullable": false
+    },
+    {
+     "name": "house",
+     "type": "boolean",
+     "nullable": false
+    },
+    {
+     "name": "level",
+     "type": "'starter'|'standard'|'premium'",
+     "nullable": false
+    },
+    {
+     "name": "kinds",
+     "type": "string[] (wish kind slugs)",
+     "nullable": false
+    },
+    {
+     "name": "previews",
+     "type": "number (this month, sample)",
+     "nullable": false
+    },
+    {
+     "name": "paid",
+     "type": "number (this month, sample)",
+     "nullable": false
+    },
+    {
+     "name": "rate",
+     "type": "number (paid / previews, 0 when no previews)",
+     "nullable": false
+    },
+    {
+     "name": "on",
+     "type": "boolean",
+     "nullable": false
+    },
+    {
+     "name": "record",
+     "type": "Event[] {at, what, by?, reason?}",
+     "nullable": false
+    }
+   ],
+   "cardinality": "list",
+   "filtersOrSort": [
+    "client-side: search on name, slug, by; level chip (starter, standard, premium, off)",
+    "table sorts on name, level, previews, paid, rate, state"
+   ],
+   "pagination": "paged (client-side Table pageSize 15; seam returns the whole list)",
+   "evidence": "GET /v1/admin/styles -> StyleRow[]: every listed style in the registry, with its level, kinds, this month's use and preview-to-paid rate",
+   "note": "house styles come from the style registry (lib/styles.ts allStyles); creator styles are added when a submission is approved. previews/paid/rate are sample numbers: fixture data in lib/admin/b-fixtures.ts (SAMPLE = true)"
+  },
+  {
+   "entity": "Submission (count only)",
+   "fields": [
+    {
+     "name": "open",
+     "type": "number (length of Review.open, the 'N to review' link)",
+     "nullable": false
+    }
+   ],
+   "cardinality": "single",
+   "pagination": "none",
+   "evidence": "GET /v1/admin/styles/review -> Review (the same read as the Style review screen; only open.length is used here)"
+  }
+ ],
+ "actions": [
+  {
+   "name": "moveStyle",
+   "kind": "update",
+   "entity": "StyleRow",
+   "payload": [
+    {
+     "name": "slug",
+     "type": "string"
+    },
+    {
+     "name": "level",
+     "type": "'starter'|'standard'|'premium' (creator styles: standard or premium only; must differ from the current level)"
+    },
+    {
+     "name": "reason",
+     "type": "string (min 4 chars after trim; written to the audit log)"
+    }
+   ],
+   "expectedResponse": {
+    "entity": "StyleRow",
+    "cardinality": "single",
+    "note": "seam returns void; header says -> { slug, level }. not_allowed for a level the style may not take or an unchanged level; adds a record entry 'Moved from X to Y'"
+   },
+   "evidence": "PUT /v1/styles/levels/:slug { level } with { reason } for the audit log -> { slug, level } (lib/levels.ts names the same request)"
+  },
+  {
+   "name": "switchStyle",
+   "kind": "custom",
+   "entity": "StyleRow",
+   "payload": [
+    {
+     "name": "slug",
+     "type": "string"
+    },
+    {
+     "name": "on",
+     "type": "boolean"
+    },
+    {
+     "name": "reason",
+     "type": "string (min 4 chars after trim; written to the audit log)"
+    }
+   ],
+   "expectedResponse": {
+    "entity": "StyleRow",
+    "cardinality": "single",
+    "note": "seam returns void. Off: no new wish can pick it; wishes already made in it keep playing"
+   },
+   "evidence": "POST /v1/admin/styles/:slug/switch { on, reason }. Off: no new wish can pick it; wishes already made in it keep playing."
+  }
+ ],
+ "authContext": {
+  "requiresAuth": true,
+  "side": "staff",
+  "rolesObserved": [
+   "reviewer (route access table in lib/admin/d-fixtures.ts:117)",
+   "owner",
+   "ops"
+  ]
+ },
+ "special": {
+  "realtime": false,
+  "uploads": false,
+  "downloads": false
+ },
+ "uiStatesHandled": [
+  {
+   "state": "loading",
+   "entersWhen": "useAdmin data == null and no error (starts loading:true)",
+   "reachable": "no today (async over in-memory reads resolves in a microtask); yes once a network call exists"
+  },
+  {
+   "state": "error",
+   "entersWhen": "useAdmin read() rejects; Problem shows adminProblem(e) with retry",
+   "reachable": "no today (nothing rejects on reads); yes once a network call exists. Write errors (not_found, not_allowed, failed) reject inside Confirm onConfirm"
+  },
+  {
+   "state": "loaded",
+   "entersWhen": "data present",
+   "reachable": "yes"
+  },
+  {
+   "state": "empty",
+   "entersWhen": "filtered rows.length === 0: 'No style found'",
+   "reachable": "yes (search with no match)"
+  },
+  {
+   "state": "confirm",
+   "entersWhen": "open set by Move / Switch; Confirm asks for the reason",
+   "reachable": "yes"
+  }
+ ],
+ "uiStatesDesigned": [
+  "loading",
+  "empty",
+  "error",
+  "loaded"
+ ],
+ "stubsObserved": [
+  {
+   "file": "lib/admin/b-api.ts:1-9",
+   "evidence": "header: 'NOT CONNECTED YET: the bodies read lib/admin/b-fixtures.ts (marked sample data) and keep staff decisions in memory on this page only'",
+   "standsInFor": "the /v1/admin server",
+   "consequence": "every figure and row is fixture data; decisions vanish on reload; loading and error states are not reachable from a network"
+  },
+  {
+   "file": "lib/admin/b-api.ts:150",
+   "evidence": "B.styleCounts(slug): hash of the slug gives previews and paid",
+   "standsInFor": "this month's preview and paid-wish counts",
+   "consequence": "numbers are invented; marked PROVISIONAL on the screen"
+  },
+  {
+   "file": "lib/admin/b-api.ts:3-9",
+   "evidence": "header: 'Moving a style here changes this page's copy only: the app reads levels from the server (lib/levels.ts), and nothing here pretends to be it'",
+   "standsInFor": "the level write the app reads",
+   "consequence": "a move on this page changes nothing the app shows"
+  }
+ ]
+}

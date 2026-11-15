@@ -1818,6 +1818,127 @@
       ]
     },
     {
+      "name": "AuditRow",
+      "sourceScreens": [
+        "admin-audit"
+      ],
+      "sourceDeclarations": [],
+      "embedded": [],
+      "fields": [
+        {
+          "name": "at",
+          "type": "time",
+          "classes": [
+            "time-iso"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-audit"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "by",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-audit"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "href",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": true,
+          "provenance": [
+            "admin-audit"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "id",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-audit"
+          ],
+          "supersedes": [
+            "S-2: server-issued UUIDv7 ids"
+          ]
+        },
+        {
+          "name": "reason",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": true,
+          "provenance": [
+            "admin-audit"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "section",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-audit"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "what",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-audit"
+          ],
+          "supersedes": []
+        }
+      ],
+      "endpoints": [
+        {
+          "id": "E-15",
+          "method": "GET",
+          "path": "/v1/audit-rows",
+          "auth": [
+            {
+              "kind": "staff role",
+              "role": "any"
+            }
+          ],
+          "body": [],
+          "response": {
+            "entity": "AuditRow",
+            "cardinality": "list"
+          },
+          "sources": [
+            {
+              "src": "admin-audit",
+              "via": "read:AuditRow"
+            }
+          ],
+          "notes": []
+        }
+      ]
+    },
+    {
       "name": "AuthCode",
       "sourceScreens": [
         "sign-in",
@@ -2007,7 +2128,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-15",
+          "id": "E-16",
           "method": "POST",
           "path": "/v1/auth/codes",
           "auth": [
@@ -2083,7 +2204,7 @@
           ]
         },
         {
-          "id": "E-16",
+          "id": "E-17",
           "method": "POST",
           "path": "/v1/auth/codes/verify",
           "auth": [
@@ -2232,7 +2353,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-17",
+          "id": "E-18",
           "method": "POST",
           "path": "/v1/admin/bans",
           "auth": [
@@ -2317,7 +2438,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-18",
+          "id": "E-19",
           "method": "POST",
           "path": "/v1/bank-accounts",
           "auth": [
@@ -2614,7 +2735,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-19",
+          "id": "E-20",
           "method": "GET",
           "path": "/v1/business",
           "auth": [
@@ -2673,7 +2794,7 @@
           "notes": []
         },
         {
-          "id": "E-20",
+          "id": "E-21",
           "method": "PATCH",
           "path": "/v1/business",
           "auth": [
@@ -2732,7 +2853,7 @@
           "notes": []
         },
         {
-          "id": "E-21",
+          "id": "E-22",
           "method": "GET",
           "path": "/v1/business/plan",
           "auth": [
@@ -2851,7 +2972,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-22",
+          "id": "E-23",
           "method": "GET",
           "path": "/v1/chapter-specs",
           "auth": [
@@ -3303,7 +3424,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-23",
+          "id": "E-24",
           "method": "GET",
           "path": "/v1/business/client-wishes",
           "auth": [
@@ -3334,7 +3455,7 @@
           "notes": []
         },
         {
-          "id": "E-24",
+          "id": "E-25",
           "method": "POST",
           "path": "/v1/business/client-wishes",
           "auth": [
@@ -3425,7 +3546,7 @@
           "notes": []
         },
         {
-          "id": "E-25",
+          "id": "E-26",
           "method": "GET",
           "path": "/v1/business/client-wishes/:id",
           "auth": [
@@ -3460,7 +3581,7 @@
           "notes": []
         },
         {
-          "id": "E-26",
+          "id": "E-27",
           "method": "POST",
           "path": "/v1/business/client-wishes/:id/approve-date",
           "auth": [
@@ -3522,7 +3643,7 @@
           ]
         },
         {
-          "id": "E-27",
+          "id": "E-28",
           "method": "POST",
           "path": "/v1/business/client-wishes/:id/send-reveal",
           "auth": [
@@ -3779,7 +3900,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-28",
+          "id": "E-29",
           "method": "POST",
           "path": "/v1/admin/concierge-orders/:id/delivery",
           "auth": [
@@ -3812,7 +3933,7 @@
           ]
         },
         {
-          "id": "E-29",
+          "id": "E-30",
           "method": "POST",
           "path": "/v1/admin/concierge-orders/:id/maker",
           "auth": [
@@ -3856,7 +3977,7 @@
           ]
         },
         {
-          "id": "E-30",
+          "id": "E-31",
           "method": "POST",
           "path": "/v1/admin/concierge-orders/:id/quote",
           "auth": [
@@ -3900,7 +4021,7 @@
           ]
         },
         {
-          "id": "E-31",
+          "id": "E-32",
           "method": "POST",
           "path": "/v1/concierge-orders",
           "auth": [
@@ -4080,7 +4201,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-32",
+          "id": "E-33",
           "method": "GET",
           "path": "/v1/creators",
           "auth": [
@@ -4235,6 +4356,165 @@
       "endpoints": []
     },
     {
+      "name": "CreatorRow",
+      "sourceScreens": [
+        "admin-creators"
+      ],
+      "sourceDeclarations": [],
+      "embedded": [],
+      "fields": [
+        {
+          "name": "credits",
+          "type": "number",
+          "classes": [
+            "number"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-creators"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "earned",
+          "type": "money",
+          "classes": [
+            "money-kobo"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-creators"
+          ],
+          "supersedes": [
+            "S-1: integer kobo, currency NGN, over the wire and in storage; prices only from the price book"
+          ]
+        },
+        {
+          "name": "handle",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-creators"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "id",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-creators"
+          ],
+          "supersedes": [
+            "S-2: server-issued UUIDv7 ids"
+          ]
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-creators"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "person",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-creators"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "plan",
+          "type": "string",
+          "classes": [
+            "enum"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-creators"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "signed",
+          "type": "boolean",
+          "classes": [
+            "boolean"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-creators"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "styles",
+          "type": "object",
+          "classes": [
+            "object"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-creators"
+          ],
+          "supersedes": []
+        }
+      ],
+      "endpoints": [
+        {
+          "id": "E-34",
+          "method": "GET",
+          "path": "/v1/creator-rows",
+          "auth": [
+            {
+              "kind": "staff role",
+              "role": "finance"
+            },
+            {
+              "kind": "staff role",
+              "role": "ops"
+            },
+            {
+              "kind": "staff role",
+              "role": "owner"
+            },
+            {
+              "kind": "staff role",
+              "role": "reviewer"
+            }
+          ],
+          "body": [],
+          "response": {
+            "entity": "CreatorRow",
+            "cardinality": "list"
+          },
+          "sources": [
+            {
+              "src": "admin-creators",
+              "via": "read:CreatorRow"
+            }
+          ],
+          "notes": []
+        }
+      ]
+    },
+    {
       "name": "CreatorState",
       "sourceScreens": [
         "studio-editor",
@@ -4380,7 +4660,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-33",
+          "id": "E-35",
           "method": "GET",
           "path": "/v1/studio/me",
           "auth": [
@@ -4411,7 +4691,7 @@
           "notes": []
         },
         {
-          "id": "E-34",
+          "id": "E-36",
           "method": "PATCH",
           "path": "/v1/studio/me",
           "auth": [
@@ -4607,7 +4887,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-35",
+          "id": "E-37",
           "method": "GET",
           "path": "/v1/me/dates",
           "auth": [
@@ -4638,7 +4918,7 @@
           "notes": []
         },
         {
-          "id": "E-36",
+          "id": "E-38",
           "method": "POST",
           "path": "/v1/me/dates",
           "auth": [
@@ -4713,7 +4993,7 @@
           "notes": []
         },
         {
-          "id": "E-37",
+          "id": "E-39",
           "method": "DELETE",
           "path": "/v1/me/dates/:id",
           "auth": [
@@ -4744,7 +5024,7 @@
           "notes": []
         },
         {
-          "id": "E-38",
+          "id": "E-40",
           "method": "GET",
           "path": "/v1/me/dates/:id",
           "auth": [
@@ -4770,6 +5050,151 @@
             {
               "src": "app-you",
               "via": "read:DateRow (count)"
+            }
+          ],
+          "notes": []
+        }
+      ]
+    },
+    {
+      "name": "DayPick",
+      "sourceScreens": [
+        "admin-showing"
+      ],
+      "sourceDeclarations": [],
+      "embedded": [],
+      "fields": [
+        {
+          "name": "date",
+          "type": "time",
+          "classes": [
+            "time-iso"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-showing"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "pick",
+          "type": "object",
+          "classes": [
+            "object"
+          ],
+          "nullable": true,
+          "provenance": [
+            "admin-showing"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "reason",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-showing"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "wish",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-showing"
+          ],
+          "supersedes": []
+        }
+      ],
+      "endpoints": [
+        {
+          "id": "E-41",
+          "method": "PATCH",
+          "path": "/v1/admin/day-picks/:id",
+          "auth": [
+            {
+              "kind": "staff role",
+              "role": "moderator"
+            },
+            {
+              "kind": "staff role",
+              "role": "ops"
+            },
+            {
+              "kind": "staff role",
+              "role": "owner"
+            }
+          ],
+          "body": [
+            {
+              "name": "date",
+              "type": "string YYYY-MM-DD within the next 7 days",
+              "from": [
+                "admin-showing"
+              ]
+            },
+            {
+              "name": "reason",
+              "type": "string (min 4 chars after trim; written to the audit log)",
+              "from": [
+                "admin-showing"
+              ]
+            },
+            {
+              "name": "wish",
+              "type": "string (Wish.no of a listed wish)",
+              "from": [
+                "admin-showing"
+              ]
+            }
+          ],
+          "response": {
+            "entity": "DayPick",
+            "cardinality": "single",
+            "note": "seam returns void; header says -> the day's pick. Not listed wish or date outside the window is not_allowed"
+          },
+          "sources": [
+            {
+              "src": "admin-showing",
+              "via": "action:pickWishOfDay"
+            }
+          ],
+          "notes": []
+        },
+        {
+          "id": "E-42",
+          "method": "GET",
+          "path": "/v1/day-picks",
+          "auth": [
+            {
+              "kind": "staff role",
+              "role": "moderator"
+            },
+            {
+              "kind": "staff role",
+              "role": "ops"
+            },
+            {
+              "kind": "staff role",
+              "role": "owner"
+            }
+          ],
+          "body": [],
+          "response": {
+            "entity": "DayPick",
+            "cardinality": "list"
+          },
+          "sources": [
+            {
+              "src": "admin-showing",
+              "via": "read:DayPick"
             }
           ],
           "notes": []
@@ -4859,7 +5284,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-39",
+          "id": "E-43",
           "method": "GET",
           "path": "/v1/admin/earnings",
           "auth": [
@@ -4953,7 +5378,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-40",
+          "id": "E-44",
           "method": "GET",
           "path": "/v1/ending-purposes",
           "auth": [
@@ -5216,7 +5641,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-41",
+          "id": "E-45",
           "method": "POST",
           "path": "/v1/events",
           "auth": [
@@ -5386,7 +5811,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-42",
+          "id": "E-46",
           "method": "GET",
           "path": "/v1/auth/google/callback",
           "auth": [
@@ -5425,7 +5850,7 @@
           ]
         },
         {
-          "id": "E-43",
+          "id": "E-47",
           "method": "POST",
           "path": "/v1/auth/google/start",
           "auth": [
@@ -5466,7 +5891,7 @@
           ]
         },
         {
-          "id": "E-44",
+          "id": "E-48",
           "method": "DELETE",
           "path": "/v1/me/google",
           "auth": [
@@ -5499,7 +5924,7 @@
           ]
         },
         {
-          "id": "E-45",
+          "id": "E-49",
           "method": "POST",
           "path": "/v1/me/google",
           "auth": [
@@ -5670,7 +6095,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-46",
+          "id": "E-50",
           "method": "DELETE",
           "path": "/v1/creators/:handle/follow",
           "auth": [
@@ -5711,7 +6136,7 @@
           ]
         },
         {
-          "id": "E-47",
+          "id": "E-51",
           "method": "PUT",
           "path": "/v1/creators/:handle/follow",
           "auth": [
@@ -5866,7 +6291,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-48",
+          "id": "E-52",
           "method": "GET",
           "path": "/v1/business/invoices",
           "auth": [
@@ -5889,7 +6314,7 @@
           "notes": []
         },
         {
-          "id": "E-49",
+          "id": "E-53",
           "method": "GET",
           "path": "/v1/business/invoices/:id/file",
           "auth": [
@@ -6021,7 +6446,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-50",
+          "id": "E-54",
           "method": "GET",
           "path": "/v1/admin/jobs",
           "auth": [
@@ -6063,7 +6488,7 @@
           "notes": []
         },
         {
-          "id": "E-51",
+          "id": "E-55",
           "method": "POST",
           "path": "/v1/admin/jobs/:id/retry",
           "auth": [
@@ -6195,6 +6620,123 @@
         }
       ],
       "endpoints": []
+    },
+    {
+      "name": "LedgerDay",
+      "sourceScreens": [
+        "admin-payments"
+      ],
+      "sourceDeclarations": [],
+      "embedded": [],
+      "fields": [
+        {
+          "name": "day",
+          "type": "time",
+          "classes": [
+            "time-iso"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-payments"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "diffs",
+          "type": "array",
+          "classes": [
+            "array"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-payments"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "ours",
+          "type": "money",
+          "classes": [
+            "money-kobo"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-payments"
+          ],
+          "supersedes": [
+            "S-1: integer kobo, currency NGN, over the wire and in storage; prices only from the price book"
+          ]
+        },
+        {
+          "name": "oursCount",
+          "type": "number",
+          "classes": [
+            "number"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-payments"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "theirs",
+          "type": "number",
+          "classes": [
+            "number"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-payments"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "theirsCount",
+          "type": "number",
+          "classes": [
+            "number"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-payments"
+          ],
+          "supersedes": []
+        }
+      ],
+      "endpoints": [
+        {
+          "id": "E-56",
+          "method": "GET",
+          "path": "/v1/ledger-days/:id",
+          "auth": [
+            {
+              "kind": "staff role",
+              "role": "finance"
+            },
+            {
+              "kind": "staff role",
+              "role": "ops"
+            },
+            {
+              "kind": "staff role",
+              "role": "owner"
+            }
+          ],
+          "body": [],
+          "response": {
+            "entity": "LedgerDay",
+            "cardinality": "single"
+          },
+          "sources": [
+            {
+              "src": "admin-payments",
+              "via": "read:LedgerDay"
+            }
+          ],
+          "notes": []
+        }
+      ]
     },
     {
       "name": "LedgerEntry",
@@ -6364,7 +6906,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-52",
+          "id": "E-57",
           "method": "GET",
           "path": "/v1/admin/ledger-entries",
           "auth": [
@@ -6615,6 +7157,192 @@
       "endpoints": []
     },
     {
+      "name": "Listed",
+      "sourceScreens": [
+        "admin-showing"
+      ],
+      "sourceDeclarations": [],
+      "embedded": [],
+      "fields": [
+        {
+          "name": "forName",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-showing"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "from",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-showing"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "kind",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-showing"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "listedAt",
+          "type": "time",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-showing"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "no",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-showing"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "occasion",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-showing"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "reason",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-showing"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "styleName",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-showing"
+          ],
+          "supersedes": []
+        }
+      ],
+      "endpoints": [
+        {
+          "id": "E-58",
+          "method": "POST",
+          "path": "/v1/admin/listeds/:id/unlist-wish",
+          "auth": [
+            {
+              "kind": "staff role",
+              "role": "moderator"
+            },
+            {
+              "kind": "staff role",
+              "role": "ops"
+            },
+            {
+              "kind": "staff role",
+              "role": "owner"
+            }
+          ],
+          "body": [
+            {
+              "name": "no",
+              "type": "string (Wish.no)",
+              "from": [
+                "admin-showing"
+              ]
+            },
+            {
+              "name": "reason",
+              "type": "string (min 4 chars after trim; written to the audit log)",
+              "from": [
+                "admin-showing"
+              ]
+            }
+          ],
+          "response": {
+            "entity": "Listed",
+            "cardinality": "list",
+            "note": "seam returns void; header says -> Listed[]. Wish stays as is; any wish-of-day picks for it from tomorrow on are dropped"
+          },
+          "sources": [
+            {
+              "src": "admin-showing",
+              "via": "action:unlistWish"
+            }
+          ],
+          "notes": []
+        },
+        {
+          "id": "E-59",
+          "method": "GET",
+          "path": "/v1/listeds",
+          "auth": [
+            {
+              "kind": "staff role",
+              "role": "moderator"
+            },
+            {
+              "kind": "staff role",
+              "role": "ops"
+            },
+            {
+              "kind": "staff role",
+              "role": "owner"
+            }
+          ],
+          "body": [],
+          "response": {
+            "entity": "Listed",
+            "cardinality": "list"
+          },
+          "sources": [
+            {
+              "src": "admin-showing",
+              "via": "read:Listed"
+            }
+          ],
+          "notes": []
+        }
+      ]
+    },
+    {
       "name": "Login",
       "sourceScreens": [
         "pro-brand"
@@ -6665,7 +7393,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-53",
+          "id": "E-60",
           "method": "GET",
           "path": "/v1/business/logins",
           "auth": [
@@ -6688,7 +7416,7 @@
           "notes": []
         },
         {
-          "id": "E-54",
+          "id": "E-61",
           "method": "POST",
           "path": "/v1/business/logins",
           "auth": [
@@ -6719,7 +7447,7 @@
           "notes": []
         },
         {
-          "id": "E-55",
+          "id": "E-62",
           "method": "DELETE",
           "path": "/v1/business/logins/:id",
           "auth": [
@@ -6745,6 +7473,562 @@
             {
               "src": "pro-brand",
               "via": "action:removeLogin"
+            }
+          ],
+          "notes": []
+        }
+      ]
+    },
+    {
+      "name": "Maker",
+      "sourceScreens": [
+        "admin-concierge"
+      ],
+      "sourceDeclarations": [],
+      "embedded": [],
+      "fields": [
+        {
+          "name": "id",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-concierge"
+          ],
+          "supersedes": [
+            "S-2: server-issued UUIDv7 ids"
+          ]
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-concierge"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "open",
+          "type": "number",
+          "classes": [
+            "number"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-concierge"
+          ],
+          "supersedes": []
+        }
+      ],
+      "endpoints": [
+        {
+          "id": "E-63",
+          "method": "GET",
+          "path": "/v1/makers",
+          "auth": [
+            {
+              "kind": "staff role",
+              "role": "maker"
+            },
+            {
+              "kind": "staff role",
+              "role": "ops"
+            },
+            {
+              "kind": "staff role",
+              "role": "owner"
+            }
+          ],
+          "body": [],
+          "response": {
+            "entity": "Maker",
+            "cardinality": "list"
+          },
+          "sources": [
+            {
+              "src": "admin-concierge",
+              "via": "read:Maker"
+            }
+          ],
+          "notes": []
+        }
+      ]
+    },
+    {
+      "name": "Member",
+      "sourceScreens": [
+        "admin-team"
+      ],
+      "sourceDeclarations": [],
+      "embedded": [],
+      "fields": [
+        {
+          "name": "email",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-team"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "id",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-team"
+          ],
+          "supersedes": [
+            "S-2: server-issued UUIDv7 ids"
+          ]
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-team"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "reason",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-team"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "role",
+          "type": "named",
+          "classes": [
+            "named"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-team"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "seen",
+          "type": "time",
+          "classes": [
+            "time-iso"
+          ],
+          "nullable": true,
+          "provenance": [
+            "admin-team"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "since",
+          "type": "time",
+          "classes": [
+            "time-iso"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-team"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "state",
+          "type": "string",
+          "classes": [
+            "enum"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-team"
+          ],
+          "supersedes": []
+        }
+      ],
+      "endpoints": [
+        {
+          "id": "E-64",
+          "method": "POST",
+          "path": "/v1/admin/members",
+          "auth": [
+            {
+              "kind": "staff role",
+              "role": "any"
+            },
+            {
+              "kind": "staff role",
+              "role": "owner"
+            }
+          ],
+          "body": [
+            {
+              "name": "email",
+              "type": "string (trimmed lowercased; /^\\S+@\\S+\\.\\S+$/)",
+              "from": [
+                "admin-team"
+              ]
+            },
+            {
+              "name": "reason",
+              "type": "string",
+              "from": [
+                "admin-team"
+              ]
+            },
+            {
+              "name": "role",
+              "type": "Role excluding owner",
+              "from": [
+                "admin-team"
+              ]
+            }
+          ],
+          "response": {
+            "entity": "Member",
+            "cardinality": "single",
+            "note": "seam returns void; header says -> Member. Server sends a sign-in code to the email. Owner only. Reason min 4 chars after trim. Sample builds name from the email local part and masks the email, state invited, since today"
+          },
+          "sources": [
+            {
+              "src": "admin-team",
+              "via": "action:inviteMember"
+            }
+          ],
+          "notes": []
+        },
+        {
+          "id": "E-65",
+          "method": "PATCH",
+          "path": "/v1/admin/members/:id",
+          "auth": [
+            {
+              "kind": "staff role",
+              "role": "any"
+            },
+            {
+              "kind": "staff role",
+              "role": "owner"
+            }
+          ],
+          "body": [
+            {
+              "name": "id",
+              "type": "string",
+              "from": [
+                "admin-team"
+              ]
+            },
+            {
+              "name": "reason",
+              "type": "string",
+              "from": [
+                "admin-team"
+              ]
+            }
+          ],
+          "response": {
+            "entity": "none",
+            "cardinality": "single",
+            "note": "seam returns void; member becomes state removed. Refused for the owner role or an already removed member (not_allowed). Owner only"
+          },
+          "sources": [
+            {
+              "src": "admin-team",
+              "via": "action:removeMember"
+            }
+          ],
+          "notes": []
+        },
+        {
+          "id": "E-66",
+          "method": "GET",
+          "path": "/v1/members",
+          "auth": [
+            {
+              "kind": "staff role",
+              "role": "any"
+            },
+            {
+              "kind": "staff role",
+              "role": "owner"
+            }
+          ],
+          "body": [],
+          "response": {
+            "entity": "Member",
+            "cardinality": "list"
+          },
+          "sources": [
+            {
+              "src": "admin-team",
+              "via": "read:Member"
+            }
+          ],
+          "notes": []
+        }
+      ]
+    },
+    {
+      "name": "Message",
+      "sourceScreens": [
+        "admin-messages",
+        "admin-overview",
+        "admin-wishes-detail"
+      ],
+      "sourceDeclarations": [],
+      "embedded": [],
+      "fields": [
+        {
+          "name": "at",
+          "type": "time",
+          "classes": [
+            "string",
+            "time-iso"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-messages",
+            "admin-overview",
+            "admin-wishes-detail"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "channel",
+          "type": "string",
+          "classes": [
+            "string",
+            "unknown"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-messages",
+            "admin-overview",
+            "admin-wishes-detail"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "id",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-messages",
+            "admin-overview",
+            "admin-wishes-detail"
+          ],
+          "supersedes": [
+            "S-2: server-issued UUIDv7 ids"
+          ]
+        },
+        {
+          "name": "reason",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-messages"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "resent",
+          "type": "named",
+          "classes": [
+            "named"
+          ],
+          "nullable": true,
+          "provenance": [
+            "admin-messages"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "state",
+          "type": "string",
+          "classes": [
+            "enum",
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-messages",
+            "admin-overview",
+            "admin-wishes-detail"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "to",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-messages",
+            "admin-overview",
+            "admin-wishes-detail"
+          ],
+          "supersedes": [
+            "S-27: sign-in by email code or Google only; phone is an optional plain detail stored E.164 when given, never verified, never an account key"
+          ]
+        },
+        {
+          "name": "what",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-messages",
+            "admin-overview",
+            "admin-wishes-detail"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "wish",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": true,
+          "provenance": [
+            "admin-messages",
+            "admin-overview",
+            "admin-wishes-detail"
+          ],
+          "supersedes": []
+        }
+      ],
+      "endpoints": [
+        {
+          "id": "E-67",
+          "method": "POST",
+          "path": "/v1/admin/messages/:id/resend-message",
+          "auth": [
+            {
+              "kind": "staff role",
+              "role": "ops"
+            },
+            {
+              "kind": "staff role",
+              "role": "owner"
+            },
+            {
+              "kind": "staff role",
+              "role": "support"
+            }
+          ],
+          "body": [
+            {
+              "name": "id",
+              "type": "string",
+              "from": [
+                "admin-messages"
+              ]
+            },
+            {
+              "name": "reason",
+              "type": "string, at least 4 chars",
+              "from": [
+                "admin-messages"
+              ]
+            }
+          ],
+          "response": {
+            "entity": "Delivery",
+            "cardinality": "single",
+            "note": "seam returns void"
+          },
+          "sources": [
+            {
+              "src": "admin-messages",
+              "via": "action:resendMessage"
+            }
+          ],
+          "notes": []
+        },
+        {
+          "id": "E-68",
+          "method": "GET",
+          "path": "/v1/messages",
+          "auth": [
+            {
+              "kind": "staff role",
+              "role": "finance"
+            },
+            {
+              "kind": "staff role",
+              "role": "maker"
+            },
+            {
+              "kind": "staff role",
+              "role": "moderator"
+            },
+            {
+              "kind": "staff role",
+              "role": "ops"
+            },
+            {
+              "kind": "staff role",
+              "role": "owner"
+            },
+            {
+              "kind": "staff role",
+              "role": "reviewer"
+            },
+            {
+              "kind": "staff role",
+              "role": "support"
+            }
+          ],
+          "body": [],
+          "response": {
+            "entity": "Message",
+            "cardinality": "list"
+          },
+          "sources": [
+            {
+              "src": "admin-messages",
+              "via": "read:Message"
+            },
+            {
+              "src": "admin-overview",
+              "via": "read:Message"
+            },
+            {
+              "src": "admin-wishes-detail",
+              "via": "read:Message"
             }
           ],
           "notes": []
@@ -6942,7 +8226,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-56",
+          "id": "E-69",
           "method": "POST",
           "path": "/v1/webhooks/email",
           "auth": [
@@ -6979,7 +8263,7 @@
           "notes": []
         },
         {
-          "id": "E-57",
+          "id": "E-70",
           "method": "INTERNAL",
           "path": "port:message-deliveries#send",
           "auth": [
@@ -7114,6 +8398,347 @@
         }
       ],
       "endpoints": []
+    },
+    {
+      "name": "ModItem",
+      "sourceScreens": [
+        "admin-moderation"
+      ],
+      "sourceDeclarations": [],
+      "embedded": [],
+      "fields": [
+        {
+          "name": "decision",
+          "type": "string",
+          "classes": [
+            "enum"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-moderation"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "reason",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-moderation"
+          ],
+          "supersedes": []
+        }
+      ],
+      "endpoints": [
+        {
+          "id": "E-71",
+          "method": "POST",
+          "path": "/v1/admin/mod-items/:id/decide-moderation",
+          "auth": [
+            {
+              "kind": "staff role",
+              "role": "moderator"
+            },
+            {
+              "kind": "staff role",
+              "role": "ops"
+            },
+            {
+              "kind": "staff role",
+              "role": "owner"
+            }
+          ],
+          "body": [
+            {
+              "name": "decision",
+              "type": "'take_down'|'keep'|'ban'",
+              "from": [
+                "admin-moderation"
+              ]
+            },
+            {
+              "name": "id",
+              "type": "string (ModItem.id)",
+              "from": [
+                "admin-moderation"
+              ]
+            },
+            {
+              "name": "reason",
+              "type": "string (min 4 chars after trim; written to the audit log)",
+              "from": [
+                "admin-moderation"
+              ]
+            }
+          ],
+          "response": {
+            "entity": "ModView",
+            "cardinality": "single",
+            "note": "take_down takes the wish down; ban bans the account that made it and takes the wish down; refused (not_allowed) when already decided, not_found when unknown. Seam calls actOnWish/actOnPerson in the shared seam so Wishes and People show the effect"
+          },
+          "sources": [
+            {
+              "src": "admin-moderation",
+              "via": "action:decideModeration"
+            }
+          ],
+          "notes": []
+        }
+      ]
+    },
+    {
+      "name": "ModView",
+      "sourceScreens": [
+        "admin-moderation"
+      ],
+      "sourceDeclarations": [],
+      "embedded": [],
+      "fields": [
+        {
+          "name": "at",
+          "type": "time",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-moderation"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "decided",
+          "type": "object",
+          "classes": [
+            "object"
+          ],
+          "nullable": true,
+          "provenance": [
+            "admin-moderation"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "dueAt",
+          "type": "time",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-moderation"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "forName",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-moderation"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "from",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-moderation"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "id",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-moderation"
+          ],
+          "supersedes": [
+            "S-2: server-issued UUIDv7 ids"
+          ]
+        },
+        {
+          "name": "late",
+          "type": "boolean",
+          "classes": [
+            "boolean"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-moderation"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "minutesLeft",
+          "type": "number",
+          "classes": [
+            "number"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-moderation"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "personId",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-moderation"
+          ],
+          "supersedes": [
+            "S-2: server-issued UUIDv7 ids"
+          ]
+        },
+        {
+          "name": "photo",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": true,
+          "provenance": [
+            "admin-moderation"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "queue",
+          "type": "string",
+          "classes": [
+            "enum"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-moderation"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "score",
+          "type": "number",
+          "classes": [
+            "number"
+          ],
+          "nullable": true,
+          "provenance": [
+            "admin-moderation"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "what",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-moderation"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "who",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-moderation"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "whoLine",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-moderation"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "wish",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-moderation"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "wishState",
+          "type": "string",
+          "classes": [
+            "enum"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-moderation"
+          ],
+          "supersedes": []
+        }
+      ],
+      "endpoints": [
+        {
+          "id": "E-72",
+          "method": "GET",
+          "path": "/v1/mod-views",
+          "auth": [
+            {
+              "kind": "staff role",
+              "role": "moderator"
+            },
+            {
+              "kind": "staff role",
+              "role": "ops"
+            },
+            {
+              "kind": "staff role",
+              "role": "owner"
+            }
+          ],
+          "body": [],
+          "response": {
+            "entity": "ModView",
+            "cardinality": "list"
+          },
+          "sources": [
+            {
+              "src": "admin-moderation",
+              "via": "read:ModView"
+            }
+          ],
+          "notes": []
+        }
+      ]
     },
     {
       "name": "Moment",
@@ -7330,7 +8955,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-58",
+          "id": "E-73",
           "method": "GET",
           "path": "/v1/moments",
           "auth": [
@@ -7489,7 +9114,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-59",
+          "id": "E-74",
           "method": "GET",
           "path": "/v1/me/notices",
           "auth": [
@@ -7550,7 +9175,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-60",
+          "id": "E-75",
           "method": "PATCH",
           "path": "/v1/me/notice-prefs",
           "auth": [
@@ -7583,6 +9208,171 @@
             {
               "src": "notices",
               "via": "action:setNoticePrefs"
+            }
+          ],
+          "notes": []
+        }
+      ]
+    },
+    {
+      "name": "Numbers",
+      "sourceScreens": [
+        "admin-numbers"
+      ],
+      "sourceDeclarations": [],
+      "embedded": [],
+      "fields": [
+        {
+          "name": "days",
+          "type": "number",
+          "classes": [
+            "number"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-numbers"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "keeps",
+          "type": "array",
+          "classes": [
+            "array"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-numbers"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "kinds",
+          "type": "array",
+          "classes": [
+            "array"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-numbers"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "lines",
+          "type": "money",
+          "classes": [
+            "money-kobo"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-numbers"
+          ],
+          "supersedes": [
+            "S-1: integer kobo, currency NGN, over the wire and in storage; prices only from the price book"
+          ]
+        },
+        {
+          "name": "occasions",
+          "type": "array",
+          "classes": [
+            "array"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-numbers"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "opens",
+          "type": "object",
+          "classes": [
+            "object"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-numbers"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "paid",
+          "type": "number",
+          "classes": [
+            "number"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-numbers"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "period",
+          "type": "string",
+          "classes": [
+            "enum"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-numbers"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "previews",
+          "type": "number",
+          "classes": [
+            "number"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-numbers"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "styles",
+          "type": "array",
+          "classes": [
+            "array"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-numbers"
+          ],
+          "supersedes": []
+        }
+      ],
+      "endpoints": [
+        {
+          "id": "E-76",
+          "method": "GET",
+          "path": "/v1/numbers/:id",
+          "auth": [
+            {
+              "kind": "staff role",
+              "role": "finance"
+            },
+            {
+              "kind": "staff role",
+              "role": "ops"
+            },
+            {
+              "kind": "staff role",
+              "role": "owner"
+            }
+          ],
+          "body": [],
+          "response": {
+            "entity": "Numbers",
+            "cardinality": "single"
+          },
+          "sources": [
+            {
+              "src": "admin-numbers",
+              "via": "read:Numbers"
             }
           ],
           "notes": []
@@ -7662,7 +9452,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-61",
+          "id": "E-77",
           "method": "GET",
           "path": "/v1/opening-defs",
           "auth": [
@@ -7680,6 +9470,172 @@
             {
               "src": "maker-opening",
               "via": "read:OpeningDef"
+            }
+          ],
+          "notes": []
+        }
+      ]
+    },
+    {
+      "name": "Order",
+      "sourceScreens": [
+        "admin-concierge"
+      ],
+      "sourceDeclarations": [],
+      "embedded": [],
+      "fields": [
+        {
+          "name": "maker",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-concierge"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "reason",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-concierge"
+          ],
+          "supersedes": []
+        }
+      ],
+      "endpoints": []
+    },
+    {
+      "name": "Overview",
+      "sourceScreens": [
+        "admin-overview"
+      ],
+      "sourceDeclarations": [],
+      "embedded": [],
+      "fields": [
+        {
+          "name": "day",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-overview"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "failedMessages",
+          "type": "array",
+          "classes": [
+            "array"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-overview"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "failedPayments",
+          "type": "array",
+          "classes": [
+            "array"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-overview"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "queues",
+          "type": "array",
+          "classes": [
+            "array"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-overview"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "takings",
+          "type": "object",
+          "classes": [
+            "object"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-overview"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "today",
+          "type": "object",
+          "classes": [
+            "object"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-overview"
+          ],
+          "supersedes": []
+        }
+      ],
+      "endpoints": [
+        {
+          "id": "E-78",
+          "method": "GET",
+          "path": "/v1/overviews/:id",
+          "auth": [
+            {
+              "kind": "staff role",
+              "role": "finance"
+            },
+            {
+              "kind": "staff role",
+              "role": "maker"
+            },
+            {
+              "kind": "staff role",
+              "role": "moderator"
+            },
+            {
+              "kind": "staff role",
+              "role": "ops"
+            },
+            {
+              "kind": "staff role",
+              "role": "owner"
+            },
+            {
+              "kind": "staff role",
+              "role": "reviewer"
+            },
+            {
+              "kind": "staff role",
+              "role": "support"
+            }
+          ],
+          "body": [],
+          "response": {
+            "entity": "Overview",
+            "cardinality": "single"
+          },
+          "sources": [
+            {
+              "src": "admin-overview",
+              "via": "read:Overview"
             }
           ],
           "notes": []
@@ -7771,7 +9727,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-62",
+          "id": "E-79",
           "method": "GET",
           "path": "/v1/me/pass",
           "auth": [
@@ -7923,6 +9879,10 @@
     {
       "name": "Payment",
       "sourceScreens": [
+        "admin-overview",
+        "admin-payments",
+        "admin-people-detail",
+        "admin-wishes-detail",
         "app-wish-detail"
       ],
       "sourceDeclarations": [
@@ -7950,12 +9910,29 @@
           ],
           "nullable": false,
           "provenance": [
+            "admin-overview",
+            "admin-people-detail",
+            "admin-wishes-detail",
             "app-wish-detail",
             "payments"
           ],
           "supersedes": [
             "S-1: integer kobo, currency NGN, over the wire and in storage; prices only from the price book"
           ]
+        },
+        {
+          "name": "at",
+          "type": "time",
+          "classes": [
+            "time-iso"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-overview",
+            "admin-people-detail",
+            "admin-wishes-detail"
+          ],
+          "supersedes": []
         },
         {
           "name": "businessId",
@@ -8042,6 +10019,20 @@
           "supersedes": []
         },
         {
+          "name": "line",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-overview",
+            "admin-people-detail",
+            "admin-wishes-detail"
+          ],
+          "supersedes": []
+        },
+        {
           "name": "lines",
           "type": "array",
           "classes": [
@@ -8074,6 +10065,20 @@
           "nullable": true,
           "provenance": [
             "payments"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "person",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-overview",
+            "admin-people-detail",
+            "admin-wishes-detail"
           ],
           "supersedes": []
         },
@@ -8127,6 +10132,33 @@
           "supersedes": []
         },
         {
+          "name": "reason",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-payments"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "ref",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-overview",
+            "admin-payments",
+            "admin-people-detail",
+            "admin-wishes-detail"
+          ],
+          "supersedes": []
+        },
+        {
           "name": "reference",
           "type": "string",
           "classes": [
@@ -8135,6 +10167,20 @@
           "nullable": false,
           "provenance": [
             "payments"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "state",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-overview",
+            "admin-people-detail",
+            "admin-wishes-detail"
           ],
           "supersedes": []
         },
@@ -8209,11 +10255,85 @@
             "app-wish-detail"
           ],
           "supersedes": []
+        },
+        {
+          "name": "what",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-overview",
+            "admin-people-detail",
+            "admin-wishes-detail"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "wish",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": true,
+          "provenance": [
+            "admin-overview",
+            "admin-people-detail",
+            "admin-wishes-detail"
+          ],
+          "supersedes": []
         }
       ],
       "endpoints": [
         {
-          "id": "E-63",
+          "id": "E-80",
+          "method": "POST",
+          "path": "/v1/admin/payments/:id/refund",
+          "auth": [
+            {
+              "kind": "staff role",
+              "role": "finance"
+            },
+            {
+              "kind": "staff role",
+              "role": "ops"
+            },
+            {
+              "kind": "staff role",
+              "role": "owner"
+            }
+          ],
+          "body": [
+            {
+              "name": "reason",
+              "type": "string (trimmed, 4 or more characters; the Confirm dialog disables the button below 4, the seam throws 'failed')",
+              "from": [
+                "admin-payments"
+              ]
+            },
+            {
+              "name": "ref",
+              "type": "string (path)",
+              "from": [
+                "admin-payments"
+              ]
+            }
+          ],
+          "response": {
+            "entity": "Payment (new state)",
+            "cardinality": "single"
+          },
+          "sources": [
+            {
+              "src": "admin-payments",
+              "via": "action:refund"
+            }
+          ],
+          "notes": []
+        },
+        {
+          "id": "E-81",
           "method": "POST",
           "path": "/v1/payments",
           "auth": [
@@ -8393,7 +10513,7 @@
           ]
         },
         {
-          "id": "E-64",
+          "id": "E-82",
           "method": "GET",
           "path": "/v1/payments/:reference",
           "auth": [
@@ -8407,6 +10527,34 @@
             {
               "kind": "role",
               "role": "creator"
+            },
+            {
+              "kind": "staff role",
+              "role": "finance"
+            },
+            {
+              "kind": "staff role",
+              "role": "maker"
+            },
+            {
+              "kind": "staff role",
+              "role": "moderator"
+            },
+            {
+              "kind": "staff role",
+              "role": "ops"
+            },
+            {
+              "kind": "staff role",
+              "role": "owner"
+            },
+            {
+              "kind": "staff role",
+              "role": "reviewer"
+            },
+            {
+              "kind": "staff role",
+              "role": "support"
             },
             {
               "kind": "user",
@@ -8428,6 +10576,18 @@
           },
           "sources": [
             {
+              "src": "admin-overview",
+              "via": "read:Payment"
+            },
+            {
+              "src": "admin-people-detail",
+              "via": "read:Payment"
+            },
+            {
+              "src": "admin-wishes-detail",
+              "via": "read:Payment"
+            },
+            {
               "src": "payments",
               "via": "action:verifyPayment"
             }
@@ -8435,7 +10595,7 @@
           "notes": []
         },
         {
-          "id": "E-65",
+          "id": "E-83",
           "method": "INTERNAL",
           "path": "port:fulfilment#concierge.rush",
           "auth": [
@@ -8457,7 +10617,7 @@
           ]
         },
         {
-          "id": "E-66",
+          "id": "E-84",
           "method": "INTERNAL",
           "path": "port:fulfilment#concierge.single",
           "auth": [
@@ -8479,7 +10639,7 @@
           ]
         },
         {
-          "id": "E-67",
+          "id": "E-85",
           "method": "INTERNAL",
           "path": "port:fulfilment#creator.credit-pack",
           "auth": [
@@ -8501,7 +10661,7 @@
           ]
         },
         {
-          "id": "E-68",
+          "id": "E-86",
           "method": "INTERNAL",
           "path": "port:fulfilment#creator.extra-review",
           "auth": [
@@ -8523,7 +10683,7 @@
           ]
         },
         {
-          "id": "E-69",
+          "id": "E-87",
           "method": "INTERNAL",
           "path": "port:fulfilment#creator.plan",
           "auth": [
@@ -8545,7 +10705,7 @@
           ]
         },
         {
-          "id": "E-70",
+          "id": "E-88",
           "method": "INTERNAL",
           "path": "port:fulfilment#creator.signed",
           "auth": [
@@ -8567,7 +10727,7 @@
           ]
         },
         {
-          "id": "E-71",
+          "id": "E-89",
           "method": "INTERNAL",
           "path": "port:fulfilment#extra.clip-15s",
           "auth": [
@@ -8589,7 +10749,7 @@
           ]
         },
         {
-          "id": "E-72",
+          "id": "E-90",
           "method": "INTERNAL",
           "path": "port:fulfilment#extra.clip-60s",
           "auth": [
@@ -8611,7 +10771,7 @@
           ]
         },
         {
-          "id": "E-73",
+          "id": "E-91",
           "method": "INTERNAL",
           "path": "port:fulfilment#extra.five-photos",
           "auth": [
@@ -8633,7 +10793,7 @@
           ]
         },
         {
-          "id": "E-74",
+          "id": "E-92",
           "method": "INTERNAL",
           "path": "port:fulfilment#extra.portrait-video",
           "auth": [
@@ -8655,7 +10815,7 @@
           ]
         },
         {
-          "id": "E-75",
+          "id": "E-93",
           "method": "INTERNAL",
           "path": "port:fulfilment#extra.premium-style",
           "auth": [
@@ -8677,7 +10837,7 @@
           ]
         },
         {
-          "id": "E-76",
+          "id": "E-94",
           "method": "INTERNAL",
           "path": "port:fulfilment#extra.qr-card",
           "auth": [
@@ -8699,7 +10859,7 @@
           ]
         },
         {
-          "id": "E-77",
+          "id": "E-95",
           "method": "INTERNAL",
           "path": "port:fulfilment#keep.half",
           "auth": [
@@ -8721,7 +10881,7 @@
           ]
         },
         {
-          "id": "E-78",
+          "id": "E-96",
           "method": "INTERNAL",
           "path": "port:fulfilment#keep.month",
           "auth": [
@@ -8743,7 +10903,7 @@
           ]
         },
         {
-          "id": "E-79",
+          "id": "E-97",
           "method": "INTERNAL",
           "path": "port:fulfilment#keep.year",
           "auth": [
@@ -8765,7 +10925,7 @@
           ]
         },
         {
-          "id": "E-80",
+          "id": "E-98",
           "method": "INTERNAL",
           "path": "port:fulfilment#pass.year",
           "auth": [
@@ -8787,7 +10947,7 @@
           ]
         },
         {
-          "id": "E-81",
+          "id": "E-99",
           "method": "INTERNAL",
           "path": "port:fulfilment#pro.pack",
           "auth": [
@@ -8809,7 +10969,7 @@
           ]
         },
         {
-          "id": "E-82",
+          "id": "E-100",
           "method": "INTERNAL",
           "path": "port:fulfilment#pro.starter",
           "auth": [
@@ -8831,7 +10991,7 @@
           ]
         },
         {
-          "id": "E-83",
+          "id": "E-101",
           "method": "INTERNAL",
           "path": "port:fulfilment#pro.studio",
           "auth": [
@@ -8853,7 +11013,7 @@
           ]
         },
         {
-          "id": "E-84",
+          "id": "E-102",
           "method": "INTERNAL",
           "path": "port:fulfilment#ticket.keepsake",
           "auth": [
@@ -8875,7 +11035,7 @@
           ]
         },
         {
-          "id": "E-85",
+          "id": "E-103",
           "method": "INTERNAL",
           "path": "port:fulfilment#ticket.moment",
           "auth": [
@@ -8897,7 +11057,7 @@
           ]
         },
         {
-          "id": "E-86",
+          "id": "E-104",
           "method": "INTERNAL",
           "path": "port:fulfilment#ticket.premiere",
           "auth": [
@@ -8919,7 +11079,7 @@
           ]
         },
         {
-          "id": "E-87",
+          "id": "E-105",
           "method": "INTERNAL",
           "path": "port:fulfilment#ticket.signature",
           "auth": [
@@ -8941,7 +11101,7 @@
           ]
         },
         {
-          "id": "E-88",
+          "id": "E-106",
           "method": "INTERNAL",
           "path": "port:fulfilment#vault.block",
           "auth": [
@@ -8963,7 +11123,7 @@
           ]
         },
         {
-          "id": "E-89",
+          "id": "E-107",
           "method": "INTERNAL",
           "path": "port:fulfilment#vault.block-bulk",
           "auth": [
@@ -9093,7 +11253,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-90",
+          "id": "E-108",
           "method": "POST",
           "path": "/v1/admin/payout-runs/:id/approve",
           "auth": [
@@ -9130,7 +11290,7 @@
           ]
         },
         {
-          "id": "E-91",
+          "id": "E-109",
           "method": "GET",
           "path": "/v1/creator/payouts",
           "auth": [
@@ -9157,14 +11317,368 @@
       ]
     },
     {
+      "name": "PayoutRow",
+      "sourceScreens": [
+        "admin-creators"
+      ],
+      "sourceDeclarations": [],
+      "embedded": [],
+      "fields": [
+        {
+          "name": "carried",
+          "type": "money",
+          "classes": [
+            "money-kobo"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-creators"
+          ],
+          "supersedes": [
+            "S-1: integer kobo, currency NGN, over the wire and in storage; prices only from the price book"
+          ]
+        },
+        {
+          "name": "creator",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-creators"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "earned",
+          "type": "money",
+          "classes": [
+            "money-kobo"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-creators"
+          ],
+          "supersedes": [
+            "S-1: integer kobo, currency NGN, over the wire and in storage; prices only from the price book"
+          ]
+        },
+        {
+          "name": "handle",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-creators"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "month",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-creators"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-creators"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "paid",
+          "type": "object",
+          "classes": [
+            "object"
+          ],
+          "nullable": true,
+          "provenance": [
+            "admin-creators"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "reason",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-creators"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "state",
+          "type": "string",
+          "classes": [
+            "enum"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-creators"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "total",
+          "type": "money",
+          "classes": [
+            "money-kobo"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-creators"
+          ],
+          "supersedes": [
+            "S-1: integer kobo, currency NGN, over the wire and in storage; prices only from the price book"
+          ]
+        }
+      ],
+      "endpoints": [
+        {
+          "id": "E-110",
+          "method": "POST",
+          "path": "/v1/admin/payout-rows/:id/mark-payout-paid",
+          "auth": [
+            {
+              "kind": "staff role",
+              "role": "finance"
+            },
+            {
+              "kind": "staff role",
+              "role": "ops"
+            },
+            {
+              "kind": "staff role",
+              "role": "owner"
+            },
+            {
+              "kind": "staff role",
+              "role": "reviewer"
+            }
+          ],
+          "body": [
+            {
+              "name": "creator",
+              "type": "string (CreatorRow.id)",
+              "from": [
+                "admin-creators"
+              ]
+            },
+            {
+              "name": "month",
+              "type": "string (named in the header; the seam call does not pass it, the run is last month's)",
+              "from": [
+                "admin-creators"
+              ]
+            },
+            {
+              "name": "reason",
+              "type": "string (min 4 chars after trim; written to the audit log)",
+              "from": [
+                "admin-creators"
+              ]
+            }
+          ],
+          "response": {
+            "entity": "PayoutRow",
+            "cardinality": "single",
+            "note": "seam returns void. Only a payout in state due; otherwise not_allowed. The reason carries the transfer reference (UI text). No money moves through this action: it records that it left"
+          },
+          "sources": [
+            {
+              "src": "admin-creators",
+              "via": "action:markPayoutPaid"
+            }
+          ],
+          "notes": []
+        },
+        {
+          "id": "E-111",
+          "method": "GET",
+          "path": "/v1/payout-rows",
+          "auth": [
+            {
+              "kind": "staff role",
+              "role": "finance"
+            },
+            {
+              "kind": "staff role",
+              "role": "ops"
+            },
+            {
+              "kind": "staff role",
+              "role": "owner"
+            },
+            {
+              "kind": "staff role",
+              "role": "reviewer"
+            }
+          ],
+          "body": [],
+          "response": {
+            "entity": "PayoutRow",
+            "cardinality": "list"
+          },
+          "sources": [
+            {
+              "src": "admin-creators",
+              "via": "read:PayoutRow"
+            }
+          ],
+          "notes": []
+        }
+      ]
+    },
+    {
+      "name": "PayoutRun",
+      "sourceScreens": [
+        "admin-creators"
+      ],
+      "sourceDeclarations": [],
+      "embedded": [],
+      "fields": [
+        {
+          "name": "month",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-creators"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "payDay",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-creators"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "rows",
+          "type": "array",
+          "classes": [
+            "array"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-creators"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "threshold",
+          "type": "money",
+          "classes": [
+            "money-kobo"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-creators"
+          ],
+          "supersedes": [
+            "S-1: integer kobo, currency NGN, over the wire and in storage; prices only from the price book"
+          ]
+        }
+      ],
+      "endpoints": [
+        {
+          "id": "E-112",
+          "method": "GET",
+          "path": "/v1/payout-runs/:id",
+          "auth": [
+            {
+              "kind": "staff role",
+              "role": "finance"
+            },
+            {
+              "kind": "staff role",
+              "role": "ops"
+            },
+            {
+              "kind": "staff role",
+              "role": "owner"
+            },
+            {
+              "kind": "staff role",
+              "role": "reviewer"
+            }
+          ],
+          "body": [],
+          "response": {
+            "entity": "PayoutRun",
+            "cardinality": "single"
+          },
+          "sources": [
+            {
+              "src": "admin-creators",
+              "via": "read:PayoutRun"
+            }
+          ],
+          "notes": []
+        }
+      ]
+    },
+    {
       "name": "Person",
       "sourceScreens": [
+        "admin-people-detail",
+        "admin-support-detail",
         "pro-home",
         "pro-people"
       ],
       "sourceDeclarations": [],
       "embedded": [],
       "fields": [
+        {
+          "name": "action",
+          "type": "string",
+          "classes": [
+            "enum"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-people-detail"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "ban",
+          "type": "object",
+          "classes": [
+            "object"
+          ],
+          "nullable": true,
+          "provenance": [
+            "admin-people-detail"
+          ],
+          "supersedes": []
+        },
         {
           "name": "birthday",
           "type": "time",
@@ -9179,6 +11693,30 @@
           "supersedes": []
         },
         {
+          "name": "email",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-people-detail"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "erased",
+          "type": "boolean",
+          "classes": [
+            "boolean"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-people-detail"
+          ],
+          "supersedes": []
+        },
+        {
           "name": "id",
           "type": "string",
           "classes": [
@@ -9186,12 +11724,27 @@
           ],
           "nullable": false,
           "provenance": [
+            "admin-people-detail",
+            "admin-support-detail",
             "pro-home",
             "pro-people"
           ],
           "supersedes": [
             "S-2: server-issued UUIDv7 ids"
           ]
+        },
+        {
+          "name": "joined",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-people-detail",
+            "admin-support-detail"
+          ],
+          "supersedes": []
         },
         {
           "name": "name",
@@ -9201,8 +11754,22 @@
           ],
           "nullable": false,
           "provenance": [
+            "admin-people-detail",
+            "admin-support-detail",
             "pro-home",
             "pro-people"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "pass",
+          "type": "object",
+          "classes": [
+            "object"
+          ],
+          "nullable": true,
+          "provenance": [
+            "admin-people-detail"
           ],
           "supersedes": []
         },
@@ -9214,12 +11781,37 @@
           ],
           "nullable": false,
           "provenance": [
+            "admin-people-detail",
             "pro-home",
             "pro-people"
           ],
           "supersedes": [
             "S-27: sign-in by email code or Google only; phone is an optional plain detail stored E.164 when given, never verified, never an account key"
           ]
+        },
+        {
+          "name": "reason",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-people-detail"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "record",
+          "type": "array",
+          "classes": [
+            "array"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-people-detail"
+          ],
+          "supersedes": []
         },
         {
           "name": "rows",
@@ -9230,6 +11822,18 @@
           "nullable": false,
           "provenance": [
             "pro-people"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "sides",
+          "type": "object",
+          "classes": [
+            "object"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-people-detail"
           ],
           "supersedes": []
         },
@@ -9262,7 +11866,64 @@
       ],
       "endpoints": [
         {
-          "id": "E-92",
+          "id": "E-113",
+          "method": "POST",
+          "path": "/v1/admin/persons/:id/act-on-person",
+          "auth": [
+            {
+              "kind": "staff role",
+              "role": "moderator"
+            },
+            {
+              "kind": "staff role",
+              "role": "ops"
+            },
+            {
+              "kind": "staff role",
+              "role": "owner"
+            },
+            {
+              "kind": "staff role",
+              "role": "support"
+            }
+          ],
+          "body": [
+            {
+              "name": "action",
+              "type": "ban|lift|erase",
+              "from": [
+                "admin-people-detail"
+              ]
+            },
+            {
+              "name": "id",
+              "type": "string",
+              "from": [
+                "admin-people-detail"
+              ]
+            },
+            {
+              "name": "reason",
+              "type": "string(min 4 chars after trim)",
+              "from": [
+                "admin-people-detail"
+              ]
+            }
+          ],
+          "response": {
+            "entity": "PersonDetail",
+            "cardinality": "single"
+          },
+          "sources": [
+            {
+              "src": "admin-people-detail",
+              "via": "action:actOnPerson"
+            }
+          ],
+          "notes": []
+        },
+        {
+          "id": "E-114",
           "method": "GET",
           "path": "/v1/business/people",
           "auth": [
@@ -9289,7 +11950,7 @@
           "notes": []
         },
         {
-          "id": "E-93",
+          "id": "E-115",
           "method": "POST",
           "path": "/v1/business/people",
           "auth": [
@@ -9348,7 +12009,7 @@
           "notes": []
         },
         {
-          "id": "E-94",
+          "id": "E-116",
           "method": "DELETE",
           "path": "/v1/business/people/:id",
           "auth": [
@@ -9379,7 +12040,46 @@
           "notes": []
         },
         {
-          "id": "E-95",
+          "id": "E-117",
+          "method": "GET",
+          "path": "/v1/business/people/:id",
+          "auth": [
+            {
+              "kind": "staff role",
+              "role": "moderator"
+            },
+            {
+              "kind": "staff role",
+              "role": "ops"
+            },
+            {
+              "kind": "staff role",
+              "role": "owner"
+            },
+            {
+              "kind": "staff role",
+              "role": "support"
+            }
+          ],
+          "body": [],
+          "response": {
+            "entity": "Person",
+            "cardinality": "single"
+          },
+          "sources": [
+            {
+              "src": "admin-people-detail",
+              "via": "read:Person"
+            },
+            {
+              "src": "admin-support-detail",
+              "via": "read:Person"
+            }
+          ],
+          "notes": []
+        },
+        {
+          "id": "E-118",
           "method": "PATCH",
           "path": "/v1/business/people/:id",
           "auth": [
@@ -9445,7 +12145,7 @@
           "notes": []
         },
         {
-          "id": "E-96",
+          "id": "E-119",
           "method": "POST",
           "path": "/v1/business/people/import",
           "auth": [
@@ -9476,6 +12176,89 @@
           "notes": [
             "route by conventions naming"
           ]
+        }
+      ]
+    },
+    {
+      "name": "PersonDetail",
+      "sourceScreens": [
+        "admin-people-detail"
+      ],
+      "sourceDeclarations": [],
+      "embedded": [],
+      "fields": [
+        {
+          "name": "payments",
+          "type": "array",
+          "classes": [
+            "array"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-people-detail"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "person",
+          "type": "named",
+          "classes": [
+            "named"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-people-detail"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "wishes",
+          "type": "array",
+          "classes": [
+            "array"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-people-detail"
+          ],
+          "supersedes": []
+        }
+      ],
+      "endpoints": [
+        {
+          "id": "E-120",
+          "method": "GET",
+          "path": "/v1/person-details/:id",
+          "auth": [
+            {
+              "kind": "staff role",
+              "role": "moderator"
+            },
+            {
+              "kind": "staff role",
+              "role": "ops"
+            },
+            {
+              "kind": "staff role",
+              "role": "owner"
+            },
+            {
+              "kind": "staff role",
+              "role": "support"
+            }
+          ],
+          "body": [],
+          "response": {
+            "entity": "PersonDetail",
+            "cardinality": "single"
+          },
+          "sources": [
+            {
+              "src": "admin-people-detail",
+              "via": "read:PersonDetail"
+            }
+          ],
+          "notes": []
         }
       ]
     },
@@ -9514,7 +12297,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-97",
+          "id": "E-121",
           "method": "GET",
           "path": "/v1/play-wishes/:id",
           "auth": [
@@ -9549,6 +12332,7 @@
     {
       "name": "Price",
       "sourceScreens": [
+        "admin-prices",
         "site-business",
         "site-contact",
         "site-home",
@@ -9560,6 +12344,18 @@
       ],
       "embedded": [],
       "fields": [
+        {
+          "name": "changed",
+          "type": "boolean",
+          "classes": [
+            "boolean"
+          ],
+          "nullable": true,
+          "provenance": [
+            "admin-prices"
+          ],
+          "supersedes": []
+        },
         {
           "name": "conciergeDeliveryHours",
           "type": "number",
@@ -9599,6 +12395,30 @@
           "supersedes": []
         },
         {
+          "name": "from",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-prices"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "group",
+          "type": "string",
+          "classes": [
+            "enum"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-prices"
+          ],
+          "supersedes": []
+        },
+        {
           "name": "items",
           "type": "array",
           "classes": [
@@ -9613,6 +12433,32 @@
           "supersedes": []
         },
         {
+          "name": "key",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-prices"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "kind",
+          "type": "money",
+          "classes": [
+            "money-kobo"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-prices"
+          ],
+          "supersedes": [
+            "S-1: integer kobo, currency NGN, over the wire and in storage; prices only from the price book"
+          ]
+        },
+        {
           "name": "lead",
           "type": "string",
           "classes": [
@@ -9625,6 +12471,20 @@
             "site-pricing"
           ],
           "supersedes": []
+        },
+        {
+          "name": "list",
+          "type": "money",
+          "classes": [
+            "money-kobo"
+          ],
+          "nullable": true,
+          "provenance": [
+            "admin-prices"
+          ],
+          "supersedes": [
+            "S-1: integer kobo, currency NGN, over the wire and in storage; prices only from the price book"
+          ]
         },
         {
           "name": "listKobo",
@@ -9646,10 +12506,23 @@
           ],
           "nullable": false,
           "provenance": [
+            "admin-prices",
             "price-book",
             "site-business",
             "site-home",
             "site-pricing"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "per",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-prices"
           ],
           "supersedes": []
         },
@@ -9679,6 +12552,18 @@
           "nullable": true,
           "provenance": [
             "price-book"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "reason",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-prices"
           ],
           "supersedes": []
         },
@@ -9719,6 +12604,20 @@
             "site-pricing"
           ],
           "supersedes": []
+        },
+        {
+          "name": "value",
+          "type": "money",
+          "classes": [
+            "money-kobo"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-prices"
+          ],
+          "supersedes": [
+            "S-1: integer kobo, currency NGN, over the wire and in storage; prices only from the price book"
+          ]
         },
         {
           "name": "vatIncluded",
@@ -9763,7 +12662,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-98",
+          "id": "E-122",
           "method": "GET",
           "path": "/v1/price-book",
           "auth": [
@@ -9777,6 +12676,10 @@
             "cardinality": "list"
           },
           "sources": [
+            {
+              "src": "admin-prices",
+              "via": "read:Price (route DEC-96)"
+            },
             {
               "src": "app-home",
               "via": "read:Price/offer configuration (ticket list) (route DEC-96)"
@@ -10016,7 +12919,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-99",
+          "id": "E-123",
           "method": "POST",
           "path": "/v1/admin/price-book-versions",
           "auth": [
@@ -10065,7 +12968,7 @@
           "notes": []
         },
         {
-          "id": "E-100",
+          "id": "E-124",
           "method": "POST",
           "path": "/v1/admin/price-book-versions/:id/publish",
           "auth": [
@@ -10495,7 +13398,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-101",
+          "id": "E-125",
           "method": "GET",
           "path": "/v1/business/usage",
           "auth": [
@@ -10620,6 +13523,105 @@
         }
       ],
       "endpoints": []
+    },
+    {
+      "name": "Provider",
+      "sourceScreens": [
+        "admin-settings"
+      ],
+      "sourceDeclarations": [],
+      "embedded": [],
+      "fields": [
+        {
+          "name": "key",
+          "type": "string",
+          "classes": [
+            "enum"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-settings"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "line",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-settings"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-settings"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "state",
+          "type": "unknown",
+          "classes": [
+            "unknown"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-settings"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "who",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-settings"
+          ],
+          "supersedes": []
+        }
+      ],
+      "endpoints": [
+        {
+          "id": "E-126",
+          "method": "GET",
+          "path": "/v1/providers",
+          "auth": [
+            {
+              "kind": "staff role",
+              "role": "any"
+            },
+            {
+              "kind": "staff role",
+              "role": "owner"
+            }
+          ],
+          "body": [],
+          "response": {
+            "entity": "Provider",
+            "cardinality": "list"
+          },
+          "sources": [
+            {
+              "src": "admin-settings",
+              "via": "read:Provider"
+            }
+          ],
+          "notes": []
+        }
+      ]
     },
     {
       "name": "PublicWishView",
@@ -10812,7 +13814,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-102",
+          "id": "E-127",
           "method": "GET",
           "path": "/v1/w/:slug",
           "auth": [
@@ -10872,7 +13874,7 @@
           ]
         },
         {
-          "id": "E-103",
+          "id": "E-128",
           "method": "POST",
           "path": "/v1/w/:slug/favourites",
           "auth": [
@@ -10911,7 +13913,7 @@
           ]
         },
         {
-          "id": "E-104",
+          "id": "E-129",
           "method": "POST",
           "path": "/v1/w/:slug/opens",
           "auth": [
@@ -10943,7 +13945,7 @@
           ]
         },
         {
-          "id": "E-105",
+          "id": "E-130",
           "method": "POST",
           "path": "/v1/w/:slug/reaction",
           "auth": [
@@ -10982,7 +13984,7 @@
           ]
         },
         {
-          "id": "E-106",
+          "id": "E-131",
           "method": "POST",
           "path": "/v1/w/:slug/take-down",
           "auth": [
@@ -11021,7 +14023,7 @@
           ]
         },
         {
-          "id": "E-107",
+          "id": "E-132",
           "method": "POST",
           "path": "/v1/w/:slug/unlock",
           "auth": [
@@ -11086,7 +14088,9 @@
     },
     {
       "name": "PublishRequest",
-      "sourceScreens": [],
+      "sourceScreens": [
+        "admin-showing"
+      ],
       "sourceDeclarations": [
         "now-showing-review"
       ],
@@ -11136,6 +14140,7 @@
           ],
           "nullable": false,
           "provenance": [
+            "admin-showing",
             "now-showing-review"
           ],
           "supersedes": []
@@ -11185,6 +14190,7 @@
           ],
           "nullable": false,
           "provenance": [
+            "admin-showing",
             "now-showing-review"
           ],
           "supersedes": []
@@ -11264,7 +14270,61 @@
       ],
       "endpoints": [
         {
-          "id": "E-108",
+          "id": "E-133",
+          "method": "POST",
+          "path": "/v1/admin/publish-requests/:id/decide-publish",
+          "auth": [
+            {
+              "kind": "staff role",
+              "role": "moderator"
+            },
+            {
+              "kind": "staff role",
+              "role": "ops"
+            },
+            {
+              "kind": "staff role",
+              "role": "owner"
+            }
+          ],
+          "body": [
+            {
+              "name": "decision",
+              "type": "'approve'|'decline'",
+              "from": [
+                "admin-showing"
+              ]
+            },
+            {
+              "name": "id",
+              "type": "string",
+              "from": [
+                "admin-showing"
+              ]
+            },
+            {
+              "name": "reason",
+              "type": "string (min 4 chars after trim; written to the audit log)",
+              "from": [
+                "admin-showing"
+              ]
+            }
+          ],
+          "response": {
+            "entity": "PublishView",
+            "cardinality": "single",
+            "note": "approve lists the wish (isPublic true, listed time = now), only when the wish is live or resting (else not_allowed); either decision adds a timeline event to the wish; already decided is not_allowed"
+          },
+          "sources": [
+            {
+              "src": "admin-showing",
+              "via": "action:decidePublish"
+            }
+          ],
+          "notes": []
+        },
+        {
+          "id": "E-134",
           "method": "POST",
           "path": "/v1/admin/publish-requests/:id/decision",
           "auth": [
@@ -11315,7 +14375,7 @@
           ]
         },
         {
-          "id": "E-109",
+          "id": "E-135",
           "method": "DELETE",
           "path": "/v1/wishes/:id/publish-requests",
           "auth": [
@@ -11376,7 +14436,7 @@
           ]
         },
         {
-          "id": "E-110",
+          "id": "E-136",
           "method": "POST",
           "path": "/v1/wishes/:id/publish-requests",
           "auth": [
@@ -11463,6 +14523,183 @@
           "notes": [
             "route by DEC-95"
           ]
+        }
+      ]
+    },
+    {
+      "name": "PublishView",
+      "sourceScreens": [
+        "admin-showing"
+      ],
+      "sourceDeclarations": [],
+      "embedded": [],
+      "fields": [
+        {
+          "name": "at",
+          "type": "time",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-showing"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "decided",
+          "type": "object",
+          "classes": [
+            "object"
+          ],
+          "nullable": true,
+          "provenance": [
+            "admin-showing"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "forName",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-showing"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "from",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-showing"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "id",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-showing"
+          ],
+          "supersedes": [
+            "S-2: server-issued UUIDv7 ids"
+          ]
+        },
+        {
+          "name": "kind",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-showing"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "occasion",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-showing"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "screen",
+          "type": "object",
+          "classes": [
+            "object"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-showing"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "style",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-showing"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "styleName",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-showing"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "wish",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-showing"
+          ],
+          "supersedes": []
+        }
+      ],
+      "endpoints": [
+        {
+          "id": "E-137",
+          "method": "GET",
+          "path": "/v1/publish-views",
+          "auth": [
+            {
+              "kind": "staff role",
+              "role": "moderator"
+            },
+            {
+              "kind": "staff role",
+              "role": "ops"
+            },
+            {
+              "kind": "staff role",
+              "role": "owner"
+            }
+          ],
+          "body": [],
+          "response": {
+            "entity": "PublishView",
+            "cardinality": "list"
+          },
+          "sources": [
+            {
+              "src": "admin-showing",
+              "via": "read:PublishView"
+            }
+          ],
+          "notes": []
         }
       ]
     },
@@ -11769,7 +15006,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-111",
+          "id": "E-138",
           "method": "GET",
           "path": "/v1/showing",
           "auth": [
@@ -11920,7 +15157,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-112",
+          "id": "E-139",
           "method": "POST",
           "path": "/v1/qr-cards",
           "auth": [
@@ -11979,6 +15216,125 @@
       ]
     },
     {
+      "name": "Queue",
+      "sourceScreens": [
+        "admin-overview"
+      ],
+      "sourceDeclarations": [],
+      "embedded": [],
+      "fields": [
+        {
+          "name": "count",
+          "type": "number",
+          "classes": [
+            "number"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-overview"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "href",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-overview"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "key",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-overview"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "label",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-overview"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "oldest",
+          "type": "time",
+          "classes": [
+            "time-iso"
+          ],
+          "nullable": true,
+          "provenance": [
+            "admin-overview"
+          ],
+          "supersedes": []
+        }
+      ],
+      "endpoints": [
+        {
+          "id": "E-140",
+          "method": "GET",
+          "path": "/v1/queues",
+          "auth": [
+            {
+              "kind": "staff role",
+              "role": "finance"
+            },
+            {
+              "kind": "staff role",
+              "role": "maker"
+            },
+            {
+              "kind": "staff role",
+              "role": "moderator"
+            },
+            {
+              "kind": "staff role",
+              "role": "ops"
+            },
+            {
+              "kind": "staff role",
+              "role": "owner"
+            },
+            {
+              "kind": "staff role",
+              "role": "reviewer"
+            },
+            {
+              "kind": "staff role",
+              "role": "support"
+            }
+          ],
+          "body": [],
+          "response": {
+            "entity": "Queue",
+            "cardinality": "list"
+          },
+          "sources": [
+            {
+              "src": "admin-overview",
+              "via": "read:Queue"
+            }
+          ],
+          "notes": []
+        }
+      ]
+    },
+    {
       "name": "Reaction",
       "sourceScreens": [
         "app-home"
@@ -12013,7 +15369,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-113",
+          "id": "E-141",
           "method": "DELETE",
           "path": "/v1/feed/wishes/:id/reaction",
           "auth": [
@@ -12054,7 +15410,7 @@
           ]
         },
         {
-          "id": "E-114",
+          "id": "E-142",
           "method": "PUT",
           "path": "/v1/feed/wishes/:id/reaction",
           "auth": [
@@ -12210,7 +15566,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-115",
+          "id": "E-143",
           "method": "POST",
           "path": "/v1/admin/reconciliations",
           "auth": [
@@ -12380,7 +15736,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-116",
+          "id": "E-144",
           "method": "POST",
           "path": "/v1/admin/refunds",
           "auth": [
@@ -12433,7 +15789,7 @@
           "notes": []
         },
         {
-          "id": "E-117",
+          "id": "E-145",
           "method": "POST",
           "path": "/v1/admin/refunds/:id/approve-refund",
           "auth": [
@@ -12612,7 +15968,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-118",
+          "id": "E-146",
           "method": "GET",
           "path": "/v1/wishes/:id/video",
           "auth": [
@@ -12645,7 +16001,7 @@
           ]
         },
         {
-          "id": "E-119",
+          "id": "E-147",
           "method": "POST",
           "path": "/v1/wishes/:id/video",
           "auth": [
@@ -12885,7 +16241,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-120",
+          "id": "E-148",
           "method": "POST",
           "path": "/v1/admin/reports/:id/decision",
           "auth": [
@@ -12929,7 +16285,7 @@
           ]
         },
         {
-          "id": "E-121",
+          "id": "E-149",
           "method": "POST",
           "path": "/v1/reports",
           "auth": [
@@ -13009,7 +16365,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-122",
+          "id": "E-150",
           "method": "GET",
           "path": "/v1/business/reveal-links/:id",
           "auth": [
@@ -13032,7 +16388,7 @@
           "notes": []
         },
         {
-          "id": "E-123",
+          "id": "E-151",
           "method": "POST",
           "path": "/v1/business/reveal-links/:id/copy-link",
           "auth": [
@@ -13146,6 +16502,69 @@
         }
       ],
       "endpoints": []
+    },
+    {
+      "name": "RoleAccess",
+      "sourceScreens": [
+        "admin-team"
+      ],
+      "sourceDeclarations": [],
+      "embedded": [],
+      "fields": [
+        {
+          "name": "role",
+          "type": "named",
+          "classes": [
+            "named"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-team"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "sections",
+          "type": "array",
+          "classes": [
+            "array"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-team"
+          ],
+          "supersedes": []
+        }
+      ],
+      "endpoints": [
+        {
+          "id": "E-152",
+          "method": "GET",
+          "path": "/v1/role-accesses",
+          "auth": [
+            {
+              "kind": "staff role",
+              "role": "any"
+            },
+            {
+              "kind": "staff role",
+              "role": "owner"
+            }
+          ],
+          "body": [],
+          "response": {
+            "entity": "RoleAccess",
+            "cardinality": "list"
+          },
+          "sources": [
+            {
+              "src": "admin-team",
+              "via": "read:RoleAccess"
+            }
+          ],
+          "notes": []
+        }
+      ]
     },
     {
       "name": "RoyaltyAccrual",
@@ -13285,7 +16704,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-124",
+          "id": "E-153",
           "method": "GET",
           "path": "/v1/creator/earnings",
           "auth": [
@@ -13316,6 +16735,87 @@
       ]
     },
     {
+      "name": "SavedReply",
+      "sourceScreens": [
+        "admin-support-detail"
+      ],
+      "sourceDeclarations": [],
+      "embedded": [],
+      "fields": [
+        {
+          "name": "id",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-support-detail"
+          ],
+          "supersedes": [
+            "S-2: server-issued UUIDv7 ids"
+          ]
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-support-detail"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "text",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-support-detail"
+          ],
+          "supersedes": []
+        }
+      ],
+      "endpoints": [
+        {
+          "id": "E-154",
+          "method": "GET",
+          "path": "/v1/saved-replies",
+          "auth": [
+            {
+              "kind": "staff role",
+              "role": "ops"
+            },
+            {
+              "kind": "staff role",
+              "role": "owner"
+            },
+            {
+              "kind": "staff role",
+              "role": "support"
+            }
+          ],
+          "body": [],
+          "response": {
+            "entity": "SavedReply",
+            "cardinality": "list"
+          },
+          "sources": [
+            {
+              "src": "admin-support-detail",
+              "via": "read:SavedReply"
+            }
+          ],
+          "notes": []
+        }
+      ]
+    },
+    {
       "name": "SavedWish",
       "sourceScreens": [
         "app-home"
@@ -13338,7 +16838,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-125",
+          "id": "E-155",
           "method": "DELETE",
           "path": "/v1/feed/wishes/:id/save",
           "auth": [
@@ -13379,7 +16879,7 @@
           ]
         },
         {
-          "id": "E-126",
+          "id": "E-156",
           "method": "PUT",
           "path": "/v1/feed/wishes/:id/save",
           "auth": [
@@ -13528,7 +17028,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-127",
+          "id": "E-157",
           "method": "POST",
           "path": "/v1/admin/screening-results/:id/decision",
           "auth": [
@@ -13568,7 +17068,7 @@
           ]
         },
         {
-          "id": "E-128",
+          "id": "E-158",
           "method": "INTERNAL",
           "path": "port:screening-results#screenFile",
           "auth": [
@@ -13788,7 +17288,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-129",
+          "id": "E-159",
           "method": "POST",
           "path": "/v1/auth/refresh",
           "auth": [
@@ -13811,7 +17311,7 @@
           "notes": []
         },
         {
-          "id": "E-130",
+          "id": "E-160",
           "method": "POST",
           "path": "/v1/auth/sign-out",
           "auth": [
@@ -13844,7 +17344,7 @@
           ]
         },
         {
-          "id": "E-131",
+          "id": "E-161",
           "method": "POST",
           "path": "/v1/auth/sign-out-everywhere",
           "auth": [
@@ -13869,7 +17369,7 @@
           ]
         },
         {
-          "id": "E-132",
+          "id": "E-162",
           "method": "GET",
           "path": "/v1/sessions",
           "auth": [
@@ -13892,6 +17392,190 @@
           "notes": [
             "route by conventions naming"
           ]
+        }
+      ]
+    },
+    {
+      "name": "Settings",
+      "sourceScreens": [
+        "admin-settings"
+      ],
+      "sourceDeclarations": [],
+      "embedded": [],
+      "fields": [
+        {
+          "name": "choice",
+          "type": "unknown",
+          "classes": [
+            "unknown"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-settings"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "key",
+          "type": "unknown",
+          "classes": [
+            "unknown"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-settings"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "on",
+          "type": "boolean",
+          "classes": [
+            "boolean"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-settings"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "providers",
+          "type": "array",
+          "classes": [
+            "array"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-settings"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "reason",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-settings"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "storage",
+          "type": "named",
+          "classes": [
+            "named"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-settings"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "switches",
+          "type": "object",
+          "classes": [
+            "object"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-settings"
+          ],
+          "supersedes": []
+        }
+      ],
+      "endpoints": [
+        {
+          "id": "E-163",
+          "method": "PATCH",
+          "path": "/v1/admin/settings/:id",
+          "auth": [
+            {
+              "kind": "staff role",
+              "role": "any"
+            },
+            {
+              "kind": "staff role",
+              "role": "owner"
+            }
+          ],
+          "body": [
+            {
+              "name": "choice",
+              "type": "r2|spaces",
+              "from": [
+                "admin-settings"
+              ]
+            },
+            {
+              "name": "key",
+              "type": "off40|samplesOff",
+              "from": [
+                "admin-settings"
+              ]
+            },
+            {
+              "name": "on",
+              "type": "boolean",
+              "from": [
+                "admin-settings"
+              ]
+            },
+            {
+              "name": "reason",
+              "type": "string",
+              "from": [
+                "admin-settings"
+              ]
+            }
+          ],
+          "response": {
+            "entity": "none",
+            "cardinality": "single",
+            "note": "seam returns void; no-op when unchanged. Owner only. One is used at a time"
+          },
+          "sources": [
+            {
+              "src": "admin-settings",
+              "via": "action:setStorage"
+            },
+            {
+              "src": "admin-settings",
+              "via": "action:setSwitch"
+            }
+          ],
+          "notes": []
+        },
+        {
+          "id": "E-164",
+          "method": "GET",
+          "path": "/v1/settings/:id",
+          "auth": [
+            {
+              "kind": "staff role",
+              "role": "any"
+            },
+            {
+              "kind": "staff role",
+              "role": "owner"
+            }
+          ],
+          "body": [],
+          "response": {
+            "entity": "Settings",
+            "cardinality": "single"
+          },
+          "sources": [
+            {
+              "src": "admin-settings",
+              "via": "read:Settings"
+            }
+          ],
+          "notes": []
         }
       ]
     },
@@ -13930,7 +17614,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-133",
+          "id": "E-165",
           "method": "POST",
           "path": "/v1/feed/wishes/:id/shares",
           "auth": [
@@ -14204,7 +17888,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-134",
+          "id": "E-166",
           "method": "GET",
           "path": "/v1/business/shoots",
           "auth": [
@@ -14231,7 +17915,7 @@
           "notes": []
         },
         {
-          "id": "E-135",
+          "id": "E-167",
           "method": "POST",
           "path": "/v1/business/shoots",
           "auth": [
@@ -14276,7 +17960,7 @@
           "notes": []
         },
         {
-          "id": "E-136",
+          "id": "E-168",
           "method": "DELETE",
           "path": "/v1/business/shoots/:id",
           "auth": [
@@ -14307,7 +17991,7 @@
           "notes": []
         },
         {
-          "id": "E-137",
+          "id": "E-169",
           "method": "GET",
           "path": "/v1/business/shoots/:id",
           "auth": [
@@ -14338,7 +18022,7 @@
           "notes": []
         },
         {
-          "id": "E-138",
+          "id": "E-170",
           "method": "POST",
           "path": "/v1/business/shoots/:id/files",
           "auth": [
@@ -14385,7 +18069,7 @@
           ]
         },
         {
-          "id": "E-139",
+          "id": "E-171",
           "method": "POST",
           "path": "/v1/business/shoots/:id/finals",
           "auth": [
@@ -14468,7 +18152,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-140",
+          "id": "E-172",
           "method": "INTERNAL",
           "path": "port:signed-urls#signedRead",
           "auth": [
@@ -14626,7 +18310,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-141",
+          "id": "E-173",
           "method": "POST",
           "path": "/v1/admin/auth/codes/verify",
           "auth": [
@@ -14665,7 +18349,7 @@
           ]
         },
         {
-          "id": "E-142",
+          "id": "E-174",
           "method": "POST",
           "path": "/v1/admin/staff-accounts",
           "auth": [
@@ -14703,7 +18387,7 @@
           "notes": []
         },
         {
-          "id": "E-143",
+          "id": "E-175",
           "method": "PATCH",
           "path": "/v1/admin/staff-accounts/:id",
           "auth": [
@@ -14743,7 +18427,7 @@
           ]
         },
         {
-          "id": "E-144",
+          "id": "E-176",
           "method": "POST",
           "path": "/v1/admin/staff-accounts/:id/suspend",
           "auth": [
@@ -14774,6 +18458,156 @@
           "notes": [
             "route by conventions naming"
           ]
+        }
+      ]
+    },
+    {
+      "name": "StaffSession",
+      "sourceScreens": [
+        "admin-sign-in"
+      ],
+      "sourceDeclarations": [],
+      "embedded": [],
+      "fields": [
+        {
+          "name": "code",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-sign-in"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "email",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-sign-in"
+          ],
+          "supersedes": []
+        }
+      ],
+      "endpoints": [
+        {
+          "id": "E-177",
+          "method": "POST",
+          "path": "/v1/staff-sessions/:id/request-code",
+          "auth": [
+            {
+              "kind": "public"
+            }
+          ],
+          "body": [
+            {
+              "name": "email",
+              "type": "string",
+              "from": [
+                "admin-sign-in"
+              ]
+            }
+          ],
+          "response": {
+            "entity": null,
+            "cardinality": "none",
+            "note": "204; refuses an email not on the staff list (not_staff)"
+          },
+          "sources": [
+            {
+              "src": "admin-sign-in",
+              "via": "action:requestCode"
+            }
+          ],
+          "notes": []
+        },
+        {
+          "id": "E-178",
+          "method": "POST",
+          "path": "/v1/staff-sessions/:id/sign-out",
+          "auth": [
+            {
+              "kind": "public"
+            }
+          ],
+          "body": [],
+          "response": {
+            "entity": null,
+            "cardinality": "none"
+          },
+          "sources": [
+            {
+              "src": "admin-sign-in",
+              "via": "action:signOut"
+            }
+          ],
+          "notes": []
+        },
+        {
+          "id": "E-179",
+          "method": "POST",
+          "path": "/v1/staff-sessions/:id/verify-code",
+          "auth": [
+            {
+              "kind": "public"
+            }
+          ],
+          "body": [
+            {
+              "name": "code",
+              "type": "string(6 digits)",
+              "from": [
+                "admin-sign-in"
+              ]
+            },
+            {
+              "name": "email",
+              "type": "string",
+              "from": [
+                "admin-sign-in"
+              ]
+            }
+          ],
+          "response": {
+            "entity": "Staff",
+            "cardinality": "single",
+            "fields": [
+              {
+                "name": "id",
+                "type": "string",
+                "nullable": false
+              },
+              {
+                "name": "name",
+                "type": "string",
+                "nullable": false
+              },
+              {
+                "name": "email",
+                "type": "string",
+                "nullable": false
+              },
+              {
+                "name": "role",
+                "type": "string",
+                "nullable": false,
+                "note": "owner|ops|moderator|reviewer|support|finance|maker"
+              }
+            ],
+            "note": "also a session"
+          },
+          "sources": [
+            {
+              "src": "admin-sign-in",
+              "via": "action:verifyCode"
+            }
+          ],
+          "notes": []
         }
       ]
     },
@@ -14989,7 +18823,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-145",
+          "id": "E-180",
           "method": "POST",
           "path": "/v1/uploads",
           "auth": [
@@ -15105,7 +18939,7 @@
           ]
         },
         {
-          "id": "E-146",
+          "id": "E-181",
           "method": "DELETE",
           "path": "/v1/uploads/:id",
           "auth": [
@@ -15157,7 +18991,7 @@
           ]
         },
         {
-          "id": "E-147",
+          "id": "E-182",
           "method": "POST",
           "path": "/v1/uploads/:id/confirm",
           "auth": [
@@ -15306,7 +19140,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-148",
+          "id": "E-183",
           "method": "GET",
           "path": "/v1/studio/prefs",
           "auth": [
@@ -15329,7 +19163,7 @@
           "notes": []
         },
         {
-          "id": "E-149",
+          "id": "E-184",
           "method": "PATCH",
           "path": "/v1/studio/prefs",
           "auth": [
@@ -15965,7 +19799,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-150",
+          "id": "E-185",
           "method": "GET",
           "path": "/v1/studio/styles",
           "auth": [
@@ -16004,7 +19838,7 @@
           "notes": []
         },
         {
-          "id": "E-151",
+          "id": "E-186",
           "method": "POST",
           "path": "/v1/studio/styles",
           "auth": [
@@ -16040,7 +19874,7 @@
           "notes": []
         },
         {
-          "id": "E-152",
+          "id": "E-187",
           "method": "DELETE",
           "path": "/v1/studio/styles/:id",
           "auth": [
@@ -16076,7 +19910,7 @@
           "notes": []
         },
         {
-          "id": "E-153",
+          "id": "E-188",
           "method": "GET",
           "path": "/v1/studio/styles/:id",
           "auth": [
@@ -16099,7 +19933,7 @@
           "notes": []
         },
         {
-          "id": "E-154",
+          "id": "E-189",
           "method": "PATCH",
           "path": "/v1/studio/styles/:id",
           "auth": [
@@ -16149,7 +19983,7 @@
           "notes": []
         },
         {
-          "id": "E-155",
+          "id": "E-190",
           "method": "POST",
           "path": "/v1/studio/styles/:id/withdraw",
           "auth": [
@@ -16657,7 +20491,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-156",
+          "id": "E-191",
           "method": "GET",
           "path": "/v1/styles",
           "auth": [
@@ -16727,7 +20561,7 @@
           "notes": []
         },
         {
-          "id": "E-157",
+          "id": "E-192",
           "method": "GET",
           "path": "/v1/styles/:id",
           "auth": [
@@ -16883,7 +20717,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-158",
+          "id": "E-193",
           "method": "POST",
           "path": "/v1/admin/styles/:slug/level",
           "auth": [
@@ -16934,7 +20768,7 @@
           ]
         },
         {
-          "id": "E-159",
+          "id": "E-194",
           "method": "GET",
           "path": "/v1/styles/levels",
           "auth": [
@@ -17020,7 +20854,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-160",
+          "id": "E-195",
           "method": "GET",
           "path": "/v1/admin/styles/preview-to-paid",
           "auth": [
@@ -17055,6 +20889,301 @@
           "notes": [
             "route by conventions naming"
           ]
+        }
+      ]
+    },
+    {
+      "name": "StyleRow",
+      "sourceScreens": [
+        "admin-styles"
+      ],
+      "sourceDeclarations": [],
+      "embedded": [],
+      "fields": [
+        {
+          "name": "by",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-styles"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "house",
+          "type": "boolean",
+          "classes": [
+            "boolean"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-styles"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "kinds",
+          "type": "array",
+          "classes": [
+            "array"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-styles"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "level",
+          "type": "string",
+          "classes": [
+            "enum"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-styles"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-styles"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "on",
+          "type": "boolean",
+          "classes": [
+            "boolean"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-styles"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "paid",
+          "type": "number",
+          "classes": [
+            "number"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-styles"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "previews",
+          "type": "number",
+          "classes": [
+            "number"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-styles"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "rate",
+          "type": "number",
+          "classes": [
+            "number"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-styles"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "reason",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-styles"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "record",
+          "type": "array",
+          "classes": [
+            "array"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-styles"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "slug",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-styles"
+          ],
+          "supersedes": []
+        }
+      ],
+      "endpoints": [
+        {
+          "id": "E-196",
+          "method": "POST",
+          "path": "/v1/admin/style-rows/:id/move-style",
+          "auth": [
+            {
+              "kind": "staff role",
+              "role": "ops"
+            },
+            {
+              "kind": "staff role",
+              "role": "owner"
+            },
+            {
+              "kind": "staff role",
+              "role": "reviewer"
+            }
+          ],
+          "body": [
+            {
+              "name": "level",
+              "type": "'starter'|'standard'|'premium' (creator styles: standard or premium only; must differ from the current level)",
+              "from": [
+                "admin-styles"
+              ]
+            },
+            {
+              "name": "reason",
+              "type": "string (min 4 chars after trim; written to the audit log)",
+              "from": [
+                "admin-styles"
+              ]
+            },
+            {
+              "name": "slug",
+              "type": "string",
+              "from": [
+                "admin-styles"
+              ]
+            }
+          ],
+          "response": {
+            "entity": "StyleRow",
+            "cardinality": "single",
+            "note": "seam returns void; header says -> { slug, level }. not_allowed for a level the style may not take or an unchanged level; adds a record entry 'Moved from X to Y'"
+          },
+          "sources": [
+            {
+              "src": "admin-styles",
+              "via": "action:moveStyle"
+            }
+          ],
+          "notes": []
+        },
+        {
+          "id": "E-197",
+          "method": "POST",
+          "path": "/v1/admin/style-rows/:id/switch-style",
+          "auth": [
+            {
+              "kind": "staff role",
+              "role": "ops"
+            },
+            {
+              "kind": "staff role",
+              "role": "owner"
+            },
+            {
+              "kind": "staff role",
+              "role": "reviewer"
+            }
+          ],
+          "body": [
+            {
+              "name": "on",
+              "type": "boolean",
+              "from": [
+                "admin-styles"
+              ]
+            },
+            {
+              "name": "reason",
+              "type": "string (min 4 chars after trim; written to the audit log)",
+              "from": [
+                "admin-styles"
+              ]
+            },
+            {
+              "name": "slug",
+              "type": "string",
+              "from": [
+                "admin-styles"
+              ]
+            }
+          ],
+          "response": {
+            "entity": "StyleRow",
+            "cardinality": "single",
+            "note": "seam returns void. Off: no new wish can pick it; wishes already made in it keep playing"
+          },
+          "sources": [
+            {
+              "src": "admin-styles",
+              "via": "action:switchStyle"
+            }
+          ],
+          "notes": []
+        },
+        {
+          "id": "E-198",
+          "method": "GET",
+          "path": "/v1/style-rows",
+          "auth": [
+            {
+              "kind": "staff role",
+              "role": "ops"
+            },
+            {
+              "kind": "staff role",
+              "role": "owner"
+            },
+            {
+              "kind": "staff role",
+              "role": "reviewer"
+            }
+          ],
+          "body": [],
+          "response": {
+            "entity": "StyleRow",
+            "cardinality": "list"
+          },
+          "sources": [
+            {
+              "src": "admin-styles",
+              "via": "read:StyleRow"
+            }
+          ],
+          "notes": []
         }
       ]
     },
@@ -17201,7 +21330,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-161",
+          "id": "E-199",
           "method": "POST",
           "path": "/v1/admin/style-submissions/:id/decision",
           "auth": [
@@ -17252,7 +21381,7 @@
           ]
         },
         {
-          "id": "E-162",
+          "id": "E-200",
           "method": "POST",
           "path": "/v1/studio/styles/:id/submissions",
           "auth": [
@@ -17302,6 +21431,328 @@
           "notes": [
             "route by DEC-65"
           ]
+        }
+      ]
+    },
+    {
+      "name": "Submission",
+      "sourceScreens": [
+        "admin-styles-review"
+      ],
+      "sourceDeclarations": [],
+      "embedded": [],
+      "fields": [
+        {
+          "name": "decision",
+          "type": "string",
+          "classes": [
+            "enum"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-styles-review"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "level",
+          "type": "string",
+          "classes": [
+            "enum"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-styles-review"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "reason",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-styles-review"
+          ],
+          "supersedes": []
+        }
+      ],
+      "endpoints": [
+        {
+          "id": "E-201",
+          "method": "POST",
+          "path": "/v1/admin/submissions/:id/decide-submission",
+          "auth": [
+            {
+              "kind": "staff role",
+              "role": "ops"
+            },
+            {
+              "kind": "staff role",
+              "role": "owner"
+            },
+            {
+              "kind": "staff role",
+              "role": "reviewer"
+            }
+          ],
+          "body": [
+            {
+              "name": "decision",
+              "type": "'approve'|'return'",
+              "from": [
+                "admin-styles-review"
+              ]
+            },
+            {
+              "name": "id",
+              "type": "string",
+              "from": [
+                "admin-styles-review"
+              ]
+            },
+            {
+              "name": "level",
+              "type": "'standard'|'premium' (approve only; default standard)",
+              "from": [
+                "admin-styles-review"
+              ]
+            },
+            {
+              "name": "reason",
+              "type": "string (min 4 chars after trim; written to the audit log)",
+              "from": [
+                "admin-styles-review"
+              ]
+            }
+          ],
+          "response": {
+            "entity": "Submission",
+            "cardinality": "single",
+            "note": "seam returns void. approve places the style at the level and lists it (a new StyleRow by the creator's handle, on, record entry); return sends it back with the reason as notes. Approve is disabled in the UI when rights.confirmed is false; already decided is not_allowed"
+          },
+          "sources": [
+            {
+              "src": "admin-styles-review",
+              "via": "action:decideSubmission"
+            }
+          ],
+          "notes": []
+        }
+      ]
+    },
+    {
+      "name": "SubmissionView",
+      "sourceScreens": [
+        "admin-styles-review"
+      ],
+      "sourceDeclarations": [],
+      "embedded": [],
+      "fields": [
+        {
+          "name": "at",
+          "type": "time",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-styles-review"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "baseName",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-styles-review"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "checks",
+          "type": "object",
+          "classes": [
+            "object"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-styles-review"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "creator",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-styles-review"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "creatorName",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-styles-review"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "decided",
+          "type": "object",
+          "classes": [
+            "object"
+          ],
+          "nullable": true,
+          "provenance": [
+            "admin-styles-review"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "handle",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-styles-review"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "id",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-styles-review"
+          ],
+          "supersedes": [
+            "S-2: server-issued UUIDv7 ids"
+          ]
+        },
+        {
+          "name": "kinds",
+          "type": "array",
+          "classes": [
+            "array"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-styles-review"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-styles-review"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "plan",
+          "type": "string",
+          "classes": [
+            "enum"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-styles-review"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "rights",
+          "type": "object",
+          "classes": [
+            "object"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-styles-review"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "still",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-styles-review"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "style",
+          "type": "string",
+          "classes": [
+            "enum"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-styles-review"
+          ],
+          "supersedes": []
+        }
+      ],
+      "endpoints": [
+        {
+          "id": "E-202",
+          "method": "GET",
+          "path": "/v1/submission-views",
+          "auth": [
+            {
+              "kind": "staff role",
+              "role": "ops"
+            },
+            {
+              "kind": "staff role",
+              "role": "owner"
+            },
+            {
+              "kind": "staff role",
+              "role": "reviewer"
+            }
+          ],
+          "body": [],
+          "response": {
+            "entity": "SubmissionView",
+            "cardinality": "list"
+          },
+          "sources": [
+            {
+              "src": "admin-styles-review",
+              "via": "read:SubmissionView"
+            }
+          ],
+          "notes": []
         }
       ]
     },
@@ -17388,7 +21839,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-163",
+          "id": "E-203",
           "method": "POST",
           "path": "/v1/support-messages",
           "auth": [
@@ -17558,7 +22009,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-164",
+          "id": "E-204",
           "method": "POST",
           "path": "/v1/admin/support-threads/:id/assignee",
           "auth": [
@@ -17602,7 +22053,7 @@
           ]
         },
         {
-          "id": "E-165",
+          "id": "E-205",
           "method": "POST",
           "path": "/v1/support-threads",
           "auth": [
@@ -17644,6 +22095,7 @@
     {
       "name": "Template",
       "sourceScreens": [
+        "admin-messages",
         "studio-home",
         "studio-new"
       ],
@@ -17664,6 +22116,18 @@
           "supersedes": []
         },
         {
+          "name": "body",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-messages"
+          ],
+          "supersedes": []
+        },
+        {
           "name": "dimension",
           "type": "string",
           "classes": [
@@ -17674,6 +22138,18 @@
           "provenance": [
             "studio-home",
             "studio-new"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "edited",
+          "type": "object",
+          "classes": [
+            "object"
+          ],
+          "nullable": true,
+          "provenance": [
+            "admin-messages"
           ],
           "supersedes": []
         },
@@ -17717,6 +22193,19 @@
           "supersedes": [
             "S-2: server-issued UUIDv7 ids"
           ]
+        },
+        {
+          "name": "key",
+          "type": "string",
+          "classes": [
+            "enum",
+            "named"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-messages"
+          ],
+          "supersedes": []
         },
         {
           "name": "kinds",
@@ -17765,6 +22254,7 @@
           ],
           "nullable": false,
           "provenance": [
+            "admin-messages",
             "studio-home",
             "studio-new"
           ],
@@ -17798,6 +22288,30 @@
           "supersedes": []
         },
         {
+          "name": "reason",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-messages"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "subject",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-messages"
+          ],
+          "supersedes": []
+        },
+        {
           "name": "theme",
           "type": "named",
           "classes": [
@@ -17809,17 +22323,115 @@
             "studio-new"
           ],
           "supersedes": []
+        },
+        {
+          "name": "to",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-messages"
+          ],
+          "supersedes": [
+            "S-27: sign-in by email code or Google only; phone is an optional plain detail stored E.164 when given, never verified, never an account key"
+          ]
+        },
+        {
+          "name": "when",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-messages"
+          ],
+          "supersedes": []
         }
       ],
       "endpoints": [
         {
-          "id": "E-166",
+          "id": "E-206",
+          "method": "PATCH",
+          "path": "/v1/admin/templates/:id",
+          "auth": [
+            {
+              "kind": "staff role",
+              "role": "ops"
+            },
+            {
+              "kind": "staff role",
+              "role": "owner"
+            },
+            {
+              "kind": "staff role",
+              "role": "support"
+            }
+          ],
+          "body": [
+            {
+              "name": "body",
+              "type": "string non-empty",
+              "from": [
+                "admin-messages"
+              ]
+            },
+            {
+              "name": "key",
+              "type": "MessageKey",
+              "from": [
+                "admin-messages"
+              ]
+            },
+            {
+              "name": "reason",
+              "type": "string, at least 4 chars",
+              "from": [
+                "admin-messages"
+              ]
+            },
+            {
+              "name": "subject",
+              "type": "string non-empty",
+              "from": [
+                "admin-messages"
+              ]
+            }
+          ],
+          "response": {
+            "entity": "Template",
+            "cardinality": "single"
+          },
+          "sources": [
+            {
+              "src": "admin-messages",
+              "via": "action:saveTemplate"
+            }
+          ],
+          "notes": []
+        },
+        {
+          "id": "E-207",
           "method": "GET",
           "path": "/v1/studio/templates",
           "auth": [
             {
               "kind": "role",
               "role": "creator"
+            },
+            {
+              "kind": "staff role",
+              "role": "ops"
+            },
+            {
+              "kind": "staff role",
+              "role": "owner"
+            },
+            {
+              "kind": "staff role",
+              "role": "support"
             }
           ],
           "body": [],
@@ -17828,6 +22440,10 @@
             "cardinality": "list"
           },
           "sources": [
+            {
+              "src": "admin-messages",
+              "via": "read:Template"
+            },
             {
               "src": "studio-home",
               "via": "read:Template (house)"
@@ -17839,6 +22455,431 @@
             {
               "src": "studio-new",
               "via": "read:Template (house)"
+            }
+          ],
+          "notes": []
+        }
+      ]
+    },
+    {
+      "name": "Thread",
+      "sourceScreens": [
+        "admin-support",
+        "admin-support-detail"
+      ],
+      "sourceDeclarations": [],
+      "embedded": [],
+      "fields": [
+        {
+          "name": "email",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-support",
+            "admin-support-detail"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "id",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-support",
+            "admin-support-detail"
+          ],
+          "supersedes": [
+            "S-2: server-issued UUIDv7 ids"
+          ]
+        },
+        {
+          "name": "last",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-support"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-support",
+            "admin-support-detail"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "notes",
+          "type": "array",
+          "classes": [
+            "array"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-support-detail"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "person",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": true,
+          "provenance": [
+            "admin-support",
+            "admin-support-detail"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "reason",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-support-detail"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "state",
+          "type": "string",
+          "classes": [
+            "enum"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-support",
+            "admin-support-detail"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "subject",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-support",
+            "admin-support-detail"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "text",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-support-detail"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "wish",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": true,
+          "provenance": [
+            "admin-support",
+            "admin-support-detail"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "wishFor",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": true,
+          "provenance": [
+            "admin-support"
+          ],
+          "supersedes": []
+        }
+      ],
+      "endpoints": [
+        {
+          "id": "E-208",
+          "method": "PATCH",
+          "path": "/v1/admin/threads/:id",
+          "auth": [
+            {
+              "kind": "staff role",
+              "role": "ops"
+            },
+            {
+              "kind": "staff role",
+              "role": "owner"
+            },
+            {
+              "kind": "staff role",
+              "role": "support"
+            }
+          ],
+          "body": [
+            {
+              "name": "id",
+              "type": "string (route)",
+              "from": [
+                "admin-support-detail"
+              ]
+            },
+            {
+              "name": "reason",
+              "type": "string, at least 4 chars",
+              "from": [
+                "admin-support-detail"
+              ]
+            },
+            {
+              "name": "state",
+              "type": "'closed'|'open'",
+              "from": [
+                "admin-support-detail"
+              ]
+            }
+          ],
+          "response": {
+            "entity": "ThreadDetail",
+            "cardinality": "single"
+          },
+          "sources": [
+            {
+              "src": "admin-support-detail",
+              "via": "action:setThreadState"
+            }
+          ],
+          "notes": []
+        },
+        {
+          "id": "E-209",
+          "method": "POST",
+          "path": "/v1/admin/threads/:id/reply-thread",
+          "auth": [
+            {
+              "kind": "staff role",
+              "role": "ops"
+            },
+            {
+              "kind": "staff role",
+              "role": "owner"
+            },
+            {
+              "kind": "staff role",
+              "role": "support"
+            }
+          ],
+          "body": [
+            {
+              "name": "id",
+              "type": "string (route)",
+              "from": [
+                "admin-support-detail"
+              ]
+            },
+            {
+              "name": "reason",
+              "type": "string, at least 4 chars after trim",
+              "from": [
+                "admin-support-detail"
+              ]
+            },
+            {
+              "name": "text",
+              "type": "string, non-empty after trim",
+              "from": [
+                "admin-support-detail"
+              ]
+            }
+          ],
+          "response": {
+            "entity": "ThreadDetail",
+            "cardinality": "single"
+          },
+          "sources": [
+            {
+              "src": "admin-support-detail",
+              "via": "action:replyThread"
+            }
+          ],
+          "notes": []
+        },
+        {
+          "id": "E-210",
+          "method": "GET",
+          "path": "/v1/threads",
+          "auth": [
+            {
+              "kind": "staff role",
+              "role": "ops"
+            },
+            {
+              "kind": "staff role",
+              "role": "owner"
+            },
+            {
+              "kind": "staff role",
+              "role": "support"
+            }
+          ],
+          "body": [],
+          "response": {
+            "entity": "Thread",
+            "cardinality": "list"
+          },
+          "sources": [
+            {
+              "src": "admin-support",
+              "via": "read:Thread"
+            }
+          ],
+          "notes": []
+        },
+        {
+          "id": "E-211",
+          "method": "GET",
+          "path": "/v1/threads/:id",
+          "auth": [
+            {
+              "kind": "staff role",
+              "role": "ops"
+            },
+            {
+              "kind": "staff role",
+              "role": "owner"
+            },
+            {
+              "kind": "staff role",
+              "role": "support"
+            }
+          ],
+          "body": [],
+          "response": {
+            "entity": "Thread",
+            "cardinality": "single"
+          },
+          "sources": [
+            {
+              "src": "admin-support-detail",
+              "via": "read:Thread"
+            }
+          ],
+          "notes": []
+        }
+      ]
+    },
+    {
+      "name": "ThreadCounts",
+      "sourceScreens": [
+        "admin-support"
+      ],
+      "sourceDeclarations": [],
+      "embedded": [],
+      "fields": [
+        {
+          "name": "all",
+          "type": "number",
+          "classes": [
+            "number"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-support"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "closed",
+          "type": "number",
+          "classes": [
+            "number"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-support"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "open",
+          "type": "number",
+          "classes": [
+            "number"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-support"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "waiting",
+          "type": "number",
+          "classes": [
+            "number"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-support"
+          ],
+          "supersedes": []
+        }
+      ],
+      "endpoints": [
+        {
+          "id": "E-212",
+          "method": "GET",
+          "path": "/v1/thread-counts/:id",
+          "auth": [
+            {
+              "kind": "staff role",
+              "role": "ops"
+            },
+            {
+              "kind": "staff role",
+              "role": "owner"
+            },
+            {
+              "kind": "staff role",
+              "role": "support"
+            }
+          ],
+          "body": [],
+          "response": {
+            "entity": "ThreadCounts",
+            "cardinality": "single"
+          },
+          "sources": [
+            {
+              "src": "admin-support",
+              "via": "read:ThreadCounts"
             }
           ],
           "notes": []
@@ -18132,7 +23173,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-167",
+          "id": "E-213",
           "method": "GET",
           "path": "/v1/ticket-offers",
           "auth": [
@@ -18337,7 +23378,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-168",
+          "id": "E-214",
           "method": "GET",
           "path": "/v1/business/vault-files",
           "auth": [
@@ -18614,7 +23655,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-169",
+          "id": "E-215",
           "method": "GET",
           "path": "/v1/business/vault/space",
           "auth": [
@@ -18734,7 +23775,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-170",
+          "id": "E-216",
           "method": "GET",
           "path": "/v1/voice-notes/:id",
           "auth": [
@@ -18886,7 +23927,7 @@
       ],
       "endpoints": [
         {
-          "id": "E-171",
+          "id": "E-217",
           "method": "POST",
           "path": "/v1/webhooks/paystack",
           "auth": [
@@ -18940,6 +23981,8 @@
     {
       "name": "Wish",
       "sourceScreens": [
+        "admin-support-detail",
+        "admin-wishes-detail",
         "app-home",
         "app-style-detail",
         "app-styles",
@@ -19004,6 +24047,18 @@
           "nullable": false,
           "provenance": [
             "wish-lifecycle"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "action",
+          "type": "unknown",
+          "classes": [
+            "unknown"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-wishes-detail"
           ],
           "supersedes": []
         },
@@ -19748,6 +24803,7 @@
           ],
           "nullable": true,
           "provenance": [
+            "admin-wishes-detail",
             "app-home",
             "app-wish-detail",
             "app-wishes",
@@ -19805,6 +24861,18 @@
           "supersedes": []
         },
         {
+          "name": "extras",
+          "type": "array",
+          "classes": [
+            "array"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-wishes-detail"
+          ],
+          "supersedes": []
+        },
+        {
           "name": "files",
           "type": "unknown",
           "classes": [
@@ -19825,6 +24893,19 @@
           "nullable": false,
           "provenance": [
             "maker-ask"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "forName",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-support-detail",
+            "admin-wishes-detail"
           ],
           "supersedes": []
         },
@@ -19916,6 +24997,7 @@
           ],
           "nullable": true,
           "provenance": [
+            "admin-wishes-detail",
             "app-home",
             "app-wish-detail",
             "app-wishes",
@@ -19985,6 +25067,8 @@
           ],
           "nullable": false,
           "provenance": [
+            "admin-support-detail",
+            "admin-wishes-detail",
             "app-home",
             "app-style-detail",
             "app-styles",
@@ -20047,6 +25131,18 @@
             "maker-watch",
             "maker-when",
             "receiver-wish-mine"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "link",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-wishes-detail"
           ],
           "supersedes": []
         },
@@ -20391,6 +25487,8 @@
           ],
           "nullable": false,
           "provenance": [
+            "admin-support-detail",
+            "admin-wishes-detail",
             "app-home",
             "app-wish-detail",
             "app-wishes",
@@ -20434,6 +25532,8 @@
           ],
           "nullable": false,
           "provenance": [
+            "admin-support-detail",
+            "admin-wishes-detail",
             "app-home",
             "app-style-detail",
             "app-styles",
@@ -20517,6 +25617,8 @@
           ],
           "nullable": true,
           "provenance": [
+            "admin-support-detail",
+            "admin-wishes-detail",
             "app-home",
             "app-wish-detail",
             "app-wishes",
@@ -20582,6 +25684,18 @@
           "supersedes": []
         },
         {
+          "name": "person",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-wishes-detail"
+          ],
+          "supersedes": []
+        },
+        {
           "name": "photos",
           "type": "array",
           "classes": [
@@ -20639,6 +25753,18 @@
             "app-wish-detail",
             "app-wishes",
             "receiver-wish-mine"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "reason",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-wishes-detail"
           ],
           "supersedes": []
         },
@@ -20753,6 +25879,20 @@
             "maker-watch",
             "maker-when",
             "receiver-wish-mine"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "state",
+          "type": "string",
+          "classes": [
+            "enum",
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-support-detail",
+            "admin-wishes-detail"
           ],
           "supersedes": []
         },
@@ -20914,6 +26054,7 @@
           ],
           "nullable": true,
           "provenance": [
+            "admin-wishes-detail",
             "app-home",
             "app-wish-detail",
             "app-wishes",
@@ -20950,12 +26091,14 @@
         },
         {
           "name": "timeline",
-          "type": "unknown",
+          "type": "array",
           "classes": [
+            "array",
             "unknown"
           ],
           "nullable": false,
           "provenance": [
+            "admin-wishes-detail",
             "maker-ask"
           ],
           "supersedes": []
@@ -21088,7 +26231,64 @@
       ],
       "endpoints": [
         {
-          "id": "E-172",
+          "id": "E-218",
+          "method": "POST",
+          "path": "/v1/admin/wishes/:id/act-on-wish",
+          "auth": [
+            {
+              "kind": "staff role",
+              "role": "moderator"
+            },
+            {
+              "kind": "staff role",
+              "role": "ops"
+            },
+            {
+              "kind": "staff role",
+              "role": "owner"
+            },
+            {
+              "kind": "staff role",
+              "role": "support"
+            }
+          ],
+          "body": [
+            {
+              "name": "action",
+              "type": "take_down|restore|extend|resend|refund",
+              "from": [
+                "admin-wishes-detail"
+              ]
+            },
+            {
+              "name": "no",
+              "type": "string",
+              "from": [
+                "admin-wishes-detail"
+              ]
+            },
+            {
+              "name": "reason",
+              "type": "string(min 4 chars after trim)",
+              "from": [
+                "admin-wishes-detail"
+              ]
+            }
+          ],
+          "response": {
+            "entity": "WishDetail",
+            "cardinality": "single"
+          },
+          "sources": [
+            {
+              "src": "admin-wishes-detail",
+              "via": "action:actOnWish"
+            }
+          ],
+          "notes": []
+        },
+        {
+          "id": "E-219",
           "method": "GET",
           "path": "/v1/wishes",
           "auth": [
@@ -21135,7 +26335,7 @@
           "notes": []
         },
         {
-          "id": "E-173",
+          "id": "E-220",
           "method": "POST",
           "path": "/v1/wishes",
           "auth": [
@@ -21215,7 +26415,7 @@
           "notes": []
         },
         {
-          "id": "E-174",
+          "id": "E-221",
           "method": "DELETE",
           "path": "/v1/wishes/:id",
           "auth": [
@@ -21288,7 +26488,7 @@
           ]
         },
         {
-          "id": "E-175",
+          "id": "E-222",
           "method": "GET",
           "path": "/v1/wishes/:id",
           "auth": [
@@ -21307,6 +26507,14 @@
             "cardinality": "single"
           },
           "sources": [
+            {
+              "src": "admin-support-detail",
+              "via": "read:Wish"
+            },
+            {
+              "src": "admin-wishes-detail",
+              "via": "read:Wish"
+            },
             {
               "src": "app-wish-detail",
               "via": "read:Wish"
@@ -21526,7 +26734,7 @@
           ]
         },
         {
-          "id": "E-176",
+          "id": "E-223",
           "method": "PATCH",
           "path": "/v1/wishes/:id",
           "auth": [
@@ -22218,7 +27426,7 @@
           ]
         },
         {
-          "id": "E-177",
+          "id": "E-224",
           "method": "POST",
           "path": "/v1/wishes/:id/add-photos",
           "auth": [
@@ -22256,7 +27464,7 @@
           "notes": []
         },
         {
-          "id": "E-178",
+          "id": "E-225",
           "method": "POST",
           "path": "/v1/wishes/:id/erase",
           "auth": [
@@ -22313,7 +27521,7 @@
           ]
         },
         {
-          "id": "E-179",
+          "id": "E-226",
           "method": "POST",
           "path": "/v1/wishes/:id/keep",
           "auth": [
@@ -22406,7 +27614,7 @@
           "notes": []
         },
         {
-          "id": "E-180",
+          "id": "E-227",
           "method": "GET",
           "path": "/v1/wishes/:id/link",
           "auth": [
@@ -22439,7 +27647,7 @@
           ]
         },
         {
-          "id": "E-181",
+          "id": "E-228",
           "method": "POST",
           "path": "/v1/wishes/:id/restore",
           "auth": [
@@ -22506,7 +27714,7 @@
           ]
         },
         {
-          "id": "E-182",
+          "id": "E-229",
           "method": "POST",
           "path": "/v1/wishes/:id/seal",
           "auth": [
@@ -22601,7 +27809,7 @@
           ]
         },
         {
-          "id": "E-183",
+          "id": "E-230",
           "method": "POST",
           "path": "/v1/wishes/:id/wake",
           "auth": [
@@ -22638,7 +27846,7 @@
           ]
         },
         {
-          "id": "E-184",
+          "id": "E-231",
           "method": "INTERNAL",
           "path": "port:wishes#issueNumber",
           "auth": [
@@ -22927,6 +28135,101 @@
         }
       ],
       "endpoints": []
+    },
+    {
+      "name": "WishDetail",
+      "sourceScreens": [
+        "admin-wishes-detail"
+      ],
+      "sourceDeclarations": [],
+      "embedded": [],
+      "fields": [
+        {
+          "name": "messages",
+          "type": "array",
+          "classes": [
+            "array"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-wishes-detail"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "payments",
+          "type": "array",
+          "classes": [
+            "array"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-wishes-detail"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "person",
+          "type": "named",
+          "classes": [
+            "named"
+          ],
+          "nullable": true,
+          "provenance": [
+            "admin-wishes-detail"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "wish",
+          "type": "named",
+          "classes": [
+            "named"
+          ],
+          "nullable": false,
+          "provenance": [
+            "admin-wishes-detail"
+          ],
+          "supersedes": []
+        }
+      ],
+      "endpoints": [
+        {
+          "id": "E-232",
+          "method": "GET",
+          "path": "/v1/wish-details/:id",
+          "auth": [
+            {
+              "kind": "staff role",
+              "role": "moderator"
+            },
+            {
+              "kind": "staff role",
+              "role": "ops"
+            },
+            {
+              "kind": "staff role",
+              "role": "owner"
+            },
+            {
+              "kind": "staff role",
+              "role": "support"
+            }
+          ],
+          "body": [],
+          "response": {
+            "entity": "WishDetail",
+            "cardinality": "single"
+          },
+          "sources": [
+            {
+              "src": "admin-wishes-detail",
+              "via": "read:WishDetail"
+            }
+          ],
+          "notes": []
+        }
+      ]
     },
     {
       "name": "WishLink",

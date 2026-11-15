@@ -1,0 +1,296 @@
+{
+ "screenId": "admin-showing",
+ "reads": [
+  {
+   "entity": "PublishView",
+   "fields": [
+    {
+     "name": "id",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "wish",
+     "type": "string (Wish.no)",
+     "nullable": false
+    },
+    {
+     "name": "style",
+     "type": "string (style slug)",
+     "nullable": false
+    },
+    {
+     "name": "at",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "screen",
+     "type": "{ok:boolean, notes:string[]} (automatic screening result)",
+     "nullable": false
+    },
+    {
+     "name": "decided",
+     "type": "{decision:'approve'|'decline', at, by, reason}",
+     "nullable": true
+    },
+    {
+     "name": "forName",
+     "type": "string (joined)",
+     "nullable": false
+    },
+    {
+     "name": "from",
+     "type": "string (joined, maker's name)",
+     "nullable": false
+    },
+    {
+     "name": "kind",
+     "type": "string (wish kind slug)",
+     "nullable": false
+    },
+    {
+     "name": "occasion",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "styleName",
+     "type": "string (style name, slug if unknown)",
+     "nullable": false
+    }
+   ],
+   "cardinality": "list",
+   "filtersOrSort": [
+    "requests: undecided, oldest first",
+    "decided: newest first"
+   ],
+   "pagination": "none",
+   "evidence": "GET /v1/admin/showing -> Showing: publish requests (screened, waiting for a person), wishes listed now, the next 7 days of wish of the day",
+   "note": "part of Showing {requests, decided, listed, days}; fixture data in lib/admin/b-fixtures.ts (SAMPLE = true)"
+  },
+  {
+   "entity": "Listed",
+   "fields": [
+    {
+     "name": "no",
+     "type": "string (Wish.no)",
+     "nullable": false
+    },
+    {
+     "name": "forName",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "from",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "kind",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "occasion",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "styleName",
+     "type": "string ('' shows 'Not known')",
+     "nullable": false
+    },
+    {
+     "name": "listedAt",
+     "type": "string",
+     "nullable": false
+    }
+   ],
+   "cardinality": "list",
+   "filtersOrSort": [
+    "newest listedAt first; table sorts client-side on no, for, style, listed"
+   ],
+   "pagination": "paged (client-side Table pageSize 8; seam returns full list)",
+   "evidence": "same request: Showing.listed (wishes with isPublic and state live or resting)"
+  },
+  {
+   "entity": "DayPick",
+   "fields": [
+    {
+     "name": "date",
+     "type": "string YYYY-MM-DD",
+     "nullable": false
+    },
+    {
+     "name": "pick",
+     "type": "{wish, by, reason, forName, date}",
+     "nullable": true
+    }
+   ],
+   "cardinality": "list",
+   "filtersOrSort": [
+    "today and the next 6 days (DAY_AHEAD = 7)"
+   ],
+   "pagination": "none",
+   "evidence": "same request: Showing.days, the next 7 days of wish of the day",
+   "note": "one entry per day, pick null when nobody picked; the UI flags a pick whose wish is no longer listed"
+  }
+ ],
+ "actions": [
+  {
+   "name": "decidePublish",
+   "kind": "custom",
+   "entity": "PublishRequest",
+   "payload": [
+    {
+     "name": "id",
+     "type": "string"
+    },
+    {
+     "name": "decision",
+     "type": "'approve'|'decline'"
+    },
+    {
+     "name": "reason",
+     "type": "string (min 4 chars after trim; written to the audit log)"
+    }
+   ],
+   "expectedResponse": {
+    "entity": "PublishView",
+    "cardinality": "single",
+    "note": "approve lists the wish (isPublic true, listed time = now), only when the wish is live or resting (else not_allowed); either decision adds a timeline event to the wish; already decided is not_allowed"
+   },
+   "evidence": "POST /v1/admin/showing/requests/:id/decide { decision: approve | decline, reason } -> PublishView. Approve lists the wish."
+  },
+  {
+   "name": "unlistWish",
+   "kind": "custom",
+   "entity": "Listed",
+   "payload": [
+    {
+     "name": "no",
+     "type": "string (Wish.no)"
+    },
+    {
+     "name": "reason",
+     "type": "string (min 4 chars after trim; written to the audit log)"
+    }
+   ],
+   "expectedResponse": {
+    "entity": "Listed",
+    "cardinality": "list",
+    "note": "seam returns void; header says -> Listed[]. Wish stays as is; any wish-of-day picks for it from tomorrow on are dropped"
+   },
+   "evidence": "POST /v1/admin/showing/listed/:no/unlist { reason } -> Listed[]. Takes a wish off the gallery; the wish itself stays as it is."
+  },
+  {
+   "name": "pickWishOfDay",
+   "kind": "update",
+   "entity": "DayPick",
+   "payload": [
+    {
+     "name": "date",
+     "type": "string YYYY-MM-DD within the next 7 days"
+    },
+    {
+     "name": "wish",
+     "type": "string (Wish.no of a listed wish)"
+    },
+    {
+     "name": "reason",
+     "type": "string (min 4 chars after trim; written to the audit log)"
+    }
+   ],
+   "expectedResponse": {
+    "entity": "DayPick",
+    "cardinality": "single",
+    "note": "seam returns void; header says -> the day's pick. Not listed wish or date outside the window is not_allowed"
+   },
+   "evidence": "PUT /v1/admin/showing/day/:date { wish, reason } -> the day's pick. Only a listed wish can be wish of the day."
+  }
+ ],
+ "authContext": {
+  "requiresAuth": true,
+  "side": "staff",
+  "rolesObserved": [
+   "moderator (route access table in lib/admin/d-fixtures.ts:116)",
+   "owner",
+   "ops"
+  ]
+ },
+ "special": {
+  "realtime": false,
+  "uploads": false,
+  "downloads": false
+ },
+ "uiStatesHandled": [
+  {
+   "state": "loading",
+   "entersWhen": "useAdmin data == null and no error (starts loading:true)",
+   "reachable": "no today (async over in-memory reads resolves in a microtask); yes once a network call exists"
+  },
+  {
+   "state": "error",
+   "entersWhen": "useAdmin read() rejects; Problem shows adminProblem(e) with retry",
+   "reachable": "no today (nothing rejects on reads); yes once a network call exists. Write errors (not_found, not_allowed, failed) reject inside Confirm onConfirm"
+  },
+  {
+   "state": "loaded",
+   "entersWhen": "data present",
+   "reachable": "yes"
+  },
+  {
+   "state": "empty (requests)",
+   "entersWhen": "data.requests.length === 0: 'No request is waiting.'",
+   "reachable": "yes after all are decided"
+  },
+  {
+   "state": "empty (listed)",
+   "entersWhen": "data.listed.length === 0: 'Nothing is listed'",
+   "reachable": "yes after unlisting all"
+  },
+  {
+   "state": "screening flagged",
+   "entersWhen": "request.screen.ok false shows the Screening flagged pill and notes",
+   "reachable": "yes in sample"
+  },
+  {
+   "state": "day pick no longer listed",
+   "entersWhen": "day pick's wish not in data.listed",
+   "reachable": "yes"
+  },
+  {
+   "state": "confirm",
+   "entersWhen": "open set (publish / unlist / day); Confirm asks for the reason",
+   "reachable": "yes"
+  }
+ ],
+ "uiStatesDesigned": [
+  "loading",
+  "empty",
+  "error",
+  "loaded"
+ ],
+ "stubsObserved": [
+  {
+   "file": "lib/admin/b-api.ts:1-9",
+   "evidence": "header: 'NOT CONNECTED YET: the bodies read lib/admin/b-fixtures.ts (marked sample data) and keep staff decisions in memory on this page only'",
+   "standsInFor": "the /v1/admin server",
+   "consequence": "every figure and row is fixture data; decisions vanish on reload; loading and error states are not reachable from a network"
+  },
+  {
+   "file": "lib/admin/b-api.ts:114",
+   "evidence": "styleName(B.WISH_STYLE[w.no] ?? '') ; B.WISH_STYLE in b-fixtures",
+   "standsInFor": "the style a wish was made in, which the shared Wish record does not carry",
+   "consequence": "listed wishes' style comes from a fixture map; unknown shows 'Not known'"
+  },
+  {
+   "file": "lib/admin/b-api.ts:131",
+   "evidence": "nextDays(n) uses new Date() on the browser",
+   "standsInFor": "server date for the wish-of-day window",
+   "consequence": "the 7 day window follows the phone/browser clock"
+  }
+ ]
+}

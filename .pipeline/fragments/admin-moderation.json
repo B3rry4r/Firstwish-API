@@ -1,0 +1,208 @@
+{
+ "screenId": "admin-moderation",
+ "reads": [
+  {
+   "entity": "ModView",
+   "fields": [
+    {
+     "name": "id",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "queue",
+     "type": "'report'|'flagged'|'takedown'",
+     "nullable": false
+    },
+    {
+     "name": "what",
+     "type": "string (the report's reason, the screening's finding, or the request in the person's words)",
+     "nullable": false
+    },
+    {
+     "name": "who",
+     "type": "string (who raised it)",
+     "nullable": false
+    },
+    {
+     "name": "whoLine",
+     "type": "string (how they are known to us)",
+     "nullable": false
+    },
+    {
+     "name": "wish",
+     "type": "string (Wish.no)",
+     "nullable": false
+    },
+    {
+     "name": "at",
+     "type": "string (when it came in)",
+     "nullable": false
+    },
+    {
+     "name": "photo",
+     "type": "string (image url; flagged queue only)",
+     "nullable": true
+    },
+    {
+     "name": "score",
+     "type": "number 0..1 (screening confidence; flagged only; sample)",
+     "nullable": true
+    },
+    {
+     "name": "decided",
+     "type": "{decision:'take_down'|'keep'|'ban', at, by, reason}",
+     "nullable": true
+    },
+    {
+     "name": "forName",
+     "type": "string (the wish's forName, joined)",
+     "nullable": false
+    },
+    {
+     "name": "from",
+     "type": "string (name of the wish's maker, joined)",
+     "nullable": false
+    },
+    {
+     "name": "personId",
+     "type": "string (Person.id of the wish's maker)",
+     "nullable": false
+    },
+    {
+     "name": "wishState",
+     "type": "'draft'|'sealed'|'live'|'resting'|'down'|'erased'|''",
+     "nullable": false
+    },
+    {
+     "name": "dueAt",
+     "type": "string (at + 24 hours, CLOCK_HOURS)",
+     "nullable": false
+    },
+    {
+     "name": "minutesLeft",
+     "type": "number (negative when late; computed against the clock)",
+     "nullable": false
+    },
+    {
+     "name": "late",
+     "type": "boolean (minutesLeft < 0)",
+     "nullable": false
+    }
+   ],
+   "cardinality": "list",
+   "filtersOrSort": [
+    "open: undecided, oldest first",
+    "decided: newest decision first",
+    "queue chip filter is client-side"
+   ],
+   "pagination": "none (the seam returns the whole of both lists; no table paging)",
+   "evidence": "GET /v1/admin/moderation -> Moderation. Open items oldest first, each with its 24-hour clock; today's decisions after.",
+   "note": "response is {open: ModView[], decided: ModView[]}. All sample ids, names and figures are fixture data in lib/admin/b-fixtures.ts (SAMPLE = true)"
+  }
+ ],
+ "actions": [
+  {
+   "name": "decideModeration",
+   "kind": "custom",
+   "entity": "ModItem",
+   "payload": [
+    {
+     "name": "id",
+     "type": "string (ModItem.id)"
+    },
+    {
+     "name": "decision",
+     "type": "'take_down'|'keep'|'ban'"
+    },
+    {
+     "name": "reason",
+     "type": "string (min 4 chars after trim; written to the audit log)"
+    }
+   ],
+   "expectedResponse": {
+    "entity": "ModView",
+    "cardinality": "single",
+    "note": "take_down takes the wish down; ban bans the account that made it and takes the wish down; refused (not_allowed) when already decided, not_found when unknown. Seam calls actOnWish/actOnPerson in the shared seam so Wishes and People show the effect"
+   },
+   "evidence": "POST /v1/admin/moderation/:id/decide { decision: take_down | keep | ban, reason } -> ModView. take_down takes the wish down; ban bans the account that made it (and takes the wish down). Written to the audit log."
+  }
+ ],
+ "authContext": {
+  "requiresAuth": true,
+  "side": "staff",
+  "rolesObserved": [
+   "moderator (route access table in lib/admin/d-fixtures.ts:116)",
+   "owner",
+   "ops (all routes except team, settings, prices)"
+  ]
+ },
+ "special": {
+  "realtime": false,
+  "uploads": false,
+  "downloads": false
+ },
+ "uiStatesHandled": [
+  {
+   "state": "loading",
+   "entersWhen": "useAdmin data == null and no error (starts loading:true)",
+   "reachable": "no today (async over in-memory reads resolves in a microtask); yes once a network call exists"
+  },
+  {
+   "state": "error",
+   "entersWhen": "useAdmin read() rejects; Problem shows adminProblem(e) with retry",
+   "reachable": "no today (nothing rejects on reads); yes once a network call exists. Write errors (not_found, not_allowed, failed) reject inside Confirm onConfirm"
+  },
+  {
+   "state": "loaded",
+   "entersWhen": "data present",
+   "reachable": "yes"
+  },
+  {
+   "state": "empty",
+   "entersWhen": "open items filtered by the queue chip: list.length === 0 shows 'Nothing waiting'",
+   "reachable": "yes once items are decided or a queue with none is chosen"
+  },
+  {
+   "state": "late",
+   "entersWhen": "item.late (minutesLeft < 0) marks the card",
+   "reachable": "yes in sample (a stamp hours before load)"
+  },
+  {
+   "state": "flagged-photo blurred/shown",
+   "entersWhen": "local Set 'shown' per item id",
+   "reachable": "yes"
+  },
+  {
+   "state": "confirm",
+   "entersWhen": "open set by Take down / Keep / Ban click; Confirm asks for the reason",
+   "reachable": "yes"
+  }
+ ],
+ "uiStatesDesigned": [
+  "loading",
+  "empty",
+  "error",
+  "loaded"
+ ],
+ "stubsObserved": [
+  {
+   "file": "lib/admin/b-api.ts:1-9",
+   "evidence": "header: 'NOT CONNECTED YET: the bodies read lib/admin/b-fixtures.ts (marked sample data) and keep staff decisions in memory on this page only'",
+   "standsInFor": "the /v1/admin server",
+   "consequence": "every figure and row is fixture data; decisions vanish on reload; loading and error states are not reachable from a network"
+  },
+  {
+   "file": "lib/admin/b-api.ts:67",
+   "evidence": "const need = (reason) => { if (reason.trim().length < 4) throw fail }",
+   "standsInFor": "server-side reason validation",
+   "consequence": "min length is client-seam logic only"
+  },
+  {
+   "file": "components/admin/b/parts.tsx",
+   "evidence": "<Provisional /> next to the screening score",
+   "standsInFor": "a real screening model",
+   "consequence": "score is a made-up number in the sample"
+  }
+ ]
+}

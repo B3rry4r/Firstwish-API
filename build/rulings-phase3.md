@@ -56,3 +56,35 @@ R12 the email adapter is Resend (RESEND_API_KEY, MAIL_FROM in env-manifest). R13
 ## Round 2 leftovers (15 Nov, 16:20)
 C-20 (round 2) QrCard.wishIds is string[] only (DEC-109). C-21 (round 2) StoredFile.fileId is a string id; bytes go straight to storage by a
 signed upload, never through the API (DEC-110). The public price route is GET /v1/price-book (DEC-111).
+
+## Admin screens joined (15 Nov, evening). Every line: Default (lead), owner may override, unless it cites R..
+The 23 admin fragments (.pipeline/fragments/admin-*.json) are in; scan-map.json holds their entries (89 screens).
+A1  Every staff request lives under /v1/admin, with auth "staff role" and the roles from the Team access table (lib/admin/d-fixtures.ts
+    in the web repo): the server enforces it on every route; the page's own hiding is not protection. Where a seam header names its
+    /v1/admin request, that route is used (tools/pipeline/routes.json). The one exception named by a reader, PUT /v1/styles/levels/:slug,
+    becomes PUT /v1/admin/styles/:slug/level (the public read stays GET /v1/styles/levels).
+A2  Admin entity names with a note in brackets ("Wish (list row)", "Person (as used here: ...)", "Payment (single) with its record",
+    "Order (row)", "Business (single)", "AuditRow (unfiltered ...)", "Due (this week)", "Submission (count only)", "PriceChange (audit
+    entries ...)") are staff VIEWS of the resource named before the bracket, not new resources: Wish, Person = Account, Payment,
+    Order = ConciergeOrder, Business, AuditRow = AuditEntry, Due = a read over ConciergeOrder, Submission = StyleSubmission,
+    PriceChange = PriceBookVersion's change record. Member = StaffAccount. ModView = Report / flagged StoredFile / takedown request.
+    PublishView and Listed = PublishedWish and its request. StyleRow = Style. CreatorRow = Creator. PayoutRun, PayoutRow = Payout.
+    Thread = SupportThread. Template = the Notice wording. Message = MessageDelivery. Numbers, Overview = reads worked out by the server.
+A3  Sample figures in admin fixtures (lib/admin-fixtures.ts, lib/admin/*-fixtures.ts) are sample data, not prices: the money truth check
+    skips them (closes the ₦17 and ₦7,000 rows). Price.list and Price.listKobo are one field, listKobo.
+A4  Hyphenated action names ('assign-maker', 'set-price') are single actions (the parser accepts hyphens).
+A5  GET /v1/payments/:reference is the payer's own (user:owner); staff read GET /v1/admin/payments/:reference; nothing about a payment is public.
+A6  An audit row's actor is a staff id (name joined on read); every staff action writes one, in the same transaction as the change.
+A7  The server decides which actions a wish, person, payment or order offers (the response carries `actions`); it masks phone and
+    email for staff (the full value only with a reason, audited).
+A8  Staff sign-in: a code to an email that is already a staff member in Team; no self sign-up; staff refresh life 12 h (as declared).
+A9  A maker sees only the Concierge orders given to them; owner and ops see all. Ops may read Prices; only owner and finance change them.
+A10 A price change carries typed old and new values in kobo and takes effect as a new price-book version; the 40% and its end date
+    live in the price book's Promotion, never a page constant. The payout threshold is a price-book setting (R14).
+A11 A refund goes through the payments port and reads "Refund started" until the provider's webhook confirms it; the ledger's provider
+    side comes from a daily settlement job; differences are rows staff can see, never auto-corrected.
+A12 Numbers' targets are a staff-set setting (none set -> "No target set"); thread counts are their own read; a reply really sends an
+    email; an inbound email (the email provider's inbound webhook, signature checked) opens or reopens a thread.
+A13 Style use counts (previews, paid uses) are written by events from the app (a preview played, a wish paid in that style), never
+    invented; a wish records the style it was made in (Wish.style). Automatic checks on a submitted style run in the page and are
+    re-run by the reviewer's page; the server stores the result with who ran it (it cannot run a browser check itself).

@@ -1,0 +1,196 @@
+{
+ "screenId": "admin-styles-review",
+ "reads": [
+  {
+   "entity": "SubmissionView",
+   "fields": [
+    {
+     "name": "id",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "creator",
+     "type": "string (CreatorRow.id)",
+     "nullable": false
+    },
+    {
+     "name": "at",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "style",
+     "type": "StudioStyle {id, name, base (scene-set slug), theme, scenes, art, sound?, made:{kinds, best:'either'|'landscape'|'portrait'}, tags, still, ...} (the creator's whole style document; the checks run on it)",
+     "nullable": false
+    },
+    {
+     "name": "still",
+     "type": "string (image url of a still from the recorded preview; sample)",
+     "nullable": false
+    },
+    {
+     "name": "rights",
+     "type": "{confirmed:boolean, words:string}",
+     "nullable": false
+    },
+    {
+     "name": "decided",
+     "type": "{decision:'approve'|'return', at, by, reason, level?}",
+     "nullable": true
+    },
+    {
+     "name": "name",
+     "type": "string (style name)",
+     "nullable": false
+    },
+    {
+     "name": "kinds",
+     "type": "string[] (kind display names)",
+     "nullable": false
+    },
+    {
+     "name": "handle",
+     "type": "string (creator)",
+     "nullable": false
+    },
+    {
+     "name": "creatorName",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "plan",
+     "type": "'open'|'creator'",
+     "nullable": false
+    },
+    {
+     "name": "baseName",
+     "type": "string (scene set name)",
+     "nullable": false
+    },
+    {
+     "name": "checks",
+     "type": "{key,name,ok,fix,panel,scene?,detail?}[] (automatic checks computed from the style by lib/studio.ts checks())",
+     "nullable": false
+    }
+   ],
+   "cardinality": "list",
+   "filtersOrSort": [
+    "open: undecided, oldest first",
+    "decided: in stored order"
+   ],
+   "pagination": "none",
+   "evidence": "GET /v1/admin/styles/review -> Review: creators' submissions with the recorded preview, the automatic checks and the rights they confirmed",
+   "note": "response {open, decided}. The screen consumes the style document and the checks, so the checks are today computed in the browser from the document; fixture data in lib/admin/b-fixtures.ts (SAMPLE = true)"
+  }
+ ],
+ "actions": [
+  {
+   "name": "decideSubmission",
+   "kind": "custom",
+   "entity": "Submission",
+   "payload": [
+    {
+     "name": "id",
+     "type": "string"
+    },
+    {
+     "name": "decision",
+     "type": "'approve'|'return'"
+    },
+    {
+     "name": "level",
+     "type": "'standard'|'premium' (approve only; default standard)"
+    },
+    {
+     "name": "reason",
+     "type": "string (min 4 chars after trim; written to the audit log)"
+    }
+   ],
+   "expectedResponse": {
+    "entity": "Submission",
+    "cardinality": "single",
+    "note": "seam returns void. approve places the style at the level and lists it (a new StyleRow by the creator's handle, on, record entry); return sends it back with the reason as notes. Approve is disabled in the UI when rights.confirmed is false; already decided is not_allowed"
+   },
+   "evidence": "POST /v1/admin/styles/review/:id/decide { decision: approve | return, level?, reason }. approve places the style at a level and lists it; return sends it back to the creator with the reason as notes."
+  }
+ ],
+ "authContext": {
+  "requiresAuth": true,
+  "side": "staff",
+  "rolesObserved": [
+   "reviewer (route access table in lib/admin/d-fixtures.ts:117)",
+   "owner",
+   "ops"
+  ]
+ },
+ "special": {
+  "realtime": false,
+  "uploads": false,
+  "downloads": false
+ },
+ "uiStatesHandled": [
+  {
+   "state": "loading",
+   "entersWhen": "useAdmin data == null and no error (starts loading:true)",
+   "reachable": "no today (async over in-memory reads resolves in a microtask); yes once a network call exists"
+  },
+  {
+   "state": "error",
+   "entersWhen": "useAdmin read() rejects; Problem shows adminProblem(e) with retry",
+   "reachable": "no today (nothing rejects on reads); yes once a network call exists. Write errors (not_found, not_allowed, failed) reject inside Confirm onConfirm"
+  },
+  {
+   "state": "loaded",
+   "entersWhen": "data present",
+   "reachable": "yes"
+  },
+  {
+   "state": "empty",
+   "entersWhen": "data.open.length === 0: 'Nothing to review'",
+   "reachable": "yes after all are decided"
+  },
+  {
+   "state": "check failed",
+   "entersWhen": "check.ok false shows the fix line",
+   "reachable": "yes in sample"
+  },
+  {
+   "state": "rights not confirmed",
+   "entersWhen": "!s.rights.confirmed: pill bad and Approve disabled",
+   "reachable": "yes in sample"
+  },
+  {
+   "state": "confirm",
+   "entersWhen": "open set by Approve / Send back; Confirm asks for the reason (approve also picks a level)",
+   "reachable": "yes"
+  }
+ ],
+ "uiStatesDesigned": [
+  "loading",
+  "empty",
+  "error",
+  "loaded"
+ ],
+ "stubsObserved": [
+  {
+   "file": "lib/admin/b-api.ts:1-9",
+   "evidence": "header: 'NOT CONNECTED YET: the bodies read lib/admin/b-fixtures.ts (marked sample data) and keep staff decisions in memory on this page only'",
+   "standsInFor": "the /v1/admin server",
+   "consequence": "every figure and row is fixture data; decisions vanish on reload; loading and error states are not reachable from a network"
+  },
+  {
+   "file": "lib/admin/b-api.ts:206",
+   "evidence": "checks(s.style) from lib/studio.ts run in the browser; still is a site picture ('Sample: the recording plays here once the server keeps it')",
+   "standsInFor": "a server-recorded preview and server-side checks",
+   "consequence": "the still is a placeholder and the checks come from client code, not stored results"
+  },
+  {
+   "file": "lib/admin/b-api.ts:206",
+   "evidence": "creatorOf(id) reads B.CREATORS",
+   "standsInFor": "the creators table",
+   "consequence": "handle, name and plan come from the fixture"
+  }
+ ]
+}

@@ -1857,6 +1857,650 @@
       "route": "/w/mine",
       "area": "receiver",
       "note": "This is the link the Share sheet copies (/w/mine?id=<local id>): it only works in the sender's own browser (STUB-9)."
+    },
+    {
+      "id": "admin-audit",
+      "title": "Admin: Audit",
+      "uiFiles": [
+        "app/admin/audit/page.tsx",
+        "components/admin/d/Audit.tsx",
+        "components/admin/nav.ts"
+      ],
+      "dataFiles": [
+        "lib/admin-api.ts",
+        "lib/admin/d-api.ts",
+        "lib/admin/d-types.ts",
+        "lib/admin/d-fixtures.ts",
+        "lib/admin-types.ts",
+        "lib/admin-fixtures.ts"
+      ],
+      "dataProvenance": "inline",
+      "localStore": {
+        "reads": "in-memory store in lib/admin/d-api.ts cloned from lib/admin/d-fixtures.ts (marked sample data); lost on reload",
+        "populatedBy": null
+      },
+      "inlineLiterals": [
+        {
+          "file": "lib/admin/d-fixtures.ts",
+          "description": "audit rows before today (lines 133-141); also derives rows from wish timelines and person records in lib/admin-api.ts"
+        }
+      ],
+      "route": "/admin/audit",
+      "area": "admin"
+    },
+    {
+      "id": "admin-businesses-detail",
+      "title": "Admin: Business detail",
+      "uiFiles": [
+        "app/admin/businesses/[id]/page.tsx",
+        "components/admin/c/Businesses.tsx",
+        "components/admin/ui.tsx"
+      ],
+      "dataFiles": [
+        "lib/admin/c-api.ts",
+        "lib/admin/c-types.ts",
+        "lib/admin/c-fixtures.ts",
+        "lib/admin-api.ts",
+        "lib/admin-types.ts",
+        "lib/admin-fixtures.ts"
+      ],
+      "dataProvenance": "inline",
+      "localStore": {
+        "reads": "in-memory cdb.businesses",
+        "populatedBy": null
+      },
+      "inlineLiterals": [
+        {
+          "file": "lib/admin/c-fixtures.ts",
+          "description": "businesses sample rows (as the list)"
+        },
+        {
+          "file": "lib/pro-data.ts",
+          "description": "PLANS, VAULT, VAULT_MORE copy read client side"
+        }
+      ],
+      "route": "/admin/businesses/[id]",
+      "area": "admin"
+    },
+    {
+      "id": "admin-businesses",
+      "title": "Admin: Businesses",
+      "uiFiles": [
+        "app/admin/businesses/page.tsx",
+        "components/admin/c/Businesses.tsx",
+        "components/admin/ui.tsx"
+      ],
+      "dataFiles": [
+        "lib/admin/c-api.ts",
+        "lib/admin/c-types.ts",
+        "lib/admin/c-fixtures.ts",
+        "lib/admin-api.ts",
+        "lib/admin-types.ts",
+        "lib/admin-fixtures.ts"
+      ],
+      "dataProvenance": "inline",
+      "localStore": {
+        "reads": "in-memory cdb.businesses (clone of c-fixtures businesses)",
+        "populatedBy": null
+      },
+      "inlineLiterals": [
+        {
+          "file": "lib/admin/c-fixtures.ts",
+          "description": "businesses: sample Pro businesses (Bakare Events, Lumen Studio Lagos, Mara Photography, Halden and Co, Nairobi Brew Co...) with logins and invoices"
+        },
+        {
+          "file": "lib/pro-data.ts",
+          "description": "PLANS (name, price, wishes, vault, logins, monthly), VAULT (block, price, bulkFrom, bulkPrice): plan sizes and prices read client side, not from the seam"
+        }
+      ],
+      "route": "/admin/businesses",
+      "area": "admin"
+    },
+    {
+      "id": "admin-concierge",
+      "title": "Admin: Concierge orders",
+      "uiFiles": [
+        "app/admin/concierge/page.tsx",
+        "app/admin/concierge/[id]/page.tsx",
+        "components/admin/c/Concierge.tsx",
+        "components/admin/Wishes.tsx",
+        "components/admin/ui.tsx"
+      ],
+      "dataFiles": [
+        "lib/admin/c-api.ts",
+        "lib/admin/c-types.ts",
+        "lib/admin/c-fixtures.ts",
+        "lib/admin-api.ts",
+        "lib/admin-types.ts",
+        "lib/admin-fixtures.ts"
+      ],
+      "dataProvenance": "inline",
+      "localStore": {
+        "reads": "in-memory cdb.orders and cdb.makers (clones of c-fixtures)",
+        "populatedBy": null
+      },
+      "inlineLiterals": [
+        {
+          "file": "lib/admin/c-fixtures.ts",
+          "description": "makers (mk_ngozi, mk_femi, mk_sade) and orders C-0010..C-0013 with names; amounts built from CONCIERGE_ONE (lib/catalog concierge price)"
+        },
+        {
+          "file": "lib/admin-fixtures.ts",
+          "description": "SAMPLE_DAY used as the sample 'today' (CONCIERGE_TODAY)"
+        }
+      ],
+      "route": "/admin/concierge and /admin/concierge/[id]",
+      "area": "admin"
+    },
+    {
+      "id": "admin-creators",
+      "title": "Admin: Creators",
+      "uiFiles": [
+        "app/admin/creators/page.tsx",
+        "components/admin/b/Creators.tsx",
+        "components/admin/ui.tsx",
+        "components/admin/b/parts.tsx"
+      ],
+      "dataFiles": [
+        "lib/admin-api.ts",
+        "lib/admin/b-api.ts",
+        "lib/admin/b-types.ts",
+        "lib/admin/b-fixtures.ts",
+        "lib/admin-types.ts",
+        "lib/studio.ts"
+      ],
+      "dataProvenance": "inline",
+      "localStore": {
+        "reads": "in-memory copy ('mine') in lib/admin/b-api.ts cloned from lib/admin/b-fixtures.ts (marked sample data, SAMPLE = true); lost on reload",
+        "populatedBy": null
+      },
+      "inlineLiterals": [
+        {
+          "file": "lib/admin/b-fixtures.ts",
+          "description": "CREATORS (lines 20-31) and LAST_MONTH uses/carriedUses"
+        }
+      ],
+      "route": "/admin/creators",
+      "area": "admin"
+    },
+    {
+      "id": "admin-messages",
+      "title": "Admin: Messages and delivery log",
+      "uiFiles": [
+        "app/admin/messages/page.tsx",
+        "components/admin/d/Messages.tsx"
+      ],
+      "dataFiles": [
+        "lib/admin-api.ts",
+        "lib/admin/d-api.ts",
+        "lib/admin/d-types.ts",
+        "lib/admin/d-fixtures.ts",
+        "lib/admin-types.ts"
+      ],
+      "dataProvenance": "repository-direct",
+      "localStore": {
+        "reads": "in-memory store in lib/admin/d-api.ts cloned from marked sample fixtures lib/admin/d-fixtures.ts (SAMPLE = true); sample data until /v1/admin exists; changes live only until reload",
+        "populatedBy": null
+      },
+      "inlineLiterals": [],
+      "route": "/admin/messages",
+      "area": "admin"
+    },
+    {
+      "id": "admin-moderation",
+      "title": "Admin: Moderation",
+      "uiFiles": [
+        "app/admin/moderation/page.tsx",
+        "components/admin/b/Moderation.tsx",
+        "components/admin/ui.tsx",
+        "components/admin/b/parts.tsx"
+      ],
+      "dataFiles": [
+        "lib/admin-api.ts",
+        "lib/admin/b-api.ts",
+        "lib/admin/b-types.ts",
+        "lib/admin/b-fixtures.ts",
+        "lib/admin-types.ts"
+      ],
+      "dataProvenance": "inline",
+      "localStore": {
+        "reads": "in-memory copy ('mine') in lib/admin/b-api.ts cloned from lib/admin/b-fixtures.ts (marked sample data, SAMPLE = true); lost on reload",
+        "populatedBy": null
+      },
+      "inlineLiterals": [
+        {
+          "file": "lib/admin/b-fixtures.ts",
+          "description": "MOD sample items (queue report, flagged, takedown) with photos from the site's own pictures"
+        }
+      ],
+      "route": "/admin/moderation",
+      "area": "admin"
+    },
+    {
+      "id": "admin-numbers",
+      "title": "Admin: Numbers",
+      "uiFiles": [
+        "app/admin/numbers/page.tsx",
+        "components/admin/d/Numbers.tsx",
+        "components/admin/d/Charts.tsx"
+      ],
+      "dataFiles": [
+        "lib/admin-api.ts",
+        "lib/admin/d-api.ts",
+        "lib/admin/d-types.ts",
+        "lib/admin/d-fixtures.ts",
+        "lib/admin-types.ts",
+        "components/admin/d/Charts.tsx"
+      ],
+      "dataProvenance": "repository-direct",
+      "localStore": {
+        "reads": "in-memory store in lib/admin/d-api.ts cloned from marked sample fixtures lib/admin/d-fixtures.ts (SAMPLE = true); sample data until /v1/admin exists; changes live only until reload; figures and targets are PROVISIONAL fixture numbers (d-fixtures.ts numbers())",
+        "populatedBy": null
+      },
+      "inlineLiterals": [],
+      "route": "/admin/numbers",
+      "area": "admin"
+    },
+    {
+      "id": "admin-overview",
+      "title": "Admin: Overview",
+      "uiFiles": [
+        "app/admin/page.tsx",
+        "components/admin/Overview.tsx",
+        "components/admin/Shell.tsx",
+        "components/admin/ui.tsx"
+      ],
+      "dataFiles": [
+        "lib/admin-api.ts",
+        "lib/admin-types.ts",
+        "lib/admin-fixtures.ts"
+      ],
+      "dataProvenance": "seam file (lib/admin-api.ts) returning marked sample data from lib/admin-fixtures.ts held in memory; CONNECTED=false; staff changes kept in memory only",
+      "localStore": {
+        "reads": "in-memory db in lib/admin-api.ts (module variable, lost on reload)",
+        "populatedBy": "lib/admin-fixtures.ts (SAMPLE data cloned at module load)"
+      },
+      "inlineLiterals": [],
+      "route": "/admin",
+      "area": "admin"
+    },
+    {
+      "id": "admin-payments",
+      "title": "Admin: Payments and ledger",
+      "uiFiles": [
+        "app/admin/payments/page.tsx",
+        "components/admin/c/Payments.tsx",
+        "components/admin/ui.tsx"
+      ],
+      "dataFiles": [
+        "lib/admin/c-api.ts",
+        "lib/admin/c-types.ts",
+        "lib/admin/c-fixtures.ts",
+        "lib/admin-api.ts",
+        "lib/admin-types.ts",
+        "lib/admin-fixtures.ts"
+      ],
+      "dataProvenance": "inline",
+      "localStore": {
+        "reads": "in-memory db.payments (cSeam.db()), payRecord events, copy of lib/admin-fixtures payments",
+        "populatedBy": null
+      },
+      "inlineLiterals": [
+        {
+          "file": "lib/admin/c-fixtures.ts",
+          "description": "providerOnly, providerMissing, providerAmount, LEDGER_DAYS (seven fixed days 2026-11-09..15): the sample provider side of the ledger"
+        },
+        {
+          "file": "lib/admin-fixtures.ts",
+          "description": "payments sample rows (F.payments)"
+        }
+      ],
+      "route": "/admin/payments?view=ledger&ref=<ref>",
+      "area": "admin"
+    },
+    {
+      "id": "admin-people-detail",
+      "title": "Admin: Person detail",
+      "uiFiles": [
+        "app/admin/people/[id]/page.tsx",
+        "components/admin/Person.tsx",
+        "components/admin/ui.tsx"
+      ],
+      "dataFiles": [
+        "lib/admin-api.ts",
+        "lib/admin-types.ts",
+        "lib/admin-fixtures.ts"
+      ],
+      "dataProvenance": "seam file (lib/admin-api.ts) returning marked sample data from lib/admin-fixtures.ts held in memory; CONNECTED=false; staff changes kept in memory only",
+      "localStore": {
+        "reads": "in-memory db in lib/admin-api.ts (module variable, lost on reload)",
+        "populatedBy": "lib/admin-fixtures.ts (SAMPLE data cloned at module load)"
+      },
+      "inlineLiterals": [],
+      "route": "/admin/people/[id]",
+      "area": "admin"
+    },
+    {
+      "id": "admin-people",
+      "title": "Admin: People",
+      "uiFiles": [
+        "app/admin/people/page.tsx",
+        "components/admin/People.tsx",
+        "components/admin/ui.tsx"
+      ],
+      "dataFiles": [
+        "lib/admin-api.ts",
+        "lib/admin-types.ts",
+        "lib/admin-fixtures.ts"
+      ],
+      "dataProvenance": "seam file (lib/admin-api.ts) returning marked sample data from lib/admin-fixtures.ts held in memory; CONNECTED=false; staff changes kept in memory only",
+      "localStore": {
+        "reads": "in-memory db in lib/admin-api.ts (module variable, lost on reload)",
+        "populatedBy": "lib/admin-fixtures.ts (SAMPLE data cloned at module load)"
+      },
+      "inlineLiterals": [],
+      "route": "/admin/people",
+      "area": "admin"
+    },
+    {
+      "id": "admin-prices",
+      "title": "Admin: Prices",
+      "uiFiles": [
+        "app/admin/prices/page.tsx",
+        "components/admin/c/Prices.tsx",
+        "components/admin/ui.tsx"
+      ],
+      "dataFiles": [
+        "lib/admin/c-api.ts",
+        "lib/admin/c-types.ts",
+        "lib/admin/c-fixtures.ts",
+        "lib/admin-api.ts",
+        "lib/admin-types.ts",
+        "lib/admin-fixtures.ts"
+      ],
+      "dataProvenance": "inline",
+      "localStore": {
+        "reads": "in-memory BASE (built at load), priceSet overrides and priceLog (module-level in c-api.ts)",
+        "populatedBy": null
+      },
+      "inlineLiterals": [
+        {
+          "file": "lib/admin/c-api.ts",
+          "description": "basePrices() builds the price list from lib/catalog.ts (tickets, extras, pass), lib/pro-data.ts (plans, Vault), lib/studio.ts (creator plan, signed, credit pack, extra review) and the constant OFFER_ENDS 2027-01-31 ('site copy')"
+        }
+      ],
+      "route": "/admin/prices",
+      "area": "admin"
+    },
+    {
+      "id": "admin-settings",
+      "title": "Admin: Settings",
+      "uiFiles": [
+        "app/admin/settings/page.tsx",
+        "components/admin/d/Settings.tsx"
+      ],
+      "dataFiles": [
+        "lib/admin-api.ts",
+        "lib/admin/d-api.ts",
+        "lib/admin/d-types.ts",
+        "lib/admin/d-fixtures.ts",
+        "lib/admin-types.ts",
+        "lib/admin-fixtures.ts"
+      ],
+      "dataProvenance": "inline",
+      "localStore": {
+        "reads": "in-memory store in lib/admin/d-api.ts cloned from lib/admin/d-fixtures.ts (marked sample data); lost on reload",
+        "populatedBy": null
+      },
+      "inlineLiterals": [
+        {
+          "file": "lib/admin/d-fixtures.ts",
+          "description": "settings: providers, storage, switches (lines 143-153); OFF=0.4 from lib/maker.ts"
+        }
+      ],
+      "route": "/admin/settings",
+      "area": "admin"
+    },
+    {
+      "id": "admin-showing",
+      "title": "Admin: Now Showing",
+      "uiFiles": [
+        "app/admin/showing/page.tsx",
+        "components/admin/b/Showing.tsx",
+        "components/admin/Wishes.tsx",
+        "components/admin/ui.tsx",
+        "components/admin/b/parts.tsx"
+      ],
+      "dataFiles": [
+        "lib/admin-api.ts",
+        "lib/admin/b-api.ts",
+        "lib/admin/b-types.ts",
+        "lib/admin/b-fixtures.ts",
+        "lib/admin-types.ts"
+      ],
+      "dataProvenance": "inline",
+      "localStore": {
+        "reads": "in-memory copy ('mine') in lib/admin/b-api.ts cloned from lib/admin/b-fixtures.ts (marked sample data, SAMPLE = true); lost on reload",
+        "populatedBy": null
+      },
+      "inlineLiterals": [
+        {
+          "file": "lib/admin/b-fixtures.ts",
+          "description": "PUBLISH requests, DAY_PICKS and WISH_STYLE sample; opened public wishes appended to the Wishes sample"
+        }
+      ],
+      "route": "/admin/showing",
+      "area": "admin"
+    },
+    {
+      "id": "admin-sign-in",
+      "title": "Admin: Staff sign in",
+      "uiFiles": [
+        "app/admin/sign-in/page.tsx",
+        "components/admin/SignIn.tsx",
+        "components/app/AuthShell.tsx"
+      ],
+      "dataFiles": [
+        "lib/admin-api.ts",
+        "lib/admin-types.ts",
+        "lib/admin-fixtures.ts"
+      ],
+      "dataProvenance": "seam file (lib/admin-api.ts) returning marked sample data from lib/admin-fixtures.ts held in memory; CONNECTED=false; staff changes kept in memory only",
+      "localStore": {
+        "reads": "in-memory db in lib/admin-api.ts (module variable, lost on reload)",
+        "populatedBy": "lib/admin-fixtures.ts (SAMPLE data cloned at module load)"
+      },
+      "inlineLiterals": [],
+      "route": "/admin/sign-in",
+      "area": "admin"
+    },
+    {
+      "id": "admin-styles-review",
+      "title": "Admin: Style review",
+      "uiFiles": [
+        "app/admin/styles/review/page.tsx",
+        "components/admin/b/Review.tsx",
+        "components/admin/b/Styles.tsx",
+        "components/admin/ui.tsx",
+        "components/admin/b/parts.tsx"
+      ],
+      "dataFiles": [
+        "lib/admin-api.ts",
+        "lib/admin/b-api.ts",
+        "lib/admin/b-types.ts",
+        "lib/admin/b-fixtures.ts",
+        "lib/admin-types.ts",
+        "lib/studio.ts",
+        "lib/levels.ts",
+        "lib/catalog.ts"
+      ],
+      "dataProvenance": "inline",
+      "localStore": {
+        "reads": "in-memory copy ('mine') in lib/admin/b-api.ts cloned from lib/admin/b-fixtures.ts (marked sample data, SAMPLE = true); lost on reload",
+        "populatedBy": null
+      },
+      "inlineLiterals": [
+        {
+          "file": "lib/admin/b-fixtures.ts",
+          "description": "SUBMISSIONS: whole StudioStyle documents with stills and rights words"
+        }
+      ],
+      "route": "/admin/styles/review",
+      "area": "admin"
+    },
+    {
+      "id": "admin-styles",
+      "title": "Admin: Styles",
+      "uiFiles": [
+        "app/admin/styles/page.tsx",
+        "components/admin/b/Styles.tsx",
+        "components/admin/ui.tsx",
+        "components/admin/b/parts.tsx"
+      ],
+      "dataFiles": [
+        "lib/admin-api.ts",
+        "lib/admin/b-api.ts",
+        "lib/admin/b-types.ts",
+        "lib/admin/b-fixtures.ts",
+        "lib/admin-types.ts",
+        "lib/styles.ts",
+        "lib/levels.ts",
+        "lib/catalog.ts"
+      ],
+      "dataProvenance": "inline",
+      "localStore": {
+        "reads": "in-memory copy ('mine') in lib/admin/b-api.ts cloned from lib/admin/b-fixtures.ts (marked sample data, SAMPLE = true); lost on reload",
+        "populatedBy": null
+      },
+      "inlineLiterals": [
+        {
+          "file": "lib/admin/b-fixtures.ts",
+          "description": "styleCounts(slug) hash-made monthly counts (lines 80-87)"
+        }
+      ],
+      "route": "/admin/styles",
+      "area": "admin"
+    },
+    {
+      "id": "admin-support-detail",
+      "title": "Admin: Support thread",
+      "uiFiles": [
+        "app/admin/support/[id]/page.tsx",
+        "components/admin/d/Thread.tsx",
+        "components/admin/d/Support.tsx"
+      ],
+      "dataFiles": [
+        "lib/admin-api.ts",
+        "lib/admin/d-api.ts",
+        "lib/admin/d-types.ts",
+        "lib/admin/d-fixtures.ts",
+        "lib/admin-types.ts"
+      ],
+      "dataProvenance": "repository-direct",
+      "localStore": {
+        "reads": "in-memory store in lib/admin/d-api.ts cloned from marked sample fixtures lib/admin/d-fixtures.ts (SAMPLE = true); sample data until /v1/admin exists; changes live only until reload",
+        "populatedBy": null
+      },
+      "inlineLiterals": [],
+      "route": "/admin/support/[id]",
+      "area": "admin"
+    },
+    {
+      "id": "admin-support",
+      "title": "Admin: Support inbox",
+      "uiFiles": [
+        "app/admin/support/page.tsx",
+        "components/admin/d/Support.tsx"
+      ],
+      "dataFiles": [
+        "lib/admin-api.ts",
+        "lib/admin/d-api.ts",
+        "lib/admin/d-types.ts",
+        "lib/admin/d-fixtures.ts",
+        "lib/admin-types.ts"
+      ],
+      "dataProvenance": "repository-direct",
+      "localStore": {
+        "reads": "in-memory store in lib/admin/d-api.ts cloned from marked sample fixtures lib/admin/d-fixtures.ts (SAMPLE = true); sample data until /v1/admin exists; changes live only until reload",
+        "populatedBy": null
+      },
+      "inlineLiterals": [],
+      "route": "/admin/support",
+      "area": "admin"
+    },
+    {
+      "id": "admin-team",
+      "title": "Admin: Team",
+      "uiFiles": [
+        "app/admin/team/page.tsx",
+        "components/admin/d/Team.tsx",
+        "components/admin/nav.ts"
+      ],
+      "dataFiles": [
+        "lib/admin-api.ts",
+        "lib/admin/d-api.ts",
+        "lib/admin/d-types.ts",
+        "lib/admin/d-fixtures.ts",
+        "lib/admin-types.ts",
+        "lib/admin-fixtures.ts"
+      ],
+      "dataProvenance": "inline",
+      "localStore": {
+        "reads": "in-memory store in lib/admin/d-api.ts cloned from lib/admin/d-fixtures.ts (marked sample data); lost on reload",
+        "populatedBy": null
+      },
+      "inlineLiterals": [
+        {
+          "file": "lib/admin/d-fixtures.ts",
+          "description": "members (lines 99-108), access table (110-121), ROLES and ROLE_LINE (122-131)"
+        }
+      ],
+      "route": "/admin/team",
+      "area": "admin"
+    },
+    {
+      "id": "admin-wishes-detail",
+      "title": "Admin: Wish detail",
+      "uiFiles": [
+        "app/admin/wishes/[no]/page.tsx",
+        "components/admin/Wish.tsx",
+        "components/admin/ui.tsx"
+      ],
+      "dataFiles": [
+        "lib/admin-api.ts",
+        "lib/admin-types.ts",
+        "lib/admin-fixtures.ts"
+      ],
+      "dataProvenance": "seam file (lib/admin-api.ts) returning marked sample data from lib/admin-fixtures.ts held in memory; CONNECTED=false; staff changes kept in memory only",
+      "localStore": {
+        "reads": "in-memory db in lib/admin-api.ts (module variable, lost on reload)",
+        "populatedBy": "lib/admin-fixtures.ts (SAMPLE data cloned at module load)"
+      },
+      "inlineLiterals": [],
+      "route": "/admin/wishes/[no]",
+      "area": "admin"
+    },
+    {
+      "id": "admin-wishes",
+      "title": "Admin: Wishes",
+      "uiFiles": [
+        "app/admin/wishes/page.tsx",
+        "components/admin/Wishes.tsx",
+        "components/admin/ui.tsx"
+      ],
+      "dataFiles": [
+        "lib/admin-api.ts",
+        "lib/admin-types.ts",
+        "lib/admin-fixtures.ts"
+      ],
+      "dataProvenance": "seam file (lib/admin-api.ts) returning marked sample data from lib/admin-fixtures.ts held in memory; CONNECTED=false; staff changes kept in memory only",
+      "localStore": {
+        "reads": "in-memory db in lib/admin-api.ts (module variable, lost on reload)",
+        "populatedBy": "lib/admin-fixtures.ts (SAMPLE data cloned at module load)"
+      },
+      "inlineLiterals": [],
+      "route": "/admin/wishes",
+      "area": "admin"
     }
   ]
 }

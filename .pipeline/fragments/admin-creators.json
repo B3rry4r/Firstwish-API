@@ -1,0 +1,241 @@
+{
+ "screenId": "admin-creators",
+ "reads": [
+  {
+   "entity": "CreatorRow",
+   "fields": [
+    {
+     "name": "id",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "person",
+     "type": "string (Person.id; links to /admin/people/:id)",
+     "nullable": false
+    },
+    {
+     "name": "name",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "handle",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "plan",
+     "type": "'open'|'creator'",
+     "nullable": false
+    },
+    {
+     "name": "signed",
+     "type": "boolean (the Signed add-on)",
+     "nullable": false
+    },
+    {
+     "name": "credits",
+     "type": "number",
+     "nullable": false
+    },
+    {
+     "name": "styles",
+     "type": "{name, level, uses}[] (live styles with paid uses this month; sample)",
+     "nullable": false
+    },
+    {
+     "name": "earned",
+     "type": "number (naira; this month so far: sum of premium styles' uses * PER_USE)",
+     "nullable": false
+    }
+   ],
+   "cardinality": "list",
+   "filtersOrSort": [
+    "table sorts on name, plan, credits, styles, uses, earned (initial: earned descending)"
+   ],
+   "pagination": "none (Table without pageSize; whole list)",
+   "evidence": "GET /v1/admin/creators -> Creators: each creator's plan, credits, live styles and this month's earnings; last month's payout run",
+   "note": "response {creators, run}. Money in naira numbers (PER_USE = PREMIUM_PRICE.now * SHARE = 2400 * 0.2 = 480). Every figure is fixture data in lib/admin/b-fixtures.ts (SAMPLE = true)"
+  },
+  {
+   "entity": "PayoutRun",
+   "fields": [
+    {
+     "name": "month",
+     "type": "string e.g. 'October 2026' (last month)",
+     "nullable": false
+    },
+    {
+     "name": "payDay",
+     "type": "string e.g. '5 November'",
+     "nullable": false
+    },
+    {
+     "name": "threshold",
+     "type": "number (naira; PAYOUT_THRESHOLD = 5000, PROVISIONAL)",
+     "nullable": false
+    },
+    {
+     "name": "rows",
+     "type": "PayoutRow[]",
+     "nullable": false
+    }
+   ],
+   "cardinality": "single",
+   "pagination": "none",
+   "evidence": "same request: Creators.run, last month's payout run"
+  },
+  {
+   "entity": "PayoutRow",
+   "fields": [
+    {
+     "name": "creator",
+     "type": "string (CreatorRow.id)",
+     "nullable": false
+    },
+    {
+     "name": "name",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "handle",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "earned",
+     "type": "number (naira, last month)",
+     "nullable": false
+    },
+    {
+     "name": "carried",
+     "type": "number (naira rolled on from earlier months)",
+     "nullable": false
+    },
+    {
+     "name": "total",
+     "type": "number (naira, earned + carried)",
+     "nullable": false
+    },
+    {
+     "name": "state",
+     "type": "'due'|'rolls'|'paid'",
+     "nullable": false
+    },
+    {
+     "name": "paid",
+     "type": "{decision:'paid', at, by, reason}",
+     "nullable": true
+    }
+   ],
+   "cardinality": "list",
+   "filtersOrSort": [
+    "total descending"
+   ],
+   "pagination": "none",
+   "evidence": "same request: Creators.run.rows; state is due when total >= threshold and not paid, rolls when under, paid once marked"
+  }
+ ],
+ "actions": [
+  {
+   "name": "markPayoutPaid",
+   "kind": "custom",
+   "entity": "PayoutRow",
+   "payload": [
+    {
+     "name": "creator",
+     "type": "string (CreatorRow.id)"
+    },
+    {
+     "name": "month",
+     "type": "string (named in the header; the seam call does not pass it, the run is last month's)"
+    },
+    {
+     "name": "reason",
+     "type": "string (min 4 chars after trim; written to the audit log)"
+    }
+   ],
+   "expectedResponse": {
+    "entity": "PayoutRow",
+    "cardinality": "single",
+    "note": "seam returns void. Only a payout in state due; otherwise not_allowed. The reason carries the transfer reference (UI text). No money moves through this action: it records that it left"
+   },
+   "evidence": "POST /v1/admin/creators/payouts/:creator/paid { month, reason }. Marks last month's payout paid; only a payout past the threshold."
+  }
+ ],
+ "authContext": {
+  "requiresAuth": true,
+  "side": "staff",
+  "rolesObserved": [
+   "reviewer (route access table in lib/admin/d-fixtures.ts:117)",
+   "finance (same table, line 119)",
+   "owner",
+   "ops"
+  ]
+ },
+ "special": {
+  "realtime": false,
+  "uploads": false,
+  "downloads": false
+ },
+ "uiStatesHandled": [
+  {
+   "state": "loading",
+   "entersWhen": "useAdmin data == null and no error (starts loading:true)",
+   "reachable": "no today (async over in-memory reads resolves in a microtask); yes once a network call exists"
+  },
+  {
+   "state": "error",
+   "entersWhen": "useAdmin read() rejects; Problem shows adminProblem(e) with retry",
+   "reachable": "no today (nothing rejects on reads); yes once a network call exists. Write errors (not_found, not_allowed, failed) reject inside Confirm onConfirm"
+  },
+  {
+   "state": "loaded",
+   "entersWhen": "data present",
+   "reachable": "yes"
+  },
+  {
+   "state": "empty",
+   "entersWhen": "no explicit empty state: the Table is given data.creators with no empty branch",
+   "reachable": "no"
+  },
+  {
+   "state": "payout due / rolls / paid",
+   "entersWhen": "row.state of each payout row",
+   "reachable": "yes in sample"
+  },
+  {
+   "state": "confirm",
+   "entersWhen": "open set by Mark paid; Confirm asks for the reason",
+   "reachable": "yes"
+  }
+ ],
+ "uiStatesDesigned": [
+  "loading",
+  "empty",
+  "error",
+  "loaded"
+ ],
+ "stubsObserved": [
+  {
+   "file": "lib/admin/b-api.ts:1-9",
+   "evidence": "header: 'NOT CONNECTED YET: the bodies read lib/admin/b-fixtures.ts (marked sample data) and keep staff decisions in memory on this page only'",
+   "standsInFor": "the /v1/admin server",
+   "consequence": "every figure and row is fixture data; decisions vanish on reload; loading and error states are not reachable from a network"
+  },
+  {
+   "file": "lib/admin/b-api.ts:259-262",
+   "evidence": "/* R14, Default (lead), owner may override: PROVISIONAL until the owner says yes */ PAYOUT_THRESHOLD = 5000; PAY_DAY = 5",
+   "standsInFor": "owner ruling R14 on threshold and pay day",
+   "consequence": "threshold and day are client constants shown as PROVISIONAL"
+  },
+  {
+   "file": "lib/admin/b-api.ts:267-275",
+   "evidence": "B.LAST_MONTH uses * PER_USE computed in the browser",
+   "standsInFor": "a ledger of paid uses and carried balances",
+   "consequence": "earnings are derived from invented use counts times a constant; no ledger exists. Money here is naira numbers (convention says integer kobo)"
+  }
+ ]
+}

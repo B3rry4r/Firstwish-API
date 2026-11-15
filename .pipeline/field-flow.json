@@ -1049,6 +1049,104 @@
       "noWriter": false
     },
     {
+      "field": "AuditRow.at",
+      "writers": [],
+      "store": "AuditRow",
+      "readers": [
+        "admin-audit"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "AuditRow.by",
+      "writers": [],
+      "store": "AuditRow",
+      "readers": [
+        "admin-audit"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "AuditRow.href",
+      "writers": [],
+      "store": "AuditRow",
+      "readers": [
+        "admin-audit"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "AuditRow.id",
+      "writers": [],
+      "store": "AuditRow",
+      "readers": [
+        "admin-audit"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "AuditRow.reason",
+      "writers": [],
+      "store": "AuditRow",
+      "readers": [
+        "admin-audit"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "AuditRow.section",
+      "writers": [],
+      "store": "AuditRow",
+      "readers": [
+        "admin-audit"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "AuditRow.what",
+      "writers": [],
+      "store": "AuditRow",
+      "readers": [
+        "admin-audit"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
       "field": "AuthCode.attempts",
       "writers": [
         "server:auth-codes"
@@ -1065,7 +1163,7 @@
     {
       "field": "AuthCode.channel",
       "writers": [
-        "E-15"
+        "E-16"
       ],
       "store": "AuthCode",
       "readers": [
@@ -1084,7 +1182,7 @@
     {
       "field": "AuthCode.code",
       "writers": [
-        "E-16"
+        "E-17"
       ],
       "store": "AuthCode",
       "readers": [],
@@ -1126,8 +1224,8 @@
     {
       "field": "AuthCode.contact",
       "writers": [
-        "E-15",
-        "E-16"
+        "E-16",
+        "E-17"
       ],
       "store": "AuthCode",
       "readers": [
@@ -1216,7 +1314,7 @@
     {
       "field": "AuthCode.mode",
       "writers": [
-        "E-15"
+        "E-16"
       ],
       "store": "AuthCode",
       "readers": [
@@ -1249,7 +1347,7 @@
     {
       "field": "AuthCode.via",
       "writers": [
-        "E-15"
+        "E-16"
       ],
       "store": "AuthCode",
       "readers": [
@@ -1268,7 +1366,7 @@
     {
       "field": "Ban.accountId",
       "writers": [
-        "E-17"
+        "E-18"
       ],
       "store": "Ban",
       "readers": [],
@@ -1324,7 +1422,7 @@
     {
       "field": "Ban.reason",
       "writers": [
-        "E-17"
+        "E-18"
       ],
       "store": "Ban",
       "readers": [],
@@ -1338,7 +1436,7 @@
     {
       "field": "Ban.scope",
       "writers": [
-        "E-17"
+        "E-18"
       ],
       "store": "Ban",
       "readers": [],
@@ -1366,7 +1464,7 @@
     {
       "field": "BankAccount.accountNumber",
       "writers": [
-        "E-18"
+        "E-19"
       ],
       "store": "BankAccount",
       "readers": [],
@@ -1380,7 +1478,7 @@
     {
       "field": "BankAccount.bankCode",
       "writers": [
-        "E-18"
+        "E-19"
       ],
       "store": "BankAccount",
       "readers": [],
@@ -1410,7 +1508,7 @@
     {
       "field": "Business.brand.booking?",
       "writers": [
-        "E-20"
+        "E-21"
       ],
       "store": "Business",
       "readers": [
@@ -1442,7 +1540,7 @@
     {
       "field": "Business.brand.business?",
       "writers": [
-        "E-20"
+        "E-21"
       ],
       "store": "Business",
       "readers": [
@@ -1474,7 +1572,7 @@
     {
       "field": "Business.brand.colours?",
       "writers": [
-        "E-20"
+        "E-21"
       ],
       "store": "Business",
       "readers": [
@@ -1508,7 +1606,7 @@
     {
       "field": "Business.brand.line?",
       "writers": [
-        "E-20"
+        "E-21"
       ],
       "store": "Business",
       "readers": [
@@ -1540,7 +1638,7 @@
     {
       "field": "Business.brand.logo?",
       "writers": [
-        "E-20"
+        "E-21"
       ],
       "store": "Business",
       "readers": [
@@ -1779,8 +1877,8 @@
     {
       "field": "ClientWish.client",
       "writers": [
-        "E-24",
-        "E-26"
+        "E-25",
+        "E-27"
       ],
       "store": "ClientWish",
       "readers": [
@@ -1821,8 +1919,8 @@
     {
       "field": "ClientWish.day",
       "writers": [
-        "E-24",
-        "E-26"
+        "E-25",
+        "E-27"
       ],
       "store": "ClientWish",
       "readers": [
@@ -1912,7 +2010,7 @@
     {
       "field": "ClientWish.key",
       "writers": [
-        "E-26"
+        "E-27"
       ],
       "store": "ClientWish",
       "readers": [
@@ -1930,8 +2028,8 @@
     {
       "field": "ClientWish.kind",
       "writers": [
-        "E-24",
-        "E-26"
+        "E-25",
+        "E-27"
       ],
       "store": "ClientWish",
       "readers": [
@@ -1992,8 +2090,8 @@
     {
       "field": "ClientWish.occasion",
       "writers": [
-        "E-24",
-        "E-26"
+        "E-25",
+        "E-27"
       ],
       "store": "ClientWish",
       "readers": [
@@ -2035,8 +2133,8 @@
     {
       "field": "ClientWish.reveal",
       "writers": [
-        "E-24",
-        "E-27"
+        "E-25",
+        "E-28"
       ],
       "store": "ClientWish",
       "readers": [
@@ -2174,7 +2272,7 @@
     {
       "field": "ClientWish.reveal?",
       "writers": [
-        "E-24"
+        "E-25"
       ],
       "store": "ClientWish",
       "readers": [
@@ -2222,7 +2320,7 @@
     {
       "field": "ClientWish.set",
       "writers": [
-        "E-27"
+        "E-28"
       ],
       "store": "ClientWish",
       "readers": [
@@ -2241,7 +2339,7 @@
     {
       "field": "ClientWish.shoot",
       "writers": [
-        "E-27"
+        "E-28"
       ],
       "store": "ClientWish",
       "readers": [
@@ -2288,7 +2386,7 @@
     {
       "field": "ConciergeOrder.brief",
       "writers": [
-        "E-31"
+        "E-32"
       ],
       "store": "ConciergeOrder",
       "readers": [],
@@ -2317,7 +2415,7 @@
     {
       "field": "ConciergeOrder.count",
       "writers": [
-        "E-31"
+        "E-32"
       ],
       "store": "ConciergeOrder",
       "readers": [],
@@ -2360,9 +2458,9 @@
     {
       "field": "ConciergeOrder.id",
       "writers": [
-        "E-28",
         "E-29",
-        "E-30"
+        "E-30",
+        "E-31"
       ],
       "store": "ConciergeOrder",
       "readers": [],
@@ -2390,7 +2488,7 @@
     {
       "field": "ConciergeOrder.kind",
       "writers": [
-        "E-31"
+        "E-32"
       ],
       "store": "ConciergeOrder",
       "readers": [],
@@ -2405,7 +2503,7 @@
     {
       "field": "ConciergeOrder.makerId",
       "writers": [
-        "E-29"
+        "E-30"
       ],
       "store": "ConciergeOrder",
       "readers": [],
@@ -2433,7 +2531,7 @@
     {
       "field": "ConciergeOrder.quoteKobo",
       "writers": [
-        "E-30"
+        "E-31"
       ],
       "store": "ConciergeOrder",
       "readers": [],
@@ -2461,7 +2559,7 @@
     {
       "field": "ConciergeOrder.rush",
       "writers": [
-        "E-31"
+        "E-32"
       ],
       "store": "ConciergeOrder",
       "readers": [],
@@ -2762,6 +2860,132 @@
       "noWriter": true
     },
     {
+      "field": "CreatorRow.credits",
+      "writers": [],
+      "store": "CreatorRow",
+      "readers": [
+        "admin-creators"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "CreatorRow.earned",
+      "writers": [],
+      "store": "CreatorRow",
+      "readers": [
+        "admin-creators"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "CreatorRow.handle",
+      "writers": [],
+      "store": "CreatorRow",
+      "readers": [
+        "admin-creators"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "CreatorRow.id",
+      "writers": [],
+      "store": "CreatorRow",
+      "readers": [
+        "admin-creators"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "CreatorRow.name",
+      "writers": [],
+      "store": "CreatorRow",
+      "readers": [
+        "admin-creators"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "CreatorRow.person",
+      "writers": [],
+      "store": "CreatorRow",
+      "readers": [
+        "admin-creators"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "CreatorRow.plan",
+      "writers": [],
+      "store": "CreatorRow",
+      "readers": [
+        "admin-creators"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "CreatorRow.signed",
+      "writers": [],
+      "store": "CreatorRow",
+      "readers": [
+        "admin-creators"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "CreatorRow.styles",
+      "writers": [],
+      "store": "CreatorRow",
+      "readers": [
+        "admin-creators"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
       "field": "CreatorState.accountId",
       "writers": [
         "server:ai-writing"
@@ -2813,7 +3037,7 @@
     {
       "field": "CreatorState.on",
       "writers": [
-        "E-34"
+        "E-36"
       ],
       "store": "CreatorState",
       "readers": [
@@ -2937,7 +3161,7 @@
     {
       "field": "DateRow.date",
       "writers": [
-        "E-36"
+        "E-38"
       ],
       "store": "DateRow",
       "readers": [
@@ -2989,8 +3213,8 @@
     {
       "field": "DateRow.id",
       "writers": [
-        "E-36",
-        "E-37"
+        "E-38",
+        "E-39"
       ],
       "store": "DateRow",
       "readers": [
@@ -3024,7 +3248,7 @@
     {
       "field": "DateRow.name",
       "writers": [
-        "E-36"
+        "E-38"
       ],
       "store": "DateRow",
       "readers": [
@@ -3061,7 +3285,7 @@
     {
       "field": "DateRow.what",
       "writers": [
-        "E-36"
+        "E-38"
       ],
       "store": "DateRow",
       "readers": [
@@ -3085,7 +3309,7 @@
     {
       "field": "DateRow.who",
       "writers": [
-        "E-36"
+        "E-38"
       ],
       "store": "DateRow",
       "readers": [
@@ -3120,6 +3344,74 @@
       "noWriter": true
     },
     {
+      "field": "DayPick.date",
+      "writers": [
+        "E-41"
+      ],
+      "store": "DayPick",
+      "readers": [
+        "admin-showing"
+      ],
+      "writerActors": [
+        "staff"
+      ],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": false
+    },
+    {
+      "field": "DayPick.pick",
+      "writers": [],
+      "store": "DayPick",
+      "readers": [
+        "admin-showing"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "DayPick.reason",
+      "writers": [
+        "E-41"
+      ],
+      "store": "DayPick",
+      "readers": [
+        "admin-showing"
+      ],
+      "writerActors": [
+        "staff"
+      ],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": false
+    },
+    {
+      "field": "DayPick.wish",
+      "writers": [
+        "E-41"
+      ],
+      "store": "DayPick",
+      "readers": [
+        "admin-showing"
+      ],
+      "writerActors": [
+        "staff"
+      ],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": false
+    },
+    {
       "field": "EarningsSummary.count",
       "writers": [
         "server:analytics-events"
@@ -3136,7 +3428,7 @@
     {
       "field": "EarningsSummary.from",
       "writers": [
-        "E-39"
+        "E-43"
       ],
       "store": "EarningsSummary",
       "readers": [],
@@ -3192,7 +3484,7 @@
     {
       "field": "EarningsSummary.to",
       "writers": [
-        "E-39"
+        "E-43"
       ],
       "store": "EarningsSummary",
       "readers": [],
@@ -3444,7 +3736,7 @@
     {
       "field": "Event.name",
       "writers": [
-        "E-41"
+        "E-45"
       ],
       "store": "Event",
       "readers": [],
@@ -3458,7 +3750,7 @@
     {
       "field": "Event.props",
       "writers": [
-        "E-41"
+        "E-45"
       ],
       "store": "Event",
       "readers": [],
@@ -3514,8 +3806,8 @@
     {
       "field": "ExternalIdentity.code",
       "writers": [
-        "E-42",
-        "E-45"
+        "E-46",
+        "E-49"
       ],
       "store": "ExternalIdentity",
       "readers": [],
@@ -3572,7 +3864,7 @@
     {
       "field": "ExternalIdentity.id",
       "writers": [
-        "E-44"
+        "E-48"
       ],
       "store": "ExternalIdentity",
       "readers": [],
@@ -3600,7 +3892,7 @@
     {
       "field": "ExternalIdentity.returnTo",
       "writers": [
-        "E-43"
+        "E-47"
       ],
       "store": "ExternalIdentity",
       "readers": [],
@@ -3614,8 +3906,8 @@
     {
       "field": "ExternalIdentity.state",
       "writers": [
-        "E-42",
-        "E-45"
+        "E-46",
+        "E-49"
       ],
       "store": "ExternalIdentity",
       "readers": [],
@@ -3758,8 +4050,8 @@
     {
       "field": "Follow.handle",
       "writers": [
-        "E-46",
-        "E-47"
+        "E-50",
+        "E-51"
       ],
       "store": "Follow",
       "readers": [
@@ -3809,7 +4101,7 @@
     {
       "field": "Invoice.id",
       "writers": [
-        "E-49"
+        "E-53"
       ],
       "store": "Invoice",
       "readers": [
@@ -3925,7 +4217,7 @@
     {
       "field": "Job.id",
       "writers": [
-        "E-51"
+        "E-55"
       ],
       "store": "Job",
       "readers": [],
@@ -3953,7 +4245,7 @@
     {
       "field": "Job.status",
       "writers": [
-        "E-50"
+        "E-54"
       ],
       "store": "Job",
       "readers": [],
@@ -3981,7 +4273,7 @@
     {
       "field": "Job.type",
       "writers": [
-        "E-50"
+        "E-54"
       ],
       "store": "Job",
       "readers": [],
@@ -4091,9 +4383,93 @@
       "noWriter": false
     },
     {
+      "field": "LedgerDay.day",
+      "writers": [],
+      "store": "LedgerDay",
+      "readers": [
+        "admin-payments"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "LedgerDay.diffs",
+      "writers": [],
+      "store": "LedgerDay",
+      "readers": [
+        "admin-payments"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "LedgerDay.ours",
+      "writers": [],
+      "store": "LedgerDay",
+      "readers": [
+        "admin-payments"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "LedgerDay.oursCount",
+      "writers": [],
+      "store": "LedgerDay",
+      "readers": [
+        "admin-payments"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "LedgerDay.theirs",
+      "writers": [],
+      "store": "LedgerDay",
+      "readers": [
+        "admin-payments"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "LedgerDay.theirsCount",
+      "writers": [],
+      "store": "LedgerDay",
+      "readers": [
+        "admin-payments"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
       "field": "LedgerEntry.account",
       "writers": [
-        "E-52"
+        "E-57"
       ],
       "store": "LedgerEntry",
       "readers": [],
@@ -4163,7 +4539,7 @@
     {
       "field": "LedgerEntry.from",
       "writers": [
-        "E-52"
+        "E-57"
       ],
       "store": "LedgerEntry",
       "readers": [],
@@ -4261,7 +4637,7 @@
     {
       "field": "LedgerEntry.to",
       "writers": [
-        "E-52"
+        "E-57"
       ],
       "store": "LedgerEntry",
       "readers": [],
@@ -4485,9 +4861,129 @@
       "noWriter": true
     },
     {
+      "field": "Listed.forName",
+      "writers": [],
+      "store": "Listed",
+      "readers": [
+        "admin-showing"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "Listed.from",
+      "writers": [],
+      "store": "Listed",
+      "readers": [
+        "admin-showing"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "Listed.kind",
+      "writers": [],
+      "store": "Listed",
+      "readers": [
+        "admin-showing"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "Listed.listedAt",
+      "writers": [],
+      "store": "Listed",
+      "readers": [
+        "admin-showing"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "Listed.no",
+      "writers": [
+        "E-58"
+      ],
+      "store": "Listed",
+      "readers": [
+        "admin-showing"
+      ],
+      "writerActors": [
+        "staff"
+      ],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": false
+    },
+    {
+      "field": "Listed.occasion",
+      "writers": [],
+      "store": "Listed",
+      "readers": [
+        "admin-showing"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "Listed.reason",
+      "writers": [
+        "E-58"
+      ],
+      "store": "Listed",
+      "readers": [
+        "admin-showing"
+      ],
+      "writerActors": [
+        "staff"
+      ],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": false
+    },
+    {
+      "field": "Listed.styleName",
+      "writers": [],
+      "store": "Listed",
+      "readers": [
+        "admin-showing"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
       "field": "Login.contact",
       "writers": [
-        "E-54"
+        "E-61"
       ],
       "store": "Login",
       "readers": [
@@ -4505,7 +5001,7 @@
     {
       "field": "Login.id",
       "writers": [
-        "E-55"
+        "E-62"
       ],
       "store": "Login",
       "readers": [
@@ -4530,6 +5026,325 @@
       "writerActors": [],
       "readerActors": [
         "business"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "Maker.id",
+      "writers": [],
+      "store": "Maker",
+      "readers": [
+        "admin-concierge"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "Maker.name",
+      "writers": [],
+      "store": "Maker",
+      "readers": [
+        "admin-concierge"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "Maker.open",
+      "writers": [],
+      "store": "Maker",
+      "readers": [
+        "admin-concierge"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "Member.email",
+      "writers": [
+        "E-64"
+      ],
+      "store": "Member",
+      "readers": [
+        "admin-team"
+      ],
+      "writerActors": [
+        "staff"
+      ],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": false
+    },
+    {
+      "field": "Member.id",
+      "writers": [
+        "E-65"
+      ],
+      "store": "Member",
+      "readers": [
+        "admin-team"
+      ],
+      "writerActors": [
+        "staff"
+      ],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": false
+    },
+    {
+      "field": "Member.name",
+      "writers": [],
+      "store": "Member",
+      "readers": [
+        "admin-team"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "Member.reason",
+      "writers": [
+        "E-64",
+        "E-65"
+      ],
+      "store": "Member",
+      "readers": [
+        "admin-team"
+      ],
+      "writerActors": [
+        "staff"
+      ],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": false
+    },
+    {
+      "field": "Member.role",
+      "writers": [
+        "E-64"
+      ],
+      "store": "Member",
+      "readers": [
+        "admin-team"
+      ],
+      "writerActors": [
+        "staff"
+      ],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": false
+    },
+    {
+      "field": "Member.seen",
+      "writers": [],
+      "store": "Member",
+      "readers": [
+        "admin-team"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "Member.since",
+      "writers": [],
+      "store": "Member",
+      "readers": [
+        "admin-team"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "Member.state",
+      "writers": [],
+      "store": "Member",
+      "readers": [
+        "admin-team"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "Message.at",
+      "writers": [],
+      "store": "Message",
+      "readers": [
+        "admin-messages",
+        "admin-overview",
+        "admin-wishes-detail"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "Message.channel",
+      "writers": [],
+      "store": "Message",
+      "readers": [
+        "admin-messages",
+        "admin-overview",
+        "admin-wishes-detail"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "Message.id",
+      "writers": [
+        "E-67"
+      ],
+      "store": "Message",
+      "readers": [
+        "admin-messages",
+        "admin-overview",
+        "admin-wishes-detail"
+      ],
+      "writerActors": [
+        "staff"
+      ],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": false
+    },
+    {
+      "field": "Message.reason",
+      "writers": [
+        "E-67"
+      ],
+      "store": "Message",
+      "readers": [
+        "admin-messages"
+      ],
+      "writerActors": [
+        "staff"
+      ],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": false
+    },
+    {
+      "field": "Message.resent",
+      "writers": [],
+      "store": "Message",
+      "readers": [
+        "admin-messages"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "Message.state",
+      "writers": [],
+      "store": "Message",
+      "readers": [
+        "admin-messages",
+        "admin-overview",
+        "admin-wishes-detail"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "Message.to",
+      "writers": [],
+      "store": "Message",
+      "readers": [
+        "admin-messages",
+        "admin-overview",
+        "admin-wishes-detail"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "Message.what",
+      "writers": [],
+      "store": "Message",
+      "readers": [
+        "admin-messages",
+        "admin-overview",
+        "admin-wishes-detail"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "Message.wish",
+      "writers": [],
+      "store": "Message",
+      "readers": [
+        "admin-messages",
+        "admin-overview",
+        "admin-wishes-detail"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
       ],
       "crossActor": false,
       "noWriter": true
@@ -4621,7 +5436,7 @@
     {
       "field": "MessageDelivery.idempotencyKey",
       "writers": [
-        "E-57"
+        "E-70"
       ],
       "store": "MessageDelivery",
       "readers": [],
@@ -4635,7 +5450,7 @@
     {
       "field": "MessageDelivery.provider payload",
       "writers": [
-        "E-56"
+        "E-69"
       ],
       "store": "MessageDelivery",
       "readers": [],
@@ -4691,7 +5506,7 @@
     {
       "field": "MessageDelivery.templateKey",
       "writers": [
-        "E-57"
+        "E-70"
       ],
       "store": "MessageDelivery",
       "readers": [],
@@ -4705,7 +5520,7 @@
     {
       "field": "MessageDelivery.to",
       "writers": [
-        "E-57"
+        "E-70"
       ],
       "store": "MessageDelivery",
       "readers": [],
@@ -4733,7 +5548,7 @@
     {
       "field": "MessageDelivery.vars",
       "writers": [
-        "E-57"
+        "E-70"
       ],
       "store": "MessageDelivery",
       "readers": [],
@@ -4827,6 +5642,280 @@
       "readerActors": [],
       "crossActor": false,
       "noWriter": false
+    },
+    {
+      "field": "ModItem.decision",
+      "writers": [
+        "E-71"
+      ],
+      "store": "ModItem",
+      "readers": [
+        "admin-moderation"
+      ],
+      "writerActors": [
+        "staff"
+      ],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": false
+    },
+    {
+      "field": "ModItem.reason",
+      "writers": [
+        "E-71"
+      ],
+      "store": "ModItem",
+      "readers": [
+        "admin-moderation"
+      ],
+      "writerActors": [
+        "staff"
+      ],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": false
+    },
+    {
+      "field": "ModView.at",
+      "writers": [],
+      "store": "ModView",
+      "readers": [
+        "admin-moderation"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "ModView.decided",
+      "writers": [],
+      "store": "ModView",
+      "readers": [
+        "admin-moderation"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "ModView.dueAt",
+      "writers": [],
+      "store": "ModView",
+      "readers": [
+        "admin-moderation"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "ModView.forName",
+      "writers": [],
+      "store": "ModView",
+      "readers": [
+        "admin-moderation"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "ModView.from",
+      "writers": [],
+      "store": "ModView",
+      "readers": [
+        "admin-moderation"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "ModView.id",
+      "writers": [],
+      "store": "ModView",
+      "readers": [
+        "admin-moderation"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "ModView.late",
+      "writers": [],
+      "store": "ModView",
+      "readers": [
+        "admin-moderation"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "ModView.minutesLeft",
+      "writers": [],
+      "store": "ModView",
+      "readers": [
+        "admin-moderation"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "ModView.personId",
+      "writers": [],
+      "store": "ModView",
+      "readers": [
+        "admin-moderation"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "ModView.photo",
+      "writers": [],
+      "store": "ModView",
+      "readers": [
+        "admin-moderation"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "ModView.queue",
+      "writers": [],
+      "store": "ModView",
+      "readers": [
+        "admin-moderation"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "ModView.score",
+      "writers": [],
+      "store": "ModView",
+      "readers": [
+        "admin-moderation"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "ModView.what",
+      "writers": [],
+      "store": "ModView",
+      "readers": [
+        "admin-moderation"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "ModView.who",
+      "writers": [],
+      "store": "ModView",
+      "readers": [
+        "admin-moderation"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "ModView.whoLine",
+      "writers": [],
+      "store": "ModView",
+      "readers": [
+        "admin-moderation"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "ModView.wish",
+      "writers": [],
+      "store": "ModView",
+      "readers": [
+        "admin-moderation"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "ModView.wishState",
+      "writers": [],
+      "store": "ModView",
+      "readers": [
+        "admin-moderation"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
     },
     {
       "field": "Moment.dimension",
@@ -5199,7 +6288,7 @@
     {
       "field": "NoticePrefs.channel",
       "writers": [
-        "E-60"
+        "E-75"
       ],
       "store": "NoticePrefs",
       "readers": [],
@@ -5213,7 +6302,7 @@
     {
       "field": "NoticePrefs.muted",
       "writers": [
-        "E-60"
+        "E-75"
       ],
       "store": "NoticePrefs",
       "readers": [],
@@ -5223,6 +6312,146 @@
       "readerActors": [],
       "crossActor": false,
       "noWriter": false
+    },
+    {
+      "field": "Numbers.days",
+      "writers": [],
+      "store": "Numbers",
+      "readers": [
+        "admin-numbers"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "Numbers.keeps",
+      "writers": [],
+      "store": "Numbers",
+      "readers": [
+        "admin-numbers"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "Numbers.kinds",
+      "writers": [],
+      "store": "Numbers",
+      "readers": [
+        "admin-numbers"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "Numbers.lines",
+      "writers": [],
+      "store": "Numbers",
+      "readers": [
+        "admin-numbers"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "Numbers.occasions",
+      "writers": [],
+      "store": "Numbers",
+      "readers": [
+        "admin-numbers"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "Numbers.opens",
+      "writers": [],
+      "store": "Numbers",
+      "readers": [
+        "admin-numbers"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "Numbers.paid",
+      "writers": [],
+      "store": "Numbers",
+      "readers": [
+        "admin-numbers"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "Numbers.period",
+      "writers": [],
+      "store": "Numbers",
+      "readers": [
+        "admin-numbers"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "Numbers.previews",
+      "writers": [],
+      "store": "Numbers",
+      "readers": [
+        "admin-numbers"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "Numbers.styles",
+      "writers": [],
+      "store": "Numbers",
+      "readers": [
+        "admin-numbers"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
     },
     {
       "field": "OpeningDef.fields",
@@ -5290,6 +6519,118 @@
       "writerActors": [],
       "readerActors": [
         "person"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "Order.maker",
+      "writers": [],
+      "store": "Order",
+      "readers": [
+        "admin-concierge"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "Order.reason",
+      "writers": [],
+      "store": "Order",
+      "readers": [
+        "admin-concierge"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "Overview.day",
+      "writers": [],
+      "store": "Overview",
+      "readers": [
+        "admin-overview"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "Overview.failedMessages",
+      "writers": [],
+      "store": "Overview",
+      "readers": [
+        "admin-overview"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "Overview.failedPayments",
+      "writers": [],
+      "store": "Overview",
+      "readers": [
+        "admin-overview"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "Overview.queues",
+      "writers": [],
+      "store": "Overview",
+      "readers": [
+        "admin-overview"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "Overview.takings",
+      "writers": [],
+      "store": "Overview",
+      "readers": [
+        "admin-overview"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "Overview.today",
+      "writers": [],
+      "store": "Overview",
+      "readers": [
+        "admin-overview"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
       ],
       "crossActor": false,
       "noWriter": true
@@ -5527,16 +6868,36 @@
       ],
       "store": "Payment",
       "readers": [
+        "admin-overview",
+        "admin-people-detail",
+        "admin-wishes-detail",
         "app-wish-detail"
       ],
       "writerActors": [
         "server"
       ],
       "readerActors": [
-        "person"
+        "person",
+        "staff"
       ],
       "crossActor": false,
       "noWriter": false
+    },
+    {
+      "field": "Payment.at",
+      "writers": [],
+      "store": "Payment",
+      "readers": [
+        "admin-overview",
+        "admin-people-detail",
+        "admin-wishes-detail"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
     },
     {
       "field": "Payment.businessId",
@@ -5611,7 +6972,7 @@
     {
       "field": "Payment.id",
       "writers": [
-        "E-63"
+        "E-81"
       ],
       "store": "Payment",
       "readers": [],
@@ -5640,6 +7001,22 @@
       "noWriter": false
     },
     {
+      "field": "Payment.line",
+      "writers": [],
+      "store": "Payment",
+      "readers": [
+        "admin-overview",
+        "admin-people-detail",
+        "admin-wishes-detail"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
       "field": "Payment.lines",
       "writers": [
         "server:payments"
@@ -5656,7 +7033,7 @@
     {
       "field": "Payment.options",
       "writers": [
-        "E-63"
+        "E-81"
       ],
       "store": "Payment",
       "readers": [],
@@ -5683,6 +7060,22 @@
       "readerActors": [],
       "crossActor": false,
       "noWriter": false
+    },
+    {
+      "field": "Payment.person",
+      "writers": [],
+      "store": "Payment",
+      "readers": [
+        "admin-overview",
+        "admin-people-detail",
+        "admin-wishes-detail"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
     },
     {
       "field": "Payment.priceBookVersion",
@@ -5729,7 +7122,7 @@
     {
       "field": "Payment.purpose",
       "writers": [
-        "E-63"
+        "E-81"
       ],
       "store": "Payment",
       "readers": [],
@@ -5744,9 +7137,48 @@
       "noWriter": false
     },
     {
+      "field": "Payment.reason",
+      "writers": [
+        "E-80"
+      ],
+      "store": "Payment",
+      "readers": [
+        "admin-payments"
+      ],
+      "writerActors": [
+        "staff"
+      ],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": false
+    },
+    {
+      "field": "Payment.ref",
+      "writers": [
+        "E-80"
+      ],
+      "store": "Payment",
+      "readers": [
+        "admin-overview",
+        "admin-payments",
+        "admin-people-detail",
+        "admin-wishes-detail"
+      ],
+      "writerActors": [
+        "staff"
+      ],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": false
+    },
+    {
       "field": "Payment.reference",
       "writers": [
-        "E-64"
+        "E-82"
       ],
       "store": "Payment",
       "readers": [],
@@ -5754,11 +7186,28 @@
         "business",
         "creator",
         "person",
-        "public"
+        "public",
+        "staff"
       ],
       "readerActors": [],
       "crossActor": false,
       "noWriter": false
+    },
+    {
+      "field": "Payment.state",
+      "writers": [],
+      "store": "Payment",
+      "readers": [
+        "admin-overview",
+        "admin-people-detail",
+        "admin-wishes-detail"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
     },
     {
       "field": "Payment.status",
@@ -5777,7 +7226,7 @@
     {
       "field": "Payment.subjectId",
       "writers": [
-        "E-63"
+        "E-81"
       ],
       "store": "Payment",
       "readers": [],
@@ -5794,7 +7243,7 @@
     {
       "field": "Payment.title",
       "writers": [
-        "E-63"
+        "E-81"
       ],
       "store": "Payment",
       "readers": [
@@ -5843,7 +7292,7 @@
     {
       "field": "Payment.way",
       "writers": [
-        "E-63"
+        "E-81"
       ],
       "store": "Payment",
       "readers": [
@@ -5860,6 +7309,38 @@
       ],
       "crossActor": false,
       "noWriter": false
+    },
+    {
+      "field": "Payment.what",
+      "writers": [],
+      "store": "Payment",
+      "readers": [
+        "admin-overview",
+        "admin-people-detail",
+        "admin-wishes-detail"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "Payment.wish",
+      "writers": [],
+      "store": "Payment",
+      "readers": [
+        "admin-overview",
+        "admin-people-detail",
+        "admin-wishes-detail"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
     },
     {
       "field": "Payout.amountKobo",
@@ -5934,7 +7415,7 @@
     {
       "field": "Payout.month",
       "writers": [
-        "E-90"
+        "E-108"
       ],
       "store": "Payout",
       "readers": [],
@@ -5974,10 +7455,250 @@
       "noWriter": false
     },
     {
+      "field": "PayoutRow.carried",
+      "writers": [],
+      "store": "PayoutRow",
+      "readers": [
+        "admin-creators"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "PayoutRow.creator",
+      "writers": [
+        "E-110"
+      ],
+      "store": "PayoutRow",
+      "readers": [
+        "admin-creators"
+      ],
+      "writerActors": [
+        "staff"
+      ],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": false
+    },
+    {
+      "field": "PayoutRow.earned",
+      "writers": [],
+      "store": "PayoutRow",
+      "readers": [
+        "admin-creators"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "PayoutRow.handle",
+      "writers": [],
+      "store": "PayoutRow",
+      "readers": [
+        "admin-creators"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "PayoutRow.month",
+      "writers": [
+        "E-110"
+      ],
+      "store": "PayoutRow",
+      "readers": [
+        "admin-creators"
+      ],
+      "writerActors": [
+        "staff"
+      ],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": false
+    },
+    {
+      "field": "PayoutRow.name",
+      "writers": [],
+      "store": "PayoutRow",
+      "readers": [
+        "admin-creators"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "PayoutRow.paid",
+      "writers": [],
+      "store": "PayoutRow",
+      "readers": [
+        "admin-creators"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "PayoutRow.reason",
+      "writers": [
+        "E-110"
+      ],
+      "store": "PayoutRow",
+      "readers": [
+        "admin-creators"
+      ],
+      "writerActors": [
+        "staff"
+      ],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": false
+    },
+    {
+      "field": "PayoutRow.state",
+      "writers": [],
+      "store": "PayoutRow",
+      "readers": [
+        "admin-creators"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "PayoutRow.total",
+      "writers": [],
+      "store": "PayoutRow",
+      "readers": [
+        "admin-creators"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "PayoutRun.month",
+      "writers": [],
+      "store": "PayoutRun",
+      "readers": [
+        "admin-creators"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "PayoutRun.payDay",
+      "writers": [],
+      "store": "PayoutRun",
+      "readers": [
+        "admin-creators"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "PayoutRun.rows",
+      "writers": [],
+      "store": "PayoutRun",
+      "readers": [
+        "admin-creators"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "PayoutRun.threshold",
+      "writers": [],
+      "store": "PayoutRun",
+      "readers": [
+        "admin-creators"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "Person.action",
+      "writers": [
+        "E-113"
+      ],
+      "store": "Person",
+      "readers": [
+        "admin-people-detail"
+      ],
+      "writerActors": [
+        "staff"
+      ],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": false
+    },
+    {
+      "field": "Person.ban",
+      "writers": [],
+      "store": "Person",
+      "readers": [
+        "admin-people-detail"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
       "field": "Person.birthday",
       "writers": [
-        "E-93",
-        "E-95"
+        "E-115",
+        "E-118"
       ],
       "store": "Person",
       "readers": [
@@ -5992,35 +7713,85 @@
       ],
       "crossActor": false,
       "noWriter": false
+    },
+    {
+      "field": "Person.email",
+      "writers": [],
+      "store": "Person",
+      "readers": [
+        "admin-people-detail"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "Person.erased",
+      "writers": [],
+      "store": "Person",
+      "readers": [
+        "admin-people-detail"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
     },
     {
       "field": "Person.id",
       "writers": [
-        "E-94",
-        "E-95"
+        "E-113",
+        "E-116",
+        "E-118"
       ],
       "store": "Person",
       "readers": [
+        "admin-people-detail",
+        "admin-support-detail",
         "pro-home",
         "pro-people"
       ],
       "writerActors": [
-        "business"
+        "business",
+        "staff"
       ],
       "readerActors": [
-        "business"
+        "business",
+        "staff"
       ],
       "crossActor": false,
       "noWriter": false
+    },
+    {
+      "field": "Person.joined",
+      "writers": [],
+      "store": "Person",
+      "readers": [
+        "admin-people-detail",
+        "admin-support-detail"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
     },
     {
       "field": "Person.name",
       "writers": [
-        "E-93",
-        "E-95"
+        "E-115",
+        "E-118"
       ],
       "store": "Person",
       "readers": [
+        "admin-people-detail",
+        "admin-support-detail",
         "pro-home",
         "pro-people"
       ],
@@ -6028,19 +7799,35 @@
         "business"
       ],
       "readerActors": [
-        "business"
+        "business",
+        "staff"
+      ],
+      "crossActor": true,
+      "noWriter": false
+    },
+    {
+      "field": "Person.pass",
+      "writers": [],
+      "store": "Person",
+      "readers": [
+        "admin-people-detail"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
       ],
       "crossActor": false,
-      "noWriter": false
+      "noWriter": true
     },
     {
       "field": "Person.phone",
       "writers": [
-        "E-93",
-        "E-95"
+        "E-115",
+        "E-118"
       ],
       "store": "Person",
       "readers": [
+        "admin-people-detail",
         "pro-home",
         "pro-people"
       ],
@@ -6048,15 +7835,48 @@
         "business"
       ],
       "readerActors": [
-        "business"
+        "business",
+        "staff"
+      ],
+      "crossActor": true,
+      "noWriter": false
+    },
+    {
+      "field": "Person.reason",
+      "writers": [
+        "E-113"
+      ],
+      "store": "Person",
+      "readers": [
+        "admin-people-detail"
+      ],
+      "writerActors": [
+        "staff"
+      ],
+      "readerActors": [
+        "staff"
       ],
       "crossActor": false,
       "noWriter": false
     },
     {
+      "field": "Person.record",
+      "writers": [],
+      "store": "Person",
+      "readers": [
+        "admin-people-detail"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
       "field": "Person.rows",
       "writers": [
-        "E-96"
+        "E-119"
       ],
       "store": "Person",
       "readers": [
@@ -6072,10 +7892,24 @@
       "noWriter": false
     },
     {
+      "field": "Person.sides",
+      "writers": [],
+      "store": "Person",
+      "readers": [
+        "admin-people-detail"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
       "field": "Person.start",
       "writers": [
-        "E-93",
-        "E-95"
+        "E-115",
+        "E-118"
       ],
       "store": "Person",
       "readers": [
@@ -6094,8 +7928,8 @@
     {
       "field": "Person.team",
       "writers": [
-        "E-93",
-        "E-95"
+        "E-115",
+        "E-118"
       ],
       "store": "Person",
       "readers": [
@@ -6110,6 +7944,48 @@
       ],
       "crossActor": false,
       "noWriter": false
+    },
+    {
+      "field": "PersonDetail.payments",
+      "writers": [],
+      "store": "PersonDetail",
+      "readers": [
+        "admin-people-detail"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "PersonDetail.person",
+      "writers": [],
+      "store": "PersonDetail",
+      "readers": [
+        "admin-people-detail"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "PersonDetail.wishes",
+      "writers": [],
+      "store": "PersonDetail",
+      "readers": [
+        "admin-people-detail"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
     },
     {
       "field": "PlayWish.data",
@@ -6139,6 +8015,20 @@
         "business",
         "creator",
         "person"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "Price.changed",
+      "writers": [],
+      "store": "Price",
+      "readers": [
+        "admin-prices"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
       ],
       "crossActor": false,
       "noWriter": true
@@ -6186,6 +8076,34 @@
       "noWriter": false
     },
     {
+      "field": "Price.from",
+      "writers": [],
+      "store": "Price",
+      "readers": [
+        "admin-prices"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "Price.group",
+      "writers": [],
+      "store": "Price",
+      "readers": [
+        "admin-prices"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
       "field": "Price.items",
       "writers": [],
       "store": "Price",
@@ -6202,6 +8120,34 @@
       "noWriter": true
     },
     {
+      "field": "Price.key",
+      "writers": [],
+      "store": "Price",
+      "readers": [
+        "admin-prices"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "Price.kind",
+      "writers": [],
+      "store": "Price",
+      "readers": [
+        "admin-prices"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
       "field": "Price.lead",
       "writers": [],
       "store": "Price",
@@ -6213,6 +8159,20 @@
       "writerActors": [],
       "readerActors": [
         "public"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "Price.list",
+      "writers": [],
+      "store": "Price",
+      "readers": [
+        "admin-prices"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
       ],
       "crossActor": false,
       "noWriter": true
@@ -6238,6 +8198,7 @@
       ],
       "store": "Price",
       "readers": [
+        "admin-prices",
         "site-business",
         "site-home",
         "site-pricing"
@@ -6246,10 +8207,25 @@
         "server"
       ],
       "readerActors": [
-        "public"
+        "public",
+        "staff"
       ],
       "crossActor": false,
       "noWriter": false
+    },
+    {
+      "field": "Price.per",
+      "writers": [],
+      "store": "Price",
+      "readers": [
+        "admin-prices"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
     },
     {
       "field": "Price.price",
@@ -6281,6 +8257,20 @@
       "readerActors": [],
       "crossActor": false,
       "noWriter": false
+    },
+    {
+      "field": "Price.reason",
+      "writers": [],
+      "store": "Price",
+      "readers": [
+        "admin-prices"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
     },
     {
       "field": "Price.sku",
@@ -6322,6 +8312,20 @@
       "writerActors": [],
       "readerActors": [
         "public"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "Price.value",
+      "writers": [],
+      "store": "Price",
+      "readers": [
+        "admin-prices"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
       ],
       "crossActor": false,
       "noWriter": true
@@ -6401,7 +8405,7 @@
     {
       "field": "PriceBookVersion.effectiveFrom",
       "writers": [
-        "E-99"
+        "E-123"
       ],
       "store": "PriceBookVersion",
       "readers": [],
@@ -6415,7 +8419,7 @@
     {
       "field": "PriceBookVersion.note",
       "writers": [
-        "E-99"
+        "E-123"
       ],
       "store": "PriceBookVersion",
       "readers": [],
@@ -6429,7 +8433,7 @@
     {
       "field": "PriceBookVersion.prices",
       "writers": [
-        "E-99"
+        "E-123"
       ],
       "store": "PriceBookVersion",
       "readers": [],
@@ -6443,7 +8447,7 @@
     {
       "field": "PriceBookVersion.version",
       "writers": [
-        "E-100"
+        "E-124"
       ],
       "store": "PriceBookVersion",
       "readers": [],
@@ -6943,9 +8947,79 @@
       "noWriter": false
     },
     {
+      "field": "Provider.key",
+      "writers": [],
+      "store": "Provider",
+      "readers": [
+        "admin-settings"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "Provider.line",
+      "writers": [],
+      "store": "Provider",
+      "readers": [
+        "admin-settings"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "Provider.name",
+      "writers": [],
+      "store": "Provider",
+      "readers": [
+        "admin-settings"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "Provider.state",
+      "writers": [],
+      "store": "Provider",
+      "readers": [
+        "admin-settings"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "Provider.who",
+      "writers": [],
+      "store": "Provider",
+      "readers": [
+        "admin-settings"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
       "field": "PublicWishView.answer",
       "writers": [
-        "E-107"
+        "E-132"
       ],
       "store": "PublicWishView",
       "readers": [],
@@ -7029,7 +9103,7 @@
     {
       "field": "PublicWishView.passcode",
       "writers": [
-        "E-107"
+        "E-132"
       ],
       "store": "PublicWishView",
       "readers": [],
@@ -7085,10 +9159,10 @@
     {
       "field": "PublicWishView.slug",
       "writers": [
-        "E-102",
-        "E-104",
-        "E-106",
-        "E-107"
+        "E-127",
+        "E-129",
+        "E-131",
+        "E-132"
       ],
       "store": "PublicWishView",
       "readers": [],
@@ -7158,7 +9232,7 @@
     {
       "field": "PublishRequest.consent",
       "writers": [
-        "E-110"
+        "E-136"
       ],
       "store": "PublishRequest",
       "readers": [],
@@ -7201,23 +9275,29 @@
     {
       "field": "PublishRequest.decision",
       "writers": [
-        "E-108"
+        "E-133",
+        "E-134"
       ],
       "store": "PublishRequest",
-      "readers": [],
+      "readers": [
+        "admin-showing"
+      ],
       "writerActors": [
         "staff"
       ],
-      "readerActors": [],
+      "readerActors": [
+        "staff"
+      ],
       "crossActor": false,
       "noWriter": false
     },
     {
       "field": "PublishRequest.id",
       "writers": [
-        "E-108",
-        "E-109",
-        "E-110"
+        "E-133",
+        "E-134",
+        "E-135",
+        "E-136"
       ],
       "store": "PublishRequest",
       "readers": [],
@@ -7233,7 +9313,7 @@
     {
       "field": "PublishRequest.level",
       "writers": [
-        "E-110"
+        "E-136"
       ],
       "store": "PublishRequest",
       "readers": [],
@@ -7248,7 +9328,7 @@
     {
       "field": "PublishRequest.publicChapters",
       "writers": [
-        "E-110"
+        "E-136"
       ],
       "store": "PublishRequest",
       "readers": [],
@@ -7263,14 +9343,19 @@
     {
       "field": "PublishRequest.reason",
       "writers": [
-        "E-108"
+        "E-133",
+        "E-134"
       ],
       "store": "PublishRequest",
-      "readers": [],
+      "readers": [
+        "admin-showing"
+      ],
       "writerActors": [
         "staff"
       ],
-      "readerActors": [],
+      "readerActors": [
+        "staff"
+      ],
       "crossActor": false,
       "noWriter": false
     },
@@ -7347,8 +9432,8 @@
     {
       "field": "PublishRequest.wishId",
       "writers": [
-        "E-109",
-        "E-110"
+        "E-135",
+        "E-136"
       ],
       "store": "PublishRequest",
       "readers": [],
@@ -7359,6 +9444,160 @@
       "readerActors": [],
       "crossActor": false,
       "noWriter": false
+    },
+    {
+      "field": "PublishView.at",
+      "writers": [],
+      "store": "PublishView",
+      "readers": [
+        "admin-showing"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "PublishView.decided",
+      "writers": [],
+      "store": "PublishView",
+      "readers": [
+        "admin-showing"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "PublishView.forName",
+      "writers": [],
+      "store": "PublishView",
+      "readers": [
+        "admin-showing"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "PublishView.from",
+      "writers": [],
+      "store": "PublishView",
+      "readers": [
+        "admin-showing"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "PublishView.id",
+      "writers": [],
+      "store": "PublishView",
+      "readers": [
+        "admin-showing"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "PublishView.kind",
+      "writers": [],
+      "store": "PublishView",
+      "readers": [
+        "admin-showing"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "PublishView.occasion",
+      "writers": [],
+      "store": "PublishView",
+      "readers": [
+        "admin-showing"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "PublishView.screen",
+      "writers": [],
+      "store": "PublishView",
+      "readers": [
+        "admin-showing"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "PublishView.style",
+      "writers": [],
+      "store": "PublishView",
+      "readers": [
+        "admin-showing"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "PublishView.styleName",
+      "writers": [],
+      "store": "PublishView",
+      "readers": [
+        "admin-showing"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "PublishView.wish",
+      "writers": [],
+      "store": "PublishView",
+      "readers": [
+        "admin-showing"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
     },
     {
       "field": "PublishedWish.counts",
@@ -7793,7 +10032,7 @@
     {
       "field": "QrCard.names",
       "writers": [
-        "E-112"
+        "E-139"
       ],
       "store": "QrCard",
       "readers": [],
@@ -7823,7 +10062,7 @@
     {
       "field": "QrCard.wishIds",
       "writers": [
-        "E-112"
+        "E-139"
       ],
       "store": "QrCard",
       "readers": [],
@@ -7837,9 +10076,79 @@
       "noWriter": false
     },
     {
+      "field": "Queue.count",
+      "writers": [],
+      "store": "Queue",
+      "readers": [
+        "admin-overview"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "Queue.href",
+      "writers": [],
+      "store": "Queue",
+      "readers": [
+        "admin-overview"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "Queue.key",
+      "writers": [],
+      "store": "Queue",
+      "readers": [
+        "admin-overview"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "Queue.label",
+      "writers": [],
+      "store": "Queue",
+      "readers": [
+        "admin-overview"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "Queue.oldest",
+      "writers": [],
+      "store": "Queue",
+      "readers": [
+        "admin-overview"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
       "field": "Reaction.reaction",
       "writers": [
-        "E-114"
+        "E-142"
       ],
       "store": "Reaction",
       "readers": [
@@ -7861,8 +10170,8 @@
     {
       "field": "Reaction.wish",
       "writers": [
-        "E-113",
-        "E-114"
+        "E-141",
+        "E-142"
       ],
       "store": "Reaction",
       "readers": [
@@ -7898,7 +10207,7 @@
     {
       "field": "Reconciliation.day",
       "writers": [
-        "E-115"
+        "E-143"
       ],
       "store": "Reconciliation",
       "readers": [],
@@ -7996,7 +10305,7 @@
     {
       "field": "Refund.amountKobo",
       "writers": [
-        "E-116"
+        "E-144"
       ],
       "store": "Refund",
       "readers": [],
@@ -8038,7 +10347,7 @@
     {
       "field": "Refund.id",
       "writers": [
-        "E-117"
+        "E-145"
       ],
       "store": "Refund",
       "readers": [],
@@ -8052,7 +10361,7 @@
     {
       "field": "Refund.paymentId",
       "writers": [
-        "E-116"
+        "E-144"
       ],
       "store": "Refund",
       "readers": [],
@@ -8080,7 +10389,7 @@
     {
       "field": "Refund.reason",
       "writers": [
-        "E-116"
+        "E-144"
       ],
       "store": "Refund",
       "readers": [],
@@ -8178,8 +10487,8 @@
     {
       "field": "RenderJob.id",
       "writers": [
-        "E-118",
-        "E-119"
+        "E-146",
+        "E-147"
       ],
       "store": "RenderJob",
       "readers": [],
@@ -8277,7 +10586,7 @@
     {
       "field": "RenderJob.wishId",
       "writers": [
-        "E-119"
+        "E-147"
       ],
       "store": "RenderJob",
       "readers": [],
@@ -8361,7 +10670,7 @@
     {
       "field": "Report.decision",
       "writers": [
-        "E-120"
+        "E-148"
       ],
       "store": "Report",
       "readers": [],
@@ -8375,7 +10684,7 @@
     {
       "field": "Report.id",
       "writers": [
-        "E-120"
+        "E-148"
       ],
       "store": "Report",
       "readers": [],
@@ -8389,7 +10698,7 @@
     {
       "field": "Report.note",
       "writers": [
-        "E-121"
+        "E-149"
       ],
       "store": "Report",
       "readers": [],
@@ -8403,7 +10712,7 @@
     {
       "field": "Report.reason",
       "writers": [
-        "E-121"
+        "E-149"
       ],
       "store": "Report",
       "readers": [],
@@ -8431,7 +10740,7 @@
     {
       "field": "Report.slug",
       "writers": [
-        "E-121"
+        "E-149"
       ],
       "store": "Report",
       "readers": [],
@@ -8501,7 +10810,7 @@
     {
       "field": "RevealLink.set",
       "writers": [
-        "E-123"
+        "E-151"
       ],
       "store": "RevealLink",
       "readers": [
@@ -8608,6 +10917,34 @@
         "business",
         "person",
         "public"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "RoleAccess.role",
+      "writers": [],
+      "store": "RoleAccess",
+      "readers": [
+        "admin-team"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "RoleAccess.sections",
+      "writers": [],
+      "store": "RoleAccess",
+      "readers": [
+        "admin-team"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
       ],
       "crossActor": false,
       "noWriter": true
@@ -8757,10 +11094,52 @@
       "noWriter": true
     },
     {
+      "field": "SavedReply.id",
+      "writers": [],
+      "store": "SavedReply",
+      "readers": [
+        "admin-support-detail"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "SavedReply.name",
+      "writers": [],
+      "store": "SavedReply",
+      "readers": [
+        "admin-support-detail"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "SavedReply.text",
+      "writers": [],
+      "store": "SavedReply",
+      "readers": [
+        "admin-support-detail"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
       "field": "SavedWish.wish",
       "writers": [
-        "E-125",
-        "E-126"
+        "E-155",
+        "E-156"
       ],
       "store": "SavedWish",
       "readers": [
@@ -8796,7 +11175,7 @@
     {
       "field": "ScreeningResult.fileId",
       "writers": [
-        "E-128"
+        "E-158"
       ],
       "store": "ScreeningResult",
       "readers": [],
@@ -8810,7 +11189,7 @@
     {
       "field": "ScreeningResult.finalVerdict",
       "writers": [
-        "E-127"
+        "E-157"
       ],
       "store": "ScreeningResult",
       "readers": [],
@@ -8824,7 +11203,7 @@
     {
       "field": "ScreeningResult.id",
       "writers": [
-        "E-127"
+        "E-157"
       ],
       "store": "ScreeningResult",
       "readers": [],
@@ -9090,9 +11469,123 @@
       "noWriter": false
     },
     {
+      "field": "Settings.choice",
+      "writers": [
+        "E-163"
+      ],
+      "store": "Settings",
+      "readers": [
+        "admin-settings"
+      ],
+      "writerActors": [
+        "staff"
+      ],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": false
+    },
+    {
+      "field": "Settings.key",
+      "writers": [
+        "E-163"
+      ],
+      "store": "Settings",
+      "readers": [
+        "admin-settings"
+      ],
+      "writerActors": [
+        "staff"
+      ],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": false
+    },
+    {
+      "field": "Settings.on",
+      "writers": [
+        "E-163"
+      ],
+      "store": "Settings",
+      "readers": [
+        "admin-settings"
+      ],
+      "writerActors": [
+        "staff"
+      ],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": false
+    },
+    {
+      "field": "Settings.providers",
+      "writers": [],
+      "store": "Settings",
+      "readers": [
+        "admin-settings"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "Settings.reason",
+      "writers": [
+        "E-163"
+      ],
+      "store": "Settings",
+      "readers": [
+        "admin-settings"
+      ],
+      "writerActors": [
+        "staff"
+      ],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": false
+    },
+    {
+      "field": "Settings.storage",
+      "writers": [],
+      "store": "Settings",
+      "readers": [
+        "admin-settings"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "Settings.switches",
+      "writers": [],
+      "store": "Settings",
+      "readers": [
+        "admin-settings"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
       "field": "Share.style",
       "writers": [
-        "E-133"
+        "E-165"
       ],
       "store": "Share",
       "readers": [
@@ -9114,7 +11607,7 @@
     {
       "field": "Share.wish",
       "writers": [
-        "E-133"
+        "E-165"
       ],
       "store": "Share",
       "readers": [
@@ -9136,7 +11629,7 @@
     {
       "field": "Shoot.client",
       "writers": [
-        "E-135"
+        "E-167"
       ],
       "store": "Shoot",
       "readers": [
@@ -9174,7 +11667,7 @@
     {
       "field": "Shoot.date",
       "writers": [
-        "E-135"
+        "E-167"
       ],
       "store": "Shoot",
       "readers": [
@@ -9196,8 +11689,8 @@
     {
       "field": "Shoot.files",
       "writers": [
-        "E-138",
-        "E-139"
+        "E-170",
+        "E-171"
       ],
       "store": "Shoot",
       "readers": [
@@ -9266,7 +11759,7 @@
     {
       "field": "Shoot.id",
       "writers": [
-        "E-136"
+        "E-168"
       ],
       "store": "Shoot",
       "readers": [
@@ -9337,8 +11830,8 @@
     {
       "field": "Shoot.set",
       "writers": [
-        "E-138",
-        "E-139"
+        "E-170",
+        "E-171"
       ],
       "store": "Shoot",
       "readers": [
@@ -9357,8 +11850,8 @@
     {
       "field": "Shoot.shoot",
       "writers": [
-        "E-138",
-        "E-139"
+        "E-170",
+        "E-171"
       ],
       "store": "Shoot",
       "readers": [
@@ -9377,7 +11870,7 @@
     {
       "field": "Shoot.title",
       "writers": [
-        "E-135"
+        "E-167"
       ],
       "store": "Shoot",
       "readers": [
@@ -9399,7 +11892,7 @@
     {
       "field": "SignedUrl.fileId",
       "writers": [
-        "E-140"
+        "E-172"
       ],
       "store": "SignedUrl",
       "readers": [],
@@ -9413,7 +11906,7 @@
     {
       "field": "SignedUrl.variant",
       "writers": [
-        "E-140"
+        "E-172"
       ],
       "store": "SignedUrl",
       "readers": [],
@@ -9427,7 +11920,7 @@
     {
       "field": "StaffAccount.code",
       "writers": [
-        "E-141"
+        "E-173"
       ],
       "store": "StaffAccount",
       "readers": [],
@@ -9455,8 +11948,8 @@
     {
       "field": "StaffAccount.email",
       "writers": [
-        "E-141",
-        "E-142"
+        "E-173",
+        "E-174"
       ],
       "store": "StaffAccount",
       "readers": [],
@@ -9471,8 +11964,8 @@
     {
       "field": "StaffAccount.id",
       "writers": [
-        "E-143",
-        "E-144"
+        "E-175",
+        "E-176"
       ],
       "store": "StaffAccount",
       "readers": [],
@@ -9514,8 +12007,8 @@
     {
       "field": "StaffAccount.roles",
       "writers": [
-        "E-142",
-        "E-143"
+        "E-174",
+        "E-175"
       ],
       "store": "StaffAccount",
       "readers": [],
@@ -9555,6 +12048,43 @@
       "noWriter": false
     },
     {
+      "field": "StaffSession.code",
+      "writers": [
+        "E-179"
+      ],
+      "store": "StaffSession",
+      "readers": [
+        "admin-sign-in"
+      ],
+      "writerActors": [
+        "public"
+      ],
+      "readerActors": [
+        "public"
+      ],
+      "crossActor": false,
+      "noWriter": false
+    },
+    {
+      "field": "StaffSession.email",
+      "writers": [
+        "E-177",
+        "E-179"
+      ],
+      "store": "StaffSession",
+      "readers": [
+        "admin-sign-in"
+      ],
+      "writerActors": [
+        "public"
+      ],
+      "readerActors": [
+        "public"
+      ],
+      "crossActor": false,
+      "noWriter": false
+    },
+    {
       "field": "StoredFile.businessId",
       "writers": [
         "server:storage"
@@ -9571,7 +12101,7 @@
     {
       "field": "StoredFile.bytes",
       "writers": [
-        "E-145"
+        "E-180"
       ],
       "store": "StoredFile",
       "readers": [],
@@ -9587,7 +12117,7 @@
     {
       "field": "StoredFile.contentType",
       "writers": [
-        "E-145"
+        "E-180"
       ],
       "store": "StoredFile",
       "readers": [],
@@ -9631,8 +12161,8 @@
     {
       "field": "StoredFile.fileId",
       "writers": [
-        "E-146",
-        "E-147"
+        "E-181",
+        "E-182"
       ],
       "store": "StoredFile",
       "readers": [
@@ -9666,7 +12196,7 @@
     {
       "field": "StoredFile.kind",
       "writers": [
-        "E-145"
+        "E-180"
       ],
       "store": "StoredFile",
       "readers": [
@@ -9714,7 +12244,7 @@
     {
       "field": "StoredFile.purpose",
       "writers": [
-        "E-145"
+        "E-180"
       ],
       "store": "StoredFile",
       "readers": [],
@@ -9758,7 +12288,7 @@
     {
       "field": "StoredFile.styleId",
       "writers": [
-        "E-145"
+        "E-180"
       ],
       "store": "StoredFile",
       "readers": [
@@ -9806,7 +12336,7 @@
     {
       "field": "StudioPrefs.(any of) coached, bottom, span, looks, recent, fav, addTab",
       "writers": [
-        "E-149"
+        "E-184"
       ],
       "store": "StudioPrefs",
       "readers": [
@@ -10073,9 +12603,9 @@
     {
       "field": "StudioStyle.id",
       "writers": [
-        "E-152",
-        "E-154",
-        "E-155"
+        "E-187",
+        "E-189",
+        "E-190"
       ],
       "store": "StudioStyle",
       "readers": [
@@ -10175,7 +12705,7 @@
     {
       "field": "StudioStyle.on",
       "writers": [
-        "E-154"
+        "E-189"
       ],
       "store": "StudioStyle",
       "readers": [
@@ -10193,7 +12723,7 @@
     {
       "field": "StudioStyle.on (setTemplate only)",
       "writers": [
-        "E-155"
+        "E-190"
       ],
       "store": "StudioStyle",
       "readers": [
@@ -10519,8 +13049,8 @@
     {
       "field": "StudioStyle.style",
       "writers": [
-        "E-151",
-        "E-154"
+        "E-186",
+        "E-189"
       ],
       "store": "StudioStyle",
       "readers": [
@@ -11169,7 +13699,7 @@
     {
       "field": "StyleLevel.level",
       "writers": [
-        "E-158"
+        "E-193"
       ],
       "store": "StyleLevel",
       "readers": [
@@ -11192,7 +13722,7 @@
     {
       "field": "StyleLevel.reason",
       "writers": [
-        "E-158"
+        "E-193"
       ],
       "store": "StyleLevel",
       "readers": [],
@@ -11239,7 +13769,7 @@
     {
       "field": "StyleLevel.styleSlug",
       "writers": [
-        "E-158"
+        "E-193"
       ],
       "store": "StyleLevel",
       "readers": [],
@@ -11253,7 +13783,7 @@
     {
       "field": "StyleRate.quarter",
       "writers": [
-        "E-160"
+        "E-195"
       ],
       "store": "StyleRate",
       "readers": [],
@@ -11261,6 +13791,192 @@
         "staff"
       ],
       "readerActors": [],
+      "crossActor": false,
+      "noWriter": false
+    },
+    {
+      "field": "StyleRow.by",
+      "writers": [],
+      "store": "StyleRow",
+      "readers": [
+        "admin-styles"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "StyleRow.house",
+      "writers": [],
+      "store": "StyleRow",
+      "readers": [
+        "admin-styles"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "StyleRow.kinds",
+      "writers": [],
+      "store": "StyleRow",
+      "readers": [
+        "admin-styles"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "StyleRow.level",
+      "writers": [
+        "E-196"
+      ],
+      "store": "StyleRow",
+      "readers": [
+        "admin-styles"
+      ],
+      "writerActors": [
+        "staff"
+      ],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": false
+    },
+    {
+      "field": "StyleRow.name",
+      "writers": [],
+      "store": "StyleRow",
+      "readers": [
+        "admin-styles"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "StyleRow.on",
+      "writers": [
+        "E-197"
+      ],
+      "store": "StyleRow",
+      "readers": [
+        "admin-styles"
+      ],
+      "writerActors": [
+        "staff"
+      ],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": false
+    },
+    {
+      "field": "StyleRow.paid",
+      "writers": [],
+      "store": "StyleRow",
+      "readers": [
+        "admin-styles"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "StyleRow.previews",
+      "writers": [],
+      "store": "StyleRow",
+      "readers": [
+        "admin-styles"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "StyleRow.rate",
+      "writers": [],
+      "store": "StyleRow",
+      "readers": [
+        "admin-styles"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "StyleRow.reason",
+      "writers": [
+        "E-196",
+        "E-197"
+      ],
+      "store": "StyleRow",
+      "readers": [
+        "admin-styles"
+      ],
+      "writerActors": [
+        "staff"
+      ],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": false
+    },
+    {
+      "field": "StyleRow.record",
+      "writers": [],
+      "store": "StyleRow",
+      "readers": [
+        "admin-styles"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "StyleRow.slug",
+      "writers": [
+        "E-196",
+        "E-197"
+      ],
+      "store": "StyleRow",
+      "readers": [
+        "admin-styles"
+      ],
+      "writerActors": [
+        "staff"
+      ],
+      "readerActors": [
+        "staff"
+      ],
       "crossActor": false,
       "noWriter": false
     },
@@ -11309,7 +14025,7 @@
     {
       "field": "StyleSubmission.decision",
       "writers": [
-        "E-161"
+        "E-199"
       ],
       "store": "StyleSubmission",
       "readers": [],
@@ -11323,7 +14039,7 @@
     {
       "field": "StyleSubmission.id",
       "writers": [
-        "E-161"
+        "E-199"
       ],
       "store": "StyleSubmission",
       "readers": [],
@@ -11351,7 +14067,7 @@
     {
       "field": "StyleSubmission.note",
       "writers": [
-        "E-161"
+        "E-199"
       ],
       "store": "StyleSubmission",
       "readers": [],
@@ -11393,7 +14109,7 @@
     {
       "field": "StyleSubmission.styleId",
       "writers": [
-        "E-162"
+        "E-200"
       ],
       "store": "StyleSubmission",
       "readers": [],
@@ -11419,9 +14135,259 @@
       "noWriter": false
     },
     {
+      "field": "Submission.decision",
+      "writers": [
+        "E-201"
+      ],
+      "store": "Submission",
+      "readers": [
+        "admin-styles-review"
+      ],
+      "writerActors": [
+        "staff"
+      ],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": false
+    },
+    {
+      "field": "Submission.level",
+      "writers": [
+        "E-201"
+      ],
+      "store": "Submission",
+      "readers": [
+        "admin-styles-review"
+      ],
+      "writerActors": [
+        "staff"
+      ],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": false
+    },
+    {
+      "field": "Submission.reason",
+      "writers": [
+        "E-201"
+      ],
+      "store": "Submission",
+      "readers": [
+        "admin-styles-review"
+      ],
+      "writerActors": [
+        "staff"
+      ],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": false
+    },
+    {
+      "field": "SubmissionView.at",
+      "writers": [],
+      "store": "SubmissionView",
+      "readers": [
+        "admin-styles-review"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "SubmissionView.baseName",
+      "writers": [],
+      "store": "SubmissionView",
+      "readers": [
+        "admin-styles-review"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "SubmissionView.checks",
+      "writers": [],
+      "store": "SubmissionView",
+      "readers": [
+        "admin-styles-review"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "SubmissionView.creator",
+      "writers": [],
+      "store": "SubmissionView",
+      "readers": [
+        "admin-styles-review"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "SubmissionView.creatorName",
+      "writers": [],
+      "store": "SubmissionView",
+      "readers": [
+        "admin-styles-review"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "SubmissionView.decided",
+      "writers": [],
+      "store": "SubmissionView",
+      "readers": [
+        "admin-styles-review"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "SubmissionView.handle",
+      "writers": [],
+      "store": "SubmissionView",
+      "readers": [
+        "admin-styles-review"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "SubmissionView.id",
+      "writers": [],
+      "store": "SubmissionView",
+      "readers": [
+        "admin-styles-review"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "SubmissionView.kinds",
+      "writers": [],
+      "store": "SubmissionView",
+      "readers": [
+        "admin-styles-review"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "SubmissionView.name",
+      "writers": [],
+      "store": "SubmissionView",
+      "readers": [
+        "admin-styles-review"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "SubmissionView.plan",
+      "writers": [],
+      "store": "SubmissionView",
+      "readers": [
+        "admin-styles-review"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "SubmissionView.rights",
+      "writers": [],
+      "store": "SubmissionView",
+      "readers": [
+        "admin-styles-review"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "SubmissionView.still",
+      "writers": [],
+      "store": "SubmissionView",
+      "readers": [
+        "admin-styles-review"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "SubmissionView.style",
+      "writers": [],
+      "store": "SubmissionView",
+      "readers": [
+        "admin-styles-review"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
       "field": "SupportMessage.body",
       "writers": [
-        "E-163"
+        "E-203"
       ],
       "store": "SupportMessage",
       "readers": [],
@@ -11491,7 +14457,7 @@
     {
       "field": "SupportMessage.threadId",
       "writers": [
-        "E-163"
+        "E-203"
       ],
       "store": "SupportMessage",
       "readers": [],
@@ -11519,7 +14485,7 @@
     {
       "field": "SupportThread.assigneeId",
       "writers": [
-        "E-164"
+        "E-204"
       ],
       "store": "SupportThread",
       "readers": [],
@@ -11533,7 +14499,7 @@
     {
       "field": "SupportThread.body",
       "writers": [
-        "E-165"
+        "E-205"
       ],
       "store": "SupportThread",
       "readers": [],
@@ -11575,7 +14541,7 @@
     {
       "field": "SupportThread.id",
       "writers": [
-        "E-164"
+        "E-204"
       ],
       "store": "SupportThread",
       "readers": [],
@@ -11617,7 +14583,7 @@
     {
       "field": "SupportThread.subject",
       "writers": [
-        "E-165"
+        "E-205"
       ],
       "store": "SupportThread",
       "readers": [],
@@ -11658,6 +14624,24 @@
       "noWriter": true
     },
     {
+      "field": "Template.body",
+      "writers": [
+        "E-206"
+      ],
+      "store": "Template",
+      "readers": [
+        "admin-messages"
+      ],
+      "writerActors": [
+        "staff"
+      ],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": false
+    },
+    {
       "field": "Template.dimension",
       "writers": [],
       "store": "Template",
@@ -11668,6 +14652,20 @@
       "writerActors": [],
       "readerActors": [
         "creator"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "Template.edited",
+      "writers": [],
+      "store": "Template",
+      "readers": [
+        "admin-messages"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
       ],
       "crossActor": false,
       "noWriter": true
@@ -11716,6 +14714,24 @@
       ],
       "crossActor": false,
       "noWriter": true
+    },
+    {
+      "field": "Template.key",
+      "writers": [
+        "E-206"
+      ],
+      "store": "Template",
+      "readers": [
+        "admin-messages"
+      ],
+      "writerActors": [
+        "staff"
+      ],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": false
     },
     {
       "field": "Template.kinds",
@@ -11767,12 +14783,14 @@
       "writers": [],
       "store": "Template",
       "readers": [
+        "admin-messages",
         "studio-home",
         "studio-new"
       ],
       "writerActors": [],
       "readerActors": [
-        "creator"
+        "creator",
+        "staff"
       ],
       "crossActor": false,
       "noWriter": true
@@ -11808,6 +14826,42 @@
       "noWriter": true
     },
     {
+      "field": "Template.reason",
+      "writers": [
+        "E-206"
+      ],
+      "store": "Template",
+      "readers": [
+        "admin-messages"
+      ],
+      "writerActors": [
+        "staff"
+      ],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": false
+    },
+    {
+      "field": "Template.subject",
+      "writers": [
+        "E-206"
+      ],
+      "store": "Template",
+      "readers": [
+        "admin-messages"
+      ],
+      "writerActors": [
+        "staff"
+      ],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": false
+    },
+    {
       "field": "Template.theme",
       "writers": [],
       "store": "Template",
@@ -11818,6 +14872,283 @@
       "writerActors": [],
       "readerActors": [
         "creator"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "Template.to",
+      "writers": [],
+      "store": "Template",
+      "readers": [
+        "admin-messages"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "Template.when",
+      "writers": [],
+      "store": "Template",
+      "readers": [
+        "admin-messages"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "Thread.email",
+      "writers": [],
+      "store": "Thread",
+      "readers": [
+        "admin-support",
+        "admin-support-detail"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "Thread.id",
+      "writers": [
+        "E-208",
+        "E-209"
+      ],
+      "store": "Thread",
+      "readers": [
+        "admin-support",
+        "admin-support-detail"
+      ],
+      "writerActors": [
+        "staff"
+      ],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": false
+    },
+    {
+      "field": "Thread.last",
+      "writers": [],
+      "store": "Thread",
+      "readers": [
+        "admin-support"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "Thread.name",
+      "writers": [],
+      "store": "Thread",
+      "readers": [
+        "admin-support",
+        "admin-support-detail"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "Thread.notes",
+      "writers": [],
+      "store": "Thread",
+      "readers": [
+        "admin-support-detail"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "Thread.person",
+      "writers": [],
+      "store": "Thread",
+      "readers": [
+        "admin-support",
+        "admin-support-detail"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "Thread.reason",
+      "writers": [
+        "E-208",
+        "E-209"
+      ],
+      "store": "Thread",
+      "readers": [
+        "admin-support-detail"
+      ],
+      "writerActors": [
+        "staff"
+      ],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": false
+    },
+    {
+      "field": "Thread.state",
+      "writers": [
+        "E-208"
+      ],
+      "store": "Thread",
+      "readers": [
+        "admin-support",
+        "admin-support-detail"
+      ],
+      "writerActors": [
+        "staff"
+      ],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": false
+    },
+    {
+      "field": "Thread.subject",
+      "writers": [],
+      "store": "Thread",
+      "readers": [
+        "admin-support",
+        "admin-support-detail"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "Thread.text",
+      "writers": [
+        "E-209"
+      ],
+      "store": "Thread",
+      "readers": [
+        "admin-support-detail"
+      ],
+      "writerActors": [
+        "staff"
+      ],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": false
+    },
+    {
+      "field": "Thread.wish",
+      "writers": [],
+      "store": "Thread",
+      "readers": [
+        "admin-support",
+        "admin-support-detail"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "Thread.wishFor",
+      "writers": [],
+      "store": "Thread",
+      "readers": [
+        "admin-support"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "ThreadCounts.all",
+      "writers": [],
+      "store": "ThreadCounts",
+      "readers": [
+        "admin-support"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "ThreadCounts.closed",
+      "writers": [],
+      "store": "ThreadCounts",
+      "readers": [
+        "admin-support"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "ThreadCounts.open",
+      "writers": [],
+      "store": "ThreadCounts",
+      "readers": [
+        "admin-support"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "ThreadCounts.waiting",
+      "writers": [],
+      "store": "ThreadCounts",
+      "readers": [
+        "admin-support"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
       ],
       "crossActor": false,
       "noWriter": true
@@ -12650,7 +15981,7 @@
     {
       "field": "WebhookEvent.event",
       "writers": [
-        "E-171"
+        "E-217"
       ],
       "store": "WebhookEvent",
       "readers": [],
@@ -12774,9 +16105,27 @@
       "noWriter": false
     },
     {
+      "field": "Wish.action",
+      "writers": [
+        "E-218"
+      ],
+      "store": "Wish",
+      "readers": [
+        "admin-wishes-detail"
+      ],
+      "writerActors": [
+        "staff"
+      ],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": false
+    },
+    {
       "field": "Wish.adds",
       "writers": [
-        "E-182"
+        "E-229"
       ],
       "store": "Wish",
       "readers": [
@@ -12795,7 +16144,7 @@
     {
       "field": "Wish.amount",
       "writers": [
-        "E-182"
+        "E-229"
       ],
       "store": "Wish",
       "readers": [
@@ -12860,7 +16209,7 @@
     {
       "field": "Wish.blessing",
       "writers": [
-        "E-176"
+        "E-223"
       ],
       "store": "Wish",
       "readers": [
@@ -12894,7 +16243,7 @@
     {
       "field": "Wish.call",
       "writers": [
-        "E-176"
+        "E-223"
       ],
       "store": "Wish",
       "readers": [
@@ -12942,7 +16291,7 @@
     {
       "field": "Wish.captions",
       "writers": [
-        "E-176"
+        "E-223"
       ],
       "store": "Wish",
       "readers": [
@@ -12962,7 +16311,7 @@
     {
       "field": "Wish.chapter",
       "writers": [
-        "E-176"
+        "E-223"
       ],
       "store": "Wish",
       "readers": [
@@ -12982,7 +16331,7 @@
     {
       "field": "Wish.content",
       "writers": [
-        "E-182"
+        "E-229"
       ],
       "store": "Wish",
       "readers": [
@@ -13065,7 +16414,7 @@
     {
       "field": "Wish.content.cover.more",
       "writers": [
-        "E-176"
+        "E-223"
       ],
       "store": "Wish",
       "readers": [
@@ -13105,7 +16454,7 @@
     {
       "field": "Wish.content.details",
       "writers": [
-        "E-176"
+        "E-223"
       ],
       "store": "Wish",
       "readers": [
@@ -13153,7 +16502,7 @@
     {
       "field": "Wish.content.ending.id",
       "writers": [
-        "E-176"
+        "E-223"
       ],
       "store": "Wish",
       "readers": [
@@ -13174,7 +16523,7 @@
     {
       "field": "Wish.content.ending.scene",
       "writers": [
-        "E-176"
+        "E-223"
       ],
       "store": "Wish",
       "readers": [
@@ -13194,7 +16543,7 @@
     {
       "field": "Wish.content.ending.values",
       "writers": [
-        "E-176"
+        "E-223"
       ],
       "store": "Wish",
       "readers": [
@@ -13355,7 +16704,7 @@
     {
       "field": "Wish.content.on",
       "writers": [
-        "E-176"
+        "E-223"
       ],
       "store": "Wish",
       "readers": [
@@ -13401,7 +16750,7 @@
     {
       "field": "Wish.content.opening.id",
       "writers": [
-        "E-176"
+        "E-223"
       ],
       "store": "Wish",
       "readers": [
@@ -13422,7 +16771,7 @@
     {
       "field": "Wish.content.opening.scene",
       "writers": [
-        "E-176"
+        "E-223"
       ],
       "store": "Wish",
       "readers": [
@@ -13443,7 +16792,7 @@
     {
       "field": "Wish.content.opening.values",
       "writers": [
-        "E-176"
+        "E-223"
       ],
       "store": "Wish",
       "readers": [
@@ -13464,7 +16813,7 @@
     {
       "field": "Wish.content.partner",
       "writers": [
-        "E-176"
+        "E-223"
       ],
       "store": "Wish",
       "readers": [
@@ -13533,7 +16882,7 @@
     {
       "field": "Wish.content.studio",
       "writers": [
-        "E-176"
+        "E-223"
       ],
       "store": "Wish",
       "readers": [
@@ -13602,7 +16951,7 @@
     {
       "field": "Wish.content.voices.ask",
       "writers": [
-        "E-176"
+        "E-223"
       ],
       "store": "Wish",
       "readers": [
@@ -13622,7 +16971,7 @@
     {
       "field": "Wish.content.voices.items",
       "writers": [
-        "E-176"
+        "E-223"
       ],
       "store": "Wish",
       "readers": [
@@ -13656,7 +17005,7 @@
     {
       "field": "Wish.credits",
       "writers": [
-        "E-176"
+        "E-223"
       ],
       "store": "Wish",
       "readers": [
@@ -13676,7 +17025,7 @@
     {
       "field": "Wish.days",
       "writers": [
-        "E-179"
+        "E-226"
       ],
       "store": "Wish",
       "readers": [
@@ -13695,7 +17044,7 @@
     {
       "field": "Wish.details",
       "writers": [
-        "E-176"
+        "E-223"
       ],
       "store": "Wish",
       "readers": [
@@ -13715,7 +17064,7 @@
     {
       "field": "Wish.effect",
       "writers": [
-        "E-176"
+        "E-223"
       ],
       "store": "Wish",
       "readers": [
@@ -13739,6 +17088,7 @@
       ],
       "store": "Wish",
       "readers": [
+        "admin-wishes-detail",
         "app-home",
         "app-wish-detail",
         "app-wishes",
@@ -13751,7 +17101,8 @@
         "business",
         "creator",
         "person",
-        "public"
+        "public",
+        "staff"
       ],
       "crossActor": false,
       "noWriter": false
@@ -13813,9 +17164,23 @@
       "noWriter": true
     },
     {
+      "field": "Wish.extras",
+      "writers": [],
+      "store": "Wish",
+      "readers": [
+        "admin-wishes-detail"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
       "field": "Wish.files",
       "writers": [
-        "E-177"
+        "E-224"
       ],
       "store": "Wish",
       "readers": [
@@ -13833,7 +17198,7 @@
     {
       "field": "Wish.finale",
       "writers": [
-        "E-176"
+        "E-223"
       ],
       "store": "Wish",
       "readers": [
@@ -13851,9 +17216,24 @@
       "noWriter": false
     },
     {
+      "field": "Wish.forName",
+      "writers": [],
+      "store": "Wish",
+      "readers": [
+        "admin-support-detail",
+        "admin-wishes-detail"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
       "field": "Wish.from",
       "writers": [
-        "E-173"
+        "E-220"
       ],
       "store": "Wish",
       "readers": [
@@ -13900,10 +17280,10 @@
     {
       "field": "Wish.id",
       "writers": [
-        "E-174",
-        "E-178",
-        "E-179",
-        "E-181"
+        "E-221",
+        "E-225",
+        "E-226",
+        "E-228"
       ],
       "store": "Wish",
       "readers": [
@@ -13955,6 +17335,7 @@
       "writers": [],
       "store": "Wish",
       "readers": [
+        "admin-wishes-detail",
         "app-home",
         "app-wish-detail",
         "app-wishes",
@@ -13968,7 +17349,8 @@
         "business",
         "creator",
         "person",
-        "public"
+        "public",
+        "staff"
       ],
       "crossActor": false,
       "noWriter": true
@@ -13976,8 +17358,8 @@
     {
       "field": "Wish.keep",
       "writers": [
-        "E-176",
-        "E-179"
+        "E-223",
+        "E-226"
       ],
       "store": "Wish",
       "readers": [
@@ -13997,7 +17379,7 @@
     {
       "field": "Wish.keepKey",
       "writers": [
-        "E-179"
+        "E-226"
       ],
       "store": "Wish",
       "readers": [
@@ -14044,11 +17426,13 @@
     {
       "field": "Wish.kind",
       "writers": [
-        "E-173",
-        "E-176"
+        "E-220",
+        "E-223"
       ],
       "store": "Wish",
       "readers": [
+        "admin-support-detail",
+        "admin-wishes-detail",
         "app-home",
         "app-style-detail",
         "app-styles",
@@ -14089,7 +17473,8 @@
         "business",
         "creator",
         "person",
-        "public"
+        "public",
+        "staff"
       ],
       "crossActor": true,
       "noWriter": false
@@ -14097,7 +17482,7 @@
     {
       "field": "Wish.letter",
       "writers": [
-        "E-176"
+        "E-223"
       ],
       "store": "Wish",
       "readers": [
@@ -14136,9 +17521,23 @@
       "noWriter": false
     },
     {
+      "field": "Wish.link",
+      "writers": [],
+      "store": "Wish",
+      "readers": [
+        "admin-wishes-detail"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
       "field": "Wish.links",
       "writers": [
-        "E-176"
+        "E-223"
       ],
       "store": "Wish",
       "readers": [
@@ -14188,7 +17587,7 @@
     {
       "field": "Wish.makerNote.chosen.kind",
       "writers": [
-        "E-176"
+        "E-223"
       ],
       "store": "Wish",
       "readers": [
@@ -14215,7 +17614,7 @@
     {
       "field": "Wish.makerNote.chosen.occasion",
       "writers": [
-        "E-176"
+        "E-223"
       ],
       "store": "Wish",
       "readers": [
@@ -14293,7 +17692,7 @@
     {
       "field": "Wish.makerNote.given.occasion",
       "writers": [
-        "E-176"
+        "E-223"
       ],
       "store": "Wish",
       "readers": [
@@ -14320,7 +17719,7 @@
     {
       "field": "Wish.makerNote.note",
       "writers": [
-        "E-176"
+        "E-223"
       ],
       "store": "Wish",
       "readers": [
@@ -14346,7 +17745,7 @@
     {
       "field": "Wish.makerNote.now",
       "writers": [
-        "E-176"
+        "E-223"
       ],
       "store": "Wish",
       "readers": [
@@ -14428,7 +17827,7 @@
     {
       "field": "Wish.makerNote.wedding",
       "writers": [
-        "E-176"
+        "E-223"
       ],
       "store": "Wish",
       "readers": [
@@ -14472,7 +17871,7 @@
     {
       "field": "Wish.makerNote.wishId",
       "writers": [
-        "E-176"
+        "E-223"
       ],
       "store": "Wish",
       "readers": [
@@ -14498,7 +17897,7 @@
     {
       "field": "Wish.memory",
       "writers": [
-        "E-176"
+        "E-223"
       ],
       "store": "Wish",
       "readers": [
@@ -14518,8 +17917,8 @@
     {
       "field": "Wish.name",
       "writers": [
-        "E-173",
-        "E-176"
+        "E-220",
+        "E-223"
       ],
       "store": "Wish",
       "readers": [
@@ -14568,9 +17967,13 @@
     },
     {
       "field": "Wish.no",
-      "writers": [],
+      "writers": [
+        "E-218"
+      ],
       "store": "Wish",
       "readers": [
+        "admin-support-detail",
+        "admin-wishes-detail",
         "app-home",
         "app-wish-detail",
         "app-wishes",
@@ -14592,20 +17995,23 @@
         "maker-when",
         "receiver-wish-mine"
       ],
-      "writerActors": [],
+      "writerActors": [
+        "staff"
+      ],
       "readerActors": [
         "business",
         "creator",
         "person",
-        "public"
+        "public",
+        "staff"
       ],
-      "crossActor": false,
-      "noWriter": true
+      "crossActor": true,
+      "noWriter": false
     },
     {
       "field": "Wish.note",
       "writers": [
-        "E-176"
+        "E-223"
       ],
       "store": "Wish",
       "readers": [
@@ -14625,11 +18031,13 @@
     {
       "field": "Wish.occasion",
       "writers": [
-        "E-173",
-        "E-176"
+        "E-220",
+        "E-223"
       ],
       "store": "Wish",
       "readers": [
+        "admin-support-detail",
+        "admin-wishes-detail",
         "app-home",
         "app-style-detail",
         "app-styles",
@@ -14670,7 +18078,8 @@
         "business",
         "creator",
         "person",
-        "public"
+        "public",
+        "staff"
       ],
       "crossActor": true,
       "noWriter": false
@@ -14678,7 +18087,7 @@
     {
       "field": "Wish.off",
       "writers": [
-        "E-176"
+        "E-223"
       ],
       "store": "Wish",
       "readers": [
@@ -14738,11 +18147,13 @@
     {
       "field": "Wish.opensAt",
       "writers": [
-        "E-176",
-        "E-182"
+        "E-223",
+        "E-229"
       ],
       "store": "Wish",
       "readers": [
+        "admin-support-detail",
+        "admin-wishes-detail",
         "app-home",
         "app-wish-detail",
         "app-wishes",
@@ -14772,7 +18183,8 @@
         "business",
         "creator",
         "person",
-        "public"
+        "public",
+        "staff"
       ],
       "crossActor": true,
       "noWriter": false
@@ -14780,7 +18192,7 @@
     {
       "field": "Wish.patch",
       "writers": [
-        "E-176"
+        "E-223"
       ],
       "store": "Wish",
       "readers": [
@@ -14805,7 +18217,7 @@
     {
       "field": "Wish.payWay",
       "writers": [
-        "E-182"
+        "E-229"
       ],
       "store": "Wish",
       "readers": [
@@ -14824,7 +18236,7 @@
     {
       "field": "Wish.paymentWay",
       "writers": [
-        "E-179"
+        "E-226"
       ],
       "store": "Wish",
       "readers": [
@@ -14841,9 +18253,23 @@
       "noWriter": false
     },
     {
+      "field": "Wish.person",
+      "writers": [],
+      "store": "Wish",
+      "readers": [
+        "admin-wishes-detail"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
       "field": "Wish.photos",
       "writers": [
-        "E-176"
+        "E-223"
       ],
       "store": "Wish",
       "readers": [
@@ -14886,7 +18312,7 @@
     {
       "field": "Wish.price",
       "writers": [
-        "E-179"
+        "E-226"
       ],
       "store": "Wish",
       "readers": [
@@ -14923,10 +18349,28 @@
       "noWriter": true
     },
     {
+      "field": "Wish.reason",
+      "writers": [
+        "E-218"
+      ],
+      "store": "Wish",
+      "readers": [
+        "admin-wishes-detail"
+      ],
+      "writerActors": [
+        "staff"
+      ],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": false
+    },
+    {
       "field": "Wish.reasons",
       "writers": [
-        "E-176",
-        "E-182"
+        "E-223",
+        "E-229"
       ],
       "store": "Wish",
       "readers": [
@@ -14966,8 +18410,8 @@
     {
       "field": "Wish.removedAt",
       "writers": [
-        "E-174",
-        "E-181"
+        "E-221",
+        "E-228"
       ],
       "store": "Wish",
       "readers": [
@@ -15006,7 +18450,7 @@
     {
       "field": "Wish.result",
       "writers": [
-        "E-177"
+        "E-224"
       ],
       "store": "Wish",
       "readers": [
@@ -15070,10 +18514,25 @@
       "noWriter": true
     },
     {
+      "field": "Wish.state",
+      "writers": [],
+      "store": "Wish",
+      "readers": [
+        "admin-support-detail",
+        "admin-wishes-detail"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
       "field": "Wish.status",
       "writers": [
-        "E-174",
-        "E-181"
+        "E-221",
+        "E-228"
       ],
       "store": "Wish",
       "readers": [
@@ -15123,7 +18582,7 @@
     {
       "field": "Wish.step",
       "writers": [
-        "E-176"
+        "E-223"
       ],
       "store": "Wish",
       "readers": [
@@ -15171,7 +18630,7 @@
     {
       "field": "Wish.studio",
       "writers": [
-        "E-173"
+        "E-220"
       ],
       "store": "Wish",
       "readers": [
@@ -15192,8 +18651,8 @@
     {
       "field": "Wish.style",
       "writers": [
-        "E-173",
-        "E-176"
+        "E-220",
+        "E-223"
       ],
       "store": "Wish",
       "readers": [
@@ -15259,11 +18718,12 @@
     {
       "field": "Wish.ticket",
       "writers": [
-        "E-176",
-        "E-182"
+        "E-223",
+        "E-229"
       ],
       "store": "Wish",
       "readers": [
+        "admin-wishes-detail",
         "app-home",
         "app-wish-detail",
         "app-wishes",
@@ -15292,7 +18752,8 @@
         "business",
         "creator",
         "person",
-        "public"
+        "public",
+        "staff"
       ],
       "crossActor": true,
       "noWriter": false
@@ -15314,10 +18775,11 @@
     {
       "field": "Wish.timeline",
       "writers": [
-        "E-176"
+        "E-223"
       ],
       "store": "Wish",
       "readers": [
+        "admin-wishes-detail",
         "maker-ask"
       ],
       "writerActors": [
@@ -15326,15 +18788,16 @@
         "person"
       ],
       "readerActors": [
-        "person"
+        "person",
+        "staff"
       ],
-      "crossActor": false,
+      "crossActor": true,
       "noWriter": false
     },
     {
       "field": "Wish.type",
       "writers": [
-        "E-176"
+        "E-223"
       ],
       "store": "Wish",
       "readers": [
@@ -15368,7 +18831,7 @@
     {
       "field": "Wish.voices",
       "writers": [
-        "E-176"
+        "E-223"
       ],
       "store": "Wish",
       "readers": [
@@ -15388,7 +18851,7 @@
     {
       "field": "Wish.voices.ask",
       "writers": [
-        "E-176"
+        "E-223"
       ],
       "store": "Wish",
       "readers": [
@@ -15450,14 +18913,14 @@
     {
       "field": "Wish.wishId",
       "writers": [
-        "E-174",
-        "E-176",
-        "E-178",
-        "E-179",
-        "E-181",
-        "E-182",
-        "E-183",
-        "E-184"
+        "E-221",
+        "E-223",
+        "E-225",
+        "E-226",
+        "E-228",
+        "E-229",
+        "E-230",
+        "E-231"
       ],
       "store": "Wish",
       "readers": [
@@ -15820,6 +19283,62 @@
       "noWriter": true
     },
     {
+      "field": "WishDetail.messages",
+      "writers": [],
+      "store": "WishDetail",
+      "readers": [
+        "admin-wishes-detail"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "WishDetail.payments",
+      "writers": [],
+      "store": "WishDetail",
+      "readers": [
+        "admin-wishes-detail"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "WishDetail.person",
+      "writers": [],
+      "store": "WishDetail",
+      "readers": [
+        "admin-wishes-detail"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "WishDetail.wish",
+      "writers": [],
+      "store": "WishDetail",
+      "readers": [
+        "admin-wishes-detail"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "staff"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
       "field": "WishLink.active",
       "writers": [
         "server:wish-link"
@@ -16016,6 +19535,6 @@
       "noWriter": false
     }
   ],
-  "crossActor": 28,
-  "noWriter": 394
+  "crossActor": 32,
+  "noWriter": 582
 }

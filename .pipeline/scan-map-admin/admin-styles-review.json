@@ -1,0 +1,34 @@
+{
+ "id": "admin-styles-review",
+ "title": "Admin: Style review",
+ "uiFiles": [
+  "app/admin/styles/review/page.tsx",
+  "components/admin/b/Review.tsx",
+  "components/admin/b/Styles.tsx",
+  "components/admin/ui.tsx",
+  "components/admin/b/parts.tsx"
+ ],
+ "dataFiles": [
+  "lib/admin-api.ts",
+  "lib/admin/b-api.ts",
+  "lib/admin/b-types.ts",
+  "lib/admin/b-fixtures.ts",
+  "lib/admin-types.ts",
+  "lib/studio.ts",
+  "lib/levels.ts",
+  "lib/catalog.ts"
+ ],
+ "dataProvenance": "inline",
+ "localStore": {
+  "reads": "in-memory copy ('mine') in lib/admin/b-api.ts cloned from lib/admin/b-fixtures.ts (marked sample data, SAMPLE = true); lost on reload",
+  "populatedBy": null
+ },
+ "inlineLiterals": [
+  {
+   "file": "lib/admin/b-fixtures.ts",
+   "description": "SUBMISSIONS: whole StudioStyle documents with stills and rights words"
+  }
+ ],
+ "route": "/admin/styles/review",
+ "area": "admin"
+}

@@ -137,6 +137,36 @@
       "owedEvent": "price book: staff publish a price-book version (POST /v1/admin/price-book-versions/:id/publish-version)"
     },
     {
+      "metric": "CreatorRow.credits",
+      "shownOn": [
+        "admin-creators"
+      ],
+      "writerPath": [],
+      "formula": [
+        "T-41"
+      ],
+      "wording": [
+        "admin-creators: number"
+      ],
+      "noWriter": true,
+      "owed": true,
+      "owedEvent": null
+    },
+    {
+      "metric": "CreatorRow.earned",
+      "shownOn": [
+        "admin-creators"
+      ],
+      "writerPath": [
+        "price book (S-14: the web reads GET /v1/prices)"
+      ],
+      "formula": [],
+      "wording": [
+        "admin-creators: number (naira; this month so far: sum of premium styles' uses * PER_USE)"
+      ],
+      "noWriter": false
+    },
+    {
       "metric": "CreatorState.credits",
       "shownOn": [
         "studio-editor",
@@ -316,6 +346,71 @@
       "noWriter": false
     },
     {
+      "metric": "LedgerDay.ours",
+      "shownOn": [
+        "admin-payments"
+      ],
+      "writerPath": [
+        "price book (S-14: the web reads GET /v1/prices)"
+      ],
+      "formula": [],
+      "wording": [
+        "admin-payments: number (whole naira sum of non-failed payments that day)"
+      ],
+      "noWriter": false
+    },
+    {
+      "metric": "LedgerDay.oursCount",
+      "shownOn": [
+        "admin-payments"
+      ],
+      "writerPath": [],
+      "formula": [
+        "T-32",
+        "T-33"
+      ],
+      "wording": [
+        "admin-payments: number"
+      ],
+      "noWriter": true,
+      "owed": true,
+      "owedEvent": null
+    },
+    {
+      "metric": "LedgerDay.theirs",
+      "shownOn": [
+        "admin-payments"
+      ],
+      "writerPath": [],
+      "formula": [
+        "T-42"
+      ],
+      "wording": [
+        "admin-payments: number (provider settlement sum)"
+      ],
+      "noWriter": true,
+      "owed": true,
+      "owedEvent": null
+    },
+    {
+      "metric": "LedgerDay.theirsCount",
+      "shownOn": [
+        "admin-payments"
+      ],
+      "writerPath": [],
+      "formula": [
+        "T-32",
+        "T-33",
+        "T-42"
+      ],
+      "wording": [
+        "admin-payments: number"
+      ],
+      "noWriter": true,
+      "owed": true,
+      "owedEvent": null
+    },
+    {
       "metric": "LifecycleConfig.HOLD_DAYS",
       "shownOn": [
         "app-wish-detail",
@@ -471,6 +566,113 @@
       "owedEvent": "price book: staff publish a price-book version (POST /v1/admin/price-book-versions/:id/publish-version)"
     },
     {
+      "metric": "Maker.open",
+      "shownOn": [
+        "admin-concierge"
+      ],
+      "writerPath": [],
+      "formula": [],
+      "wording": [
+        "admin-concierge: number (open orders held: orders with this maker whose state is not delivered)"
+      ],
+      "noWriter": true,
+      "owed": true,
+      "owedEvent": null
+    },
+    {
+      "metric": "ModView.minutesLeft",
+      "shownOn": [
+        "admin-moderation"
+      ],
+      "writerPath": [],
+      "formula": [],
+      "wording": [
+        "admin-moderation: number (negative when late; computed against the clock)"
+      ],
+      "noWriter": true,
+      "owed": true,
+      "owedEvent": null
+    },
+    {
+      "metric": "ModView.score",
+      "shownOn": [
+        "admin-moderation"
+      ],
+      "writerPath": [],
+      "formula": [],
+      "wording": [
+        "admin-moderation: number 0..1 (screening confidence; flagged only; sample)"
+      ],
+      "noWriter": true,
+      "owed": true,
+      "owedEvent": null
+    },
+    {
+      "metric": "Numbers.days",
+      "shownOn": [
+        "admin-numbers"
+      ],
+      "writerPath": [],
+      "formula": [],
+      "wording": [
+        "admin-numbers: number"
+      ],
+      "noWriter": true,
+      "owed": true,
+      "owedEvent": null
+    },
+    {
+      "metric": "Numbers.lines",
+      "shownOn": [
+        "admin-numbers"
+      ],
+      "writerPath": [
+        "price book (S-14: the web reads GET /v1/prices)"
+      ],
+      "formula": [
+        "T-69"
+      ],
+      "wording": [
+        "admin-numbers: {line:Line, amount:number, target:number}[] over the eight lines tickets, extras, keeps, pass, pro, vault, concierge, creator; amount and target in naira numbers"
+      ],
+      "noWriter": false
+    },
+    {
+      "metric": "Numbers.paid",
+      "shownOn": [
+        "admin-numbers"
+      ],
+      "writerPath": [],
+      "formula": [
+        "T-32",
+        "T-33",
+        "T-65",
+        "T-66"
+      ],
+      "wording": [
+        "admin-numbers: number"
+      ],
+      "noWriter": true,
+      "owed": true,
+      "owedEvent": null
+    },
+    {
+      "metric": "Numbers.previews",
+      "shownOn": [
+        "admin-numbers"
+      ],
+      "writerPath": [],
+      "formula": [
+        "T-68"
+      ],
+      "wording": [
+        "admin-numbers: number"
+      ],
+      "noWriter": true,
+      "owed": true,
+      "owedEvent": null
+    },
+    {
       "metric": "PassMembership.amount",
       "shownOn": [
         "app-pass"
@@ -596,6 +798,9 @@
     {
       "metric": "Payment.amountKobo",
       "shownOn": [
+        "admin-overview",
+        "admin-people-detail",
+        "admin-wishes-detail",
         "app-wish-detail"
       ],
       "writerPath": [
@@ -604,7 +809,67 @@
       ],
       "formula": [],
       "wording": [
-        "app-wish-detail: string naira text"
+        "admin-overview: number",
+        "admin-people-detail: number",
+        "admin-wishes-detail: number"
+      ],
+      "noWriter": false
+    },
+    {
+      "metric": "PayoutRow.carried",
+      "shownOn": [
+        "admin-creators"
+      ],
+      "writerPath": [
+        "price book (S-14: the web reads GET /v1/prices)"
+      ],
+      "formula": [],
+      "wording": [
+        "admin-creators: number (naira rolled on from earlier months)"
+      ],
+      "noWriter": false
+    },
+    {
+      "metric": "PayoutRow.earned",
+      "shownOn": [
+        "admin-creators"
+      ],
+      "writerPath": [
+        "price book (S-14: the web reads GET /v1/prices)"
+      ],
+      "formula": [],
+      "wording": [
+        "admin-creators: number (naira, last month)"
+      ],
+      "noWriter": false
+    },
+    {
+      "metric": "PayoutRow.total",
+      "shownOn": [
+        "admin-creators"
+      ],
+      "writerPath": [
+        "price book (S-14: the web reads GET /v1/prices)"
+      ],
+      "formula": [
+        "T-40"
+      ],
+      "wording": [
+        "admin-creators: number (naira, earned + carried)"
+      ],
+      "noWriter": false
+    },
+    {
+      "metric": "PayoutRun.threshold",
+      "shownOn": [
+        "admin-creators"
+      ],
+      "writerPath": [
+        "price book (S-14: the web reads GET /v1/prices)"
+      ],
+      "formula": [],
+      "wording": [
+        "admin-creators: number (naira; PAYOUT_THRESHOLD = 5000, PROVISIONAL)"
       ],
       "noWriter": false
     },
@@ -645,6 +910,34 @@
       "noWriter": false
     },
     {
+      "metric": "Price.kind",
+      "shownOn": [
+        "admin-prices"
+      ],
+      "writerPath": [
+        "price book (S-14: the web reads GET /v1/prices)"
+      ],
+      "formula": [],
+      "wording": [
+        "admin-prices: 'naira'|'date'"
+      ],
+      "noWriter": false
+    },
+    {
+      "metric": "Price.list",
+      "shownOn": [
+        "admin-prices"
+      ],
+      "writerPath": [
+        "price book (S-14: the web reads GET /v1/prices)"
+      ],
+      "formula": [],
+      "wording": [
+        "admin-prices: number (whole naira, the was/list price)"
+      ],
+      "noWriter": false
+    },
+    {
       "metric": "Price.price",
       "shownOn": [
         "site-business",
@@ -665,6 +958,21 @@
         "site-business: string ('₦15,000')",
         "site-home: string ('₦15,000')",
         "site-make: string '₦15,000' typed in JSX line 32, not from catalog.concierge"
+      ],
+      "noWriter": false
+    },
+    {
+      "metric": "Price.value",
+      "shownOn": [
+        "admin-prices"
+      ],
+      "writerPath": [
+        "price book (S-14: the web reads GET /v1/prices)"
+      ],
+      "formula": [],
+      "wording": [
+        "admin-prices: number (whole naira) when kind naira; YYYY-MM-DD string when kind date",
+        "admin-prices: number (whole naira, > 0 and <= 10,000,000, typed with optional ₦ and commas) or YYYY-MM-DD string for the date row (the UI accepts 'YYYY-MM-DD' or 'D Mon YYYY')"
       ],
       "noWriter": false
     },
@@ -1013,6 +1321,23 @@
       "noWriter": false
     },
     {
+      "metric": "Queue.count",
+      "shownOn": [
+        "admin-overview"
+      ],
+      "writerPath": [],
+      "formula": [
+        "T-32",
+        "T-33"
+      ],
+      "wording": [
+        "admin-overview: number"
+      ],
+      "noWriter": true,
+      "owed": true,
+      "owedEvent": null
+    },
+    {
       "metric": "RoyaltyAccrual.rows",
       "shownOn": [
         "studio-home"
@@ -1055,6 +1380,114 @@
       "noWriter": true,
       "owed": true,
       "owedEvent": "PATCH /v1/studio/styles/:id (the editor saves the whole document)"
+    },
+    {
+      "metric": "StyleRow.paid",
+      "shownOn": [
+        "admin-styles"
+      ],
+      "writerPath": [],
+      "formula": [
+        "T-32",
+        "T-33",
+        "T-65",
+        "T-66"
+      ],
+      "wording": [
+        "admin-styles: number (this month, sample)"
+      ],
+      "noWriter": true,
+      "owed": true,
+      "owedEvent": null
+    },
+    {
+      "metric": "StyleRow.previews",
+      "shownOn": [
+        "admin-styles"
+      ],
+      "writerPath": [],
+      "formula": [
+        "T-68"
+      ],
+      "wording": [
+        "admin-styles: number (this month, sample)"
+      ],
+      "noWriter": true,
+      "owed": true,
+      "owedEvent": null
+    },
+    {
+      "metric": "StyleRow.rate",
+      "shownOn": [
+        "admin-styles"
+      ],
+      "writerPath": [],
+      "formula": [
+        "T-27",
+        "T-68"
+      ],
+      "wording": [
+        "admin-styles: number (paid / previews, 0 when no previews)"
+      ],
+      "noWriter": true,
+      "owed": true,
+      "owedEvent": null
+    },
+    {
+      "metric": "ThreadCounts.all",
+      "shownOn": [
+        "admin-support"
+      ],
+      "writerPath": [],
+      "formula": [],
+      "wording": [
+        "admin-support: number"
+      ],
+      "noWriter": true,
+      "owed": true,
+      "owedEvent": null
+    },
+    {
+      "metric": "ThreadCounts.closed",
+      "shownOn": [
+        "admin-support"
+      ],
+      "writerPath": [],
+      "formula": [],
+      "wording": [
+        "admin-support: number"
+      ],
+      "noWriter": true,
+      "owed": true,
+      "owedEvent": null
+    },
+    {
+      "metric": "ThreadCounts.open",
+      "shownOn": [
+        "admin-support"
+      ],
+      "writerPath": [],
+      "formula": [],
+      "wording": [
+        "admin-support: number"
+      ],
+      "noWriter": true,
+      "owed": true,
+      "owedEvent": null
+    },
+    {
+      "metric": "ThreadCounts.waiting",
+      "shownOn": [
+        "admin-support"
+      ],
+      "writerPath": [],
+      "formula": [],
+      "wording": [
+        "admin-support: number"
+      ],
+      "noWriter": true,
+      "owed": true,
+      "owedEvent": null
     },
     {
       "metric": "Ticket.price",
@@ -1460,7 +1893,7 @@
         "maker-ticket"
       ],
       "writerPath": [
-        "E-182",
+        "E-229",
         "price book (S-14: the web reads GET /v1/prices)"
       ],
       "formula": [],
@@ -1519,7 +1952,7 @@
         "app-wish-detail"
       ],
       "writerPath": [
-        "E-179"
+        "E-226"
       ],
       "formula": [],
       "wording": [
@@ -1593,7 +2026,7 @@
         "app-wish-detail"
       ],
       "writerPath": [
-        "E-179",
+        "E-226",
         "price book (S-14: the web reads GET /v1/prices)"
       ],
       "formula": [
@@ -1639,7 +2072,7 @@
         "receiver-wish-mine"
       ],
       "writerPath": [
-        "E-176"
+        "E-223"
       ],
       "formula": [],
       "wording": [
@@ -1654,12 +2087,16 @@
     "Business.pack",
     "Business.rolled",
     "CreatorOffer.royaltyPercent",
+    "CreatorRow.credits",
     "CreatorState.extraReviews",
     "CreatorState.packs",
     "CreatorState.reviewsLeft",
     "DateRow.count",
     "DateRow.days",
     "DateRow.years",
+    "LedgerDay.oursCount",
+    "LedgerDay.theirs",
+    "LedgerDay.theirsCount",
     "LifecycleConfig.HOLD_DAYS",
     "LifecycleConfig.OFF",
     "LifecycleConfig.RESTORE_DAYS",
@@ -1667,6 +2104,12 @@
     "LifecycleConfig.maxPhotos",
     "LifecycleConfig.restingHoldMonths",
     "LifecycleConfig.restoreWindowDays",
+    "Maker.open",
+    "ModView.minutesLeft",
+    "ModView.score",
+    "Numbers.days",
+    "Numbers.paid",
+    "Numbers.previews",
     "PassMembership.upgradesUsed",
     "PassMembership.wishesUsed",
     "PassOffer.upgrades",
@@ -1681,7 +2124,15 @@
     "ProUsage.rolled",
     "ProUsage.total",
     "ProUsage.used",
+    "Queue.count",
     "StudioStyle.scenes[k].span",
+    "StyleRow.paid",
+    "StyleRow.previews",
+    "StyleRow.rate",
+    "ThreadCounts.all",
+    "ThreadCounts.closed",
+    "ThreadCounts.open",
+    "ThreadCounts.waiting",
     "TicketOffer.total",
     "TicketTerms.momentDays",
     "VaultFile.size",
@@ -1702,6 +2153,26 @@
     "Wish.makerNote.voice"
   ],
   "owedByEvent": {
+    "NO EVENT NAMED": [
+      "CreatorRow.credits",
+      "LedgerDay.oursCount",
+      "LedgerDay.theirs",
+      "LedgerDay.theirsCount",
+      "Maker.open",
+      "ModView.minutesLeft",
+      "ModView.score",
+      "Numbers.days",
+      "Numbers.paid",
+      "Numbers.previews",
+      "Queue.count",
+      "StyleRow.paid",
+      "StyleRow.previews",
+      "StyleRow.rate",
+      "ThreadCounts.all",
+      "ThreadCounts.closed",
+      "ThreadCounts.open",
+      "ThreadCounts.waiting"
+    ],
     "PATCH /v1/studio/styles/:id (the editor saves the whole document)": [
       "StudioStyle.scenes[k].span"
     ],

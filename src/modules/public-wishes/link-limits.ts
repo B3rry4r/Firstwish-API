@@ -1,5 +1,7 @@
-import { createHash } from "node:crypto";
-import { Injectable } from "@nestjs/common";
+import { createHmac } from "node:crypto";
+import { Inject, Injectable } from "@nestjs/common";
+import type { Env } from "../../common/env/env";
+import { ENV } from "../../common/env/env.module";
 import { PrismaService } from "../../common/db/prisma.service";
 import { RateLimited } from "../../common/errors/rate-limited";
 import { Clock } from "../../common/ports/clock.port";
@@ -11,10 +13,6 @@ export const UNLOCKS_PER_HOUR = 10;
 export const LINK_WRONG_TRIES = 30;
 export const LINK_LOCK_SECONDS = 3600;
 
-/** A key made from an address: a hash, so no address is ever stored. */
-export const keyOf = (...parts: (string | null | undefined)[]): string =>
-  createHash("sha256").update(parts.map((p) => p ?? "").join("|")).digest("hex").slice(0, 32);
-
 /**
  * Limits counted in the database (they fail closed: a dead database refuses the request). A take is ONE statement (insert
  * where the count in the window is under the limit) run under an advisory lock on the bucket and key, so requests at once
@@ -23,10 +21,17 @@ export const keyOf = (...parts: (string | null | undefined)[]): string =>
 @Injectable()
 export class LinkLimits {
   constructor(
+    @Inject(ENV) private readonly env: Env,
     private readonly db: PrismaService,
     private readonly clock: Clock,
     private readonly ids: IdGenerator,
   ) {}
+
+  /** NN4: a key made from an address (or a link) is an HMAC with a server secret, so a table that leaks cannot be hashed back to addresses. */
+  keyOf(...parts: (string | null | undefined)[]): string {
+    const key = createHmac("sha256", this.env.JWT_ACCESS_SECRET).update("link-key").digest();
+    return createHmac("sha256", key).update(parts.map((p) => p ?? "").join("|")).digest("hex").slice(0, 32);
+  }
 
   async take(bucket: string, key: string, max: number, windowSeconds: number): Promise<void> {
     const now = this.clock.now();

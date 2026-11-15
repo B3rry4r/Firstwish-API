@@ -52,6 +52,7 @@ describe("public wishes E-129 E-130 E-131 E-132 E-134 and the feed's E-122 E-142
     return { id, slug, linkId };
   }
   const get = (slug: string, h: Record<string, string> = {}) => t.http().get(`/v1/w/${slug}`).set(h);
+  const open = (slug: string, h: Record<string, string> = {}) => t.http().post(`/v1/w/${slug}/opens`).set(h).send({});
 
   it("a sealed link shows only the opening scene, the open time and the server's clock", async () => {
     const w = await wish({ opensAt: new Date(NOW.getTime() + DAY), passcodeHash: hash("1234") });
@@ -69,7 +70,7 @@ describe("public wishes E-129 E-130 E-131 E-132 E-134 and the feed's E-122 E-142
     expect(row.openedAt).toBeNull();
   });
 
-  it("at the open time: full content, a signed link per wish_file row only, the first read starts the term", async () => {
+  it("at the open time: the opening gesture gives the full content, a signed link per wish_file row only, and starts the term", async () => {
     const w = await wish();
     const fileId = ids.next();
     const strayId = ids.next();
@@ -78,7 +79,7 @@ describe("public wishes E-129 E-130 E-131 E-132 E-134 and the feed's E-122 E-142
     }
     await db.wishFile.create({ data: { id: ids.next(), wishId: w.id, fileId, role: "photo" } });
     await db.wish.update({ where: { id: w.id }, data: { content: { story: { photos: [{ photoId: strayId }] }, letter: { paras: ["Happy birthday."] } } } });
-    const r = await get(w.slug);
+    const r = await open(w.slug);
     expect(r.status).toBe(200);
     expect(r.body.state).toBe("open");
     expect(r.body.content.letter.paras[0]).toBe("Happy birthday.");
@@ -98,9 +99,9 @@ describe("public wishes E-129 E-130 E-131 E-132 E-134 and the feed's E-122 E-142
     expect(rows.map((x) => x.first)).toEqual([true, false]);
   });
 
-  it("20 first reads at once: one WishOpen with first = true and one transition", async () => {
+  it("20 first openings at once: one WishOpen with first = true and one transition", async () => {
     const w = await wish();
-    const rs = await Promise.all(Array.from({ length: 20 }, () => get(w.slug)));
+    const rs = await Promise.all(Array.from({ length: 20 }, () => open(w.slug)));
     const opened = rs.map((r) => (r.body as { openedAt: string }).openedAt);
     expect(rs.filter((r) => r.status !== 200 || r.body.state !== "open").map((r) => `${r.status} ${JSON.stringify(r.body).slice(0, 150)}`)).toEqual([]);
     const rows = await db.$queryRaw<{ first: boolean; n: bigint }[]>`SELECT first, count(*)::bigint AS n FROM wish_open WHERE "wishId" = ${w.id}::uuid GROUP BY first`;
@@ -111,7 +112,7 @@ describe("public wishes E-129 E-130 E-131 E-132 E-134 and the feed's E-122 E-142
 
   it("a wedding wish counts its term from the wedding date (EE8) through markOpened", async () => {
     const w = await wish({ weddingDate: new Date("2027-06-01T00:00:00Z"), timeZone: "UTC" });
-    const r = await get(w.slug);
+    const r = await open(w.slug);
     expect(r.body.endsAt).toBe(new Date(Date.parse("2027-06-01T00:00:00Z") + 7 * DAY).toISOString());
   });
 
@@ -129,7 +130,8 @@ describe("public wishes E-129 E-130 E-131 E-132 E-134 and the feed's E-122 E-142
     const ok = await t.http().post(`/v1/w/${w.slug}/unlock`).send({ passcode: "open-sesame" });
     expect(ok.body.ok).toBe(true);
     expect(typeof ok.body.token).toBe("string");
-    expect((await get(w.slug, { "x-unlock-token": ok.body.token })).body.state).toBe("open");
+    expect((await get(w.slug, { "x-unlock-token": ok.body.token })).body).toMatchObject({ state: "sealed", openable: true });
+    expect((await open(w.slug, { "x-unlock-token": ok.body.token })).body.state).toBe("open");
     expect((await get(other.slug, { "x-unlock-token": ok.body.token })).body.state).toBe("passcode");
     expect((await get(w.slug, { "x-unlock-token": `${ok.body.token}x` })).body.state).toBe("passcode");
     t.clock.advance(16 * 60 * 1000);
@@ -196,7 +198,7 @@ describe("public wishes E-129 E-130 E-131 E-132 E-134 and the feed's E-122 E-142
 
   it("one reaction per opening session, changeable, counted from rows; favourites and plays", async () => {
     const w = await wish();
-    await get(w.slug);
+    await open(w.slug);
     const s1 = { "x-wish-session": "session-one-aaaa" };
     const s2 = { "x-wish-session": "session-two-bbbb" };
     const post = (path: string, body: object, h = s1) => t.http().post(`/v1/w/${w.slug}/${path}`).set(h).send(body);
@@ -245,7 +247,7 @@ describe("public wishes E-129 E-130 E-131 E-132 E-134 and the feed's E-122 E-142
 
   describe("the signed-in side of a published wish", () => {
     async function published(over: Record<string, unknown> = {}) {
-      const w = await wish(over);
+      const w = await wish({ status: "live", openedAt: new Date(NOW.getTime() - 3600000), endsAt: new Date(NOW.getTime() + 7 * DAY), ...over });
       const id = ids.next();
       await db.$executeRaw`INSERT INTO published_wish (id, wish, "wishId", title) VALUES (${id}::uuid, ${w.id}, ${w.id}::uuid, 'For Chidi')`;
       return { ...w, feedId: id };

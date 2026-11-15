@@ -9,13 +9,15 @@ import { toWireInstant } from "../../common/time/time";
 import type { PublicWishView } from "../../contracts";
 import { SignedUrlsService } from "../stored-files/signed-urls.service";
 import { WishLifecycleService } from "../wishes/wish-lifecycle.service";
-import { LINK_LOCK_SECONDS, LINK_WRONG_TRIES, LinkLimits, READS_PER_MINUTE, UNLOCKS_PER_HOUR, keyOf } from "./link-limits";
+import { LINK_LOCK_SECONDS, LINK_WRONG_TRIES, LinkLimits, READS_PER_MINUTE, UNLOCKS_PER_HOUR } from "./link-limits";
 import { UnlockTokens } from "./unlock-token";
 
 /** Who is asking: the client address (from the trusted proxy setting), the unlock token the page holds, the opening session. */
 export interface Caller {
   address: string | null;
   userAgent?: string | null;
+  /** a HEAD: answered like the read, but nothing is written (NN2) */
+  head?: boolean;
   token?: string;
   session?: string;
 }
@@ -56,6 +58,7 @@ export interface Resolved {
 
 const gone = () => new AppError(HttpStatus.GONE, "gone", "This wish is no longer here.");
 const plain = (v: unknown): v is Record<string, unknown> => !!v && typeof v === "object" && !Array.isArray(v);
+const INVISIBLE = /[\p{Cf}\p{Zl}\p{Zp}\p{Co}\p{Cn}]/u;
 const SLUG_LOOKS = /^[A-Za-z0-9_-]{1,64}$/;
 
 function questionOf(content: unknown): string | null {
@@ -100,9 +103,12 @@ export class PublicWishesService {
     private readonly life: WishLifecycleService,
   ) {}
 
-  /** E-129. */
+  /**
+   * E-129. A read never starts the term (NN2): before the first opening it answers the opening view only (state sealed,
+   * openable true once the open time has passed); after it, the full view.
+   */
   async view(slug: string, c: Caller, depth = 0): Promise<PublicWishView> {
-    await this.limits.take("read", keyOf(c.address), READS_PER_MINUTE, 60);
+    await this.limits.take("read", this.limits.keyOf(c.address), READS_PER_MINUTE, 60);
     const r = await this.resolve(slug, c);
     const { row } = r;
     const base = this.base(slug, row);
@@ -111,25 +117,51 @@ export class PublicWishesService {
       const q = questionOf(row.content);
       return { ...base, state: q ? "question" : "passcode", openable: true, prompt: q, content: sceneOf(row.content) };
     }
-    const files = await this.fileLinks(row.id);
-    const stored = plain(row.content) ? row.content : {};
-    const at = this.clock.now();
-    const done = await this.recordRead(row, at, c);
-    if (done === "refused") {
+    if (!row.openedAt) return { ...base, state: "sealed", openable: true, content: sceneOf(row.content) };
+    const served = await this.serve(row, base, c, "read");
+    if (served === "refused") {
       if (depth > 0) throw gone();
       return this.view(slug, c, depth + 1);
     }
+    return served;
+  }
+
+  /**
+   * E-131: the receiver's opening gesture. This call, and only it, starts the term (once); it answers the full view, after the
+   * passcode step where there is one. Before the open time it is refused and starts nothing.
+   */
+  async open(slug: string, c: Caller, depth = 0): Promise<PublicWishView> {
+    await this.limits.take("read", this.limits.keyOf(c.address), READS_PER_MINUTE, 60);
+    const r = await this.resolve(slug, c);
+    if (r.standing === "countdown") throw AppError.conflict("not_open_yet", "This wish is not open yet.");
+    if (r.standing === "locked") throw AppError.conflict("not_open", "This wish is not showing yet.");
+    const { row } = r;
+    const served = await this.serve(row, this.base(slug, row), c, row.openedAt ? "play" : "read");
+    if (served === "refused") {
+      if (depth > 0) throw gone();
+      return this.open(slug, c, depth + 1);
+    }
+    return served;
+  }
+
+  /** The full view of a wish whose content may show now. The first call for a wish starts its term in one transaction. */
+  private async serve(row: Row, base: PublicWishView, c: Caller, kind: "read" | "play"): Promise<PublicWishView | "refused"> {
+    const stored = plain(row.content) ? row.content : {};
+    if (c.head) return { ...base, state: "open", openable: true, openedAt: row.openedAt ? toWireInstant(row.openedAt) : null, endsAt: row.endsAt ? toWireInstant(row.endsAt) : null };
+    const files = await this.fileLinks(row.id);
+    const done = await this.recordRead(row, this.clock.now(), c, kind);
+    if (done === "refused") return "refused";
     return { ...base, ...done.times, state: "open", openable: true, content: { ...stored, files } };
   }
 
   /** E-134: a passcode (or the answer of a question). Counted before it is compared; a locked link says when to come back. */
   async unlock(slug: string, c: Caller, input: { passcode?: string; answer?: string; opening?: Record<string, unknown> }): Promise<Record<string, unknown>> {
-    await this.limits.take("read", keyOf(c.address), READS_PER_MINUTE, 60);
+    await this.limits.take("read", this.limits.keyOf(c.address), READS_PER_MINUTE, 60);
     const { row } = await this.resolve(slug, c);
     const now = this.clock.now();
     if (!row.opensAt || row.opensAt.getTime() > now.getTime()) throw AppError.conflict("not_open_yet", "This wish is not open yet.");
     if (!row.passcodeHash) return { ok: true };
-    await this.limits.take("unlock", keyOf(row.linkId, c.address), UNLOCKS_PER_HOUR, 3600);
+    await this.limits.take("unlock", this.limits.keyOf(row.linkId, c.address), UNLOCKS_PER_HOUR, 3600);
     // the try is counted in ONE statement on the link; a link locked until a time refuses with that time
     const lockTo = new Date(now.getTime() + LINK_LOCK_SECONDS * 1000);
     const counted = await this.db.$queryRaw<{ tries: number }[]>`
@@ -146,21 +178,17 @@ export class PublicWishesService {
     const candidate = input.passcode ?? input.answer ?? (typeof input.opening?.answer === "string" ? input.opening.answer : "");
     const good = typeof candidate === "string" && candidate.length > 0 && candidate.length <= 200 && (await verify(candidate, row.passcodeHash));
     if (!good) return { ok: false, error: questionOf(row.content) ? "That is not the answer." : "That is not the passcode." };
-    await this.db.wishLink.update({ where: { id: row.linkId }, data: { tries: 0, lockedUntil: null } });
+    // a good code does not reset the count: a reset would let tries made at the same moment pass the lock (at most 30 are checked)
     const t = this.tokens.issue(row.linkId, row.passcodeHash);
     return { ok: true, token: t.token, expiresAt: toWireInstant(t.expiresAt) };
-  }
-
-  /** E-131: the page says the receiver pressed play; a row of kind play, only for a wish whose content is showing. */
-  async played(slug: string, c: Caller): Promise<void> {
-    const row = await this.showing(slug, c);
-    await this.insertOpen(this.db, row, "play", false, this.clock.now(), c);
   }
 
   /** E-132: one reaction per opening session, changeable; the counts come from the rows. */
   async react(slug: string, c: Caller, input: { reaction: string; wishId: string }): Promise<{ reaction: string; counts: Record<string, number> }> {
     const reaction = input.reaction.trim();
     if (!reaction || reaction.length > 40 || [...reaction].some((ch) => ch.charCodeAt(0) < 32)) throw AppError.validation({ reaction: "Use 1 to 40 characters." });
+    // NN5: no direction-override, zero-width or other invisible (format) character, and no line or paragraph separator
+    if (INVISIBLE.test(input.reaction)) throw AppError.validation({ reaction: "Use ordinary text, with no hidden characters." });
     const row = await this.showing(slug, c);
     this.sameWish(row, slug, input.wishId, "wishId");
     const now = this.clock.now();
@@ -210,9 +238,9 @@ export class PublicWishesService {
 
   /** The wish when its content is showing to this caller, else the answer the read would give (409 when it is not showing). */
   private async showing(slug: string, c: Caller): Promise<Row> {
-    await this.limits.take("read", keyOf(c.address), READS_PER_MINUTE, 60);
+    await this.limits.take("read", this.limits.keyOf(c.address), READS_PER_MINUTE, 60);
     const r = await this.resolve(slug, c);
-    if (r.standing !== "open") throw AppError.conflict("not_open", "This wish is not showing yet.");
+    if (r.standing !== "open" || !r.row.openedAt) throw AppError.conflict("not_open", "This wish is not showing yet.");
     return r.row;
   }
 
@@ -224,7 +252,7 @@ export class PublicWishesService {
   /** The opening session: the id the page holds in memory, or else a hash of the link, the address and the browser. */
   private sessionOf(row: Row, c: Caller): string {
     if (c.session && /^[A-Za-z0-9_-]{8,64}$/.test(c.session)) return `s:${c.session}`;
-    return `h:${keyOf(row.id, c.address, c.userAgent)}`;
+    return `h:${this.limits.keyOf(row.id, c.address, c.userAgent)}`;
   }
 
   private async reactionCounts(wishId: string): Promise<Record<string, number>> {
@@ -261,10 +289,10 @@ export class PublicWishesService {
    * {opened: false} when it refuses (JJ2): then the read is not a first opening; if the wish is still not opened, the read is
    * answered again from the row as it stands now.
    */
-  private async recordRead(row: Row, at: Date, c: Caller): Promise<"refused" | { times: Partial<PublicWishView> }> {
+  private async recordRead(row: Row, at: Date, c: Caller, kind: "read" | "play"): Promise<"refused" | { times: Partial<PublicWishView> }> {
     const t = (d: Date | null): string | null => (d ? toWireInstant(d) : null);
     if (row.openedAt) {
-      await this.insertOpen(this.db, row, "read", false, at, c);
+      await this.insertOpen(this.db, row, kind, false, at, c);
       return { times: { openedAt: t(row.openedAt), endsAt: t(row.endsAt) } };
     }
     return this.db.$transaction(async (tx) => {

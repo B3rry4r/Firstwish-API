@@ -1,0 +1,115 @@
+import type { StoredFile as FileRow, StoredFilePurpose } from "@prisma/client";
+import { toWireInstant } from "../../common/time/time";
+import type { StoredFile } from "../../contracts";
+
+export const MB = 1024 * 1024;
+/** Default (lead), owner may override: a Vault GB is 1024^3 bytes. */
+export const GB = 1024 * MB;
+
+/** DEC-35: a signed upload is good for 15 minutes (PROVISIONAL). */
+export const UPLOAD_TTL_SECONDS = 15 * 60;
+/** Case 4: a signed read is good for 10 minutes. */
+export const READ_TTL_SECONDS = 10 * 60;
+/** DEC-42: unconfirmed uploads are removed after 24 hours (PROVISIONAL). */
+export const UNCONFIRMED_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+/** DEC-43, DEC-44: reject at or above 0.9, staff review from 0.5 (PROVISIONAL). */
+export const REJECT_SCORE = 0.9;
+export const REVIEW_SCORE = 0.5;
+/** Case 8: image widths made after confirm. */
+export const IMAGE_WIDTHS = [320, 768, 1600] as const;
+/** The contract's longest voice note (E-182: up to 180 s). */
+export const MAX_VOICE_SECONDS = 180;
+
+export type UploadPurpose = "wish-photo" | "voice-note" | "video-clip" | "vault-file";
+
+const IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/heic", "image/gif"];
+const AUDIO_TYPES = ["audio/webm", "audio/mpeg", "audio/mp4", "audio/x-m4a", "audio/ogg", "audio/wav"];
+const VIDEO_TYPES = ["video/mp4", "video/quicktime", "video/webm"];
+
+export interface PurposeRule {
+  purpose: UploadPurpose;
+  db: StoredFilePurpose;
+  /** DEC-38..41 (PROVISIONAL): 15 MB photo, 10 MB voice, 200 MB clip, 100 MB Vault file. */
+  maxBytes: number;
+  types: string[];
+  /** The contract's kind (image|sound|model) the type must agree with, when one is sent. */
+  kinds: string[];
+}
+
+export const RULES: Record<UploadPurpose, PurposeRule> = {
+  "wish-photo": { purpose: "wish-photo", db: "wish_photo", maxBytes: 15 * MB, types: IMAGE_TYPES, kinds: ["image"] },
+  "voice-note": { purpose: "voice-note", db: "voice_note", maxBytes: 10 * MB, types: AUDIO_TYPES, kinds: ["sound"] },
+  "video-clip": { purpose: "video-clip", db: "video_clip", maxBytes: 200 * MB, types: VIDEO_TYPES, kinds: [] },
+  "vault-file": { purpose: "vault-file", db: "vault_file", maxBytes: 100 * MB, types: [...IMAGE_TYPES, ...VIDEO_TYPES], kinds: [] },
+};
+
+const PURPOSE_ALIASES: Record<string, UploadPurpose> = {
+  photo: "wish-photo",
+  "wish-photo": "wish-photo",
+  voice: "voice-note",
+  "voice-note": "voice-note",
+  clip: "video-clip",
+  "video-clip": "video-clip",
+  vault: "vault-file",
+  "vault-file": "vault-file",
+};
+
+/** The purpose (the brief's kind: photo, voice, clip, Vault file), normalised: trimmed, lowercased, "_" or " " read as "-". */
+export function purposeOf(input: unknown): PurposeRule | null {
+  if (typeof input !== "string") return null;
+  const p = PURPOSE_ALIASES[input.trim().toLowerCase().replace(/[_\s]+/g, "-")];
+  return p ? RULES[p] : null;
+}
+
+const TYPE_ALIASES: Record<string, string> = { "image/jpg": "image/jpeg", "image/pjpeg": "image/jpeg", "audio/mp3": "audio/mpeg", "audio/x-wav": "audio/wav", "audio/wave": "audio/wav", "audio/m4a": "audio/x-m4a" };
+
+/** A content type normalised: lowercased, parameters dropped, common aliases mapped ("image/JPG; q=1" is "image/jpeg"). */
+export function normaliseType(input: unknown): string | null {
+  if (typeof input !== "string") return null;
+  const t = input.split(";")[0].trim().toLowerCase();
+  if (!t) return null;
+  return TYPE_ALIASES[t] ?? t;
+}
+
+export const isImage = (contentType: string) => IMAGE_TYPES.includes(contentType);
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+export const isUuid = (v: unknown): v is string => typeof v === "string" && UUID.test(v);
+
+/** Purpose names on the wire, from the database enum. */
+export function purposeOnWire(p: StoredFilePurpose): StoredFile["purpose"] {
+  return p.replace(/_/g, "-") as StoredFile["purpose"];
+}
+
+export interface Variant {
+  width: number;
+  key: string;
+}
+
+export function variantsOf(row: Pick<FileRow, "variants">): Variant[] {
+  const v = row.variants as unknown;
+  if (!Array.isArray(v)) return [];
+  return v.filter((x): x is Variant => !!x && typeof x === "object" && typeof (x as Variant).width === "number" && typeof (x as Variant).key === "string");
+}
+
+/** The wire shape of a stored file. objectKey is the server's own key (never built from user text). */
+export function fileView(row: FileRow): StoredFile {
+  return {
+    id: row.id,
+    fileId: row.id,
+    ownerAccountId: row.ownerAccountId,
+    businessId: row.businessId,
+    purpose: purposeOnWire(row.purpose),
+    kind: row.kind ?? null,
+    objectKey: row.objectKey,
+    contentType: row.contentType,
+    bytes: Number(row.bytes),
+    sha256: row.sha256,
+    status: row.status,
+    variants: variantsOf(row).map((v) => ({ width: v.width, variant: `w${v.width}` })),
+    driver: row.driver,
+    styleId: row.styleId as string,
+    createdAt: toWireInstant(row.createdAt),
+    updatedAt: toWireInstant(row.updatedAt),
+  };
+}

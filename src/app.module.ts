@@ -24,6 +24,12 @@ import { BusinessModule } from "./modules/business/business.module";
 import { CreatorsModule } from "./modules/creators/creators.module";
 import { FollowsModule } from "./modules/follows/follows.module";
 // end B02
+// B09: files
+import { StoredFilesModule } from "./modules/stored-files/stored-files.module";
+import { ScreeningResultsModule } from "./modules/screening-results/screening-results.module";
+import { VoiceNotesModule } from "./modules/voice-notes/voice-notes.module";
+import { VaultFilesModule } from "./modules/vault-files/vault-files.module";
+// end B09
 
 /** Registration entry: each resource module adds one import line here. */
 @Module({
@@ -53,6 +59,12 @@ import { FollowsModule } from "./modules/follows/follows.module";
     FollowsModule,
     BusinessModule,
     // end B02
+    // B09
+    StoredFilesModule,
+    ScreeningResultsModule,
+    VoiceNotesModule,
+    VaultFilesModule,
+    // end B09
   ],
 })
 export class AppModule {}

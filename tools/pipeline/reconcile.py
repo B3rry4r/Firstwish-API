@@ -791,22 +791,27 @@ def main():
             delivers[p["sku"]].append(k_)
 
     # bodies a decision rules (routes.json endpointBody): drop fields, set fields, name the response
-    for ek, ov in sorted(routes.get("endpointBody", {}).items()):
-        if ov["decision"] not in dec_ids:
-            continue
-        m_, p_ = ek.split(" ", 1)
-        if (m_, p_) not in endpoints:
-            print("HALT: routes.json endpointBody names %s, which no source makes" % ek)
-            sys.exit(3)
-        ep = endpoints[(m_, p_)]
-        for n in ov.get("drop", []):
-            ep["body"].pop(n, None)
-        for n, t in ov.get("set", {}).items():
-            # a retyped field keeps the sources that send it (so a field every source sends stays required)
-            ep["body"][n] = {"type": t, "from": set(ep["body"].get(n, {}).get("from", set())) | {ov["decision"]}}
-        if "response" in ov:
-            ep["response"] = ov["response"]
-        ep["notes"].add("body by " + ov["decision"])
+    # an endpointBody value may be a list of rulings (each with its own decision), applied in order (INT-3: the seal route has three)
+    for ek, ovs in sorted(routes.get("endpointBody", {}).items()):
+        for ov in (ovs if isinstance(ovs, list) else [ovs]):
+            if ov["decision"] not in dec_ids:
+                continue
+            m_, p_ = ek.split(" ", 1)
+            if (m_, p_) not in endpoints:
+                print("HALT: routes.json endpointBody names %s, which no source makes" % ek)
+                sys.exit(3)
+            ep = endpoints[(m_, p_)]
+            for n in ov.get("drop", []):
+                ep["body"].pop(n, None)
+            for n, t in ov.get("set", {}).items():
+                # a retyped field keeps the sources that send it (so a field every source sends stays required)
+                ep["body"][n] = {"type": t, "from": set(ep["body"].get(n, {}).get("from", set())) | {ov["decision"]}}
+            # `require` names fields every source of the endpoint now sends, so the contract makes them required (INT-3: version)
+            for n in ov.get("require", []):
+                ep["body"][n]["from"] |= set(s_["src"] for s_ in ep["sources"])
+            if "response" in ov:
+                ep["response"] = ov["response"]
+            ep["notes"].add("body by " + ov["decision"])
 
     # A14: reason on every changing admin request
     if REASON_DECISION not in [d_["id"] for d_ in decisions]:

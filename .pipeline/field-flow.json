@@ -9181,6 +9181,16 @@
       "noWriter": false
     },
     {
+      "field": "PublicWishView.endsAt",
+      "writers": [],
+      "store": "PublicWishView",
+      "readers": [],
+      "writerActors": [],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
       "field": "PublicWishView.keepOffer",
       "writers": [
         "server:wish-link"
@@ -9221,6 +9231,26 @@
       "readerActors": [],
       "crossActor": false,
       "noWriter": false
+    },
+    {
+      "field": "PublicWishView.openable",
+      "writers": [],
+      "store": "PublicWishView",
+      "readers": [],
+      "writerActors": [],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "PublicWishView.openedAt",
+      "writers": [],
+      "store": "PublicWishView",
+      "readers": [],
+      "writerActors": [],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": true
     },
     {
       "field": "PublicWishView.opensAt",
@@ -18469,6 +18499,16 @@
       "noWriter": true
     },
     {
+      "field": "Wish.openable",
+      "writers": [],
+      "store": "Wish",
+      "readers": [],
+      "writerActors": [],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
       "field": "Wish.openedAt",
       "writers": [
         "server:wish-lifecycle"
@@ -19124,12 +19164,15 @@
     {
       "field": "Wish.timeZone",
       "writers": [
-        "server:wish-lifecycle"
+        "E-225",
+        "E-231"
       ],
       "store": "Wish",
       "readers": [],
       "writerActors": [
-        "server"
+        "business",
+        "creator",
+        "person"
       ],
       "readerActors": [],
       "crossActor": false,
@@ -19187,6 +19230,23 @@
       "readers": [],
       "writerActors": [
         "server"
+      ],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": false
+    },
+    {
+      "field": "Wish.version",
+      "writers": [
+        "E-225",
+        "E-231"
+      ],
+      "store": "Wish",
+      "readers": [],
+      "writerActors": [
+        "business",
+        "creator",
+        "person"
       ],
       "readerActors": [],
       "crossActor": false,
@@ -19900,5 +19960,5 @@
     }
   ],
   "crossActor": 37,
-  "noWriter": 607
+  "noWriter": 611
 }

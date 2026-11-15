@@ -15,6 +15,7 @@ import { ABANDON_EVERY_MS, JobHandlers, SWEEP_KEY, UPLOAD_CLEANUP_EVERY_MS } fro
    The clock stands at a time no other spec uses, so this spec's runDue never takes another spec's job. */
 const NOW = new Date("2025-06-01T09:00:00.000Z");
 const MIN = 60_000;
+const FAR = new Date("2099-01-01T00:00:00.000Z");
 
 /** Removes this spec's job rows and their recorded runs, so no job of ours is left for another spec's tick. */
 async function dropJobs(db: PrismaService, where: object): Promise<void> {
@@ -37,6 +38,7 @@ describe("INT-3: the jobs frame runs the handlers other bundles exported", () =>
     t = await createTestApp({ now: NOW, configure: (b) => b.overrideProvider(UploadScreeningPort).useValue(scored) });
     db = t.app.get(PrismaService);
     jobs = t.app.get(JobsService);
+    t.app.get(JobHandlers).registerAll();
     await ensureEntitlements(db);
   });
   afterAll(() => t.close());
@@ -169,6 +171,7 @@ describe("INT-3: X10, J1, J2 and Y1 on the merged base (B06's wishes with the ac
     t = await createTestApp({ now: NOW });
     db = t.app.get(PrismaService);
     jobs = t.app.get(JobsService);
+    t.app.get(JobHandlers).registerAll();
     await ensureEntitlements(db);
   });
   afterAll(() => t.close());
@@ -200,10 +203,11 @@ describe("INT-3: X10, J1, J2 and Y1 on the merged base (B06's wishes with the ac
     await db.wishFile.create({ data: { id: ids.next(), wishId: sealed, fileId: f1.id, role: "photo" } as never });
     await db.wishFile.create({ data: { id: ids.next(), wishId: theirs, fileId: fTheirs.id, role: "photo" } as never });
     for (const w of [sealed, live, theirs]) await db.wishLink.create({ data: { id: ids.next(), slug: `int3${ids.next().slice(-12)}`, wishId: w, active: true } });
-    await jobs.schedule("open-wish", new Date(NOW.getTime() + 3600_000), sealed);
-    await jobs.schedule("rest-wish", new Date(NOW.getTime() + 86400_000), live);
-    await jobs.schedule("send-notice", new Date(NOW.getTime() + 80000_000), live);
-    await jobs.schedule("open-wish", new Date(NOW.getTime() + 3600_000), theirs);
+    // far ahead of any clock another spec uses, so no other spec's tick takes these waiting jobs
+    await jobs.schedule("open-wish", FAR, sealed);
+    await jobs.schedule("rest-wish", FAR, live);
+    await jobs.schedule("send-notice", FAR, live);
+    await jobs.schedule("open-wish", FAR, theirs);
     // saves: the fan saved both of my wishes and the other's; I saved the other's
     const save = (accountId: string, wish: string) => db.savedWish.create({ data: { id: ids.next(), accountId, wish } });
     await save(fan.id, sealed);

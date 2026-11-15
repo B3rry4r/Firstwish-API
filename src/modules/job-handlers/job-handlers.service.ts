@@ -31,7 +31,16 @@ export class JobHandlers implements OnModuleInit, OnApplicationBootstrap {
     private readonly files: FileJobs,
   ) {}
 
+  /**
+   * Not in tests (NODE_ENV=test), like the tick and the recurring jobs: specs share one database, so an app that handled these kinds
+   * would run another spec's waiting jobs from its own tick. A spec that wants them calls registerAll() itself.
+   */
   onModuleInit(): void {
+    if (process.env.NODE_ENV === "test") return;
+    this.registerAll();
+  }
+
+  registerAll(): void {
     this.jobs.register("abandon-payment", (c) => this.abandonPayments(c));
     this.jobs.register("upload-cleanup", (c) => this.uploadCleanup(c));
     this.jobs.register("make-image-sizes", (c) => this.makeImageSizes(c));

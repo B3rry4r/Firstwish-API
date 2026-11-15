@@ -1,0 +1,1862 @@
+{
+  "framework": "nextjs",
+  "frameworkDetail": "Next.js 16.4.5 App Router (app/), React 19.2.0, TypeScript 5.8.3; gsap 3.13, three 0.181, @rive-app/react-canvas. No data-fetching library, no server actions, no API routes, no fetch() to any backend, no env vars. Branch claude/sleepy-mayer-f0hkb8. Excluded: app/lab/** (developer lab), app/admin/** (being built by another agent), components/styles/_fixtures.ts (lab-only).",
+  "dataLayerPattern": "OFFLINE-FIRST SIGNALS PRESENT, sync strategy required in Phase 0 (conventions.md already rules: always-online, server is the only truth; localStorage keeps only theme, a remembered tab, and the unsent maker draft). There is NO network layer: every screen is a 'use client' component that reads browser storage, either directly through lib/account.ts or through a per-area 'seam' module that declares the server contract in comments and implements it against localStorage. (1) Account store: lib/account.ts holds the whole signed-in person as ONE JSON blob in localStorage 'fw-account' (Account {name, contact, here, handle, creator, bio, pro{plan,business}, space, pass, dates[], wishes[]}); hook useAccount() returns [account|undefined|null, save]; pages read account.wishes / account.dates directly and write with save({...account, ...}) or putWish/dropWish. lib/maker.ts saveWish() writes drafts into that same blob on every maker step, plus a side note 'fw-maker' and voice 'fw-voice-<id>'. (2) Seams (each documents REST paths in JSDoc comments, e.g. '/** GET /pro ... */', '/** POST /pro/logins */', 'POST /studio/ai/draft', 'GET /v1/styles/levels'): lib/feed-api.ts (async listFeed/getWish/react/save/follow/share/listCreators/listNewStyles; store 'fw-feed'), lib/pro-api.ts (hook usePro() + async createClientWish/savePerson/importPeople/approveDate/saveBrand/inviteLogin/removeLogin/buyPlan/getInvoiceFile; store 'fw-pro' via lib/pro-data.ts loadPro/savePro), lib/vault-api.ts (async getStorage/listShoots/getShoot/createShoot/uploadFiles/removeShoot/sendReveal/getReveal/sendFavourites/getDownload; store 'fw-vault'), lib/studio-api.ts (Promise<Result<T>> getCreator/setPlan/buyCredits/draftStyle/changeStyle/listDrafts/saveDraft/submitStyle/listMyStyles/setTemplate/listTemplates/getEarnings/getPayouts; store 'fw-studio'; Studio components call it as `api` via components/app/studio/ctx.tsx useLoad), lib/levels.ts (levels(), levelOf, stylesAt; no store, answers from style manifests). Errors are typed per seam (FeedError/ProError/VaultError codes offline|full|not_found|no_wishes|failed; studio Result.reason). Live refresh is by window events ('fw-account', 'fw-pro', 'fw-vault', 'fw-studio', 'storage'). (3) Static content (ruling candidates for staying local): lib/catalog.ts (kinds, occasions copy, tickets/extras/pass/concierge prices as naira strings, house showcase wishes, STYLE_COPY), lib/occasions.ts (recipes: chapters per kind+occasion), lib/engine/packages.ts + components/styles/** (style manifests), lib/engine/registry.ts + lib/engine/moments.ts (openings/endings), lib/wish-model.ts (chapter content model), lib/pro-data.ts PLANS/VAULT/VAT, lib/studio.ts plans/credits. (4) Seeds: one switch ('Show sample wishes' on /app/you) inserts four Wish rows with ids 's-*' into 'fw-account'; every other fixture file is gated by samplesOn() = account has a wish whose id starts with 's-'. HOW TO READ ONE SCREEN'S DATA NEEDS: open the page under app/**; follow its imports from lib/ (useAccount -> the Account/Wish/DateRow types in lib/account.ts; usePro -> ProData/ClientWish/Person/Invoice/Login/Brand in lib/pro-data.ts; vault-api Shoot/VaultFile/Storage/RevealPlay; feed-api FeedWish/Creator/FeedStyle/FeedPage; studio-api CreatorState/StudioStyle/SubmittedStyle/Earnings). The seam's exported request/response TypeScript types ARE the intended contract; the JSDoc above each function names the intended method+path. Fields read in JSX (account.wishes.filter(...)) give the read shape; each save()/seam call gives an action. Money today is naira (number in pro-data/studio, formatted string in catalog), not kobo.",
+  "dataLayerPaths": [
+    "lib/account.ts",
+    "lib/maker.ts",
+    "lib/feed-api.ts",
+    "lib/feed-fixtures.ts",
+    "lib/pro-api.ts",
+    "lib/pro-data.ts",
+    "lib/vault-api.ts",
+    "lib/vault-fixtures.ts",
+    "lib/studio-api.ts",
+    "lib/studio-fixtures.ts",
+    "lib/studio.ts",
+    "lib/levels.ts",
+    "lib/use-levels.ts",
+    "lib/catalog.ts",
+    "lib/occasions.ts",
+    "lib/styles.ts",
+    "lib/wish-model.ts",
+    "lib/engine/packages.ts",
+    "lib/engine/adapt.ts",
+    "lib/engine/unlock.ts",
+    "lib/engine/types.ts",
+    "lib/config.ts",
+    "components/app/studio/ctx.tsx"
+  ],
+  "exampleFiles": [
+    "lib/pro-api.ts",
+    "lib/account.ts"
+  ],
+  "localPersistence": {
+    "present": true,
+    "statement": "OFFLINE-FIRST SIGNALS PRESENT, sync strategy required in Phase 0.",
+    "packages": [
+      "window.localStorage",
+      "window.sessionStorage"
+    ],
+    "modelPaths": [
+      "lib/account.ts",
+      "lib/maker.ts",
+      "lib/pro-data.ts",
+      "lib/vault-api.ts",
+      "lib/feed-api.ts",
+      "lib/studio-api.ts",
+      "lib/studio.ts"
+    ],
+    "syncStrategyRequired": true,
+    "indexedDB": false,
+    "keys": [
+      {
+        "key": "fw-account",
+        "storage": "localStorage",
+        "holds": "the entire Account: profile, contact, sides (pro, creator, handle, bio), pass flag, dates[], wishes[] including drafts with photos as data URLs",
+        "model": "lib/account.ts Account/Wish/DateRow",
+        "writers": [
+          "lib/account.ts writeAccount",
+          "lib/maker.ts saveWish/line 43",
+          "pages via useAccount().save"
+        ]
+      },
+      {
+        "key": "fw-maker",
+        "storage": "localStorage",
+        "holds": "Record<wishId, MakerNote> (given/chosen, wedding date, opens-now, voice seconds)",
+        "model": "lib/maker.ts MakerNote"
+      },
+      {
+        "key": "fw-voice-<wishId>",
+        "storage": "localStorage",
+        "holds": "recorded voice note as a data URL",
+        "model": "lib/maker.ts readVoice/writeVoice"
+      },
+      {
+        "key": "fw-pro",
+        "storage": "localStorage",
+        "holds": "ProData: month, rolled, pack, business, wishes (ClientWish[]), people, approved, logins, invoices, brand, hidden sample ids",
+        "model": "lib/pro-data.ts ProData"
+      },
+      {
+        "key": "fw-vault",
+        "storage": "localStorage",
+        "holds": "{shoots: Shoot[] with VaultFile previews, hidden, peak bytes}",
+        "model": "lib/vault-api.ts Shoot/VaultFile"
+      },
+      {
+        "key": "fw-feed",
+        "storage": "localStorage",
+        "holds": "{reactions, saves, follows} of the viewer",
+        "model": "lib/feed-api.ts Store"
+      },
+      {
+        "key": "fw-studio",
+        "storage": "localStorage",
+        "holds": "Studio Store v3: creator plan, signed, credits, reviews, drafts (StudioStyle[]), mine (SubmittedStyle[]), prefs",
+        "model": "lib/studio-api.ts Store, lib/studio.ts StudioStyle"
+      },
+      {
+        "key": "fw-pass-at",
+        "storage": "localStorage",
+        "holds": "ISO date the Pass was 'paid'",
+        "model": "app/app/pass/page.tsx:18"
+      },
+      {
+        "key": "fw-mode",
+        "storage": "localStorage",
+        "holds": "theme dark|light (allowed to stay per conventions)",
+        "model": "lib/mode-head.js, components/site/Nav.tsx, components/app/Switcher.tsx, app/app/you/page.tsx, lib/cinema.js"
+      },
+      {
+        "key": "fw-pending",
+        "storage": "sessionStorage",
+        "holds": "contact just 'confirmed' at sign-up/in, read by Welcome",
+        "model": "lib/account.ts setPending/getPending"
+      },
+      {
+        "key": "fw-next",
+        "storage": "sessionStorage",
+        "holds": "path to return to after sign-in",
+        "model": "lib/account.ts setNext/takeNext"
+      }
+    ],
+    "populatedByBackend": "none: no store is ever written from a backend response"
+  },
+  "seedSources": [
+    {
+      "file": "lib/account.ts",
+      "populates": "'fw-account' wishes[]: four sample Wish rows (ids s-live, s-sealed, s-rest, s-draft; Aisha/Mum/Tobi/Dad, /img/aisha-*.webp) via sampleWishes() (lines ~133-142)",
+      "gating": "user-facing switch 'Show sample wishes' on /app/you (app/app/you/page.tsx:53-56,143-144). Off by default; available to every signed-in user in production; not dev-only. Turning it on PERSISTS the rows into the real account store.",
+      "risk": "sample wishes are real rows in the same store and flow through every personal screen (wishes, wish detail, home 'Yours', /w/mine); after wiring they could be sent to the server unless the switch is removed."
+    },
+    {
+      "file": "lib/feed-fixtures.ts",
+      "populates": "feed-api listFeed/listCreators answers: 3 sample creators and 8 sample public wishes with fabricated reaction/save/follower counts",
+      "gating": "samplesOn() from lib/vault-fixtures.ts: true when 'fw-account' holds any wish with id starting 's-' (i.e. the /app/you switch). Not persisted.",
+      "risk": "fabricated social counts shown as if real while the switch is on."
+    },
+    {
+      "file": "lib/vault-fixtures.ts",
+      "populates": "vault-api listShoots/getShoot/getReveal/getStorage: sample shoots (proof/final files DSC_*.jpg pointing at /img/aisha-*.webp, hearts) via sampleShoots()",
+      "gating": "same samplesOn() switch; acting on a sample shoot persists a changed copy into 'fw-vault'.",
+      "risk": "sample shoots become persisted rows once touched; storage figures include sample bytes."
+    },
+    {
+      "file": "lib/pro-data.ts",
+      "populates": "'fw-pro' view: sample client wishes (sample-w*), people (sample-p*), invoices (sample-i*), logins (sample-l1) via samplesFor() lines 205-262, merged in view()",
+      "gating": "same samplesOn() switch; sample rows persisted only once changed; removals remembered in ProData.hidden.",
+      "risk": "sample invoices with real-looking numbers and VAT; changed sample rows persist as the business's own."
+    },
+    {
+      "file": "lib/pro-data.ts",
+      "populates": "SAMPLE_FRAMES (line 71): 8 photo frames for a Shoot Reveal",
+      "gating": "'Use sample photos' button on app/app/pro/reveal/new/page.tsx:153, shown only when no frames and samplesOn().",
+      "risk": "a real reveal can be sent with sample photos."
+    },
+    {
+      "file": "lib/studio-fixtures.ts",
+      "populates": "studio-api listMyStyles (2 live sample styles), listTemplates (2 sample templates), getEarnings (N14,880 sample earnings)",
+      "gating": "configure({samples: samplesOn(account)}) called by app/app/creator/studio/page.tsx, new/page.tsx, [id]/page.tsx; samplesOn here is account.wishes.some(id startsWith 's-').",
+      "risk": "sample earnings shown as the creator's own; file header says 'The server work deletes this file and the three places the api reads it.'"
+    },
+    {
+      "file": "lib/engine/adapt.ts",
+      "populates": "sampleWish()/sampleContent()/SAMPLE_PHOTOS (lines 15, 258, 277): demo wish data used to preview styles (app-styles, style pages, Studio stage, maker placeholders, feed player for house wishes)",
+      "gating": "always on (preview content, not records).",
+      "risk": "low: never stored; static-ruling candidate."
+    },
+    {
+      "file": "components/styles/_fixtures.ts",
+      "populates": "style development fixtures",
+      "gating": "imported only from app/lab/** (excluded).",
+      "risk": "none outside the lab."
+    }
+  ],
+  "designSources": [
+    {
+      "path": "docs/style-studio-prompt.md",
+      "kind": "design-system",
+      "statesDefined": [
+        {
+          "screenHint": "receiver-wish (opening)",
+          "states": [
+            "time",
+            "countdown",
+            "secret",
+            "title",
+            "none"
+          ]
+        },
+        {
+          "screenHint": "receiver-wish (ending purposes)",
+          "states": [
+            "wish",
+            "question",
+            "reveal",
+            "date",
+            "credits",
+            "close"
+          ]
+        },
+        {
+          "screenHint": "style chapters by kind",
+          "states": [
+            "Love",
+            "Celebration",
+            "Group",
+            "Wedding",
+            "Team",
+            "Shoot Reveal"
+          ]
+        }
+      ],
+      "note": "Brief for style designers: contract (lib/engine/types.ts), openings/endings registry, Studio marks, 36-style launch target, .wishstyle delivery."
+    },
+    {
+      "path": "docs/designer-chat-studio-marks.md",
+      "kind": "design-system",
+      "statesDefined": [],
+      "note": "Studio mark rules: data-part=cover/ending, data-chapter=<type>, layer marks."
+    },
+    {
+      "path": "docs/motion-standard.md",
+      "kind": "design-system",
+      "statesDefined": [],
+      "note": "Motion vocabulary; openings and endings are scenes."
+    },
+    {
+      "path": "docs/style-preview.html",
+      "kind": "canvas-export",
+      "statesDefined": [],
+      "note": "Style preview page (3347 lines) for trying a style in a chat artifact; not a screen design."
+    },
+    {
+      "path": "components/styles/README.md",
+      "kind": "design-system",
+      "statesDefined": [],
+      "note": "Style kit folder and rules."
+    },
+    {
+      "path": "styles/cinema.css",
+      "kind": "tokens",
+      "statesDefined": [
+        {
+          "screenHint": "all",
+          "states": [
+            "data-mode=dark",
+            "data-mode=light"
+          ]
+        }
+      ],
+      "note": ":root CSS custom properties (--accent, --line, --bg-2 ...); other styles/*.css consume them."
+    },
+    {
+      "path": "conventions.md (Firstwish-API/.pipeline)",
+      "kind": "design-system",
+      "statesDefined": [
+        {
+          "screenHint": "every data surface",
+          "states": [
+            "loading",
+            "empty",
+            "error",
+            "loaded"
+          ]
+        }
+      ],
+      "note": "No screen-level canvas/Figma export exists in or beside the repo; no per-screen designed states other than this convention."
+    }
+  ],
+  "screens": [
+    {
+      "id": "site-home",
+      "title": "Home (marketing)",
+      "uiFiles": [
+        "app/page.tsx",
+        "components/cinema/Hero.tsx",
+        "components/cinema/How.tsx",
+        "components/cinema/Styles.tsx",
+        "components/cinema/Pricing.tsx",
+        "components/cinema/Proof.tsx",
+        "components/cinema/Cta.tsx",
+        "components/site/HomeKinds.tsx",
+        "components/site/Concierge.tsx",
+        "components/site/Nav.tsx",
+        "components/site/Footer.tsx",
+        "lib/cinema.js"
+      ],
+      "dataFiles": [
+        "lib/catalog.ts",
+        "lib/styles.ts"
+      ],
+      "dataProvenance": "static",
+      "localStore": null,
+      "inlineLiterals": [
+        {
+          "file": "components/cinema/Pricing.tsx",
+          "description": "marketing copy and prices; price strings come from lib/catalog.ts (tickets/pass)"
+        }
+      ],
+      "route": "/",
+      "area": "website",
+      "note": "Copy and catalogue content; Nav writes localStorage 'fw-mode' (theme only)."
+    },
+    {
+      "id": "site-make",
+      "title": "Make a wish (kind picker)",
+      "uiFiles": [
+        "app/make/page.tsx",
+        "components/site/KindCard.tsx"
+      ],
+      "dataFiles": [
+        "lib/catalog.ts"
+      ],
+      "dataProvenance": "static",
+      "localStore": null,
+      "inlineLiterals": [],
+      "route": "/make",
+      "area": "website"
+    },
+    {
+      "id": "site-wishes",
+      "title": "Wishes for you (kinds)",
+      "uiFiles": [
+        "app/wishes/page.tsx",
+        "components/site/KindCard.tsx"
+      ],
+      "dataFiles": [
+        "lib/catalog.ts"
+      ],
+      "dataProvenance": "static",
+      "localStore": null,
+      "inlineLiterals": [],
+      "route": "/wishes",
+      "area": "website"
+    },
+    {
+      "id": "site-wishes-kind",
+      "title": "Kind page (for you)",
+      "uiFiles": [
+        "app/wishes/[kind]/page.tsx",
+        "components/site/CategoryPage.tsx",
+        "components/site/OccasionCard.tsx"
+      ],
+      "dataFiles": [
+        "lib/catalog.ts",
+        "lib/occasions.ts",
+        "lib/styles.ts"
+      ],
+      "dataProvenance": "static",
+      "localStore": null,
+      "inlineLiterals": [],
+      "route": "/wishes/[kind]",
+      "area": "website"
+    },
+    {
+      "id": "site-business",
+      "title": "For business",
+      "uiFiles": [
+        "app/business/page.tsx",
+        "components/site/ProPlans.tsx",
+        "components/site/Concierge.tsx",
+        "components/site/Creatives.tsx",
+        "components/site/KindCard.tsx"
+      ],
+      "dataFiles": [
+        "lib/catalog.ts",
+        "lib/pro-data.ts"
+      ],
+      "dataProvenance": "static",
+      "localStore": null,
+      "inlineLiterals": [
+        {
+          "file": "lib/pro-data.ts",
+          "description": "PLANS (Pro Starter 35000 / Pro Studio 105000 / Wish pack 17500 naira, was-prices) lines ~17-22, rendered by components/site/ProPlans.tsx"
+        }
+      ],
+      "route": "/business",
+      "area": "website"
+    },
+    {
+      "id": "site-business-cat",
+      "title": "Business category page",
+      "uiFiles": [
+        "app/business/[cat]/page.tsx",
+        "components/site/CategoryPage.tsx"
+      ],
+      "dataFiles": [
+        "lib/catalog.ts",
+        "lib/occasions.ts"
+      ],
+      "dataProvenance": "static",
+      "localStore": null,
+      "inlineLiterals": [],
+      "route": "/business/[cat]",
+      "area": "website"
+    },
+    {
+      "id": "site-pricing",
+      "title": "Pricing",
+      "uiFiles": [
+        "app/pricing/page.tsx",
+        "components/site/Ticket.tsx",
+        "components/site/ProPlans.tsx",
+        "components/site/Concierge.tsx"
+      ],
+      "dataFiles": [
+        "lib/catalog.ts",
+        "lib/pro-data.ts"
+      ],
+      "dataProvenance": "static",
+      "localStore": null,
+      "inlineLiterals": [
+        {
+          "file": "lib/catalog.ts",
+          "description": "tickets[] (Moment N3,000 / Keepsake N6,000 / Signature N12,000 / Premiere N21,000 as formatted strings), extras[], KEEPSAKE_EXTRAS_CEILING, pass (N20,000), concierge (N15,000), lines ~383-431"
+        }
+      ],
+      "route": "/pricing",
+      "area": "website",
+      "note": "RULING: conventions say prices come from configuration tables; here they are formatted naira strings in lib/catalog.ts."
+    },
+    {
+      "id": "site-how",
+      "title": "How it works",
+      "uiFiles": [
+        "app/how/page.tsx",
+        "components/site/Act.tsx"
+      ],
+      "dataFiles": [],
+      "dataProvenance": "static",
+      "localStore": null,
+      "inlineLiterals": [],
+      "route": "/how",
+      "area": "website"
+    },
+    {
+      "id": "site-creators",
+      "title": "For creators",
+      "uiFiles": [
+        "app/creators/page.tsx",
+        "components/site/CreatorHero.tsx",
+        "components/site/StudioTimeline.tsx",
+        "components/site/WishFrames.tsx",
+        "components/site/Ticket.tsx"
+      ],
+      "dataFiles": [
+        "lib/catalog.ts",
+        "lib/styles.ts"
+      ],
+      "dataProvenance": "static",
+      "localStore": null,
+      "inlineLiterals": [],
+      "route": "/creators",
+      "area": "website"
+    },
+    {
+      "id": "site-showing",
+      "title": "Now Showing (public gallery)",
+      "uiFiles": [
+        "app/showing/page.tsx",
+        "components/site/ShowingGallery.tsx",
+        "components/site/LivePoster.tsx"
+      ],
+      "dataFiles": [
+        "lib/catalog.ts",
+        "lib/styles.ts"
+      ],
+      "dataProvenance": "static",
+      "localStore": null,
+      "inlineLiterals": [
+        {
+          "file": "lib/catalog.ts",
+          "description": "wishes[] showcase list (~line 365) and creators[] (house only, line 378) drive the gallery"
+        }
+      ],
+      "route": "/showing",
+      "area": "website",
+      "note": "RULING: Now Showing is the public gallery of published wishes; today it shows only the house showcase list from lib/catalog.ts. Wishes published from the app (Wish.isPublic) never appear here."
+    },
+    {
+      "id": "site-styles",
+      "title": "Styles catalogue",
+      "uiFiles": [
+        "app/styles/page.tsx",
+        "components/site/StyleMarquee.tsx",
+        "components/site/StyleCatalog.tsx"
+      ],
+      "dataFiles": [
+        "lib/styles.ts",
+        "lib/levels.ts",
+        "lib/engine/packages.ts",
+        "lib/catalog.ts"
+      ],
+      "dataProvenance": "static",
+      "localStore": null,
+      "inlineLiterals": [],
+      "route": "/styles",
+      "area": "website",
+      "note": "Style levels are read through lib/levels.ts (stylesAt), a seam whose levels() will GET /v1/styles/levels; today answers from manifests."
+    },
+    {
+      "id": "site-style-detail",
+      "title": "Style page",
+      "uiFiles": [
+        "app/styles/[slug]/page.tsx",
+        "components/site/StyleRow.tsx",
+        "components/site/WishFrames.tsx",
+        "components/site/LivePoster.tsx",
+        "components/engine/Preview.tsx"
+      ],
+      "dataFiles": [
+        "lib/catalog.ts",
+        "lib/styles.ts",
+        "lib/previews.ts",
+        "lib/engine/packages.ts"
+      ],
+      "dataProvenance": "static",
+      "localStore": null,
+      "inlineLiterals": [],
+      "route": "/styles/[slug]",
+      "area": "website"
+    },
+    {
+      "id": "site-contact",
+      "title": "Contact",
+      "uiFiles": [
+        "app/contact/page.tsx"
+      ],
+      "dataFiles": [
+        "lib/config.ts"
+      ],
+      "dataProvenance": "static",
+      "localStore": null,
+      "inlineLiterals": [
+        {
+          "file": "lib/config.ts",
+          "description": "WHATSAPP_URL = \"\" and EMAIL = \"\": the page renders no contact buttons"
+        }
+      ],
+      "route": "/contact",
+      "area": "website"
+    },
+    {
+      "id": "site-privacy",
+      "title": "Privacy",
+      "uiFiles": [
+        "app/privacy/page.tsx"
+      ],
+      "dataFiles": [],
+      "dataProvenance": "static",
+      "localStore": null,
+      "inlineLiterals": [],
+      "route": "/privacy",
+      "area": "website"
+    },
+    {
+      "id": "site-terms",
+      "title": "Terms",
+      "uiFiles": [
+        "app/terms/page.tsx"
+      ],
+      "dataFiles": [],
+      "dataProvenance": "static",
+      "localStore": null,
+      "inlineLiterals": [],
+      "route": "/terms",
+      "area": "website"
+    },
+    {
+      "id": "sign-in",
+      "title": "Sign in (contact, then code)",
+      "uiFiles": [
+        "app/(auth)/sign-in/page.tsx",
+        "app/(auth)/layout.tsx",
+        "components/app/AuthFlow.tsx",
+        "components/app/AuthShell.tsx"
+      ],
+      "dataFiles": [
+        "lib/account.ts"
+      ],
+      "dataProvenance": "repository-local-store",
+      "localStore": {
+        "reads": "readAccount() on 'fw-account' decides where to go after the code; sessionStorage 'fw-pending' (contact) and 'fw-next' (return path) via setPending/takeNext",
+        "populatedBy": null
+      },
+      "inlineLiterals": [],
+      "route": "/sign-in",
+      "area": "auth",
+      "note": "No code is sent and any six digits are accepted (STUB-2); 'Continue with Google' signs in with no OAuth (STUB-3)."
+    },
+    {
+      "id": "sign-up",
+      "title": "Create account (contact, then code)",
+      "uiFiles": [
+        "app/(auth)/sign-up/page.tsx",
+        "components/app/AuthFlow.tsx",
+        "components/app/AuthShell.tsx"
+      ],
+      "dataFiles": [
+        "lib/account.ts"
+      ],
+      "dataProvenance": "repository-local-store",
+      "localStore": {
+        "reads": "sessionStorage 'fw-pending' written; no backend read",
+        "populatedBy": null
+      },
+      "inlineLiterals": [],
+      "route": "/sign-up",
+      "area": "auth",
+      "note": "Same flow as sign-in with mode='up'."
+    },
+    {
+      "id": "welcome",
+      "title": "Welcome (name, what you are here for, optional business/creator)",
+      "uiFiles": [
+        "app/(auth)/welcome/page.tsx",
+        "components/app/Welcome.tsx"
+      ],
+      "dataFiles": [
+        "lib/account.ts"
+      ],
+      "dataProvenance": "repository-local-store",
+      "localStore": {
+        "reads": "getPending() from sessionStorage 'fw-pending'; readAccount(); writes the new Account to 'fw-account' via writeAccount()",
+        "populatedBy": null
+      },
+      "inlineLiterals": [],
+      "route": "/welcome",
+      "area": "auth"
+    },
+    {
+      "id": "app-home",
+      "title": "Home feed (For you / Following / Styles, stories, aside)",
+      "uiFiles": [
+        "app/app/page.tsx",
+        "app/app/layout.tsx",
+        "components/app/AppShell.tsx",
+        "components/app/Switcher.tsx",
+        "components/app/feed/Feed.tsx",
+        "components/app/feed/Cards.tsx",
+        "components/app/feed/Stories.tsx",
+        "components/app/feed/Player.tsx",
+        "components/app/feed/Aside.tsx",
+        "components/app/feed/Rail.tsx",
+        "components/app/feed/yours.ts",
+        "components/app/feed/SetUp.tsx",
+        "components/app/feed/spaces.ts"
+      ],
+      "dataFiles": [
+        "lib/feed-api.ts",
+        "lib/feed-fixtures.ts",
+        "lib/account.ts",
+        "lib/catalog.ts",
+        "lib/engine/packages.ts",
+        "lib/engine/adapt.ts",
+        "lib/occasions.ts"
+      ],
+      "dataProvenance": "mixed",
+      "localStore": {
+        "reads": "feed-api listFeed/listCreators/getWish: house content from lib/catalog + lib/engine/packages (static), the viewer's own published wishes from 'fw-account', the viewer's reactions/saves/follows from localStorage 'fw-feed'; sample creators/wishes from lib/feed-fixtures while samplesOn(). 'Yours' circle built from 'fw-account' by components/app/feed/yours.ts",
+        "populatedBy": null
+      },
+      "inlineLiterals": [
+        {
+          "file": "components/app/feed/Feed.tsx",
+          "description": "promo card list (line ~103: kind love, offer, pass, concierge, ...) hardcoded"
+        }
+      ],
+      "route": "/app",
+      "area": "app"
+    },
+    {
+      "id": "app-styles",
+      "title": "Styles gallery (in app)",
+      "uiFiles": [
+        "app/app/styles/page.tsx",
+        "components/app/feed/Gallery.tsx",
+        "components/app/feed/Player.tsx",
+        "components/engine/Preview.tsx"
+      ],
+      "dataFiles": [
+        "lib/feed-api.ts",
+        "lib/engine/packages.ts",
+        "lib/levels.ts",
+        "lib/use-levels.ts",
+        "lib/engine/adapt.ts"
+      ],
+      "dataProvenance": "repository-direct",
+      "localStore": null,
+      "inlineLiterals": [],
+      "route": "/app/styles",
+      "area": "app",
+      "note": "feed-api listNewStyles() has no local store: it answers from the registered packages today and is the seam for GET styles. Content (style manifests) is a static-ruling candidate."
+    },
+    {
+      "id": "app-style-detail",
+      "title": "Style, full screen in app",
+      "uiFiles": [
+        "app/app/styles/[slug]/page.tsx",
+        "components/app/feed/Gallery.tsx",
+        "components/app/feed/Player.tsx"
+      ],
+      "dataFiles": [
+        "lib/feed-api.ts",
+        "lib/styles.ts",
+        "lib/engine/adapt.ts",
+        "lib/levels.ts"
+      ],
+      "dataProvenance": "repository-direct",
+      "localStore": null,
+      "inlineLiterals": [],
+      "route": "/app/styles/[slug]",
+      "area": "app",
+      "note": "Plays a style on sampleWish() from lib/engine/adapt.ts."
+    },
+    {
+      "id": "app-wishes",
+      "title": "My wishes",
+      "uiFiles": [
+        "app/app/wishes/page.tsx",
+        "components/app/life/WishCard.tsx",
+        "components/app/life/sheets.tsx",
+        "components/app/life/wish.ts",
+        "components/app/life/Toast.tsx"
+      ],
+      "dataFiles": [
+        "lib/account.ts"
+      ],
+      "dataProvenance": "repository-local-store",
+      "localStore": {
+        "reads": "localStorage 'fw-account' (whole Account blob: profile, sides, pass flag, dates[], wishes[]) via useAccount()/readAccount() in lib/account.ts",
+        "populatedBy": null
+      },
+      "inlineLiterals": [],
+      "route": "/app/wishes",
+      "area": "app"
+    },
+    {
+      "id": "app-wish-detail",
+      "title": "One wish (state, share, keep, video, publish, erase, pay)",
+      "uiFiles": [
+        "app/app/wishes/[id]/page.tsx",
+        "components/app/life/sheets.tsx",
+        "components/app/life/wish.ts",
+        "components/app/life/WishCard.tsx",
+        "components/app/Pay.tsx"
+      ],
+      "dataFiles": [
+        "lib/account.ts",
+        "lib/catalog.ts"
+      ],
+      "dataProvenance": "mixed",
+      "localStore": {
+        "reads": "localStorage 'fw-account' (whole Account blob: profile, sides, pass flag, dates[], wishes[]) via useAccount()/readAccount() in lib/account.ts",
+        "populatedBy": null
+      },
+      "inlineLiterals": [
+        {
+          "file": "lib/account.ts",
+          "description": "KEEPS prices (N1,500 / N4,000 / N6,000) and TERM_DAYS, HOLD_DAYS, RESTORE_DAYS lines ~106-116"
+        },
+        {
+          "file": "components/app/life/wish.ts",
+          "description": "OFF = 0.4 and OFF_LINE '40% off until 31 January' lines 83-84"
+        }
+      ],
+      "route": "/app/wishes/[id]",
+      "area": "app"
+    },
+    {
+      "id": "app-dates",
+      "title": "People and dates",
+      "uiFiles": [
+        "app/app/dates/page.tsx",
+        "components/app/life/DateForm.tsx"
+      ],
+      "dataFiles": [
+        "lib/account.ts"
+      ],
+      "dataProvenance": "repository-local-store",
+      "localStore": {
+        "reads": "Account.dates[] in 'fw-account'",
+        "populatedBy": null
+      },
+      "inlineLiterals": [],
+      "route": "/app/dates",
+      "area": "app"
+    },
+    {
+      "id": "app-you",
+      "title": "You (profile, sides, Pass link, theme, sample-data switch, sign out)",
+      "uiFiles": [
+        "app/app/you/page.tsx",
+        "components/app/Switcher.tsx",
+        "components/app/ui.tsx"
+      ],
+      "dataFiles": [
+        "lib/account.ts",
+        "lib/pro-data.ts"
+      ],
+      "dataProvenance": "repository-local-store",
+      "localStore": {
+        "reads": "Account in 'fw-account'; writes 'fw-mode' (theme)",
+        "populatedBy": null
+      },
+      "inlineLiterals": [],
+      "route": "/app/you",
+      "area": "app",
+      "note": "Hosts the 'Show sample wishes' switch that gates every seed source."
+    },
+    {
+      "id": "app-pass",
+      "title": "Firstwish Pass",
+      "uiFiles": [
+        "app/app/pass/page.tsx",
+        "components/app/Pay.tsx"
+      ],
+      "dataFiles": [
+        "lib/account.ts",
+        "lib/catalog.ts"
+      ],
+      "dataProvenance": "mixed",
+      "localStore": {
+        "reads": "Account.pass in 'fw-account' plus localStorage 'fw-pass-at' (purchase date)",
+        "populatedBy": null
+      },
+      "inlineLiterals": [
+        {
+          "file": "lib/catalog.ts",
+          "description": "pass object: price N20,000, was N35,000, 20 wishes, 4 upgrades, items (lines ~417-431)"
+        }
+      ],
+      "route": "/app/pass",
+      "area": "app"
+    },
+    {
+      "id": "maker-name",
+      "title": "Maker: Who is it for?",
+      "uiFiles": [
+        "app/app/new/page.tsx",
+        "app/app/new/layout.tsx",
+        "components/app/maker/Maker.tsx"
+      ],
+      "dataFiles": [
+        "lib/maker.ts",
+        "lib/account.ts",
+        "lib/occasions.ts",
+        "lib/catalog.ts",
+        "lib/wish-model.ts"
+      ],
+      "dataProvenance": "repository-local-store",
+      "localStore": {
+        "reads": "the draft Wish inside 'fw-account' (saveWish/readAccount in lib/maker.ts) plus the maker note in localStorage 'fw-maker' (readNote/writeNote, keyed by wish id)",
+        "populatedBy": null
+      },
+      "inlineLiterals": [],
+      "route": "/app/new?id=<wish>&at=name",
+      "area": "maker"
+    },
+    {
+      "id": "maker-kind",
+      "title": "Maker: What kind of wish?",
+      "uiFiles": [
+        "app/app/new/page.tsx",
+        "app/app/new/layout.tsx",
+        "components/app/maker/Maker.tsx"
+      ],
+      "dataFiles": [
+        "lib/maker.ts",
+        "lib/account.ts",
+        "lib/occasions.ts",
+        "lib/catalog.ts",
+        "lib/wish-model.ts",
+        "lib/catalog.ts"
+      ],
+      "dataProvenance": "mixed",
+      "localStore": {
+        "reads": "the draft Wish inside 'fw-account' (saveWish/readAccount in lib/maker.ts) plus the maker note in localStorage 'fw-maker' (readNote/writeNote, keyed by wish id)",
+        "populatedBy": null
+      },
+      "inlineLiterals": [],
+      "route": "/app/new?id=<wish>&at=kind",
+      "area": "maker",
+      "note": "Choices are the static kinds from lib/catalog.ts; the answer is written to the draft."
+    },
+    {
+      "id": "maker-occasion",
+      "title": "Maker: What is the occasion?",
+      "uiFiles": [
+        "app/app/new/page.tsx",
+        "app/app/new/layout.tsx",
+        "components/app/maker/Maker.tsx"
+      ],
+      "dataFiles": [
+        "lib/maker.ts",
+        "lib/account.ts",
+        "lib/occasions.ts",
+        "lib/catalog.ts",
+        "lib/wish-model.ts"
+      ],
+      "dataProvenance": "mixed",
+      "localStore": {
+        "reads": "the draft Wish inside 'fw-account' (saveWish/readAccount in lib/maker.ts) plus the maker note in localStorage 'fw-maker' (readNote/writeNote, keyed by wish id)",
+        "populatedBy": null
+      },
+      "inlineLiterals": [],
+      "route": "/app/new?id=<wish>&at=occasion",
+      "area": "maker",
+      "note": "Choices are static recipes from lib/occasions.ts."
+    },
+    {
+      "id": "maker-partner",
+      "title": "Maker: The second name (two-name covers)",
+      "uiFiles": [
+        "app/app/new/page.tsx",
+        "app/app/new/layout.tsx",
+        "components/app/maker/Maker.tsx"
+      ],
+      "dataFiles": [
+        "lib/maker.ts",
+        "lib/account.ts",
+        "lib/occasions.ts",
+        "lib/catalog.ts",
+        "lib/wish-model.ts"
+      ],
+      "dataProvenance": "repository-local-store",
+      "localStore": {
+        "reads": "the draft Wish inside 'fw-account' (saveWish/readAccount in lib/maker.ts) plus the maker note in localStorage 'fw-maker' (readNote/writeNote, keyed by wish id)",
+        "populatedBy": null
+      },
+      "inlineLiterals": [],
+      "route": "/app/new?id=<wish>&at=partner",
+      "area": "maker"
+    },
+    {
+      "id": "maker-wedding",
+      "title": "Maker: When is the wedding?",
+      "uiFiles": [
+        "app/app/new/page.tsx",
+        "app/app/new/layout.tsx",
+        "components/app/maker/Maker.tsx"
+      ],
+      "dataFiles": [
+        "lib/maker.ts",
+        "lib/account.ts",
+        "lib/occasions.ts",
+        "lib/catalog.ts",
+        "lib/wish-model.ts"
+      ],
+      "dataProvenance": "repository-local-store",
+      "localStore": {
+        "reads": "the draft Wish inside 'fw-account' (saveWish/readAccount in lib/maker.ts) plus the maker note in localStorage 'fw-maker' (readNote/writeNote, keyed by wish id)",
+        "populatedBy": null
+      },
+      "inlineLiterals": [],
+      "route": "/app/new?id=<wish>&at=wedding",
+      "area": "maker",
+      "note": "Wedding date kept in 'fw-maker' note and draft content."
+    },
+    {
+      "id": "maker-studio",
+      "title": "Maker: Business / studio name (teams, photographers)",
+      "uiFiles": [
+        "app/app/new/page.tsx",
+        "app/app/new/layout.tsx",
+        "components/app/maker/Maker.tsx"
+      ],
+      "dataFiles": [
+        "lib/maker.ts",
+        "lib/account.ts",
+        "lib/occasions.ts",
+        "lib/catalog.ts",
+        "lib/wish-model.ts"
+      ],
+      "dataProvenance": "repository-local-store",
+      "localStore": {
+        "reads": "the draft Wish inside 'fw-account' (saveWish/readAccount in lib/maker.ts) plus the maker note in localStorage 'fw-maker' (readNote/writeNote, keyed by wish id)",
+        "populatedBy": null
+      },
+      "inlineLiterals": [],
+      "route": "/app/new?id=<wish>&at=studio",
+      "area": "maker"
+    },
+    {
+      "id": "maker-call",
+      "title": "Maker: What do you call them?",
+      "uiFiles": [
+        "app/app/new/page.tsx",
+        "app/app/new/layout.tsx",
+        "components/app/maker/Maker.tsx"
+      ],
+      "dataFiles": [
+        "lib/maker.ts",
+        "lib/account.ts",
+        "lib/occasions.ts",
+        "lib/catalog.ts",
+        "lib/wish-model.ts"
+      ],
+      "dataProvenance": "repository-local-store",
+      "localStore": {
+        "reads": "the draft Wish inside 'fw-account' (saveWish/readAccount in lib/maker.ts) plus the maker note in localStorage 'fw-maker' (readNote/writeNote, keyed by wish id)",
+        "populatedBy": null
+      },
+      "inlineLiterals": [],
+      "route": "/app/new?id=<wish>&at=call",
+      "area": "maker"
+    },
+    {
+      "id": "maker-more",
+      "title": "Maker: Is it for anyone else? (many names)",
+      "uiFiles": [
+        "app/app/new/page.tsx",
+        "app/app/new/layout.tsx",
+        "components/app/maker/Maker.tsx"
+      ],
+      "dataFiles": [
+        "lib/maker.ts",
+        "lib/account.ts",
+        "lib/occasions.ts",
+        "lib/catalog.ts",
+        "lib/wish-model.ts"
+      ],
+      "dataProvenance": "repository-local-store",
+      "localStore": {
+        "reads": "the draft Wish inside 'fw-account' (saveWish/readAccount in lib/maker.ts) plus the maker note in localStorage 'fw-maker' (readNote/writeNote, keyed by wish id)",
+        "populatedBy": null
+      },
+      "inlineLiterals": [],
+      "route": "/app/new?id=<wish>&at=more",
+      "area": "maker"
+    },
+    {
+      "id": "maker-cover",
+      "title": "Maker: Cover details (school, years, born)",
+      "uiFiles": [
+        "app/app/new/page.tsx",
+        "app/app/new/layout.tsx",
+        "components/app/maker/Maker.tsx"
+      ],
+      "dataFiles": [
+        "lib/maker.ts",
+        "lib/account.ts",
+        "lib/occasions.ts",
+        "lib/catalog.ts",
+        "lib/wish-model.ts"
+      ],
+      "dataProvenance": "repository-local-store",
+      "localStore": {
+        "reads": "the draft Wish inside 'fw-account' (saveWish/readAccount in lib/maker.ts) plus the maker note in localStorage 'fw-maker' (readNote/writeNote, keyed by wish id)",
+        "populatedBy": null
+      },
+      "inlineLiterals": [],
+      "route": "/app/new?id=<wish>&at=cover",
+      "area": "maker"
+    },
+    {
+      "id": "maker-photos",
+      "title": "Maker: Add the photos",
+      "uiFiles": [
+        "app/app/new/page.tsx",
+        "app/app/new/layout.tsx",
+        "components/app/maker/Maker.tsx",
+        "components/app/maker/Photos.tsx"
+      ],
+      "dataFiles": [
+        "lib/maker.ts",
+        "lib/account.ts",
+        "lib/occasions.ts",
+        "lib/catalog.ts",
+        "lib/wish-model.ts"
+      ],
+      "dataProvenance": "repository-local-store",
+      "localStore": {
+        "reads": "the draft Wish inside 'fw-account' (saveWish/readAccount in lib/maker.ts) plus the maker note in localStorage 'fw-maker' (readNote/writeNote, keyed by wish id)",
+        "populatedBy": null
+      },
+      "inlineLiterals": [],
+      "route": "/app/new?id=<wish>&at=photos",
+      "area": "maker",
+      "note": "Photos shrunk to 720px JPEG data URLs and kept in the draft in 'fw-account' (lib/maker.ts ~391)."
+    },
+    {
+      "id": "maker-chapters",
+      "title": "Maker: Your chapters",
+      "uiFiles": [
+        "app/app/new/page.tsx",
+        "app/app/new/layout.tsx",
+        "components/app/maker/Maker.tsx",
+        "components/app/maker/Ways.tsx"
+      ],
+      "dataFiles": [
+        "lib/maker.ts",
+        "lib/account.ts",
+        "lib/occasions.ts",
+        "lib/catalog.ts",
+        "lib/wish-model.ts"
+      ],
+      "dataProvenance": "mixed",
+      "localStore": {
+        "reads": "the draft Wish inside 'fw-account' (saveWish/readAccount in lib/maker.ts) plus the maker note in localStorage 'fw-maker' (readNote/writeNote, keyed by wish id)",
+        "populatedBy": null
+      },
+      "inlineLiterals": [],
+      "route": "/app/new?id=<wish>&at=chapters",
+      "area": "maker",
+      "note": "Chapter list from the occasion recipe (static lib/occasions.ts); keep/leave-out toggles written to the draft."
+    },
+    {
+      "id": "maker-ask",
+      "title": "Maker: One question per kept chapter (dynamic keys ask-<chapterType>: letter, reasons, story, voices, details, ...)",
+      "uiFiles": [
+        "app/app/new/page.tsx",
+        "app/app/new/layout.tsx",
+        "components/app/maker/Maker.tsx",
+        "components/app/maker/Fields.tsx",
+        "components/app/maker/Voice.tsx"
+      ],
+      "dataFiles": [
+        "lib/maker.ts",
+        "lib/account.ts",
+        "lib/occasions.ts",
+        "lib/catalog.ts",
+        "lib/wish-model.ts",
+        "lib/engine/adapt.ts"
+      ],
+      "dataProvenance": "mixed",
+      "localStore": {
+        "reads": "the draft Wish inside 'fw-account' (saveWish/readAccount in lib/maker.ts) plus the maker note in localStorage 'fw-maker' (readNote/writeNote, keyed by wish id)",
+        "populatedBy": null
+      },
+      "inlineLiterals": [],
+      "route": "/app/new?id=<wish>&at=ask",
+      "area": "maker",
+      "note": "One screen per kept chapter, generated by screens() in lib/maker.ts:216-244. Voice note kept in localStorage 'fw-voice-<wishId>'. Placeholders come from sampleContent() in lib/engine/adapt.ts."
+    },
+    {
+      "id": "maker-ask-voices-gather",
+      "title": "Maker: Group: type the answers you have (ask-voices-gather)",
+      "uiFiles": [
+        "app/app/new/page.tsx",
+        "app/app/new/layout.tsx",
+        "components/app/maker/Maker.tsx",
+        "components/app/maker/Fields.tsx"
+      ],
+      "dataFiles": [
+        "lib/maker.ts",
+        "lib/account.ts",
+        "lib/occasions.ts",
+        "lib/catalog.ts",
+        "lib/wish-model.ts"
+      ],
+      "dataProvenance": "repository-local-store",
+      "localStore": {
+        "reads": "the draft Wish inside 'fw-account' (saveWish/readAccount in lib/maker.ts) plus the maker note in localStorage 'fw-maker' (readNote/writeNote, keyed by wish id)",
+        "populatedBy": null
+      },
+      "inlineLiterals": [],
+      "route": "/app/new?id=<wish>&at=askVoicesGather",
+      "area": "maker",
+      "note": "Stand-in for a contribution link (STUB-14)."
+    },
+    {
+      "id": "maker-opening",
+      "title": "Maker: How should it open?",
+      "uiFiles": [
+        "app/app/new/page.tsx",
+        "app/app/new/layout.tsx",
+        "components/app/maker/Maker.tsx",
+        "components/app/maker/Ways.tsx"
+      ],
+      "dataFiles": [
+        "lib/maker.ts",
+        "lib/account.ts",
+        "lib/occasions.ts",
+        "lib/catalog.ts",
+        "lib/wish-model.ts",
+        "lib/engine/registry.ts"
+      ],
+      "dataProvenance": "mixed",
+      "localStore": {
+        "reads": "the draft Wish inside 'fw-account' (saveWish/readAccount in lib/maker.ts) plus the maker note in localStorage 'fw-maker' (readNote/writeNote, keyed by wish id)",
+        "populatedBy": null
+      },
+      "inlineLiterals": [],
+      "route": "/app/new?id=<wish>&at=opening",
+      "area": "maker"
+    },
+    {
+      "id": "maker-opening-scene",
+      "title": "Maker: Choose the opening scene",
+      "uiFiles": [
+        "app/app/new/page.tsx",
+        "app/app/new/layout.tsx",
+        "components/app/maker/Maker.tsx",
+        "components/app/maker/Ways.tsx"
+      ],
+      "dataFiles": [
+        "lib/maker.ts",
+        "lib/account.ts",
+        "lib/occasions.ts",
+        "lib/catalog.ts",
+        "lib/wish-model.ts",
+        "lib/engine/moments.ts"
+      ],
+      "dataProvenance": "mixed",
+      "localStore": {
+        "reads": "the draft Wish inside 'fw-account' (saveWish/readAccount in lib/maker.ts) plus the maker note in localStorage 'fw-maker' (readNote/writeNote, keyed by wish id)",
+        "populatedBy": null
+      },
+      "inlineLiterals": [],
+      "route": "/app/new?id=<wish>&at=openingScene",
+      "area": "maker"
+    },
+    {
+      "id": "maker-ending",
+      "title": "Maker: What should the ending do?",
+      "uiFiles": [
+        "app/app/new/page.tsx",
+        "app/app/new/layout.tsx",
+        "components/app/maker/Maker.tsx",
+        "components/app/maker/Ways.tsx"
+      ],
+      "dataFiles": [
+        "lib/maker.ts",
+        "lib/account.ts",
+        "lib/occasions.ts",
+        "lib/catalog.ts",
+        "lib/wish-model.ts",
+        "lib/engine/registry.ts"
+      ],
+      "dataProvenance": "mixed",
+      "localStore": {
+        "reads": "the draft Wish inside 'fw-account' (saveWish/readAccount in lib/maker.ts) plus the maker note in localStorage 'fw-maker' (readNote/writeNote, keyed by wish id)",
+        "populatedBy": null
+      },
+      "inlineLiterals": [],
+      "route": "/app/new?id=<wish>&at=ending",
+      "area": "maker"
+    },
+    {
+      "id": "maker-ending-scene",
+      "title": "Maker: Choose the ending scene",
+      "uiFiles": [
+        "app/app/new/page.tsx",
+        "app/app/new/layout.tsx",
+        "components/app/maker/Maker.tsx",
+        "components/app/maker/Ways.tsx"
+      ],
+      "dataFiles": [
+        "lib/maker.ts",
+        "lib/account.ts",
+        "lib/occasions.ts",
+        "lib/catalog.ts",
+        "lib/wish-model.ts",
+        "lib/engine/moments.ts"
+      ],
+      "dataProvenance": "mixed",
+      "localStore": {
+        "reads": "the draft Wish inside 'fw-account' (saveWish/readAccount in lib/maker.ts) plus the maker note in localStorage 'fw-maker' (readNote/writeNote, keyed by wish id)",
+        "populatedBy": null
+      },
+      "inlineLiterals": [],
+      "route": "/app/new?id=<wish>&at=endingScene",
+      "area": "maker"
+    },
+    {
+      "id": "maker-style",
+      "title": "Maker: How should it look? (style pick)",
+      "uiFiles": [
+        "app/app/new/page.tsx",
+        "app/app/new/layout.tsx",
+        "components/app/maker/Maker.tsx",
+        "components/app/maker/StylePick.tsx"
+      ],
+      "dataFiles": [
+        "lib/maker.ts",
+        "lib/account.ts",
+        "lib/occasions.ts",
+        "lib/catalog.ts",
+        "lib/wish-model.ts",
+        "lib/engine/packages.ts",
+        "lib/levels.ts",
+        "lib/pro-data.ts"
+      ],
+      "dataProvenance": "mixed",
+      "localStore": {
+        "reads": "the draft Wish inside 'fw-account' (saveWish/readAccount in lib/maker.ts) plus the maker note in localStorage 'fw-maker' (readNote/writeNote, keyed by wish id)",
+        "populatedBy": null
+      },
+      "inlineLiterals": [],
+      "route": "/app/new?id=<wish>&at=style",
+      "area": "maker"
+    },
+    {
+      "id": "maker-watch",
+      "title": "Maker: Watch it (live preview)",
+      "uiFiles": [
+        "app/app/new/page.tsx",
+        "app/app/new/layout.tsx",
+        "components/app/maker/Maker.tsx",
+        "components/app/maker/Live.tsx",
+        "components/engine/Host.tsx"
+      ],
+      "dataFiles": [
+        "lib/maker.ts",
+        "lib/account.ts",
+        "lib/occasions.ts",
+        "lib/catalog.ts",
+        "lib/wish-model.ts",
+        "lib/engine/adapt.ts"
+      ],
+      "dataProvenance": "repository-local-store",
+      "localStore": {
+        "reads": "the draft Wish inside 'fw-account' (saveWish/readAccount in lib/maker.ts) plus the maker note in localStorage 'fw-maker' (readNote/writeNote, keyed by wish id)",
+        "populatedBy": null
+      },
+      "inlineLiterals": [],
+      "route": "/app/new?id=<wish>&at=watch",
+      "area": "maker"
+    },
+    {
+      "id": "maker-when",
+      "title": "Maker: When does it open? (seal time)",
+      "uiFiles": [
+        "app/app/new/page.tsx",
+        "app/app/new/layout.tsx",
+        "components/app/maker/Maker.tsx",
+        "components/app/maker/Seal.tsx"
+      ],
+      "dataFiles": [
+        "lib/maker.ts",
+        "lib/account.ts",
+        "lib/occasions.ts",
+        "lib/catalog.ts",
+        "lib/wish-model.ts"
+      ],
+      "dataProvenance": "repository-local-store",
+      "localStore": {
+        "reads": "the draft Wish inside 'fw-account' (saveWish/readAccount in lib/maker.ts) plus the maker note in localStorage 'fw-maker' (readNote/writeNote, keyed by wish id)",
+        "populatedBy": null
+      },
+      "inlineLiterals": [],
+      "route": "/app/new?id=<wish>&at=when",
+      "area": "maker"
+    },
+    {
+      "id": "maker-ticket",
+      "title": "Maker: Choose a ticket and pay (or 'counts on your plan' for business)",
+      "uiFiles": [
+        "app/app/new/page.tsx",
+        "app/app/new/layout.tsx",
+        "components/app/maker/Maker.tsx",
+        "components/app/maker/Seal.tsx",
+        "components/app/Pay.tsx"
+      ],
+      "dataFiles": [
+        "lib/maker.ts",
+        "lib/account.ts",
+        "lib/occasions.ts",
+        "lib/catalog.ts",
+        "lib/wish-model.ts",
+        "lib/pro-data.ts",
+        "lib/pro-api.ts"
+      ],
+      "dataProvenance": "mixed",
+      "localStore": {
+        "reads": "the draft Wish inside 'fw-account' (saveWish/readAccount in lib/maker.ts) plus the maker note in localStorage 'fw-maker' (readNote/writeNote, keyed by wish id)",
+        "populatedBy": null
+      },
+      "inlineLiterals": [
+        {
+          "file": "lib/catalog.ts",
+          "description": "tickets[] prices as naira strings"
+        },
+        {
+          "file": "lib/maker.ts",
+          "description": "OFF = 0.4 (line 410); Maker.tsx:348 hint '40% off until 31 January.'"
+        }
+      ],
+      "route": "/app/new?id=<wish>&at=ticket",
+      "area": "maker",
+      "note": "Payment is PaySheet (STUB-1); on 'paid' the draft is set status 'sealed' and given a client-side random wish number (STUB-8)."
+    },
+    {
+      "id": "maker-sealed",
+      "title": "Maker: Sealed (done)",
+      "uiFiles": [
+        "app/app/new/page.tsx",
+        "app/app/new/layout.tsx",
+        "components/app/maker/Maker.tsx"
+      ],
+      "dataFiles": [
+        "lib/maker.ts",
+        "lib/account.ts",
+        "lib/occasions.ts",
+        "lib/catalog.ts",
+        "lib/wish-model.ts"
+      ],
+      "dataProvenance": "repository-local-store",
+      "localStore": {
+        "reads": "the draft Wish inside 'fw-account' (saveWish/readAccount in lib/maker.ts) plus the maker note in localStorage 'fw-maker' (readNote/writeNote, keyed by wish id)",
+        "populatedBy": null
+      },
+      "inlineLiterals": [],
+      "route": "/app/new?id=<wish>&at=sealed",
+      "area": "maker"
+    },
+    {
+      "id": "pro-home",
+      "title": "Business home",
+      "uiFiles": [
+        "app/app/pro/page.tsx",
+        "components/app/pro/vault.tsx",
+        "app/app/pro/layout.tsx",
+        "components/app/pro/ui.tsx"
+      ],
+      "dataFiles": [
+        "lib/pro-api.ts",
+        "lib/pro-data.ts",
+        "lib/vault-api.ts",
+        "lib/vault-fixtures.ts"
+      ],
+      "dataProvenance": "repository-local-store",
+      "localStore": {
+        "reads": "usePro() in lib/pro-api.ts -> loadPro() in lib/pro-data.ts: localStorage 'fw-pro' (ProData: month, rolled, pack, business, wishes, people, approved, logins, invoices, brand, hidden) merged with sample rows while samplesOn(); plan from Account.pro in 'fw-account'; Vault figure from 'fw-vault' via useVault()",
+        "populatedBy": null
+      },
+      "inlineLiterals": [],
+      "route": "/app/pro",
+      "area": "pro"
+    },
+    {
+      "id": "pro-wishes",
+      "title": "Client wishes",
+      "uiFiles": [
+        "app/app/pro/wishes/page.tsx",
+        "app/app/pro/layout.tsx",
+        "components/app/pro/ui.tsx"
+      ],
+      "dataFiles": [
+        "lib/pro-api.ts",
+        "lib/pro-data.ts",
+        "lib/catalog.ts"
+      ],
+      "dataProvenance": "repository-local-store",
+      "localStore": {
+        "reads": "usePro() in lib/pro-api.ts -> loadPro() in lib/pro-data.ts: localStorage 'fw-pro' (ProData: month, rolled, pack, business, wishes, people, approved, logins, invoices, brand, hidden) merged with sample rows while samplesOn(); plan from Account.pro in 'fw-account'",
+        "populatedBy": null
+      },
+      "inlineLiterals": [],
+      "route": "/app/pro/wishes",
+      "area": "pro"
+    },
+    {
+      "id": "pro-wish-detail",
+      "title": "One client wish",
+      "uiFiles": [
+        "app/app/pro/wishes/[id]/page.tsx",
+        "app/app/pro/layout.tsx",
+        "components/app/pro/ui.tsx"
+      ],
+      "dataFiles": [
+        "lib/pro-api.ts",
+        "lib/pro-data.ts"
+      ],
+      "dataProvenance": "repository-local-store",
+      "localStore": {
+        "reads": "usePro() in lib/pro-api.ts -> loadPro() in lib/pro-data.ts: localStorage 'fw-pro' (ProData: month, rolled, pack, business, wishes, people, approved, logins, invoices, brand, hidden) merged with sample rows while samplesOn(); plan from Account.pro in 'fw-account'",
+        "populatedBy": null
+      },
+      "inlineLiterals": [],
+      "route": "/app/pro/wishes/[id]",
+      "area": "pro"
+    },
+    {
+      "id": "pro-people",
+      "title": "People and their dates (staff birthdays, work anniversaries, import)",
+      "uiFiles": [
+        "app/app/pro/people/page.tsx",
+        "app/app/pro/layout.tsx",
+        "components/app/pro/ui.tsx"
+      ],
+      "dataFiles": [
+        "lib/pro-api.ts",
+        "lib/pro-data.ts"
+      ],
+      "dataProvenance": "repository-local-store",
+      "localStore": {
+        "reads": "usePro() in lib/pro-api.ts -> loadPro() in lib/pro-data.ts: localStorage 'fw-pro' (ProData: month, rolled, pack, business, wishes, people, approved, logins, invoices, brand, hidden) merged with sample rows while samplesOn(); plan from Account.pro in 'fw-account'",
+        "populatedBy": null
+      },
+      "inlineLiterals": [],
+      "route": "/app/pro/people",
+      "area": "pro"
+    },
+    {
+      "id": "pro-brand",
+      "title": "Brand and logins",
+      "uiFiles": [
+        "app/app/pro/brand/page.tsx",
+        "app/app/pro/layout.tsx",
+        "components/app/pro/ui.tsx"
+      ],
+      "dataFiles": [
+        "lib/pro-api.ts",
+        "lib/pro-data.ts"
+      ],
+      "dataProvenance": "repository-local-store",
+      "localStore": {
+        "reads": "usePro() in lib/pro-api.ts -> loadPro() in lib/pro-data.ts: localStorage 'fw-pro' (ProData: month, rolled, pack, business, wishes, people, approved, logins, invoices, brand, hidden) merged with sample rows while samplesOn(); plan from Account.pro in 'fw-account'",
+        "populatedBy": null
+      },
+      "inlineLiterals": [],
+      "route": "/app/pro/brand",
+      "area": "pro",
+      "note": "inviteLogin writes a row and sends nothing (STUB-11)."
+    },
+    {
+      "id": "pro-plan",
+      "title": "Plan and invoices",
+      "uiFiles": [
+        "app/app/pro/plan/page.tsx",
+        "components/app/Pay.tsx",
+        "components/app/pro/vault.tsx",
+        "app/app/pro/layout.tsx",
+        "components/app/pro/ui.tsx"
+      ],
+      "dataFiles": [
+        "lib/pro-api.ts",
+        "lib/pro-data.ts",
+        "lib/vault-api.ts"
+      ],
+      "dataProvenance": "mixed",
+      "localStore": {
+        "reads": "usePro() in lib/pro-api.ts -> loadPro() in lib/pro-data.ts: localStorage 'fw-pro' (ProData: month, rolled, pack, business, wishes, people, approved, logins, invoices, brand, hidden) merged with sample rows while samplesOn(); plan from Account.pro in 'fw-account'",
+        "populatedBy": null
+      },
+      "inlineLiterals": [
+        {
+          "file": "lib/pro-data.ts",
+          "description": "PLANS, VAULT block pricing, VAT_RATE 0.075 (lines ~12-30)"
+        }
+      ],
+      "route": "/app/pro/plan",
+      "area": "pro",
+      "note": "buyPlan runs after the fake PaySheet; invoices numbered client-side."
+    },
+    {
+      "id": "pro-favourites",
+      "title": "Favourites from clients",
+      "uiFiles": [
+        "app/app/pro/favourites/page.tsx",
+        "app/app/pro/layout.tsx",
+        "components/app/pro/ui.tsx"
+      ],
+      "dataFiles": [
+        "lib/pro-api.ts",
+        "lib/pro-data.ts",
+        "lib/vault-api.ts"
+      ],
+      "dataProvenance": "repository-local-store",
+      "localStore": {
+        "reads": "usePro() in lib/pro-api.ts -> loadPro() in lib/pro-data.ts: localStorage 'fw-pro' (ProData: month, rolled, pack, business, wishes, people, approved, logins, invoices, brand, hidden) merged with sample rows while samplesOn(); plan from Account.pro in 'fw-account'",
+        "populatedBy": null
+      },
+      "inlineLiterals": [],
+      "route": "/app/pro/favourites",
+      "area": "pro"
+    },
+    {
+      "id": "pro-vault",
+      "title": "Vault (shoots, storage, bill)",
+      "uiFiles": [
+        "app/app/pro/vault/page.tsx",
+        "components/app/pro/vault.tsx",
+        "app/app/pro/layout.tsx",
+        "components/app/pro/ui.tsx"
+      ],
+      "dataFiles": [
+        "lib/vault-api.ts",
+        "lib/vault-fixtures.ts",
+        "lib/pro-api.ts",
+        "lib/pro-data.ts"
+      ],
+      "dataProvenance": "repository-local-store",
+      "localStore": {
+        "reads": "lib/vault-api.ts: localStorage 'fw-vault' ({shoots, hidden, peak}) plus an in-memory preview map, merged with sampleShoots() while samplesOn(); also reads 'fw-pro' for plan/space",
+        "populatedBy": null
+      },
+      "inlineLiterals": [],
+      "route": "/app/pro/vault",
+      "area": "pro"
+    },
+    {
+      "id": "pro-vault-shoot",
+      "title": "One shoot (proofs, finals, upload, send)",
+      "uiFiles": [
+        "app/app/pro/vault/[id]/page.tsx",
+        "components/app/pro/vault.tsx",
+        "app/app/pro/layout.tsx",
+        "components/app/pro/ui.tsx"
+      ],
+      "dataFiles": [
+        "lib/vault-api.ts",
+        "lib/vault-fixtures.ts",
+        "lib/pro-api.ts"
+      ],
+      "dataProvenance": "repository-local-store",
+      "localStore": {
+        "reads": "lib/vault-api.ts: localStorage 'fw-vault' ({shoots, hidden, peak}) plus an in-memory preview map, merged with sampleShoots() while samplesOn(); also reads 'fw-pro' for plan/space",
+        "populatedBy": null
+      },
+      "inlineLiterals": [],
+      "route": "/app/pro/vault/[id]",
+      "area": "pro",
+      "note": "uploadFiles keeps small previews in localStorage; full files are not kept anywhere (STUB-12)."
+    },
+    {
+      "id": "pro-reveal-new",
+      "title": "New Shoot Reveal (send a reveal wish)",
+      "uiFiles": [
+        "app/app/pro/reveal/new/page.tsx",
+        "components/engine/Preview.tsx",
+        "components/app/pro/vault.tsx",
+        "app/app/pro/layout.tsx",
+        "components/app/pro/ui.tsx"
+      ],
+      "dataFiles": [
+        "lib/pro-api.ts",
+        "lib/pro-data.ts",
+        "lib/vault-api.ts",
+        "lib/vault-fixtures.ts",
+        "lib/styles.ts",
+        "lib/catalog.ts"
+      ],
+      "dataProvenance": "mixed",
+      "localStore": {
+        "reads": "'fw-pro' via usePro(); a shoot from 'fw-vault' via getShoot(); 'Use sample photos' fills SAMPLE_FRAMES from lib/pro-data.ts while samplesOn()",
+        "populatedBy": null
+      },
+      "inlineLiterals": [],
+      "route": "/app/pro/reveal/new",
+      "area": "pro"
+    },
+    {
+      "id": "pro-vault-shoot-reveal",
+      "title": "Reveal form opened from a shoot (alias of pro-reveal-new)",
+      "uiFiles": [
+        "app/app/pro/vault/[id]/reveal/page.tsx",
+        "app/app/pro/reveal/new/page.tsx",
+        "app/app/pro/layout.tsx",
+        "components/app/pro/ui.tsx"
+      ],
+      "dataFiles": [
+        "lib/pro-api.ts",
+        "lib/vault-api.ts"
+      ],
+      "dataProvenance": "mixed",
+      "localStore": {
+        "reads": "same as pro-reveal-new (re-exports that page)",
+        "populatedBy": null
+      },
+      "inlineLiterals": [],
+      "route": "/app/pro/vault/[id]/reveal",
+      "area": "pro"
+    },
+    {
+      "id": "creator-profile",
+      "title": "Creator profile (handle, bio, published)",
+      "uiFiles": [
+        "app/app/creator/page.tsx",
+        "components/app/feed/SetUp.tsx",
+        "components/app/feed/spaces.ts"
+      ],
+      "dataFiles": [
+        "lib/account.ts",
+        "lib/catalog.ts",
+        "lib/styles.ts"
+      ],
+      "dataProvenance": "repository-local-store",
+      "localStore": {
+        "reads": "Account.handle/bio/wishes(isPublic) in 'fw-account'",
+        "populatedBy": null
+      },
+      "inlineLiterals": [],
+      "route": "/app/creator",
+      "area": "creator",
+      "note": "Handle uniqueness is checked only by format (handleOk), never against other accounts."
+    },
+    {
+      "id": "creator-published",
+      "title": "Published wishes",
+      "uiFiles": [
+        "app/app/creator/published/page.tsx"
+      ],
+      "dataFiles": [
+        "lib/account.ts",
+        "lib/catalog.ts",
+        "lib/styles.ts"
+      ],
+      "dataProvenance": "repository-local-store",
+      "localStore": {
+        "reads": "Account.wishes filtered isPublic in 'fw-account'",
+        "populatedBy": null
+      },
+      "inlineLiterals": [],
+      "route": "/app/creator/published",
+      "area": "creator"
+    },
+    {
+      "id": "studio-home",
+      "title": "Style Studio home (my styles, drafts, plan, credits, earnings, templates)",
+      "uiFiles": [
+        "app/app/creator/studio/page.tsx",
+        "app/app/creator/studio/layout.tsx",
+        "components/app/studio/Home.tsx",
+        "components/app/studio/Cards.tsx",
+        "components/app/studio/Sheets.tsx",
+        "components/app/studio/Live.tsx",
+        "components/app/studio/ctx.tsx"
+      ],
+      "dataFiles": [
+        "lib/studio-api.ts",
+        "lib/studio-fixtures.ts",
+        "lib/studio.ts",
+        "lib/account.ts"
+      ],
+      "dataProvenance": "repository-local-store",
+      "localStore": {
+        "reads": "lib/studio-api.ts: localStorage 'fw-studio' (Store v3: month, me{plan, signed, credits, reviewsLeft, extraReviews, renews}, drafts[], mine[], prefs) plus sample styles/templates/earnings from lib/studio-fixtures.ts while configure({samples: samplesOn(account)})",
+        "populatedBy": null
+      },
+      "inlineLiterals": [
+        {
+          "file": "lib/studio.ts",
+          "description": "PLANS open/creator (7500/month), PACK {credits:5, price:3000}, SIGNED 5000/month, PREMIUM_PRICE, credit costs (lines ~18-32)"
+        }
+      ],
+      "route": "/app/creator/studio",
+      "area": "creator"
+    },
+    {
+      "id": "studio-new",
+      "title": "Style Studio: start a style (stage, moments, starters, AI describe)",
+      "uiFiles": [
+        "app/app/creator/studio/new/page.tsx",
+        "components/app/studio/Start.tsx",
+        "components/app/studio/MomentBank.tsx",
+        "components/app/studio/kit-moments.ts",
+        "components/engine/Preview.tsx"
+      ],
+      "dataFiles": [
+        "lib/studio-api.ts",
+        "lib/studio.ts",
+        "lib/occasions.ts",
+        "lib/engine/moments.ts"
+      ],
+      "dataProvenance": "mixed",
+      "localStore": {
+        "reads": "lib/studio-api.ts: localStorage 'fw-studio' (Store v3: month, me{plan, signed, credits, reviewsLeft, extraReviews, renews}, drafts[], mine[], prefs) plus sample styles/templates/earnings from lib/studio-fixtures.ts while configure({samples: samplesOn(account)})",
+        "populatedBy": null
+      },
+      "inlineLiterals": [
+        {
+          "file": "lib/studio.ts",
+          "description": "STARTERS, HOUSE, PACES, PIECE lists"
+        }
+      ],
+      "route": "/app/creator/studio/new",
+      "area": "creator",
+      "note": "AI 'describe a style' always answers offline (STUB-4)."
+    },
+    {
+      "id": "studio-editor",
+      "title": "Style Studio editor",
+      "uiFiles": [
+        "app/app/creator/studio/[id]/page.tsx",
+        "components/app/studio/Editor.tsx",
+        "components/app/studio/Canvas.tsx",
+        "components/app/studio/AiBar.tsx",
+        "components/app/studio/Panels.tsx",
+        "components/app/studio/Bottom.tsx",
+        "components/app/studio/Sheets.tsx",
+        "components/engine/made/StudioHost.tsx"
+      ],
+      "dataFiles": [
+        "lib/studio-api.ts",
+        "lib/studio.ts",
+        "lib/studio-layout.ts",
+        "lib/studio-checks.ts",
+        "lib/engine/packages.ts"
+      ],
+      "dataProvenance": "mixed",
+      "localStore": {
+        "reads": "lib/studio-api.ts: localStorage 'fw-studio' (Store v3: month, me{plan, signed, credits, reviewsLeft, extraReviews, renews}, drafts[], mine[], prefs) plus sample styles/templates/earnings from lib/studio-fixtures.ts while configure({samples: samplesOn(account)})",
+        "populatedBy": null
+      },
+      "inlineLiterals": [],
+      "route": "/app/creator/studio/[id]",
+      "area": "creator",
+      "note": "Draft autosaved to 'fw-studio' 500 ms after each change (Editor.tsx:80); AI change always offline; submitStyle leaves the style in 'review' with no reviewer."
+    },
+    {
+      "id": "receiver-wish-showcase",
+      "title": "Wish page by style slug (/w/[slug])",
+      "uiFiles": [
+        "app/w/[slug]/page.tsx",
+        "components/wish/Showcase.tsx",
+        "components/wish/ShowcaseMenu.tsx",
+        "components/wish/WishPlayer.tsx",
+        "components/engine/Host.tsx",
+        "components/engine/Gate.tsx",
+        "components/engine/Opening.tsx",
+        "components/engine/MomentEnding.tsx"
+      ],
+      "dataFiles": [
+        "lib/catalog.ts",
+        "lib/engine/packages.ts",
+        "lib/engine/adapt.ts",
+        "lib/engine/unlock.ts"
+      ],
+      "dataProvenance": "static",
+      "localStore": null,
+      "inlineLiterals": [
+        {
+          "file": "app/w/[slug]/page.tsx",
+          "description": "fallback showcase wish literal (name 'Aisha', line ~22) when the style has no showcase wish in lib/catalog.ts"
+        }
+      ],
+      "route": "/w/[slug]",
+      "area": "receiver",
+      "note": "RULING: [slug] is a STYLE slug and the page plays a house showcase wish. There is no route that resolves a real wish by its public link slug; the server-decided receiver states (sealed, countdown, passcode, question, open, resting, gone) are rendered client-side from the wish's own values (lib/engine/unlock.ts)."
+    },
+    {
+      "id": "receiver-wish-mine",
+      "title": "Wish preview / shared link (/w/mine?id= | ?name=&no=&kind=)",
+      "uiFiles": [
+        "app/w/mine/page.tsx",
+        "components/engine/Host.tsx",
+        "components/wish/WishPlayer.tsx"
+      ],
+      "dataFiles": [
+        "lib/account.ts",
+        "lib/maker.ts",
+        "lib/vault-api.ts",
+        "lib/engine/adapt.ts",
+        "lib/engine/unlock.ts"
+      ],
+      "dataProvenance": "repository-local-store",
+      "localStore": {
+        "reads": "the Wish by id from 'fw-account', note from 'fw-maker', voice from 'fw-voice-<id>'; a business client wish's reveal from 'fw-vault' via getReveal(no); favourites written back via sendFavourites into 'fw-vault'",
+        "populatedBy": null
+      },
+      "inlineLiterals": [],
+      "route": "/w/mine",
+      "area": "receiver",
+      "note": "This is the link the Share sheet copies (/w/mine?id=<local id>): it only works in the sender's own browser (STUB-9)."
+    }
+  ]
+}

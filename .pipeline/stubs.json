@@ -1,0 +1,254 @@
+{
+  "stubs": [
+    {
+      "id": "STUB-1",
+      "kind": "fake-provider",
+      "file": "components/app/Pay.tsx:18",
+      "evidence": "const pay = () => { setBusy(true); setTimeout(() => { onPaid(); }, 700); };  // header line 12-13: 'Nothing is charged here yet: choosing a way and confirming calls onPaid.'",
+      "standsInFor": "Paystack payment (start, verify, webhook) for tickets, extras, keeps, the Pass, Pro plans and wish packs, Studio plan/credits/extra reviews",
+      "consequence": "every purchase in the app succeeds after 700 ms with no charge: wishes seal, Pass activates, plans/credits are granted; used by Maker.tsx, wishes/[id], pass, pro/plan, studio/Sheets.tsx",
+      "resolution": "unresolved",
+      "taskId": null
+    },
+    {
+      "id": "STUB-2",
+      "kind": "fake-provider",
+      "file": "components/app/AuthFlow.tsx:86",
+      "evidence": "<form ... onSubmit={(e) => { e.preventDefault(); if (full) done(contact); }}>  // and line 53: if (ok) setStep(\"code\") sends nothing",
+      "standsInFor": "one-time code via SMS/WhatsApp/email and its server-side verification (6 digits, 10 min, 5 tries)",
+      "consequence": "no code is ever sent; any six digits sign in as whatever phone/email was typed; no token, no session",
+      "resolution": "unresolved",
+      "taskId": null
+    },
+    {
+      "id": "STUB-3",
+      "kind": "fake-provider",
+      "file": "components/app/AuthFlow.tsx:77",
+      "evidence": "onClick={() => done(\"Google account\")}",
+      "standsInFor": "Google sign-in (OAuth)",
+      "consequence": "tapping Google signs in instantly with contact 'Google account'",
+      "resolution": "unresolved",
+      "taskId": null
+    },
+    {
+      "id": "STUB-4",
+      "kind": "fake-provider",
+      "file": "lib/studio-api.ts:142",
+      "evidence": "export function draftStyle(_req: ...): Promise<Result<StyleChange>> { return no(\"offline\"); }  // and :145 changeStyle -> no(\"offline\"); ctx.tsx:115 AI_LINE",
+      "standsInFor": "AI style drafting/changing through the Anthropic port (POST /studio/ai/draft, change)",
+      "consequence": "every AI action in Studio answers 'offline'; credits are bought (fake pay) but can never be spent",
+      "resolution": "unresolved",
+      "taskId": null
+    },
+    {
+      "id": "STUB-5",
+      "kind": "hardcoded-signal",
+      "file": "lib/account.ts:6",
+      "evidence": "/* The account, kept on this device. Nothing here talks to a server yet: sign up, sign in, wishes and dates are held in the browser */",
+      "standsInFor": "the account, wishes and dates held by the server",
+      "consequence": "all personal data lives in one browser; another device or a cleared browser shows nothing; Sign out (app/app/you/page.tsx:59, Switcher.tsx:41 writeAccount(null)) erases every wish and date",
+      "resolution": "unresolved",
+      "taskId": null
+    },
+    {
+      "id": "STUB-6",
+      "kind": "todo-comment",
+      "file": "lib/pro-api.ts:6",
+      "evidence": "Until it exists, the bodies keep the records on this device through lib/pro-data (localStorage, fw-pro).",
+      "standsInFor": "GET /pro and the business write endpoints",
+      "consequence": "business data, invoices and people exist only in one browser; team logins (other people) can never see it",
+      "resolution": "unresolved",
+      "taskId": null
+    },
+    {
+      "id": "STUB-7",
+      "kind": "todo-comment",
+      "file": "lib/vault-api.ts:6",
+      "evidence": "Until it exists, the implementation keeps the shoot records on this device (localStorage, key fw-vault) and the files as small previews beside them.",
+      "standsInFor": "Vault storage (signed-URL uploads to R2/Spaces), shoots, reveals, favourites and downloads",
+      "consequence": "uploads keep only small previews in localStorage; storage bills are computed client-side; a client's favourites never reach the business unless on the same browser",
+      "resolution": "unresolved",
+      "taskId": null
+    },
+    {
+      "id": "STUB-8",
+      "kind": "fake-provider",
+      "file": "lib/maker.ts:449",
+      "evidence": "export const wishNo = (a) => { ... n = String(Math.floor(1000 + Math.random() * 9000)); } while (taken.includes(n)) ...",
+      "standsInFor": "server-issued sequential wish number",
+      "consequence": "wish numbers are random 4-digit values unique only within one browser",
+      "resolution": "unresolved",
+      "taskId": null
+    },
+    {
+      "id": "STUB-9",
+      "kind": "fake-provider",
+      "file": "components/app/life/sheets.tsx:16",
+      "evidence": "useEffect(() => { setLink(`${window.location.origin}/w/mine?id=${wish.id}`); }, [wish.id]);",
+      "standsInFor": "the wish's public link slug resolved by the server (/w/<slug>)",
+      "consequence": "the shared link opens 'That wish is not here' for the receiver on any other device: no wish can actually reach its receiver",
+      "resolution": "unresolved",
+      "taskId": null
+    },
+    {
+      "id": "STUB-10",
+      "kind": "fake-provider",
+      "file": "lib/engine/unlock.ts:1",
+      "evidence": "Today the passcode and the answer are checked against the wish's own values on this device. When the server holds wishes, this function becomes POST /w/:no/unlock",
+      "standsInFor": "server-side opening decision (sealed/countdown/passcode/question) using server time",
+      "consequence": "secret answers and the content ship to the client; phone clock decides when a wish opens",
+      "resolution": "unresolved",
+      "taskId": null
+    },
+    {
+      "id": "STUB-11",
+      "kind": "unbacked-toggle",
+      "file": "lib/pro-api.ts:104",
+      "evidence": "export async function inviteLogin(contact: string) { online(); change((d) => ({ ...d, logins: [...d.logins, { id: uid(), contact, status: \"invited\" }] })); }",
+      "standsInFor": "team-login invitation (message send + member account)",
+      "consequence": "the invitee is never told and can never sign in; the row stays 'invited' forever",
+      "resolution": "unresolved",
+      "taskId": null
+    },
+    {
+      "id": "STUB-12",
+      "kind": "unbacked-toggle",
+      "file": "lib/vault-api.ts:178",
+      "evidence": "export async function sendFavourites(req: FavouritesRequest): Promise<void> {  // writes hearts into fw-vault",
+      "standsInFor": "client favourites sent to the business",
+      "consequence": "hearts tapped by a client on their phone never reach the photographer",
+      "resolution": "unresolved",
+      "taskId": null
+    },
+    {
+      "id": "STUB-13",
+      "kind": "unbacked-toggle",
+      "file": "app/app/wishes/[id]/page.tsx:93",
+      "evidence": "const videoFree = () => { setOpen(\"\"); say(\"The video will be sent to you.\"); };  // :92 videoPay same after PaySheet",
+      "standsInFor": "portrait video render + delivery job",
+      "consequence": "user is told a video will be sent; nothing is made or sent",
+      "resolution": "unresolved",
+      "taskId": null
+    },
+    {
+      "id": "STUB-14",
+      "kind": "todo-comment",
+      "file": "lib/maker.ts:157",
+      "evidence": "/* Group wishes: everyone answers the question through a link. Until that link exists, the organiser types what came in. */",
+      "standsInFor": "group contribution link where friends add their own voices",
+      "consequence": "Group wishes have no contribution flow; the organiser types every answer",
+      "resolution": "unresolved",
+      "taskId": null
+    },
+    {
+      "id": "STUB-15",
+      "kind": "todo-comment",
+      "file": "lib/levels.ts:58",
+      "evidence": "/* when the server exists: const answer = await (await fetch(\"/v1/styles/levels\")).json(); then remember it below */",
+      "standsInFor": "GET /v1/styles/levels (admin-set style levels)",
+      "consequence": "an admin moving a style's level changes nothing in the app; levels are the manifests' own",
+      "resolution": "unresolved",
+      "taskId": null
+    },
+    {
+      "id": "STUB-16",
+      "kind": "hardcoded-signal",
+      "file": "lib/vault-fixtures.ts:12",
+      "evidence": "export const samplesOn = () => { ... wishes?.some((w) => w.id.startsWith(\"s-\")) ... }  // also lib/studio-fixtures.ts:10",
+      "standsInFor": "a real 'sample data' setting (or none at all)",
+      "consequence": "every fixture file in feed/pro/vault/studio switches on whenever the account holds an 's-' wish; production users can turn fabricated data on",
+      "resolution": "unresolved",
+      "taskId": null
+    },
+    {
+      "id": "STUB-17",
+      "kind": "hardcoded-signal",
+      "file": "app/app/pass/page.tsx:18",
+      "evidence": "const SINCE = \"fw-pass-at\"; // the day the Pass was paid for, kept beside the account until the account holds it",
+      "standsInFor": "Pass period held by the server (start/end, fair-use counters)",
+      "consequence": "Pass expiry is computed from a localStorage date; Pass never actually ends (account.pass stays true)",
+      "resolution": "unresolved",
+      "taskId": null
+    },
+    {
+      "id": "STUB-18",
+      "kind": "hardcoded-signal",
+      "file": "components/app/life/wish.ts:84",
+      "evidence": "export const OFF_LINE = \"40% off until 31 January\";  // also wish.ts:83 OFF=0.4, lib/maker.ts:410 OFF=0.4, Maker.tsx:348, lib/studio.ts:21",
+      "standsInFor": "promotion/prices from configuration tables",
+      "consequence": "discount never expires (no date check); prices are literals in lib/catalog.ts/pro-data.ts/studio.ts/account.ts KEEPS, not server config",
+      "resolution": "unresolved",
+      "taskId": null
+    },
+    {
+      "id": "STUB-19",
+      "kind": "fake-provider",
+      "file": "lib/studio-api.ts:173",
+      "evidence": "export function submitStyle(...) { ... const sent: SubmittedStyle = { ...req.style, status: \"review\", ... } }",
+      "standsInFor": "style review queue worked by staff (reviewer role)",
+      "consequence": "a submitted style stays 'review' forever; nothing can go live except sample styles",
+      "resolution": "unresolved",
+      "taskId": null
+    },
+    {
+      "id": "STUB-20",
+      "kind": "hardcoded-signal",
+      "file": "lib/studio-api.ts:220",
+      "evidence": "export function getPayouts(): Promise<Result<Payout[]>> { return ok([]); }",
+      "standsInFor": "creator payouts ledger",
+      "consequence": "payouts list is always empty",
+      "resolution": "unresolved",
+      "taskId": null
+    },
+    {
+      "id": "STUB-21",
+      "kind": "todo-comment",
+      "file": "app/w/mine/page.tsx:31",
+      "evidence": "/* a business's client wish named in the address: it plays its occasion with that name until a server holds the wish itself */",
+      "standsInFor": "server-held client wish resolved by number",
+      "consequence": "a business's client wish link plays a generic wish with only the name/occasion from the URL",
+      "resolution": "unresolved",
+      "taskId": null
+    },
+    {
+      "id": "STUB-22",
+      "kind": "hardcoded-signal",
+      "file": "lib/config.ts:2",
+      "evidence": "export const WHATSAPP_URL = \"\"; export const EMAIL = \"\"; export const SAMPLE_REVEAL_URL = \"https://claude.ai/artifact/...\";",
+      "standsInFor": "real contact details / hosted sample reveal",
+      "consequence": "Contact page shows no way to reach the business; a sample-reveal link points at a claude.ai artifact",
+      "resolution": "unresolved",
+      "taskId": null
+    },
+    {
+      "id": "STUB-23",
+      "kind": "todo-comment",
+      "file": "lib/feed-api.ts:6",
+      "evidence": "Until it exists, the implementation serves the real house content from lib/catalog ... and keeps the viewer's own reactions, saves and follows on this device (localStorage, key fw-feed).",
+      "standsInFor": "feed, reactions, saves, follows, creators on the server",
+      "consequence": "counts are only the viewer's own; follows/saves don't leave the browser; published wishes of other users never appear",
+      "resolution": "unresolved",
+      "taskId": null
+    },
+    {
+      "id": "STUB-24",
+      "kind": "todo-comment",
+      "file": "lib/studio-api.ts:4",
+      "evidence": "Today the bodies keep everything on this device (localStorage, under `fw-studio`): the plan, credits, reviews, drafts, files and submissions all work.",
+      "standsInFor": "Studio server: creator plan, credits, reviews, drafts, uploads, submissions, earnings",
+      "consequence": "creator plan/credits/reviews renew from the browser clock; uploads are local data URLs",
+      "resolution": "unresolved",
+      "taskId": null
+    },
+    {
+      "id": "STUB-25",
+      "kind": "fake-provider",
+      "file": "components/app/Welcome.tsx:46",
+      "evidence": "writeAccount({ ... })  // with getPending() from sessionStorage: account created entirely client-side",
+      "standsInFor": "POST account creation after verified sign-in",
+      "consequence": "a 'new account' exists only in this browser; handle uniqueness (creator) is never checked across accounts",
+      "resolution": "unresolved",
+      "taskId": null
+    }
+  ]
+}

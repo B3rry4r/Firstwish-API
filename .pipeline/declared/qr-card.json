@@ -1,0 +1,128 @@
+{
+  "screenId": null,
+  "resource": "qr-card",
+  "sourceScreens": [],
+  "provenance": "declaration",
+  "declaredAs": "other",
+  "reads": [
+    {
+      "entity": "QrCard",
+      "fields": [
+        {
+          "name": "id",
+          "type": "string",
+          "nullable": false,
+          "note": "UUIDv7, issued by the server"
+        },
+        {
+          "name": "wishId",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "eventId",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "kind",
+          "type": "enum(wish-card|table-card)",
+          "nullable": false
+        },
+        {
+          "name": "fileId",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "status",
+          "type": "enum(queued|done|failed)",
+          "nullable": false
+        },
+        {
+          "name": "createdAt",
+          "type": "datetime",
+          "nullable": false
+        }
+      ],
+      "cardinality": "list",
+      "filtersOrSort": [],
+      "pagination": "none"
+    }
+  ],
+  "actions": [
+    {
+      "name": "makeWishCard",
+      "kind": "create",
+      "entity": "QrCard",
+      "payload": [
+        {
+          "name": "wishId",
+          "type": "string"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "QrCard",
+        "cardinality": "single"
+      }
+    },
+    {
+      "name": "makeTableCards",
+      "kind": "create",
+      "entity": "QrCard",
+      "payload": [
+        {
+          "name": "names",
+          "type": "array<string>"
+        },
+        {
+          "name": "wishIds",
+          "type": "array<string>"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "QrCard",
+        "cardinality": "list"
+      },
+      "roles": [
+        "business-member",
+        "maker"
+      ]
+    }
+  ],
+  "authContext": {
+    "requiresAuth": true,
+    "rolesObserved": [
+      "person",
+      "business-member",
+      "maker"
+    ]
+  },
+  "special": {
+    "realtime": false,
+    "uploads": false,
+    "downloads": true
+  },
+  "uiStatesHandled": [],
+  "uiStatesDesigned": [],
+  "stubsObserved": [],
+  "behaviour": [
+    "A print-ready PDF card with the wish's public link as a QR code, in the wish's style colours (included on Signature and above, paid extra on Keepsake, T-04, T-30).",
+    "Table cards for planners: one card per guest or table pointing to its wish, made as one PDF.",
+    "Made by a job; stored as a private file; downloaded through a signed URL."
+  ],
+  "provisional": [
+    {
+      "key": "qrCard.size",
+      "value": "A6 at 300 dpi",
+      "unit": "print size",
+      "status": "PROVISIONAL",
+      "owner": "owner",
+      "why": "documents say print-ready only"
+    }
+  ],
+  "truths": [
+    "T-04",
+    "T-30"
+  ]
+}

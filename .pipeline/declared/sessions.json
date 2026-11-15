@@ -1,0 +1,192 @@
+{
+  "screenId": null,
+  "resource": "sessions",
+  "sourceScreens": [],
+  "provenance": "declaration",
+  "declaredAs": "other",
+  "reads": [
+    {
+      "entity": "Session",
+      "fields": [
+        {
+          "name": "id",
+          "type": "string",
+          "nullable": false,
+          "note": "UUIDv7, issued by the server"
+        },
+        {
+          "name": "accountId",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "staffId",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "familyId",
+          "type": "string",
+          "nullable": false,
+          "note": "one refresh-token family per sign-in"
+        },
+        {
+          "name": "refreshTokenHash",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "rotatedAt",
+          "type": "datetime",
+          "nullable": true
+        },
+        {
+          "name": "revokedAt",
+          "type": "datetime",
+          "nullable": true
+        },
+        {
+          "name": "revokeReason",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "userAgent",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "ip",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "expiresAt",
+          "type": "datetime",
+          "nullable": false
+        },
+        {
+          "name": "createdAt",
+          "type": "datetime",
+          "nullable": false
+        }
+      ],
+      "cardinality": "list",
+      "filtersOrSort": [
+        "createdAt desc"
+      ],
+      "pagination": "none"
+    },
+    {
+      "entity": "Me",
+      "fields": [
+        {
+          "name": "id",
+          "type": "string",
+          "nullable": false,
+          "note": "UUIDv7, issued by the server"
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "contact",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "sides",
+          "type": "array<enum(person|creator|business)>",
+          "nullable": false
+        },
+        {
+          "name": "lastSide",
+          "type": "string",
+          "nullable": false
+        }
+      ],
+      "cardinality": "single",
+      "filtersOrSort": [],
+      "pagination": "none"
+    }
+  ],
+  "actions": [
+    {
+      "name": "refresh",
+      "kind": "custom",
+      "entity": "Session",
+      "payload": [],
+      "expectedResponse": {
+        "entity": "Session",
+        "cardinality": "single"
+      },
+      "note": "POST /v1/auth/refresh, reads the httpOnly cookie, rotates it"
+    },
+    {
+      "name": "signOut",
+      "kind": "delete",
+      "entity": "Session",
+      "payload": [],
+      "expectedResponse": {
+        "entity": "Empty",
+        "cardinality": "single"
+      },
+      "note": "revokes this session's family; clears cookie"
+    },
+    {
+      "name": "signOutEverywhere",
+      "kind": "delete",
+      "entity": "Session",
+      "payload": [],
+      "expectedResponse": {
+        "entity": "Empty",
+        "cardinality": "single"
+      }
+    },
+    {
+      "name": "listMySessions",
+      "kind": "custom",
+      "entity": "Session",
+      "payload": [],
+      "expectedResponse": {
+        "entity": "Session",
+        "cardinality": "list"
+      }
+    }
+  ],
+  "authContext": {
+    "requiresAuth": true,
+    "rolesObserved": [
+      "person",
+      "staff"
+    ]
+  },
+  "special": {
+    "realtime": false,
+    "uploads": false,
+    "downloads": false
+  },
+  "uiStatesHandled": [],
+  "uiStatesDesigned": [],
+  "stubsObserved": [
+    "STUB-5"
+  ],
+  "behaviour": [
+    "Access token: JWT, 15 minutes, Authorization: Bearer. Refresh: opaque, rotating, 30 days, httpOnly Secure SameSite=Lax cookie on the API host.",
+    "Reusing a rotated refresh token revokes every session of the account (signs out everywhere).",
+    "Signing out never erases data (the as-built sign-out wiped fw-account: STUB-5).",
+    "Staff sessions are separate tokens with audience 'staff' and a shorter refresh life."
+  ],
+  "provisional": [
+    {
+      "key": "staffSession.refreshLife",
+      "value": 12,
+      "unit": "hours",
+      "status": "PROVISIONAL",
+      "owner": "owner",
+      "why": "documents say nothing about staff sessions"
+    }
+  ]
+}

@@ -1,0 +1,171 @@
+{
+  "screenId": null,
+  "resource": "staff-accounts",
+  "sourceScreens": [],
+  "provenance": "declaration",
+  "declaredAs": "other",
+  "reads": [
+    {
+      "entity": "StaffAccount",
+      "fields": [
+        {
+          "name": "id",
+          "type": "string",
+          "nullable": false,
+          "note": "UUIDv7, issued by the server"
+        },
+        {
+          "name": "email",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "roles",
+          "type": "array<enum(owner|ops|moderator|reviewer|support|finance|maker)>",
+          "nullable": false
+        },
+        {
+          "name": "status",
+          "type": "enum(invited|active|suspended)",
+          "nullable": false
+        },
+        {
+          "name": "lastSignInAt",
+          "type": "datetime",
+          "nullable": true
+        },
+        {
+          "name": "createdAt",
+          "type": "datetime",
+          "nullable": false
+        },
+        {
+          "name": "updatedAt",
+          "type": "datetime",
+          "nullable": false
+        }
+      ],
+      "cardinality": "list",
+      "filtersOrSort": [
+        "name"
+      ],
+      "pagination": "paged"
+    }
+  ],
+  "actions": [
+    {
+      "name": "inviteStaff",
+      "kind": "create",
+      "entity": "StaffAccount",
+      "payload": [
+        {
+          "name": "email",
+          "type": "string"
+        },
+        {
+          "name": "roles",
+          "type": "array<string>"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "StaffAccount",
+        "cardinality": "single"
+      },
+      "roles": [
+        "owner"
+      ]
+    },
+    {
+      "name": "changeStaffRoles",
+      "kind": "update",
+      "entity": "StaffAccount",
+      "payload": [
+        {
+          "name": "id",
+          "type": "string"
+        },
+        {
+          "name": "roles",
+          "type": "array<string>"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "StaffAccount",
+        "cardinality": "single"
+      },
+      "roles": [
+        "owner"
+      ]
+    },
+    {
+      "name": "suspendStaff",
+      "kind": "update",
+      "entity": "StaffAccount",
+      "payload": [
+        {
+          "name": "id",
+          "type": "string"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "StaffAccount",
+        "cardinality": "single"
+      },
+      "roles": [
+        "owner"
+      ]
+    },
+    {
+      "name": "staffSignIn",
+      "kind": "custom",
+      "entity": "StaffAccount",
+      "payload": [
+        {
+          "name": "email",
+          "type": "string"
+        },
+        {
+          "name": "code",
+          "type": "string"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "Session",
+        "cardinality": "single"
+      },
+      "note": "email code only, purpose staff-sign-in"
+    }
+  ],
+  "authContext": {
+    "requiresAuth": true,
+    "rolesObserved": [
+      "owner",
+      "ops",
+      "moderator",
+      "reviewer",
+      "support",
+      "finance",
+      "maker"
+    ]
+  },
+  "special": {
+    "realtime": false,
+    "uploads": false,
+    "downloads": false
+  },
+  "uiStatesHandled": [],
+  "uiStatesDesigned": [],
+  "stubsObserved": [],
+  "behaviour": [
+    "Staff are separate from customer accounts; staff routes live under /v1/admin (conventions.md).",
+    "Roles: owner, ops, moderator, reviewer, support, finance, maker. A staff member may hold several.",
+    "The first owner is created from STAFF_BOOTSTRAP_OWNER_EMAIL on first boot; after that only an owner invites or changes roles.",
+    "There must always be at least one active owner; the last owner cannot be suspended or demoted.",
+    "Every staff write is written to audit-log."
+  ]
+}

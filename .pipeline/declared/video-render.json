@@ -1,0 +1,163 @@
+{
+  "screenId": null,
+  "resource": "video-render",
+  "sourceScreens": [],
+  "provenance": "declaration",
+  "declaredAs": "integration",
+  "integration": {
+    "provider": "self-hosted render worker",
+    "direction": [
+      "outbound"
+    ],
+    "envVars": [
+      "RENDER_CONCURRENCY"
+    ],
+    "sandbox": true,
+    "testStandIn": "tests bind the port to an in-memory stand-in; no live call is made from any test or agent run"
+  },
+  "reads": [
+    {
+      "entity": "RenderJob",
+      "fields": [
+        {
+          "name": "id",
+          "type": "string",
+          "nullable": false,
+          "note": "UUIDv7, issued by the server"
+        },
+        {
+          "name": "wishId",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "kind",
+          "type": "enum(status-video|premiere-clip|keepsake-export)",
+          "nullable": false
+        },
+        {
+          "name": "status",
+          "type": "enum(queued|rendering|done|failed)",
+          "nullable": false
+        },
+        {
+          "name": "outputFileId",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "width",
+          "type": "integer",
+          "nullable": false
+        },
+        {
+          "name": "height",
+          "type": "integer",
+          "nullable": false
+        },
+        {
+          "name": "seconds",
+          "type": "integer",
+          "nullable": false
+        },
+        {
+          "name": "deliveredVia",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "createdAt",
+          "type": "datetime",
+          "nullable": false
+        },
+        {
+          "name": "updatedAt",
+          "type": "datetime",
+          "nullable": false
+        }
+      ],
+      "cardinality": "list",
+      "filtersOrSort": [],
+      "pagination": "none"
+    }
+  ],
+  "actions": [
+    {
+      "name": "requestStatusVideo",
+      "kind": "create",
+      "entity": "RenderJob",
+      "payload": [
+        {
+          "name": "wishId",
+          "type": "string"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "RenderJob",
+        "cardinality": "single"
+      },
+      "note": "included on Signature/Premiere, a paid extra on Keepsake"
+    },
+    {
+      "name": "getRender",
+      "kind": "custom",
+      "entity": "RenderJob",
+      "payload": [
+        {
+          "name": "id",
+          "type": "string"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "RenderJob",
+        "cardinality": "single"
+      }
+    }
+  ],
+  "authContext": {
+    "requiresAuth": true,
+    "rolesObserved": [
+      "person"
+    ]
+  },
+  "special": {
+    "realtime": false,
+    "uploads": false,
+    "downloads": false
+  },
+  "uiStatesHandled": [],
+  "uiStatesDesigned": [],
+  "stubsObserved": [
+    "STUB-13"
+  ],
+  "behaviour": [
+    "Portrait video for WhatsApp status made from the wish in its style; when done the sender gets a signed download link by message (replaces STUB-13).",
+    "Premiere clips: uploaded clips are transcoded to the playback format and length checked (15 s each, one long clip up to 60 s, T-05, T-30).",
+    "Before erasure after rest, both people are offered the wish as a video file (T-49): keepsake-export.",
+    "Preview video quality left as is (R9).",
+    "Renderer runs as a worker (headless browser capture + ffmpeg); tests use a stand-in that returns a fixed file."
+  ],
+  "provisional": [
+    {
+      "key": "videoRender.statusSize",
+      "value": "1080x1920",
+      "unit": "pixels",
+      "status": "PROVISIONAL",
+      "owner": "owner",
+      "why": "documents say portrait only"
+    },
+    {
+      "key": "videoRender.statusMaxSeconds",
+      "value": 30,
+      "unit": "seconds",
+      "status": "PROVISIONAL",
+      "owner": "owner",
+      "why": "documents give no figure"
+    }
+  ],
+  "truths": [
+    "T-04",
+    "T-05",
+    "T-49"
+  ]
+}

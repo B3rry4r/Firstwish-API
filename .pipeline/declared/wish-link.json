@@ -1,0 +1,227 @@
+{
+  "screenId": null,
+  "resource": "wish-link",
+  "sourceScreens": [],
+  "provenance": "declaration",
+  "declaredAs": "other",
+  "reads": [
+    {
+      "entity": "WishLink",
+      "fields": [
+        {
+          "name": "slug",
+          "type": "string",
+          "nullable": false,
+          "note": "readable part from the receiver's name or the wish title, lowercased a-z0-9 and '-', then '-' and 4 random characters"
+        },
+        {
+          "name": "wishId",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "active",
+          "type": "boolean",
+          "nullable": false
+        },
+        {
+          "name": "createdAt",
+          "type": "datetime",
+          "nullable": false
+        }
+      ],
+      "cardinality": "single",
+      "filtersOrSort": [],
+      "pagination": "none"
+    },
+    {
+      "entity": "PublicWishView",
+      "fields": [
+        {
+          "name": "state",
+          "type": "enum(sealed|countdown|passcode|question|open|resting|gone)",
+          "nullable": false
+        },
+        {
+          "name": "serverTime",
+          "type": "datetime",
+          "nullable": false
+        },
+        {
+          "name": "opensAt",
+          "type": "datetime",
+          "nullable": true
+        },
+        {
+          "name": "timeZone",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "styleSlug",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "kind",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "occasion",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "receiverName",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "wishNo",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "prompt",
+          "type": "string",
+          "nullable": true,
+          "note": "the question text when state=question; never the answer"
+        },
+        {
+          "name": "content",
+          "type": "object",
+          "nullable": true,
+          "note": "only when state=open: chapters with short-lived signed media URLs"
+        },
+        {
+          "name": "keepOffer",
+          "type": "object",
+          "nullable": true,
+          "note": "only when state=resting: keep prices from price-book"
+        }
+      ],
+      "cardinality": "single",
+      "filtersOrSort": [],
+      "pagination": "none"
+    }
+  ],
+  "actions": [
+    {
+      "name": "readLink",
+      "kind": "custom",
+      "entity": "PublicWishView",
+      "payload": [
+        {
+          "name": "slug",
+          "type": "string"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "PublicWishView",
+        "cardinality": "single"
+      },
+      "note": "GET /v1/w/:slug, no auth"
+    },
+    {
+      "name": "unlock",
+      "kind": "custom",
+      "entity": "PublicWishView",
+      "payload": [
+        {
+          "name": "slug",
+          "type": "string"
+        },
+        {
+          "name": "passcode",
+          "type": "string?"
+        },
+        {
+          "name": "answer",
+          "type": "string?"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "PublicWishView",
+        "cardinality": "single"
+      },
+      "note": "POST /v1/w/:slug/unlock; replaces lib/engine/unlock.ts"
+    },
+    {
+      "name": "recordOpen",
+      "kind": "custom",
+      "entity": "WishOpen",
+      "payload": [
+        {
+          "name": "slug",
+          "type": "string"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "Empty",
+        "cardinality": "single"
+      },
+      "note": "first successful open sets wish.openedAt and starts the term (wish-lifecycle)"
+    }
+  ],
+  "authContext": {
+    "requiresAuth": false,
+    "rolesObserved": []
+  },
+  "special": {
+    "realtime": false,
+    "uploads": false,
+    "downloads": false
+  },
+  "uiStatesHandled": [],
+  "uiStatesDesigned": [],
+  "stubsObserved": [
+    "STUB-9",
+    "STUB-10",
+    "STUB-21"
+  ],
+  "behaviour": [
+    "Link form: https://<site>/w/<readable>-<4 random>, e.g. /w/aisha-k7q2. Random part from a 31-character alphabet without look-alikes (no 0, o, 1, l, i); unique across all wishes.",
+    "What the link returns, by state, decided only from server time and the wish row: draft or unpaid -> gone (404 'not_here'); sealed and before opensAt -> countdown with opensAt and serverTime (no content); sealed with passcode or question and time reached -> passcode or question (no content, no answer); open -> content; resting -> seal, 'This wish is resting. Wake it.' and keep offer; deleted, erased or taken down -> gone.",
+    "Content and secret answers never leave the server before the wish may open (T-72, T-74). The phone's clock is never read.",
+    "Every wish opens at midnight in the receiver's time zone unless the sender chose 'open now' (T-72).",
+    "Wrong passcode or answer attempts are limited per link and per IP.",
+    "Links are excluded from search engines (X-Robots-Tag: noindex) (T-74).",
+    "Replaces STUB-9 (/w/mine?id=<local id>), STUB-10 and STUB-21."
+  ],
+  "provisional": [
+    {
+      "key": "wishLink.unlockTriesPerHour",
+      "value": 10,
+      "unit": "attempts per link per IP",
+      "status": "PROVISIONAL",
+      "owner": "owner",
+      "why": "documents give no figure"
+    },
+    {
+      "key": "wishLink.readablePartMaxLength",
+      "value": 24,
+      "unit": "characters",
+      "status": "PROVISIONAL",
+      "owner": "owner",
+      "why": "documents give no figure"
+    },
+    {
+      "key": "wishLink.publicReadsPerMinutePerIp",
+      "value": 60,
+      "unit": "requests",
+      "status": "PROVISIONAL",
+      "owner": "owner",
+      "why": "documents give no figure"
+    }
+  ],
+  "truths": [
+    "T-47",
+    "T-72",
+    "T-74"
+  ],
+  "supersedes": [
+    "S-4",
+    "S-5"
+  ]
+}

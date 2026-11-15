@@ -1,0 +1,133 @@
+{
+  "screenId": null,
+  "resource": "audit-log",
+  "sourceScreens": [],
+  "provenance": "declaration",
+  "declaredAs": "other",
+  "reads": [
+    {
+      "entity": "AuditEntry",
+      "fields": [
+        {
+          "name": "id",
+          "type": "string",
+          "nullable": false,
+          "note": "UUIDv7, issued by the server"
+        },
+        {
+          "name": "actorType",
+          "type": "enum(staff|account|system)",
+          "nullable": false
+        },
+        {
+          "name": "actorId",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "action",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "subjectType",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "subjectId",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "before",
+          "type": "json",
+          "nullable": true
+        },
+        {
+          "name": "after",
+          "type": "json",
+          "nullable": true
+        },
+        {
+          "name": "ip",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "requestId",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "createdAt",
+          "type": "datetime",
+          "nullable": false
+        }
+      ],
+      "cardinality": "list",
+      "filtersOrSort": [
+        "createdAt desc"
+      ],
+      "pagination": "paged"
+    }
+  ],
+  "actions": [
+    {
+      "name": "listAudit",
+      "kind": "custom",
+      "entity": "AuditEntry",
+      "payload": [
+        {
+          "name": "subjectType",
+          "type": "string?"
+        },
+        {
+          "name": "actorId",
+          "type": "string?"
+        },
+        {
+          "name": "from",
+          "type": "date?"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "AuditEntry",
+        "cardinality": "list"
+      },
+      "roles": [
+        "owner",
+        "finance"
+      ]
+    }
+  ],
+  "authContext": {
+    "requiresAuth": true,
+    "rolesObserved": [
+      "owner",
+      "finance"
+    ]
+  },
+  "special": {
+    "realtime": false,
+    "uploads": false,
+    "downloads": false
+  },
+  "uiStatesHandled": [],
+  "uiStatesDesigned": [],
+  "stubsObserved": [],
+  "behaviour": [
+    "Append-only. Every staff write, every price-book change, every refund, ban, takedown, style move and role change, and every sign-in of staff.",
+    "Never edited or deleted by any route."
+  ],
+  "provisional": [
+    {
+      "key": "auditLog.retention",
+      "value": 6,
+      "unit": "years",
+      "status": "PROVISIONAL",
+      "owner": "owner",
+      "why": "documents give no figure; matches the ledger retention"
+    }
+  ]
+}

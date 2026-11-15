@@ -1,0 +1,214 @@
+{
+  "entries": [
+    {
+      "id": "S-1",
+      "asBuilt": "money as naira text and numbers: catalog.ts:386-413 price \"₦3,000\" strings; maker.ts:412 naira() parses text; maker.ts:426 Math.round(naira(e.price) * (1 - OFF)); pro-data.ts:18 price: 35000 (naira); studio.ts:18-21",
+      "targetState": "integer kobo, currency NGN, over the wire and in storage; prices only from the price book",
+      "reason": "float and text money is unsafe; the ledger must equal Paystack, which works in kobo",
+      "approvedBy": "Default (lead), owner may override",
+      "approvedAt": "2026-11-15T14:45:25Z",
+      "wireVisible": true,
+      "evidenceRoot": "/home/user/Firstwish-web/"
+    },
+    {
+      "id": "S-2",
+      "asBuilt": "ids made in the browser: account.ts:78 uid = Math.random().toString(36).slice(2, 10); used by pro-data.ts:127,132,200",
+      "targetState": "server-issued UUIDv7 ids",
+      "reason": "browser ids collide across devices and cannot be trusted",
+      "approvedBy": "Default (lead), owner may override",
+      "approvedAt": "2026-11-15T14:45:25Z",
+      "wireVisible": true,
+      "evidenceRoot": "/home/user/Firstwish-web/"
+    },
+    {
+      "id": "S-3",
+      "asBuilt": "wish numbers made in the browser: maker.ts:449 wishNo = random 1000-9999 unique only in this browser",
+      "targetState": "wish number issued in payment order by the server (wish-number)",
+      "reason": "numbers must be unique and ordered across all wishes (T-57)",
+      "approvedBy": "Default (lead), owner may override",
+      "approvedAt": "2026-11-15T14:45:25Z",
+      "wireVisible": true,
+      "evidenceRoot": "/home/user/Firstwish-web/"
+    },
+    {
+      "id": "S-4",
+      "asBuilt": "share link components/app/life/sheets.tsx:16 `${origin}/w/mine?id=${wish.id}` (local id)",
+      "targetState": "public link /w/<readable>-<4 random> resolved by the server (wish-link)",
+      "reason": "the local link opens nothing on the receiver's device",
+      "approvedBy": "Default (lead), owner may override",
+      "approvedAt": "2026-11-15T14:45:25Z",
+      "wireVisible": true,
+      "evidenceRoot": "/home/user/Firstwish-web/"
+    },
+    {
+      "id": "S-5",
+      "asBuilt": "opening decided by the phone's clock: lib/engine/unlock.ts:26 t > Date.now(); passcode and answer checked on the device (unlock.ts:1)",
+      "targetState": "the server decides the state from its own time and never sends content or answers early (wish-link)",
+      "reason": "T-72, T-74; the phone clock can be changed",
+      "approvedBy": "Default (lead), owner may override",
+      "approvedAt": "2026-11-15T14:45:25Z",
+      "wireVisible": true,
+      "evidenceRoot": "/home/user/Firstwish-web/"
+    },
+    {
+      "id": "S-6",
+      "asBuilt": "sign-in accepting any six digits: components/app/AuthFlow.tsx:86 onSubmit -> done(contact); :53 sends nothing",
+      "targetState": "real one-time codes sent by SMS/WhatsApp/email and checked by the server (auth-codes)",
+      "reason": "anyone can sign in as anyone",
+      "approvedBy": "owner ruling R8 (nothing faked) and R6",
+      "approvedAt": "2026-11-15T14:45:25Z",
+      "wireVisible": true,
+      "evidenceRoot": "/home/user/Firstwish-web/"
+    },
+    {
+      "id": "S-7",
+      "asBuilt": "Google button that only continues: components/app/AuthFlow.tsx:77 onClick={() => done(\"Google account\")}",
+      "targetState": "real Google sign-in (google-identity)",
+      "reason": "fake identity",
+      "approvedBy": "owner ruling R8 (nothing faked) and R6",
+      "approvedAt": "2026-11-15T14:45:25Z",
+      "wireVisible": true,
+      "evidenceRoot": "/home/user/Firstwish-web/"
+    },
+    {
+      "id": "S-8",
+      "asBuilt": "payment that confirms after 700 ms: components/app/Pay.tsx:18 setTimeout(() => onPaid(), 700)",
+      "targetState": "Paystack start, verify and signed webhook (payments)",
+      "reason": "nothing is charged; every purchase is granted free",
+      "approvedBy": "owner ruling R8 (nothing faked) and R6",
+      "approvedAt": "2026-11-15T14:45:25Z",
+      "wireVisible": true,
+      "evidenceRoot": "/home/user/Firstwish-web/"
+    },
+    {
+      "id": "S-9",
+      "asBuilt": "localStorage fw-account holds the whole account and its wishes: lib/account.ts:53,63; lib/maker.ts:43",
+      "targetState": "the server holds the account, sides, dates and wishes; localStorage keeps only the theme (fw-mode), a remembered tab and the unsent draft",
+      "reason": "one browser is not an account; sign out erased everything (STUB-5)",
+      "approvedBy": "Default (lead), owner may override",
+      "approvedAt": "2026-11-15T14:45:25Z",
+      "wireVisible": true,
+      "evidenceRoot": "/home/user/Firstwish-web/"
+    },
+    {
+      "id": "S-10",
+      "asBuilt": "localStorage fw-maker and fw-voice-*: lib/maker.ts:28,32,35,37",
+      "targetState": "maker notes saved to the server draft on every step once signed in; voice notes uploaded to storage",
+      "reason": "drafts and voice notes are lost with the browser",
+      "approvedBy": "Default (lead), owner may override",
+      "approvedAt": "2026-11-15T14:45:25Z",
+      "wireVisible": true,
+      "evidenceRoot": "/home/user/Firstwish-web/"
+    },
+    {
+      "id": "S-11",
+      "asBuilt": "localStorage fw-pro (business, client wishes, people, invoices, logins): lib/pro-data.ts:265,307,317; lib/pro-api.ts:6",
+      "targetState": "the server (business, members, client wishes, people, invoices)",
+      "reason": "team logins can never see the business (STUB-6, STUB-11)",
+      "approvedBy": "Default (lead), owner may override",
+      "approvedAt": "2026-11-15T14:45:25Z",
+      "wireVisible": true,
+      "evidenceRoot": "/home/user/Firstwish-web/"
+    },
+    {
+      "id": "S-12",
+      "asBuilt": "localStorage fw-vault, fw-feed, fw-studio, fw-pass-at: lib/vault-api.ts:230,262; lib/feed-api.ts:186,194; lib/studio-api.ts:77,97; app/app/pass/page.tsx:18,38",
+      "targetState": "the server (Vault shoots and files, reactions/saves/follows, Studio plan/credits/reviews/drafts/submissions, Pass period)",
+      "reason": "Pass never ends, credits renew by browser clock, favourites never reach the business (STUB-7, STUB-12, STUB-17, STUB-23, STUB-24)",
+      "approvedBy": "Default (lead), owner may override",
+      "approvedAt": "2026-11-15T14:45:25Z",
+      "wireVisible": true,
+      "evidenceRoot": "/home/user/Firstwish-web/"
+    },
+    {
+      "id": "S-13",
+      "asBuilt": "photos and voice notes as data URLs: lib/maker.ts:403 toDataURL; components/app/maker/Voice.tsx:48 readAsDataURL; lib/vault-api.ts:341; lib/studio-api.ts:160; components/app/pro/ui.tsx:107",
+      "targetState": "signed uploads straight to storage, confirm step, short-lived signed reads (storage)",
+      "reason": "data URLs overflow localStorage and never reach a receiver",
+      "approvedBy": "owner ruling R2 (one storage interface, R2 and Spaces adapters)",
+      "approvedAt": "2026-11-15T14:45:25Z",
+      "wireVisible": true,
+      "evidenceRoot": "/home/user/Firstwish-web/"
+    },
+    {
+      "id": "S-14",
+      "asBuilt": "prices are literals in the web app: lib/catalog.ts:386-421, lib/account.ts:109-113 KEEPS, lib/pro-data.ts:17-23, lib/studio.ts:15-32",
+      "targetState": "the web reads GET /v1/prices; the server charges only from the price book",
+      "reason": "a price shown and a price charged must be the same number from one place",
+      "approvedBy": "Default (lead), owner may override",
+      "approvedAt": "2026-11-15T14:45:25Z",
+      "wireVisible": true,
+      "evidenceRoot": "/home/user/Firstwish-web/"
+    },
+    {
+      "id": "S-15",
+      "asBuilt": "\"40% off until 31 January\" with no date check: components/app/life/wish.ts:83-84 OFF = 0.4, OFF_LINE; lib/maker.ts:410 OFF = 0.4; lib/studio.ts:21",
+      "targetState": "the price book's promotion with endsAt 2027-02-01 00:00 Africa/Lagos, checked by the server on every quote",
+      "reason": "the discount would never end (T-26)",
+      "approvedBy": "owner ruling R5 (app and web are the truth for the date and prices)",
+      "approvedAt": "2026-11-15T14:45:25Z",
+      "wireVisible": true,
+      "evidenceRoot": "/home/user/Firstwish-web/"
+    },
+    {
+      "id": "S-16",
+      "asBuilt": "the 'Show sample wishes' switch saves fabricated rows into a real account: app/app/you/page.tsx:53-56 save({...wishes: [...sampleWishes(...)]}); gating samplesOn() lib/vault-fixtures.ts:12, lib/studio-fixtures.ts:10",
+      "targetState": "removed from production; house showcase wishes served by the server (feed, Now Showing)",
+      "reason": "fabricated data in a real account and fabricated counts and earnings",
+      "approvedBy": "owner ruling R8 (nothing faked)",
+      "approvedAt": "2026-11-15T14:45:25Z",
+      "wireVisible": true,
+      "evidenceRoot": "/home/user/Firstwish-web/"
+    },
+    {
+      "id": "S-17",
+      "asBuilt": "phone numbers kept as typed: components/app/AuthFlow.tsx:22 contact = `${cc} ${value.trim()}`; :23 accepts 7+ digits",
+      "targetState": "E.164 normalised by the server (default NG); 08031472093 and 2348031472093 are the same account",
+      "reason": "one person would get several accounts",
+      "approvedBy": "Default (lead), owner may override",
+      "approvedAt": "2026-11-15T14:45:25Z",
+      "wireVisible": true,
+      "evidenceRoot": "/home/user/Firstwish-web/"
+    },
+    {
+      "id": "S-18",
+      "asBuilt": "account created in the browser: components/app/Welcome.tsx:46 writeAccount({...}) from sessionStorage fw-pending",
+      "targetState": "account created by the server after a verified code or Google sign-in; handle uniqueness checked by the server",
+      "reason": "accounts exist only in one browser",
+      "approvedBy": "Default (lead), owner may override",
+      "approvedAt": "2026-11-15T14:45:25Z",
+      "wireVisible": true,
+      "evidenceRoot": "/home/user/Firstwish-web/"
+    },
+    {
+      "id": "S-19",
+      "asBuilt": "AI actions answer 'offline': lib/studio-api.ts:142,145",
+      "targetState": "AI port (ai-writing), credits spent only on a real answer",
+      "reason": "credits are sold but cannot be spent",
+      "approvedBy": "owner ruling R8 (AI is never faked)",
+      "approvedAt": "2026-11-15T14:45:25Z",
+      "wireVisible": true,
+      "evidenceRoot": "/home/user/Firstwish-web/"
+    },
+    {
+      "id": "S-20",
+      "asBuilt": "video promised but nothing made: app/app/wishes/[id]/page.tsx:92-93 say(\"The video will be sent to you.\")",
+      "targetState": "render job and delivery by message (video-render)",
+      "reason": "the customer is told something that never happens",
+      "approvedBy": "owner ruling R8 (nothing faked)",
+      "approvedAt": "2026-11-15T14:45:25Z",
+      "wireVisible": true,
+      "evidenceRoot": "/home/user/Firstwish-web/"
+    },
+    {
+      "id": "S-21",
+      "asBuilt": "style levels from manifests only: lib/levels.ts:58 (fetch named but not made)",
+      "targetState": "GET /v1/styles/levels served by the server, moved by staff (style-levels)",
+      "reason": "an admin move would change nothing",
+      "approvedBy": "owner ruling R9 (levels table changeable in admin)",
+      "approvedAt": "2026-11-15T14:45:25Z",
+      "wireVisible": true,
+      "evidenceRoot": "/home/user/Firstwish-web/"
+    }
+  ]
+}

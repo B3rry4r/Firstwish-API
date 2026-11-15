@@ -1,0 +1,165 @@
+{
+  "screenId": null,
+  "resource": "auth-codes",
+  "sourceScreens": [],
+  "provenance": "declaration",
+  "declaredAs": "other",
+  "reads": [
+    {
+      "entity": "AuthCode",
+      "fields": [
+        {
+          "name": "id",
+          "type": "string",
+          "nullable": false,
+          "note": "UUIDv7, issued by the server"
+        },
+        {
+          "name": "channel",
+          "type": "enum(sms|whatsapp|email)",
+          "nullable": false
+        },
+        {
+          "name": "destination",
+          "type": "string",
+          "nullable": false,
+          "note": "E.164 phone or lowercased email"
+        },
+        {
+          "name": "codeHash",
+          "type": "string",
+          "nullable": false,
+          "note": "never the code itself"
+        },
+        {
+          "name": "purpose",
+          "type": "enum(sign-in|confirm-phone|confirm-email|staff-sign-in)",
+          "nullable": false
+        },
+        {
+          "name": "attempts",
+          "type": "integer",
+          "nullable": false
+        },
+        {
+          "name": "expiresAt",
+          "type": "datetime",
+          "nullable": false
+        },
+        {
+          "name": "consumedAt",
+          "type": "datetime",
+          "nullable": true
+        },
+        {
+          "name": "ip",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "createdAt",
+          "type": "datetime",
+          "nullable": false
+        }
+      ],
+      "cardinality": "single",
+      "filtersOrSort": [],
+      "pagination": "none"
+    }
+  ],
+  "actions": [
+    {
+      "name": "requestCode",
+      "kind": "create",
+      "entity": "AuthCode",
+      "payload": [
+        {
+          "name": "contact",
+          "type": "string"
+        },
+        {
+          "name": "channel",
+          "type": "enum(sms|whatsapp|email)"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "CodeSent",
+        "cardinality": "single"
+      },
+      "note": "response never says whether an account exists; returns resendAfter seconds and the masked destination"
+    },
+    {
+      "name": "verifyCode",
+      "kind": "custom",
+      "entity": "AuthCode",
+      "payload": [
+        {
+          "name": "contact",
+          "type": "string"
+        },
+        {
+          "name": "code",
+          "type": "string"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "Session",
+        "cardinality": "single"
+      },
+      "note": "on success creates the account if none (status new) and returns access token + sets refresh cookie; isNew tells the web to show Welcome"
+    }
+  ],
+  "authContext": {
+    "requiresAuth": false,
+    "rolesObserved": []
+  },
+  "special": {
+    "realtime": false,
+    "uploads": false,
+    "downloads": false
+  },
+  "uiStatesHandled": [],
+  "uiStatesDesigned": [],
+  "stubsObserved": [
+    "STUB-2",
+    "STUB-25"
+  ],
+  "behaviour": [
+    "Codes are 6 random digits, valid 10 minutes, 5 wrong tries then the code is dead (conventions.md, Signing in).",
+    "Phone input is normalised to E.164 (default country NG) before lookup; email trimmed and lowercased.",
+    "A new code invalidates the previous unconsumed code for the same destination.",
+    "Delivery goes through messages-sms first, messages-whatsapp as the second way (conventions.md), messages-email for email.",
+    "Rate limits per destination and per IP (PROVISIONAL figures below); a limited request answers error code 'too_many_requests' with retryAfter.",
+    "Codes are compared in constant time against a peppered hash (AUTH_CODE_PEPPER).",
+    "Replaces STUB-2: any six digits never sign anyone in."
+  ],
+  "provisional": [
+    {
+      "key": "authCode.resendAfter",
+      "value": 60,
+      "unit": "seconds",
+      "status": "PROVISIONAL",
+      "owner": "owner",
+      "why": "documents give no resend gap"
+    },
+    {
+      "key": "authCode.perDestinationPerHour",
+      "value": 5,
+      "unit": "codes",
+      "status": "PROVISIONAL",
+      "owner": "owner",
+      "why": "documents say 'rate limited' with no figure"
+    },
+    {
+      "key": "authCode.perIpPerHour",
+      "value": 20,
+      "unit": "codes",
+      "status": "PROVISIONAL",
+      "owner": "owner",
+      "why": "documents give no figure"
+    }
+  ],
+  "supersedes": [
+    "S-6"
+  ]
+}

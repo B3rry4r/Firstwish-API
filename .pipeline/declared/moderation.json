@@ -1,0 +1,255 @@
+{
+  "screenId": null,
+  "resource": "moderation",
+  "sourceScreens": [],
+  "provenance": "declaration",
+  "declaredAs": "other",
+  "reads": [
+    {
+      "entity": "Report",
+      "fields": [
+        {
+          "name": "id",
+          "type": "string",
+          "nullable": false,
+          "note": "UUIDv7, issued by the server"
+        },
+        {
+          "name": "wishId",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "styleId",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "accountId",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "reason",
+          "type": "enum(this-is-me|abuse|child|copyright|other)",
+          "nullable": false
+        },
+        {
+          "name": "reporterContact",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "status",
+          "type": "enum(open|upheld|dismissed)",
+          "nullable": false
+        },
+        {
+          "name": "decidedBy",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "decidedAt",
+          "type": "datetime",
+          "nullable": true
+        },
+        {
+          "name": "createdAt",
+          "type": "datetime",
+          "nullable": false
+        }
+      ],
+      "cardinality": "list",
+      "filtersOrSort": [
+        "createdAt"
+      ],
+      "pagination": "paged"
+    },
+    {
+      "entity": "Ban",
+      "fields": [
+        {
+          "name": "id",
+          "type": "string",
+          "nullable": false,
+          "note": "UUIDv7, issued by the server"
+        },
+        {
+          "name": "accountId",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "scope",
+          "type": "enum(publishing|account)",
+          "nullable": false
+        },
+        {
+          "name": "reason",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "until",
+          "type": "datetime",
+          "nullable": true
+        },
+        {
+          "name": "by",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "createdAt",
+          "type": "datetime",
+          "nullable": false
+        }
+      ],
+      "cardinality": "list",
+      "filtersOrSort": [],
+      "pagination": "none"
+    }
+  ],
+  "actions": [
+    {
+      "name": "reportWish",
+      "kind": "create",
+      "entity": "Report",
+      "payload": [
+        {
+          "name": "slug",
+          "type": "string"
+        },
+        {
+          "name": "reason",
+          "type": "string"
+        },
+        {
+          "name": "note",
+          "type": "string?"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "Report",
+        "cardinality": "single"
+      },
+      "note": "public, no account"
+    },
+    {
+      "name": "takeDownThisIsMe",
+      "kind": "custom",
+      "entity": "Report",
+      "payload": [
+        {
+          "name": "slug",
+          "type": "string"
+        },
+        {
+          "name": "contact",
+          "type": "string"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "Report",
+        "cardinality": "single"
+      },
+      "note": "comes down at once, reviewed after (T-53)"
+    },
+    {
+      "name": "decideReport",
+      "kind": "update",
+      "entity": "Report",
+      "payload": [
+        {
+          "name": "id",
+          "type": "string"
+        },
+        {
+          "name": "decision",
+          "type": "enum(upheld|dismissed)"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "Report",
+        "cardinality": "single"
+      },
+      "roles": [
+        "moderator",
+        "owner"
+      ]
+    },
+    {
+      "name": "ban",
+      "kind": "create",
+      "entity": "Ban",
+      "payload": [
+        {
+          "name": "accountId",
+          "type": "string"
+        },
+        {
+          "name": "scope",
+          "type": "string"
+        },
+        {
+          "name": "reason",
+          "type": "string"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "Ban",
+        "cardinality": "single"
+      },
+      "roles": [
+        "moderator",
+        "owner"
+      ]
+    }
+  ],
+  "authContext": {
+    "requiresAuth": false,
+    "rolesObserved": [
+      "moderator",
+      "owner",
+      "public"
+    ]
+  },
+  "special": {
+    "realtime": false,
+    "uploads": false,
+    "downloads": false
+  },
+  "uiStatesHandled": [],
+  "uiStatesDesigned": [],
+  "stubsObserved": [],
+  "behaviour": [
+    "'This is me, take it down' hides a public wish at once (back to private) and opens a review (T-53).",
+    "Every report is decided within 24 hours (T-76); upheld reports can remove publishing or ban the account (T-55).",
+    "A receiver messaged at publishing can refuse; refusal makes the wish private (T-52)."
+  ],
+  "provisional": [
+    {
+      "key": "moderation.reportsPerContactPerDay",
+      "value": 10,
+      "unit": "reports",
+      "status": "PROVISIONAL",
+      "owner": "owner",
+      "why": "documents give no figure"
+    },
+    {
+      "key": "moderation.upheldReportsBeforePublishingBan",
+      "value": 3,
+      "unit": "upheld reports",
+      "status": "PROVISIONAL",
+      "owner": "owner",
+      "why": "documents say abusers lose publishing, no figure"
+    }
+  ],
+  "truths": [
+    "T-52",
+    "T-53",
+    "T-55",
+    "T-76"
+  ]
+}

@@ -1,0 +1,218 @@
+{
+  "screenId": null,
+  "resource": "royalties-payouts",
+  "sourceScreens": [],
+  "provenance": "declaration",
+  "declaredAs": "ledger",
+  "integration": {
+    "provider": "paystack-transfers",
+    "direction": [
+      "outbound",
+      "webhook-inbound"
+    ],
+    "envVars": [
+      "PAYSTACK_SECRET_KEY",
+      "PAYSTACK_PUBLIC_KEY",
+      "PAYSTACK_CALLBACK_URL"
+    ],
+    "sandbox": true,
+    "testStandIn": "tests bind the port to an in-memory stand-in; no live call is made from any test or agent run"
+  },
+  "reads": [
+    {
+      "entity": "RoyaltyAccrual",
+      "fields": [
+        {
+          "name": "id",
+          "type": "string",
+          "nullable": false,
+          "note": "UUIDv7, issued by the server"
+        },
+        {
+          "name": "creatorId",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "styleSlug",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "paymentId",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "basis",
+          "type": "enum(premium-style|pro-wish|template-share)",
+          "nullable": false
+        },
+        {
+          "name": "amountKobo",
+          "type": "integer",
+          "nullable": false
+        },
+        {
+          "name": "month",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "createdAt",
+          "type": "datetime",
+          "nullable": false
+        }
+      ],
+      "cardinality": "list",
+      "filtersOrSort": [
+        "createdAt desc"
+      ],
+      "pagination": "paged"
+    },
+    {
+      "entity": "Payout",
+      "fields": [
+        {
+          "name": "id",
+          "type": "string",
+          "nullable": false,
+          "note": "UUIDv7, issued by the server"
+        },
+        {
+          "name": "creatorId",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "month",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "amountKobo",
+          "type": "integer",
+          "nullable": false
+        },
+        {
+          "name": "status",
+          "type": "enum(pending|sent|succeeded|failed)",
+          "nullable": false
+        },
+        {
+          "name": "providerReference",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "bankAccountId",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "createdAt",
+          "type": "datetime",
+          "nullable": false
+        }
+      ],
+      "cardinality": "list",
+      "filtersOrSort": [
+        "createdAt desc"
+      ],
+      "pagination": "paged"
+    }
+  ],
+  "actions": [
+    {
+      "name": "getEarnings",
+      "kind": "custom",
+      "entity": "RoyaltyAccrual",
+      "payload": [],
+      "expectedResponse": {
+        "entity": "RoyaltyAccrual",
+        "cardinality": "list"
+      }
+    },
+    {
+      "name": "getPayouts",
+      "kind": "custom",
+      "entity": "Payout",
+      "payload": [],
+      "expectedResponse": {
+        "entity": "Payout",
+        "cardinality": "list"
+      }
+    },
+    {
+      "name": "addBankAccount",
+      "kind": "create",
+      "entity": "BankAccount",
+      "payload": [
+        {
+          "name": "bankCode",
+          "type": "string"
+        },
+        {
+          "name": "accountNumber",
+          "type": "string"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "BankAccount",
+        "cardinality": "single"
+      },
+      "note": "resolved and made a Paystack transfer recipient"
+    },
+    {
+      "name": "approvePayoutRun",
+      "kind": "custom",
+      "entity": "Payout",
+      "payload": [
+        {
+          "name": "month",
+          "type": "string"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "Payout",
+        "cardinality": "list"
+      },
+      "roles": [
+        "finance",
+        "owner"
+      ]
+    }
+  ],
+  "authContext": {
+    "requiresAuth": true,
+    "rolesObserved": [
+      "creator",
+      "finance",
+      "owner"
+    ]
+  },
+  "special": {
+    "realtime": false,
+    "uploads": false,
+    "downloads": false
+  },
+  "uiStatesHandled": [],
+  "uiStatesDesigned": [],
+  "stubsObserved": [
+    "STUB-20"
+  ],
+  "behaviour": [
+    "Royalty on a paid wish in a creator's Premium style = 20% of the premium style price paid (T-65); on a Pro wish 20% of what the business paid for that wish (T-66); the template's creator gets 25% of a royalty earned by a style built on it (T-67).",
+    "Accrued at payment success, reversed on refund; written to the ledger as royalties-payable.",
+    "Paid monthly by Paystack Transfers once a creator's balance passes the payout threshold; the threshold is not set anywhere (T-64): owner item.",
+    "Creator share on Pass wishes is not set (T-77): owner item; until set, Pass wishes accrue nothing and are listed for the owner.",
+    "Replaces STUB-20 (payouts always empty)."
+  ],
+  "truths": [
+    "T-64",
+    "T-65",
+    "T-66",
+    "T-67",
+    "T-77"
+  ]
+}

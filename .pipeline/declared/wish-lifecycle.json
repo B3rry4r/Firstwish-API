@@ -1,0 +1,293 @@
+{
+  "screenId": null,
+  "resource": "wish-lifecycle",
+  "sourceScreens": [],
+  "provenance": "declaration",
+  "declaredAs": "scheduler",
+  "reads": [
+    {
+      "entity": "Wish",
+      "fields": [
+        {
+          "name": "id",
+          "type": "string",
+          "nullable": false,
+          "note": "UUIDv7, issued by the server"
+        },
+        {
+          "name": "accountId",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "businessId",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "status",
+          "type": "enum(draft|sealed|live|resting|removed)",
+          "nullable": false
+        },
+        {
+          "name": "ticket",
+          "type": "enum(moment|keepsake|signature|premiere)",
+          "nullable": true
+        },
+        {
+          "name": "kind",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "occasion",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "styleSlug",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "opensAt",
+          "type": "datetime",
+          "nullable": true
+        },
+        {
+          "name": "timeZone",
+          "type": "string",
+          "nullable": false,
+          "note": "receiver's IANA zone"
+        },
+        {
+          "name": "weddingDate",
+          "type": "date",
+          "nullable": true
+        },
+        {
+          "name": "sealedAt",
+          "type": "datetime",
+          "nullable": true
+        },
+        {
+          "name": "openedAt",
+          "type": "datetime",
+          "nullable": true
+        },
+        {
+          "name": "endsAt",
+          "type": "datetime",
+          "nullable": true
+        },
+        {
+          "name": "restingSince",
+          "type": "datetime",
+          "nullable": true
+        },
+        {
+          "name": "keptUntil",
+          "type": "datetime",
+          "nullable": true
+        },
+        {
+          "name": "removedAt",
+          "type": "datetime",
+          "nullable": true
+        },
+        {
+          "name": "eraseAfter",
+          "type": "datetime",
+          "nullable": true
+        },
+        {
+          "name": "erasedAt",
+          "type": "datetime",
+          "nullable": true
+        },
+        {
+          "name": "keptBy",
+          "type": "enum(pass|now-showing|pro-plan|keep)",
+          "nullable": true
+        },
+        {
+          "name": "createdAt",
+          "type": "datetime",
+          "nullable": false
+        },
+        {
+          "name": "updatedAt",
+          "type": "datetime",
+          "nullable": false
+        }
+      ],
+      "cardinality": "single",
+      "filtersOrSort": [],
+      "pagination": "none"
+    },
+    {
+      "entity": "WishTransition",
+      "fields": [
+        {
+          "name": "id",
+          "type": "string",
+          "nullable": false,
+          "note": "UUIDv7, issued by the server"
+        },
+        {
+          "name": "wishId",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "from",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "to",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "cause",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "jobRunId",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "createdAt",
+          "type": "datetime",
+          "nullable": false
+        }
+      ],
+      "cardinality": "list",
+      "filtersOrSort": [],
+      "pagination": "none"
+    }
+  ],
+  "actions": [
+    {
+      "name": "seal",
+      "kind": "custom",
+      "entity": "Wish",
+      "payload": [
+        {
+          "name": "wishId",
+          "type": "string"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "Wish",
+        "cardinality": "single"
+      },
+      "note": "only after payment is verified (payments); issues wish number and link"
+    },
+    {
+      "name": "keep",
+      "kind": "custom",
+      "entity": "Wish",
+      "payload": [
+        {
+          "name": "wishId",
+          "type": "string"
+        },
+        {
+          "name": "keep",
+          "type": "enum(month|half|year)"
+        },
+        {
+          "name": "Idempotency-Key",
+          "type": "header"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "Wish",
+        "cardinality": "single"
+      },
+      "note": "paid by sender or receiver; extends a live wish or wakes a resting one by 30/182/365 days"
+    },
+    {
+      "name": "deleteWish",
+      "kind": "delete",
+      "entity": "Wish",
+      "payload": [
+        {
+          "name": "wishId",
+          "type": "string"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "Wish",
+        "cardinality": "single"
+      }
+    },
+    {
+      "name": "restoreWish",
+      "kind": "custom",
+      "entity": "Wish",
+      "payload": [
+        {
+          "name": "wishId",
+          "type": "string"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "Wish",
+        "cardinality": "single"
+      }
+    },
+    {
+      "name": "eraseNow",
+      "kind": "custom",
+      "entity": "Wish",
+      "payload": [
+        {
+          "name": "wishId",
+          "type": "string"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "Empty",
+        "cardinality": "single"
+      }
+    }
+  ],
+  "authContext": {
+    "requiresAuth": true,
+    "rolesObserved": [
+      "person",
+      "business-member"
+    ]
+  },
+  "special": {
+    "realtime": false,
+    "uploads": false,
+    "downloads": false
+  },
+  "uiStatesHandled": [],
+  "uiStatesDesigned": [],
+  "stubsObserved": [],
+  "behaviour": [
+    "States: draft -> sealed (paid) -> live (from the first opening) -> resting (term ended) -> erased 12 months (365 days) after resting began unless kept or woken. Delete from any state -> removed; restorable for 30 days, then erased.",
+    "Term starts at openedAt: endsAt = openedAt + term (moment 7, keepsake 14, signature 30, premiere 60 days) (T-44).",
+    "Wedding wishes count the term from the wedding date (endsAt = weddingDate 00:00 in timeZone + term); a Save the date lives until the day, then its term (T-45).",
+    "A keep moves endsAt forward (live) or sets status live with endsAt = now + keep days (resting). Pass (while active), Now Showing (while public) and a Pro plan (wishes on a business page, while active) keep a wish live without a keep (T-16).",
+    "Moment cannot be kept (T-02).",
+    "Erase now removes the wish and its files for good within 24 hours (T-50). Before erasure after rest, both people are offered the wish as a video file (T-49).",
+    "Every transition is made by the server (jobs or a verified request), recorded in WishTransition; the client never sets status.",
+    "Pro client wishes use sealed, live, resting (T-43)."
+  ],
+  "truths": [
+    "T-43",
+    "T-44",
+    "T-45",
+    "T-48",
+    "T-49",
+    "T-50"
+  ]
+}

@@ -1,0 +1,177 @@
+{
+  "screenId": null,
+  "resource": "now-showing-review",
+  "sourceScreens": [],
+  "provenance": "declaration",
+  "declaredAs": "other",
+  "reads": [
+    {
+      "entity": "PublishRequest",
+      "fields": [
+        {
+          "name": "id",
+          "type": "string",
+          "nullable": false,
+          "note": "UUIDv7, issued by the server"
+        },
+        {
+          "name": "wishId",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "level",
+          "type": "enum(public-link|now-showing)",
+          "nullable": false
+        },
+        {
+          "name": "publicChapters",
+          "type": "array<string>",
+          "nullable": false
+        },
+        {
+          "name": "consentConfirmed",
+          "type": "boolean",
+          "nullable": false
+        },
+        {
+          "name": "screening",
+          "type": "enum(pass|review|reject)",
+          "nullable": false
+        },
+        {
+          "name": "receiverNotifiedAt",
+          "type": "datetime",
+          "nullable": true
+        },
+        {
+          "name": "receiverRefusedAt",
+          "type": "datetime",
+          "nullable": true
+        },
+        {
+          "name": "status",
+          "type": "enum(waiting|approved|refused|withdrawn)",
+          "nullable": false
+        },
+        {
+          "name": "reviewedBy",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "createdAt",
+          "type": "datetime",
+          "nullable": false
+        }
+      ],
+      "cardinality": "list",
+      "filtersOrSort": [
+        "createdAt"
+      ],
+      "pagination": "paged"
+    }
+  ],
+  "actions": [
+    {
+      "name": "requestPublish",
+      "kind": "create",
+      "entity": "PublishRequest",
+      "payload": [
+        {
+          "name": "wishId",
+          "type": "string"
+        },
+        {
+          "name": "level",
+          "type": "string"
+        },
+        {
+          "name": "publicChapters",
+          "type": "array<string>"
+        },
+        {
+          "name": "consent",
+          "type": "boolean"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "PublishRequest",
+        "cardinality": "single"
+      }
+    },
+    {
+      "name": "reviewPublish",
+      "kind": "update",
+      "entity": "PublishRequest",
+      "payload": [
+        {
+          "name": "id",
+          "type": "string"
+        },
+        {
+          "name": "decision",
+          "type": "enum(approved|refused)"
+        },
+        {
+          "name": "reason",
+          "type": "string?"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "PublishRequest",
+        "cardinality": "single"
+      },
+      "roles": [
+        "moderator",
+        "owner"
+      ]
+    },
+    {
+      "name": "withdraw",
+      "kind": "custom",
+      "entity": "PublishRequest",
+      "payload": [
+        {
+          "name": "id",
+          "type": "string"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "PublishRequest",
+        "cardinality": "single"
+      }
+    }
+  ],
+  "authContext": {
+    "requiresAuth": true,
+    "rolesObserved": [
+      "creator",
+      "moderator",
+      "owner"
+    ]
+  },
+  "special": {
+    "realtime": false,
+    "uploads": false,
+    "downloads": false
+  },
+  "uiStatesHandled": [],
+  "uiStatesDesigned": [],
+  "stubsObserved": [],
+  "behaviour": [
+    "Only an opened wish can be published; the sender confirms consent; needs a creator profile with a confirmed phone (T-25, T-51).",
+    "Automatic screening then a person before anything reaches the gallery (T-54); the receiver is messaged directly (T-52).",
+    "A public wish cannot carry the sender's own song; public cuts use the licensed library (T-56).",
+    "Now Showing keeps the wish live while public (T-16). House showcase wishes are served by the server (replaces the sample switch, S-16)."
+  ],
+  "truths": [
+    "T-16",
+    "T-25",
+    "T-51",
+    "T-52",
+    "T-54",
+    "T-55",
+    "T-56"
+  ]
+}

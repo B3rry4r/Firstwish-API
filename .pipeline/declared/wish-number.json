@@ -1,0 +1,72 @@
+{
+  "screenId": null,
+  "resource": "wish-number",
+  "sourceScreens": [],
+  "provenance": "declaration",
+  "declaredAs": "reference-data",
+  "reads": [
+    {
+      "entity": "WishNumberSequence",
+      "fields": [
+        {
+          "name": "next",
+          "type": "integer",
+          "nullable": false
+        },
+        {
+          "name": "updatedAt",
+          "type": "datetime",
+          "nullable": false
+        }
+      ],
+      "cardinality": "single",
+      "filtersOrSort": [],
+      "pagination": "none"
+    }
+  ],
+  "actions": [
+    {
+      "name": "issueNumber",
+      "kind": "custom",
+      "entity": "Wish",
+      "payload": [
+        {
+          "name": "wishId",
+          "type": "string"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "Wish",
+        "cardinality": "single"
+      },
+      "note": "internal, called inside the seal transaction; not a public route"
+    }
+  ],
+  "authContext": {
+    "requiresAuth": true,
+    "rolesObserved": []
+  },
+  "special": {
+    "realtime": false,
+    "uploads": false,
+    "downloads": false
+  },
+  "uiStatesHandled": [],
+  "uiStatesDesigned": [],
+  "stubsObserved": [
+    "STUB-8"
+  ],
+  "behaviour": [
+    "A wish gets its number when it is paid for, in payment order, from one database sequence; never reused, never chosen by a client (T-57).",
+    "Shown as 'Wish № 0412': at least 4 digits, zero padded; past 9999 it simply grows.",
+    "Wish № 0001 is Aisha's house showcase wish (T-57); the sequence for customers starts at 0002.",
+    "Business client wishes draw from the same sequence.",
+    "Replaces STUB-8 (random 4-digit numbers made in the browser)."
+  ],
+  "truths": [
+    "T-57"
+  ],
+  "supersedes": [
+    "S-3"
+  ]
+}

@@ -1,0 +1,161 @@
+{
+  "screenId": null,
+  "resource": "google-identity",
+  "sourceScreens": [],
+  "provenance": "declaration",
+  "declaredAs": "integration",
+  "integration": {
+    "provider": "google-oauth",
+    "direction": [
+      "outbound"
+    ],
+    "envVars": [
+      "GOOGLE_CLIENT_ID",
+      "GOOGLE_CLIENT_SECRET",
+      "GOOGLE_REDIRECT_URI"
+    ],
+    "sandbox": true,
+    "testStandIn": "tests bind the port to an in-memory stand-in; no live call is made from any test or agent run"
+  },
+  "reads": [
+    {
+      "entity": "ExternalIdentity",
+      "fields": [
+        {
+          "name": "id",
+          "type": "string",
+          "nullable": false,
+          "note": "UUIDv7, issued by the server"
+        },
+        {
+          "name": "accountId",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "provider",
+          "type": "enum(google)",
+          "nullable": false
+        },
+        {
+          "name": "subject",
+          "type": "string",
+          "nullable": false,
+          "note": "Google 'sub', unique"
+        },
+        {
+          "name": "email",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "emailVerified",
+          "type": "boolean",
+          "nullable": false
+        },
+        {
+          "name": "createdAt",
+          "type": "datetime",
+          "nullable": false
+        }
+      ],
+      "cardinality": "list",
+      "filtersOrSort": [],
+      "pagination": "none"
+    }
+  ],
+  "actions": [
+    {
+      "name": "startGoogle",
+      "kind": "custom",
+      "entity": "ExternalIdentity",
+      "payload": [
+        {
+          "name": "returnTo",
+          "type": "string"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "RedirectUrl",
+        "cardinality": "single"
+      },
+      "note": "authorization code flow with PKCE and state"
+    },
+    {
+      "name": "googleCallback",
+      "kind": "custom",
+      "entity": "ExternalIdentity",
+      "payload": [
+        {
+          "name": "code",
+          "type": "string"
+        },
+        {
+          "name": "state",
+          "type": "string"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "Session",
+        "cardinality": "single"
+      }
+    },
+    {
+      "name": "linkGoogle",
+      "kind": "create",
+      "entity": "ExternalIdentity",
+      "payload": [
+        {
+          "name": "code",
+          "type": "string"
+        },
+        {
+          "name": "state",
+          "type": "string"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "ExternalIdentity",
+        "cardinality": "single"
+      }
+    },
+    {
+      "name": "unlinkGoogle",
+      "kind": "delete",
+      "entity": "ExternalIdentity",
+      "payload": [
+        {
+          "name": "id",
+          "type": "string"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "Empty",
+        "cardinality": "single"
+      }
+    }
+  ],
+  "authContext": {
+    "requiresAuth": false,
+    "rolesObserved": []
+  },
+  "special": {
+    "realtime": false,
+    "uploads": false,
+    "downloads": false
+  },
+  "uiStatesHandled": [],
+  "uiStatesDesigned": [],
+  "stubsObserved": [
+    "STUB-3"
+  ],
+  "behaviour": [
+    "Real Google sign-in (OpenID Connect): the server exchanges the code, verifies the ID token signature, audience and issuer.",
+    "A verified Google email that matches an existing account's email signs into that account; otherwise a new account is created.",
+    "An account can always also sign in by code; unlinking Google is refused if it is the only way in.",
+    "Replaces STUB-3 (the button that only continued as 'Google account')."
+  ],
+  "supersedes": [
+    "S-7"
+  ]
+}

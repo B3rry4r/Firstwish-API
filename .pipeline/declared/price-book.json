@@ -1,0 +1,462 @@
+{
+  "screenId": null,
+  "resource": "price-book",
+  "sourceScreens": [],
+  "provenance": "declaration",
+  "declaredAs": "reference-data",
+  "reads": [
+    {
+      "entity": "PriceBookVersion",
+      "fields": [
+        {
+          "name": "version",
+          "type": "integer",
+          "nullable": false
+        },
+        {
+          "name": "effectiveFrom",
+          "type": "datetime",
+          "nullable": false
+        },
+        {
+          "name": "createdBy",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "note",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "createdAt",
+          "type": "datetime",
+          "nullable": false
+        }
+      ],
+      "cardinality": "list",
+      "filtersOrSort": [
+        "version desc"
+      ],
+      "pagination": "none"
+    },
+    {
+      "entity": "Price",
+      "fields": [
+        {
+          "name": "sku",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "listKobo",
+          "type": "integer",
+          "nullable": false
+        },
+        {
+          "name": "promoKobo",
+          "type": "integer",
+          "nullable": true
+        },
+        {
+          "name": "discountable",
+          "type": "boolean",
+          "nullable": false
+        },
+        {
+          "name": "vatIncluded",
+          "type": "boolean",
+          "nullable": false
+        },
+        {
+          "name": "version",
+          "type": "integer",
+          "nullable": false
+        }
+      ],
+      "cardinality": "list",
+      "filtersOrSort": [],
+      "pagination": "none"
+    },
+    {
+      "entity": "Promotion",
+      "fields": [
+        {
+          "name": "id",
+          "type": "string",
+          "nullable": false,
+          "note": "UUIDv7, issued by the server"
+        },
+        {
+          "name": "label",
+          "type": "string",
+          "nullable": false,
+          "note": "customer line: '40% off until 31 January'"
+        },
+        {
+          "name": "percentOff",
+          "type": "integer",
+          "nullable": false
+        },
+        {
+          "name": "endsAt",
+          "type": "datetime",
+          "nullable": false,
+          "note": "2027-01-31T23:00:00Z = 1 February 2027 00:00 Africa/Lagos"
+        },
+        {
+          "name": "appliesTo",
+          "type": "array<string>",
+          "nullable": false
+        }
+      ],
+      "cardinality": "single",
+      "filtersOrSort": [],
+      "pagination": "none"
+    },
+    {
+      "entity": "Entitlements",
+      "fields": [
+        {
+          "name": "tickets",
+          "type": "object",
+          "nullable": false,
+          "note": "term days, photos, clips, style level, keepable"
+        },
+        {
+          "name": "keepsakeExtrasCeilingKobo",
+          "type": "integer",
+          "nullable": false
+        },
+        {
+          "name": "passWishes",
+          "type": "integer",
+          "nullable": false
+        },
+        {
+          "name": "passUpgrades",
+          "type": "integer",
+          "nullable": false
+        },
+        {
+          "name": "conciergePassDiscountPercent",
+          "type": "integer",
+          "nullable": false
+        },
+        {
+          "name": "vatRate",
+          "type": "decimal-string",
+          "nullable": false
+        },
+        {
+          "name": "creator",
+          "type": "object",
+          "nullable": false,
+          "note": "credits, reviews, costs, share 20%, template royalty 25%"
+        },
+        {
+          "name": "pro",
+          "type": "object",
+          "nullable": false,
+          "note": "wishes, logins, vault GB, pack days 90"
+        }
+      ],
+      "cardinality": "single",
+      "filtersOrSort": [],
+      "pagination": "none"
+    }
+  ],
+  "actions": [
+    {
+      "name": "getPrices",
+      "kind": "custom",
+      "entity": "Price",
+      "payload": [],
+      "expectedResponse": {
+        "entity": "Price",
+        "cardinality": "list"
+      },
+      "note": "GET /v1/prices, public; returns the price now (promo if before endsAt, else list) plus list, the promotion line and endsAt"
+    },
+    {
+      "name": "draftVersion",
+      "kind": "create",
+      "entity": "PriceBookVersion",
+      "payload": [
+        {
+          "name": "prices",
+          "type": "array<Price>"
+        },
+        {
+          "name": "effectiveFrom",
+          "type": "datetime"
+        },
+        {
+          "name": "note",
+          "type": "string"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "PriceBookVersion",
+        "cardinality": "single"
+      },
+      "roles": [
+        "owner",
+        "finance"
+      ]
+    },
+    {
+      "name": "publishVersion",
+      "kind": "custom",
+      "entity": "PriceBookVersion",
+      "payload": [
+        {
+          "name": "version",
+          "type": "integer"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "PriceBookVersion",
+        "cardinality": "single"
+      },
+      "roles": [
+        "owner"
+      ]
+    }
+  ],
+  "authContext": {
+    "requiresAuth": true,
+    "rolesObserved": [
+      "public",
+      "owner",
+      "finance"
+    ]
+  },
+  "special": {
+    "realtime": false,
+    "uploads": false,
+    "downloads": false
+  },
+  "uiStatesHandled": [],
+  "uiStatesDesigned": [],
+  "stubsObserved": [
+    "STUB-18"
+  ],
+  "behaviour": [
+    "The only source of every price. Prices are integer kobo. The promotion is a row with an end date; after endsAt the price now is the list price, checked by the server on every quote (no client date check).",
+    "Seed (from the app, R5): see 'seed' below. Keeps and Vault space are never discounted (T-29, T-39). The 40% off ends 31 January 2027 and is never extended (T-26).",
+    "Entitlements seed: term days 7/14/30/60 (account.ts:108); photos 6/15/15/20; clips on Premiere only, 3 of 15 s; Keepsake extras ceiling 750000 kobo (catalog.ts:415); Pass 20 wishes and 4 upgrades (catalog.ts:418); Concierge 20% off for Pass holders; VAT 7.5% included on Pro (pro-data.ts:26); creator Open 3 credits once and 1 review a month, Creator 10 credits and 2 reviews a month, draft 4 credits, change 1 credit (studio.ts:15-20); Pro Starter 10 wishes/1 login/100 GB, Studio 35/3/500 GB, pack 5 wishes/20 GB for 90 days (pro-data.ts:12-20).",
+    "'Become the next ticket' is priced as the difference between the two tickets' prices now, less extras already paid (T-32). A business that joined before endsAt keeps its promo Pro price for 12 months from joining (T-38).",
+    "Changed only by staff (owner publishes; finance may draft); every version is kept and every change is in audit-log. A quote records the version it used.",
+    "International (USD) prices exist only in the product plan (T-27); not seeded until the owner decides to sell in dollars."
+  ],
+  "truths": [
+    "T-26",
+    "T-28",
+    "T-29",
+    "T-30",
+    "T-31",
+    "T-33",
+    "T-36",
+    "T-37",
+    "T-38",
+    "T-39",
+    "T-40",
+    "T-41"
+  ],
+  "supersedes": [
+    "S-1",
+    "S-15"
+  ],
+  "seed": {
+    "currency": "NGN",
+    "promotion": {
+      "label": "40% off until 31 January",
+      "percentOff": 40,
+      "endsAt": "2027-01-31T23:00:00Z",
+      "endsAtLocal": "2027-02-01T00:00:00 Africa/Lagos"
+    },
+    "prices": [
+      {
+        "sku": "ticket.moment",
+        "name": "Moment",
+        "listKobo": 500000,
+        "promoKobo": 300000,
+        "source": "catalog.ts:386"
+      },
+      {
+        "sku": "ticket.keepsake",
+        "name": "Keepsake",
+        "listKobo": 1000000,
+        "promoKobo": 600000,
+        "source": "catalog.ts:387"
+      },
+      {
+        "sku": "ticket.signature",
+        "name": "Signature",
+        "listKobo": 2000000,
+        "promoKobo": 1200000,
+        "source": "catalog.ts:388"
+      },
+      {
+        "sku": "ticket.premiere",
+        "name": "Premiere",
+        "listKobo": 3500000,
+        "promoKobo": 2100000,
+        "source": "catalog.ts:389"
+      },
+      {
+        "sku": "extra.five-photos",
+        "name": "Five more photos",
+        "listKobo": 200000,
+        "promoKobo": 120000,
+        "source": "catalog.ts:405"
+      },
+      {
+        "sku": "extra.premium-style",
+        "name": "A premium style",
+        "listKobo": 400000,
+        "promoKobo": 240000,
+        "source": "catalog.ts:406; studio.ts:21"
+      },
+      {
+        "sku": "extra.portrait-video",
+        "name": "Portrait video for WhatsApp status",
+        "listKobo": 350000,
+        "promoKobo": 210000,
+        "source": "catalog.ts:407"
+      },
+      {
+        "sku": "extra.qr-card",
+        "name": "Print-ready QR card",
+        "listKobo": 250000,
+        "promoKobo": 150000,
+        "source": "catalog.ts:408"
+      },
+      {
+        "sku": "extra.clip-15s",
+        "name": "One more video clip, 15 seconds",
+        "listKobo": 250000,
+        "promoKobo": 150000,
+        "source": "catalog.ts:409"
+      },
+      {
+        "sku": "extra.clip-60s",
+        "name": "A long clip, up to 60 seconds",
+        "listKobo": 500000,
+        "promoKobo": 300000,
+        "source": "catalog.ts:410"
+      },
+      {
+        "sku": "keep.month",
+        "name": "Keep it one more month (30 days)",
+        "listKobo": 150000,
+        "promoKobo": null,
+        "source": "catalog.ts:411; account.ts:110; never discounted"
+      },
+      {
+        "sku": "keep.half",
+        "name": "Keep it six months (182 days)",
+        "listKobo": 400000,
+        "promoKobo": null,
+        "source": "catalog.ts:412; account.ts:111; never discounted"
+      },
+      {
+        "sku": "keep.year",
+        "name": "Keep it a year (365 days)",
+        "listKobo": 600000,
+        "promoKobo": null,
+        "source": "catalog.ts:413; account.ts:112; never discounted"
+      },
+      {
+        "sku": "pass.year",
+        "name": "Firstwish Pass, a year",
+        "listKobo": 3500000,
+        "promoKobo": 2000000,
+        "source": "catalog.ts:421"
+      },
+      {
+        "sku": "concierge.single",
+        "name": "Concierge, one wish",
+        "listKobo": 2500000,
+        "promoKobo": 1500000,
+        "source": "catalog.ts:397"
+      },
+      {
+        "sku": "concierge.rush",
+        "name": "Concierge rush within 1 hour",
+        "listKobo": 800000,
+        "promoKobo": 480000,
+        "source": "product-plan.txt L142 (T-36); not in the app"
+      },
+      {
+        "sku": "pro.starter",
+        "name": "Pro Starter, a month (VAT included)",
+        "listKobo": 5800000,
+        "promoKobo": 3500000,
+        "source": "pro-data.ts:18"
+      },
+      {
+        "sku": "pro.studio",
+        "name": "Pro Studio, a month (VAT included)",
+        "listKobo": 17500000,
+        "promoKobo": 10500000,
+        "source": "pro-data.ts:19"
+      },
+      {
+        "sku": "pro.pack",
+        "name": "Wish pack, 5 Signature wishes (VAT included)",
+        "listKobo": 2900000,
+        "promoKobo": 1750000,
+        "source": "pro-data.ts:20"
+      },
+      {
+        "sku": "vault.block",
+        "name": "Vault space, 100 GB a month",
+        "listKobo": 300000,
+        "promoKobo": null,
+        "source": "pro-data.ts:23; never discounted"
+      },
+      {
+        "sku": "vault.block-bulk",
+        "name": "Vault space past 1 TB, 100 GB a month",
+        "listKobo": 250000,
+        "promoKobo": null,
+        "source": "pro-data.ts:23; never discounted"
+      },
+      {
+        "sku": "creator.plan",
+        "name": "Creator plan, a month",
+        "listKobo": 750000,
+        "promoKobo": null,
+        "source": "studio.ts:29; no 40% off shown in the app"
+      },
+      {
+        "sku": "creator.signed",
+        "name": "Signed, a month",
+        "listKobo": 500000,
+        "promoKobo": null,
+        "source": "studio.ts:32"
+      },
+      {
+        "sku": "creator.credit-pack",
+        "name": "Credit pack, 5 AI credits",
+        "listKobo": 300000,
+        "promoKobo": null,
+        "source": "studio.ts:18"
+      },
+      {
+        "sku": "creator.extra-review",
+        "name": "One more review this month",
+        "listKobo": 250000,
+        "promoKobo": null,
+        "source": "studio.ts:19"
+      }
+    ]
+  }
+}

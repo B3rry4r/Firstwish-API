@@ -1,0 +1,298 @@
+{
+  "screenId": null,
+  "resource": "payments",
+  "sourceScreens": [],
+  "provenance": "declaration",
+  "declaredAs": "integration",
+  "integration": {
+    "provider": "paystack",
+    "direction": [
+      "outbound",
+      "webhook-inbound"
+    ],
+    "envVars": [
+      "PAYSTACK_SECRET_KEY",
+      "PAYSTACK_PUBLIC_KEY",
+      "PAYSTACK_CALLBACK_URL"
+    ],
+    "sandbox": true,
+    "testStandIn": "tests bind the port to an in-memory stand-in; no live call is made from any test or agent run",
+    "note": "Paystack signs webhooks with the secret key itself; there is no separate webhook secret."
+  },
+  "reads": [
+    {
+      "entity": "Payment",
+      "fields": [
+        {
+          "name": "id",
+          "type": "string",
+          "nullable": false,
+          "note": "UUIDv7, issued by the server"
+        },
+        {
+          "name": "accountId",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "businessId",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "payerContact",
+          "type": "string",
+          "nullable": true,
+          "note": "a receiver paying a keep has no account"
+        },
+        {
+          "name": "purpose",
+          "type": "enum(ticket|extra|upgrade|keep|pass|pro-plan|wish-pack|vault-space|concierge|creator-plan|signed|credit-pack|extra-review)",
+          "nullable": false
+        },
+        {
+          "name": "subjectId",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "lines",
+          "type": "array<PriceLine>",
+          "nullable": false
+        },
+        {
+          "name": "amountKobo",
+          "type": "integer",
+          "nullable": false
+        },
+        {
+          "name": "currency",
+          "type": "enum(NGN)",
+          "nullable": false
+        },
+        {
+          "name": "priceBookVersion",
+          "type": "integer",
+          "nullable": false
+        },
+        {
+          "name": "status",
+          "type": "enum(started|pending|succeeded|failed|abandoned|refunded|partly-refunded)",
+          "nullable": false
+        },
+        {
+          "name": "provider",
+          "type": "enum(paystack)",
+          "nullable": false
+        },
+        {
+          "name": "providerReference",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "idempotencyKey",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "verifiedAt",
+          "type": "datetime",
+          "nullable": true
+        },
+        {
+          "name": "channel",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "feeKobo",
+          "type": "integer",
+          "nullable": true
+        },
+        {
+          "name": "createdAt",
+          "type": "datetime",
+          "nullable": false
+        },
+        {
+          "name": "updatedAt",
+          "type": "datetime",
+          "nullable": false
+        }
+      ],
+      "cardinality": "single",
+      "filtersOrSort": [],
+      "pagination": "none"
+    },
+    {
+      "entity": "WebhookEvent",
+      "fields": [
+        {
+          "name": "id",
+          "type": "string",
+          "nullable": false,
+          "note": "UUIDv7, issued by the server"
+        },
+        {
+          "name": "provider",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "eventId",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "type",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "signatureValid",
+          "type": "boolean",
+          "nullable": false
+        },
+        {
+          "name": "payload",
+          "type": "json",
+          "nullable": false
+        },
+        {
+          "name": "processedAt",
+          "type": "datetime",
+          "nullable": true
+        },
+        {
+          "name": "createdAt",
+          "type": "datetime",
+          "nullable": false
+        }
+      ],
+      "cardinality": "list",
+      "filtersOrSort": [],
+      "pagination": "none"
+    }
+  ],
+  "actions": [
+    {
+      "name": "startPayment",
+      "kind": "create",
+      "entity": "Payment",
+      "payload": [
+        {
+          "name": "purpose",
+          "type": "string"
+        },
+        {
+          "name": "subjectId",
+          "type": "string"
+        },
+        {
+          "name": "options",
+          "type": "object"
+        },
+        {
+          "name": "Idempotency-Key",
+          "type": "header"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "PaymentStart",
+        "cardinality": "single"
+      },
+      "note": "server prices from price-book; client sends what is bought, never an amount; returns Paystack authorization URL/access code and reference"
+    },
+    {
+      "name": "verifyPayment",
+      "kind": "custom",
+      "entity": "Payment",
+      "payload": [
+        {
+          "name": "reference",
+          "type": "string"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "Payment",
+        "cardinality": "single"
+      },
+      "note": "GET /v1/payments/:reference; server calls Paystack verify"
+    },
+    {
+      "name": "paystackWebhook",
+      "kind": "custom",
+      "entity": "WebhookEvent",
+      "payload": [
+        {
+          "name": "raw body",
+          "type": "bytes"
+        },
+        {
+          "name": "x-paystack-signature",
+          "type": "header"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "Empty",
+        "cardinality": "single"
+      },
+      "note": "POST /v1/webhooks/paystack, no user role"
+    }
+  ],
+  "authContext": {
+    "requiresAuth": true,
+    "rolesObserved": [
+      "person",
+      "business-member",
+      "creator",
+      "receiver (keep only)"
+    ]
+  },
+  "special": {
+    "realtime": false,
+    "uploads": false,
+    "downloads": false
+  },
+  "uiStatesHandled": [],
+  "uiStatesDesigned": [],
+  "stubsObserved": [
+    "STUB-1"
+  ],
+  "behaviour": [
+    "Start: the server computes the amount from price-book (current version, promotion end date) and the subject's state, creates Payment(started), calls Paystack initialize with amount in kobo and our reference.",
+    "Verify: on return from Paystack and on webhook, the server calls Paystack verify; only a verified success with matching amount, currency and reference moves the payment to succeeded.",
+    "Webhook: HMAC-SHA512 of the raw body with the Paystack secret key must equal x-paystack-signature; otherwise 401 and nothing is done. Events are stored once by event id; repeats are acknowledged and ignored.",
+    "Idempotency: Idempotency-Key on start returns the first result for a repeat; fulfilment (seal, keep, pass, plan, credits) runs exactly once per succeeded payment, inside the same transaction as its ledger rows.",
+    "A wish unlocks the moment Paystack confirms (T-73). A paid wish that fails to be delivered gets a refund (refunds).",
+    "Started payments not completed are marked abandoned by a job.",
+    "Replaces STUB-1 (confirm after 700 ms)."
+  ],
+  "provisional": [
+    {
+      "key": "payments.abandonAfter",
+      "value": 60,
+      "unit": "minutes",
+      "status": "PROVISIONAL",
+      "owner": "owner",
+      "why": "documents give no figure"
+    },
+    {
+      "key": "idempotencyKey.retention",
+      "value": 24,
+      "unit": "hours",
+      "status": "PROVISIONAL",
+      "owner": "owner",
+      "why": "documents give no figure"
+    }
+  ],
+  "truths": [
+    "T-71",
+    "T-73"
+  ],
+  "supersedes": [
+    "S-1",
+    "S-8"
+  ]
+}

@@ -1,0 +1,1063 @@
+{
+  "decisions": [
+    {
+      "id": "DEC-1",
+      "topic": "money",
+      "decision": "integer kobo, NGN, everywhere (S-1)",
+      "approvedBy": "Default (lead), owner may override",
+      "options": [
+        "integer kobo (chosen)",
+        "decimal naira",
+        "naira floats as built"
+      ],
+      "evidence": [
+        "conventions.md Shapes",
+        "S-1"
+      ],
+      "confidence": "high",
+      "executingPass": "schema pre-step, payments, ledger",
+      "decidedAt": "2026-11-15T14:45:25Z"
+    },
+    {
+      "id": "DEC-2",
+      "topic": "ids",
+      "decision": "server UUIDv7 (S-2)",
+      "approvedBy": "Default (lead), owner may override",
+      "options": [
+        "UUIDv7 (chosen)",
+        "UUIDv4",
+        "browser ids as built"
+      ],
+      "evidence": [
+        "conventions.md",
+        "S-2"
+      ],
+      "confidence": "high",
+      "executingPass": "schema pre-step",
+      "decidedAt": "2026-11-15T14:45:25Z"
+    },
+    {
+      "id": "DEC-3",
+      "topic": "wish number",
+      "decision": "one database sequence at payment, zero padded to 4; 0001 reserved for Aisha's house wish (S-3)",
+      "approvedBy": "Default (lead), owner may override",
+      "options": [
+        "sequence at payment (chosen)",
+        "sequence at draft",
+        "random as built"
+      ],
+      "evidence": [
+        "T-57",
+        "account.ts:12 'Empty until it is paid for'",
+        "STUB-8"
+      ],
+      "confidence": "high",
+      "executingPass": "wish-number",
+      "decidedAt": "2026-11-15T14:45:25Z"
+    },
+    {
+      "id": "DEC-4",
+      "topic": "public link",
+      "decision": "readable part + '-' + 4 chars from a 31-char alphabet without look-alikes (S-4)",
+      "approvedBy": "Default (lead), owner may override",
+      "options": [
+        "readable+4 (chosen)",
+        "random only",
+        "/w/mine?id= as built"
+      ],
+      "evidence": [
+        "conventions.md Ids",
+        "T-74",
+        "STUB-9"
+      ],
+      "confidence": "high",
+      "executingPass": "wish-link",
+      "decidedAt": "2026-11-15T14:45:25Z"
+    },
+    {
+      "id": "DEC-5",
+      "topic": "opening",
+      "decision": "server time decides; content held until open; midnight in receiver's zone (S-5)",
+      "approvedBy": "Default (lead), owner may override",
+      "options": [
+        "server decides (chosen)",
+        "phone clock as built"
+      ],
+      "evidence": [
+        "T-72",
+        "STUB-10"
+      ],
+      "confidence": "high",
+      "executingPass": "wish-link, jobs",
+      "decidedAt": "2026-11-15T14:45:25Z"
+    },
+    {
+      "id": "DEC-6",
+      "topic": "sign-in codes",
+      "decision": "6 digits, 10 min, 5 tries, SMS then WhatsApp, email; rate limits PROVISIONAL (S-6)",
+      "approvedBy": "owner ruling R8 for removing the fake; figures Default (lead)",
+      "options": [
+        "codes (chosen)",
+        "passwords",
+        "magic links"
+      ],
+      "evidence": [
+        "conventions.md Signing in",
+        "STUB-2"
+      ],
+      "confidence": "high",
+      "executingPass": "auth-codes",
+      "decidedAt": "2026-11-15T14:45:25Z"
+    },
+    {
+      "id": "DEC-7",
+      "topic": "Google sign-in",
+      "decision": "OIDC code flow with PKCE, server-verified ID token (S-7)",
+      "approvedBy": "Default (lead), owner may override",
+      "options": [
+        "server OIDC (chosen)",
+        "Google Identity Services one-tap token posted by the browser"
+      ],
+      "evidence": [
+        "STUB-3"
+      ],
+      "confidence": "high",
+      "executingPass": "google-identity",
+      "decidedAt": "2026-11-15T14:45:25Z"
+    },
+    {
+      "id": "DEC-8",
+      "topic": "payments",
+      "decision": "Paystack initialize/verify/webhook HMAC-SHA512, Idempotency-Key, fulfilment exactly once (S-8)",
+      "approvedBy": "Default (lead), owner may override",
+      "options": [
+        "Paystack (chosen, conventions)",
+        "Flutterwave"
+      ],
+      "evidence": [
+        "conventions.md Payments",
+        "STUB-1",
+        "T-73"
+      ],
+      "confidence": "high",
+      "executingPass": "payments",
+      "decidedAt": "2026-11-15T14:45:25Z"
+    },
+    {
+      "id": "DEC-9",
+      "topic": "local storage",
+      "decision": "server is the only truth; localStorage keeps only theme (fw-mode), a remembered tab, the unsent draft (S-9..S-12)",
+      "approvedBy": "Default (lead), owner may override",
+      "options": [
+        "server only (chosen)",
+        "offline-first sync"
+      ],
+      "evidence": [
+        "conventions.md Runtime contract",
+        "scan-map localPersistence.keys"
+      ],
+      "confidence": "high",
+      "executingPass": "every resource; Phase 6 ui-align",
+      "decidedAt": "2026-11-15T14:45:25Z"
+    },
+    {
+      "id": "DEC-10",
+      "topic": "uploads",
+      "decision": "signed browser uploads, confirm, private buckets, signed reads, sizes made on upload; adapter by STORAGE_DRIVER (S-13)",
+      "approvedBy": "owner ruling R2 for the two adapters",
+      "options": [
+        "direct-to-storage (chosen)",
+        "proxy through API"
+      ],
+      "evidence": [
+        "R2",
+        "conventions.md Files"
+      ],
+      "confidence": "high",
+      "executingPass": "storage",
+      "decidedAt": "2026-11-15T14:45:25Z"
+    },
+    {
+      "id": "DEC-11",
+      "topic": "prices",
+      "decision": "price book with versions; promotion endsAt 2027-02-01T00:00 Africa/Lagos; server-checked; owner publishes, finance drafts (S-14, S-15)",
+      "approvedBy": "owner ruling R5 for figures and date",
+      "options": [
+        "price book (chosen)",
+        "constants in code"
+      ],
+      "evidence": [
+        "T-26",
+        "T-28",
+        "STUB-18"
+      ],
+      "confidence": "high",
+      "executingPass": "price-book",
+      "decidedAt": "2026-11-15T14:45:25Z"
+    },
+    {
+      "id": "DEC-12",
+      "topic": "sample switch",
+      "decision": "removed from production; house showcase wishes from the server (S-16)",
+      "approvedBy": "owner ruling R8",
+      "options": [
+        "remove (chosen)",
+        "keep behind a dev flag only"
+      ],
+      "evidence": [
+        "scan-map seedSources",
+        "STUB-16"
+      ],
+      "confidence": "high",
+      "executingPass": "Phase 6 ui-align",
+      "decidedAt": "2026-11-15T14:45:25Z"
+    },
+    {
+      "id": "DEC-13",
+      "topic": "phone format",
+      "decision": "E.164, default NG, normalised on ingest (S-17)",
+      "approvedBy": "Default (lead), owner may override",
+      "options": [
+        "E.164 (chosen)"
+      ],
+      "evidence": [
+        "conventions.md Identity canon"
+      ],
+      "confidence": "high",
+      "executingPass": "auth-codes, accounts",
+      "decidedAt": "2026-11-15T14:45:25Z"
+    },
+    {
+      "id": "DEC-14",
+      "topic": "message providers",
+      "decision": "ports with stand-ins; no provider chosen",
+      "approvedBy": "owner decides",
+      "options": [
+        "Termii",
+        "Twilio",
+        "Africa's Talking",
+        "Meta Cloud API (WhatsApp)",
+        "Resend/Postmark/SES (email)"
+      ],
+      "evidence": [
+        "conventions.md Messages: owner item"
+      ],
+      "confidence": "low",
+      "executingPass": "messages-*",
+      "decidedAt": "2026-11-15T14:45:25Z"
+    },
+    {
+      "id": "DEC-15",
+      "topic": "transcription",
+      "decision": "a transcription port next to the AI port (Anthropic does not transcribe audio)",
+      "approvedBy": "owner decides provider",
+      "options": [
+        "OpenAI Whisper API",
+        "Deepgram",
+        "AssemblyAI",
+        "self-hosted whisper"
+      ],
+      "evidence": [
+        "conventions.md AI writing"
+      ],
+      "confidence": "low",
+      "executingPass": "ai-writing",
+      "decidedAt": "2026-11-15T14:45:25Z"
+    },
+    {
+      "id": "DEC-16",
+      "topic": "upload screening provider",
+      "decision": "port with stand-in; provider not chosen",
+      "approvedBy": "owner decides provider",
+      "options": [
+        "AWS Rekognition",
+        "Google Vision SafeSearch",
+        "Sightengine",
+        "Hive"
+      ],
+      "evidence": [
+        "T-54",
+        "T-76"
+      ],
+      "confidence": "low",
+      "executingPass": "upload-screening",
+      "decidedAt": "2026-11-15T14:45:25Z"
+    },
+    {
+      "id": "DEC-17",
+      "topic": "video render",
+      "decision": "self-hosted worker (headless capture + ffmpeg)",
+      "approvedBy": "Default (lead), owner may override",
+      "options": [
+        "self-hosted worker (chosen)",
+        "hosted render service"
+      ],
+      "evidence": [
+        "STUB-13",
+        "R9 preview quality as is"
+      ],
+      "confidence": "medium",
+      "executingPass": "video-render",
+      "decidedAt": "2026-11-15T14:45:25Z"
+    },
+    {
+      "id": "DEC-18",
+      "topic": "refund approval",
+      "decision": "auto refund for failed delivery; all others need finance or owner, requester cannot approve",
+      "approvedBy": "Default (lead), owner may override",
+      "options": [
+        "two-person (chosen)",
+        "any staff"
+      ],
+      "evidence": [
+        "T-73"
+      ],
+      "confidence": "medium",
+      "executingPass": "refunds",
+      "decidedAt": "2026-11-15T14:45:25Z"
+    },
+    {
+      "id": "DEC-19",
+      "topic": "royalty payout threshold",
+      "decision": "not set; no payouts run until the owner sets it; accruals still recorded",
+      "approvedBy": "owner decides (money figure)",
+      "options": [
+        "owner sets a figure"
+      ],
+      "evidence": [
+        "T-64"
+      ],
+      "confidence": "low",
+      "executingPass": "royalties-payouts",
+      "decidedAt": "2026-11-15T14:45:25Z"
+    },
+    {
+      "id": "DEC-20",
+      "topic": "creator share on Pass wishes",
+      "decision": "not set; accrue nothing and list them for the owner",
+      "approvedBy": "owner decides",
+      "options": [
+        "owner sets a rule"
+      ],
+      "evidence": [
+        "T-77"
+      ],
+      "confidence": "low",
+      "executingPass": "royalties-payouts",
+      "decidedAt": "2026-11-15T14:45:25Z"
+    },
+    {
+      "id": "DEC-21",
+      "topic": "creator share on Pro wishes",
+      "decision": "20% of what the business paid for that wish",
+      "approvedBy": "Default (lead), owner may override",
+      "options": [
+        "20% (product plan, chosen)",
+        "not set (spec)"
+      ],
+      "evidence": [
+        "T-66",
+        "T-77"
+      ],
+      "confidence": "medium",
+      "executingPass": "royalties-payouts",
+      "decidedAt": "2026-11-15T14:45:25Z"
+    },
+    {
+      "id": "DEC-22",
+      "topic": "USD prices",
+      "decision": "not seeded; app shows naira only",
+      "approvedBy": "owner decides whether to sell in dollars",
+      "options": [
+        "seed product-plan USD (T-27)",
+        "naira only (chosen)"
+      ],
+      "evidence": [
+        "T-27",
+        "R5"
+      ],
+      "confidence": "medium",
+      "executingPass": "price-book",
+      "decidedAt": "2026-11-15T14:45:25Z"
+    },
+    {
+      "id": "DEC-23",
+      "topic": "Pro plan keep vs one-month term",
+      "decision": "a client wish lives its Signature month; while the plan is active, wishes shown on the business page stay live; others rest and are offered a keep",
+      "approvedBy": "Default (lead), owner may override",
+      "options": [
+        "chosen",
+        "plan keeps all client wishes"
+      ],
+      "evidence": [
+        "T-19",
+        "T-83"
+      ],
+      "confidence": "low",
+      "executingPass": "wish-lifecycle",
+      "decidedAt": "2026-11-15T14:45:25Z"
+    },
+    {
+      "id": "DEC-24",
+      "topic": "staff sign-in",
+      "decision": "email code only, separate staff sessions, first owner from STAFF_BOOTSTRAP_OWNER_EMAIL",
+      "approvedBy": "Default (lead), owner may override",
+      "options": [
+        "email code (chosen)",
+        "Google Workspace only"
+      ],
+      "evidence": [
+        "conventions.md Who can do what"
+      ],
+      "confidence": "medium",
+      "executingPass": "staff-accounts",
+      "decidedAt": "2026-11-15T14:45:25Z"
+    },
+    {
+      "id": "DEC-25",
+      "topic": "ledger retention",
+      "decision": "ledger kept 6 years",
+      "approvedBy": "Default (lead), owner may override",
+      "options": [
+        "6 years"
+      ],
+      "evidence": [
+        "no document figure"
+      ],
+      "confidence": "low",
+      "executingPass": "ledger, audit-log",
+      "decidedAt": "2026-11-15T14:45:25Z",
+      "status": "PROVISIONAL",
+      "owner": "owner"
+    },
+    {
+      "id": "DEC-26",
+      "topic": "auth-codes: authCode.resendAfter",
+      "decision": "60 seconds",
+      "approvedBy": "Default (lead), owner may override",
+      "options": [
+        "60"
+      ],
+      "evidence": [
+        "documents give no resend gap"
+      ],
+      "confidence": "low",
+      "status": "PROVISIONAL",
+      "owner": "owner",
+      "executingPass": "auth-codes",
+      "decidedAt": "2026-11-15T14:45:25Z"
+    },
+    {
+      "id": "DEC-27",
+      "topic": "auth-codes: authCode.perDestinationPerHour",
+      "decision": "5 codes",
+      "approvedBy": "Default (lead), owner may override",
+      "options": [
+        "5"
+      ],
+      "evidence": [
+        "documents say 'rate limited' with no figure"
+      ],
+      "confidence": "low",
+      "status": "PROVISIONAL",
+      "owner": "owner",
+      "executingPass": "auth-codes",
+      "decidedAt": "2026-11-15T14:45:25Z"
+    },
+    {
+      "id": "DEC-28",
+      "topic": "auth-codes: authCode.perIpPerHour",
+      "decision": "20 codes",
+      "approvedBy": "Default (lead), owner may override",
+      "options": [
+        "20"
+      ],
+      "evidence": [
+        "documents give no figure"
+      ],
+      "confidence": "low",
+      "status": "PROVISIONAL",
+      "owner": "owner",
+      "executingPass": "auth-codes",
+      "decidedAt": "2026-11-15T14:45:25Z"
+    },
+    {
+      "id": "DEC-29",
+      "topic": "sessions: staffSession.refreshLife",
+      "decision": "12 hours",
+      "approvedBy": "Default (lead), owner may override",
+      "options": [
+        "12"
+      ],
+      "evidence": [
+        "documents say nothing about staff sessions"
+      ],
+      "confidence": "low",
+      "status": "PROVISIONAL",
+      "owner": "owner",
+      "executingPass": "sessions",
+      "decidedAt": "2026-11-15T14:45:25Z"
+    },
+    {
+      "id": "DEC-30",
+      "topic": "wish-link: wishLink.unlockTriesPerHour",
+      "decision": "10 attempts per link per IP",
+      "approvedBy": "Default (lead), owner may override",
+      "options": [
+        "10"
+      ],
+      "evidence": [
+        "documents give no figure"
+      ],
+      "confidence": "low",
+      "status": "PROVISIONAL",
+      "owner": "owner",
+      "executingPass": "wish-link",
+      "decidedAt": "2026-11-15T14:45:25Z"
+    },
+    {
+      "id": "DEC-31",
+      "topic": "wish-link: wishLink.readablePartMaxLength",
+      "decision": "24 characters",
+      "approvedBy": "Default (lead), owner may override",
+      "options": [
+        "24"
+      ],
+      "evidence": [
+        "documents give no figure"
+      ],
+      "confidence": "low",
+      "status": "PROVISIONAL",
+      "owner": "owner",
+      "executingPass": "wish-link",
+      "decidedAt": "2026-11-15T14:45:25Z"
+    },
+    {
+      "id": "DEC-32",
+      "topic": "wish-link: wishLink.publicReadsPerMinutePerIp",
+      "decision": "60 requests",
+      "approvedBy": "Default (lead), owner may override",
+      "options": [
+        "60"
+      ],
+      "evidence": [
+        "documents give no figure"
+      ],
+      "confidence": "low",
+      "status": "PROVISIONAL",
+      "owner": "owner",
+      "executingPass": "wish-link",
+      "decidedAt": "2026-11-15T14:45:25Z"
+    },
+    {
+      "id": "DEC-33",
+      "topic": "payments: payments.abandonAfter",
+      "decision": "60 minutes",
+      "approvedBy": "Default (lead), owner may override",
+      "options": [
+        "60"
+      ],
+      "evidence": [
+        "documents give no figure"
+      ],
+      "confidence": "low",
+      "status": "PROVISIONAL",
+      "owner": "owner",
+      "executingPass": "payments",
+      "decidedAt": "2026-11-15T14:45:25Z"
+    },
+    {
+      "id": "DEC-34",
+      "topic": "payments: idempotencyKey.retention",
+      "decision": "24 hours",
+      "approvedBy": "Default (lead), owner may override",
+      "options": [
+        "24"
+      ],
+      "evidence": [
+        "documents give no figure"
+      ],
+      "confidence": "low",
+      "status": "PROVISIONAL",
+      "owner": "owner",
+      "executingPass": "payments",
+      "decidedAt": "2026-11-15T14:45:25Z"
+    },
+    {
+      "id": "DEC-35",
+      "topic": "storage: storage.signedUploadTtl",
+      "decision": "15 minutes",
+      "approvedBy": "Default (lead), owner may override",
+      "options": [
+        "15"
+      ],
+      "evidence": [
+        "documents give no figure"
+      ],
+      "confidence": "low",
+      "status": "PROVISIONAL",
+      "owner": "owner",
+      "executingPass": "storage",
+      "decidedAt": "2026-11-15T14:45:25Z"
+    },
+    {
+      "id": "DEC-36",
+      "topic": "storage: storage.signedReadTtl",
+      "decision": "10 minutes",
+      "approvedBy": "Default (lead), owner may override",
+      "options": [
+        "10"
+      ],
+      "evidence": [
+        "documents say only that addresses expire"
+      ],
+      "confidence": "low",
+      "status": "PROVISIONAL",
+      "owner": "owner",
+      "executingPass": "storage",
+      "decidedAt": "2026-11-15T14:45:25Z"
+    },
+    {
+      "id": "DEC-37",
+      "topic": "storage: storage.imageVariantWidths",
+      "decision": "[320, 768, 1600] pixels",
+      "approvedBy": "Default (lead), owner may override",
+      "options": [
+        "[320, 768, 1600]"
+      ],
+      "evidence": [
+        "documents give no sizes"
+      ],
+      "confidence": "low",
+      "status": "PROVISIONAL",
+      "owner": "owner",
+      "executingPass": "storage",
+      "decidedAt": "2026-11-15T14:45:25Z"
+    },
+    {
+      "id": "DEC-38",
+      "topic": "storage: storage.maxPhotoBytes",
+      "decision": "15 MB",
+      "approvedBy": "Default (lead), owner may override",
+      "options": [
+        "15"
+      ],
+      "evidence": [
+        "documents give no figure"
+      ],
+      "confidence": "low",
+      "status": "PROVISIONAL",
+      "owner": "owner",
+      "executingPass": "storage",
+      "decidedAt": "2026-11-15T14:45:25Z"
+    },
+    {
+      "id": "DEC-39",
+      "topic": "storage: storage.maxVoiceNoteBytes",
+      "decision": "10 MB",
+      "approvedBy": "Default (lead), owner may override",
+      "options": [
+        "10"
+      ],
+      "evidence": [
+        "documents give no figure"
+      ],
+      "confidence": "low",
+      "status": "PROVISIONAL",
+      "owner": "owner",
+      "executingPass": "storage",
+      "decidedAt": "2026-11-15T14:45:25Z"
+    },
+    {
+      "id": "DEC-40",
+      "topic": "storage: storage.maxClipBytes",
+      "decision": "200 MB",
+      "approvedBy": "Default (lead), owner may override",
+      "options": [
+        "200"
+      ],
+      "evidence": [
+        "documents give clip lengths only (15 s, 60 s)"
+      ],
+      "confidence": "low",
+      "status": "PROVISIONAL",
+      "owner": "owner",
+      "executingPass": "storage",
+      "decidedAt": "2026-11-15T14:45:25Z"
+    },
+    {
+      "id": "DEC-41",
+      "topic": "storage: storage.maxVaultFileBytes",
+      "decision": "100 MB",
+      "approvedBy": "Default (lead), owner may override",
+      "options": [
+        "100"
+      ],
+      "evidence": [
+        "documents give no figure"
+      ],
+      "confidence": "low",
+      "status": "PROVISIONAL",
+      "owner": "owner",
+      "executingPass": "storage",
+      "decidedAt": "2026-11-15T14:45:25Z"
+    },
+    {
+      "id": "DEC-42",
+      "topic": "storage: storage.unconfirmedUploadCleanup",
+      "decision": "24 hours",
+      "approvedBy": "Default (lead), owner may override",
+      "options": [
+        "24"
+      ],
+      "evidence": [
+        "documents give no figure"
+      ],
+      "confidence": "low",
+      "status": "PROVISIONAL",
+      "owner": "owner",
+      "executingPass": "storage",
+      "decidedAt": "2026-11-15T14:45:25Z"
+    },
+    {
+      "id": "DEC-43",
+      "topic": "upload-screening: screening.rejectScore",
+      "decision": "0.9 provider confidence",
+      "approvedBy": "Default (lead), owner may override",
+      "options": [
+        "0.9"
+      ],
+      "evidence": [
+        "documents give no threshold"
+      ],
+      "confidence": "low",
+      "status": "PROVISIONAL",
+      "owner": "owner",
+      "executingPass": "upload-screening",
+      "decidedAt": "2026-11-15T14:45:25Z"
+    },
+    {
+      "id": "DEC-44",
+      "topic": "upload-screening: screening.reviewScore",
+      "decision": "0.5 provider confidence",
+      "approvedBy": "Default (lead), owner may override",
+      "options": [
+        "0.5"
+      ],
+      "evidence": [
+        "documents give no threshold"
+      ],
+      "confidence": "low",
+      "status": "PROVISIONAL",
+      "owner": "owner",
+      "executingPass": "upload-screening",
+      "decidedAt": "2026-11-15T14:45:25Z"
+    },
+    {
+      "id": "DEC-45",
+      "topic": "messages-sms: messages-sms.maxAttempts",
+      "decision": "3 attempts",
+      "approvedBy": "Default (lead), owner may override",
+      "options": [
+        "3"
+      ],
+      "evidence": [
+        "documents give no figure"
+      ],
+      "confidence": "low",
+      "status": "PROVISIONAL",
+      "owner": "owner",
+      "executingPass": "messages-sms",
+      "decidedAt": "2026-11-15T14:45:25Z"
+    },
+    {
+      "id": "DEC-46",
+      "topic": "messages-whatsapp: messages-whatsapp.maxAttempts",
+      "decision": "3 attempts",
+      "approvedBy": "Default (lead), owner may override",
+      "options": [
+        "3"
+      ],
+      "evidence": [
+        "documents give no figure"
+      ],
+      "confidence": "low",
+      "status": "PROVISIONAL",
+      "owner": "owner",
+      "executingPass": "messages-whatsapp",
+      "decidedAt": "2026-11-15T14:45:25Z"
+    },
+    {
+      "id": "DEC-47",
+      "topic": "messages-email: messages-email.maxAttempts",
+      "decision": "3 attempts",
+      "approvedBy": "Default (lead), owner may override",
+      "options": [
+        "3"
+      ],
+      "evidence": [
+        "documents give no figure"
+      ],
+      "confidence": "low",
+      "status": "PROVISIONAL",
+      "owner": "owner",
+      "executingPass": "messages-email",
+      "decidedAt": "2026-11-15T14:45:25Z"
+    },
+    {
+      "id": "DEC-48",
+      "topic": "notices: notices.sendHourLocal",
+      "decision": "9 hour of day in the recipient's time zone",
+      "approvedBy": "Default (lead), owner may override",
+      "options": [
+        "9"
+      ],
+      "evidence": [
+        "documents give days, not times"
+      ],
+      "confidence": "low",
+      "status": "PROVISIONAL",
+      "owner": "owner",
+      "executingPass": "notices",
+      "decidedAt": "2026-11-15T14:45:25Z"
+    },
+    {
+      "id": "DEC-49",
+      "topic": "notices: notices.passEndsSoon",
+      "decision": "[14, 1] days before end",
+      "approvedBy": "Default (lead), owner may override",
+      "options": [
+        "[14, 1]"
+      ],
+      "evidence": [
+        "documents give no figure"
+      ],
+      "confidence": "low",
+      "status": "PROVISIONAL",
+      "owner": "owner",
+      "executingPass": "notices",
+      "decidedAt": "2026-11-15T14:45:25Z"
+    },
+    {
+      "id": "DEC-50",
+      "topic": "notices: notices.planRenewal",
+      "decision": "3 days before period end",
+      "approvedBy": "Default (lead), owner may override",
+      "options": [
+        "3"
+      ],
+      "evidence": [
+        "documents give no figure"
+      ],
+      "confidence": "low",
+      "status": "PROVISIONAL",
+      "owner": "owner",
+      "executingPass": "notices",
+      "decidedAt": "2026-11-15T14:45:25Z"
+    },
+    {
+      "id": "DEC-51",
+      "topic": "jobs: jobs.maxAttempts",
+      "decision": "5 attempts",
+      "approvedBy": "Default (lead), owner may override",
+      "options": [
+        "5"
+      ],
+      "evidence": [
+        "documents give no figure"
+      ],
+      "confidence": "low",
+      "status": "PROVISIONAL",
+      "owner": "owner",
+      "executingPass": "jobs",
+      "decidedAt": "2026-11-15T14:45:25Z"
+    },
+    {
+      "id": "DEC-52",
+      "topic": "jobs: jobs.runRetention",
+      "decision": "90 days",
+      "approvedBy": "Default (lead), owner may override",
+      "options": [
+        "90"
+      ],
+      "evidence": [
+        "documents give no figure"
+      ],
+      "confidence": "low",
+      "status": "PROVISIONAL",
+      "owner": "owner",
+      "executingPass": "jobs",
+      "decidedAt": "2026-11-15T14:45:25Z"
+    },
+    {
+      "id": "DEC-53",
+      "topic": "ai-writing: ai.personalRequestsPerDay",
+      "decision": "20 requests per account",
+      "approvedBy": "Default (lead), owner may override",
+      "options": [
+        "20"
+      ],
+      "evidence": [
+        "letter/reasons/photo-pick for senders have no credit cost in the documents; a cap protects cost"
+      ],
+      "confidence": "low",
+      "status": "PROVISIONAL",
+      "owner": "owner",
+      "executingPass": "ai-writing",
+      "decidedAt": "2026-11-15T14:45:25Z"
+    },
+    {
+      "id": "DEC-54",
+      "topic": "ai-writing: ai.maxVoiceNoteSeconds",
+      "decision": "180 seconds",
+      "approvedBy": "Default (lead), owner may override",
+      "options": [
+        "180"
+      ],
+      "evidence": [
+        "documents give 60 s only for Group friends"
+      ],
+      "confidence": "low",
+      "status": "PROVISIONAL",
+      "owner": "owner",
+      "executingPass": "ai-writing",
+      "decidedAt": "2026-11-15T14:45:25Z"
+    },
+    {
+      "id": "DEC-55",
+      "topic": "video-render: videoRender.statusSize",
+      "decision": "1080x1920 pixels",
+      "approvedBy": "Default (lead), owner may override",
+      "options": [
+        "1080x1920"
+      ],
+      "evidence": [
+        "documents say portrait only"
+      ],
+      "confidence": "low",
+      "status": "PROVISIONAL",
+      "owner": "owner",
+      "executingPass": "video-render",
+      "decidedAt": "2026-11-15T14:45:25Z"
+    },
+    {
+      "id": "DEC-56",
+      "topic": "video-render: videoRender.statusMaxSeconds",
+      "decision": "30 seconds",
+      "approvedBy": "Default (lead), owner may override",
+      "options": [
+        "30"
+      ],
+      "evidence": [
+        "documents give no figure"
+      ],
+      "confidence": "low",
+      "status": "PROVISIONAL",
+      "owner": "owner",
+      "executingPass": "video-render",
+      "decidedAt": "2026-11-15T14:45:25Z"
+    },
+    {
+      "id": "DEC-57",
+      "topic": "qr-card: qrCard.size",
+      "decision": "A6 at 300 dpi print size",
+      "approvedBy": "Default (lead), owner may override",
+      "options": [
+        "A6 at 300 dpi"
+      ],
+      "evidence": [
+        "documents say print-ready only"
+      ],
+      "confidence": "low",
+      "status": "PROVISIONAL",
+      "owner": "owner",
+      "executingPass": "qr-card",
+      "decidedAt": "2026-11-15T14:45:25Z"
+    },
+    {
+      "id": "DEC-58",
+      "topic": "moderation: moderation.reportsPerContactPerDay",
+      "decision": "10 reports",
+      "approvedBy": "Default (lead), owner may override",
+      "options": [
+        "10"
+      ],
+      "evidence": [
+        "documents give no figure"
+      ],
+      "confidence": "low",
+      "status": "PROVISIONAL",
+      "owner": "owner",
+      "executingPass": "moderation",
+      "decidedAt": "2026-11-15T14:45:25Z"
+    },
+    {
+      "id": "DEC-59",
+      "topic": "moderation: moderation.upheldReportsBeforePublishingBan",
+      "decision": "3 upheld reports",
+      "approvedBy": "Default (lead), owner may override",
+      "options": [
+        "3"
+      ],
+      "evidence": [
+        "documents say abusers lose publishing, no figure"
+      ],
+      "confidence": "low",
+      "status": "PROVISIONAL",
+      "owner": "owner",
+      "executingPass": "moderation",
+      "decidedAt": "2026-11-15T14:45:25Z"
+    },
+    {
+      "id": "DEC-60",
+      "topic": "style-levels: styleLevels.minPreviewsForRate",
+      "decision": "200 previews in the quarter",
+      "approvedBy": "Default (lead), owner may override",
+      "options": [
+        "200"
+      ],
+      "evidence": [
+        "documents give no figure"
+      ],
+      "confidence": "low",
+      "status": "PROVISIONAL",
+      "owner": "owner",
+      "executingPass": "style-levels",
+      "decidedAt": "2026-11-15T14:45:25Z"
+    },
+    {
+      "id": "DEC-61",
+      "topic": "audit-log: auditLog.retention",
+      "decision": "6 years",
+      "approvedBy": "Default (lead), owner may override",
+      "options": [
+        "6"
+      ],
+      "evidence": [
+        "documents give no figure; matches the ledger retention"
+      ],
+      "confidence": "low",
+      "status": "PROVISIONAL",
+      "owner": "owner",
+      "executingPass": "audit-log",
+      "decidedAt": "2026-11-15T14:45:25Z"
+    },
+    {
+      "id": "DEC-62",
+      "topic": "analytics-events: analytics.rawEventRetention",
+      "decision": "13 months",
+      "approvedBy": "Default (lead), owner may override",
+      "options": [
+        "13"
+      ],
+      "evidence": [
+        "documents give no figure"
+      ],
+      "confidence": "low",
+      "status": "PROVISIONAL",
+      "owner": "owner",
+      "executingPass": "analytics-events",
+      "decidedAt": "2026-11-15T14:45:25Z"
+    }
+  ]
+}

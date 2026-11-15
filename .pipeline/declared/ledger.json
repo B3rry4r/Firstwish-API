@@ -1,0 +1,202 @@
+{
+  "screenId": null,
+  "resource": "ledger",
+  "sourceScreens": [],
+  "provenance": "declaration",
+  "declaredAs": "ledger",
+  "reads": [
+    {
+      "entity": "LedgerEntry",
+      "fields": [
+        {
+          "name": "id",
+          "type": "string",
+          "nullable": false,
+          "note": "UUIDv7, issued by the server"
+        },
+        {
+          "name": "journalId",
+          "type": "string",
+          "nullable": false,
+          "note": "entries of one movement share a journal; debits equal credits"
+        },
+        {
+          "name": "account",
+          "type": "enum(customer-cash|provider-clearing|revenue-tickets|revenue-extras|revenue-keeps|revenue-pass|revenue-pro|revenue-vault|revenue-concierge|revenue-creator|vat-payable|provider-fees|refunds|royalties-payable|payouts)",
+          "nullable": false
+        },
+        {
+          "name": "direction",
+          "type": "enum(debit|credit)",
+          "nullable": false
+        },
+        {
+          "name": "amountKobo",
+          "type": "integer",
+          "nullable": false
+        },
+        {
+          "name": "currency",
+          "type": "enum(NGN)",
+          "nullable": false
+        },
+        {
+          "name": "paymentId",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "refundId",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "payoutId",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "memo",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "createdAt",
+          "type": "datetime",
+          "nullable": false
+        }
+      ],
+      "cardinality": "list",
+      "filtersOrSort": [
+        "createdAt"
+      ],
+      "pagination": "paged"
+    },
+    {
+      "entity": "Reconciliation",
+      "fields": [
+        {
+          "name": "id",
+          "type": "string",
+          "nullable": false,
+          "note": "UUIDv7, issued by the server"
+        },
+        {
+          "name": "day",
+          "type": "date",
+          "nullable": false
+        },
+        {
+          "name": "providerTotalKobo",
+          "type": "integer",
+          "nullable": false
+        },
+        {
+          "name": "ledgerTotalKobo",
+          "type": "integer",
+          "nullable": false
+        },
+        {
+          "name": "differenceKobo",
+          "type": "integer",
+          "nullable": false
+        },
+        {
+          "name": "status",
+          "type": "enum(matched|mismatch)",
+          "nullable": false
+        },
+        {
+          "name": "mismatches",
+          "type": "array<object>",
+          "nullable": false
+        },
+        {
+          "name": "createdAt",
+          "type": "datetime",
+          "nullable": false
+        }
+      ],
+      "cardinality": "list",
+      "filtersOrSort": [
+        "day desc"
+      ],
+      "pagination": "paged"
+    }
+  ],
+  "actions": [
+    {
+      "name": "listEntries",
+      "kind": "custom",
+      "entity": "LedgerEntry",
+      "payload": [
+        {
+          "name": "from",
+          "type": "date"
+        },
+        {
+          "name": "to",
+          "type": "date"
+        },
+        {
+          "name": "account",
+          "type": "string?"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "LedgerEntry",
+        "cardinality": "list"
+      },
+      "roles": [
+        "finance",
+        "owner"
+      ]
+    },
+    {
+      "name": "runReconciliation",
+      "kind": "custom",
+      "entity": "Reconciliation",
+      "payload": [
+        {
+          "name": "day",
+          "type": "date"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "Reconciliation",
+        "cardinality": "single"
+      },
+      "roles": [
+        "finance",
+        "owner"
+      ]
+    }
+  ],
+  "authContext": {
+    "requiresAuth": true,
+    "rolesObserved": [
+      "finance",
+      "owner"
+    ]
+  },
+  "special": {
+    "realtime": false,
+    "uploads": false,
+    "downloads": false
+  },
+  "uiStatesHandled": [],
+  "uiStatesDesigned": [],
+  "stubsObserved": [],
+  "behaviour": [
+    "Every kobo that moves is a ledger row: payment captured, provider fee, VAT part, revenue line, refund, royalty accrual, payout.",
+    "Append-only: a correction is a new reversing journal, never an update or delete.",
+    "Amounts are integers in kobo; a journal's debits equal its credits or it is refused.",
+    "VAT part on Pro and invoiced payments = round(total x 0.075 / 1.075) (T-40).",
+    "A daily job reconciles the ledger with Paystack's transactions and settlements; any difference is a mismatch shown to finance and owner, never auto-fixed (the owner decides).",
+    "Revenue accounts map to the eight earning lines (T-69) so analytics can read them."
+  ],
+  "truths": [
+    "T-40",
+    "T-69"
+  ]
+}

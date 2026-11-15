@@ -1,0 +1,152 @@
+{
+  "screenId": null,
+  "resource": "notices",
+  "sourceScreens": [],
+  "provenance": "declaration",
+  "declaredAs": "scheduler",
+  "reads": [
+    {
+      "entity": "Notice",
+      "fields": [
+        {
+          "name": "id",
+          "type": "string",
+          "nullable": false,
+          "note": "UUIDv7, issued by the server"
+        },
+        {
+          "name": "kind",
+          "type": "enum(opened|term-ends-soon|anniversary|date-reminder-7d|date-reminder-1d|pass-ends-soon|pass-ended|plan-renewal|plan-ended|publish-notice)",
+          "nullable": false
+        },
+        {
+          "name": "accountId",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "wishId",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "dateRowId",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "dueAt",
+          "type": "datetime",
+          "nullable": false
+        },
+        {
+          "name": "status",
+          "type": "enum(scheduled|sent|skipped|cancelled)",
+          "nullable": false
+        },
+        {
+          "name": "deliveryId",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "createdAt",
+          "type": "datetime",
+          "nullable": false
+        }
+      ],
+      "cardinality": "list",
+      "filtersOrSort": [
+        "dueAt"
+      ],
+      "pagination": "paged"
+    }
+  ],
+  "actions": [
+    {
+      "name": "listMyNotices",
+      "kind": "custom",
+      "entity": "Notice",
+      "payload": [],
+      "expectedResponse": {
+        "entity": "Notice",
+        "cardinality": "list"
+      }
+    },
+    {
+      "name": "setNoticePrefs",
+      "kind": "update",
+      "entity": "NoticePrefs",
+      "payload": [
+        {
+          "name": "channel",
+          "type": "enum(sms|whatsapp|email)"
+        },
+        {
+          "name": "muted",
+          "type": "array<string>"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "NoticePrefs",
+        "cardinality": "single"
+      }
+    }
+  ],
+  "authContext": {
+    "requiresAuth": true,
+    "rolesObserved": [
+      "person"
+    ]
+  },
+  "special": {
+    "realtime": false,
+    "uploads": false,
+    "downloads": false
+  },
+  "uiStatesHandled": [],
+  "uiStatesDesigned": [],
+  "stubsObserved": [],
+  "behaviour": [
+    "Opened: the sender is told when the wish is first opened (Keepsake and above, T-03); contributor friends who asked are told too (T-75).",
+    "Term ends soon: three days before endsAt the sender is messaged and offered a keep (T-46).",
+    "Anniversary: on the wish's anniversary the sender is messaged to wake it (T-46).",
+    "Date reminders: 7 days and 1 day before each date in People and dates, with a wish already started (T-14); all tiers get reminders (Pass covers everyone in People and dates).",
+    "Pass and plan periods: before a Pass ends (it never renews on its own, T-14) and before a Pro plan period ends.",
+    "Each notice is created as a scheduled row when its cause appears and cancelled if the cause goes away (wish kept, deleted)."
+  ],
+  "provisional": [
+    {
+      "key": "notices.sendHourLocal",
+      "value": 9,
+      "unit": "hour of day in the recipient's time zone",
+      "status": "PROVISIONAL",
+      "owner": "owner",
+      "why": "documents give days, not times"
+    },
+    {
+      "key": "notices.passEndsSoon",
+      "value": [
+        14,
+        1
+      ],
+      "unit": "days before end",
+      "status": "PROVISIONAL",
+      "owner": "owner",
+      "why": "documents give no figure"
+    },
+    {
+      "key": "notices.planRenewal",
+      "value": 3,
+      "unit": "days before period end",
+      "status": "PROVISIONAL",
+      "owner": "owner",
+      "why": "documents give no figure"
+    }
+  ],
+  "truths": [
+    "T-14",
+    "T-46",
+    "T-75"
+  ]
+}

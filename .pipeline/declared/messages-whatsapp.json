@@ -1,0 +1,219 @@
+{
+  "screenId": null,
+  "resource": "messages-whatsapp",
+  "sourceScreens": [],
+  "provenance": "declaration",
+  "declaredAs": "integration",
+  "integration": {
+    "provider": "whatsapp provider (not chosen)",
+    "direction": [
+      "outbound",
+      "webhook-inbound"
+    ],
+    "envVars": [
+      "WHATSAPP_PROVIDER",
+      "WHATSAPP_ACCESS_TOKEN",
+      "WHATSAPP_PHONE_NUMBER_ID",
+      "WHATSAPP_APP_SECRET",
+      "WHATSAPP_VERIFY_TOKEN"
+    ],
+    "sandbox": true,
+    "testStandIn": "tests bind the port to an in-memory stand-in; no live call is made from any test or agent run"
+  },
+  "reads": [
+    {
+      "entity": "MessageTemplate",
+      "fields": [
+        {
+          "name": "key",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "channel",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "locale",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "body",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "version",
+          "type": "integer",
+          "nullable": false
+        },
+        {
+          "name": "approvedRef",
+          "type": "string",
+          "nullable": true
+        }
+      ],
+      "cardinality": "list",
+      "filtersOrSort": [],
+      "pagination": "none"
+    },
+    {
+      "entity": "MessageDelivery",
+      "fields": [
+        {
+          "name": "id",
+          "type": "string",
+          "nullable": false,
+          "note": "UUIDv7, issued by the server"
+        },
+        {
+          "name": "templateKey",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "channel",
+          "type": "enum(whatsapp)",
+          "nullable": false
+        },
+        {
+          "name": "to",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "purpose",
+          "type": "enum(auth-code|wish-delivery|opened|term-notice|anniversary|date-reminder|publish-notice|pass|plan|invite|receipt|support)",
+          "nullable": false
+        },
+        {
+          "name": "status",
+          "type": "enum(queued|sent|delivered|failed|undeliverable)",
+          "nullable": false
+        },
+        {
+          "name": "providerMessageId",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "error",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "attempts",
+          "type": "integer",
+          "nullable": false
+        },
+        {
+          "name": "costKobo",
+          "type": "integer",
+          "nullable": true
+        },
+        {
+          "name": "createdAt",
+          "type": "datetime",
+          "nullable": false
+        },
+        {
+          "name": "updatedAt",
+          "type": "datetime",
+          "nullable": false
+        }
+      ],
+      "cardinality": "list",
+      "filtersOrSort": [
+        "createdAt desc"
+      ],
+      "pagination": "paged"
+    }
+  ],
+  "actions": [
+    {
+      "name": "send",
+      "kind": "custom",
+      "entity": "MessageDelivery",
+      "payload": [
+        {
+          "name": "templateKey",
+          "type": "string"
+        },
+        {
+          "name": "to",
+          "type": "string"
+        },
+        {
+          "name": "vars",
+          "type": "object"
+        },
+        {
+          "name": "idempotencyKey",
+          "type": "string"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "MessageDelivery",
+        "cardinality": "single"
+      },
+      "note": "internal port, queued as a job"
+    },
+    {
+      "name": "deliveryReceipt",
+      "kind": "custom",
+      "entity": "MessageDelivery",
+      "payload": [
+        {
+          "name": "provider payload",
+          "type": "object"
+        },
+        {
+          "name": "signature",
+          "type": "header"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "Empty",
+        "cardinality": "single"
+      },
+      "note": "POST /v1/webhooks/whatsapp, signature checked, no user role"
+    }
+  ],
+  "authContext": {
+    "requiresAuth": true,
+    "rolesObserved": [
+      "ops",
+      "support"
+    ]
+  },
+  "special": {
+    "realtime": false,
+    "uploads": false,
+    "downloads": false
+  },
+  "uiStatesHandled": [],
+  "uiStatesDesigned": [],
+  "stubsObserved": [],
+  "behaviour": [
+    "One port for whatsapp; provider not chosen yet (owner item); tests and agent runs use a stand-in that records sends.",
+    "Every send uses a stored template (plain short words, no emojis, R8) and is written to the delivery log; inbound delivery receipts update status.",
+    "Sends are jobs with retries; a send carries an idempotency key so a retry never sends twice.",
+    "Receivers are messaged only to deliver the wish and the publishing notice (T-75).",
+    "Business-initiated messages need provider-approved templates; approvedRef stores the provider's template id."
+  ],
+  "provisional": [
+    {
+      "key": "messages-whatsapp.maxAttempts",
+      "value": 3,
+      "unit": "attempts",
+      "status": "PROVISIONAL",
+      "owner": "owner",
+      "why": "documents give no figure"
+    }
+  ],
+  "truths": [
+    "T-75"
+  ]
+}

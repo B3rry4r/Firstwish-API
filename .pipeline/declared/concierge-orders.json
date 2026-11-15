@@ -1,0 +1,221 @@
+{
+  "screenId": null,
+  "resource": "concierge-orders",
+  "sourceScreens": [],
+  "provenance": "declaration",
+  "declaredAs": "other",
+  "reads": [
+    {
+      "entity": "ConciergeOrder",
+      "fields": [
+        {
+          "name": "id",
+          "type": "string",
+          "nullable": false,
+          "note": "UUIDv7, issued by the server"
+        },
+        {
+          "name": "accountId",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "businessId",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "kind",
+          "type": "enum(single|list)",
+          "nullable": false
+        },
+        {
+          "name": "count",
+          "type": "integer",
+          "nullable": false
+        },
+        {
+          "name": "rush",
+          "type": "boolean",
+          "nullable": false
+        },
+        {
+          "name": "brief",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "namesFileId",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "quoteKobo",
+          "type": "integer",
+          "nullable": true
+        },
+        {
+          "name": "makerId",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "status",
+          "type": "enum(brief|quoted|paid|making|delivered|cancelled)",
+          "nullable": false
+        },
+        {
+          "name": "deliverBy",
+          "type": "datetime",
+          "nullable": true
+        },
+        {
+          "name": "reportFileId",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "invoiceId",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "createdAt",
+          "type": "datetime",
+          "nullable": false
+        },
+        {
+          "name": "updatedAt",
+          "type": "datetime",
+          "nullable": false
+        }
+      ],
+      "cardinality": "list",
+      "filtersOrSort": [
+        "createdAt desc"
+      ],
+      "pagination": "paged"
+    }
+  ],
+  "actions": [
+    {
+      "name": "placeOrder",
+      "kind": "create",
+      "entity": "ConciergeOrder",
+      "payload": [
+        {
+          "name": "kind",
+          "type": "string"
+        },
+        {
+          "name": "count",
+          "type": "integer"
+        },
+        {
+          "name": "rush",
+          "type": "boolean"
+        },
+        {
+          "name": "brief",
+          "type": "string"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "ConciergeOrder",
+        "cardinality": "single"
+      }
+    },
+    {
+      "name": "quoteOrder",
+      "kind": "update",
+      "entity": "ConciergeOrder",
+      "payload": [
+        {
+          "name": "id",
+          "type": "string"
+        },
+        {
+          "name": "quoteKobo",
+          "type": "integer"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "ConciergeOrder",
+        "cardinality": "single"
+      },
+      "roles": [
+        "ops",
+        "owner"
+      ],
+      "note": "lists are quoted by staff, never computed from an invented rate"
+    },
+    {
+      "name": "assignMaker",
+      "kind": "update",
+      "entity": "ConciergeOrder",
+      "payload": [
+        {
+          "name": "id",
+          "type": "string"
+        },
+        {
+          "name": "makerId",
+          "type": "string"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "ConciergeOrder",
+        "cardinality": "single"
+      },
+      "roles": [
+        "ops",
+        "owner"
+      ]
+    },
+    {
+      "name": "deliverOrder",
+      "kind": "custom",
+      "entity": "ConciergeOrder",
+      "payload": [
+        {
+          "name": "id",
+          "type": "string"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "ConciergeOrder",
+        "cardinality": "single"
+      },
+      "roles": [
+        "maker"
+      ]
+    }
+  ],
+  "authContext": {
+    "requiresAuth": true,
+    "rolesObserved": [
+      "person",
+      "business-member",
+      "maker",
+      "ops",
+      "owner"
+    ]
+  },
+  "special": {
+    "realtime": false,
+    "uploads": false,
+    "downloads": false
+  },
+  "uiStatesHandled": [],
+  "uiStatesDesigned": [],
+  "stubsObserved": [],
+  "behaviour": [
+    "One wish: Signature, delivered within 3 hours of payment; rush within 1 hour adds the rush price; Pass holders get 20% off (T-12, T-13, T-36).",
+    "A list is quoted by staff; one maker owns the order; delivery comes with a report of what was opened and one VAT invoice (T-12)."
+  ],
+  "truths": [
+    "T-12",
+    "T-13",
+    "T-36"
+  ]
+}

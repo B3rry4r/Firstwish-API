@@ -1,0 +1,188 @@
+{
+  "screenId": null,
+  "resource": "jobs",
+  "sourceScreens": [],
+  "provenance": "declaration",
+  "declaredAs": "scheduler",
+  "reads": [
+    {
+      "entity": "Job",
+      "fields": [
+        {
+          "name": "id",
+          "type": "string",
+          "nullable": false,
+          "note": "UUIDv7, issued by the server"
+        },
+        {
+          "name": "type",
+          "type": "enum(open-wish|rest-wish|erase-wish|restore-window-end|erase-now|send-notice|send-message|make-image-sizes|screen-file|render-video|make-qr-card|abandon-payment|reconcile-ledger|pass-period|plan-period|creator-period|vault-billing|royalty-accrual|payout-run|style-level-review|upload-cleanup)",
+          "nullable": false
+        },
+        {
+          "name": "subjectId",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "runAt",
+          "type": "datetime",
+          "nullable": false
+        },
+        {
+          "name": "status",
+          "type": "enum(scheduled|running|succeeded|failed|dead)",
+          "nullable": false
+        },
+        {
+          "name": "attempts",
+          "type": "integer",
+          "nullable": false
+        },
+        {
+          "name": "createdAt",
+          "type": "datetime",
+          "nullable": false
+        }
+      ],
+      "cardinality": "list",
+      "filtersOrSort": [
+        "runAt"
+      ],
+      "pagination": "paged"
+    },
+    {
+      "entity": "JobRun",
+      "fields": [
+        {
+          "name": "id",
+          "type": "string",
+          "nullable": false,
+          "note": "UUIDv7, issued by the server"
+        },
+        {
+          "name": "jobId",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "startedAt",
+          "type": "datetime",
+          "nullable": false
+        },
+        {
+          "name": "finishedAt",
+          "type": "datetime",
+          "nullable": true
+        },
+        {
+          "name": "outcome",
+          "type": "enum(succeeded|failed|skipped)",
+          "nullable": false
+        },
+        {
+          "name": "error",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "changed",
+          "type": "object",
+          "nullable": true
+        }
+      ],
+      "cardinality": "list",
+      "filtersOrSort": [
+        "startedAt desc"
+      ],
+      "pagination": "paged"
+    }
+  ],
+  "actions": [
+    {
+      "name": "listJobs",
+      "kind": "custom",
+      "entity": "Job",
+      "payload": [
+        {
+          "name": "type",
+          "type": "string?"
+        },
+        {
+          "name": "status",
+          "type": "string?"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "Job",
+        "cardinality": "list"
+      },
+      "roles": [
+        "ops",
+        "owner"
+      ]
+    },
+    {
+      "name": "retryJob",
+      "kind": "custom",
+      "entity": "Job",
+      "payload": [
+        {
+          "name": "id",
+          "type": "string"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "Job",
+        "cardinality": "single"
+      },
+      "roles": [
+        "ops",
+        "owner"
+      ]
+    }
+  ],
+  "authContext": {
+    "requiresAuth": true,
+    "rolesObserved": [
+      "ops",
+      "owner"
+    ]
+  },
+  "special": {
+    "realtime": false,
+    "uploads": false,
+    "downloads": false
+  },
+  "uiStatesHandled": [],
+  "uiStatesDesigned": [],
+  "stubsObserved": [],
+  "behaviour": [
+    "One queue (Redis + BullMQ, conventions.md) with a database record of every job and every run; nothing timed depends on a page being open.",
+    "Open at the moment: at opensAt the wish link starts returning content (the link also checks server time on every read, so a late job never opens early or late).",
+    "Rest at term end, erase 365 days after resting, end of the 30-day restore window, erase-now within 24 hours, reminders and notices, Pass/plan/creator periods, Vault billing, royalties, reconciliation.",
+    "Jobs are idempotent: re-running a job for the same subject and due time changes nothing twice. Failed jobs retry with backoff, then go dead and show to ops.",
+    "A daily sweep re-schedules any due transition missing from the queue (the database is the truth, the queue is a cache)."
+  ],
+  "provisional": [
+    {
+      "key": "jobs.maxAttempts",
+      "value": 5,
+      "unit": "attempts",
+      "status": "PROVISIONAL",
+      "owner": "owner",
+      "why": "documents give no figure"
+    },
+    {
+      "key": "jobs.runRetention",
+      "value": 90,
+      "unit": "days",
+      "status": "PROVISIONAL",
+      "owner": "owner",
+      "why": "documents give no figure"
+    }
+  ],
+  "envVars": [
+    "REDIS_URL"
+  ]
+}

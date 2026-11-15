@@ -1,0 +1,120 @@
+{
+  "screenId": null,
+  "resource": "style-levels",
+  "sourceScreens": [],
+  "provenance": "declaration",
+  "declaredAs": "reference-data",
+  "reads": [
+    {
+      "entity": "StyleLevel",
+      "fields": [
+        {
+          "name": "styleSlug",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "level",
+          "type": "enum(starter|standard|premium)",
+          "nullable": false
+        },
+        {
+          "name": "since",
+          "type": "datetime",
+          "nullable": false
+        },
+        {
+          "name": "by",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "reason",
+          "type": "string",
+          "nullable": true
+        }
+      ],
+      "cardinality": "list",
+      "filtersOrSort": [],
+      "pagination": "none"
+    }
+  ],
+  "actions": [
+    {
+      "name": "getLevels",
+      "kind": "custom",
+      "entity": "StyleLevel",
+      "payload": [],
+      "expectedResponse": {
+        "entity": "StyleLevel",
+        "cardinality": "list"
+      },
+      "note": "GET /v1/styles/levels, public (named by lib/levels.ts:58)"
+    },
+    {
+      "name": "moveStyle",
+      "kind": "update",
+      "entity": "StyleLevel",
+      "payload": [
+        {
+          "name": "styleSlug",
+          "type": "string"
+        },
+        {
+          "name": "level",
+          "type": "string"
+        },
+        {
+          "name": "reason",
+          "type": "string"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "StyleLevel",
+        "cardinality": "single"
+      },
+      "roles": [
+        "reviewer",
+        "owner"
+      ]
+    }
+  ],
+  "authContext": {
+    "requiresAuth": false,
+    "rolesObserved": [
+      "public",
+      "reviewer",
+      "owner"
+    ]
+  },
+  "special": {
+    "realtime": false,
+    "uploads": false,
+    "downloads": false
+  },
+  "uiStatesHandled": [],
+  "uiStatesDesigned": [],
+  "stubsObserved": [
+    "STUB-15"
+  ],
+  "behaviour": [
+    "Staff move a style between Standard and Premium; Starter is Firstwish's own only (T-60). Levels table approved for now, changeable in admin (R9).",
+    "Each quarter the preview-to-paid rate per style is shown to staff to support moves (T-61, T-68); the cut-off is the owner's.",
+    "A move changes which tickets can pick the style for new wishes only; wishes already made keep their style."
+  ],
+  "provisional": [
+    {
+      "key": "styleLevels.minPreviewsForRate",
+      "value": 200,
+      "unit": "previews in the quarter",
+      "status": "PROVISIONAL",
+      "owner": "owner",
+      "why": "documents give no figure"
+    }
+  ],
+  "truths": [
+    "T-60",
+    "T-61",
+    "T-68"
+  ]
+}

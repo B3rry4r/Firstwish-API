@@ -1,0 +1,151 @@
+{
+  "screenId": null,
+  "resource": "upload-screening",
+  "sourceScreens": [],
+  "provenance": "declaration",
+  "declaredAs": "integration",
+  "integration": {
+    "provider": "screening provider (not chosen)",
+    "direction": [
+      "outbound"
+    ],
+    "envVars": [
+      "SCREENING_PROVIDER",
+      "SCREENING_API_KEY"
+    ],
+    "sandbox": true,
+    "testStandIn": "tests bind the port to an in-memory stand-in; no live call is made from any test or agent run"
+  },
+  "reads": [
+    {
+      "entity": "ScreeningResult",
+      "fields": [
+        {
+          "name": "id",
+          "type": "string",
+          "nullable": false,
+          "note": "UUIDv7, issued by the server"
+        },
+        {
+          "name": "fileId",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "provider",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "verdict",
+          "type": "enum(pass|review|reject)",
+          "nullable": false
+        },
+        {
+          "name": "labels",
+          "type": "array<{label, score}>",
+          "nullable": false
+        },
+        {
+          "name": "reviewedBy",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "finalVerdict",
+          "type": "enum(pass|reject)",
+          "nullable": true
+        },
+        {
+          "name": "createdAt",
+          "type": "datetime",
+          "nullable": false
+        }
+      ],
+      "cardinality": "single",
+      "filtersOrSort": [],
+      "pagination": "none"
+    }
+  ],
+  "actions": [
+    {
+      "name": "screenFile",
+      "kind": "custom",
+      "entity": "ScreeningResult",
+      "payload": [
+        {
+          "name": "fileId",
+          "type": "string"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "ScreeningResult",
+        "cardinality": "single"
+      },
+      "note": "job after confirm"
+    },
+    {
+      "name": "reviewScreening",
+      "kind": "update",
+      "entity": "ScreeningResult",
+      "payload": [
+        {
+          "name": "id",
+          "type": "string"
+        },
+        {
+          "name": "finalVerdict",
+          "type": "enum(pass|reject)"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "ScreeningResult",
+        "cardinality": "single"
+      },
+      "roles": [
+        "moderator"
+      ]
+    }
+  ],
+  "authContext": {
+    "requiresAuth": true,
+    "rolesObserved": [
+      "moderator"
+    ]
+  },
+  "special": {
+    "realtime": false,
+    "uploads": false,
+    "downloads": false
+  },
+  "uiStatesHandled": [],
+  "uiStatesDesigned": [],
+  "stubsObserved": [],
+  "behaviour": [
+    "Every photo is checked automatically before a wish can be sealed or published (T-54, T-76); 'review' verdicts wait for a moderator.",
+    "A wish cannot be published while any of its files is not pass; public wishes about children are refused (T-54).",
+    "Provider behind a port; not chosen yet (owner item). Tests use a stand-in."
+  ],
+  "provisional": [
+    {
+      "key": "screening.rejectScore",
+      "value": 0.9,
+      "unit": "provider confidence",
+      "status": "PROVISIONAL",
+      "owner": "owner",
+      "why": "documents give no threshold"
+    },
+    {
+      "key": "screening.reviewScore",
+      "value": 0.5,
+      "unit": "provider confidence",
+      "status": "PROVISIONAL",
+      "owner": "owner",
+      "why": "documents give no threshold"
+    }
+  ],
+  "truths": [
+    "T-54",
+    "T-76"
+  ]
+}

@@ -1,0 +1,189 @@
+{
+  "screenId": null,
+  "resource": "analytics-events",
+  "sourceScreens": [],
+  "provenance": "declaration",
+  "declaredAs": "other",
+  "reads": [
+    {
+      "entity": "Event",
+      "fields": [
+        {
+          "name": "id",
+          "type": "string",
+          "nullable": false,
+          "note": "UUIDv7, issued by the server"
+        },
+        {
+          "name": "name",
+          "type": "enum(preview-started|preview-finished|paid|opened|kept|published|style-previewed|plan-bought|pass-bought|vault-billed|concierge-paid|creator-plan-bought)",
+          "nullable": false
+        },
+        {
+          "name": "accountId",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "wishId",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "styleSlug",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "kind",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "amountKobo",
+          "type": "integer",
+          "nullable": true
+        },
+        {
+          "name": "line",
+          "type": "enum(tickets|extras|keeps|pass|pro|vault|concierge|creator)",
+          "nullable": true
+        },
+        {
+          "name": "at",
+          "type": "datetime",
+          "nullable": false
+        }
+      ],
+      "cardinality": "list",
+      "filtersOrSort": [],
+      "pagination": "none"
+    },
+    {
+      "entity": "EarningsSummary",
+      "fields": [
+        {
+          "name": "line",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "period",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "grossKobo",
+          "type": "integer",
+          "nullable": false
+        },
+        {
+          "name": "count",
+          "type": "integer",
+          "nullable": false
+        }
+      ],
+      "cardinality": "list",
+      "filtersOrSort": [],
+      "pagination": "none"
+    }
+  ],
+  "actions": [
+    {
+      "name": "track",
+      "kind": "create",
+      "entity": "Event",
+      "payload": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "props",
+          "type": "object"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "Empty",
+        "cardinality": "single"
+      },
+      "note": "first-party only, no third-party tracker"
+    },
+    {
+      "name": "earningsByLine",
+      "kind": "custom",
+      "entity": "EarningsSummary",
+      "payload": [
+        {
+          "name": "from",
+          "type": "date"
+        },
+        {
+          "name": "to",
+          "type": "date"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "EarningsSummary",
+        "cardinality": "list"
+      },
+      "roles": [
+        "owner",
+        "finance"
+      ]
+    },
+    {
+      "name": "previewToPaid",
+      "kind": "custom",
+      "entity": "StyleRate",
+      "payload": [
+        {
+          "name": "quarter",
+          "type": "string"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "StyleRate",
+        "cardinality": "list"
+      },
+      "roles": [
+        "owner",
+        "reviewer"
+      ]
+    }
+  ],
+  "authContext": {
+    "requiresAuth": true,
+    "rolesObserved": [
+      "owner",
+      "finance",
+      "reviewer"
+    ]
+  },
+  "special": {
+    "realtime": false,
+    "uploads": false,
+    "downloads": false
+  },
+  "uiStatesHandled": [],
+  "uiStatesDesigned": [],
+  "stubsObserved": [],
+  "behaviour": [
+    "The eight earning lines (T-69): tickets, extras, keeps, Pass, Pro plans, Vault space, Concierge, creator plans; money figures come from the ledger, not from client events.",
+    "Preview to paid per style feeds style-levels (T-68); opens come from wish-link."
+  ],
+  "provisional": [
+    {
+      "key": "analytics.rawEventRetention",
+      "value": 13,
+      "unit": "months",
+      "status": "PROVISIONAL",
+      "owner": "owner",
+      "why": "documents give no figure"
+    }
+  ],
+  "truths": [
+    "T-68",
+    "T-69"
+  ]
+}

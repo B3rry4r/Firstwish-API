@@ -1,0 +1,280 @@
+{
+  "vars": [
+    {
+      "name": "DATABASE_URL",
+      "introducedBy": "schema",
+      "purpose": "PostgreSQL connection",
+      "secret": true
+    },
+    {
+      "name": "REDIS_URL",
+      "introducedBy": "jobs",
+      "purpose": "Redis for the BullMQ queue",
+      "secret": true
+    },
+    {
+      "name": "JWT_ACCESS_SECRET",
+      "introducedBy": "sessions",
+      "purpose": "signs 15-minute access tokens",
+      "secret": true
+    },
+    {
+      "name": "REFRESH_TOKEN_PEPPER",
+      "introducedBy": "sessions",
+      "purpose": "peppers stored refresh-token hashes",
+      "secret": true
+    },
+    {
+      "name": "COOKIE_DOMAIN",
+      "introducedBy": "sessions",
+      "purpose": "API host for the refresh cookie",
+      "secret": false
+    },
+    {
+      "name": "WEB_ORIGINS",
+      "introducedBy": "sessions",
+      "purpose": "allowed CORS origins (the site on Vercel)",
+      "secret": false
+    },
+    {
+      "name": "PUBLIC_SITE_URL",
+      "introducedBy": "wish-link",
+      "purpose": "base of public wish links /w/<slug>",
+      "secret": false
+    },
+    {
+      "name": "API_PUBLIC_URL",
+      "introducedBy": "payments",
+      "purpose": "public API base for callbacks and webhooks",
+      "secret": false
+    },
+    {
+      "name": "AUTH_CODE_PEPPER",
+      "introducedBy": "auth-codes",
+      "purpose": "peppers one-time code hashes",
+      "secret": true
+    },
+    {
+      "name": "GOOGLE_CLIENT_ID",
+      "introducedBy": "google-identity",
+      "purpose": "Google OAuth client",
+      "secret": false
+    },
+    {
+      "name": "GOOGLE_CLIENT_SECRET",
+      "introducedBy": "google-identity",
+      "purpose": "Google OAuth secret",
+      "secret": true
+    },
+    {
+      "name": "GOOGLE_REDIRECT_URI",
+      "introducedBy": "google-identity",
+      "purpose": "OAuth callback",
+      "secret": false
+    },
+    {
+      "name": "STAFF_BOOTSTRAP_OWNER_EMAIL",
+      "introducedBy": "staff-accounts",
+      "purpose": "first owner staff account",
+      "secret": false
+    },
+    {
+      "name": "PAYSTACK_SECRET_KEY",
+      "introducedBy": "payments",
+      "purpose": "Paystack API auth and webhook signature (HMAC-SHA512)",
+      "secret": true
+    },
+    {
+      "name": "PAYSTACK_PUBLIC_KEY",
+      "introducedBy": "payments",
+      "purpose": "Paystack inline/checkout public key",
+      "secret": false
+    },
+    {
+      "name": "PAYSTACK_CALLBACK_URL",
+      "introducedBy": "payments",
+      "purpose": "where Paystack returns the payer",
+      "secret": false
+    },
+    {
+      "name": "STORAGE_DRIVER",
+      "introducedBy": "storage",
+      "purpose": "r2 | spaces",
+      "secret": false
+    },
+    {
+      "name": "R2_ACCOUNT_ID",
+      "introducedBy": "storage",
+      "purpose": "Cloudflare account for R2 endpoint",
+      "secret": false
+    },
+    {
+      "name": "R2_ACCESS_KEY_ID",
+      "introducedBy": "storage",
+      "purpose": "R2 S3 key",
+      "secret": true
+    },
+    {
+      "name": "R2_SECRET_ACCESS_KEY",
+      "introducedBy": "storage",
+      "purpose": "R2 S3 secret",
+      "secret": true
+    },
+    {
+      "name": "R2_BUCKET",
+      "introducedBy": "storage",
+      "purpose": "private bucket",
+      "secret": false
+    },
+    {
+      "name": "SPACES_ENDPOINT",
+      "introducedBy": "storage",
+      "purpose": "DigitalOcean Spaces endpoint",
+      "secret": false
+    },
+    {
+      "name": "SPACES_REGION",
+      "introducedBy": "storage",
+      "purpose": "Spaces region",
+      "secret": false
+    },
+    {
+      "name": "SPACES_ACCESS_KEY_ID",
+      "introducedBy": "storage",
+      "purpose": "Spaces key",
+      "secret": true
+    },
+    {
+      "name": "SPACES_SECRET_ACCESS_KEY",
+      "introducedBy": "storage",
+      "purpose": "Spaces secret",
+      "secret": true
+    },
+    {
+      "name": "SPACES_BUCKET",
+      "introducedBy": "storage",
+      "purpose": "private bucket",
+      "secret": false
+    },
+    {
+      "name": "SCREENING_PROVIDER",
+      "introducedBy": "upload-screening",
+      "purpose": "which screening adapter (stand-in in tests)",
+      "secret": false
+    },
+    {
+      "name": "SCREENING_API_KEY",
+      "introducedBy": "upload-screening",
+      "purpose": "screening provider auth",
+      "secret": true
+    },
+    {
+      "name": "SMS_PROVIDER",
+      "introducedBy": "messages-sms",
+      "purpose": "which SMS adapter",
+      "secret": false
+    },
+    {
+      "name": "SMS_API_KEY",
+      "introducedBy": "messages-sms",
+      "purpose": "SMS provider auth",
+      "secret": true
+    },
+    {
+      "name": "SMS_SENDER_ID",
+      "introducedBy": "messages-sms",
+      "purpose": "registered sender id",
+      "secret": false
+    },
+    {
+      "name": "SMS_WEBHOOK_SECRET",
+      "introducedBy": "messages-sms",
+      "purpose": "checks delivery-receipt signatures",
+      "secret": true
+    },
+    {
+      "name": "WHATSAPP_PROVIDER",
+      "introducedBy": "messages-whatsapp",
+      "purpose": "which WhatsApp adapter",
+      "secret": false
+    },
+    {
+      "name": "WHATSAPP_ACCESS_TOKEN",
+      "introducedBy": "messages-whatsapp",
+      "purpose": "WhatsApp API auth",
+      "secret": true
+    },
+    {
+      "name": "WHATSAPP_PHONE_NUMBER_ID",
+      "introducedBy": "messages-whatsapp",
+      "purpose": "sending number",
+      "secret": false
+    },
+    {
+      "name": "WHATSAPP_APP_SECRET",
+      "introducedBy": "messages-whatsapp",
+      "purpose": "checks inbound webhook signatures",
+      "secret": true
+    },
+    {
+      "name": "WHATSAPP_VERIFY_TOKEN",
+      "introducedBy": "messages-whatsapp",
+      "purpose": "webhook subscription verification",
+      "secret": true
+    },
+    {
+      "name": "EMAIL_PROVIDER",
+      "introducedBy": "messages-email",
+      "purpose": "which email adapter",
+      "secret": false
+    },
+    {
+      "name": "EMAIL_API_KEY",
+      "introducedBy": "messages-email",
+      "purpose": "email provider auth",
+      "secret": true
+    },
+    {
+      "name": "EMAIL_FROM",
+      "introducedBy": "messages-email",
+      "purpose": "sender address",
+      "secret": false
+    },
+    {
+      "name": "EMAIL_WEBHOOK_SECRET",
+      "introducedBy": "messages-email",
+      "purpose": "checks delivery-event signatures",
+      "secret": true
+    },
+    {
+      "name": "ANTHROPIC_API_KEY",
+      "introducedBy": "ai-writing",
+      "purpose": "Anthropic API (owner key)",
+      "secret": true
+    },
+    {
+      "name": "ANTHROPIC_MODEL",
+      "introducedBy": "ai-writing",
+      "purpose": "model id used for writing",
+      "secret": false
+    },
+    {
+      "name": "TRANSCRIBE_PROVIDER",
+      "introducedBy": "ai-writing",
+      "purpose": "which transcription adapter",
+      "secret": false
+    },
+    {
+      "name": "TRANSCRIBE_API_KEY",
+      "introducedBy": "ai-writing",
+      "purpose": "transcription provider auth",
+      "secret": true
+    },
+    {
+      "name": "RENDER_CONCURRENCY",
+      "introducedBy": "video-render",
+      "purpose": "parallel render workers",
+      "secret": false
+    }
+  ]
+}

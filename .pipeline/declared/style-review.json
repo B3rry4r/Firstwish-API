@@ -1,0 +1,143 @@
+{
+  "screenId": null,
+  "resource": "style-review",
+  "sourceScreens": [],
+  "provenance": "declaration",
+  "declaredAs": "other",
+  "reads": [
+    {
+      "entity": "StyleSubmission",
+      "fields": [
+        {
+          "name": "id",
+          "type": "string",
+          "nullable": false,
+          "note": "UUIDv7, issued by the server"
+        },
+        {
+          "name": "styleId",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "creatorId",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "version",
+          "type": "integer",
+          "nullable": false
+        },
+        {
+          "name": "checks",
+          "type": "array<{key, pass, detail}>",
+          "nullable": false
+        },
+        {
+          "name": "status",
+          "type": "enum(review|returned|live)",
+          "nullable": false
+        },
+        {
+          "name": "level",
+          "type": "enum(standard|premium)",
+          "nullable": true
+        },
+        {
+          "name": "reviewedBy",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "note",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "createdAt",
+          "type": "datetime",
+          "nullable": false
+        }
+      ],
+      "cardinality": "list",
+      "filtersOrSort": [
+        "createdAt"
+      ],
+      "pagination": "paged"
+    }
+  ],
+  "actions": [
+    {
+      "name": "submitStyle",
+      "kind": "create",
+      "entity": "StyleSubmission",
+      "payload": [
+        {
+          "name": "styleId",
+          "type": "string"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "StyleSubmission",
+        "cardinality": "single"
+      },
+      "note": "spends one review of the month; runs the eight checks server-side first"
+    },
+    {
+      "name": "decideSubmission",
+      "kind": "update",
+      "entity": "StyleSubmission",
+      "payload": [
+        {
+          "name": "id",
+          "type": "string"
+        },
+        {
+          "name": "decision",
+          "type": "enum(live|returned)"
+        },
+        {
+          "name": "note",
+          "type": "string"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "StyleSubmission",
+        "cardinality": "single"
+      },
+      "roles": [
+        "reviewer",
+        "owner"
+      ]
+    }
+  ],
+  "authContext": {
+    "requiresAuth": true,
+    "rolesObserved": [
+      "creator",
+      "reviewer",
+      "owner"
+    ]
+  },
+  "special": {
+    "realtime": false,
+    "uploads": false,
+    "downloads": false
+  },
+  "uiStatesHandled": [],
+  "uiStatesDesigned": [],
+  "stubsObserved": [
+    "STUB-19"
+  ],
+  "behaviour": [
+    "Draft -> submit -> eight automatic checks (T-63) -> reviewer -> returned or live; accepted styles enter as Standard; placement at a level by Firstwish only (T-59, T-60).",
+    "Reviews a month: Open 1, Creator 2, extra review purchasable (T-21, T-22).",
+    "Replaces STUB-19 (a submitted style stays 'review' forever)."
+  ],
+  "truths": [
+    "T-59",
+    "T-60",
+    "T-63"
+  ]
+}

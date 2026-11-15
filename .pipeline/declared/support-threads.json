@@ -1,0 +1,193 @@
+{
+  "screenId": null,
+  "resource": "support-threads",
+  "sourceScreens": [],
+  "provenance": "declaration",
+  "declaredAs": "other",
+  "reads": [
+    {
+      "entity": "SupportThread",
+      "fields": [
+        {
+          "name": "id",
+          "type": "string",
+          "nullable": false,
+          "note": "UUIDv7, issued by the server"
+        },
+        {
+          "name": "accountId",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "contact",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "subject",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "status",
+          "type": "enum(open|waiting|closed)",
+          "nullable": false
+        },
+        {
+          "name": "assigneeId",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "priority",
+          "type": "enum(normal|priority)",
+          "nullable": false,
+          "note": "Pro Studio gets priority support (T-17)"
+        },
+        {
+          "name": "createdAt",
+          "type": "datetime",
+          "nullable": false
+        },
+        {
+          "name": "updatedAt",
+          "type": "datetime",
+          "nullable": false
+        }
+      ],
+      "cardinality": "list",
+      "filtersOrSort": [
+        "updatedAt desc"
+      ],
+      "pagination": "paged"
+    },
+    {
+      "entity": "SupportMessage",
+      "fields": [
+        {
+          "name": "id",
+          "type": "string",
+          "nullable": false,
+          "note": "UUIDv7, issued by the server"
+        },
+        {
+          "name": "threadId",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "from",
+          "type": "enum(customer|staff)",
+          "nullable": false
+        },
+        {
+          "name": "body",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "fileIds",
+          "type": "array<string>",
+          "nullable": false
+        },
+        {
+          "name": "createdAt",
+          "type": "datetime",
+          "nullable": false
+        }
+      ],
+      "cardinality": "list",
+      "filtersOrSort": [],
+      "pagination": "none"
+    }
+  ],
+  "actions": [
+    {
+      "name": "openThread",
+      "kind": "create",
+      "entity": "SupportThread",
+      "payload": [
+        {
+          "name": "subject",
+          "type": "string"
+        },
+        {
+          "name": "body",
+          "type": "string"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "SupportThread",
+        "cardinality": "single"
+      }
+    },
+    {
+      "name": "reply",
+      "kind": "create",
+      "entity": "SupportMessage",
+      "payload": [
+        {
+          "name": "threadId",
+          "type": "string"
+        },
+        {
+          "name": "body",
+          "type": "string"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "SupportMessage",
+        "cardinality": "single"
+      }
+    },
+    {
+      "name": "assign",
+      "kind": "update",
+      "entity": "SupportThread",
+      "payload": [
+        {
+          "name": "id",
+          "type": "string"
+        },
+        {
+          "name": "assigneeId",
+          "type": "string"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "SupportThread",
+        "cardinality": "single"
+      },
+      "roles": [
+        "support",
+        "owner"
+      ]
+    }
+  ],
+  "authContext": {
+    "requiresAuth": true,
+    "rolesObserved": [
+      "person",
+      "support",
+      "owner"
+    ]
+  },
+  "special": {
+    "realtime": false,
+    "uploads": false,
+    "downloads": false
+  },
+  "uiStatesHandled": [],
+  "uiStatesDesigned": [],
+  "stubsObserved": [
+    "STUB-22"
+  ],
+  "behaviour": [
+    "Customers write from the app or by email; staff answer from the admin; replies go out by email (and in the app).",
+    "Contact details on the site are empty today (STUB-22): owner item."
+  ],
+  "truths": [
+    "T-17"
+  ]
+}

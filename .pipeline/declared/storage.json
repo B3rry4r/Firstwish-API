@@ -1,0 +1,286 @@
+{
+  "screenId": null,
+  "resource": "storage",
+  "sourceScreens": [],
+  "provenance": "declaration",
+  "declaredAs": "integration",
+  "integration": {
+    "provider": "cloudflare-r2 | digitalocean-spaces",
+    "direction": [
+      "outbound"
+    ],
+    "envVars": [
+      "STORAGE_DRIVER",
+      "R2_ACCOUNT_ID",
+      "R2_ACCESS_KEY_ID",
+      "R2_SECRET_ACCESS_KEY",
+      "R2_BUCKET",
+      "SPACES_ENDPOINT",
+      "SPACES_REGION",
+      "SPACES_ACCESS_KEY_ID",
+      "SPACES_SECRET_ACCESS_KEY",
+      "SPACES_BUCKET"
+    ],
+    "sandbox": true,
+    "testStandIn": "tests bind the port to an in-memory stand-in; no live call is made from any test or agent run",
+    "note": "Which adapter is live on day one is the owner's call at the end of November (R2)."
+  },
+  "reads": [
+    {
+      "entity": "StoredFile",
+      "fields": [
+        {
+          "name": "id",
+          "type": "string",
+          "nullable": false,
+          "note": "UUIDv7, issued by the server"
+        },
+        {
+          "name": "ownerAccountId",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "businessId",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "purpose",
+          "type": "enum(wish-photo|voice-note|video-clip|vault-file|studio-asset|brand-logo|render|qr-card|export)",
+          "nullable": false
+        },
+        {
+          "name": "objectKey",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "contentType",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "bytes",
+          "type": "integer",
+          "nullable": false
+        },
+        {
+          "name": "sha256",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "status",
+          "type": "enum(pending|uploaded|screening|ready|rejected|deleted)",
+          "nullable": false
+        },
+        {
+          "name": "variants",
+          "type": "array<{size, objectKey, width, height}>",
+          "nullable": false
+        },
+        {
+          "name": "driver",
+          "type": "enum(r2|spaces)",
+          "nullable": false
+        },
+        {
+          "name": "createdAt",
+          "type": "datetime",
+          "nullable": false
+        },
+        {
+          "name": "updatedAt",
+          "type": "datetime",
+          "nullable": false
+        }
+      ],
+      "cardinality": "single",
+      "filtersOrSort": [],
+      "pagination": "none"
+    }
+  ],
+  "actions": [
+    {
+      "name": "createUpload",
+      "kind": "create",
+      "entity": "UploadTicket",
+      "payload": [
+        {
+          "name": "purpose",
+          "type": "string"
+        },
+        {
+          "name": "contentType",
+          "type": "string"
+        },
+        {
+          "name": "bytes",
+          "type": "integer"
+        },
+        {
+          "name": "subjectId",
+          "type": "string?"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "UploadTicket",
+        "cardinality": "single"
+      },
+      "note": "returns a signed PUT URL (or presigned POST) to the private bucket and the file id"
+    },
+    {
+      "name": "confirmUpload",
+      "kind": "custom",
+      "entity": "StoredFile",
+      "payload": [
+        {
+          "name": "fileId",
+          "type": "string"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "StoredFile",
+        "cardinality": "single"
+      },
+      "note": "server HEADs the object, checks size and type, then starts screening and image sizes"
+    },
+    {
+      "name": "signedRead",
+      "kind": "custom",
+      "entity": "SignedUrl",
+      "payload": [
+        {
+          "name": "fileId",
+          "type": "string"
+        },
+        {
+          "name": "variant",
+          "type": "string?"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "SignedUrl",
+        "cardinality": "single"
+      },
+      "note": "internal, used when serving content"
+    },
+    {
+      "name": "deleteFile",
+      "kind": "delete",
+      "entity": "StoredFile",
+      "payload": [
+        {
+          "name": "fileId",
+          "type": "string"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "Empty",
+        "cardinality": "single"
+      }
+    }
+  ],
+  "authContext": {
+    "requiresAuth": true,
+    "rolesObserved": [
+      "person",
+      "business-member",
+      "creator"
+    ]
+  },
+  "special": {
+    "realtime": false,
+    "uploads": true,
+    "downloads": true
+  },
+  "uiStatesHandled": [],
+  "uiStatesDesigned": [],
+  "stubsObserved": [
+    "STUB-7",
+    "STUB-24"
+  ],
+  "behaviour": [
+    "One storage port, two adapters (Cloudflare R2, DigitalOcean Spaces), both S3-compatible, chosen by STORAGE_DRIVER (R2 ruling).",
+    "The browser uploads straight to storage with a signed URL the API issues, then calls confirm; the API never proxies file bytes.",
+    "Buckets are private; reads are short-lived signed URLs; photo addresses expire (T-74). Storage encrypted at rest by the provider.",
+    "Image sizes are made on upload (a job after confirm). Uploads never confirmed are removed by a job.",
+    "Vault usage per business is the sum of bytes of ready vault files; it feeds Vault billing (blocks of 100 GB).",
+    "Customer photos and words never train AI (T-74).",
+    "Replaces data URLs in localStorage (STUB-7, STUB-24, maker.ts:403, Voice.tsx:48)."
+  ],
+  "provisional": [
+    {
+      "key": "storage.signedUploadTtl",
+      "value": 15,
+      "unit": "minutes",
+      "status": "PROVISIONAL",
+      "owner": "owner",
+      "why": "documents give no figure"
+    },
+    {
+      "key": "storage.signedReadTtl",
+      "value": 10,
+      "unit": "minutes",
+      "status": "PROVISIONAL",
+      "owner": "owner",
+      "why": "documents say only that addresses expire"
+    },
+    {
+      "key": "storage.imageVariantWidths",
+      "value": [
+        320,
+        768,
+        1600
+      ],
+      "unit": "pixels",
+      "status": "PROVISIONAL",
+      "owner": "owner",
+      "why": "documents give no sizes"
+    },
+    {
+      "key": "storage.maxPhotoBytes",
+      "value": 15,
+      "unit": "MB",
+      "status": "PROVISIONAL",
+      "owner": "owner",
+      "why": "documents give no figure"
+    },
+    {
+      "key": "storage.maxVoiceNoteBytes",
+      "value": 10,
+      "unit": "MB",
+      "status": "PROVISIONAL",
+      "owner": "owner",
+      "why": "documents give no figure"
+    },
+    {
+      "key": "storage.maxClipBytes",
+      "value": 200,
+      "unit": "MB",
+      "status": "PROVISIONAL",
+      "owner": "owner",
+      "why": "documents give clip lengths only (15 s, 60 s)"
+    },
+    {
+      "key": "storage.maxVaultFileBytes",
+      "value": 100,
+      "unit": "MB",
+      "status": "PROVISIONAL",
+      "owner": "owner",
+      "why": "documents give no figure"
+    },
+    {
+      "key": "storage.unconfirmedUploadCleanup",
+      "value": 24,
+      "unit": "hours",
+      "status": "PROVISIONAL",
+      "owner": "owner",
+      "why": "documents give no figure"
+    }
+  ],
+  "supersedes": [
+    "S-13"
+  ]
+}

@@ -1,0 +1,173 @@
+{
+  "screenId": null,
+  "resource": "refunds",
+  "sourceScreens": [],
+  "provenance": "declaration",
+  "declaredAs": "integration",
+  "integration": {
+    "provider": "paystack",
+    "direction": [
+      "outbound",
+      "webhook-inbound"
+    ],
+    "envVars": [
+      "PAYSTACK_SECRET_KEY",
+      "PAYSTACK_PUBLIC_KEY",
+      "PAYSTACK_CALLBACK_URL"
+    ],
+    "sandbox": true,
+    "testStandIn": "tests bind the port to an in-memory stand-in; no live call is made from any test or agent run"
+  },
+  "reads": [
+    {
+      "entity": "Refund",
+      "fields": [
+        {
+          "name": "id",
+          "type": "string",
+          "nullable": false,
+          "note": "UUIDv7, issued by the server"
+        },
+        {
+          "name": "paymentId",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "amountKobo",
+          "type": "integer",
+          "nullable": false
+        },
+        {
+          "name": "reason",
+          "type": "enum(delivery-failed|duplicate|staff-decision|chargeback)",
+          "nullable": false
+        },
+        {
+          "name": "status",
+          "type": "enum(requested|approved|sent|succeeded|failed)",
+          "nullable": false
+        },
+        {
+          "name": "requestedBy",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "approvedBy",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "providerReference",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "createdAt",
+          "type": "datetime",
+          "nullable": false
+        },
+        {
+          "name": "updatedAt",
+          "type": "datetime",
+          "nullable": false
+        }
+      ],
+      "cardinality": "list",
+      "filtersOrSort": [
+        "createdAt desc"
+      ],
+      "pagination": "paged"
+    }
+  ],
+  "actions": [
+    {
+      "name": "requestRefund",
+      "kind": "create",
+      "entity": "Refund",
+      "payload": [
+        {
+          "name": "paymentId",
+          "type": "string"
+        },
+        {
+          "name": "amountKobo",
+          "type": "integer"
+        },
+        {
+          "name": "reason",
+          "type": "string"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "Refund",
+        "cardinality": "single"
+      },
+      "roles": [
+        "support",
+        "finance",
+        "owner"
+      ]
+    },
+    {
+      "name": "approveRefund",
+      "kind": "custom",
+      "entity": "Refund",
+      "payload": [
+        {
+          "name": "id",
+          "type": "string"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "Refund",
+        "cardinality": "single"
+      },
+      "roles": [
+        "finance",
+        "owner"
+      ]
+    },
+    {
+      "name": "refundWebhook",
+      "kind": "custom",
+      "entity": "WebhookEvent",
+      "payload": [
+        {
+          "name": "event",
+          "type": "refund.processed|refund.failed"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "Empty",
+        "cardinality": "single"
+      }
+    }
+  ],
+  "authContext": {
+    "requiresAuth": true,
+    "rolesObserved": [
+      "support",
+      "finance",
+      "owner"
+    ]
+  },
+  "special": {
+    "realtime": false,
+    "uploads": false,
+    "downloads": false
+  },
+  "uiStatesHandled": [],
+  "uiStatesDesigned": [],
+  "stubsObserved": [],
+  "behaviour": [
+    "Refunds go through Paystack's refund API; full or partial, never more than was captured less earlier refunds.",
+    "A paid wish that fails is refunded automatically (T-73) with reason delivery-failed; others need a finance or owner approval (the one who requests cannot approve).",
+    "A refund reverses what it bought: a refunded ticket unseals the wish; a refunded keep removes those days; refunded credits are taken back if unspent.",
+    "Every refund writes ledger rows and an audit-log entry; Paystack's refund webhooks confirm the final state."
+  ],
+  "truths": [
+    "T-73"
+  ]
+}

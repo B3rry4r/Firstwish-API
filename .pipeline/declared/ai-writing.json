@@ -1,0 +1,262 @@
+{
+  "screenId": null,
+  "resource": "ai-writing",
+  "sourceScreens": [],
+  "provenance": "declaration",
+  "declaredAs": "integration",
+  "integration": {
+    "provider": "anthropic + transcription (not chosen)",
+    "direction": [
+      "outbound"
+    ],
+    "envVars": [
+      "ANTHROPIC_API_KEY",
+      "ANTHROPIC_MODEL",
+      "TRANSCRIBE_PROVIDER",
+      "TRANSCRIBE_API_KEY"
+    ],
+    "sandbox": true,
+    "testStandIn": "tests bind the port to an in-memory stand-in; no live call is made from any test or agent run",
+    "note": "Anthropic's API does not transcribe audio; a transcription provider is needed (owner item)."
+  },
+  "reads": [
+    {
+      "entity": "AiRequest",
+      "fields": [
+        {
+          "name": "id",
+          "type": "string",
+          "nullable": false,
+          "note": "UUIDv7, issued by the server"
+        },
+        {
+          "name": "accountId",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "kind",
+          "type": "enum(letter-from-voice|reasons-from-voice|photo-pick|studio-draft|studio-change)",
+          "nullable": false
+        },
+        {
+          "name": "inputFileId",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "transcript",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "output",
+          "type": "json",
+          "nullable": true
+        },
+        {
+          "name": "creditsSpent",
+          "type": "integer",
+          "nullable": false
+        },
+        {
+          "name": "status",
+          "type": "enum(queued|done|failed)",
+          "nullable": false
+        },
+        {
+          "name": "model",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "inputTokens",
+          "type": "integer",
+          "nullable": true
+        },
+        {
+          "name": "outputTokens",
+          "type": "integer",
+          "nullable": true
+        },
+        {
+          "name": "createdAt",
+          "type": "datetime",
+          "nullable": false
+        }
+      ],
+      "cardinality": "list",
+      "filtersOrSort": [],
+      "pagination": "none"
+    },
+    {
+      "entity": "CreditBalance",
+      "fields": [
+        {
+          "name": "accountId",
+          "type": "string",
+          "nullable": false
+        },
+        {
+          "name": "credits",
+          "type": "integer",
+          "nullable": false
+        },
+        {
+          "name": "periodEndsAt",
+          "type": "datetime",
+          "nullable": true
+        }
+      ],
+      "cardinality": "single",
+      "filtersOrSort": [],
+      "pagination": "none"
+    }
+  ],
+  "actions": [
+    {
+      "name": "letterFromVoice",
+      "kind": "custom",
+      "entity": "AiRequest",
+      "payload": [
+        {
+          "name": "voiceFileId",
+          "type": "string"
+        },
+        {
+          "name": "wishId",
+          "type": "string"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "AiRequest",
+        "cardinality": "single"
+      }
+    },
+    {
+      "name": "reasonsFromVoice",
+      "kind": "custom",
+      "entity": "AiRequest",
+      "payload": [
+        {
+          "name": "voiceFileId",
+          "type": "string"
+        },
+        {
+          "name": "wishId",
+          "type": "string"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "AiRequest",
+        "cardinality": "single"
+      }
+    },
+    {
+      "name": "pickPhotos",
+      "kind": "custom",
+      "entity": "AiRequest",
+      "payload": [
+        {
+          "name": "wishId",
+          "type": "string"
+        },
+        {
+          "name": "fileIds",
+          "type": "array<string>"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "AiRequest",
+        "cardinality": "single"
+      }
+    },
+    {
+      "name": "studioDraft",
+      "kind": "custom",
+      "entity": "AiRequest",
+      "payload": [
+        {
+          "name": "prompt",
+          "type": "string"
+        },
+        {
+          "name": "styleId",
+          "type": "string?"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "AiRequest",
+        "cardinality": "single"
+      },
+      "note": "spends 4 credits (studio.ts:15)"
+    },
+    {
+      "name": "studioChange",
+      "kind": "custom",
+      "entity": "AiRequest",
+      "payload": [
+        {
+          "name": "styleId",
+          "type": "string"
+        },
+        {
+          "name": "ask",
+          "type": "string"
+        }
+      ],
+      "expectedResponse": {
+        "entity": "AiRequest",
+        "cardinality": "single"
+      },
+      "note": "spends 1 credit"
+    }
+  ],
+  "authContext": {
+    "requiresAuth": true,
+    "rolesObserved": [
+      "person",
+      "creator"
+    ]
+  },
+  "special": {
+    "realtime": false,
+    "uploads": false,
+    "downloads": false
+  },
+  "uiStatesHandled": [],
+  "uiStatesDesigned": [],
+  "stubsObserved": [
+    "STUB-4"
+  ],
+  "behaviour": [
+    "One AI port (Anthropic API, owner's key, conventions.md). A voice note is transcribed first through a transcription port, then written into a letter or reasons.",
+    "Never answered by a fake in production (R8): when the provider fails the request fails with a plain error and no credit is spent.",
+    "Credits: Open gets 3 once, Creator 10 a month, packs add 5; a draft spends 4, a change 1 (T-21, T-22). Credits are spent only when the result is returned, in the same transaction.",
+    "Customer photos and words never train AI (T-74); requests are sent with no-training terms.",
+    "Replaces STUB-4 (every AI action answered 'offline')."
+  ],
+  "provisional": [
+    {
+      "key": "ai.personalRequestsPerDay",
+      "value": 20,
+      "unit": "requests per account",
+      "status": "PROVISIONAL",
+      "owner": "owner",
+      "why": "letter/reasons/photo-pick for senders have no credit cost in the documents; a cap protects cost"
+    },
+    {
+      "key": "ai.maxVoiceNoteSeconds",
+      "value": 180,
+      "unit": "seconds",
+      "status": "PROVISIONAL",
+      "owner": "owner",
+      "why": "documents give 60 s only for Group friends"
+    }
+  ],
+  "truths": [
+    "T-21",
+    "T-22",
+    "T-74"
+  ]
+}

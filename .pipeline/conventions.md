@@ -17,7 +17,15 @@
 ## Signing in
 - O No passwords. Sign in by a one-time code to an email, or Google sign-in (R11; phone sign-in removed). Codes: 6 digits, 10 minutes, 5 tries, rate limited.
 - D Access token: JWT, 15 minutes, `Authorization: Bearer`. Refresh token: rotating, 30 days, httpOnly Secure SameSite=Lax cookie on the API host,
-  refreshed at `POST /v1/auth/refresh`. Reuse of a rotated refresh token signs the account out everywhere.
+  refreshed at `POST /v1/auth/refresh` (public by its cookie, no bearer: T3). Each sign-in starts a session FAMILY (one device's chain).
+- D (V1) An access token names its session family and is good while that family lives: rotating the refresh token does not end the
+  access tokens already given (a second tab and parallel requests keep working). Sign-out and a detected theft end the family at once.
+- D (V2) Refresh has a grace of 10 seconds: the same rotated token sent again inside it gets the SAME new child (one rotation, many
+  identical answers), never a 401 and never a cleared cookie. (T4) After the grace, a reused rotated token ends that session family
+  only; the account's other devices stay signed in.
+- D Staff sessions follow the same rules (S5, V1, V2): `POST /v1/admin/auth/refresh` by the staff cookie, 12 hours from sign-in.
+  One access-token issuer and verifier (src/common/auth): a token with audience "staff" is checked as staff, any other as a user,
+  and each side refuses the other's token (S1).
 - CORS: only the site's own origins, with credentials.
 
 ## Shapes

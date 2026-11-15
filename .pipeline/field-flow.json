@@ -1260,17 +1260,21 @@
     },
     {
       "field": "AuditEntry.section",
-      "writers": [],
+      "writers": [
+        "E-18"
+      ],
       "store": "AuditEntry",
       "readers": [
         "admin-audit"
       ],
-      "writerActors": [],
+      "writerActors": [
+        "staff"
+      ],
       "readerActors": [
         "staff"
       ],
       "crossActor": false,
-      "noWriter": true
+      "noWriter": false
     },
     {
       "field": "AuditEntry.subjectId",
@@ -19788,5 +19792,5 @@
     }
   ],
   "crossActor": 35,
-  "noWriter": 600
+  "noWriter": 599
 }

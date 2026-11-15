@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "frozenAt": "2026-11-15T16:55:02Z",
+  "frozenAt": "2026-11-15T18:52:28Z",
   "framework": "nestjs",
   "generatedBy": "tools/pipeline/reconcile.py",
   "resources": [
@@ -2164,7 +2164,6 @@
             {
               "kind": "staff role",
               "roles": [
-                "finance",
                 "ops",
                 "owner"
               ]
@@ -2183,6 +2182,13 @@
               "type": "date?",
               "from": [
                 "audit-log"
+              ]
+            },
+            {
+              "name": "section",
+              "type": "string? (an admin section of the role table, such as /admin/team; DEC-147)",
+              "from": [
+                "DEC-147"
               ]
             },
             {
@@ -2216,6 +2222,8 @@
             }
           ],
           "notes": [
+            "auth by DEC-147",
+            "body by DEC-147",
             "route by DEC-112"
           ]
         }
@@ -2513,9 +2521,9 @@
             }
           ],
           "response": {
-            "entity": "Session",
+            "entity": "AuthResult",
             "cardinality": "single",
-            "note": "UI needs only success or failure plus whether an account exists (existing -> return path or /app; new -> /welcome). No token handling coded."
+            "note": "AuthResult; the refresh token only in the httpOnly cookie (DEC-150)"
           },
           "sources": [
             {
@@ -2532,6 +2540,7 @@
             }
           ],
           "notes": [
+            "body by DEC-150",
             "route by DEC-104"
           ]
         }
@@ -6609,8 +6618,9 @@
             }
           ],
           "response": {
-            "entity": "Session",
-            "cardinality": "single"
+            "entity": "AuthResult",
+            "cardinality": "single",
+            "note": "AuthResult with returnTo; the refresh token only in the httpOnly cookie (DEC-150)"
           },
           "sources": [
             {
@@ -6619,6 +6629,7 @@
             }
           ],
           "notes": [
+            "body by DEC-150",
             "route by DEC-104"
           ]
         },
@@ -6641,9 +6652,9 @@
             }
           ],
           "response": {
-            "entity": "Session",
+            "entity": "GoogleStart",
             "cardinality": "single",
-            "note": "today calls done('Google account') with no OAuth"
+            "note": "{url}: where the browser goes next; sets the httpOnly Google state cookie (DEC-151)"
           },
           "sources": [
             {
@@ -6660,6 +6671,7 @@
             }
           ],
           "notes": [
+            "body by DEC-151",
             "route by DEC-104"
           ]
         },
@@ -17476,14 +17488,15 @@
           "path": "/v1/auth/refresh",
           "auth": [
             {
-              "kind": "user",
-              "scope": "signed in"
+              "kind": "cookie",
+              "note": "public by its httpOnly refresh cookie; no bearer (DEC-152)"
             }
           ],
           "body": [],
           "response": {
-            "entity": "Session",
-            "cardinality": "single"
+            "entity": "AuthResult",
+            "cardinality": "single",
+            "note": "AuthResult; rotates the cookie, 10-second grace, a reused old cookie ends its family (DEC-150)"
           },
           "sources": [
             {
@@ -17491,7 +17504,10 @@
               "via": "action:refresh"
             }
           ],
-          "notes": []
+          "notes": [
+            "auth by DEC-152",
+            "body by DEC-150"
+          ]
         },
         {
           "id": "E-160",
@@ -18571,7 +18587,7 @@
         },
         {
           "name": "status",
-          "type": "string",
+          "type": "enum(invited|active|suspended|removed)",
           "classes": [
             "enum"
           ],
@@ -18579,7 +18595,8 @@
           "provenance": [
             "staff-accounts"
           ],
-          "supersedes": []
+          "supersedes": [],
+          "typeBy": "DEC-146"
         },
         {
           "name": "updatedAt",
@@ -18616,7 +18633,7 @@
           "response": {
             "entity": null,
             "cardinality": "none",
-            "note": "204; refuses an email not on the staff list (not_staff)"
+            "note": "204 with no body for every email, whoever asks; a code goes only to an active or invited member (DEC-149)"
           },
           "sources": [
             {
@@ -18625,7 +18642,34 @@
             }
           ],
           "notes": [
+            "body by DEC-149",
             "route by DEC-119"
+          ]
+        },
+        {
+          "id": "E-234",
+          "method": "POST",
+          "path": "/v1/admin/auth/refresh",
+          "auth": [
+            {
+              "kind": "cookie",
+              "note": "public by its httpOnly refresh cookie; no bearer (DEC-152)"
+            }
+          ],
+          "body": [],
+          "response": {
+            "entity": "StaffAuthResult",
+            "cardinality": "single",
+            "note": "{staff, accessToken, accessTokenExpiresAt}; rotates the staff cookie, 10-second grace, a reused old cookie ends the family (DEC-148)"
+          },
+          "sources": [
+            {
+              "src": "DEC-148",
+              "via": "ruling:DEC-148"
+            }
+          ],
+          "notes": [
+            "body by DEC-148"
           ]
         },
         {
@@ -18689,32 +18733,9 @@
             }
           ],
           "response": {
-            "entity": "Staff",
+            "entity": "StaffAuthResult",
             "cardinality": "single",
-            "fields": [
-              {
-                "name": "id",
-                "type": "string",
-                "nullable": false
-              },
-              {
-                "name": "name",
-                "type": "string",
-                "nullable": false
-              },
-              {
-                "name": "email",
-                "type": "string",
-                "nullable": false
-              },
-              {
-                "name": "role",
-                "type": "string",
-                "nullable": false,
-                "note": "owner|ops|moderator|reviewer|support|finance|maker"
-              }
-            ],
-            "note": "also a session"
+            "note": "{staff, accessToken, accessTokenExpiresAt}; the refresh token only in the httpOnly staff cookie (DEC-148)"
           },
           "sources": [
             {
@@ -18727,6 +18748,7 @@
             }
           ],
           "notes": [
+            "body by DEC-148",
             "route by DEC-119",
             "route by DEC-24, DEC-112"
           ]

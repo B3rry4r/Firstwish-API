@@ -1,4 +1,4 @@
--- Identity integration INT-1 (build/rulings-phase3.md S2, S3, U7, V1, V2, V5; registry DEC-146..153).
+-- Identity integration INT-1 (build/rulings-phase3.md S2, S3, U7, V1, V2, V5, V9; registry DEC-146..153).
 -- Generated part: prisma migrate diff from schema.prisma (gen_schema.py + .pipeline/schema-map.json).
 -- Raw part (after it): the audit backfill of section and reason from the old JSON detail, and the trigger that refuses deleting a
 -- staff account (U7). A member B03 stored as removed (suspended, no roles) is not moved to the new status here: a new enum value
@@ -12,7 +12,8 @@ ALTER TABLE "audit_entry" ADD COLUMN     "reason" TEXT,
 ADD COLUMN     "section" TEXT NOT NULL DEFAULT '';
 
 -- AlterTable
-ALTER TABLE "auth_code" ADD COLUMN     "canonical" TEXT;
+ALTER TABLE "auth_code" ADD COLUMN     "canonical" TEXT,
+ADD COLUMN     "triedFrom" TEXT[] DEFAULT ARRAY[]::TEXT[];
 
 -- AlterTable
 ALTER TABLE "session" ADD COLUMN     "replacedById" UUID;
@@ -28,7 +29,6 @@ CREATE INDEX "auth_code_ip_createdAt_idx" ON "auth_code"("ip", "createdAt");
 
 -- CreateIndex
 CREATE INDEX "session_familyId_revokedAt_idx" ON "session"("familyId", "revokedAt");
-
 
 -- Raw: S2 backfill. B03 kept section and reason inside "after"; move them to their columns (the audit table refuses UPDATE, so
 -- its update trigger is lifted for this one statement and put back).

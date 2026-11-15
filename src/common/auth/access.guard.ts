@@ -37,6 +37,7 @@ export class AccessGuard implements CanActivate {
 
     switch (access.kind) {
       case "public":
+      case "cookie": // the refresh routes check their cookie themselves (T3)
         return true;
       case "internal":
         // Default (lead), owner may override: a shared secret, and never through a proxy.

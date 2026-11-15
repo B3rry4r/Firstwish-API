@@ -1,6 +1,6 @@
 /**
  * The environment schema. Every variable in .pipeline/env-manifest.json is listed here (a spec checks the two match),
- * plus the few runtime-only variables in RUNTIME_VARS.
+ * plus any runtime-only variables in RUNTIME_VARS (none now).
  *
  * `need` says when a variable must be set:
  *  - always: the API will not boot without it.
@@ -54,13 +54,6 @@ export const MANIFEST_VARS: readonly VarSpec[] = [
   { name: "RENDER_CONCURRENCY", need: "optional", kind: "int", purpose: "parallel render workers", default: "2" },
   { name: "RESEND_API_KEY", need: "live", kind: "string", purpose: "Resend API auth (R12)" },
   { name: "MAIL_FROM", need: "live", kind: "email", purpose: "sender address for every email (R12)" },
-];
-
-/**
- * Runtime-only variables: how the process runs, not what it talks to. Not secrets.
- * Default (lead), owner may override: these three are not in the manifest yet; the lead adds them.
- */
-export const RUNTIME_VARS: readonly VarSpec[] = [
   { name: "NODE_ENV", need: "optional", kind: { oneOf: ["development", "test", "production"] }, purpose: "process mode", default: "development" },
   { name: "PORT", need: "optional", kind: "int", purpose: "HTTP port", default: "3000" },
   {
@@ -76,6 +69,19 @@ export const RUNTIME_VARS: readonly VarSpec[] = [
     kind: "secret",
     purpose: "shared secret an internal route needs in the x-internal-token header (32 or more characters)",
   },
+  {
+    name: "TRUST_PROXY_HOPS",
+    need: "optional",
+    kind: "int",
+    purpose: "proxies in front of the API trusted for the client address (V4); 0 reads the socket address, 1 behind one load balancer",
+    default: "0",
+  },
 ];
+
+/**
+ * Runtime-only variables: none now. NODE_ENV, PORT, PROVIDERS and INTERNAL_TOKEN moved into the manifest (build/sweeps/api.md),
+ * with TRUST_PROXY_HOPS (V4).
+ */
+export const RUNTIME_VARS: readonly VarSpec[] = [];
 
 export const ENV_SCHEMA: readonly VarSpec[] = [...MANIFEST_VARS, ...RUNTIME_VARS];

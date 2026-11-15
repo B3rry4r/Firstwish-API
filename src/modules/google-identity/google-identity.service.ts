@@ -1,7 +1,7 @@
 import { HttpStatus, Inject, Injectable } from "@nestjs/common";
 import { ExternalIdentity as ExternalIdentityRow } from "@prisma/client";
-import { createHash } from "node:crypto";
-import type { ExternalIdentity } from "../../contracts";
+import { createHash, timingSafeEqual } from "node:crypto";
+import type { ExternalIdentity, GoogleStart } from "../../contracts";
 import { ENV } from "../../common/env/env.module";
 import type { Env } from "../../common/env/env";
 import { PrismaService } from "../../common/db/prisma.service";
@@ -13,17 +13,18 @@ import { normaliseEmail } from "../../common/normalise/email";
 import { toWireInstant } from "../../common/time/time";
 import { AccountsService } from "../accounts/accounts.service";
 import { ClientMeta, SessionsService, StartedSession } from "../sessions/sessions.service";
-import { GOOGLE_ISSUERS } from "./google.adapters";
-import { GoogleIdentityPort } from "./google.port";
+import { GOOGLE_ISSUERS, GoogleIdentityPort } from "../../common/ports/google.port";
+import { isUuid } from "../../common/auth/access-tokens";
 
 /** The client id the stand-in expects when GOOGLE_CLIENT_ID is not set (PROVIDERS=standin only). */
 export const STANDIN_GOOGLE_CLIENT_ID = "standin-google-client";
 /** How long a started Google sign-in may take before its state is gone. */
 const STATE_SECONDS = 10 * 60;
 
-export interface GoogleStart {
-  /** Where the browser goes next: Google's sign-in page. */
-  url: string;
+/** E-54's answer, and the nonce the controller puts in the httpOnly Google state cookie (V3). */
+export interface GoogleStarted {
+  start: GoogleStart;
+  nonce: string;
 }
 
 export type ExternalIdentityView = Pick<ExternalIdentity, "id" | "accountId" | "provider" | "subject" | "email" | "emailVerified" | "createdAt"> & {
@@ -51,22 +52,28 @@ export class GoogleIdentityService {
     @Inject(ENV) private readonly env: Env,
   ) {}
 
-  /** E-54: starts the code flow with PKCE. The state and the verifier stay on the server for 10 minutes, used once. */
-  async start(returnTo: string | undefined): Promise<GoogleStart> {
+  /**
+   * E-54: starts the code flow with PKCE. The state and the verifier stay on the server for 10 minutes, used once. The state is
+   * bound to this browser (V3): a nonce goes into an httpOnly cookie, and only its hash is kept beside the state.
+   */
+  async start(returnTo: string | undefined): Promise<GoogleStarted> {
     const back = returnTo ?? "/app";
     if (!/^\/(?![/\\])[^\s]*$/.test(back) || back.length > 500) {
       throw AppError.validation({ returnTo: "Must be a path on this site, such as /app." });
     }
     const state = this.codes.token(24);
     const verifier = this.codes.token(48);
+    const nonce = this.codes.token(24);
     const challenge = createHash("sha256").update(verifier).digest("base64url");
-    await this.store().then((c) => c.set(this.stateKey(state), JSON.stringify({ verifier, returnTo: back }), "EX", STATE_SECONDS));
-    return { url: this.google.authorizationUrl({ clientId: this.clientId(), redirectUri: this.redirectUri(), state, codeChallenge: challenge }) };
+    const saved = JSON.stringify({ verifier, returnTo: back, nonce: this.nonceHash(nonce) });
+    await this.store().then((c) => c.set(this.stateKey(state), saved, "EX", STATE_SECONDS));
+    const url = this.google.authorizationUrl({ clientId: this.clientId(), redirectUri: this.redirectUri(), state, codeChallenge: challenge });
+    return { start: { url }, nonce };
   }
 
   /** E-53: Google sent the browser back. One account per email: a Google email that has an account signs into it. */
-  async callback(code: string, state: string, meta: ClientMeta): Promise<{ started: StartedSession; email: string; isNew: boolean; returnTo: string }> {
-    const { proved, returnTo } = await this.prove(code, state);
+  async callback(code: string, state: string, nonce: string | null, meta: ClientMeta): Promise<{ started: StartedSession; email: string; isNew: boolean; returnTo: string }> {
+    const { proved, returnTo } = await this.prove(code, state, nonce);
     const result = await this.prisma.$transaction(async (tx) => {
       await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`google:${proved.subject}`}))`;
       const linked = await tx.externalIdentity.findFirst({ where: { provider: "google", subject: proved.subject }, include: { account: true } });
@@ -96,8 +103,8 @@ export class GoogleIdentityService {
   }
 
   /** E-56: links a Google account to the signed-in account. */
-  async link(accountId: string, code: string, state: string): Promise<ExternalIdentityView> {
-    const { proved, returnTo } = await this.prove(code, state);
+  async link(accountId: string, code: string, state: string, nonce: string | null): Promise<ExternalIdentityView> {
+    const { proved, returnTo } = await this.prove(code, state, nonce);
     return this.prisma.$transaction(async (tx) => {
       await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`google:${proved.subject}`}))`;
       const linked = await tx.externalIdentity.findFirst({ where: { provider: "google", subject: proved.subject } });
@@ -115,6 +122,7 @@ export class GoogleIdentityService {
 
   /** E-55: unlinks one Google account. The email code always remains a way in, so this is never the last way. */
   async unlink(accountId: string, id: string): Promise<void> {
+    if (!isUuid(id)) throw AppError.notFound("No such linked Google account."); // V6: never a 500 for a made-up id
     const { count } = await this.prisma.externalIdentity.deleteMany({ where: { id, accountId } });
     if (count === 0) throw AppError.notFound("No such linked Google account.");
   }
@@ -133,10 +141,12 @@ export class GoogleIdentityService {
   }
 
   /** Uses the state once, trades the code, and checks the ID token: signature, issuer, audience, expiry, verified email. */
-  private async prove(code: string, state: string): Promise<{ proved: ProvedGoogle; returnTo: string }> {
+  private async prove(code: string, state: string, nonce: string | null): Promise<{ proved: ProvedGoogle; returnTo: string }> {
     const raw = await this.store().then((c) => c.getdel(this.stateKey(state)));
     if (!raw) throw refused("This Google sign-in has run out or was already used. Start again.");
-    const saved = JSON.parse(raw) as { verifier: string; returnTo: string };
+    const saved = JSON.parse(raw) as { verifier: string; returnTo: string; nonce: string };
+    // V3: the state is good only in the browser that started it (its nonce cookie); the state is used up either way.
+    if (!nonce || !this.sameText(saved.nonce, this.nonceHash(nonce))) throw refused("This Google sign-in was started in another browser. Start again.");
     let idToken: string;
     try {
       ({ idToken } = await this.google.exchangeCode({ code, codeVerifier: saved.verifier, redirectUri: this.redirectUri() }));
@@ -163,6 +173,16 @@ export class GoogleIdentityService {
 
   private redirectUri(): string {
     return this.env.GOOGLE_REDIRECT_URI ?? `${this.env.PUBLIC_SITE_URL}/auth/google`;
+  }
+
+  private nonceHash(nonce: string): string {
+    return createHash("sha256").update(`google-nonce:${nonce}`).digest("hex");
+  }
+
+  private sameText(a: string, b: string): boolean {
+    const x = Buffer.from(a);
+    const y = Buffer.from(b);
+    return x.length === y.length && timingSafeEqual(x, y);
   }
 
   private stateKey(state: string): string {

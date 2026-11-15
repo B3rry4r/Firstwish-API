@@ -1,3 +1,6 @@
+/** Issuers a Google ID token may carry. */
+export const GOOGLE_ISSUERS = ["https://accounts.google.com", "accounts.google.com"];
+
 /** The claims of a Google ID token whose signature checked out. The service checks issuer, audience, expiry and email. */
 export interface GoogleIdClaims {
   iss?: unknown;

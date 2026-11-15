@@ -53,6 +53,8 @@ export interface TestAppOptions {
   /** Where the stand-in clock starts (frozen). Default 2026-01-01T09:00:00Z. */
   now?: Date;
   configure?: (b: TestingModuleBuilder) => TestingModuleBuilder;
+  /** true: real access tokens, checked by the kernel's verifier (sign-in tests). Default: the TestTokens map. */
+  realTokens?: boolean;
 }
 
 /**
@@ -68,9 +70,8 @@ export async function createTestApp(opts: TestAppOptions = {}): Promise<TestApp>
     providers: opts.providers ?? [],
   })
     .overrideProvider(Clock)
-    .useValue(clock)
-    .overrideProvider(AccessTokenVerifier)
-    .useValue(tokens);
+    .useValue(clock);
+  if (!opts.realTokens) builder = builder.overrideProvider(AccessTokenVerifier).useValue(tokens);
   if (opts.configure) builder = opts.configure(builder);
   const moduleRef = await builder.compile();
   const app = moduleRef.createNestApplication({ rawBody: true, logger: false });

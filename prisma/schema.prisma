@@ -142,6 +142,7 @@ model AuthCode {
   mode        AuthCodeMode?
   via         AuthCodeVia?
   canonical   String?
+  triedFrom   String[]        @default([])
 
   @@index([canonical, createdAt])
   @@index([ip, createdAt])

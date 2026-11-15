@@ -5,17 +5,18 @@ import {
   PostAuthRefreshBodyDto,
   PostAuthSignOutBodyDto,
   PostAuthSignOutEverywhereBodyDto,
+  type AuthResult,
   type Empty,
 } from "../../contracts";
-import { CurrentPrincipal, Public } from "../../common/auth/decorators";
-import type { Principal } from "../../common/auth/principal";
+import { CookieAuth, CurrentPrincipal } from "../../common/auth/decorators";
+import type { Principal, UserPrincipal } from "../../common/auth/principal";
+import type { ClientMeta } from "../../common/auth/session-families";
 import { AppError } from "../../common/errors/app-error";
 import { ENV } from "../../common/env/env.module";
 import type { Env } from "../../common/env/env";
 import { Clock } from "../../common/ports/clock.port";
-import { AccessTokens } from "./access-tokens";
 import { clearRefreshCookie, readRefreshCookie, setRefreshCookie } from "./refresh-cookie";
-import { ClientMeta, SessionsService, SessionView, SignedIn } from "./sessions.service";
+import { SessionsService, SessionView } from "./sessions.service";
 import type { Page } from "../../common/pagination/cursor";
 
 export function clientMeta(req: Request): ClientMeta {
@@ -23,50 +24,44 @@ export function clientMeta(req: Request): ClientMeta {
   return { ip: req.ip ?? null, userAgent: typeof ua === "string" ? ua : null };
 }
 
-function accountOf(p: Principal | undefined): string {
+function userOf(p: Principal | undefined): UserPrincipal {
   if (!p || p.kind !== "user") throw AppError.forbidden();
-  return p.accountId;
+  return p;
 }
 
 @Controller("auth")
 export class SessionsController {
   constructor(
     private readonly sessions: SessionsService,
-    private readonly tokens: AccessTokens,
     private readonly clock: Clock,
     @Inject(ENV) private readonly env: Env,
   ) {}
 
   /**
-   * E-159. The credential is the httpOnly refresh cookie, not a bearer token: after a page load the access token is gone
-   * from memory (R10), so this route is the way back to one.
+   * E-159 (T3: public by its cookie, no bearer). After a page load the access token is gone from memory (R10), so this route is
+   * the way back to one. A repeat with the same old cookie inside 10 seconds gets the same new session (V2); the cookie is
+   * cleared only when the session has really ended.
    */
-  @Public()
+  @CookieAuth()
   @Post("refresh")
   @HttpCode(200)
-  async refresh(@Body() _body: PostAuthRefreshBodyDto, @Req() req: Request, @Res({ passthrough: true }) res: Response): Promise<SignedIn> {
+  async refresh(@Body() _body: PostAuthRefreshBodyDto, @Req() req: Request, @Res({ passthrough: true }) res: Response): Promise<AuthResult> {
     try {
-      const { started, contact } = await this.sessions.refresh(readRefreshCookie(req), clientMeta(req));
+      const started = await this.sessions.refresh(readRefreshCookie(req), clientMeta(req));
       setRefreshCookie(res, this.env, started.cookie, started.row.expiresAt, this.clock.now());
-      return this.sessions.signedIn(started, contact, false);
+      return this.sessions.authResult(started, false);
     } catch (e) {
-      clearRefreshCookie(res, this.env);
+      if (e instanceof AppError && e.getStatus() === 401) clearRefreshCookie(res, this.env);
       throw e;
     }
   }
 
-  /** E-160: ends this device's session. */
+  /** E-160: ends this device's session family. */
   @Post("sign-out")
   @HttpCode(204)
-  async signOut(
-    @Body() _body: PostAuthSignOutBodyDto,
-    @CurrentPrincipal() p: Principal | undefined,
-    @Req() req: Request,
-    @Res({ passthrough: true }) res: Response,
-  ): Promise<void> {
-    const accountId = accountOf(p);
-    const sid = this.sessionIdOf(req);
-    if (sid) await this.sessions.signOut(accountId, sid);
+  async signOut(@Body() _body: PostAuthSignOutBodyDto, @CurrentPrincipal() p: Principal | undefined, @Res({ passthrough: true }) res: Response): Promise<void> {
+    const u = userOf(p);
+    if (u.familyId) await this.sessions.signOut(u.accountId, u.familyId);
     clearRefreshCookie(res, this.env);
   }
 
@@ -78,29 +73,20 @@ export class SessionsController {
     @CurrentPrincipal() p: Principal | undefined,
     @Res({ passthrough: true }) res: Response,
   ): Promise<Empty> {
-    await this.sessions.signOutEverywhere(accountOf(p));
+    await this.sessions.signOutEverywhere(userOf(p).accountId);
     clearRefreshCookie(res, this.env);
     return {};
-  }
-
-  private sessionIdOf(req: Request): string | null {
-    const m = /^Bearer\s+(\S+)$/i.exec(req.headers.authorization ?? "");
-    return m ? (this.tokens.read(m[1])?.sid ?? null) : null;
   }
 }
 
 @Controller("sessions")
 export class SessionsListController {
-  constructor(
-    private readonly sessions: SessionsService,
-    private readonly tokens: AccessTokens,
-  ) {}
+  constructor(private readonly sessions: SessionsService) {}
 
   /** E-162: the account's live sessions; `current` marks this device's. */
   @Get()
-  list(@Query() q: GetSessionsQueryDto, @CurrentPrincipal() p: Principal | undefined, @Req() req: Request): Promise<Page<SessionView>> {
-    const m = /^Bearer\s+(\S+)$/i.exec(req.headers.authorization ?? "");
-    const sid = m ? (this.tokens.read(m[1])?.sid ?? null) : null;
-    return this.sessions.list(accountOf(p), sid, q.cursor, q.limit);
+  list(@Query() q: GetSessionsQueryDto, @CurrentPrincipal() p: Principal | undefined): Promise<Page<SessionView>> {
+    const u = userOf(p);
+    return this.sessions.list(u.accountId, u.familyId ?? null, q.cursor, q.limit);
   }
 }

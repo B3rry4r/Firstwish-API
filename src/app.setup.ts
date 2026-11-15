@@ -19,7 +19,8 @@ export function setupApp(app: INestApplication): INestApplication {
   const env = app.get<Env>(ENV);
   const express = app as NestExpressApplication;
   express.disable("x-powered-by");
-  express.set("trust proxy", 1);
+  // V4: the client address is read past exactly TRUST_PROXY_HOPS trusted proxies; 0 (default) reads the socket address.
+  express.set("trust proxy", env.TRUST_PROXY_HOPS);
   express.set("json replacer", wireReplacer);
   app.use(requestIdMiddleware);
   app.setGlobalPrefix(API_PREFIX);

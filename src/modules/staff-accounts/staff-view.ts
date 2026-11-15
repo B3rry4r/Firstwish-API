@@ -4,9 +4,9 @@ import type { StaffAccount } from "../../contracts";
 
 export const STAFF_ROLES: readonly StaffAccountRoles[] = ["owner", "ops", "moderator", "reviewer", "support", "finance", "maker"];
 
-/** A removed member: suspended and holding no role (the schema has no "removed" status; see the B03 hand-back). */
-export function isRemoved(row: Pick<StaffRow, "status" | "roles">): boolean {
-  return row.status === "suspended" && row.roles.length === 0;
+/** A removed member (S3): kept for the audit trail, cannot sign in, holds no role. */
+export function isRemoved(row: Pick<StaffRow, "status">): boolean {
+  return row.status === "removed";
 }
 
 /** A staff row on the wire. `code` and `reason` are request inputs of other endpoints and are never echoed back. */
@@ -19,7 +19,7 @@ export function staffToWire(row: StaffRow): StaffAccount {
     roles: [...row.roles],
     role: row.roles[0] ?? null,
     status: row.status,
-    state: isRemoved(row) ? "removed" : row.status,
+    state: row.status,
     lastSignInAt: seen,
     seen,
     since: toWireInstant(row.createdAt),

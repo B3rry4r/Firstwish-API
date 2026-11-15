@@ -179,6 +179,10 @@
     "canonical": {
      "rule": "blank",
      "why": "personal"
+    },
+    "triedFrom": {
+     "rule": "blank",
+     "why": "personal"
     }
    },
    "columns": {
@@ -187,6 +191,12 @@
      "attrs": "",
      "opt": true,
      "why": "V5: the email's canonical form (lowercased, the +tag dropped); per-email limits count on it, the destination stays as typed"
+    },
+    "triedFrom": {
+     "type": "String[]",
+     "attrs": "@default([])",
+     "opt": false,
+     "why": "V9: the address of each try at this code; tries per address per hour are counted from it (in the database, U2)"
     }
    },
    "indexes": [

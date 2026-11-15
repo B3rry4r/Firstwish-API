@@ -1,11 +1,14 @@
 import { HttpStatus } from "@nestjs/common";
 import type { Response } from "express";
-import { AppError } from "../../common/errors/app-error";
+import { AppError } from "./app-error";
 
-/** 429 in the error envelope; the controller copies retryAfter into the Retry-After header. */
+/** 429 in the error envelope; withRetryAfter copies retryAfter into the Retry-After header. */
 export class RateLimited extends AppError {
-  constructor(readonly retryAfter: number) {
-    super(HttpStatus.TOO_MANY_REQUESTS, "too_many_requests", `Too many codes asked for. Try again in ${retryAfter} seconds.`);
+  constructor(
+    readonly retryAfter: number,
+    message = `Too many codes asked for. Try again in ${retryAfter} seconds.`,
+  ) {
+    super(HttpStatus.TOO_MANY_REQUESTS, "too_many_requests", message);
   }
 }
 

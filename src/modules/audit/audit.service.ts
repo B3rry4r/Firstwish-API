@@ -31,33 +31,29 @@ export interface AuditInput {
 }
 
 export const MIN_REASON = 4;
+/** U6: a reason is 4 to 500 characters everywhere. */
+export const MAX_REASON = 500;
 const FIELD_NAME = /^[A-Za-z][A-Za-z0-9_.]{0,63}$/;
 
 /**
- * Refuses a reason under 4 characters (after trimming) with 422 on `reason`. Call it before any write, so a refused
- * request writes nothing; the audit helper calls it again as a last line.
+ * Refuses a reason under 4 or over 500 characters (after trimming) with 422 on `reason` (A14, U6). Call it before any write,
+ * so a refused request writes nothing; the audit helper calls it again as a last line.
  */
 export function requireReason(reason: unknown): string {
   const r = typeof reason === "string" ? reason.trim() : "";
-  if (r.length < MIN_REASON) throw AppError.validation({ reason: `Give a reason of ${MIN_REASON} or more characters.` });
+  if (r.length < MIN_REASON || r.length > MAX_REASON) {
+    throw AppError.validation({ reason: `Give a reason of ${MIN_REASON} to ${MAX_REASON} characters.` });
+  }
   return r;
 }
 
-/** What the row keeps beside its columns (the audit table has no section or reason column yet; see the B03 hand-back). */
-interface AuditDetail {
-  section: string;
-  reason: string | null;
-  fields: string[];
+/** The names of the changed fields, kept in `after` (never their values, Q9). */
+function fieldsOf(row: AuditRow): string[] {
+  const a = (row.after ?? {}) as { fields?: unknown };
+  return Array.isArray(a.fields) ? a.fields.filter((f): f is string => typeof f === "string") : [];
 }
 
-function detailOf(row: AuditRow): AuditDetail {
-  const a = (row.after ?? {}) as Partial<AuditDetail>;
-  return {
-    section: typeof a.section === "string" ? a.section : "",
-    reason: typeof a.reason === "string" ? a.reason : null,
-    fields: Array.isArray(a.fields) ? a.fields.filter((f): f is string => typeof f === "string") : [],
-  };
-}
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /** The one audit write helper every staff action uses, and the staff read of the log (E-18). */
 @Injectable()
@@ -76,7 +72,6 @@ export class AuditService {
     const bad = input.changedFields.find((f) => !FIELD_NAME.test(f));
     if (bad !== undefined) throw new Error("audit: changedFields holds field names only");
     const id = this.ids.id();
-    const detail: AuditDetail = { section: input.section, reason, fields: [...input.changedFields] };
     await tx.auditEntry.create({
       data: {
         id,
@@ -85,8 +80,10 @@ export class AuditService {
         action: input.action,
         subjectType: input.target.type,
         subjectId: input.target.id,
+        section: input.section,
+        reason,
         before: Prisma.DbNull,
-        after: detail as unknown as Prisma.InputJsonObject,
+        after: { fields: [...input.changedFields] },
         ip: networkOf(input.actor.ip),
         requestId: input.actor.requestId,
       },
@@ -94,15 +91,20 @@ export class AuditService {
     return id;
   }
 
-  /** E-18: newest first, cursor pages, filtered by actor, subject type and a first day. */
+  /** E-18: newest first, cursor pages, filtered by actor, section (S4), subject type and a first day. */
   async list(q: GetAdminAuditQuery): Promise<Page<AuditEntry>> {
     const limit = q.limit ?? DEFAULT_LIMIT;
     const where: Prisma.AuditEntryWhereInput = {};
     if (q.actorId) where.actorId = q.actorId;
     if (q.subjectType) where.subjectType = q.subjectType;
+    if (q.section) where.section = q.section;
     if (q.from) where.createdAt = { gte: new Date(`${q.from}T00:00:00.000Z`) };
-    if (q.cursor) where.id = { lt: decodeCursor(q.cursor).id };
-    if (q.actorId && !/^[0-9a-f-]{36}$/i.test(q.actorId)) throw AppError.validation({ actorId: "Must be a staff id." });
+    if (q.actorId && !UUID.test(q.actorId)) throw AppError.validation({ actorId: "Must be a staff id." });
+    if (q.cursor) {
+      const at = decodeCursor(q.cursor).id;
+      if (typeof at !== "string" || !UUID.test(at)) throw AppError.validation({ cursor: "Must be a cursor from a previous page." });
+      where.id = { lt: at };
+    }
     const rows = await this.db.auditEntry.findMany({ where, orderBy: { id: "desc" }, take: limit + 1 });
     const actorIds = [...new Set(rows.map((r) => r.actorId).filter((x): x is string => !!x))];
     const staff = actorIds.length
@@ -114,7 +116,7 @@ export class AuditService {
   }
 
   private toWire(r: AuditRow, names: Map<string, string>): AuditEntry {
-    const d = detailOf(r);
+    const fields = fieldsOf(r);
     const at = toWireInstant(r.createdAt);
     const by = r.actorType === "system" ? "System" : ((r.actorId && names.get(r.actorId)) ?? "Unknown");
     return {
@@ -123,13 +125,13 @@ export class AuditService {
       actorId: r.actorId,
       by,
       action: r.action,
-      what: d.fields.length ? `${r.action} (${d.fields.join(", ")})` : r.action,
-      section: d.section,
+      what: fields.length ? `${r.action} (${fields.join(", ")})` : r.action,
+      section: r.section,
       subjectType: r.subjectType,
       subjectId: r.subjectId,
       before: null,
-      after: { fields: d.fields },
-      reason: d.reason,
+      after: { fields },
+      reason: r.reason,
       ip: r.ip,
       requestId: r.requestId,
       href: null,

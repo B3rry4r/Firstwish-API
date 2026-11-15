@@ -5,6 +5,9 @@
 export const RESERVED_HANDLES: ReadonlySet<string> = new Set([
   "firstwish", "admin", "support", "help", "app", "wishes", "styles", "showing",
   "creator", "creators", "pro", "business", "concierge", "team", "official",
+  // V8: routes and words a handle must never take
+  "api", "root", "settings", "staff", "moderator", "wish", "w", "v1", "me", "sign-in", "sign-up", "pricing", "terms", "privacy",
+  "contact",
 ]);
 
 /** Lowercases, trims and drops one leading @. Does not remove other characters: a bad character is a problem to report. */

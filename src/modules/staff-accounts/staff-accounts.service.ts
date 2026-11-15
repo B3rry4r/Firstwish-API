@@ -1,5 +1,5 @@
 import { HttpStatus, Inject, Injectable, Logger, OnApplicationBootstrap } from "@nestjs/common";
-import type { Prisma, StaffAccount as StaffRow, StaffAccountRoles } from "@prisma/client";
+import { Prisma, type StaffAccount as StaffRow, type StaffAccountRoles } from "@prisma/client";
 import { PrismaService } from "../../common/db/prisma.service";
 import { ENV } from "../../common/env/env.module";
 import type { Env } from "../../common/env/env";
@@ -120,6 +120,7 @@ export class StaffAccountsService implements OnApplicationBootstrap {
     const row = await this.db.$transaction(async (tx) => {
       const owners = await this.lockOwners(tx);
       const target = await this.lockOne(tx, id);
+      if (isRemoved(target)) throw notAllowed("This member has been removed.");
       if (target.status === "suspended") throw notAllowed("This member is already suspended.");
       if (owners.includes(target.id) && owners.length <= 1) throw notAllowed("The last owner cannot be suspended.");
       const updated = await tx.staffAccount.update({ where: { id: target.id }, data: { status: "suspended" } });
@@ -138,36 +139,48 @@ export class StaffAccountsService implements OnApplicationBootstrap {
       const target = await this.lockOne(tx, id);
       if (target.roles.includes("owner")) throw notAllowed("An owner cannot be removed. Change their roles first.");
       if (isRemoved(target)) throw notAllowed("This member has already been removed.");
-      await tx.staffAccount.update({ where: { id: target.id }, data: { status: "suspended", roles: [] } });
+      await tx.staffAccount.update({ where: { id: target.id }, data: { status: "removed", roles: [] } });
       await this.endSessions(tx, target.id, "removed");
       await tx.authCode.updateMany({ where: { destination: target.email, purpose: "staff_sign_in", consumedAt: null }, data: { consumedAt: this.clock.now() } });
       await this.audit.write(tx, { actor, section: TEAM, action: "team.remove", target: { type: "StaffAccount", id: target.id }, reason, changedFields: ["status", "roles"] });
     });
   }
 
-  /** E-181: invite a member (never as owner); the server emails them a sign-in code. */
-  async invite(body: PostAdminTeamInviteBody, actor: AuditActor, ip: string | null): Promise<StaffAccount> {
+  /**
+   * E-181: invite a member (never as owner); the server emails them a sign-in code. A removed member can be invited again: they
+   * return as invited with the new roles (U5). Two invites at once for one email: one 201, the other 409 already_staff (U3).
+   */
+  async invite(body: PostAdminTeamInviteBody, actor: AuditActor): Promise<StaffAccount> {
     const reason = requireReason(body.reason);
     const asked: unknown = body.roles ?? (body.role === undefined ? undefined : [body.role]);
     const roles = parseRoles(asked, body.roles !== undefined ? "roles" : "role", false);
     const email = body.email;
-    const row = await this.db.$transaction(async (tx) => {
-      const existing = await tx.staffAccount.findUnique({ where: { email } });
-      if (existing) throw AppError.conflict("already_staff", "That email is already on the team.");
-      const created = await tx.staffAccount.create({
-        data: { id: this.ids.id(), email, name: email.split("@")[0], roles, status: "invited" },
+    let row: StaffRow;
+    try {
+      row = await this.db.$transaction(async (tx) => {
+        await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`staff-invite:${email}`}))`;
+        const existing = await tx.staffAccount.findUnique({ where: { email } });
+        if (existing && !isRemoved(existing)) throw AppError.conflict("already_staff", "That email is already on the team.");
+        const saved = existing
+          ? await tx.staffAccount.update({ where: { id: existing.id }, data: { roles, status: "invited" } })
+          : await tx.staffAccount.create({ data: { id: this.ids.id(), email, name: email.split("@")[0], roles, status: "invited" } });
+        await this.audit.write(tx, {
+          actor,
+          section: TEAM,
+          action: existing ? "team.re-invite" : "team.invite",
+          target: { type: "StaffAccount", id: saved.id },
+          reason,
+          changedFields: existing ? ["roles", "status"] : ["email", "name", "roles", "status"],
+        });
+        return saved;
       });
-      await this.audit.write(tx, {
-        actor,
-        section: TEAM,
-        action: "team.invite",
-        target: { type: "StaffAccount", id: created.id },
-        reason,
-        changedFields: ["email", "name", "roles", "status"],
-      });
-      return created;
-    });
-    await this.auth.sendCode(row, ip, "invite");
+    } catch (e) {
+      if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
+        throw AppError.conflict("already_staff", "That email is already on the team.");
+      }
+      throw e;
+    }
+    await this.auth.inviteCode(row);
     return staffToWire(row);
   }
 

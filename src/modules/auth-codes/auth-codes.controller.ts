@@ -1,15 +1,15 @@
 import { Body, Controller, HttpCode, Inject, Post, Req, Res } from "@nestjs/common";
 import type { Request, Response } from "express";
-import { PostAuthCodesBodyDto, PostAuthCodesVerifyBodyDto } from "../../contracts";
+import { PostAuthCodesBodyDto, PostAuthCodesVerifyBodyDto, type AuthResult } from "../../contracts";
 import { Public } from "../../common/auth/decorators";
 import { ENV } from "../../common/env/env.module";
 import type { Env } from "../../common/env/env";
 import { Clock } from "../../common/ports/clock.port";
 import { clientMeta } from "../sessions/sessions.controller";
 import { setRefreshCookie } from "../sessions/refresh-cookie";
-import { SessionsService, SignedIn } from "../sessions/sessions.service";
+import { SessionsService } from "../sessions/sessions.service";
 import { AuthCodesService, CodeSent } from "./auth-codes.service";
-import { withRetryAfter } from "./rate-limited";
+import { withRetryAfter } from "../../common/errors/rate-limited";
 
 @Controller("auth/codes")
 export class AuthCodesController {
@@ -36,9 +36,13 @@ export class AuthCodesController {
   @Public()
   @Post("verify")
   @HttpCode(200)
-  async verify(@Body() body: PostAuthCodesVerifyBodyDto, @Req() req: Request, @Res({ passthrough: true }) res: Response): Promise<SignedIn> {
-    const { started, email, isNew } = await this.codes.verify(body.contact, body.code, clientMeta(req));
-    setRefreshCookie(res, this.env, started.cookie, started.row.expiresAt, this.clock.now());
-    return this.sessions.signedIn(started, email, isNew);
+  async verify(@Body() body: PostAuthCodesVerifyBodyDto, @Req() req: Request, @Res({ passthrough: true }) res: Response): Promise<AuthResult> {
+    try {
+      const { started, isNew } = await this.codes.verify(body.contact, body.code, clientMeta(req));
+      setRefreshCookie(res, this.env, started.cookie, started.row.expiresAt, this.clock.now());
+      return this.sessions.authResult(started, isNew);
+    } catch (e) {
+      return withRetryAfter(res, e);
+    }
   }
 }

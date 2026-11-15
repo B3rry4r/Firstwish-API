@@ -14,6 +14,10 @@
   audit row in the same transaction (the audit helper, once B03 is merged).
 - Contract tests per endpoint (test kit: test/kit/app.ts createTestApp): the happy shape; 401 without a token; 403 wrong role or not the
   owner; 422 with fields for a bad body; a non-canonical input normalised; and what your brief's cases list. Tests own their rows.
+- Learned from the first two bundles (binding): a counter or limit is changed in ONE statement that cannot be raced (UPDATE ... WHERE
+  count < limit RETURNING), never read-then-write; limits are counted in the database and fail closed (a dead Redis or database
+  refuses the request, never lets it through); a unique violation is a 409, never a 500; an id that is not a uuid is a 404 or 401,
+  never a 500; anything two requests can do at once has a test that really runs them at once.
 - A gap you notice is a task, not a comment: no "out of scope", "later", "this wave", TODO in src (the gate refuses them). Say it in the hand-back.
 - Checks (quiet logs, EXIT lines): build, typecheck, lint on changed files, `npm run test:affected -- <your paths>`, scripts/gates.sh,
   scripts/check-contracts.mjs; T2: `scripts/stack.sh up <prefix> <port>` and the cases by real HTTP (curl), then down.

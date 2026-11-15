@@ -220,7 +220,7 @@ for edge in DEP["edges"]:
     if a not in MODELS:
         continue
     for b in edge["to"]:
-        if b not in MODELS:
+        if b not in MODELS or b in MAP[a].get("skipEdges", {}):
             continue
         col = camel(b) + "Id"
         cols = MODELS[a]
@@ -384,7 +384,7 @@ def resource_interface(r: dict) -> str:
     for n, f in plain.items():
         q = "?" if f["nullable"] else ""
         t = ts_field_type(r["name"], f)
-        if f["nullable"] and "null" not in t:
+        if f["nullable"] and "null" not in t and t != "unknown":
             t = f"{t} | null"
         lines.append(f"  {prop(n)}{q}: {t};")
     for rt, sub in tree.items():
@@ -524,7 +524,7 @@ def body_field(name: str, typ: str, required: bool):
     elif "yyyy-mm-dd" in low or core in ("date", "date?"):
         ts, decos = "DateOnly", ["IsDateOnly()"]
         if "''" in t:
-            ts, decos = 'DateOnly | ""', ['ValidateIf((o: Record<string, unknown>) => o[%s] !== "")' % json.dumps(name), "IsDateOnly()"]
+            ts, decos = "DateOnly", ['ValidateIf((o: Record<string, unknown>) => o[%s] !== "")' % json.dumps(name), "IsDateOnly()"]
     elif core in ("boolean", "boolean?"):
         ts, decos = "boolean", ["IsBoolean()"]
     elif core == "true":
@@ -579,9 +579,11 @@ def split_body(e: dict):
         if n == "raw body":
             raw = True
             continue
-        if n in path_params or "(path)" in t or "(route)" in t:
+        if n in path_params:
             params.append(n)
             continue
+        if "(path)" in t or "(route)" in t:
+            continue  # the path's own parameter under another name
         if not root_of(n):
             continue
         required = srcs.issubset(set(b["from"])) or len(srcs) <= 1
@@ -685,6 +687,22 @@ for r in REG["resources"]:
         DTO_FILES[group].append(("\n".join(dto), used_decos))
         ENDPOINT_ROWS.append((e["id"], e["method"], e["path"], op, bodyname, r["name"], raw, bool(params)))
 
+def collapse_empty(lines):
+    out, i = [], 0
+    while i < len(lines):
+        m = re.match(r"^export interface (\w+) \{$", lines[i])
+        if m and i + 1 < len(lines) and lines[i + 1] == "}":
+            out.append(f"export type {m.group(1)} = Record<string, never>;")
+            i += 2
+            continue
+        out.append(lines[i])
+        i += 1
+    return out
+
+
+TYPE_LINES = collapse_empty(TYPE_LINES)
+for g, items in DTO_FILES.items():
+    DTO_FILES[g] = [(re.sub(r"(export class \w+) implements \w+ \{\n\}", r"\1 {}", d), u) for d, u in items]
 TYPE_LINES.append("/** Every endpoint by registry id: its request parts and its response. */")
 TYPE_LINES.append("export interface EndpointContracts {")
 for eid, method, path, op, bodyname, res, raw, hp in ENDPOINT_ROWS:

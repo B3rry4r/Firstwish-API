@@ -1319,7 +1319,7 @@ CREATE TABLE "voice_note" (
 CREATE TABLE "webhook_event" (
     "id" UUID NOT NULL,
     "provider" TEXT NOT NULL,
-    "eventId" UUID NOT NULL,
+    "eventId" TEXT NOT NULL,
     "type" TEXT NOT NULL,
     "signatureValid" BOOLEAN NOT NULL,
     "payload" JSONB NOT NULL,
@@ -1729,9 +1729,6 @@ CREATE INDEX "support_thread_status_id_idx" ON "support_thread"("status", "id");
 CREATE INDEX "voice_note_wishId_id_idx" ON "voice_note"("wishId", "id");
 
 -- CreateIndex
-CREATE INDEX "webhook_event_eventId_id_idx" ON "webhook_event"("eventId", "id");
-
--- CreateIndex
 CREATE INDEX "webhook_event_createdAt_id_idx" ON "webhook_event"("createdAt", "id");
 
 -- CreateIndex
@@ -1937,9 +1934,6 @@ ALTER TABLE "support_thread" ADD CONSTRAINT "support_thread_accountId_fkey" FORE
 
 -- AddForeignKey
 ALTER TABLE "voice_note" ADD CONSTRAINT "voice_note_wishId_fkey" FOREIGN KEY ("wishId") REFERENCES "wish"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "webhook_event" ADD CONSTRAINT "webhook_event_eventId_fkey" FOREIGN KEY ("eventId") REFERENCES "event"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "wish" ADD CONSTRAINT "wish_accountId_fkey" FOREIGN KEY ("accountId") REFERENCES "account"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

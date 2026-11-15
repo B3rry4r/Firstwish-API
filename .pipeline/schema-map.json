@@ -754,7 +754,10 @@
      "provider",
      "eventId"
     ]
-   ]
+   ],
+   "skipEdges": {
+    "Event": "HALT-2: dep-graph edge WebhookEvent to Event would take the column eventId, which the payments declaration makes the provider's event id (string, unique). One column cannot be both; the edge is left out until a ruling names it."
+   }
   },
   "Wish": {
    "class": "table",

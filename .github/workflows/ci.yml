@@ -44,8 +44,18 @@ jobs:
         run: npm run build
       - name: Gates
         run: bash scripts/gates.sh
+      - name: Contracts gate
+        run: node scripts/check-contracts.mjs
       - name: Migrate
         run: npx prisma migrate deploy
+        env:
+          DATABASE_URL: postgresql://firstwish:firstwish@localhost:5432/firstwish
+      - name: No drift between migrations and schema
+        run: npx prisma migrate diff --from-url "$DATABASE_URL" --to-schema-datamodel prisma/schema.prisma --exit-code
+        env:
+          DATABASE_URL: postgresql://firstwish:firstwish@localhost:5432/firstwish
+      - name: Seed (reference rows, twice)
+        run: node scripts/seed.mjs && node scripts/seed.mjs
         env:
           DATABASE_URL: postgresql://firstwish:firstwish@localhost:5432/firstwish
       - name: Test (full suite)

@@ -71,3 +71,7 @@ export const IsId = (opts?: ValidationOptions) => check("isId", (v) => isUuidV7(
 /** Money amount in kobo: a whole number from 0 up. A float or a formatted string is refused. */
 export const IsKobo = (opts?: ValidationOptions) =>
   applyDecorators(IsInt({ message: "Must be a whole number of kobo.", ...opts }), Min(0, { message: "Must not be negative.", ...opts }), Max(Number.MAX_SAFE_INTEGER, opts));
+
+/** Text with at least `min` characters once spaces at either end are trimmed (an admin reason is 4 or more, DEC-125). */
+export const MinTrimmed = (min: number, opts?: ValidationOptions) =>
+  check("minTrimmed", (v) => typeof v === "string" && v.trim().length >= min, `Must be at least ${min} characters.`, opts);

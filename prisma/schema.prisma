@@ -386,20 +386,19 @@ model Entitlements {
 
 /// table: written by E-52 and server:analytics-events (raw app events)
 model Event {
-  id                  String         @id @db.Uuid
-  name                EventName
-  accountId           String?        @db.Uuid
-  wishId              String?        @db.Uuid
-  styleSlug           String?
-  kind                String?
-  amountKobo          BigInt?
-  line                EventLine?
-  at                  DateTime       @db.Timestamptz(3)
-  props               Json?
-  account             Account?       @relation("Event_accountId", fields: [accountId], references: [id])
-  wish                Wish?          @relation("Event_wishId", fields: [wishId], references: [id])
-  qrCardByEvent       QrCard[]       @relation("QrCard_eventId")
-  webhookEventByEvent WebhookEvent[] @relation("WebhookEvent_eventId")
+  id            String     @id @db.Uuid
+  name          EventName
+  accountId     String?    @db.Uuid
+  wishId        String?    @db.Uuid
+  styleSlug     String?
+  kind          String?
+  amountKobo    BigInt?
+  line          EventLine?
+  at            DateTime   @db.Timestamptz(3)
+  props         Json?
+  account       Account?   @relation("Event_accountId", fields: [accountId], references: [id])
+  wish          Wish?      @relation("Event_wishId", fields: [wishId], references: [id])
+  qrCardByEvent QrCard[]   @relation("QrCard_eventId")
 
   @@index([accountId, id])
   @@index([wishId, id])
@@ -1344,17 +1343,15 @@ model VoiceNote {
 model WebhookEvent {
   id             String    @id @db.Uuid
   provider       String
-  eventId        String    @db.Uuid
+  eventId        String
   type           String
   signatureValid Boolean
   payload        Json
   processedAt    DateTime? @db.Timestamptz(3)
   createdAt      DateTime  @default(now()) @db.Timestamptz(3)
   event          Json?
-  eventRef       Event     @relation("WebhookEvent_eventId", fields: [eventId], references: [id])
 
   @@unique([provider, eventId])
-  @@index([eventId, id])
   @@index([createdAt, id])
   @@map("webhook_event")
 }

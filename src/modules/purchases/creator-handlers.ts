@@ -54,12 +54,12 @@ export class CreatorHandlers {
           where: { id: s.id },
           data: { plan: "creator", credits: num(s.credits) + credits, reviewsLeft: num(g.reviewsPerMonth), renews, periodEndsAt: renews, ...bump },
         });
-        await this.store.record(tx, grantId, { credits, reviewsPerMonth: num(g.reviewsPerMonth), before: { plan: s.plan, reviewsLeft: s.reviewsLeft, renews: s.renews?.toISOString() ?? null, periodEndsAt: s.periodEndsAt?.toISOString() ?? null } }, renews);
+        await this.store.record(tx, grantId, { credits, reviewsPerMonth: num(g.reviewsPerMonth) }, renews);
         return;
       }
       case "signed": {
         await tx.creatorState.update({ where: { id: s.id }, data: { signed: true, ...bump } });
-        await this.store.record(tx, grantId, { signed: true, days: num(g.days), before: { signed: s.signed } });
+        await this.store.record(tx, grantId, { signed: true, days: num(g.days) });
         return;
       }
       case "credit-pack": {
@@ -76,21 +76,42 @@ export class CreatorHandlers {
     }
   }
 
+  /** The grants of one line for an account that still stand (not revoked, not refused), newest first, leaving out `except` (HH3). */
+  private standing(tx: Tx, accountId: string, sku: string, except: string): Promise<{ detail: Record<string, unknown>; endsAt: Date | null }[]> {
+    return tx.$queryRaw<{ detail: Record<string, unknown>; endsAt: Date | null }[]>`
+      SELECT detail, "endsAt" FROM purchase_grant
+       WHERE "accountId" = ${accountId}::uuid AND sku = ${sku} AND "revokedAt" IS NULL AND "refusedReason" IS NULL AND id <> ${except}::uuid
+       ORDER BY "createdAt" DESC, id DESC`;
+  }
+
+  /**
+   * HH3: no snapshot is restored. The grant is taken out and the plan and Signed are worked out again from the grants that remain:
+   * the plan stands while the latest end among the remaining plan grants is in the future; counters come off by what the grant gave.
+   */
   async revoke(tx: Tx, g: GrantRow): Promise<string> {
     const s = await this.lockState(tx, g.accountId);
-    if (!s) return "account_gone";
+    if (!s || !g.accountId) return "account_gone";
     const d = g.detail;
-    const was = (d.before ?? {}) as Record<string, unknown>;
-    const iso = (v: unknown) => (typeof v === "string" ? new Date(v) : null);
     const take = (n: number | null, by: unknown) => Math.max(num(n) - num(by), 0);
     const bump = { version: { increment: 1 } };
     if (g.sku === "creator.plan") {
+      const rest = await this.standing(tx, g.accountId, "creator.plan", g.id);
+      const ends = rest.reduce<Date | null>((m, r) => (r.endsAt && (!m || r.endsAt.getTime() > m.getTime()) ? r.endsAt : m), null);
+      const stands = !!rest[0] && !!ends && ends.getTime() > this.clock.now().getTime();
       await tx.creatorState.update({
         where: { id: s.id },
-        data: { plan: typeof was.plan === "string" ? was.plan : "open", credits: take(s.credits, d.credits), reviewsLeft: typeof was.reviewsLeft === "number" ? was.reviewsLeft : 0, renews: iso(was.renews), periodEndsAt: iso(was.periodEndsAt), ...bump },
+        data: {
+          plan: stands ? "creator" : "open",
+          credits: take(s.credits, d.credits),
+          reviewsLeft: stands ? Math.min(num(s.reviewsLeft), num(rest[0].detail.reviewsPerMonth)) : 0,
+          renews: stands ? ends : null,
+          periodEndsAt: stands ? ends : null,
+          ...bump,
+        },
       });
     } else if (g.sku === "creator.signed") {
-      await tx.creatorState.update({ where: { id: s.id }, data: { signed: was.signed === true, ...bump } });
+      const rest = await this.standing(tx, g.accountId, "creator.signed", g.id);
+      await tx.creatorState.update({ where: { id: s.id }, data: { signed: rest.length > 0, ...bump } });
     } else if (g.sku === "creator.credit-pack") {
       await tx.creatorState.update({ where: { id: s.id }, data: { credits: take(s.credits, d.credits), packs: take(s.packs, d.packs), ...bump } });
     } else {

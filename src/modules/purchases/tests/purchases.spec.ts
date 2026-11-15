@@ -173,6 +173,10 @@ describe("purchases B07: what a payment buys", () => {
   });
 
   it("3. keep: from endsAt, two at once both count one after the other, resting wakes from now, never on a ticket that cannot be kept", async () => {
+    // HH9: specs share one database and others run the due jobs of every row on their own clocks, so this test runs on a clock no
+    // other spec reaches (a rest-wish job of ours that was due for them put the wish to rest mid-test).
+    const NOW = new Date("2150-03-01T09:00:00.000Z");
+    t.clock.set(NOW);
     const a = await account();
     const ends = new Date(NOW.getTime() + 5 * DAY);
     const w = await wish(a, { ticket: "keepsake", status: "live", openedAt: NOW, endsAt: ends });

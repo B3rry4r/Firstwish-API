@@ -22,6 +22,7 @@ EPS = {e["id"]: (r["name"], e) for r in REG["resources"] for e in r["endpoints"]
 IDENT = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 PATH = re.compile(r"^([A-Za-z_][A-Za-z0-9_]*)((?:\.[A-Za-z_][A-Za-z0-9_]*|\[[A-Za-z_]\w*\])+)\??$")
 ENUM_IN = re.compile(r"enum\(([^)]*)\)")
+TYPE_NAMES = {"string", "number", "boolean", "undefined", "null", "object", "array"}
 LIT_UNION = re.compile(r"^\s*'?[A-Za-z0-9_.-]+'?(\s*\|\s*'?[A-Za-z0-9_.-]+'?)+\s*$")
 
 assert set(MAP) == set(RES), f"schema-map must classify every resource: missing {set(RES) - set(MAP)}, extra {set(MAP) - set(RES)}"
@@ -575,6 +576,15 @@ def op_name(e: dict) -> str:
 # ---------------------------------------------------------------- body field -> TS type and class-validator decorators
 def body_field(name: str, typ: str, required: bool):
     t = typ.strip()
+    # A union of type NAMES ("string | undefined (...)") is not a set of values: undefined/null mean optional, the rest is the type.
+    m = re.match(r"^\s*([a-z]+(?:\s*\|\s*[a-z]+)+)\s*(\(.*)?$", t)
+    if m and all(x.strip() in TYPE_NAMES for x in m.group(1).split("|")):
+        parts = [x.strip() for x in m.group(1).split("|")]
+        rest = [x for x in parts if x not in ("undefined", "null")]
+        if len(rest) == 1:
+            t = rest[0] + (" " + m.group(2) if m.group(2) else "")
+            if len(rest) < len(parts):
+                required = False
     low = t.lower()
     decos = []
     imports = set()

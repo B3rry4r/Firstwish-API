@@ -61,8 +61,9 @@ export class GetMeQueryDto {}
 /** E-7 PATCH /v1/me (body). */
 export class PatchMeBodyDto implements PatchMeBody {
   @IsOptional()
-  @IsIn(["string", "undefined"])
-  bio?: "string" | "undefined";
+  @IsString()
+  @MaxLength(80)
+  bio?: string;
   @IsOptional()
   @IsString()
   contact?: string;

@@ -1,4 +1,5 @@
-import { Controller, Get } from "@nestjs/common";
+import { Controller, Get, StreamableFile } from "@nestjs/common";
+import { Readable } from "node:stream";
 import { Public } from "../../auth/decorators";
 import { Money } from "../../money/money";
 import { UnsafeIntegerError, toWire } from "../wire-json";
@@ -26,6 +27,15 @@ describe("toWire", () => {
   it("turns every bigint into a number and leaves the rest as JSON would", () => {
     expect(toWire({ a: 1n, b: [2n, { c: 3n }], d: "x", e: null })).toEqual({ a: 1, b: [2, { c: 3 }], d: "x", e: null });
     expect(JSON.stringify(toWire({ at: new Date("2026-01-01T00:00:00Z") }))).toBe('{"at":"2026-01-01T00:00:00.000Z"}');
+  });
+
+  it("returns Buffer, typed arrays, StreamableFile, Readable, Map and Set as the same reference", () => {
+    const things = [Buffer.from("pdf"), new Uint8Array([1, 2]), new StreamableFile(Buffer.from("x")), Readable.from(["a"]), new Map([[1, 2n]]), new Set([1])];
+    for (const x of things) expect(toWire(x)).toBe(x);
+    const b = Buffer.from("zip");
+    expect((toWire({ file: b }) as { file: unknown }).file).toBe(b);
+    expect(JSON.stringify(toWire(new Date("2026-01-01T00:00:00Z")))).toBe('"2026-01-01T00:00:00.000Z"');
+    expect(toWire(Object.assign(Object.create(null), { a: 1n }))).toEqual({ a: 1 });
   });
 
   it("refuses a value past the safe integer range, naming where it is", () => {

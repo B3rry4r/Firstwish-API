@@ -1697,8 +1697,8 @@ export type GetMeResponse = Account;
 /** E-7 PATCH /v1/me. Auth: business; creator; signed in. */
 export type PatchMeParams = Record<string, never>;
 export interface PatchMeBody {
-  /** string | undefined (trimmed, max 80, empty becomes undefined) */
-  bio?: "string" | "undefined";
+  /** string (trimmed, max 80, empty becomes undefined) */
+  bio?: string;
   /** string */
   contact?: string;
   /** DateRow[] (optional one new row appended) */

@@ -4,7 +4,7 @@ import { Prisma, PrismaClient } from "@prisma/client";
 import { validate } from "class-validator";
 import { plainToInstance } from "class-transformer";
 import { UuidV7Maker } from "../../src/common/ids/uuidv7";
-import { PostAdminRefundsBodyDto, PostAuthCodesBodyDto, PutAdminPricesByKeyBodyDto } from "../../src/contracts";
+import { PatchMeBodyDto, PostAdminRefundsBodyDto, PostAuthCodesBodyDto, PutAdminPricesByKeyBodyDto } from "../../src/contracts";
 
 /*
  * The second reopen's rulings (build/rulings-phase3.md Q4 to Q10), proved against a real database: nothing is granted twice,
@@ -164,6 +164,12 @@ describe("contracts the rulings fixed", () => {
     expect(await errs(PostAdminRefundsBodyDto, { ...ok, amountKobo: 0 })).toEqual(["amountKobo"]);
     expect(await errs(PostAdminRefundsBodyDto, { ...ok, amountKobo: 9007199254740992 })).toEqual(["amountKobo"]);
     expect(await errs(PostAdminRefundsBodyDto, { ...ok, reason: "r" })).toEqual(["reason"]);
+  });
+
+  it("E-7 PATCH /v1/me: bio is text up to 80, not a type name", async () => {
+    expect(await errs(PatchMeBodyDto, { bio: "Loves jollof." })).toEqual([]);
+    expect(await errs(PatchMeBodyDto, {})).toEqual([]);
+    expect(await errs(PatchMeBodyDto, { bio: 5 })).toEqual(["bio"]);
   });
 
   it("E-124 price change: a price in kobo can be sent; one of the three is needed (Q3)", async () => {

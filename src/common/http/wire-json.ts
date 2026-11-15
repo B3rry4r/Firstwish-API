@@ -27,11 +27,10 @@ export function toWire(value: unknown, path = ""): unknown {
   if (typeof value === "bigint") return bigintToNumber(value, path);
   if (value === null || typeof value !== "object") return value;
   if (Array.isArray(value)) return value.map((v, i) => toWire(v, `${path}[${i}]`));
-  const withJson = value as { toJSON?: () => unknown };
-  if (typeof withJson.toJSON === "function") {
-    const j = withJson.toJSON();
-    return j === value ? j : toWire(j, path);
-  }
+  // Only plain objects and arrays are walked. Buffer, typed arrays, Date, Map, Set, StreamableFile, Readable and class
+  // instances (with or without their own toJSON) come back as the same reference and serialise as they always did.
+  const proto: unknown = Object.getPrototypeOf(value);
+  if (proto !== Object.prototype && proto !== null) return value;
   const out: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(value)) out[k] = toWire(v, path ? `${path}.${k}` : k);
   return out;

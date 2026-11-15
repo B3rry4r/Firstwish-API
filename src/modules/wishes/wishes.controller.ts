@@ -1,13 +1,14 @@
-import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, Query, Res } from "@nestjs/common";
-import type { Response } from "express";
+import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, Query } from "@nestjs/common";
 import {
   DeleteWishesByIdBodyDto, DeleteWishesByIdParamsDto, GetWishesByIdLinkParamsDto, GetWishesByIdParamsDto, GetWishesQueryDto,
-  PatchWishesByIdParamsDto, PostWishesBodyDto, PostWishesByIdEraseParamsDto, PostWishesByIdRestoreParamsDto, PostWishesByIdSealParamsDto,
+  PatchWishesByIdParamsDto, PostWishesBodyDto, PostWishesByIdAddPhotosBodyDto, PostWishesByIdAddPhotosParamsDto,
+  PostWishesByIdEraseParamsDto, PostWishesByIdRestoreParamsDto, PostWishesByIdSealBodyDto, PostWishesByIdSealParamsDto,
 } from "../../contracts";
+import type { WishSaved } from "../../contracts";
 import { CurrentPrincipal, Roles } from "../../common/auth/decorators";
 import type { Principal } from "../../common/auth/principal";
 import { accountOf } from "../people/business-of";
-import { PatchWishBodyDto, SealWishBodyDto } from "./dto";
+import { SaveWishBodyDto } from "./dto";
 import { WishesService } from "./wishes.service";
 
 /**
@@ -36,18 +37,22 @@ export class WishesController {
     return this.wishes.get(accountOf(p), params.id);
   }
 
-  /** 204; the new version is in the ETag header (the page sends it back as `version` on its next save). */
+  /** 200 {version, updatedAt}: the page always holds the version to send with its next save (CC1). */
   @Roles("person", "creator", "business")
   @Patch(":id")
-  @HttpCode(204)
-  async patch(
-    @Param() params: PatchWishesByIdParamsDto,
-    @Body() body: PatchWishBodyDto,
-    @CurrentPrincipal() p: Principal | undefined,
-    @Res({ passthrough: true }) res: Response,
-  ): Promise<void> {
-    const version = await this.wishes.patch(accountOf(p), params.id, body);
-    res.setHeader("ETag", `"${version}"`);
+  patch(@Param() params: PatchWishesByIdParamsDto, @Body() body: SaveWishBodyDto, @CurrentPrincipal() p: Principal | undefined): Promise<WishSaved> {
+    return this.wishes.patch(accountOf(p), params.id, {
+      version: body.version, kind: body.kind, occasion: body.occasion, name: body.name, style: body.style, content: body.content,
+      makerNote: body.makerNote, opensAt: body.opensAt, timeZone: body.timeZone, keep: body.keep, step: body.step, passcode: body.passcode,
+    });
+  }
+
+  /** E-226: add confirmed photo files to a draft. */
+  @Roles("person", "creator", "business")
+  @Post(":id/add-photos")
+  @HttpCode(200)
+  addPhotos(@Param() params: PostWishesByIdAddPhotosParamsDto, @Body() body: PostWishesByIdAddPhotosBodyDto, @CurrentPrincipal() p: Principal | undefined) {
+    return this.wishes.addPhotos(accountOf(p), params.id, body.files);
   }
 
   @Roles("person", "creator", "business")
@@ -65,8 +70,8 @@ export class WishesController {
   @Roles("person", "creator", "business")
   @Post(":id/seal")
   @HttpCode(200)
-  seal(@Param() params: PostWishesByIdSealParamsDto, @Body() body: SealWishBodyDto, @CurrentPrincipal() p: Principal | undefined) {
-    return this.wishes.seal(accountOf(p), params.id, body);
+  seal(@Param() params: PostWishesByIdSealParamsDto, @Body() body: PostWishesByIdSealBodyDto, @CurrentPrincipal() p: Principal | undefined) {
+    return this.wishes.seal(accountOf(p), params.id, { version: body.version, opensAt: body.opensAt, openNow: body.openNow, timeZone: body.timeZone });
   }
 
   @Roles("person", "creator", "business")

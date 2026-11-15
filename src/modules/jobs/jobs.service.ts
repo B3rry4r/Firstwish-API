@@ -15,8 +15,13 @@ export const backoffMs = (attempts: number): number => Math.min(30_000 * 2 ** (a
 /** A claimed job that never answers is run again after this long (its handler is safe to run twice). */
 export const LEASE_MS = 10 * 60_000;
 
+/** The time limit of one run when job_kind_config has no row for the kind (EE1). */
+export const DEFAULT_TIME_LIMIT_SECONDS = 60;
+
 export interface JobContext {
   jobId: string;
+  /** Aborted when the run passes its time limit (EE1): a handler that can stop early should watch it. */
+  signal: AbortSignal;
   jobRunId: string;
   subjectId: string;
   attempt: number;
@@ -47,6 +52,8 @@ interface Claimed {
 export class JobsService implements OnApplicationBootstrap {
   private readonly log = new Logger("jobs");
   private readonly handlers = new Map<string, JobHandler>();
+  /** Handlers for the subjects of one kind that start with a prefix; they answer before the kind's own handler. */
+  private readonly routes: { type: string; prefix: string; handler: JobHandler }[] = [];
   private worker: Worker | null = null;
 
   constructor(
@@ -58,6 +65,18 @@ export class JobsService implements OnApplicationBootstrap {
 
   register(kind: string, handler: JobHandler): void {
     this.handlers.set(dbType(kind), handler);
+  }
+
+  /** Registers a handler for the jobs of `kind` whose subject key starts with `prefix` (a kind several bundles share). */
+  registerSubject(kind: string, prefix: string, handler: JobHandler): void {
+    const type = dbType(kind);
+    const at = this.routes.findIndex((r) => r.type === type && r.prefix === prefix);
+    if (at >= 0) this.routes[at] = { type, prefix, handler };
+    else this.routes.push({ type, prefix, handler });
+  }
+
+  private handlerFor(type: string, subjectId: string): JobHandler | undefined {
+    return this.routes.find((r) => r.type === type && subjectId.startsWith(r.prefix))?.handler ?? this.handlers.get(type);
   }
 
   /**
@@ -97,7 +116,9 @@ export class JobsService implements OnApplicationBootstrap {
 
   private async claim(only?: string[]): Promise<Claimed | null> {
     const types = [...this.handlers.keys()];
-    if (!types.length) return null;
+    const routeTypes = this.routes.map((r) => r.type);
+    const routePrefixes = this.routes.map((r) => r.prefix);
+    if (!types.length && !routeTypes.length) return null;
     const now = this.clock.now();
     const lease = new Date(now.getTime() + LEASE_MS);
     const runId = this.ids.id();
@@ -106,7 +127,9 @@ export class JobsService implements OnApplicationBootstrap {
         UPDATE job SET status = 'running', attempts = attempts + 1, "runAt" = ${lease}
          WHERE id = (
            SELECT id FROM job
-            WHERE status IN ('scheduled', 'failed', 'running') AND "runAt" <= ${now} AND type::text = ANY(${types}::text[])
+            WHERE status IN ('scheduled', 'failed', 'running') AND "runAt" <= ${now} AND (type::text = ANY(${types}::text[])
+                   OR EXISTS (SELECT 1 FROM unnest(${routeTypes}::text[], ${routePrefixes}::text[]) AS r(t, p)
+                               WHERE r.t = type::text AND starts_with("subjectId", r.p)))
               AND (${only ?? null}::text[] IS NULL OR "subjectId" = ANY(${only ?? null}::text[]))
             ORDER BY "runAt", id FOR UPDATE SKIP LOCKED LIMIT 1)
         RETURNING id::text AS id, type::text AS type, "subjectId", attempts`;
@@ -121,13 +144,17 @@ export class JobsService implements OnApplicationBootstrap {
   }
 
   private async execute(job: Claimed): Promise<void> {
-    const handler = this.handlers.get(job.type)!;
+    const handler = this.handlerFor(job.type, job.subjectId);
+    const limitMs = (await this.timeLimitSeconds(job.type)) * 1000;
     let outcome: "succeeded" | "failed" | "skipped" = "succeeded";
     let error: string | null = null;
     let changed: Record<string, unknown> | null = null;
     let again: Date | null = null;
     try {
-      const res = await handler({ jobId: job.id, jobRunId: job.jobRunId, subjectId: job.subjectId, attempt: job.attempts, now: this.clock.now() });
+      if (!handler) throw new Error(`no handler for ${job.type}`);
+      const res = await this.withTimeLimit(handler, limitMs, {
+        jobId: job.id, jobRunId: job.jobRunId, subjectId: job.subjectId, attempt: job.attempts, now: this.clock.now(),
+      });
       if (res && res.skipped) outcome = "skipped";
       if (res && res.changed) changed = res.changed;
       if (res && res.again) again = res.again;
@@ -152,6 +179,35 @@ export class JobsService implements OnApplicationBootstrap {
         await tx.$executeRaw`UPDATE job SET status = 'failed', "runAt" = ${next} WHERE id = ${job.id}::uuid AND status = 'running'`;
       }
     });
+  }
+
+  /** The run's time limit in seconds: the kind's row in job_kind_config, else 60 (EE1). */
+  private async timeLimitSeconds(type: string): Promise<number> {
+    const rows = await this.prisma.$queryRaw<{ s: number }[]>`SELECT "timeLimitSeconds" AS s FROM job_kind_config WHERE kind = ${type}`;
+    const s = rows[0]?.s;
+    return typeof s === "number" && s > 0 ? s : DEFAULT_TIME_LIMIT_SECONDS;
+  }
+
+  /**
+   * EE1: runs the handler against the limit. Passing it aborts the signal and fails the run (timeout), so the caller records it,
+   * retries with backoff and goes on; a handler that never answers cannot hold the worker or the tick. What it does after that is ignored.
+   */
+  private async withTimeLimit(handler: JobHandler, limitMs: number, base: Omit<JobContext, "signal">): Promise<JobResult> {
+    const ac = new AbortController();
+    let timer: NodeJS.Timeout | undefined;
+    const limit = new Promise<never>((_, reject) => {
+      timer = setTimeout(() => {
+        ac.abort();
+        reject(new Error(`timeout: the run passed its limit of ${limitMs / 1000} seconds`));
+      }, limitMs);
+    });
+    const run = Promise.resolve().then(() => handler({ ...base, signal: ac.signal }));
+    run.catch(() => undefined);
+    try {
+      return await Promise.race([run, limit]);
+    } finally {
+      clearTimeout(timer);
+    }
   }
 
   /** Staff retry of a parked job: back to scheduled now, with its tries counted again. */

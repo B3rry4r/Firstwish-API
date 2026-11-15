@@ -14,9 +14,9 @@ import { EntitlementsService, grantOf } from "../price-book/entitlements.service
 import type { Entitlements as EntitlementsRow } from "@prisma/client";
 import { JobsService } from "../jobs/jobs.service";
 import { BusinessOf } from "../people/business-of";
-import { parseOpening } from "./local-time";
-import { CHAPTER_KEYS, checkContent, fileRefsOf, hasBody } from "./wish-content";
-import { WishLifecycleService } from "./wish-lifecycle.service";
+import { localToUtc, parseOpening, utcToLocal } from "./local-time";
+import { CHAPTER_KEYS, DEFAULT_CONTENT_MAX_BYTES, FileRef, hasBody, readContent } from "./wish-content";
+import { UNOPENED_DAYS, WishLifecycleService } from "./wish-lifecycle.service";
 import { stateOf } from "./wish-state";
 
 type Tx = Prisma.TransactionClient;
@@ -27,6 +27,11 @@ export const DEFAULT_ZONE = "Africa/Lagos";
 const SEQUENCE_ID = "00000000-0000-7000-8000-0000000000b6";
 const TICKETS = ["moment", "keepsake", "signature", "premiere"] as const;
 const SLUG = /^[a-z0-9][a-z0-9-]{0,39}$/;
+const MINUTE = 60_000;
+const DAY = 24 * 60 * MINUTE;
+/** The longest wait between sealing and the open time (EE5, PROVISIONAL). */
+const MAX_YEARS_AHEAD = 5;
+const DATE_ONLY = /^\d{4}-\d{2}-\d{2}$/;
 
 export interface DraftInput {
   kind: string;
@@ -43,6 +48,7 @@ export interface PatchInput {
   name?: string;
   style?: string;
   content?: Obj;
+  makerNote?: Obj;
   opensAt?: string | null;
   timeZone?: string;
   keep?: "month" | "half" | "year" | null;
@@ -50,8 +56,9 @@ export interface PatchInput {
   passcode?: string | null;
 }
 export interface SealInput {
-  version?: number;
-  opensAt?: string;
+  version: number;
+  opensAt?: unknown;
+  openNow?: boolean;
   timeZone?: string;
 }
 
@@ -130,8 +137,17 @@ export class WishesService {
       step: r.step, opensAt: t(r.opensAt), timeZone: r.timeZone, sealedAt: t(r.sealedAt), openedAt: t(r.openedAt), endsAt: t(r.endsAt),
       restingSince: t(r.restingSince), keptUntil: t(r.keptUntil), eraseAfter: t(r.eraseAfter), erasedAt: t(r.erasedAt),
       removedAt: t(r.removedAt), createdAt: toWireInstant(r.createdAt), updatedAt: toWireInstant(r.updatedAt), version: r.version,
-      link: slug ? `/w/${slug}` : null, hasPasscode: r.passcodeHash !== null,
+      link: slug ? `/w/${slug}` : null, hasPasscode: r.passcodeHash !== null, weddingDate: t(r.weddingDate),
+      openable: this.openable(r),
     };
+  }
+
+  /** EE7: sealed (or live) with the open time passed, and not yet opened, or opened and still within its term. */
+  private openable(r: Wish): boolean {
+    const now = this.clock.now().getTime();
+    const state = stateOf(r);
+    if ((state !== "sealed" && state !== "live") || !r.opensAt || r.opensAt.getTime() > now) return false;
+    return r.openedAt === null || (r.endsAt !== null && r.endsAt.getTime() > now);
   }
 
   // ---- the draft ----
@@ -218,13 +234,45 @@ export class WishesService {
     if (missing.length) throw AppError.validation({ content: `Not your own confirmed file: ${missing.slice(0, 3).join(", ")}.` });
   }
 
-  async patch(accountId: string, id: string, input: PatchInput): Promise<number> {
+  /** The content size limit: the lifecycle config's wishContentMaxBytes (CC3). */
+  private async contentMax(tx: Tx): Promise<number> {
+    const cfg = await tx.lifecycleConfig.findFirst({ orderBy: { id: "desc" }, select: { wishContentMaxBytes: true } });
+    return cfg?.wishContentMaxBytes ?? DEFAULT_CONTENT_MAX_BYTES;
+  }
+
+  /**
+   * Checks a whole content document (closed shape, size, the caller's own files, the ticket's limits) and rewrites the wish's
+   * wish_file rows to exactly the files it names. Answers the document to store.
+   */
+  private async applyContent(tx: Tx, accountId: string, biz: string | null, book: EntitlementsRow, cur: Wish, content: Obj): Promise<Prisma.InputJsonValue> {
+    const { refs } = readContent(content, await this.contentMax(tx));
+    await this.checkFiles(tx, accountId, biz, refs);
+    this.checkLimits(book, content, refs, cur);
+    await this.syncFiles(tx, cur.id, refs);
+    return content as Prisma.InputJsonValue;
+  }
+
+  private async syncFiles(tx: Tx, wishId: string, refs: FileRef[]): Promise<void> {
+    await tx.wishFile.deleteMany({ where: { wishId, NOT: refs.map((r) => ({ fileId: r.fileId, role: r.role })) } });
+    if (refs.length) {
+      await tx.wishFile.createMany({ data: refs.map((r) => ({ id: this.ids.id(), wishId, fileId: r.fileId, role: r.role })), skipDuplicates: true });
+    }
+  }
+
+  /** A time zone change moves the instant: the wall-clock time stays, in the new zone (EE5). */
+  private moveZone(at: Date, from: string, to: string): Date {
+    if (from === to) return at;
+    return localToUtc(utcToLocal(at, from), to) ?? at;
+  }
+
+  async patch(accountId: string, id: string, input: PatchInput): Promise<{ version: number; updatedAt: string }> {
     if (!isUuidV7(id)) throw AppError.notFound("No such wish.");
     const kind = input.kind === undefined ? undefined : this.slugOf(input.kind, "kind");
     const occasion = input.occasion === undefined ? undefined : this.slugOf(input.occasion, "occasion");
     const name = input.name === undefined ? undefined : this.text(input.name, "name", 120);
     const zone = input.timeZone;
     if (zone !== undefined && !isTimeZone(zone)) throw AppError.validation({ timeZone: "Not a time zone, for example Africa/Lagos." });
+    const wedding = this.weddingOf(input.makerNote);
     const passHash = typeof input.passcode === "string" ? await hashPasscode(this.passcode(input.passcode)) : input.passcode;
     const biz = await this.business.find(accountId);
     const book = await this.entitlements.row();
@@ -245,6 +293,8 @@ export class WishesService {
       if (input.keep !== undefined) data.keep = input.keep;
       if (input.step !== undefined) data.step = input.step;
       if (passHash !== undefined) data.passcodeHash = passHash;
+      if (wedding !== undefined) data.weddingDate = wedding.date;
+      if (input.makerNote !== undefined) data.makerNote = { ...((cur.makerNote ?? {}) as Obj), ...input.makerNote } as Prisma.InputJsonValue;
       const tz = zone ?? cur.timeZone;
       if (zone !== undefined) data.timeZone = zone;
       if (input.opensAt !== undefined) {
@@ -254,32 +304,65 @@ export class WishesService {
           if (!at) throw AppError.validation({ opensAt: "Use a date and time, for example 2027-02-14T09:00." });
           data.opensAt = at;
         }
-      }
-      let content = (cur.content ?? {}) as Obj;
+      } else if (cur.opensAt && tz !== cur.timeZone) data.opensAt = this.moveZone(cur.opensAt, cur.timeZone, tz);
       if (input.content !== undefined) {
         if (!input.content || typeof input.content !== "object" || Array.isArray(input.content)) throw AppError.validation({ content: "Must be an object." });
-        content = { ...content };
+        const content = { ...((cur.content ?? {}) as Obj) };
         for (const [k, v] of Object.entries(input.content)) {
           if (v === null) delete content[k];
           else content[k] = v;
         }
-        checkContent(content);
-        const refs = fileRefsOf(content);
-        await this.checkFiles(tx, accountId, biz, refs);
-        this.checkLimits(book, content, refs, cur);
-        data.content = content as Prisma.InputJsonValue;
-        await tx.wishFile.deleteMany({ where: { wishId: id, NOT: refs.map((r) => ({ fileId: r.fileId, role: r.role })) } });
-        if (refs.length) {
-          await tx.wishFile.createMany({
-            data: refs.map((r) => ({ id: this.ids.id(), wishId: id, fileId: r.fileId, role: r.role })),
-            skipDuplicates: true,
-          });
-        }
+        data.content = await this.applyContent(tx, accountId, biz, book, cur, content);
       }
       const done = await tx.wish.updateMany({ where: { id, version: input.version }, data });
       if (done.count !== 1) throw new AppError(409, "stale_version", "This wish changed somewhere else. Load it again.");
-      return input.version + 1;
+      const saved = await tx.wish.findUniqueOrThrow({ where: { id }, select: { version: true, updatedAt: true } });
+      return { version: saved.version, updatedAt: toWireInstant(saved.updatedAt) };
     });
+  }
+
+  /** makerNote.wedding: a date (yyyy-mm-dd) or null. Answers undefined when the note does not say. */
+  private weddingOf(note: Obj | undefined): { date: Date | null } | undefined {
+    if (!note || !("wedding" in note)) return undefined;
+    if (JSON.stringify(note).length > 8192) throw AppError.validation({ makerNote: "Too large." });
+    const v = note.wedding;
+    if (v === null || v === "") return { date: null };
+    const d = typeof v === "string" && DATE_ONLY.test(v) ? new Date(`${v}T00:00:00.000Z`) : null;
+    if (!d || Number.isNaN(d.getTime()) || d.toISOString().slice(0, 10) !== v) throw AppError.validation({ makerNote: "The wedding day reads like 2027-06-12." });
+    return { date: d };
+  }
+
+  /**
+   * E-226 add photos to a draft: `files` are the caller's own confirmed photo files (ids from the upload route); they are appended to
+   * content.story.photos under the ticket's photo limit. A sealed wish is refused (409), like every other change to its words.
+   */
+  async addPhotos(accountId: string, id: string, files: unknown[]): Promise<Obj> {
+    if (!isUuidV7(id)) throw AppError.notFound("No such wish.");
+    const ids = files.map((f) => (typeof f === "string" ? f : (f as { fileId?: unknown } | null)?.fileId));
+    if (!ids.length || ids.length > 50 || !ids.every(isUuidV7)) throw AppError.validation({ files: "Send 1 to 50 file ids from your own uploads." });
+    const biz = await this.business.find(accountId);
+    const book = await this.entitlements.row();
+    const row = await this.prisma.$transaction(async (tx) => {
+      await lockAccount(tx, accountId);
+      await this.owned(tx, accountId, id, biz);
+      await this.lifecycle.lock(tx, id);
+      const cur = await tx.wish.findUniqueOrThrow({ where: { id } });
+      if (stateOf(cur) !== "draft") throw AppError.conflict("wish_locked", "This wish is sealed, so its photos can no longer be changed.");
+      const content = { ...((cur.content ?? {}) as Obj) };
+      const story = { ...((content.story ?? {}) as Obj) };
+      const photos = Array.isArray(story.photos) ? [...(story.photos as Obj[])] : [];
+      const have = new Set(photos.map((p) => p.photoId));
+      for (const fileId of ids) {
+        if (have.has(fileId)) continue;
+        photos.push({ photoId: fileId });
+        have.add(fileId);
+      }
+      content.story = { ...story, photos };
+      const stored = await this.applyContent(tx, accountId, biz, book, cur, content);
+      await tx.wish.update({ where: { id }, data: { content: stored, version: { increment: 1 } } });
+      return tx.wish.findUniqueOrThrow({ where: { id } });
+    });
+    return this.wire(row, (await this.linksFor([id])).get(id));
   }
 
   private passcode(p: string): string {
@@ -336,7 +419,7 @@ export class WishesService {
       const locked = await this.lifecycle.lock(tx, id);
       const w = await tx.wish.findUniqueOrThrow({ where: { id } });
       if (stateOf(locked) !== "draft") throw AppError.conflict("not_allowed", "Only a draft can be sealed.");
-      if (input.version !== undefined && input.version !== w.version) {
+      if (input.version !== w.version) {
         throw new AppError(409, "stale_version", "This wish changed somewhere else. Load it again.", { version: String(w.version) });
       }
       if (!w.ticket) throw new AppError(402, "payment_required", "Pay for this wish first.");
@@ -346,20 +429,43 @@ export class WishesService {
       if (Object.keys(missing).length) throw AppError.validation(missing, "This wish is not ready to seal.");
       const now = this.clock.now();
       const zone = input.timeZone ?? w.timeZone;
-      let opensAt: Date = w.opensAt ?? now;
-      if (input.opensAt !== undefined) {
-        const at = parseOpening(input.opensAt, zone);
-        if (!at) throw AppError.validation({ opensAt: "Use a date and time, for example 2027-02-14T09:00." });
-        opensAt = at;
-      }
-      if (opensAt.getTime() < now.getTime()) opensAt = now;
+      const opensAt = this.openTime(input, w, zone, now);
       const no = await this.issueNumber(tx);
       await this.issueSlug(tx, id, w.name ?? "");
       await this.lifecycle.move(tx, locked, "sealed", { cause: "owner.seal", data: { no, sealedAt: now, opensAt, timeZone: zone } });
-      await this.jobs.schedule("open-wish", opensAt, id, tx);
+      await this.scheduleOpening(tx, id, opensAt);
       return tx.wish.findUniqueOrThrow({ where: { id } });
     });
     return this.wire(row, (await this.linksFor([id])).get(id));
+  }
+
+  /** The open job at the open time, and the rest job for a wish nobody opens (EE9). */
+  private async scheduleOpening(tx: Tx, id: string, opensAt: Date): Promise<void> {
+    await this.jobs.schedule("open-wish", opensAt, id, tx);
+    await this.jobs.schedule("rest-wish", new Date(opensAt.getTime() + UNOPENED_DAYS * DAY), id, tx);
+  }
+
+  /**
+   * EE5: the open time a seal fixes, in UTC. openNow: true opens at once; otherwise it needs a time at least a minute ahead and
+   * at most 5 years ahead (422 for a past, missing or too far time). A new zone keeps the wall-clock time of the stored instant.
+   * Nothing but the body's own opensAt, openNow and timeZone moves it: no header and no other field is read.
+   */
+  private openTime(input: SealInput, w: Wish, zone: string, now: Date): Date {
+    const given = input.opensAt;
+    if (given !== undefined && given !== null && typeof given !== "string") throw AppError.validation({ opensAt: "Use a date and time, for example 2027-02-14T09:00." });
+    const nowWord = typeof given === "string" && given.trim().toLowerCase() === "now";
+    if (input.openNow === true || nowWord) return now;
+    let at: Date | null = w.opensAt;
+    if (typeof given === "string") {
+      at = parseOpening(given, zone);
+      if (!at) throw AppError.validation({ opensAt: "Use a date and time, for example 2027-02-14T09:00." });
+    } else if (at) at = this.moveZone(at, w.timeZone, zone);
+    if (!at) throw AppError.validation({ opensAt: "Choose when it opens, or open it now." });
+    if (at.getTime() < now.getTime() + MINUTE) throw AppError.validation({ opensAt: "The open time must be at least a minute from now." });
+    const limit = new Date(now);
+    limit.setUTCFullYear(limit.getUTCFullYear() + MAX_YEARS_AHEAD);
+    if (at.getTime() > limit.getTime()) throw AppError.validation({ opensAt: `The open time can be at most ${MAX_YEARS_AHEAD} years from now.` });
+    return at;
   }
 
   // ---- the owner's other moves ----
@@ -375,12 +481,15 @@ export class WishesService {
     return this.wire(row);
   }
 
+  /** Erases a sealed, live or resting wish. A draft is never erased (EE6): its owner removes it. */
   async erase(accountId: string, id: string): Promise<void> {
     const biz = await this.business.find(accountId);
     await this.prisma.$transaction(async (tx) => {
       await lockAccount(tx, accountId);
       await this.owned(tx, accountId, id, biz);
-      await this.lifecycle.move(tx, await this.lifecycle.lock(tx, id), "erased", { cause: "owner.erase" });
+      const w = await this.lifecycle.lock(tx, id);
+      if (stateOf(w) === "draft") throw AppError.conflict("not_allowed", "A draft is removed, not erased. Remove it instead.");
+      await this.lifecycle.move(tx, w, "erased", { cause: "owner.erase" });
     });
   }
 
@@ -399,7 +508,7 @@ export class WishesService {
         const to = await this.lifecycle.stateBeforeTakeDown(tx, id);
         await this.lifecycle.move(tx, w, to, { cause: "owner.restore" });
         const back = await tx.wish.findUniqueOrThrow({ where: { id } });
-        if (to === "sealed") await this.jobs.schedule("open-wish", back.opensAt ?? this.clock.now(), id, tx);
+        if (to === "sealed") await this.scheduleOpening(tx, id, back.opensAt ?? this.clock.now());
         if (to === "live") await this.jobs.schedule("rest-wish", back.endsAt ?? this.clock.now(), id, tx);
         if (to === "resting") await this.jobs.schedule("erase-wish", back.eraseAfter ?? this.clock.now(), id, tx);
         await tx.wishLink.updateMany({ where: { wishId: id }, data: { active: true } });

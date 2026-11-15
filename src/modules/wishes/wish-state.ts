@@ -7,8 +7,10 @@ export const WISH_STATES = ["draft", "sealed", "live", "resting", "erased", "tak
 export type WishState = (typeof WISH_STATES)[number];
 
 export const MOVES: Record<WishState, readonly WishState[]> = {
-  draft: ["sealed", "taken_down", "erased"],
-  sealed: ["live", "taken_down", "erased"],
+  /** A draft is removed by its owner, never erased (EE6). */
+  draft: ["sealed", "taken_down"],
+  /** sealed to resting: nobody opened it for 365 days after its open time (EE9). */
+  sealed: ["live", "resting", "taken_down", "erased"],
   live: ["resting", "taken_down", "erased"],
   resting: ["live", "erased", "taken_down"],
   taken_down: ["draft", "sealed", "live", "resting", "erased"],

@@ -46,4 +46,21 @@ it must work at 360 and 390 wide with no sideways page scroll (tables scroll ins
   email, AI, storage with its two choices Cloudflare R2 and DigitalOcean Spaces; switches).
 
 ## Current state
-- ADM-A: queued.  ADM-B, ADM-C, ADM-D: wait for ADM-A.
+- ADM-A: screen built (front end only, sample data), web branch `adm-a`. ADM-B, ADM-C, ADM-D: can start; build on the parts below.
+- Shell: app/admin/layout.tsx + components/admin/Shell.tsx (side nav at 960px+, drawer below; who and role at the nav foot; light/dark;
+  "Sample data" marker while lib/admin-api CONNECTED is false). Nav list: components/admin/nav.ts (18 sections, grouped).
+- Not built sections open app/admin/[...rest] ("Not built yet"); a real route at the same address takes over by itself. Unknown -> 404.
+- Shared parts: components/admin/ui.tsx: Head, Block, Pill, Stat, Search, Chips, Table (sort, paging, own scroll on a laptop, cards
+  under 760px), Pager, Drawer, Confirm (needs a reason of 4+ characters), Timeline, Loading, Problem, Nothing, Facts. Sheet/Empty/Toast
+  are the app's own (components/app/ui.tsx), reused unchanged.
+- Seam: lib/admin-api.ts (each function names its /v1/admin/... request; useAdmin() reloads after any action). Changes live in memory
+  until a reload. Fixtures: lib/admin-fixtures.ts (SAMPLE, prices pulled from lib/catalog.ts and lib/pro-data.ts); types lib/admin-types.ts.
+- Default (lead), owner may override: sample sign-in takes any email and any six digits and signs in as Owner; the session is kept in
+  localStorage fo-staff. Phones and emails are masked (last four digits); phone search uses the last 3+ digits.
+- Default (lead), owner may override: "Taken down" is its own wish state beside draft, sealed, live, resting, erased. Goodwill extension
+  is 7 days. Resend goes on WhatsApp. Refund only marks the ticket payment "Refund started" (Payments, ADM-C, finishes it).
+- Default (lead), owner may override: overview counts, takings by line and queue sizes are SAMPLE (PROVISIONAL) numbers.
+- Default (lead), owner may override: staff sign-in reuses the app's AuthShell as is (its art and "Back to the site" link).
+- Shared change wanted, not made: export useMode from components/app/Switcher.tsx; Shell.tsx has a copy of it (14 lines).
+- Proof: tsc, check-css and a Playwright walk (360/390/1440, light and dark, the four cases, no sideways scroll, zero console errors;
+  /app, /app/pro, /app/creator/studio same layout after /admin). Pictures: scratchpad build/verify/adm-a/.

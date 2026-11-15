@@ -19,12 +19,12 @@ function accountOf(p: Principal | undefined): string {
   return p.accountId;
 }
 
-/** E-5: registry auth is the creator side only. */
+/** E-5 (X11): any signed-in person may check a handle, so one can be checked before the creator side is turned on. */
 @Controller("handles")
 export class HandlesController {
   constructor(private readonly sides: AccountSidesService) {}
 
-  @Roles("creator")
+  @Roles("person", "creator", "business")
   @Get(":handle")
   check(@Param() params: GetHandlesByHandleParamsDto, @Query() _q: GetHandlesByHandleQueryDto, @CurrentPrincipal() p: Principal | undefined): Promise<HandleCheck> {
     return this.sides.checkHandle(accountOf(p), params.handle);

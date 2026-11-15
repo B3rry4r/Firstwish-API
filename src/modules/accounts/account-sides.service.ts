@@ -1,6 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { Account as AccountRow, Prisma } from "@prisma/client";
 import type { HandleCheck, PostMeBusinessBody, PostMeCreatorBody } from "../../contracts";
+import { lockAccount } from "../../common/db/account-lock";
 import { PrismaService } from "../../common/db/prisma.service";
 import { AppError, ErrorFields } from "../../common/errors/app-error";
 import { canonicalHandle, handleProblem } from "../../common/normalise/handle";
@@ -11,7 +12,6 @@ import { AccountsService, MeView } from "./accounts.service";
 
 const BUSINESS_NAME_MAX = 48;
 const NAME_MAX = 80;
-const ENDED = () => AppError.unauthorized("Your session has ended. Sign in again.");
 
 /**
  * The creator and business sides of an account (E-8 to E-11) and the handle check (E-5). Turning a side on makes its row once
@@ -132,13 +132,13 @@ export class AccountSidesService {
     });
   }
 
-  /** Runs `fn` with the account row locked (FOR UPDATE), so two side changes at once run one after the other. */
+  /** Runs `fn` with the account locked by the kernel helper (AA1), so two side changes, or a side change and an erase, run one after the other. */
   private async inLockedAccount(accountId: string, fn: (tx: Db, row: AccountRow) => Promise<void>): Promise<void> {
     try {
       await this.prisma.$transaction(async (tx) => {
-        await tx.$queryRaw`SELECT id FROM account WHERE id = ${accountId}::uuid FOR UPDATE`;
-        const row = await tx.account.findUnique({ where: { id: accountId } });
-        if (!row || row.erasedAt) throw ENDED();
+        // AA1: the kernel's account lock, first; an erased account refuses the write (401 account_erased).
+        await lockAccount(tx, accountId);
+        const row = await tx.account.findUniqueOrThrow({ where: { id: accountId } });
         await fn(tx, row);
       });
     } catch (e) {

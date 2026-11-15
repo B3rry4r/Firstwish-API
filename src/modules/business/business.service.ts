@@ -1,32 +1,41 @@
 import { Injectable } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
 import type { Business, PatchBusinessBody } from "../../contracts";
+import { lockAccount } from "../../common/db/account-lock";
 import { PrismaService } from "../../common/db/prisma.service";
 import { AppError, ErrorFields } from "../../common/errors/app-error";
+import { linkProblem, normaliseLink } from "../../common/normalise/link";
 
 type Brand = NonNullable<Business["brand"]>;
 
 const TEXT_MAX = { business: 48, line: 80 } as const;
-const BOOKING_MAX = 300;
 const COLOUR = /^#[0-9a-f]{6}$/;
-/** The logo as the web app sends it: a data URL of an image it shrank to 280px, or '' to clear it. Default (lead) size cap. */
-const LOGO = /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/]+=*$/;
-const LOGO_MAX = 300_000;
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /**
  * E-26: the business's brand (its name on wishes, line, two colours, logo, booking link). Only the owner's own business is
- * changed: the owner check is the query condition (accountId).
+ * changed: the owner check is the query condition (accountId). The write runs under the kernel's account lock (AA1). Free text is
+ * stored as typed (the web app always shows it as text, never HTML, AA5); the booking link is stored as the parsed URL's own
+ * text (AA4); the logo is the id of a stored file the account uploaded with purpose "brand" (AA5), never a data URL.
  */
 @Injectable()
 export class BusinessService {
   constructor(private readonly prisma: PrismaService) {}
 
   async patchBrand(accountId: string, body: PatchBusinessBody): Promise<Brand> {
-    const patch = this.readBrand(body.brand ?? {});
+    const { patch, logo } = this.readBrand(body.brand ?? {});
     return this.prisma.$transaction(async (tx) => {
+      await lockAccount(tx, accountId);
       const rows = await tx.$queryRaw<{ id: string }[]>`
         SELECT id FROM business WHERE "accountId" = ${accountId}::uuid ORDER BY id ASC LIMIT 1 FOR UPDATE`;
       if (!rows[0]) throw AppError.notFound("Set up your business first.");
+      if (logo) {
+        const file = await tx.storedFile.findFirst({
+          where: { id: logo, purpose: "brand_logo", status: "ready", OR: [{ ownerAccountId: accountId }, { businessId: rows[0].id }] },
+          select: { id: true },
+        });
+        if (!file) throw AppError.validation({ "brand.logo": "Must be a logo you uploaded with purpose brand." });
+      }
       const current = await tx.business.findUniqueOrThrow({ where: { id: rows[0].id }, select: { brand: true } });
       const brand: Brand = { ...((current.brand as Brand | null) ?? {}), ...patch };
       for (const [k, v] of Object.entries(brand)) if (v === "") delete brand[k];
@@ -38,9 +47,10 @@ export class BusinessService {
     });
   }
 
-  private readBrand(raw: Record<string, unknown>): Brand {
+  private readBrand(raw: Record<string, unknown>): { patch: Brand; logo: string | null } {
     const fields: ErrorFields = {};
     const out: Brand = {};
+    let logo: string | null = null;
     for (const [k, v] of Object.entries(raw)) {
       const at = `brand.${k}`;
       switch (k) {
@@ -54,8 +64,11 @@ export class BusinessService {
         case "booking": {
           if (typeof v !== "string") fields[at] = "Must be a link or empty.";
           else if (v.trim() === "") out[k] = "";
-          else if (v.trim().length > BOOKING_MAX || !this.isHttpsLink(v.trim())) fields[at] = "Must be a link starting https://.";
-          else out[k] = v.trim();
+          else {
+            const link = normaliseLink(v);
+            if (link === null) fields[at] = linkProblem(v) ?? "Must be a link starting https://.";
+            else out[k] = link;
+          }
           break;
         }
         case "colours": {
@@ -65,10 +78,13 @@ export class BusinessService {
           break;
         }
         case "logo": {
-          if (typeof v !== "string") fields[at] = "Must be an image or empty.";
+          if (typeof v !== "string") fields[at] = "Must be a stored file id or empty.";
           else if (v === "") out[k] = "";
-          else if (v.length > LOGO_MAX || !LOGO.test(v)) fields[at] = "Must be a PNG, JPEG or WebP image under 300 KB.";
-          else out[k] = v;
+          else if (!UUID.test(v.trim())) fields[at] = "Must be the id of an uploaded logo.";
+          else {
+            logo = v.trim().toLowerCase();
+            out[k] = logo;
+          }
           break;
         }
         default:
@@ -76,15 +92,6 @@ export class BusinessService {
       }
     }
     if (Object.keys(fields).length) throw AppError.validation(fields);
-    return out;
-  }
-
-  private isHttpsLink(v: string): boolean {
-    try {
-      const u = new URL(v);
-      return u.protocol === "https:" && u.hostname.includes(".");
-    } catch {
-      return false;
-    }
+    return { patch: out, logo };
   }
 }

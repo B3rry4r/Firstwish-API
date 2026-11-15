@@ -1,6 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { Account as AccountRow, DateRow as DateRowRecord, Prisma } from "@prisma/client";
 import type { Account, PatchMeBody } from "../../contracts";
+import { lockAccount } from "../../common/db/account-lock";
 import { PrismaService } from "../../common/db/prisma.service";
 import { AppError, ErrorFields } from "../../common/errors/app-error";
 import { IdGenerator } from "../../common/ports/ids.port";
@@ -71,43 +72,41 @@ export class AccountsService {
   }
 
   async patch(accountId: string, body: PatchMeBody): Promise<MeView> {
-    const current = await this.prisma.account.findUnique({ where: { id: accountId } });
-    if (!current || current.erasedAt) throw AppError.unauthorized("Your session has ended. Sign in again.");
-    const data: Prisma.AccountUpdateInput = {};
-    const fields: ErrorFields = {};
-
-    if (body.name !== undefined) {
-      const name = body.name.trim();
-      if (name.length > NAME_MAX) fields.name = `Must be ${NAME_MAX} characters or fewer.`;
-      else data.name = name;
-    }
-    if (body.mode !== undefined) data.mode = body.mode;
-    if (body.bio !== undefined) {
-      const bio = body.bio.trim();
-      data.bio = bio === "" ? null : bio;
-    }
-    if (body.contact !== undefined) {
-      const phone = readContact(body.contact, current.contact, fields);
-      if (phone !== undefined) data.phone = phone;
-    }
-    if (body.space !== undefined) {
-      const side: Side = body.space === "me" ? "person" : body.space;
-      if (!this.sidesOf(current).includes(side)) fields.space = "You do not have that side.";
-      else {
-        data.space = body.space;
-        data.lastSide = side;
-      }
-    }
-    const newDates = body.dates !== undefined ? this.readDates(body.dates, fields) : [];
-    if (Object.keys(fields).length) throw AppError.validation(fields);
-
     try {
       await this.prisma.$transaction(async (tx) => {
-        if (Object.keys(data).length) await tx.account.update({ where: { id: accountId }, data });
-        if (body.handle !== undefined) {
-          const locked = await tx.$queryRaw<{ handle: string | null }[]>`SELECT handle FROM account WHERE id = ${accountId}::uuid FOR UPDATE`;
-          await setHandle(tx, accountId, locked[0]?.handle ?? null, body.handle);
+        // AA1: the account lock first; an erased account refuses the whole write (401 account_erased).
+        await lockAccount(tx, accountId);
+        const current = await tx.account.findUniqueOrThrow({ where: { id: accountId } });
+        const data: Prisma.AccountUpdateInput = {};
+        const fields: ErrorFields = {};
+
+        if (body.name !== undefined) {
+          const name = body.name.trim();
+          if (name.length > NAME_MAX) fields.name = `Must be ${NAME_MAX} characters or fewer.`;
+          else data.name = name;
         }
+        if (body.mode !== undefined) data.mode = body.mode;
+        if (body.bio !== undefined) {
+          const bio = body.bio.trim();
+          data.bio = bio === "" ? null : bio;
+        }
+        if (body.contact !== undefined) {
+          const phone = readContact(body.contact, current.contact, fields);
+          if (phone !== undefined) data.phone = phone;
+        }
+        if (body.space !== undefined) {
+          const side: Side = body.space === "me" ? "person" : body.space;
+          if (!this.sidesOf(current).includes(side)) fields.space = "You do not have that side.";
+          else {
+            data.space = body.space;
+            data.lastSide = side;
+          }
+        }
+        const newDates = body.dates !== undefined ? this.readDates(body.dates, fields) : [];
+        if (Object.keys(fields).length) throw AppError.validation(fields);
+
+        if (Object.keys(data).length) await tx.account.update({ where: { id: accountId }, data });
+        if (body.handle !== undefined) await setHandle(tx, accountId, current.handle, body.handle);
         if (newDates.length) {
           await tx.dateRow.createMany({
             data: newDates.map((d) => ({ id: this.ids.id(), accountId, name: d.name, who: d.who, what: d.what, date: new Date(`${d.date}T00:00:00.000Z`) })),

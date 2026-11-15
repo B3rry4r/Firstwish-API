@@ -1,5 +1,5 @@
-import { Controller, Get, Headers, Query } from "@nestjs/common";
-import { GetCreatorsQueryDto } from "../../contracts";
+import { Controller, Get, Headers, Param, Query } from "@nestjs/common";
+import { GetCreatorsByHandleParamsDto, GetCreatorsByHandleQueryDto, GetCreatorsQueryDto } from "../../contracts";
 import { Public } from "../../common/auth/decorators";
 import { AccessTokenVerifier } from "../../common/auth/principal";
 import type { Page } from "../../common/pagination/cursor";
@@ -21,6 +21,17 @@ export class CreatorsController {
   @Get()
   async list(@Query() q: GetCreatorsQueryDto, @Headers("authorization") auth: string | undefined): Promise<Page<PublicCreator>> {
     return this.creators.list(await this.viewer(auth), q.cursor, q.limit);
+  }
+
+  /** E-236 GET /v1/creators/:handle (public; a good bearer token marks `following` and `own`). */
+  @Public()
+  @Get(":handle")
+  async one(
+    @Param() params: GetCreatorsByHandleParamsDto,
+    @Query() _q: GetCreatorsByHandleQueryDto,
+    @Headers("authorization") auth: string | undefined,
+  ): Promise<PublicCreator> {
+    return this.creators.one(await this.viewer(auth), params.handle);
   }
 
   private async viewer(auth: string | undefined): Promise<string | null> {

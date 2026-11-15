@@ -11,6 +11,12 @@ import { AuditModule } from "./modules/audit/audit.module";
 import { RoleAccessModule } from "./modules/role-access/role-access.module";
 import { StaffAccountsModule } from "./modules/staff-accounts/staff-accounts.module";
 // end B03
+// B09: files
+import { StoredFilesModule } from "./modules/stored-files/stored-files.module";
+import { ScreeningResultsModule } from "./modules/screening-results/screening-results.module";
+import { VoiceNotesModule } from "./modules/voice-notes/voice-notes.module";
+import { VaultFilesModule } from "./modules/vault-files/vault-files.module";
+// end B09
 
 /** Registration entry: each resource module adds one import line here. */
 @Module({
@@ -27,6 +33,12 @@ import { StaffAccountsModule } from "./modules/staff-accounts/staff-accounts.mod
     RoleAccessModule,
     StaffAccountsModule,
     // end B03
+    // B09
+    StoredFilesModule,
+    ScreeningResultsModule,
+    VoiceNotesModule,
+    VaultFilesModule,
+    // end B09
   ],
 })
 export class AppModule {}

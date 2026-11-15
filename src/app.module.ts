@@ -48,6 +48,10 @@ import { PurchasesModule } from "./modules/purchases/purchases.module";
 import { JobHandlersModule } from "./modules/job-handlers/job-handlers.module";
 // end INT-3
 
+// B11: email notices
+import { NoticesModule } from "./modules/notices/notices.module";
+// end B11
+
 /** Registration entry: each resource module adds one import line here. */
 @Module({
   imports: [
@@ -100,6 +104,9 @@ import { JobHandlersModule } from "./modules/job-handlers/job-handlers.module";
     // INT-3
     JobHandlersModule,
     // end INT-3
+    // B11
+    NoticesModule,
+    // end B11
   ],
 })
 export class AppModule {}

@@ -58,7 +58,8 @@
       "approvedBy": "owner ruling R8 (nothing faked) and R6",
       "approvedAt": "2026-11-15T14:45:25Z",
       "wireVisible": true,
-      "evidenceRoot": "/home/user/Firstwish-web/"
+      "evidenceRoot": "/home/user/Firstwish-web/",
+      "supersededBy": "S-27"
     },
     {
       "id": "S-7",
@@ -88,7 +89,8 @@
       "approvedBy": "Default (lead), owner may override",
       "approvedAt": "2026-11-15T14:45:25Z",
       "wireVisible": true,
-      "evidenceRoot": "/home/user/Firstwish-web/"
+      "evidenceRoot": "/home/user/Firstwish-web/",
+      "supersededBy": "S-26"
     },
     {
       "id": "S-10",
@@ -168,7 +170,8 @@
       "approvedBy": "Default (lead), owner may override",
       "approvedAt": "2026-11-15T14:45:25Z",
       "wireVisible": true,
-      "evidenceRoot": "/home/user/Firstwish-web/"
+      "evidenceRoot": "/home/user/Firstwish-web/",
+      "supersededBy": "S-27"
     },
     {
       "id": "S-18",
@@ -209,6 +212,73 @@
       "approvedAt": "2026-11-15T14:45:25Z",
       "wireVisible": true,
       "evidenceRoot": "/home/user/Firstwish-web/"
+    },
+    {
+      "id": "S-22",
+      "asBuilt": "epoch-ms change stamps: Wish.at (lib/account.ts Wish 'at: number epoch ms'), StudioStyle.at (lib/studio-api.ts); dates kept as display text (pro-data.ts packUntil, shoot createdAt)",
+      "targetState": "every epoch-ms `at` becomes createdAt/updatedAt ISO-8601 UTC strings set by the server; calendar dates are YYYY-MM-DD strings (date-only canon)",
+      "reason": "conventions.md time canon; Phase 3 rulings C-24, C-26, C-32, C-33",
+      "approvedBy": "lead default, owner may override",
+      "approvedAt": "2026-11-15T16:00:00Z",
+      "wireVisible": true,
+      "evidenceRoot": "/home/user/Firstwish-web/"
+    },
+    {
+      "id": "S-23",
+      "asBuilt": "maker's chapter switch Wish.keep: boolean (lib/maker.ts chapters, maker-chapters)",
+      "targetState": "Wish.keep is null | \"month\" | \"half\" | \"year\" (the keep bought); the maker's boolean is stale and goes",
+      "reason": "Phase 3 ruling C-28",
+      "approvedBy": "lead default, owner may override",
+      "approvedAt": "2026-11-15T16:00:00Z",
+      "wireVisible": true,
+      "evidenceRoot": "/home/user/Firstwish-web/"
+    },
+    {
+      "id": "S-24",
+      "asBuilt": "the pay sheet sends an amount: components/app/Pay.tsx payForItem payload amount (naira text) from app/app/wishes/[id]/page.tsx",
+      "targetState": "the client never sends an amount; Payment.amountKobo is set by the server from the price book",
+      "reason": "Phase 3 ruling C-21; payments declaration",
+      "approvedBy": "lead default, owner may override",
+      "approvedAt": "2026-11-15T16:00:00Z",
+      "wireVisible": true,
+      "evidenceRoot": "/home/user/Firstwish-web/"
+    },
+    {
+      "id": "S-25",
+      "asBuilt": "₦80,000 typed as a literal on the creators page: components/site/CreatorHero.tsx, app/creators/page.tsx monthlyFromHundredWishes",
+      "targetState": "the page works the figure out from the served price book (100 wishes x the premium-style royalty at list, T-65) and never types it",
+      "reason": "Phase 3 ruling C-34",
+      "approvedBy": "lead default, owner may override",
+      "approvedAt": "2026-11-15T16:00:00Z",
+      "wireVisible": true,
+      "evidenceRoot": "/home/user/Firstwish-web/"
+    },
+    {
+      "id": "S-26",
+      "asBuilt": "browser stores hold app state: lib/account.ts, lib/maker.ts, lib/pro-data.ts, lib/pro-api.ts, lib/vault-api.ts, lib/feed-api.ts, lib/studio-api.ts, app/app/pass/page.tsx, components/site/Nav.tsx, lib/cinema.js (localStorage, sessionStorage)",
+      "targetState": "every read or write of localStorage/sessionStorage/IndexedDB is replaced by its endpoint; the session is an httpOnly refresh cookie plus an in-memory access token; mode (light/dark) is a field on the account; choices before sign-in travel in the link; the build fails on the words localStorage, sessionStorage, IndexedDB in app/, components/, lib/",
+      "reason": "owner ruling R10",
+      "approvedBy": "owner ruling R10",
+      "approvedAt": "2026-11-15T16:00:00Z",
+      "wireVisible": true,
+      "evidenceRoot": "/home/user/Firstwish-web/",
+      "replaces": [
+        "S-9"
+      ]
+    },
+    {
+      "id": "S-27",
+      "asBuilt": "sign-in by phone code: components/app/AuthFlow.tsx:22-23 phone entry, :53 code send; phone as the account key",
+      "targetState": "sign-in by email code or Google only; phone is an optional plain detail stored E.164 when given, never verified, never an account key",
+      "reason": "owner ruling R11",
+      "approvedBy": "owner ruling R11",
+      "approvedAt": "2026-11-15T16:00:00Z",
+      "wireVisible": true,
+      "evidenceRoot": "/home/user/Firstwish-web/",
+      "replaces": [
+        "S-6",
+        "S-17"
+      ]
     }
   ]
 }

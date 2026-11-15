@@ -457,6 +457,15 @@
         "promoKobo": null,
         "source": "studio.ts:19"
       }
+    ],
+    "settings": [
+      {
+        "key": "payout.thresholdKobo",
+        "value": 500000,
+        "schedule": "monthly on the 5th",
+        "status": "PROVISIONAL",
+        "source": "owner ruling R14"
+      }
     ]
   }
 }

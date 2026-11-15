@@ -169,84 +169,6 @@
       "secret": true
     },
     {
-      "name": "SMS_PROVIDER",
-      "introducedBy": "messages-sms",
-      "purpose": "which SMS adapter",
-      "secret": false
-    },
-    {
-      "name": "SMS_API_KEY",
-      "introducedBy": "messages-sms",
-      "purpose": "SMS provider auth",
-      "secret": true
-    },
-    {
-      "name": "SMS_SENDER_ID",
-      "introducedBy": "messages-sms",
-      "purpose": "registered sender id",
-      "secret": false
-    },
-    {
-      "name": "SMS_WEBHOOK_SECRET",
-      "introducedBy": "messages-sms",
-      "purpose": "checks delivery-receipt signatures",
-      "secret": true
-    },
-    {
-      "name": "WHATSAPP_PROVIDER",
-      "introducedBy": "messages-whatsapp",
-      "purpose": "which WhatsApp adapter",
-      "secret": false
-    },
-    {
-      "name": "WHATSAPP_ACCESS_TOKEN",
-      "introducedBy": "messages-whatsapp",
-      "purpose": "WhatsApp API auth",
-      "secret": true
-    },
-    {
-      "name": "WHATSAPP_PHONE_NUMBER_ID",
-      "introducedBy": "messages-whatsapp",
-      "purpose": "sending number",
-      "secret": false
-    },
-    {
-      "name": "WHATSAPP_APP_SECRET",
-      "introducedBy": "messages-whatsapp",
-      "purpose": "checks inbound webhook signatures",
-      "secret": true
-    },
-    {
-      "name": "WHATSAPP_VERIFY_TOKEN",
-      "introducedBy": "messages-whatsapp",
-      "purpose": "webhook subscription verification",
-      "secret": true
-    },
-    {
-      "name": "EMAIL_PROVIDER",
-      "introducedBy": "messages-email",
-      "purpose": "which email adapter",
-      "secret": false
-    },
-    {
-      "name": "EMAIL_API_KEY",
-      "introducedBy": "messages-email",
-      "purpose": "email provider auth",
-      "secret": true
-    },
-    {
-      "name": "EMAIL_FROM",
-      "introducedBy": "messages-email",
-      "purpose": "sender address",
-      "secret": false
-    },
-    {
-      "name": "EMAIL_WEBHOOK_SECRET",
-      "introducedBy": "messages-email",
-      "purpose": "checks delivery-event signatures",
-      "secret": true
-    },
-    {
       "name": "ANTHROPIC_API_KEY",
       "introducedBy": "ai-writing",
       "purpose": "Anthropic API (owner key)",
@@ -259,21 +181,21 @@
       "secret": false
     },
     {
-      "name": "TRANSCRIBE_PROVIDER",
-      "introducedBy": "ai-writing",
-      "purpose": "which transcription adapter",
-      "secret": false
-    },
-    {
-      "name": "TRANSCRIBE_API_KEY",
-      "introducedBy": "ai-writing",
-      "purpose": "transcription provider auth",
-      "secret": true
-    },
-    {
       "name": "RENDER_CONCURRENCY",
       "introducedBy": "video-render",
       "purpose": "parallel render workers",
+      "secret": false
+    },
+    {
+      "name": "RESEND_API_KEY",
+      "introducedBy": "messages-email",
+      "purpose": "Resend API auth (R12)",
+      "secret": true
+    },
+    {
+      "name": "MAIL_FROM",
+      "introducedBy": "messages-email",
+      "purpose": "sender address for every email (R12)",
       "secret": false
     }
   ]

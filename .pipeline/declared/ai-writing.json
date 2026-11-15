@@ -5,19 +5,17 @@
   "provenance": "declaration",
   "declaredAs": "integration",
   "integration": {
-    "provider": "anthropic + transcription (not chosen)",
+    "provider": "anthropic",
     "direction": [
       "outbound"
     ],
     "envVars": [
       "ANTHROPIC_API_KEY",
-      "ANTHROPIC_MODEL",
-      "TRANSCRIBE_PROVIDER",
-      "TRANSCRIBE_API_KEY"
+      "ANTHROPIC_MODEL"
     ],
     "sandbox": true,
     "testStandIn": "tests bind the port to an in-memory stand-in; no live call is made from any test or agent run",
-    "note": "Anthropic's API does not transcribe audio; a transcription provider is needed (owner item)."
+    "note": "R13: no transcription provider; dictation is the browser's speech-to-text; the AI receives text only."
   },
   "reads": [
     {
@@ -234,7 +232,8 @@
     "Never answered by a fake in production (R8): when the provider fails the request fails with a plain error and no credit is spent.",
     "Credits: Open gets 3 once, Creator 10 a month, packs add 5; a draft spends 4, a change 1 (T-21, T-22). Credits are spent only when the result is returned, in the same transaction.",
     "Customer photos and words never train AI (T-74); requests are sent with no-training terms.",
-    "Replaces STUB-4 (every AI action answered 'offline')."
+    "Replaces STUB-4 (every AI action answered 'offline').",
+    "R13 (replaces the transcription line above): letterFromVoice and reasonsFromVoice take the text the browser dictated; no audio reaches the AI."
   ],
   "provisional": [
     {

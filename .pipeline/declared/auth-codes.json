@@ -131,7 +131,8 @@
     "Delivery goes through messages-sms first, messages-whatsapp as the second way (conventions.md), messages-email for email.",
     "Rate limits per destination and per IP (PROVISIONAL figures below); a limited request answers error code 'too_many_requests' with retryAfter.",
     "Codes are compared in constant time against a peppered hash (AUTH_CODE_PEPPER).",
-    "Replaces STUB-2: any six digits never sign anyone in."
+    "Replaces STUB-2: any six digits never sign anyone in.",
+    "R11 (replaces the phone and SMS/WhatsApp lines above): codes go to an email only, by messages-email; a phone is never a destination or an account key."
   ],
   "provisional": [
     {
@@ -161,5 +162,8 @@
   ],
   "supersedes": [
     "S-6"
+  ],
+  "channels": [
+    "email"
   ]
 }

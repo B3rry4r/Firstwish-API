@@ -5,16 +5,14 @@
   "provenance": "declaration",
   "declaredAs": "integration",
   "integration": {
-    "provider": "email provider (not chosen)",
+    "provider": "resend",
     "direction": [
       "outbound",
       "webhook-inbound"
     ],
     "envVars": [
-      "EMAIL_PROVIDER",
-      "EMAIL_API_KEY",
-      "EMAIL_FROM",
-      "EMAIL_WEBHOOK_SECRET"
+      "RESEND_API_KEY",
+      "MAIL_FROM"
     ],
     "sandbox": true,
     "testStandIn": "tests bind the port to an in-memory stand-in; no live call is made from any test or agent run"
@@ -200,7 +198,8 @@
     "Every send uses a stored template (plain short words, no emojis, R8) and is written to the delivery log; inbound delivery receipts update status.",
     "Sends are jobs with retries; a send carries an idempotency key so a retry never sends twice.",
     "Receivers are messaged only to deliver the wish and the publishing notice (T-75).",
-    "Email carries codes for email sign-in, receipts and invoices (with VAT part), and Concierge reports."
+    "Email carries codes for email sign-in, receipts and invoices (with VAT part), and Concierge reports.",
+    "R11, R12: the email adapter is Resend; every notice and every sign-in code goes by email."
   ],
   "provisional": [
     {

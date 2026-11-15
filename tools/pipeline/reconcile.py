@@ -166,6 +166,11 @@ def canon_kind(name):
     return None
 
 
+def conflict_key(kind, entity, detail):
+    """Stable key a decision names to close a conflict; independent of row order."""
+    return "%s|%s|%s" % (kind, entity, re.sub(r"\s*\(it can be bought.*\)$", "", detail)[:140])
+
+
 # ---------------------------------------------------------------- main
 def main():
     aliases = json.load(open(os.path.join(HERE, "aliases.json"), encoding="utf-8"))
@@ -195,8 +200,8 @@ def main():
     log = []
 
     def conflict(kind, entity, detail, srcs, options=None, extra=None):
-        row = {"kind": kind, "entity": entity, "detail": detail, "sources": srcs,
-               "options": options or [], "status": "open"}
+        row = {"kind": kind, "entity": entity, "detail": detail, "key": conflict_key(kind, entity, detail),
+               "sources": srcs, "options": options or [], "status": "open"}
         if extra:
             row.update(extra)
         conflicts.append(row)

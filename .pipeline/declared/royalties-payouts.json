@@ -206,7 +206,8 @@
     "Accrued at payment success, reversed on refund; written to the ledger as royalties-payable.",
     "Paid monthly by Paystack Transfers once a creator's balance passes the payout threshold; the threshold is not set anywhere (T-64): owner item.",
     "Creator share on Pass wishes is not set (T-77): owner item; until set, Pass wishes accrue nothing and are listed for the owner.",
-    "Replaces STUB-20 (payouts always empty)."
+    "Replaces STUB-20 (payouts always empty).",
+    "R14 (replaces the threshold owner item): payout threshold 500000 kobo, paid monthly on the 5th; PROVISIONAL; a price-book setting (payout.thresholdKobo) staff can change."
   ],
   "truths": [
     "T-64",
@@ -214,5 +215,16 @@
     "T-66",
     "T-67",
     "T-77"
+  ],
+  "provisional": [
+    {
+      "key": "payout.thresholdKobo",
+      "value": 500000,
+      "unit": "kobo",
+      "schedule": "monthly on the 5th",
+      "status": "PROVISIONAL",
+      "owner": "owner",
+      "why": "owner ruling R14 asked the lead to suggest"
+    }
   ]
 }

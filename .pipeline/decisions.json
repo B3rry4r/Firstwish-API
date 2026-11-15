@@ -107,7 +107,8 @@
       ],
       "confidence": "high",
       "executingPass": "auth-codes",
-      "decidedAt": "2026-11-15T14:45:25Z"
+      "decidedAt": "2026-11-15T14:45:25Z",
+      "supersededBy": "DEC-104"
     },
     {
       "id": "DEC-7",
@@ -158,7 +159,8 @@
       ],
       "confidence": "high",
       "executingPass": "every resource; Phase 6 ui-align",
-      "decidedAt": "2026-11-15T14:45:25Z"
+      "decidedAt": "2026-11-15T14:45:25Z",
+      "supersededBy": "DEC-103"
     },
     {
       "id": "DEC-10",
@@ -225,7 +227,8 @@
       ],
       "confidence": "high",
       "executingPass": "auth-codes, accounts",
-      "decidedAt": "2026-11-15T14:45:25Z"
+      "decidedAt": "2026-11-15T14:45:25Z",
+      "supersededBy": "DEC-104"
     },
     {
       "id": "DEC-14",
@@ -244,7 +247,8 @@
       ],
       "confidence": "low",
       "executingPass": "messages-*",
-      "decidedAt": "2026-11-15T14:45:25Z"
+      "decidedAt": "2026-11-15T14:45:25Z",
+      "supersededBy": "DEC-104"
     },
     {
       "id": "DEC-15",
@@ -262,7 +266,8 @@
       ],
       "confidence": "low",
       "executingPass": "ai-writing",
-      "decidedAt": "2026-11-15T14:45:25Z"
+      "decidedAt": "2026-11-15T14:45:25Z",
+      "supersededBy": "DEC-106"
     },
     {
       "id": "DEC-16",
@@ -329,7 +334,8 @@
       ],
       "confidence": "low",
       "executingPass": "royalties-payouts",
-      "decidedAt": "2026-11-15T14:45:25Z"
+      "decidedAt": "2026-11-15T14:45:25Z",
+      "supersededBy": "DEC-107"
     },
     {
       "id": "DEC-20",
@@ -1058,6 +1064,874 @@
       "owner": "owner",
       "executingPass": "analytics-events",
       "decidedAt": "2026-11-15T14:45:25Z"
+    },
+    {
+      "id": "DEC-63",
+      "topic": "same: published wishes",
+      "closes": [
+        {
+          "conflict": "C-1",
+          "key": "possible-alias|FeedWish ~ ShowcaseWish|both show house and published wishes with href, img, kind, no, occasion, pos; feed-api vs lib/catalog.ts rows",
+          "detail": "both show house and published wishes with href, img, kind, no, occasion, pos; feed-api vs lib/catalog.ts rows"
+        }
+      ],
+      "decision": "same: one resource PublishedWish (house wishes are seeded rows); read by GET /v1/showing (S-16)",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "medium",
+      "source": "build/rulings-phase3.md",
+      "decidedAt": "2026-11-15T16:00:00Z"
+    },
+    {
+      "id": "DEC-64",
+      "topic": "different: public link view",
+      "closes": [
+        {
+          "conflict": "C-2",
+          "key": "possible-alias|PublicWishView ~ WishData|PublicWishView.content may be the WishData a style plays",
+          "detail": "PublicWishView.content may be the WishData a style plays"
+        }
+      ],
+      "decision": "different: PublicWishView is what the public link returns; its content is typed WishData",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "medium",
+      "source": "build/rulings-phase3.md",
+      "decidedAt": "2026-11-15T16:00:00Z"
+    },
+    {
+      "id": "DEC-65",
+      "topic": "studio submit",
+      "closes": [
+        {
+          "conflict": "C-3",
+          "key": "possible-alias|SubmittedStyle ~ StyleSubmission|both have submitStyle; SubmittedStyle carries the style and its review, StyleSubmission the review record",
+          "detail": "both have submitStyle; SubmittedStyle carries the style and its review, StyleSubmission the review record"
+        }
+      ],
+      "decision": "two records, one action: StudioStyle (the document) and StyleSubmission (its review); SubmittedStyle is a read view of a live StudioStyle with its submission; one submit endpoint POST /v1/studio/styles/:id/submissions",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "medium",
+      "source": "build/rulings-phase3.md",
+      "decidedAt": "2026-11-15T16:00:00Z"
+    },
+    {
+      "id": "DEC-66",
+      "topic": "credits",
+      "closes": [
+        {
+          "conflict": "C-4",
+          "key": "possible-alias|CreditBalance ~ CreatorState|CreditBalance.credits (ai-writing) and CreatorState.credits (studio)",
+          "detail": "CreditBalance.credits (ai-writing) and CreatorState.credits (studio)"
+        }
+      ],
+      "decision": "same: one credit balance on the creator (CreatorState.credits); a sender's AI writing uses no credits (a daily cap)",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "medium",
+      "source": "build/rulings-phase3.md",
+      "decidedAt": "2026-11-15T16:00:00Z"
+    },
+    {
+      "id": "DEC-67",
+      "topic": "earnings",
+      "closes": [
+        {
+          "conflict": "C-5",
+          "key": "possible-alias|Earnings ~ RoyaltyAccrual|studio-home Earnings rows vs royalties-payouts getEarnings",
+          "detail": "studio-home Earnings rows vs royalties-payouts getEarnings"
+        }
+      ],
+      "decision": "same: Earnings is a read view over RoyaltyAccrual (GET /v1/creator/earnings)",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "medium",
+      "source": "build/rulings-phase3.md",
+      "decidedAt": "2026-11-15T16:00:00Z"
+    },
+    {
+      "id": "DEC-68",
+      "topic": "styles",
+      "closes": [
+        {
+          "conflict": "C-6",
+          "key": "possible-alias|Style ~ FeedStyle|lib/styles.ts styles vs feed-api styles; overlapping slug, name, level, kinds",
+          "detail": "lib/styles.ts styles vs feed-api styles; overlapping slug, name, level, kinds"
+        }
+      ],
+      "decision": "same: FeedStyle is Style",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "medium",
+      "source": "build/rulings-phase3.md",
+      "decidedAt": "2026-11-15T16:00:00Z"
+    },
+    {
+      "id": "DEC-69",
+      "topic": "style manifests",
+      "closes": [
+        {
+          "conflict": "C-7",
+          "key": "possible-alias|Style ~ StyleManifest|lib/styles.ts vs registered package manifests; overlapping slug, name, level, occasions",
+          "detail": "lib/styles.ts vs registered package manifests; overlapping slug, name, level, occasions"
+        }
+      ],
+      "decision": "different: StyleManifest stays in the web app; the server's Style holds slug, level, on/off, creator, counts",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "medium",
+      "source": "build/rulings-phase3.md",
+      "decidedAt": "2026-11-15T16:00:00Z"
+    },
+    {
+      "id": "DEC-70",
+      "topic": "lifecycle config",
+      "closes": [
+        {
+          "conflict": "C-8",
+          "key": "possible-alias|PricingRules ~ LifecycleConfig|restoreWindow vs RESTORE_DAYS",
+          "detail": "restoreWindow vs RESTORE_DAYS"
+        },
+        {
+          "conflict": "C-9",
+          "key": "possible-alias|RetentionRules ~ LifecycleConfig|restingHoldMonths/restoreWindowDays vs HOLD_DAYS/RESTORE_DAYS",
+          "detail": "restingHoldMonths/restoreWindowDays vs HOLD_DAYS/RESTORE_DAYS"
+        }
+      ],
+      "decision": "same: one LifecycleConfig, served inside the public price book (GET /v1/price-book)",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "medium",
+      "source": "build/rulings-phase3.md",
+      "decidedAt": "2026-11-15T16:00:00Z"
+    },
+    {
+      "id": "DEC-71",
+      "topic": "concierge price",
+      "closes": [
+        {
+          "conflict": "C-10",
+          "key": "possible-alias|ConciergeOffer ~ ConciergeSinglePrice|both show a Concierge price",
+          "detail": "both show a Concierge price"
+        }
+      ],
+      "decision": "same: a price-book line (concierge.single)",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "medium",
+      "source": "build/rulings-phase3.md",
+      "decidedAt": "2026-11-15T16:00:00Z"
+    },
+    {
+      "id": "DEC-72",
+      "topic": "plan reference",
+      "closes": [
+        {
+          "conflict": "C-11",
+          "key": "possible-alias|PlanReference ~ ProPlan|app-you shows a plan name",
+          "detail": "app-you shows a plan name"
+        }
+      ],
+      "decision": "same: ProPlan",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "medium",
+      "source": "build/rulings-phase3.md",
+      "decidedAt": "2026-11-15T16:00:00Z"
+    },
+    {
+      "id": "DEC-73",
+      "topic": "kinds and occasions",
+      "closes": [
+        {
+          "conflict": "C-12",
+          "key": "possible-alias|KindOccasionLabel ~ Kind|name, slug of a kind or an occasion",
+          "detail": "name, slug of a kind or an occasion"
+        },
+        {
+          "conflict": "C-13",
+          "key": "possible-alias|KindOccasionLabel ~ Occasion|name, slug of a kind or an occasion",
+          "detail": "name, slug of a kind or an occasion"
+        }
+      ],
+      "decision": "kinds and occasions stay in the web app; not a resource",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "medium",
+      "source": "build/rulings-phase3.md",
+      "decidedAt": "2026-11-15T16:00:00Z"
+    },
+    {
+      "id": "DEC-74",
+      "topic": "sent reveal",
+      "closes": [
+        {
+          "conflict": "C-14",
+          "key": "possible-alias|SentReveal ~ ClientWish|a reveal sent from a shoot (no, openedAt, sentAt, wish) vs the client wish it creates",
+          "detail": "a reveal sent from a shoot (no, openedAt, sentAt, wish) vs the client wish it creates"
+        }
+      ],
+      "decision": "same: a reveal sent from a shoot is a ClientWish carrying its shootId",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "medium",
+      "source": "build/rulings-phase3.md",
+      "decidedAt": "2026-11-15T16:00:00Z"
+    },
+    {
+      "id": "DEC-75",
+      "topic": "style previews",
+      "closes": [
+        {
+          "conflict": "C-15",
+          "key": "possible-alias|StylePreview ~ StyleRecording|recorded loop by slug vs StyleRecording src/poster",
+          "detail": "recorded loop by slug vs StyleRecording src/poster"
+        }
+      ],
+      "decision": "same, and it stays in the web app (recorded files under public/previews)",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "medium",
+      "source": "build/rulings-phase3.md",
+      "decidedAt": "2026-11-15T16:00:00Z"
+    },
+    {
+      "id": "DEC-76",
+      "topic": "creator",
+      "closes": [
+        {
+          "conflict": "C-16",
+          "key": "possible-alias|Creator ~ Account|feed Creator (handle, name) vs the creator side of an Account",
+          "detail": "feed Creator (handle, name) vs the creator side of an Account"
+        }
+      ],
+      "decision": "different: Creator (public profile, 1:1 with an Account); the feed's Creator is Creator's public view; GET /v1/creators/:handle",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "medium",
+      "source": "build/rulings-phase3.md",
+      "decidedAt": "2026-11-15T16:00:00Z"
+    },
+    {
+      "id": "DEC-77",
+      "topic": "coming dates",
+      "closes": [
+        {
+          "conflict": "C-17",
+          "key": "possible-alias|Coming ~ DateRow|upcoming dates (date, person, what) vs DateRow (date, who, what)",
+          "detail": "upcoming dates (date, person, what) vs DateRow (date, who, what)"
+        }
+      ],
+      "decision": "same: DateRow",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "medium",
+      "source": "build/rulings-phase3.md",
+      "decidedAt": "2026-11-15T16:00:00Z"
+    },
+    {
+      "id": "DEC-78",
+      "topic": "field aliases",
+      "closes": [
+        {
+          "conflict": "C-18",
+          "key": "possible-alias|AiRequest|AiRequest fields style / styleId may be one field",
+          "detail": "AiRequest fields style / styleId may be one field"
+        },
+        {
+          "conflict": "C-23",
+          "key": "possible-alias|StoredFile|StoredFile fields file / fileId may be one field",
+          "detail": "StoredFile fields file / fileId may be one field"
+        },
+        {
+          "conflict": "C-30",
+          "key": "possible-alias|Wish|Wish fields style / styleSlug may be one field",
+          "detail": "Wish fields style / styleSlug may be one field"
+        },
+        {
+          "conflict": "C-31",
+          "key": "possible-alias|Wish|Wish fields wish / wishId may be one field",
+          "detail": "Wish fields wish / wishId may be one field"
+        }
+      ],
+      "decision": "same fields: AiRequest styleId; StoredFile fileId; Wish style (a house slug or studio:<id>); Wish wishId",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "medium",
+      "source": "build/rulings-phase3.md",
+      "decidedAt": "2026-11-15T16:00:00Z"
+    },
+    {
+      "id": "DEC-79",
+      "topic": "payment amount",
+      "closes": [
+        {
+          "conflict": "C-21",
+          "key": "possible-alias|Payment|Payment fields amount / amountKobo may be one field",
+          "detail": "Payment fields amount / amountKobo may be one field"
+        }
+      ],
+      "decision": "one field, amountKobo, set by the server only; the client never sends an amount; the app-wish-detail amount is dropped (S-24)",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "medium",
+      "source": "build/rulings-phase3.md",
+      "decidedAt": "2026-11-15T16:00:00Z"
+    },
+    {
+      "id": "DEC-80",
+      "topic": "qr card wishes",
+      "closes": [
+        {
+          "conflict": "C-22",
+          "key": "possible-alias|QrCard|QrCard fields wishId / wishIds may be one field",
+          "detail": "QrCard fields wishId / wishIds may be one field"
+        }
+      ],
+      "decision": "one field wishIds: string[] (a single card is a list of one)",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "medium",
+      "source": "build/rulings-phase3.md",
+      "decidedAt": "2026-11-15T16:00:00Z"
+    },
+    {
+      "id": "DEC-81",
+      "topic": "webhook event",
+      "closes": [
+        {
+          "conflict": "C-25",
+          "key": "possible-alias|WebhookEvent|WebhookEvent fields event / eventId may be one field",
+          "detail": "WebhookEvent fields event / eventId may be one field"
+        }
+      ],
+      "decision": "different: event is the provider's event name, eventId its id (dedupe key)",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "medium",
+      "source": "build/rulings-phase3.md",
+      "decidedAt": "2026-11-15T16:00:00Z"
+    },
+    {
+      "id": "DEC-82",
+      "topic": "field types",
+      "closes": [
+        {
+          "conflict": "C-19",
+          "key": "type-mismatch|Moment|Moment.fields is seen as array vs object",
+          "detail": "Moment.fields is seen as array vs object"
+        },
+        {
+          "conflict": "C-20",
+          "key": "type-mismatch|PassOffer|PassOffer.items is seen as array vs object",
+          "detail": "PassOffer.items is seen as array vs object"
+        },
+        {
+          "conflict": "C-27",
+          "key": "type-mismatch|Wish|Wish.content.details is seen as array vs object",
+          "detail": "Wish.content.details is seen as array vs object"
+        }
+      ],
+      "decision": "Moment.fields object (values keyed by field key; definitions stay in the web app); PassOffer.items array; Wish.content.details object",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "medium",
+      "source": "build/rulings-phase3.md",
+      "decidedAt": "2026-11-15T16:00:00Z",
+      "fieldTypes": {
+        "Moment.fields": "object",
+        "PassOffer.items": "array",
+        "Wish.content.details": "object"
+      }
+    },
+    {
+      "id": "DEC-83",
+      "topic": "time canon",
+      "closes": [
+        {
+          "conflict": "C-24",
+          "key": "type-mismatch|VaultStorage|VaultStorage.packUntil is seen as string vs time",
+          "detail": "VaultStorage.packUntil is seen as string vs time"
+        },
+        {
+          "conflict": "C-26",
+          "key": "type-mismatch|Wish|Wish.at is seen as number vs time",
+          "detail": "Wish.at is seen as number vs time"
+        },
+        {
+          "conflict": "C-32",
+          "key": "format-canon|StudioStyle|StudioStyle.at: time must be ISO-8601 UTC on the wire (conventions.md canon); no supersede covers epoch numbers",
+          "detail": "StudioStyle.at: time must be ISO-8601 UTC on the wire (conventions.md canon); no supersede covers epoch numbers"
+        },
+        {
+          "conflict": "C-33",
+          "key": "format-canon|Wish|Wish.at: time must be ISO-8601 UTC on the wire (conventions.md canon); no supersede covers epoch numbers",
+          "detail": "Wish.at: time must be ISO-8601 UTC on the wire (conventions.md canon); no supersede covers epoch numbers"
+        }
+      ],
+      "decision": "time is ISO-8601 UTC on the wire; every epoch-ms at becomes createdAt/updatedAt ISO strings (S-22)",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md",
+      "decidedAt": "2026-11-15T16:00:00Z",
+      "fieldTypes": {
+        "VaultStorage.packUntil": "date-only",
+        "Wish.at": "time-iso (S-22: updatedAt)",
+        "StudioStyle.at": "time-iso (S-22: updatedAt)"
+      }
+    },
+    {
+      "id": "DEC-84",
+      "topic": "keep",
+      "closes": [
+        {
+          "conflict": "C-28",
+          "key": "type-mismatch|Wish|Wish.keep is seen as boolean vs string",
+          "detail": "Wish.keep is seen as boolean vs string"
+        }
+      ],
+      "decision": "one field keep: null | month | half | year; the maker's boolean is stale (S-23)",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "medium",
+      "source": "build/rulings-phase3.md",
+      "decidedAt": "2026-11-15T16:00:00Z",
+      "fieldTypes": {
+        "Wish.keep": "enum(null|month|half|year)"
+      }
+    },
+    {
+      "id": "DEC-85",
+      "topic": "date-only",
+      "closes": [
+        {
+          "conflict": "C-29",
+          "key": "type-mismatch|Wish|Wish.makerNote.wedding is seen as string vs time",
+          "detail": "Wish.makerNote.wedding is seen as string vs time"
+        }
+      ],
+      "decision": "a calendar date string YYYY-MM-DD, not a timestamp; date-only added to the format canon",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "medium",
+      "source": "build/rulings-phase3.md",
+      "decidedAt": "2026-11-15T16:00:00Z",
+      "fieldTypes": {
+        "Wish.makerNote.wedding": "date-only"
+      }
+    },
+    {
+      "id": "DEC-86",
+      "topic": "creator figure",
+      "closes": [
+        {
+          "conflict": "C-34",
+          "key": "truth-mismatch|money|₦80,000 shown or sent by a screen is in no product truth and not in the price book seed",
+          "detail": "₦80,000 shown or sent by a screen is in no product truth and not in the price book seed"
+        }
+      ],
+      "decision": "not a new figure: ₦80,000 = 100 wishes x the ₦800 royalty at list (T-65); the page works it out from the served price book (S-25). Listed to the owner.",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "medium",
+      "source": "build/rulings-phase3.md",
+      "decidedAt": "2026-11-15T16:00:00Z"
+    },
+    {
+      "id": "DEC-87",
+      "topic": "fulfilment",
+      "closes": [
+        {
+          "conflict": "C-66",
+          "key": "entitlement-without-endpoint|pro.starter|sold or promised (price-book) but no endpoint delivers it",
+          "detail": "sold or promised (price-book) but no endpoint delivers it (it can be bought: POST /v1/payments)"
+        },
+        {
+          "conflict": "C-67",
+          "key": "entitlement-without-endpoint|pro.pack|sold or promised (price-book) but no endpoint delivers it",
+          "detail": "sold or promised (price-book) but no endpoint delivers it (it can be bought: POST /v1/payments)"
+        }
+      ],
+      "decision": "build it: every price-book line has a fulfilment handler that runs on a verified payment (webhook); pro.starter starts the plan, pro.pack adds its wishes and space; reads GET /v1/business/plan; tests: pay -> plan active; pay -> pack added; replayed webhook adds nothing",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md",
+      "decidedAt": "2026-11-15T16:00:00Z"
+    },
+    {
+      "id": "DEC-88",
+      "topic": "navigation only",
+      "closes": [
+        {
+          "conflict": "C-35",
+          "key": "client-only-action|DateRow|DateRow.makeWishForDate asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that names ",
+          "detail": "DateRow.makeWishForDate asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that names the server need"
+        },
+        {
+          "conflict": "C-44",
+          "key": "client-only-action|(navigation)|(navigation).messageUs asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that names t",
+          "detail": "(navigation).messageUs asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that names the server need"
+        },
+        {
+          "conflict": "C-45",
+          "key": "client-only-action|(navigation)|(navigation).startWish asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that names t",
+          "detail": "(navigation).startWish asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that names the server need"
+        },
+        {
+          "conflict": "C-46",
+          "key": "client-only-action|(navigation)|(navigation).chooseTicket asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that name",
+          "detail": "(navigation).chooseTicket asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that names the server need"
+        }
+      ],
+      "decision": "navigation only (a choice travels in the link); R10: never a browser store",
+      "approvedBy": "lead default, owner may override; R10",
+      "confidence": "medium",
+      "source": "build/rulings-phase3.md",
+      "decidedAt": "2026-11-15T16:00:00Z"
+    },
+    {
+      "id": "DEC-89",
+      "topic": "share sheet",
+      "closes": [
+        {
+          "conflict": "C-38",
+          "key": "client-only-action|Wish|Wish.shareLink asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that names the serve",
+          "detail": "Wish.shareLink asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that names the server need"
+        }
+      ],
+      "decision": "share sheet only (the link comes from the server)",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "medium",
+      "source": "build/rulings-phase3.md",
+      "decidedAt": "2026-11-15T16:00:00Z"
+    },
+    {
+      "id": "DEC-90",
+      "topic": "clipboard",
+      "closes": [
+        {
+          "conflict": "C-41",
+          "key": "client-only-action|(local clipboard)|(local clipboard).copyNames asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that na",
+          "detail": "(local clipboard).copyNames asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that names the server need"
+        },
+        {
+          "conflict": "C-42",
+          "key": "client-only-action|(local clipboard)|(local clipboard).copyNames asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that na",
+          "detail": "(local clipboard).copyNames asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that names the server need"
+        }
+      ],
+      "decision": "clipboard only",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "medium",
+      "source": "build/rulings-phase3.md",
+      "decidedAt": "2026-11-15T16:00:00Z"
+    },
+    {
+      "id": "DEC-91",
+      "topic": "draft edits",
+      "closes": [
+        {
+          "conflict": "C-36",
+          "key": "client-only-action|Wish|Wish draft.useThisStyle asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that names ",
+          "detail": "Wish draft.useThisStyle asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that names the server need"
+        },
+        {
+          "conflict": "C-40",
+          "key": "client-only-action|Wish|Wish.saveChanges asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that names the ser",
+          "detail": "Wish.saveChanges asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that names the server need"
+        }
+      ],
+      "decision": "server: PATCH /v1/wishes/:id (the draft's style; saving changes)",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "medium",
+      "source": "build/rulings-phase3.md",
+      "decidedAt": "2026-11-15T16:00:00Z"
+    },
+    {
+      "id": "DEC-92",
+      "topic": "seal",
+      "closes": [
+        {
+          "conflict": "C-39",
+          "key": "client-only-action|Wish|Wish.sealIt asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that names the server n",
+          "detail": "Wish.sealIt asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that names the server need"
+        }
+      ],
+      "decision": "server: POST /v1/wishes/:id/seal",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "medium",
+      "source": "build/rulings-phase3.md",
+      "decidedAt": "2026-11-15T16:00:00Z"
+    },
+    {
+      "id": "DEC-93",
+      "topic": "wake",
+      "closes": [
+        {
+          "conflict": "C-43",
+          "key": "client-only-action|Wish|Wish.wakeWish asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that names the server",
+          "detail": "Wish.wakeWish asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that names the server need"
+        }
+      ],
+      "decision": "server: POST /v1/wishes/:id/wake (after its payment)",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "medium",
+      "source": "build/rulings-phase3.md",
+      "decidedAt": "2026-11-15T16:00:00Z"
+    },
+    {
+      "id": "DEC-94",
+      "topic": "pass",
+      "closes": [
+        {
+          "conflict": "C-47",
+          "key": "client-only-action|PassOffer|Pass.getPass asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that names the server ",
+          "detail": "Pass.getPass asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that names the server need"
+        }
+      ],
+      "decision": "server: POST /v1/payments with the Pass line; the grant by its fulfilment handler",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "medium",
+      "source": "build/rulings-phase3.md",
+      "decidedAt": "2026-11-15T16:00:00Z"
+    },
+    {
+      "id": "DEC-95",
+      "topic": "split sheets",
+      "closes": [
+        {
+          "conflict": "C-37",
+          "key": "unparseable-action|Wish|action name '(defined, not reached on this page) sheets: share, keep/wake, video, publish' is not one action",
+          "detail": "action name '(defined, not reached on this page) sheets: share, keep/wake, video, publish' is not one action"
+        }
+      ],
+      "decision": "split into: share (C-38), buy a keep and wake (payments + wake), ask for the video (POST /v1/wishes/:id/video), ask to publish (POST /v1/wishes/:id/publish-requests); each maps to the endpoint its declaration already has",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "medium",
+      "source": "build/rulings-phase3.md",
+      "decidedAt": "2026-11-15T16:00:00Z"
+    },
+    {
+      "id": "DEC-96",
+      "topic": "price book",
+      "closes": [
+        {
+          "conflict": "C-49",
+          "key": "static-ruling|ConciergeOffer|ConciergeOffer is read only by static screens (scan-map); serve from the API or keep local in the web app",
+          "detail": "ConciergeOffer is read only by static screens (scan-map); serve from the API or keep local in the web app"
+        },
+        {
+          "conflict": "C-50",
+          "key": "static-ruling|ConciergeSinglePrice|ConciergeSinglePrice is read only by static screens (scan-map); serve from the API or keep local in the web app",
+          "detail": "ConciergeSinglePrice is read only by static screens (scan-map); serve from the API or keep local in the web app"
+        },
+        {
+          "conflict": "C-53",
+          "key": "static-ruling|CreatorOffer|CreatorOffer is read only by static screens (scan-map); serve from the API or keep local in the web app",
+          "detail": "CreatorOffer is read only by static screens (scan-map); serve from the API or keep local in the web app"
+        },
+        {
+          "conflict": "C-55",
+          "key": "static-ruling|PricingRules|PricingRules is read only by static screens (scan-map); serve from the API or keep local in the web app",
+          "detail": "PricingRules is read only by static screens (scan-map); serve from the API or keep local in the web app"
+        },
+        {
+          "conflict": "C-56",
+          "key": "static-ruling|ProPricingCopy|ProPricingCopy is read only by static screens (scan-map); serve from the API or keep local in the web app",
+          "detail": "ProPricingCopy is read only by static screens (scan-map); serve from the API or keep local in the web app"
+        },
+        {
+          "conflict": "C-57",
+          "key": "static-ruling|RetentionRules|RetentionRules is read only by static screens (scan-map); serve from the API or keep local in the web app",
+          "detail": "RetentionRules is read only by static screens (scan-map); serve from the API or keep local in the web app"
+        },
+        {
+          "conflict": "C-62",
+          "key": "static-ruling|TicketTerms|TicketTerms is read only by static screens (scan-map); serve from the API or keep local in the web app",
+          "detail": "TicketTerms is read only by static screens (scan-map); serve from the API or keep local in the web app"
+        },
+        {
+          "conflict": "C-63",
+          "key": "static-ruling|VaultPricing|VaultPricing is read only by static screens (scan-map); serve from the API or keep local in the web app",
+          "detail": "VaultPricing is read only by static screens (scan-map); serve from the API or keep local in the web app"
+        }
+      ],
+      "decision": "served (public, cacheable) in GET /v1/price-book: every price, term, limit and the date the 40% off ends",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "medium",
+      "source": "build/rulings-phase3.md",
+      "decidedAt": "2026-11-15T16:00:00Z"
+    },
+    {
+      "id": "DEC-97",
+      "topic": "showing",
+      "closes": [
+        {
+          "conflict": "C-59",
+          "key": "static-ruling|ShowcaseWish|ShowcaseWish is read only by static screens (scan-map); serve from the API or keep local in the web app",
+          "detail": "ShowcaseWish is read only by static screens (scan-map); serve from the API or keep local in the web app"
+        }
+      ],
+      "decision": "served: GET /v1/showing",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "medium",
+      "source": "build/rulings-phase3.md",
+      "decidedAt": "2026-11-15T16:00:00Z"
+    },
+    {
+      "id": "DEC-98",
+      "topic": "level counts",
+      "closes": [
+        {
+          "conflict": "C-60",
+          "key": "static-ruling|StyleLevelCounts|StyleLevelCounts is read only by static screens (scan-map); serve from the API or keep local in the web app",
+          "detail": "StyleLevelCounts is read only by static screens (scan-map); serve from the API or keep local in the web app"
+        }
+      ],
+      "decision": "worked out in the page from GET /v1/styles/levels",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "medium",
+      "source": "build/rulings-phase3.md",
+      "decidedAt": "2026-11-15T16:00:00Z"
+    },
+    {
+      "id": "DEC-99",
+      "topic": "kept in the web app",
+      "closes": [
+        {
+          "conflict": "C-48",
+          "key": "static-ruling|ComingSoonAudience|ComingSoonAudience is read only by static screens (scan-map); serve from the API or keep local in the web app",
+          "detail": "ComingSoonAudience is read only by static screens (scan-map); serve from the API or keep local in the web app"
+        },
+        {
+          "conflict": "C-51",
+          "key": "static-ruling|ContactChannels|ContactChannels is read only by static screens (scan-map); serve from the API or keep local in the web app",
+          "detail": "ContactChannels is read only by static screens (scan-map); serve from the API or keep local in the web app"
+        },
+        {
+          "conflict": "C-52",
+          "key": "static-ruling|CreativeLabel|CreativeLabel is read only by static screens (scan-map); serve from the API or keep local in the web app",
+          "detail": "CreativeLabel is read only by static screens (scan-map); serve from the API or keep local in the web app"
+        },
+        {
+          "conflict": "C-54",
+          "key": "static-ruling|EndingEvent|EndingEvent is read only by static screens (scan-map); serve from the API or keep local in the web app",
+          "detail": "EndingEvent is read only by static screens (scan-map); serve from the API or keep local in the web app"
+        },
+        {
+          "conflict": "C-58",
+          "key": "static-ruling|SampleReveal|SampleReveal is read only by static screens (scan-map); serve from the API or keep local in the web app",
+          "detail": "SampleReveal is read only by static screens (scan-map); serve from the API or keep local in the web app"
+        },
+        {
+          "conflict": "C-61",
+          "key": "static-ruling|StyleRecording|StyleRecording is read only by static screens (scan-map); serve from the API or keep local in the web app",
+          "detail": "StyleRecording is read only by static screens (scan-map); serve from the API or keep local in the web app"
+        }
+      ],
+      "decision": "kept in the web app (wording and files only)",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "medium",
+      "source": "build/rulings-phase3.md",
+      "decidedAt": "2026-11-15T16:00:00Z"
+    },
+    {
+      "id": "DEC-100",
+      "topic": "account reads",
+      "closes": [
+        {
+          "conflict": "C-64",
+          "key": "role-contradiction|Account|GET /v1/accounts/:id: public and owner-only on one record",
+          "detail": "GET /v1/accounts/:id: public and owner-only on one record"
+        }
+      ],
+      "decision": "no public read of an account; sign-in reads nothing about an account before it is proved; signed-in screens use GET /v1/me; a creator's public page is GET /v1/creators/:handle",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md",
+      "decidedAt": "2026-11-15T16:00:00Z"
+    },
+    {
+      "id": "DEC-101",
+      "topic": "wish reads",
+      "closes": [
+        {
+          "conflict": "C-65",
+          "key": "role-contradiction|Wish|GET /v1/wishes/:id: public and owner-only on one record",
+          "detail": "GET /v1/wishes/:id: public and owner-only on one record"
+        }
+      ],
+      "decision": "GET /v1/wishes/:id is the owner's (and staff); a receiver reads GET /v1/w/:slug, where the server decides what a sealed wish shows",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md",
+      "decidedAt": "2026-11-15T16:00:00Z"
+    },
+    {
+      "id": "DEC-102",
+      "topic": "auth class",
+      "closes": [],
+      "decision": "internal is a fifth auth class: a job or port with no HTTP route",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "medium",
+      "source": "build/rulings-phase3.md",
+      "decidedAt": "2026-11-15T16:00:00Z"
+    },
+    {
+      "id": "DEC-103",
+      "topic": "browser stores (R10)",
+      "closes": [],
+      "decision": "every browser store read or write is replaced by its endpoint; mode is a field on the account; choices before sign-in travel in the link; gate on the three words (S-26)",
+      "approvedBy": "owner ruling R10",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md",
+      "decidedAt": "2026-11-15T16:00:00Z",
+      "replaces": [
+        "DEC-9"
+      ]
+    },
+    {
+      "id": "DEC-104",
+      "topic": "sign-in (R11)",
+      "closes": [],
+      "decision": "sign-in by email code or Google; phone optional, never verified, never an account key; messages-sms and messages-whatsapp deferred-by-owner; every notice by email (S-27)",
+      "approvedBy": "owner ruling R11",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md",
+      "decidedAt": "2026-11-15T16:00:00Z",
+      "replaces": [
+        "DEC-6",
+        "DEC-13",
+        "DEC-14"
+      ]
+    },
+    {
+      "id": "DEC-105",
+      "topic": "email provider (R12)",
+      "closes": [],
+      "decision": "email adapter is Resend (RESEND_API_KEY, MAIL_FROM)",
+      "approvedBy": "owner ruling R12",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md",
+      "decidedAt": "2026-11-15T16:00:00Z",
+      "replaces": [
+        "DEC-14"
+      ]
+    },
+    {
+      "id": "DEC-106",
+      "topic": "transcription (R13)",
+      "closes": [],
+      "decision": "no transcription provider or env var; dictation is the browser's; the AI gets text only",
+      "approvedBy": "owner ruling R13",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md",
+      "decidedAt": "2026-11-15T16:00:00Z",
+      "replaces": [
+        "DEC-15"
+      ]
+    },
+    {
+      "id": "DEC-107",
+      "topic": "payout threshold (R14)",
+      "closes": [],
+      "decision": "payout threshold 500000 kobo, paid monthly on the 5th; a price-book setting staff can change",
+      "approvedBy": "owner ruling R14 (figure suggested by the lead)",
+      "confidence": "medium",
+      "source": "build/rulings-phase3.md",
+      "decidedAt": "2026-11-15T16:00:00Z",
+      "status": "PROVISIONAL",
+      "replaces": [
+        "DEC-19"
+      ]
+    },
+    {
+      "id": "DEC-108",
+      "topic": "contact details (R15)",
+      "closes": [],
+      "decision": "contact details are set in lib/config.ts; STUB-22 and STUB-168 resolved (implemented)",
+      "approvedBy": "owner ruling R15",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md",
+      "decidedAt": "2026-11-15T16:00:00Z"
     }
   ]
 }

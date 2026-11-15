@@ -5,6 +5,7 @@
       "kind": "possible-alias",
       "entity": "FeedWish ~ ShowcaseWish",
       "detail": "both show house and published wishes with href, img, kind, no, occasion, pos; feed-api vs lib/catalog.ts rows",
+      "key": "possible-alias|FeedWish ~ ShowcaseWish|both show house and published wishes with href, img, kind, no, occasion, pos; feed-api vs lib/catalog.ts rows",
       "sources": [
         {
           "src": "app-home",
@@ -30,6 +31,7 @@
       "kind": "possible-alias",
       "entity": "PublicWishView ~ WishData",
       "detail": "PublicWishView.content may be the WishData a style plays",
+      "key": "possible-alias|PublicWishView ~ WishData|PublicWishView.content may be the WishData a style plays",
       "sources": [
         {
           "src": "wish-link",
@@ -59,6 +61,7 @@
       "kind": "possible-alias",
       "entity": "SubmittedStyle ~ StyleSubmission",
       "detail": "both have submitStyle; SubmittedStyle carries the style and its review, StyleSubmission the review record",
+      "key": "possible-alias|SubmittedStyle ~ StyleSubmission|both have submitStyle; SubmittedStyle carries the style and its review, StyleSubmission the review record",
       "sources": [
         {
           "src": "studio-editor",
@@ -84,6 +87,7 @@
       "kind": "possible-alias",
       "entity": "CreditBalance ~ CreatorState",
       "detail": "CreditBalance.credits (ai-writing) and CreatorState.credits (studio)",
+      "key": "possible-alias|CreditBalance ~ CreatorState|CreditBalance.credits (ai-writing) and CreatorState.credits (studio)",
       "sources": [
         {
           "src": "ai-writing",
@@ -113,6 +117,7 @@
       "kind": "possible-alias",
       "entity": "Earnings ~ RoyaltyAccrual",
       "detail": "studio-home Earnings rows vs royalties-payouts getEarnings",
+      "key": "possible-alias|Earnings ~ RoyaltyAccrual|studio-home Earnings rows vs royalties-payouts getEarnings",
       "sources": [
         {
           "src": "studio-home",
@@ -134,6 +139,7 @@
       "kind": "possible-alias",
       "entity": "Style ~ FeedStyle",
       "detail": "lib/styles.ts styles vs feed-api styles; overlapping slug, name, level, kinds",
+      "key": "possible-alias|Style ~ FeedStyle|lib/styles.ts styles vs feed-api styles; overlapping slug, name, level, kinds",
       "sources": [
         {
           "src": "app-style-detail",
@@ -171,6 +177,7 @@
       "kind": "possible-alias",
       "entity": "Style ~ StyleManifest",
       "detail": "lib/styles.ts vs registered package manifests; overlapping slug, name, level, occasions",
+      "key": "possible-alias|Style ~ StyleManifest|lib/styles.ts vs registered package manifests; overlapping slug, name, level, occasions",
       "sources": [
         {
           "src": "app-style-detail",
@@ -208,6 +215,7 @@
       "kind": "possible-alias",
       "entity": "PricingRules ~ LifecycleConfig",
       "detail": "restoreWindow vs RESTORE_DAYS",
+      "key": "possible-alias|PricingRules ~ LifecycleConfig|restoreWindow vs RESTORE_DAYS",
       "sources": [
         {
           "src": "site-pricing",
@@ -233,6 +241,7 @@
       "kind": "possible-alias",
       "entity": "RetentionRules ~ LifecycleConfig",
       "detail": "restingHoldMonths/restoreWindowDays vs HOLD_DAYS/RESTORE_DAYS",
+      "key": "possible-alias|RetentionRules ~ LifecycleConfig|restingHoldMonths/restoreWindowDays vs HOLD_DAYS/RESTORE_DAYS",
       "sources": [
         {
           "src": "site-privacy",
@@ -258,6 +267,7 @@
       "kind": "possible-alias",
       "entity": "ConciergeOffer ~ ConciergeSinglePrice",
       "detail": "both show a Concierge price",
+      "key": "possible-alias|ConciergeOffer ~ ConciergeSinglePrice|both show a Concierge price",
       "sources": [
         {
           "src": "site-business",
@@ -291,6 +301,7 @@
       "kind": "possible-alias",
       "entity": "PlanReference ~ ProPlan",
       "detail": "app-you shows a plan name",
+      "key": "possible-alias|PlanReference ~ ProPlan|app-you shows a plan name",
       "sources": [
         {
           "src": "app-you",
@@ -320,6 +331,7 @@
       "kind": "possible-alias",
       "entity": "KindOccasionLabel ~ Kind",
       "detail": "name, slug of a kind or an occasion",
+      "key": "possible-alias|KindOccasionLabel ~ Kind|name, slug of a kind or an occasion",
       "sources": [
         {
           "src": "app-style-detail",
@@ -349,6 +361,7 @@
       "kind": "possible-alias",
       "entity": "KindOccasionLabel ~ Occasion",
       "detail": "name, slug of a kind or an occasion",
+      "key": "possible-alias|KindOccasionLabel ~ Occasion|name, slug of a kind or an occasion",
       "sources": [
         {
           "src": "app-style-detail",
@@ -378,6 +391,7 @@
       "kind": "possible-alias",
       "entity": "SentReveal ~ ClientWish",
       "detail": "a reveal sent from a shoot (no, openedAt, sentAt, wish) vs the client wish it creates",
+      "key": "possible-alias|SentReveal ~ ClientWish|a reveal sent from a shoot (no, openedAt, sentAt, wish) vs the client wish it creates",
       "sources": [
         {
           "src": "pro-vault-shoot",
@@ -407,6 +421,7 @@
       "kind": "possible-alias",
       "entity": "StylePreview ~ StyleRecording",
       "detail": "recorded loop by slug vs StyleRecording src/poster",
+      "key": "possible-alias|StylePreview ~ StyleRecording|recorded loop by slug vs StyleRecording src/poster",
       "sources": [
         {
           "src": "app-styles",
@@ -436,6 +451,7 @@
       "kind": "possible-alias",
       "entity": "Creator ~ Account",
       "detail": "feed Creator (handle, name) vs the creator side of an Account",
+      "key": "possible-alias|Creator ~ Account|feed Creator (handle, name) vs the creator side of an Account",
       "sources": [
         {
           "src": "app-home",
@@ -469,6 +485,7 @@
       "kind": "possible-alias",
       "entity": "Coming ~ DateRow",
       "detail": "upcoming dates (date, person, what) vs DateRow (date, who, what)",
+      "key": "possible-alias|Coming ~ DateRow|upcoming dates (date, person, what) vs DateRow (date, who, what)",
       "sources": [
         {
           "src": "pro-people",
@@ -498,6 +515,7 @@
       "kind": "possible-alias",
       "entity": "AiRequest",
       "detail": "AiRequest fields style / styleId may be one field",
+      "key": "possible-alias|AiRequest|AiRequest fields style / styleId may be one field",
       "sources": [
         {
           "src": "studio-editor",
@@ -519,6 +537,7 @@
       "kind": "type-mismatch",
       "entity": "Moment",
       "detail": "Moment.fields is seen as array vs object",
+      "key": "type-mismatch|Moment|Moment.fields is seen as array vs object",
       "sources": [
         {
           "src": "maker-opening-scene",
@@ -540,6 +559,7 @@
       "kind": "type-mismatch",
       "entity": "PassOffer",
       "detail": "PassOffer.items is seen as array vs object",
+      "key": "type-mismatch|PassOffer|PassOffer.items is seen as array vs object",
       "sources": [
         {
           "src": "app-pass",
@@ -561,6 +581,7 @@
       "kind": "possible-alias",
       "entity": "Payment",
       "detail": "Payment fields amount / amountKobo may be one field",
+      "key": "possible-alias|Payment|Payment fields amount / amountKobo may be one field",
       "sources": [
         {
           "src": "app-wish-detail",
@@ -582,6 +603,7 @@
       "kind": "possible-alias",
       "entity": "QrCard",
       "detail": "QrCard fields wishId / wishIds may be one field",
+      "key": "possible-alias|QrCard|QrCard fields wishId / wishIds may be one field",
       "sources": [
         {
           "src": "qr-card",
@@ -603,6 +625,7 @@
       "kind": "possible-alias",
       "entity": "StoredFile",
       "detail": "StoredFile fields file / fileId may be one field",
+      "key": "possible-alias|StoredFile|StoredFile fields file / fileId may be one field",
       "sources": [
         {
           "src": "studio-editor",
@@ -624,6 +647,7 @@
       "kind": "type-mismatch",
       "entity": "VaultStorage",
       "detail": "VaultStorage.packUntil is seen as string vs time",
+      "key": "type-mismatch|VaultStorage|VaultStorage.packUntil is seen as string vs time",
       "sources": [
         {
           "src": "pro-home",
@@ -649,6 +673,7 @@
       "kind": "possible-alias",
       "entity": "WebhookEvent",
       "detail": "WebhookEvent fields event / eventId may be one field",
+      "key": "possible-alias|WebhookEvent|WebhookEvent fields event / eventId may be one field",
       "sources": [
         {
           "src": "refunds",
@@ -670,6 +695,7 @@
       "kind": "type-mismatch",
       "entity": "Wish",
       "detail": "Wish.at is seen as number vs time",
+      "key": "type-mismatch|Wish|Wish.at is seen as number vs time",
       "sources": [
         {
           "src": "maker-ending-scene",
@@ -699,6 +725,7 @@
       "kind": "type-mismatch",
       "entity": "Wish",
       "detail": "Wish.content.details is seen as array vs object",
+      "key": "type-mismatch|Wish|Wish.content.details is seen as array vs object",
       "sources": [
         {
           "src": "maker-wedding",
@@ -724,6 +751,7 @@
       "kind": "type-mismatch",
       "entity": "Wish",
       "detail": "Wish.keep is seen as boolean vs string",
+      "key": "type-mismatch|Wish|Wish.keep is seen as boolean vs string",
       "sources": [
         {
           "src": "maker-chapters",
@@ -745,6 +773,7 @@
       "kind": "type-mismatch",
       "entity": "Wish",
       "detail": "Wish.makerNote.wedding is seen as string vs time",
+      "key": "type-mismatch|Wish|Wish.makerNote.wedding is seen as string vs time",
       "sources": [
         {
           "src": "maker-ending-scene",
@@ -774,6 +803,7 @@
       "kind": "possible-alias",
       "entity": "Wish",
       "detail": "Wish fields style / styleSlug may be one field",
+      "key": "possible-alias|Wish|Wish fields style / styleSlug may be one field",
       "sources": [
         {
           "src": "app-home",
@@ -795,6 +825,7 @@
       "kind": "possible-alias",
       "entity": "Wish",
       "detail": "Wish fields wish / wishId may be one field",
+      "key": "possible-alias|Wish|Wish fields wish / wishId may be one field",
       "sources": [
         {
           "src": "app-wishes",
@@ -816,6 +847,7 @@
       "kind": "format-canon",
       "entity": "StudioStyle",
       "detail": "StudioStyle.at: time must be ISO-8601 UTC on the wire (conventions.md canon); no supersede covers epoch numbers",
+      "key": "format-canon|StudioStyle|StudioStyle.at: time must be ISO-8601 UTC on the wire (conventions.md canon); no supersede covers epoch numbers",
       "sources": [
         {
           "src": "studio-editor",
@@ -837,6 +869,7 @@
       "kind": "format-canon",
       "entity": "Wish",
       "detail": "Wish.at: time must be ISO-8601 UTC on the wire (conventions.md canon); no supersede covers epoch numbers",
+      "key": "format-canon|Wish|Wish.at: time must be ISO-8601 UTC on the wire (conventions.md canon); no supersede covers epoch numbers",
       "sources": [
         {
           "src": "app-home",
@@ -862,6 +895,7 @@
       "kind": "truth-mismatch",
       "entity": "money",
       "detail": "₦80,000 shown or sent by a screen is in no product truth and not in the price book seed",
+      "key": "truth-mismatch|money|₦80,000 shown or sent by a screen is in no product truth and not in the price book seed",
       "sources": [
         {
           "src": "site-creators",
@@ -883,6 +917,7 @@
       "kind": "client-only-action",
       "entity": "DateRow",
       "detail": "DateRow.makeWishForDate asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that names the server need",
+      "key": "client-only-action|DateRow|DateRow.makeWishForDate asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that names ",
       "sources": [
         {
           "src": "app-dates",
@@ -900,6 +935,7 @@
       "kind": "client-only-action",
       "entity": "Wish",
       "detail": "Wish draft.useThisStyle asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that names the server need",
+      "key": "client-only-action|Wish|Wish draft.useThisStyle asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that names ",
       "sources": [
         {
           "src": "app-styles",
@@ -917,6 +953,7 @@
       "kind": "unparseable-action",
       "entity": "Wish",
       "detail": "action name '(defined, not reached on this page) sheets: share, keep/wake, video, publish' is not one action",
+      "key": "unparseable-action|Wish|action name '(defined, not reached on this page) sheets: share, keep/wake, video, publish' is not one action",
       "sources": [
         {
           "src": "app-wishes",
@@ -933,6 +970,7 @@
       "kind": "client-only-action",
       "entity": "Wish",
       "detail": "Wish.shareLink asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that names the server need",
+      "key": "client-only-action|Wish|Wish.shareLink asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that names the serve",
       "sources": [
         {
           "src": "maker-sealed",
@@ -950,6 +988,7 @@
       "kind": "client-only-action",
       "entity": "Wish",
       "detail": "Wish.sealIt asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that names the server need",
+      "key": "client-only-action|Wish|Wish.sealIt asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that names the server n",
       "sources": [
         {
           "src": "maker-watch",
@@ -967,6 +1006,7 @@
       "kind": "client-only-action",
       "entity": "Wish",
       "detail": "Wish.saveChanges asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that names the server need",
+      "key": "client-only-action|Wish|Wish.saveChanges asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that names the ser",
       "sources": [
         {
           "src": "maker-watch",
@@ -984,6 +1024,7 @@
       "kind": "client-only-action",
       "entity": "(local clipboard)",
       "detail": "(local clipboard).copyNames asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that names the server need",
+      "key": "client-only-action|(local clipboard)|(local clipboard).copyNames asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that na",
       "sources": [
         {
           "src": "pro-favourites",
@@ -1001,6 +1042,7 @@
       "kind": "client-only-action",
       "entity": "(local clipboard)",
       "detail": "(local clipboard).copyNames asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that names the server need",
+      "key": "client-only-action|(local clipboard)|(local clipboard).copyNames asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that na",
       "sources": [
         {
           "src": "pro-vault-shoot",
@@ -1018,6 +1060,7 @@
       "kind": "client-only-action",
       "entity": "Wish",
       "detail": "Wish.wakeWish asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that names the server need",
+      "key": "client-only-action|Wish|Wish.wakeWish asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that names the server",
       "sources": [
         {
           "src": "receiver-wish-mine",
@@ -1035,6 +1078,7 @@
       "kind": "client-only-action",
       "entity": "(navigation)",
       "detail": "(navigation).messageUs asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that names the server need",
+      "key": "client-only-action|(navigation)|(navigation).messageUs asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that names t",
       "sources": [
         {
           "src": "site-business",
@@ -1052,6 +1096,7 @@
       "kind": "client-only-action",
       "entity": "(navigation)",
       "detail": "(navigation).startWish asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that names the server need",
+      "key": "client-only-action|(navigation)|(navigation).startWish asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that names t",
       "sources": [
         {
           "src": "site-make",
@@ -1069,6 +1114,7 @@
       "kind": "client-only-action",
       "entity": "(navigation)",
       "detail": "(navigation).chooseTicket asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that names the server need",
+      "key": "client-only-action|(navigation)|(navigation).chooseTicket asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that name",
       "sources": [
         {
           "src": "site-pricing",
@@ -1086,6 +1132,7 @@
       "kind": "client-only-action",
       "entity": "PassOffer",
       "detail": "Pass.getPass asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that names the server need",
+      "key": "client-only-action|PassOffer|Pass.getPass asks for no server call; no endpoint derived. Needs a ruling that it stays in the browser, or a fragment that names the server ",
       "sources": [
         {
           "src": "site-pricing",
@@ -1103,6 +1150,7 @@
       "kind": "static-ruling",
       "entity": "ComingSoonAudience",
       "detail": "ComingSoonAudience is read only by static screens (scan-map); serve from the API or keep local in the web app",
+      "key": "static-ruling|ComingSoonAudience|ComingSoonAudience is read only by static screens (scan-map); serve from the API or keep local in the web app",
       "sources": [
         {
           "src": "site-business",
@@ -1120,6 +1168,7 @@
       "kind": "static-ruling",
       "entity": "ConciergeOffer",
       "detail": "ConciergeOffer is read only by static screens (scan-map); serve from the API or keep local in the web app",
+      "key": "static-ruling|ConciergeOffer|ConciergeOffer is read only by static screens (scan-map); serve from the API or keep local in the web app",
       "sources": [
         {
           "src": "site-business",
@@ -1145,6 +1194,7 @@
       "kind": "static-ruling",
       "entity": "ConciergeSinglePrice",
       "detail": "ConciergeSinglePrice is read only by static screens (scan-map); serve from the API or keep local in the web app",
+      "key": "static-ruling|ConciergeSinglePrice|ConciergeSinglePrice is read only by static screens (scan-map); serve from the API or keep local in the web app",
       "sources": [
         {
           "src": "site-contact",
@@ -1166,6 +1216,7 @@
       "kind": "static-ruling",
       "entity": "ContactChannels",
       "detail": "ContactChannels is read only by static screens (scan-map); serve from the API or keep local in the web app",
+      "key": "static-ruling|ContactChannels|ContactChannels is read only by static screens (scan-map); serve from the API or keep local in the web app",
       "sources": [
         {
           "src": "site-contact",
@@ -1183,6 +1234,7 @@
       "kind": "static-ruling",
       "entity": "CreativeLabel",
       "detail": "CreativeLabel is read only by static screens (scan-map); serve from the API or keep local in the web app",
+      "key": "static-ruling|CreativeLabel|CreativeLabel is read only by static screens (scan-map); serve from the API or keep local in the web app",
       "sources": [
         {
           "src": "site-business",
@@ -1204,6 +1256,7 @@
       "kind": "static-ruling",
       "entity": "CreatorOffer",
       "detail": "CreatorOffer is read only by static screens (scan-map); serve from the API or keep local in the web app",
+      "key": "static-ruling|CreatorOffer|CreatorOffer is read only by static screens (scan-map); serve from the API or keep local in the web app",
       "sources": [
         {
           "src": "site-creators",
@@ -1221,6 +1274,7 @@
       "kind": "static-ruling",
       "entity": "EndingEvent",
       "detail": "EndingEvent is read only by static screens (scan-map); serve from the API or keep local in the web app",
+      "key": "static-ruling|EndingEvent|EndingEvent is read only by static screens (scan-map); serve from the API or keep local in the web app",
       "sources": [
         {
           "src": "receiver-wish-showcase",
@@ -1238,6 +1292,7 @@
       "kind": "static-ruling",
       "entity": "PricingRules",
       "detail": "PricingRules is read only by static screens (scan-map); serve from the API or keep local in the web app",
+      "key": "static-ruling|PricingRules|PricingRules is read only by static screens (scan-map); serve from the API or keep local in the web app",
       "sources": [
         {
           "src": "site-pricing",
@@ -1255,6 +1310,7 @@
       "kind": "static-ruling",
       "entity": "ProPricingCopy",
       "detail": "ProPricingCopy is read only by static screens (scan-map); serve from the API or keep local in the web app",
+      "key": "static-ruling|ProPricingCopy|ProPricingCopy is read only by static screens (scan-map); serve from the API or keep local in the web app",
       "sources": [
         {
           "src": "site-business",
@@ -1272,6 +1328,7 @@
       "kind": "static-ruling",
       "entity": "RetentionRules",
       "detail": "RetentionRules is read only by static screens (scan-map); serve from the API or keep local in the web app",
+      "key": "static-ruling|RetentionRules|RetentionRules is read only by static screens (scan-map); serve from the API or keep local in the web app",
       "sources": [
         {
           "src": "site-privacy",
@@ -1289,6 +1346,7 @@
       "kind": "static-ruling",
       "entity": "SampleReveal",
       "detail": "SampleReveal is read only by static screens (scan-map); serve from the API or keep local in the web app",
+      "key": "static-ruling|SampleReveal|SampleReveal is read only by static screens (scan-map); serve from the API or keep local in the web app",
       "sources": [
         {
           "src": "site-business-cat",
@@ -1306,6 +1364,7 @@
       "kind": "static-ruling",
       "entity": "ShowcaseWish",
       "detail": "ShowcaseWish is read only by static screens (scan-map); serve from the API or keep local in the web app",
+      "key": "static-ruling|ShowcaseWish|ShowcaseWish is read only by static screens (scan-map); serve from the API or keep local in the web app",
       "sources": [
         {
           "src": "receiver-wish-showcase",
@@ -1327,6 +1386,7 @@
       "kind": "static-ruling",
       "entity": "StyleLevelCounts",
       "detail": "StyleLevelCounts is read only by static screens (scan-map); serve from the API or keep local in the web app",
+      "key": "static-ruling|StyleLevelCounts|StyleLevelCounts is read only by static screens (scan-map); serve from the API or keep local in the web app",
       "sources": [
         {
           "src": "site-styles",
@@ -1344,6 +1404,7 @@
       "kind": "static-ruling",
       "entity": "StyleRecording",
       "detail": "StyleRecording is read only by static screens (scan-map); serve from the API or keep local in the web app",
+      "key": "static-ruling|StyleRecording|StyleRecording is read only by static screens (scan-map); serve from the API or keep local in the web app",
       "sources": [
         {
           "src": "site-showing",
@@ -1369,6 +1430,7 @@
       "kind": "static-ruling",
       "entity": "TicketTerms",
       "detail": "TicketTerms is read only by static screens (scan-map); serve from the API or keep local in the web app",
+      "key": "static-ruling|TicketTerms|TicketTerms is read only by static screens (scan-map); serve from the API or keep local in the web app",
       "sources": [
         {
           "src": "site-terms",
@@ -1386,6 +1448,7 @@
       "kind": "static-ruling",
       "entity": "VaultPricing",
       "detail": "VaultPricing is read only by static screens (scan-map); serve from the API or keep local in the web app",
+      "key": "static-ruling|VaultPricing|VaultPricing is read only by static screens (scan-map); serve from the API or keep local in the web app",
       "sources": [
         {
           "src": "site-business",
@@ -1411,6 +1474,7 @@
       "kind": "role-contradiction",
       "entity": "Account",
       "detail": "GET /v1/accounts/:id: public and owner-only on one record",
+      "key": "role-contradiction|Account|GET /v1/accounts/:id: public and owner-only on one record",
       "sources": [
         {
           "src": "sign-in",
@@ -1459,6 +1523,7 @@
       "kind": "role-contradiction",
       "entity": "Wish",
       "detail": "GET /v1/wishes/:id: public and owner-only on one record",
+      "key": "role-contradiction|Wish|GET /v1/wishes/:id: public and owner-only on one record",
       "sources": [
         {
           "src": "receiver-wish-mine",
@@ -1502,6 +1567,7 @@
       "kind": "entitlement-without-endpoint",
       "entity": "pro.starter",
       "detail": "sold or promised (price-book) but no endpoint delivers it (it can be bought: POST /v1/payments)",
+      "key": "entitlement-without-endpoint|pro.starter|sold or promised (price-book) but no endpoint delivers it",
       "sources": [
         {
           "src": "price-book",
@@ -1519,6 +1585,7 @@
       "kind": "entitlement-without-endpoint",
       "entity": "pro.pack",
       "detail": "sold or promised (price-book) but no endpoint delivers it (it can be bought: POST /v1/payments)",
+      "key": "entitlement-without-endpoint|pro.pack|sold or promised (price-book) but no endpoint delivers it",
       "sources": [
         {
           "src": "price-book",

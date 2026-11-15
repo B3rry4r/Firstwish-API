@@ -10,12 +10,7 @@
       "outbound",
       "webhook-inbound"
     ],
-    "envVars": [
-      "SMS_PROVIDER",
-      "SMS_API_KEY",
-      "SMS_SENDER_ID",
-      "SMS_WEBHOOK_SECRET"
-    ],
+    "envVars": [],
     "sandbox": true,
     "testStandIn": "tests bind the port to an in-memory stand-in; no live call is made from any test or agent run"
   },
@@ -130,56 +125,7 @@
       "pagination": "paged"
     }
   ],
-  "actions": [
-    {
-      "name": "send",
-      "kind": "custom",
-      "entity": "MessageDelivery",
-      "payload": [
-        {
-          "name": "templateKey",
-          "type": "string"
-        },
-        {
-          "name": "to",
-          "type": "string"
-        },
-        {
-          "name": "vars",
-          "type": "object"
-        },
-        {
-          "name": "idempotencyKey",
-          "type": "string"
-        }
-      ],
-      "expectedResponse": {
-        "entity": "MessageDelivery",
-        "cardinality": "single"
-      },
-      "note": "internal port, queued as a job"
-    },
-    {
-      "name": "deliveryReceipt",
-      "kind": "custom",
-      "entity": "MessageDelivery",
-      "payload": [
-        {
-          "name": "provider payload",
-          "type": "object"
-        },
-        {
-          "name": "signature",
-          "type": "header"
-        }
-      ],
-      "expectedResponse": {
-        "entity": "Empty",
-        "cardinality": "single"
-      },
-      "note": "POST /v1/webhooks/sms, signature checked, no user role"
-    }
-  ],
+  "actions": [],
   "authContext": {
     "requiresAuth": true,
     "rolesObserved": [
@@ -214,5 +160,7 @@
   ],
   "truths": [
     "T-75"
-  ]
+  ],
+  "status": "deferred-by-owner",
+  "deferredBy": "owner ruling R11: no SMS or WhatsApp provider for now; no adapter, no endpoints, no env vars; every notice goes by email"
 }

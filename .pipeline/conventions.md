@@ -15,7 +15,7 @@
 - `@Roles(...)` + `RolesGuard`; ownership checks in the service (a person reads only their own wishes; a member only their business).
 
 ## Signing in
-- D No passwords. A one-time code to a phone (SMS, then WhatsApp) or an email; Google sign-in. Codes: 6 digits, 10 minutes, 5 tries, rate limited.
+- O No passwords. Sign in by a one-time code to an email, or Google sign-in (R11; phone sign-in removed). Codes: 6 digits, 10 minutes, 5 tries, rate limited.
 - D Access token: JWT, 15 minutes, `Authorization: Bearer`. Refresh token: rotating, 30 days, httpOnly Secure SameSite=Lax cookie on the API host,
   refreshed at `POST /v1/auth/refresh`. Reuse of a rotated refresh token signs the account out everywhere.
 - CORS: only the site's own origins, with credentials.
@@ -27,10 +27,10 @@
 - Writes that take money or send something accept an `Idempotency-Key` header; a repeat returns the first result.
 
 ## Identity and format canon (the server normalises on ingest; it never trusts the client's spelling)
-- Phone: E.164 (`+2348031472093`). `08031472093` and `2348031472093` resolve to the same account. Default country Nigeria.
+- Phone: an optional plain detail, never verified and never an account key (O R11); stored E.164 (`+2348031472093`) when given, default country Nigeria.
 - Email: trimmed, lowercased. Handle: lowercased, a leading @ dropped, `[a-z0-9._]{3,20}`, starts and ends with a letter or number, no two dots or underscores together, reserved words refused (the app's rule, components/app/feed/spaces.ts; R5).
 - Money: integer kobo, currency `NGN`, never a float, never a formatted string on the wire. Prices are read from configuration tables, never hardcoded.
-- Time: ISO-8601 UTC on the wire. A wish's opening moment is stored as an instant plus the receiver's IANA time zone.
+- Time: ISO-8601 UTC on the wire. Date-only: a calendar date (birthday, wedding day, pack end) is a `YYYY-MM-DD` string, not a timestamp (Phase 3 ruling C-29). A wish's opening moment is stored as an instant plus the receiver's IANA time zone.
 - Ids: UUIDv7 strings. A wish also has a public link slug (a readable part plus 4 random characters) and a wish number (issued in order by the server).
 - Kinds, occasions, styles, tickets, extras: the slugs the web app already uses (lib/catalog.ts, lib/occasions.ts, style manifests).
 
@@ -48,6 +48,7 @@
 ## Runtime contract (the web app)
 - Connectivity: none. The app is always-online; D no offline mode. A failed request shows the surface's error state with a retry.
 - The app keeps data in the browser's localStorage today (accounts, wishes, drafts, Studio, business data). After wiring, the server is the
-  only truth. D localStorage keeps only: the theme, a remembered tab, and an unsent draft of the wish being made (saved to the server on every step once signed in).
+  only truth. O R10: nothing is kept in localStorage, sessionStorage or IndexedDB. The session is an httpOnly refresh cookie plus an in-memory access token;
+  light/dark mode is a field on the account; choices made before sign-in travel in the link. The build fails on those three words in app/, components/, lib/.
 - Refresh triggers: on page load, after sign-in, when the tab becomes visible again, and after any write. A manual button is not a trigger.
 - Every data surface has four states: loading (the app's own skeleton), empty, error (with retry), and loaded.

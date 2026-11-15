@@ -43,7 +43,8 @@ describe("people E-117..E-121 and approved dates E-17 /v1/business (contract)", 
   it("a person removed takes their dates with them: their coming dates and their approvals go", async () => {
     const o = await businessOwner(t);
     const made = await add(o.token, ada);
-    await t.db.approvedDate.create({ data: { id: t.id(), key: `${made.body.id}:b:2027` } });
+    const businessId = (await t.db.person.findUniqueOrThrow({ where: { id: made.body.id } })).businessId;
+    await t.db.approvedDate.create({ data: { id: t.id(), businessId: businessId as string, key: `${made.body.id}:b:2027` } });
     expect((await t.http().get("/v1/business/approved-dates").set(bearer(o.token))).body.items).toEqual([{ key: `${made.body.id}:b:2027` }]);
     expect((await t.http().get("/v1/me/dates").set(bearer(o.token))).body.items).toHaveLength(1);
     expect((await t.http().delete(`/v1/business/people/${made.body.id}`).set(bearer(o.token))).status).toBe(204);
@@ -57,7 +58,8 @@ describe("people E-117..E-121 and approved dates E-17 /v1/business (contract)", 
     const other = await businessOwner(t);
     const p = await add(o.token, ada);
     const keys = [`${p.body.id}:b:2027`, `${p.body.id}:s:2027`];
-    for (const key of keys) await t.db.approvedDate.create({ data: { id: t.id(), key } });
+    const businessId = (await t.db.person.findUniqueOrThrow({ where: { id: p.body.id } })).businessId;
+    for (const key of keys) await t.db.approvedDate.create({ data: { id: t.id(), businessId: businessId as string, key } });
     const page1 = await t.http().get("/v1/business/approved-dates?limit=1").set(bearer(o.token));
     expect(page1.status).toBe(200);
     const page2 = await t.http().get(`/v1/business/approved-dates?limit=1&cursor=${page1.body.nextCursor}`).set(bearer(o.token));

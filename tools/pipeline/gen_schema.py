@@ -478,6 +478,7 @@ SPECIAL_RESP = {
     "StudioStyle (withdraw, back to draft) | SubmittedStyle (template)": "StudioStyle | SubmittedStyle",
     "AuthResult": "AuthResult", "StaffAuthResult": "StaffAuthResult", "GoogleStart": "GoogleStart",
     "TicketQuote": "TicketQuote", "PriceBook": "PriceBook",
+    "WishSaved": "WishSaved", "PeopleImportResult": "PeopleImportResult",
 }
 
 SHARED_TYPES = '''/** A UUIDv7 id issued by the server. */
@@ -645,6 +646,21 @@ export interface PriceBook {
   entitlements: Entitlements;
   nextCursor: string | null;
 }
+/** E-225 (CC1, DEC-170): a saved draft: the version to send with the next write, and when this one landed. */
+export interface WishSaved {
+  version: number;
+  updatedAt: Instant;
+}
+/** One row an import left out (BB8, DEC-169): its position in the pasted rows (1 is the first) and why. */
+export interface PeopleImportSkipped {
+  row: number;
+  reason: string;
+}
+/** E-121 (BB8, DEC-169): how many people were added and which rows were skipped. */
+export interface PeopleImportResult {
+  added: number;
+  skipped: PeopleImportSkipped[];
+}
 /** E-19: the registry names the response SignInCode and gives no fields. */
 export type SignInCode = Record<string, unknown>;
 /** E-202 (DEC-65): a read view of a live StudioStyle with its submission. */
@@ -708,7 +724,11 @@ def body_field(name: str, typ: str, required: bool):
         ts, decos = "Instant", ["IsInstant()"]
     elif LIT_UNION.match(core) and "|" in core:
         vals = [v.strip().strip("'") for v in core.split("|")]
-        ts = " | ".join(json.dumps(v) for v in vals)
+        has_null = "null" in [v.strip() for v in core.split("|")]  # an unquoted null is the value null (CC1: keep)
+        if has_null:
+            vals = [v for v in vals if v != "null"]
+            optional = True  # IsOptional lets null through
+        ts = " | ".join(json.dumps(v) for v in vals) + (" | null" if has_null else "")
         decos = [f"IsIn({json.dumps(vals)})"]
     elif re.match(r"^'[^']+'$", core):
         v = core.strip("'")

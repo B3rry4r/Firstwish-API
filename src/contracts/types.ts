@@ -169,6 +169,21 @@ export interface PriceBook {
   entitlements: Entitlements;
   nextCursor: string | null;
 }
+/** E-225 (CC1, DEC-170): a saved draft: the version to send with the next write, and when this one landed. */
+export interface WishSaved {
+  version: number;
+  updatedAt: Instant;
+}
+/** One row an import left out (BB8, DEC-169): its position in the pasted rows (1 is the first) and why. */
+export interface PeopleImportSkipped {
+  row: number;
+  reason: string;
+}
+/** E-121 (BB8, DEC-169): how many people were added and which rows were skipped. */
+export interface PeopleImportResult {
+  added: number;
+  skipped: PeopleImportSkipped[];
+}
 /** E-19: the registry names the response SignInCode and gives no fields. */
 export type SignInCode = Record<string, unknown>;
 /** E-202 (DEC-65): a read view of a live StudioStyle with its submission. */
@@ -231,7 +246,7 @@ export interface AiRequest {
   wishId: string;
 }
 
-/** ApprovedDate: config. the dates a business may make wishes for, served by GET /v1/business/approved-dates; no route writes it, staff keep the list */
+/** ApprovedDate: table. the dates a business has approved for its people, read by GET /v1/business/approved-dates and written by POST and DELETE /v1/business/approved-dates (BB1, DEC-168); each row belongs to a business */
 export interface ApprovedDate {
   key: string;
 }
@@ -539,7 +554,7 @@ export interface Invoice {
   what: string;
 }
 
-/** Job: table. written by E-62 and server:jobs (timed work definitions and state) */
+/** Job: table. written by E-62 and server:jobs (timed work definitions and state); one row per job type and subject key (CC4), a second schedule moves the same row */
 export interface Job {
   attempts: number;
   createdAt: Instant;
@@ -951,9 +966,12 @@ export interface Provider {
 /** PublicWishView: view. what the public link returns (DEC-64), worked out from the wish, its link and its opens; the POST routes on /v1/w/:slug write WishOpen, Report and Wish, never this shape */
 export interface PublicWishView {
   content?: Record<string, unknown> | null;
+  endsAt?: Instant | null;
   keepOffer?: Record<string, unknown> | null;
   kind: string;
   occasion: string;
+  openable: boolean;
+  openedAt?: Instant | null;
   opensAt?: Instant | null;
   prompt?: string | null;
   receiverName?: string | null;
@@ -1616,6 +1634,7 @@ export interface Wish {
   occasion: string;
   off: boolean;
   on: boolean;
+  openable: boolean;
   openedAt?: Instant | null;
   opensAt?: Instant | null;
   patch: unknown;
@@ -1643,6 +1662,7 @@ export interface Wish {
   timeline: unknown[];
   type: unknown;
   updatedAt: Instant;
+  version: number;
   voices: unknown;
   weddingDate?: Instant | null;
   wishId: string;
@@ -1918,6 +1938,20 @@ export interface PostAiStudioDraftBody {
 export type PostAiStudioDraftHeaders = Record<string, never>;
 export type PostAiStudioDraftResponse = StyleChange;
 
+/** E-238 DELETE /v1/business/approved-dates. Auth: business. */
+export type DeleteBusinessApprovedDatesParams = Record<string, never>;
+export interface DeleteBusinessApprovedDatesBody {
+  /** 'b'|'s' (b: birthday, s: start) */
+  kind: "b" | "s";
+  /** string (one of the caller's own people) */
+  personId: string;
+  /** integer (the year approved) */
+  year: number;
+}
+export type DeleteBusinessApprovedDatesHeaders = Record<string, never>;
+/** 204 No Content: the response has no body (Q12). */
+export type DeleteBusinessApprovedDatesResponse = NoContent;
+
 /** E-17 GET /v1/business/approved-dates. Auth: business. */
 export type GetBusinessApprovedDatesParams = Record<string, never>;
 export interface GetBusinessApprovedDatesQuery {
@@ -1926,6 +1960,19 @@ export interface GetBusinessApprovedDatesQuery {
 }
 export type GetBusinessApprovedDatesHeaders = Record<string, never>;
 export type GetBusinessApprovedDatesResponse = PaginatedList<ApprovedDate>;
+
+/** E-239 POST /v1/business/approved-dates. Auth: business. */
+export type PostBusinessApprovedDatesParams = Record<string, never>;
+export interface PostBusinessApprovedDatesBody {
+  /** 'b'|'s' (b: birthday, s: start) */
+  kind: "b" | "s";
+  /** string (one of the caller's own people) */
+  personId: string;
+  /** integer (the year approved) */
+  year: number;
+}
+export type PostBusinessApprovedDatesHeaders = Record<string, never>;
+export type PostBusinessApprovedDatesResponse = ApprovedDate;
 
 /** E-18 GET /v1/admin/audit. Auth: ops,owner. */
 export type GetAdminAuditParams = Record<string, never>;
@@ -2643,6 +2690,15 @@ export interface PostAdminPaymentsByReferenceRefundBody {
 export type PostAdminPaymentsByReferenceRefundHeaders = Record<string, never>;
 export type PostAdminPaymentsByReferenceRefundResponse = Payment;
 
+/** E-240 GET /v1/payments. Auth: own records. */
+export type GetPaymentsParams = Record<string, never>;
+export interface GetPaymentsQuery {
+  cursor?: string;
+  limit?: number;
+}
+export type GetPaymentsHeaders = Record<string, never>;
+export type GetPaymentsResponse = PaginatedList<Payment>;
+
 /** E-87 POST /v1/payments. Auth: public; business; creator; signed in. */
 export type PostPaymentsParams = Record<string, never>;
 export interface PostPaymentsBody {
@@ -2978,7 +3034,7 @@ export interface PostBusinessPeopleImportBody {
   rows: unknown;
 }
 export type PostBusinessPeopleImportHeaders = Record<string, never>;
-export type PostBusinessPeopleImportResponse = number;
+export type PostBusinessPeopleImportResponse = PeopleImportResult;
 
 /** E-122 GET /v1/play-wishes/:id. Auth: business; creator; signed in. */
 export interface GetPlayWishesByIdParams {
@@ -4148,8 +4204,8 @@ export interface PatchWishesByIdBody {
   effect?: unknown;
   /** content.gift={title:first sentence,text:rest} */
   finale?: unknown;
-  /** boolean */
-  keep?: boolean;
+  /** 'month'|'half'|'year'|null (optional; null clears it, DEC-84) */
+  keep?: "month" | "half" | "year" | null;
   /** string */
   kind?: string;
   /** content.letter={paras:string[] split on blank lines}; love also mirrors Wish.letter string */
@@ -4182,10 +4238,14 @@ export interface PatchWishesByIdBody {
   style?: string;
   /** TicketSlug */
   ticket?: unknown;
+  /** string (optional; an IANA zone name such as Africa/Lagos) */
+  timeZone?: string;
   /** content.timeline=[{when,what}] */
   timeline?: unknown;
   /** ChapterType */
   type?: unknown;
+  /** integer (the version the page last read; the write is refused 409 when it is older) */
+  version: number;
   /** content.voices.items=[{name,text,role?}] (name defaults 'A friend') */
   voices?: unknown;
   /** full Wish object (spread of previous plus patch) */
@@ -4194,8 +4254,7 @@ export interface PatchWishesByIdBody {
   wishId?: string;
 }
 export type PatchWishesByIdHeaders = Record<string, never>;
-/** 204 No Content: the response has no body (Q12). */
-export type PatchWishesByIdResponse = NoContent;
+export type PatchWishesByIdResponse = WishSaved;
 
 /** E-226 POST /v1/wishes/:id/add-photos. Auth: signed in. */
 export interface PostWishesByIdAddPhotosParams {
@@ -4275,6 +4334,8 @@ export interface PostWishesByIdSealBody {
   adds?: string;
   /** WishContent with note.from and finale.sign finalised (noteFrom, finaleOf) */
   content?: unknown;
+  /** boolean (optional; true opens the wish as soon as it is paid) */
+  openNow?: boolean;
   /** ISO string, or now */
   opensAt?: unknown;
   /** card|transfer|ussd (PaySheet state, not passed out) */
@@ -4283,6 +4344,10 @@ export interface PostWishesByIdSealBody {
   reasons?: string;
   /** TicketSlug */
   ticket?: unknown;
+  /** string (optional; an IANA zone name) */
+  timeZone?: string;
+  /** integer (the version the page last read) */
+  version: number;
   /** string */
   wishId?: string;
 }
@@ -4331,7 +4396,9 @@ export interface EndpointContracts {
   "E-14": { params: PostAiReasonsParams; body: PostAiReasonsBody; headers: PostAiReasonsHeaders; response: PostAiReasonsResponse };
   "E-15": { params: PostAiStudioChangeParams; body: PostAiStudioChangeBody; headers: PostAiStudioChangeHeaders; response: PostAiStudioChangeResponse };
   "E-16": { params: PostAiStudioDraftParams; body: PostAiStudioDraftBody; headers: PostAiStudioDraftHeaders; response: PostAiStudioDraftResponse };
+  "E-238": { params: DeleteBusinessApprovedDatesParams; body: DeleteBusinessApprovedDatesBody; headers: DeleteBusinessApprovedDatesHeaders; response: DeleteBusinessApprovedDatesResponse };
   "E-17": { params: GetBusinessApprovedDatesParams; query: GetBusinessApprovedDatesQuery; headers: GetBusinessApprovedDatesHeaders; response: GetBusinessApprovedDatesResponse };
+  "E-239": { params: PostBusinessApprovedDatesParams; body: PostBusinessApprovedDatesBody; headers: PostBusinessApprovedDatesHeaders; response: PostBusinessApprovedDatesResponse };
   "E-18": { params: GetAdminAuditParams; query: GetAdminAuditQuery; headers: GetAdminAuditHeaders; response: GetAdminAuditResponse };
   "E-19": { params: PostAuthCodesParams; body: PostAuthCodesBody; headers: PostAuthCodesHeaders; response: PostAuthCodesResponse };
   "E-20": { params: PostAuthCodesVerifyParams; body: PostAuthCodesVerifyBody; headers: PostAuthCodesVerifyHeaders; response: PostAuthCodesVerifyResponse };
@@ -4402,6 +4469,7 @@ export interface EndpointContracts {
   "E-84": { params: GetAdminPaymentsParams; query: GetAdminPaymentsQuery; headers: GetAdminPaymentsHeaders; response: GetAdminPaymentsResponse };
   "E-85": { params: GetAdminPaymentsByReferenceParams; query: GetAdminPaymentsByReferenceQuery; headers: GetAdminPaymentsByReferenceHeaders; response: GetAdminPaymentsByReferenceResponse };
   "E-86": { params: PostAdminPaymentsByReferenceRefundParams; body: PostAdminPaymentsByReferenceRefundBody; headers: PostAdminPaymentsByReferenceRefundHeaders; response: PostAdminPaymentsByReferenceRefundResponse };
+  "E-240": { params: GetPaymentsParams; query: GetPaymentsQuery; headers: GetPaymentsHeaders; response: GetPaymentsResponse };
   "E-87": { params: PostPaymentsParams; body: PostPaymentsBody; headers: PostPaymentsHeaders; response: PostPaymentsResponse };
   "E-88": { params: GetPaymentsByReferenceParams; query: GetPaymentsByReferenceQuery; headers: GetPaymentsByReferenceHeaders; response: GetPaymentsByReferenceResponse };
   "E-89": { params: InternalFulfilmentConciergeRushParams; body: InternalFulfilmentConciergeRushBody; headers: InternalFulfilmentConciergeRushHeaders; response: InternalFulfilmentConciergeRushResponse };

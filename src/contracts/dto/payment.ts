@@ -2,7 +2,7 @@
 import { Allow, IsIn, IsInt, IsObject, IsOptional, IsString, Max, Min } from "class-validator";
 import { Type } from "class-transformer";
 import { MinTrimmed } from "../../common/validation/decorators";
-import type { GetAdminPaymentsByReferenceParams, GetAdminPaymentsQuery, GetPaymentsByReferenceParams, InternalFulfilmentConciergeRushParams, InternalFulfilmentConciergeSingleParams, InternalFulfilmentCreatorCreditPackParams, InternalFulfilmentCreatorExtraReviewParams, InternalFulfilmentCreatorPlanParams, InternalFulfilmentCreatorSignedParams, InternalFulfilmentExtraClip15sParams, InternalFulfilmentExtraClip60sParams, InternalFulfilmentExtraFivePhotosParams, InternalFulfilmentExtraPortraitVideoParams, InternalFulfilmentExtraPremiumStyleParams, InternalFulfilmentExtraQrCardParams, InternalFulfilmentKeepHalfParams, InternalFulfilmentKeepMonthParams, InternalFulfilmentKeepYearParams, InternalFulfilmentPassYearParams, InternalFulfilmentProPackParams, InternalFulfilmentProStarterParams, InternalFulfilmentProStudioParams, InternalFulfilmentTicketKeepsakeParams, InternalFulfilmentTicketMomentParams, InternalFulfilmentTicketPremiereParams, InternalFulfilmentTicketSignatureParams, InternalFulfilmentVaultBlockBulkParams, InternalFulfilmentVaultBlockParams, PostAdminPaymentsByReferenceRefundBody, PostAdminPaymentsByReferenceRefundParams, PostPaymentsBody } from "../types";
+import type { GetAdminPaymentsByReferenceParams, GetAdminPaymentsQuery, GetPaymentsByReferenceParams, GetPaymentsQuery, InternalFulfilmentConciergeRushParams, InternalFulfilmentConciergeSingleParams, InternalFulfilmentCreatorCreditPackParams, InternalFulfilmentCreatorExtraReviewParams, InternalFulfilmentCreatorPlanParams, InternalFulfilmentCreatorSignedParams, InternalFulfilmentExtraClip15sParams, InternalFulfilmentExtraClip60sParams, InternalFulfilmentExtraFivePhotosParams, InternalFulfilmentExtraPortraitVideoParams, InternalFulfilmentExtraPremiumStyleParams, InternalFulfilmentExtraQrCardParams, InternalFulfilmentKeepHalfParams, InternalFulfilmentKeepMonthParams, InternalFulfilmentKeepYearParams, InternalFulfilmentPassYearParams, InternalFulfilmentProPackParams, InternalFulfilmentProStarterParams, InternalFulfilmentProStudioParams, InternalFulfilmentTicketKeepsakeParams, InternalFulfilmentTicketMomentParams, InternalFulfilmentTicketPremiereParams, InternalFulfilmentTicketSignatureParams, InternalFulfilmentVaultBlockBulkParams, InternalFulfilmentVaultBlockParams, PostAdminPaymentsByReferenceRefundBody, PostAdminPaymentsByReferenceRefundParams, PostPaymentsBody } from "../types";
 
 /** E-84 GET /v1/admin/payments (query). */
 export class GetAdminPaymentsQueryDto implements GetAdminPaymentsQuery {
@@ -33,6 +33,19 @@ export class PostAdminPaymentsByReferenceRefundBodyDto implements PostAdminPayme
 export class PostAdminPaymentsByReferenceRefundParamsDto implements PostAdminPaymentsByReferenceRefundParams {
   @IsString()
   reference!: string;
+}
+
+/** E-240 GET /v1/payments (query). */
+export class GetPaymentsQueryDto implements GetPaymentsQuery {
+  @IsOptional()
+  @IsString()
+  cursor?: string;
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(50)
+  limit?: number;
 }
 
 /** E-87 POST /v1/payments (body). */

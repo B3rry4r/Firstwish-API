@@ -1,6 +1,6 @@
 {
  "phase": "SCHEMA (Phase 4)",
- "registrySha256": "6c65c8208fd4b9dd3b45b127af2261128865b5f369d90acd5f1408a984fd8c9d",
+ "registrySha256": "6bce28986d510768f8e8da52778e172ecaed5627bd58adfbd4ced722095f6e9b",
  "rules": [
   "table: something writes it (a POST, PUT, PATCH, DELETE or INTERNAL route, or a server:* declaration). A GET's query parameters are not writers.",
   "view: read only, worked out on read from the tables named in 'of'. No table of its own.",
@@ -172,12 +172,33 @@
    }
   },
   "ApprovedDate": {
-   "class": "config",
-   "reason": "the dates a business may make wishes for, served by GET /v1/business/approved-dates; no route writes it, staff keep the list",
-   "seedFrom": {
-    "repo": "Firstwish-web",
-    "file": null,
-    "halt": "Q11 cannot seed it: the web app holds no list of approved dates; a business approves a coming date per business (lib/pro-api.ts approveDate, lib/pro-data.ts approved: [] per business). It is business data, not a catalogue."
+   "class": "table",
+   "reason": "the dates a business has approved for its people, read by GET /v1/business/approved-dates and written by POST and DELETE /v1/business/approved-dates (BB1, DEC-168); each row belongs to a business",
+   "columns": {
+    "businessId": {
+     "type": "String",
+     "attrs": "@db.Uuid",
+     "opt": false,
+     "why": "BB1: the business the approval belongs to; a real foreign key, rows go with the business"
+    }
+   },
+   "refs": {
+    "businessId": "Business"
+   },
+   "refOnDelete": {
+    "businessId": "Cascade"
+   },
+   "unique": [
+    [
+     "businessId",
+     "key"
+    ]
+   ],
+   "erase": {
+    "key": {
+     "rule": "keep",
+     "why": "an id and a year (person:b|s:year); nothing personal, the person row is blanked"
+    }
    }
   },
   "AuditEntry": {
@@ -731,7 +752,13 @@
   },
   "Job": {
    "class": "table",
-   "reason": "written by E-62 and server:jobs (timed work definitions and state)"
+   "reason": "written by E-62 and server:jobs (timed work definitions and state); one row per job type and subject key (CC4), a second schedule moves the same row",
+   "unique": [
+    [
+     "type",
+     "subjectId"
+    ]
+   ]
   },
   "JobRun": {
    "class": "table",
@@ -762,7 +789,15 @@
   },
   "LifecycleConfig": {
    "class": "config",
-   "reason": "one row of lifecycle terms served inside the public price book (DEC-70); staff change it"
+   "reason": "one row of lifecycle terms served inside the public price book (DEC-70); staff change it",
+   "columns": {
+    "wishContentMaxBytes": {
+     "type": "Int",
+     "attrs": "@default(262144)",
+     "opt": false,
+     "why": "CC3: the size limit of a wish's content in bytes, a config value (not an env variable). PROVISIONAL: 262144, listed to the owner"
+    }
+   }
   },
   "Login": {
    "class": "table",
@@ -1013,6 +1048,12 @@
      "attrs": "@db.Timestamptz(3)",
      "opt": true,
      "why": "Q5: set once, when fulfilment ran (a trigger refuses changing it after)"
+    },
+    "flags": {
+     "type": "String[]",
+     "attrs": "@default([])",
+     "opt": false,
+     "why": "DD3: staff flags on the payment (late success, amount mismatch, ...), a text list; they moved out of the options JSON"
     }
    },
    "erase": {
@@ -1043,6 +1084,10 @@
     "options": {
      "rule": "keep",
      "why": "money record: what was bought"
+    },
+    "flags": {
+     "rule": "keep",
+     "why": "money record: flags staff set on the payment, nothing personal"
     }
    }
   },
@@ -1867,6 +1912,14 @@
    ],
    "skipEdges": {
     "Event": "HALT-2, ruled by DEC-133: WebhookEvent does not link to Event; eventId is the provider's event id (string, unique with provider). reconcile.py no longer draws the edge (aliases.json notReferences); kept here as the record that no foreign key is made."
+   },
+   "columns": {
+    "outcome": {
+     "type": "String",
+     "attrs": "",
+     "opt": true,
+     "why": "DD3: what the server did with the event (applied, ignored, refused, ...), set when it is processed"
+    }
    }
   },
   "Wish": {
@@ -1893,7 +1946,8 @@
     "keepKey": "price-book sku chosen in E-228, kept on Payment.line",
     "extraDays": "derived from the ticket terms (LifecycleConfig)",
     "from": "the sender's name, kept in content",
-    "files": "upload input of E-226, kept as StoredFile rows"
+    "files": "upload input of E-226, kept as StoredFile rows",
+    "openable": "worked out on read: sealed, the open time reached, and not yet opened or still inside its term (EE7)"
    },
    "unique": [
     [
@@ -2124,6 +2178,26 @@
      "wishId",
      "fileId",
      "role"
+    ]
+   ]
+  },
+  "JobKindConfig": {
+   "reason": "EE1: the time limit of one run of each kind of job, in seconds (60 unless a row says otherwise); a config table, no contract shape",
+   "columns": {
+    "kind": {
+     "type": "String",
+     "attrs": "",
+     "opt": false
+    },
+    "timeLimitSeconds": {
+     "type": "Int",
+     "attrs": "",
+     "opt": false
+    }
+   },
+   "unique": [
+    [
+     "kind"
     ]
    ]
   }

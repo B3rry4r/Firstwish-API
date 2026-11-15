@@ -1,0 +1,272 @@
+{
+ "screenId": "admin-overview",
+ "reads": [
+  {
+   "entity": "Overview",
+   "fields": [
+    {
+     "name": "day",
+     "type": "string(date)",
+     "nullable": "",
+     "note": "the day shown; seam ignores the day param, fixture SAMPLE_DAY 2026-11-15"
+    },
+    {
+     "name": "today",
+     "type": "{sealed:number,opened:number,paid:number}",
+     "nullable": false
+    },
+    {
+     "name": "takings",
+     "type": "{line,amount}[]",
+     "nullable": false,
+     "note": "one per eight lines; amount naira number, fixture figures"
+    },
+    {
+     "name": "queues",
+     "type": "Queue[]",
+     "nullable": false
+    },
+    {
+     "name": "failedPayments",
+     "type": "Payment[]",
+     "nullable": false
+    },
+    {
+     "name": "failedMessages",
+     "type": "Message[]",
+     "nullable": false
+    }
+   ],
+   "cardinality": "single",
+   "filtersOrSort": [
+    "day (query ?day=YYYY-MM-DD)"
+   ],
+   "pagination": "none"
+  },
+  {
+   "entity": "Queue",
+   "fields": [
+    {
+     "name": "key",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "label",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "count",
+     "type": "number",
+     "nullable": false,
+     "note": "only queues with count>0 are shown"
+    },
+    {
+     "name": "href",
+     "type": "string",
+     "nullable": false,
+     "note": "link to the section that owns the queue (moderation, showing, styles/review, support, wishes?state=down)"
+    },
+    {
+     "name": "oldest",
+     "type": "string(ISO datetime)",
+     "nullable": true
+    }
+   ],
+   "cardinality": "list",
+   "filtersOrSort": [],
+   "pagination": "none"
+  },
+  {
+   "entity": "Payment",
+   "fields": [
+    {
+     "name": "ref",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "what",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "line",
+     "type": "string",
+     "nullable": false,
+     "note": "tickets|extras|keeps|pass|pro|vault|concierge|creator"
+    },
+    {
+     "name": "amount",
+     "type": "number",
+     "nullable": false,
+     "note": "naira number as in the code (fixture), e.g. 312000"
+    },
+    {
+     "name": "state",
+     "type": "string",
+     "nullable": false,
+     "note": "paid|failed|refunding|refunded"
+    },
+    {
+     "name": "at",
+     "type": "string(ISO datetime)",
+     "nullable": false
+    },
+    {
+     "name": "person",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "wish",
+     "type": "string",
+     "nullable": true,
+     "note": "optional wish no"
+    }
+   ],
+   "cardinality": "list",
+   "filtersOrSort": [
+    "failed only"
+   ],
+   "pagination": "none"
+  },
+  {
+   "entity": "Message",
+   "fields": [
+    {
+     "name": "id",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "what",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "channel",
+     "type": "string",
+     "nullable": false,
+     "note": "email only"
+    },
+    {
+     "name": "to",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "state",
+     "type": "string",
+     "nullable": false,
+     "note": "sent|delivered|failed"
+    },
+    {
+     "name": "at",
+     "type": "string(ISO datetime)",
+     "nullable": false
+    },
+    {
+     "name": "wish",
+     "type": "string",
+     "nullable": true,
+     "note": "optional wish no"
+    }
+   ],
+   "cardinality": "list",
+   "filtersOrSort": [
+    "failed only"
+   ],
+   "pagination": "none"
+  }
+ ],
+ "actions": [],
+ "authContext": {
+  "requiresAuth": true,
+  "rolesObserved": [
+   "owner",
+   "ops",
+   "moderator",
+   "reviewer",
+   "support",
+   "finance",
+   "maker"
+  ],
+  "note": "Shell redirects to /admin/sign-in when useStaff() is null (components/admin/Shell.tsx:~64). The code does not gate this screen by role; roles are those whose access list (lib/admin/d-fixtures.ts:113-121) includes this path."
+ },
+ "special": {
+  "realtime": false,
+  "uploads": false,
+  "downloads": false,
+  "pagination": "none",
+  "note": "refreshes after any staff change via useAdmin listeners (in-memory); with a server: on load, tab visible, after write per conventions"
+ },
+ "uiStatesHandled": [
+  {
+   "state": "loading",
+   "entersWhen": "loading && !data",
+   "reachable": "no",
+   "note": "seam resolves from memory"
+  },
+  {
+   "state": "error",
+   "entersWhen": "error || !data",
+   "reachable": "no",
+   "note": "fixture read cannot fail; 'Nothing came back.' fallback"
+  },
+  {
+   "state": "empty queues",
+   "entersWhen": "waiting.length===0 ('Nothing is waiting.')",
+   "reachable": "yes"
+  },
+  {
+   "state": "empty failed payments",
+   "entersWhen": "failedPayments.length===0 ('None today.')",
+   "reachable": "yes"
+  },
+  {
+   "state": "empty failed messages",
+   "entersWhen": "failedMessages.length===0 ('None today.')",
+   "reachable": "yes"
+  },
+  {
+   "state": "loaded",
+   "entersWhen": "data present",
+   "reachable": "yes"
+  },
+  {
+   "state": "sample lead",
+   "entersWhen": "!CONNECTED",
+   "reachable": "yes",
+   "note": "' · sample numbers' in the lead"
+  }
+ ],
+ "uiStatesDesigned": [
+  "loading",
+  "empty",
+  "error",
+  "loaded"
+ ],
+ "stubsObserved": [
+  {
+   "file": "lib/admin-api.ts:1-12",
+   "evidence": "NOT CONNECTED YET ... bodies read lib/admin-fixtures.ts (marked sample data); CONNECTED = false (line 14)",
+   "standsInFor": "the /v1/admin server for overview",
+   "consequence": "every figure and record on the screen is made-up fixture data; 'Sample data' mark shown while CONNECTED is false"
+  },
+  {
+   "file": "lib/admin-api.ts:100-107",
+   "evidence": "getOverview spreads F.overview; only the 'taken' queue count is computed from db.wishes (state==='down')",
+   "standsInFor": "every figure: today counts, takings, queue counts for reports, flagged, takedown, publish, styles, support",
+   "consequence": "all other queue counts (3, 5, 1, 8, 2, 6) and the takings are constants; day is the fixed SAMPLE_DAY, not today"
+  },
+  {
+   "file": "lib/admin-fixtures.ts:118-134",
+   "evidence": "today:{sealed:41,opened:63,paid:47}; takings tickets 312000, extras 48500, keeps 22000, pass 60000, pro 90000, vault 15000, concierge 45000, creator 12000",
+   "standsInFor": "real day aggregates",
+   "consequence": "fixture figures, not data"
+  }
+ ],
+ "notes": "Failed-payment row links to /admin/wishes/<wish> else /admin/people/<person>. Taken total is summed in the UI from takings (naira numbers)."
+}

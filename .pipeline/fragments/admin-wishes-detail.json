@@ -1,0 +1,358 @@
+{
+ "screenId": "admin-wishes-detail",
+ "reads": [
+  {
+   "entity": "WishDetail",
+   "fields": [
+    {
+     "name": "wish",
+     "type": "Wish",
+     "nullable": false
+    },
+    {
+     "name": "person",
+     "type": "Person",
+     "nullable": true,
+     "note": "the sender; null if gone"
+    },
+    {
+     "name": "payments",
+     "type": "Payment[]",
+     "nullable": false
+    },
+    {
+     "name": "messages",
+     "type": "Message[]",
+     "nullable": false
+    }
+   ],
+   "cardinality": "single",
+   "filtersOrSort": [
+    "by wish no"
+   ],
+   "pagination": "none"
+  },
+  {
+   "entity": "Wish",
+   "fields": [
+    {
+     "name": "no",
+     "type": "string",
+     "nullable": false,
+     "note": "wish number e.g. 0001, also the id in addresses"
+    },
+    {
+     "name": "link",
+     "type": "string",
+     "nullable": false,
+     "note": "last part of /w/<link>; may be empty until paid (UI tests !w.link)"
+    },
+    {
+     "name": "forName",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "person",
+     "type": "string",
+     "nullable": false,
+     "note": "Person.id of the sender"
+    },
+    {
+     "name": "kind",
+     "type": "string",
+     "nullable": false,
+     "note": "kind slug from lib/catalog"
+    },
+    {
+     "name": "occasion",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "ticket",
+     "type": "string",
+     "nullable": false,
+     "note": "moment|keepsake|signature|premiere or empty string when not paid"
+    },
+    {
+     "name": "extras",
+     "type": "string[]",
+     "nullable": false
+    },
+    {
+     "name": "state",
+     "type": "string",
+     "nullable": false,
+     "note": "draft|sealed|live|resting|down|erased"
+    },
+    {
+     "name": "opensAt",
+     "type": "string(ISO datetime)",
+     "nullable": false
+    },
+    {
+     "name": "endsAt",
+     "type": "string(ISO datetime)",
+     "nullable": true,
+     "note": "optional; absent means term counts from first open"
+    },
+    {
+     "name": "isPublic",
+     "type": "boolean",
+     "nullable": false
+    },
+    {
+     "name": "timeline",
+     "type": "Event[]",
+     "nullable": false
+    }
+   ],
+   "cardinality": "single",
+   "filtersOrSort": [],
+   "pagination": "none"
+  },
+  {
+   "entity": "Person (as used here: id, name)",
+   "fields": [
+    {
+     "name": "id",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "name",
+     "type": "string",
+     "nullable": false
+    }
+   ],
+   "cardinality": "single",
+   "filtersOrSort": [],
+   "pagination": "none"
+  },
+  {
+   "entity": "Payment",
+   "fields": [
+    {
+     "name": "ref",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "what",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "line",
+     "type": "string",
+     "nullable": false,
+     "note": "tickets|extras|keeps|pass|pro|vault|concierge|creator"
+    },
+    {
+     "name": "amount",
+     "type": "number",
+     "nullable": false,
+     "note": "naira number as in the code (fixture), e.g. 312000"
+    },
+    {
+     "name": "state",
+     "type": "string",
+     "nullable": false,
+     "note": "paid|failed|refunding|refunded"
+    },
+    {
+     "name": "at",
+     "type": "string(ISO datetime)",
+     "nullable": false
+    },
+    {
+     "name": "person",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "wish",
+     "type": "string",
+     "nullable": true,
+     "note": "optional wish no"
+    }
+   ],
+   "cardinality": "list",
+   "filtersOrSort": [
+    "for this wish"
+   ],
+   "pagination": "none"
+  },
+  {
+   "entity": "Message",
+   "fields": [
+    {
+     "name": "id",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "what",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "channel",
+     "type": "string",
+     "nullable": false,
+     "note": "email only"
+    },
+    {
+     "name": "to",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "state",
+     "type": "string",
+     "nullable": false,
+     "note": "sent|delivered|failed"
+    },
+    {
+     "name": "at",
+     "type": "string(ISO datetime)",
+     "nullable": false
+    },
+    {
+     "name": "wish",
+     "type": "string",
+     "nullable": true,
+     "note": "optional wish no"
+    }
+   ],
+   "cardinality": "list",
+   "filtersOrSort": [
+    "for this wish"
+   ],
+   "pagination": "none"
+  }
+ ],
+ "actions": [
+  {
+   "name": "actOnWish",
+   "kind": "custom",
+   "entity": "Wish",
+   "payload": [
+    {
+     "name": "no",
+     "type": "string"
+    },
+    {
+     "name": "action",
+     "type": "take_down|restore|extend|resend|refund"
+    },
+    {
+     "name": "reason",
+     "type": "string(min 4 chars after trim)"
+    }
+   ],
+   "expectedResponse": {
+    "entity": "WishDetail",
+    "cardinality": "single"
+   },
+   "evidence": "POST /v1/admin/wishes/:no/actions { action, reason } -> WishDetail. Written to the audit log with the staff member and reason.",
+   "effects": {
+    "take_down": "state -> down, timeline 'Taken down'",
+    "restore": "state -> live (term not ended) / resting (ended) / sealed (no endsAt)",
+    "extend": "endsAt + 7 days (GOODWILL_DAYS=7) from later of now and endsAt; resting -> live",
+    "resend": "a Message 'The link, sent again by staff' to the sender's email",
+    "refund": "the wish's paid tickets payment -> refunding (not_allowed if none)"
+   },
+   "availability": "offered by state: take_down for live/sealed/resting; restore for down; extend for live/resting; resend for live/sealed with a link; refund when a paid tickets payment exists and wish not draft (the UI computes this client-side in wishActions; server must decide it)"
+  }
+ ],
+ "authContext": {
+  "requiresAuth": true,
+  "rolesObserved": [
+   "owner",
+   "ops",
+   "moderator",
+   "support"
+  ],
+  "note": "Shell redirects to /admin/sign-in when useStaff() is null (components/admin/Shell.tsx:~64). The code does not gate this screen by role; roles are those whose access list (lib/admin/d-fixtures.ts:113-121) includes this path."
+ },
+ "special": {
+  "realtime": false,
+  "uploads": false,
+  "downloads": false,
+  "pagination": "none",
+  "note": "not_found error when wish no unknown; each action opens a confirm sheet that needs a reason of 4+ characters"
+ },
+ "uiStatesHandled": [
+  {
+   "state": "loading",
+   "entersWhen": "!data && !error",
+   "reachable": "no",
+   "note": "seam resolves from memory"
+  },
+  {
+   "state": "error",
+   "entersWhen": "error (not_found 'That is not here.', or failed)",
+   "reachable": "yes",
+   "note": "unknown wish number in the address is reachable"
+  },
+  {
+   "state": "loaded",
+   "entersWhen": "data present",
+   "reachable": "yes"
+  },
+  {
+   "state": "no actions",
+   "entersWhen": "wishActions returns []",
+   "reachable": "yes",
+   "note": "action bar hidden (e.g. draft, erased)"
+  },
+  {
+   "state": "empty payments",
+   "entersWhen": "'No payments.'",
+   "reachable": "yes"
+  },
+  {
+   "state": "empty messages",
+   "entersWhen": "'No messages yet.'",
+   "reachable": "yes"
+  },
+  {
+   "state": "confirm sheet",
+   "entersWhen": "open!==null",
+   "reachable": "yes"
+  },
+  {
+   "state": "action error",
+   "entersWhen": "Confirm onConfirm throws -> 'That did not go through.'",
+   "reachable": "yes"
+  }
+ ],
+ "uiStatesDesigned": [
+  "loading",
+  "empty",
+  "error",
+  "loaded"
+ ],
+ "stubsObserved": [
+  {
+   "file": "lib/admin-api.ts:1-12",
+   "evidence": "NOT CONNECTED YET ... bodies read lib/admin-fixtures.ts (marked sample data); CONNECTED = false (line 14)",
+   "standsInFor": "the /v1/admin server for wish detail and wish actions",
+   "consequence": "every figure and record on the screen is made-up fixture data; 'Sample data' mark shown while CONNECTED is false"
+  },
+  {
+   "file": "lib/admin-api.ts:154-182",
+   "evidence": "actOnWish mutates the in-memory db; refund only sets payment state 'refunding'; resend pushes a message with state 'sent'",
+   "standsInFor": "audit logging, Paystack refund, the message provider",
+   "consequence": "no money moves and nothing is emailed; 'by' is the signed-in sample staff name"
+  },
+  {
+   "file": "lib/admin-api.ts:140-149",
+   "evidence": "wishActions decides allowed actions in the browser",
+   "standsInFor": "server-side state rules and role checks",
+   "consequence": "no role gating: every role sees every action"
+  }
+ ]
+}

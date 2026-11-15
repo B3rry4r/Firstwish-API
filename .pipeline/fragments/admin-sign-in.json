@@ -1,0 +1,145 @@
+{
+ "screenId": "admin-sign-in",
+ "reads": [],
+ "actions": [
+  {
+   "name": "requestCode",
+   "kind": "custom",
+   "entity": "StaffSession",
+   "payload": [
+    {
+     "name": "email",
+     "type": "string"
+    }
+   ],
+   "expectedResponse": {
+    "entity": null,
+    "cardinality": "none",
+    "note": "204; refuses an email not on the staff list (not_staff)"
+   },
+   "evidence": "POST /v1/admin/auth/code { email } -> 204. The server sends a six-digit code to a staff email and refuses any other."
+  },
+  {
+   "name": "verifyCode",
+   "kind": "custom",
+   "entity": "StaffSession",
+   "payload": [
+    {
+     "name": "email",
+     "type": "string"
+    },
+    {
+     "name": "code",
+     "type": "string(6 digits)"
+    }
+   ],
+   "expectedResponse": {
+    "entity": "Staff",
+    "cardinality": "single",
+    "fields": [
+     {
+      "name": "id",
+      "type": "string",
+      "nullable": false
+     },
+     {
+      "name": "name",
+      "type": "string",
+      "nullable": false
+     },
+     {
+      "name": "email",
+      "type": "string",
+      "nullable": false
+     },
+     {
+      "name": "role",
+      "type": "string",
+      "nullable": false,
+      "note": "owner|ops|moderator|reviewer|support|finance|maker"
+     }
+    ],
+    "note": "also a session"
+   },
+   "evidence": "POST /v1/admin/auth/verify { email, code } -> { staff, session }."
+  },
+  {
+   "name": "signOut",
+   "kind": "custom",
+   "entity": "StaffSession",
+   "payload": [],
+   "expectedResponse": {
+    "entity": null,
+    "cardinality": "none"
+   },
+   "evidence": "POST /v1/admin/auth/sign-out (called from Shell, not this screen)"
+  }
+ ],
+ "authContext": {
+  "requiresAuth": false,
+  "rolesObserved": [],
+  "note": "Public page for staff to sign in; redirects to /admin when a staff member is already signed in. Errors: not_staff, bad_code, failed."
+ },
+ "special": {
+  "realtime": false,
+  "uploads": false,
+  "downloads": false,
+  "pagination": "none",
+  "note": "six-digit code in six boxes, paste spreads across boxes"
+ },
+ "uiStatesHandled": [
+  {
+   "state": "email step",
+   "entersWhen": "step==='email'",
+   "reachable": "yes"
+  },
+  {
+   "state": "code step",
+   "entersWhen": "step==='code' after requestCode resolves",
+   "reachable": "yes"
+  },
+  {
+   "state": "busy",
+   "entersWhen": "busy true during send/check",
+   "reachable": "no",
+   "note": "seam resolves in memory; perceptible only with a real request"
+  },
+  {
+   "state": "error",
+   "entersWhen": "err set from adminProblem(e): not_staff / bad_code / failed",
+   "reachable": "yes"
+  },
+  {
+   "state": "already-signed-in redirect",
+   "entersWhen": "useStaff() returns a staff -> router.replace('/admin')",
+   "reachable": "yes"
+  },
+  {
+   "state": "sample note",
+   "entersWhen": "!CONNECTED",
+   "reachable": "yes",
+   "note": "shows 'any email and any six digits will do'"
+  }
+ ],
+ "uiStatesDesigned": [],
+ "stubsObserved": [
+  {
+   "file": "lib/admin-api.ts:1-12",
+   "evidence": "NOT CONNECTED YET ... bodies read lib/admin-fixtures.ts (marked sample data); CONNECTED = false (line 14)",
+   "standsInFor": "the /v1/admin server for staff sign-in",
+   "consequence": "every figure and record on the screen is made-up fixture data; 'Sample data' mark shown while CONNECTED is false"
+  },
+  {
+   "file": "lib/admin-api.ts:49-51",
+   "evidence": "requestCode only tests /^\\S+@\\S+\\.\\S+$/ and sends nothing",
+   "standsInFor": "emailing a code to a staff address and refusing non-staff",
+   "consequence": "any well-formed email is accepted as staff"
+  },
+  {
+   "file": "lib/admin-api.ts:54-60",
+   "evidence": "/^\\d{6}$/ passes; F.sampleStaff(email) role 'owner' ('Any six digits pass, as the owner')",
+   "standsInFor": "verifying the emailed code (10 min, 5 tries per conventions)",
+   "consequence": "anyone is signed in as owner; no rate limit or expiry; session lives in module variable 'me' and is lost on reload; name derived from email local part (lib/admin-fixtures.ts:18-23)"
+  }
+ ]
+}

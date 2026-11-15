@@ -1,0 +1,150 @@
+{
+ "screenId": "admin-people",
+ "reads": [
+  {
+   "entity": "Person (list row)",
+   "fields": [
+    {
+     "name": "id",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "name",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "phone",
+     "type": "string",
+     "nullable": false,
+     "note": "masked, last four digits only; fixture form '+234 ••• ••• 0142'"
+    },
+    {
+     "name": "email",
+     "type": "string",
+     "nullable": false,
+     "note": "masked, e.g. 'ad•••@gmail.com'"
+    },
+    {
+     "name": "joined",
+     "type": "string(date)",
+     "nullable": false
+    },
+    {
+     "name": "sides",
+     "type": "{side:personal|business|creator,name:string,line:string}[]",
+     "nullable": false
+    },
+    {
+     "name": "pass",
+     "type": "{ends:date,used:number,of:number}",
+     "nullable": true
+    },
+    {
+     "name": "ban",
+     "type": "{at,by,reason}",
+     "nullable": true
+    },
+    {
+     "name": "erased",
+     "type": "boolean",
+     "nullable": false
+    },
+    {
+     "name": "record",
+     "type": "Event[]",
+     "nullable": false
+    },
+    {
+     "name": "wishCount",
+     "type": "number",
+     "nullable": false,
+     "note": "added: number of the person's wishes"
+    }
+   ],
+   "cardinality": "list",
+   "filtersOrSort": [
+    "q: matches name or email",
+    "sorted by name ascending"
+   ],
+   "pagination": "none (all rows; table pages client-side, pageSize default 25, sortable columns)"
+  }
+ ],
+ "actions": [],
+ "authContext": {
+  "requiresAuth": true,
+  "rolesObserved": [
+   "owner",
+   "ops",
+   "moderator",
+   "support"
+  ],
+  "note": "Shell redirects to /admin/sign-in when useStaff() is null (components/admin/Shell.tsx:~64). The code does not gate this screen by role; roles are those whose access list (lib/admin/d-fixtures.ts:113-121) includes this path."
+ },
+ "special": {
+  "realtime": false,
+  "uploads": false,
+  "downloads": false,
+  "pagination": "client-side table pages (25)",
+  "note": "refetches on every keystroke; phone and email arrive already masked from the server"
+ },
+ "uiStatesHandled": [
+  {
+   "state": "loading",
+   "entersWhen": "!data && !error",
+   "reachable": "no"
+  },
+  {
+   "state": "error",
+   "entersWhen": "error set",
+   "reachable": "no"
+  },
+  {
+   "state": "empty",
+   "entersWhen": "data.length===0 ('Nobody found')",
+   "reachable": "yes"
+  },
+  {
+   "state": "loaded",
+   "entersWhen": "data.length>0",
+   "reachable": "yes"
+  },
+  {
+   "state": "updating",
+   "entersWhen": "loading while data present",
+   "reachable": "yes"
+  },
+  {
+   "state": "person state pill",
+   "entersWhen": "erased -> Erased, ban -> Banned, else Active",
+   "reachable": "yes"
+  }
+ ],
+ "uiStatesDesigned": [
+  "loading",
+  "empty",
+  "error",
+  "loaded"
+ ],
+ "stubsObserved": [
+  {
+   "file": "lib/admin-api.ts:1-12",
+   "evidence": "NOT CONNECTED YET ... bodies read lib/admin-fixtures.ts (marked sample data); CONNECTED = false (line 14)",
+   "standsInFor": "the /v1/admin server for people list",
+   "consequence": "every figure and record on the screen is made-up fixture data; 'Sample data' mark shown while CONNECTED is false"
+  },
+  {
+   "file": "lib/admin-api.ts:186-192",
+   "evidence": "filter, wishCount and sort computed in the browser",
+   "standsInFor": "server search, count and paging",
+   "consequence": "all accounts downloaded; no cursor"
+  },
+  {
+   "file": "lib/admin-fixtures.ts:25-40",
+   "evidence": "phone '+234 ••• ••• 0142', email 'ad•••@gmail.com' are pre-masked strings in the fixture",
+   "standsInFor": "server-side masking for staff",
+   "consequence": "the server must do the masking; the UI shows the strings as given"
+  }
+ ]
+}

@@ -1,0 +1,22 @@
+{
+ "id": "admin-wishes-detail",
+ "title": "Admin: Wish detail",
+ "uiFiles": [
+  "app/admin/wishes/[no]/page.tsx",
+  "components/admin/Wish.tsx",
+  "components/admin/ui.tsx"
+ ],
+ "dataFiles": [
+  "lib/admin-api.ts",
+  "lib/admin-types.ts",
+  "lib/admin-fixtures.ts"
+ ],
+ "dataProvenance": "seam file (lib/admin-api.ts) returning marked sample data from lib/admin-fixtures.ts held in memory; CONNECTED=false; staff changes kept in memory only",
+ "localStore": {
+  "reads": "in-memory db in lib/admin-api.ts (module variable, lost on reload)",
+  "populatedBy": "lib/admin-fixtures.ts (SAMPLE data cloned at module load)"
+ },
+ "inlineLiterals": [],
+ "route": "/admin/wishes/[no]",
+ "area": "admin"
+}

@@ -1,0 +1,310 @@
+{
+ "screenId": "admin-people-detail",
+ "reads": [
+  {
+   "entity": "PersonDetail",
+   "fields": [
+    {
+     "name": "person",
+     "type": "Person",
+     "nullable": false
+    },
+    {
+     "name": "wishes",
+     "type": "Wish[]",
+     "nullable": false
+    },
+    {
+     "name": "payments",
+     "type": "Payment[]",
+     "nullable": false
+    }
+   ],
+   "cardinality": "single",
+   "filtersOrSort": [
+    "by person id"
+   ],
+   "pagination": "none"
+  },
+  {
+   "entity": "Person",
+   "fields": [
+    {
+     "name": "id",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "name",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "phone",
+     "type": "string",
+     "nullable": false,
+     "note": "masked, last four digits only; fixture form '+234 ••• ••• 0142'"
+    },
+    {
+     "name": "email",
+     "type": "string",
+     "nullable": false,
+     "note": "masked, e.g. 'ad•••@gmail.com'"
+    },
+    {
+     "name": "joined",
+     "type": "string(date)",
+     "nullable": false
+    },
+    {
+     "name": "sides",
+     "type": "{side:personal|business|creator,name:string,line:string}[]",
+     "nullable": false
+    },
+    {
+     "name": "pass",
+     "type": "{ends:date,used:number,of:number}",
+     "nullable": true
+    },
+    {
+     "name": "ban",
+     "type": "{at,by,reason}",
+     "nullable": true
+    },
+    {
+     "name": "erased",
+     "type": "boolean",
+     "nullable": false
+    },
+    {
+     "name": "record",
+     "type": "Event[]",
+     "nullable": false
+    }
+   ],
+   "cardinality": "single",
+   "filtersOrSort": [],
+   "pagination": "none"
+  },
+  {
+   "entity": "Wish (as used here: no, forName, kind, occasion, opensAt, state)",
+   "fields": [
+    {
+     "name": "no",
+     "type": "string",
+     "nullable": false,
+     "note": "wish number e.g. 0001, also the id in addresses"
+    },
+    {
+     "name": "forName",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "kind",
+     "type": "string",
+     "nullable": false,
+     "note": "kind slug from lib/catalog"
+    },
+    {
+     "name": "occasion",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "state",
+     "type": "string",
+     "nullable": false,
+     "note": "draft|sealed|live|resting|down|erased"
+    },
+    {
+     "name": "opensAt",
+     "type": "string(ISO datetime)",
+     "nullable": false
+    }
+   ],
+   "cardinality": "list",
+   "filtersOrSort": [
+    "the person's wishes"
+   ],
+   "pagination": "none"
+  },
+  {
+   "entity": "Payment",
+   "fields": [
+    {
+     "name": "ref",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "what",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "line",
+     "type": "string",
+     "nullable": false,
+     "note": "tickets|extras|keeps|pass|pro|vault|concierge|creator"
+    },
+    {
+     "name": "amount",
+     "type": "number",
+     "nullable": false,
+     "note": "naira number as in the code (fixture), e.g. 312000"
+    },
+    {
+     "name": "state",
+     "type": "string",
+     "nullable": false,
+     "note": "paid|failed|refunding|refunded"
+    },
+    {
+     "name": "at",
+     "type": "string(ISO datetime)",
+     "nullable": false
+    },
+    {
+     "name": "person",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "wish",
+     "type": "string",
+     "nullable": true,
+     "note": "optional wish no"
+    }
+   ],
+   "cardinality": "list",
+   "filtersOrSort": [
+    "the person's payments"
+   ],
+   "pagination": "none"
+  }
+ ],
+ "actions": [
+  {
+   "name": "actOnPerson",
+   "kind": "custom",
+   "entity": "Person",
+   "payload": [
+    {
+     "name": "id",
+     "type": "string"
+    },
+    {
+     "name": "action",
+     "type": "ban|lift|erase"
+    },
+    {
+     "name": "reason",
+     "type": "string(min 4 chars after trim)"
+    }
+   ],
+   "expectedResponse": {
+    "entity": "PersonDetail",
+    "cardinality": "single"
+   },
+   "evidence": "POST /v1/admin/people/:id/actions { action, reason } -> PersonDetail. Written to the audit log.",
+   "effects": {
+    "ban": "ban {at,by,reason}; record 'Banned'",
+    "lift": "ban null; record 'Ban lifted'",
+    "erase": "erased true; record 'Erased on request'; every non-erased wish of the person -> state erased with timeline 'Erased with the account'"
+   },
+   "availability": "none when erased; lift+erase when banned; ban+erase otherwise (personActions, decided in the browser)"
+  }
+ ],
+ "authContext": {
+  "requiresAuth": true,
+  "rolesObserved": [
+   "owner",
+   "ops",
+   "moderator",
+   "support"
+  ],
+  "note": "Shell redirects to /admin/sign-in when useStaff() is null (components/admin/Shell.tsx:~64). The code does not gate this screen by role; roles are those whose access list (lib/admin/d-fixtures.ts:113-121) includes this path."
+ },
+ "special": {
+  "realtime": false,
+  "uploads": false,
+  "downloads": false,
+  "pagination": "none",
+  "note": "not_found when id unknown; erase is irreversible per the UI copy and says 'Only when the person has asked'"
+ },
+ "uiStatesHandled": [
+  {
+   "state": "loading",
+   "entersWhen": "!data && !error",
+   "reachable": "no"
+  },
+  {
+   "state": "error",
+   "entersWhen": "error (not_found shows 'Not found' heading)",
+   "reachable": "yes",
+   "note": "unknown id in the address"
+  },
+  {
+   "state": "loaded",
+   "entersWhen": "data present",
+   "reachable": "yes"
+  },
+  {
+   "state": "banned banner",
+   "entersWhen": "p.ban set",
+   "reachable": "yes"
+  },
+  {
+   "state": "no actions",
+   "entersWhen": "erased -> action bar hidden",
+   "reachable": "yes"
+  },
+  {
+   "state": "empty wishes",
+   "entersWhen": "'No wishes.'",
+   "reachable": "yes"
+  },
+  {
+   "state": "empty payments",
+   "entersWhen": "'No payments.'",
+   "reachable": "yes"
+  },
+  {
+   "state": "no Pass",
+   "entersWhen": "p.pass null -> 'No Pass.'",
+   "reachable": "yes"
+  },
+  {
+   "state": "confirm sheet",
+   "entersWhen": "open!==null",
+   "reachable": "yes"
+  }
+ ],
+ "uiStatesDesigned": [
+  "loading",
+  "empty",
+  "error",
+  "loaded"
+ ],
+ "stubsObserved": [
+  {
+   "file": "lib/admin-api.ts:1-12",
+   "evidence": "NOT CONNECTED YET ... bodies read lib/admin-fixtures.ts (marked sample data); CONNECTED = false (line 14)",
+   "standsInFor": "the /v1/admin server for person detail and person actions",
+   "consequence": "every figure and record on the screen is made-up fixture data; 'Sample data' mark shown while CONNECTED is false"
+  },
+  {
+   "file": "lib/admin-api.ts:207-225",
+   "evidence": "actOnPerson mutates in-memory people and wishes",
+   "standsInFor": "audit logging, sign-in block, account erasure job",
+   "consequence": "ban blocks nothing; erase only flips flags (conventions: erase after 12 months at rest etc. not modelled)"
+  },
+  {
+   "file": "lib/admin-api.ts:201-205",
+   "evidence": "personActions decides allowed actions in the browser",
+   "standsInFor": "server-side rules and role checks",
+   "consequence": "no role gating"
+  }
+ ]
+}

@@ -1,0 +1,163 @@
+{
+ "screenId": "admin-wishes",
+ "reads": [
+  {
+   "entity": "Wish (list row)",
+   "fields": [
+    {
+     "name": "no",
+     "type": "string",
+     "nullable": false,
+     "note": "wish number e.g. 0001, also the id in addresses"
+    },
+    {
+     "name": "link",
+     "type": "string",
+     "nullable": false,
+     "note": "last part of /w/<link>; may be empty until paid (UI tests !w.link)"
+    },
+    {
+     "name": "forName",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "person",
+     "type": "string",
+     "nullable": false,
+     "note": "Person.id of the sender"
+    },
+    {
+     "name": "kind",
+     "type": "string",
+     "nullable": false,
+     "note": "kind slug from lib/catalog"
+    },
+    {
+     "name": "occasion",
+     "type": "string",
+     "nullable": false
+    },
+    {
+     "name": "ticket",
+     "type": "string",
+     "nullable": false,
+     "note": "moment|keepsake|signature|premiere or empty string when not paid"
+    },
+    {
+     "name": "extras",
+     "type": "string[]",
+     "nullable": false
+    },
+    {
+     "name": "state",
+     "type": "string",
+     "nullable": false,
+     "note": "draft|sealed|live|resting|down|erased"
+    },
+    {
+     "name": "opensAt",
+     "type": "string(ISO datetime)",
+     "nullable": false
+    },
+    {
+     "name": "endsAt",
+     "type": "string(ISO datetime)",
+     "nullable": true,
+     "note": "optional; absent means term counts from first open"
+    },
+    {
+     "name": "isPublic",
+     "type": "boolean",
+     "nullable": false
+    },
+    {
+     "name": "timeline",
+     "type": "Event[]",
+     "nullable": false,
+     "note": "present in rows but unused by this screen"
+    },
+    {
+     "name": "personName",
+     "type": "string",
+     "nullable": false,
+     "note": "added: sender's name, joined server-side"
+    }
+   ],
+   "cardinality": "list",
+   "filtersOrSort": [
+    "q: matches wish number (accepts '#', 'No.', or a pasted /w/ link), link, forName, sender name or email",
+    "state: one of the six",
+    "sorted by no descending"
+   ],
+   "pagination": "none (all rows returned; table pages client-side, pageSize 8, sortable columns)"
+  }
+ ],
+ "actions": [],
+ "authContext": {
+  "requiresAuth": true,
+  "rolesObserved": [
+   "owner",
+   "ops",
+   "moderator",
+   "support"
+  ],
+  "note": "Shell redirects to /admin/sign-in when useStaff() is null (components/admin/Shell.tsx:~64). The code does not gate this screen by role; roles are those whose access list (lib/admin/d-fixtures.ts:113-121) includes this path."
+ },
+ "special": {
+  "realtime": false,
+  "uploads": false,
+  "downloads": false,
+  "pagination": "client-side table pages (8); no server paging in the seam",
+  "note": "?q= and ?state= in the address prefill the filters; Wishes without state in nav clears the filter. Search box refetches on every keystroke (key is q|state)."
+ },
+ "uiStatesHandled": [
+  {
+   "state": "loading",
+   "entersWhen": "!data && !error",
+   "reachable": "no",
+   "note": "seam resolves from memory; a real request would make it yes"
+  },
+  {
+   "state": "error",
+   "entersWhen": "error set from adminProblem",
+   "reachable": "no",
+   "note": "fixture read cannot fail"
+  },
+  {
+   "state": "empty",
+   "entersWhen": "data.length===0 ('No wish found'; message differs by q and state)",
+   "reachable": "yes"
+  },
+  {
+   "state": "loaded",
+   "entersWhen": "data.length>0",
+   "reachable": "yes"
+  },
+  {
+   "state": "updating",
+   "entersWhen": "loading while data present (' · updating')",
+   "reachable": "yes"
+  }
+ ],
+ "uiStatesDesigned": [
+  "loading",
+  "empty",
+  "error",
+  "loaded"
+ ],
+ "stubsObserved": [
+  {
+   "file": "lib/admin-api.ts:1-12",
+   "evidence": "NOT CONNECTED YET ... bodies read lib/admin-fixtures.ts (marked sample data); CONNECTED = false (line 14)",
+   "standsInFor": "the /v1/admin server for wish list",
+   "consequence": "every figure and record on the screen is made-up fixture data; 'Sample data' mark shown while CONNECTED is false"
+  },
+  {
+   "file": "lib/admin-api.ts:113-126",
+   "evidence": "q/state filtering and sort done in the browser over the full in-memory list",
+   "standsInFor": "server-side search, filter and cursor paging",
+   "consequence": "all wishes would be downloaded at once; no cursor"
+  }
+ ]
+}

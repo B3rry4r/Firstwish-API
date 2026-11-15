@@ -408,3 +408,5 @@ LL4 Old link_hit rows are removed by a timed job. PROVISIONAL limits: 60 reads a
     per link and address; 30 wrong tries lock a link for an hour.
 LL5 Owed: the owner's wish detail (B06) shows opens, plays, reactions, favourites and shares through
     ReceiverActivityService.summary (joined in INT-4); "This is me, take it down" (E-133) is B13's.
+MM1 (P-B11) The delivery status enum gains `sending` and `dropped` (INT-4), replacing the stand-ins "sent" (in flight) and
+    undeliverable with a "Dropped" reason.

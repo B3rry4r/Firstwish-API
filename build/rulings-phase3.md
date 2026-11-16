@@ -599,3 +599,6 @@ CB2 (B19 verify, medium) A delivery counts only wishes that are sealed or live; 
 CB3 (B19 verify, low) The order's maker may make its QR card as the registry says; count must be a whole number (a string is
     422); a quote is capped at 100 times the list price of the order (PROVISIONAL). (B19 patch.) CA1 and CA3 move into the
     B19 patch: the payments start prices an order from its own row; the customer is emailed on delivery.
+SA6 (P-B15 re-check, round 2: lead rules) Merge. The two left-overs are small and go into the wave 5 join (J8): the AI answer's
+    `art` is checked like the rest; saving a draft wish with its own style again is never refused. The file-not-ready check
+    stays stricter on the server.

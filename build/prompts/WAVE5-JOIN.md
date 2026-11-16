@@ -28,3 +28,6 @@ and its cause); then `scripts/stack.sh up pjoin5 4880`, GET /v1/health and one u
 in the envelope), then down.
 Commit (do not push); remove your worktree and databases. Hand back in 12 lines: head sha; J0 to J7 closed or not with test
 names; the tables for the baseline; any test that failed in any of the three runs and why; counts; EXIT lines.
+ J8 (Studio re-check, added by the lead): studio-doc.ts shapeParts also checks `art` (an AI answer with a bad `art` is 502 with
+    the credits back, as a save refuses it); a draft wish saved again with its own current style is accepted even after that
+    style has gone off (wishes.service.ts:302: only a CHANGE to an off style is 422). Tests for both.

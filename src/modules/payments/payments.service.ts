@@ -94,7 +94,7 @@ export class PaymentsService {
       throw AppError.validation({ "Idempotency-Key": "Must be 8 to 100 letters, digits or . _ : -" });
     }
     if (!accountId && (!holder || req.purpose !== "keep")) throw AppError.notFound();
-    // HU1: a link holder is no account. Their payment belongs to the wish; the email is kept on the payment row only (never in the key: it is hashed).
+    // HU1: a link holder is no account. Their payment is for the wish; the email is kept on the payment row only (never in the key: it is hashed).
     const payer = accountId ?? `hold:${createHash("sha256").update(`${holder?.wishId}:${holder?.email}`).digest("hex").slice(0, 32)}`;
     const storedKey = `${payer}:${idempotencyKey ?? this.ids.id()}`;
     let email: string | null;

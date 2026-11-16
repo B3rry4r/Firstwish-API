@@ -72,6 +72,21 @@ export class SettlementService {
    * outcome), so a rollback leaves it unprocessed and the next delivery retries.
    */
   async settle(answer: ProviderAnswer, webhookEventId?: string): Promise<SettleResult> {
+    try {
+      return await this.settleOnce(answer, webhookEventId);
+    } catch (e) {
+      // a deadlock (40P01) or a serialization failure (40001) rolled the whole settle back: run it once more
+      if (!isLockConflict(e)) throw e;
+      return this.settleOnce(answer, webhookEventId);
+    }
+  }
+
+  /**
+   * THE LOCK ORDER of every settle, owner's or link holder's, whatever the line: the account (when the payment has one), then the
+   * payment row, then the wish the line names (before its grant row is claimed: the grant's foreign key to the wish takes a share
+   * lock on it, and two settles holding that share lock would each wait for the other's exclusive one), then anything else.
+   */
+  private async settleOnce(answer: ProviderAnswer, webhookEventId?: string): Promise<SettleResult> {
     const pre = await this.db.payment.findUnique({ where: { providerReference: answer.reference }, select: { accountId: true } });
     return this.db.$transaction(async (tx) => {
       if (pre?.accountId) await lockAccount(tx, pre.accountId, { allowErased: true });
@@ -226,6 +241,13 @@ export class SettlementService {
       tx,
     );
   }
+}
+
+/** Postgres says "deadlock detected" (40P01) or "could not serialize" (40001), as the driver or Prisma (P2034) reports it. */
+export function isLockConflict(e: unknown): boolean {
+  const x = e as { code?: string; meta?: { code?: string; message?: string }; message?: string } | null;
+  const text = `${x?.code ?? ""} ${x?.meta?.code ?? ""} ${x?.meta?.message ?? ""} ${x?.message ?? ""}`;
+  return /P2034|40P01|40001|deadlock detected|could not serialize/i.test(text);
 }
 
 /** The lines a payment kept when it was started (what the buyer was charged, at the version it names). */

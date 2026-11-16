@@ -47,10 +47,11 @@ export class WishHandlers {
 
   async ticket(ctx: FulfilmentContext): Promise<void> {
     const { tx, line } = ctx;
+    // lock order (see SettlementService.settle): the wish is locked before the grant row is claimed
+    const w = await this.lockWish(tx, ctx);
     const grantId = await this.store.claim(tx, ctx, "ticket", { wishId: ctx.request.subjectId });
     if (!grantId) return;
     const ticket = line.sku.slice("ticket.".length) as TicketName;
-    const w = await this.lockWish(tx, ctx);
     const why = assessTicket(w, ctx.payment.accountId, ticket);
     if (why || !w) return this.store.refuse(tx, ctx, grantId, why ?? "wish_not_payers");
     const grant = await ctx.grant();
@@ -77,9 +78,9 @@ export class WishHandlers {
 
   async extra(ctx: FulfilmentContext): Promise<void> {
     const { tx, line } = ctx;
+    const w = await this.lockWish(tx, ctx);
     const grantId = await this.store.claim(tx, ctx, "extra", { wishId: ctx.request.subjectId });
     if (!grantId) return;
-    const w = await this.lockWish(tx, ctx);
     const book = await this.entitlements.row(tx);
     const lines = new Map((await this.book.load(ctx.payment.priceBookVersion, tx)).lines.map((l) => [l.sku, l.listKobo]));
     const why = assessExtra(w, ctx.payment.accountId, line.sku, book, (s) => lines.get(s) ?? 0n);
@@ -93,10 +94,10 @@ export class WishHandlers {
 
   async keep(ctx: FulfilmentContext): Promise<void> {
     const { tx, line } = ctx;
+    const w = await this.lockWish(tx, ctx);
     const grantId = await this.store.claim(tx, ctx, "keep", { wishId: ctx.request.subjectId });
     if (!grantId) return;
     const length = line.sku.slice("keep.".length) as "month" | "half" | "year";
-    const w = await this.lockWish(tx, ctx);
     const payer = ctx.payment.accountId ?? (ctx.payment.payerContact ? holderKey(ctx.payment.payerContact) : null);
     const byLink = this.proofs.valid(ctx.request.options?.receiverProof, payer, w?.id ?? null, false);
     const why = assessKeep(w, payer, await this.entitlements.row(tx), byLink);

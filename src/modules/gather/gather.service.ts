@@ -57,9 +57,9 @@ export class GatherService {
     return this.db.wishGather.create({ data: row }).catch(async () => this.db.wishGather.findUniqueOrThrow({ where: { wishId } }));
   }
 
-  /** HU4: the voices that have really arrived count against the wish's 12 (an ask that was never uploaded holds no place). */
+  /** HU4: the voices from friends that have really arrived count against the wish's 12 (an ask that was never uploaded holds no place; the owner's own voice is not counted here). */
   private async count(wishId: string): Promise<number> {
-    const [n] = await this.db.$queryRaw<{ n: number }[]>`SELECT count(*)::int AS n FROM voice_note v JOIN stored_file f ON f.id = v.id WHERE v."wishId" = ${wishId}::uuid AND f.status IN ('uploaded', 'screening', 'ready')`;
+    const [n] = await this.db.$queryRaw<{ n: number }[]>`SELECT count(*)::int AS n FROM voice_note v JOIN stored_file f ON f.id = v.id JOIN wish_gather_voice g ON g.id = v.id WHERE v."wishId" = ${wishId}::uuid AND f.status IN ('uploaded', 'screening', 'ready')`;
     return n?.n ?? 0;
   }
 

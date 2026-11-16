@@ -8,7 +8,7 @@ export const NOT_HOUSE_SQL = `"accountId" NOT IN (SELECT id FROM account WHERE h
 
 type Db = Pick<PrismaService, "wish">;
 
-/** HU2: true when the wish belongs to the house account. */
+/** HU2: true when the wish is owned by the house account. */
 export async function isHouseWish(db: Db, wishId: string): Promise<boolean> {
   const w = await db.wish.findFirst({ where: { id: wishId, account: { handle: HOUSE_HANDLE } }, select: { id: true } });
   return w !== null;

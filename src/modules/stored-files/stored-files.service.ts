@@ -62,7 +62,7 @@ export async function vaultLimitBytes(tx: Tx, biz: Pick<Business, "id" | "plan" 
   return (planGb + grantGb) * GB;
 }
 
-/** A wish holds at most this many voice notes (the price book's friend-message ceiling is 10; 12 is the content default). */
+/** A wish holds at most this many voice notes from friends (the price book's friend-message ceiling is 10; 12 is the content default), and the owner's own voice notes are counted apart: at most this many too. */
 export const MAX_VOICE_NOTES_PER_WISH = 12;
 
 @Injectable()
@@ -86,12 +86,16 @@ export class StoredFilesService {
     return biz;
   }
 
-  /** HU4: a wish holds at most MAX_VOICE_NOTES_PER_WISH voice notes; only one that has arrived (uploaded, screening or ready) counts, so an ask never uploaded holds no place. The next one is 409 with words. */
-  private async checkVoiceRoom(tx: Tx, wishId: string, except?: string): Promise<void> {
+  /**
+   * HU4: a wish holds at most MAX_VOICE_NOTES_PER_WISH voice notes from friends and, counted apart, as many of the owner's own (the owner's own
+   * voice is never counted against what friends may send). Only one that has arrived (uploaded, screening or ready) counts, so an ask never
+   * uploaded holds no place. The next one is 409 with words.
+   */
+  private async checkVoiceRoom(tx: Tx, wishId: string, friends: boolean, except?: string): Promise<void> {
     const [n] = await tx.$queryRaw<{ n: number }[]>`
       SELECT count(*)::int AS n FROM voice_note v JOIN stored_file f ON f.id = v.id
-       WHERE v."wishId" = ${wishId}::uuid AND f.status IN ('uploaded', 'screening', 'ready') AND (${except ?? null}::uuid IS NULL OR v.id <> ${except ?? null}::uuid)`;
-    if ((n?.n ?? 0) >= MAX_VOICE_NOTES_PER_WISH) throw AppError.conflict("voice_notes_full", `A wish holds at most ${MAX_VOICE_NOTES_PER_WISH} voice notes. Remove one to add another.`);
+       WHERE v."wishId" = ${wishId}::uuid AND f.status IN ('uploaded', 'screening', 'ready') AND EXISTS (SELECT 1 FROM wish_gather_voice g WHERE g.id = v.id) = ${friends} AND (${except ?? null}::uuid IS NULL OR v.id <> ${except ?? null}::uuid)`;
+    if ((n?.n ?? 0) >= MAX_VOICE_NOTES_PER_WISH) throw AppError.conflict("voice_notes_full", `A wish holds at most ${MAX_VOICE_NOTES_PER_WISH} voice notes from friends and ${MAX_VOICE_NOTES_PER_WISH} of the owner's own. Remove one to add another.`);
   }
 
   /** The subject wish, the caller's own and not yet sealed; a clip also needs a ticket that takes clips. */
@@ -152,7 +156,7 @@ export class StoredFilesService {
         }
       } else if (wishFile) {
         await this.checkWish(tx, p, rule, body.subjectId, opts.gather === true);
-        if (rule.purpose === "voice-note" && body.subjectId !== undefined) await this.checkVoiceRoom(tx, body.subjectId);
+        if (rule.purpose === "voice-note" && body.subjectId !== undefined) await this.checkVoiceRoom(tx, body.subjectId, opts.gather === true);
       } else if (body.styleId !== undefined) {
         if (!(await tx.style.findUnique({ where: { id: body.styleId }, select: { id: true } }))) throw AppError.validation({ styleId: "No such style." });
         styleId = body.styleId;
@@ -299,7 +303,8 @@ export class StoredFilesService {
         const voice = await tx.voiceNote.findUnique({ where: { id }, select: { wishId: true } });
         if (voice?.wishId) {
           try {
-            await this.checkVoiceRoom(tx, voice.wishId, id);
+            const [g] = await tx.$queryRaw<{ n: number }[]>`SELECT count(*)::int AS n FROM wish_gather_voice WHERE id = ${id}::uuid`;
+            await this.checkVoiceRoom(tx, voice.wishId, (g?.n ?? 0) > 0, id);
           } catch (e) {
             if (!(e instanceof AppError)) throw e;
             await this.removeRows(tx, id);

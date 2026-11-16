@@ -236,7 +236,7 @@ export class WishKeepsService implements OnModuleInit {
 
   /**
    * HS2: a keep (or, on a resting wish, a wake: the keep wakes it when it is paid) started by the holder of the wish's link with no account.
-   * The payment belongs to the wish and the holder's proof, with the payer's email on the payment row only, priced by the price book; the answer carries the public view of the wish only.
+   * The payment is for the wish and carries the holder's proof, with the payer's email on the payment row only, priced by the price book; the answer carries the public view of the wish only.
    */
   async keepByLink(slug: string, body: PostWBySlugKeepBody, idempotencyKey: string | undefined, hold: LinkProof): Promise<{ answer: PostWBySlugKeepResponse; status: 200 | 201 }> {
     const length = await this.lengthOf(body, true);

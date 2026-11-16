@@ -463,6 +463,7 @@ export interface Creator {
   line: string;
   name: string;
   own?: boolean | null;
+  payoutMonths?: Array<{ month: string; earnedKobo: number; payoutStatus: "pending" | "sent" | "succeeded" | "failed" | null; due: boolean }>;
   person: string;
   plan: string;
   signed: boolean;
@@ -500,7 +501,7 @@ export interface DateRow {
   count: number;
   date: DateOnly;
   days: number;
-  for: unknown;
+  for?: string | null;
   id: string;
   key: string;
   name: string;
@@ -921,8 +922,8 @@ export interface PersonDetail {
 
 /** PlayWish: view. a wish and its content for playing in the app */
 export interface PlayWish {
-  data: unknown;
-  wish: unknown;
+  data: Record<string, unknown>;
+  wish: { id: string; no: string | null; kind: string; occasion: string; styleSlug: string; receiverName: string | null };
 }
 
 /** Price: config. price-book lines in kobo (price-book declaration); staff change them by E-124 as a new version */
@@ -1066,8 +1067,8 @@ export interface PublishRequest {
 /** PublishedWish: table. a wish listed on Now showing (DEC-63, house wishes are seeded rows); written by E-139 */
 export interface PublishedWish {
   at: Instant;
-  counts: Record<string, unknown>;
-  creator: unknown;
+  counts: { reactions: number; saves: number };
+  creator: { handle?: string; name: string } | null;
   date: Instant;
   decided?: Record<string, unknown> | null;
   featured?: boolean | null;
@@ -1078,7 +1079,7 @@ export interface PublishedWish {
   img: string;
   kind: string;
   listedAt: Instant;
-  mine: Record<string, unknown>;
+  mine: { reaction?: "love" | "joy" | "clap" | "wow" | null; saved?: boolean };
   name: string;
   no?: string | null;
   occasion: string;
@@ -1176,6 +1177,7 @@ export interface Report {
   dueAt: Instant;
   forName: string;
   from: string;
+  heldPhoto?: { url: string; expiresAt: Instant } | null;
   id: string;
   late: boolean;
   minutesLeft: number;
@@ -1325,11 +1327,13 @@ export interface StaffAccount {
   reason: string;
   role: unknown;
   roles: unknown[];
+  sections: string[];
   seen?: Instant | null;
   since: Instant;
   state: string;
   status: "invited" | "active" | "suspended" | "removed";
   updatedAt: Instant;
+  version: number;
 }
 
 /** StaffSession: view. the staff sign-in form's inputs; what is kept is the AuthCode and the Session (sessions declaration) */
@@ -1409,18 +1413,18 @@ export interface StudioStyle {
 export interface Style {
   addedAt?: Instant | null;
   by: string;
-  creator: unknown;
+  creator: { handle: string; name: string } | null;
   dimension: string;
   feel: string;
   get: string;
   house: boolean;
   img: string;
-  kinds: unknown[];
+  kinds: Array<string>;
   level: "starter" | "standard" | "premium";
   light: boolean;
   line: string;
   look?: string | null;
-  mood: unknown[];
+  mood: Array<string>;
   motion?: string | null;
   moves: string;
   name: string;
@@ -1656,7 +1660,7 @@ export interface WebhookEvent {
 export interface Wish {
   accountId: string;
   action: unknown;
-  activity?: Record<string, unknown> | null;
+  activity?: { opens: number; plays: number; reactions: Record<string, number>; favourites: number; shares: number } | null;
   adds: unknown[];
   amount: Kobo;
   at: Instant;
@@ -1683,7 +1687,7 @@ export interface Wish {
   kind: string;
   link: string;
   name: string;
-  no: string;
+  no?: string | null;
   occasion: string;
   openable: boolean;
   openedAt?: Instant | null;
@@ -1693,7 +1697,9 @@ export interface Wish {
   paymentWay: "card" | "transfer" | "ussd";
   person: string;
   personName: string;
+  pictures: Array<{ fileId: string; role: "photo" | "cover"; status: "ready" | "screening" | "refused"; url: string | null; expiresAt: Instant | null }>;
   price: Kobo;
+  publish?: { status: string; reason: string | null; decidedAt: string | null; listed: boolean } | null;
   reaction?: string | null;
   reason: string;
   removedAt?: Instant | null;
@@ -1701,7 +1707,7 @@ export interface Wish {
   result: unknown;
   sealedAt?: Instant | null;
   sound: string;
-  state: string;
+  state: "draft" | "sealed" | "live" | "resting" | "taken_down" | "erased";
   status: "draft" | "sealed" | "live" | "resting" | "removed";
   step: number;
   style: string;
@@ -1709,6 +1715,7 @@ export interface Wish {
   timeZone: string;
   updatedAt: Instant;
   version: number;
+  video: "none" | "asked" | "rendering" | "ready" | "failed";
   weddingDate?: Instant | null;
   wishId: string;
   makerNote?: Record<string, unknown> | null;
@@ -1775,6 +1782,8 @@ export interface WishTransition {
 /** E-1 GET /v1/admin/people. Auth: moderator,ops,owner,support. */
 export type GetAdminPeopleParams = Record<string, never>;
 export interface GetAdminPeopleQuery {
+  /** string (optional; a name, an email, an account id or a wish number) */
+  q?: string;
   cursor?: string;
   limit?: number;
 }
@@ -2432,6 +2441,15 @@ export interface PutAdminShowingDayByDateBody {
 }
 export type PutAdminShowingDayByDateHeaders = Record<string, never>;
 export type PutAdminShowingDayByDateResponse = DayPick;
+
+/** E-255 GET /v1/admin/showing/days. Auth: moderator,ops,owner. */
+export type GetAdminShowingDaysParams = Record<string, never>;
+export interface GetAdminShowingDaysQuery {
+  cursor?: string;
+  limit?: number;
+}
+export type GetAdminShowingDaysHeaders = Record<string, never>;
+export type GetAdminShowingDaysResponse = PaginatedList<DayPick>;
 
 /** E-50 GET /v1/admin/earnings. Auth: finance,owner. */
 export type GetAdminEarningsParams = Record<string, never>;
@@ -3850,6 +3868,8 @@ export interface PatchAdminStaffAccountsByIdBody {
   reason: string;
   /** array<string> */
   roles: string[];
+  /** integer (the version the member had when read; another change since is 409 stale_version) */
+  version: number;
 }
 export type PatchAdminStaffAccountsByIdHeaders = Record<string, never>;
 export type PatchAdminStaffAccountsByIdResponse = StaffAccount;
@@ -3861,6 +3881,8 @@ export interface PostAdminStaffAccountsByIdSuspendParams {
 export interface PostAdminStaffAccountsByIdSuspendBody {
   /** string (4 or more characters; written to the audit row) */
   reason: string;
+  /** integer (the version the member had when read; another change since is 409 stale_version) */
+  version: number;
 }
 export type PostAdminStaffAccountsByIdSuspendHeaders = Record<string, never>;
 export type PostAdminStaffAccountsByIdSuspendResponse = StaffAccount;
@@ -3868,6 +3890,8 @@ export type PostAdminStaffAccountsByIdSuspendResponse = StaffAccount;
 /** E-179 GET /v1/admin/team. Auth: owner. */
 export type GetAdminTeamParams = Record<string, never>;
 export interface GetAdminTeamQuery {
+  /** 'true'|'false' (optional; removed members are left out unless 'true') */
+  includeRemoved?: "true" | "false";
   cursor?: string;
   limit?: number;
 }
@@ -3881,6 +3905,8 @@ export interface PostAdminTeamByIdRemoveParams {
 export interface PostAdminTeamByIdRemoveBody {
   /** string */
   reason: string;
+  /** integer (the version the member had when read; another change since is 409 stale_version) */
+  version: number;
 }
 export type PostAdminTeamByIdRemoveHeaders = Record<string, never>;
 /** 204 No Content: the response has no body (Q12). */
@@ -4482,7 +4508,7 @@ export interface GetWishesByIdLinkParams {
 }
 export type GetWishesByIdLinkQuery = Record<string, never>;
 export type GetWishesByIdLinkHeaders = Record<string, never>;
-export type GetWishesByIdLinkResponse = string;
+export type GetWishesByIdLinkResponse = { link: string; slug: string };
 
 /** E-241 POST /v1/wishes/:id/pass-upgrade. Auth: business; signed in. */
 export interface PostWishesByIdPassUpgradeParams {
@@ -4626,6 +4652,7 @@ export interface EndpointContracts {
   "E-47": { params: DeleteMeDatesByIdParams; body: DeleteMeDatesByIdBody; headers: DeleteMeDatesByIdHeaders; response: DeleteMeDatesByIdResponse };
   "E-48": { params: GetMeDatesByIdParams; query: GetMeDatesByIdQuery; headers: GetMeDatesByIdHeaders; response: GetMeDatesByIdResponse };
   "E-49": { params: PutAdminShowingDayByDateParams; body: PutAdminShowingDayByDateBody; headers: PutAdminShowingDayByDateHeaders; response: PutAdminShowingDayByDateResponse };
+  "E-255": { params: GetAdminShowingDaysParams; query: GetAdminShowingDaysQuery; headers: GetAdminShowingDaysHeaders; response: GetAdminShowingDaysResponse };
   "E-50": { params: GetAdminEarningsParams; query: GetAdminEarningsQuery; headers: GetAdminEarningsHeaders; response: GetAdminEarningsResponse };
   "E-51": { params: GetEndingPurposesParams; query: GetEndingPurposesQuery; headers: GetEndingPurposesHeaders; response: GetEndingPurposesResponse };
   "E-52": { params: PostEventsParams; body: PostEventsBody; headers: PostEventsHeaders; response: PostEventsResponse };

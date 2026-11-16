@@ -144,9 +144,14 @@ export class StandinStorage extends StoragePort {
 
   private readonly objects = new Map<string, { bytes: Buffer; contentType: string }>();
 
+  /**
+   * `base` is where the urls point. Tests keep the host that never resolves; a stack points it at the API's own
+   * /v1/standin-storage route (HP3), which serves the bytes of a stored object for a valid signed url.
+   */
   constructor(
     private readonly clock: Clock,
     readonly bucket = "standin-bucket",
+    private readonly base = `https://storage.${STANDIN_HOST}`,
   ) {
     super();
   }
@@ -162,7 +167,7 @@ export class StandinStorage extends StoragePort {
     const expiresAt = new Date(this.clock.now().getTime() + input.expiresInSeconds * 1000);
     const exp = Math.floor(expiresAt.getTime() / 1000);
     const sig = this.sig(input.key, exp, `${input.contentType}:${input.contentLength}`);
-    const url = `https://storage.${STANDIN_HOST}/${this.bucket}/${encodeURI(input.key)}?expires=${exp}&signature=${sig}`;
+    const url = `${this.base}/${this.bucket}/${encodeURI(input.key)}?expires=${exp}&signature=${sig}`;
     this.bound.set(input.key, { contentType: input.contentType, contentLength: input.contentLength });
     const headers = { "content-type": input.contentType, "content-length": String(input.contentLength) };
     return Promise.resolve({ url, method: "PUT", headers, expiresAt });
@@ -181,7 +186,15 @@ export class StandinStorage extends StoragePort {
 
   signDownload(key: string, expiresInSeconds: number): Promise<string> {
     const exp = Math.floor(this.clock.now().getTime() / 1000) + expiresInSeconds;
-    return Promise.resolve(`https://storage.${STANDIN_HOST}/${this.bucket}/${encodeURI(key)}?expires=${exp}&signature=${this.sig(key, exp)}`);
+    return Promise.resolve(`${this.base}/${this.bucket}/${encodeURI(key)}?expires=${exp}&signature=${this.sig(key, exp)}`);
+  }
+
+  /** HP3: the bytes behind a signed download url, or null when the signature is wrong, the url has expired or there is no object. */
+  serve(key: string, expires: number, signature: string): { bytes: Buffer; contentType: string } | null {
+    if (!Number.isFinite(expires) || expires * 1000 < this.clock.now().getTime()) return null;
+    if (signature !== this.sig(key, expires)) return null;
+    const o = this.objects.get(key);
+    return o ? { bytes: o.bytes, contentType: o.contentType } : null;
   }
 
   /** Puts an object, as the browser's signed upload would. */

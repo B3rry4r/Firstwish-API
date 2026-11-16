@@ -15,6 +15,7 @@ import { SavedWishesService } from "../saved-wishes/saved-wishes.service";
 import { stateOf } from "../wishes/wish-state";
 import { CHAPTER_KEYS } from "../wishes/wish-content";
 import { WishesService } from "../wishes/wishes.service";
+import { SignedUrlsService } from "../stored-files/signed-urls.service";
 import { ShowingLink } from "./showing-link";
 import { DAY_MS, lagosToday, PICK_DAYS, publicJoins, publicNow } from "./showing-sql";
 
@@ -42,6 +43,7 @@ export class ShowingService implements OnModuleInit {
     private readonly wishes: WishesService,
     private readonly saved: SavedWishesService,
     private readonly link: ShowingLink,
+    private readonly signed: SignedUrlsService,
   ) {}
 
   onModuleInit(): void {
@@ -213,7 +215,7 @@ export class ShowingService implements OnModuleInit {
   }
 
   /** E-140 (public): approved wishes that are live, opened, with an owner who is neither banned nor erased. Newest first. */
-  async publicList(q: { cursor?: string; limit?: number }): Promise<Page<PublishedWish>> {
+  async publicList(q: { cursor?: string; limit?: number }, viewer: string | null = null): Promise<Page<PublishedWish>> {
     const limit = q.limit ?? DEFAULT_LIMIT;
     const now = this.clock.now();
     const at = Prisma.sql`COALESCE(pw."listedAt", to_timestamp(0))`;
@@ -227,7 +229,7 @@ export class ShowingService implements OnModuleInit {
       SELECT pw.id::text AS id, ${at} AS at FROM published_wish pw ${publicJoins()}
        WHERE ${publicNow(now)} ${after} ORDER BY ${at} DESC, pw.id DESC LIMIT ${limit + 1}`;
     const pageRows = rows.slice(0, limit);
-    const items = await this.wireRows(pageRows.map((r) => r.id), "public");
+    const items = await this.wireRows(pageRows.map((r) => r.id), "public", viewer);
     const last = pageRows[limit - 1] as ({ id: string; at: Date } | undefined);
     return { items, nextCursor: rows.length > limit && last ? encodeCursor({ key: last.at.getTime(), id: last.id }) : null };
   }
@@ -257,7 +259,7 @@ export class ShowingService implements OnModuleInit {
   }
 
   /** Public rows are read through the live test; a staff list shows every listed row. */
-  private async wireRows(ids: string[], who: "public" | "staff"): Promise<PublishedWish[]> {
+  private async wireRows(ids: string[], who: "public" | "staff", viewer: string | null = null): Promise<PublishedWish[]> {
     if (!ids.length) return [];
     const rows = await this.db.publishedWish.findMany({ where: { id: { in: ids } } });
     const [reactions, saves] = await Promise.all([
@@ -268,16 +270,63 @@ export class ShowingService implements OnModuleInit {
     const sc = new Map(saves.map((r) => [r.wish, r._count]));
     const today = await this.todaysNo();
     const byId = new Map(rows.map((r) => [r.id, r]));
+    // HP9: a signed-in viewer's own heart and save on each row; a visitor's mark is empty
+    const marks = new Map<string, { reaction: NonNullable<PublishedWish["mine"]["reaction"]> | null; saved: boolean }>();
+    if (viewer) {
+      const [mine, kept] = await Promise.all([
+        this.db.reaction.findMany({ where: { accountId: viewer, wish: { in: ids } }, select: { wish: true, reaction: true } }),
+        this.db.savedWish.findMany({ where: { accountId: viewer, wish: { in: ids } }, select: { wish: true } }),
+      ]);
+      for (const id of ids) marks.set(id, { reaction: null, saved: false });
+      for (const m of mine) if (m.wish) (marks.get(m.wish) as { reaction: NonNullable<PublishedWish["mine"]["reaction"]> | null }).reaction = m.reaction;
+      for (const m of kept) if (m.wish) (marks.get(m.wish) as { saved: boolean }).saved = true;
+    }
+    const looks = await this.looksOf(rows.map((r) => r.wishId).filter((w): w is string => !!w));
     return ids.map((id) => byId.get(id)).filter((r): r is NonNullable<typeof r> => !!r).map((r) => {
       const at = toWireInstant(r.listedAt ?? new Date(0));
       return {
         id: r.id, at, date: at, listedAt: at, publishedAt: at, counts: { reactions: rc.get(r.id) ?? 0, saves: sc.get(r.id) ?? 0 },
-        creator: r.creator ?? { name: r.from ?? "" }, forName: r.forName ?? "", from: r.from ?? "", href: r.href ?? "", img: r.img ?? "", kind: r.kind ?? "",
-        name: r.name ?? "", no: r.no, occasion: r.occasion ?? "", occasionName: r.occasionName ?? "", pos: r.pos ?? "", reason: "", scope: who === "staff" ? "listed" : "public",
+        creator: this.creatorOf(r.creator, r.from, looks.get(r.wishId ?? "")?.handle), forName: r.forName ?? "", from: r.from ?? "", href: r.href ?? "", img: looks.get(r.wishId ?? "")?.img ?? r.img ?? "", kind: r.kind ?? "",
+        name: r.name ?? "", no: r.no, occasion: r.occasion ?? "", occasionName: r.occasionName ?? "", pos: looks.get(r.wishId ?? "")?.img ? (looks.get(r.wishId ?? "")?.pos ?? "") : r.pos ?? "", reason: "", scope: who === "staff" ? "listed" : "public",
         screen: who === "staff" ? ((r.screen as Obj | null) ?? {}) : {}, style: r.style ?? "", styleName: r.styleName ?? "", title: r.title ?? "", wish: r.wish ?? "",
-        mine: {}, decided: who === "staff" ? (r.decided as Obj | null) : null, featured: !!r.no && r.no === today, own: false,
+        mine: marks.has(r.id) ? { reaction: marks.get(r.id)?.reaction ?? null, saved: marks.get(r.id)?.saved ?? false } : {}, decided: who === "staff" ? (r.decided as Obj | null) : null, featured: !!r.no && r.no === today, own: false,
       };
     });
+  }
+
+  /**
+   * HP13: what a published row shows of its wish, read from the wish each time (so rows published before this change get it too, and a
+   * signed picture never goes stale in a row): the creator's handle when the publisher has the creator side and a handle, and the
+   * cover as a short-lived signed read url (img) with its focus (pos). A cover that did not pass screening gives none (img stays "").
+   */
+  private async looksOf(wishIds: string[]): Promise<Map<string, { handle: string | null; img: string; pos: string }>> {
+    const out = new Map<string, { handle: string | null; img: string; pos: string }>();
+    if (!wishIds.length) return out;
+    const wishes = await this.db.wish.findMany({ where: { id: { in: wishIds } }, select: { id: true, content: true, account: { select: { handle: true, sides: true, erasedAt: true } } } });
+    for (const w of wishes) {
+      const a = w.account;
+      const handle = a && !a.erasedAt && a.sides.includes("creator") && a.handle ? a.handle : null;
+      const cover = (w.content && typeof w.content === "object" && !Array.isArray(w.content) ? (w.content as Obj).cover : null) as Obj | null;
+      const fileId = [cover?.coverId, cover?.photoId].find((x): x is string => typeof x === "string");
+      let img = "";
+      if (fileId) {
+        try {
+          img = (await this.signed.signedRead({ fileId }, { type: "allowed" })).url;
+        } catch (e) {
+          if (!(e instanceof AppError) || e.getStatus() !== 404) throw e;
+        }
+      }
+      out.set(w.id, { handle, img, pos: img ? "50% 50%" : "" });
+    }
+    return out;
+  }
+
+  /** The stored creator ({name}) with the handle the publisher holds now; a publisher with no creator side or handle stays {name}. */
+  private creatorOf(stored: unknown, from: string | null, handle: string | null | undefined): PublishedWish["creator"] {
+    const base = stored && typeof stored === "object" && !Array.isArray(stored) ? (stored as { name?: string; handle?: string }) : { name: from ?? "" };
+    const name = base.name ?? from ?? "";
+    const h = handle ?? base.handle;
+    return h ? { handle: h, name } : { name };
   }
 
   private async requestRows(ids: string[]): Promise<PublishedWish[]> {
@@ -335,6 +384,19 @@ export class ShowingService implements OnModuleInit {
       });
       return { date: day, wish: no, reason, pick: { publishedId: rows[0].id, wishId: rows[0].wishId } };
     });
+  }
+
+  /** HP12: the wish-of-the-day picks from today to the next 6 days (Lagos days), by date; a day with no pick is left out. */
+  async picks(): Promise<Page<DayPick>> {
+    const today = lagosToday(this.clock.now());
+    const first = new Date(`${today}T00:00:00.000Z`);
+    const last = new Date(first.getTime() + PICK_DAYS * DAY_MS);
+    const rows = await this.db.dayPick.findMany({ where: { date: { gte: first, lte: last } }, orderBy: { date: "asc" } });
+    const items = rows.map((r) => {
+      const pick = (r.pick ?? {}) as { publishedId?: string; wishId?: string; reason?: string };
+      return { date: (r.date as Date).toISOString().slice(0, 10), wish: r.wish ?? "", reason: pick.reason ?? "", pick: { publishedId: pick.publishedId, wishId: pick.wishId } };
+    });
+    return { items: items as unknown as DayPick[], nextCursor: null };
   }
 
   /** The number of requests waiting for a person (the Overview's count). */

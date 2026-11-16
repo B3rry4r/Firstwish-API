@@ -18,6 +18,7 @@ import type {
   StaffAccount,
 } from "../../contracts";
 import { AuditActor, AuditService, requireReason } from "../audit/audit.service";
+import { RoleAccessService, sectionsOf } from "../role-access/role-access.service";
 import { StaffAuthService } from "./staff-auth.service";
 import { isRemoved, STAFF_ROLES, staffToWire } from "./staff-view";
 
@@ -48,6 +49,7 @@ export class StaffAccountsService implements OnApplicationBootstrap {
     private readonly auth: StaffAuthService,
     private readonly clock: Clock,
     private readonly ids: IdGenerator,
+    private readonly access: RoleAccessService,
     @Inject(ENV) private readonly env: Env,
   ) {}
 
@@ -85,15 +87,18 @@ export class StaffAccountsService implements OnApplicationBootstrap {
   /** E-179: the team by name, cursor pages. */
   async team(q: GetAdminTeamQuery): Promise<Page<StaffAccount>> {
     const limit = q.limit ?? DEFAULT_LIMIT;
-    let where: Prisma.StaffAccountWhereInput = {};
+    const and: Prisma.StaffAccountWhereInput[] = [];
+    // HP8: removed members are left out unless asked for
+    if (q.includeRemoved !== "true") and.push({ status: { not: "removed" } });
     if (q.cursor) {
       const c = decodeCursor(q.cursor);
       if (typeof c.key !== "string") throw AppError.validation({ cursor: "Must be a cursor from a previous page." });
-      where = { OR: [{ name: { gt: c.key } }, { name: c.key, id: { gt: c.id } }] };
+      and.push({ OR: [{ name: { gt: c.key } }, { name: c.key, id: { gt: c.id } }] });
     }
-    const rows = await this.db.staffAccount.findMany({ where, orderBy: [{ name: "asc" }, { id: "asc" }], take: limit + 1 });
+    const rows = await this.db.staffAccount.findMany({ where: { AND: and }, orderBy: [{ name: "asc" }, { id: "asc" }], take: limit + 1 });
     const page = toPage(rows, limit, (r) => ({ key: r.name, id: r.id }));
-    return { items: page.items.map(staffToWire), nextCursor: page.nextCursor };
+    const table = await this.access.all();
+    return { items: page.items.map((r) => staffToWire(r, sectionsOf(table, r.roles))), nextCursor: page.nextCursor };
   }
 
   /** E-177: change a member's roles. The last active owner cannot be demoted. */
@@ -104,14 +109,15 @@ export class StaffAccountsService implements OnApplicationBootstrap {
       const owners = await this.lockOwners(tx);
       const target = await this.lockOne(tx, id);
       if (isRemoved(target)) throw notAllowed("This member has been removed.");
+      this.sawVersion(target, body.version);
       if (owners.includes(target.id) && !roles.includes("owner") && owners.length <= 1) {
         throw notAllowed("The last owner cannot be demoted.");
       }
-      const updated = await tx.staffAccount.update({ where: { id: target.id }, data: { roles } });
+      const updated = await tx.staffAccount.update({ where: { id: target.id }, data: { roles, version: { increment: 1 } } });
       await this.audit.write(tx, { actor, section: TEAM, action: "team.change-roles", target: { type: "StaffAccount", id: target.id }, reason, changedFields: ["roles"] });
       return updated;
     });
-    return staffToWire(row);
+    return staffToWire(row, await this.access.sectionsFor(row.roles));
   }
 
   /** E-178: suspend a member; their sessions end at once. The last active owner cannot be suspended. */
@@ -121,14 +127,15 @@ export class StaffAccountsService implements OnApplicationBootstrap {
       const owners = await this.lockOwners(tx);
       const target = await this.lockOne(tx, id);
       if (isRemoved(target)) throw notAllowed("This member has been removed.");
+      this.sawVersion(target, body.version);
       if (target.status === "suspended") throw notAllowed("This member is already suspended.");
       if (owners.includes(target.id) && owners.length <= 1) throw notAllowed("The last owner cannot be suspended.");
-      const updated = await tx.staffAccount.update({ where: { id: target.id }, data: { status: "suspended" } });
+      const updated = await tx.staffAccount.update({ where: { id: target.id }, data: { status: "suspended", version: { increment: 1 } } });
       await this.endSessions(tx, target.id, "suspended");
       await this.audit.write(tx, { actor, section: TEAM, action: "team.suspend", target: { type: "StaffAccount", id: target.id }, reason, changedFields: ["status"] });
       return updated;
     });
-    return staffToWire(row);
+    return staffToWire(row, await this.access.sectionsFor(row.roles));
   }
 
   /** E-180: remove a member: no sign-in from now on and every session ends at once. Refused for an owner or one already removed. */
@@ -139,7 +146,8 @@ export class StaffAccountsService implements OnApplicationBootstrap {
       const target = await this.lockOne(tx, id);
       if (target.roles.includes("owner")) throw notAllowed("An owner cannot be removed. Change their roles first.");
       if (isRemoved(target)) throw notAllowed("This member has already been removed.");
-      await tx.staffAccount.update({ where: { id: target.id }, data: { status: "removed", roles: [] } });
+      this.sawVersion(target, body.version);
+      await tx.staffAccount.update({ where: { id: target.id }, data: { status: "removed", roles: [], version: { increment: 1 } } });
       await this.endSessions(tx, target.id, "removed");
       await tx.authCode.updateMany({ where: { destination: target.email, purpose: "staff_sign_in", consumedAt: null }, data: { consumedAt: this.clock.now() } });
       await this.audit.write(tx, { actor, section: TEAM, action: "team.remove", target: { type: "StaffAccount", id: target.id }, reason, changedFields: ["status", "roles"] });
@@ -162,7 +170,7 @@ export class StaffAccountsService implements OnApplicationBootstrap {
         const existing = await tx.staffAccount.findUnique({ where: { email } });
         if (existing && !isRemoved(existing)) throw AppError.conflict("already_staff", "That email is already on the team.");
         const saved = existing
-          ? await tx.staffAccount.update({ where: { id: existing.id }, data: { roles, status: "invited" } })
+          ? await tx.staffAccount.update({ where: { id: existing.id }, data: { roles, status: "invited", version: { increment: 1 } } })
           : await tx.staffAccount.create({ data: { id: this.ids.id(), email, name: email.split("@")[0], roles, status: "invited" } });
         await this.audit.write(tx, {
           actor,
@@ -181,7 +189,14 @@ export class StaffAccountsService implements OnApplicationBootstrap {
       throw e;
     }
     await this.auth.inviteCode(row);
-    return staffToWire(row);
+    return staffToWire(row, await this.access.sectionsFor(row.roles));
+  }
+
+  /** HP7: a change carries the version the member had when read; another change since is 409 stale_version. */
+  private sawVersion(target: StaffRow, seen: number): void {
+    if (target.version !== seen) {
+      throw new AppError(HttpStatus.CONFLICT, "stale_version", "This member was changed by someone else. Load the team again.", { version: String(target.version) });
+    }
   }
 
   /** Locks every active owner row (always taken first, then the target, so two owner changes never cross). */

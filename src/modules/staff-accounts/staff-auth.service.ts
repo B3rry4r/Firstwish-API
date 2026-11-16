@@ -11,6 +11,7 @@ import type { StaffAuthResult } from "../../contracts";
 import { AuditService } from "../audit/audit.service";
 import { networkOf } from "../audit/ip-network";
 import { NoticesService } from "../notices/notices.service";
+import { RoleAccessService } from "../role-access/role-access.service";
 import { staffToWire } from "./staff-view";
 import { STAFF_SESSION } from "./staff-session";
 
@@ -46,6 +47,7 @@ export class StaffAuthService {
     private readonly codes: SignInCodes,
     private readonly notices: NoticesService,
     private readonly clock: Clock,
+    private readonly access: RoleAccessService,
   ) {}
 
   /**
@@ -102,7 +104,7 @@ export class StaffAuthService {
       return { updated, started };
     });
     if (!outcome) throw BAD_CODE();
-    return { result: this.result(outcome.updated, outcome.started), started: outcome.started };
+    return { result: await this.result(outcome.updated, outcome.started), started: outcome.started };
   }
 
   /** E-234 (S5). Rotates the staff cookie (10-second grace, V2); a member who may no longer sign in ends the family. */
@@ -113,7 +115,7 @@ export class StaffAuthService {
       await this.families.endFamily(this.db, started.row.familyId, "not-staff");
       throw ENDED();
     }
-    return { result: this.result(staff, started), started };
+    return { result: await this.result(staff, started), started };
   }
 
   /** E-175. Ends this session family at once; one audit row. */
@@ -139,8 +141,8 @@ export class StaffAuthService {
     while (this.sending.size) await Promise.all([...this.sending]);
   }
 
-  private result(staff: StaffRow, s: StartedSession): StaffAuthResult {
-    return { staff: staffToWire(staff), accessToken: s.access.token, accessTokenExpiresAt: s.access.expiresAt.toISOString() };
+  private async result(staff: StaffRow, s: StartedSession): Promise<StaffAuthResult> {
+    return { staff: staffToWire(staff, await this.access.sectionsFor(staff.roles)), accessToken: s.access.token, accessTokenExpiresAt: s.access.expiresAt.toISOString() };
   }
 
   /**

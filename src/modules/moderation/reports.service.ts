@@ -14,6 +14,7 @@ import { toWireInstant } from "../../common/time/time";
 import type { Report } from "../../contracts";
 import { AuditActor, AuditService, requireReason } from "../audit/audit.service";
 import { NoticesService } from "../notices/notices.service";
+import { SignedUrlsService } from "../stored-files/signed-urls.service";
 import { ShowingService } from "../showing/showing.service";
 import { WishLifecycleService } from "../wishes/wish-lifecycle.service";
 import { outOfSight, stateOf } from "../wishes/wish-state";
@@ -51,6 +52,7 @@ export class ReportsService {
     private readonly showing: ShowingService,
     private readonly lifecycle: WishLifecycleService,
     private readonly notices: NoticesService,
+    private readonly signed: SignedUrlsService,
     @Inject(ENV) private readonly env: Env,
   ) {}
 
@@ -225,7 +227,7 @@ export class ReportsService {
   }
 
   /** E-149: the three queues in one list, oldest first: reports, flagged photos (from the files bundle's queue), take-down asks. */
-  async list(q: { cursor?: string; limit?: number }): Promise<Page<Report>> {
+  async list(q: { cursor?: string; limit?: number }, staff?: { actor: AuditActor; roles: readonly string[] }): Promise<Page<Report>> {
     const limit = q.limit ?? DEFAULT_LIMIT;
     let after = Prisma.empty;
     if (q.cursor) {
@@ -244,8 +246,10 @@ export class ReportsService {
     const flagged = await this.wire(page.filter((r) => r.src === "flagged").map((r) => r.id), "flagged");
     const byId = new Map([...reports, ...flagged].map((i) => [i.id as string, i]));
     const last = page[limit - 1];
+    const items = page.map((r) => byId.get(r.id)).filter((i): i is Obj => !!i);
+    await this.addHeldPhotos(items, staff);
     return {
-      items: page.map((r) => byId.get(r.id)).filter((i): i is Obj => !!i) as unknown as Report[],
+      items: items as unknown as Report[],
       nextCursor: rows.length > limit && last ? encodeCursor({ key: Number(last.ms), id: last.id }) : null,
     };
   }
@@ -260,6 +264,30 @@ export class ReportsService {
              ((SELECT count(*) FROM report WHERE status = 'open' AND "createdAt" < ${due})
               + (SELECT count(*) FROM screening_result WHERE verdict = 'review' AND "finalVerdict" IS NULL AND "createdAt" < ${due})) AS late`;
     return { reports: Number(row.reports), flagged: Number(row.flagged), takedowns: Number(row.takedowns), late: Number(row.late) };
+  }
+
+  /**
+   * HP12: a flagged item gets heldPhoto {url, expiresAt}, a signed read good for ten minutes, so the moderator can see the photo they
+   * judge. Only moderator, ops and owner get it (anyone else, and an item that is not a photo, gets null); each read is an audit row
+   * (field names only, never the url).
+   */
+  private async addHeldPhotos(items: Obj[], staff?: { actor: AuditActor; roles: readonly string[] }): Promise<void> {
+    const may = !!staff && staff.roles.some((r) => r === "moderator" || r === "ops" || r === "owner");
+    for (const it of items) {
+      it.heldPhoto = null;
+      if (!may || !staff || it.queue !== "flagged" || typeof it.photo !== "string") continue;
+      let read;
+      try {
+        read = await this.signed.signedRead({ fileId: it.photo }, { type: "staff" });
+      } catch (e) {
+        if (e instanceof AppError && e.getStatus() === 404) continue;
+        throw e;
+      }
+      await this.db.$transaction((tx) =>
+        this.audit.write(tx, { actor: staff.actor, section: "/admin/moderation", action: "moderation.view-photo", target: { type: "StoredFile", id: it.photo as string }, reason: null, changedFields: ["heldPhoto"] }),
+      );
+      it.heldPhoto = { url: read.url, expiresAt: read.expiresAt };
+    }
   }
 
   /** Staff wire for reports and flagged photos, in the order of `ids`. */

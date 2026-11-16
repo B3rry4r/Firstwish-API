@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, HttpCode, Param, Post, Put, Query } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Headers, HttpCode, Param, Post, Put, Query } from "@nestjs/common";
 import {
   DeleteWishesByIdPublishRequestsBodyDto, DeleteWishesByIdPublishRequestsParamsDto, GetAdminShowingQueryDto, GetShowingQueryDto,
   PostAdminShowingListedByNoUnlistBodyDto, PostAdminShowingListedByNoUnlistParamsDto, PostAdminShowingRequestsByIdDecideBodyDto,
@@ -8,7 +8,7 @@ import {
 import { HttpStatus } from "@nestjs/common";
 import { AppError } from "../../common/errors/app-error";
 import { CurrentPrincipal, Public, Roles } from "../../common/auth/decorators";
-import type { Principal } from "../../common/auth/principal";
+import { AccessTokenVerifier, type Principal } from "../../common/auth/principal";
 import type { AuditActor } from "../audit/audit.service";
 import { accountOf } from "../people/business-of";
 import { AdminRoute, StaffActor } from "../role-access/staff-section.guard";
@@ -26,7 +26,10 @@ function creatorSideOnly(who: Principal | undefined): string {
 /** The owner's asks to be shown (E-137, E-136), the public list (E-140) and the staff side (E-135, E-138, E-139, E-49). */
 @Controller()
 export class ShowingController {
-  constructor(private readonly showing: ShowingService) {}
+  constructor(
+    private readonly showing: ShowingService,
+    private readonly tokens: AccessTokenVerifier,
+  ) {}
 
   /** E-137 (registry auth: creator;own records; any signed-in side here, as the wish routes are). */
   @Roles("person", "creator", "business")
@@ -46,8 +49,16 @@ export class ShowingController {
   /** E-140 (public). */
   @Public()
   @Get("showing")
-  list(@Query() q: GetShowingQueryDto) {
-    return this.showing.publicList(q);
+  async list(@Query() q: GetShowingQueryDto, @Headers("authorization") auth: string | undefined) {
+    return this.showing.publicList(q, await this.viewer(auth));
+  }
+
+  /** HP9: a good bearer token marks the viewer's own reaction and save on each row; no token, or one that is not good, reads as a visitor. */
+  private async viewer(auth: string | undefined): Promise<string | null> {
+    const m = /^Bearer\s+(\S+)$/i.exec(auth ?? "");
+    if (!m) return null;
+    const p = await this.tokens.verify(m[1]);
+    return p?.kind === "user" ? p.accountId : null;
   }
 
   /** E-138. */
@@ -71,6 +82,13 @@ export class ShowingController {
   @HttpCode(200)
   unlist(@Param() p: PostAdminShowingListedByNoUnlistParamsDto, @Body() b: PostAdminShowingListedByNoUnlistBodyDto, @StaffActor() actor: AuditActor) {
     return this.showing.unlist(p.no, b, actor);
+  }
+
+  /** HP12: the picks for today and the next 6 days. */
+  @AdminRoute("/admin/showing", "moderator", "ops", "owner")
+  @Get("admin/showing/days")
+  days() {
+    return this.showing.picks();
   }
 
   /** E-49. */

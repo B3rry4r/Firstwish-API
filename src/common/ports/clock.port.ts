@@ -15,11 +15,13 @@ export class SystemClock extends Clock {
  */
 export class StandinClock extends Clock {
   private frozenAt: number | null;
-  private offset = 0;
+  private offset: number;
 
-  constructor(start?: Date) {
+  /** `offsetSeconds` (HP6, STANDIN_CLOCK_OFFSET) starts a following clock that far ahead of real time (or behind, when negative). */
+  constructor(start?: Date, offsetSeconds = 0) {
     super();
     this.frozenAt = start ? start.getTime() : null;
+    this.offset = offsetSeconds * 1000;
   }
   now(): Date {
     return new Date(this.frozenAt ?? Date.now() + this.offset);

@@ -8,6 +8,21 @@ export const CONTROL_CHARS = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/;
 /** A half of a surrogate pair with no other half: text that is not well formed (EE2). A pair (an emoji) is fine. */
 export const LONE_SURROGATE = /[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/;
 
+/** Deepest nesting a body, query or path value may have; a document is a few levels deep, so this refuses only a hostile one. */
+export const MAX_DEPTH = 32;
+
+/** True when `value` nests deeper than `limit` levels. Iterative, so a body nested thousands deep cannot overflow the stack. */
+export function nestedDeeperThan(value: unknown, limit: number): boolean {
+  const stack: [unknown, number][] = [[value, 0]];
+  while (stack.length) {
+    const [v, d] = stack.pop() as [unknown, number];
+    if (v === null || typeof v !== "object" || Buffer.isBuffer(v)) continue;
+    if (d >= limit) return true;
+    for (const c of Object.values(v as Record<string, unknown>)) stack.push([c, d + 1]);
+  }
+  return false;
+}
+
 /** The path of the first string (or key) that `bad` refuses, or null. Walks objects and arrays (not Buffers). */
 function badTextPath(value: unknown, path: string, bad: RegExp, seen: Set<unknown>): string | null {
   if (typeof value === "string") return bad.test(value) ? path : null;
@@ -40,6 +55,7 @@ export function illFormedTextPath(value: unknown, path: string, seen = new Set<u
 export class ControlCharsPipe implements PipeTransform {
   transform(value: unknown, meta: ArgumentMetadata): unknown {
     if (meta.type !== "body" && meta.type !== "query" && meta.type !== "param") return value;
+    if (nestedDeeperThan(value, MAX_DEPTH)) throw AppError.validation({ [meta.data || meta.type]: "Nested too deeply." });
     const hit = controlCharPath(value, meta.data ?? "");
     if (hit !== null)
       throw AppError.validation({

@@ -22,6 +22,8 @@ import { localToUtc, parseOpening, utcToLocal } from "./local-time";
 import { CHAPTER_KEYS, DEFAULT_CONTENT_MAX_BYTES, FileRef, hasBody, readContent } from "./wish-content";
 import { UNOPENED_DAYS, WishLifecycleService } from "./wish-lifecycle.service";
 import { stateOf } from "./wish-state";
+import { WishPictures } from "./wish-pictures";
+import { kindHasOccasion, LAST_STEP } from "./kind-occasions";
 import { DEFAULT_KIND, DEFAULT_OCCASION, isBareStart, START_KEY } from "./wish-start";
 
 type Tx = Prisma.TransactionClient;
@@ -98,6 +100,9 @@ export const hashPasscode = (p: string): Promise<string> =>
  * open time, and the owner's list and detail. The server decides the state (WishLifecycleService); the phone's clock is
  * never read. An owner check is a query condition: the wish is the caller's own, or one of the caller's business.
  */
+/** The most characters a maker's note may hold, incoming and stored (the stored note is the merge of every save). */
+const MAKER_NOTE_MAX = 8192;
+
 @Injectable()
 export class WishesService {
   constructor(
@@ -112,6 +117,7 @@ export class WishesService {
     private readonly passDraws: PassDrawService,
     private readonly showing: ShowingLink,
     private readonly access: ProAccess,
+    private readonly pictures: WishPictures,
   ) {}
 
   private planSeal: PlanSealFn | null = null;
@@ -167,7 +173,10 @@ export class WishesService {
       take: limit + 1,
     });
     const links = await this.linksFor(rows.map((r) => r.id));
-    return toPage(rows.map((r) => this.wire(r, links.get(r.id))), limit, (r) => ({ key: String(r.id), id: String(r.id) }));
+    const shown = rows.slice(0, limit).map((r) => r.id);
+    const [pics, videos] = await Promise.all([this.pictures.forWishes(shown), this.pictures.videoStates(shown)]);
+    const one = (r: Wish): Obj => ({ ...this.wire(r, links.get(r.id)), pictures: pics.get(r.id) ?? [], video: videos.get(r.id) ?? "none" });
+    return toPage(rows.map(one), limit, (r) => ({ key: String(r.id), id: String(r.id) }));
   }
 
   async get(accountId: string, id: string): Promise<Obj> {
@@ -176,7 +185,9 @@ export class WishesService {
     const activity = (await this.activity.summary([row.id])).get(row.id);
     // QQ3: where the owner's asks to be shown stand (the last one, its decline reason, whether it is listed).
     const publish = (await this.showing.showing.publishStateOf([row.id])).get(row.id) ?? null;
-    return { ...this.wire(row, (await this.linksFor([id])).get(id)), activity, publish };
+    const pictures = (await this.pictures.forWishes([row.id])).get(row.id) ?? [];
+    const video = (await this.pictures.videoStates([row.id])).get(row.id) ?? "none";
+    return { ...this.wire(row, (await this.linksFor([id])).get(id)), activity, publish, pictures, video };
   }
 
   async link(accountId: string, id: string): Promise<{ link: string; slug: string }> {
@@ -211,6 +222,9 @@ export class WishesService {
       openable: this.openable(r),
       // HM1: the maker's own note, as the contract types it (null until one is saved); only the owner's routes build this wire
       makerNote: r.makerNote ?? null,
+      // HP3, HP5: the owner's list and single reads fill these in; every other owner answer says no pictures and no video here
+      pictures: [],
+      video: "none",
     };
   }
 
@@ -225,6 +239,8 @@ export class WishesService {
   // ---- the draft ----
 
   private slugOf(label: string, field: string): string {
+    // L1: the contract's kind and occasion are strings (no null): null or any other type is a 422 on the field, never a 500
+    if (typeof label !== "string") throw AppError.validation({ [field]: "Must be text." });
     const v = label.trim().toLowerCase().replace(/[\s_]+/g, "-");
     if (!SLUG.test(v)) throw AppError.validation({ [field]: "Use the kind's own name, letters, numbers and dashes." });
     return v;
@@ -397,6 +413,10 @@ export class WishesService {
     const kind = input.kind === undefined ? undefined : this.slugOf(input.kind, "kind");
     const occasion = input.occasion === undefined ? undefined : this.slugOf(input.occasion, "occasion");
     const name = input.name === undefined ? undefined : this.text(input.name, "name", 120);
+    // HP2: a step is a whole number from 0 to the last step the maker has
+    if (input.step !== undefined && (!Number.isInteger(input.step) || input.step < 0 || input.step > LAST_STEP)) {
+      throw AppError.validation({ step: `Must be a whole number from 0 to ${LAST_STEP}.` });
+    }
     const zone = input.timeZone;
     if (zone !== undefined && !isTimeZone(zone)) throw AppError.validation({ timeZone: "Not a time zone, for example Africa/Lagos." });
     const wedding = this.weddingOf(input.makerNote);
@@ -412,6 +432,14 @@ export class WishesService {
       if (cur.version !== input.version) {
         throw new AppError(409, "stale_version", "This wish changed somewhere else. Load it again.", { version: String(cur.version) });
       }
+      // HP2: an occasion must be one the (new or current) kind has; the kind may be changed in the same save
+      if (occasion !== undefined && !kindHasOccasion(kind ?? cur.kind, occasion)) {
+        throw AppError.validation({ occasion: `The ${kind ?? cur.kind} kind has no occasion called ${occasion}.` });
+      }
+      // L2: a new kind sent alone must still fit the occasion the draft holds; the person sends both to change both
+      if (kind !== undefined && occasion === undefined && kind !== cur.kind && !kindHasOccasion(kind, cur.occasion)) {
+        throw AppError.validation({ occasion: `The ${kind} kind has no occasion called ${cur.occasion}. Send the kind and an occasion it has.` });
+      }
       const data: Prisma.WishUncheckedUpdateInput = { version: { increment: 1 } };
       if (kind !== undefined) data.kind = kind;
       if (occasion !== undefined) data.occasion = occasion;
@@ -421,7 +449,12 @@ export class WishesService {
       if (input.step !== undefined) data.step = input.step;
       if (passHash !== undefined) data.passcodeHash = passHash;
       if (wedding !== undefined) data.weddingDate = wedding.date;
-      if (input.makerNote !== undefined) data.makerNote = { ...((cur.makerNote ?? {}) as Obj), ...input.makerNote } as Prisma.InputJsonValue;
+      if (input.makerNote !== undefined) {
+        // the stored note is the merge, so the limit is on the merged note (a long run of small saves cannot pile past it)
+        const merged = { ...((cur.makerNote ?? {}) as Obj), ...input.makerNote };
+        if (JSON.stringify(merged).length > MAKER_NOTE_MAX) throw AppError.validation({ makerNote: "Too large." });
+        data.makerNote = merged as Prisma.InputJsonValue;
+      }
       const tz = zone ?? cur.timeZone;
       if (zone !== undefined) data.timeZone = zone;
       if (input.opensAt !== undefined) {
@@ -451,7 +484,7 @@ export class WishesService {
   /** makerNote.wedding: a date (yyyy-mm-dd) or null. Answers undefined when the note does not say. */
   private weddingOf(note: Obj | undefined): { date: Date | null } | undefined {
     if (!note) return undefined;
-    if (JSON.stringify(note).length > 8192) throw AppError.validation({ makerNote: "Too large." });
+    if (JSON.stringify(note).length > MAKER_NOTE_MAX) throw AppError.validation({ makerNote: "Too large." });
     if (!("wedding" in note)) return undefined;
     const v = note.wedding;
     if (v === null || v === "") return { date: null };

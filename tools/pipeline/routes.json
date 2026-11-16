@@ -1329,6 +1329,10 @@
         "staff:support"
       ],
       "decision": "DEC-112"
+    },
+    "api-base-4:*": {
+      "drop": true,
+      "decision": "DEC-220"
     }
   },
   "endpointAuth": {
@@ -1675,6 +1679,17 @@
         "staff:ops"
       ],
       "decision": "DEC-199"
+    },
+    {
+      "resource": "DayPick",
+      "method": "GET",
+      "path": "/v1/admin/showing/days",
+      "auth": [
+        "staff:moderator",
+        "staff:ops",
+        "staff:owner"
+      ],
+      "decision": "DEC-226"
     }
   ],
   "fulfilment": {
@@ -2431,6 +2446,83 @@
         "occasion": "string (optional; the occasion chosen so far: counts as an answer when sent)",
         "style": "string (optional; the style chosen so far: counts as an answer when sent; absent, the default style)",
         "idempotency-key": "header (optional: 8 to 100 letters, digits or . _ : -; the same key answers the same draft, one row)"
+      }
+    },
+    "PATCH /v1/admin/staff-accounts/:id": [
+      {
+        "decision": "DEC-223",
+        "set": {
+          "version": "integer (the version the member had when read; another change since is 409 stale_version)"
+        },
+        "require": [
+          "version"
+        ]
+      }
+    ],
+    "POST /v1/admin/staff-accounts/:id/suspend": [
+      {
+        "decision": "DEC-223",
+        "set": {
+          "version": "integer (the version the member had when read; another change since is 409 stale_version)"
+        },
+        "require": [
+          "version"
+        ]
+      }
+    ],
+    "POST /v1/admin/team/:id/remove": [
+      {
+        "decision": "DEC-223",
+        "set": {
+          "version": "integer (the version the member had when read; another change since is 409 stale_version)"
+        },
+        "require": [
+          "version"
+        ]
+      }
+    ],
+    "GET /v1/admin/team": {
+      "decision": "DEC-223",
+      "set": {
+        "includeRemoved": "'true'|'false' (optional; removed members are left out unless 'true')"
+      }
+    },
+    "PUT /v1/creators/:handle/follow": [
+      {
+        "decision": "DEC-225",
+        "drop": [
+          "handle"
+        ]
+      }
+    ],
+    "DELETE /v1/creators/:handle/follow": [
+      {
+        "decision": "DEC-225",
+        "drop": [
+          "handle"
+        ]
+      }
+    ],
+    "GET /v1/wishes/:id/link": {
+      "decision": "DEC-221",
+      "response": {
+        "entity": "WishLinkRead {link,slug}",
+        "cardinality": "single",
+        "note": "{link, slug}: the path of the public link and its slug (DEC-221)"
+      }
+    },
+    "GET /v1/admin/showing/days": {
+      "decision": "DEC-226",
+      "response": {
+        "entity": "DayPick",
+        "cardinality": "list",
+        "note": "the wish-of-the-day picks from today to the next 6 days, by date; a day with no pick is left out (DEC-226)"
+      }
+    },
+    "GET /v1/admin/people": {
+      "decision": "DEC-226",
+      "set": {
+        "q": "string (optional; a name, an email, an account id or a wish number)"
       }
     }
   },

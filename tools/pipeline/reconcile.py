@@ -982,6 +982,9 @@ def main():
     for d_ in decisions:
         for fk, ft in sorted((d_.get("fieldTypes") or {}).items()):
             field_types[fk] = (ft, d_["id"])
+    field_nullable = set()
+    for d_ in decisions:
+        field_nullable |= set(d_.get("fieldNullable") or [])
     ep_keys = sorted(endpoints, key=lambda k: (endpoints[k]["resource"], k[1], k[0]))
     # Endpoint ids are stable across a reopen (INT-1): an endpoint keeps the id the registry gave it; a new endpoint takes the
     # next free number, in sorted order. A first run (no registry yet) numbers in sorted order.
@@ -1046,6 +1049,9 @@ def main():
                 row_f["type"] = "object"
             if "%s.%s" % (rname, fname) in field_types:
                 row_f["type"], row_f["typeBy"] = field_types["%s.%s" % (rname, fname)]
+            # HP4 (DEC-219): a decision may rule a field nullable (Wish.no is null until a wish is sealed)
+            if "%s.%s" % (rname, fname) in field_nullable:
+                row_f["nullable"] = True
             fields.append(row_f)
         eps = []
         for k in ep_keys:

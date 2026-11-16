@@ -6,7 +6,8 @@ import {
   PostReportsBodyDto, PostWBySlugTakeDownParamsDto,
   DeleteAdminBansByIdBodyDto, DeleteAdminBansByIdParamsDto,
 } from "../../contracts";
-import { Public } from "../../common/auth/decorators";
+import { CurrentPrincipal, Public } from "../../common/auth/decorators";
+import type { Principal } from "../../common/auth/principal";
 import type { AuditActor } from "../audit/audit.service";
 import { AdminRoute, StaffActor } from "../role-access/staff-section.guard";
 import { BansService } from "./bans.service";
@@ -50,8 +51,8 @@ export class ModerationController {
   /** E-149. */
   @AdminRoute("/admin/moderation", "moderator", "ops", "owner")
   @Get("admin/moderation")
-  queues(@Query() q: GetAdminModerationQueryDto) {
-    return this.reports.list(q);
+  queues(@Query() q: GetAdminModerationQueryDto, @StaffActor() actor: AuditActor, @CurrentPrincipal() who: Principal | undefined) {
+    return this.reports.list(q, { actor, roles: who?.kind === "staff" ? who.roles : [] });
   }
 
   /** E-150. */

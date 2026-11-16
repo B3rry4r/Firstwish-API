@@ -694,3 +694,12 @@ GD3 (B23 verify, medium) The seed export keeps rows that differ only in nested f
     served (99, not 97); a test counts each of the four lists against the web app's own files.
 GD4 (B23 verify, medium) Ending purposes are read by any signed-in person (the maker every sender uses reads them); the
     registry is corrected at the closing base. (All four: B23 patch.) Lows -> sweep.
+HB1 (B22 verify, high) A wish's end is always worked out from scratch by one function, never by adding to or taking from the
+    stored end: start from the wish's own term end (first open + the ticket's term, the wedding rule EE8); for each paid keep
+    that still stands, in the order bought: begin at the later of the running end and the moment it was bought, then add its
+    days; the end is the later of that and the end of any live Pass of the owner. Every event calls it (a keep paid or
+    refunded, a Pass bought, ended or refunded, a wake). keptBy says what holds the end (keep, pass or none). Never an end
+    later than what is paid for or covered; never earlier. Default (lead), owner may override: a keep bought while a Pass
+    covers the wish counts its days from the day it was bought.
+HB2 (B22 verify, low) The Pass read shows the end of the last live Pass when two are stacked; a refund schedules no rest job
+    for a wish that already rests. (Both with HB1: B22 patch.)

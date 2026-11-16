@@ -64,6 +64,15 @@
    "locale": "en-NG",
    "subject": "{business} invited you to Firstwish",
    "version": 1
+  },
+  {
+   "seedKey": "reveal:en-NG:1",
+   "body": "Hi {name},\n\n{business} has sent you your photos. Open them here:\n{link}\n\nThe link is yours. Please do not share it.\n\nFirstwish",
+   "channel": "email",
+   "key": "reveal",
+   "locale": "en-NG",
+   "subject": "{business} sent you your photos",
+   "version": 1
   }
  ]
 }

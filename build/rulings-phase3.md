@@ -602,3 +602,8 @@ CB3 (B19 verify, low) The order's maker may make its QR card as the registry say
 SA6 (P-B15 re-check, round 2: lead rules) Merge. The two left-overs are small and go into the wave 5 join (J8): the AI answer's
     `art` is checked like the rest; saving a draft wish with its own style again is never refused. The file-not-ready check
     stays stricter on the server.
+CB4 (P-B19 hand-back) E-141 reading the token itself is accepted only until the next shared base, where the guard lets one
+    route take a user or a staff member. A maker's card for an order's wishes needs no per-wish card check (the card is part
+    of the order). The changes in payments.service and fulfilment.registry (the start check may set the price and answer a
+    pending payment) are accepted subject to the re-check.
+CB5 (P-B19 hand-back) A staff quote cannot be changed while a payment for that order is pending (409). (Wave 5 join.)

@@ -31,3 +31,5 @@ names; the tables for the baseline; any test that failed in any of the three run
  J8 (Studio re-check, added by the lead): studio-doc.ts shapeParts also checks `art` (an AI answer with a bad `art` is 502 with
     the credits back, as a save refuses it); a draft wish saved again with its own current style is accepted even after that
     style has gone off (wishes.service.ts:302: only a CHANGE to an off style is 422). Tests for both.
+ J9 (CB5, added by the lead): changing a Concierge order's quote while a payment for it is pending is 409; after the payment
+    fails or lapses it works. Test.

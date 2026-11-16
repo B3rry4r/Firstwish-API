@@ -4,7 +4,7 @@ prisma through schema-map.json + gen_schema.py and ONE new migration, src/common
 build/baselines/drift-tables.txt (remove a line when its table becomes a model; never add one); and you may touch
 src/modules/** only where a shared change forces it (list each touch).
 Read /home/user/Firstwish-API/build/common-rules.md, build/prompts/P5-COMMON.md, build/prompts/INT-4.md (how the last one was done), then in
-build/rulings-phase3.md the lines OO4, PP1-PP3, QQ1, QQ2, QQ6, VV1, VV3, WW3, WW4, WW7, XX4, YY1-YY3, ZZ5, ZB1, CA2, CB3, and the
+build/rulings-phase3.md the lines OO4, PP1-PP3, QQ1, QQ2, QQ6, VV1, VV3, WW3, WW4, WW7, XX4, YY1-YY3, ZZ5, ZB1, CA2, CB3, CB4, and the
 rows of build/sweeps/api.md that say "next shared base" or "one masker".
 Work: local branch `int-5` from claude/sleepy-mayer-f0hkb8 (the head in your spawn line) of /home/user/Firstwish-API; worktree
 /tmp/claude-0/-home-user/533566a9-6497-503f-863f-065ac253d739/scratchpad/build/wt/b-int-5 (`npm ci`); ports 4890-4899; TEST_DB_PREFIX=int5 for every run.
@@ -25,7 +25,7 @@ Work: local branch `int-5` from claude/sleepy-mayer-f0hkb8 (the head in your spa
     provider ports move to src/common/ports beside the payments port (PP1, WW3); the email port carries replyTo and the
     Resend adapter sends it, and gains a call that fetches a received email by id which the support webhook uses (YY1, YY2;
     NOT RUN against Resend: say so); RESEND_WEBHOOK_SECRET in the env schema and manifest and a `resend` webhook provider in
-    the guard (YY3); the storage port gains a server-side put for both adapters (CA2).
+    the guard (YY3); the storage port gains a server-side put for both adapters (CA2); the access guard lets one route take a user or a staff member (CB4: E-141 stops reading the token itself); scripts/export-seed-data.mjs keeps the messages that exist only on the server.
  4. The joins the shared changes force, each with a test named by its id: the bundles' raw SQL on tables that became models
     is replaced by the models where it is a small change (else leave it and say so); refunds, payouts, support, concierge,
     studio and showing use the new columns, routes and ports; E-231 and E-148 answer the new shape; lifting a ban works

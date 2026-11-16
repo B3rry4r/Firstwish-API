@@ -1,5 +1,7 @@
 import { createServer, type IncomingMessage, type Server } from "node:http";
 import type { AddressInfo } from "node:net";
+import { Prisma } from "@prisma/client";
+import { databaseUnavailable } from "../../src/common/errors/error-envelope.filter";
 import { Money } from "../../src/common/money/money";
 import { PaystackRefundProvider } from "../../src/common/ports/adapters/paystack-refund-provider";
 
@@ -50,5 +52,15 @@ describe("B08: findRefund matches the amount", () => {
     const p = new PaystackRefundProvider("sk_test_x", base);
     expect(await p.refund({ refundId: "r2", paymentReference: "ref-1", amount: Money.kobo(150000) })).toEqual({ providerReference: "777" });
     expect(posts).toEqual(["/refund"]);
+  });
+});
+
+describe("INT-7: a wait that ran out is the database not answering (503), any other failure is not", () => {
+  it("P2028 (a transaction that could not start in time) is unavailable; an ordinary error is not", () => {
+    const wait = new Prisma.PrismaClientKnownRequestError("Unable to start a transaction in the given time.", { code: "P2028", clientVersion: "x" });
+    const unique = new Prisma.PrismaClientKnownRequestError("Unique constraint failed", { code: "P2002", clientVersion: "x" });
+    expect(databaseUnavailable(wait)).toBe(true);
+    expect(databaseUnavailable(unique)).toBe(false);
+    expect(databaseUnavailable(new Error("boom"))).toBe(false);
   });
 });

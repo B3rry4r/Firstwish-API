@@ -167,6 +167,17 @@ describe("Wave 4 join: invoices with payments and refunds (J1), a refund of a li
     const taken = (await takenNumbers()).sort((a, b) => a - b);
     expect(taken).toEqual(Array.from({ length: taken.length }, (_, i) => taken[0] + i));
     expect(await counter()).toBeGreaterThanOrEqual(before);
+    // INT-7: the counter stands at the highest number taken: a number the rolled-back settle kept would leave it one above. Other specs
+    // issue numbers too, so the pair is read until the highest number did not move while the counter was read.
+    let last: { top: number; counter: number } = { top: -1, counter: -2 };
+    for (let i = 0; i < 8; i++) {
+      const top = Math.max(...(await takenNumbers()));
+      const c = await counter();
+      last = { top, counter: c };
+      if (Math.max(...(await takenNumbers())) === top && c === top) break;
+      await new Promise((r) => setTimeout(r, 150));
+    }
+    expect(last.counter).toBe(last.top);
   });
 
   /** A paid ticket on a wish that is now live and listed on Now showing. */

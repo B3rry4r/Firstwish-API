@@ -6,7 +6,7 @@ import { PrismaService } from "../../common/db/prisma.service";
 import type { Env } from "../../common/env/env";
 import { ENV } from "../../common/env/env.module";
 import { AppError } from "../../common/errors/app-error";
-import { normaliseEmail } from "../../common/normalise/email";
+import { canonicalEmail, normaliseEmail } from "../../common/normalise/email";
 import { decodeCursor, DEFAULT_LIMIT, encodeCursor, Page } from "../../common/pagination/cursor";
 import { Clock } from "../../common/ports/clock.port";
 import { CodeGenerator, IdGenerator } from "../../common/ports/ids.port";
@@ -123,7 +123,7 @@ export class ReportsService {
   private async sendCode(slug: string, email: string, address: string | null): Promise<Obj> {
     await this.limits.take("take-down", address);
     // B13: a code is mailed to a typed address, so one address is also limited on its own, whoever asks and from wherever.
-    await this.limits.take("take-down-email", email, TAKE_DOWN_CODES_PER_EMAIL_PER_DAY);
+    await this.limits.take("take-down-email", canonicalEmail(email) ?? email, TAKE_DOWN_CODES_PER_EMAIL_PER_DAY); // a+1@ and a+2@ are one mailbox
     const now = this.clock.now();
     const id = this.ids.id();
     const code = this.codes.digits(6);

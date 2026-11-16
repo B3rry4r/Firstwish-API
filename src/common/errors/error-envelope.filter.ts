@@ -93,8 +93,11 @@ function envelope(code: string, message: string, requestId: string, fields?: Err
   return { error: fields && Object.keys(fields).length ? { code, message, fields, requestId } : { code, message, requestId } };
 }
 
-/** Prisma's errors for a database it cannot reach: connection refused, timed out, closed, or no connection from the pool. */
-const UNREACHABLE = new Set(["P1001", "P1002", "P1008", "P1017", "P2024"]);
+/**
+ * Prisma's errors for a database it cannot reach: connection refused, timed out, closed, or no connection from the pool. P2028 is
+ * a transaction that could not start, or ran past its time, because the database was busy (a wait that ran out): the caller may try again.
+ */
+const UNREACHABLE = new Set(["P1001", "P1002", "P1008", "P1017", "P2024", "P2028"]);
 export function databaseUnavailable(e: unknown): boolean {
   if (!e || typeof e !== "object") return false;
   const name = (e as { name?: unknown }).name;

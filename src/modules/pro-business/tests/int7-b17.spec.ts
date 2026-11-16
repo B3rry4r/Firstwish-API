@@ -4,6 +4,7 @@ import { PrismaService } from "../../../common/db/prisma.service";
 import { UuidV7Maker } from "../../../common/ids/uuidv7";
 import { bearer } from "../../people/tests/b12-kit";
 import { createTestApp, TestApp } from "../../../../test/kit/app";
+import { ClientWishesService } from "../client-wishes.service";
 import { SettlementService } from "../../payments/settlement.service";
 
 const ROOT = join(__dirname, "../../../..");
@@ -43,13 +44,7 @@ describe("INT-7 B17: a downgrade keeps the logins, tells the owner once, and the
   };
   const live = (over: Record<string, unknown> = {}) =>
     owner({ plan: "studio", allowance: 35, used: 0, rolled: 0, month: "2026-12", renews: new Date("2027-01-01T09:00:00.000Z"), ...over });
-  const staffToken = (roles: ("owner" | "ops" | "finance" | "moderator")[]) => {
-    const token = `i7b17-staff-${++seq}-${run}`;
-    t.tokens.set(token, { kind: "staff", staffId: ids.next(), roles });
-    return token;
-  };
   const get = (path: string, token?: string) => (token ? t.http().get(path).set(bearer(token)) : t.http().get(path));
-  const wishBody = { client: "Ada Obi", kind: "birthday", occasion: "birthday", day: "2027-03-04" };
 
   async function pay(o: { accountId: string; businessId: string }, sku: string) {
     const book = await db.price.findFirstOrThrow({ where: { sku }, orderBy: { version: "desc" } });
@@ -101,5 +96,21 @@ describe("INT-7 B17: a downgrade keeps the logins, tells the owner once, and the
     await pay(o, "pro.studio");
     expect((await get("/v1/business/logins", o.token)).body.items.map((x: { overPlan: boolean }) => x.overPlan)).toEqual([false]);
     expect(await db.messageDelivery.count({ where: { templateKey: "logins-over", to: o.email } })).toBe(0);
+  });
+
+  it("INT-7: an invited login that has not accepted is not a member for making client wishes; an active one is", async () => {
+    const o = await live();
+    const m = await who();
+    const loginId = ids.next();
+    await db.login.create({ data: { id: loginId, businessId: o.businessId, contact: m.email, status: "invited" } });
+    const svc = t.app.get(ClientWishesService);
+    const body = { client: "Ada Obi", kind: "birthday", occasion: "birthday", day: "2027-03-04" } as never;
+    const e: unknown = await svc.create(m.accountId, o.businessId, body).catch((x: unknown) => x);
+    expect((e as { getStatus?: () => number }).getStatus?.()).toBe(404);
+    expect(await db.clientWish.count({ where: { businessId: o.businessId } })).toBe(0);
+    await db.login.update({ where: { id: loginId }, data: { status: "active" } });
+    const made = await svc.create(m.accountId, o.businessId, body);
+    expect(made.id).toBeDefined();
+    expect(await db.clientWish.count({ where: { businessId: o.businessId } })).toBe(1);
   });
 });

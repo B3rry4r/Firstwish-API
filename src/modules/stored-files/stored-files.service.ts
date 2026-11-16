@@ -42,15 +42,22 @@ const isStillUsed = (e: unknown) => e instanceof Prisma.PrismaClientKnownRequest
 
 const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 
-/** Vault space: the plan's GB plus every live pack's GB (entitlements.pro; DEC-96 price book). */
-export async function vaultLimitBytes(tx: Tx, biz: Pick<Business, "plan" | "pack" | "packEnds">, now: Date): Promise<number> {
+/**
+ * Vault space (GG4): the plan's GB plus the GB of every live grant: a wish pack's (its vaultGb, for its 90 days) and bought Vault
+ * space (its gb, for its period), read from the grants (not refunded, not refused, not past their end). business.pack is wishes left.
+ */
+export async function vaultLimitBytes(tx: Tx, biz: Pick<Business, "id" | "plan">, now: Date): Promise<number> {
   const e = await tx.entitlements.findFirst();
   if (!e) throw new AppError(HttpStatus.SERVICE_UNAVAILABLE, "entitlements_missing", "Vault space cannot be worked out right now.");
   const pro = (e.pro ?? {}) as Record<string, { vaultGb?: unknown } | undefined>;
   const gb = (x: unknown) => (typeof x === "number" && x > 0 ? x : 0);
   const planGb = biz.plan && biz.plan !== "pack" ? gb(pro[biz.plan]?.vaultGb) : 0;
-  const packGb = biz.packEnds && biz.packEnds > now ? Math.max(0, biz.pack ?? 0) * gb(pro.pack?.vaultGb) : 0;
-  return (planGb + packGb) * GB;
+  const grants = await tx.purchaseGrant.findMany({
+    where: { businessId: biz.id, kind: { in: ["wish-pack", "vault-space"] }, revokedAt: null, refusedReason: null, endsAt: { gt: now } },
+    select: { kind: true, detail: true },
+  });
+  const grantGb = grants.reduce((n, g) => n + gb(((g.detail ?? {}) as Record<string, unknown>)[g.kind === "wish-pack" ? "vaultGb" : "gb"]), 0);
+  return (planGb + grantGb) * GB;
 }
 
 @Injectable()

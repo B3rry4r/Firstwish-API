@@ -86,6 +86,9 @@ export class PatchMeBodyDto implements PatchMeBody {
   @IsOptional()
   @IsIn(["me", "business", "creator"])
   space?: "me" | "business" | "creator";
+  @IsOptional()
+  @IsString()
+  timeZone?: string;
 }
 
 /** E-8 DELETE /v1/me/business (body). */

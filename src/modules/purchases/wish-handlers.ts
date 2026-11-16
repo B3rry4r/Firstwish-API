@@ -8,6 +8,7 @@ import { EventsService } from "../events/events.service";
 import type { FulfilmentContext } from "../payments/fulfilment.registry";
 import { JobsService } from "../jobs/jobs.service";
 import { NOTICE_DAYS, WishLifecycleService } from "../wishes/wish-lifecycle.service";
+import { WishesService } from "../wishes/wishes.service";
 import { addDays, DAY_MS, GrantStore, num, type GrantRow, type Tx } from "./grants";
 import { assessExtra, assessKeep, assessTicket, readWish, TICKET_ORDER, type WishFacts } from "./wish-rules";
 
@@ -21,7 +22,10 @@ function longest(lengths: (string | null)[]): $Enums.WishKeep | null {
 const SLUG = /^[a-z0-9][a-z0-9-]{0,63}$/;
 type TicketName = (typeof TICKET_ORDER)[number];
 
-/** The ticket, the extras and the keeps: what a payment does to one wish. Every handler runs in the payment's own transaction. */
+/**
+ * The ticket, the extras and the keeps: what a payment does to one wish. Every handler runs in the payment's own transaction. The
+ * ticket is given by the wish bundle's fulfilTicketIn (GG2): one way to give a wish its ticket.
+ */
 @Injectable()
 export class WishHandlers {
   constructor(
@@ -32,6 +36,7 @@ export class WishHandlers {
     private readonly events: EventsService,
     private readonly jobs: JobsService,
     private readonly clock: Clock,
+    private readonly wishes: WishesService,
   ) {}
 
   /** Locks the wish the payment names (a missing one or one that is no uuid is null) and reads it under that lock. */
@@ -55,9 +60,9 @@ export class WishHandlers {
     const why = assessTicket(w, ctx.payment.accountId, ticket);
     if (why || !w) return this.store.refuse(tx, ctx, grantId, why ?? "wish_not_payers");
     const grant = await ctx.grant();
-    await tx.wish.update({ where: { id: w.id }, data: { ticket, version: { increment: 1 } } });
+    await this.wishes.fulfilTicketIn(tx, w.id, ticket);
     await this.store.record(tx, grantId, { wishId: w.id, ticket, previousTicket: w.ticket, termDays: num(grant.termDays), photos: num(grant.photos) });
-    await tx.$executeRaw`UPDATE purchase_grant SET "wishId" = ${w.id}::uuid WHERE id = ${grantId}::uuid`;
+    await this.store.nameWish(tx, grantId, w.id);
     await this.paidInStyle(tx, ctx, w.id);
   }
 
@@ -86,7 +91,7 @@ export class WishHandlers {
     const grant = await ctx.grant();
     await tx.wish.update({ where: { id: w.id }, data: { adds: [...w.adds, line.sku], version: { increment: 1 } } });
     await this.store.record(tx, grantId, { wishId: w.id, extra: line.sku, ticket: w.ticket, gives: grant });
-    await tx.$executeRaw`UPDATE purchase_grant SET "wishId" = ${w.id}::uuid WHERE id = ${grantId}::uuid`;
+    await this.store.nameWish(tx, grantId, w.id);
   }
 
   async keep(ctx: FulfilmentContext): Promise<void> {
@@ -126,7 +131,7 @@ export class WishHandlers {
         previousKeep: before.keep, previousKeptUntil: before.keptUntil?.toISOString() ?? null, previousKeptBy: before.keptBy },
       endsAt,
     );
-    await tx.$executeRaw`UPDATE purchase_grant SET "wishId" = ${w.id}::uuid WHERE id = ${grantId}::uuid`;
+    await this.store.nameWish(tx, grantId, w.id);
   }
 
   /** A refund takes the ticket back while the wish is still a draft; a keep takes its days off the end; an extra comes off the list. */
@@ -156,18 +161,24 @@ export class WishHandlers {
     if (g.kind === "keep" && w.endsAt) {
       // HH4: the days come off the end, and keep, keptBy and keptUntil are worked out again from the keeps that remain.
       const endsAt = new Date(w.endsAt.getTime() - num(d.days) * DAY_MS);
-      const rest = await tx.$queryRaw<{ detail: Record<string, unknown> }[]>`
-        SELECT detail FROM purchase_grant
-         WHERE "wishId" = ${w.id}::uuid AND kind = 'keep' AND "revokedAt" IS NULL AND "refusedReason" IS NULL AND id <> ${g.id}::uuid
-         ORDER BY "createdAt" DESC, id DESC`;
+      const rest = (
+        await tx.purchaseGrant.findMany({
+          where: { wishId: w.id, kind: "keep", revokedAt: null, refusedReason: null, id: { not: g.id } },
+          orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+          select: { detail: true },
+        })
+      ).map((r) => ({ detail: (r.detail ?? {}) as Record<string, unknown> }));
       let marks: { keep: $Enums.WishKeep | null; keptBy: $Enums.WishKeptBy | null; keptUntil: Date | null };
       if (rest.length) {
         marks = { keep: longest(rest.map((r) => (typeof r.detail.length === "string" ? r.detail.length : null))), keptBy: "keep", keptUntil: endsAt };
       } else {
         // No keep left: what the wish carried before its first keep (revoked ones included) is what it carries again.
-        const first = await tx.$queryRaw<{ detail: Record<string, unknown> }[]>`
-          SELECT detail FROM purchase_grant WHERE "wishId" = ${w.id}::uuid AND kind = 'keep' AND "refusedReason" IS NULL ORDER BY "createdAt", id LIMIT 1`;
-        const was = first[0]?.detail ?? d;
+        const first = await tx.purchaseGrant.findFirst({
+          where: { wishId: w.id, kind: "keep", refusedReason: null },
+          orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+          select: { detail: true },
+        });
+        const was = (first?.detail ?? d) as Record<string, unknown>;
         marks = {
           keep: typeof was.previousKeep === "string" ? (was.previousKeep as $Enums.WishKeep) : null,
           keptBy: typeof was.previousKeptBy === "string" ? (was.previousKeptBy as $Enums.WishKeptBy) : null,

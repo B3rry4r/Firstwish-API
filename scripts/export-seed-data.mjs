@@ -128,8 +128,16 @@ const TABLES = {
   },
   MessageTemplate: {
     from: "lib/admin/d-fixtures.ts (templates)", key: (r) => `${r.key}:${r.locale}:${r.version}`,
-    rows: () => web("lib/admin/d-fixtures.ts").templates.map((t) => ({ key: t.key, channel: "email", locale: "en-NG", version: 1, subject: t.subject, body: t.body })),
+    // INT-4: the staff invite has its own wording (plain short words); the web app's fixtures hold no such message.
+    rows: () => web("lib/admin/d-fixtures.ts").templates.map((t) => ({ key: t.key, channel: "email", locale: "en-NG", version: 1, subject: t.subject, body: t.body })).concat([INVITE]),
   },
+};
+
+/** The staff invite (INT-4): a sign-in code with its own lead line. Wording the owner's rules allow: plain short words, no emoji. */
+const INVITE = {
+  key: "invite", channel: "email", locale: "en-NG", version: 1,
+  subject: "You are invited to the Firstwish team",
+  body: "Hi,\n\nYou are invited to the Firstwish team. Use this code to sign in: {code}. It works for 10 minutes.\n\nIf you did not expect this, you can leave this email.\n\nFirstwish",
 };
 
 const sortKeys = (v) => (Array.isArray(v) ? v.map(sortKeys) : v && typeof v === "object" ? Object.fromEntries(Object.keys(v).sort().map((k) => [k, sortKeys(v[k])])) : v);

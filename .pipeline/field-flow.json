@@ -648,6 +648,22 @@
       "noWriter": false
     },
     {
+      "field": "Account.timeZone",
+      "writers": [
+        "E-7"
+      ],
+      "store": "Account",
+      "readers": [],
+      "writerActors": [
+        "business",
+        "creator",
+        "person"
+      ],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": false
+    },
+    {
       "field": "Account.wishCount",
       "writers": [],
       "store": "Account",
@@ -5901,6 +5917,26 @@
       "noWriter": false
     },
     {
+      "field": "MessageTemplate.editedAt",
+      "writers": [],
+      "store": "MessageTemplate",
+      "readers": [],
+      "writerActors": [],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "MessageTemplate.editedBy",
+      "writers": [],
+      "store": "MessageTemplate",
+      "readers": [],
+      "writerActors": [],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
       "field": "MessageTemplate.key",
       "writers": [
         "server:messages-email"
@@ -5927,6 +5963,36 @@
       "readerActors": [],
       "crossActor": false,
       "noWriter": false
+    },
+    {
+      "field": "MessageTemplate.name",
+      "writers": [],
+      "store": "MessageTemplate",
+      "readers": [],
+      "writerActors": [],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "MessageTemplate.placeholders",
+      "writers": [],
+      "store": "MessageTemplate",
+      "readers": [],
+      "writerActors": [],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "MessageTemplate.subject",
+      "writers": [],
+      "store": "MessageTemplate",
+      "readers": [],
+      "writerActors": [],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": true
     },
     {
       "field": "MessageTemplate.version",
@@ -9191,6 +9257,16 @@
       "noWriter": true
     },
     {
+      "field": "PublicWishView.files",
+      "writers": [],
+      "store": "PublicWishView",
+      "readers": [],
+      "writerActors": [],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
       "field": "PublicWishView.keepOffer",
       "writers": [
         "server:wish-link"
@@ -9244,6 +9320,16 @@
     },
     {
       "field": "PublicWishView.openedAt",
+      "writers": [],
+      "store": "PublicWishView",
+      "readers": [],
+      "writerActors": [],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "PublicWishView.opening",
       "writers": [],
       "store": "PublicWishView",
       "readers": [],
@@ -16494,6 +16580,16 @@
       "noWriter": false
     },
     {
+      "field": "Wish.activity",
+      "writers": [],
+      "store": "Wish",
+      "readers": [],
+      "writerActors": [],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
       "field": "Wish.adds",
       "writers": [
         "E-231"
@@ -16574,23 +16670,17 @@
     },
     {
       "field": "Wish.blessing",
-      "writers": [
-        "E-225"
-      ],
+      "writers": [],
       "store": "Wish",
       "readers": [
         "maker-ask"
       ],
-      "writerActors": [
-        "business",
-        "creator",
-        "person"
-      ],
+      "writerActors": [],
       "readerActors": [
         "person"
       ],
       "crossActor": false,
-      "noWriter": false
+      "noWriter": true
     },
     {
       "field": "Wish.businessId",
@@ -16608,9 +16698,7 @@
     },
     {
       "field": "Wish.call",
-      "writers": [
-        "E-225"
-      ],
+      "writers": [],
       "store": "Wish",
       "readers": [
         "app-home",
@@ -16640,59 +16728,43 @@
         "maker-when",
         "receiver-wish-mine"
       ],
-      "writerActors": [
-        "business",
-        "creator",
-        "person"
-      ],
+      "writerActors": [],
       "readerActors": [
         "business",
         "creator",
         "person",
         "public"
       ],
-      "crossActor": true,
-      "noWriter": false
+      "crossActor": false,
+      "noWriter": true
     },
     {
       "field": "Wish.captions",
-      "writers": [
-        "E-225"
-      ],
+      "writers": [],
       "store": "Wish",
       "readers": [
         "maker-ask"
       ],
-      "writerActors": [
-        "business",
-        "creator",
-        "person"
-      ],
+      "writerActors": [],
       "readerActors": [
         "person"
       ],
       "crossActor": false,
-      "noWriter": false
+      "noWriter": true
     },
     {
       "field": "Wish.chapter",
-      "writers": [
-        "E-225"
-      ],
+      "writers": [],
       "store": "Wish",
       "readers": [
         "maker-ask"
       ],
-      "writerActors": [
-        "business",
-        "creator",
-        "person"
-      ],
+      "writerActors": [],
       "readerActors": [
         "person"
       ],
       "crossActor": false,
-      "noWriter": false
+      "noWriter": true
     },
     {
       "field": "Wish.content",
@@ -17370,23 +17442,17 @@
     },
     {
       "field": "Wish.credits",
-      "writers": [
-        "E-225"
-      ],
+      "writers": [],
       "store": "Wish",
       "readers": [
         "maker-ask"
       ],
-      "writerActors": [
-        "business",
-        "creator",
-        "person"
-      ],
+      "writerActors": [],
       "readerActors": [
         "person"
       ],
       "crossActor": false,
-      "noWriter": false
+      "noWriter": true
     },
     {
       "field": "Wish.days",
@@ -17409,43 +17475,31 @@
     },
     {
       "field": "Wish.details",
-      "writers": [
-        "E-225"
-      ],
+      "writers": [],
       "store": "Wish",
       "readers": [
         "maker-ask"
       ],
-      "writerActors": [
-        "business",
-        "creator",
-        "person"
-      ],
+      "writerActors": [],
       "readerActors": [
         "person"
       ],
       "crossActor": false,
-      "noWriter": false
+      "noWriter": true
     },
     {
       "field": "Wish.effect",
-      "writers": [
-        "E-225"
-      ],
+      "writers": [],
       "store": "Wish",
       "readers": [
         "maker-chapters"
       ],
-      "writerActors": [
-        "business",
-        "creator",
-        "person"
-      ],
+      "writerActors": [],
       "readerActors": [
         "person"
       ],
       "crossActor": false,
-      "noWriter": false
+      "noWriter": true
     },
     {
       "field": "Wish.endsAt",
@@ -17565,23 +17619,17 @@
     },
     {
       "field": "Wish.finale",
-      "writers": [
-        "E-225"
-      ],
+      "writers": [],
       "store": "Wish",
       "readers": [
         "maker-ask"
       ],
-      "writerActors": [
-        "business",
-        "creator",
-        "person"
-      ],
+      "writerActors": [],
       "readerActors": [
         "person"
       ],
       "crossActor": false,
-      "noWriter": false
+      "noWriter": true
     },
     {
       "field": "Wish.forName",
@@ -17854,9 +17902,7 @@
     },
     {
       "field": "Wish.letter",
-      "writers": [
-        "E-225"
-      ],
+      "writers": [],
       "store": "Wish",
       "readers": [
         "app-home",
@@ -17879,19 +17925,15 @@
         "maker-when",
         "receiver-wish-mine"
       ],
-      "writerActors": [
-        "business",
-        "creator",
-        "person"
-      ],
+      "writerActors": [],
       "readerActors": [
         "business",
         "creator",
         "person",
         "public"
       ],
-      "crossActor": true,
-      "noWriter": false
+      "crossActor": false,
+      "noWriter": true
     },
     {
       "field": "Wish.link",
@@ -17910,23 +17952,17 @@
     },
     {
       "field": "Wish.links",
-      "writers": [
-        "E-225"
-      ],
+      "writers": [],
       "store": "Wish",
       "readers": [
         "maker-ask"
       ],
-      "writerActors": [
-        "business",
-        "creator",
-        "person"
-      ],
+      "writerActors": [],
       "readerActors": [
         "person"
       ],
       "crossActor": false,
-      "noWriter": false
+      "noWriter": true
     },
     {
       "field": "Wish.makerNote.chosen",
@@ -18270,23 +18306,17 @@
     },
     {
       "field": "Wish.memory",
-      "writers": [
-        "E-225"
-      ],
+      "writers": [],
       "store": "Wish",
       "readers": [
         "maker-ask"
       ],
-      "writerActors": [
-        "business",
-        "creator",
-        "person"
-      ],
+      "writerActors": [],
       "readerActors": [
         "person"
       ],
       "crossActor": false,
-      "noWriter": false
+      "noWriter": true
     },
     {
       "field": "Wish.name",
@@ -18386,23 +18416,17 @@
     },
     {
       "field": "Wish.note",
-      "writers": [
-        "E-225"
-      ],
+      "writers": [],
       "store": "Wish",
       "readers": [
         "maker-ask"
       ],
-      "writerActors": [
-        "business",
-        "creator",
-        "person"
-      ],
+      "writerActors": [],
       "readerActors": [
         "person"
       ],
       "crossActor": false,
-      "noWriter": false
+      "noWriter": true
     },
     {
       "field": "Wish.occasion",
@@ -18464,23 +18488,17 @@
     },
     {
       "field": "Wish.off",
-      "writers": [
-        "E-225"
-      ],
+      "writers": [],
       "store": "Wish",
       "readers": [
         "maker-ask"
       ],
-      "writerActors": [
-        "business",
-        "creator",
-        "person"
-      ],
+      "writerActors": [],
       "readerActors": [
         "person"
       ],
       "crossActor": false,
-      "noWriter": false
+      "noWriter": true
     },
     {
       "field": "Wish.on",
@@ -18581,9 +18599,7 @@
     },
     {
       "field": "Wish.patch",
-      "writers": [
-        "E-225"
-      ],
+      "writers": [],
       "store": "Wish",
       "readers": [
         "maker-ending",
@@ -18593,16 +18609,12 @@
         "maker-watch",
         "maker-when"
       ],
-      "writerActors": [
-        "business",
-        "creator",
-        "person"
-      ],
+      "writerActors": [],
       "readerActors": [
         "business"
       ],
       "crossActor": false,
-      "noWriter": false
+      "noWriter": true
     },
     {
       "field": "Wish.payWay",
@@ -18673,9 +18685,7 @@
     },
     {
       "field": "Wish.photos",
-      "writers": [
-        "E-225"
-      ],
+      "writers": [],
       "store": "Wish",
       "readers": [
         "app-home",
@@ -18700,19 +18710,15 @@
         "maker-when",
         "receiver-wish-mine"
       ],
-      "writerActors": [
-        "business",
-        "creator",
-        "person"
-      ],
+      "writerActors": [],
       "readerActors": [
         "business",
         "creator",
         "person",
         "public"
       ],
-      "crossActor": true,
-      "noWriter": false
+      "crossActor": false,
+      "noWriter": true
     },
     {
       "field": "Wish.price",
@@ -18769,7 +18775,6 @@
     {
       "field": "Wish.reasons",
       "writers": [
-        "E-225",
         "E-231"
       ],
       "store": "Wish",
@@ -18795,7 +18800,6 @@
       ],
       "writerActors": [
         "business",
-        "creator",
         "person"
       ],
       "readerActors": [
@@ -19120,7 +19124,6 @@
     {
       "field": "Wish.ticket",
       "writers": [
-        "E-225",
         "E-231"
       ],
       "store": "Wish",
@@ -19148,7 +19151,6 @@
       ],
       "writerActors": [
         "business",
-        "creator",
         "person"
       ],
       "readerActors": [
@@ -19180,46 +19182,34 @@
     },
     {
       "field": "Wish.timeline",
-      "writers": [
-        "E-225"
-      ],
+      "writers": [],
       "store": "Wish",
       "readers": [
         "admin-wishes",
         "admin-wishes-detail",
         "maker-ask"
       ],
-      "writerActors": [
-        "business",
-        "creator",
-        "person"
-      ],
+      "writerActors": [],
       "readerActors": [
         "person",
         "staff"
       ],
-      "crossActor": true,
-      "noWriter": false
+      "crossActor": false,
+      "noWriter": true
     },
     {
       "field": "Wish.type",
-      "writers": [
-        "E-225"
-      ],
+      "writers": [],
       "store": "Wish",
       "readers": [
         "maker-chapters"
       ],
-      "writerActors": [
-        "business",
-        "creator",
-        "person"
-      ],
+      "writerActors": [],
       "readerActors": [
         "person"
       ],
       "crossActor": false,
-      "noWriter": false
+      "noWriter": true
     },
     {
       "field": "Wish.updatedAt",
@@ -19254,43 +19244,31 @@
     },
     {
       "field": "Wish.voices",
-      "writers": [
-        "E-225"
-      ],
+      "writers": [],
       "store": "Wish",
       "readers": [
         "maker-ask"
       ],
-      "writerActors": [
-        "business",
-        "creator",
-        "person"
-      ],
+      "writerActors": [],
       "readerActors": [
         "person"
       ],
       "crossActor": false,
-      "noWriter": false
+      "noWriter": true
     },
     {
       "field": "Wish.voices.ask",
-      "writers": [
-        "E-225"
-      ],
+      "writers": [],
       "store": "Wish",
       "readers": [
         "maker-ask"
       ],
-      "writerActors": [
-        "business",
-        "creator",
-        "person"
-      ],
+      "writerActors": [],
       "readerActors": [
         "person"
       ],
       "crossActor": false,
-      "noWriter": false
+      "noWriter": true
     },
     {
       "field": "Wish.w.photos[0] fallback literal /img/aisha-1.webp",
@@ -19338,7 +19316,6 @@
       "field": "Wish.wishId",
       "writers": [
         "E-223",
-        "E-225",
         "E-227",
         "E-228",
         "E-230",
@@ -19375,7 +19352,6 @@
       ],
       "writerActors": [
         "business",
-        "creator",
         "person",
         "public",
         "server"
@@ -19959,6 +19935,6 @@
       "noWriter": false
     }
   ],
-  "crossActor": 37,
-  "noWriter": 611
+  "crossActor": 33,
+  "noWriter": 638
 }

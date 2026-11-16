@@ -28,6 +28,7 @@ describe("P-B05 rulings (payments)", () => {
     const r = spawnSync(process.execPath, [join(ROOT, "scripts/seed.mjs")], { cwd: ROOT, env: process.env, encoding: "utf8" });
     if (r.status !== 0) throw new Error(`seed failed: ${r.stderr}`);
     const registry = t.app.get(FulfilmentRegistry);
+    registry.clearStartChecks(); // INT-4 (GG3): this spec tests the payments core with stand-in handlers, not the start check
     for (const sku of ["ticket.keepsake", "extra.five-photos", "pass.year", "keep.month"]) {
       registry.replace(sku, () => {
         calls++;
@@ -266,6 +267,7 @@ describe("P-B05 FF1: a provider that never answers", () => {
     const r = spawnSync(process.execPath, [join(ROOT, "scripts/seed.mjs")], { cwd: ROOT, env: process.env, encoding: "utf8" });
     if (r.status !== 0) throw new Error(`seed failed: ${r.stderr}`);
     t.app.get(FulfilmentRegistry).replace("ticket.keepsake", () => Promise.resolve());
+    t.app.get(FulfilmentRegistry).clearStartChecks(); // INT-4 (GG3): a time-limit spec, not a start-check spec
   });
   afterAll(() => t.close());
 

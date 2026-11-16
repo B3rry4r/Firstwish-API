@@ -4,7 +4,7 @@ import {
   GetAdminMessagesLogQueryDto, GetAdminMessagesTemplatesQueryDto, GetMeNoticesQueryDto, PatchMeNoticePrefsBodyDto, PostAdminMessagesByIdResendBodyDto,
   PostAdminMessagesByIdResendParamsDto, PutAdminMessagesTemplatesByKeyBodyDto, PutAdminMessagesTemplatesByKeyParamsDto,
 } from "../../contracts";
-import type { MessageDelivery, Notice, NoticePrefs } from "../../contracts";
+import type { MessageDelivery, MessageTemplate, Notice, NoticePrefs } from "../../contracts";
 import { CurrentPrincipal, Roles } from "../../common/auth/decorators";
 import type { Principal } from "../../common/auth/principal";
 import { DEFAULT_LIMIT } from "../../common/pagination/cursor";
@@ -18,7 +18,7 @@ import { NoticesMeService } from "./notices-me.service";
 /** E-71 with the filter the page needs: ?status=failed. */
 export class MessageLogQueryDto extends GetAdminMessagesLogQueryDto {
   @IsOptional()
-  @IsIn(["queued", "sent", "delivered", "failed", "undeliverable"], { message: "Must be queued, sent, delivered, failed or undeliverable." })
+  @IsIn(["queued", "sending", "sent", "delivered", "failed", "dropped"], { message: "Must be queued, sending, sent, delivered, failed or dropped." })
   status?: string;
 }
 
@@ -32,14 +32,14 @@ export class NoticesController {
   /** E-75 */
   @AdminRoute("/admin/messages", "ops", "owner", "support")
   @Get("admin/messages/templates")
-  templates(@Query() q: GetAdminMessagesTemplatesQueryDto): Promise<Page<Notice>> {
+  templates(@Query() q: GetAdminMessagesTemplatesQueryDto): Promise<Page<MessageTemplate>> {
     return this.admin.templates(q.limit ?? DEFAULT_LIMIT, q.cursor);
   }
 
   /** E-76 */
   @AdminRoute("/admin/messages", "ops", "owner", "support")
   @Put("admin/messages/templates/:key")
-  edit(@Param() p: PutAdminMessagesTemplatesByKeyParamsDto, @Body() b: PutAdminMessagesTemplatesByKeyBodyDto, @StaffActor() actor: AuditActor): Promise<Notice> {
+  edit(@Param() p: PutAdminMessagesTemplatesByKeyParamsDto, @Body() b: PutAdminMessagesTemplatesByKeyBodyDto, @StaffActor() actor: AuditActor): Promise<MessageTemplate> {
     return this.admin.edit(p.key, b, actor);
   }
 

@@ -82,6 +82,13 @@ export const MANIFEST_VARS: readonly VarSpec[] = [
     kind: "string",
     purpose: "time limit of one call to a provider port, as port=milliseconds pairs (FF1); payments 10000 unless changed",
   },
+  {
+    name: "JSON_BODY_LIMIT_BYTES",
+    need: "optional",
+    kind: "int",
+    purpose: "the largest JSON body the API reads, in bytes (JJ1); 512 KB, above the 256 KB wish content limit so an oversize wish gets the service's 422",
+    default: "524288",
+  },
 ];
 
 /**

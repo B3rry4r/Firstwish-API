@@ -1,5 +1,5 @@
 import { Inject, Injectable, Logger, OnModuleInit } from "@nestjs/common";
-import { Prisma } from "@prisma/client";
+import { Prisma, type $Enums } from "@prisma/client";
 import { PrismaService } from "../../common/db/prisma.service";
 import { lockAccount } from "../../common/db/account-lock";
 import { ENV } from "../../common/env/env.module";
@@ -9,10 +9,11 @@ import { Clock } from "../../common/ports/clock.port";
 import { EmailPort } from "../../common/ports/email.port";
 import { IdGenerator } from "../../common/ports/ids.port";
 import { isPortTimeout } from "../../common/ports/time-limit";
+import { isTimeZone } from "../../common/time/time";
 import { ProviderError } from "../../common/ports/adapters/http";
 import { JobContext, JobResult, JobsService } from "../jobs/jobs.service";
 import {
-  CODE_WORDING_FALLBACK, DELIVERY_TRIES, fill, fillSubject, scrubReason, isTemplateKey, MissingValueError, missingValues, NOTICE_HOUR_LOCAL, RETRY_WAIT_MS, scrubEmails, TEMPLATES, TemplateKey,
+  CODE_WORDING_FALLBACK, INVITE_WORDING_FALLBACK, DELIVERY_TRIES, fill, fillSubject, scrubReason, isTemplateKey, MissingValueError, missingValues, NOTICE_HOUR_LOCAL, RETRY_WAIT_MS, scrubEmails, TEMPLATES, TemplateKey, type TemplateSpec,
 } from "./catalog";
 import { atLocalHour, dayText } from "./zoned";
 
@@ -22,6 +23,11 @@ const DAY = 86_400_000;
 /** B06 schedules the "resting soon" job this long before a term ends. */
 export const NOTICE_DAYS = 3;
 export const LANG = "en-NG";
+
+/** The purpose column's value (the database spells "auth-code" as auth_code in Prisma). */
+function purposeColumn(p: TemplateSpec["purpose"]): $Enums.MessageDeliveryPurpose {
+  return p.replace("-", "_") as $Enums.MessageDeliveryPurpose;
+}
 
 export interface SendNotice {
   template: TemplateKey;
@@ -91,8 +97,8 @@ export class NoticesService implements OnModuleInit {
     if (!isTemplateKey(input.template)) throw new Error(`notices.send: no message named ${String(input.template)}`);
     const key = input.key.trim();
     if (!key || key.length > 200) throw new Error("notices.send: the key is 1 to 200 characters");
-    // One send per key even when 20 callers arrive at once: they queue on this lock, and the second finds the first's row.
-    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${"notice:" + key}, 11))`;
+    // II3: one send per key even when 20 callers arrive at once: message_delivery.idempotencyKey is unique, so the callers' inserts
+    // queue on the index, the first one wins and every other finds its row.
     const existing = await tx.messageDelivery.findFirst({ where: { idempotencyKey: key }, select: { id: true } });
     if (existing) return { status: "existing", deliveryId: existing.id };
 
@@ -118,12 +124,17 @@ export class NoticesService implements OnModuleInit {
     const vars: Vars = { data: input.data, ...(accountId ? { accountId } : {}), ...(input.wishId ? { wishId: input.wishId } : {}) };
     const problem = !to ? "The account has no email address." : await this.wordingProblem(tx, input.template, input.data);
     const now = this.clock.now();
-    await tx.messageDelivery.create({
-      data: {
-        id, templateKey: input.template, channel: "email", to: to || "none", purpose: spec.purpose.replace("-", "_") as "auth_code" | "wish_delivery" | "opened" | "term_notice", status: problem ? "failed" : "queued",
+    const made = await tx.messageDelivery.createMany({
+      data: [{
+        id, templateKey: input.template, channel: "email", to: to || "none", purpose: purposeColumn(spec.purpose), status: problem ? "failed" : "queued",
         error: problem, attempts: 0, idempotencyKey: key, vars: vars as unknown as Prisma.InputJsonValue,
-      },
+      }],
+      skipDuplicates: true,
     });
+    if (made.count === 0) {
+      const first = await tx.messageDelivery.findFirstOrThrow({ where: { idempotencyKey: key }, select: { id: true } });
+      return { status: "existing", deliveryId: first.id };
+    }
     if (accountId && spec.noticeKind) {
       await tx.notice.create({
         data: {
@@ -144,7 +155,8 @@ export class NoticesService implements OnModuleInit {
   async template(db: Pick<Tx, "messageTemplate">, key: string): Promise<{ id: string; subject: string; body: string; version: number } | null> {
     const row = await db.messageTemplate.findFirst({ where: { key, channel: "email", locale: LANG }, orderBy: { version: "desc" } });
     if (row) return { id: row.id, subject: row.subject ?? "", body: row.body, version: row.version };
-    return key === "code" ? { id: "", ...CODE_WORDING_FALLBACK, version: 0 } : null;
+    if (key === "code") return { id: "", ...CODE_WORDING_FALLBACK, version: 0 };
+    return key === "invite" ? { id: "", ...INVITE_WORDING_FALLBACK, version: 0 } : null;
   }
 
   /** Why this message cannot be written with these values (a missing wording or a placeholder with no value), or null. */
@@ -162,7 +174,7 @@ export class NoticesService implements OnModuleInit {
 
   /** The sign-in code is never kept once its email is settled. */
   private async scrub(tx: Tx, deliveryId: string, key: string): Promise<void> {
-    if (key !== "code") return;
+    if (key !== "code" && key !== "invite") return;
     await tx.$executeRaw`UPDATE message_delivery SET vars = jsonb_set(vars, '{data,code}', '"removed"'::jsonb) WHERE id = ${deliveryId}::uuid AND vars #> '{data,code}' IS NOT NULL`;
   }
 
@@ -186,41 +198,42 @@ export class NoticesService implements OnModuleInit {
   }
 
   /**
-   * One try at one delivery. Safe to run twice at once: the try is claimed by ONE conditional UPDATE (queued, or "sent" with no
+   * One try at one delivery. Safe to run twice at once: the try is claimed by ONE conditional UPDATE (queued, or "sending" with no
    * settle for 5 minutes because its caller died, and fewer than 3 tries made); the caller whose UPDATE took the row is the only one
-   * that calls the provider. "sent" is the delivery's in-flight state.
+   * that calls the provider. "sending" is the delivery's in-flight state (MM1); a message that cannot go (its account was erased)
+   * is "dropped", with the reason.
    */
-  async deliver(deliveryId: string): Promise<{ outcome: "delivered" | "failed" | "undeliverable" | "retry" | "skipped"; reason?: string; again?: Date; busy?: boolean }> {
+  async deliver(deliveryId: string): Promise<{ outcome: "delivered" | "failed" | "dropped" | "retry" | "skipped"; reason?: string; again?: Date; busy?: boolean }> {
     if (!UUID.test(deliveryId)) return { outcome: "skipped" };
     const got = await this.prisma.$queryRaw<{ attempts: number }[]>`
-      UPDATE message_delivery SET status = 'sent', attempts = attempts + 1, "updatedAt" = now()
+      UPDATE message_delivery SET status = 'sending', attempts = attempts + 1, "updatedAt" = now()
       WHERE id = ${deliveryId}::uuid AND attempts < ${DELIVERY_TRIES}
-        AND (status = 'queued' OR (status = 'sent' AND "updatedAt" < now() - interval '5 minutes'))
+        AND (status = 'queued' OR (status = 'sending' AND "updatedAt" < now() - interval '5 minutes'))
       RETURNING attempts`;
     if (got.length === 0) {
       // In flight past its stale time with every try used: nobody will try again, so it is failed for staff.
       const gone = await this.prisma.$queryRaw<{ templateKey: string }[]>`
         UPDATE message_delivery SET status = 'failed', error = 'The email service did not finish this try.'
-        WHERE id = ${deliveryId}::uuid AND status = 'sent' AND attempts >= ${DELIVERY_TRIES} AND "updatedAt" < now() - interval '5 minutes'
+        WHERE id = ${deliveryId}::uuid AND status = 'sending' AND attempts >= ${DELIVERY_TRIES} AND "updatedAt" < now() - interval '5 minutes'
         RETURNING "templateKey"`;
       if (gone.length) {
         await this.settle(deliveryId, gone[0].templateKey as TemplateKey, "failed", "The email service did not finish this try.");
         return { outcome: "failed", reason: "The email service did not finish this try." };
       }
       const cur = await this.prisma.messageDelivery.findUnique({ where: { id: deliveryId }, select: { status: true } });
-      return cur?.status === "sent" ? { outcome: "skipped", busy: true } : { outcome: "skipped" };
+      return cur?.status === "sending" ? { outcome: "skipped", busy: true } : { outcome: "skipped" };
     }
     const tries = got[0].attempts;
     const row = await this.prisma.messageDelivery.findUniqueOrThrow({ where: { id: deliveryId } });
     // An erased account's row has its address and values blanked: the delivery is dropped, never sent.
-    if (row.to === "" || row.vars === null) return this.settle(row.id, row.templateKey as TemplateKey, "undeliverable", "Dropped: the account was erased.");
+    if (row.to === "" || row.vars === null) return this.settle(row.id, row.templateKey as TemplateKey, "dropped", "Dropped: the account was erased.");
     const vars = (row.vars ?? { data: {} }) as unknown as Vars;
     const key = row.templateKey as TemplateKey;
 
     let to = row.to;
     if (vars.accountId) {
       const a = await this.prisma.account.findUnique({ where: { id: vars.accountId }, select: { contact: true, erasedAt: true } });
-      if (!a || a.erasedAt) return this.settle(row.id, key, "undeliverable", "Dropped: the account was erased.");
+      if (!a || a.erasedAt) return this.settle(row.id, key, "dropped", "Dropped: the account was erased.");
       to = normaliseEmail(a.contact ?? "") ?? row.to;
     }
     const t = await this.template(this.prisma, key);
@@ -241,19 +254,19 @@ export class NoticesService implements OnModuleInit {
     } catch (e) {
       const { forGood, reason } = classify(e);
       if (forGood || tries >= DELIVERY_TRIES) return this.settle(row.id, key, "failed", reason);
-      await this.prisma.messageDelivery.updateMany({ where: { id: row.id, status: "sent" }, data: { status: "queued", error: reason, updatedAt: this.clock.now() } });
+      await this.prisma.messageDelivery.updateMany({ where: { id: row.id, status: "sending" }, data: { status: "queued", error: reason, updatedAt: this.clock.now() } });
       return { outcome: "retry", reason, again: new Date(this.clock.now().getTime() + RETRY_WAIT_MS[Math.min(tries - 1, RETRY_WAIT_MS.length - 1)]) };
     }
   }
 
   private async settle(
-    id: string, key: TemplateKey, outcome: "delivered" | "failed" | "undeliverable", reason: string | null, providerMessageId?: string,
-  ): Promise<{ outcome: "delivered" | "failed" | "undeliverable"; reason?: string }> {
+    id: string, key: TemplateKey, outcome: "delivered" | "failed" | "dropped", reason: string | null, providerMessageId?: string,
+  ): Promise<{ outcome: "delivered" | "failed" | "dropped"; reason?: string }> {
     await this.prisma.$transaction(async (tx) => {
       await tx.messageDelivery.update({ where: { id }, data: { status: outcome, error: reason, ...(providerMessageId ? { providerMessageId } : {}) } });
       await tx.notice.updateMany({
         where: { deliveryId: id },
-        data: { status: outcome === "delivered" ? "sent" : outcome === "undeliverable" ? "skipped" : "cancelled" },
+        data: { status: outcome === "delivered" ? "sent" : outcome === "dropped" ? "skipped" : "cancelled" },
       });
       await this.scrub(tx, id, key);
     });
@@ -262,7 +275,7 @@ export class NoticesService implements OnModuleInit {
 
   /**
    * The "resting soon" job (B06 schedules send-notice for the wish three days before the term ends). It goes to the wish's
-   * sender at 09:00 in the wish's time zone on that day (PROVISIONAL: nothing names a sender's zone, so the wish's zone is used),
+   * sender at 09:00 in the sender's time zone on that day (II4: the account's zone, else the wish's),
    * or at once when that hour has passed. A wish kept, resting, taken down or erased meanwhile sends nothing.
    */
   async restingJob(c: JobContext): Promise<JobResult> {
@@ -274,11 +287,13 @@ export class NoticesService implements OnModuleInit {
       if (w.endsAt.getTime() <= c.now.getTime()) return { skipped: true };
       const noticeAt = new Date(w.endsAt.getTime() - NOTICE_DAYS * DAY);
       if (c.now.getTime() < noticeAt.getTime()) return { skipped: true, again: noticeAt };
-      const nineAm = atLocalHour(noticeAt, w.timeZone, NOTICE_HOUR_LOCAL);
+      // II4: the sender's own zone when the account has one, else the wish's (PROVISIONAL until every account has one)
+      const acct = await tx.account.findUnique({ where: { id: w.accountId }, select: { name: true, timeZone: true } });
+      const zone = acct?.timeZone && isTimeZone(acct.timeZone) ? acct.timeZone : w.timeZone;
+      const nineAm = atLocalHour(noticeAt, zone, NOTICE_HOUR_LOCAL);
       if (c.now.getTime() < nineAm.getTime()) return { skipped: true, again: nineAm };
       const link = await tx.wishLink.findFirst({ where: { wishId: w.id, active: true }, orderBy: { createdAt: "desc" }, select: { slug: true } });
-      const acct = await tx.account.findUnique({ where: { id: w.accountId }, select: { name: true } });
-      const data: Record<string, string> = { name: acct?.name?.trim() || "there", date: dayText(w.endsAt, w.timeZone) };
+      const data: Record<string, string> = { name: acct?.name?.trim() || "there", date: dayText(w.endsAt, zone) };
       if (w.name?.trim()) data.for = w.name.trim();
       if (link) data.link = `${this.env.PUBLIC_SITE_URL.replace(/\/+$/, "")}/w/${link.slug}`;
       const r = await this.send(tx, { template: "resting", toAccountId: w.accountId, data, key: `resting:${w.id}:${w.endsAt.toISOString()}`, wishId: w.id });

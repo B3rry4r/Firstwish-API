@@ -169,7 +169,8 @@ describe("purchases B07: what a payment buys", () => {
     expect(await flagged(await pay(a, "extra.five-photos", { subjectId: bare }))).toContain("refund_due:extra_needs_a_ticket");
     await expect(purchasesSvc.assertStartable(a, { purpose: "extra" }, ["extra.five-photos"])).rejects.toMatchObject({ status: 422 });
     await expect(purchasesSvc.assertStartable(a, { purpose: "ticket", subjectId: w }, ["ticket.keepsake"])).rejects.toMatchObject({ status: 422 });
-    await purchasesSvc.assertStartable(a, { purpose: "ticket", subjectId: w }, ["ticket.premiere"]);
+    // GG3 (INT-4): the app sells no paid upgrade, so a ticket line for a wish that has a ticket is refused at start, a higher one too
+    await expect(purchasesSvc.assertStartable(a, { purpose: "ticket", subjectId: w }, ["ticket.premiere"])).rejects.toMatchObject({ status: 422 });
   });
 
   it("3. keep: from endsAt, two at once both count one after the other, resting wakes from now, never on a ticket that cannot be kept", async () => {

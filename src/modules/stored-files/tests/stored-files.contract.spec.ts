@@ -324,9 +324,15 @@ describe("E-182, E-184, E-183 uploads (contract)", () => {
       const over = await ticket({ purpose: "vault", contentType: "video/mp4", bytes: 60 * MB }, owner.token);
       expect(over.status).toBe(409);
       expect(over.body.error.code).toBe("vault_full");
-      await db.business.update({ where: { id: bizId }, data: { pack: 1, packEnds: new Date(t.clock.now().getTime() + 86_400_000) } });
+      // GG4 (INT-4): Vault space from a pack is the GB of its live grant (business.pack counts wishes left)
+      const payId = ids.next();
+      const at = t.clock.now();
+      await db.payment.create({ data: { id: payId, purpose: "wish_pack", lines: [], amountKobo: 1n, currency: "NGN", priceBookVersion: 1, status: "succeeded", provider: "paystack", providerReference: `vp-${payId}`, idempotencyKey: `vp-${payId}`, updatedAt: at } });
+      const grantId = ids.next();
+      await db.purchaseGrant.create({ data: { id: grantId, paymentId: payId, sku: "pro.pack", kind: "wish-pack", businessId: bizId, detail: { vaultGb: 20 }, startsAt: at, endsAt: new Date(at.getTime() + 86_400_000), createdAt: at } });
       expect((await ticket({ purpose: "vault", contentType: "video/mp4", bytes: 60 * MB }, owner.token)).status).toBe(201);
-      await db.business.update({ where: { id: bizId }, data: { vault: 0n, pack: null, packEnds: null } });
+      await db.business.update({ where: { id: bizId }, data: { vault: 0n } });
+      await db.purchaseGrant.update({ where: { id: grantId }, data: { revokedAt: at } });
     });
 
     it("20 confirms at once count the exact sum into the business's usage", async () => {

@@ -77,11 +77,13 @@ export class CreatorHandlers {
   }
 
   /** The grants of one line for an account that still stand (not revoked, not refused), newest first, leaving out `except` (HH3). */
-  private standing(tx: Tx, accountId: string, sku: string, except: string): Promise<{ detail: Record<string, unknown>; endsAt: Date | null }[]> {
-    return tx.$queryRaw<{ detail: Record<string, unknown>; endsAt: Date | null }[]>`
-      SELECT detail, "endsAt" FROM purchase_grant
-       WHERE "accountId" = ${accountId}::uuid AND sku = ${sku} AND "revokedAt" IS NULL AND "refusedReason" IS NULL AND id <> ${except}::uuid
-       ORDER BY "createdAt" DESC, id DESC`;
+  private async standing(tx: Tx, accountId: string, sku: string, except: string): Promise<{ detail: Record<string, unknown>; endsAt: Date | null }[]> {
+    const rows = await tx.purchaseGrant.findMany({
+      where: { accountId, sku, revokedAt: null, refusedReason: null, id: { not: except } },
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      select: { detail: true, endsAt: true },
+    });
+    return rows.map((r) => ({ detail: (r.detail ?? {}) as Record<string, unknown>, endsAt: r.endsAt }));
   }
 
   /**

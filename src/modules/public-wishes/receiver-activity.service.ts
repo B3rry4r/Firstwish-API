@@ -22,10 +22,8 @@ export class ReceiverActivityService {
     const out = new Map<string, ReceiverActivity>(ids.map((id) => [id, { opens: 0, plays: 0, reactions: {}, favourites: 0, shares: 0 }]));
     if (!ids.length) return out;
     const [opens, reactions, favs, shares] = await Promise.all([
-      this.db.$queryRaw<{ id: string; kind: string; n: bigint }[]>`
-        SELECT "wishId"::text AS id, kind, count(*)::bigint AS n FROM wish_open WHERE "wishId" = ANY(${ids}::uuid[]) GROUP BY 1, 2`,
-      this.db.$queryRaw<{ id: string; reaction: string; n: bigint }[]>`
-        SELECT "wishId"::text AS id, reaction, count(*)::bigint AS n FROM wish_reaction WHERE "wishId" = ANY(${ids}::uuid[]) GROUP BY 1, 2`,
+      this.db.wishOpen.groupBy({ by: ["wishId", "kind"], where: { wishId: { in: ids } }, _count: { _all: true } }),
+      this.db.wishReaction.groupBy({ by: ["wishId", "reaction"], where: { wishId: { in: ids } }, _count: { _all: true } }),
       this.db.$queryRaw<{ id: string; n: bigint }[]>`
         SELECT "wishId"::text AS id, count(*)::bigint AS n FROM wish_favourite WHERE "wishId" = ANY(${ids}::uuid[]) AND cardinality(hearts) > 0 GROUP BY 1`,
       this.db.$queryRaw<{ id: string; n: bigint }[]>`
@@ -35,13 +33,13 @@ export class ReceiverActivityService {
          GROUP BY 1`,
     ]);
     for (const r of opens) {
-      const a = out.get(r.id);
-      if (a && r.kind === "play") a.plays = Number(r.n);
-      else if (a) a.opens = Number(r.n);
+      const a = r.wishId ? out.get(r.wishId) : undefined;
+      if (a && r.kind === "play") a.plays = r._count._all;
+      else if (a) a.opens = r._count._all;
     }
     for (const r of reactions) {
-      const a = out.get(r.id);
-      if (a) a.reactions[r.reaction] = Number(r.n);
+      const a = out.get(r.wishId);
+      if (a) a.reactions[r.reaction] = r._count._all;
     }
     for (const r of favs) {
       const a = out.get(r.id);

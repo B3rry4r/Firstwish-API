@@ -21,6 +21,7 @@ import { PriceBookModule } from "./modules/price-book/price-book.module";
 // end B04
 // B02: account sides, creators, business profile, follow
 import { BusinessModule } from "./modules/business/business.module";
+import { ProBusinessModule } from "./modules/pro-business/pro-business.module";
 import { CreatorsModule } from "./modules/creators/creators.module";
 import { FollowsModule } from "./modules/follows/follows.module";
 // end B02
@@ -53,7 +54,13 @@ import { JobHandlersModule } from "./modules/job-handlers/job-handlers.module";
 import { NoticesModule } from "./modules/notices/notices.module";
 // end B11
 
+// B08
+import { RefundsModule } from "./modules/refunds/refunds.module";
+// end B08
+
 /** Registration entry: each resource module adds one import line here. */
+import { ModerationModule } from "./modules/moderation/moderation.module";
+import { ShowingModule } from "./modules/showing/showing.module";
 @Module({
   imports: [
     CommonModule,
@@ -108,9 +115,19 @@ import { NoticesModule } from "./modules/notices/notices.module";
     // INT-3
     JobHandlersModule,
     // end INT-3
+    // B17
+    ProBusinessModule,
+    // end B17
     // B11
     NoticesModule,
     // end B11
+    // B13
+    ShowingModule,
+    ModerationModule,
+    // end B13
+    // B08: refunds, the settlement check, staff payments
+    RefundsModule,
+    // end B08
   ],
 })
 export class AppModule {}

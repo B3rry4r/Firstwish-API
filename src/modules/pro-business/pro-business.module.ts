@@ -1,0 +1,23 @@
+import { Module } from "@nestjs/common";
+import { NoticesModule } from "../notices/notices.module";
+import { PriceBookModule } from "../price-book/price-book.module";
+import { PurchasesModule } from "../purchases/purchases.module";
+import { ClientWishesService } from "./client-wishes.service";
+import { InvoicesModule } from "./invoices.module";
+import { LoginsService } from "./logins.service";
+import { PlanView } from "./plan-view";
+import { ProAccess } from "./pro-access";
+import { AdminBusinessesController, ProBusinessController } from "./pro-business.controller";
+import { ProBusinessService } from "./pro-business.service";
+
+/**
+ * The business beyond its profile (B17): plan and usage, client wishes, invoices, extra logins, and staff's read of businesses.
+ * Exports InvoicesService: the plan and pack handlers call issue(tx, payment) and a refund calls voidFor(tx, paymentId).
+ */
+@Module({
+  imports: [PurchasesModule, NoticesModule, PriceBookModule, InvoicesModule],
+  controllers: [ProBusinessController, AdminBusinessesController],
+  providers: [ProAccess, PlanView, ProBusinessService, ClientWishesService, LoginsService],
+  exports: [InvoicesModule, ProAccess, PlanView],
+})
+export class ProBusinessModule {}

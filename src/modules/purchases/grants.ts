@@ -58,24 +58,30 @@ export class GrantStore {
   /** Takes the line's row. Answers its id, or null when this payment's line already has one (nothing more to do). */
   async claim(tx: Tx, ctx: FulfilmentContext, kind: string, who: { wishId?: string | null; businessId?: string | null } = {}): Promise<string | null> {
     const now = this.clock.now();
-    const wishId = typeof who.wishId === "string" && UUID.test(who.wishId) ? who.wishId : null;
-    const rows = await tx.$queryRaw<{ id: string }[]>`
-      INSERT INTO purchase_grant (id, "paymentId", sku, kind, "accountId", "businessId", "wishId", detail, "startsAt", "createdAt")
-      VALUES (${this.ids.id()}::uuid, ${ctx.payment.id}::uuid, ${ctx.line.sku}, ${kind}, ${ctx.payment.accountId}::uuid,
-              ${who.businessId ?? ctx.payment.businessId}::uuid, ${wishId}::uuid, '{}'::jsonb, ${now}, ${now})
-      ON CONFLICT ("paymentId", sku) DO NOTHING
-      RETURNING id::text AS id`;
-    return rows[0]?.id ?? null;
+    const named = typeof who.wishId === "string" && UUID.test(who.wishId) ? who.wishId : null;
+    // the wish is named on the row only when it exists (the row has a foreign key to the wish); a line for a missing wish is refused later
+    const wishId = named && (await tx.wish.findUnique({ where: { id: named }, select: { id: true } })) ? named : null;
+    const id = this.ids.id();
+    const made = await tx.purchaseGrant.createMany({
+      data: [{ id, paymentId: ctx.payment.id, sku: ctx.line.sku, kind, accountId: ctx.payment.accountId, businessId: who.businessId ?? ctx.payment.businessId ?? null, wishId, detail: {}, startsAt: now, createdAt: now }],
+      skipDuplicates: true,
+    });
+    return made.count === 1 ? id : null;
   }
 
   /** Writes what was granted (and what a refund needs to take back) on the claimed row. */
   async record(tx: Tx, id: string, detail: Detail, endsAt: Date | null = null): Promise<void> {
-    await tx.$executeRaw`UPDATE purchase_grant SET detail = ${JSON.stringify(detail)}::jsonb, "endsAt" = ${endsAt} WHERE id = ${id}::uuid`;
+    await tx.purchaseGrant.update({ where: { id }, data: { detail: detail as Prisma.InputJsonValue, endsAt } });
+  }
+
+  /** The wish a granted line changed, named on its row. */
+  async nameWish(tx: Tx, id: string, wishId: string): Promise<void> {
+    await tx.purchaseGrant.update({ where: { id }, data: { wishId } });
   }
 
   /** Nothing is granted: the reason is kept and the payment is flagged for a refund. */
   async refuse(tx: Tx, ctx: FulfilmentContext, id: string, reason: string): Promise<void> {
-    await tx.$executeRaw`UPDATE purchase_grant SET "refusedReason" = ${reason} WHERE id = ${id}::uuid`;
+    await tx.purchaseGrant.update({ where: { id }, data: { refusedReason: reason } });
     const p = await tx.payment.findUniqueOrThrow({ where: { id: ctx.payment.id } });
     const flags = withFlag(withFlag(p.flags, "refund_due"), `refund_due:${reason}`);
     if (flags.length === p.flags.length) return;
@@ -83,13 +89,11 @@ export class GrantStore {
   }
 
   async list(tx: Tx, paymentId: string): Promise<GrantRow[]> {
-    return tx.$queryRaw<GrantRow[]>`
-      SELECT id::text AS id, "paymentId"::text AS "paymentId", sku, kind, "accountId"::text AS "accountId", "businessId"::text AS "businessId",
-             "wishId"::text AS "wishId", detail, "startsAt", "endsAt", "refusedReason", "revokedAt"
-        FROM purchase_grant WHERE "paymentId" = ${paymentId}::uuid ORDER BY "createdAt", id`;
+    const rows = await tx.purchaseGrant.findMany({ where: { paymentId }, orderBy: [{ createdAt: "asc" }, { id: "asc" }] });
+    return rows.map((r) => ({ ...r, detail: (r.detail ?? {}) as Detail }));
   }
 
   async markRevoked(tx: Tx, id: string): Promise<void> {
-    await tx.$executeRaw`UPDATE purchase_grant SET "revokedAt" = ${this.clock.now()} WHERE id = ${id}::uuid AND "revokedAt" IS NULL`;
+    await tx.purchaseGrant.updateMany({ where: { id, revokedAt: null }, data: { revokedAt: this.clock.now() } });
   }
 }

@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "frozenAt": "2026-11-15T20:58:33Z",
+  "frozenAt": "2026-11-15T22:40:31Z",
   "framework": "nestjs",
   "generatedBy": "tools/pipeline/reconcile.py",
   "resources": [
@@ -533,6 +533,19 @@
           "supersedes": []
         },
         {
+          "name": "timeZone",
+          "type": "string (IANA time zone name, e.g. Africa/Lagos)",
+          "classes": [
+            "string"
+          ],
+          "nullable": true,
+          "provenance": [
+            "DEC-181"
+          ],
+          "supersedes": [],
+          "typeBy": "DEC-181"
+        },
+        {
           "name": "wishCount",
           "type": "number",
           "classes": [
@@ -998,6 +1011,13 @@
                 "app-you",
                 "welcome"
               ]
+            },
+            {
+              "name": "timeZone",
+              "type": "string (an IANA zone name such as Africa/Lagos)",
+              "from": [
+                "DEC-181"
+              ]
             }
           ],
           "response": {
@@ -1032,6 +1052,7 @@
           ],
           "notes": [
             "body by DEC-137",
+            "body by DEC-181",
             "route by DEC-103"
           ]
         },
@@ -7381,7 +7402,7 @@
         },
         {
           "name": "type",
-          "type": "string",
+          "type": "enum(open-wish|rest-wish|erase-wish|restore-window-end|erase-now|send-notice|send-message|make-image-sizes|screen-file|render-video|make-qr-card|abandon-payment|reconcile-ledger|pass-period|plan-period|creator-period|vault-billing|royalty-accrual|payout-run|style-level-review|upload-cleanup|clean-link-hits)",
           "classes": [
             "enum",
             "string"
@@ -7390,7 +7411,8 @@
           "provenance": [
             "jobs"
           ],
-          "supersedes": []
+          "supersedes": [],
+          "typeBy": "DEC-188"
         }
       ],
       "endpoints": [
@@ -8491,7 +8513,7 @@
         },
         {
           "name": "purpose",
-          "type": "string",
+          "type": "enum(auth-code|wish-delivery|opened|term-notice|anniversary|date-reminder|publish-notice|pass|plan|invite|receipt|support|sealed|opens)",
           "classes": [
             "enum"
           ],
@@ -8499,7 +8521,8 @@
           "provenance": [
             "messages-email"
           ],
-          "supersedes": []
+          "supersedes": [],
+          "typeBy": "DEC-188"
         },
         {
           "name": "reason",
@@ -8542,7 +8565,7 @@
         },
         {
           "name": "status",
-          "type": "string",
+          "type": "enum(queued|sending|sent|delivered|failed|dropped)",
           "classes": [
             "enum"
           ],
@@ -8550,7 +8573,8 @@
           "provenance": [
             "messages-email"
           ],
-          "supersedes": []
+          "supersedes": [],
+          "typeBy": "DEC-188"
         },
         {
           "name": "templateKey",
@@ -8845,6 +8869,30 @@
           "supersedes": []
         },
         {
+          "name": "editedAt",
+          "type": "time",
+          "classes": [
+            "time-iso"
+          ],
+          "nullable": true,
+          "provenance": [
+            "DEC-180"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "editedBy",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": true,
+          "provenance": [
+            "DEC-180"
+          ],
+          "supersedes": []
+        },
+        {
           "name": "key",
           "type": "string",
           "classes": [
@@ -8865,6 +8913,42 @@
           "nullable": false,
           "provenance": [
             "messages-email"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "DEC-180"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "placeholders",
+          "type": "array",
+          "classes": [
+            "array"
+          ],
+          "nullable": false,
+          "provenance": [
+            "DEC-180"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "subject",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "DEC-180"
           ],
           "supersedes": []
         },
@@ -9373,8 +9457,9 @@
           ],
           "body": [],
           "response": {
-            "entity": "Notice",
-            "cardinality": "list"
+            "entity": "MessageTemplate",
+            "cardinality": "list",
+            "note": "the wording now in force for each message (DEC-180)"
           },
           "sources": [
             {
@@ -9383,6 +9468,7 @@
             }
           ],
           "notes": [
+            "body by DEC-180",
             "route by DEC-112"
           ]
         },
@@ -9431,8 +9517,9 @@
             }
           ],
           "response": {
-            "entity": "Template",
-            "cardinality": "single"
+            "entity": "MessageTemplate",
+            "cardinality": "single",
+            "note": "the wording as saved (DEC-180)"
           },
           "sources": [
             {
@@ -9441,6 +9528,7 @@
             }
           ],
           "notes": [
+            "body by DEC-180",
             "route by DEC-112"
           ]
         },
@@ -10973,8 +11061,9 @@
             },
             {
               "name": "ticket",
-              "type": "'keepsake'",
+              "type": "'moment'|'keepsake'|'signature'|'premiere'",
               "from": [
+                "DEC-179",
                 "app-wish-detail"
               ]
             },
@@ -11048,6 +11137,7 @@
           ],
           "notes": [
             "body by DEC-134",
+            "body by DEC-179",
             "route by DEC-94"
           ]
         },
@@ -13947,6 +14037,18 @@
           "supersedes": []
         },
         {
+          "name": "files",
+          "type": "array",
+          "classes": [
+            "array"
+          ],
+          "nullable": false,
+          "provenance": [
+            "DEC-183"
+          ],
+          "supersedes": []
+        },
+        {
           "name": "keepOffer",
           "type": "object",
           "classes": [
@@ -14007,6 +14109,18 @@
           "supersedes": []
         },
         {
+          "name": "opening",
+          "type": "object",
+          "classes": [
+            "object"
+          ],
+          "nullable": true,
+          "provenance": [
+            "DEC-183"
+          ],
+          "supersedes": []
+        },
+        {
           "name": "opensAt",
           "type": "time",
           "classes": [
@@ -14020,7 +14134,7 @@
         },
         {
           "name": "prompt",
-          "type": "string",
+          "type": "string (the question opening's text, kept at content.opening.values.question; null when there is none)",
           "classes": [
             "string"
           ],
@@ -14028,7 +14142,8 @@
           "provenance": [
             "wish-link"
           ],
-          "supersedes": []
+          "supersedes": [],
+          "typeBy": "DEC-184"
         },
         {
           "name": "receiverName",
@@ -14234,8 +14349,9 @@
             }
           ],
           "response": {
-            "entity": "Empty",
-            "cardinality": "single"
+            "entity": "PublicWishView",
+            "cardinality": "single",
+            "note": "the full view of the open wish (DEC-185)"
           },
           "sources": [
             {
@@ -14244,6 +14360,7 @@
             }
           ],
           "notes": [
+            "body by DEC-185",
             "route by DEC-101"
           ]
         },
@@ -14273,8 +14390,9 @@
             }
           ],
           "response": {
-            "entity": "Wish",
-            "cardinality": "single"
+            "entity": "ReactionResult",
+            "cardinality": "single",
+            "note": "{reaction, counts} (DEC-182)"
           },
           "sources": [
             {
@@ -14283,6 +14401,7 @@
             }
           ],
           "notes": [
+            "body by DEC-182",
             "route by DEC-101"
           ]
         },
@@ -14366,8 +14485,9 @@
             }
           ],
           "response": {
-            "entity": "ok | {ok:false,error}",
-            "cardinality": "single"
+            "entity": "UnlockResult",
+            "cardinality": "single",
+            "note": "{ok: true, token?, expiresAt?} or {ok: false, error} (DEC-182)"
           },
           "sources": [
             {
@@ -14384,6 +14504,7 @@
             }
           ],
           "notes": [
+            "body by DEC-182",
             "route by DEC-101"
           ]
         }
@@ -24516,6 +24637,18 @@
           "supersedes": []
         },
         {
+          "name": "activity",
+          "type": "object",
+          "classes": [
+            "object"
+          ],
+          "nullable": true,
+          "provenance": [
+            "DEC-186"
+          ],
+          "supersedes": []
+        },
+        {
           "name": "adds",
           "type": "array",
           "classes": [
@@ -27332,34 +27465,6 @@
           ],
           "body": [
             {
-              "name": "blessing",
-              "type": "content.blessing={verse,cite?}",
-              "from": [
-                "maker-ask"
-              ]
-            },
-            {
-              "name": "call",
-              "type": "string",
-              "from": [
-                "maker-call"
-              ]
-            },
-            {
-              "name": "captions",
-              "type": "content.story.captions=string[] one per photo after the cover, max 10, trailing blanks trimmed",
-              "from": [
-                "maker-ask"
-              ]
-            },
-            {
-              "name": "chapter",
-              "type": "ChapterType",
-              "from": [
-                "maker-ask"
-              ]
-            },
-            {
               "name": "content.cover.more",
               "type": "string[] (written by Names component; entries may be blank until trimmed in ready check)",
               "from": [
@@ -27457,34 +27562,6 @@
               ]
             },
             {
-              "name": "credits",
-              "type": "content.credits=[{role,name,handle?}]",
-              "from": [
-                "maker-ask"
-              ]
-            },
-            {
-              "name": "details",
-              "type": "content.details=[{label,value}], with a leading {label:'The day',value:longDay(wedding)} when a wedding day is set",
-              "from": [
-                "maker-ask"
-              ]
-            },
-            {
-              "name": "effect",
-              "type": "for rule 'on' writes content.off (add/remove type); for rule '+' writes content.on (add/remove type); locked ignored",
-              "from": [
-                "maker-chapters"
-              ]
-            },
-            {
-              "name": "finale",
-              "type": "content.gift={title:first sentence,text:rest}",
-              "from": [
-                "maker-ask"
-              ]
-            },
-            {
               "name": "keep",
               "type": "'month'|'half'|'year'|null (optional; null clears it, DEC-84)",
               "from": [
@@ -27499,20 +27576,6 @@
                 "app-style-detail",
                 "app-styles",
                 "maker-kind"
-              ]
-            },
-            {
-              "name": "letter",
-              "type": "content.letter={paras:string[] split on blank lines}; love also mirrors Wish.letter string",
-              "from": [
-                "maker-ask"
-              ]
-            },
-            {
-              "name": "links",
-              "type": "content.links={files?,book?} URLs",
-              "from": [
-                "maker-ask"
               ]
             },
             {
@@ -27578,24 +27641,10 @@
               ]
             },
             {
-              "name": "memory",
-              "type": "content.memory={title:first sentence,text:rest}",
-              "from": [
-                "maker-ask"
-              ]
-            },
-            {
               "name": "name",
               "type": "string, untrimmed as typed",
               "from": [
                 "maker-name"
-              ]
-            },
-            {
-              "name": "note",
-              "type": "content.note={from:'Everyone at <studio>'|studio|from|'Me',text}",
-              "from": [
-                "maker-ask"
               ]
             },
             {
@@ -27609,13 +27658,6 @@
               ]
             },
             {
-              "name": "off",
-              "type": "boolean (Skip on an optional chapter writes content.off; continuing from an answered one turns it back on)",
-              "from": [
-                "maker-ask"
-              ]
-            },
-            {
               "name": "opensAt",
               "type": "string ISO-8601 from local date+time via new Date(`${day}T${time}:00`).toISOString() (browser's own time zone, no zone sent)",
               "from": [
@@ -27623,29 +27665,10 @@
               ]
             },
             {
-              "name": "patch",
-              "type": "Partial<Wish> (whole Wish object is written today via saveWish/putWish, lib/maker.ts:40-46)",
+              "name": "passcode",
+              "type": "string, at least 4 chars, max 64 (write only: stored hashed, never returned; null clears it)",
               "from": [
-                "maker-ending",
-                "maker-ending-scene",
-                "maker-style",
-                "maker-ticket",
-                "maker-watch",
-                "maker-when"
-              ]
-            },
-            {
-              "name": "photos",
-              "type": "string[] reordered, chosen photo moved to index 0",
-              "from": [
-                "maker-photos"
-              ]
-            },
-            {
-              "name": "reasons",
-              "type": "content.reasons=[{title}] (max ask.max, default 5); love mirrors Wish.reasons string[]",
-              "from": [
-                "maker-ask"
+                "DEC-178"
               ]
             },
             {
@@ -27674,31 +27697,10 @@
               ]
             },
             {
-              "name": "ticket",
-              "type": "TicketSlug",
-              "from": [
-                "maker-ticket"
-              ]
-            },
-            {
               "name": "timeZone",
               "type": "string (optional; an IANA zone name such as Africa/Lagos)",
               "from": [
                 "DEC-170"
-              ]
-            },
-            {
-              "name": "timeline",
-              "type": "content.timeline=[{when,what}]",
-              "from": [
-                "maker-ask"
-              ]
-            },
-            {
-              "name": "type",
-              "type": "ChapterType",
-              "from": [
-                "maker-chapters"
               ]
             },
             {
@@ -27723,53 +27725,6 @@
                 "maker-opening-scene",
                 "maker-partner",
                 "maker-photos",
-                "maker-studio",
-                "maker-style",
-                "maker-ticket",
-                "maker-watch",
-                "maker-wedding",
-                "maker-when"
-              ]
-            },
-            {
-              "name": "voices",
-              "type": "content.voices.items=[{name,text,role?}] (name defaults 'A friend')",
-              "from": [
-                "maker-ask"
-              ]
-            },
-            {
-              "name": "voices.ask",
-              "type": "content.voices.ask string (picked from 3 suggested questions or typed)",
-              "from": [
-                "maker-ask"
-              ]
-            },
-            {
-              "name": "wish",
-              "type": "full Wish object (spread of previous plus patch)",
-              "from": [
-                "maker-ask",
-                "maker-ask-voices-gather",
-                "maker-chapters",
-                "maker-cover",
-                "maker-opening",
-                "maker-opening-scene",
-                "maker-photos"
-              ]
-            },
-            {
-              "name": "wishId",
-              "type": "string",
-              "from": [
-                "maker-call",
-                "maker-ending",
-                "maker-ending-scene",
-                "maker-kind",
-                "maker-more",
-                "maker-name",
-                "maker-occasion",
-                "maker-partner",
                 "maker-studio",
                 "maker-style",
                 "maker-ticket",
@@ -28040,6 +27995,7 @@
           ],
           "notes": [
             "body by DEC-170",
+            "body by DEC-178",
             "embedded by S-10",
             "route by DEC-91"
           ]
@@ -28262,6 +28218,36 @@
           ]
         },
         {
+          "id": "E-241",
+          "method": "POST",
+          "path": "/v1/wishes/:id/pass-upgrade",
+          "auth": [
+            {
+              "kind": "role",
+              "role": "business"
+            },
+            {
+              "kind": "user",
+              "scope": "signed in"
+            }
+          ],
+          "body": [],
+          "response": {
+            "entity": "Wish",
+            "cardinality": "single",
+            "note": "the draft as a Signature wish; one Pass upgrade drawn (DEC-176)"
+          },
+          "sources": [
+            {
+              "src": "DEC-176",
+              "via": "ruling:DEC-176"
+            }
+          ],
+          "notes": [
+            "body by DEC-176"
+          ]
+        },
+        {
           "id": "E-230",
           "method": "POST",
           "path": "/v1/wishes/:id/restore",
@@ -28400,6 +28386,13 @@
               ]
             },
             {
+              "name": "usePass",
+              "type": "boolean (optional; true draws one wish from the Pass in place of a ticket payment)",
+              "from": [
+                "DEC-177"
+              ]
+            },
+            {
               "name": "version",
               "type": "integer (the version the page last read)",
               "from": [
@@ -28442,6 +28435,7 @@
             "body by DEC-134",
             "body by DEC-171",
             "body by DEC-173",
+            "body by DEC-177",
             "route by DEC-92"
           ]
         },

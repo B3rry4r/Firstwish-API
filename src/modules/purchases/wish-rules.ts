@@ -81,6 +81,7 @@ export const REASON_TEXT: Record<string, string> = {
   wish_removed: "This wish was taken down.",
   wish_sealed: "This wish is already sealed.",
   ticket_already_held: "This wish already has this ticket.",
+  wish_has_ticket: "This wish already has a ticket. A ticket cannot be bought on top of it.",
   ticket_not_an_upgrade: "This wish already has a ticket as good as this one.",
   wish_not_open_to_extras: "Extras can be added until the wish opens.",
   extra_needs_a_ticket: "Pick a ticket for this wish first.",

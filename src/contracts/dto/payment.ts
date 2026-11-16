@@ -75,8 +75,8 @@ export class PostPaymentsBodyDto implements PostPaymentsBody {
   @IsString()
   subjectId?: string;
   @IsOptional()
-  @IsIn(["keepsake"])
-  ticket?: "keepsake";
+  @IsIn(["moment", "keepsake", "signature", "premiere"])
+  ticket?: "moment" | "keepsake" | "signature" | "premiere";
   @IsOptional()
   @IsString()
   title?: string;

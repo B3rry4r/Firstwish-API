@@ -39,7 +39,8 @@ const ROLE_SECTIONS = {
   ops: ALL.filter((h) => !["/admin/team", "/admin/settings"].includes(h)),
   moderator: ["/admin", "/admin/wishes", "/admin/people", "/admin/moderation", "/admin/showing"],
   reviewer: ["/admin", "/admin/styles", "/admin/styles/review", "/admin/creators"],
-  support: ["/admin", "/admin/wishes", "/admin/people", "/admin/support", "/admin/messages"],
+  // TT2: support holds /admin/payments for E-145 (start a refund); every other payments route lists roles that leave support out.
+  support: ["/admin", "/admin/wishes", "/admin/people", "/admin/payments", "/admin/support", "/admin/messages"],
   finance: ["/admin", "/admin/payments", "/admin/businesses", "/admin/creators", "/admin/prices", "/admin/numbers"],
   maker: ["/admin", "/admin/concierge"],
 };
@@ -137,7 +138,8 @@ async function seedCatalogues(db) {
     for (const { seedKey, ...r } of doc.rows) {
       const row = Object.fromEntries(Object.entries(r).filter(([, v]) => v !== null && v !== undefined));
       const id = seedId(`${table}:${seedKey}`);
-      await model.upsert({ where: { id }, create: { id, ...row }, update: row });
+      // J7: staff edit a message in place (wording and version), so a re-run only creates a row that is absent and never rewrites one.
+      await model.upsert({ where: { id }, create: { id, ...row }, update: table === "MessageTemplate" ? {} : row });
     }
   }
 }

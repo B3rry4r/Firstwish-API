@@ -74,7 +74,7 @@ export class StaffAuthService {
       const code = await this.db.$transaction(async (tx) => {
         return this.codes.issue(tx, { destination: staff.email, purpose: "staff_sign_in", address: null, limits: INVITE_LIMITS });
       });
-      this.queue(staff.email, code);
+      this.queue(staff.email, code, "invite");
     } catch (e) {
       if (!(e instanceof RateLimited)) throw e;
       this.log.warn("invite code not made: too many codes for this email; the member can ask for one at sign-in");
@@ -144,13 +144,14 @@ export class StaffAuthService {
   }
 
   /**
-   * Sends after the answer has gone (U4), through the one path for every email (II6: notices.send, then deliverNow). A failed
+   * Sends after the answer has gone (U4), through the one path for every email (II6: notices.send, then deliverNow); an invite uses
+   * the "invite" message, a sign-in the "code" message. A failed
    * send is logged, never shown: the answer is the same for every email, and the code stays.
    */
-  private queue(to: string, issued: { id: string; code: string }): void {
+  private queue(to: string, issued: { id: string; code: string }, template: "code" | "invite" = "code"): void {
     const job: Promise<void> = new Promise<void>((resolve) => setImmediate(resolve))
       .then(async () => {
-        const sent = await this.notices.send(undefined, { template: "code", toEmail: to, data: { code: issued.code }, key: `staff-code:${issued.id}` });
+        const sent = await this.notices.send(undefined, { template, toEmail: to, data: { code: issued.code }, key: `staff-${template === "invite" ? "invite" : "code"}:${issued.id}` });
         await this.notices.deliverNow(sent.deliveryId);
       })
       .then(

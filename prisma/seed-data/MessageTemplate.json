@@ -46,6 +46,24 @@
    "locale": "en-NG",
    "subject": "Your Firstwish code: {code}",
    "version": 1
+  },
+  {
+   "seedKey": "invite:en-NG:1",
+   "body": "Hi,\n\nYou are invited to the Firstwish team. Use this code to sign in: {code}. It works for 10 minutes.\n\nIf you did not expect this, you can leave this email.\n\nFirstwish",
+   "channel": "email",
+   "key": "invite",
+   "locale": "en-NG",
+   "subject": "You are invited to the Firstwish team",
+   "version": 1
+  },
+  {
+   "seedKey": "login-invite:en-NG:1",
+   "body": "Hi,\n\n{business} has added you as a login on Firstwish. Sign in with this email address and you can make client wishes for {business}.\n\nIf you were not expecting this, you can leave this email.\n\nFirstwish",
+   "channel": "email",
+   "key": "login-invite",
+   "locale": "en-NG",
+   "subject": "{business} invited you to Firstwish",
+   "version": 1
   }
  ]
 }

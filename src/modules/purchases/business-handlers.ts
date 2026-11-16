@@ -1,5 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { Clock } from "../../common/ports/clock.port";
+import { InvoicesService } from "../pro-business/invoices.service";
 import type { FulfilmentContext } from "../payments/fulfilment.registry";
 import { addDays, addMonths, GrantStore, monthKey, num, type GrantRow, type Tx } from "./grants";
 
@@ -49,6 +50,7 @@ export class BusinessHandlers {
   constructor(
     private readonly store: GrantStore,
     private readonly clock: Clock,
+    private readonly invoices: InvoicesService,
   ) {}
 
   /** Locks the business and rolls its month to the clock's month (a no-op inside the month). Answers the row as it now stands. */
@@ -130,6 +132,7 @@ export class BusinessHandlers {
       { plan, wishes: num(g.wishes), logins: num(g.logins), vaultGb: num(g.vaultGb), pushed: live, month: b.month ?? monthKey(now) },
       data.renews as Date,
     );
+    await this.invoices.issue(tx, ctx.payment);
   }
 
   async pack(ctx: FulfilmentContext): Promise<void> {
@@ -149,6 +152,7 @@ export class BusinessHandlers {
       data: { pack: num(b.pack) + wishes, packEnds, ...(setPlan ? { plan: "pack" } : {}), since: b.since ?? now, version: { increment: 1 } },
     });
     await this.store.record(tx, grantId, { wishes, packs: line.qty, vaultGb: num(g.vaultGb) * line.qty, days: num(g.days), setPlan }, ends);
+    await this.invoices.issue(tx, ctx.payment);
   }
 
   async vault(ctx: FulfilmentContext): Promise<void> {
@@ -161,6 +165,7 @@ export class BusinessHandlers {
     const ends = addDays(this.clock.now(), num(g.days));
     await tx.business.update({ where: { id: b.id }, data: { version: { increment: 1 } } });
     await this.store.record(tx, grantId, { gb: num(g.vaultGb) * line.qty, blocks: line.qty, days: num(g.days) }, ends);
+    await this.invoices.issue(tx, ctx.payment);
   }
 
   /**
@@ -169,10 +174,11 @@ export class BusinessHandlers {
    */
   async extraGb(tx: Tx, businessId: string): Promise<number> {
     const now = this.clock.now();
-    const rows = await tx.$queryRaw<{ gb: number | null }[]>`
-      SELECT COALESCE(sum((detail->>'gb')::int), 0)::int AS gb FROM purchase_grant
-       WHERE "businessId" = ${businessId}::uuid AND kind = 'vault-space' AND "revokedAt" IS NULL AND "refusedReason" IS NULL AND "endsAt" > ${now}::timestamptz`;
-    return rows[0]?.gb ?? 0;
+    const rows = await tx.purchaseGrant.findMany({
+      where: { businessId, kind: "vault-space", revokedAt: null, refusedReason: null, endsAt: { gt: now } },
+      select: { detail: true },
+    });
+    return rows.reduce((sum, r) => sum + num((r.detail as Record<string, unknown> | null)?.gb), 0);
   }
 
   /**
@@ -196,11 +202,13 @@ export class BusinessHandlers {
   }
 
   /** The grants of a kind for a business that still stand (not revoked, not refused), newest first, leaving out `except` (HH3). */
-  private standing(tx: Tx, businessId: string, kind: string, except: string): Promise<{ detail: Record<string, unknown>; endsAt: Date | null }[]> {
-    return tx.$queryRaw<{ detail: Record<string, unknown>; endsAt: Date | null }[]>`
-      SELECT detail, "endsAt" FROM purchase_grant
-       WHERE "businessId" = ${businessId}::uuid AND kind = ${kind} AND "revokedAt" IS NULL AND "refusedReason" IS NULL AND id <> ${except}::uuid
-       ORDER BY "createdAt" DESC, id DESC`;
+  private async standing(tx: Tx, businessId: string, kind: string, except: string): Promise<{ detail: Record<string, unknown>; endsAt: Date | null }[]> {
+    const rows = await tx.purchaseGrant.findMany({
+      where: { businessId, kind, revokedAt: null, refusedReason: null, id: { not: except } },
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      select: { detail: true, endsAt: true },
+    });
+    return rows.map((r) => ({ detail: (r.detail ?? {}) as Record<string, unknown>, endsAt: r.endsAt }));
   }
 
   /**
@@ -213,8 +221,16 @@ export class BusinessHandlers {
     if (!b) return "business_gone";
     const now = this.clock.now();
     const d = g.detail;
+    let result = "revoked";
     if (g.kind === "wish-pack") {
-      const pack = Math.max(num(b.pack) - num(d.wishes), 0);
+      // TT5: this pack's size comes off what is left, never below 0; what was already used is not taken back and is written on the refund.
+      const size = num(d.wishes);
+      const pack = Math.max(num(b.pack) - size, 0);
+      const used = size - (num(b.pack) - pack);
+      if (used > 0) {
+        await this.store.markRevoked(tx, g.id);
+        result = `revoked_${used}_of_${size}_wishes_already_used`;
+      }
       const rest = await this.standing(tx, b.id, "wish-pack", g.id);
       const ends = rest.reduce<Date | null>((m, r) => (r.endsAt && (!m || r.endsAt.getTime() > m.getTime()) ? r.endsAt : m), null);
       await tx.business.update({
@@ -233,6 +249,6 @@ export class BusinessHandlers {
           : { plan: num(b.pack) > 0 ? "pack" : null, allowance: null, renews: null, version: { increment: 1 } },
       });
     }
-    return "revoked";
+    return result;
   }
 }

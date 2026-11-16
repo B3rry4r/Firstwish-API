@@ -4,12 +4,14 @@ import { JobContext, JobResult, JobsService } from "../jobs/jobs.service";
 import { AbandonPayments } from "../payments/abandon";
 import { FileJobs, ERASE_FILES_PREFIX } from "../stored-files/file-jobs";
 import { STAGING_PREFIX } from "../stored-files/file-rules";
+import { LinkLimits } from "../public-wishes/link-limits";
 
 /** The subject key of a recurring job: one row for the whole system, moved on by the handler each time it runs. */
 export const SWEEP_KEY = "sweep";
 /** How often the recurring jobs run again (the handler answers `again`). */
 export const ABANDON_EVERY_MS = 5 * 60_000;
 export const UPLOAD_CLEANUP_EVERY_MS = 60 * 60_000;
+export const LINK_HITS_EVERY_MS = 10 * 60_000;
 
 /**
  * INT-3: the joins only a shared base can make. Registers with the jobs frame (JobsService.register) the handlers other bundles
@@ -18,6 +20,7 @@ export const UPLOAD_CLEANUP_EVERY_MS = 60 * 60_000;
  *   upload-cleanup    (B09, FileJobs)         by subject: a staging key (a stray signed PUT, Y1), erase-files:<account> (X10), and
  *                                             the recurring sweep of uploads never confirmed (hourly)
  *   make-image-sizes  (B09, FileJobs)         one per confirmed image (the subject is the file's id)
+ *   clean-link-hits   (B10, LinkLimits)       every 10 minutes: the public link's hits past their keeping time (LL4)
  * Each runs from the queue tick with a recorded run, never because a page is open.
  */
 @Injectable()
@@ -29,6 +32,7 @@ export class JobHandlers implements OnModuleInit, OnApplicationBootstrap {
     private readonly clock: Clock,
     private readonly abandon: AbandonPayments,
     private readonly files: FileJobs,
+    private readonly links: LinkLimits,
   ) {}
 
   /**
@@ -44,6 +48,7 @@ export class JobHandlers implements OnModuleInit, OnApplicationBootstrap {
     this.jobs.register("abandon-payment", (c) => this.abandonPayments(c));
     this.jobs.register("upload-cleanup", (c) => this.uploadCleanup(c));
     this.jobs.register("make-image-sizes", (c) => this.makeImageSizes(c));
+    this.jobs.register("clean-link-hits", (c) => this.cleanLinkHits(c));
   }
 
   /** Puts the recurring jobs on the table (once: a second call moves the same rows). Not run in tests, which call it themselves. */
@@ -51,6 +56,7 @@ export class JobHandlers implements OnModuleInit, OnApplicationBootstrap {
     const now = this.clock.now();
     await this.jobs.schedule("abandon-payment", now, SWEEP_KEY);
     await this.jobs.schedule("upload-cleanup", now, SWEEP_KEY);
+    await this.jobs.schedule("clean-link-hits", now, SWEEP_KEY);
   }
 
   onApplicationBootstrap(): void {
@@ -74,6 +80,12 @@ export class JobHandlers implements OnModuleInit, OnApplicationBootstrap {
     }
     const removed = await this.files.sweepUnconfirmed();
     return { changed: { removed }, again: new Date(c.now.getTime() + UPLOAD_CLEANUP_EVERY_MS) };
+  }
+
+  /** LL4: the public link's old hits are removed every 10 minutes. */
+  private async cleanLinkHits(c: JobContext): Promise<JobResult> {
+    const removed = await this.links.removeOld();
+    return { changed: { removed }, again: new Date(c.now.getTime() + LINK_HITS_EVERY_MS) };
   }
 
   private async makeImageSizes(c: JobContext): Promise<JobResult> {

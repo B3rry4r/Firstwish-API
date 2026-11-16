@@ -3,8 +3,7 @@ import { Clock } from "../../common/ports/clock.port";
 import { IdGenerator } from "../../common/ports/ids.port";
 import type { FulfilmentContext } from "../payments/fulfilment.registry";
 import { addDays, GrantStore, num, type GrantRow, type Tx } from "./grants";
-
-export type PassCounter = "wishes" | "upgrades";
+import { PassDrawService, type PassCounter } from "./pass-draws";
 
 /**
  * The Pass: a year from the payment, its wishes and upgrades counters from the entitlements row of the price book (snapshotted on the
@@ -17,6 +16,7 @@ export class PassService {
     private readonly store: GrantStore,
     private readonly clock: Clock,
     private readonly ids: IdGenerator,
+    private readonly draws: PassDrawService,
   ) {}
 
   async fulfil(ctx: FulfilmentContext): Promise<void> {
@@ -45,54 +45,11 @@ export class PassService {
   }
 
   /**
-   * Draws one wish or one upgrade down from the Pass the account has now: ONE conditional UPDATE (used < the granted count), so 20 at
+   * Draws one wish or one upgrade down from the Pass the account has now (PassDrawService.counter): ONE conditional UPDATE, so 20 at
    * once with 1 left give exactly one yes. False when no live Pass has one left. Run it in the transaction of the wish being made.
    */
   async draw(tx: Tx, accountId: string, counter: PassCounter): Promise<boolean> {
-    const now = this.clock.now();
-    for (let attempt = 0; attempt < 3; attempt++) {
-      const rows =
-        counter === "wishes"
-          ? await tx.$queryRaw<{ id: string }[]>`
-              UPDATE pass_membership pm SET "wishesUsed" = COALESCE(pm."wishesUsed", 0) + 1, version = pm.version + 1
-                FROM purchase_grant g
-               WHERE g."paymentId" = pm."paymentId" AND g.sku = 'pass.year' AND g."revokedAt" IS NULL
-                 AND COALESCE(pm."wishesUsed", 0) < (g.detail->>'wishes')::int
-                 AND pm.id = (SELECT p2.id FROM pass_membership p2 JOIN purchase_grant g2 ON g2."paymentId" = p2."paymentId" AND g2.sku = 'pass.year' AND g2."revokedAt" IS NULL
-                               WHERE p2."accountId" = ${accountId}::uuid AND p2.state = 'active' AND p2.since <= ${now}::timestamptz
-                                 AND (("validUntil" #>> '{}'))::timestamptz > ${now}::timestamptz
-                                 AND COALESCE(p2."wishesUsed", 0) < (g2.detail->>'wishes')::int
-                               ORDER BY p2.since, p2.id LIMIT 1)
-              RETURNING pm.id::text AS id`
-          : await tx.$queryRaw<{ id: string }[]>`
-              UPDATE pass_membership pm SET "upgradesUsed" = COALESCE(pm."upgradesUsed", 0) + 1, version = pm.version + 1
-                FROM purchase_grant g
-               WHERE g."paymentId" = pm."paymentId" AND g.sku = 'pass.year' AND g."revokedAt" IS NULL
-                 AND COALESCE(pm."upgradesUsed", 0) < (g.detail->>'upgrades')::int
-                 AND pm.id = (SELECT p2.id FROM pass_membership p2 JOIN purchase_grant g2 ON g2."paymentId" = p2."paymentId" AND g2.sku = 'pass.year' AND g2."revokedAt" IS NULL
-                               WHERE p2."accountId" = ${accountId}::uuid AND p2.state = 'active' AND p2.since <= ${now}::timestamptz
-                                 AND (("validUntil" #>> '{}'))::timestamptz > ${now}::timestamptz
-                                 AND COALESCE(p2."upgradesUsed", 0) < (g2.detail->>'upgrades')::int
-                               ORDER BY p2.since, p2.id LIMIT 1)
-              RETURNING pm.id::text AS id`;
-      if (rows.length) return true;
-      // The row picked was drawn empty by a rival between the pick and the update: look once more for another with a place left.
-      const left = await this.hasPlace(tx, accountId, counter, now);
-      if (!left) return false;
-    }
-    return false;
-  }
-
-  private async hasPlace(tx: Tx, accountId: string, counter: PassCounter, now: Date): Promise<boolean> {
-    const col = counter === "wishes" ? "wishes" : "upgrades";
-    const rows = await tx.$queryRawUnsafe<{ n: number }[]>(
-      `SELECT count(*)::int AS n FROM pass_membership p JOIN purchase_grant g ON g."paymentId" = p."paymentId" AND g.sku = 'pass.year' AND g."revokedAt" IS NULL
-        WHERE p."accountId" = $1::uuid AND p.state = 'active' AND p.since <= $2::timestamptz AND (("validUntil" #>> '{}'))::timestamptz > $2::timestamptz
-          AND COALESCE(p."${col}Used", 0) < (g.detail->>'${col}')::int`,
-      accountId,
-      now,
-    );
-    return (rows[0]?.n ?? 0) > 0;
+    return (await this.draws.counter(tx, accountId, counter)) !== null;
   }
 
   async revoke(tx: Tx, g: GrantRow): Promise<string> {

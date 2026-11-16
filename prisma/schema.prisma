@@ -28,6 +28,7 @@ model Account {
   pro                       Json?
   side                      Json?
   space                     AccountSpace?
+  timeZone                  String?
   createdAt                 DateTime           @default(now()) @db.Timestamptz(3)
   erasedAt                  DateTime?          @db.Timestamptz(3)
   aiRequestByAccount        AiRequest[]        @relation("AiRequest_accountId")
@@ -54,6 +55,7 @@ model Account {
   studioPrefsByAccount      StudioPrefs?       @relation("StudioPrefs_accountId")
   studioStyleByAccount      StudioStyle[]      @relation("StudioStyle_accountId")
   storedFileByOwnerAccount  StoredFile[]       @relation("StoredFile_ownerAccountId")
+  passDrawByAccount         PassDraw[]         @relation("PassDraw_accountId")
 
   @@unique([contact])
   @@unique([handle])
@@ -574,7 +576,7 @@ model Login {
   @@map("login")
 }
 
-/// table: written by E-70, E-72, E-73 and server:messages-email
+/// table: written by E-70, E-72, E-73 and server:messages-email; II3: idempotencyKey is unique, so one key is one email (the advisory lock is gone)
 model MessageDelivery {
   id                String                 @id @db.Uuid
   templateKey       String
@@ -592,6 +594,7 @@ model MessageDelivery {
   vars              Json?
   noticeByDelivery  Notice[]               @relation("Notice_deliveryId")
 
+  @@unique([idempotencyKey])
   @@index([status, id])
   @@index([createdAt, id])
   @@map("message_delivery")
@@ -599,7 +602,7 @@ model MessageDelivery {
 
 /// config: message wording kept by staff (messages-email declaration)
 model MessageTemplate {
-  id          String  @id @db.Uuid
+  id          String    @id @db.Uuid
   key         String
   channel     String
   locale      String
@@ -607,6 +610,8 @@ model MessageTemplate {
   version     Int
   approvedRef String?
   subject     String?
+  editedAt    DateTime? @db.Timestamptz(3)
+  editedBy    String?   @db.Uuid
 
   @@map("message_template")
 }
@@ -699,19 +704,20 @@ model OpeningDef {
 
 /// table: a Pass bought by an account, granted by payment fulfilment E-104 (DEC-94); read by E-83
 model PassMembership {
-  id           String              @id @db.Uuid
-  amount       BigInt?
-  since        DateTime?           @db.Timestamptz(3)
-  upgradesUsed Int?
-  validUntil   Json?
-  way          String?
-  wishesUsed   Int?
-  paymentId    String              @db.Uuid
-  state        PassMembershipState @default(active)
-  version      Int                 @default(0)
-  accountId    String?             @db.Uuid
-  account      Account?            @relation("PassMembership_accountId", fields: [accountId], references: [id])
-  payment      Payment             @relation("PassMembership_paymentId", fields: [paymentId], references: [id])
+  id                   String              @id @db.Uuid
+  amount               BigInt?
+  since                DateTime?           @db.Timestamptz(3)
+  upgradesUsed         Int?
+  validUntil           Json?
+  way                  String?
+  wishesUsed           Int?
+  paymentId            String              @db.Uuid
+  state                PassMembershipState @default(active)
+  version              Int                 @default(0)
+  accountId            String?             @db.Uuid
+  account              Account?            @relation("PassMembership_accountId", fields: [accountId], references: [id])
+  payment              Payment             @relation("PassMembership_paymentId", fields: [paymentId], references: [id])
+  passDrawByMembership PassDraw[]          @relation("PassDraw_membershipId")
 
   @@unique([paymentId])
   @@index([accountId, id])
@@ -749,6 +755,7 @@ model Payment {
   refundByPayment         Refund[]         @relation("Refund_paymentId")
   royaltyAccrualByPayment RoyaltyAccrual[] @relation("RoyaltyAccrual_paymentId")
   passMembershipByPayment PassMembership?  @relation("PassMembership_paymentId")
+  purchaseGrantByPayment  PurchaseGrant[]  @relation("PurchaseGrant_paymentId")
 
   @@unique([providerReference])
   @@unique([idempotencyKey])
@@ -1532,7 +1539,12 @@ model Wish {
   wishLinkByWish       WishLink[]       @relation("WishLink_wishId")
   wishTransitionByWish WishTransition[] @relation("WishTransition_wishId")
   publishedWishByWish  PublishedWish[]  @relation("PublishedWish_wishId")
+  wishOpenByWish       WishOpen[]       @relation("WishOpen_wishId")
   wishFileByWish       WishFile[]       @relation("WishFile_wishId")
+  purchaseGrantByWish  PurchaseGrant[]  @relation("PurchaseGrant_wishId")
+  wishReactionByWish   WishReaction[]   @relation("WishReaction_wishId")
+  wishFavouriteByWish  WishFavourite[]  @relation("WishFavourite_wishId")
+  passDrawByWish       PassDraw[]       @relation("PassDraw_wishId")
 
   @@unique([no])
   @@index([accountId, id])
@@ -1566,11 +1578,18 @@ model WishNumberSequence {
   @@map("wish_number_sequence")
 }
 
-/// table: written by server:wish-link (E-131 records an opening of the public link)
+/// table: written by server:wish-link (E-131 records an opening of the public link); LL1: the wish it is for, the kind of row (read or play), whether it was the first opening and the opening session (a hash, never an address)
 model WishOpen {
-  id   String  @id @db.Uuid
-  slug String?
+  id        String   @id @db.Uuid
+  slug      String?
+  wishId    String?  @db.Uuid
+  kind      String   @default("read")
+  first     Boolean  @default(false)
+  session   String?
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  wish      Wish?    @relation("WishOpen_wishId", fields: [wishId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
+  @@index([wishId, id])
   @@map("wish_open")
 }
 
@@ -1616,6 +1635,91 @@ model JobKindConfig {
 
   @@unique([kind])
   @@map("job_kind_config")
+}
+
+/// table: GG1: what each paid line granted, one row per payment and line (a handler claims its row first, a refund reads it to take the grant back); written by SQL inside the payment's own transaction; accountId and businessId are plain ids (no relation to Account or Business, so the table is not an owned table of the erase gate; its text columns hold no person, rules below)
+model PurchaseGrant {
+  id            String    @id @db.Uuid
+  paymentId     String    @db.Uuid
+  sku           String
+  kind          String
+  accountId     String?   @db.Uuid
+  businessId    String?   @db.Uuid
+  wishId        String?   @db.Uuid
+  detail        Json      @default("{}")
+  startsAt      DateTime  @db.Timestamptz(3)
+  endsAt        DateTime? @db.Timestamptz(3)
+  refusedReason String?
+  revokedAt     DateTime? @db.Timestamptz(3)
+  createdAt     DateTime  @db.Timestamptz(3)
+  payment       Payment   @relation("PurchaseGrant_paymentId", fields: [paymentId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  wish          Wish?     @relation("PurchaseGrant_wishId", fields: [wishId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([paymentId, sku])
+  @@index([paymentId, id])
+  @@index([wishId, id])
+  @@index([businessId, kind])
+  @@index([accountId, kind])
+  @@map("purchase_grant")
+}
+
+/// table: LL1: one reaction per opening session of a wish, changeable; written by SQL from the receiver's link, counted for the owner
+model WishReaction {
+  id        String   @id @db.Uuid
+  wishId    String   @db.Uuid
+  session   String
+  reaction  String
+  createdAt DateTime @db.Timestamptz(3)
+  updatedAt DateTime @db.Timestamptz(3)
+  wish      Wish     @relation("WishReaction_wishId", fields: [wishId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@unique([wishId, session])
+  @@index([wishId, id])
+  @@map("wish_reaction")
+}
+
+/// table: LL1: the photo positions an opening session marked, one set per session of a wish; written by SQL from the receiver's link
+model WishFavourite {
+  id        String   @id @db.Uuid
+  wishId    String   @db.Uuid
+  session   String
+  hearts    Int[]
+  updatedAt DateTime @db.Timestamptz(3)
+  wish      Wish     @relation("WishFavourite_wishId", fields: [wishId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@unique([wishId, session])
+  @@index([wishId, id])
+  @@map("wish_favourite")
+}
+
+/// table: LL1, LL4: the public link's limits counted in the database: a bucket, a key (a hash of the address, never the address) and the time; old rows are removed by a timed job
+model LinkHit {
+  id     String   @id @db.Uuid
+  bucket String
+  key    String
+  at     DateTime @db.Timestamptz(3)
+
+  @@index([bucket, key, at])
+  @@map("link_hit")
+}
+
+/// table: GG3, GG5: a wish or an upgrade drawn from an account's Pass for one wish; the unique key keeps a wish from drawing twice, and the draw is made in the same transaction as the counter
+model PassDraw {
+  id           String         @id @db.Uuid
+  accountId    String         @db.Uuid
+  wishId       String         @db.Uuid
+  membershipId String         @db.Uuid
+  kind         PassDrawKind
+  createdAt    DateTime       @default(now()) @db.Timestamptz(3)
+  account      Account        @relation("PassDraw_accountId", fields: [accountId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  wish         Wish           @relation("PassDraw_wishId", fields: [wishId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  membership   PassMembership @relation("PassDraw_membershipId", fields: [membershipId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([wishId, kind])
+  @@index([accountId, id])
+  @@index([wishId, id])
+  @@index([membershipId, id])
+  @@map("pass_draw")
 }
 
 enum AccountSides {
@@ -1751,6 +1855,7 @@ enum JobType {
   payout_run         @map("payout-run")
   style_level_review @map("style-level-review")
   upload_cleanup     @map("upload-cleanup")
+  clean_link_hits    @map("clean-link-hits")
 }
 
 enum JobStatus {
@@ -1811,14 +1916,17 @@ enum MessageDeliveryPurpose {
   invite
   receipt
   support
+  sealed
+  opens
 }
 
 enum MessageDeliveryStatus {
   queued
+  sending
   sent
   delivered
   failed
-  undeliverable
+  dropped
 }
 
 enum NoticeKind {
@@ -2146,4 +2254,9 @@ enum WishFileRole {
   cover
   sound
   model
+}
+
+enum PassDrawKind {
+  wish
+  upgrade
 }

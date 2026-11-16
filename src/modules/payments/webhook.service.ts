@@ -1,9 +1,10 @@
-import { Injectable } from "@nestjs/common";
+import { Inject, Injectable, Optional } from "@nestjs/common";
 import type { Prisma } from "@prisma/client";
 import { PrismaService } from "../../common/db/prisma.service";
 import { AppError } from "../../common/errors/app-error";
 import { Clock } from "../../common/ports/clock.port";
 import { IdGenerator } from "../../common/ports/ids.port";
+import { REFUND_EVENT_SINK, type RefundEventSink } from "./refund-event-sink";
 import { SettlementService, type ProviderAnswer } from "./settlement.service";
 
 const PROVIDER = "paystack";
@@ -17,8 +18,8 @@ interface Parsed {
 
 /**
  * E-217: Paystack's one signed URL. The access guard has already checked the HMAC-SHA512 of the raw body; here the event is stored
- * once by (provider, eventId) and, if it is a charge, settled by the same path as the verify page. Refund events are stored for
- * the refunds bundle and left unprocessed.
+ * once by (provider, eventId) and, if it is a charge, settled by the same path as the verify page. A refund event goes to the refunds
+ * module (the sink) when one is installed, else it is stored and left unprocessed.
  */
 @Injectable()
 export class WebhookService {
@@ -27,6 +28,7 @@ export class WebhookService {
     private readonly clock: Clock,
     private readonly ids: IdGenerator,
     private readonly settlement: SettlementService,
+    @Optional() @Inject(REFUND_EVENT_SINK) private readonly refunds?: RefundEventSink,
   ) {}
 
   async receive(raw: Buffer): Promise<void> {
@@ -44,7 +46,11 @@ export class WebhookService {
       await this.settlement.settle(answerOf(ev), row.id);
       return;
     }
-    if (ev.type.startsWith("refund.")) return; // the refunds bundle reads these
+    if (ev.type.startsWith("refund.") && this.refunds) {
+      await this.refunds.apply(row.id, ev.type, ev.data);
+      return;
+    }
+    if (ev.type.startsWith("refund.")) return;
     await this.db.webhookEvent.update({ where: { id: row.id }, data: { processedAt: this.clock.now(), outcome: "ignored" } });
   }
 }

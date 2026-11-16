@@ -1,8 +1,8 @@
 /**
- * The five messages Firstwish sends (B11). Every one goes by email (R11). The wording lives in the MessageTemplate table
+ * The seven messages Firstwish sends (B11; INT-4 adds the staff invite, B17 the business login invite). Every one goes by email (R11). The wording lives in the MessageTemplate table
  * (seeded from the web app, edited by staff); this file holds what the wording may name and what the code needs from it.
  */
-export type TemplateKey = "sealed" | "opens" | "opened" | "resting" | "code";
+export type TemplateKey = "sealed" | "opens" | "opened" | "resting" | "code" | "invite" | "login-invite";
 
 export interface TemplateSpec {
   key: TemplateKey;
@@ -16,8 +16,8 @@ export interface TemplateSpec {
   allowed: readonly string[];
   /** The placeholders the message needs: wording that drops one is refused (422). */
   needs: readonly string[];
-  /** The delivery log's purpose for this message. */
-  purpose: "auth-code" | "wish-delivery" | "opened" | "term-notice";
+  /** The delivery log's purpose for this message (II5: sealed and opens have their own). */
+  purpose: "auth-code" | "wish-delivery" | "opened" | "term-notice" | "sealed" | "opens" | "invite";
   /** The in-app notice kind written for it (E-77), when it has one. */
   noticeKind: "opened" | "term-ends-soon" | null;
   /** A person may turn it off. The sign-in code never can. */
@@ -27,23 +27,31 @@ export interface TemplateSpec {
 export const TEMPLATES: Readonly<Record<TemplateKey, TemplateSpec>> = {
   sealed: {
     key: "sealed", label: "Your wish is sealed", when: "When the sender seals a wish.", audience: "The sender",
-    allowed: ["name", "for", "date"], needs: ["name", "for", "date"], purpose: "wish-delivery", noticeKind: null, mutable: true,
+    allowed: ["name", "for", "date"], needs: ["name", "for", "date"], purpose: "sealed", noticeKind: null, mutable: true,
   },
   opens: {
     key: "opens", label: "Your wish opens today", when: "On the day the wish opens.", audience: "The sender",
-    allowed: ["name", "for", "link"], needs: ["name", "for", "link"], purpose: "wish-delivery", noticeKind: null, mutable: true,
+    allowed: ["name", "for", "link"], needs: ["name", "for", "link"], purpose: "opens", noticeKind: null, mutable: true,
   },
   opened: {
     key: "opened", label: "Your wish was opened", when: "When the receiver opens the wish.", audience: "The sender",
     allowed: ["name", "for"], needs: ["name", "for"], purpose: "opened", noticeKind: "opened", mutable: true,
   },
   resting: {
-    key: "resting", label: "Your wish is resting soon", when: "3 days before the term ends, at 09:00 in the wish's time zone.", audience: "The sender",
+    key: "resting", label: "Your wish is resting soon", when: "3 days before the term ends, at 09:00 in the sender's time zone (the wish's until the sender sets one).", audience: "The sender",
     allowed: ["name", "for", "date", "link"], needs: ["name", "for", "date", "link"], purpose: "term-notice", noticeKind: "term-ends-soon", mutable: true,
   },
   code: {
     key: "code", label: "Your sign-in code", when: "When someone asks for a sign-in code.", audience: "The person signing in",
     allowed: ["code"], needs: ["code"], purpose: "auth-code", noticeKind: null, mutable: false,
+  },
+  invite: {
+    key: "invite", label: "You are invited to the team", when: "When staff invite a new team member.", audience: "The new team member",
+    allowed: ["code"], needs: ["code"], purpose: "invite", noticeKind: null, mutable: false,
+  },
+  "login-invite": {
+    key: "login-invite", label: "You are invited to a business", when: "When a business owner adds a login for an email address.", audience: "The person invited",
+    allowed: ["business"], needs: ["business"], purpose: "invite", noticeKind: null, mutable: false,
   },
 };
 
@@ -56,6 +64,12 @@ export const isTemplateKey = (k: unknown): k is TemplateKey => typeof k === "str
 export const CODE_WORDING_FALLBACK = {
   subject: "Your Firstwish code: {code}",
   body: "Your code is {code}. It works for 10 minutes. If you did not ask for it, you can leave this email.\n\nFirstwish",
+} as const;
+
+/** The staff invite's wording when no row exists yet (a database before its seed): an invited member must still get a code. Same words as the seed. */
+export const INVITE_WORDING_FALLBACK = {
+  subject: "You are invited to the Firstwish team",
+  body: "Hi,\n\nYou are invited to the Firstwish team. Use this code to sign in: {code}. It works for 10 minutes.\n\nIf you did not expect this, you can leave this email.\n\nFirstwish",
 } as const;
 
 /** A delivery gets 3 tries (the first counts), with these waits before try 2 and try 3 (declared, PROVISIONAL). */

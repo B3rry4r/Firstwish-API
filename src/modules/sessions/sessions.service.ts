@@ -7,6 +7,7 @@ import { Clock } from "../../common/ports/clock.port";
 import { AppError } from "../../common/errors/app-error";
 import { toWireInstant } from "../../common/time/time";
 import { decodeCursor, DEFAULT_LIMIT, Page, toPage } from "../../common/pagination/cursor";
+import { activeBanScopes, assertNotBanned } from "../moderation/ban-rules";
 
 export type { ClientMeta, StartedSession } from "../../common/auth/session-families";
 
@@ -32,7 +33,8 @@ export class SessionsService {
   ) {}
 
   /** Opens a new session family for an account (a sign-in). Runs in the caller's transaction when given one. */
-  start(db: Db, accountId: string, meta: ClientMeta): Promise<StartedSession> {
+  async start(db: Db, accountId: string, meta: ClientMeta): Promise<StartedSession> {
+    await assertNotBanned(db, accountId, this.clock.now());
     return this.families.start(db, { kind: "user", accountId }, meta, USER_SESSION);
   }
 
@@ -51,7 +53,8 @@ export class SessionsService {
   async refresh(cookie: string | null, meta: ClientMeta): Promise<StartedSession> {
     const started = await this.families.rotate(cookie, "user", meta, USER_SESSION);
     const account = await this.prisma.account.findUnique({ where: { id: started.row.accountId ?? "" }, select: { erasedAt: true } });
-    if (!account || account.erasedAt) {
+    const banned = !!account && !account.erasedAt && (await activeBanScopes(this.prisma, started.row.accountId ?? "", this.clock.now())).includes("account");
+    if (!account || account.erasedAt || banned) {
       await this.families.endFamily(this.prisma, started.row.familyId, "erased");
       throw AppError.unauthorized("Your session has ended. Sign in again.");
     }

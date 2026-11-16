@@ -308,7 +308,7 @@ export class PriceAdminService {
         const now = this.book.now();
         const base = await this.book.latestPublished(tx);
         const published = await this.publishLines(tx, base.lines.map((l) => ({ ...l })), now, actor, `Limit change: ${def.key}`, now);
-        await this.audit.write(tx, { actor, section: SECTION, action: "price.change", target: { type: "price", id: def.key }, reason, changedFields: ["value"] });
+        await this.audit.write(tx, { actor, section: SECTION, action: "price.change", target: { type: "price", id: def.key }, reason, changedFields: ["value"], values: { key: def.key, old: before, new: v } });
         return limitLineView(def, v, published, reason, true);
       });
     } catch (e) {

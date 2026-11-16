@@ -120,6 +120,38 @@ describe("HX1 staff Prices and HX5 session actions", () => {
     }
   });
 
+  it("HX1 a limit change's audit row carries the key, the old and new value and who, and two changes at once chain", async () => {
+    const key = "limits.unopenedDays";
+    const start = (await lines()).find((l) => l.key === key)?.value as number;
+    const audit = async () => {
+      const r = await t.http().get("/v1/admin/audit").query({ limit: 50, section: "/admin/prices", subjectType: "price" }).set(auth(staff.owner.token));
+      expect(r.status).toBe(200);
+      return (r.body.items as { subjectId: string; by: string; actorId: string; before: { key: string; value: number }; after: { key: string; value: number } }[]).filter((e) => e.subjectId === key).reverse();
+    };
+    const already = (await audit()).length;
+    try {
+      expect((await put("finance", key, { value: start + 1 })).status).toBe(200);
+      expect((await put("owner", key, { value: start + 2 })).status).toBe(200);
+      let rows = (await audit()).slice(already);
+      expect(rows.map((e) => [e.before, e.after, e.actorId])).toEqual([
+        [{ key, value: start }, { fields: ["value"], key, value: start + 1 }, staff.finance.id],
+        [{ key, value: start + 1 }, { fields: ["value"], key, value: start + 2 }, staff.owner.id],
+      ]);
+      // two at once: the one that lands second reads the first's value inside its own transaction
+      const both = await Promise.all([put("finance", key, { value: start + 3 }), put("owner", key, { value: start + 4 })]);
+      expect(both.map((r) => r.status).filter((x) => x === 200).length).toBeGreaterThanOrEqual(1);
+      rows = (await audit()).slice(already + 2);
+      let at = start + 2;
+      for (const e of rows) {
+        expect(e.before.value).toBe(at);
+        at = e.after.value;
+      }
+      expect(at).toBe((await lines()).find((l) => l.key === key)?.value);
+    } finally {
+      if ((await lines()).find((l) => l.key === key)?.value !== start) expect((await put("finance", key, { value: start })).status).toBe(200);
+    }
+  });
+
   it("HX1 the payout threshold and day move through the same route, by the roles that change prices, with the read", async () => {
     const first = (await book()).body.payout as { thresholdKobo: number; day: number };
     expect((await put("support", "payout.thresholdKobo", { priceKobo: 600000 })).status).toBe(403);

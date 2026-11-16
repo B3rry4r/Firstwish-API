@@ -1,4 +1,6 @@
 PHASE 6 COMMON (every wiring builder reads this once; 40 lines or fewer)
+Built on W0b (merged 16 Nov): lib/api.ts, lib/session.ts, lib/contracts/, scripts/live/{stack,drive,auth-flow,standin}.mjs,
+`npm run test:client`, `npm run contracts:check`. Read lib/api.ts and lib/session.ts before writing a line.
 Read: /home/user/Firstwish-API/build/common-rules.md; /home/user/Firstwish-API/build/tasks/PHASE6.md; /home/user/Firstwish-API/.pipeline/conventions.md (auth, error
 envelope, format canon, Runtime contract); /home/user/Firstwish-web/AGENTS.md, .pipeline-ui/invariants.md, .pipeline-ui/surface-map.json;
 /root/.claude/skills/synced/f85b4e60-1876-4137-a2c7-d7d119745a79_8f677423-0744-4c12-8d0d-331ba6815a77/frontend-surface-build/SKILL.md (Core laws, Phase 5) and
@@ -26,8 +28,11 @@ Measure in a real browser on the built web against the stack, numbers not adject
 360x740, 390x844, 1440x900: scrollWidth <= innerWidth AND each control inside its own cell (its right edge against its
 container's); 0 console errors; every state reached; a value that exists only on the server seen on the screen; after a
 reload the screen shows the same server data; storage as the page sees it is EMPTY; one light and one dark picture per
-screen at 360 (and one per extra state of a pay screen) into your pictures folder. Add each screen to
-.pipeline-ui/wired.json and a step for it in scripts/live/drive.mjs that reaches it through the real screens.
+screen at 360 (and one per extra state of a pay screen) into your pictures folder. The live driver: your steps go in
+your OWN new file scripts/live/flows/<bundle>.mjs (reaching each screen through the real screens, as auth-flow.mjs does);
+in drive.mjs add only one import line and one call line for it. .pipeline-ui/wired.json is the lead's: list your screens
+in it locally to see your count, but do NOT commit that file (name the screens in the hand-back). Sign-in codes: use
+scripts/live/standin.mjs as it is (the lead is replacing the planted code with a file the API writes; do not rework it).
 Checks (quiet logs, EXIT lines): typecheck, lint, check:css, `npm run gates` (exit 0, no new finding), `npm run build`,
 `npm run test:client`, the live driver. Commit on your branch; do not push; remove your worktrees, stack and databases.
 Hand back in 14 lines or fewer: head; claims one per line, each testable; ui-align ids done / not done with why; stale

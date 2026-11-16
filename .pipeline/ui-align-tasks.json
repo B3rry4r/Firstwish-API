@@ -1199,7 +1199,8 @@
         "lib/account.ts"
       ],
       "change": "server-issued UUIDv7 ids",
-      "status": "open"
+      "status": "done",
+      "resolution": "W0b (web 53e76ef + patch 8d4df84), verified 16 Nov"
     },
     {
       "id": "UA-107",
@@ -1210,7 +1211,8 @@
         "lib/account.ts"
       ],
       "change": "server-issued UUIDv7 ids",
-      "status": "open"
+      "status": "done",
+      "resolution": "W0b (web 53e76ef + patch 8d4df84), verified 16 Nov"
     },
     {
       "id": "UA-108",
@@ -1276,7 +1278,8 @@
         "lib/account.ts"
       ],
       "change": "server-issued UUIDv7 ids",
-      "status": "open"
+      "status": "done",
+      "resolution": "W0b (web 53e76ef + patch 8d4df84), verified 16 Nov"
     },
     {
       "id": "UA-114",
@@ -1606,7 +1609,8 @@
         "components/app/AuthFlow.tsx"
       ],
       "change": "real Google sign-in (google-identity)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W0b (web 53e76ef + patch 8d4df84), verified 16 Nov"
     },
     {
       "id": "UA-144",
@@ -1617,7 +1621,8 @@
         "components/app/AuthFlow.tsx"
       ],
       "change": "real Google sign-in (google-identity)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W0b (web 53e76ef + patch 8d4df84), verified 16 Nov"
     },
     {
       "id": "UA-145",
@@ -3354,7 +3359,8 @@
         "lib/account.ts"
       ],
       "change": "the web reads GET /v1/prices; the server charges only from the price book",
-      "status": "open"
+      "status": "done",
+      "resolution": "W0b (web 53e76ef + patch 8d4df84), verified 16 Nov"
     },
     {
       "id": "UA-298",
@@ -3365,7 +3371,8 @@
         "lib/account.ts"
       ],
       "change": "the web reads GET /v1/prices; the server charges only from the price book",
-      "status": "open"
+      "status": "done",
+      "resolution": "W0b (web 53e76ef + patch 8d4df84), verified 16 Nov"
     },
     {
       "id": "UA-299",
@@ -3556,7 +3563,8 @@
         "lib/account.ts"
       ],
       "change": "the web reads GET /v1/prices; the server charges only from the price book",
-      "status": "open"
+      "status": "done",
+      "resolution": "W0b (web 53e76ef + patch 8d4df84), verified 16 Nov"
     },
     {
       "id": "UA-316",
@@ -4030,7 +4038,8 @@
         "components/app/Welcome.tsx"
       ],
       "change": "account created by the server after a verified code or Google sign-in; handle uniqueness checked by the server",
-      "status": "open"
+      "status": "done",
+      "resolution": "W0b (web 53e76ef + patch 8d4df84), verified 16 Nov"
     },
     {
       "id": "UA-359",
@@ -4671,7 +4680,8 @@
         "lib/account.ts"
       ],
       "change": "every epoch-ms `at` becomes createdAt/updatedAt ISO-8601 UTC strings set by the server; calendar dates are YYYY-MM-DD strings (date-only canon)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W0b (web 53e76ef + patch 8d4df84), verified 16 Nov"
     },
     {
       "id": "UA-417",
@@ -4682,7 +4692,8 @@
         "lib/account.ts"
       ],
       "change": "every epoch-ms `at` becomes createdAt/updatedAt ISO-8601 UTC strings set by the server; calendar dates are YYYY-MM-DD strings (date-only canon)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W0b (web 53e76ef + patch 8d4df84), verified 16 Nov"
     },
     {
       "id": "UA-418",
@@ -4771,7 +4782,8 @@
         "lib/account.ts"
       ],
       "change": "every epoch-ms `at` becomes createdAt/updatedAt ISO-8601 UTC strings set by the server; calendar dates are YYYY-MM-DD strings (date-only canon)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W0b (web 53e76ef + patch 8d4df84), verified 16 Nov"
     },
     {
       "id": "UA-426",
@@ -5700,7 +5712,8 @@
         "lib/account.ts"
       ],
       "change": "every read or write of localStorage/sessionStorage/IndexedDB is replaced by its endpoint; the session is an httpOnly refresh cookie plus an in-memory access token; mode (light/dark) is a field on the account; choices before sign-in travel in the link; the build fails on the words localStorage, sessionStorage, IndexedDB in app/, components/, lib/",
-      "status": "open"
+      "status": "done",
+      "resolution": "W0b (web 53e76ef + patch 8d4df84), verified 16 Nov"
     },
     {
       "id": "UA-506",
@@ -5711,7 +5724,8 @@
         "lib/account.ts"
       ],
       "change": "every read or write of localStorage/sessionStorage/IndexedDB is replaced by its endpoint; the session is an httpOnly refresh cookie plus an in-memory access token; mode (light/dark) is a field on the account; choices before sign-in travel in the link; the build fails on the words localStorage, sessionStorage, IndexedDB in app/, components/, lib/",
-      "status": "open"
+      "status": "done",
+      "resolution": "W0b (web 53e76ef + patch 8d4df84), verified 16 Nov"
     },
     {
       "id": "UA-507",
@@ -5812,7 +5826,8 @@
         "lib/account.ts"
       ],
       "change": "every read or write of localStorage/sessionStorage/IndexedDB is replaced by its endpoint; the session is an httpOnly refresh cookie plus an in-memory access token; mode (light/dark) is a field on the account; choices before sign-in travel in the link; the build fails on the words localStorage, sessionStorage, IndexedDB in app/, components/, lib/",
-      "status": "open"
+      "status": "done",
+      "resolution": "W0b (web 53e76ef + patch 8d4df84), verified 16 Nov"
     },
     {
       "id": "UA-516",
@@ -5823,7 +5838,8 @@
         "components/app/AuthFlow.tsx"
       ],
       "change": "sign-in by email code or Google only; phone is an optional plain detail stored E.164 when given, never verified, never an account key",
-      "status": "open"
+      "status": "done",
+      "resolution": "W0b (web 53e76ef + patch 8d4df84), verified 16 Nov"
     },
     {
       "id": "UA-517",
@@ -5834,7 +5850,8 @@
         "components/app/AuthFlow.tsx"
       ],
       "change": "sign-in by email code or Google only; phone is an optional plain detail stored E.164 when given, never verified, never an account key",
-      "status": "open"
+      "status": "done",
+      "resolution": "W0b (web 53e76ef + patch 8d4df84), verified 16 Nov"
     },
     {
       "id": "UA-518",
@@ -7629,7 +7646,8 @@
       ],
       "change": "implement the designed loading state",
       "enterCondition": "a request for this surface is in flight (conventions Runtime contract)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W0b (web 53e76ef + patch 8d4df84), verified 16 Nov"
     },
     {
       "id": "UA-647",
@@ -7643,7 +7661,8 @@
       ],
       "change": "implement the designed empty state",
       "enterCondition": "the server returns no items",
-      "status": "open"
+      "status": "not-a-state",
+      "resolution": "W0b verify, 16 Nov: an empty state has no meaning on this screen"
     },
     {
       "id": "UA-648",
@@ -7657,7 +7676,8 @@
       ],
       "change": "implement the designed error state",
       "enterCondition": "the request fails; show retry",
-      "status": "open"
+      "status": "done",
+      "resolution": "W0b (web 53e76ef + patch 8d4df84), verified 16 Nov"
     },
     {
       "id": "UA-649",
@@ -7671,7 +7691,8 @@
       ],
       "change": "implement the designed loaded state",
       "enterCondition": "as designed: loaded",
-      "status": "open"
+      "status": "done",
+      "resolution": "W0b (web 53e76ef + patch 8d4df84), verified 16 Nov"
     },
     {
       "id": "UA-650",
@@ -7685,7 +7706,8 @@
       ],
       "change": "implement the designed loading state",
       "enterCondition": "a request for this surface is in flight (conventions Runtime contract)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W0b (web 53e76ef + patch 8d4df84), verified 16 Nov"
     },
     {
       "id": "UA-651",
@@ -7699,7 +7721,8 @@
       ],
       "change": "implement the designed empty state",
       "enterCondition": "the server returns no items",
-      "status": "open"
+      "status": "not-a-state",
+      "resolution": "W0b verify, 16 Nov: an empty state has no meaning on this screen"
     },
     {
       "id": "UA-652",
@@ -7713,7 +7736,8 @@
       ],
       "change": "implement the designed error state",
       "enterCondition": "the request fails; show retry",
-      "status": "open"
+      "status": "done",
+      "resolution": "W0b (web 53e76ef + patch 8d4df84), verified 16 Nov"
     },
     {
       "id": "UA-653",
@@ -7727,7 +7751,8 @@
       ],
       "change": "implement the designed loaded state",
       "enterCondition": "as designed: loaded",
-      "status": "open"
+      "status": "done",
+      "resolution": "W0b (web 53e76ef + patch 8d4df84), verified 16 Nov"
     },
     {
       "id": "UA-654",
@@ -8487,7 +8512,8 @@
       ],
       "change": "implement the designed loading state",
       "enterCondition": "a request for this surface is in flight (conventions Runtime contract)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W0b (web 53e76ef + patch 8d4df84), verified 16 Nov"
     },
     {
       "id": "UA-710",
@@ -8500,7 +8526,8 @@
       ],
       "change": "implement the designed empty state",
       "enterCondition": "the server returns no items",
-      "status": "open"
+      "status": "not-a-state",
+      "resolution": "W0b verify, 16 Nov: an empty state has no meaning on this screen"
     },
     {
       "id": "UA-711",
@@ -8513,7 +8540,8 @@
       ],
       "change": "implement the designed error state",
       "enterCondition": "the request fails; show retry",
-      "status": "open"
+      "status": "done",
+      "resolution": "W0b (web 53e76ef + patch 8d4df84), verified 16 Nov"
     },
     {
       "id": "UA-712",
@@ -8526,7 +8554,8 @@
       ],
       "change": "implement the designed loaded state",
       "enterCondition": "as designed: loaded",
-      "status": "open"
+      "status": "done",
+      "resolution": "W0b (web 53e76ef + patch 8d4df84), verified 16 Nov"
     },
     {
       "id": "UA-713",
@@ -10242,7 +10271,8 @@
         "components/app/AuthFlow.tsx:53"
       ],
       "change": "replace: sending a one-time code by SMS, WhatsApp or email (STUB-2)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W0b (web 53e76ef + patch 8d4df84), verified 16 Nov"
     },
     {
       "id": "UA-869",
@@ -10253,7 +10283,8 @@
         "components/app/AuthFlow.tsx:86"
       ],
       "change": "replace: verifying the code (6 digits, 10 min, 5 tries)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W0b (web 53e76ef + patch 8d4df84), verified 16 Nov"
     },
     {
       "id": "UA-870",
@@ -10264,7 +10295,8 @@
         "components/app/AuthFlow.tsx:77"
       ],
       "change": "replace: Google sign-in (OAuth) (STUB-3)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W0b (web 53e76ef + patch 8d4df84), verified 16 Nov"
     },
     {
       "id": "UA-871",
@@ -10275,7 +10307,8 @@
         "components/app/AuthFlow.tsx:27-30,95-96"
       ],
       "change": "replace: session creation and resend",
-      "status": "open"
+      "status": "done",
+      "resolution": "W0b (web 53e76ef + patch 8d4df84), verified 16 Nov"
     },
     {
       "id": "UA-872",
@@ -10286,7 +10319,8 @@
         "components/app/AuthFlow.tsx:25"
       ],
       "change": "replace: resend cool-down",
-      "status": "open"
+      "status": "done",
+      "resolution": "W0b (web 53e76ef + patch 8d4df84), verified 16 Nov"
     },
     {
       "id": "UA-873",
@@ -10297,7 +10331,8 @@
         "components/app/AuthFlow.tsx:9"
       ],
       "change": "replace: supported country codes",
-      "status": "open"
+      "status": "done",
+      "resolution": "W0b (web 53e76ef + patch 8d4df84), verified 16 Nov"
     },
     {
       "id": "UA-874",
@@ -10968,7 +11003,8 @@
         "components/app/Welcome.tsx:33-45"
       ],
       "change": "replace: creating or updating the account on the server",
-      "status": "open"
+      "status": "done",
+      "resolution": "W0b (web 53e76ef + patch 8d4df84), verified 16 Nov"
     },
     {
       "id": "UA-935",
@@ -10979,7 +11015,8 @@
         "components/app/Welcome.tsx:30"
       ],
       "change": "replace: the signed-in session's contact and name",
-      "status": "open"
+      "status": "done",
+      "resolution": "W0b (web 53e76ef + patch 8d4df84), verified 16 Nov"
     },
     {
       "id": "UA-936",
@@ -10990,7 +11027,8 @@
         "lib/account.ts:71"
       ],
       "change": "replace: server-issued ids (UUIDv7)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W0b (web 53e76ef + patch 8d4df84), verified 16 Nov"
     },
     {
       "id": "UA-937",
@@ -11001,7 +11039,8 @@
         "components/app/Welcome.tsx:43"
       ],
       "change": "replace: choosing a Business plan",
-      "status": "open"
+      "status": "done",
+      "resolution": "W0b (web 53e76ef + patch 8d4df84), verified 16 Nov"
     },
     {
       "id": "UA-938",
@@ -11012,7 +11051,8 @@
         "lib/account.ts:15-18 header comment"
       ],
       "change": "replace: the whole account store",
-      "status": "open"
+      "status": "done",
+      "resolution": "W0b (web 53e76ef + patch 8d4df84), verified 16 Nov"
     },
     {
       "id": "UA-939",
@@ -11023,8 +11063,9 @@
         "lib/account.ts"
       ],
       "change": "the server populates what this screen reads (readAccount() on 'fw-account' decides where to go after the code; sessionStorage 'fw-pending' (contact) and 'fw-next' (r); triggers: on page load, after sign-in, when the tab becomes visible again, and after any write. A manual button is not a trigger.",
-      "status": "open",
-      "provenance": "repository-local-store"
+      "status": "done",
+      "provenance": "repository-local-store",
+      "resolution": "W0b (web 53e76ef + patch 8d4df84), verified 16 Nov"
     },
     {
       "id": "UA-940",
@@ -11035,8 +11076,9 @@
         "lib/account.ts"
       ],
       "change": "the server populates what this screen reads (sessionStorage 'fw-pending' written; no backend read); triggers: on page load, after sign-in, when the tab becomes visible again, and after any write. A manual button is not a trigger.",
-      "status": "open",
-      "provenance": "repository-local-store"
+      "status": "done",
+      "provenance": "repository-local-store",
+      "resolution": "W0b (web 53e76ef + patch 8d4df84), verified 16 Nov"
     },
     {
       "id": "UA-941",
@@ -11047,8 +11089,9 @@
         "lib/account.ts"
       ],
       "change": "the server populates what this screen reads (getPending() from sessionStorage 'fw-pending'; readAccount(); writes the new Account to 'fw-account' via writeAccount()); triggers: on page load, after sign-in, when the tab becomes visible again, and after any write. A manual button is not a trigger.",
-      "status": "open",
-      "provenance": "repository-local-store"
+      "status": "done",
+      "provenance": "repository-local-store",
+      "resolution": "W0b (web 53e76ef + patch 8d4df84), verified 16 Nov"
     },
     {
       "id": "UA-942",

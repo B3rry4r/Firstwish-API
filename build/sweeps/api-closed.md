@@ -43,3 +43,7 @@
   second pack (so it can be named for a sixth wish). Count each pack's standing draws separately.
 
 - HJ1: a pack refund takes away only that pack's own unused places. HK1: the stand-in mail file for test stacks.
+
+## Closed 16 Nov by API-BASE-3 (verified twice)
+- A refresh with no cookie answers no_session (HM6). The stand-in mail file is 0600 and a bad path fails at boot.
+- makerNote on the owner's wish read (HM1); a start is safe to repeat and never changes a draft (HO1, HO2); Wish.content is an object (HM4).

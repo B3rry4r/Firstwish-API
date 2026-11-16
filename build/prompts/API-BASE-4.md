@@ -31,8 +31,8 @@ Cases (through the real routes; a test for each):
     answer ({reaction, wish}), PublishedWish.creator ({handle, name}), PlayWish.wish and data, and the loose fields
     the web had to cast (lib/person.ts on the web branch w3-app lists ten named casts with the request beside each:
     read them: /home/user/Firstwish-web, `git show w3-app:lib/person.ts`). No change on the wire unless a ruling says so.
- 9. Leftovers in build/sweeps/api.md under "For the next API base" that are still open after API-BASE-3: close each or
-    say why not.
+ 9. The two low lines in build/sweeps/api.md under "For the next API base": the stored makerNote is bounded (not
+    only the incoming one) and a body nested too deep is 422, never 500.
 Checks (quiet logs, EXIT lines): typecheck, lint on changed files, gates.sh, check-contracts, check-drift, check-routes,
 the affected specs, then `npm test -- --maxWorkers=2` twice (the reference-data "seed equals the web app's own files"
 test may fail here when the web checkout has moved: report it apart, do not touch it). Commit on api-base-4; do not

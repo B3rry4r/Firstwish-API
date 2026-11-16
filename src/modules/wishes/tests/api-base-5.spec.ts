@@ -113,4 +113,29 @@ describe("API-BASE-5 wishes (through the real routes)", () => {
       expect(open.body.content).toMatchObject({ ...fields });
     });
   });
+  describe("case 3, HQ4: the owner (a person, not only a business) reads the link friends use", () => {
+    it("the owner of a sealed wish reads {link, slug}; another person gets 404; a draft has no link yet (404); a friend's visit reads the wish's state and cannot add anything", async () => {
+      const u = await user();
+      const other = await user();
+      const w = await start(u);
+      const draft = await t.http().get(`/v1/wishes/${w.id}/link`).set(bearer(u.token));
+      expect(draft.status).toBe(404);
+      const slug = `ab5g-${run}-${seq}`.slice(0, 32);
+      await db.wish.update({ where: { id: w.id }, data: { status: "sealed", ticket: "moment", sealedAt: NOW, opensAt: new Date(NOW.getTime() + 3600000), no: `FW-G5${run}` } as never });
+      await db.wishLink.create({ data: { id: nid(), slug, wishId: w.id, active: true } });
+      const mine = await t.http().get(`/v1/wishes/${w.id}/link`).set(bearer(u.token));
+      expect(mine.status).toBe(200);
+      expect(mine.body).toEqual({ link: `/w/${slug}`, slug });
+      expect((await t.http().get(`/v1/wishes/${w.id}/link`).set(bearer(other.token))).status).toBe(404);
+      expect((await t.http().get(`/v1/wishes/${w.id}/link`)).status).toBe(401);
+      // a friend with the link and no account: reads the state of the wish (no content before it opens); no route lets them write into it
+      const friend = await t.http().get(`/v1/w/${slug}`).set({ "x-forwarded-for": "10.56.1.1" });
+      expect(friend.status).toBe(200);
+      expect(friend.body.state).toBe("countdown");
+      for (const [m, path] of [["post", "voices"], ["put", ""], ["patch", ""], ["delete", ""]] as const) {
+        const r = await t.http()[m](`/v1/w/${slug}${path ? `/${path}` : ""}`).set({ "x-forwarded-for": "10.56.1.2" }).send({ name: "Ada", text: "Hi" });
+        expect([m, r.status]).toEqual([m, 404]);
+      }
+    });
+  });
 });

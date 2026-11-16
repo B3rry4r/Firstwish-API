@@ -23,3 +23,6 @@
   Idempotency-Key; a creator's waiting amount can show negative ("-₦2,500": the server's figure); Mark paid stays drawn
   after a payout succeeded; the Mark-paid sheet's X touches its title at 390; a 404 wish or person shows "Try again";
   "Picked just now" names an unlisted wish until a reload. UA-3, UA-252, UA-316 stay open for the Studio bundle (W10).
+- W12 (verify 16 Nov): lib/admin/c-types.ts and c-live.ts type the staff payment, refund, ledger and business reads by
+  hand with `as unknown as` (the contract is loose there: an API contract fix, API-BASE-5, then the casts go); a price
+  typed 0, negative or not a number gets the screen's own words and is never sent; finance sees no "Changes" block.

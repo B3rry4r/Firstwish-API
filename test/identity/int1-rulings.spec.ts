@@ -246,9 +246,21 @@ describe("U rulings (Verify B03; they bind both sign-ins)", () => {
   /** The wrong guesses go first; the right one goes once the 5 looks are spent (waited on in the database, not by a fixed time). */
   async function burst(send: (code: string) => Promise<TestResponse>, right: string, destination: string) {
     const wrong = Array.from({ length: 10 }, (_, i) => send(String((Number(right) + 1 + i) % 1_000_000).padStart(6, "0")));
-    for (let i = 0; i < 400; i++) {
+    // The right code goes only once the 5 looks are spent. The wait has no fixed time (a loaded machine answers the wrong ones
+    // late, and a right code sent before they were counted is rightly accepted): it ends when 5 are counted, or when every wrong
+    // guess has been answered, in which case 5 must have been counted by then.
+    let answered = false;
+    void Promise.allSettled(wrong).then(() => {
+      answered = true;
+    });
+    for (let i = 0; i < 4800; i++) {
       const row = await t.db.authCode.findFirst({ where: { destination }, orderBy: { createdAt: "desc" } });
       if ((row?.attempts ?? 0) >= 5) break;
+      if (answered) {
+        const last = await t.db.authCode.findFirst({ where: { destination }, orderBy: { createdAt: "desc" } });
+        if ((last?.attempts ?? 0) >= 5) break;
+        throw new Error(`all 10 wrong guesses were answered but ${last?.attempts ?? 0} were counted`);
+      }
       await new Promise((r) => setTimeout(r, 25));
     }
     const all = await Promise.all([...wrong, send(right)]);

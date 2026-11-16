@@ -111,7 +111,7 @@ describe("Moderation: reports, take-down asks, decisions, bans, queues (B13)", (
     await post({ contact: email });
     const code = /\b(\d{6})\b/.exec(`${t.email.lastTo(email)?.subject ?? ""} ${t.email.lastTo(email)?.text ?? ""}`)?.[1] as string;
     const bad = code === "000000" ? "111111" : "000000";
-    const answers = [];
+    const answers: { status: number; body: { error: { code: string; message: string } } }[] = [];
     for (let i = 0; i < 5; i++) answers.push(await post({ contact: email, code: bad }));
     expect(answers.slice(0, 4).map((r) => r.body.error.message)).toEqual([1, 2, 3, 4].map((i) => `That code is not right. ${5 - i} ${5 - i === 1 ? "try" : "tries"} left.`));
     expect(answers[4].status).toBe(400);

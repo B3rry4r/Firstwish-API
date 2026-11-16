@@ -9,9 +9,10 @@ import { AuditActor, AuditService } from "../audit/audit.service";
 import { ShowingLink } from "../showing/showing-link";
 import { SavedWishesService } from "../saved-wishes/saved-wishes.service";
 import { JobsService } from "../jobs/jobs.service";
-import { UNOPENED_DAYS } from "../wishes/wish-lifecycle.service";
+import { ERASE_WISH_FILE_PREFIX, UNOPENED_DAYS } from "../wishes/wish-lifecycle.service";
 import { StudioErasure } from "../studio/studio-erasure";
 import { FileJobs } from "../stored-files/file-jobs";
+import { passBusinessWishesToOwner } from "../wishes/business-wishes";
 import type { Db } from "./account-rules";
 
 /** How young the session family (the sign-in) must be for a person to erase their own account. */
@@ -53,6 +54,21 @@ export const NOT_THIS_ACCOUNT: Record<string, string> = {
 
 /** The subject prefix of an erase-now job that blanks one client wish row when its term ends (RR3). */
 export const CLIENT_WISH_PREFIX = "client-wish:";
+
+/**
+ * EA4: a client wish's reveal words (the client's name, the note, the credits, the city, the booking link) are blanked; only the link id
+ * stays (a key, nothing personal). `ids` are client-wish ids. One statement; safe to repeat.
+ */
+export async function blankRevealWords(tx: Pick<Prisma.TransactionClient, "$executeRaw">, ids: string[]): Promise<number> {
+  if (!ids.length) return 0;
+  // The email that carried the client's name to the client (key reveal:<client wish>:<send>) keeps neither address nor words.
+  const mails = await tx.$executeRaw`
+    UPDATE message_delivery SET vars = NULL, "to" = ''
+     WHERE "idempotencyKey" LIKE ANY(SELECT 'reveal:' || x || ':%' FROM unnest(${ids}::text[]) AS x) AND (vars IS NOT NULL OR "to" <> '')`;
+  return mails + await tx.$executeRaw`
+    UPDATE client_wish SET reveal = CASE WHEN reveal ? 'link' THEN jsonb_build_object('link', reveal -> 'link') ELSE '{}'::jsonb END
+     WHERE id = ANY(${ids}::uuid[]) AND reveal IS NOT NULL AND reveal <> CASE WHEN reveal ? 'link' THEN jsonb_build_object('link', reveal -> 'link') ELSE '{}'::jsonb END`;
+}
 
 /** The job kinds that wait on one wish (its id is the job's subject): the lifecycle's timed moves and its notice. */
 const WISH_JOB_KINDS = ["open_wish", "rest_wish", "erase_wish", "erase_now", "restore_window_end", "send_notice"] as const;
@@ -115,9 +131,12 @@ export class AccountErasureService {
 
   private async blankAll(tx: Db, accountId: string, email: string | null, handle: string | null): Promise<void> {
     const now = this.clock.now();
+    // ZB4: the business wishes this login made (drafts and sealed) pass to the business owner's account and keep playing; the rest of this account goes.
+    await passBusinessWishesToOwner(tx, { fromAccountIds: [accountId] });
     const businessIds = (await tx.business.findMany({ where: { accountId }, select: { id: true } })).map((b) => b.id);
     const creatorIds = (await tx.creator.findMany({ where: { accountId }, select: { id: true } })).map((c) => c.id);
-    const allWishes = await tx.wish.findMany({ where: { accountId }, select: { id: true, status: true, businessId: true, erasedAt: true, removedAt: true, opensAt: true, openedAt: true, endsAt: true } });
+    // RR3 / ZB3: the account's own wishes, and the wishes made for its businesses (a login's client wishes carry the business).
+    const allWishes = await tx.wish.findMany({ where: { OR: [{ accountId }, ...(businessIds.length ? [{ businessId: { in: businessIds } }] : [])] }, select: { id: true, status: true, businessId: true, erasedAt: true, removedAt: true, opensAt: true, openedAt: true, endsAt: true } });
     // RR3: a business owner's client wish that was already sent (sealed or live) is not erased now: its link keeps playing to the end of its term.
     const sentForClient = allWishes.filter((w) => w.businessId !== null && businessIds.includes(w.businessId) && !w.erasedAt && !w.removedAt && (w.status === "sealed" || w.status === "live"));
     const keptSet = new Set(sentForClient.map((w) => w.id));
@@ -141,6 +160,8 @@ export class AccountErasureService {
       });
       await tx.messageDelivery.updateMany({ where: { to: email }, data: { to: "", vars: Prisma.DbNull } });
     }
+    // HD1: this person's own address in every business's login rows (as a member of other businesses) goes too.
+    if (email) await tx.$executeRaw`UPDATE login SET contact = NULL WHERE contact IS NOT NULL AND lower(trim(contact)) = lower(trim(${email}))`;
     await tx.externalIdentity.updateMany({ where: { accountId }, data: { email: null, subject: "" } });
     await tx.creator.updateMany({ where: { accountId }, data: { name: null, person: null, line: null, href: null, img: null } });
     if (creatorIds.length) await tx.bankAccount.updateMany({ where: { creatorId: { in: creatorIds } }, data: { accountNumber: null } });
@@ -148,9 +169,25 @@ export class AccountErasureService {
     if (businessIds.length) {
       // RR3: the business's record of the client (name, contact) goes at once; a sent client wish still in its term keeps its words until the term ends.
       await tx.clientWish.updateMany({ where: inBusiness, data: { from: null, client: null } });
-      const playing = await tx.clientWish.findMany({ where: { ...inBusiness, sentAt: { not: null }, endsAt: { gt: now }, wish: { not: null } }, select: { id: true, endsAt: true } });
-      await tx.clientWish.updateMany({ where: { ...inBusiness, id: { notIn: playing.map((c) => c.id) } }, data: { wish: null } });
-      for (const c of playing) await this.jobs.schedule("erase-now", c.endsAt as Date, `${CLIENT_WISH_PREFIX}${c.id}`, tx);
+      // A record with a wish (ZB3) follows that wish: kept while the wish plays, blanked at once when the wish is erased now. A record with
+      // no wish (a reveal) keeps its own term.
+      const keptDue = new Map(sentForClient.map((w) => [w.id, w.status === "live" ? w.endsAt : new Date((w.opensAt ?? now).getTime() + UNOPENED_DAYS * 86_400_000)] as const));
+      const rows = await tx.clientWish.findMany({ where: inBusiness, select: { id: true, wishId: true, sentAt: true, endsAt: true, wish: true } });
+      // EA4: a reveal sent from the Vault ends where its link ends (the owner's end day), unless the link was switched off.
+      const links = await tx.$queryRaw<{ wishId: string; endsAt: Date | null }[]>`
+        SELECT "wishId"::text AS "wishId", "endsAt" FROM reveal_access WHERE "businessId" = ANY(${businessIds}::uuid[]) AND "wishId" IS NOT NULL AND "offAt" IS NULL`;
+      const linkEnds = new Map(links.map((l) => [l.wishId, l.endsAt] as const));
+      const playing: { id: string; endsAt: Date }[] = [];
+      for (const c of rows) {
+        const ends = c.endsAt ?? linkEnds.get(c.id) ?? null;
+        const due = c.wishId ? keptDue.get(c.wishId) ?? null : c.sentAt && ends && ends > now && c.wish !== null ? ends : null;
+        if (due) playing.push({ id: c.id, endsAt: due });
+      }
+      const notPlaying = { ...inBusiness, id: { notIn: playing.map((c) => c.id) } };
+      await tx.clientWish.updateMany({ where: notPlaying, data: { wish: null } });
+      // EA4: a reveal's words (name, note, credits) follow the same term: gone at once for a record not playing, at the end of its term for one that is.
+      await blankRevealWords(tx, (await tx.clientWish.findMany({ where: notPlaying, select: { id: true } })).map((c) => c.id));
+      for (const c of playing) await this.jobs.schedule("erase-now", c.endsAt, `${CLIENT_WISH_PREFIX}${c.id}`, tx);
       // RR3: closing the business: its logins can no longer act.
       await tx.login.updateMany({ where: inBusiness, data: { contact: null, status: "removed" } });
       await tx.person.updateMany({ where: inBusiness, data: { name: null, phone: null, birthday: null, rows: Prisma.DbNull } });
@@ -175,15 +212,15 @@ export class AccountErasureService {
       await tx.publishedWish.updateMany({ where: { wish: { in: wishIds } }, data: { forName: null, from: null, name: null } });
     }
     // Every wish transition is recorded (wish lifecycle declaration); ids are UUIDv7 made here, one per wish that moves.
-    const moving = await tx.wish.findMany({ where: { accountId, id: { in: wishIds }, status: { not: "removed" } }, select: { id: true, status: true } });
+    const moving = await tx.wish.findMany({ where: { id: { in: wishIds }, status: { not: "removed" } }, select: { id: true, status: true } });
     if (moving.length) {
       await tx.wishTransition.createMany({
         data: moving.map((w) => ({ id: this.ids.id(), wishId: w.id, from: w.status, to: "removed", cause: "account.erase", createdAt: now })),
       });
     }
-    await tx.wish.updateMany({ where: { accountId, id: { in: wishIds }, removedAt: null }, data: { removedAt: now } });
+    await tx.wish.updateMany({ where: { id: { in: wishIds }, removedAt: null }, data: { removedAt: now } });
     await tx.wish.updateMany({
-      where: { accountId, id: { in: wishIds } },
+      where: { id: { in: wishIds } },
       data: {
         name: null, content: Prisma.DbNull, passcodeHash: null, makerNote: Prisma.DbNull,
         status: "removed", erasedAt: now,
@@ -200,10 +237,14 @@ export class AccountErasureService {
     // no longer named (the files themselves go with the account's file job below).
     if (wishIds.length) {
       await tx.job.deleteMany({ where: { subjectId: { in: wishIds }, type: { in: [...WISH_JOB_KINDS] }, status: "scheduled" } });
+      // A login's wish in the business is not covered by the owner's file job: each file no other wish names gets its own cleanup (safe to repeat).
+      const files = [...new Set((await tx.wishFile.findMany({ where: { wishId: { in: wishIds } }, select: { fileId: true } })).map((r) => r.fileId))];
       await tx.wishFile.deleteMany({ where: { wishId: { in: wishIds } } });
+      for (const fileId of files) await this.jobs.schedule("upload-cleanup", now, `${ERASE_WISH_FILE_PREFIX}${fileId}`, tx);
     }
     // SS1: every wish of the account leaves the public list tables (published row and asks), with its saves and day picks.
     await this.showing.showing.dropForAccount(tx, accountId);
+    await this.showing.showing.dropForWishes(tx, allWishes.map((w) => w.id));
     // RR3: the kept client wishes are erased when their term ends (never rest a year): nothing rests them, nothing notifies a gone owner.
     for (const w of sentForClient) {
       await this.jobs.cancel("rest-wish", w.id, tx);

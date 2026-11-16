@@ -20,6 +20,9 @@ const NOW = new Date("2026-12-01T09:00:00.000Z");
 const FAR = new Date("2150-03-01T09:00:00.000Z");
 const DAY = 86_400_000;
 const at = (iso: string) => new Date(iso);
+const TERM_DAYS: Record<string, number> = { moment: 7, keepsake: 14, signature: 30, premiere: 60 };
+/** A wish row's first open is its end less the ticket's term (EE7): the end is worked out from it (HB1). */
+const openedFor = (d: Record<string, unknown>): Date | undefined => (d.endsAt instanceof Date && typeof d.ticket === "string" && TERM_DAYS[d.ticket] ? new Date(d.endsAt.getTime() - TERM_DAYS[d.ticket] * 86_400_000) : undefined);
 const ids = new UuidV7Maker();
 const bearer = (token: string) => ({ authorization: `Bearer ${token}` });
 let seq = 0;
@@ -63,7 +66,7 @@ describe("purchases P-B07: the rulings HH1 to HH9", () => {
     return id;
   };
   const liveWish = (accountId: string, endsAt: Date, over: Record<string, unknown> = {}) =>
-    wish(accountId, { ticket: "keepsake", status: "live", openedAt: new Date(endsAt.getTime() - 7 * DAY), endsAt, ...over });
+    wish(accountId, { ticket: "keepsake", status: "live", endsAt, ...over, openedAt: openedFor({ ticket: "keepsake", endsAt, ...over }) });
   const wishRow = (id: string) => db.wish.findUniqueOrThrow({ where: { id } });
   const bizRow = (id: string) => db.business.findUniqueOrThrow({ where: { id } });
   const paymentRow = (reference: string) => db.payment.findUniqueOrThrow({ where: { providerReference: reference } });
@@ -284,7 +287,7 @@ describe("purchases P-B07: the rulings HH1 to HH9", () => {
     expect(row.keptUntil!.getTime()).toBe(row.endsAt!.getTime());
     await revoke(k1); // the last goes: the wish is as it was before any keep
     row = await wishRow(w);
-    expect(row).toMatchObject({ keep: null, keptBy: "now_showing" });
+    expect(row).toMatchObject({ keep: null, keptBy: "now_showing" }); // a mark this code does not own is left as it was
     expect(row.endsAt!.getTime()).toBe(ends.getTime());
     expect(row.keptUntil!.getTime()).toBe(ends.getTime());
 

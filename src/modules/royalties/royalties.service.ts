@@ -13,6 +13,7 @@ import { revenueAccount } from "../payments/ledger";
 import { EntitlementsService } from "../price-book/entitlements.service";
 import { PriceBookService } from "../price-book/price-book.service";
 import { monthOf, percentOf, splitRoyalty } from "./royalty-math";
+import { monthSource, packSource, type DrawSource } from "./draw-source";
 import { readStyleOwners } from "./style-owners";
 
 type Tx = Prisma.TransactionClient;
@@ -26,6 +27,15 @@ export interface AccrualMade {
   creatorId: string;
   basis: "premium_style" | "pro_wish" | "template_share";
   amountKobo: bigint;
+}
+
+/** What the business draw tells the royalties: the business, where the draw counted the wish from, and the wish it made. */
+export interface DrawAccrual {
+  businessId: string;
+  from: "month" | "pack";
+  wishId: string;
+  /** The style on the wish at the moment the caller calls (the seal: the style is final then). */
+  styleSlug: string;
 }
 
 export interface Summary {
@@ -46,6 +56,12 @@ const num = (v: bigint | number | null | undefined): number => Number(v ?? 0);
  *     await this.royalties.accrue(ctx.tx, ctx.payment);
  * It is safe to call for every ticket or extra line of a payment and to replay: one accrual per payment and creator.
  * And the refund path calls `await this.royalties.reverse(tx, payment.id)` in the refund's transaction.
+ *
+ * THE ONE LINE the business's draw must call (ZZ5), in the draw's own transaction, once the wish's style is final:
+ *     await this.royalties.accrueForDraw(tx, { businessId, from, wishId: wish.id, styleSlug: wish.styleSlug });
+ * (`from` is what BusinessHandlers.draw answered.) It is safe to replay: one accrual per payment, creator and wish.
+ * Chosen: accrue at the SEAL, not at the draw's first moment, because a draft can still change its style until it is sealed;
+ * the maker's seal (usePlan) draws and seals in one transaction, so there the two moments are the same.
  *
  * What earns (T-65, T-66, T-67, T-77): a person's paid wish in a creator's Premium style earns the creator 20% of the premium
  * style's price in force at that payment (the payment's own price-book version and moment); a business's paid wish in a creator's
@@ -144,6 +160,69 @@ export class RoyaltiesService {
   }
 
   /**
+   * ZZ5 (T-66): a client wish drawn from a Pro plan month or a pack earns the creator of its Premium style 20% of that wish's share
+   * of what the business paid: the plan payment's line divided by the plan's wishes for the month the wish came from (a rolled-over
+   * wish: the month it rolled from), or the pack line divided by the pack's size. The share rounds down, then the 20% rounds down;
+   * a template style gives a quarter of it to the original creator, out of it. Standard, Starter and house styles, and a creator
+   * whose account is erased, earn nothing. A creator whose account is banned still accrues; the payout waits (ZZ3).
+   * The wish earns once per creator, however often this is called. Runs under the business row lock (taken here again; the draw
+   * holds it already) so a refund of the plan or pack payment, which takes that lock first, and this call never pass each other.
+   */
+  async accrueForDraw(tx: Tx, d: DrawAccrual): Promise<AccrualMade[]> {
+    if (!UUID.test(d.businessId) || !UUID.test(d.wishId) || !SLUG.test(d.styleSlug)) return [];
+    await tx.$queryRaw`SELECT id FROM business WHERE id = ${d.businessId}::uuid FOR UPDATE`;
+    // A wish earns once, whichever seal runs and whichever payment it is counted against (month or pack): a wish with a draw accrual earns nothing more.
+    if ((await tx.royaltyAccrual.count({ where: { wishId: d.wishId } })) > 0) return [];
+    const style = await tx.style.findUnique({ where: { slug: d.styleSlug }, select: { level: true, creator: true, house: true } });
+    if (!style || style.house || style.level !== "premium") return [];
+    const owners = readStyleOwners(style.creator);
+    if (!owners.creatorId) return [];
+    const creator = await this.payable(tx, owners.creatorId);
+    if (!creator) return [];
+    const templateCreator = owners.templateCreatorId ? await this.payable(tx, owners.templateCreatorId) : null;
+    const now = this.clock.now();
+    const source: DrawSource | null = d.from === "month" ? await monthSource(tx, d.businessId, now) : await packSource(tx, d.businessId, d.wishId);
+    if (!source) return [];
+
+    const cfg = ((await this.entitlements.row(tx)).creator ?? {}) as Record<string, unknown>;
+    const sharePercent = Number(cfg.sharePercent);
+    const templatePercent = Number(cfg.templateRoyaltyPercent);
+    if (!Number.isSafeInteger(sharePercent) || !Number.isSafeInteger(templatePercent)) throw new Error("price book: the creator share is not set");
+    const share = source.lineKobo / BigInt(source.wishes);
+    const royalty = percentOf(share, sharePercent);
+    if (royalty === 0n) return [];
+
+    const lockIds = [creator.id, ...(templateCreator ? [templateCreator.id] : [])].sort();
+    await tx.$queryRaw`SELECT id FROM creator WHERE id = ANY(${lockIds}::uuid[]) ORDER BY id FOR UPDATE`;
+    const split = splitRoyalty(royalty, templatePercent, templateCreator !== null);
+    const rows: { creatorId: string; basis: AccrualMade["basis"]; amount: bigint }[] = [{ creatorId: creator.id, basis: "pro_wish", amount: split.creator }];
+    if (templateCreator && split.template > 0n) rows.push({ creatorId: templateCreator.id, basis: "template_share", amount: split.template });
+    const [pay] = await tx.$queryRaw<{ ref: string }[]>`SELECT "providerReference" AS ref FROM payment WHERE id = ${source.paymentId}::uuid`;
+    const account = revenueAccount(source.sku);
+    const month = monthOf(now);
+    const made: AccrualMade[] = [];
+    for (const r of rows) {
+      if (r.amount <= 0n) continue;
+      const id = this.ids.id();
+      const done = await tx.royaltyAccrual.createMany({
+        data: [{ id, creatorId: r.creatorId, styleSlug: d.styleSlug, paymentId: source.paymentId, wishId: d.wishId, basis: r.basis, amountKobo: r.amount, month, createdAt: now }],
+        skipDuplicates: true,
+      });
+      if (done.count === 0) continue;
+      const journalId = this.ids.id();
+      const memo = `Royalty ${r.creatorId} ${r.basis} ${pay?.ref ?? ""} ${d.wishId}`;
+      await tx.ledgerEntry.createMany({
+        data: [
+          { id: this.ids.id(), journalId, account, direction: "debit", amountKobo: r.amount, currency: "NGN", paymentId: source.paymentId, memo, createdAt: now },
+          { id: this.ids.id(), journalId, account: "royalties_payable", direction: "credit", amountKobo: r.amount, currency: "NGN", paymentId: source.paymentId, memo, createdAt: now },
+        ],
+      });
+      made.push({ accrualId: id, creatorId: r.creatorId, basis: r.basis, amountKobo: r.amount });
+    }
+    return made;
+  }
+
+  /**
    * A refund of a payment takes its royalties back: one negative row per accrual (a reversal; the accrual itself is never touched
    * or deleted) and the journal the other way round. A second call changes nothing. When the royalty was already paid out, the
    * creator's balance goes below zero and the next run pays the difference less.
@@ -151,8 +230,8 @@ export class RoyaltiesService {
   async reverse(tx: Tx, paymentId: string): Promise<{ creatorId: string; amountKobo: bigint }[]> {
     if (!UUID.test(paymentId)) throw AppError.notFound();
     await tx.$queryRaw`SELECT id FROM payment WHERE id = ${paymentId}::uuid FOR UPDATE`;
-    const accruals = await tx.$queryRaw<{ id: string; creatorId: string; amountKobo: bigint }[]>`
-      SELECT id::text AS id, "creatorId"::text AS "creatorId", "amountKobo" FROM royalty_accrual WHERE "paymentId" = ${paymentId}::uuid ORDER BY id`;
+    const accruals = await tx.$queryRaw<{ id: string; creatorId: string; amountKobo: bigint; wishId: string | null }[]>`
+      SELECT id::text AS id, "creatorId"::text AS "creatorId", "amountKobo", "wishId"::text AS "wishId" FROM royalty_accrual WHERE "paymentId" = ${paymentId}::uuid ORDER BY id`;
     if (!accruals.length) {
       await this.markReversedFirst(tx, paymentId);
       return [];
@@ -161,7 +240,7 @@ export class RoyaltiesService {
     await tx.$queryRaw`SELECT id FROM creator WHERE id = ANY(${lockIds}::uuid[]) ORDER BY id FOR UPDATE`;
     const payment = await tx.payment.findUniqueOrThrow({ where: { id: paymentId } });
     const line = paidLines(payment).find((l) => l.sku.startsWith("ticket.") || l.sku === PREMIUM_STYLE_SKU);
-    const account = revenueAccount(line?.sku ?? PREMIUM_STYLE_SKU);
+    const drawLine = paidLines(payment).find((l) => l.sku.startsWith("pro."));
     const at = this.clock.now();
     const month = monthOf(at);
     const out: { creatorId: string; amountKobo: bigint }[] = [];
@@ -173,6 +252,8 @@ export class RoyaltiesService {
         VALUES (${id}::uuid, ${a.id}::uuid, ${a.creatorId}::uuid, ${paymentId}::uuid, ${negative}, ${month}, ${at})
         ON CONFLICT ("accrualId") DO NOTHING`;
       if (done === 0) continue;
+      // a wish drawn from a plan or pack (ZZ5) was booked against the plan's or pack's line, any other against its ticket or extra line
+      const account = revenueAccount(a.wishId && drawLine ? drawLine.sku : (line?.sku ?? PREMIUM_STYLE_SKU));
       const journalId = this.ids.id();
       const memo = `Royalty reversed ${a.creatorId} ${payment.providerReference}`;
       await tx.ledgerEntry.createMany({

@@ -6,6 +6,7 @@ import { Clock } from "../../common/ports/clock.port";
 import { isUuidV7 } from "../../common/ids/uuidv7";
 import { IdGenerator } from "../../common/ports/ids.port";
 import { StoragePort } from "../../common/ports/storage.port";
+import { forgetForWishes as forgetAiWords } from "../ai-writing/ai-writing.service";
 import { stagingKeyOf, variantsOf } from "../stored-files/file-rules";
 import { localToUtc } from "./local-time";
 import { EntitlementsService, grantOf } from "../price-book/entitlements.service";
@@ -23,6 +24,39 @@ export const UNOPENED_DAYS = 365;
 /** The upload-cleanup jobs that remove one file a erased wish named (EE4): the subject is this prefix and the file's id. */
 export const ERASE_WISH_FILE_PREFIX = "erase-wish-file:";
 
+/**
+ * A wish's own term end (EE7, EE8): its first open plus the ticket's term days; a wedding wish counts from its wedding date and never
+ * ends before it was opened. Null while it has not been opened. The one place this date is worked out (markOpened and HB1's endOf).
+ */
+export async function termEnd(
+  tx: Tx,
+  w: { ticket: string | null; openedAt: Date | null; weddingDate: Date | null; timeZone: string },
+  entitlements: (tx: Tx) => Promise<Parameters<typeof grantOf>[0]>,
+): Promise<Date | null> {
+  if (!w.openedAt) return null;
+  let days = 0;
+  let found = false;
+  if (w.ticket) {
+    const g = grantOf(await entitlements(tx), `ticket.${w.ticket}`);
+    if (g && typeof g.termDays === "number") {
+      days = g.termDays;
+      found = true;
+    }
+  }
+  if (!found) {
+    const cfg = await tx.lifecycleConfig.findFirst({ orderBy: { id: "desc" } });
+    const terms = (cfg?.TERM_DAYS ?? {}) as Record<string, number>;
+    days = (w.ticket && terms[w.ticket]) || 7;
+  }
+  const term = days * DAY;
+  let endsAt = new Date(w.openedAt.getTime() + term);
+  if (w.weddingDate) {
+    const day = localToUtc(`${w.weddingDate.toISOString().slice(0, 10)}T00:00`, w.timeZone);
+    if (day) endsAt = new Date(Math.max(w.openedAt.getTime(), day.getTime() + term));
+  }
+  return endsAt;
+}
+
 interface Locked {
   id: string;
   status: string;
@@ -36,6 +70,9 @@ interface Locked {
   restingSince: Date | null;
   eraseAfter: Date | null;
 }
+
+/** Works a live or resting wish's end out again from the rows and writes it with its rest job; answers the end, or null when it holds none. */
+export type EndFn = (tx: Tx, wishId: string, opt: { wake?: boolean; cause?: string }) => Promise<Date | null>;
 
 export interface MoveOptions {
   cause: string;
@@ -67,6 +104,13 @@ export class WishLifecycleService implements OnModuleInit {
     private readonly storage: StoragePort,
     private readonly showing: ShowingLink,
   ) {}
+
+  private endHook: EndFn | null = null;
+
+  /** HB3: the purchases module hands over the one end function (PassCover.applyEnd): wishes cannot import purchases. */
+  registerEnd(fn: EndFn): void {
+    this.endHook = fn;
+  }
 
   onModuleInit(): void {
     this.jobs.register("open-wish", (c) => this.openJob(c));
@@ -113,7 +157,10 @@ export class WishLifecycleService implements OnModuleInit {
       await tx.wishLink.updateMany({ where: { wishId: wish.id }, data: { active: false } });
       if (to === "erased") {
         await this.forgetLinkNames(tx, [wish.id]);
+        await forgetAiWords(tx, [wish.id]);
         await this.releaseFiles(tx, wish.id, now);
+        // ZB3: a client wish's record reads its wish; when the wish is erased the record's words go with it.
+        await tx.clientWish.updateMany({ where: { wishId: wish.id }, data: { wish: null, from: null, client: null } });
       }
       for (const kind of ["open-wish", "rest-wish", "erase-wish", "restore-window-end", "send-notice"]) await this.jobs.cancel(kind, wish.id, tx);
     }
@@ -178,17 +225,6 @@ export class WishLifecycleService implements OnModuleInit {
     await this.jobs.schedule("rest-wish", endsAt, wish.id, tx);
   }
 
-  private async termDays(tx: Tx, ticket: string | null): Promise<number> {
-    if (ticket) {
-      const g = grantOf(await this.entitlements.row(tx), `ticket.${ticket}`);
-      if (g && typeof g.termDays === "number") return g.termDays;
-      // the price book has no line: the lifecycle terms below answer
-    }
-    const cfg = await tx.lifecycleConfig.findFirst({ orderBy: { id: "desc" } });
-    const terms = (cfg?.TERM_DAYS ?? {}) as Record<string, number>;
-    return (ticket && terms[ticket]) || 7;
-  }
-
   /**
    * EE7: the first opening by the receiver (B10 calls it in its own transaction when it serves the first read at or after the open
    * time). In that one transaction: openedAt is set once, the wish becomes live, endsAt = openedAt + the ticket's term (EE8: a
@@ -201,19 +237,21 @@ export class WishLifecycleService implements OnModuleInit {
     if (w.openedAt || stateOf(w) !== "sealed" || !w.opensAt || w.opensAt.getTime() > at.getTime()) {
       return { opened: false, openedAt: w.openedAt, endsAt: w.endsAt };
     }
-    const term = (await this.termDays(tx, w.ticket)) * DAY;
-    let endsAt = new Date(at.getTime() + term);
-    if (w.weddingDate) {
-      const day = localToUtc(`${w.weddingDate.toISOString().slice(0, 10)}T00:00`, w.timeZone);
-      if (day) endsAt = new Date(Math.max(at.getTime(), day.getTime() + term));
-    }
+    const endsAt = (await termEnd(tx, { ticket: w.ticket, openedAt: at, weddingDate: w.weddingDate, timeZone: w.timeZone }, (t) => this.entitlements.row(t))) as Date;
     await this.move(tx, w, "live", { cause: "receiver.open", data: { openedAt: at, endsAt } });
     const owner = await tx.$queryRaw<{ gone: boolean }[]>`
-      SELECT (a."erasedAt" IS NOT NULL) AS gone FROM wish w JOIN account a ON a.id = w."accountId" WHERE w.id = ${w.id}::uuid`;
+      SELECT (a."erasedAt" IS NOT NULL OR ba."erasedAt" IS NOT NULL) AS gone
+        FROM wish w JOIN account a ON a.id = w."accountId"
+        LEFT JOIN business b ON b.id = w."businessId" LEFT JOIN account ba ON ba.id = b."accountId"
+       WHERE w.id = ${w.id}::uuid`;
     if (owner[0]?.gone) {
       // RR3: the owner of this client wish was erased: it plays to the end of its term and is erased then (it does not rest a year); nobody is told.
       await this.jobs.schedule("erase-now", endsAt, w.id, tx);
     } else {
+      // HB3: a wish opened while its owner holds a live Pass ends with the Pass, not with its own term: the one end function says (and
+      // writes the end, the mark and the rest job and notice itself); with none it gives back null and the term stands.
+      const held = this.endHook ? await this.endHook(tx, w.id, { cause: "receiver.open" }) : null;
+      if (held) return { opened: true, openedAt: at, endsAt: held };
       await this.jobs.schedule("rest-wish", endsAt, w.id, tx);
       await this.jobs.schedule("send-notice", new Date(endsAt.getTime() - NOTICE_DAYS * DAY), w.id, tx);
     }
@@ -234,9 +272,18 @@ export class WishLifecycleService implements OnModuleInit {
    */
   async restJob(c: JobContext): Promise<JobResult> {
     return this.prisma.$transaction(async (tx) => {
-      const w = await this.lock(tx, c.subjectId);
+      let w = await this.lock(tx, c.subjectId);
       const state = stateOf(w);
       if (state !== "live" && state !== "sealed") return { skipped: true };
+      if (state === "live" && this.endHook) {
+        // HB3: never rest a wish a live Pass or a paid keep still covers: the one end function works the end out again; a later end
+        // is the next rest time (it has scheduled this job there already).
+        const end = await this.endHook(tx, w.id, { cause: "job.rest" });
+        if (end && end.getTime() > c.now.getTime()) return { skipped: true, again: end };
+        // nothing covers it: the end function put this job at "now" again; this run is that run, so the job stands down
+        await this.jobs.cancel("rest-wish", w.id, tx);
+        w = await this.lock(tx, c.subjectId);
+      }
       const due = state === "sealed" ? (w.opensAt ? new Date(w.opensAt.getTime() + UNOPENED_DAYS * DAY) : null) : w.endsAt;
       if (state === "sealed" && !due) return { skipped: true };
       if (due && due.getTime() > c.now.getTime()) return { skipped: true, again: due };

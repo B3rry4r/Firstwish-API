@@ -65,7 +65,7 @@ export class InvoicesService {
    * the payment: `await this.invoices.issue(ctx.tx, ctx.payment)`. A second call for the same payment keeps its one invoice (its
    * period is worked out again from the payment's grants). Answers the invoice id, or null when the payment names no business.
    */
-  async issue(tx: Tx, payment: Pick<Payment, "id" | "businessId" | "amountKobo" | "lines">): Promise<string | null> {
+  async issue(tx: Tx, payment: Pick<Payment, "id" | "businessId" | "amountKobo" | "lines" | "priceBookVersion">): Promise<string | null> {
     if (!payment.businessId) return null;
     const now = this.clock.now();
     const span = await tx.$queryRaw<{ s: Date | null; e: Date | null }[]>`
@@ -88,7 +88,10 @@ export class InvoicesService {
     if (!n) throw new Error("invoice counter is missing");
     const no = `FW-${String(now.getUTCFullYear()).slice(2)}${String(now.getUTCMonth() + 1).padStart(2, "0")}-${String(n).padStart(4, "0")}`;
     const total = payment.amountKobo;
-    const vat = vatInside(total, vatBasisPoints((await this.entitlements.row(tx)).vatRate));
+    // FA1: the VAT part is what the ledger books: the VAT inside each line the price book (at the payment's version) says includes it, line by line.
+    const bps = vatBasisPoints((await this.entitlements.row(tx)).vatRate);
+    const carries = new Set((await tx.price.findMany({ where: { version: payment.priceBookVersion, sku: { in: items.map((i) => i.sku) }, vatIncluded: true }, select: { sku: true } })).map((p) => p.sku));
+    const vat = items.reduce((n, i) => (carries.has(i.sku) && i.amount > 0 ? n + vatInside(BigInt(i.amount), bps) : n), 0n);
     const what = items.map((i) => i.what).filter(Boolean).join(" and ") || "Firstwish";
     const key = items[0]?.sku.split(".")[0] ?? "pro";
     const id = this.ids.id();

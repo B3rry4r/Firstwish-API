@@ -1,14 +1,17 @@
-import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, Query } from "@nestjs/common";
+import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, Query, Res } from "@nestjs/common";
 import {
+  DeleteBusinessApprovedDatesBodyDto,
   DeleteBusinessPeopleByIdBodyDto,
   DeleteBusinessPeopleByIdParamsDto,
   GetBusinessApprovedDatesQueryDto,
   GetBusinessPeopleQueryDto,
   PatchBusinessPeopleByIdBodyDto,
   PatchBusinessPeopleByIdParamsDto,
+  PostBusinessApprovedDatesBodyDto,
   PostBusinessPeopleBodyDto,
   PostBusinessPeopleImportBodyDto,
 } from "../../contracts";
+import type { Response } from "express";
 import type { ApprovedDate, Person } from "../../contracts";
 import { CurrentPrincipal, Roles } from "../../common/auth/decorators";
 import type { Principal } from "../../common/auth/principal";
@@ -68,5 +71,22 @@ export class PeopleController {
   @Get("approved-dates")
   async approved(@Query() q: GetBusinessApprovedDatesQueryDto, @CurrentPrincipal() p: Principal | undefined): Promise<Page<ApprovedDate>> {
     return this.people.approved(await this.business.require(p), q.cursor, q.limit ?? DEFAULT_LIMIT);
+  }
+
+  /** E-239 (DEC-168): 201 for a new approval, 200 for the same body again. */
+  @Roles("business")
+  @Post("approved-dates")
+  async approve(@Body() body: PostBusinessApprovedDatesBodyDto, @CurrentPrincipal() p: Principal | undefined, @Res({ passthrough: true }) res: Response): Promise<ApprovedDate> {
+    const r = await this.people.approve(await this.business.require(p), body);
+    res.status(r.created ? 201 : 200);
+    return r.row;
+  }
+
+  /** E-238 (DEC-168): 204, also for a date that was not approved. */
+  @Roles("business")
+  @Delete("approved-dates")
+  @HttpCode(204)
+  async takeBack(@Body() body: DeleteBusinessApprovedDatesBodyDto, @CurrentPrincipal() p: Principal | undefined): Promise<void> {
+    await this.people.takeBack(await this.business.require(p), body);
   }
 }

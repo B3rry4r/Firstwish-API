@@ -1,5 +1,6 @@
 import { Module } from "@nestjs/common";
 import { PeopleModule } from "../people/people.module";
+import { ProAccess } from "../pro-business/pro-access";
 import { PassDrawsModule } from "../purchases/pass-draws";
 import { ReceiverActivityService } from "../public-wishes/receiver-activity.service";
 import { SavedWishesModule } from "../saved-wishes/saved-wishes.module";
@@ -13,7 +14,7 @@ import { WishesService } from "./wishes.service";
   imports: [PeopleModule, SavedWishesModule, PassDrawsModule, ShowingLinkModule],
   controllers: [WishesController],
   // ReceiverActivityService holds no state and needs only the database: PublicWishesModule imports this module, so it is listed here too (no import cycle).
-  providers: [WishesService, WishLifecycleService, ReceiverActivityService],
+  providers: [WishesService, WishLifecycleService, ReceiverActivityService, ProAccess],
   exports: [WishesService, WishLifecycleService],
 })
 export class WishesModule {}

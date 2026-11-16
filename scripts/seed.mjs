@@ -173,7 +173,8 @@ export async function seed(db) {
       listKobo: BigInt(p.listKobo),
       promoKobo: p.promoKobo === null ? null : BigInt(p.promoKobo),
       discountable: p.promoKobo !== null,
-      vatIncluded: /VAT included/i.test(p.name),
+      // FA1: Pro and Concierge carry VAT (T-12: one VAT invoice for a Concierge delivery); creator plans, credit packs and reviews do not (the owner has not said they carry VAT).
+      vatIncluded: /VAT included/i.test(p.name) || p.sku.startsWith("concierge."),
       version,
     };
     await db.price.upsert({ where: { sku_version: { sku: p.sku, version } }, create: { id: seedId(`price:${p.sku}:${version}`), ...row }, update: row });

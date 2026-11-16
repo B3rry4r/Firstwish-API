@@ -9,6 +9,7 @@ import { CurrentPrincipal, Roles } from "../../common/auth/decorators";
 import type { Principal } from "../../common/auth/principal";
 import { accountOf } from "../people/business-of";
 import { SaveWishBodyDto } from "./dto";
+import { BusinessHeader } from "../pro-business/pro-access";
 import { WishesService } from "./wishes.service";
 
 /**
@@ -71,8 +72,8 @@ export class WishesController {
   @Post(":id/seal")
   @HttpCode(200)
   /** E-231 (VV1): answers {payment, item} as E-228 does. No money moves here (the ticket was paid, or the Pass pays), so `payment` is null. */
-  async seal(@Param() params: PostWishesByIdSealParamsDto, @Body() body: PostWishesByIdSealBodyDto, @CurrentPrincipal() p: Principal | undefined): Promise<PostWishesByIdSealResponse> {
-    const item = (await this.wishes.seal(accountOf(p), params.id, { version: body.version, opensAt: body.opensAt, openNow: body.openNow, timeZone: body.timeZone, usePass: body.usePass })) as unknown as Wish;
+  async seal(@Param() params: PostWishesByIdSealParamsDto, @Body() body: PostWishesByIdSealBodyDto, @CurrentPrincipal() p: Principal | undefined, @BusinessHeader() h: string | undefined): Promise<PostWishesByIdSealResponse> {
+    const item = (await this.wishes.seal(accountOf(p), params.id, { version: body.version, opensAt: body.opensAt, openNow: body.openNow, timeZone: body.timeZone, usePass: body.usePass, usePlan: body.usePlan, businessHeader: h })) as unknown as Wish;
     return { payment: null, item };
   }
 

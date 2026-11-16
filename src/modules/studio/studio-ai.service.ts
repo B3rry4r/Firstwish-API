@@ -10,6 +10,7 @@ import { AiWritingPort } from "../../common/ports/ai.port";
 import { IdGenerator } from "../../common/ports/ids.port";
 import type { StyleChange } from "../../contracts";
 import { JobsService, type JobContext, type JobResult } from "../jobs/jobs.service";
+import { askAi } from "./ai-call";
 import { CreatorStateService } from "./creator-state.service";
 import { cleanDoc, isObj, json, MAX_DOC_BYTES, obj, shapeParts, type Obj, UUID } from "./studio-doc";
 
@@ -223,16 +224,10 @@ export class StudioAiService implements OnModuleInit, OnApplicationBootstrap {
       await tx.aiRequest.create({ data: { id, accountId, kind: plan.kind, creditsSpent: plan.cost, status: "queued", model: "pending", createdAt: this.clock.now(), ...plan.row } });
     });
     // 2. the provider call, outside any transaction (the port holds its own time limit).
-    let change: Omit<StyleChange, "credits"> | null = null;
-    let model = "";
-    let failure: unknown = null;
-    try {
-      const r = await this.ai.write({ system: SYSTEM, prompt: plan.prompt, maxTokens: MAX_TOKENS });
-      model = r.model;
-      change = parseChange(r.text);
-    } catch (e) {
-      failure = e;
-    }
+    const asked = await askAi(this.ai, { system: SYSTEM, prompt: plan.prompt, maxTokens: MAX_TOKENS }, parseChange);
+    const change = asked.value;
+    const model = asked.model;
+    const failure = asked.failure;
     // 3. the answer is kept, or the credits come back.
     if (change) {
       const out = change;

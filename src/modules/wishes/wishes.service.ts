@@ -2,7 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { ReceiverActivityService } from "../public-wishes/receiver-activity.service";
 import { Prisma, Wish } from "@prisma/client";
 import { randomBytes, scrypt } from "node:crypto";
-import { lockAccount } from "../../common/db/account-lock";
+import { lockAccount, lockBusinessOwner } from "../../common/db/account-lock";
 import { PrismaService } from "../../common/db/prisma.service";
 import { AppError } from "../../common/errors/app-error";
 import { isUuidV7 } from "../../common/ids/uuidv7";
@@ -16,6 +16,7 @@ import type { Entitlements as EntitlementsRow } from "@prisma/client";
 import { JobsService } from "../jobs/jobs.service";
 import { BusinessOf } from "../people/business-of";
 import { PassDrawService } from "../purchases/pass-draws";
+import { ProAccess } from "../pro-business/pro-access";
 import { ShowingLink } from "../showing/showing-link";
 import { localToUtc, parseOpening, utcToLocal } from "./local-time";
 import { CHAPTER_KEYS, DEFAULT_CONTENT_MAX_BYTES, FileRef, hasBody, readContent } from "./wish-content";
@@ -63,10 +64,26 @@ export interface SealInput {
   version: number;
   /** GG5: draw one wish from the Pass in place of a ticket payment. */
   usePass?: boolean;
+  /** ZB3: a business's seal on its plan: draws one wish from the business in this transaction (the maker's path). */
+  usePlan?: boolean;
+  /** The header x-business-id (RR2), read only with usePlan. */
+  businessHeader?: string;
   opensAt?: unknown;
   openNow?: boolean;
   timeZone?: string;
 }
+
+/** What the plan seal is told: the wish being sealed, the business it is drawn from and the open time the seal fixed. */
+export interface PlanSealCall {
+  wish: Wish;
+  businessId: string;
+  opensAt: Date;
+  zone: string;
+}
+/** Draws one wish from the business and writes the client-wish record (registered by the business module: wishes never import it). */
+export type PlanSealFn = (tx: Tx, call: PlanSealCall) => Promise<void>;
+/** GB1: called at the ordinary seal of a wish that carries a business: the creator's share of its draw (registered by the business module). */
+export type SealAccrualFn = (tx: Tx, wish: Wish) => Promise<void>;
 
 export const hashPasscode = (p: string): Promise<string> =>
   new Promise((resolve, reject) => {
@@ -92,7 +109,45 @@ export class WishesService {
     private readonly activity: ReceiverActivityService,
     private readonly passDraws: PassDrawService,
     private readonly showing: ShowingLink,
+    private readonly access: ProAccess,
   ) {}
+
+  private planSeal: PlanSealFn | null = null;
+
+  /** The business module hands over the draw and the client-wish write for a seal on the plan (ZB3). */
+  registerPlanSeal(fn: PlanSealFn): void {
+    this.planSeal = fn;
+  }
+
+  private sealAccrual: SealAccrualFn | null = null;
+
+  /** GB1: the business module hands over the accrual an ordinary seal of a business's wish calls. */
+  registerSealAccrual(fn: SealAccrualFn): void {
+    this.sealAccrual = fn;
+  }
+
+  /**
+   * ZB3: a draft owned by `accountId` that carries the business, for a client wish made with no reveal. Runs in the caller's
+   * transaction (the caller holds the owner's lock). It answers the wish id; the draw gives its Signature ticket in the same
+   * transaction (fulfilTicketIn). The words are the client's name and the business's name; the maker writes the rest.
+   */
+  async createBusinessDraftIn(tx: Tx, a: { accountId: string; businessId: string; kind: string; occasion: string; name: string }): Promise<string> {
+    const kind = this.slugOf(a.kind, "kind");
+    const occasion = this.slugOf(a.occasion, "occasion");
+    const style = await tx.style.findFirst({ where: { on: true }, orderBy: [{ house: { sort: "desc", nulls: "last" } }, { id: "asc" }], select: { slug: true } });
+    if (!style?.slug) throw AppError.conflict("no_style", "No style is on, so a wish cannot be started.");
+    const biz = await tx.business.findUnique({ where: { id: a.businessId }, select: { name: true, business: true } });
+    const from = (biz?.name ?? biz?.business ?? "").trim();
+    const id = this.ids.id();
+    await tx.wish.create({
+      data: {
+        id, accountId: a.accountId, businessId: a.businessId, status: "draft", kind, occasion, styleSlug: style.slug, timeZone: DEFAULT_ZONE,
+        name: this.text(a.name, "name", 120), content: { cover: { from } }, version: 0,
+      },
+    });
+    await this.fulfilTicketIn(tx, id, "signature");
+    return id;
+  }
 
   // ---- reads ----
 
@@ -480,8 +535,17 @@ export class WishesService {
   async seal(accountId: string, id: string, input: SealInput): Promise<Obj> {
     if (!isUuidV7(id)) throw AppError.notFound("No such wish.");
     if (input.timeZone !== undefined && !isTimeZone(input.timeZone)) throw AppError.validation({ timeZone: "Not a time zone, for example Africa/Lagos." });
-    const biz = await this.business.find(accountId);
+    if (input.usePlan && input.usePass) throw AppError.validation({ usePlan: "Use the plan or the Pass, not both.", usePass: "Use the plan or the Pass, not both." });
+    // ZB3: the plan is the caller's business (owner or live login, RR2 header); a person with no business gets 403.
+    const plan = input.usePlan ? await this.access.find(accountId, input.businessHeader) : null;
+    if (input.usePlan && !plan) throw AppError.forbidden("You are not part of a business.");
+    const biz = plan ? plan.businessId : await this.business.find(accountId);
     const row = await this.prisma.$transaction(async (tx) => {
+      // HD3: one lock order for everything a business's money touches: the owner's account first, then the caller's. A seal that took the
+      // caller's account first and the owner's second deadlocked with a client wish being made (it takes the owner's, then writes a row
+      // that needs the caller's account); the cause of the 500 on POST /v1/business/client-wishes under load.
+      const carried = plan ? plan.businessId : (await tx.$queryRaw<{ businessId: string | null }[]>`SELECT "businessId"::text AS "businessId" FROM wish WHERE id = ${id}::uuid`)[0]?.businessId;
+      if (carried) await lockBusinessOwner(tx, carried);
       await lockAccount(tx, accountId);
       await this.owned(tx, accountId, id, biz);
       const locked = await this.lifecycle.lock(tx, id);
@@ -490,7 +554,8 @@ export class WishesService {
       if (input.version !== w.version) {
         throw new AppError(409, "stale_version", "This wish changed somewhere else. Load it again.", { version: String(w.version) });
       }
-      if (!w.ticket && !input.usePass) throw new AppError(402, "payment_required", "Pay for this wish first.");
+      if (plan && w.ticket) throw AppError.conflict("already_ticketed", "This wish already has a ticket, so nothing is drawn from the plan for it.");
+      if (!w.ticket && !input.usePass && !plan) throw new AppError(402, "payment_required", "Pay for this wish first.");
       const missing: Record<string, string> = {};
       if (!w.name?.trim()) missing.name = "Who is it for?";
       if (!hasBody(w.content as Obj | null)) missing.content = "Write at least one part of the wish.";
@@ -498,8 +563,17 @@ export class WishesService {
       const now = this.clock.now();
       const zone = input.timeZone ?? w.timeZone;
       const opensAt = this.openTime(input, w, zone, now);
-      await this.payForSeal(tx, accountId, w, input.usePass);
+      if (plan) {
+        if (!this.planSeal) throw new Error("the plan seal is not registered");
+        await this.planSeal(tx, { wish: w, businessId: plan.businessId, opensAt, zone });
+      } else {
+        await this.payForSeal(tx, accountId, w, input.usePass);
+        // GB1: a wish that carries a business earns its creator at this seal too (it was drawn from the plan when it was made).
+        if (w.businessId && this.sealAccrual) await this.sealAccrual(tx, w);
+      }
       const no = await this.issueNumber(tx);
+      // ZB3: a client wish shares its wish's number once the wish has one.
+      await tx.clientWish.updateMany({ where: { wishId: id }, data: { no } });
       await this.issueSlug(tx, id, w.name ?? "");
       await this.lifecycle.move(tx, locked, "sealed", { cause: "owner.seal", data: { no, sealedAt: now, opensAt, timeZone: zone } });
       await this.scheduleOpening(tx, id, opensAt);

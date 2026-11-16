@@ -11,6 +11,24 @@ import { ImageSizesPort } from "../../common/ports/image-sizes.port";
 export const ERASE_FILES_PREFIX = "erase-files:";
 
 /**
+ * HC1: true when a reveal that plays right now names the file (fileIds). Playing is the public read's own rule: the link is on, its end
+ * has not come, and an erased owner's reveal plays only while its term has not ended (the client wish's end, else its wish's, else the link's).
+ */
+export async function playingRevealNames(db: Pick<PrismaService, "$queryRaw">, fileId: string, now: Date): Promise<boolean> {
+  const rows = await db.$queryRaw<{ n: number }[]>`
+    SELECT 1 AS n FROM reveal_access a
+      JOIN business b ON b.id = a."businessId"
+      LEFT JOIN account o ON o.id = b."accountId"
+      LEFT JOIN client_wish w ON w.id = a."wishId"
+      LEFT JOIN wish ww ON ww.id = w."wishId"
+     WHERE a."fileIds" @> to_jsonb(${fileId}::text) AND a."offAt" IS NULL
+       AND (a."endsAt" IS NULL OR a."endsAt" > ${now})
+       AND (o."erasedAt" IS NULL OR COALESCE(w."endsAt", ww."endsAt", a."endsAt") > ${now})
+     LIMIT 1`;
+  return rows.length > 0;
+}
+
+/**
  * The file jobs, exported for the jobs frame (B06, not merged when this was built): it runs them from the queue with a recorded run.
  *   "upload-cleanup"   -> cleanupUnconfirmed()   on a schedule
  *   "make-image-sizes" -> makeImageSizes(id)     one per confirmed image (confirm writes the job row)
@@ -146,23 +164,56 @@ export class FileJobs {
       for (const f of files) {
         // RR3: a file a client wish still in its term names stays; the wish's own erase removes it when the term ends.
         if ((await this.db.wishFile.count({ where: { fileId: f.id, wish: { erasedAt: null } } })) > 0) continue;
-        for (const key of [f.objectKey, stagingKeyOf(f.objectKey), ...variantsOf(f).map((v) => v.key)]) await this.storage.delete(key);
-        await this.db.$transaction(async (tx) => {
-          const id = f.id;
-          await tx.aiRequest.updateMany({ where: { inputFileId: id }, data: { inputFileId: null } });
-          await tx.aiRequest.updateMany({ where: { voiceFileId: id }, data: { voiceFileId: null } });
-          await tx.conciergeOrder.updateMany({ where: { namesFileId: id }, data: { namesFileId: null } });
-          await tx.conciergeOrder.updateMany({ where: { reportFileId: id }, data: { reportFileId: null } });
-          await tx.qrCard.updateMany({ where: { fileId: id }, data: { fileId: null } });
-          await tx.renderJob.updateMany({ where: { outputFileId: id }, data: { outputFileId: null } });
-          await tx.wishFile.deleteMany({ where: { fileId: id } });
-          await tx.voiceNote.deleteMany({ where: { id } });
-          await tx.uploadTicket.deleteMany({ where: { id } });
-          await tx.storedFile.deleteMany({ where: { id } });
-        });
+        // HC1: a file a reveal that still plays shows stays; the reveal's own term end removes it (removeRevealFiles).
+        if (await playingRevealNames(this.db, f.id, this.clock.now())) continue;
+        await this.dropFile(f);
         removed++;
       }
     }
+  }
+
+  /** The objects first (safe to repeat), then every row that names the file and the file's own row. */
+  private async dropFile(f: { id: string; objectKey: string; variants: Prisma.JsonValue }): Promise<void> {
+    for (const key of [f.objectKey, stagingKeyOf(f.objectKey), ...variantsOf(f as Parameters<typeof variantsOf>[0]).map((v) => v.key)]) await this.storage.delete(key);
+    await this.db.$transaction(async (tx) => {
+      const id = f.id;
+      await tx.aiRequest.updateMany({ where: { inputFileId: id }, data: { inputFileId: null } });
+      await tx.aiRequest.updateMany({ where: { voiceFileId: id }, data: { voiceFileId: null } });
+      await tx.conciergeOrder.updateMany({ where: { namesFileId: id }, data: { namesFileId: null } });
+      await tx.conciergeOrder.updateMany({ where: { reportFileId: id }, data: { reportFileId: null } });
+      await tx.qrCard.updateMany({ where: { fileId: id }, data: { fileId: null } });
+      await tx.renderJob.updateMany({ where: { outputFileId: id }, data: { outputFileId: null } });
+      await tx.wishFile.deleteMany({ where: { fileId: id } });
+      await tx.voiceNote.deleteMany({ where: { id } });
+      await tx.uploadTicket.deleteMany({ where: { id } });
+      await tx.storedFile.deleteMany({ where: { id } });
+    });
+  }
+
+  /**
+   * HC1: the term of an erased owner's reveal has ended: the Vault files it named go, unless another reveal still plays them or a
+   * client wish still in its term names them. Only files of an erased owner are touched. Safe to repeat. Answers how many were removed.
+   */
+  async removeRevealFiles(clientWishId: string): Promise<number> {
+    const now = this.clock.now();
+    const rows = await this.db.$queryRaw<{ linkId: string; fileIds: unknown }[]>`
+      SELECT a."linkId"::text AS "linkId", a."fileIds" FROM reveal_access a
+        JOIN business b ON b.id = a."businessId" JOIN account o ON o.id = b."accountId"
+       WHERE a."wishId" = ${clientWishId}::uuid AND o."erasedAt" IS NOT NULL`;
+    let removed = 0;
+    for (const r of rows) {
+      const ids = Array.isArray(r.fileIds) ? r.fileIds.filter((x): x is string => typeof x === "string" && /^[0-9a-f-]{36}$/i.test(x)) : [];
+      for (const id of ids) {
+        if (await playingRevealNames(this.db, id, now)) continue;
+        if ((await this.db.wishFile.count({ where: { fileId: id, wish: { erasedAt: null } } })) > 0) continue;
+        const f = await this.db.storedFile.findUnique({ where: { id } });
+        if (!f) continue;
+        await this.dropFile(f);
+        removed++;
+      }
+      await this.db.$executeRaw`UPDATE reveal_access SET "fileIds" = '[]'::jsonb WHERE "linkId" = ${r.linkId}::uuid AND "fileIds" <> '[]'::jsonb`;
+    }
+    return removed;
   }
 
   /** Makes widths 320, 768 and 1600 of a confirmed image, each under its own key, through the image-sizes port. */

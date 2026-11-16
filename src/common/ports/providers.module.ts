@@ -13,7 +13,7 @@ import { ImageSizesPort, MissingImageSizes } from "./image-sizes.port";
 import { LimitedPort, portTimeouts, withTimeLimit } from "./time-limit";
 import { UploadScreeningPort } from "./screening.port";
 import { StoragePort } from "./storage.port";
-import { STANDIN_STORAGE, StandinStorageController } from "./standin-storage.controller";
+import { STANDIN_STORAGE } from "./standin-storage";
 import { AnthropicWriting } from "./adapters/anthropic.adapter";
 import { GoogleOidc } from "./adapters/google.adapter";
 import { BasicScreening } from "./adapters/basic-screening.adapter";
@@ -100,8 +100,7 @@ const providers: Provider[] = [
 
 @Global()
 @Module({
-  controllers: [StandinStorageController],
   providers,
-  exports: [Clock, IdGenerator, CodeGenerator, PaymentsPort, RefundProviderPort, PayoutProviderPort, EmailPort, StoragePort, AiWritingPort, UploadScreeningPort, GoogleIdentityPort, ImageSizesPort],
+  exports: [STANDIN_STORAGE, Clock, IdGenerator, CodeGenerator, PaymentsPort, RefundProviderPort, PayoutProviderPort, EmailPort, StoragePort, AiWritingPort, UploadScreeningPort, GoogleIdentityPort, ImageSizesPort],
 })
 export class ProvidersModule {}

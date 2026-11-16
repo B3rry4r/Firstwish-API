@@ -49,10 +49,10 @@ describe("API-BASE-4 team (HP1, HP7, HP8)", () => {
       expect(sections).toEqual(want);
       for (const s of new Set(every)) expect(await access.opens(roles, s)).toBe(sections.includes(s));
       const team = await t.http().get("/v1/admin/team?limit=50").set(bearer(ownerToken));
-      expect(team.body.items.find((x: { id: string }) => x.id === m.id).sections).toEqual(want);
+      expect((team.body.items as { id: string; sections: string[] }[]).find((x) => x.id === m.id)?.sections).toEqual(want);
     }
     const o = await t.http().get("/v1/admin/team?limit=50").set(bearer(ownerToken));
-    expect(o.body.items.find((x: { id: string }) => x.id === owner.id).sections).toEqual([...new Set(every)].sort());
+    expect((o.body.items as { id: string; sections: string[] }[]).find((x) => x.id === owner.id)?.sections).toEqual([...new Set(every)].sort());
     for (const s of new Set(every)) expect(await access.opens(["owner"], s)).toBe(true);
   });
 

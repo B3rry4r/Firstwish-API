@@ -5,7 +5,7 @@ import { IdGenerator } from "../../../common/ports/ids.port";
 import { createTestApp, TestApp } from "../../../../test/kit/app";
 import { StandinClock } from "../../../common/ports/clock.port";
 import { loadEnv } from "../../../common/env/env";
-import { STANDIN_STORAGE } from "../../../common/ports/standin-storage.controller";
+import { STANDIN_STORAGE } from "../../../common/ports/standin-storage";
 import type { StandinStorage } from "../../../common/ports/adapters/standins";
 
 const ROOT = join(__dirname, "../../../..");

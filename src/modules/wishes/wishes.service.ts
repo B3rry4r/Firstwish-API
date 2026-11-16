@@ -175,7 +175,8 @@ export class WishesService {
     const links = await this.linksFor(rows.map((r) => r.id));
     const shown = rows.slice(0, limit).map((r) => r.id);
     const [pics, videos] = await Promise.all([this.pictures.forWishes(shown), this.pictures.videoStates(shown)]);
-    return toPage(rows.map((r) => ({ ...this.wire(r, links.get(r.id)), pictures: pics.get(r.id) ?? [], video: videos.get(r.id) ?? "none" }) as Obj), limit, (r) => ({ key: String(r.id), id: String(r.id) }));
+    const one = (r: Wish): Obj => ({ ...this.wire(r, links.get(r.id)), pictures: pics.get(r.id) ?? [], video: videos.get(r.id) ?? "none" });
+    return toPage(rows.map(one), limit, (r) => ({ key: String(r.id), id: String(r.id) }));
   }
 
   async get(accountId: string, id: string): Promise<Obj> {

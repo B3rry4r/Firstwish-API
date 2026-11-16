@@ -28,7 +28,19 @@ describe("staff accounts and staff sign-in (contract)", () => {
   afterAll(async () => {
     await t.close();
     process.env.DATABASE_URL = savedUrl;
-    execFileSync("node", [script, "drop", ownDb]);
+    // DROP DATABASE ... WITH (FORCE) must end every session on the database; when the server's own autovacuum worker has just
+    // attached to this fresh copy it answers "permission denied to terminate process". That worker lets go within a moment, so
+    // the drop is asked again (up to 10 times); any other error, or the 10th, still fails the spec.
+    for (let attempt = 1; ; attempt++) {
+      try {
+        execFileSync("node", [script, "drop", ownDb], { stdio: ["ignore", "pipe", "pipe"] });
+        return;
+      } catch (e) {
+        const said = String((e as { stderr?: Buffer }).stderr ?? e);
+        if (attempt >= 10 || !said.includes("permission denied to terminate process")) throw e;
+        await new Promise((r) => setTimeout(r, 300));
+      }
+    }
   });
 
   describe("E-174 code", () => {

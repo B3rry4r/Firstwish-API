@@ -103,6 +103,11 @@ describe("Wave 4 join: invoices with payments and refunds (J1), a refund of a li
 
 
   const counter = async () => (await db.$queryRaw<{ last: number }[]>`SELECT last FROM invoice_counter WHERE id = 1`)[0].last;
+  /** The sequence number an invoice number ends in. */
+  const tailOf = (no: string) => Number(/(\d+)$/.exec(no)![1]);
+  /** Every committed invoice number, as the sequence numbers they end in. Other specs in the database take numbers too, so a spec
+   *  checks its own invoice against this set, never against the counter's value before it paid. */
+  const takenNumbers = async () => (await db.$queryRaw<{ n: number }[]>`SELECT substring(no from '[0-9]+$')::int AS n FROM invoice`).map((r) => r.n);
   const business = async () => {
     const a = await account();
     const id = ids.next();
@@ -119,11 +124,17 @@ describe("Wave 4 join: invoices with payments and refunds (J1), a refund of a li
     expect(p.outcome).toBe("fulfilled");
     const rows = await invoicesOf(o.b);
     expect(rows).toHaveLength(1);
-    expect(rows[0].no).toMatch(new RegExp(`^FW-\\d{4}-${String(before + 1).padStart(4, "0")}$`));
+    expect(rows[0].no).toMatch(/^FW-\d{4}-\d{4,}$/);
+    // The next number: past the counter as this spec saw it, one more than a number already issued (numbers are taken in
+    // order and never skipped), and used by no other invoice.
+    const n = tailOf(rows[0].no);
+    expect(n).toBeGreaterThan(before);
+    expect(n === 1 || (await takenNumbers()).includes(n - 1)).toBe(true);
+    expect((await takenNumbers()).filter((x) => x === n)).toHaveLength(1);
     expect(rows[0].amount).toBe(p.total);
     expect(rows[0].vat).toBeGreaterThan(0n);
     expect(rows[0].voidedAt).toBeNull();
-    expect(await counter()).toBe(before + 1);
+    expect(await counter()).toBeGreaterThanOrEqual(n);
     const rf = await sentRefund({ id: p.id, total: p.total });
     expect((await processed(p.reference, Number(p.total))).status).toBe(200);
     expect((await db.refund.findUniqueOrThrow({ where: { id: rf.id } })).status).toBe("succeeded");
@@ -151,7 +162,11 @@ describe("Wave 4 join: invoices with payments and refunds (J1), a refund of a li
       registry.replace("pro.starter", original);
     }
     expect(await invoicesOf(o.b)).toHaveLength(1);
-    expect(await counter()).toBe(before);
+    // The number the rolled-back settle took is given back: the numbers issued have no gap in them (a number taken and kept
+    // would leave one), whoever else issued meanwhile.
+    const taken = (await takenNumbers()).sort((a, b) => a - b);
+    expect(taken).toEqual(Array.from({ length: taken.length }, (_, i) => taken[0] + i));
+    expect(await counter()).toBeGreaterThanOrEqual(before);
   });
 
   /** A paid ticket on a wish that is now live and listed on Now showing. */

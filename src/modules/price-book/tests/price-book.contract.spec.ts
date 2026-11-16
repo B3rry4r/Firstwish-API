@@ -137,6 +137,20 @@ describe("price book (contract)", () => {
       for (const l of after.body.items as Line[]) expect(l.price).toBe(l.listKobo);
       expect(after.headers.etag).not.toBe(before.headers.etag);
     });
+
+    it("B04: after the offer ends the public line drops promoKobo; while it runs the line carries it; staff still see the stored one", async () => {
+      const moment = (r: { body: { items: Line[] } }) => r.body.items.find((l) => l.sku === "ticket.moment") as Line;
+      expect(moment(await t.http().get("/v1/price-book").query({ limit: 50 })).promoKobo).toBe(300000);
+      t.clock.set(new Date("2027-01-31T23:00:00.000Z"));
+      try {
+        const ended = moment(await t.http().get("/v1/price-book").query({ limit: 50 }));
+        expect(ended).toMatchObject({ promoKobo: null, price: 500000, listKobo: 500000 });
+        const staff = await t.http().get("/v1/admin/prices").set(bearer("owner")).query({ limit: 50 });
+        expect((staff.body.items as Line[]).find((l) => l.sku === "ticket.moment")?.promoKobo).toBe(300000);
+      } finally {
+        t.clock.set(NOW);
+      }
+    });
   });
 
   describe("price.quote", () => {

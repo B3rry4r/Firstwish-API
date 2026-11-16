@@ -860,3 +860,19 @@ HG1 (give race) Two staff giving one Concierge order: the code is right (overlap
   owner, not only to a business (API-BASE-5; the screen is drawn when it does).
 - HQ5: which styles a ticket may use is the server's rule (the style's level against the ticket's): the API enforces
   it on the draft and at the seal and says so in words; lib/levels.ts as a local rule goes (API-BASE-5, then W6).
+
+## HR (16 Nov 2026, the lead, on W8's verdict). Default (lead), owner may override.
+- HR1: a business is never surprised by a plan payment. Before paying, the Plan screen says what paying does, in the
+  server's terms: the same plan while it is live adds a month (to which day); another plan replaces the live one from
+  now (and what happens to the time already paid: the server says). The API tells it (the plan read gives, for each
+  plan on offer, what a payment now would do) and REFUSES a second plan start while one of the business's plan
+  payments is still pending (409 with words), so two tabs cannot both pay. Packs may be bought more than once.
+- HR2: after any payment the person lands where they paid from, with the result read from the server and said in
+  words: a plan or a pack returns to the business Plan screen, never silently to Wishes.
+- HR3: a login of a business is known as one: the person's own read (/me) carries the businesses they are a login
+  of; the app opens the business screens for a login (what the server lets a login do) and never offers "Add a
+  business" on a business's pages to someone who is a login of it. A removed login sees the server's words.
+- HR4: a removed draft client wish comes back to the pack when its restore window ends (HF1), and the screen says
+  so ("back in your pack on <day> unless you restore it"); it is not shown as given back at once.
+- HR5: an import says, row by row, what the server refused and why; the client drops nothing silently; the server
+  refuses a phone that is not one and says so, and the same person twice is asked about, not doubled (API).

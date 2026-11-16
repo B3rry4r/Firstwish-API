@@ -65,3 +65,7 @@
   DRAFT's styleId (today "No such style"); upload purposes for sound, a 3D model, a poster and a creator's profile
   picture; a route to turn Signed off or move a style to Open; the payout threshold and day in the price-book read
   with their provisional mark (R14); GET /v1/wishes carries `publish` (today only the detail does).
+- API-BASE-7 (check 16 Nov, lows): the player's style-files read answers for a live wish past its end day and for a
+  passcode-locked wish (an approved style's files are catalogue assets: accepted); a link payer whose payment is
+  marked refund due still gets the "paid" receipt and the refund notice only when the refund runs; a failed receipt
+  is retried by a queued job (not timed in the check). Not run: a payout run either side of a moved threshold.

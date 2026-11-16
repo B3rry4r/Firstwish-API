@@ -953,3 +953,17 @@ HG1 (give race) Two staff giving one Concierge order: the code is right (overlap
   limits; the code reads the book (a field that says 0 while the code uses 3 is a defect).
 - HW7: the staff session read says, per section, which actions this role may do; staff reads are typed in the
   contract (no loose object where a screen draws fields).
+
+## HX (16 Nov 2026, the lead, on the seventh API round's check). Default (lead), owner may override.
+- HX1 (HW2, HW6): every value the price book serves can be changed in staff Prices by the roles that change prices
+  (audited, versioned like a price): the file limits, the Concierge delivery hours, the unopened days, the payout
+  threshold and day. A book value staff cannot move is a constant with extra steps.
+- HX2 (replaces HW6's "erase-now period"): an erase happens at once, as the code does; there is no period and no book
+  value for it. The website's "gone for good within 24 hours" stands on that (at once is within 24 hours).
+- HX3 (HW2): deleting a draft style removes its files and their bytes; an upload cannot be confirmed for a style that
+  is gone; the sweep also takes a file whose style no longer exists.
+- HX4 (HW2, T-62): when a creator's account is erased, an approved style that stays in the catalogue keeps the files
+  it plays with (they are the catalogue's from then on, with no link to the erased person); the creator's drafts,
+  their files and the profile picture are erased.
+- HX5 (HW7): the staff session's per-section actions cover every staff write, drawn from the same table the guard
+  checks (one source), so the two cannot disagree.

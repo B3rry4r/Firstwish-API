@@ -29,3 +29,5 @@
 - B20 rules.ts isOwnAddress: a person whose address is reply@<any domain> is treated as a system box; narrow REPLY_LOCAL to the mail domain.
 - B19 qr-cards.service.ts:66: an asker racing the first sees the card still queued with no file id.
 - B19 not run by the verifier: erase (claim 8), a price-book change after placing, a customer cancel while with a maker.
+- B19 concierge start: a pending payment for an order is answered again however old; a pending payment should lapse (say after 24 hours) so a new start makes a new one.
+- B19 E-141 sets no req.principal and words its 401 differently from the guard (goes away with CB4 at the next shared base).

@@ -55,6 +55,7 @@ describe("HS1 the gather link", () => {
     const w = await setup("draft");
     const r = await friend(w.slug);
     expect(r.status).toBe(200);
+    expect(r.headers["cache-control"]).toBe("no-store");
     expect(r.body).toMatchObject({ from: "Ada", forName: "Chidi", kind: "birthday", occasion: "birthday", open: true, reason: null, count: 0, limit: 12, full: false, maxSeconds: 180 });
     expect(Object.keys(r.body).sort()).toEqual(["count", "forName", "from", "full", "kind", "limit", "maxBytes", "maxSeconds", "occasion", "open", "reason"]);
     expect(JSON.stringify(r.body)).not.toMatch(/private words|Obi|Eze|FW-/);

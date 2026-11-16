@@ -32,6 +32,17 @@ describe("API-BASE-6 small: HR4 day, HR5 import rows, brand logo read, failed re
     expect((await t.http().get(`/v1/business/client-wishes/${cw}`).set(bearer(o.token))).body.returnsToPackOn).toBeUndefined();
   });
 
+  it("1b. HU6: returnsToPackOn is the business's Lagos day: a window that ends at 23:30 UTC is the next day there, the job's own instant", async () => {
+    const o = await businessOwner(t);
+    const runAt = new Date("2027-06-10T23:30:00.000Z");
+    const wishId = t.id();
+    await t.db.wish.create({ data: { id: wishId, accountId: o.accountId, businessId: o.businessId, status: "removed", removedAt: NOW, kind: "birthday", occasion: "birthday", styleSlug: "classic", timeZone: "Africa/Lagos" } as never });
+    const cw = t.id();
+    await t.db.clientWish.create({ data: { id: cw, businessId: o.businessId, wishId, client: "Ada", no: "FW-X2", key: `k-${cw}`, kind: "birthday", occasion: "birthday" } as never });
+    await t.db.job.create({ data: { id: t.id(), type: "restore_window_end", subjectId: wishId, runAt, status: "scheduled", attempts: 0 } });
+    expect((await t.http().get(`/v1/business/client-wishes/${cw}`).set(bearer(o.token))).body.returnsToPackOn).toBe("2027-06-11");
+  });
+
   it("2. HR5: the import answers per row: accepted, or refused with the field and words; a bad phone is refused; the same person twice is reported", async () => {
     const o = await businessOwner(t);
     const rows = [

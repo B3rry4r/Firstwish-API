@@ -46,6 +46,8 @@ const EVENT_LINE: Record<string, "tickets" | "extras" | "keeps" | "pass" | "pro"
   concierge: "concierge",
   creator: "creator",
 };
+/** HU6: the purposes that are one per intent (a pack, a vault block or an extra photo may be bought again at once; these may not). */
+const ONE_PER_INTENT = new Set(["ticket", "keep", "pass", "pro_plan", "creator_plan"]);
 const SLUG = /^[a-z0-9][a-z0-9-]{0,63}$/;
 
 /**
@@ -118,6 +120,12 @@ export class SettlementService {
       flagged = true;
     }
 
+    // HU6: a payment the sweep closed (or that failed) and the provider later reports paid: if the same thing was paid for since, this one gave nothing and is refund due
+    const superseded = !erased && (p.status === "abandoned" || p.status === "failed") && (await this.paidSince(tx, p));
+    if (superseded) {
+      flags = withFlag(withFlag(flags, "refund_due"), "refund_due:paid_after_lapse");
+      flagged = true;
+    }
     const lines = paidLines(p);
     await this.writeLedger(tx, p, a, lines);
     await tx.payment.update({
@@ -127,20 +135,44 @@ export class SettlementService {
         verifiedAt: a.paidAt ?? now,
         channel: a.channel ?? p.channel,
         feeKobo: a.feeKobo ?? null,
-        fulfilledAt: erased ? null : now,
+        fulfilledAt: erased || superseded ? null : now,
         flags,
         updatedAt: now,
       },
     });
     const paid = await tx.payment.findUniqueOrThrow({ where: { id: p.id } });
     await this.record(tx, paid, lines);
-    if (erased) return { outcome: "recorded_unfulfilled", flagged };
+    if (erased || superseded) return { outcome: "recorded_unfulfilled", flagged };
     for (const line of lines) {
       const handler = this.registry.get(line.sku);
       if (!handler) throw new Error(`fulfilment: no handler registered for ${line.sku}`);
       await handler({ tx, payment: paid, line, request: opts.request, grant: () => this.grantIn(tx, line.sku) });
     }
     return { outcome: "fulfilled", flagged };
+  }
+
+  /**
+   * HU6: has anything else paid for the same intent since this payment started? The intent is the payer's own (their account, or a link
+   * holder's email), the purpose and the wish (or, for a plan, the business: one plan is applied once for one intent, whichever plan it was).
+   */
+  private async paidSince(tx: Prisma.TransactionClient, p: Payment): Promise<boolean> {
+    if (!ONE_PER_INTENT.has(p.purpose)) return false;
+    if (!p.accountId && !p.payerContact) return false;
+    const plan = p.purpose === "pro_plan";
+    const others = await tx.payment.findMany({
+      where: {
+        id: { not: p.id },
+        purpose: p.purpose,
+        status: { in: ["succeeded", "refunded", "partly_refunded"] },
+        verifiedAt: { gt: p.createdAt },
+        ...(p.accountId ? { accountId: p.accountId } : { accountId: null, payerContact: p.payerContact }),
+        ...(plan ? { businessId: p.businessId } : { subjectId: p.subjectId }),
+      },
+      select: { lines: true },
+      take: 20,
+    });
+    const sku = (x: Pick<Payment, "lines">) => paidLines(x)[0]?.sku;
+    return others.some((o) => plan || sku(o) === sku(p));
   }
 
   /** What the book grants for a line, read on the settle transaction's own connection (never the pool: HH2). */

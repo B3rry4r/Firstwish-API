@@ -1,5 +1,6 @@
-import { Body, Controller, Delete, Get, HttpCode, Param, Post, Req } from "@nestjs/common";
-import type { Request } from "express";
+import { Body, Controller, Delete, Get, HttpCode, Param, Post, Req, Res } from "@nestjs/common";
+import type { Request, Response } from "express";
+import { withRetryAfter } from "../../common/errors/rate-limited";
 import {
   DeleteWishesByIdGatherVoicesByVoiceIdParamsDto, GetGBySlugParamsDto, GetWishesByIdGatherParamsDto, PostGBySlugVoiceBodyDto, PostGBySlugVoiceByIdConfirmParamsDto,
   PostGBySlugVoiceParamsDto, PostWishesByIdGatherOffParamsDto,
@@ -43,21 +44,25 @@ export class GatherFriendController {
 
   @Public()
   @Get()
-  view(@Param() p: GetGBySlugParamsDto, @Req() req: Request): Promise<GatherFriendView> {
-    return this.gather.friendView(p.slug, req.ip ?? null);
+  view(@Param() p: GetGBySlugParamsDto, @Req() req: Request, @Res({ passthrough: true }) res: Response): Promise<GatherFriendView> {
+    // HU6: the link's page is never kept by a cache: it says whether the link is on and how many voices there are
+    res.setHeader("Cache-Control", "no-store");
+    return this.gather.friendView(p.slug, req.ip ?? null).catch((e: unknown) => withRetryAfter(res, e));
   }
 
   @Public()
   @Post("voice")
   @HttpCode(201)
-  add(@Param() p: PostGBySlugVoiceParamsDto, @Body() body: PostGBySlugVoiceBodyDto, @Req() req: Request): Promise<GatherVoiceAdded> {
-    return this.gather.addVoice(p.slug, body, req.ip ?? null);
+  add(@Param() p: PostGBySlugVoiceParamsDto, @Body() body: PostGBySlugVoiceBodyDto, @Req() req: Request, @Res({ passthrough: true }) res: Response): Promise<GatherVoiceAdded> {
+    res.setHeader("Cache-Control", "no-store");
+    return this.gather.addVoice(p.slug, body, req.ip ?? null).catch((e: unknown) => withRetryAfter(res, e));
   }
 
   @Public()
   @Post("voice/:id/confirm")
   @HttpCode(200)
-  confirm(@Param() p: PostGBySlugVoiceByIdConfirmParamsDto, @Req() req: Request): Promise<{ id: string; state: "ready" | "checking" | "refused"; reason?: string }> {
-    return this.gather.confirmVoice(p.slug, p.id, req.ip ?? null);
+  confirm(@Param() p: PostGBySlugVoiceByIdConfirmParamsDto, @Req() req: Request, @Res({ passthrough: true }) res: Response): Promise<{ id: string; state: "ready" | "checking" | "refused"; reason?: string }> {
+    res.setHeader("Cache-Control", "no-store");
+    return this.gather.confirmVoice(p.slug, p.id, req.ip ?? null).catch((e: unknown) => withRetryAfter(res, e));
   }
 }

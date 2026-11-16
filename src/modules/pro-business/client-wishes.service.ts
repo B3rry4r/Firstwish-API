@@ -98,14 +98,15 @@ export class ClientWishesService implements OnModuleInit {
   }
 
   /**
-   * HR4: the day a removed draft's wish goes back to the business's pack: the day its restore window ends (the job that erases the draft
+   * HR4: the day a removed draft's wish goes back to the business's pack: the Lagos day its restore window ends (the job that erases the draft
    * and gives the draw back runs then). A wish with no waiting window has no entry; bringing the draft back cancels the job.
    */
   private async returnDays(wishIds: (string | null)[]): Promise<Map<string, string>> {
     const ids = wishIds.filter((x): x is string => !!x);
     if (!ids.length) return new Map();
     const jobs = await this.prisma.job.findMany({ where: { type: "restore_window_end", subjectId: { in: ids }, status: "scheduled" }, select: { subjectId: true, runAt: true } });
-    return new Map(jobs.map((j) => [j.subjectId, j.runAt.toISOString().slice(0, 10)]));
+    // HU6: a DateOnly is the business's local day (Lagos is UTC+1 all year), the day the job that gives the wish back runs, so day and instant agree
+    return new Map(jobs.map((j) => [j.subjectId, new Date(j.runAt.getTime() + 3_600_000).toISOString().slice(0, 10)]));
   }
 
   private read(body: PostBusinessClientWishesBody): NewWish {

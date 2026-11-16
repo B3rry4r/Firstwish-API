@@ -654,3 +654,8 @@ FC2 (B21 verify, low) Staff may add at most 30 days in all to one wish, and send
     (PROVISIONAL), counted in the database. (B21 patch.)
 FC3 (P-B21 hand-back) Finance starts refunds from the payments screen, which its role opens; the wish screen is not open to
     finance, so the refund action there is for ops and the owner. Accepted.
+ZB4 (P-B17b hand-back) A client wish belongs to the business, not to the login who made it: when a login's own account is
+    erased, the business's client wishes that login made (drafts and sealed) pass to the business owner's account and keep
+    playing; the login's personal data goes. (Wave 6 join.) ClientWish.wishId joins the contract at the closing base. A
+    client wish takes its wish's number at the seal (no gaps): accepted. A refund of the plan payment does not unseal wishes
+    already made: accepted (the existing revoke).

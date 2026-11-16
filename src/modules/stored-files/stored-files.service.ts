@@ -95,7 +95,7 @@ export class StoredFilesService {
   }
 
   /** The subject wish, the caller's own and not yet sealed; a clip also needs a ticket that takes clips. */
-  private async checkWish(tx: Tx, p: UserPrincipal, rule: PurposeRule, subjectId: string | undefined): Promise<void> {
+  private async checkWish(tx: Tx, p: UserPrincipal, rule: PurposeRule, subjectId: string | undefined, gather = false): Promise<void> {
     if (subjectId === undefined) {
       if (rule.purpose === "video-clip") throw AppError.validation({ subjectId: "Say which wish the clip is for." });
       return;
@@ -103,7 +103,8 @@ export class StoredFilesService {
     if (!isUuid(subjectId)) throw AppError.validation({ subjectId: "Must be a wish id." });
     const wish = await tx.wish.findFirst({ where: { id: subjectId, accountId: p.accountId }, select: { status: true, ticket: true } });
     if (!wish) throw AppError.notFound("No such wish.");
-    if (wish.status !== "draft") throw AppError.conflict("wish_sealed", "This wish is sealed; its files cannot change.");
+    // HS1: a friend's voice through the gather link may arrive while the wish is a draft or sealed and not yet open
+    if (wish.status !== "draft" && !(gather && wish.status === "sealed")) throw AppError.conflict("wish_sealed", "This wish is sealed; its files cannot change.");
     if (rule.purpose === "video-clip") {
       const e = await tx.entitlements.findFirst();
       const tickets = (e?.tickets ?? {}) as Record<string, { clips?: unknown } | undefined>;
@@ -116,7 +117,7 @@ export class StoredFilesService {
    * E-182: checks purpose, type, size and entitlement, then issues a signed PUT for one STAGING key (Y1), good for 15 minutes and
    * bound to the type and the exact length (X26). The file's own key is made here too but is never signed for a PUT.
    */
-  async createTicket(p: UserPrincipal, body: PostUploadsBody): Promise<UploadTicket> {
+  async createTicket(p: UserPrincipal, body: PostUploadsBody, opts: { gather?: boolean } = {}): Promise<UploadTicket> {
     const rule = purposeOf(body.purpose);
     if (!rule) throw AppError.validation({ purpose: "Must be one of photo, voice, clip, vault, studio or brand." });
     const contentType = normaliseType(body.contentType);
@@ -150,7 +151,7 @@ export class StoredFilesService {
           if (Number(biz.vault ?? 0n) + bytes > limit) throw AppError.conflict("vault_full", "This file would go over your Vault space.");
         }
       } else if (wishFile) {
-        await this.checkWish(tx, p, rule, body.subjectId);
+        await this.checkWish(tx, p, rule, body.subjectId, opts.gather === true);
         if (rule.purpose === "voice-note" && body.subjectId !== undefined) await this.checkVoiceRoom(tx, body.subjectId);
       } else if (body.styleId !== undefined) {
         if (!(await tx.style.findUnique({ where: { id: body.styleId }, select: { id: true } }))) throw AppError.validation({ styleId: "No such style." });
@@ -339,7 +340,7 @@ export class StoredFilesService {
   }
 
   /** E-183 (Y5, X23): removes the row, then the objects (and sizes). A file a wish or a card names (a real foreign key) is 409. */
-  async remove(p: UserPrincipal, id: string, body: DeleteUploadsByIdBody): Promise<void> {
+  async remove(p: UserPrincipal, id: string, body: DeleteUploadsByIdBody, opts: { gather?: boolean } = {}): Promise<void> {
     if (!isUuid(id)) throw AppError.notFound("No such file.");
     if (body.fileId !== undefined && body.fileId !== id) throw AppError.validation({ fileId: "Must be the id in the path." });
     const row = await this.db.$transaction(
@@ -352,7 +353,7 @@ export class StoredFilesService {
           WHERE w.id IN (SELECT "wishId" FROM wish_file WHERE "fileId" = ${id}::uuid)
              OR w.id IN (SELECT "wishId" FROM voice_note WHERE id = ${id}::uuid AND "wishId" IS NOT NULL)
           FOR UPDATE`;
-        if (wishes.some((w) => w.status !== "draft")) throw AppError.conflict("file_in_use", "A sealed wish still uses this file.");
+        if (wishes.some((w) => w.status !== "draft" && !(opts.gather && w.status === "sealed"))) throw AppError.conflict("file_in_use", "A sealed wish still uses this file.");
         await tx.$executeRaw`DELETE FROM wish_file WHERE "fileId" = ${id}::uuid`;
         if (r.businessId && r.purpose === "vault_file" && (r.status === "ready" || r.status === "screening")) {
           await tx.$executeRaw`UPDATE business SET vault = GREATEST(COALESCE(vault, 0) - ${r.bytes}, 0), version = version + 1 WHERE id = ${r.businessId}::uuid`;

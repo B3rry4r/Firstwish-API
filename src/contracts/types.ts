@@ -4614,6 +4614,102 @@ export type GetWishesByIdLinkQuery = Record<string, never>;
 export type GetWishesByIdLinkHeaders = Record<string, never>;
 export type GetWishesByIdLinkResponse = { link: string; slug: string };
 
+/** HS1: the owner's read of a wish's gather link. */
+export interface GatherOwnerView {
+  slug: string;
+  /** the address friends open: /g/<slug> */
+  link: string;
+  active: boolean;
+  /** a friend may add a voice now (the link is on, the wish is a draft or sealed and not open yet) */
+  open: boolean;
+  count: number;
+  limit: number;
+  voices: Array<{ id: string; from: string; seconds: number; state: "ready" | "checking"; at: Instant; url: string | null; expiresAt: Instant | null }>;
+}
+/** HS1: what a friend sees at a gather link: who is asking, for whom (first names), the room, what a voice may be. Nothing else of the wish. */
+export interface GatherFriendView {
+  from: string;
+  forName: string;
+  kind: string;
+  occasion: string;
+  open: boolean;
+  reason: string | null;
+  count: number;
+  limit: number;
+  full: boolean;
+  maxSeconds: number;
+  maxBytes: number;
+}
+/** HS1: the signed put for one friend's voice, and the voice's id. */
+export interface GatherVoiceAdded {
+  id: string;
+  upload: UploadTicket["upload"];
+}
+
+/** E-260 GET /v1/wishes/:id/gather. Auth: own records. */
+export interface GetWishesByIdGatherParams {
+  id: string;
+}
+export type GetWishesByIdGatherQuery = Record<string, never>;
+export type GetWishesByIdGatherHeaders = Record<string, never>;
+export type GetWishesByIdGatherResponse = GatherOwnerView;
+
+/** E-261 POST /v1/wishes/:id/gather/off. Auth: own records. */
+export interface PostWishesByIdGatherOffParams {
+  id: string;
+}
+export type PostWishesByIdGatherOffBody = Record<string, never>;
+export type PostWishesByIdGatherOffHeaders = Record<string, never>;
+export type PostWishesByIdGatherOffResponse = GatherOwnerView;
+
+/** E-262 DELETE /v1/wishes/:id/gather/voices/:voiceId. Auth: own records. */
+export interface DeleteWishesByIdGatherVoicesByVoiceIdParams {
+  id: string;
+  voiceId: string;
+}
+export type DeleteWishesByIdGatherVoicesByVoiceIdBody = Record<string, never>;
+export type DeleteWishesByIdGatherVoicesByVoiceIdHeaders = Record<string, never>;
+/** 204 No Content: the response has no body (Q12). */
+export type DeleteWishesByIdGatherVoicesByVoiceIdResponse = void;
+
+/** E-263 GET /v1/g/:slug. Auth: public. */
+export interface GetGBySlugParams {
+  slug: string;
+}
+export type GetGBySlugQuery = Record<string, never>;
+export type GetGBySlugHeaders = Record<string, never>;
+export type GetGBySlugResponse = GatherFriendView;
+
+/** E-264 POST /v1/g/:slug/voice. Auth: public. */
+export interface PostGBySlugVoiceParams {
+  slug: string;
+}
+export interface PostGBySlugVoiceBody {
+  /** string (the friend's first name, up to 40 characters) */
+  name: string;
+  /** string (an audio type taken for a voice note) */
+  contentType: string;
+  /** number (the file's size in bytes) */
+  bytes: number;
+  /** number (1 to 180) */
+  seconds?: number;
+}
+export type PostGBySlugVoiceHeaders = Record<string, never>;
+export type PostGBySlugVoiceResponse = GatherVoiceAdded;
+
+/** E-265 POST /v1/g/:slug/voice/:id/confirm. Auth: public. */
+export interface PostGBySlugVoiceByIdConfirmParams {
+  slug: string;
+  id: string;
+}
+export type PostGBySlugVoiceByIdConfirmBody = Record<string, never>;
+export type PostGBySlugVoiceByIdConfirmHeaders = Record<string, never>;
+export interface PostGBySlugVoiceByIdConfirmResponse {
+  id: string;
+  state: "ready" | "checking" | "refused";
+  reason?: string;
+}
+
 /** E-241 POST /v1/wishes/:id/pass-upgrade. Auth: business; signed in. */
 export interface PostWishesByIdPassUpgradeParams {
   id: string;
@@ -4951,6 +5047,12 @@ export interface EndpointContracts {
   "E-227": { params: PostWishesByIdEraseParams; body: PostWishesByIdEraseBody; headers: PostWishesByIdEraseHeaders; response: PostWishesByIdEraseResponse };
   "E-228": { params: PostWishesByIdKeepParams; body: PostWishesByIdKeepBody; headers: PostWishesByIdKeepHeaders; response: PostWishesByIdKeepResponse };
   "E-229": { params: GetWishesByIdLinkParams; query: GetWishesByIdLinkQuery; headers: GetWishesByIdLinkHeaders; response: GetWishesByIdLinkResponse };
+  "E-260": { params: GetWishesByIdGatherParams; query: GetWishesByIdGatherQuery; headers: GetWishesByIdGatherHeaders; response: GetWishesByIdGatherResponse };
+  "E-261": { params: PostWishesByIdGatherOffParams; body: PostWishesByIdGatherOffBody; headers: PostWishesByIdGatherOffHeaders; response: PostWishesByIdGatherOffResponse };
+  "E-262": { params: DeleteWishesByIdGatherVoicesByVoiceIdParams; body: DeleteWishesByIdGatherVoicesByVoiceIdBody; headers: DeleteWishesByIdGatherVoicesByVoiceIdHeaders; response: DeleteWishesByIdGatherVoicesByVoiceIdResponse };
+  "E-263": { params: GetGBySlugParams; query: GetGBySlugQuery; headers: GetGBySlugHeaders; response: GetGBySlugResponse };
+  "E-264": { params: PostGBySlugVoiceParams; body: PostGBySlugVoiceBody; headers: PostGBySlugVoiceHeaders; response: PostGBySlugVoiceResponse };
+  "E-265": { params: PostGBySlugVoiceByIdConfirmParams; body: PostGBySlugVoiceByIdConfirmBody; headers: PostGBySlugVoiceByIdConfirmHeaders; response: PostGBySlugVoiceByIdConfirmResponse };
   "E-241": { params: PostWishesByIdPassUpgradeParams; body: PostWishesByIdPassUpgradeBody; headers: PostWishesByIdPassUpgradeHeaders; response: PostWishesByIdPassUpgradeResponse };
   "E-230": { params: PostWishesByIdRestoreParams; body: PostWishesByIdRestoreBody; headers: PostWishesByIdRestoreHeaders; response: PostWishesByIdRestoreResponse };
   "E-231": { params: PostWishesByIdSealParams; body: PostWishesByIdSealBody; headers: PostWishesByIdSealHeaders; response: PostWishesByIdSealResponse };

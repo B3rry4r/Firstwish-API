@@ -3642,6 +3642,83 @@
      "why": "a random request key the web made, no person; it only lets a repeated start find its draft"
     }
    }
+  },
+  "WishGather": {
+   "reason": "HS1: the gather link a wish's owner gives friends to add a voice (one per wish; its own slug, never the wish's link)",
+   "columns": {
+    "slug": {
+     "type": "String",
+     "attrs": "@db.VarChar(32)",
+     "opt": false
+    },
+    "wishId": {
+     "type": "String",
+     "attrs": "@db.Uuid",
+     "opt": false
+    },
+    "active": {
+     "type": "Boolean",
+     "attrs": "@default(true)",
+     "opt": false
+    },
+    "createdAt": {
+     "type": "DateTime",
+     "attrs": "@default(now()) @db.Timestamptz(3)",
+     "opt": false
+    }
+   },
+   "refs": {
+    "wishId": "Wish"
+   },
+   "refOnDelete": {
+    "wishId": "Cascade"
+   },
+   "unique": [
+    [
+     "slug"
+    ],
+    [
+     "wishId"
+    ]
+   ],
+   "erase": {
+    "slug": {
+     "rule": "keep",
+     "why": "a random link name, no person"
+    }
+   }
+  },
+  "WishGatherVoice": {
+   "reason": "HS1: who a friend's voice note is from (the friend's first name)",
+   "columns": {
+    "wishId": {
+     "type": "String",
+     "attrs": "@db.Uuid",
+     "opt": false
+    },
+    "fromName": {
+     "type": "String",
+     "attrs": "",
+     "opt": false
+    },
+    "createdAt": {
+     "type": "DateTime",
+     "attrs": "@default(now()) @db.Timestamptz(3)",
+     "opt": false
+    }
+   },
+   "refs": {
+    "wishId": "Wish"
+   },
+   "refOnDelete": {
+    "wishId": "Cascade"
+   },
+   "erase": {
+    "fromName": {
+     "rule": "blank",
+     "why": "a friend's first name"
+    }
+   }
   }
  }
 }

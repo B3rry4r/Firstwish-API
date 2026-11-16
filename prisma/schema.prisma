@@ -1569,6 +1569,8 @@ model Wish {
   purchaseGrantByWish      PurchaseGrant[]     @relation("PurchaseGrant_wishId")
   wishReactionByWish       WishReaction[]      @relation("WishReaction_wishId")
   wishFavouriteByWish      WishFavourite[]     @relation("WishFavourite_wishId")
+  wishGatherByWish         WishGather?         @relation("WishGather_wishId")
+  wishGatherVoiceByWish    WishGatherVoice[]   @relation("WishGatherVoice_wishId")
   passDrawByWish           PassDraw[]          @relation("PassDraw_wishId")
   takeDownCodeByWish       TakeDownCode[]      @relation("TakeDownCode_wishId")
   conciergeOrderWishByWish ConciergeOrderWish? @relation("ConciergeOrderWish_wishId")
@@ -1718,6 +1720,32 @@ model WishFavourite {
   @@unique([wishId, session])
   @@index([wishId, id])
   @@map("wish_favourite")
+}
+
+/// table: HS1: the gather link a wish's owner gives friends to add a voice (one per wish; slug is the link's own, never the wish's link); written by server:gather
+model WishGather {
+  id        String   @id @db.Uuid
+  slug      String   @db.VarChar(32)
+  wishId    String   @db.Uuid
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  wish      Wish     @relation("WishGather_wishId", fields: [wishId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@unique([slug])
+  @@unique([wishId])
+  @@map("wish_gather")
+}
+
+/// table: HS1: who a friend's voice note is from (the friend's first name), one row per voice added through a gather link
+model WishGatherVoice {
+  id        String   @id @db.Uuid
+  wishId    String   @db.Uuid
+  fromName  String
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  wish      Wish     @relation("WishGatherVoice_wishId", fields: [wishId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@index([wishId, id])
+  @@map("wish_gather_voice")
 }
 
 /// table: LL1, LL4: the public link's limits counted in the database: a bucket, a key (a hash of the address, never the address) and the time; old rows are removed by a timed job

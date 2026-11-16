@@ -724,3 +724,7 @@ HD3 (join 6 verify) The login check for making a business wish runs under the bu
     cause). (Join 6 patch.)
 HD4 (join 6 verify) Extra Vault space shows no VAT line and books none, like the creator lines: OWNER QUESTION with them
     (which lines carry VAT beyond Pro plans, wish packs and Concierge). Until answered the invoice states the total only.
+HE1 (INT-6 hand-back) The seed never overwrites what a staff member has set: a setting, a price or a wording that exists is
+    left as it is (create if absent). A test that needs the seed's figure sets it itself. (Sweep bundle.) The tests that
+    still fail now and then because specs share one database (int1-rulings U1; join4 J1's invoice number) are fixed there
+    too: each asserts on its own rows.

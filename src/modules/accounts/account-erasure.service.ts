@@ -169,7 +169,7 @@ export class AccountErasureService {
     await tx.payment.updateMany({ where: { OR: [{ accountId }, inBusiness] }, data: { payerContact: null } });
     await tx.report.updateMany({ where: { accountId }, data: { reporterContact: null, contact: null, note: null } });
     if (threadIds.length) await tx.supportMessage.updateMany({ where: { threadId: { in: threadIds } }, data: { body: "" } });
-    await tx.supportThread.updateMany({ where: { accountId }, data: { contact: "", subject: "", body: null, text: null } });
+    await tx.supportThread.updateMany({ where: { accountId }, data: { contact: "", subject: "", body: null, text: null, name: null } });
     if (wishIds.length) {
       await tx.qrCard.updateMany({ where: { wishId: { in: wishIds } }, data: { names: Prisma.DbNull } });
       await tx.publishedWish.updateMany({ where: { wish: { in: wishIds } }, data: { forName: null, from: null, name: null } });

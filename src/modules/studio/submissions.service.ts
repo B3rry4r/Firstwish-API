@@ -193,7 +193,7 @@ export class SubmissionsService implements OnModuleInit {
       creatorName: sub.creator.name ?? metaOf(doc).byline, decided, handle: sub.creator.account?.handle ?? "", kinds: arr(made.kinds),
       name: typeof doc.name === "string" ? doc.name : "", plan: state?.plan ?? "open", rights: obj(doc.rights),
       still: typeof doc.still === "string" ? doc.still : "", style: sub.styleId, snapshot: doc,
-    } as SubmissionView;
+    };
   }
 
   /**

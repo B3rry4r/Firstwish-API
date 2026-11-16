@@ -252,7 +252,7 @@ describe("wishes E-221 E-222 E-224 E-225 E-229 E-231 (contract)", () => {
     expect(tr).toEqual([expect.objectContaining({ from: "draft", to: "sealed", cause: "owner.seal" })]);
     expect(await db.job.count({ where: { subjectId: id, type: "open_wish", status: "scheduled" } })).toBe(1);
     expect((await t.http().get(`/v1/wishes/${id}/link`).set(bearer(u.token))).body).toEqual({ link: `/w/${slug}`, slug });
-    expect((await save(u, id, { version: r.body.version, name: "Late" })).status).toBe(409);
+    expect((await save(u, id, { version: item.version, name: "Late" })).status).toBe(409);
     expect((await sealIt(u, id)).status).toBe(409);
   });
 
@@ -263,11 +263,11 @@ describe("wishes E-221 E-222 E-224 E-225 E-229 E-231 (contract)", () => {
     for (const u of us) idsOf.push(await ready(u));
     const out = await Promise.all(us.map((u, i) => sealIt(u, idsOf[i])));
     expect(out.every((r) => r.status === 200)).toBe(true);
-    const nums = out.map((r) => Number(r.body.no)).sort((a, b) => a - b);
+    const nums = out.map((r) => Number(r.body.item.no)).sort((a, b) => a - b);
     expect(new Set(nums).size).toBe(50);
     expect(nums[49] - nums[0]).toBe(49);
     expect(await db.wish.count({ where: { id: { in: idsOf }, no: { not: null } } })).toBe(50);
-    expect(new Set(out.map((r) => (r.body as { link: string }).link)).size).toBe(50);
+    expect(new Set(out.map((r) => (r.body as { item: { link: string } }).item.link)).size).toBe(50);
     const seqRow = await db.wishNumberSequence.findMany();
     expect(seqRow).toHaveLength(1);
     expect(seqRow[0].next).toBeGreaterThanOrEqual(nums[49] + 1);
@@ -567,7 +567,7 @@ describe("wishes E-221 E-222 E-224 E-225 E-229 E-231 (contract)", () => {
     expect((await sealIt(u, w.id, {})).status).toBe(422);
     const ok = await sealIt(u, w.id, { openNow: true });
     expect(ok.status).toBe(200);
-    expect(ok.body.opensAt).toBe(NOW.toISOString());
+    expect(ok.body.item.opensAt).toBe(NOW.toISOString());
     // a zone change recomputes the instant from the stored local time, in the draft and at the seal
     const z = await draft(u);
     await save(u, z.id, { version: 0, content: letter, opensAt: "2027-03-01T09:00", timeZone: "Africa/Lagos" });
@@ -576,7 +576,7 @@ describe("wishes E-221 E-222 E-224 E-225 E-229 E-231 (contract)", () => {
     expect((await db.wish.findUniqueOrThrow({ where: { id: z.id } })).opensAt!.toISOString()).toBe("2027-03-01T00:00:00.000Z");
     await wishes.fulfilTicket(z.id, "moment");
     const sealed = await sealIt(u, z.id, { timeZone: "Europe/London" });
-    expect(sealed.body).toMatchObject({ timeZone: "Europe/London", opensAt: "2027-03-01T09:00:00.000Z" });
+    expect(sealed.body.item).toMatchObject({ timeZone: "Europe/London", opensAt: "2027-03-01T09:00:00.000Z" });
     // nothing else moves a sealed wish's open time: another seal, a save, a header, a zone
     const row = await db.wish.findUniqueOrThrow({ where: { id: z.id } });
     expect((await t.http().post(`/v1/wishes/${z.id}/seal`).set(bearer(u.token)).set("x-opens-at", at(DAY)).send({ version: row.version, opensAt: at(DAY), timeZone: "Asia/Tokyo" })).status).toBe(409);

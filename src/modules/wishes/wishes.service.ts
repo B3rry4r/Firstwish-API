@@ -655,6 +655,7 @@ export class WishesService {
     const plan = input.usePlan ? await this.access.find(accountId, input.businessHeader) : null;
     if (input.usePlan && !plan) throw AppError.forbidden("You are not part of a business.");
     const biz = plan ? plan.businessId : await this.business.find(accountId);
+    const book = await this.entitlements.row(); // read before the transaction: a pool connection is never held while another is asked for
     const row = await this.prisma.$transaction(async (tx) => {
       // HD3: one lock order for everything a business's money touches: the owner's account first, then the caller's. A seal that took the
       // caller's account first and the owner's second deadlocked with a client wish being made (it takes the owner's, then writes a row
@@ -672,7 +673,7 @@ export class WishesService {
       if (plan && w.ticket) throw AppError.conflict("already_ticketed", "This wish already has a ticket, so nothing is drawn from the plan for it.");
       if (!w.ticket && !input.usePass && !plan) throw new AppError(402, "payment_required", "Pay for this wish first.");
       // HQ5: the style the wish is on must be one its ticket allows (a wish with no ticket yet draws its ticket below)
-      if (w.ticket) await this.checkStyleLevel(tx, await this.entitlements.row(), w.ticket, w.adds, w.styleSlug);
+      if (w.ticket) await this.checkStyleLevel(tx, book, w.ticket, w.adds, w.styleSlug);
       const missing: Record<string, string> = {};
       if (!w.name?.trim()) missing.name = "Who is it for?";
       if (!hasBody(w.content as Obj | null)) missing.content = "Write at least one part of the wish.";

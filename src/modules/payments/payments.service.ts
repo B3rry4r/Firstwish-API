@@ -85,11 +85,13 @@ export class PaymentsService {
     const created = await this.db.$transaction(async (tx) => {
       await lockAccount(tx, accountId);
       const existing = await tx.payment.findUnique({ where: { idempotencyKey: storedKey } });
-      if (existing) return { row: existing, fresh: false };
+      if (existing) return { row: existing, fresh: false, sameThing: false };
       const now = this.clock.now();
       const quote = await this.book.quote(req.lines, now, { db: tx });
       // GG3: what the fulfilment bundle knows can never be granted is refused now (422), before the buyer pays
-      await this.registry.checkStart(accountId, req.info, quote.lines.map((l) => l.sku), tx);
+      const open = await this.registry.checkStart(accountId, req.info, quote.lines.map((l) => l.sku), tx, quote);
+      // CB1: a payment already open for the same order is answered again: no new row, no new provider call
+      if (open) return { row: await tx.payment.findUniqueOrThrow({ where: { id: open } }), fresh: false, sameThing: true };
       const id = this.ids.id();
       const row = await tx.payment.create({
         data: {
@@ -113,12 +115,12 @@ export class PaymentsService {
           updatedAt: now,
         },
       });
-      return { row, fresh: true };
+      return { row, fresh: true, sameThing: false };
     });
 
     if (!created.fresh) {
       const opts = readOptions(created.row.options);
-      if (opts.server.fingerprint !== req.fingerprint) {
+      if (!created.sameThing && opts.server.fingerprint !== req.fingerprint) {
         throw AppError.conflict("idempotency_key_reused", "This Idempotency-Key was already used for a different payment.");
       }
       // FF4: a repeat of a payment that is no longer waiting answers 200 with it as it stands and no checkout address.

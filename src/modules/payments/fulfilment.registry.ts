@@ -1,6 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import type { Payment, Prisma } from "@prisma/client";
 import type { Grant } from "../price-book/entitlements.service";
+import type { Quote } from "../price-book/price-book.service";
 
 /** What was bought on one price-book line of a payment. */
 export interface PaidLineInfo {
@@ -45,7 +46,13 @@ export type FulfilmentHandler = (ctx: FulfilmentContext) => Promise<void>;
  * A check made when a payment STARTS (GG3), in the start's own transaction with the account locked: it throws the 422 that tells the
  * buyer a line can never be granted, before any money is asked for. The fulfilment bundle registers its own (assertStartable).
  */
-export type StartCheck = (accountId: string, request: PaymentRequestInfo, skus: string[], tx: Prisma.TransactionClient) => Promise<void>;
+export type StartCheck = (
+  accountId: string,
+  request: PaymentRequestInfo,
+  skus: string[],
+  tx: Prisma.TransactionClient,
+  quote: Quote,
+) => Promise<void | { existingPaymentId: string }>;
 
 /**
  * The fulfilment frame: handlers register by price-book line (sku). The payment core calls the registered handler once
@@ -73,9 +80,16 @@ export class FulfilmentRegistry {
     this.startChecks.length = 0;
   }
 
-  /** Runs the start checks in the order they were registered; the first to throw refuses the start. */
-  async checkStart(accountId: string, request: PaymentRequestInfo, skus: string[], tx: Prisma.TransactionClient): Promise<void> {
-    for (const check of this.startChecks) await check(accountId, request, skus, tx);
+  /**
+   * Runs the start checks in the order they were registered; the first to throw refuses the start. A check may set the price the
+   * payment charges (it changes `quote`: the order's own row) or answer that an open payment for the same thing already exists.
+   */
+  async checkStart(accountId: string, request: PaymentRequestInfo, skus: string[], tx: Prisma.TransactionClient, quote: Quote): Promise<string | null> {
+    for (const check of this.startChecks) {
+      const again = await check(accountId, request, skus, tx, quote);
+      if (again) return again.existingPaymentId;
+    }
+    return null;
   }
 
   /** Test helper and hot-swap: replaces whatever is registered. */

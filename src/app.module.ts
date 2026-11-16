@@ -75,6 +75,8 @@ import { PayoutsModule } from "./modules/payouts/payouts.module";
 import { ModerationModule } from "./modules/moderation/moderation.module";
 import { ShowingModule } from "./modules/showing/showing.module";
 import { StaffReadsModule } from "./modules/staff-reads/staff-reads.module";
+import { AiWritingModule } from "./modules/ai-writing/ai-writing.module";
+import { ReferenceDataModule } from "./modules/reference-data/reference-data.module";
 
 @Module({
   imports: [
@@ -164,6 +166,10 @@ import { StaffReadsModule } from "./modules/staff-reads/staff-reads.module";
     // B21
     StaffReadsModule,
     // end B21
+    // B23
+    AiWritingModule,
+    ReferenceDataModule,
+    // end B23
   ],
 })
 export class AppModule {}

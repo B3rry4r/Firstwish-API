@@ -662,6 +662,18 @@
    "why": "This is what makes it a group birthday wish."
   },
   {
+   "seedKey": "story:3ba35d21e46c",
+   "ask": {
+    "hint": "A line for each photo.",
+    "input": "captions",
+    "title": "A few words for the photos."
+   },
+   "line": "The photos in order, a line each.",
+   "rule": "+",
+   "title": "The photo story",
+   "type": "story"
+  },
+  {
    "seedKey": "credits:cc441810feb7",
    "line": "Every friend's name, rolling.",
    "rule": "L",
@@ -786,6 +798,18 @@
    "title": "The voices",
    "type": "voices",
    "why": "This is what makes it a milestone wish from the children."
+  },
+  {
+   "seedKey": "story:e17a352322d0",
+   "ask": {
+    "hint": "A line for each photo.",
+    "input": "captions",
+    "title": "A few words for the photos."
+   },
+   "line": "The photos in order, a line each.",
+   "rule": "on",
+   "title": "The photo story",
+   "type": "story"
   },
   {
    "seedKey": "note:df2ff9c88d75",

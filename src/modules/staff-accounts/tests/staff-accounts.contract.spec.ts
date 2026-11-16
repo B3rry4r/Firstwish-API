@@ -180,12 +180,12 @@ describe("staff accounts and staff sign-in (contract)", () => {
 
     it("refuses a short reason before anything is written", async () => {
       const email = `short-${tag()}@example.test`;
-      const before = await t.db.auditEntry.count();
+      const before = await t.db.auditEntry.count({ where: { reason: "ab" } });
       const r = await t.http().post("/v1/admin/team/invite").set(bearer(ownerToken)).send({ email, roles: ["support"], reason: " ab " });
       expect(r.status).toBe(422);
       expect(r.body.error.fields.reason).toBeDefined();
       expect(await t.db.staffAccount.count({ where: { email } })).toBe(0);
-      expect(await t.db.auditEntry.count()).toBe(before);
+      expect(await t.db.auditEntry.count({ where: { reason: "ab" } })).toBe(before);
       expect(t.email.lastTo(email)).toBeUndefined();
     });
 

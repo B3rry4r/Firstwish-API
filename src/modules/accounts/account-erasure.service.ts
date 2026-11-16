@@ -6,7 +6,10 @@ import { AppError } from "../../common/errors/app-error";
 import { Clock } from "../../common/ports/clock.port";
 import { IdGenerator } from "../../common/ports/ids.port";
 import { AuditActor, AuditService } from "../audit/audit.service";
+import { ShowingLink } from "../showing/showing-link";
 import { SavedWishesService } from "../saved-wishes/saved-wishes.service";
+import { JobsService } from "../jobs/jobs.service";
+import { UNOPENED_DAYS } from "../wishes/wish-lifecycle.service";
 import { FileJobs } from "../stored-files/file-jobs";
 import type { Db } from "./account-rules";
 
@@ -47,6 +50,9 @@ export const NOT_THIS_ACCOUNT: Record<string, string> = {
   StaffAccount: "staff are separate from accounts (conventions: Who can do what); a staff member is never erased by an account erase",
 };
 
+/** The subject prefix of an erase-now job that blanks one client wish row when its term ends (RR3). */
+export const CLIENT_WISH_PREFIX = "client-wish:";
+
 /** The job kinds that wait on one wish (its id is the job's subject): the lifecycle's timed moves and its notice. */
 const WISH_JOB_KINDS = ["open_wish", "rest_wish", "erase_wish", "erase_now", "restore_window_end", "send_notice"] as const;
 
@@ -74,6 +80,8 @@ export class AccountErasureService {
     private readonly audit: AuditService,
     private readonly savedWishes: SavedWishesService,
     private readonly fileJobs: FileJobs,
+    private readonly showing: ShowingLink,
+    private readonly jobs: JobsService,
   ) {}
 
   async erase(accountId: string, req: EraseRequest): Promise<void> {
@@ -107,7 +115,11 @@ export class AccountErasureService {
     const now = this.clock.now();
     const businessIds = (await tx.business.findMany({ where: { accountId }, select: { id: true } })).map((b) => b.id);
     const creatorIds = (await tx.creator.findMany({ where: { accountId }, select: { id: true } })).map((c) => c.id);
-    const wishIds = (await tx.wish.findMany({ where: { accountId }, select: { id: true } })).map((w) => w.id);
+    const allWishes = await tx.wish.findMany({ where: { accountId }, select: { id: true, status: true, businessId: true, erasedAt: true, removedAt: true, opensAt: true, openedAt: true, endsAt: true } });
+    // RR3: a business owner's client wish that was already sent (sealed or live) is not erased now: its link keeps playing to the end of its term.
+    const sentForClient = allWishes.filter((w) => w.businessId !== null && businessIds.includes(w.businessId) && !w.erasedAt && !w.removedAt && (w.status === "sealed" || w.status === "live"));
+    const keptSet = new Set(sentForClient.map((w) => w.id));
+    const wishIds = allWishes.map((w) => w.id).filter((id) => !keptSet.has(id));
     const threadIds = (await tx.supportThread.findMany({ where: { accountId }, select: { id: true } })).map((t) => t.id);
     const inBusiness = { businessId: { in: businessIds } };
 
@@ -132,8 +144,13 @@ export class AccountErasureService {
     if (creatorIds.length) await tx.bankAccount.updateMany({ where: { creatorId: { in: creatorIds } }, data: { accountNumber: null } });
     await tx.business.updateMany({ where: { accountId }, data: { ownerName: null, person: null, business: null, name: null, brand: Prisma.DbNull } });
     if (businessIds.length) {
-      await tx.clientWish.updateMany({ where: inBusiness, data: { from: null, client: null, wish: null } });
-      await tx.login.updateMany({ where: inBusiness, data: { contact: null } });
+      // RR3: the business's record of the client (name, contact) goes at once; a sent client wish still in its term keeps its words until the term ends.
+      await tx.clientWish.updateMany({ where: inBusiness, data: { from: null, client: null } });
+      const playing = await tx.clientWish.findMany({ where: { ...inBusiness, sentAt: { not: null }, endsAt: { gt: now }, wish: { not: null } }, select: { id: true, endsAt: true } });
+      await tx.clientWish.updateMany({ where: { ...inBusiness, id: { notIn: playing.map((c) => c.id) } }, data: { wish: null } });
+      for (const c of playing) await this.jobs.schedule("erase-now", c.endsAt as Date, `${CLIENT_WISH_PREFIX}${c.id}`, tx);
+      // RR3: closing the business: its logins can no longer act.
+      await tx.login.updateMany({ where: inBusiness, data: { contact: null, status: "removed" } });
       await tx.person.updateMany({ where: inBusiness, data: { name: null, phone: null, birthday: null, rows: Prisma.DbNull } });
       await tx.shoot.updateMany({ where: inBusiness, data: { client: null, title: null } });
     }
@@ -156,15 +173,15 @@ export class AccountErasureService {
       await tx.publishedWish.updateMany({ where: { wish: { in: wishIds } }, data: { forName: null, from: null, name: null } });
     }
     // Every wish transition is recorded (wish lifecycle declaration); ids are UUIDv7 made here, one per wish that moves.
-    const moving = await tx.wish.findMany({ where: { accountId, status: { not: "removed" } }, select: { id: true, status: true } });
+    const moving = await tx.wish.findMany({ where: { accountId, id: { in: wishIds }, status: { not: "removed" } }, select: { id: true, status: true } });
     if (moving.length) {
       await tx.wishTransition.createMany({
         data: moving.map((w) => ({ id: this.ids.id(), wishId: w.id, from: w.status, to: "removed", cause: "account.erase", createdAt: now })),
       });
     }
-    await tx.wish.updateMany({ where: { accountId, removedAt: null }, data: { removedAt: now } });
+    await tx.wish.updateMany({ where: { accountId, id: { in: wishIds }, removedAt: null }, data: { removedAt: now } });
     await tx.wish.updateMany({
-      where: { accountId },
+      where: { accountId, id: { in: wishIds } },
       data: {
         name: null, letter: null, content: Prisma.DbNull, passcodeHash: null, call: null, note: null,
         blessing: Prisma.DbNull, captions: Prisma.DbNull, chapter: Prisma.DbNull, details: Prisma.DbNull, finale: Prisma.DbNull,
@@ -175,14 +192,28 @@ export class AccountErasureService {
     });
     // X10: the wishes' public links answer "gone" (the link row stays as a key; it is no longer active).
     if (wishIds.length) await tx.wishLink.updateMany({ where: { wishId: { in: wishIds } }, data: { active: false } });
+    // VV2: no name stays in a link: the slug's name is cut off and the openings are deleted (the same step an erase of one wish takes).
+    if (wishIds.length) {
+      await tx.$executeRaw`UPDATE wish_link SET slug = substr(slug, strpos(slug, '-') + 1) WHERE "wishId" = ANY(${wishIds}::uuid[]) AND strpos(slug, '-') > 0 AND length(slug) - strpos(slug, '-') >= 8`;
+      await tx.wishOpen.deleteMany({ where: { wishId: { in: wishIds } } });
+    }
     // INT-3 (J1): the erased wishes' waiting jobs go (nothing may open, rest or notify an erased wish), and the files they named are
     // no longer named (the files themselves go with the account's file job below).
     if (wishIds.length) {
       await tx.job.deleteMany({ where: { subjectId: { in: wishIds }, type: { in: [...WISH_JOB_KINDS] }, status: "scheduled" } });
       await tx.wishFile.deleteMany({ where: { wishId: { in: wishIds } } });
     }
+    // SS1: every wish of the account leaves the public list tables (published row and asks), with its saves and day picks.
+    await this.showing.showing.dropForAccount(tx, accountId);
+    // RR3: the kept client wishes are erased when their term ends (never rest a year): nothing rests them, nothing notifies a gone owner.
+    for (const w of sentForClient) {
+      await this.jobs.cancel("rest-wish", w.id, tx);
+      await this.jobs.cancel("send-notice", w.id, tx);
+      const due = w.status === "live" ? w.endsAt : new Date((w.opensAt ?? now).getTime() + UNOPENED_DAYS * 86_400_000);
+      if (due) await this.jobs.schedule("erase-now", due, w.id, tx);
+    }
     // BB6: every saved list drops the wishes (a feed row's id too); the account's own saved rows go with it.
-    await this.savedWishes.forgetForWishes(tx, wishIds);
+    await this.savedWishes.forgetForWishes(tx, allWishes.map((w) => w.id));
     await tx.savedWish.deleteMany({ where: { accountId } });
     // X10: the account's stored files are removed after this commits: one job row now, the storage calls by the cleanup handler (Y4).
     await this.fileJobs.removeAccountFiles(accountId, tx);

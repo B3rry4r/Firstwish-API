@@ -138,7 +138,8 @@ async function seedCatalogues(db) {
     for (const { seedKey, ...r } of doc.rows) {
       const row = Object.fromEntries(Object.entries(r).filter(([, v]) => v !== null && v !== undefined));
       const id = seedId(`${table}:${seedKey}`);
-      await model.upsert({ where: { id }, create: { id, ...row }, update: row });
+      // J7: staff edit a message in place (wording and version), so a re-run only creates a row that is absent and never rewrites one.
+      await model.upsert({ where: { id }, create: { id, ...row }, update: table === "MessageTemplate" ? {} : row });
     }
   }
 }

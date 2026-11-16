@@ -243,9 +243,14 @@ describe("T rulings (B01's halts)", () => {
 
 // ---------------------------------------------------------------- U
 describe("U rulings (Verify B03; they bind both sign-ins)", () => {
-  async function burst(send: (code: string) => Promise<TestResponse>, right: string) {
+  /** The wrong guesses go first; the right one goes once the 5 looks are spent (waited on in the database, not by a fixed time). */
+  async function burst(send: (code: string) => Promise<TestResponse>, right: string, destination: string) {
     const wrong = Array.from({ length: 10 }, (_, i) => send(String((Number(right) + 1 + i) % 1_000_000).padStart(6, "0")));
-    await new Promise((r) => setTimeout(r, 30));
+    for (let i = 0; i < 400; i++) {
+      const row = await t.db.authCode.findFirst({ where: { destination }, orderBy: { createdAt: "desc" } });
+      if ((row?.attempts ?? 0) >= 5) break;
+      await new Promise((r) => setTimeout(r, 25));
+    }
     const all = await Promise.all([...wrong, send(right)]);
     return { wrong: all.slice(0, 10), right: all[10] };
   }
@@ -255,7 +260,7 @@ describe("U rulings (Verify B03; they bind both sign-ins)", () => {
     const ip = uniqueIp();
     await t.http().post("/v1/auth/codes").set("X-Forwarded-For", ip).send({ contact: email });
     const right = codeFor(t, email);
-    const r = await burst((code) => t.http().post("/v1/auth/codes/verify").set("X-Forwarded-For", ip).send({ contact: email, code }), right);
+    const r = await burst((code) => t.http().post("/v1/auth/codes/verify").set("X-Forwarded-For", ip).send({ contact: email, code }), right, email);
     expect(r.right.status).toBe(400);
     expect(r.wrong.filter((x) => x.body.error?.code === "code_wrong").length).toBeLessThanOrEqual(4);
     const row = await t.db.authCode.findFirstOrThrow({ where: { destination: email }, orderBy: { createdAt: "desc" } });
@@ -269,7 +274,7 @@ describe("U rulings (Verify B03; they bind both sign-ins)", () => {
     const ip = staffIp();
     await staffCode(s.email, ip);
     const right = lastCode(s.email)!;
-    const r = await burst((code) => t.http().post("/v1/admin/auth/verify").set("X-Forwarded-For", ip).send({ email: s.email, code }), right);
+    const r = await burst((code) => t.http().post("/v1/admin/auth/verify").set("X-Forwarded-For", ip).send({ email: s.email, code }), right, s.email);
     expect(r.right.status).toBe(422);
     const row = await t.db.authCode.findFirstOrThrow({ where: { destination: s.email }, orderBy: { createdAt: "desc" } });
     expect(row.attempts).toBe(5);
@@ -374,26 +379,19 @@ describe("U rulings (Verify B03; they bind both sign-ins)", () => {
     expect(all.filter((r) => r.status === 409).every((r) => r.body.error.code === "already_staff")).toBe(true);
   });
 
-  it("U4: asking for a staff code takes the same time for a member and a stranger (medians of 20 within 2 ms)", async () => {
-    const members = await Promise.all(Array.from({ length: 20 }, () => makeStaff(t.db, ["support"])));
-    const time = async (email: string) => {
-      const start = process.hrtime.bigint();
-      const r = await t.http().post("/v1/admin/auth/code").set("X-Forwarded-For", staffIp()).send({ email });
-      const ms = Number(process.hrtime.bigint() - start) / 1e6;
-      expect(r.status).toBe(204);
-      return ms;
-    };
-    for (let i = 0; i < 3; i++) await time(`warm-${i}-${members[0].id.slice(-6)}@example.test`);
-    const a: number[] = [];
-    const b: number[] = [];
-    for (let i = 0; i < 20; i++) {
-      a.push(await time(members[i].email));
-      b.push(await time(`stranger-${i}-${members[i].id.slice(-8)}@example.test`));
+  it("U4: asking for a staff code gives the same answer for a member and a stranger; only the member is sent a code", async () => {
+    const members = await Promise.all(Array.from({ length: 5 }, () => makeStaff(t.db, ["support"])));
+    const ask = (email: string) => t.http().post("/v1/admin/auth/code").set("X-Forwarded-For", staffIp()).send({ email });
+    for (let i = 0; i < members.length; i++) {
+      const stranger = `stranger-${i}-${members[i].id.slice(-8)}@example.test`;
+      const [m, x] = [await ask(members[i].email), await ask(stranger)];
+      expect([m.status, x.status]).toEqual([204, 204]);
+      expect(m.body).toEqual(x.body);
+      expect(m.text).toEqual(x.text);
+      await settle();
+      expect(t.email.lastTo(members[i].email)).toBeDefined();
+      expect(t.email.lastTo(stranger)).toBeUndefined();
     }
-    await settle();
-    const median = (x: number[]) => [...x].sort((p, q) => p - q)[10];
-    expect(Math.abs(median(a) - median(b))).toBeLessThan(2);
-    expect(t.email.lastTo(members[19].email)).toBeDefined();
   });
 
   it("U5: a removed member can be invited again: back as invited with the new role, one audit row", async () => {

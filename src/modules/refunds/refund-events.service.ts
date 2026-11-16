@@ -7,6 +7,7 @@ import { IdGenerator } from "../../common/ports/ids.port";
 import type { RefundEventSink } from "../payments/refund-event-sink";
 import { withFlag } from "../payments/payment-options";
 import { AuditService } from "../audit/audit.service";
+import { InvoicesService } from "../pro-business/invoices.service";
 import { PurchasesService } from "../purchases/purchases.service";
 import { reversalEntries } from "./ledger-reversal";
 import { OPEN_REFUND, refusalText } from "./refunds.service";
@@ -33,6 +34,7 @@ export class RefundEvents implements RefundEventSink {
     private readonly ids: IdGenerator,
     private readonly audit: AuditService,
     private readonly purchases: PurchasesService,
+    private readonly invoices: InvoicesService,
   ) {}
 
   async apply(eventRowId: string, type: string, data: Record<string, unknown>): Promise<void> {
@@ -83,6 +85,7 @@ export class RefundEvents implements RefundEventSink {
       data: drafts.map((d) => ({ id: this.ids.id(), journalId: d.journalId, account: d.account, direction: d.direction, amountKobo: d.amountKobo, currency: "NGN" as const, paymentId, refundId: refund.id, memo: d.memo, createdAt: now })),
     });
     const revoked = await this.purchases.revoke(tx, payment);
+    await this.invoices.voidFor(tx, paymentId);
     await tx.refund.update({ where: { id: refund.id }, data: { status: "succeeded", updatedAt: now } });
     await tx.payment.update({ where: { id: paymentId }, data: { status: "refunded", flags: payment.flags.filter((f) => f !== "refund_due" && f !== "refund_amount_mismatch"), updatedAt: now } });
     const kept = revoked.filter((r) => !NOTHING_KEPT.has(r.result));

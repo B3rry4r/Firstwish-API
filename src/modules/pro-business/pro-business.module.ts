@@ -3,7 +3,7 @@ import { NoticesModule } from "../notices/notices.module";
 import { PriceBookModule } from "../price-book/price-book.module";
 import { PurchasesModule } from "../purchases/purchases.module";
 import { ClientWishesService } from "./client-wishes.service";
-import { InvoicesService } from "./invoices.service";
+import { InvoicesModule } from "./invoices.module";
 import { LoginsService } from "./logins.service";
 import { PlanView } from "./plan-view";
 import { ProAccess } from "./pro-access";
@@ -15,9 +15,9 @@ import { ProBusinessService } from "./pro-business.service";
  * Exports InvoicesService: the plan and pack handlers call issue(tx, payment) and a refund calls voidFor(tx, paymentId).
  */
 @Module({
-  imports: [PurchasesModule, NoticesModule, PriceBookModule],
+  imports: [PurchasesModule, NoticesModule, PriceBookModule, InvoicesModule],
   controllers: [ProBusinessController, AdminBusinessesController],
-  providers: [ProAccess, PlanView, ProBusinessService, ClientWishesService, InvoicesService, LoginsService],
-  exports: [InvoicesService, ProAccess, PlanView],
+  providers: [ProAccess, PlanView, ProBusinessService, ClientWishesService, LoginsService],
+  exports: [InvoicesModule, ProAccess, PlanView],
 })
 export class ProBusinessModule {}

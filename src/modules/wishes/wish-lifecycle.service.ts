@@ -10,6 +10,7 @@ import { stagingKeyOf, variantsOf } from "../stored-files/file-rules";
 import { localToUtc } from "./local-time";
 import { EntitlementsService, grantOf } from "../price-book/entitlements.service";
 import { JobsService, JobContext, JobResult } from "../jobs/jobs.service";
+import { ShowingLink } from "../showing/showing-link";
 import { SavedWishesService } from "../saved-wishes/saved-wishes.service";
 import { canMove, outOfSight, stateOf, WishState } from "./wish-state";
 
@@ -67,6 +68,7 @@ export class WishLifecycleService implements OnModuleInit {
     private readonly saved: SavedWishesService,
     private readonly entitlements: EntitlementsService,
     private readonly storage: StoragePort,
+    private readonly showing: ShowingLink,
   ) {}
 
   onModuleInit(): void {
@@ -107,13 +109,29 @@ export class WishLifecycleService implements OnModuleInit {
     await tx.wishTransition.create({
       data: { id: this.ids.id(), wishId: wish.id, from, to, cause: opt.cause, jobRunId: opt.jobRunId ?? null, createdAt: now },
     });
+    // SS1: a wish that rests, is taken down or erased loses its published row and its asks in this transaction; coming back needs a new ask.
+    if (to === "resting" || outOfSight(to)) await this.showing.showing.dropForWishes(tx, [wish.id]);
     if (outOfSight(to)) {
       await this.saved.forgetForWishes(tx, [wish.id]);
       await tx.wishLink.updateMany({ where: { wishId: wish.id }, data: { active: false } });
-      if (to === "erased") await this.releaseFiles(tx, wish.id, now);
+      if (to === "erased") {
+        await this.forgetLinkNames(tx, [wish.id]);
+        await this.releaseFiles(tx, wish.id, now);
+      }
       for (const kind of ["open-wish", "rest-wish", "erase-wish", "restore-window-end", "send-notice"]) await this.jobs.cancel(kind, wish.id, tx);
     }
     return from;
+  }
+
+  /**
+   * VV2: an erase leaves no name in a link. The receiver's name at the front of the slug is cut off (the random tail stays when it is a full issued tail of 8 or more characters, so the old
+   * link still answers as an erased wish does, with no name in the answer) and the wish's opening rows are deleted.
+   */
+  async forgetLinkNames(tx: Tx, wishIds: string[]): Promise<void> {
+    if (!wishIds.length) return;
+    await tx.$executeRaw`
+      UPDATE wish_link SET slug = substr(slug, strpos(slug, '-') + 1) WHERE "wishId" = ANY(${wishIds}::uuid[]) AND strpos(slug, '-') > 0 AND length(slug) - strpos(slug, '-') >= 8`;
+    await tx.wishOpen.deleteMany({ where: { wishId: { in: wishIds } } });
   }
 
   /** Takes a wish out of sight (staff take-down, owner remove). Done twice changes nothing more: the second is refused 409. */
@@ -193,8 +211,15 @@ export class WishLifecycleService implements OnModuleInit {
       if (day) endsAt = new Date(Math.max(at.getTime(), day.getTime() + term));
     }
     await this.move(tx, w, "live", { cause: "receiver.open", data: { openedAt: at, endsAt } });
-    await this.jobs.schedule("rest-wish", endsAt, w.id, tx);
-    await this.jobs.schedule("send-notice", new Date(endsAt.getTime() - NOTICE_DAYS * DAY), w.id, tx);
+    const owner = await tx.$queryRaw<{ gone: boolean }[]>`
+      SELECT (a."erasedAt" IS NOT NULL) AS gone FROM wish w JOIN account a ON a.id = w."accountId" WHERE w.id = ${w.id}::uuid`;
+    if (owner[0]?.gone) {
+      // RR3: the owner of this client wish was erased: it plays to the end of its term and is erased then (it does not rest a year); nobody is told.
+      await this.jobs.schedule("erase-now", endsAt, w.id, tx);
+    } else {
+      await this.jobs.schedule("rest-wish", endsAt, w.id, tx);
+      await this.jobs.schedule("send-notice", new Date(endsAt.getTime() - NOTICE_DAYS * DAY), w.id, tx);
+    }
     return { opened: true, openedAt: at, endsAt };
   }
 

@@ -16,6 +16,7 @@ import type { Entitlements as EntitlementsRow } from "@prisma/client";
 import { JobsService } from "../jobs/jobs.service";
 import { BusinessOf } from "../people/business-of";
 import { PassDrawService } from "../purchases/pass-draws";
+import { ShowingLink } from "../showing/showing-link";
 import { localToUtc, parseOpening, utcToLocal } from "./local-time";
 import { CHAPTER_KEYS, DEFAULT_CONTENT_MAX_BYTES, FileRef, hasBody, readContent } from "./wish-content";
 import { UNOPENED_DAYS, WishLifecycleService } from "./wish-lifecycle.service";
@@ -90,6 +91,7 @@ export class WishesService {
     private readonly business: BusinessOf,
     private readonly activity: ReceiverActivityService,
     private readonly passDraws: PassDrawService,
+    private readonly showing: ShowingLink,
   ) {}
 
   // ---- reads ----
@@ -115,7 +117,9 @@ export class WishesService {
     const row = await this.owned(this.prisma, accountId, id, await this.business.find(accountId));
     // LL5: what the receivers did (opens, plays, reactions, favourites, shares), counted from rows; only for a wish the caller owns.
     const activity = (await this.activity.summary([row.id])).get(row.id);
-    return { ...this.wire(row, (await this.linksFor([id])).get(id)), activity };
+    // QQ3: where the owner's asks to be shown stand (the last one, its decline reason, whether it is listed).
+    const publish = (await this.showing.showing.publishStateOf([row.id])).get(row.id) ?? null;
+    return { ...this.wire(row, (await this.linksFor([id])).get(id)), activity, publish };
   }
 
   async link(accountId: string, id: string): Promise<{ link: string; slug: string }> {

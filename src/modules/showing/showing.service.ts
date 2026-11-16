@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, OnModuleInit } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
 import { lockAccount } from "../../common/db/account-lock";
 import { PrismaService } from "../../common/db/prisma.service";
@@ -15,6 +15,7 @@ import { SavedWishesService } from "../saved-wishes/saved-wishes.service";
 import { stateOf } from "../wishes/wish-state";
 import { CHAPTER_KEYS } from "../wishes/wish-content";
 import { WishesService } from "../wishes/wishes.service";
+import { ShowingLink } from "./showing-link";
 import { DAY_MS, lagosToday, PICK_DAYS, publicJoins, publicNow } from "./showing-sql";
 
 type Tx = Prisma.TransactionClient;
@@ -32,7 +33,7 @@ interface ListRow {
 
 /** PublishRequest, PublishedWish (the public list and its staff side) and DayPick. */
 @Injectable()
-export class ShowingService {
+export class ShowingService implements OnModuleInit {
   constructor(
     private readonly db: PrismaService,
     private readonly ids: IdGenerator,
@@ -40,7 +41,12 @@ export class ShowingService {
     private readonly audit: AuditService,
     private readonly wishes: WishesService,
     private readonly saved: SavedWishesService,
+    private readonly link: ShowingLink,
   ) {}
+
+  onModuleInit(): void {
+    this.link.register(this);
+  }
 
   // ---- the owner's side -------------------------------------------------------------------------------------------
 
@@ -172,8 +178,7 @@ export class ShowingService {
 
   /**
    * Takes wishes off Now showing: their saves are forgotten first, then the rows go, with their asks (a wish listed again needs
-   * a new ask and a new approval), then their wish-of-the-day picks from today on. Runs in the caller's transaction. A ban, an unlist and an owner's withdrawal call it; the take-down and erase
-   * moves need no call, because the list reads the wish's own state (see publicNow).
+   * a new ask and a new approval), then their wish-of-the-day picks from today on. Runs in the caller's transaction. A ban, an unlist, an owner's withdrawal and the wish lifecycle (rests, taken down, removed, erased: SS1) call it.
    */
   async dropForWishes(tx: Tx, wishIds: string[]): Promise<number> {
     const ids = wishIds.filter((w) => UUID.test(w));

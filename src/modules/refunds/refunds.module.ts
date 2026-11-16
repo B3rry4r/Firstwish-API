@@ -6,6 +6,7 @@ import { portTimeouts, withTimeLimit } from "../../common/ports/time-limit";
 import { JobContext, JobResult, JobsService } from "../jobs/jobs.service";
 import { PaymentsModule } from "../payments/payments.module";
 import { REFUND_EVENT_SINK } from "../payments/refund-event-sink";
+import { InvoicesModule } from "../pro-business/invoices.module";
 import { PurchasesModule } from "../purchases/purchases.module";
 import { AdminPaymentsService } from "./admin-payments.service";
 import { PaystackRefundProvider } from "./paystack-refund-provider";
@@ -27,7 +28,7 @@ const DAY_MS = 86_400_000;
  */
 @Global()
 @Module({
-  imports: [PaymentsModule, PurchasesModule],
+  imports: [PaymentsModule, PurchasesModule, InvoicesModule],
   controllers: [AdminPaymentsController, AdminRefundsController, AdminLedgerController, AdminReconciliationsController],
   providers: [
     {

@@ -33,6 +33,7 @@ interface Row {
   erasedAt: Date | null;
   removedAt: Date | null;
   ownerErasedAt: Date | null;
+  businessId: string | null;
   kind: string;
   occasion: string;
   styleSlug: string;
@@ -228,7 +229,7 @@ export class PublicWishesService {
     const key = SLUG_LOOKS.test(slug) ? slug : "-";
     const rows = await this.db.$queryRaw<Row[]>`
       SELECT l.id AS "linkId", l.slug, l.active, l.tries, l."lockedUntil", w.id, w.status::text AS status, w."erasedAt", w."removedAt",
-             a."erasedAt" AS "ownerErasedAt", w.kind, w.occasion, w."styleSlug", w."opensAt", w."openedAt", w."endsAt",
+             a."erasedAt" AS "ownerErasedAt", w."businessId"::text AS "businessId", w.kind, w.occasion, w."styleSlug", w."opensAt", w."openedAt", w."endsAt",
              w."timeZone", w.name, w.no, w.content, w."passcodeHash"
         FROM wish_link l JOIN wish w ON w.id = l."wishId" JOIN account a ON a.id = w."accountId"
        WHERE l.slug = ${key}`;
@@ -236,7 +237,7 @@ export class PublicWishesService {
     if (!row || key !== slug || row.status === "draft") throw AppError.notFound("No wish is at this link.");
     const now = this.clock.now().getTime();
     const resting = row.status === "resting" || (row.status === "live" && (!row.endsAt || row.endsAt.getTime() <= now));
-    if (!row.active || row.erasedAt || row.removedAt || row.ownerErasedAt || row.status === "removed" || resting) throw gone();
+    if (!row.active || row.erasedAt || row.removedAt || (row.ownerErasedAt && !row.businessId) || row.status === "removed" || resting) throw gone();
     if (!row.opensAt || row.opensAt.getTime() > now || (row.status !== "sealed" && row.status !== "live")) {
       return { row, standing: "countdown", needsPasscode: false };
     }

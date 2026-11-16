@@ -378,7 +378,7 @@ describe("notices (contract)", () => {
       const p = await t.http().get("/v1/admin/messages/templates").query({ limit: 2 }).set(bearer("ops"));
       expect(p.body.items).toHaveLength(2);
       const p2 = await t.http().get("/v1/admin/messages/templates").query({ limit: 2, cursor: p.body.nextCursor }).set(bearer("ops"));
-      expect((p2.body.items as { key: string }[]).map((i) => i.key)).toEqual(["opened", "opens"]);
+      expect((p2.body.items as { key: string }[]).map((i) => i.key)).toEqual(["login-invite", "opened"]);
     });
     it("422 for a short reason, a dropped placeholder, an unknown one, an emoji, a banned word or an empty body; 404 for an unknown message", async () => {
       expect((await edit("ops", "opened", { ...good, reason: "ab" })).status).toBe(422);

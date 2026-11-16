@@ -4,7 +4,6 @@ import { PrismaService } from "../../../common/db/prisma.service";
 import { UuidV7Maker } from "../../../common/ids/uuidv7";
 import { bearer } from "../../people/tests/b12-kit";
 import { createTestApp, TestApp } from "../../../../test/kit/app";
-import { FulfilmentRegistry } from "../../payments/fulfilment.registry";
 import { SettlementService } from "../../payments/settlement.service";
 import { InvoicesService } from "../invoices.service";
 import { NoticesService } from "../../notices/notices.service";
@@ -29,15 +28,6 @@ describe("B17 business: plan, usage, client wishes, invoices, logins, staff", ()
     invoices = t.app.get(InvoicesService);
     const r = spawnSync(process.execPath, [join(ROOT, "scripts/seed.mjs")], { cwd: ROOT, env: process.env, encoding: "utf8" });
     if (r.status !== 0) throw new Error(`seed failed: ${r.stderr}`);
-    // What the plan and pack handlers must do (the one line the hand-back names): issue the invoice in the settle transaction.
-    const registry = t.app.get(FulfilmentRegistry);
-    for (const sku of ["pro.starter", "pro.studio", "pro.pack"]) {
-      const original = registry.get(sku)!;
-      registry.replace(sku, async (ctx) => {
-        await original(ctx);
-        await invoices.issue(ctx.tx, ctx.payment);
-      });
-    }
   });
   afterAll(() => t.close());
   beforeEach(() => t.clock.set(NOW));
@@ -273,16 +263,18 @@ describe("B17 business: plan, usage, client wishes, invoices, logins, staff", ()
     const p = await db.payment.findUniqueOrThrow({ where: { id: a.id } });
     await db.$transaction((tx) => invoices.issue(tx, p));
     expect(await db.invoice.count({ where: { businessId: o.businessId } })).toBe(1);
-    const before = await db.$queryRaw<{ last: number }[]>`SELECT last FROM invoice_counter`;
-    await expect(
-      db.$transaction(async (tx) => {
-        const fake = await tx.payment.findUniqueOrThrow({ where: { id: a.id } });
-        await tx.$executeRaw`DELETE FROM invoice_link WHERE "paymentId" = ${a.id}::uuid`;
-        await invoices.issue(tx, fake);
-        throw new Error("settle failed");
-      }),
-    ).rejects.toThrow("settle failed");
-    expect((await db.$queryRaw<{ last: number }[]>`SELECT last FROM invoice_counter`)[0].last).toBe(before[0].last);
+    // Other specs issue invoices in the same database, so the counter is held (row lock) while the settle is rolled back to a savepoint.
+    await db.$transaction(async (tx) => {
+      const seen = (await tx.$queryRaw<{ last: number }[]>`SELECT last FROM invoice_counter WHERE id = 1 FOR UPDATE`)[0].last;
+      await tx.$executeRaw`SAVEPOINT settle`;
+      const fake = await tx.payment.findUniqueOrThrow({ where: { id: a.id } });
+      await tx.$executeRaw`DELETE FROM invoice_link WHERE "paymentId" = ${a.id}::uuid`;
+      await invoices.issue(tx, fake);
+      expect((await tx.$queryRaw<{ last: number }[]>`SELECT last FROM invoice_counter WHERE id = 1`)[0].last).toBe(seen + 1);
+      await tx.$executeRaw`ROLLBACK TO SAVEPOINT settle`;
+      expect((await tx.$queryRaw<{ last: number }[]>`SELECT last FROM invoice_counter WHERE id = 1`)[0].last).toBe(seen);
+    });
+    expect(await db.invoice.count({ where: { businessId: o.businessId } })).toBe(1);
     await db.$transaction((tx) => invoices.voidFor(tx, a.id));
     await db.$transaction((tx) => invoices.voidFor(tx, a.id));
     const list = await get("/v1/business/invoices", o.token);

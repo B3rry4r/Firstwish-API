@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, OnModuleInit } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
 import type { ClientWish, PostBusinessClientWishesBody } from "../../contracts";
 import { lockBusinessOwner } from "../../common/db/account-lock";
@@ -8,6 +8,8 @@ import { decodeCursor, Page, toPage } from "../../common/pagination/cursor";
 import { isUuidV7 } from "../../common/ids/uuidv7";
 import { Clock } from "../../common/ports/clock.port";
 import { IdGenerator } from "../../common/ports/ids.port";
+import { CLIENT_WISH_PREFIX } from "../accounts/account-erasure.service";
+import { JobContext, JobResult, JobsService } from "../jobs/jobs.service";
 import { BusinessHandlers } from "../purchases/business-handlers";
 import type { Tx } from "../purchases/grants";
 import { clientWishWire } from "./client-wish-wire";
@@ -33,13 +35,26 @@ interface NewWish {
  * A lapsed plan changes nothing already made: the rows stay and play to the end of their terms; a new wish then draws from the pack.
  */
 @Injectable()
-export class ClientWishesService {
+export class ClientWishesService implements OnModuleInit {
   constructor(
     private readonly prisma: PrismaService,
     private readonly ids: IdGenerator,
     private readonly clock: Clock,
     private readonly handlers: BusinessHandlers,
+    private readonly jobs: JobsService,
   ) {}
+
+  onModuleInit(): void {
+    this.jobs.registerSubject("erase-now", CLIENT_WISH_PREFIX, (c) => this.eraseWords(c));
+  }
+
+  /** RR3: the term of a client wish whose owner was erased has ended: its words go (the name and contact went with the erase). */
+  private async eraseWords(c: JobContext): Promise<JobResult> {
+    const id = c.subjectId.slice(CLIENT_WISH_PREFIX.length);
+    if (!UUID.test(id)) return { skipped: true };
+    const r = await this.prisma.clientWish.updateMany({ where: { id, wish: { not: null }, OR: [{ endsAt: null }, { endsAt: { lte: c.now } }] }, data: { wish: null, from: null, client: null } });
+    return r.count ? { changed: { erased: 1 } } : { skipped: true };
+  }
 
   async list(businessId: string, cursor: string | undefined, limit: number): Promise<Page<ClientWish>> {
     let before = "ffffffff-ffff-ffff-ffff-ffffffffffff";

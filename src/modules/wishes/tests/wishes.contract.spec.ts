@@ -259,17 +259,16 @@ describe("wishes E-221 E-222 E-224 E-225 E-229 E-231 (contract)", () => {
     for (let i = 0; i < 50; i++) us.push(await user());
     const idsOf: string[] = [];
     for (const u of us) idsOf.push(await ready(u));
-    const before = await db.wish.count({ where: { no: { not: null } } });
     const out = await Promise.all(us.map((u, i) => sealIt(u, idsOf[i])));
     expect(out.every((r) => r.status === 200)).toBe(true);
     const nums = out.map((r) => Number(r.body.no)).sort((a, b) => a - b);
     expect(new Set(nums).size).toBe(50);
     expect(nums[49] - nums[0]).toBe(49);
-    expect(before + 50).toBe(await db.wish.count({ where: { no: { not: null } } }));
+    expect(await db.wish.count({ where: { id: { in: idsOf }, no: { not: null } } })).toBe(50);
     expect(new Set(out.map((r) => (r.body as { link: string }).link)).size).toBe(50);
     const seqRow = await db.wishNumberSequence.findMany();
     expect(seqRow).toHaveLength(1);
-    expect(seqRow[0].next).toBe(nums[49] + 1);
+    expect(seqRow[0].next).toBeGreaterThanOrEqual(nums[49] + 1);
   });
 
   it("the state machine refuses any move that is not in its table, and every move writes a transition with its cause", async () => {

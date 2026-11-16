@@ -1,5 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { Clock } from "../../common/ports/clock.port";
+import { InvoicesService } from "../pro-business/invoices.service";
 import type { FulfilmentContext } from "../payments/fulfilment.registry";
 import { addDays, addMonths, GrantStore, monthKey, num, type GrantRow, type Tx } from "./grants";
 
@@ -49,6 +50,7 @@ export class BusinessHandlers {
   constructor(
     private readonly store: GrantStore,
     private readonly clock: Clock,
+    private readonly invoices: InvoicesService,
   ) {}
 
   /** Locks the business and rolls its month to the clock's month (a no-op inside the month). Answers the row as it now stands. */
@@ -130,6 +132,7 @@ export class BusinessHandlers {
       { plan, wishes: num(g.wishes), logins: num(g.logins), vaultGb: num(g.vaultGb), pushed: live, month: b.month ?? monthKey(now) },
       data.renews as Date,
     );
+    await this.invoices.issue(tx, ctx.payment);
   }
 
   async pack(ctx: FulfilmentContext): Promise<void> {
@@ -149,6 +152,7 @@ export class BusinessHandlers {
       data: { pack: num(b.pack) + wishes, packEnds, ...(setPlan ? { plan: "pack" } : {}), since: b.since ?? now, version: { increment: 1 } },
     });
     await this.store.record(tx, grantId, { wishes, packs: line.qty, vaultGb: num(g.vaultGb) * line.qty, days: num(g.days), setPlan }, ends);
+    await this.invoices.issue(tx, ctx.payment);
   }
 
   async vault(ctx: FulfilmentContext): Promise<void> {
@@ -161,6 +165,7 @@ export class BusinessHandlers {
     const ends = addDays(this.clock.now(), num(g.days));
     await tx.business.update({ where: { id: b.id }, data: { version: { increment: 1 } } });
     await this.store.record(tx, grantId, { gb: num(g.vaultGb) * line.qty, blocks: line.qty, days: num(g.days) }, ends);
+    await this.invoices.issue(tx, ctx.payment);
   }
 
   /**

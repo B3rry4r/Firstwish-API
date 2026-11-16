@@ -412,15 +412,15 @@
    "erase": {
     "from": {
      "rule": "blank",
-     "why": "personal"
+     "why": "personal: the business's record of the client, blank at once (RR3)"
     },
     "client": {
      "rule": "blank",
-     "why": "personal"
+     "why": "personal: the client's name, blank at once (RR3)"
     },
     "wish": {
      "rule": "blank",
-     "why": "the wish's words"
+     "why": "the wish's words: blank at once, except a sent client wish still in its term, whose words go when the term ends (RR3)"
     },
     "hearts": {
      "rule": "keep",
@@ -2005,7 +2005,7 @@
     },
     "content": {
      "rule": "blank",
-     "why": "the wish itself"
+     "why": "the wish itself: blank at once on an erase, except a business's client wish already sent, which plays to the end of its term and is erased then (RR3)"
     },
     "passcodeHash": {
      "rule": "blank",
@@ -2154,6 +2154,12 @@
    "dbTypes": {
     "slug": "@db.VarChar(32)"
    },
+   "erase": {
+    "slug": {
+     "rule": "keep",
+     "why": "VV2: a link's public name; on an erase of the wish or its owner the receiver's name at its front is cut off and the random tail stays, so the old link still answers as an erased wish does"
+    }
+   },
    "columns": {
     "tries": {
      "type": "Int",
@@ -2217,7 +2223,7 @@
    "erase": {
     "slug": {
      "rule": "keep",
-     "why": "a link's public name, no person"
+     "why": "a link's public name; VV2: an erase of the wish or its owner deletes the wish's wish_open rows, so no name stays in them"
     },
     "kind": {
      "rule": "keep",

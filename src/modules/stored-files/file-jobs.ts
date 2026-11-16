@@ -138,10 +138,14 @@ export class FileJobs {
     const businessIds = (await this.db.business.findMany({ where: { accountId }, select: { id: true } })).map((b) => b.id);
     const owned: Prisma.StoredFileWhereInput = { OR: [{ ownerAccountId: accountId }, ...(businessIds.length ? [{ businessId: { in: businessIds } }] : [])] };
     let removed = 0;
+    let after = "00000000-0000-0000-0000-000000000000";
     for (;;) {
-      const files = await this.db.storedFile.findMany({ where: owned, take: batch, orderBy: { id: "asc" } });
+      const files = await this.db.storedFile.findMany({ where: { AND: [owned, { id: { gt: after } }] }, take: batch, orderBy: { id: "asc" } });
       if (!files.length) return removed;
+      after = files[files.length - 1].id;
       for (const f of files) {
+        // RR3: a file a client wish still in its term names stays; the wish's own erase removes it when the term ends.
+        if ((await this.db.wishFile.count({ where: { fileId: f.id, wish: { erasedAt: null } } })) > 0) continue;
         for (const key of [f.objectKey, stagingKeyOf(f.objectKey), ...variantsOf(f).map((v) => v.key)]) await this.storage.delete(key);
         await this.db.$transaction(async (tx) => {
           const id = f.id;

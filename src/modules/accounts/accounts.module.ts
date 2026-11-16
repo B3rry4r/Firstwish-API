@@ -5,6 +5,7 @@ import { AccountSidesService } from "./account-sides.service";
 import { AccountsController } from "./accounts.controller";
 import { AccountsService } from "./accounts.service";
 import { SavedWishesModule } from "../saved-wishes/saved-wishes.module";
+import { ShowingLinkModule } from "../showing/showing-link";
 import { StoredFilesModule } from "../stored-files/stored-files.module";
 
 /**
@@ -12,7 +13,7 @@ import { StoredFilesModule } from "../stored-files/stored-files.module";
  * request (B02); AccountErasureService is the one erase every caller uses (the staff erase action, E-3, included).
  */
 @Module({
-  imports: [SavedWishesModule, StoredFilesModule],
+  imports: [SavedWishesModule, StoredFilesModule, ShowingLinkModule],
   controllers: [AccountsController, AccountSidesController, HandlesController],
   providers: [AccountsService, AccountSidesService, AccountErasureService],
   exports: [AccountsService, AccountErasureService],

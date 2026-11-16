@@ -35,3 +35,7 @@ Cases:
     a paid return opened twice and in another browser; a forged reference; 13 friends on one link; a friend's file
     over the limit; the link turned off while a friend records; keep on a house wish by a typed request.
 The live flow (wa6a.mjs) makes and removes only its own data and joins `npm run live:drive`, which passes whole.
+
+ADDED 16 Nov: the driver has carried ONE known FAIL since the sixth API round: scripts/live/flows/w7*.mjs "resting,
+ended and removed: the server's 410 words" (status=200/410). Case 1 closes it: the resting state is drawn from the
+server's 200 answer, and that check then expects it (ended and removed stay 410). The driver ends with 0 FAIL.

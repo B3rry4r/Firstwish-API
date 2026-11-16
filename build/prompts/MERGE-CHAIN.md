@@ -20,7 +20,11 @@ w10-studio. For each:
  c. After w1-site1 is in: delete lib/site-plans.ts if nothing imports it (say which file still does, if one does).
  d. Checks (quiet logs, EXIT lines): typecheck, lint (0 errors), check:css, gates (report every FAIL line; do not
     fix by baseline), test:client, `API_DIR=<your API worktree> npm run contracts:check`, build, then the whole
-    `npm run live:drive -- --allow-not-wired` on a fresh stack: every flow, 0 FAIL. A red check caused by the merge
+    `npm run live:drive -- --allow-not-wired` on a fresh stack started BUILT (`npm run live:up -- --built`; never
+    next dev: its first-hit compiles time the flows out): every flow, 0 FAIL but ONE the work head already has
+    against this API: "W7 resting, ended and removed: the server's 410 words" (status=200/410: since the sixth API
+    round a resting wish's link answers 200 "resting"; another bundle redraws that state). Leave that check as it
+    is; any other FAIL counts. A red check caused by the merge
     is yours to fix inside the merge's scope; one caused by the branch's own code: stop at that branch, report it,
     and do not go on to the next.
 Hand back ONCE in at most 14 lines: the four merge commit ids in order (or where you stopped); per branch: the

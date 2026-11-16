@@ -67,3 +67,6 @@
   and the Studio screens (app/layout.tsx and the screen each render it; same URL, fetched once): one link, from the
   layout; w11's "numbers empty" check is conditional; Ban's double tap and the Audit "Removed" group were read in
   code, not driven; the cascade comparison against the pre-merge head was not possible.
+- The lead's driver run on the merged web head c3c29e6 against API 4095042 (16 Nov, built web, twice): 559 of 560
+  both times; the one FAIL is W7's resting check (the API now answers 200 "resting", HS2): WEB-API-6A redraws the
+  resting state and moves the check. What the receiver's page shows for a resting wish today is NOT known.

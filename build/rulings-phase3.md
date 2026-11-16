@@ -876,3 +876,16 @@ HG1 (give race) Two staff giving one Concierge order: the code is right (overlap
   so ("back in your pack on <day> unless you restore it"); it is not shown as given back at once.
 - HR5: an import says, row by row, what the server refused and why; the client drops nothing silently; the server
   refuses a phone that is not one and says so, and the same person twice is asked about, not doubled (API).
+
+## HS (16 Nov 2026, the lead: the sixth API round). Default (lead), owner may override.
+- HS1 (HQ4, the flow): a friend adds a voice through the wish's gather link with no account: the link shows who is
+  asking and for whom (first names only), takes one voice note (an upload through the same signed put, the same
+  limits, screened like any file) and the friend's first name, and nothing else of the wish is shown. The owner sees
+  each voice arrive and may remove one. The link works while the wish is a draft or sealed and not yet open; it can
+  be turned off by the owner. Counted against the wish's voice limit (12).
+- HS2 (keep and wake by link, HA1/HA2): the holder of a wish's link (and of its unlock where it has a passcode) may
+  pay to keep or wake it with no account; the public view gives what the payment start needs; a resting wish's link
+  says it is resting and offers the wake; the payment's result is read back by the link holder with the same proof.
+- HS3 (house wishes): each style that is on has one house wish that plays it, made by the house creator from the
+  style's own package and sample content that is marked as the house's (never shown as a person's), published, and
+  linked from the styles read. A style with no house wish has no link.

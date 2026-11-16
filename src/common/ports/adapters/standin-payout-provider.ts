@@ -1,4 +1,4 @@
-import { AccountNotFound, PayoutProviderPort, ResolveAccount, TransferAccepted, TransferLookup, TransferRefused, TransferRequest } from "./payout-provider.port";
+import { AccountNotFound, PayoutProviderPort, ResolveAccount, TransferAccepted, TransferLookup, TransferRefused, TransferRequest } from "../payout-provider.port";
 
 /** The stand-in behind the payout port (the owner's Paystack test keys are not here yet). It asks nothing of any network. */
 export class StandinPayoutProvider extends PayoutProviderPort {

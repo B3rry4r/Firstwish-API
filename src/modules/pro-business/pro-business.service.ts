@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import type { Business, Invoice, Login, ProUsage } from "../../contracts";
-import { maskEmail } from "../notices/catalog";
+import { maskEmail } from "../../common/normalise/mask-email";
 import { PrismaService } from "../../common/db/prisma.service";
 import { AppError } from "../../common/errors/app-error";
 import { decodeCursor, Page, toPage } from "../../common/pagination/cursor";

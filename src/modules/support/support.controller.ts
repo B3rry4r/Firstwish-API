@@ -1,13 +1,14 @@
-import { Body, Controller, Get, Headers, HttpCode, Ip, Param, Post, Query, Req, Res } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Headers, HttpCode, Ip, Param, Patch, Post, Query, Req, Res } from "@nestjs/common";
 import { IsIn, IsOptional, IsString, MaxLength } from "class-validator";
 import type { Request, Response } from "express";
 import {
   GetAdminSupportThreadsByIdParamsDto, GetAdminSupportThreadsQueryDto, PostAdminSupportThreadsByIdAssigneeBodyDto, PostAdminSupportThreadsByIdAssigneeParamsDto,
   PostAdminSupportThreadsByIdReplyBodyDto, PostAdminSupportThreadsByIdReplyParamsDto, PostAdminSupportThreadsByIdStateBodyDto, PostAdminSupportThreadsByIdStateParamsDto,
-  PostSupportMessagesBodyDto, PostSupportThreadsBodyDto,
+  PostSupportMessagesBodyDto, PostSupportThreadsBodyDto, DeleteAdminSupportSavedRepliesByIdBodyDto, DeleteAdminSupportSavedRepliesByIdParamsDto,
+  PatchAdminSupportSavedRepliesByIdBodyDto, PatchAdminSupportSavedRepliesByIdParamsDto, PostAdminSupportSavedRepliesBodyDto,
 } from "../../contracts";
 import type { SavedReply, SupportMessage, SupportThread, ThreadCounts } from "../../contracts";
-import { CurrentPrincipal, Public, Roles } from "../../common/auth/decorators";
+import { CurrentPrincipal, Public, Roles, WebhookSignature } from "../../common/auth/decorators";
 import type { Principal } from "../../common/auth/principal";
 import { withRetryAfter } from "../../common/errors/rate-limited";
 import { DEFAULT_LIMIT } from "../../common/pagination/cursor";
@@ -78,11 +79,35 @@ export class SupportController {
     return this.support.list(q.limit ?? DEFAULT_LIMIT, q.cursor, { status: q.status, assigneeId: q.assigneeId });
   }
 
-  /** The saved replies (not in the registry: HALT 3). */
+  /** E-250 (YY3): the saved replies. */
   @AdminRoute(SECTION, "ops", "owner", "support")
   @Get("admin/support/saved-replies")
   saved(): Promise<{ items: SavedReply[]; nextCursor: null }> {
     return this.support.savedReplies().then((items) => ({ items, nextCursor: null }));
+  }
+
+  /** E-251: add a saved reply. */
+  @AdminRoute(SECTION, "ops", "owner", "support")
+  @Post("admin/support/saved-replies")
+  @HttpCode(201)
+  addSaved(@Body() b: PostAdminSupportSavedRepliesBodyDto, @StaffActor() actor: AuditActor): Promise<SavedReply> {
+    return this.support.addSavedReply(b.name, b.text, b.reason, actor);
+  }
+
+  /** E-253: change a saved reply's name or text. */
+  @AdminRoute(SECTION, "ops", "owner", "support")
+  @Patch("admin/support/saved-replies/:id")
+  @HttpCode(200)
+  changeSaved(@Param() p: PatchAdminSupportSavedRepliesByIdParamsDto, @Body() b: PatchAdminSupportSavedRepliesByIdBodyDto, @StaffActor() actor: AuditActor): Promise<SavedReply> {
+    return this.support.changeSavedReply(p.id, { name: b.name, text: b.text }, b.reason, actor);
+  }
+
+  /** E-252: remove a saved reply (204). */
+  @AdminRoute(SECTION, "ops", "owner", "support")
+  @Delete("admin/support/saved-replies/:id")
+  @HttpCode(204)
+  async removeSaved(@Param() p: DeleteAdminSupportSavedRepliesByIdParamsDto, @Body() b: DeleteAdminSupportSavedRepliesByIdBodyDto, @StaffActor() actor: AuditActor): Promise<void> {
+    await this.support.removeSavedReply(p.id, b.reason, actor);
   }
 
   /** E-207 */
@@ -122,7 +147,7 @@ export class SupportController {
 export class EmailWebhookController {
   constructor(private readonly hooks: EmailWebhookService) {}
 
-  @Public()
+  @WebhookSignature("resend")
   @Post()
   @HttpCode(200)
   async news(@Req() req: Request & { rawBody?: Buffer }, @Headers("svix-id") id?: string, @Headers("svix-timestamp") timestamp?: string, @Headers("svix-signature") signature?: string): Promise<Record<string, never>> {
@@ -130,7 +155,7 @@ export class EmailWebhookController {
     return {};
   }
 
-  @Public()
+  @WebhookSignature("resend")
   @Post("inbound")
   @HttpCode(200)
   async inbound(@Req() req: Request & { rawBody?: Buffer }, @Headers("svix-id") id?: string, @Headers("svix-timestamp") timestamp?: string, @Headers("svix-signature") signature?: string): Promise<Record<string, never>> {

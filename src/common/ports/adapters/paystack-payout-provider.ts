@@ -1,6 +1,6 @@
-import { PAYSTACK_BASE_URL } from "../../common/ports/adapters/paystack.adapter";
-import { getJson, postJson, ProviderError } from "../../common/ports/adapters/http";
-import { AccountNotFound, PayoutProviderPort, ResolveAccount, TransferAccepted, TransferLookup, TransferRefused, TransferRequest } from "./payout-provider.port";
+import { PAYSTACK_BASE_URL } from "./paystack.adapter";
+import { getJson, postJson, ProviderError } from "./http";
+import { AccountNotFound, PayoutProviderPort, ResolveAccount, TransferAccepted, TransferLookup, TransferRefused, TransferRequest } from "../payout-provider.port";
 
 interface Envelope<T> {
   status: boolean;

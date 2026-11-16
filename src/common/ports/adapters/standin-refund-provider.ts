@@ -1,4 +1,4 @@
-import { RefundAccepted, ProviderSettlement, RefundProviderPort, RefundRefused, RefundRequest } from "./refund-provider.port";
+import { RefundAccepted, ProviderSettlement, RefundProviderPort, RefundRefused, RefundRequest } from "../refund-provider.port";
 
 /** The stand-in behind the refund port (R16: the owner's Paystack test keys are not here yet). It asks nothing of any network. */
 export class StandinRefundProvider extends RefundProviderPort {

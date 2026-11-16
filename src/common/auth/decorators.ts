@@ -7,6 +7,7 @@ import type { Principal, Side, StaffRole, WebhookProvider } from "./principal";
  *   @Public()                  anyone, no token.
  *   @Roles("creator")          a signed-in user with one of these sides.
  *   @StaffRoles("ops")         staff with one of these roles (owner passes every staff check).
+ *   @UserOrStaff({sides, roles})  one route for a signed-in user (one of the sides) or a staff member (one of the roles, owner passes): CB4.
  *   @WebhookSignature("paystack")  no user; the provider's signature on the raw body must match.
  *   @Internal()                only from this machine (job runner, ops scripts), never through a proxy.
  *   @CookieAuth()              no bearer; the route itself checks its httpOnly refresh cookie (T3, DEC-152: the refresh routes).
@@ -16,6 +17,7 @@ export type Access =
   | { kind: "public" }
   | { kind: "user"; sides?: Side[] }
   | { kind: "staff"; roles: StaffRole[] }
+  | { kind: "userOrStaff"; sides?: Side[]; roles: StaffRole[] }
   | { kind: "webhook"; provider: WebhookProvider }
   | { kind: "internal" }
   | { kind: "cookie" };
@@ -23,6 +25,7 @@ export type Access =
 export const Public = () => SetMetadata(ACCESS, { kind: "public" } satisfies Access);
 export const Roles = (...sides: Side[]) => SetMetadata(ACCESS, { kind: "user", sides } satisfies Access);
 export const StaffRoles = (...roles: StaffRole[]) => SetMetadata(ACCESS, { kind: "staff", roles } satisfies Access);
+export const UserOrStaff = (who: { sides?: Side[]; roles: StaffRole[] }) => SetMetadata(ACCESS, { kind: "userOrStaff", ...who } satisfies Access);
 export const WebhookSignature = (provider: WebhookProvider) => SetMetadata(ACCESS, { kind: "webhook", provider } satisfies Access);
 export const CookieAuth = () => SetMetadata(ACCESS, { kind: "cookie" } satisfies Access);
 export const Internal = () => SetMetadata(ACCESS, { kind: "internal" } satisfies Access);

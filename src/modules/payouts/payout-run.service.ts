@@ -12,7 +12,7 @@ import { AuditService, requireReason, type AuditActor } from "../audit/audit.ser
 import { RoyaltiesService } from "../royalties/royalties.service";
 import { isMonth, monthOf } from "../royalties/royalty-math";
 import type { PayoutEventSink } from "./payout-event-sink";
-import { PayoutProviderPort, TransferRefused, type TransferLookup } from "./payout-provider.port";
+import { PayoutProviderPort, TransferRefused, type TransferLookup } from "../../common/ports/payout-provider.port";
 import { payoutWire, type PayoutFacts } from "./payout-wire";
 
 type Tx = Prisma.TransactionClient;
@@ -291,11 +291,11 @@ export class PayoutRunService implements PayoutEventSink {
    */
   private async settleIn(tx: Tx, id: string, kind: "success" | "failed" | "reversed" | "lost", amount: unknown): Promise<string> {
     const at = this.clock.now();
-    const rows = await tx.$queryRaw<{ amountKobo: bigint; status: string }[]>`SELECT "amountKobo", status::text AS status FROM payout WHERE id = ${id}::uuid FOR UPDATE`;
+    const rows = await tx.$queryRaw<{ amountKobo: bigint; status: string; paidByHandAt: Date | null }[]>`SELECT "amountKobo", status::text AS status, "paidByHandAt" FROM payout WHERE id = ${id}::uuid FOR UPDATE`;
     const p = rows[0];
     if (!p) return "unknown_reference";
-    // ZZ8: a payout marked paid by hand (finance or the owner wrote one audit row, payout.mark-paid) ignores every later provider event and flags it for staff.
-    if (p.status === "succeeded" && (await tx.auditEntry.count({ where: { subjectType: "Payout", subjectId: id, action: "payout.mark-paid" } })) > 0) {
+    // ZZ8: a payout marked paid by hand (finance or the owner set paidByHandAt, and wrote one audit row, payout.mark-paid) ignores every later provider event and flags it for staff.
+    if (p.status === "succeeded" && p.paidByHandAt !== null) {
       await tx.$executeRaw`UPDATE payout_detail SET note = CASE WHEN note IS NULL THEN ${FLAG_HAND} WHEN position(${FLAG_HAND} in note) > 0 THEN note ELSE note || ' ' || ${FLAG_HAND} END WHERE "payoutId" = ${id}::uuid`;
       return "paid_by_hand";
     }
@@ -374,7 +374,7 @@ export class PayoutRunService implements PayoutEventSink {
           ],
         });
       }
-      await tx.$executeRaw`UPDATE payout SET status = 'succeeded' WHERE id = ${p.id}::uuid`;
+      await tx.$executeRaw`UPDATE payout SET status = 'succeeded', "paidByHandAt" = ${at} WHERE id = ${p.id}::uuid`;
       await tx.$executeRaw`UPDATE payout_detail SET "paidAt" = ${at}, note = ${reason}, "sendingUntil" = NULL WHERE "payoutId" = ${p.id}::uuid`;
       await this.audit.write(tx, { actor, section: SECTION, action: "payout.mark-paid", target: { type: "Payout", id: p.id }, reason, changedFields: ["status"] });
       return p.id;

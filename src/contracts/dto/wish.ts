@@ -244,6 +244,9 @@ export class PostWishesByIdSealBodyDto implements PostWishesByIdSealBody {
   @IsOptional()
   @IsBoolean()
   usePass?: boolean;
+  @IsOptional()
+  @IsBoolean()
+  usePlan?: boolean;
   @IsInt()
   version!: number;
   @IsOptional()

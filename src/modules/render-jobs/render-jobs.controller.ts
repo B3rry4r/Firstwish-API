@@ -24,6 +24,6 @@ export class RenderJobsController {
   @HttpCode(200)
   async ask(@Param() params: PostWishesByIdVideoParamsDto, @Body() body: PostWishesByIdVideoBodyDto, @CurrentPrincipal() p: Principal | undefined): Promise<PostWishesByIdVideoResponse> {
     if (body.wishId !== undefined && body.wishId.trim() !== params.id) throw AppError.validation({ wishId: "Must be the wish in the address." });
-    return (await this.jobs.ask(accountOf(p), params.id)) as unknown as PostWishesByIdVideoResponse;
+    return this.jobs.ask(accountOf(p), params.id);
   }
 }

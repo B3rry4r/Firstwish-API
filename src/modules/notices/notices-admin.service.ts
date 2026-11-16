@@ -8,7 +8,8 @@ import { decodeCursor, Page, toPage } from "../../common/pagination/cursor";
 import { toWireInstant } from "../../common/time/time";
 import type { MessageDelivery, MessageTemplate } from "../../contracts";
 import { AuditActor, AuditService, requireReason } from "../audit/audit.service";
-import { isTemplateKey, LISTED_KEYS, maskEmail, scrubEmails, scrubReason, TEMPLATES, TemplateKey, wordingProblems } from "./catalog";
+import { maskEmail } from "../../common/normalise/mask-email";
+import { isTemplateKey, LISTED_KEYS, scrubEmails, scrubReason, TEMPLATES, TemplateKey, wordingProblems } from "./catalog";
 import { LANG, NoticesService } from "./notices.service";
 
 const SECTION = "/admin/messages";

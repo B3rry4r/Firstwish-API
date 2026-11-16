@@ -135,7 +135,7 @@ export class ConciergeService implements OnModuleInit {
     await this.db.$transaction(async (tx) => {
       await lockAccount(tx, accountId);
       const o = await this.lock(tx, id, { accountId });
-      if (o.status === "making") throw AppError.conflict("order_with_maker", "This order is already with a maker. Ask Firstwish to cancel it.");
+      if (o.status === "making" || o.status === "given") throw AppError.conflict("order_with_maker", "This order is already with a maker. Ask Firstwish to cancel it.");
       await this.cancelLocked(tx, o, null, null);
     });
     return this.one({ accountId }, id);
@@ -187,7 +187,7 @@ export class ConciergeService implements OnModuleInit {
     const page = toPage(rows, limit, (r) => ({ key: 0, id: r.id }));
     const open = await this.db.conciergeOrder.groupBy({
       by: ["makerId"],
-      where: { makerId: { in: page.items.map((r) => r.id) }, status: { in: ["paid", "making"] } },
+      where: { makerId: { in: page.items.map((r) => r.id) }, status: { in: ["paid", "given", "making"] } },
       _count: { _all: true },
     });
     const n = new Map(open.map((r) => [r.makerId, r._count._all]));
@@ -228,11 +228,11 @@ export class ConciergeService implements OnModuleInit {
     await this.db.$transaction(async (tx) => {
       const o = await this.lock(tx, id, {});
       if (o.status !== seen.status || o.makerId !== seen.makerId) throw AppError.conflict("order_changed", "Someone else changed this order. Look again.");
-      if (!canMove(o.status, "making")) throw AppError.conflict("order_not_paid", "Only a paid order can be given to a maker.");
+      if (!canMove(o.status, "given")) throw AppError.conflict("order_not_paid", "Only a paid order can be given to a maker.");
       const maker = await tx.staffAccount.findUnique({ where: { id: makerId } });
       if (!maker || maker.status !== "active" || !maker.roles.includes("maker")) throw AppError.validation({ maker: "Pick a maker." });
       if (o.makerId === makerId) throw AppError.conflict("already_with_maker", "This order is already with that maker.");
-      await tx.conciergeOrder.update({ where: { id }, data: { makerId, status: "making" } });
+      await tx.conciergeOrder.update({ where: { id }, data: { makerId, status: "given" } });
       await tx.$executeRaw`UPDATE concierge_order_ext SET "givenAt" = ${this.clock.now()} WHERE "orderId" = ${id}::uuid`;
       await this.audit.write(tx, {
         actor, section: SECTION, action: o.makerId ? "concierge.give-again" : "concierge.give", target: { type: "ConciergeOrder", id }, reason,

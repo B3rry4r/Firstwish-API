@@ -9,7 +9,7 @@ import { IdGenerator } from "../../common/ports/ids.port";
 import { isPortTimeout } from "../../common/ports/time-limit";
 import type { Refund as RefundWire } from "../../contracts";
 import { AuditActor, AuditService, requireReason } from "../audit/audit.service";
-import { RefundProviderPort, RefundRefused } from "./refund-provider.port";
+import { RefundProviderPort, RefundRefused } from "../../common/ports/refund-provider.port";
 import { refundView } from "./refund-wire";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -142,7 +142,7 @@ export class RefundsService {
       const r = await tx.refund.findUniqueOrThrow({ where: { id } });
       if (r.status !== "sent" || r.providerReference !== null) return r; // the provider's webhook got here first
       if (refusal !== null) {
-        await tx.refund.update({ where: { id }, data: { status: "failed", updatedAt: this.clock.now() } });
+        await tx.refund.update({ where: { id }, data: { status: "failed", note: refusal, updatedAt: this.clock.now() } });
         await this.audit.write(tx, {
           actor: { type: "system", id: null, requestId: actor.requestId },
           section: SECTION,

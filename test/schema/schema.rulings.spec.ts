@@ -149,7 +149,7 @@ describe("erase rules name real columns (Q9)", () => {
     const personal = ["Payment.payerContact", "MessageDelivery.to", "AuthCode.destination", "AuthCode.ip", "ExternalIdentity.email", "SupportThread.contact",
       "SupportMessage.body", "Report.contact", "Report.reporterContact", "Login.contact", "Person.name", "Person.phone", "Person.birthday", "DateRow.name",
       "DateRow.who", "DateRow.person", "BankAccount.accountNumber", "Business.ownerName", "Creator.name", "PublishedWish.forName", "PublishedWish.from",
-      "QrCard.names", "ClientWish.from", "Session.ip", "Wish.name", "Wish.letter", "Wish.content", "Account.name", "Account.contact", "Account.phone"];
+      "QrCard.names", "ClientWish.from", "Session.ip", "Wish.name", "Wish.content", "Account.name", "Account.contact", "Account.phone"];
     expect(personal.filter((p) => { const [n, c] = p.split("."); return !map[n]?.erase?.[c]; })).toEqual([]);
   });
 });

@@ -9,8 +9,8 @@ import { PriceBookService } from "../../price-book/price-book.service";
 import { percentOf } from "../../royalties/royalty-math";
 import { makeStaff, seedRoleTable } from "../../staff-accounts/tests/staff-kit";
 import { flagRefundDue } from "../refund-due";
-import { RefundProviderPort } from "../refund-provider.port";
-import { StandinRefundProvider } from "../standin-refund-provider";
+import { RefundProviderPort } from "../../../common/ports/refund-provider.port";
+import { StandinRefundProvider } from "../../../common/ports/adapters/standin-refund-provider";
 
 /* Wave 5 join: J1 (WW1) transfer events through the webhook, J2 (WW2) royalties in the settle and the refund, J3 (YY4) the one flag,
    J4 the Signed grant's end and a payout paid by hand (ZZ8), J5 (CA3) a business's creator plan invoice. */

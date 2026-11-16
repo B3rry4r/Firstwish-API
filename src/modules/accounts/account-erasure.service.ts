@@ -169,7 +169,7 @@ export class AccountErasureService {
     await tx.payment.updateMany({ where: { OR: [{ accountId }, inBusiness] }, data: { payerContact: null } });
     await tx.report.updateMany({ where: { accountId }, data: { reporterContact: null, contact: null, note: null } });
     if (threadIds.length) await tx.supportMessage.updateMany({ where: { threadId: { in: threadIds } }, data: { body: "" } });
-    await tx.supportThread.updateMany({ where: { accountId }, data: { contact: "", subject: "", body: null, text: null } });
+    await tx.supportThread.updateMany({ where: { accountId }, data: { contact: "", subject: "", body: null, text: null, name: null } });
     if (wishIds.length) {
       await tx.qrCard.updateMany({ where: { wishId: { in: wishIds } }, data: { names: Prisma.DbNull } });
       await tx.publishedWish.updateMany({ where: { wish: { in: wishIds } }, data: { forName: null, from: null, name: null } });
@@ -185,10 +185,7 @@ export class AccountErasureService {
     await tx.wish.updateMany({
       where: { accountId, id: { in: wishIds } },
       data: {
-        name: null, letter: null, content: Prisma.DbNull, passcodeHash: null, call: null, note: null,
-        blessing: Prisma.DbNull, captions: Prisma.DbNull, chapter: Prisma.DbNull, details: Prisma.DbNull, finale: Prisma.DbNull,
-        links: Prisma.DbNull, makerNote: Prisma.DbNull, memory: Prisma.DbNull, photos: Prisma.DbNull, reasons: Prisma.DbNull,
-        timeline: Prisma.DbNull, voices: Prisma.DbNull,
+        name: null, content: Prisma.DbNull, passcodeHash: null, makerNote: Prisma.DbNull,
         status: "removed", erasedAt: now,
       },
     });

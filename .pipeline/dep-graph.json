@@ -20,7 +20,9 @@
         "Account",
         "Business",
         "Invoice",
-        "Maker"
+        "Maker",
+        "Payment",
+        "Wish"
       ]
     },
     {

@@ -6,13 +6,13 @@ import type { Env } from "../../common/env/env";
 import { AppError } from "../../common/errors/app-error";
 import { normaliseEmail } from "../../common/normalise/email";
 import { Clock } from "../../common/ports/clock.port";
+import { EmailPort } from "../../common/ports/email.port";
 import { IdGenerator } from "../../common/ports/ids.port";
 import { scrubReason } from "../notices/catalog";
 import { EmailSuppression } from "../notices/suppression";
 import { IntakeLimits } from "./intake-limits";
 import { cleanInbound, isDeliveryReport, isOwnAddress, MESSAGE_MAX, SUBJECT_MAX, threadOfToken, tokenFromAddress, tokenHolds } from "./rules";
 import { flagRefundDue } from "../refunds/refund-due";
-import { checkSvix } from "./svix";
 import { SupportService } from "./support.service";
 
 const PROVIDER = "resend";
@@ -50,17 +50,13 @@ export class EmailWebhookService {
     private readonly support: SupportService,
     private readonly suppression: EmailSuppression,
     private readonly limits: IntakeLimits,
+    private readonly email: EmailPort,
     @Inject(ENV) private readonly env: Env,
   ) {}
 
   async receive(raw: Buffer | undefined, h: SvixHeaders): Promise<void> {
-    // RESEND_WEBHOOK_SECRET is not in the env schema yet (hand-back: HALT 1), so it is read here, at the time of the request.
-    const secret = process.env.RESEND_WEBHOOK_SECRET;
-    if (!secret || secret.trim() === "" || secret.trim() === "whsec_") throw new AppError(503, "webhook_not_configured", "The email webhook has no signing secret.");
+    // The signature, the secret and the timestamp are checked by the access guard (`resend` webhook provider, YY3) before this runs.
     if (!raw) throw AppError.unauthorized("The signature does not match.");
-    const check = checkSvix(secret, raw, h, Math.floor(this.clock.now().getTime() / 1000));
-    if (check === "bad_signature") throw AppError.unauthorized("The signature does not match.");
-    if (check === "old_timestamp") throw AppError.unauthorized("The event is too old.");
 
     let json: unknown;
     try {
@@ -69,10 +65,18 @@ export class EmailWebhookService {
       throw new AppError(400, "bad_event", "The event is not JSON.");
     }
     const type = str(obj(json).type);
-    const data = obj(obj(json).data);
+    let data = obj(obj(json).data);
     const eventId = h.id ?? "";
     // eslint-disable-next-line no-control-regex
     if (!type || type.length > 80 || eventId.length > 200 || /[\u0000-\u001f]/.test(type + eventId)) throw new AppError(400, "bad_event", "The event has no type.");
+
+    // YY2: Resend's received-email event carries no body: fetch the email by its id, outside any transaction (Y4). An event that
+    // already holds the text (the stand-in stream) is used as it is. Nothing found: refuse, so the provider sends the event again.
+    if (type === "email.received" && !str(data.text) && str(data.email_id)) {
+      const got = await this.email.fetchReceived(str(data.email_id));
+      if (!got) throw new AppError(409, "received_email_not_found", "The provider has no received email with this id yet.");
+      data = { ...data, from: got.from, to: got.to, subject: got.subject, text: got.text, headers: got.headers };
+    }
 
     await this.prisma.$transaction(async (tx) => {
       const id = this.ids.id();

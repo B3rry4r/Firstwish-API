@@ -1,3 +1,4 @@
+import { maskEmail } from "../../common/normalise/mask-email";
 /**
  * The messages Firstwish sends (B11; B18 adds the reveal message; INT-4 adds the staff invite, B17 the business login invite, WW5 the bank-changed message). Every one goes by email (R11). The wording lives in the MessageTemplate table
  * (seeded from the web app, edited by staff); this file holds what the wording may name and what the code needs from it.
@@ -202,10 +203,4 @@ export function scrubEmails(text: string): string {
 /** Provider error text with addresses masked and any six-digit code (spaced or dashed too) removed. */
 export function scrubReason(text: string): string {
   return scrubEmails(text).replace(/(?<![\d])\d{3}[ -]?\d{3}(?![\d])/g, "******");
-}
-
-export function maskEmail(email: string): string {
-  const at = email.lastIndexOf("@");
-  if (at < 1) return "***";
-  return `${email.slice(0, 1)}***${email.slice(at)}`;
 }

@@ -39,6 +39,8 @@ export interface Env {
   ANTHROPIC_MODEL?: string;
   RENDER_CONCURRENCY: number;
   RESEND_API_KEY?: string;
+  /** YY3: the svix signing secret of Resend's webhook stream (delivery news and received mail); the guard's `resend` provider checks it. */
+  RESEND_WEBHOOK_SECRET?: string;
   MAIL_FROM?: string;
   /** V4: proxies trusted for the client address; 0 reads the socket address. */
   TRUST_PROXY_HOPS: number;

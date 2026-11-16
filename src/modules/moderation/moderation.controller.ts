@@ -1,9 +1,10 @@
-import { Body, Controller, Get, HttpCode, Param, Post, Query, Req } from "@nestjs/common";
+import { Body, Controller, Delete, Get, HttpCode, Param, Post, Query, Req } from "@nestjs/common";
 import { IsOptional, IsString, MaxLength } from "class-validator";
 import type { Request } from "express";
 import {
   GetAdminModerationQueryDto, PostAdminBansBodyDto, PostAdminModerationByIdDecideBodyDto, PostAdminModerationByIdDecideParamsDto,
   PostReportsBodyDto, PostWBySlugTakeDownParamsDto,
+  DeleteAdminBansByIdBodyDto, DeleteAdminBansByIdParamsDto,
 } from "../../contracts";
 import { Public } from "../../common/auth/decorators";
 import type { AuditActor } from "../audit/audit.service";
@@ -67,5 +68,13 @@ export class ModerationController {
   @HttpCode(201)
   ban(@Body() b: PostAdminBansBodyDto, @StaffActor() actor: AuditActor) {
     return this.bans.create(b, actor);
+  }
+
+  /** E-242 (QQ2): lift a ban. Owner and ops; the reason is in the body (DEC-125). */
+  @AdminRoute("/admin/people", "ops", "owner")
+  @Delete("admin/bans/:id")
+  @HttpCode(200)
+  lift(@Param() p: DeleteAdminBansByIdParamsDto, @Body() b: DeleteAdminBansByIdBodyDto, @StaffActor() actor: AuditActor) {
+    return this.bans.lift(p.id, actor, b.reason);
   }
 }

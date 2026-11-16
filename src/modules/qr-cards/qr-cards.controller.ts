@@ -1,7 +1,7 @@
-import { Body, Controller, Headers, HttpCode, Post } from "@nestjs/common";
+import { Body, Controller, HttpCode, Post } from "@nestjs/common";
 import { ArrayMaxSize, IsArray, IsOptional, IsString, MaxLength } from "class-validator";
-import { Public } from "../../common/auth/decorators";
-import { AccessTokenVerifier } from "../../common/auth/principal";
+import { CurrentPrincipal, UserOrStaff } from "../../common/auth/decorators";
+import type { Principal } from "../../common/auth/principal";
 import { AppError } from "../../common/errors/app-error";
 import type { QrCard } from "../../contracts";
 import { QrCardsService } from "./qr-cards.service";
@@ -26,28 +26,19 @@ export class MakeQrCardBodyDto {
 
 @Controller("qr-cards")
 export class QrCardsController {
-  constructor(
-    private readonly cards: QrCardsService,
-    private readonly tokens: AccessTokenVerifier,
-  ) {}
+  constructor(private readonly cards: QrCardsService) {}
 
   /**
-   * E-141. Registry auth: business, a signed-in user, or staff maker. One access mark cannot name both a user and a staff caller,
-   * so the route is marked public and decides here from the bearer token (no token or a bad one is 401; every other caller is 403).
-   * A user makes cards of their own wishes; a maker (or the owner) of the wishes of an order given to them.
+   * E-141. Registry auth: business, a signed-in user, or staff maker. One route takes a user or a staff member (CB4): the guard
+   * checks the token (no token or a bad one is 401) and the side or role (403). A user makes cards of their own wishes; a maker (or
+   * the owner) of the wishes of an order given to them.
    */
-  @Public()
+  @UserOrStaff({ sides: ["person", "creator", "business"], roles: ["owner", "maker"] })
   @Post()
   @HttpCode(200)
-  async make(@Body() body: MakeQrCardBodyDto, @Headers("authorization") auth: string | undefined): Promise<QrCard> {
-    const m = /^Bearer\s+(\S+)$/i.exec(auth ?? "");
-    const p = m ? await this.tokens.verify(m[1]) : null;
+  async make(@Body() body: MakeQrCardBodyDto, @CurrentPrincipal() p: Principal | undefined): Promise<QrCard> {
     if (!p) throw AppError.unauthorized();
-    if (p.kind === "user") {
-      if (!p.sides.some((x) => x === "person" || x === "creator" || x === "business")) throw AppError.forbidden();
-      return this.cards.make(p.accountId, body);
-    }
-    if (!p.roles.includes("owner") && !p.roles.includes("maker")) throw AppError.forbidden();
+    if (p.kind === "user") return this.cards.make(p.accountId, body);
     return this.cards.makeForOrder({ staffId: p.staffId, all: p.roles.includes("owner") }, body);
   }
 }

@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "frozenAt": "2026-11-15T22:40:31Z",
+  "frozenAt": "2026-11-16T02:33:08Z",
   "framework": "nestjs",
   "generatedBy": "tools/pipeline/reconcile.py",
   "resources": [
@@ -2840,6 +2840,44 @@
             }
           ],
           "notes": []
+        },
+        {
+          "id": "E-242",
+          "method": "DELETE",
+          "path": "/v1/admin/bans/:id",
+          "auth": [
+            {
+              "kind": "staff role",
+              "roles": [
+                "ops",
+                "owner"
+              ]
+            }
+          ],
+          "body": [
+            {
+              "name": "reason",
+              "type": "string (4 or more characters; written to the audit row)",
+              "from": [
+                "DEC-125"
+              ]
+            }
+          ],
+          "response": {
+            "entity": "Ban",
+            "cardinality": "single",
+            "note": "the ban, with until set to the time it was lifted (DEC-191)"
+          },
+          "sources": [
+            {
+              "src": "DEC-191",
+              "via": "ruling:DEC-191"
+            }
+          ],
+          "notes": [
+            "body by DEC-191",
+            "reason by DEC-125"
+          ]
         }
       ]
     },
@@ -4498,6 +4536,18 @@
           "supersedes": []
         },
         {
+          "name": "dueAt",
+          "type": "time",
+          "classes": [
+            "time-iso"
+          ],
+          "nullable": true,
+          "provenance": [
+            "DEC-199"
+          ],
+          "supersedes": []
+        },
+        {
           "name": "from",
           "type": "string",
           "classes": [
@@ -4628,6 +4678,30 @@
           "supersedes": []
         },
         {
+          "name": "paidAt",
+          "type": "time",
+          "classes": [
+            "time-iso"
+          ],
+          "nullable": true,
+          "provenance": [
+            "DEC-199"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "paymentId",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": true,
+          "provenance": [
+            "DEC-199"
+          ],
+          "supersedes": []
+        },
+        {
           "name": "person",
           "type": "string",
           "classes": [
@@ -4725,7 +4799,7 @@
         },
         {
           "name": "state",
-          "type": "string",
+          "type": "enum(placed|quoted|paid|given|making|delivered|cancelled)",
           "classes": [
             "enum"
           ],
@@ -4733,11 +4807,12 @@
           "provenance": [
             "admin-concierge"
           ],
-          "supersedes": []
+          "supersedes": [],
+          "typeBy": "DEC-199"
         },
         {
           "name": "status",
-          "type": "string",
+          "type": "enum(brief|quoted|paid|given|making|delivered|cancelled)",
           "classes": [
             "enum"
           ],
@@ -4745,7 +4820,8 @@
           "provenance": [
             "concierge-orders"
           ],
-          "supersedes": []
+          "supersedes": [],
+          "typeBy": "DEC-199"
         },
         {
           "name": "to",
@@ -4770,6 +4846,18 @@
           "nullable": false,
           "provenance": [
             "concierge-orders"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "wishIds",
+          "type": "array",
+          "classes": [
+            "array"
+          ],
+          "nullable": false,
+          "provenance": [
+            "DEC-199"
           ],
           "supersedes": []
         }
@@ -4801,6 +4889,13 @@
               "from": [
                 "DEC-125"
               ]
+            },
+            {
+              "name": "wishIds",
+              "type": "array<string> (1 to 1000 ids of the wishes made for the order)",
+              "from": [
+                "DEC-199"
+              ]
             }
           ],
           "response": {
@@ -4814,6 +4909,7 @@
             }
           ],
           "notes": [
+            "body by DEC-199",
             "reason by DEC-125",
             "route by conventions naming"
           ]
@@ -4886,7 +4982,8 @@
           "body": [],
           "response": {
             "entity": "ConciergeOrder",
-            "cardinality": "single"
+            "cardinality": "list",
+            "note": "a page of the orders due in the window (DEC-199)"
           },
           "sources": [
             {
@@ -4895,6 +4992,7 @@
             }
           ],
           "notes": [
+            "body by DEC-199",
             "route by DEC-112"
           ]
         },
@@ -4954,6 +5052,44 @@
           ],
           "notes": [
             "route by DEC-112"
+          ]
+        },
+        {
+          "id": "E-243",
+          "method": "POST",
+          "path": "/v1/admin/concierge/orders/:id/cancel",
+          "auth": [
+            {
+              "kind": "staff role",
+              "roles": [
+                "ops",
+                "owner"
+              ]
+            }
+          ],
+          "body": [
+            {
+              "name": "reason",
+              "type": "string (4 or more characters; written to the audit row)",
+              "from": [
+                "DEC-125"
+              ]
+            }
+          ],
+          "response": {
+            "entity": "ConciergeOrder",
+            "cardinality": "single",
+            "note": "the order, cancelled by staff with a reason (DEC-199)"
+          },
+          "sources": [
+            {
+              "src": "DEC-199",
+              "via": "ruling:DEC-199"
+            }
+          ],
+          "notes": [
+            "body by DEC-199",
+            "reason by DEC-125"
           ]
         },
         {
@@ -5019,6 +5155,32 @@
           ]
         },
         {
+          "id": "E-244",
+          "method": "GET",
+          "path": "/v1/concierge-orders",
+          "auth": [
+            {
+              "kind": "user",
+              "scope": "own records"
+            }
+          ],
+          "body": [],
+          "response": {
+            "entity": "ConciergeOrder",
+            "cardinality": "list",
+            "note": "the caller's own orders, newest first (DEC-199)"
+          },
+          "sources": [
+            {
+              "src": "DEC-199",
+              "via": "ruling:DEC-199"
+            }
+          ],
+          "notes": [
+            "body by DEC-199"
+          ]
+        },
+        {
           "id": "E-40",
           "method": "POST",
           "path": "/v1/concierge-orders",
@@ -5073,6 +5235,58 @@
             }
           ],
           "notes": []
+        },
+        {
+          "id": "E-245",
+          "method": "GET",
+          "path": "/v1/concierge-orders/:id",
+          "auth": [
+            {
+              "kind": "user",
+              "scope": "own records"
+            }
+          ],
+          "body": [],
+          "response": {
+            "entity": "ConciergeOrder",
+            "cardinality": "single",
+            "note": "the caller's own order (DEC-199)"
+          },
+          "sources": [
+            {
+              "src": "DEC-199",
+              "via": "ruling:DEC-199"
+            }
+          ],
+          "notes": [
+            "body by DEC-199"
+          ]
+        },
+        {
+          "id": "E-246",
+          "method": "POST",
+          "path": "/v1/concierge-orders/:id/cancel",
+          "auth": [
+            {
+              "kind": "user",
+              "scope": "own records"
+            }
+          ],
+          "body": [],
+          "response": {
+            "entity": "ConciergeOrder",
+            "cardinality": "single",
+            "note": "the order, cancelled; one that is paid is refunded by staff (DEC-199)"
+          },
+          "sources": [
+            {
+              "src": "DEC-199",
+              "via": "ruling:DEC-199"
+            }
+          ],
+          "notes": [
+            "body by DEC-199"
+          ]
         }
       ]
     },
@@ -5086,6 +5300,18 @@
       "sourceDeclarations": [],
       "embedded": [],
       "fields": [
+        {
+          "name": "bank",
+          "type": "object",
+          "classes": [
+            "object"
+          ],
+          "nullable": true,
+          "provenance": [
+            "DEC-195"
+          ],
+          "supersedes": []
+        },
         {
           "name": "counts",
           "type": "object",
@@ -7402,7 +7628,7 @@
         },
         {
           "name": "type",
-          "type": "enum(open-wish|rest-wish|erase-wish|restore-window-end|erase-now|send-notice|send-message|make-image-sizes|screen-file|render-video|make-qr-card|abandon-payment|reconcile-ledger|pass-period|plan-period|creator-period|vault-billing|royalty-accrual|payout-run|style-level-review|upload-cleanup|clean-link-hits)",
+          "type": "enum(open-wish|rest-wish|erase-wish|restore-window-end|erase-now|send-notice|send-message|make-image-sizes|screen-file|render-video|make-qr-card|abandon-payment|reconcile-ledger|pass-period|plan-period|creator-period|vault-billing|royalty-accrual|payout-run|style-level-review|upload-cleanup|clean-link-hits|check-style-submission)",
           "classes": [
             "enum",
             "string"
@@ -7412,7 +7638,7 @@
             "jobs"
           ],
           "supersedes": [],
-          "typeBy": "DEC-188"
+          "typeBy": "DEC-196"
         }
       ],
       "endpoints": [
@@ -7696,7 +7922,15 @@
               ]
             }
           ],
-          "body": [],
+          "body": [
+            {
+              "name": "day",
+              "type": "string YYYY-MM-DD (optional; the day to show, default the latest day checked)",
+              "from": [
+                "DEC-189"
+              ]
+            }
+          ],
           "response": {
             "entity": "LedgerDay",
             "cardinality": "single"
@@ -7708,6 +7942,7 @@
             }
           ],
           "notes": [
+            "body by DEC-189",
             "route by DEC-112"
           ]
         }
@@ -8565,7 +8800,7 @@
         },
         {
           "name": "status",
-          "type": "enum(queued|sending|sent|delivered|failed|dropped)",
+          "type": "enum(queued|sending|sent|delivered|failed|dropped|bounced|complained)",
           "classes": [
             "enum"
           ],
@@ -8574,7 +8809,7 @@
             "messages-email"
           ],
           "supersedes": [],
-          "typeBy": "DEC-188"
+          "typeBy": "DEC-197"
         },
         {
           "name": "templateKey",
@@ -10858,7 +11093,22 @@
               ]
             }
           ],
-          "body": [],
+          "body": [
+            {
+              "name": "flag",
+              "type": "string (optional; such as refund_due)",
+              "from": [
+                "DEC-189"
+              ]
+            },
+            {
+              "name": "q",
+              "type": "string (optional; a reference, a wish number or the payer's email)",
+              "from": [
+                "DEC-189"
+              ]
+            }
+          ],
           "response": {
             "entity": "Payment",
             "cardinality": "list"
@@ -10870,6 +11120,7 @@
             }
           ],
           "notes": [
+            "body by DEC-189",
             "route by DEC-112"
           ]
         },
@@ -14416,6 +14667,13 @@
           ],
           "body": [
             {
+              "name": "code",
+              "type": "string (optional; the code mailed to the contact address)",
+              "from": [
+                "DEC-190"
+              ]
+            },
+            {
               "name": "contact",
               "type": "string",
               "from": [
@@ -14431,8 +14689,9 @@
             }
           ],
           "response": {
-            "entity": "Report",
-            "cardinality": "single"
+            "entity": "TakeDownResult",
+            "cardinality": "single",
+            "note": "Report with a code; {sent, expiresAt} without one (DEC-190)"
           },
           "sources": [
             {
@@ -14441,6 +14700,7 @@
             }
           ],
           "notes": [
+            "body by DEC-190",
             "route by DEC-101"
           ]
         },
@@ -15576,22 +15836,25 @@
           "body": [
             {
               "name": "names",
-              "type": "array<string>",
+              "type": "array<string> (optional; up to 100, each up to 200 characters)",
               "from": [
+                "DEC-199",
                 "qr-card"
               ]
             },
             {
               "name": "wishId",
-              "type": "string",
+              "type": "string (optional; a wish of the caller's own)",
               "from": [
+                "DEC-199",
                 "qr-card"
               ]
             },
             {
               "name": "wishIds",
-              "type": "array<string>",
+              "type": "array<string> (optional; up to 100: the wishes of an order given to the maker)",
               "from": [
+                "DEC-199",
                 "qr-card"
               ]
             }
@@ -15610,7 +15873,9 @@
               "via": "action:makeWishCard"
             }
           ],
-          "notes": []
+          "notes": [
+            "body by DEC-199"
+          ]
         }
       ]
     },
@@ -16399,8 +16664,8 @@
           "response": {
             "entity": "VideoOrder",
             "cardinality": "single",
-            "paymentStart": "required",
-            "note": "{payment, item}: item is the video order, null until the verified payment fulfils it (DEC-139)"
+            "paymentStart": "optional",
+            "note": "{payment, item}: payment null when the Pass covers the video; item is the video order (DEC-199)"
           },
           "sources": [
             {
@@ -16418,6 +16683,7 @@
           ],
           "notes": [
             "body by DEC-134",
+            "body by DEC-199",
             "route by DEC-95"
           ]
         }
@@ -17014,6 +17280,32 @@
             }
           ],
           "notes": []
+        },
+        {
+          "id": "E-247",
+          "method": "POST",
+          "path": "/v1/business/reveal-links/:id/off",
+          "auth": [
+            {
+              "kind": "role",
+              "role": "business"
+            }
+          ],
+          "body": [],
+          "response": {
+            "entity": "RevealLink",
+            "cardinality": "single",
+            "note": "the link, switched off (DEC-198)"
+          },
+          "sources": [
+            {
+              "src": "DEC-198",
+              "via": "ruling:DEC-198"
+            }
+          ],
+          "notes": [
+            "body by DEC-198"
+          ]
         }
       ]
     },
@@ -17026,12 +17318,24 @@
       "embedded": [],
       "fields": [
         {
+          "name": "business",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": true,
+          "provenance": [
+            "DEC-198"
+          ],
+          "supersedes": []
+        },
+        {
           "name": "content",
           "type": "named",
           "classes": [
             "named"
           ],
-          "nullable": false,
+          "nullable": true,
           "provenance": [
             "receiver-wish-mine"
           ],
@@ -17043,7 +17347,7 @@
           "classes": [
             "time-iso"
           ],
-          "nullable": false,
+          "nullable": true,
           "provenance": [
             "receiver-wish-mine"
           ],
@@ -17055,7 +17359,7 @@
           "classes": [
             "array"
           ],
-          "nullable": false,
+          "nullable": true,
           "provenance": [
             "receiver-wish-mine"
           ],
@@ -17067,7 +17371,7 @@
           "classes": [
             "string"
           ],
-          "nullable": false,
+          "nullable": true,
           "provenance": [
             "receiver-wish-mine"
           ],
@@ -17079,9 +17383,21 @@
           "classes": [
             "array"
           ],
-          "nullable": false,
+          "nullable": true,
           "provenance": [
             "receiver-wish-mine"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "state",
+          "type": "string",
+          "classes": [
+            "enum"
+          ],
+          "nullable": false,
+          "provenance": [
+            "DEC-198"
           ],
           "supersedes": []
         },
@@ -17091,14 +17407,73 @@
           "classes": [
             "string"
           ],
-          "nullable": false,
+          "nullable": true,
           "provenance": [
             "receiver-wish-mine"
           ],
           "supersedes": []
         }
       ],
-      "endpoints": []
+      "endpoints": [
+        {
+          "id": "E-248",
+          "method": "GET",
+          "path": "/v1/r/:code",
+          "auth": [
+            {
+              "kind": "public"
+            }
+          ],
+          "body": [],
+          "response": {
+            "entity": "RevealPlay",
+            "cardinality": "single",
+            "note": "{state: 'passcode'} or {state: 'open', ...} (DEC-198)"
+          },
+          "sources": [
+            {
+              "src": "DEC-198",
+              "via": "ruling:DEC-198"
+            }
+          ],
+          "notes": [
+            "body by DEC-198"
+          ]
+        },
+        {
+          "id": "E-249",
+          "method": "POST",
+          "path": "/v1/r/:code/unlock",
+          "auth": [
+            {
+              "kind": "public"
+            }
+          ],
+          "body": [
+            {
+              "name": "passcode",
+              "type": "string",
+              "from": [
+                "DEC-198"
+              ]
+            }
+          ],
+          "response": {
+            "entity": "UnlockResult",
+            "cardinality": "single",
+            "note": "{ok: true, token, expiresAt} or {ok: false, error} (DEC-198)"
+          },
+          "sources": [
+            {
+              "src": "DEC-198",
+              "via": "ruling:DEC-198"
+            }
+          ],
+          "notes": [
+            "body by DEC-198"
+          ]
+        }
+      ]
     },
     {
       "name": "RoleAccess",
@@ -17231,20 +17606,6 @@
           "supersedes": []
         },
         {
-          "name": "rows",
-          "type": "money",
-          "classes": [
-            "money-kobo"
-          ],
-          "nullable": false,
-          "provenance": [
-            "studio-home"
-          ],
-          "supersedes": [
-            "S-1: integer kobo, currency NGN, over the wire and in storage; prices only from the price book"
-          ]
-        },
-        {
           "name": "styleSlug",
           "type": "string",
           "classes": [
@@ -17255,20 +17616,6 @@
             "royalties-payouts"
           ],
           "supersedes": []
-        },
-        {
-          "name": "total",
-          "type": "money",
-          "classes": [
-            "money-kobo"
-          ],
-          "nullable": false,
-          "provenance": [
-            "studio-home"
-          ],
-          "supersedes": [
-            "S-1: integer kobo, currency NGN, over the wire and in storage; prices only from the price book"
-          ]
         }
       ],
       "endpoints": [
@@ -17284,8 +17631,9 @@
           ],
           "body": [],
           "response": {
-            "entity": "RoyaltyAccrual",
-            "cardinality": "list"
+            "entity": "RoyaltyEarnings",
+            "cardinality": "page",
+            "note": "{items: RoyaltyAccrual[], nextCursor, summary} (DEC-195)"
           },
           "sources": [
             {
@@ -17298,6 +17646,7 @@
             }
           ],
           "notes": [
+            "body by DEC-195",
             "route by DEC-67"
           ]
         }
@@ -17350,7 +17699,183 @@
           "supersedes": []
         }
       ],
-      "endpoints": []
+      "endpoints": [
+        {
+          "id": "E-250",
+          "method": "GET",
+          "path": "/v1/admin/support/saved-replies",
+          "auth": [
+            {
+              "kind": "staff role",
+              "roles": [
+                "ops",
+                "owner",
+                "support"
+              ]
+            }
+          ],
+          "body": [],
+          "response": {
+            "entity": "SavedReply",
+            "cardinality": "list",
+            "note": "every saved reply, by name (DEC-197)"
+          },
+          "sources": [
+            {
+              "src": "DEC-197",
+              "via": "ruling:DEC-197"
+            }
+          ],
+          "notes": [
+            "body by DEC-197"
+          ]
+        },
+        {
+          "id": "E-251",
+          "method": "POST",
+          "path": "/v1/admin/support/saved-replies",
+          "auth": [
+            {
+              "kind": "staff role",
+              "roles": [
+                "ops",
+                "owner",
+                "support"
+              ]
+            }
+          ],
+          "body": [
+            {
+              "name": "name",
+              "type": "string (1 to 80 characters)",
+              "from": [
+                "DEC-197"
+              ]
+            },
+            {
+              "name": "reason",
+              "type": "string (4 or more characters; written to the audit row)",
+              "from": [
+                "DEC-125"
+              ]
+            },
+            {
+              "name": "text",
+              "type": "string (non-empty, at most 4000 characters)",
+              "from": [
+                "DEC-197"
+              ]
+            }
+          ],
+          "response": {
+            "entity": "SavedReply",
+            "cardinality": "single",
+            "note": "the saved reply added (DEC-197)"
+          },
+          "sources": [
+            {
+              "src": "DEC-197",
+              "via": "ruling:DEC-197"
+            }
+          ],
+          "notes": [
+            "body by DEC-197",
+            "reason by DEC-125"
+          ]
+        },
+        {
+          "id": "E-252",
+          "method": "DELETE",
+          "path": "/v1/admin/support/saved-replies/:id",
+          "auth": [
+            {
+              "kind": "staff role",
+              "roles": [
+                "ops",
+                "owner",
+                "support"
+              ]
+            }
+          ],
+          "body": [
+            {
+              "name": "reason",
+              "type": "string (4 or more characters; written to the audit row)",
+              "from": [
+                "DEC-125"
+              ]
+            }
+          ],
+          "response": {
+            "entity": null,
+            "cardinality": "none",
+            "note": "204 with no body (DEC-197)"
+          },
+          "sources": [
+            {
+              "src": "DEC-197",
+              "via": "ruling:DEC-197"
+            }
+          ],
+          "notes": [
+            "body by DEC-197",
+            "reason by DEC-125"
+          ]
+        },
+        {
+          "id": "E-253",
+          "method": "PATCH",
+          "path": "/v1/admin/support/saved-replies/:id",
+          "auth": [
+            {
+              "kind": "staff role",
+              "roles": [
+                "ops",
+                "owner",
+                "support"
+              ]
+            }
+          ],
+          "body": [
+            {
+              "name": "name",
+              "type": "string (optional; 1 to 80 characters)",
+              "from": [
+                "DEC-197"
+              ]
+            },
+            {
+              "name": "reason",
+              "type": "string (4 or more characters; written to the audit row)",
+              "from": [
+                "DEC-125"
+              ]
+            },
+            {
+              "name": "text",
+              "type": "string (optional; at most 4000 characters)",
+              "from": [
+                "DEC-197"
+              ]
+            }
+          ],
+          "response": {
+            "entity": "SavedReply",
+            "cardinality": "single",
+            "note": "the saved reply changed (DEC-197)"
+          },
+          "sources": [
+            {
+              "src": "DEC-197",
+              "via": "ruling:DEC-197"
+            }
+          ],
+          "notes": [
+            "body by DEC-197",
+            "reason by DEC-125"
+          ]
+        }
+      ]
     },
     {
       "name": "SavedWish",
@@ -19979,10 +20504,52 @@
           ],
           "body": [
             {
-              "name": "(any of) coached, bottom, span, looks, recent, fav, addTab",
-              "type": "partial StudioPrefs, merged over what is stored",
+              "name": "addTab",
+              "type": "string (optional)",
               "from": [
-                "studio-editor"
+                "DEC-196"
+              ]
+            },
+            {
+              "name": "bottom",
+              "type": "string (optional)",
+              "from": [
+                "DEC-196"
+              ]
+            },
+            {
+              "name": "coached",
+              "type": "boolean (optional)",
+              "from": [
+                "DEC-196"
+              ]
+            },
+            {
+              "name": "fav",
+              "type": "array (optional)",
+              "from": [
+                "DEC-196"
+              ]
+            },
+            {
+              "name": "looks",
+              "type": "array (optional)",
+              "from": [
+                "DEC-196"
+              ]
+            },
+            {
+              "name": "recent",
+              "type": "array (optional)",
+              "from": [
+                "DEC-196"
+              ]
+            },
+            {
+              "name": "span",
+              "type": "string (optional)",
+              "from": [
+                "DEC-196"
               ]
             }
           ],
@@ -19996,7 +20563,9 @@
               "via": "action:setPrefs"
             }
           ],
-          "notes": []
+          "notes": [
+            "body by DEC-196"
+          ]
         }
       ]
     },
@@ -20807,10 +21376,10 @@
               ]
             },
             {
-              "name": "on (setTemplate only)",
-              "type": "boolean",
+              "name": "on",
+              "type": "boolean (optional; the setTemplate form)",
               "from": [
-                "studio-editor"
+                "DEC-196"
               ]
             }
           ],
@@ -20829,6 +21398,7 @@
             }
           ],
           "notes": [
+            "body by DEC-196",
             "route by DEC-65"
           ]
         }
@@ -22464,6 +23034,18 @@
           "supersedes": []
         },
         {
+          "name": "snapshot",
+          "type": "object",
+          "classes": [
+            "object"
+          ],
+          "nullable": true,
+          "provenance": [
+            "DEC-196"
+          ],
+          "supersedes": []
+        },
+        {
           "name": "still",
           "type": "string",
           "classes": [
@@ -23165,6 +23747,53 @@
             }
           ],
           "notes": []
+        },
+        {
+          "id": "E-254",
+          "method": "POST",
+          "path": "/v1/support-threads/contact",
+          "auth": [
+            {
+              "kind": "public"
+            }
+          ],
+          "body": [
+            {
+              "name": "body",
+              "type": "string",
+              "from": [
+                "DEC-197"
+              ]
+            },
+            {
+              "name": "email",
+              "type": "string (an email address)",
+              "from": [
+                "DEC-197"
+              ]
+            },
+            {
+              "name": "subject",
+              "type": "string",
+              "from": [
+                "DEC-197"
+              ]
+            }
+          ],
+          "response": {
+            "entity": "ThreadDetail",
+            "cardinality": "single",
+            "note": "the thread opened, with its first message (DEC-197)"
+          },
+          "sources": [
+            {
+              "src": "DEC-197",
+              "via": "ruling:DEC-197"
+            }
+          ],
+          "notes": [
+            "body by DEC-197"
+          ]
         },
         {
           "id": "E-211",
@@ -24719,18 +25348,6 @@
           "typeBy": "DEC-83"
         },
         {
-          "name": "blessing",
-          "type": "unknown",
-          "classes": [
-            "unknown"
-          ],
-          "nullable": false,
-          "provenance": [
-            "maker-ask"
-          ],
-          "supersedes": []
-        },
-        {
           "name": "businessId",
           "type": "string",
           "classes": [
@@ -24739,67 +25356,6 @@
           "nullable": true,
           "provenance": [
             "wish-lifecycle"
-          ],
-          "supersedes": []
-        },
-        {
-          "name": "call",
-          "type": "string",
-          "classes": [
-            "string"
-          ],
-          "nullable": false,
-          "provenance": [
-            "app-home",
-            "app-wish-detail",
-            "app-wishes",
-            "maker-ask",
-            "maker-ask-voices-gather",
-            "maker-call",
-            "maker-chapters",
-            "maker-cover",
-            "maker-ending",
-            "maker-ending-scene",
-            "maker-kind",
-            "maker-more",
-            "maker-name",
-            "maker-occasion",
-            "maker-opening",
-            "maker-opening-scene",
-            "maker-partner",
-            "maker-photos",
-            "maker-sealed",
-            "maker-studio",
-            "maker-style",
-            "maker-ticket",
-            "maker-watch",
-            "maker-wedding",
-            "maker-when",
-            "receiver-wish-mine"
-          ],
-          "supersedes": []
-        },
-        {
-          "name": "captions",
-          "type": "unknown",
-          "classes": [
-            "unknown"
-          ],
-          "nullable": false,
-          "provenance": [
-            "maker-ask"
-          ],
-          "supersedes": []
-        },
-        {
-          "name": "chapter",
-          "type": "named",
-          "classes": [
-            "named"
-          ],
-          "nullable": false,
-          "provenance": [
-            "maker-ask"
           ],
           "supersedes": []
         },
@@ -25334,18 +25890,6 @@
           "supersedes": []
         },
         {
-          "name": "credits",
-          "type": "unknown",
-          "classes": [
-            "unknown"
-          ],
-          "nullable": false,
-          "provenance": [
-            "maker-ask"
-          ],
-          "supersedes": []
-        },
-        {
           "name": "days",
           "type": "number",
           "classes": [
@@ -25354,30 +25898,6 @@
           "nullable": false,
           "provenance": [
             "app-wish-detail"
-          ],
-          "supersedes": []
-        },
-        {
-          "name": "details",
-          "type": "unknown",
-          "classes": [
-            "unknown"
-          ],
-          "nullable": false,
-          "provenance": [
-            "maker-ask"
-          ],
-          "supersedes": []
-        },
-        {
-          "name": "effect",
-          "type": "unknown",
-          "classes": [
-            "unknown"
-          ],
-          "nullable": false,
-          "provenance": [
-            "maker-chapters"
           ],
           "supersedes": []
         },
@@ -25473,18 +25993,6 @@
           "supersedes": []
         },
         {
-          "name": "finale",
-          "type": "unknown",
-          "classes": [
-            "unknown"
-          ],
-          "nullable": false,
-          "provenance": [
-            "maker-ask"
-          ],
-          "supersedes": []
-        },
-        {
           "name": "forName",
           "type": "string",
           "classes": [
@@ -25533,6 +26041,18 @@
             "maker-wedding",
             "maker-when",
             "receiver-wish-mine"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "hasPasscode",
+          "type": "boolean",
+          "classes": [
+            "boolean"
+          ],
+          "nullable": false,
+          "provenance": [
+            "DEC-194"
           ],
           "supersedes": []
         },
@@ -25697,37 +26217,6 @@
           "supersedes": []
         },
         {
-          "name": "letter",
-          "type": "string",
-          "classes": [
-            "string",
-            "unknown"
-          ],
-          "nullable": false,
-          "provenance": [
-            "app-home",
-            "app-wish-detail",
-            "app-wishes",
-            "maker-ask",
-            "maker-ask-voices-gather",
-            "maker-chapters",
-            "maker-cover",
-            "maker-ending",
-            "maker-ending-scene",
-            "maker-name",
-            "maker-opening",
-            "maker-opening-scene",
-            "maker-photos",
-            "maker-sealed",
-            "maker-style",
-            "maker-ticket",
-            "maker-watch",
-            "maker-when",
-            "receiver-wish-mine"
-          ],
-          "supersedes": []
-        },
-        {
           "name": "link",
           "type": "string",
           "classes": [
@@ -25737,18 +26226,6 @@
           "provenance": [
             "admin-wishes",
             "admin-wishes-detail"
-          ],
-          "supersedes": []
-        },
-        {
-          "name": "links",
-          "type": "unknown",
-          "classes": [
-            "unknown"
-          ],
-          "nullable": false,
-          "provenance": [
-            "maker-ask"
           ],
           "supersedes": []
         },
@@ -26023,18 +26500,6 @@
           ]
         },
         {
-          "name": "memory",
-          "type": "unknown",
-          "classes": [
-            "unknown"
-          ],
-          "nullable": false,
-          "provenance": [
-            "maker-ask"
-          ],
-          "supersedes": []
-        },
-        {
           "name": "name",
           "type": "string",
           "classes": [
@@ -26109,18 +26574,6 @@
           "supersedes": []
         },
         {
-          "name": "note",
-          "type": "string",
-          "classes": [
-            "enum"
-          ],
-          "nullable": false,
-          "provenance": [
-            "maker-ask"
-          ],
-          "supersedes": []
-        },
-        {
           "name": "occasion",
           "type": "string",
           "classes": [
@@ -26163,30 +26616,6 @@
             "maker-when",
             "receiver-wish-mine",
             "wish-lifecycle"
-          ],
-          "supersedes": []
-        },
-        {
-          "name": "off",
-          "type": "boolean",
-          "classes": [
-            "boolean"
-          ],
-          "nullable": false,
-          "provenance": [
-            "maker-ask"
-          ],
-          "supersedes": []
-        },
-        {
-          "name": "on",
-          "type": "boolean",
-          "classes": [
-            "boolean"
-          ],
-          "nullable": false,
-          "provenance": [
-            "app-you"
           ],
           "supersedes": []
         },
@@ -26321,38 +26750,6 @@
           "supersedes": []
         },
         {
-          "name": "photos",
-          "type": "array",
-          "classes": [
-            "array"
-          ],
-          "nullable": false,
-          "provenance": [
-            "app-home",
-            "app-wish-detail",
-            "app-wishes",
-            "creator-profile",
-            "creator-published",
-            "maker-ask",
-            "maker-ask-voices-gather",
-            "maker-chapters",
-            "maker-cover",
-            "maker-ending",
-            "maker-ending-scene",
-            "maker-name",
-            "maker-opening",
-            "maker-opening-scene",
-            "maker-photos",
-            "maker-sealed",
-            "maker-style",
-            "maker-ticket",
-            "maker-watch",
-            "maker-when",
-            "receiver-wish-mine"
-          ],
-          "supersedes": []
-        },
-        {
           "name": "price",
           "type": "money",
           "classes": [
@@ -26390,36 +26787,6 @@
           "nullable": false,
           "provenance": [
             "admin-wishes-detail"
-          ],
-          "supersedes": []
-        },
-        {
-          "name": "reasons",
-          "type": "array",
-          "classes": [
-            "array",
-            "unknown"
-          ],
-          "nullable": false,
-          "provenance": [
-            "app-home",
-            "app-wish-detail",
-            "app-wishes",
-            "maker-ask",
-            "maker-ask-voices-gather",
-            "maker-chapters",
-            "maker-cover",
-            "maker-ending",
-            "maker-ending-scene",
-            "maker-opening",
-            "maker-opening-scene",
-            "maker-photos",
-            "maker-sealed",
-            "maker-style",
-            "maker-ticket",
-            "maker-watch",
-            "maker-when",
-            "receiver-wish-mine"
           ],
           "supersedes": []
         },
@@ -26604,19 +26971,6 @@
           "supersedes": []
         },
         {
-          "name": "studio",
-          "type": "string",
-          "classes": [
-            "string"
-          ],
-          "nullable": false,
-          "provenance": [
-            "maker-cover",
-            "maker-name"
-          ],
-          "supersedes": []
-        },
-        {
           "name": "style",
           "type": "string",
           "classes": [
@@ -26718,33 +27072,6 @@
           "supersedes": []
         },
         {
-          "name": "timeline",
-          "type": "array",
-          "classes": [
-            "array",
-            "unknown"
-          ],
-          "nullable": false,
-          "provenance": [
-            "admin-wishes",
-            "admin-wishes-detail",
-            "maker-ask"
-          ],
-          "supersedes": []
-        },
-        {
-          "name": "type",
-          "type": "named",
-          "classes": [
-            "named"
-          ],
-          "nullable": false,
-          "provenance": [
-            "maker-chapters"
-          ],
-          "supersedes": []
-        },
-        {
           "name": "updatedAt",
           "type": "time",
           "classes": [
@@ -26765,30 +27092,6 @@
           "nullable": false,
           "provenance": [
             "DEC-174"
-          ],
-          "supersedes": []
-        },
-        {
-          "name": "voices",
-          "type": "unknown",
-          "classes": [
-            "unknown"
-          ],
-          "nullable": false,
-          "provenance": [
-            "maker-ask"
-          ],
-          "supersedes": []
-        },
-        {
-          "name": "voices.ask",
-          "type": "unknown",
-          "classes": [
-            "unknown"
-          ],
-          "nullable": false,
-          "provenance": [
-            "maker-ask"
           ],
           "supersedes": []
         },
@@ -28393,6 +28696,13 @@
               ]
             },
             {
+              "name": "usePlan",
+              "type": "boolean (optional; true draws one wish from the business's plan in place of a ticket payment)",
+              "from": [
+                "DEC-193"
+              ]
+            },
+            {
               "name": "version",
               "type": "integer (the version the page last read)",
               "from": [
@@ -28414,8 +28724,8 @@
           "response": {
             "entity": "Wish",
             "cardinality": "single",
-            "paymentStart": "required",
-            "note": "{payment, item}: item is the wish, sealed once the verified payment fulfils it (DEC-139)"
+            "paymentStart": "optional",
+            "note": "{payment, item}: payment null when the Pass or the plan covers the seal; item is the wish, sealed once the verified payment fulfils it, or sealed at once when nothing is paid (DEC-192)"
           },
           "sources": [
             {
@@ -28436,6 +28746,8 @@
             "body by DEC-171",
             "body by DEC-173",
             "body by DEC-177",
+            "body by DEC-192",
+            "body by DEC-193",
             "route by DEC-92"
           ]
         },

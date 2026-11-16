@@ -6,7 +6,7 @@ import { IdGenerator } from "../../common/ports/ids.port";
 import type { BankAccount, PostBankAccountsBody } from "../../contracts";
 import { NoticesService } from "../notices/notices.service";
 import { maskNumber } from "./payout-wire";
-import { AccountNotFound, PayoutProviderPort } from "./payout-provider.port";
+import { AccountNotFound, PayoutProviderPort } from "../../common/ports/payout-provider.port";
 
 const NUMBER = /^\d{10}$/;
 const BANK_CODE = /^\d{3,6}$/;

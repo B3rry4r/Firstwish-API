@@ -1,4 +1,4 @@
-import type { Money } from "../../common/money/money";
+import type { Money } from "../money/money";
 
 export interface RefundRequest {
   /** Our refund's id: the provider is asked once for it, however many times we ask. */

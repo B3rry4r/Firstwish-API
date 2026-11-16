@@ -2,7 +2,7 @@ import { createHash, createHmac, timingSafeEqual } from "node:crypto";
 import { ImageSizesPort, ResizeInput } from "../image-sizes.port";
 import { Money } from "../../money/money";
 import { AiWritingPort, WriteRequest, WriteResult } from "../ai.port";
-import { EmailPort, OutgoingEmail, SentEmail } from "../email.port";
+import { EmailPort, OutgoingEmail, ReceivedEmail, SentEmail } from "../email.port";
 import { PaymentsPort, PaymentStatus, StartPayment, StartedPayment, VerifiedPayment } from "../payments.port";
 import { ScreenInput, ScreenResult, UploadScreeningPort } from "../screening.port";
 import { hmacSha512Hex, signatureMatches } from "../signature";
@@ -78,6 +78,13 @@ export class StandinEmail extends EmailPort {
     return Promise.resolve({ id });
   }
 
+  /** Received mail the provider "holds", by its id (a test sets it; fetchReceived reads it, YY2). */
+  readonly received = new Map<string, ReceivedEmail>();
+
+  fetchReceived(id: string): Promise<ReceivedEmail | null> {
+    return Promise.resolve(this.received.get(id) ?? null);
+  }
+
   /** The last email sent to an address. */
   lastTo(to: string): (OutgoingEmail & { id: string }) | undefined {
     return [...this.sent].reverse().find((e) => e.to === to);
@@ -130,6 +137,12 @@ export class StandinStorage extends StoragePort {
   /** Puts an object, as the browser's signed upload would. */
   put(key: string, bytes: Buffer, contentType: string): void {
     this.objects.set(key, { bytes, contentType });
+  }
+
+  /** The server's own write (CA2). */
+  putObject(key: string, bytes: Buffer, contentType: string): Promise<void> {
+    this.put(key, Buffer.from(bytes), contentType);
+    return Promise.resolve();
   }
 
   head(key: string): Promise<StoredObject | null> {

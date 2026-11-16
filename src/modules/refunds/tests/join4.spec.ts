@@ -6,8 +6,8 @@ import { createTestApp, TestApp } from "../../../../test/kit/app";
 import { JobsService } from "../../jobs/jobs.service";
 import { SettlementService } from "../../payments/settlement.service";
 import { makeStaff, seedRoleTable } from "../../staff-accounts/tests/staff-kit";
-import { StandinRefundProvider } from "../standin-refund-provider";
-import { RefundProviderPort } from "../refund-provider.port";
+import { StandinRefundProvider } from "../../../common/ports/adapters/standin-refund-provider";
+import { RefundProviderPort } from "../../../common/ports/refund-provider.port";
 import { FulfilmentRegistry } from "../../payments/fulfilment.registry";
 
 const ROOT = join(__dirname, "../../../..");

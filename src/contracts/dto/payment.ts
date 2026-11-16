@@ -8,6 +8,12 @@ import type { GetAdminPaymentsByReferenceParams, GetAdminPaymentsQuery, GetPayme
 export class GetAdminPaymentsQueryDto implements GetAdminPaymentsQuery {
   @IsOptional()
   @IsString()
+  flag?: string;
+  @IsOptional()
+  @IsString()
+  q?: string;
+  @IsOptional()
+  @IsString()
   cursor?: string;
   @IsOptional()
   @Type(() => Number)

@@ -288,8 +288,6 @@ export class RoyaltiesService {
         amountKobo: num(r.amountKobo),
         month: r.month,
         createdAt: toWireInstant(r.createdAt),
-        rows: 1,
-        total: num(r.amountKobo),
       }),
     );
     const last = page[page.length - 1];

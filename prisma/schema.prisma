@@ -224,6 +224,9 @@ model Business {
   revealLinkByBusiness     RevealLink[]     @relation("RevealLink_businessId")
   shootByBusiness          Shoot[]          @relation("Shoot_businessId")
   approvedDateByBusiness   ApprovedDate[]   @relation("ApprovedDate_businessId")
+  revealAccessByBusiness   RevealAccess[]   @relation("RevealAccess_businessId")
+  revealSendByBusiness     RevealSend[]     @relation("RevealSend_businessId")
+  vaultPeakByBusiness      VaultPeak[]      @relation("VaultPeak_businessId")
 
   @@index([accountId, id])
   @@map("business")
@@ -245,56 +248,63 @@ model ChapterSpec {
 
 /// table: written by E-30, E-32, E-33 (a business's wish for a client)
 model ClientWish {
-  id         String         @id @db.Uuid
-  client     String?
-  createdAt  DateTime       @default(now()) @db.Timestamptz(3)
-  day        DateTime?      @db.Date
-  endsAt     DateTime?      @db.Timestamptz(3)
-  from       String?
-  hearts     Json?
-  key        String?
-  kind       String?
-  madeOwn    Boolean?
-  no         String?
-  occasion   String?
-  openedAt   DateTime?      @db.Timestamptz(3)
-  reveal     Json?
-  sample     Boolean?
-  sentAt     DateTime?      @db.Timestamptz(3)
-  set        ClientWishSet?
-  shoot      String?
-  wish       String?
-  businessId String?        @db.Uuid
-  business   Business?      @relation("ClientWish_businessId", fields: [businessId], references: [id])
+  id                 String         @id @db.Uuid
+  client             String?
+  createdAt          DateTime       @default(now()) @db.Timestamptz(3)
+  day                DateTime?      @db.Date
+  endsAt             DateTime?      @db.Timestamptz(3)
+  from               String?
+  hearts             Json?
+  key                String?
+  kind               String?
+  madeOwn            Boolean?
+  no                 String?
+  occasion           String?
+  openedAt           DateTime?      @db.Timestamptz(3)
+  reveal             Json?
+  sample             Boolean?
+  sentAt             DateTime?      @db.Timestamptz(3)
+  set                ClientWishSet?
+  shoot              String?
+  wish               String?
+  wishId             String?        @db.Uuid
+  businessId         String?        @db.Uuid
+  business           Business?      @relation("ClientWish_businessId", fields: [businessId], references: [id])
+  wishRef            Wish?          @relation("ClientWish_wishId", fields: [wishId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  revealAccessByWish RevealAccess[] @relation("RevealAccess_wishId")
 
+  @@unique([wishId])
   @@index([businessId, id])
+  @@index([wishId, id])
   @@map("client_wish")
 }
 
 /// table: written by E-34, E-35, E-39, E-40 and server:concierge-orders
 model ConciergeOrder {
-  id           String               @id @db.Uuid
-  accountId    String               @db.Uuid
-  businessId   String?              @db.Uuid
-  kind         ConciergeOrderKind
-  count        Int
-  rush         Boolean
-  brief        String
-  namesFileId  String?              @db.Uuid
-  quoteKobo    BigInt?
-  makerId      String?              @db.Uuid
-  status       ConciergeOrderStatus
-  deliverBy    DateTime?            @db.Timestamptz(3)
-  reportFileId String?              @db.Uuid
-  invoiceId    String?              @db.Uuid
-  createdAt    DateTime             @default(now()) @db.Timestamptz(3)
-  updatedAt    DateTime             @updatedAt @db.Timestamptz(3)
-  account      Account              @relation("ConciergeOrder_accountId", fields: [accountId], references: [id])
-  business     Business?            @relation("ConciergeOrder_businessId", fields: [businessId], references: [id])
-  invoice      Invoice?             @relation("ConciergeOrder_invoiceId", fields: [invoiceId], references: [id])
-  maker        StaffAccount?        @relation("ConciergeOrder_makerId", fields: [makerId], references: [id])
-  namesFile    StoredFile?          @relation("ConciergeOrder_namesFileId", fields: [namesFileId], references: [id], onDelete: Restrict, onUpdate: Restrict)
-  reportFile   StoredFile?          @relation("ConciergeOrder_reportFileId", fields: [reportFileId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  id                        String               @id @db.Uuid
+  accountId                 String               @db.Uuid
+  businessId                String?              @db.Uuid
+  kind                      ConciergeOrderKind
+  count                     Int
+  rush                      Boolean
+  brief                     String
+  namesFileId               String?              @db.Uuid
+  quoteKobo                 BigInt?
+  makerId                   String?              @db.Uuid
+  status                    ConciergeOrderStatus
+  deliverBy                 DateTime?            @db.Timestamptz(3)
+  reportFileId              String?              @db.Uuid
+  invoiceId                 String?              @db.Uuid
+  createdAt                 DateTime             @default(now()) @db.Timestamptz(3)
+  updatedAt                 DateTime             @updatedAt @db.Timestamptz(3)
+  account                   Account              @relation("ConciergeOrder_accountId", fields: [accountId], references: [id])
+  business                  Business?            @relation("ConciergeOrder_businessId", fields: [businessId], references: [id])
+  invoice                   Invoice?             @relation("ConciergeOrder_invoiceId", fields: [invoiceId], references: [id])
+  maker                     StaffAccount?        @relation("ConciergeOrder_makerId", fields: [makerId], references: [id])
+  namesFile                 StoredFile?          @relation("ConciergeOrder_namesFileId", fields: [namesFileId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  reportFile                StoredFile?          @relation("ConciergeOrder_reportFileId", fields: [reportFileId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  conciergeOrderExtByOrder  ConciergeOrderExt?   @relation("ConciergeOrderExt_orderId")
+  conciergeOrderWishByOrder ConciergeOrderWish[] @relation("ConciergeOrderWish_orderId")
 
   @@index([accountId, id])
   @@index([businessId, id])
@@ -330,6 +340,7 @@ model Creator {
   royaltyAccrualByCreator  RoyaltyAccrual[]  @relation("RoyaltyAccrual_creatorId")
   styleSubmissionByCreator StyleSubmission[] @relation("StyleSubmission_creatorId")
   bankAccountByCreator     BankAccount[]     @relation("BankAccount_creatorId")
+  royaltyReversalByCreator RoyaltyReversal[] @relation("RoyaltyReversal_creatorId")
 
   @@unique([accountId])
   @@index([accountId, id])
@@ -478,6 +489,7 @@ model Invoice {
   businessId              String?          @db.Uuid
   business                Business?        @relation("Invoice_businessId", fields: [businessId], references: [id])
   conciergeOrderByInvoice ConciergeOrder[] @relation("ConciergeOrder_invoiceId")
+  invoiceLinkByInvoice    InvoiceLink?     @relation("InvoiceLink_invoiceId")
 
   @@index([businessId, id])
   @@map("invoice")
@@ -596,8 +608,8 @@ model MessageDelivery {
 
   @@unique([idempotencyKey])
   @@index([status, id])
+  @@index([providerMessageId])
   @@index([createdAt, id])
-  @@index([providerMessageId], map: "message_delivery_providerMessageId_idx")
   @@map("message_delivery")
 }
 
@@ -728,35 +740,38 @@ model PassMembership {
 
 /// table: written by E-86, E-87, E-88 and server:payments
 model Payment {
-  id                      String           @id @db.Uuid
-  accountId               String?          @db.Uuid
-  businessId              String?          @db.Uuid
-  payerContact            String?
-  purpose                 PaymentPurpose
-  subjectId               String?
-  lines                   Json
-  amountKobo              BigInt
-  currency                PaymentCurrency
-  priceBookVersion        Int
-  status                  PaymentStatus
-  provider                PaymentProvider
-  providerReference       String
-  idempotencyKey          String
-  verifiedAt              DateTime?        @db.Timestamptz(3)
-  channel                 String?
-  feeKobo                 BigInt?
-  createdAt               DateTime         @default(now()) @db.Timestamptz(3)
-  updatedAt               DateTime         @updatedAt @db.Timestamptz(3)
-  options                 Json?
-  fulfilledAt             DateTime?        @db.Timestamptz(3)
-  flags                   String[]         @default([])
-  account                 Account?         @relation("Payment_accountId", fields: [accountId], references: [id])
-  business                Business?        @relation("Payment_businessId", fields: [businessId], references: [id])
-  ledgerEntryByPayment    LedgerEntry[]    @relation("LedgerEntry_paymentId")
-  refundByPayment         Refund[]         @relation("Refund_paymentId")
-  royaltyAccrualByPayment RoyaltyAccrual[] @relation("RoyaltyAccrual_paymentId")
-  passMembershipByPayment PassMembership?  @relation("PassMembership_paymentId")
-  purchaseGrantByPayment  PurchaseGrant[]  @relation("PurchaseGrant_paymentId")
+  id                         String             @id @db.Uuid
+  accountId                  String?            @db.Uuid
+  businessId                 String?            @db.Uuid
+  payerContact               String?
+  purpose                    PaymentPurpose
+  subjectId                  String?
+  lines                      Json
+  amountKobo                 BigInt
+  currency                   PaymentCurrency
+  priceBookVersion           Int
+  status                     PaymentStatus
+  provider                   PaymentProvider
+  providerReference          String
+  idempotencyKey             String
+  verifiedAt                 DateTime?          @db.Timestamptz(3)
+  channel                    String?
+  feeKobo                    BigInt?
+  createdAt                  DateTime           @default(now()) @db.Timestamptz(3)
+  updatedAt                  DateTime           @updatedAt @db.Timestamptz(3)
+  options                    Json?
+  fulfilledAt                DateTime?          @db.Timestamptz(3)
+  flags                      String[]           @default([])
+  account                    Account?           @relation("Payment_accountId", fields: [accountId], references: [id])
+  business                   Business?          @relation("Payment_businessId", fields: [businessId], references: [id])
+  ledgerEntryByPayment       LedgerEntry[]      @relation("LedgerEntry_paymentId")
+  refundByPayment            Refund[]           @relation("Refund_paymentId")
+  royaltyAccrualByPayment    RoyaltyAccrual[]   @relation("RoyaltyAccrual_paymentId")
+  passMembershipByPayment    PassMembership?    @relation("PassMembership_paymentId")
+  purchaseGrantByPayment     PurchaseGrant[]    @relation("PurchaseGrant_paymentId")
+  invoiceLinkByPayment       InvoiceLink?       @relation("InvoiceLink_paymentId")
+  conciergeOrderExtByPayment ConciergeOrderExt? @relation("ConciergeOrderExt_paymentId")
+  royaltyReversalByPayment   RoyaltyReversal[]  @relation("RoyaltyReversal_paymentId")
 
   @@unique([providerReference])
   @@unique([idempotencyKey])
@@ -769,17 +784,19 @@ model Payment {
 
 /// table: written by E-114, E-115 and server:royalties-payouts
 model Payout {
-  id                  String        @id @db.Uuid
-  creatorId           String        @db.Uuid
-  month               String
-  amountKobo          BigInt
-  status              PayoutStatus
-  providerReference   String?
-  bankAccountId       String        @db.Uuid
-  createdAt           DateTime      @default(now()) @db.Timestamptz(3)
-  bankAccount         BankAccount   @relation("Payout_bankAccountId", fields: [bankAccountId], references: [id])
-  creator             Creator       @relation("Payout_creatorId", fields: [creatorId], references: [id])
-  ledgerEntryByPayout LedgerEntry[] @relation("LedgerEntry_payoutId")
+  id                   String        @id @db.Uuid
+  creatorId            String        @db.Uuid
+  month                String
+  amountKobo           BigInt
+  status               PayoutStatus
+  providerReference    String?
+  bankAccountId        String        @db.Uuid
+  createdAt            DateTime      @default(now()) @db.Timestamptz(3)
+  paidByHandAt         DateTime?     @db.Timestamptz(3)
+  bankAccount          BankAccount   @relation("Payout_bankAccountId", fields: [bankAccountId], references: [id])
+  creator              Creator       @relation("Payout_creatorId", fields: [creatorId], references: [id])
+  ledgerEntryByPayout  LedgerEntry[] @relation("LedgerEntry_payoutId")
+  payoutDetailByPayout PayoutDetail? @relation("PayoutDetail_payoutId")
 
   @@unique([creatorId, month])
   @@unique([providerReference])
@@ -980,6 +997,7 @@ model Refund {
   providerReference   String?
   createdAt           DateTime      @default(now()) @db.Timestamptz(3)
   updatedAt           DateTime      @updatedAt @db.Timestamptz(3)
+  note                String?
   payment             Payment       @relation("Refund_paymentId", fields: [paymentId], references: [id])
   requestedByRef      StaffAccount  @relation("Refund_requestedBy", fields: [requestedBy], references: [id])
   approvedByRef       StaffAccount? @relation("Refund_approvedBy", fields: [approvedBy], references: [id])
@@ -1049,11 +1067,13 @@ model Report {
 
 /// table: written by E-153 (the proofs or finals link a business copies)
 model RevealLink {
-  id         String         @id @db.Uuid
-  link       String?
-  set        RevealLinkSet?
-  businessId String?        @db.Uuid
-  business   Business?      @relation("RevealLink_businessId", fields: [businessId], references: [id])
+  id                 String         @id @db.Uuid
+  link               String?
+  set                RevealLinkSet?
+  businessId         String?        @db.Uuid
+  business           Business?      @relation("RevealLink_businessId", fields: [businessId], references: [id])
+  revealAccessByLink RevealAccess?  @relation("RevealAccess_linkId")
+  revealVisitByLink  RevealVisit[]  @relation("RevealVisit_linkId")
 
   @@index([businessId, id])
   @@map("reveal_link")
@@ -1070,20 +1090,24 @@ model RoleAccess {
 
 /// table: written by server:royalties-payouts on each paid wish in a creator's style
 model RoyaltyAccrual {
-  id         String              @id @db.Uuid
-  creatorId  String              @db.Uuid
-  styleSlug  String
-  paymentId  String              @db.Uuid
-  basis      RoyaltyAccrualBasis
-  amountKobo BigInt
-  month      String
-  createdAt  DateTime            @default(now()) @db.Timestamptz(3)
-  creator    Creator             @relation("RoyaltyAccrual_creatorId", fields: [creatorId], references: [id])
-  payment    Payment             @relation("RoyaltyAccrual_paymentId", fields: [paymentId], references: [id])
+  id                       String              @id @db.Uuid
+  creatorId                String              @db.Uuid
+  styleSlug                String
+  paymentId                String              @db.Uuid
+  basis                    RoyaltyAccrualBasis
+  amountKobo               BigInt
+  month                    String
+  createdAt                DateTime            @default(now()) @db.Timestamptz(3)
+  wishId                   String?             @db.Uuid
+  creator                  Creator             @relation("RoyaltyAccrual_creatorId", fields: [creatorId], references: [id])
+  payment                  Payment             @relation("RoyaltyAccrual_paymentId", fields: [paymentId], references: [id])
+  wish                     Wish?               @relation("RoyaltyAccrual_wishId", fields: [wishId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  royaltyReversalByAccrual RoyaltyReversal?    @relation("RoyaltyReversal_accrualId")
 
-  @@unique([paymentId, creatorId])
+  @@unique([paymentId, creatorId, wishId])
   @@index([creatorId, id])
   @@index([paymentId, id])
+  @@index([wishId, id])
   @@map("royalty_accrual")
 }
 
@@ -1176,21 +1200,22 @@ model Share {
 
 /// table: written by E-168, E-169, E-171, E-172 (a business's Vault shoot)
 model Shoot {
-  id           String    @id @db.Uuid
-  client       String?
-  createdAt    DateTime  @default(now()) @db.Timestamptz(3)
-  date         DateTime? @db.Date
-  files        Json?
-  finals       Json?
-  finalsReveal Json?
-  hearts       Json?
-  proofs       Json?
-  proofsReveal Json?
-  set          Json?
-  shoot        String?
-  title        String?
-  businessId   String?   @db.Uuid
-  business     Business? @relation("Shoot_businessId", fields: [businessId], references: [id])
+  id                  String         @id @db.Uuid
+  client              String?
+  createdAt           DateTime       @default(now()) @db.Timestamptz(3)
+  date                DateTime?      @db.Date
+  files               Json?
+  finals              Json?
+  finalsReveal        Json?
+  hearts              Json?
+  proofs              Json?
+  proofsReveal        Json?
+  set                 Json?
+  shoot               String?
+  title               String?
+  businessId          String?        @db.Uuid
+  business            Business?      @relation("Shoot_businessId", fields: [businessId], references: [id])
+  revealAccessByShoot RevealAccess[] @relation("RevealAccess_shootId")
 
   @@index([businessId, id])
   @@map("shoot")
@@ -1290,6 +1315,7 @@ model StudioStyle {
   status      String?
   submittedAt DateTime? @db.Timestamptz(3)
   document    Json
+  version     Int       @default(0)
   accountId   String?   @db.Uuid
   account     Account?  @relation("StudioStyle_accountId", fields: [accountId], references: [id])
 
@@ -1356,19 +1382,20 @@ model StyleLevel {
 
 /// table: written by E-201, E-202 and server:style-review (DEC-65)
 model StyleSubmission {
-  id         String                   @id @db.Uuid
-  styleId    String                   @db.Uuid
-  creatorId  String                   @db.Uuid
-  version    Int
-  checks     Json
-  status     StyleSubmissionStatus
-  level      StyleSubmissionLevel?
-  reviewedBy String?
-  note       String?
-  createdAt  DateTime                 @default(now()) @db.Timestamptz(3)
-  decision   StyleSubmissionDecision?
-  creator    Creator                  @relation("StyleSubmission_creatorId", fields: [creatorId], references: [id])
-  style      Style                    @relation("StyleSubmission_styleId", fields: [styleId], references: [id])
+  id                                  String                   @id @db.Uuid
+  styleId                             String                   @db.Uuid
+  creatorId                           String                   @db.Uuid
+  version                             Int
+  checks                              Json
+  status                              StyleSubmissionStatus
+  level                               StyleSubmissionLevel?
+  reviewedBy                          String?
+  note                                String?
+  createdAt                           DateTime                 @default(now()) @db.Timestamptz(3)
+  decision                            StyleSubmissionDecision?
+  creator                             Creator                  @relation("StyleSubmission_creatorId", fields: [creatorId], references: [id])
+  style                               Style                    @relation("StyleSubmission_styleId", fields: [styleId], references: [id])
+  styleSubmissionSnapshotBySubmission StyleSubmissionSnapshot? @relation("StyleSubmissionSnapshot_submissionId")
 
   @@index([creatorId, id])
   @@index([styleId, id])
@@ -1403,6 +1430,7 @@ model SupportThread {
   updatedAt              DateTime              @updatedAt @db.Timestamptz(3)
   body                   String?
   text                   String?
+  name                   String?
   account                Account?              @relation("SupportThread_accountId", fields: [accountId], references: [id])
   assignee               StaffAccount?         @relation("SupportThread_assigneeId", fields: [assigneeId], references: [id])
   supportMessageByThread SupportMessage[]      @relation("SupportMessage_threadId")
@@ -1477,75 +1505,60 @@ model WebhookEvent {
 
 /// table: written by E-220, E-222..E-233 and server:wish-lifecycle; content is a document column; content is JSON (DEC-64 typed WishData, DEC-82 Wish.content.details object) though the registry's top-level type reads string
 model Wish {
-  id                   String           @id @db.Uuid
-  accountId            String           @db.Uuid
-  businessId           String?          @db.Uuid
-  status               WishStatus
-  ticket               WishTicket?
-  kind                 String
-  occasion             String
-  styleSlug            String
-  opensAt              DateTime?        @db.Timestamptz(3)
-  timeZone             String
-  weddingDate          DateTime?        @db.Date
-  sealedAt             DateTime?        @db.Timestamptz(3)
-  openedAt             DateTime?        @db.Timestamptz(3)
-  endsAt               DateTime?        @db.Timestamptz(3)
-  restingSince         DateTime?        @db.Timestamptz(3)
-  keptUntil            DateTime?        @db.Timestamptz(3)
-  removedAt            DateTime?        @db.Timestamptz(3)
-  eraseAfter           DateTime?        @db.Timestamptz(3)
-  erasedAt             DateTime?        @db.Timestamptz(3)
-  keptBy               WishKeptBy?
-  createdAt            DateTime         @default(now()) @db.Timestamptz(3)
-  updatedAt            DateTime         @updatedAt @db.Timestamptz(3)
-  adds                 Json?
-  blessing             Json?
-  call                 String?
-  captions             Json?
-  chapter              Json?
-  content              Json?
-  credits              Json?
-  details              Json?
-  effect               Json?
-  finale               Json?
-  keep                 WishKeep?
-  letter               String?
-  links                Json?
-  makerNote            Json?
-  memory               Json?
-  name                 String?
-  no                   String?
-  note                 String?
-  off                  Boolean?
-  photos               Json?
-  reasons              Json?
-  step                 Int?
-  studio               String?
-  timeline             Json?
-  type                 Json?
-  version              Int              @default(0)
-  voices               Json?
-  passcodeHash         String?
-  account              Account          @relation("Wish_accountId", fields: [accountId], references: [id])
-  business             Business?        @relation("Wish_businessId", fields: [businessId], references: [id])
-  aiRequestByWish      AiRequest[]      @relation("AiRequest_wishId")
-  eventByWish          Event[]          @relation("Event_wishId")
-  noticeByWish         Notice[]         @relation("Notice_wishId")
-  publishRequestByWish PublishRequest[] @relation("PublishRequest_wishId")
-  qrCardByWish         QrCard[]         @relation("QrCard_wishId")
-  renderJobByWish      RenderJob[]      @relation("RenderJob_wishId")
-  reportByWish         Report[]         @relation("Report_wishId")
-  voiceNoteByWish      VoiceNote[]      @relation("VoiceNote_wishId")
-  wishLinkByWish       WishLink[]       @relation("WishLink_wishId")
-  wishTransitionByWish WishTransition[] @relation("WishTransition_wishId")
-  publishedWishByWish  PublishedWish[]  @relation("PublishedWish_wishId")
-  wishOpenByWish       WishOpen[]       @relation("WishOpen_wishId")
-  wishFileByWish       WishFile[]       @relation("WishFile_wishId")
-  purchaseGrantByWish  PurchaseGrant[]  @relation("PurchaseGrant_wishId")
-  wishReactionByWish   WishReaction[]   @relation("WishReaction_wishId")
-  wishFavouriteByWish  WishFavourite[]  @relation("WishFavourite_wishId")
-  passDrawByWish       PassDraw[]       @relation("PassDraw_wishId")
+  id                       String              @id @db.Uuid
+  accountId                String              @db.Uuid
+  businessId               String?             @db.Uuid
+  status                   WishStatus
+  ticket                   WishTicket?
+  kind                     String
+  occasion                 String
+  styleSlug                String
+  opensAt                  DateTime?           @db.Timestamptz(3)
+  timeZone                 String
+  weddingDate              DateTime?           @db.Date
+  sealedAt                 DateTime?           @db.Timestamptz(3)
+  openedAt                 DateTime?           @db.Timestamptz(3)
+  endsAt                   DateTime?           @db.Timestamptz(3)
+  restingSince             DateTime?           @db.Timestamptz(3)
+  keptUntil                DateTime?           @db.Timestamptz(3)
+  removedAt                DateTime?           @db.Timestamptz(3)
+  eraseAfter               DateTime?           @db.Timestamptz(3)
+  erasedAt                 DateTime?           @db.Timestamptz(3)
+  keptBy                   WishKeptBy?
+  createdAt                DateTime            @default(now()) @db.Timestamptz(3)
+  updatedAt                DateTime            @updatedAt @db.Timestamptz(3)
+  adds                     Json?
+  content                  Json?
+  keep                     WishKeep?
+  makerNote                Json?
+  name                     String?
+  no                       String?
+  step                     Int?
+  version                  Int                 @default(0)
+  passcodeHash             String?
+  account                  Account             @relation("Wish_accountId", fields: [accountId], references: [id])
+  business                 Business?           @relation("Wish_businessId", fields: [businessId], references: [id])
+  aiRequestByWish          AiRequest[]         @relation("AiRequest_wishId")
+  eventByWish              Event[]             @relation("Event_wishId")
+  noticeByWish             Notice[]            @relation("Notice_wishId")
+  publishRequestByWish     PublishRequest[]    @relation("PublishRequest_wishId")
+  qrCardByWish             QrCard[]            @relation("QrCard_wishId")
+  renderJobByWish          RenderJob[]         @relation("RenderJob_wishId")
+  reportByWish             Report[]            @relation("Report_wishId")
+  voiceNoteByWish          VoiceNote[]         @relation("VoiceNote_wishId")
+  wishLinkByWish           WishLink[]          @relation("WishLink_wishId")
+  wishTransitionByWish     WishTransition[]    @relation("WishTransition_wishId")
+  clientWishByWish         ClientWish?         @relation("ClientWish_wishId")
+  publishedWishByWish      PublishedWish[]     @relation("PublishedWish_wishId")
+  royaltyAccrualByWish     RoyaltyAccrual[]    @relation("RoyaltyAccrual_wishId")
+  wishOpenByWish           WishOpen[]          @relation("WishOpen_wishId")
+  wishFileByWish           WishFile[]          @relation("WishFile_wishId")
+  purchaseGrantByWish      PurchaseGrant[]     @relation("PurchaseGrant_wishId")
+  wishReactionByWish       WishReaction[]      @relation("WishReaction_wishId")
+  wishFavouriteByWish      WishFavourite[]     @relation("WishFavourite_wishId")
+  passDrawByWish           PassDraw[]          @relation("PassDraw_wishId")
+  takeDownCodeByWish       TakeDownCode[]      @relation("TakeDownCode_wishId")
+  conciergeOrderWishByWish ConciergeOrderWish? @relation("ConciergeOrderWish_wishId")
 
   @@unique([no])
   @@index([accountId, id])
@@ -1723,6 +1736,231 @@ model PassDraw {
   @@map("pass_draw")
 }
 
+/// table: OO4 (B17): the invoice number counter, one row (id 1), taken with a row lock inside the settle transaction so numbers run in order with no gaps; a config table, no contract shape
+model InvoiceCounter {
+  id   Int @id
+  last Int
+
+  @@map("invoice_counter")
+}
+
+/// table: OO4 (B17): what ties an invoice to the payment it came from, its period and whether a refund voided it; one row per invoice
+model InvoiceLink {
+  invoiceId   String    @id @db.Uuid
+  paymentId   String    @db.Uuid
+  periodStart DateTime? @db.Timestamptz(3)
+  periodEnd   DateTime? @db.Timestamptz(3)
+  voidedAt    DateTime? @db.Timestamptz(3)
+  invoice     Invoice   @relation("InvoiceLink_invoiceId", fields: [invoiceId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  payment     Payment   @relation("InvoiceLink_paymentId", fields: [paymentId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@unique([paymentId])
+  @@map("invoice_link")
+}
+
+/// table: QQ6 (B13): the staff reason for one decision (a publish request or a report), read back by the owner (decline) and the staff queues; the subject is one of two tables, so no foreign key
+model ModerationDecision {
+  subject   String
+  subjectId String   @db.Uuid
+  reason    String
+  decidedAt DateTime @db.Timestamptz(3)
+
+  @@id([subject, subjectId])
+  @@map("moderation_decision")
+}
+
+/// table: QQ6 (B13): the report limit per address, counted in the database: a key (an HMAC of the address, never the address) and the time
+model ReportHit {
+  id     String   @id @db.Uuid
+  bucket String
+  key    String
+  at     DateTime @db.Timestamptz(3)
+
+  @@index([bucket, key, at])
+  @@map("report_hit")
+}
+
+/// table: QQ6 (B13): 'This is me, take it down': the code mailed to the address before a report counts; short lived, removed once used or expired
+model TakeDownCode {
+  id        String    @id @db.Uuid
+  wishId    String    @db.Uuid
+  email     String
+  codeHash  String
+  tries     Int       @default(0)
+  expiresAt DateTime  @db.Timestamptz(3)
+  usedAt    DateTime? @db.Timestamptz(3)
+  createdAt DateTime  @db.Timestamptz(3)
+  wish      Wish      @relation("TakeDownCode_wishId", fields: [wishId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@index([wishId, email])
+  @@map("take_down_code")
+}
+
+/// table: CA2 (B19): a Concierge order's own price (kobo, fixed when it is placed), its payment and its times
+model ConciergeOrderExt {
+  orderId     String         @id @db.Uuid
+  amountKobo  BigInt
+  listKobo    BigInt
+  paymentId   String?        @db.Uuid
+  paidAt      DateTime?      @db.Timestamptz(3)
+  dueAt       DateTime?      @db.Timestamptz(3)
+  givenAt     DateTime?      @db.Timestamptz(3)
+  deliveredAt DateTime?      @db.Timestamptz(3)
+  cancelledAt DateTime?      @db.Timestamptz(3)
+  createdAt   DateTime       @default(now()) @db.Timestamptz(3)
+  order       ConciergeOrder @relation("ConciergeOrderExt_orderId", fields: [orderId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  payment     Payment?       @relation("ConciergeOrderExt_paymentId", fields: [paymentId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@unique([paymentId])
+  @@index([dueAt])
+  @@map("concierge_order_ext")
+}
+
+/// table: CA2 (B19): the wishes a maker delivered for an order (a wish is delivered under one order only)
+model ConciergeOrderWish {
+  orderId     String         @db.Uuid
+  wishId      String         @db.Uuid
+  deliveredAt DateTime       @default(now()) @db.Timestamptz(3)
+  order       ConciergeOrder @relation("ConciergeOrderWish_orderId", fields: [orderId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  wish        Wish           @relation("ConciergeOrderWish_wishId", fields: [wishId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@id([orderId, wishId])
+  @@unique([wishId])
+  @@index([wishId])
+  @@map("concierge_order_wish")
+}
+
+/// table: YY3 (B20): an address that complained: no more email goes to it; keyed by the address's keyed hash
+model EmailSuppression {
+  hash      String   @id
+  reason    String
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+
+  @@map("email_suppression")
+}
+
+/// table: YY3 (B20): contact-page and inbound-mail intake: one row per (kind, key, UTC day), raised by one conditional statement so two requests at once cannot both pass the last place
+model SupportIntakeCount {
+  kind  String
+  key   String
+  day   DateTime @db.Date
+  count Int
+
+  @@id([kind, key, day])
+  @@index([day])
+  @@map("support_intake_count")
+}
+
+/// table: WW4 (B16): what the payout table has no column for: when it was handed to the provider and when it was paid, why it failed, the staff note of a manual paid, and the short lease that keeps two runs from sending one payout at once
+model PayoutDetail {
+  payoutId      String    @id @db.Uuid
+  sentAt        DateTime? @db.Timestamptz(3)
+  paidAt        DateTime? @db.Timestamptz(3)
+  failedAt      DateTime? @db.Timestamptz(3)
+  failureReason String?
+  note          String?
+  sendingUntil  DateTime? @db.Timestamptz(3)
+  payout        Payout    @relation("PayoutDetail_payoutId", fields: [payoutId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@map("payout_detail")
+}
+
+/// table: WW4 (B16): the negative row of a refunded payment's royalty: one row per accrual, never a delete of the accrual
+model RoyaltyReversal {
+  id         String         @id @db.Uuid
+  accrualId  String         @db.Uuid
+  creatorId  String         @db.Uuid
+  paymentId  String         @db.Uuid
+  amountKobo BigInt
+  month      String
+  createdAt  DateTime       @db.Timestamptz(3)
+  accrual    RoyaltyAccrual @relation("RoyaltyReversal_accrualId", fields: [accrualId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  creator    Creator        @relation("RoyaltyReversal_creatorId", fields: [creatorId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  payment    Payment        @relation("RoyaltyReversal_paymentId", fields: [paymentId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@unique([accrualId])
+  @@index([creatorId, id])
+  @@index([paymentId])
+  @@map("royalty_reversal")
+}
+
+/// table: XX4 (B15): the frozen draft of each submission (T-63: the checks and the reviewer read the snapshot, never the live draft); accountId is a plain id (no relation, so the table is not an owned table of the erase gate)
+model StyleSubmissionSnapshot {
+  id           String          @id @db.Uuid
+  submissionId String          @db.Uuid
+  accountId    String          @db.Uuid
+  document     Json
+  used         String
+  createdAt    DateTime        @default(now()) @db.Timestamptz(3)
+  submission   StyleSubmission @relation("StyleSubmissionSnapshot_submissionId", fields: [submissionId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@unique([submissionId])
+  @@index([accountId])
+  @@map("style_submission_snapshot")
+}
+
+/// table: EA1 (B18): what a reveal link holds beyond reveal_link: its code, passcode, wrong tries, end, switched off, the chosen files; the one-per-client-wish rule is a partial unique index kept in SQL
+model RevealAccess {
+  linkId       String      @id @db.Uuid
+  businessId   String      @db.Uuid
+  shootId      String?     @db.Uuid
+  wishId       String?     @db.Uuid
+  setName      String      @map("set")
+  code         String
+  fileIds      Json        @default("[]")
+  passcodeHash String?
+  tries        Int         @default(0)
+  lockedUntil  DateTime?   @db.Timestamptz(3)
+  endsAt       DateTime?   @db.Timestamptz(3)
+  offAt        DateTime?   @db.Timestamptz(3)
+  createdAt    DateTime    @default(now()) @db.Timestamptz(3)
+  link         RevealLink  @relation("RevealAccess_linkId", fields: [linkId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  business     Business    @relation("RevealAccess_businessId", fields: [businessId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  shoot        Shoot?      @relation("RevealAccess_shootId", fields: [shootId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  wish         ClientWish? @relation("RevealAccess_wishId", fields: [wishId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+
+  @@unique([code])
+  @@index([businessId])
+  @@index([shootId])
+  @@map("reveal_access")
+}
+
+/// table: EA1 (B18): one row per visit of a reveal link, holding a keyed hash of the visitor and never the visitor (the table is named reveal_play)
+model RevealVisit {
+  id     String     @id @db.Uuid
+  linkId String     @db.Uuid
+  visit  String
+  at     DateTime   @db.Timestamptz(3)
+  link   RevealLink @relation("RevealVisit_linkId", fields: [linkId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@unique([linkId, visit])
+  @@map("reveal_play")
+}
+
+/// table: EA1 (B18): the sends of a reveal that carried an Idempotency-Key, so a repeat sends nothing twice
+model RevealSend {
+  id         String   @id @db.Uuid
+  businessId String   @db.Uuid
+  key        String
+  wishId     String   @db.Uuid
+  createdAt  DateTime @default(now()) @db.Timestamptz(3)
+  business   Business @relation("RevealSend_businessId", fields: [businessId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@unique([businessId, key])
+  @@map("reveal_send")
+}
+
+/// table: EA1 (B18): the most a business's Vault held in a month, in bytes (the peak the monthly billing reads)
+model VaultPeak {
+  businessId String   @db.Uuid
+  month      String
+  bytes      BigInt
+  business   Business @relation("VaultPeak_businessId", fields: [businessId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@id([businessId, month])
+  @@map("vault_peak")
+}
+
 enum AccountSides {
   person
   creator
@@ -1799,6 +2037,7 @@ enum ConciergeOrderStatus {
   brief
   quoted
   paid
+  given
   making
   delivered
   cancelled
@@ -1835,28 +2074,29 @@ enum ExternalIdentityProvider {
 }
 
 enum JobType {
-  open_wish          @map("open-wish")
-  rest_wish          @map("rest-wish")
-  erase_wish         @map("erase-wish")
-  restore_window_end @map("restore-window-end")
-  erase_now          @map("erase-now")
-  send_notice        @map("send-notice")
-  send_message       @map("send-message")
-  make_image_sizes   @map("make-image-sizes")
-  screen_file        @map("screen-file")
-  render_video       @map("render-video")
-  make_qr_card       @map("make-qr-card")
-  abandon_payment    @map("abandon-payment")
-  reconcile_ledger   @map("reconcile-ledger")
-  pass_period        @map("pass-period")
-  plan_period        @map("plan-period")
-  creator_period     @map("creator-period")
-  vault_billing      @map("vault-billing")
-  royalty_accrual    @map("royalty-accrual")
-  payout_run         @map("payout-run")
-  style_level_review @map("style-level-review")
-  upload_cleanup     @map("upload-cleanup")
-  clean_link_hits    @map("clean-link-hits")
+  open_wish              @map("open-wish")
+  rest_wish              @map("rest-wish")
+  erase_wish             @map("erase-wish")
+  restore_window_end     @map("restore-window-end")
+  erase_now              @map("erase-now")
+  send_notice            @map("send-notice")
+  send_message           @map("send-message")
+  make_image_sizes       @map("make-image-sizes")
+  screen_file            @map("screen-file")
+  render_video           @map("render-video")
+  make_qr_card           @map("make-qr-card")
+  abandon_payment        @map("abandon-payment")
+  reconcile_ledger       @map("reconcile-ledger")
+  pass_period            @map("pass-period")
+  plan_period            @map("plan-period")
+  creator_period         @map("creator-period")
+  vault_billing          @map("vault-billing")
+  royalty_accrual        @map("royalty-accrual")
+  payout_run             @map("payout-run")
+  style_level_review     @map("style-level-review")
+  upload_cleanup         @map("upload-cleanup")
+  clean_link_hits        @map("clean-link-hits")
+  check_style_submission @map("check-style-submission")
 }
 
 enum JobStatus {
@@ -1928,6 +2168,8 @@ enum MessageDeliveryStatus {
   delivered
   failed
   dropped
+  bounced
+  complained
 }
 
 enum NoticeKind {

@@ -97,6 +97,10 @@ export class S3Storage extends StoragePort {
     await this.client.send(new DeleteObjectCommand({ Bucket: this.config.bucket, Key: key }));
   }
 
+  async putObject(key: string, bytes: Buffer, contentType: string): Promise<void> {
+    await this.client.send(new PutObjectCommand({ Bucket: this.config.bucket, Key: key, Body: bytes, ContentType: contentType, ContentLength: bytes.length }));
+  }
+
   async copy(fromKey: string, toKey: string): Promise<void> {
     const source = `${this.config.bucket}/${fromKey.split("/").map(encodeURIComponent).join("/")}`;
     await this.client.send(new CopyObjectCommand({ Bucket: this.config.bucket, Key: toKey, CopySource: source }));

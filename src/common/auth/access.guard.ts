@@ -7,8 +7,10 @@ import type { Env } from "../env/env";
 import { AppError } from "../errors/app-error";
 import { PaymentsPort } from "../ports/payments.port";
 import { assertCookieOrigin, COOKIE_ORIGIN } from "./cookie-origin";
+import { checkSvix } from "./svix";
+import { Clock } from "../ports/clock.port";
 import { ACCESS, Access } from "./decorators";
-import { AccessTokenVerifier, Principal } from "./principal";
+import { AccessTokenVerifier, Principal, WebhookProvider } from "./principal";
 
 type Req = Request & { principal?: Principal; rawBody?: Buffer };
 
@@ -28,6 +30,7 @@ export class AccessGuard implements CanActivate {
     private readonly reflector: Reflector,
     private readonly tokens: AccessTokenVerifier,
     private readonly payments: PaymentsPort,
+    private readonly clock: Clock,
     @Inject(ENV) private readonly env: Env,
   ) {}
 
@@ -57,6 +60,15 @@ export class AccessGuard implements CanActivate {
         if (access.sides?.length && !access.sides.some((s) => p.sides.includes(s))) throw AppError.forbidden();
         return true;
       }
+      case "userOrStaff": {
+        const p = await this.principal(req);
+        if (p.kind === "user") {
+          if (access.sides?.length && !access.sides.some((s) => p.sides.includes(s))) throw AppError.forbidden();
+          return true;
+        }
+        if (!p.roles.includes("owner") && !access.roles.some((r) => p.roles.includes(r))) throw AppError.forbidden();
+        return true;
+      }
       case "staff": {
         const p = await this.principal(req);
         if (p.kind !== "staff") throw AppError.forbidden();
@@ -76,8 +88,22 @@ export class AccessGuard implements CanActivate {
     return p;
   }
 
-  private checkWebhook(provider: "paystack", req: Req): boolean {
+  private checkWebhook(provider: WebhookProvider, req: Req): boolean {
     const raw = req.rawBody;
+    if (provider === "resend") {
+      // YY3: Resend signs with svix. No secret (or the bare "whsec_" prefix) is 503, never "let through"; then the signature over the
+      // raw body and the timestamp (5 minutes either way, read from the clock port).
+      const secret = (this.env.RESEND_WEBHOOK_SECRET ?? "").trim();
+      if (!secret || secret === "whsec_") throw new AppError(503, "webhook_not_configured", "The email webhook has no signing secret.");
+      if (!raw) throw AppError.unauthorized("The signature does not match.");
+      const h = (name: string): string | undefined => {
+        const v = req.headers[name];
+        return typeof v === "string" ? v : undefined;
+      };
+      const check = checkSvix(secret, raw, { id: h("svix-id"), timestamp: h("svix-timestamp"), signature: h("svix-signature") }, Math.floor(this.clock.now().getTime() / 1000));
+      if (check === "ok") return true;
+      throw AppError.unauthorized(check === "old_timestamp" ? "The event is too old." : "The signature does not match.");
+    }
     if (provider === "paystack") {
       const sig = req.headers["x-paystack-signature"];
       if (raw && this.payments.verifySignature(raw, typeof sig === "string" ? sig : undefined)) return true;

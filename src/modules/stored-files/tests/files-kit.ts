@@ -71,10 +71,10 @@ export async function makeBusiness(db: PrismaService, accountId: string, over: {
   return id;
 }
 
-export async function makeWish(db: PrismaService, accountId: string, status: WishStatus = "draft", ticket: WishTicket | null = "keepsake", photos?: unknown): Promise<string> {
+export async function makeWish(db: PrismaService, accountId: string, status: WishStatus = "draft", ticket: WishTicket | null = "keepsake"): Promise<string> {
   const id = ids.next();
   await db.wish.create({
-    data: { id, accountId, status, ticket, kind: "birthday", occasion: "birthday", styleSlug: "classic", timeZone: "Africa/Lagos", photos: photos === undefined ? undefined : (photos as object) },
+    data: { id, accountId, status, ticket, kind: "birthday", occasion: "birthday", styleSlug: "classic", timeZone: "Africa/Lagos" },
   });
   return id;
 }

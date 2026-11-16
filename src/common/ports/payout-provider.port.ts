@@ -1,4 +1,4 @@
-import type { Money } from "../../common/money/money";
+import type { Money } from "../money/money";
 
 export interface ResolveAccount {
   bankCode: string;

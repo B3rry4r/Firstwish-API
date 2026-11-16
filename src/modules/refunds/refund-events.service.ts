@@ -65,13 +65,14 @@ export class RefundEvents implements RefundEventSink {
       return { outcome: done ? "already" : "unknown_refund" };
     }
     if (type === "refund.failed") {
-      await tx.refund.update({ where: { id: refund.id }, data: { status: "failed", updatedAt: now } });
+      const why = refusalText(str(data.failure_reason) || "The provider could not complete the refund.");
+      await tx.refund.update({ where: { id: refund.id }, data: { status: "failed", note: why, updatedAt: now } });
       await this.audit.write(tx, {
         actor: { type: "system", id: null, requestId: eventRowId },
         section: SECTION,
         action: "refund.failed",
         target: { type: "refund", id: refund.id },
-        reason: refusalText(str(data.failure_reason) || "The provider could not complete the refund."),
+        reason: why,
         changedFields: ["status"],
       });
       return { outcome: "refund_failed", detail: { refundId: refund.id } };
@@ -94,12 +95,14 @@ export class RefundEvents implements RefundEventSink {
     await tx.payment.update({ where: { id: paymentId }, data: { status: "refunded", flags: payment.flags.filter((f) => f !== "refund_due" && f !== "refund_amount_mismatch"), updatedAt: now } });
     const kept = revoked.filter((r) => !NOTHING_KEPT.has(r.result));
     if (kept.length) {
+      const keptText = refusalText(`Money went back; kept: ${kept.map((k) => `${k.sku} (${k.result})`).join(", ")}`);
+      await tx.refund.update({ where: { id: refund.id }, data: { note: keptText } });
       await this.audit.write(tx, {
         actor: { type: "system", id: null, requestId: eventRowId },
         section: SECTION,
         action: "refund.kept",
         target: { type: "refund", id: refund.id },
-        reason: refusalText(`Money went back; kept: ${kept.map((k) => `${k.sku} (${k.result})`).join(", ")}`),
+        reason: keptText,
         changedFields: ["status"],
       });
     }

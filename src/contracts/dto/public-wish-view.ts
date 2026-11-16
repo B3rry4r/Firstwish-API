@@ -43,6 +43,9 @@ export class PostWBySlugReactionParamsDto implements PostWBySlugReactionParams {
 
 /** E-133 POST /v1/w/:slug/take-down (body). */
 export class PostWBySlugTakeDownBodyDto implements PostWBySlugTakeDownBody {
+  @IsOptional()
+  @IsString()
+  code?: string;
   @IsString()
   contact!: string;
 }

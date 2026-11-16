@@ -6,7 +6,8 @@ import { IdGenerator } from "../../common/ports/ids.port";
 import { decodeCursor, Page, toPage } from "../../common/pagination/cursor";
 import { toWireInstant } from "../../common/time/time";
 import type { Notice, NoticePrefs } from "../../contracts";
-import { isTemplateKey, maskEmail, MUTABLE_KEYS, TEMPLATES, TemplateKey } from "./catalog";
+import { maskEmail } from "../../common/normalise/mask-email";
+import { isTemplateKey, MUTABLE_KEYS, TEMPLATES, TemplateKey } from "./catalog";
 
 const KIND_WIRE: Record<string, Notice["kind"]> = {
   opened: "opened", term_ends_soon: "term-ends-soon", anniversary: "anniversary", date_reminder_7d: "date-reminder-7d", date_reminder_1d: "date-reminder-1d",

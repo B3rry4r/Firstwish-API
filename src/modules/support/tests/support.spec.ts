@@ -1,3 +1,5 @@
+import { ENV } from "../../../common/env/env.module";
+import type { Env } from "../../../common/env/env";
 import { createHash } from "node:crypto";
 import { PrismaService } from "../../../common/db/prisma.service";
 import { UuidV7Maker } from "../../../common/ids/uuidv7";
@@ -7,7 +9,7 @@ import { NoticesService } from "../../notices/notices.service";
 import { EmailSuppression } from "../../notices/suppression";
 import { makeStaff, seedRoleTable } from "../../staff-accounts/tests/staff-kit";
 import { replyToken } from "../rules";
-import { signSvix } from "../svix";
+import { signSvix } from "../../../common/auth/svix";
 import { SupportService } from "../support.service";
 
 const NOW = new Date("2030-05-10T09:00:00.000Z");
@@ -217,9 +219,10 @@ describe("support (contract)", () => {
       expect(JSON.stringify(stored.payload)).not.toContain(a);
     });
     it("no signing secret: refused (503), never let through", async () => {
-      delete process.env.RESEND_WEBHOOK_SECRET;
+      const env = t.app.get<Env>(ENV);
+      delete env.RESEND_WEBHOOK_SECRET;
       const r = await event("email.received", { from: address(), to: ["x@example.test"], text: "t" });
-      process.env.RESEND_WEBHOOK_SECRET = SECRET;
+      env.RESEND_WEBHOOK_SECRET = SECRET;
       expect(r.status).toBe(503);
     });
     it("a person's own address on the contact page or in mail joins their account's threads", async () => {

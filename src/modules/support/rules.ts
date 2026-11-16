@@ -1,3 +1,4 @@
+import { maskEmail } from "../../common/normalise/mask-email";
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { CONTROL_CHARS, LONE_SURROGATE } from "../../common/validation/control-chars.pipe";
 import { canonicalEmail, normaliseEmail } from "../../common/normalise/email";
@@ -35,9 +36,7 @@ export function cleanInbound(text: string, max: number): string {
 
 /** An email with its address part shown in part: "a***@mail.com". */
 export function maskContact(email: string): string {
-  const at = email.lastIndexOf("@");
-  if (at < 1) return email ? "***" : "";
-  return `${email.slice(0, 1)}***${email.slice(at)}`;
+  return email ? maskEmail(email) : "";
 }
 
 const compact = (id: string): string => id.replace(/-/g, "").toLowerCase();

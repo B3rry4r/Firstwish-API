@@ -5,7 +5,7 @@ import { AppError } from "../../common/errors/app-error";
 import { normaliseEmail } from "../../common/normalise/email";
 import { decodeCursor, Page, toPage } from "../../common/pagination/cursor";
 import { toWireInstant } from "../../common/time/time";
-import { maskEmail } from "../auth-codes/auth-codes.service";
+import { maskEmail } from "../../common/normalise/mask-email";
 import { PaymentsService } from "../payments/payments.service";
 import { readOptions } from "../payments/payment-options";
 import { refundView } from "./refund-wire";
@@ -110,7 +110,11 @@ export class AdminPaymentsService {
       })),
       refunds: refunds.map((r) => ({
         ...refundView(r),
-        notes: notes.filter((n) => n.subjectId === r.id && n.actorType === "system").map((n) => ({ action: n.action, text: n.reason ?? "", at: toWireInstant(n.createdAt) })),
+        // PP3: the refund's own `note` column holds the last system note; the audit rows are the history it came from
+        notes: (() => {
+          const own = notes.filter((n) => n.subjectId === r.id && n.actorType === "system").map((n) => ({ action: n.action, text: n.reason ?? "", at: toWireInstant(n.createdAt) }));
+          return own.length || !r.note ? own : [{ action: "refund.note", text: r.note, at: toWireInstant(r.updatedAt) }];
+        })(),
       })),
       events: events.map((e) => ({ id: e.id, type: e.type, outcome: e.outcome, processedAt: e.processedAt ? toWireInstant(e.processedAt) : null, createdAt: toWireInstant(e.createdAt) })),
     };

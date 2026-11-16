@@ -35,4 +35,4 @@ export class RefuseAllTokens extends AccessTokenVerifier {
 }
 
 /** Checks an incoming webhook's signature for one provider. */
-export type WebhookProvider = "paystack";
+export type WebhookProvider = "paystack" | "resend";

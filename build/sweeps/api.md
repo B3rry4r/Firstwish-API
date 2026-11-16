@@ -24,3 +24,5 @@
 - Join 4 (J8): a slug whose random tail is under 8 characters keeps its name after an erase (issued tails are 12, so only an odd or old slug).
 - Join 4 (J1): the rolled-back-settle test is a savepoint around issue(), not a failing handler.
 - B16/B07: the Signed fulfil handler never writes purchase_grant.endsAt; the period-end job falls back to start + days. Write endsAt at fulfil (wave 5 join).
+- B16 signed-period.service.ts:46 / creator-handlers.ts:62: a grant with detail.days 0 ends at its start; confirm the Signed price-book line carries days (wave 5 join).
+- B16 payout-run.service.ts:305: a late transfer.reversed after a hand mark-paid returns the balance and the next run pays again; a payout marked paid by hand must ignore later provider events and flag them (wave 5 join).

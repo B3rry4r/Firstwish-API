@@ -787,3 +787,13 @@ HG1 (give race) Two staff giving one Concierge order: the code is right (overlap
   that state is copy for a state, not a made-up error.
 - HM6: a refresh with no cookie answers 401 with its own error code (no_session), so the web shows the server's words for
   an ended session and nothing to a first-time visitor (W0b F3).
+
+## HN (16 Nov 2026, the lead, on W11's hand-back). Default (lead), owner may override.
+- HN1: what each staff role may open is the server's to say: the staff "me" read (and the Team read) carries the role's
+  sections (the contract's RoleAccess). Until it does, the admin shell's own copy of the role table decides only what is
+  DRAWN; the server still refuses (403) and the designed refusal shows. The copy goes when the API serves it (next API base).
+- HN2: one API client. lib/api.ts gains a session option so the staff session uses it; a second client inside
+  lib/staff-session.ts is a fork and goes in one shared-change task after W3, W4 and W11 are merged (the lead serialises
+  changes to shared modules).
+- HN3: the old seam code and fixtures of wired screens are removed by the bundle that wires the LAST screen using a file;
+  a file shared with a later bundle (lib/admin/d-api.ts, the admin fixtures) is cleaned by that later bundle (W12-W14).

@@ -500,3 +500,16 @@ VV2 (INT-4 verify, medium) An erase leaves no name in a link: the receiver's nam
     (the random tail stays so the old link still answers as an erased wish does, with no name), and the wish's wish_open
     rows are deleted. The schema-map rules say so. (This wave's join, J8.)
 VV3 (INT-4 verify, low) hasPasscode joins the Wish contract and the legacy fields leave it (INT-5). Lows of the migration accepted.
+
+## Wave 5 list (halts of B16, B15, B20, B19). Default (lead), owner may override.
+WW1 (B16) The payments webhook passes transfer.* events to the payout sink, as it does refund events. (Wave 5 join.)
+WW2 (B16) The ticket and extra handlers call royalties.accrue(tx, payment) in the settle transaction; a refund calls
+    royalties.reverse(tx, paymentId) in the refund's transaction; one end-to-end test each. (Wave 5 join.)
+WW3 (B16) The payout calls stay their own port (PayoutProviderPort); it moves to src/common with the refund port at the next
+    shared base. The Paystack adapter is NOT RUN against Paystack (R16).
+WW4 (B16) royalty_reversal and payout_detail become Prisma models with erase rules at the next shared base.
+WW5 (B16) A "bank-changed" message joins the notices catalog and seed and the notice goes through the notices path. (B16 patch.)
+WW6 (B16, B15) Style.creator is {creatorId, templateCreatorId?}; Studio writes it when a style is accepted.
+WW7 (B16) Registry at the next shared base: RoyaltyAccrual loses rows and total; E-154 gains summary; E-41 gains bank.
+    E-115's :id is the month (YYYY-MM): accepted.
+WW8 (B16) The timed job that ends a creator's Signed period (GG6) is built in the B16 patch.

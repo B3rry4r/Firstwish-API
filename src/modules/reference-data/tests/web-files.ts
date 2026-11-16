@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import vm from "node:vm";
@@ -5,6 +6,14 @@ import * as ts from "typescript";
 
 /** The web app's own files, read straight from its lib folder (a small loader of this test's own, not the export script's). */
 export const WEB_LIB = process.env.WEB_LIB || "/home/user/Firstwish-web/lib";
+/** True where the web checkout is present (WEB_LIB set, or the default path). CI checks out this repository only, so there it is false. */
+export const WEB_PRESENT = existsSync(join(WEB_LIB, "occasions.ts"));
+/** Each file named in prisma/seed-data/SOURCE.json whose bytes no longer match the hash written at the last export. */
+export function staleSources(seedDir: string): string[] {
+  const { files } = JSON.parse(readFileSync(join(seedDir, "SOURCE.json"), "utf8")) as { files: { path: string; sha256: string }[] };
+  const root = join(WEB_LIB, "..");
+  return files.filter((f) => !existsSync(join(root, f.path)) || createHash("sha256").update(readFileSync(join(root, f.path))).digest("hex") !== f.sha256).map((f) => f.path);
+}
 const inert = (): object =>
   new Proxy(function () { return inert(); }, { get: (_t, k) => (k === "__esModule" ? true : k === "then" ? undefined : inert()), apply: () => inert(), construct: () => inert() });
 const cache = new Map<string, { exports: Record<string, any> }>(); // eslint-disable-line @typescript-eslint/no-explicit-any

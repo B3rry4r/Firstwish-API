@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { UuidV7Maker } from "../../../common/ids/uuidv7";
 import { PrismaService } from "../../../common/db/prisma.service";
-import { loadWeb, WEB_LIB } from "./web-files";
+import { loadWeb, staleSources, WEB_LIB, WEB_PRESENT } from "./web-files";
 import { createTestApp, TestApp } from "../../../../test/kit/app";
 
 const ROOT = join(__dirname, "../../../..");
@@ -57,7 +57,29 @@ describe("reference reads (E-28, E-51, E-74, E-81)", () => {
     expect(served(od.body.items, ["id"])).toEqual(seeded("OpeningDef"));
   });
 
-  it("each of the four lists is counted against the web app's own files and every row is compared (GD3)", async () => {
+  it("each of the four lists is served row for row and count for count as prisma/seed-data holds it (GD3, runs in CI)", async () => {
+    const page = async (path: string): Promise<Row[]> => {
+      const all: Row[] = [];
+      let cursor: string | null = null;
+      do {
+        const r = await t.http().get(path).set(person).query(cursor ? { limit: 50, cursor } : { limit: 50 });
+        all.push(...r.body.items);
+        cursor = r.body.nextCursor;
+      } while (cursor);
+      return all;
+    };
+    const nonNull = (rows: Row[]): Row[] => rows.map((r) => Object.fromEntries(Object.entries(r).filter(([, v]) => v !== null)));
+    for (const [path, table, drop] of [["/v1/chapter-specs", "ChapterSpec", []], ["/v1/ending-purposes", "EndingPurpose", ["id"]], ["/v1/opening-defs", "OpeningDef", ["id"]], ["/v1/moments", "Moment", ["id"]]] as [string, string, string[]][]) {
+      const items = await page(path);
+      const want = seeded(table);
+      expect(items.length).toBe(want.length);
+      expect(served(nonNull(items), drop)).toEqual(want);
+    }
+  });
+
+  const webIt = WEB_PRESENT ? it : it.skip;
+  webIt(WEB_PRESENT ? "the seed equals the web app's own files, every row compared, and SOURCE.json's hashes equal the files' (GD3)" : "NOT RUN: no web checkout (the seed against the web app's own files, and SOURCE.json's hashes)", async () => {
+    expect(staleSources(join(ROOT, "prisma/seed-data"))).toEqual([]);
     const plain = (v: unknown): unknown => JSON.parse(JSON.stringify(v, (_k, x: unknown) => (typeof x === "function" ? undefined : x)));
     const want = (rows: Row[], drop: string[] = []): string[] => served(plain(rows) as Row[], drop);
     const got = (rows: Row[], drop: string[] = ["id"]): string[] => served(rows.map((r) => Object.fromEntries(Object.entries(r).filter(([, v]) => v !== null))), drop);

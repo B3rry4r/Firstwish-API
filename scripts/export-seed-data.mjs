@@ -33,6 +33,8 @@ const inert = () => {
   });
 };
 const cache = new Map();
+const readFiles = new Set(); // every web file read, for SOURCE.json
+const readWeb = (file) => { readFiles.add(file); return readFileSync(file, "utf8"); };
 function resolveFile(spec, from) {
   const base = spec.startsWith("@/") ? join(WEB, spec.slice(2)) : resolve(dirname(from), spec);
   for (const c of [base, `${base}.ts`, `${base}.tsx`, join(base, "index.ts"), join(base, "index.tsx")]) {
@@ -44,7 +46,7 @@ function load(file) {
   if (cache.has(file)) return cache.get(file).exports;
   const mod = { exports: {} };
   cache.set(file, mod);
-  const src = readFileSync(file, "utf8");
+  const src = readWeb(file);
   const js = ts.transpileModule(src, {
     fileName: file,
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.React, esModuleInterop: true },
@@ -69,7 +71,7 @@ const pick = (o, keys) => Object.fromEntries(keys.filter((k) => o[k] !== undefin
 
 function endingPurposes() {
   // A type union in lib/engine/types.ts: each member carries its line as a comment.
-  const src = readFileSync(join(WEB, "lib/engine/types.ts"), "utf8");
+  const src = readWeb(join(WEB, "lib/engine/types.ts"));
   const block = src.slice(src.indexOf("export type EndingPurpose ="), src.indexOf(";", src.indexOf("export type EndingPurpose =")) + 1);
   return [...block.matchAll(/\|\s*"([a-z-]+)"\s*(?:\/\/\s*(.*))?/g)].map((m) => ({ name: m[1], line: (m[2] || "").trim() }));
 }
@@ -163,3 +165,9 @@ for (const [table, t] of Object.entries(TABLES)) {
   writeFileSync(join(OUT, `${table}.json`), JSON.stringify(doc, null, 1) + "\n");
   console.log(`${table}: ${rows.length} rows from ${t.from}`);
 }
+
+// SOURCE.json: each web file read, its path relative to the web repo and the sha256 of its bytes. A test that has the web
+// checkout compares these with the files, so a web change with no new export fails there.
+const files = [...readFiles].map((f) => ({ path: f.slice(WEB.length + 1), sha256: createHash("sha256").update(readFileSync(f)).digest("hex") })).sort((a, b) => (a.path < b.path ? -1 : 1));
+writeFileSync(join(OUT, "SOURCE.json"), JSON.stringify({ files }, null, 1) + "\n");
+console.log(`SOURCE.json: ${files.length} web files`);

@@ -10,7 +10,7 @@ export function isRemoved(row: Pick<StaffRow, "status">): boolean {
 }
 
 /** A staff row on the wire. `code` and `reason` are request inputs of other endpoints and are never echoed back. */
-export function staffToWire(row: StaffRow): StaffAccount {
+export function staffToWire(row: StaffRow, sections: string[]): StaffAccount {
   const seen = row.lastSignInAt ? toWireInstant(row.lastSignInAt) : null;
   return {
     id: row.id,
@@ -25,6 +25,8 @@ export function staffToWire(row: StaffRow): StaffAccount {
     since: toWireInstant(row.createdAt),
     createdAt: toWireInstant(row.createdAt),
     updatedAt: toWireInstant(row.updatedAt),
+    sections,
+    version: row.version,
     code: "",
     reason: "",
   };

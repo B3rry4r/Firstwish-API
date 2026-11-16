@@ -3266,6 +3266,128 @@
       "confidence": "high",
       "source": "build/prompts/API-BASE-3.md",
       "decidedAt": "2026-11-24T12:00:00Z"
+    },
+    {
+      "id": "DEC-218",
+      "topic": "Staff read carries the role's sections",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md; build/prompts/API-BASE-4.md",
+      "decidedAt": "2026-11-25T12:00:00Z",
+      "decision": "HP1: StaffAccount gains sections (the admin sections the member's roles open, the union over the roles; the owner opens every section the table names), read from the same role table the section guard reads. The staff in StaffAuthResult (verify, refresh) and every Team row carry it.",
+      "fieldTypes": {
+        "StaffAccount.sections": "array<string>"
+      }
+    },
+    {
+      "id": "DEC-219",
+      "topic": "A wish save refuses an occasion the kind lacks and a step out of range",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md; build/prompts/API-BASE-4.md",
+      "decidedAt": "2026-11-25T12:00:00Z",
+      "decision": "HP2: PATCH /v1/wishes/:id answers 422 on occasion when the occasion is not one of the kind's occasions, and 422 on step when it is not a whole number from 0 to 5. No change to the contract's fields."
+    },
+    {
+      "id": "DEC-220",
+      "topic": "Fields the wiring found missing from the wish and the staff read",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md; build/prompts/API-BASE-4.md",
+      "decidedAt": "2026-11-25T12:00:00Z",
+      "decision": "HP3: Wish.pictures lists the cover and each photo of the wish with a short-lived signed read url (owner's reads). HP5: Wish.video is none | asked | rendering | ready | failed. HP10: Wish.publish is where the owner's ask stands. The extra source api-base-4 makes no endpoint.",
+      "fieldTypes": {
+        "Wish.pictures": "shape array<{fileId: string, role: enum(photo|cover), status: enum(ready|screening|refused), url: string | null, expiresAt: time | null}>",
+        "Wish.video": "enum(none|asked|rendering|ready|failed)",
+        "Wish.publish": "shape {status: string, reason: string | null, decidedAt: string | null, listed: boolean} | null"
+      }
+    },
+    {
+      "id": "DEC-221",
+      "topic": "The contract says what the server sends",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md; build/prompts/API-BASE-4.md",
+      "decidedAt": "2026-11-25T12:00:00Z",
+      "decision": "HP4: GET /v1/wishes/:id/link answers {link, slug}; Wish.no is nullable (null until sealed); Wish.state holds draft | sealed | live | resting | taken_down | erased (status keeps the stored values).",
+      "fieldTypes": {
+        "Wish.state": "enum(draft|sealed|live|resting|taken_down|erased)",
+        "Wish.no": "string"
+      },
+      "fieldNullable": [
+        "Wish.no"
+      ]
+    },
+    {
+      "id": "DEC-222",
+      "topic": "A clock offset for test stacks",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md; build/prompts/API-BASE-4.md",
+      "decidedAt": "2026-11-25T12:00:00Z",
+      "decision": "HP6: STANDIN_CLOCK_OFFSET (whole seconds, read at boot) moves the stand-in clock; refused with NODE_ENV=production or PROVIDERS=live. Environment only: no registry shape changes."
+    },
+    {
+      "id": "DEC-223",
+      "topic": "Team changes carry the version seen; removed staff are left out",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md; build/prompts/API-BASE-4.md",
+      "decidedAt": "2026-11-25T12:00:00Z",
+      "decision": "HP7: PATCH /v1/admin/staff-accounts/:id, POST .../suspend and POST /v1/admin/team/:id/remove take a required version; a change on a stale version is 409 stale_version. HP8: GET /v1/admin/team leaves out removed members unless includeRemoved=true."
+    },
+    {
+      "id": "DEC-224",
+      "topic": "A showing row carries the viewer's own mark",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md; build/prompts/API-BASE-4.md",
+      "decidedAt": "2026-11-25T12:00:00Z",
+      "decision": "HP9: each row of GET /v1/showing carries mine {reaction, saved} for a signed-in viewer (a good bearer token); a visitor's mine is empty.",
+      "fieldTypes": {
+        "PublishedWish.mine": "shape {reaction?: enum(love|joy|clap|wow) | null, saved?: boolean}"
+      }
+    },
+    {
+      "id": "DEC-225",
+      "topic": "The contract matches the server where the web cast",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md; build/prompts/API-BASE-4.md",
+      "decidedAt": "2026-11-25T12:00:00Z",
+      "decision": "HP10: the follow routes take no body (the registry listed the path's handle as a body field); PublishedWish.creator is {handle?, name} | null, counts {reactions, saves}; PlayWish.wish and data are typed; Style.kinds, mood and creator are typed; DateRow.for is a nullable string. ReactResponse.reaction, PriceBook and Wish.content were already typed in the contract. The wire does not change.",
+      "fieldTypes": {
+        "PublishedWish.creator": "shape {handle?: string, name: string} | null",
+        "PublishedWish.counts": "shape {reactions: integer, saves: integer}",
+        "PlayWish.wish": "shape {id: string, no: string | null, kind: string, occasion: string, styleSlug: string, receiverName: string | null}",
+        "PlayWish.data": "shape map<unknown>",
+        "Style.kinds": "shape array<string>",
+        "Style.mood": "shape array<string>",
+        "Style.creator": "shape {handle: string, name: string} | null",
+        "DateRow.for": "string",
+        "Wish.activity": "shape {opens: integer, plays: integer, reactions: map<integer>, favourites: integer, shares: integer}"
+      },
+      "fieldNullable": [
+        "DateRow.for"
+      ]
+    },
+    {
+      "id": "DEC-226",
+      "topic": "registry re-freeze (twelfth reopen)",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md; build/prompts/API-BASE-4.md",
+      "decidedAt": "2026-11-25T12:00:00Z",
+      "decision": "The registry is re-frozen after HP1 to HP10 (DEC-218 to DEC-225) by tools/pipeline/freeze.py; reconcile.py was run twice with --reopen (identical outputs). Endpoint ids already issued are unchanged."
     }
   ]
 }

@@ -155,12 +155,12 @@ describe("staff accounts and staff sign-in (contract)", () => {
     it("the only owner cannot be demoted or suspended, and nothing is written", async () => {
       expect(await t.db.staffAccount.count({ where: { status: "active", roles: { has: "owner" } } })).toBe(1);
       const before = (await auditFor(owner.id)).length;
-      const demote = await t.http().patch(`/v1/admin/staff-accounts/${owner.id}`).set(bearer(ownerToken)).send({ roles: ["ops"], reason: "testing" });
+      const demote = await t.http().patch(`/v1/admin/staff-accounts/${owner.id}`).set(bearer(ownerToken)).send({ version: 0, roles: ["ops"], reason: "testing" });
       expect(demote.status).toBe(409);
       expect(demote.body.error.code).toBe("not_allowed");
-      const suspend = await t.http().post(`/v1/admin/staff-accounts/${owner.id}/suspend`).set(bearer(ownerToken)).send({ reason: "testing" });
+      const suspend = await t.http().post(`/v1/admin/staff-accounts/${owner.id}/suspend`).set(bearer(ownerToken)).send({ version: 0, reason: "testing" });
       expect(suspend.status).toBe(409);
-      const remove = await t.http().post(`/v1/admin/team/${owner.id}/remove`).set(bearer(ownerToken)).send({ reason: "testing" });
+      const remove = await t.http().post(`/v1/admin/team/${owner.id}/remove`).set(bearer(ownerToken)).send({ version: 0, reason: "testing" });
       expect(remove.status).toBe(409);
       expect((await auditFor(owner.id)).length).toBe(before);
       expect((await t.db.staffAccount.findUniqueOrThrow({ where: { id: owner.id } })).roles).toEqual(["owner"]);
@@ -217,28 +217,28 @@ describe("staff accounts and staff sign-in (contract)", () => {
   describe("E-177 change roles and E-178 suspend", () => {
     it("changes roles with one audit row; a second owner can be demoted", async () => {
       const second = await makeStaff(t.db, ["owner"]);
-      const r = await t.http().patch(`/v1/admin/staff-accounts/${second.id}`).set(bearer(ownerToken)).send({ roles: ["ops", "finance", "ops"], reason: "moving to ops" });
+      const r = await t.http().patch(`/v1/admin/staff-accounts/${second.id}`).set(bearer(ownerToken)).send({ version: 0, roles: ["ops", "finance", "ops"], reason: "moving to ops" });
       expect(r.status).toBe(200);
       expect(r.body.roles).toEqual(["ops", "finance"]);
       const rows = await auditFor(second.id);
       expect(rows.map((a) => a.action)).toEqual(["team.change-roles"]);
-      const bad = await t.http().patch(`/v1/admin/staff-accounts/${second.id}`).set(bearer(ownerToken)).send({ roles: [], reason: "moving" });
+      const bad = await t.http().patch(`/v1/admin/staff-accounts/${second.id}`).set(bearer(ownerToken)).send({ version: 0, roles: [], reason: "moving" });
       expect(bad.status).toBe(422);
-      expect((await t.http().patch(`/v1/admin/staff-accounts/${second.id}`).set(bearer(ownerToken)).send({ roles: ["ops"], reason: "no" })).status).toBe(422);
+      expect((await t.http().patch(`/v1/admin/staff-accounts/${second.id}`).set(bearer(ownerToken)).send({ version: 0, roles: ["ops"], reason: "no" })).status).toBe(422);
       expect((await auditFor(second.id)).length).toBe(1);
-      expect((await t.http().patch(`/v1/admin/staff-accounts/0190f3c4-0000-7000-8000-00000000abcd`).set(bearer(ownerToken)).send({ roles: ["ops"], reason: "testing" })).status).toBe(404);
+      expect((await t.http().patch(`/v1/admin/staff-accounts/0190f3c4-0000-7000-8000-00000000abcd`).set(bearer(ownerToken)).send({ version: 0, roles: ["ops"], reason: "testing" })).status).toBe(404);
     });
 
     it("a role change applies at once to a signed-in member", async () => {
       const m = await tokenFor(t, ["ops"]);
       expect((await t.http().get("/v1/admin/audit").set(bearer(m.token))).status).toBe(200);
-      await t.http().patch(`/v1/admin/staff-accounts/${m.staff.id}`).set(bearer(ownerToken)).send({ roles: ["support"], reason: "moving to support" });
+      await t.http().patch(`/v1/admin/staff-accounts/${m.staff.id}`).set(bearer(ownerToken)).send({ version: 0, roles: ["support"], reason: "moving to support" });
       expect((await t.http().get("/v1/admin/audit").set(bearer(m.token))).status).toBe(403);
     });
 
     it("suspends: sessions end at once and the member gets no new code", async () => {
       const m = await tokenFor(t, ["support"]);
-      const r = await t.http().post(`/v1/admin/staff-accounts/${m.staff.id}/suspend`).set(bearer(ownerToken)).send({ reason: "on leave" });
+      const r = await t.http().post(`/v1/admin/staff-accounts/${m.staff.id}/suspend`).set(bearer(ownerToken)).send({ version: 0, reason: "on leave" });
       expect(r.status).toBe(200);
       expect(r.body.status).toBe("suspended");
       expect((await t.http().post("/v1/admin/auth/sign-out").set(bearer(m.token))).status).toBe(401);
@@ -251,7 +251,7 @@ describe("staff accounts and staff sign-in (contract)", () => {
     it("ends every session at once, stops sign-in, writes one audit row; a second remove is refused", async () => {
       const m = await tokenFor(t, ["moderator"]);
       expect((await t.http().get("/v1/probe-b03/user").set(bearer(m.token))).status).toBe(403);
-      const r = await t.http().post(`/v1/admin/team/${m.staff.id}/remove`).set(bearer(ownerToken)).send({ reason: "left the team" });
+      const r = await t.http().post(`/v1/admin/team/${m.staff.id}/remove`).set(bearer(ownerToken)).send({ version: 0, reason: "left the team" });
       expect(r.status).toBe(204);
       expect(r.text).toBe("");
       expect((await t.http().post("/v1/admin/auth/sign-out").set(bearer(m.token))).status).toBe(401);
@@ -260,7 +260,7 @@ describe("staff accounts and staff sign-in (contract)", () => {
       await t.settle(); // U4: the email goes after the answer
       expect(t.email.sent.length).toBe(mailsBefore);
       expect((await auditFor(m.staff.id)).filter((a) => a.action === "team.remove")).toHaveLength(1);
-      const again = await t.http().post(`/v1/admin/team/${m.staff.id}/remove`).set(bearer(ownerToken)).send({ reason: "left the team" });
+      const again = await t.http().post(`/v1/admin/team/${m.staff.id}/remove`).set(bearer(ownerToken)).send({ version: 0, reason: "left the team" });
       expect(again.status).toBe(409);
       const team = await t.http().get("/v1/admin/team?limit=50").set(bearer(ownerToken));
       expect(team.status).toBe(200);
@@ -268,7 +268,7 @@ describe("staff accounts and staff sign-in (contract)", () => {
 
     it("refuses a short reason with fields and writes nothing", async () => {
       const m = await makeStaff(t.db, ["maker"]);
-      const r = await t.http().post(`/v1/admin/team/${m.id}/remove`).set(bearer(ownerToken)).send({ reason: "no" });
+      const r = await t.http().post(`/v1/admin/team/${m.id}/remove`).set(bearer(ownerToken)).send({ version: 0, reason: "no" });
       expect(r.status).toBe(422);
       expect((await t.db.staffAccount.findUniqueOrThrow({ where: { id: m.id } })).status).toBe("active");
       expect(await auditFor(m.id)).toHaveLength(0);

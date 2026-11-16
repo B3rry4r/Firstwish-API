@@ -1,0 +1,73 @@
+{
+  "screenId": null,
+  "resource": "api-base-4",
+  "sourceScreens": [],
+  "provenance": "declaration",
+  "declaredAs": "other",
+  "reads": [
+    {
+      "entity": "Wish",
+      "fields": [
+        {
+          "name": "publish",
+          "type": "object",
+          "nullable": true,
+          "note": "HP10: where the owner's ask to be shown stands (single read only)"
+        },
+        {
+          "name": "video",
+          "type": "string",
+          "nullable": false,
+          "note": "HP5: none | asked | rendering | ready | failed"
+        },
+        {
+          "name": "pictures",
+          "type": "array",
+          "nullable": false,
+          "note": "HP3: the cover and each photo of the wish with a short-lived signed read url (owner's reads only)"
+        }
+      ],
+      "cardinality": "single",
+      "filtersOrSort": [],
+      "pagination": "none"
+    },
+    {
+      "entity": "StaffAccount",
+      "fields": [
+        {
+          "name": "sections",
+          "type": "array",
+          "nullable": false,
+          "note": "HP1: the admin sections the member's roles open"
+        },
+        {
+          "name": "version",
+          "type": "integer",
+          "nullable": false,
+          "note": "HP7: bumped by every team change"
+        }
+      ],
+      "cardinality": "single",
+      "filtersOrSort": [],
+      "pagination": "none"
+    }
+  ],
+  "actions": [],
+  "authContext": {
+    "requiresAuth": true,
+    "rolesObserved": []
+  },
+  "special": {
+    "realtime": false,
+    "uploads": false,
+    "downloads": false
+  },
+  "uiStatesHandled": [],
+  "uiStatesDesigned": [],
+  "stubsObserved": [],
+  "behaviour": [
+    "API-BASE-4: fields the wiring found the contract missing (HP1, HP3, HP5, HP7, HP10)."
+  ],
+  "truths": [],
+  "supersedes": []
+}

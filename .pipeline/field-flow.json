@@ -4731,26 +4731,19 @@
     },
     {
       "field": "Follow.handle",
-      "writers": [
-        "E-57",
-        "E-58"
-      ],
+      "writers": [],
       "store": "Follow",
       "readers": [
         "app-home"
       ],
-      "writerActors": [
-        "business",
-        "creator",
-        "person"
-      ],
+      "writerActors": [],
       "readerActors": [
         "business",
         "creator",
         "person"
       ],
       "crossActor": false,
-      "noWriter": false
+      "noWriter": true
     },
     {
       "field": "Invoice.amount",
@@ -12750,6 +12743,20 @@
       "noWriter": false
     },
     {
+      "field": "StaffAccount.sections",
+      "writers": [
+        "server:api-base-4"
+      ],
+      "store": "StaffAccount",
+      "readers": [],
+      "writerActors": [
+        "server"
+      ],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": false
+    },
+    {
       "field": "StaffAccount.seen",
       "writers": [],
       "store": "StaffAccount",
@@ -12814,6 +12821,22 @@
       "readers": [],
       "writerActors": [
         "server"
+      ],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": false
+    },
+    {
+      "field": "StaffAccount.version",
+      "writers": [
+        "E-177",
+        "E-178",
+        "E-180"
+      ],
+      "store": "StaffAccount",
+      "readers": [],
+      "writerActors": [
+        "staff"
       ],
       "readerActors": [],
       "crossActor": false,
@@ -18955,6 +18978,20 @@
       "noWriter": true
     },
     {
+      "field": "Wish.pictures",
+      "writers": [
+        "server:api-base-4"
+      ],
+      "store": "Wish",
+      "readers": [],
+      "writerActors": [
+        "server"
+      ],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": false
+    },
+    {
       "field": "Wish.price",
       "writers": [],
       "store": "Wish",
@@ -18967,6 +19004,20 @@
       ],
       "crossActor": false,
       "noWriter": true
+    },
+    {
+      "field": "Wish.publish",
+      "writers": [
+        "server:api-base-4"
+      ],
+      "store": "Wish",
+      "readers": [],
+      "writerActors": [
+        "server"
+      ],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": false
     },
     {
       "field": "Wish.reaction",
@@ -19471,6 +19522,20 @@
         "business",
         "creator",
         "person"
+      ],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": false
+    },
+    {
+      "field": "Wish.video",
+      "writers": [
+        "server:api-base-4"
+      ],
+      "store": "Wish",
+      "readers": [],
+      "writerActors": [
+        "server"
       ],
       "readerActors": [],
       "crossActor": false,
@@ -20169,5 +20234,5 @@
     }
   ],
   "crossActor": 34,
-  "noWriter": 647
+  "noWriter": 648
 }

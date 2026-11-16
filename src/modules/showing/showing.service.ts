@@ -272,7 +272,7 @@ export class ShowingService implements OnModuleInit {
       const at = toWireInstant(r.listedAt ?? new Date(0));
       return {
         id: r.id, at, date: at, listedAt: at, publishedAt: at, counts: { reactions: rc.get(r.id) ?? 0, saves: sc.get(r.id) ?? 0 },
-        creator: r.creator ?? { name: r.from ?? "" }, forName: r.forName ?? "", from: r.from ?? "", href: r.href ?? "", img: r.img ?? "", kind: r.kind ?? "",
+        creator: (r.creator ?? { name: r.from ?? "" }) as PublishedWish["creator"], forName: r.forName ?? "", from: r.from ?? "", href: r.href ?? "", img: r.img ?? "", kind: r.kind ?? "",
         name: r.name ?? "", no: r.no, occasion: r.occasion ?? "", occasionName: r.occasionName ?? "", pos: r.pos ?? "", reason: "", scope: who === "staff" ? "listed" : "public",
         screen: who === "staff" ? ((r.screen as Obj | null) ?? {}) : {}, style: r.style ?? "", styleName: r.styleName ?? "", title: r.title ?? "", wish: r.wish ?? "",
         mine: {}, decided: who === "staff" ? (r.decided as Obj | null) : null, featured: !!r.no && r.no === today, own: false,

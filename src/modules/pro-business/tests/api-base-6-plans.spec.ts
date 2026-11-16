@@ -51,7 +51,7 @@ describe("HR1 plans: the plan read says what a payment does; a second plan start
     const r = await plan(o.token);
     expect(r.status).toBe(200);
     expect(r.body.pending).toBeNull();
-    expect(r.body.offers.map((x: { plan: string }) => x.plan)).toEqual(["starter", "studio"]);
+    expect((r.body.offers as { plan: string }[]).map((x) => x.plan)).toEqual(["starter", "studio"]);
     for (const x of r.body.offers) {
       expect(x).toMatchObject({ effect: "starts", addsTo: null, replaces: null, startsAt: NOW.toISOString(), runsUntil: "2027-05-10T09:00:00.000Z" });
       expect(x.priceKobo).toBe(await listKobo(`pro.${x.plan}`));
@@ -63,8 +63,8 @@ describe("HR1 plans: the plan read says what a payment does; a second plan start
     const renews = new Date("2027-04-25T09:00:00.000Z");
     const o = await owner({ plan: "studio", allowance: 35, used: 3, rolled: 0, month: "2027-04", renews });
     const r = await plan(o.token);
-    const studio = r.body.offers.find((x: { plan: string }) => x.plan === "studio");
-    const starter = r.body.offers.find((x: { plan: string }) => x.plan === "starter");
+    const studio = (r.body.offers as { plan: string; words: string; runsUntil: string }[]).find((x) => x.plan === "studio") as { plan: string; words: string; runsUntil: string };
+    const starter = (r.body.offers as { plan: string; words: string; runsUntil: string }[]).find((x) => x.plan === "starter") as { plan: string; words: string; runsUntil: string };
     expect(studio).toMatchObject({ effect: "adds_month", addsTo: renews.toISOString(), runsUntil: "2027-05-25T09:00:00.000Z", replaces: null });
     expect(studio.words).toMatch(/adds a month/);
     expect(starter).toMatchObject({ effect: "replaces_plan", addsTo: renews.toISOString(), runsUntil: "2027-05-25T09:00:00.000Z", replaces: "studio" });

@@ -10,7 +10,7 @@ import type { Principal } from "../../common/auth/principal";
 import { userOf } from "../stored-files/principal";
 import { GatherService } from "./gather.service";
 
-/** HS1 the owner's side: E-260 read (and make) the gather link with its voices, E-261 turn it off, E-262 remove one voice. */
+/** HS1 the owner's side: E-263 read (and make) the gather link with its voices, E-264 turn it off, E-265 remove one voice. */
 @Controller("wishes")
 export class GatherOwnerController {
   constructor(private readonly gather: GatherService) {}
@@ -36,7 +36,7 @@ export class GatherOwnerController {
   }
 }
 
-/** HS1 the friend's side, no account: E-263 who is asking, E-264 add one voice (a signed put), E-265 say it is up. */
+/** HS1 the friend's side, no account: E-260 who is asking, E-261 add one voice (a signed put), E-262 say it is up. */
 @Controller("g/:slug")
 export class GatherFriendController {
   constructor(private readonly gather: GatherService) {}

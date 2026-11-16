@@ -81,6 +81,16 @@
       "noWriter": false
     },
     {
+      "field": "Account.businesses",
+      "writers": [],
+      "store": "Account",
+      "readers": [],
+      "writerActors": [],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
       "field": "Account.contact",
       "writers": [
         "E-7",
@@ -2534,6 +2544,16 @@
       "noWriter": true
     },
     {
+      "field": "ClientWish.returnsToPackOn",
+      "writers": [],
+      "store": "ClientWish",
+      "readers": [],
+      "writerActors": [],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
       "field": "ClientWish.reveal",
       "writers": [
         "E-30",
@@ -4230,6 +4250,16 @@
       "readerActors": [
         "business"
       ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "EndingPurpose.slug",
+      "writers": [],
+      "store": "EndingPurpose",
+      "readers": [],
+      "writerActors": [],
+      "readerActors": [],
       "crossActor": false,
       "noWriter": true
     },
@@ -6908,6 +6938,16 @@
       "readerActors": [
         "person"
       ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "OpeningDef.slug",
+      "writers": [],
+      "store": "OpeningDef",
+      "readers": [],
+      "writerActors": [],
+      "readerActors": [],
       "crossActor": false,
       "noWriter": true
     },
@@ -14599,6 +14639,16 @@
       "noWriter": true
     },
     {
+      "field": "Style.showcaseSlug",
+      "writers": [],
+      "store": "Style",
+      "readers": [],
+      "writerActors": [],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
       "field": "Style.slug",
       "writers": [
         "E-194"
@@ -18737,6 +18787,7 @@
     {
       "field": "Wish.name",
       "writers": [
+        "E-261",
         "E-222",
         "E-225"
       ],
@@ -18774,7 +18825,8 @@
       "writerActors": [
         "business",
         "creator",
-        "person"
+        "person",
+        "public"
       ],
       "readerActors": [
         "business",
@@ -18782,7 +18834,7 @@
         "person",
         "public"
       ],
-      "crossActor": true,
+      "crossActor": false,
       "noWriter": false
     },
     {
@@ -20405,6 +20457,6 @@
       "noWriter": false
     }
   ],
-  "crossActor": 34,
-  "noWriter": 647
+  "crossActor": 33,
+  "noWriter": 652
 }

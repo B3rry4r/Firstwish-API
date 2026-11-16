@@ -3365,7 +3365,7 @@ export interface PostWBySlugKeepHeaders {
 }
 export type PostWBySlugKeepResponse = PaymentStarted<PublicWishView>;
 
-/** E-258 POST /v1/w/:slug/wake. Auth: public, the link's holder (HS2). */
+/** E-259 POST /v1/w/:slug/wake. Auth: public, the link's holder (HS2). */
 export interface PostWBySlugWakeParams {
   slug: string;
 }
@@ -3377,7 +3377,7 @@ export interface PostWBySlugWakeHeaders {
 /** 204 No Content: the response has no body (Q12). */
 export type PostWBySlugWakeResponse = void;
 
-/** E-259 GET /v1/w/:slug/keep/:reference. Auth: public, the link's holder (HS2). */
+/** E-258 GET /v1/w/:slug/keep/:reference. Auth: public, the link's holder (HS2). */
 export interface GetWBySlugKeepByReferenceParams {
   slug: string;
   reference: string;
@@ -4668,7 +4668,7 @@ export interface GatherVoiceAdded {
   upload: UploadTicket["upload"];
 }
 
-/** E-260 GET /v1/wishes/:id/gather. Auth: own records. */
+/** E-263 GET /v1/wishes/:id/gather. Auth: own records. */
 export interface GetWishesByIdGatherParams {
   id: string;
 }
@@ -4676,7 +4676,7 @@ export type GetWishesByIdGatherQuery = Record<string, never>;
 export type GetWishesByIdGatherHeaders = Record<string, never>;
 export type GetWishesByIdGatherResponse = GatherOwnerView;
 
-/** E-261 POST /v1/wishes/:id/gather/off. Auth: own records. */
+/** E-264 POST /v1/wishes/:id/gather/off. Auth: own records. */
 export interface PostWishesByIdGatherOffParams {
   id: string;
 }
@@ -4684,7 +4684,7 @@ export type PostWishesByIdGatherOffBody = Record<string, never>;
 export type PostWishesByIdGatherOffHeaders = Record<string, never>;
 export type PostWishesByIdGatherOffResponse = GatherOwnerView;
 
-/** E-262 DELETE /v1/wishes/:id/gather/voices/:voiceId. Auth: own records. */
+/** E-265 DELETE /v1/wishes/:id/gather/voices/:voiceId. Auth: own records. */
 export interface DeleteWishesByIdGatherVoicesByVoiceIdParams {
   id: string;
   voiceId: string;
@@ -4694,7 +4694,7 @@ export type DeleteWishesByIdGatherVoicesByVoiceIdHeaders = Record<string, never>
 /** 204 No Content: the response has no body (Q12). */
 export type DeleteWishesByIdGatherVoicesByVoiceIdResponse = void;
 
-/** E-263 GET /v1/g/:slug. Auth: public. */
+/** E-260 GET /v1/g/:slug. Auth: public. */
 export interface GetGBySlugParams {
   slug: string;
 }
@@ -4702,7 +4702,7 @@ export type GetGBySlugQuery = Record<string, never>;
 export type GetGBySlugHeaders = Record<string, never>;
 export type GetGBySlugResponse = GatherFriendView;
 
-/** E-264 POST /v1/g/:slug/voice. Auth: public. */
+/** E-261 POST /v1/g/:slug/voice. Auth: public. */
 export interface PostGBySlugVoiceParams {
   slug: string;
 }
@@ -4719,7 +4719,7 @@ export interface PostGBySlugVoiceBody {
 export type PostGBySlugVoiceHeaders = Record<string, never>;
 export type PostGBySlugVoiceResponse = GatherVoiceAdded;
 
-/** E-265 POST /v1/g/:slug/voice/:id/confirm. Auth: public. */
+/** E-262 POST /v1/g/:slug/voice/:id/confirm. Auth: public. */
 export interface PostGBySlugVoiceByIdConfirmParams {
   slug: string;
   id: string;
@@ -4959,8 +4959,8 @@ export interface EndpointContracts {
   "E-130": { params: PostWBySlugFavouritesParams; body: PostWBySlugFavouritesBody; headers: PostWBySlugFavouritesHeaders; response: PostWBySlugFavouritesResponse };
   "E-131": { params: PostWBySlugOpensParams; body: PostWBySlugOpensBody; headers: PostWBySlugOpensHeaders; response: PostWBySlugOpensResponse };
   "E-257": { params: PostWBySlugKeepParams; body: PostWBySlugKeepBody; headers: PostWBySlugKeepHeaders; response: PostWBySlugKeepResponse };
-  "E-258": { params: PostWBySlugWakeParams; body: PostWBySlugWakeBody; headers: PostWBySlugWakeHeaders; response: PostWBySlugWakeResponse };
-  "E-259": { params: GetWBySlugKeepByReferenceParams; query: GetWBySlugKeepByReferenceQuery; headers: GetWBySlugKeepByReferenceHeaders; response: GetWBySlugKeepByReferenceResponse };
+  "E-259": { params: PostWBySlugWakeParams; body: PostWBySlugWakeBody; headers: PostWBySlugWakeHeaders; response: PostWBySlugWakeResponse };
+  "E-258": { params: GetWBySlugKeepByReferenceParams; query: GetWBySlugKeepByReferenceQuery; headers: GetWBySlugKeepByReferenceHeaders; response: GetWBySlugKeepByReferenceResponse };
   "E-132": { params: PostWBySlugReactionParams; body: PostWBySlugReactionBody; headers: PostWBySlugReactionHeaders; response: PostWBySlugReactionResponse };
   "E-133": { params: PostWBySlugTakeDownParams; body: PostWBySlugTakeDownBody; headers: PostWBySlugTakeDownHeaders; response: PostWBySlugTakeDownResponse };
   "E-134": { params: PostWBySlugUnlockParams; body: PostWBySlugUnlockBody; headers: PostWBySlugUnlockHeaders; response: PostWBySlugUnlockResponse };
@@ -5069,12 +5069,12 @@ export interface EndpointContracts {
   "E-227": { params: PostWishesByIdEraseParams; body: PostWishesByIdEraseBody; headers: PostWishesByIdEraseHeaders; response: PostWishesByIdEraseResponse };
   "E-228": { params: PostWishesByIdKeepParams; body: PostWishesByIdKeepBody; headers: PostWishesByIdKeepHeaders; response: PostWishesByIdKeepResponse };
   "E-229": { params: GetWishesByIdLinkParams; query: GetWishesByIdLinkQuery; headers: GetWishesByIdLinkHeaders; response: GetWishesByIdLinkResponse };
-  "E-260": { params: GetWishesByIdGatherParams; query: GetWishesByIdGatherQuery; headers: GetWishesByIdGatherHeaders; response: GetWishesByIdGatherResponse };
-  "E-261": { params: PostWishesByIdGatherOffParams; body: PostWishesByIdGatherOffBody; headers: PostWishesByIdGatherOffHeaders; response: PostWishesByIdGatherOffResponse };
-  "E-262": { params: DeleteWishesByIdGatherVoicesByVoiceIdParams; body: DeleteWishesByIdGatherVoicesByVoiceIdBody; headers: DeleteWishesByIdGatherVoicesByVoiceIdHeaders; response: DeleteWishesByIdGatherVoicesByVoiceIdResponse };
-  "E-263": { params: GetGBySlugParams; query: GetGBySlugQuery; headers: GetGBySlugHeaders; response: GetGBySlugResponse };
-  "E-264": { params: PostGBySlugVoiceParams; body: PostGBySlugVoiceBody; headers: PostGBySlugVoiceHeaders; response: PostGBySlugVoiceResponse };
-  "E-265": { params: PostGBySlugVoiceByIdConfirmParams; body: PostGBySlugVoiceByIdConfirmBody; headers: PostGBySlugVoiceByIdConfirmHeaders; response: PostGBySlugVoiceByIdConfirmResponse };
+  "E-263": { params: GetWishesByIdGatherParams; query: GetWishesByIdGatherQuery; headers: GetWishesByIdGatherHeaders; response: GetWishesByIdGatherResponse };
+  "E-264": { params: PostWishesByIdGatherOffParams; body: PostWishesByIdGatherOffBody; headers: PostWishesByIdGatherOffHeaders; response: PostWishesByIdGatherOffResponse };
+  "E-265": { params: DeleteWishesByIdGatherVoicesByVoiceIdParams; body: DeleteWishesByIdGatherVoicesByVoiceIdBody; headers: DeleteWishesByIdGatherVoicesByVoiceIdHeaders; response: DeleteWishesByIdGatherVoicesByVoiceIdResponse };
+  "E-260": { params: GetGBySlugParams; query: GetGBySlugQuery; headers: GetGBySlugHeaders; response: GetGBySlugResponse };
+  "E-261": { params: PostGBySlugVoiceParams; body: PostGBySlugVoiceBody; headers: PostGBySlugVoiceHeaders; response: PostGBySlugVoiceResponse };
+  "E-262": { params: PostGBySlugVoiceByIdConfirmParams; body: PostGBySlugVoiceByIdConfirmBody; headers: PostGBySlugVoiceByIdConfirmHeaders; response: PostGBySlugVoiceByIdConfirmResponse };
   "E-241": { params: PostWishesByIdPassUpgradeParams; body: PostWishesByIdPassUpgradeBody; headers: PostWishesByIdPassUpgradeHeaders; response: PostWishesByIdPassUpgradeResponse };
   "E-230": { params: PostWishesByIdRestoreParams; body: PostWishesByIdRestoreBody; headers: PostWishesByIdRestoreHeaders; response: PostWishesByIdRestoreResponse };
   "E-231": { params: PostWishesByIdSealParams; body: PostWishesByIdSealBody; headers: PostWishesByIdSealHeaders; response: PostWishesByIdSealResponse };

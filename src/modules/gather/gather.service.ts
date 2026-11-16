@@ -68,7 +68,7 @@ export class GatherService {
     return (w.status === "draft" || w.status === "sealed") && !w.openedAt;
   }
 
-  /** E-260: the owner reads the gather link (made at the first read, also for a draft) and the voices that came through it, each as it arrives. */
+  /** E-263: the owner reads the gather link (made at the first read, also for a draft) and the voices that came through it, each as it arrives. */
   async ownerView(accountId: string, id: string): Promise<GatherOwnerView> {
     const w = await this.owned(accountId, id);
     const link = (await this.linkOf(w.id, true)) as { id: string; slug: string; active: boolean };
@@ -91,7 +91,7 @@ export class GatherService {
     return { slug: link.slug, link: `/g/${link.slug}`, active: link.active, open: link.active && this.canAdd(w), count, limit: MAX_VOICE_NOTES_PER_WISH, voices };
   }
 
-  /** E-261: the owner turns the gather link off: a friend's visit finds it closed. Repeating it is 409 with words. */
+  /** E-264: the owner turns the gather link off: a friend's visit finds it closed. Repeating it is 409 with words. */
   async turnOff(accountId: string, id: string): Promise<GatherOwnerView> {
     const w = await this.owned(accountId, id);
     const link = await this.linkOf(w.id, true);
@@ -100,7 +100,7 @@ export class GatherService {
     return this.ownerView(accountId, id);
   }
 
-  /** E-262: the owner removes one voice that came through the link; the file goes with it and the room comes back. */
+  /** E-265: the owner removes one voice that came through the link; the file goes with it and the room comes back. */
   async removeVoice(accountId: string, id: string, voiceId: string): Promise<void> {
     const w = await this.owned(accountId, id);
     if (!isUuid(voiceId)) throw AppError.notFound("No such voice.");
@@ -130,7 +130,7 @@ export class GatherService {
     return { from: a?.erasedAt ? "" : firstName(a?.name), forName: firstName(w.name) };
   }
 
-  /** E-263: who is asking and for whom (first names only), how many voices there are room for, and what a voice may be. Nothing else of the wish. */
+  /** E-260: who is asking and for whom (first names only), how many voices there are room for, and what a voice may be. Nothing else of the wish. */
   async friendView(slug: string, address: string | null): Promise<GatherFriendView> {
     const { link, w } = await this.friendLink(slug, address);
     const who = await this.asking(w);
@@ -158,7 +158,7 @@ export class GatherService {
     return r;
   }
 
-  /** E-264: the friend asks to add one voice with their first name: a signed put (the same checks as any voice upload) and the voice's id. */
+  /** E-261: the friend asks to add one voice with their first name: a signed put (the same checks as any voice upload) and the voice's id. */
   async addVoice(slug: string, body: PostGBySlugVoiceBody, address: string | null): Promise<GatherVoiceAdded> {
     const name = typeof body.name === "string" ? body.name.trim().replace(/\s+/g, " ") : "";
     if (!name || name.length > NAME_MAX || /[\p{Cc}\p{Cf}<>]/u.test(name)) throw AppError.validation({ name: `Your first name, up to ${NAME_MAX} letters.` });
@@ -169,7 +169,7 @@ export class GatherService {
     return { id: ticket.id, upload: ticket.upload };
   }
 
-  /** E-265: the friend says the file is up. The file is checked and screened like any other; the answer is its state. */
+  /** E-262: the friend says the file is up. The file is checked and screened like any other; the answer is its state. */
   async confirmVoice(slug: string, voiceId: string, address: string | null): Promise<{ id: string; state: "ready" | "checking" | "refused"; reason?: string }> {
     const { w } = await this.openLink(slug, address);
     if (!isUuid(voiceId)) throw AppError.notFound("No such voice.");

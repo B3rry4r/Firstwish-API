@@ -94,14 +94,14 @@ export class PostWBySlugKeepParamsDto implements PostWBySlugKeepParams {
   slug!: string;
 }
 
-/** E-258 POST /v1/w/:slug/wake (body). */
+/** E-259 POST /v1/w/:slug/wake (body). */
 export class PostWBySlugWakeBodyDto {}
 export class PostWBySlugWakeParamsDto implements PostWBySlugWakeParams {
   @IsString()
   slug!: string;
 }
 
-/** E-259 GET /v1/w/:slug/keep/:reference (query). */
+/** E-258 GET /v1/w/:slug/keep/:reference (query). */
 export class GetWBySlugKeepByReferenceQueryDto {}
 export class GetWBySlugKeepByReferenceParamsDto implements GetWBySlugKeepByReferenceParams {
   @IsString()

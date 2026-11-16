@@ -27,7 +27,7 @@ describe("API-BASE-6 small: HR4 day, HR5 import rows, brand logo read, failed re
     expect(one.status).toBe(200);
     expect(one.body.returnsToPackOn).toBe(day.toISOString().slice(0, 10));
     const list = await t.http().get("/v1/business/client-wishes").set(bearer(o.token));
-    expect(list.body.items.find((x: { id: string }) => x.id === cw).returnsToPackOn).toBe(day.toISOString().slice(0, 10));
+    expect((list.body.items as { id: string; returnsToPackOn?: string }[]).find((x) => x.id === cw)?.returnsToPackOn).toBe(day.toISOString().slice(0, 10));
     await t.db.job.updateMany({ where: { subjectId: wishId }, data: { status: "cancelled" } });
     expect((await t.http().get(`/v1/business/client-wishes/${cw}`).set(bearer(o.token))).body.returnsToPackOn).toBeUndefined();
   });

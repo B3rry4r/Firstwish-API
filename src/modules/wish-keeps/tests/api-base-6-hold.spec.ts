@@ -98,7 +98,7 @@ describe("HS2 keep and wake by link, no account", () => {
     expect(v.status).toBe(200);
     expect(v.body.state).toBe("open");
     expect(v.body.keepOffer).toMatchObject({ wishId: w.id, resting: false, wake: false });
-    expect(v.body.keepOffer.keeps.map((k: { key: string }) => k.key)).toEqual(["month", "half", "year"]);
+    expect((v.body.keepOffer.keeps as { key: string }[]).map((k) => k.key)).toEqual(["month", "half", "year"]);
     expect(v.body.keepOffer.keeps[0]).toMatchObject({ days: 30, priceKobo: await listKobo("keep.month") });
     expect(JSON.stringify(v.body)).not.toContain(w.accountId);
     const moment = await wish({ ticket: "moment" });

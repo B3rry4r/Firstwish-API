@@ -8,8 +8,8 @@ import { SlugControlFilter } from "../public-wishes/slug-escapes";
 import { WishKeepsService, type LinkProof } from "./wish-keeps.service";
 
 /**
- * HS2: keep and wake by the link, with no account. E-257 starts a keep (a wake on a resting wish), E-258 wakes a resting wish a paid keep covers,
- * E-259 reads a keep payment's result back. The holder sends the link in the address, x-unlock-token (where the wish has a passcode) and
+ * HS2: keep and wake by the link, with no account. E-257 starts a keep (a wake on a resting wish), E-259 wakes a resting wish a paid keep covers,
+ * E-258 reads a keep payment's result back. The holder sends the link in the address, x-unlock-token (where the wish has a passcode) and
  * x-wish-proof (the signed proof the public view gave): the same three for each call. Held in the page's memory only (R10).
  */
 @UseFilters(SlugControlFilter)

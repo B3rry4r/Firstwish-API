@@ -86,7 +86,7 @@ export class ClientWishesService implements OnModuleInit {
     const rows = await this.prisma.clientWish.findMany({ where: { businessId, id: { lt: before } }, orderBy: { id: "desc" }, take: limit + 1, include: WITH_WISH });
     const page = toPage(rows, limit, (r) => ({ key: r.id, id: r.id }));
     const returns = await this.returnDays(page.items.map((r) => r.wishId));
-    return { items: page.items.map((r) => ({ ...clientWishWire(r), ...(r.wishId && returns.has(r.wishId) ? { returnsToPackOn: returns.get(r.wishId) } : {}) }) as ClientWish), nextCursor: page.nextCursor };
+    return { items: page.items.map((r) => ({ ...clientWishWire(r), ...(r.wishId && returns.has(r.wishId) ? { returnsToPackOn: returns.get(r.wishId) } : {}) })), nextCursor: page.nextCursor };
   }
 
   async get(businessId: string, id: string): Promise<ClientWish> {
@@ -94,7 +94,7 @@ export class ClientWishesService implements OnModuleInit {
     const r = await this.prisma.clientWish.findFirst({ where: { id, businessId }, include: WITH_WISH });
     if (!r) throw AppError.notFound();
     const returns = await this.returnDays([r.wishId]);
-    return { ...clientWishWire(r), ...(r.wishId && returns.has(r.wishId) ? { returnsToPackOn: returns.get(r.wishId) } : {}) } as ClientWish;
+    return { ...clientWishWire(r), ...(r.wishId && returns.has(r.wishId) ? { returnsToPackOn: returns.get(r.wishId) } : {}) };
   }
 
   /**

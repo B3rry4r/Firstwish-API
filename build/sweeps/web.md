@@ -63,3 +63,7 @@
   model, profile picture), Signed off / move to Open, the payout threshold from the book, `publish` on the list.
   The Studio design draws no speak control (R13 is the maker's letter): not a finding. Not run by the checker: a
   reversed credit payment, a failed AI ask giving the credit back, a placed picture after a reload.
+- WEB-API-4 (second check 16 Nov, lows for W15): the web-font stylesheet link is in the document twice on /app/new
+  and the Studio screens (app/layout.tsx and the screen each render it; same URL, fetched once): one link, from the
+  layout; w11's "numbers empty" check is conditional; Ban's double tap and the Audit "Removed" group were read in
+  code, not driven; the cascade comparison against the pre-merge head was not possible.

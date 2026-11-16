@@ -728,3 +728,9 @@ HE1 (INT-6 hand-back) The seed never overwrites what a staff member has set: a s
     left as it is (create if absent). A test that needs the seed's figure sets it itself. (Sweep bundle.) The tests that
     still fail now and then because specs share one database (int1-rulings U1; join4 J1's invoice number) are fixed there
     too: each asserts on its own rows.
+HF1 (INT-7 verify, high) A removed draft gives its wish back only to a source that still stands: nothing returns to a pack or a
+    plan month whose payment was refunded (its grant revoked) or that has ended. (INT-7 patch.)
+HF2 (INT-7 verify, medium) Working out which pack a wish is drawn from ignores records already given back. (INT-7 patch.)
+HF3 (INT-7 verify, low) The "more logins than the plan allows" notice is sent once while that stays true, not once per payment;
+    the stand-in refund lookup matches the amount as the real adapter does; a Numbers target set by a principal with no staff
+    row is refused with a 4xx. (INT-7 patch.) A draft drawn last month and removed this month gives nothing back: accepted.

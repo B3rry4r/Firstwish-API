@@ -23,11 +23,11 @@ let jobs: JobsService;
 const staff: Record<string, string> = {};
 let seq = 0;
 
-/** A style the eight checks pass. */
+/** A style the eight checks pass, shaped as the web app's lib/studio.ts makes it (a house scene set, holds as "bars" and "fills"). */
 const goodDoc = (over: Body = {}): Body => ({
-  name: "Gold hour", base: "scroll", brief: "Warm light.", theme: { ink: "#000000", ground: "#ffffff", quiet: "#555555" },
-  scenes: { open: { added: [], layers: {} }, middle: { added: [], layers: {} } }, art: [], made: { kinds: ["love"], dimension: "flat", orientation: "both" },
-  tags: { occasions: { birthday: ["open", "middle"] } }, still: "fade", poster: { frame: "cover" }, holds: { portrait: true, landscape: true }, ending: "tap", ...over,
+  name: "Gold hour", base: "noir", brief: "Warm light.", theme: {}, scenes: { letter: { layers: {} } }, art: [],
+  made: { kinds: ["love"], occasions: {}, best: "portrait" }, tags: { mood: ["warm"], palette: "gold", family: "noir" }, still: "fade",
+  poster: { frame: "cover" }, holds: { portrait: "bars", landscape: "fills" }, ...over,
 });
 
 async function creator(opts: { plan?: "open" | "creator"; credits?: number; reviewsLeft?: number; extra?: number; sides?: string[] } = {}) {
@@ -406,13 +406,13 @@ describe("case 4: submit", () => {
 
   it("a style that fails a check goes back with the reasons, and the review is given back", async () => {
     const c = await creator({ plan: "creator", reviewsLeft: 2 });
-    const d = await draft(c, { still: "", ending: "", theme: { ink: "#777777", ground: "#888888" } });
+    const d = await draft(c, { still: "", scenes: { ending: { layers: { "action#1": { hidden: true } } } }, theme: { ink: "#777777", ground: "#888888" } });
     const r = await post(c, `/studio/styles/${d.id}/submissions`);
     const sid = r.body.submission.id as string;
     await runChecks(sid);
     const mine = await get(c, `/studio/styles/${d.id}`);
     expect(mine.body.status).toBe("returned");
-    expect(mine.body.review.note).toMatch(/contrast/);
+    expect(mine.body.review.note).toMatch(/needs 4\.5 : 1/);
     const failed = (mine.body.review.checks as Body[]).filter((x) => !x.pass).map((x) => x.key as string);
     expect(failed).toEqual(expect.arrayContaining(["readable", "still", "touch"]));
     expect((mine.body.review.checks as Body[])).toHaveLength(8);

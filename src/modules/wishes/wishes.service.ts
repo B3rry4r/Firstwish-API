@@ -169,8 +169,9 @@ export class WishesService {
 
   private async styleSlug(db: Tx | PrismaService, raw: string): Promise<string> {
     const slug = raw.trim().toLowerCase();
-    const found = slug ? await db.style.findUnique({ where: { slug }, select: { id: true } }) : null;
-    if (!found) throw AppError.validation({ style: "That style is not offered." });
+    const found = slug ? await db.style.findUnique({ where: { slug }, select: { id: true, on: true } }) : null;
+    // SA5: only a style that is on can be picked (a held, returned or withdrawn Studio style is off); a wish already made keeps its own.
+    if (!found || found.on !== true) throw AppError.validation({ style: "That style is not offered." });
     return slug;
   }
 

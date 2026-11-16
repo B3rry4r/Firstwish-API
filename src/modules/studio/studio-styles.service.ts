@@ -202,8 +202,8 @@ export class StudioStylesService {
           if (body.on !== undefined) return this.applyOn(tx, made, body.on);
           return (await this.wire(tx, [made]))[0];
         }
-        if (body.style === undefined) return this.applyOn(tx, row, body.on as boolean);
         if (!EDITABLE.includes(row.status ?? "")) throw locked();
+        if (body.style === undefined) return this.applyOn(tx, row, body.on as boolean);
         const doc = obj(row.document);
         const meta = metaOf(doc);
         const sent = isObj(body.style) ? body.style.version : undefined;

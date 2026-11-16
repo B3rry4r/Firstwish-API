@@ -279,12 +279,13 @@ describe("purchases B07: what a payment buys", () => {
     const a = await account();
     await pay(a, "creator.plan");
     let s = await db.creatorState.findUniqueOrThrow({ where: { accountId: a } });
-    expect(s).toMatchObject({ plan: "creator", credits: 10, reviewsLeft: 2 });
+    // XX3: the row starts with Open's 3 credits whichever code makes it first
+    expect(s).toMatchObject({ plan: "creator", credits: 13, reviewsLeft: 2 });
     await pay(a, "creator.credit-pack", {}, { qty: 2 });
     await pay(a, "creator.extra-review");
     await pay(a, "creator.signed");
     s = await db.creatorState.findUniqueOrThrow({ where: { accountId: a } });
-    expect(s).toMatchObject({ credits: 20, packs: 2, extraReviews: 1, signed: true });
+    expect(s).toMatchObject({ credits: 23, packs: 2, extraReviews: 1, signed: true });
   });
 
   it("5. Concierge records the paid order only", async () => {
@@ -329,7 +330,7 @@ describe("purchases B07: what a payment buys", () => {
     expect(row.adds).toEqual([]);
     expect((await wishRow(live)).endsAt!.getTime()).toBe(NOW.getTime() + 5 * DAY);
     expect(await db.business.findUniqueOrThrow({ where: { id: b } })).toMatchObject({ pack: 0, plan: null });
-    expect((await db.creatorState.findUniqueOrThrow({ where: { accountId: a } })).credits).toBe(0);
+    expect((await db.creatorState.findUniqueOrThrow({ where: { accountId: a } })).credits).toBe(3);
     expect((await db.passMembership.findFirstOrThrow({ where: { accountId: a } })).state).toBe("refunded");
     const again = await db.$transaction((tx) => purchases.revoke(tx, { id: out.length ? "00000000-0000-7000-8000-000000000000" : "" }));
     expect(again).toEqual([]);

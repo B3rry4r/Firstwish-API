@@ -12,7 +12,7 @@ import { type AuditActor, AuditService, requireReason } from "../audit/audit.ser
 import { JobsService, type JobContext, type JobResult } from "../jobs/jobs.service";
 import { type StudioEntry, StylesService } from "../styles/styles.service";
 import { CreatorStateService } from "./creator-state.service";
-import { allPass, CHECK_KEYS, fileIdsOf, runChecks, type CheckResult, type UsedFile } from "./submission-checks";
+import { allPass, CHECK_KEYS, fileIdsOf, runChecks, type CheckResult, type Manifest, type UsedFile } from "./submission-checks";
 import { EDITABLE, isObj, json, metaOf, obj, arr, UUID, type Obj } from "./studio-doc";
 import { StudioStylesService } from "./studio-styles.service";
 
@@ -108,10 +108,13 @@ export class SubmissionsService implements OnModuleInit {
     if (ids.length) {
       for (const f of await this.db.storedFile.findMany({ where: { id: { in: ids }, ownerAccountId: accountId, status: "ready" } })) files.set(f.id, { id: f.id, kind: f.kind, bytes: Number(f.bytes) });
     }
-    const checks = runChecks(document, files);
+    const checks = runChecks(document, files, { base: await this.manifestOf(document.base), fallback: await this.manifestOf(document.fallback) });
     let passed = false;
+    const known = await this.db.styleSubmission.findUnique({ where: { id: submissionId }, select: { styleId: true } });
+    if (!known) return { skipped: true };
     await this.db.$transaction(async (tx) => {
       await lockAccount(tx, accountId);
+      await this.lockStudio(tx, known.styleId);
       const rows = await tx.$queryRaw<{ id: string; styleId: string; status: string }[]>`
         SELECT id::text AS id, "styleId"::text AS "styleId", status::text AS status FROM style_submission WHERE id = ${submissionId}::uuid FOR UPDATE`;
       const sub = rows[0];
@@ -134,6 +137,19 @@ export class SubmissionsService implements OnModuleInit {
       await this.state.giveReviewBack(tx, accountId, used);
     });
     return { changed: { submissionId, passed, failed: checks.filter((k) => !k.pass).map((k) => k.key) } };
+  }
+
+  /** A scene set as the checks read it: its Template row (kinds, dimension) and the occasions its catalogue Style names; undefined when there is none. */
+  private async manifestOf(slug: unknown): Promise<Manifest | undefined> {
+    if (typeof slug !== "string" || !slug.trim()) return undefined;
+    const base = slug.trim();
+    const t = await this.db.template.findFirst({ where: { base }, select: { kinds: true, dimension: true } });
+    if (!t) return undefined;
+    const st = await this.db.style.findUnique({ where: { slug: base }, select: { occasions: true } });
+    const only = obj(st?.occasions);
+    const occasions: Record<string, string[]> = {};
+    for (const [k, v] of Object.entries(only)) occasions[k] = arr(v).filter((x): x is string => typeof x === "string");
+    return { slug: base, dimension: t.dimension ?? "flat", kinds: arr(t.kinds).filter((x): x is string => typeof x === "string"), occasions: st?.occasions ? occasions : null };
   }
 
   // ------------------------------------------------------------------ staff review (E-200, E-201)
@@ -189,6 +205,10 @@ export class SubmissionsService implements OnModuleInit {
     const note = typeof body.note === "string" && body.note.trim() ? body.note.trim().slice(0, 1000) : null;
     if (body.decision === "return" && !note && reason.length < 4) throw AppError.validation({ reason: "Say what to fix." });
     const out = await this.db.$transaction(async (tx) => {
+      // SA1: one lock order everywhere: the studio style first, then the submission (a creator's withdraw takes them the same way).
+      const known = await tx.styleSubmission.findUnique({ where: { id }, select: { styleId: true } });
+      if (!known) throw AppError.notFound("No submission has this id.");
+      const studio = await this.lockStudio(tx, known.styleId);
       const rows = await tx.$queryRaw<{ id: string }[]>`SELECT id::text AS id FROM style_submission WHERE id = ${id}::uuid FOR UPDATE`;
       if (!rows[0]) throw AppError.notFound("No submission has this id.");
       const sub = await tx.styleSubmission.findUniqueOrThrow({ where: { id } });
@@ -198,7 +218,6 @@ export class SubmissionsService implements OnModuleInit {
       if (!snap[0]) throw new AppError(HttpStatus.INTERNAL_SERVER_ERROR, "snapshot_missing", "This submission has no saved draft.");
       const doc = snap[0].document;
       const now = this.clock.now();
-      const studio = await this.lockStudio(tx, sub.styleId);
       const staff = actor.id ? await tx.staffAccount.findUnique({ where: { id: actor.id }, select: { name: true } }) : null;
       let level: "standard" | "premium" | null = null;
       if (body.decision === "approve") {

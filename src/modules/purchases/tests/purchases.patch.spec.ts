@@ -262,9 +262,9 @@ describe("purchases P-B07: the rulings HH1 to HH9", () => {
     await revoke(s1);
     expect((await db.creatorState.findUniqueOrThrow({ where: { accountId: c } })).signed).toBe(true);
     await revoke(c1);
-    expect(await db.creatorState.findUniqueOrThrow({ where: { accountId: c } })).toMatchObject({ plan: "creator", credits: 10, reviewsLeft: 2 });
+    expect(await db.creatorState.findUniqueOrThrow({ where: { accountId: c } })).toMatchObject({ plan: "creator", credits: 13, reviewsLeft: 2 });
     await revoke(c2);
-    expect(await db.creatorState.findUniqueOrThrow({ where: { accountId: c } })).toMatchObject({ plan: "open", credits: 0, reviewsLeft: 0, renews: null });
+    expect(await db.creatorState.findUniqueOrThrow({ where: { accountId: c } })).toMatchObject({ plan: "open", credits: 3, reviewsLeft: 0, renews: null });
   });
 
   it("HH4. revoking one of two keeps works the end, keep, keptBy and keptUntil out again from the keeps that remain", async () => {
@@ -479,7 +479,7 @@ describe("purchases P-B07: the rulings HH1 to HH9", () => {
     await pay(c, "creator.credit-pack", {}, { qty: 2 });
     await pay(c, "creator.extra-review", {}, { qty: 3 });
     await pay(c, "creator.signed");
-    expect(await db.creatorState.findUniqueOrThrow({ where: { accountId: c } })).toMatchObject({ plan: "creator", credits: 20, reviewsLeft: 2, packs: 2, extraReviews: 3, signed: true });
+    expect(await db.creatorState.findUniqueOrThrow({ where: { accountId: c } })).toMatchObject({ plan: "creator", credits: 23, reviewsLeft: 2, packs: 2, extraReviews: 3, signed: true });
     const order = ids.next();
     const cr = await pay(c, "concierge.single", { subjectId: order });
     expect((await grants((await paymentRow(cr)).id))[0].detail).toMatchObject({ orderId: order });

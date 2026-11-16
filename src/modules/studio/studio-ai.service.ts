@@ -1,15 +1,17 @@
-import { HttpStatus, Inject, Injectable } from "@nestjs/common";
+import { HttpStatus, Inject, Injectable, Logger, OnApplicationBootstrap, OnModuleInit } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
 import { lockAccount } from "../../common/db/account-lock";
 import { PrismaService } from "../../common/db/prisma.service";
 import type { Env } from "../../common/env/env";
 import { AppError } from "../../common/errors/app-error";
+import { Clock } from "../../common/ports/clock.port";
 import { isPortTimeout } from "../../common/ports/time-limit";
 import { AiWritingPort } from "../../common/ports/ai.port";
 import { IdGenerator } from "../../common/ports/ids.port";
 import type { StyleChange } from "../../contracts";
+import { JobsService, type JobContext, type JobResult } from "../jobs/jobs.service";
 import { CreatorStateService } from "./creator-state.service";
-import { cleanDoc, isObj, json, obj, type Obj, UUID } from "./studio-doc";
+import { cleanDoc, isObj, json, MAX_DOC_BYTES, obj, shapeParts, type Obj, UUID } from "./studio-doc";
 
 /**
  * Whether the AI can answer at all. A live API with no key cannot (the env check refuses to start without one, so this is the
@@ -22,6 +24,14 @@ export class AiAvailability {
   }
 }
 export const AI_AVAILABILITY = Symbol("AI_AVAILABILITY");
+
+/** XX2: an AI request with no answer after this long is failed and its credits come back (the sweep). */
+export const AI_WAIT_MS = 5 * 60_000;
+const AI_SWEEP_EVERY_MS = 60_000;
+/** The sweep is a job of the checks' kind (the registry's jobs list has no kind of its own for it), told apart by its subject key. */
+export const AI_SWEEP_KIND = "style-level-review";
+export const AI_SWEEP_KEY = "ai-sweep:all";
+const AI_SWEEP_PREFIX = "ai-sweep:";
 
 const MAX_WORDS = 2000;
 const MAX_TOKENS = 4000;
@@ -60,7 +70,13 @@ function designOf(doc: Obj): Obj {
   return out;
 }
 
-/** The AI's answer as a StyleChange, or null when it is not one (the credits come back and nothing invented is shown). */
+/** What the AI says is plain text: a short sentence, no markup. */
+const plain = (v: unknown): v is string => typeof v === "string" && v.trim() !== "" && v.length <= 500 && !/[<>]/.test(v);
+
+/**
+ * The AI's answer as a StyleChange, or null when it is not one (the credits come back and nothing invented is shown). The parts it
+ * changes go through the same shape check as a save (SA3); `said` is plain text; anything off in any field refuses the answer.
+ */
 export function parseChange(text: string): Omit<StyleChange, "credits"> | null {
   const start = text.indexOf("{");
   const end = text.lastIndexOf("}");
@@ -72,18 +88,19 @@ export function parseChange(text: string): Omit<StyleChange, "credits"> | null {
     return null;
   }
   if (!isObj(v)) return null;
-  const said = Array.isArray(v.said) ? v.said.filter((s): s is string => typeof s === "string" && s.trim() !== "").map((s) => s.slice(0, 500)).slice(0, 5) : [];
-  if (!said.length) return null;
+  if (!Array.isArray(v.said) || v.said.length < 1 || v.said.length > 5 || !v.said.every(plain)) return null;
   if (v.ops !== undefined && (!Array.isArray(v.ops) || v.ops.length > 50 || !v.ops.every(isObj))) return null;
-  if (v.scenes !== undefined && !isObj(v.scenes)) return null;
-  if (v.base !== undefined && typeof v.base !== "string") return null;
-  const out: Omit<StyleChange, "credits"> = { said };
-  if (v.base !== undefined) out.base = v.base;
-  if (v.theme !== undefined) out.theme = v.theme;
-  if (v.scenes !== undefined) out.scenes = v.scenes;
-  if (v.made !== undefined) out.made = v.made;
-  if (v.tags !== undefined) out.tags = v.tags;
+  const parts: Obj = {};
+  if (Object.keys(shapeParts(v, "answer", parts)).length) return null;
+  if (v.base !== undefined && (typeof v.base !== "string" || !v.base.trim() || v.base.length > 80)) return null;
+  const out: Omit<StyleChange, "credits"> = { said: v.said.map((s) => s.trim()) };
+  if (v.base !== undefined) out.base = v.base.trim();
+  if (parts.theme !== undefined) out.theme = parts.theme;
+  if (parts.scenes !== undefined) out.scenes = parts.scenes as Record<string, unknown>;
+  if (parts.made !== undefined) out.made = parts.made;
+  if (parts.tags !== undefined) out.tags = parts.tags;
   if (v.ops !== undefined) out.ops = v.ops;
+  if (Buffer.byteLength(JSON.stringify(out), "utf8") > MAX_DOC_BYTES) return null;
   return out;
 }
 
@@ -94,14 +111,54 @@ export function parseChange(text: string): Omit<StyleChange, "credits"> | null {
  * document and the creator's own words only: no customer photo, no customer words, no audio (T-74, R13).
  */
 @Injectable()
-export class StudioAiService {
+export class StudioAiService implements OnModuleInit, OnApplicationBootstrap {
+  private readonly log = new Logger(StudioAiService.name);
+
   constructor(
     private readonly db: PrismaService,
+    private readonly clock: Clock,
+    private readonly jobs: JobsService,
     private readonly ai: AiWritingPort,
     private readonly ids: IdGenerator,
     private readonly state: CreatorStateService,
     @Inject(AI_AVAILABILITY) private readonly availability: AiAvailability,
   ) {}
+
+  /** Not in tests (specs share one database); a spec calls registerAll() and runs the sweep with `only`. */
+  onModuleInit(): void {
+    if (process.env.NODE_ENV !== "test") this.registerAll();
+  }
+
+  onApplicationBootstrap(): void {
+    if (process.env.NODE_ENV === "test") return;
+    this.jobs.schedule(AI_SWEEP_KIND, this.clock.now(), AI_SWEEP_KEY).catch((e: unknown) => this.log.error(`could not schedule the AI sweep: ${String(e)}`));
+  }
+
+  registerAll(): void {
+    this.jobs.registerSubject(AI_SWEEP_KIND, AI_SWEEP_PREFIX, (c) => this.sweepJob(c));
+  }
+
+  private async sweepJob(c: JobContext): Promise<JobResult> {
+    const swept = await this.sweepStale();
+    return { changed: { swept }, again: new Date(c.now.getTime() + AI_SWEEP_EVERY_MS) };
+  }
+
+  /**
+   * XX2: every Studio AI request still waiting after five minutes is marked failed and its credits come back, each in the one
+   * transaction that marks it (a crash loses no credit; a second run finds nothing waiting and gives nothing). Answers how many.
+   */
+  async sweepStale(): Promise<number> {
+    const cutoff = new Date(this.clock.now().getTime() - AI_WAIT_MS);
+    return this.db.$transaction(async (tx) => {
+      const rows = await tx.$queryRaw<{ accountId: string; credits: number }[]>`
+        UPDATE ai_request SET status = 'failed'
+         WHERE id IN (SELECT id FROM ai_request WHERE status = 'queued' AND kind IN ('studio-draft', 'studio-change') AND "createdAt" <= ${cutoff}
+                       ORDER BY "createdAt", id LIMIT 200 FOR UPDATE SKIP LOCKED)
+        RETURNING "accountId"::text AS "accountId", "creditsSpent" AS credits`;
+      for (const r of rows) await this.state.giveBack(tx, r.accountId, r.credits);
+      return rows.length;
+    });
+  }
 
   /** E-15 */
   async change(accountId: string, body: { ask?: string; instruction?: string; style?: unknown; styleId?: string; target?: Record<string, unknown> }): Promise<StyleChange> {
@@ -163,7 +220,7 @@ export class StudioAiService {
       await lockAccount(tx, accountId);
       const left = await this.state.draw(tx, accountId, plan.cost);
       if (left === null) throw new AppError(HttpStatus.PAYMENT_REQUIRED, "credits_needed", `This needs ${plan.cost} credit${plan.cost === 1 ? "" : "s"}. Buy a credit pack to go on.`);
-      await tx.aiRequest.create({ data: { id, accountId, kind: plan.kind, creditsSpent: plan.cost, status: "queued", model: "pending", ...plan.row } });
+      await tx.aiRequest.create({ data: { id, accountId, kind: plan.kind, creditsSpent: plan.cost, status: "queued", model: "pending", createdAt: this.clock.now(), ...plan.row } });
     });
     // 2. the provider call, outside any transaction (the port holds its own time limit).
     let change: Omit<StyleChange, "credits"> | null = null;
@@ -180,10 +237,12 @@ export class StudioAiService {
     if (change) {
       const out = change;
       const credits = await this.db.$transaction(async (tx) => {
-        await tx.aiRequest.update({ where: { id }, data: { status: "done", model, output: json(out as unknown as Obj) } });
-        return this.state.balance(tx, accountId);
+        // the sweep may have failed this request and given its credits back while the provider was slow: then there is no answer to keep
+        const kept = await tx.aiRequest.updateMany({ where: { id, status: "queued" }, data: { status: "done", model, output: json(out as unknown as Obj) } });
+        return kept.count ? this.state.balance(tx, accountId) : null;
       });
-      return { ...out, credits };
+      if (credits !== null) return { ...out, credits };
+      throw new AppError(HttpStatus.BAD_GATEWAY, "ai_failed", "The AI helper took too long. Your credits are back.");
     }
     await this.refund(accountId, id, plan.cost);
     if (failure && isPortTimeout(failure)) throw failure;

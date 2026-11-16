@@ -1,6 +1,8 @@
 import { Injectable } from "@nestjs/common";
 import { Clock } from "../../common/ports/clock.port";
 import { IdGenerator } from "../../common/ports/ids.port";
+import { EntitlementsService } from "../price-book/entitlements.service";
+import { nextMonthStart, rulesFrom } from "../studio/creator-state.service";
 import type { FulfilmentContext } from "../payments/fulfilment.registry";
 import { addMonths, GrantStore, num, type GrantRow, type Tx } from "./grants";
 
@@ -23,14 +25,19 @@ export class CreatorHandlers {
     private readonly store: GrantStore,
     private readonly clock: Clock,
     private readonly ids: IdGenerator,
+    private readonly ent: EntitlementsService,
   ) {}
 
   /** The account's CreatorState, made if it has none, and locked. */
   private async lockState(tx: Tx, accountId: string | null): Promise<State | null> {
     if (!accountId) return null;
+    // XX3: the row is made with the Open plan's start whichever code makes it first (the Studio's own read makes the same row):
+    // its 3 credits once, this month's review, the Studio on.
+    const rules = await rulesFrom(this.ent, tx);
     await tx.$executeRaw`
-      INSERT INTO creator_state (id, "accountId", credits, "extraReviews", packs, plan, "reviewsLeft", version)
-      VALUES (${this.ids.id()}::uuid, ${accountId}::uuid, 0, 0, 0, 'open', 0, 0) ON CONFLICT ("accountId") DO NOTHING`;
+      INSERT INTO creator_state (id, "accountId", credits, "extraReviews", packs, plan, "reviewsLeft", "on", signed, "periodEndsAt", version)
+      VALUES (${this.ids.id()}::uuid, ${accountId}::uuid, ${rules.creditsOnce}, 0, 0, 'open', ${rules.reviewsPerMonth("open")}, true, false, ${nextMonthStart(this.clock.now())}, 0)
+      ON CONFLICT ("accountId") DO NOTHING`;
     const rows = await tx.$queryRaw<State[]>`
       SELECT id::text AS id, credits, "extraReviews", packs, plan, signed, "reviewsLeft", renews, "periodEndsAt" FROM creator_state WHERE "accountId" = ${accountId}::uuid FOR UPDATE`;
     return rows[0] ?? null;

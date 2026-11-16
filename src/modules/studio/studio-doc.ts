@@ -20,7 +20,28 @@ export const MAX_DOC_BYTES = 400_000;
 const MAX_ART = 200;
 const MAX_SCENES = 60;
 
-const text = (v: unknown, max: number): string | null => (typeof v === "string" ? v.trim().slice(0, max) : null);
+export const text = (v: unknown, max: number): string | null => (typeof v === "string" ? v.trim().slice(0, max) : null);
+
+/**
+ * The shape rules for the parts of a document that are objects: shared by a save (cleanDoc) and by what the AI answers (SA3), so
+ * the two can never disagree. Fills `out` with the parts that pass and answers the fields that do not.
+ */
+export function shapeParts(input: Obj, field: string, out: Obj): ErrorFields {
+  const fields: ErrorFields = {};
+  for (const k of ["scenes", "poster", "made", "tags", "holds", "soundSet", "moments", "rights"] as const) {
+    if (input[k] === undefined || input[k] === null) continue;
+    if (!isObj(input[k])) fields[`${field}.${k}`] = "Must be an object.";
+    else out[k] = input[k];
+  }
+  const scenes = obj(out.scenes);
+  if (Object.keys(scenes).length > MAX_SCENES) fields[`${field}.scenes`] = `At most ${MAX_SCENES} scenes.`;
+  else if (Object.values(scenes).some((v) => !isObj(v))) fields[`${field}.scenes`] = "Each scene must be an object.";
+  if (input.theme !== undefined && input.theme !== null) {
+    if (typeof input.theme === "string" || isObj(input.theme)) out.theme = input.theme;
+    else fields[`${field}.theme`] = "Must be a theme object or the name of one.";
+  }
+  return fields;
+}
 
 /**
  * The client's part of a style document, checked and trimmed. A bad part is 422 with the field named. `partial` is for a patch
@@ -42,17 +63,12 @@ export function cleanDoc(input: unknown, field = "style"): Obj {
     if (t === null) fields[`${field}.${k}`] = "Must be text.";
     else out[k] = t;
   }
-  for (const k of ["scenes", "poster", "made", "tags", "holds", "soundSet", "moments", "rights"] as const) {
-    if (input[k] === undefined || input[k] === null) continue;
-    if (!isObj(input[k])) fields[`${field}.${k}`] = "Must be an object.";
-    else out[k] = input[k];
-  }
+  Object.assign(fields, shapeParts(input, field, out));
   if (input.art !== undefined && input.art !== null) {
     if (!Array.isArray(input.art) || input.art.length > MAX_ART) fields[`${field}.art`] = `Must be a list of at most ${MAX_ART} things.`;
     else out.art = input.art;
   }
-  if (out.scenes && Object.keys(out.scenes).length > MAX_SCENES) fields[`${field}.scenes`] = `At most ${MAX_SCENES} scenes.`;
-  for (const k of ["theme", "style", "seen"] as const) if (input[k] !== undefined && input[k] !== null) out[k] = input[k];
+  for (const k of ["style", "seen"] as const) if (input[k] !== undefined && input[k] !== null) out[k] = input[k];
   if (Object.keys(fields).length) throw AppError.validation(fields);
   if (Buffer.byteLength(JSON.stringify(out), "utf8") > MAX_DOC_BYTES) throw AppError.validation({ [field]: "This style is too big to save." });
   return out;

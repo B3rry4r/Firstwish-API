@@ -85,10 +85,12 @@ describe("HW6 the book's limits, HW7 staff actions", () => {
       cursor = page.body.nextCursor as string | null;
     } while (cursor);
     const by = (id: string) => rows.find((i) => i.id === id);
-    expect(by(staff.moderator.id)?.actions).toEqual({ "/admin/wishes": ["take_down", "restore"], "/admin/people": ["ban"] });
-    expect(by(staff.finance.id)?.actions).toEqual({ "/admin/creators": ["mark_paid", "approve_run"], "/admin/numbers": ["set_target"] });
-    expect(by(staff.support.id)?.actions).toEqual({ "/admin/wishes": ["extend", "resend"] });
-    expect(Object.keys(by(staff.owner.id)?.actions ?? {}).sort()).toEqual(["/admin/creators", "/admin/numbers", "/admin/people", "/admin/wishes"]);
+    // HX5: every staff write the role may do is listed (the whole walk is in api-base-7-patch.spec.ts); the named ones keep their names
+    expect(by(staff.moderator.id)?.actions).toMatchObject({ "/admin/wishes": ["take_down", "restore"] });
+    expect(by(staff.moderator.id)?.actions["/admin/people"]).toContain("ban");
+    expect(by(staff.finance.id)?.actions).toMatchObject({ "/admin/creators": ["mark_paid", "approve_run"], "/admin/numbers": ["set_target"] });
+    expect(by(staff.support.id)?.actions).toMatchObject({ "/admin/wishes": ["extend", "resend"] });
+    expect(Object.keys(by(staff.owner.id)?.actions ?? {})).toEqual(expect.arrayContaining(["/admin/creators", "/admin/numbers", "/admin/people", "/admin/wishes", "/admin/prices"]));
     // every section named in actions is one the role opens
     for (const m of [staff.moderator, staff.finance, staff.support]) expect(Object.keys(by(m.id)?.actions ?? {}).every((s) => by(m.id)?.sections.includes(s))).toBe(true);
     const numbers = await t.http().get("/v1/admin/numbers").set(auth(staff.finance.token));

@@ -1,4 +1,5 @@
 import { applyDecorators, CanActivate, createParamDecorator, ExecutionContext, Injectable, SetMetadata, UseGuards } from "@nestjs/common";
+import { METHOD_METADATA } from "@nestjs/common/constants";
 import { Reflector } from "@nestjs/core";
 import type { Request } from "express";
 import { StaffRoles } from "../../common/auth/decorators";
@@ -32,13 +33,51 @@ export class StaffSectionGuard implements CanActivate {
   }
 }
 
+/** The routes that took AdminRoute: where the staff session read draws what each role may do (HX5). */
+const ADMIN_ROUTES: { target: object; key: string | symbol; section: string; roles: readonly StaffRole[] }[] = [];
+
+/** On a route that does several things by a body `action`: the table of those actions and the roles of each (the service checks the same table). */
+export const STAFF_ACTIONS = "fw:staff-actions";
+export const StaffActions = (table: Record<string, readonly string[]>) => SetMetadata(STAFF_ACTIONS, table);
+
+/** One staff write: the section it sits in, the roles its route lists, and what it is called on the session read (the handler's name, snake_case). */
+export interface StaffWrite {
+  section: string;
+  action: string;
+  roles: readonly StaffRole[];
+  /** the actions a body `action` names, with their roles; null for a route that does one thing */
+  table: Record<string, readonly string[]> | null;
+}
+
+const WRITE_METHODS = new Set([1, 2, 3, 4, 5]); // RequestMethod POST, PUT, DELETE, PATCH, ALL
+const snake = (name: string) => name.replace(/([a-z0-9])([A-Z])/g, "$1_$2").toLowerCase();
+
+/** Every staff write (a route that changes something) with its section and roles: the one table the guard checks and the session read reads. */
+export function staffWrites(): StaffWrite[] {
+  const out: StaffWrite[] = [];
+  for (const r of ADMIN_ROUTES) {
+    const fn = (r.target as Record<string | symbol, unknown>)[r.key];
+    if (typeof fn !== "function") continue;
+    const method = Reflect.getMetadata(METHOD_METADATA, fn) as number | undefined;
+    if (method === undefined || !WRITE_METHODS.has(method)) continue;
+    const table = (Reflect.getMetadata(STAFF_ACTIONS, fn) as Record<string, readonly string[]> | undefined) ?? null;
+    out.push({ section: r.section, action: snake(String(r.key)), roles: r.roles, table });
+  }
+  return out;
+}
+
 /**
  * Every /v1/admin route says its access with this: the roles the registry lists for it and the section of the role table it
  * sits in. A role must pass both; the owner passes every check.
  *   @AdminRoute("/admin/team", "owner")
  */
-export const AdminRoute = (section: string, ...roles: StaffRole[]) =>
-  applyDecorators(StaffRoles(...roles), SetMetadata(STAFF_SECTION, section), UseGuards(StaffSectionGuard));
+export const AdminRoute = (section: string, ...roles: StaffRole[]): MethodDecorator & ClassDecorator => {
+  const base = applyDecorators(StaffRoles(...roles), SetMetadata(STAFF_SECTION, section), UseGuards(StaffSectionGuard));
+  return ((target: object, key?: string | symbol, descriptor?: PropertyDescriptor) => {
+    if (key !== undefined) ADMIN_ROUTES.push({ target, key, section, roles });
+    return base(target, key, descriptor);
+  });
+};
 
 /** The caller as an audit actor: staff id, address (cut to its network when stored) and request id. */
 export const StaffActor = createParamDecorator((_: unknown, ctx: ExecutionContext): AuditActor => {

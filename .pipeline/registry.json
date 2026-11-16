@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "frozenAt": "2026-11-16T19:30:42Z",
+  "frozenAt": "2026-11-16T20:10:26Z",
   "framework": "nestjs",
   "generatedBy": "tools/pipeline/reconcile.py",
   "resources": [
@@ -13317,7 +13317,7 @@
         },
         {
           "name": "kind",
-          "type": "enum(naira|date)",
+          "type": "enum(naira|date|bytes|hours|days)",
           "classes": [
             "money-kobo"
           ],
@@ -13328,7 +13328,7 @@
           "supersedes": [
             "S-1: integer kobo, currency NGN, over the wire and in storage; prices only from the price book"
           ],
-          "typeBy": "DEC-142"
+          "typeBy": "DEC-252"
         },
         {
           "name": "lead",
@@ -13625,6 +13625,13 @@
             {
               "name": "sku",
               "type": "string (the price-book line, DEC-138)",
+              "from": [
+                "DEC-138"
+              ]
+            },
+            {
+              "name": "value",
+              "type": "integer (optional; the new value of a limit line limits.photoMaxBytes, limits.soundMaxBytes, limits.modelMaxBytes, limits.conciergeDeliveryHours or limits.unopenedDays, in the line's kind: bytes, hours or days; a limit line takes it alone) (DEC-252)",
               "from": [
                 "DEC-138"
               ]

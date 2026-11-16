@@ -252,7 +252,7 @@ describe("price book (contract)", () => {
       for (const who of ["owner", "finance", "ops"]) {
         const r = await t.http().get("/v1/admin/prices").set(bearer(who)).query({ limit: 50 });
         expect(r.status).toBe(200);
-        expect(r.body.items).toHaveLength(26);
+        expect(r.body.items).toHaveLength(31); // 26 lines and the five limit lines (HX1)
         const payout = (r.body.items as Line[]).find((l) => l.sku === "payout.thresholdKobo");
         expect(payout).toMatchObject({ kind: "naira", value: 500000, lead: "PROVISIONAL", group: "payout" });
         const end = (r.body.items as Line[]).find((l) => l.sku === "promotion.endsAt");
@@ -345,11 +345,12 @@ describe("price book (contract)", () => {
     });
 
     it("the payout threshold changes through the same book; finance leaves it PROVISIONAL", async () => {
+      const auditBefore = await db.auditEntry.count({ where: { subjectId: "payout.thresholdKobo" } }); // the run's database is shared: count this change's rows only
       const r = await put("finance", "payout.thresholdKobo", { priceKobo: 600000 });
       expect(r.status).toBe(200);
       expect(r.body).toMatchObject({ value: 600000, lead: "PROVISIONAL" });
       expect(await t.app.get(PriceAdminService).payoutThreshold()).toMatchObject({ valueKobo: 600000, status: "PROVISIONAL" });
-      expect(await db.auditEntry.count({ where: { subjectId: "payout.thresholdKobo" } })).toBe(1);
+      expect(await db.auditEntry.count({ where: { subjectId: "payout.thresholdKobo" } })).toBe(auditBefore + 1);
       expect((await put("finance", "payout.thresholdKobo", { listKobo: 1 })).status).toBe(422);
     });
 
@@ -425,7 +426,7 @@ describe("price book (contract)", () => {
     it("X15: value is kobo for kind naira and an ISO time for kind date; the date line carries no kobo fields", async () => {
       const items = await list();
       for (const l of items) {
-        if (l.kind === "naira") expect(Number.isSafeInteger(l.value)).toBe(true);
+        if (l.kind !== "date") expect(Number.isSafeInteger(l.value)).toBe(true); // naira in kobo; a limit in bytes, hours or days (HX1)
         else expect(String(l.value)).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/);
       }
       const end = items.find((l) => l.sku === "promotion.endsAt") as Line & { was: unknown };

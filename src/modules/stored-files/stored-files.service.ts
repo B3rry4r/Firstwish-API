@@ -307,7 +307,7 @@ export class StoredFilesService {
       async (tx): Promise<Done> => {
         await lockAccount(tx, p.accountId);
         const locked = await tx.$queryRaw<{ id: string }[]>`SELECT id FROM stored_file WHERE id = ${id}::uuid AND status = 'uploaded' FOR UPDATE`;
-        if (!locked.length) return { row, removeKeys: [objectKey, staging], error: refused("The file was removed.") };
+        if (!locked.length) return { row, removeKeys: [objectKey, staging], error: row.styleId ? AppError.notFound("No such file.") : refused("The file was removed.") };
         // HU4: the room is counted again as a voice arrives (the asks made while it was free are many; the arrivals are what fill it)
         const voice = await tx.voiceNote.findUnique({ where: { id }, select: { wishId: true } });
         if (voice?.wishId) {

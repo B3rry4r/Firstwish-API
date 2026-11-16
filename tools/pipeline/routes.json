@@ -1995,7 +1995,8 @@
         "priceKobo": "integer (kobo, optional; at least one of priceKobo, listKobo, promotionEndsAt, payoutDay)",
         "listKobo": "integer (kobo, optional; at least one of priceKobo, listKobo, promotionEndsAt, payoutDay)",
         "promotionEndsAt": "time (ISO-8601, optional; at least one of priceKobo, listKobo, promotionEndsAt, payoutDay)",
-        "payoutDay": "integer (optional; a whole day 1 to 28, the payout run's day; at least one of priceKobo, listKobo, promotionEndsAt, payoutDay) (DEC-233)"
+        "payoutDay": "integer (optional; a whole day 1 to 28, the payout run's day; at least one of priceKobo, listKobo, promotionEndsAt, payoutDay) (DEC-233)",
+        "value": "integer (optional; the new value of a limit line limits.photoMaxBytes, limits.soundMaxBytes, limits.modelMaxBytes, limits.conciergeDeliveryHours or limits.unopenedDays, in the line's kind: bytes, hours or days; a limit line takes it alone) (DEC-252)"
       }
     },
     "POST /v1/admin/refunds": {

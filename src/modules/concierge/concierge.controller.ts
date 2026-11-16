@@ -102,7 +102,7 @@ export class ConciergeAdminController {
   @AdminRoute(SECTION, "ops")
   @Post("concierge/orders/:id/maker")
   @HttpCode(200)
-  give(@Param() params: IdParamDto, @Body() body: PostAdminConciergeOrdersByIdMakerBodyDto, @StaffActor() actor: AuditActor): Promise<ConciergeOrder> {
+  giveMaker(@Param() params: IdParamDto, @Body() body: PostAdminConciergeOrdersByIdMakerBodyDto, @StaffActor() actor: AuditActor): Promise<ConciergeOrder> {
     return this.orders.give(params.id, body, actor);
   }
 

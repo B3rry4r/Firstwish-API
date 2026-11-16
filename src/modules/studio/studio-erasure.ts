@@ -10,6 +10,7 @@ import type { Prisma } from "@prisma/client";
  *   style_submission_snapshot.document: deleted for a submission that never went live; kept for one that did, as the design only
  *   (the same three keys removed). Style.by, Style.line and Style.feel: emptied, the line and feel set to the style's name.
  *   Style.record entries the creator made ("Sent in for review", "Withdrawn by its creator"): `by` emptied.
+ *   StoredFile (HX4): the files a live style plays with stay and lose their owner; a draft's files and the profile picture go with the account's files.
  *   CreatorState (credits, plan): kept, ids and counters only. AiRequest: blanked by the account erase itself.
  * Called by the account erase inside its transaction, with the account already locked.
  */
@@ -43,6 +44,9 @@ export class StudioErasure {
         || CASE WHEN jsonb_typeof(document->'rights') = 'object' THEN jsonb_build_object('rights', (document->'rights') - 'words') ELSE '{}'::jsonb END
        WHERE "accountId" = ${accountId}::uuid`;
     if (liveIds.length) {
+      // HX4: the files such a style plays with are the catalogue's from now on: they stay, and name no owner. The drafts' files and the profile
+      // picture still belong to the account and are removed with its other files.
+      await tx.$executeRaw`UPDATE stored_file SET "ownerAccountId" = NULL, "businessId" = NULL WHERE "styleId" = ANY(${liveIds}::uuid[])`;
       await tx.$executeRaw`
         UPDATE style SET "by" = '', line = name, feel = name,
                record = COALESCE((SELECT jsonb_agg(CASE WHEN e->>'what' IN ('Sent in for review', 'Withdrawn by its creator') THEN jsonb_set(e, '{by}', '""'::jsonb) ELSE e END ORDER BY n)

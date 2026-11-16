@@ -1295,6 +1295,7 @@ model StoredFile {
   kind                       StoredFileKind?
   styleId                    String?           @db.Uuid
   business                   Business?         @relation("StoredFile_businessId", fields: [businessId], references: [id])
+  style                      StudioStyle?      @relation("StoredFile_styleId", fields: [styleId], references: [id], onDelete: SetNull)
   ownerAccount               Account?          @relation("StoredFile_ownerAccountId", fields: [ownerAccountId], references: [id])
   file                       StoredFile?       @relation("StoredFile_fileId", fields: [fileId], references: [id], onDelete: SetNull, onUpdate: SetNull)
   aiRequestByInputFile       AiRequest[]       @relation("AiRequest_inputFileId")
@@ -1330,14 +1331,15 @@ model StudioPrefs {
 
 /// document: a Studio style (DEC-65: StudioStyle is the document), stored whole as validated JSON with its owner and state as columns
 model StudioStyle {
-  id          String    @id @db.Uuid
-  liveAt      DateTime? @db.Timestamptz(3)
-  status      String?
-  submittedAt DateTime? @db.Timestamptz(3)
-  document    Json
-  version     Int       @default(0)
-  accountId   String?   @db.Uuid
-  account     Account?  @relation("StudioStyle_accountId", fields: [accountId], references: [id])
+  id                String       @id @db.Uuid
+  liveAt            DateTime?    @db.Timestamptz(3)
+  status            String?
+  submittedAt       DateTime?    @db.Timestamptz(3)
+  document          Json
+  version           Int          @default(0)
+  accountId         String?      @db.Uuid
+  account           Account?     @relation("StudioStyle_accountId", fields: [accountId], references: [id])
+  storedFileByStyle StoredFile[] @relation("StoredFile_styleId")
 
   @@index([accountId, id])
   @@map("studio_style")

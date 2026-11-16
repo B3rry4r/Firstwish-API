@@ -8,6 +8,7 @@ import { BookLine, BookVersion, PriceBookService, safe } from "./price-book.serv
 /** The two setting lines staff change through the same book. */
 export const PROMOTION_KEY = "promotion.endsAt";
 import { DEFAULT_RUN_DAY } from "../payouts/run-day";
+import type { LimitLine } from "./book-limits";
 export const PAYOUT_KEY = "payout.thresholdKobo";
 
 export interface LineContext {
@@ -85,6 +86,21 @@ export function payoutLineOf(valueKobo: number, status: string, schedule: string
     per: schedule,
     payoutDay,
     lead: status,
+    reason,
+    changed,
+  };
+}
+
+/** One of the book's limits (HX1) as a setting line: value is the number in its unit (bytes, hours or days); the code that acts on it reads the same row. */
+export function limitLineView(def: LimitLine, value: number, book: BookVersion, reason = "", changed = false): Price {
+  return {
+    ...settingBase(def.key, def.name, "limits", book.version),
+    kind: def.unit,
+    price: value,
+    value,
+    was: value,
+    per: def.unit,
+    lead: "PROVISIONAL",
     reason,
     changed,
   };

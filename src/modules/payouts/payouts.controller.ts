@@ -57,7 +57,7 @@ export class PayoutsController {
   @AdminRoute("/admin/creators", "finance", "owner")
   @Post("admin/creators/payouts/:creator/paid")
   @HttpCode(200)
-  paid(@Param() p: PostAdminCreatorsPayoutsByCreatorPaidParamsDto, @Body() body: PostAdminCreatorsPayoutsByCreatorPaidBodyDto, @StaffActor() actor: AuditActor): Promise<Payout> {
+  markPaid(@Param() p: PostAdminCreatorsPayoutsByCreatorPaidParamsDto, @Body() body: PostAdminCreatorsPayoutsByCreatorPaidBodyDto, @StaffActor() actor: AuditActor): Promise<Payout> {
     return this.runs.markPaid(p.creator, body, actor);
   }
 
@@ -65,7 +65,7 @@ export class PayoutsController {
   @AdminRoute("/admin/creators", "finance", "owner")
   @Post("admin/payout-runs/:id/approve")
   @HttpCode(200)
-  approve(@Param() p: PostAdminPayoutRunsByIdApproveParamsDto, @Body() body: PostAdminPayoutRunsByIdApproveBodyDto, @StaffActor() actor: AuditActor): Promise<{ items: Payout[]; nextCursor: null }> {
+  approveRun(@Param() p: PostAdminPayoutRunsByIdApproveParamsDto, @Body() body: PostAdminPayoutRunsByIdApproveBodyDto, @StaffActor() actor: AuditActor): Promise<{ items: Payout[]; nextCursor: null }> {
     return this.runs.approve(p.id, body, actor);
   }
 }

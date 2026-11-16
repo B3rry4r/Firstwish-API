@@ -24,7 +24,7 @@ export class ScreeningResultsController {
   @AdminRoute("/admin/moderation", "moderator")
   @Post(":id/decision")
   @HttpCode(200)
-  decide(
+  decideScreening(
     @Param() params: PostAdminScreeningResultsByIdDecisionParamsDto,
     @Body() body: PostAdminScreeningResultsByIdDecisionBodyDto,
     @StaffActor() actor: AuditActor,

@@ -3613,7 +3613,7 @@
     {
       "id": "DEC-248",
       "topic": "One source for the book's limits (HW6)",
-      "decision": "HW6: the lifecycle row served inside the price book (LifecycleConfig) carries photoMaxBytes, soundMaxBytes, modelMaxBytes, conciergeDeliveryHours (3) and unopenedDays (365); the upload size check, the Concierge due time and the wish lifecycle (and the account erase) read the same row, and every price line says the same conciergeDeliveryHours (it said 0). The erase-now period is read as the unopened wish's wait before it is erased (unopenedDays) beside HOLD_DAYS (the resting hold), both from the book. The photo limit is photoMaxBytes; the count of photos stays per ticket in the entitlements.",
+      "decision": "HW6: the lifecycle row served inside the price book (LifecycleConfig) carries photoMaxBytes, soundMaxBytes, modelMaxBytes, conciergeDeliveryHours (3) and unopenedDays (365); the upload size check, the Concierge due time and the wish lifecycle (and the account erase) read the same row, and every price line says the same conciergeDeliveryHours (it said 0). The unopened wish's wait before it is put to rest (unopenedDays) is a book value beside HOLD_DAYS (the resting hold); an erase happens at once and has no period or book value (HX2). The photo limit is photoMaxBytes; the count of photos stays per ticket in the entitlements.",
       "closes": [],
       "approvedBy": "lead default, owner may override",
       "confidence": "high",
@@ -3649,6 +3649,29 @@
       "source": "build/rulings-phase3.md; build/prompts/API-BASE-7.md",
       "decidedAt": "2026-11-28T12:00:00Z",
       "decision": "The registry is re-frozen after DEC-244 to DEC-250 by tools/pipeline/freeze.py; reconcile.py was run twice with --reopen (identical outputs; .pipeline/ui-align-tasks.json restored byte for byte). Endpoint ids already issued are unchanged; E-265 was the last issued before, and the three new endpoints take E-266 (GET /v1/w/:slug/style-files), E-267 (GET /v1/studio/styles/:id/files) and E-268 (GET /v1/studio/styles/:id/files/:fileId)."
+    },
+    {
+      "id": "DEC-252",
+      "topic": "Every value the book serves is changed in staff Prices (HX1); an erase has no period (HX2); a deleted draft's files go (HX3); an erased creator's live style keeps its files (HX4); the session read's actions cover every staff write (HX5)",
+      "decision": "HX1: PUT /v1/admin/prices/:key (E-124) also changes the book's limits, by finance and owner as any price, with a reason, one audit row and a new book version: the keys limits.photoMaxBytes, limits.soundMaxBytes, limits.modelMaxBytes, limits.conciergeDeliveryHours and limits.unopenedDays take value (a whole number in the line's kind: bytes, hours or days; a limit line takes value alone). GET /v1/admin/prices lists those five lines beside the payout line (Price.kind is naira, date, bytes, hours or days); the read of the book and the code that acts on each number are the same row. The payout threshold and the payout day were already changed here. HX2: unopenedDays is the days a sealed wish nobody opens waits before it is put to rest; an erase happens at once and has no period or book value. HX3: deleting a draft style removes its files and their bytes, a confirm for it is 404, the sweep takes a file whose style no longer exists, and a file's style id is a key to the Studio style row again (a draft's id is a real studio_style row; the row a draft is stays once approved). HX4: erasing a creator keeps the files of an approved style that stays in the catalogue (no owner on them); the drafts, their files and the profile picture go. HX5: GET /v1/admin/team and the session read carry, per section the role opens, every staff write the role may do, drawn from the routes' own role table. A creator already Signed gets signedUntil from the migration (HW3).",
+      "fieldTypes": {
+        "Price.kind": "enum(naira|date|bytes|hours|days)"
+      },
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md; build/prompts/P-API-BASE-7.md",
+      "decidedAt": "2026-11-29T12:00:00Z"
+    },
+    {
+      "id": "DEC-253",
+      "topic": "The registry is frozen again after HX1 to HX5",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md; build/prompts/P-API-BASE-7.md",
+      "decidedAt": "2026-11-29T12:00:00Z",
+      "decision": "The registry is re-frozen after DEC-252 by tools/pipeline/freeze.py; reconcile.py was run with --reopen. Endpoint ids already issued are unchanged; no endpoint is new (E-124 takes one more body field)."
     }
   ]
 }

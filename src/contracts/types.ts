@@ -832,7 +832,7 @@ export interface LifecycleConfig {
   modelMaxBytes: number;
   /** HW6: hours within which one Concierge wish is delivered after payment; the Concierge code reads the same number */
   conciergeDeliveryHours: number;
-  /** HW6: days a sealed wish nobody opens waits after its open time before it is erased; the lifecycle reads the same number */
+  /** HW6: days after its open time that a sealed wish nobody opens is put to rest (it is erased after the resting hold, HOLD_DAYS); an erase itself happens at once and has no period (HX2); the lifecycle reads the same number */
   unopenedDays: number;
   noticeBeforeTermEnds: string;
   restingHoldMonths: number;
@@ -1113,7 +1113,7 @@ export interface Price {
   group?: string | null;
   items?: unknown[] | null;
   key: string;
-  kind: "naira" | "date";
+  kind: "naira" | "date" | "bytes" | "hours" | "days";
   lead?: string | null;
   listKobo?: number | null;
   name: string;
@@ -3417,6 +3417,8 @@ export interface PutAdminPricesByKeyBody {
   reason: string;
   /** string (the price-book line, DEC-138) */
   sku: string;
+  /** integer (optional; the new value of a limit line limits.photoMaxBytes, limits.soundMaxBytes, limits.modelMaxBytes, limits.conciergeDeliveryHours or limits.unopenedDays, in the line's kind: bytes, hours or days; a limit line takes it alone) (DEC-252) */
+  value?: number;
 }
 export type PutAdminPricesByKeyHeaders = Record<string, never>;
 export type PutAdminPricesByKeyResponse = Price;

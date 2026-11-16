@@ -84,7 +84,7 @@ export class FileJobs {
 
   /**
    * HW5: a confirmed upload attached to nothing is removed after 7 days (from its confirm). Attached means a wish names it (a wish file or
-   * a voice note of a wish), a style holds it (Studio files), a creator's profile shows it, a business's brand or one of its shoots
+   * a voice note of a wish), a style that still exists holds it (Studio files), a creator's profile shows it, a business's brand or one of its shoots
    * names it, or a reveal that is on names it. A Vault file is held by its business's Vault, and a render, a card and an export by their
    * owners: they are not swept here. A file attached when the sweep looks is never touched; each row is checked again in the claim.
    */
@@ -94,7 +94,7 @@ export class FileJobs {
       SELECT f.id::text AS id FROM stored_file f
        WHERE f.status IN ('ready', 'screening') AND f.purpose IN ('wish-photo', 'voice-note', 'video-clip', 'studio-asset', 'brand-logo', 'profile-picture')
          AND f."updatedAt" < ${before}
-         AND f."styleId" IS NULL
+         AND (f."styleId" IS NULL OR NOT EXISTS (SELECT 1 FROM studio_style y WHERE y.id = f."styleId"))
          AND NOT EXISTS (SELECT 1 FROM wish_file w WHERE w."fileId" = f.id)
          AND NOT EXISTS (SELECT 1 FROM voice_note v WHERE v.id = f.id AND v."wishId" IS NOT NULL)
          AND NOT EXISTS (SELECT 1 FROM creator c WHERE c.img = f.id::text)
@@ -108,7 +108,8 @@ export class FileJobs {
       const gone = await this.db.$transaction(async (tx) => {
         const rows = await tx.$queryRaw<{ id: string; objectKey: string; variants: Prisma.JsonValue }[]>`
           SELECT f.id::text AS id, f."objectKey", f.variants FROM stored_file f
-           WHERE f.id = ${id}::uuid AND f.status IN ('ready', 'screening') AND f."updatedAt" < ${before} AND f."styleId" IS NULL
+           WHERE f.id = ${id}::uuid AND f.status IN ('ready', 'screening') AND f."updatedAt" < ${before}
+             AND (f."styleId" IS NULL OR NOT EXISTS (SELECT 1 FROM studio_style y WHERE y.id = f."styleId"))
              AND NOT EXISTS (SELECT 1 FROM wish_file w WHERE w."fileId" = f.id)
              AND NOT EXISTS (SELECT 1 FROM voice_note v WHERE v.id = f.id AND v."wishId" IS NOT NULL)
              AND NOT EXISTS (SELECT 1 FROM creator c WHERE c.img = f.id::text)
@@ -120,6 +121,29 @@ export class FileJobs {
       });
       if (!gone) continue;
       await this.dropFile(gone);
+      removed++;
+    }
+    return removed;
+  }
+
+  /**
+   * HX3: a Studio draft is being deleted. In the caller's transaction every file the style holds (one still waiting for its upload or its
+   * confirm too) is marked deleted, so nobody reads it and no confirm can finish it; the objects and rows go after the commit
+   * (dropRetired), and a row a failed removal leaves behind is taken by the unconfirmed sweep. Answers the ids it marked.
+   */
+  async retireStyleFiles(tx: Prisma.TransactionClient, styleId: string): Promise<string[]> {
+    const rows = await tx.$queryRaw<{ id: string }[]>`
+      UPDATE stored_file SET status = 'deleted', "updatedAt" = ${this.clock.now()} WHERE "styleId" = ${styleId}::uuid RETURNING id::text AS id`;
+    return rows.map((r) => r.id);
+  }
+
+  /** HX3: removes the objects, then the rows, of files retireStyleFiles marked. Safe to run twice. Answers how many files it removed. */
+  async dropRetired(ids: string[]): Promise<number> {
+    let removed = 0;
+    for (const id of ids) {
+      const f = await this.db.storedFile.findFirst({ where: { id, status: "deleted" } });
+      if (!f) continue;
+      await this.dropFile(f);
       removed++;
     }
     return removed;

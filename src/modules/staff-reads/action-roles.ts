@@ -1,4 +1,5 @@
 import { AppError } from "../../common/errors/app-error";
+import { staffWrites } from "../role-access/staff-section.guard";
 
 /**
  * Who may do each action reached through the staff wish and person screens (ruling FC1): the role of the route that owns the action.
@@ -24,35 +25,19 @@ export function requireActionRole(table: Record<string, readonly string[]>, acti
   if (allowed && !roles.some((r) => allowed.includes(r))) throw AppError.forbidden("Your role cannot do this.");
 }
 
-/** The creators screen's money actions: marking a month paid and approving a payout run (the routes' own roles). */
-export const PAYOUT_ACTION_ROLES = {
-  mark_paid: ["finance", "owner"],
-  approve_run: ["finance", "owner"],
-} as const satisfies Record<string, readonly string[]>;
-
-/** The numbers screen's one action: setting a monthly target (PUT /admin/numbers/targets). */
-export const NUMBERS_ACTION_ROLES = {
-  set_target: ["finance", "owner"],
-} as const satisfies Record<string, readonly string[]>;
-
-const SECTION_ACTIONS: Record<string, Record<string, readonly string[]>> = {
-  "/admin/wishes": WISH_ACTION_ROLES,
-  "/admin/people": PERSON_ACTION_ROLES,
-  "/admin/creators": PAYOUT_ACTION_ROLES,
-  "/admin/numbers": NUMBERS_ACTION_ROLES,
-};
-
 /**
- * HW7: for each section the roles open, the actions those roles may do there, from the same tables the routes check (one source).
- * A section with no action tables, or none the roles may do, is left out.
+ * HX5: for each section the roles open, every staff write those roles may do there, drawn from the routes' own table (the section and roles
+ * each route lists to the guard, and the actions table of a route that does several things by a body `action`). One source, so the session
+ * read and the routes cannot disagree. A section with no write the roles may do is left out.
  */
 export function actionsFor(roles: readonly string[], sections: readonly string[]): Record<string, string[]> {
-  const out: Record<string, string[]> = {};
-  for (const section of sections) {
-    const table = SECTION_ACTIONS[section];
-    if (!table) continue;
-    const may = Object.keys(table).filter((a) => roles.some((r) => table[a].includes(r)));
-    if (may.length) out[section] = may;
+  const open = new Set(sections);
+  const owner = roles.includes("owner");
+  const out: Record<string, Set<string>> = {};
+  for (const w of staffWrites()) {
+    if (!open.has(w.section) || !(owner || w.roles.some((r) => roles.includes(r)))) continue;
+    const names = w.table ? Object.keys(w.table).filter((a) => roles.some((r) => (w.table as Record<string, readonly string[]>)[a].includes(r))) : [w.action];
+    for (const n of names) (out[w.section] ??= new Set()).add(n);
   }
-  return out;
+  return Object.fromEntries(Object.entries(out).map(([k, v]) => [k, [...v]]));
 }

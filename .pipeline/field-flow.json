@@ -8768,17 +8768,21 @@
     },
     {
       "field": "Price.value",
-      "writers": [],
+      "writers": [
+        "E-124"
+      ],
       "store": "Price",
       "readers": [
         "admin-prices"
       ],
-      "writerActors": [],
+      "writerActors": [
+        "staff"
+      ],
       "readerActors": [
         "staff"
       ],
       "crossActor": false,
-      "noWriter": true
+      "noWriter": false
     },
     {
       "field": "Price.vatIncluded",
@@ -20586,5 +20590,5 @@
     }
   ],
   "crossActor": 33,
-  "noWriter": 662
+  "noWriter": 661
 }

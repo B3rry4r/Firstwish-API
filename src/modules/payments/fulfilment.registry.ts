@@ -47,11 +47,13 @@ export type FulfilmentHandler = (ctx: FulfilmentContext) => Promise<void>;
  * buyer a line can never be granted, before any money is asked for. The fulfilment bundle registers its own (assertStartable).
  */
 export type StartCheck = (
-  accountId: string,
+  accountId: string | null,
   request: PaymentRequestInfo,
   skus: string[],
   tx: Prisma.TransactionClient,
   quote: Quote,
+  /** HU1: the email of a link holder who pays with no account (accountId is null then) */
+  holderEmail?: string,
 ) => Promise<void | { existingPaymentId: string }>;
 
 /**
@@ -84,9 +86,9 @@ export class FulfilmentRegistry {
    * Runs the start checks in the order they were registered; the first to throw refuses the start. A check may set the price the
    * payment charges (it changes `quote`: the order's own row) or answer that an open payment for the same thing already exists.
    */
-  async checkStart(accountId: string, request: PaymentRequestInfo, skus: string[], tx: Prisma.TransactionClient, quote: Quote): Promise<string | null> {
+  async checkStart(accountId: string | null, request: PaymentRequestInfo, skus: string[], tx: Prisma.TransactionClient, quote: Quote, holderEmail?: string): Promise<string | null> {
     for (const check of this.startChecks) {
-      const again = await check(accountId, request, skus, tx, quote);
+      const again = await check(accountId, request, skus, tx, quote, holderEmail);
       if (again) return again.existingPaymentId;
     }
     return null;

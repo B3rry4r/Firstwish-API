@@ -89,6 +89,7 @@ export const REASON_TEXT: Record<string, string> = {
   extra_not_taken_by_ticket: "This ticket does not take that extra.",
   extra_already_held: "This wish already has that extra.",
   keepsake_extras_ceiling: "Too many extras for a Keepsake.",
+  keep_already_paid: "Someone else paid to keep this wish for the same time first.",
   wish_not_live: "Only a wish that is showing or resting can be kept.",
   ticket_not_keepable: "This ticket cannot be kept longer.",
 };

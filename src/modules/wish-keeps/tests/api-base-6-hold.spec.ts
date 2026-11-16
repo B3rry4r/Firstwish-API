@@ -116,8 +116,9 @@ describe("HS2 keep and wake by link, no account", () => {
     expect(a.body.item).toMatchObject({ slug: w.slug, state: "open" });
     expect(t.payments.started.length).toBe(calls + 1);
     const pay0 = await db.payment.findUniqueOrThrow({ where: { providerReference: a.body.payment.reference }, include: { account: true } });
-    expect(pay0.account?.sides).toEqual([]);
-    expect(pay0.accountId).not.toBe(w.accountId);
+    // HU1: no Account is made for the payer: the payment keeps the email, the wish and the proof
+    expect(pay0.accountId).toBeNull();
+    expect(pay0.payerContact).toMatch(/@example\.com$/);
     const pending = await result(w.slug, a.body.payment.reference, h);
     expect(pending.status).toBe(200);
     expect(pending.body.payment.state).toBe("pending");

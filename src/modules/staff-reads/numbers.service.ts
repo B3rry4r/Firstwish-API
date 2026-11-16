@@ -1,4 +1,6 @@
 import { Injectable } from "@nestjs/common";
+import { Prisma } from "@prisma/client";
+import { NOT_HOUSE_SQL } from "../wishes/house";
 import { PrismaService } from "../../common/db/prisma.service";
 import { AppError } from "../../common/errors/app-error";
 import { Clock } from "../../common/ports/clock.port";
@@ -56,17 +58,17 @@ export class NumbersService {
     const earned = await this.earned(from, new Date(to.getTime() + 1));
     const groupBy = async (col: "kind" | "occasion" | "styleSlug"): Promise<Count[]> => {
       const rows = await this.db.$queryRawUnsafe<{ key: string; count: bigint; paid: bigint }[]>(
-        `SELECT "${col}" AS key, count(*) AS count, count("sealedAt") AS paid FROM wish WHERE "createdAt" >= $1 AND "createdAt" <= $2 GROUP BY "${col}" ORDER BY count(*) DESC, "${col}"`,
+        `SELECT "${col}" AS key, count(*) AS count, count("sealedAt") AS paid FROM wish WHERE ${NOT_HOUSE_SQL} AND "createdAt" >= $1 AND "createdAt" <= $2 GROUP BY "${col}" ORDER BY count(*) DESC, "${col}"`,
         from, to);
       return rows.map((r) => ({ key: r.key, name: r.key, count: Number(r.count), paid: Number(r.paid) }));
     };
     const [tot] = await this.db.$queryRaw<{ previews: bigint; paid: bigint }[]>`
-      SELECT count(*) AS previews, count("sealedAt") AS paid FROM wish WHERE "createdAt" >= ${from} AND "createdAt" <= ${to}`;
+      SELECT count(*) AS previews, count("sealedAt") AS paid FROM wish WHERE ${Prisma.raw(NOT_HOUSE_SQL)} AND "createdAt" >= ${from} AND "createdAt" <= ${to}`;
     const opens = await this.db.$queryRaw<{ day: Date; count: bigint }[]>`
       SELECT date_trunc('day', "createdAt" AT TIME ZONE 'UTC') AS day, count(*) AS count FROM wish_open
-       WHERE first AND "createdAt" >= ${from} AND "createdAt" <= ${to} GROUP BY 1 ORDER BY 1`;
+       WHERE first AND "wishId" NOT IN (SELECT id FROM wish WHERE ${Prisma.raw(NOT_HOUSE_SQL)}) AND "createdAt" >= ${from} AND "createdAt" <= ${to} GROUP BY 1 ORDER BY 1`;
     const keeps = await this.db.$queryRaw<{ key: string; count: bigint }[]>`
-      SELECT keep::text AS key, count(*) AS count FROM wish WHERE keep IS NOT NULL AND "createdAt" >= ${from} AND "createdAt" <= ${to} GROUP BY keep ORDER BY keep::text`;
+      SELECT keep::text AS key, count(*) AS count FROM wish WHERE ${Prisma.raw(NOT_HOUSE_SQL)} AND keep IS NOT NULL AND "createdAt" >= ${from} AND "createdAt" <= ${to} GROUP BY keep ORDER BY keep::text`;
     return {
       period,
       days,

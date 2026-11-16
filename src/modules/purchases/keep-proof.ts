@@ -5,6 +5,8 @@ import { ENV } from "../../common/env/env.module";
 import { Clock } from "../../common/ports/clock.port";
 
 const HOUR = 3600;
+/** HU1: the name a link holder with no account signs under: the email the receipt goes to (never an Account). */
+export const holderKey = (email: string): string => `hold:${email.trim().toLowerCase()}`;
 /** How long a receiver's proof may be used to START a keep payment. A payment already started settles whenever it is paid. */
 export const PROOF_START_HOURS = 2;
 

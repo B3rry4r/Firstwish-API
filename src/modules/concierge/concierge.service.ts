@@ -67,6 +67,7 @@ export class ConciergeService implements OnModuleInit {
     // the payments start asks first (GG3): only the buyer's own open order, at the price the payment would charge
     this.registry.onStart(async (accountId, request, _skus, tx, quote) => {
       if (request.purpose !== "concierge") return;
+      if (!accountId) throw AppError.validation({ subjectId: "Name one of your own Concierge orders." });
       const orderId = request.subjectId ?? "";
       // CB1: the order's row is locked, so two starts for it cannot both go past the check below
       const rows = UUID.test(orderId)

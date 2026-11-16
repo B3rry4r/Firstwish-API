@@ -563,3 +563,5 @@ SA5 (B15 verify) A wish can pick only a style that is on; a held or returned Stu
     made keep theirs). A style in review refuses every change, `on` too. (B15 patch.)
 RR4 (join 4 verify, medium) A client wish carries its business: the code that makes a client wish writes wish.businessId, in
     the same transaction, so RR3 works for real wishes and not only for rows set by hand. (Join patch.) Lows -> sweep.
+ZZ8 (P-B16 hand-back) A failed payout may be marked paid by hand by finance or the owner with a reason (money that went out
+    another way); it posts the payout journal again and writes one audit row. Accepted. Default (lead), owner may override.

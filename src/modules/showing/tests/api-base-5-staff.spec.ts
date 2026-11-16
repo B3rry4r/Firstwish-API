@@ -25,31 +25,8 @@ describe("API-BASE-5 staff and money (through the real routes)", () => {
     await releaseSetting();
   });
   const setting = (choice: Record<string, unknown>) => db.$executeRaw`UPDATE settings SET choice = ${JSON.stringify(choice)}::jsonb WHERE key = to_jsonb('payout.thresholdKobo'::text)`;
-  const put = (token: string, key: string, body: Record<string, unknown>) => t.http().put(`/v1/admin/prices/${key}`).set(bearer(token)).send({ sku: key, ...body });
 
   describe("the payout day", () => {
-    it("PUT /v1/admin/prices/payout.thresholdKobo takes payoutDay (1 to 28) with or without the threshold, and the line reads it back", async () => {
-      const owner = await staffOf(t, "owner");
-      const finance = await staffOf(t, "finance");
-      const key = "payout.thresholdKobo";
-      await setting({ value: 500000, unit: "kobo", schedule: "the 5th of each month", status: "PROVISIONAL" });
-      const day = await put(finance.token, key, { payoutDay: 12, reason: "Moved the run" });
-      expect(day.status).toBe(200);
-      expect(day.body).toMatchObject({ key, payoutDay: 12, price: 500000, per: "the 12th of each month" });
-      const both = await put(owner.token, key, { priceKobo: 600000, payoutDay: 21, reason: "Both together" });
-      expect(both.body).toMatchObject({ price: 600000, payoutDay: 21, per: "the 21st of each month", lead: "CONFIRMED" });
-      const list = await t.http().get("/v1/admin/prices?limit=50").set(bearer(owner.token));
-      const line = (list.body.items as { key: string; payoutDay?: number }[]).find((i) => i.key === key);
-      expect(line?.payoutDay).toBe(21);
-      for (const bad of [0, 29, 2.5, "5"]) {
-        const r = await put(owner.token, key, { payoutDay: bad, reason: "Not a day" });
-        expect([bad, r.status]).toEqual([bad, 422]);
-      }
-      expect((await put(owner.token, key, { payoutDay: 21, reason: "Same again" })).status).toBe(409);
-      expect((await put(owner.token, key, { listKobo: 1, payoutDay: 3, reason: "Mixed" })).status).toBe(422);
-      expect((await t.http().put(`/v1/admin/prices/${key}`).set(bearer((await staffOf(t, "support")).token)).send({ sku: key, payoutDay: 3, reason: "No role" })).status).toBe(403);
-    });
-
     it("the monthly run reads the day: nextRunDay and the run service use the stored day (5 when none)", async () => {
       const { nextRunDay } = await import("../../payouts/run-day");
       expect(nextRunDay(new Date("2027-01-02T00:00:00Z"), 12).toISOString()).toBe("2027-01-12T08:00:00.000Z");

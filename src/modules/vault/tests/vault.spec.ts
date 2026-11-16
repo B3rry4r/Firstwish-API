@@ -2,7 +2,7 @@ import { spawnSync } from "node:child_process";
 import { join } from "node:path";
 import { PrismaService } from "../../../common/db/prisma.service";
 import { UuidV7Maker } from "../../../common/ids/uuidv7";
-import { createTestApp, TestApp } from "../../../../test/kit/app";
+import { createTestApp, TestApp, uniqueAddress } from "../../../../test/kit/app";
 import { hashPasscode } from "../../wishes/wishes.service";
 import { NoticesService } from "../../notices/notices.service";
 import { JobsService } from "../../jobs/jobs.service";
@@ -23,6 +23,19 @@ describe("B18 Vault: shoots, space, reveal links, plays, E-33", () => {
   beforeAll(async () => {
     t = await createTestApp({ now: NOW });
     db = t.app.get(PrismaService);
+    // J7: public reads are counted per address; this spec's requests all come from an address of its own, so no other spec's reads count against them.
+    const address = uniqueAddress();
+    const plain = t.http;
+    t.http = () => {
+      const agent = plain();
+      const verbs = new Set(["get", "post", "put", "patch", "delete", "head", "options"]);
+      return new Proxy(agent, {
+        get: (target, prop) => {
+          const v = (target as unknown as Record<string | symbol, unknown>)[prop];
+          return typeof prop === "string" && verbs.has(prop) ? (url: string) => (v as (u: string) => { set: (k: string, x: string) => unknown }).call(target, url).set("x-forwarded-for", address) : v;
+        },
+      });
+    };
     const r = spawnSync(process.execPath, [join(ROOT, "scripts/seed.mjs")], { cwd: ROOT, env: process.env, encoding: "utf8" });
     if (r.status !== 0) throw new Error(`seed failed: ${r.stderr}`);
   });

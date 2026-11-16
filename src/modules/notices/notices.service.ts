@@ -133,7 +133,7 @@ export class NoticesService implements OnModuleInit {
     const made = await tx.messageDelivery.createMany({
       data: [{
         id, templateKey: input.template, channel: "email", to: to || "none", purpose: purposeColumn(spec.purpose), status: problem ? "failed" : "queued",
-        error: problem, attempts: 0, idempotencyKey: key, vars: vars as unknown as Prisma.InputJsonValue,
+        error: problem, attempts: 0, idempotencyKey: key, vars: vars as unknown as Prisma.InputJsonValue, createdAt: now, updatedAt: now,
       }],
       skipDuplicates: true,
     });
@@ -212,16 +212,18 @@ export class NoticesService implements OnModuleInit {
    */
   async deliver(deliveryId: string): Promise<{ outcome: "delivered" | "failed" | "dropped" | "retry" | "skipped"; reason?: string; again?: Date; busy?: boolean }> {
     if (!UUID.test(deliveryId)) return { outcome: "skipped" };
+    // the clock port's now, so a stack that moves time (STANDIN_CLOCK_OFFSET) and the tests move this too
+    const now = this.clock.now();
     const got = await this.prisma.$queryRaw<{ attempts: number }[]>`
-      UPDATE message_delivery SET status = 'sending', attempts = attempts + 1, "updatedAt" = now()
+      UPDATE message_delivery SET status = 'sending', attempts = attempts + 1, "updatedAt" = ${now}
       WHERE id = ${deliveryId}::uuid AND attempts < ${DELIVERY_TRIES}
-        AND (status = 'queued' OR (status = 'sending' AND "updatedAt" < now() - interval '5 minutes'))
+        AND (status = 'queued' OR (status = 'sending' AND "updatedAt" < ${now}::timestamptz - interval '5 minutes'))
       RETURNING attempts`;
     if (got.length === 0) {
       // In flight past its stale time with every try used: nobody will try again, so it is failed for staff.
       const gone = await this.prisma.$queryRaw<{ templateKey: string }[]>`
         UPDATE message_delivery SET status = 'failed', error = 'The email service did not finish this try.'
-        WHERE id = ${deliveryId}::uuid AND status = 'sending' AND attempts >= ${DELIVERY_TRIES} AND "updatedAt" < now() - interval '5 minutes'
+        WHERE id = ${deliveryId}::uuid AND status = 'sending' AND attempts >= ${DELIVERY_TRIES} AND "updatedAt" < ${now}::timestamptz - interval '5 minutes'
         RETURNING "templateKey"`;
       if (gone.length) {
         await this.settle(deliveryId, gone[0].templateKey as TemplateKey, "failed", "The email service did not finish this try.");

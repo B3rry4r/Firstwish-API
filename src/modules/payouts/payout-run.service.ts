@@ -11,6 +11,7 @@ import type { Payout } from "../../contracts";
 import { AuditService, requireReason, type AuditActor } from "../audit/audit.service";
 import { RoyaltiesService } from "../royalties/royalties.service";
 import { isMonth, monthOf } from "../royalties/royalty-math";
+import { DEFAULT_RUN_DAY, isRunDay } from "./run-day";
 import type { PayoutEventSink } from "./payout-event-sink";
 import { PayoutProviderPort, TransferRefused, type TransferLookup } from "../../common/ports/payout-provider.port";
 import { payoutWire, type PayoutFacts } from "./payout-wire";
@@ -79,6 +80,14 @@ export class PayoutRunService implements PayoutEventSink {
     const v = rows[0]?.choice?.value;
     if (typeof v !== "number" || !Number.isSafeInteger(v) || v <= 0) throw new AppError(503, "price_book_missing", "The payout threshold is not set up yet.");
     return v;
+  }
+
+  /** R14: the day of the month the run starts, from the price-book setting (the 5th when none is set). */
+  async runDay(db: PrismaService | Tx = this.db): Promise<number> {
+    const rows = await db.$queryRaw<{ choice: { day?: unknown } | null }[]>`
+      SELECT choice FROM settings WHERE key = to_jsonb(${PAYOUT_KEY}::text) ORDER BY id LIMIT 1`;
+    const v = rows[0]?.choice?.day;
+    return isRunDay(v) ? v : DEFAULT_RUN_DAY;
   }
 
   /** The month the 5th's job pays: the one before the clock's month. */

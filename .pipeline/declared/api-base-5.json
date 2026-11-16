@@ -1,0 +1,89 @@
+{
+  "screenId": null,
+  "resource": "api-base-5",
+  "sourceScreens": [],
+  "provenance": "declaration",
+  "declaredAs": "other",
+  "reads": [
+    {
+      "entity": "Wish",
+      "fields": [
+        {
+          "name": "content.cover.school",
+          "type": "string",
+          "nullable": true,
+          "note": "HQ1: at most 120 characters"
+        },
+        {
+          "name": "content.cover.years",
+          "type": "string",
+          "nullable": true,
+          "note": "HQ1: at most 60 characters"
+        },
+        {
+          "name": "content.cover.born",
+          "type": "string",
+          "nullable": true,
+          "note": "HQ1: at most 60 characters"
+        },
+        {
+          "name": "content.letter.line",
+          "type": "string",
+          "nullable": true,
+          "note": "HQ1: at most 300 characters"
+        },
+        {
+          "name": "content.memory.quote",
+          "type": "string",
+          "nullable": true,
+          "note": "HQ1: at most 500 characters"
+        },
+        {
+          "name": "content.blessing.note",
+          "type": "string",
+          "nullable": true,
+          "note": "HQ1: at most 500 characters"
+        },
+        {
+          "name": "content.links.download",
+          "type": "object",
+          "nullable": true,
+          "note": "HQ1: {count, size, files}"
+        },
+        {
+          "name": "styleLevel",
+          "type": "string",
+          "nullable": true,
+          "note": "HQ5: the highest style level the ticket allows, null before a ticket"
+        },
+        {
+          "name": "allowedStyles",
+          "type": "array",
+          "nullable": true,
+          "note": "HQ5: slugs of the styles that are on within it (single read)"
+        }
+      ],
+      "cardinality": "single",
+      "filtersOrSort": [],
+      "pagination": "none"
+    }
+  ],
+  "actions": [],
+  "authContext": {
+    "requiresAuth": true,
+    "rolesObserved": []
+  },
+  "special": {
+    "realtime": false,
+    "uploads": false,
+    "downloads": false
+  },
+  "uiStatesHandled": [],
+  "uiStatesDesigned": [],
+  "stubsObserved": [],
+  "behaviour": [
+    "API-BASE-5: the maker's own words in the wish content (HQ1), styles by ticket (HQ5), the payout day (R14)."
+  ],
+  "truths": [],
+  "supersedes": []
+}

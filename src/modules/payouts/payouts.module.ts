@@ -7,25 +7,17 @@ import { AdminCreatorsService } from "./admin-creators.service";
 import { BankAccountsService } from "./bank-accounts.service";
 import { PAYOUT_EVENT_SINK } from "./payout-event-sink";
 import { PayoutRunService } from "./payout-run.service";
+import { MONTHLY_RUN_KEY, nextRunDay } from "./run-day";
 import { PayoutsController } from "./payouts.controller";
 import { SignedPeriodService } from "./signed-period.service";
 
-/** The monthly run's job: one row for the whole system, moved on to the next 5th by the handler. */
-export const MONTHLY_RUN_KEY = "monthly";
-/** Hour of the 5th the run starts: 08:00 UTC, 09:00 in Lagos. */
-const RUN_HOUR_UTC = 8;
-const RUN_DAY = 5;
+export { MONTHLY_RUN_KEY };
 /** WW8: the job that ends Signed periods has one row for the whole system and looks once a day. */
 export const SIGNED_END_KEY = "signed-end";
 const SIGNED_CHECK_MS = 24 * 3_600_000;
 
-/** The next 5th, 08:00 UTC, after `now`. */
-export function nextFifth(now: Date): Date {
-  const y = now.getUTCFullYear();
-  const m = now.getUTCMonth();
-  const thisMonth = Date.UTC(y, m, RUN_DAY, RUN_HOUR_UTC);
-  return new Date(thisMonth > now.getTime() ? thisMonth : Date.UTC(y, m + 1, RUN_DAY, RUN_HOUR_UTC));
-}
+/** The next 5th, 08:00 UTC, after `now` (the default run day). */
+export const nextFifth = (now: Date): Date => nextRunDay(now);
 
 /**
  * B16: the creator's bank account, payouts, the monthly payout run and the staff creators page. Global so the payments webhook can
@@ -73,7 +65,7 @@ export class PayoutsModule implements OnModuleInit, OnApplicationBootstrap {
 
   /** Puts the monthly job on the table (once: a second call moves the same row). */
   async scheduleMonthly(): Promise<void> {
-    await this.jobs.schedule("payout-run", nextFifth(this.clock.now()), MONTHLY_RUN_KEY);
+    await this.jobs.schedule("payout-run", nextRunDay(this.clock.now(), await this.runs.runDay()), MONTHLY_RUN_KEY);
     await this.jobs.schedule("creator-period", this.clock.now(), SIGNED_END_KEY);
   }
 
@@ -82,9 +74,9 @@ export class PayoutsModule implements OnModuleInit, OnApplicationBootstrap {
     this.scheduleMonthly().catch((e: unknown) => this.log.error(`could not schedule the payout run: ${String(e)}`));
   }
 
-  /** The 5th: pays last month. Then sets the next 5th. */
+  /** The run day (the 5th unless staff set another): pays last month. Then sets the next run day. */
   private async monthly(c: JobContext): Promise<JobResult> {
     const result = await this.runs.run(this.runs.lastMonth());
-    return { changed: { ...result }, again: nextFifth(c.now) };
+    return { changed: { ...result }, again: nextRunDay(c.now, await this.runs.runDay()) };
   }
 }

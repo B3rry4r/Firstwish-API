@@ -7643,7 +7643,9 @@
     },
     {
       "field": "Payment.state",
-      "writers": [],
+      "writers": [
+        "E-84"
+      ],
       "store": "Payment",
       "readers": [
         "admin-overview",
@@ -7651,12 +7653,14 @@
         "admin-people-detail",
         "admin-wishes-detail"
       ],
-      "writerActors": [],
+      "writerActors": [
+        "staff"
+      ],
       "readerActors": [
         "staff"
       ],
       "crossActor": false,
-      "noWriter": true
+      "noWriter": false
     },
     {
       "field": "Payment.status",
@@ -8470,6 +8474,20 @@
         "public",
         "staff"
       ],
+      "crossActor": false,
+      "noWriter": false
+    },
+    {
+      "field": "Price.payoutDay",
+      "writers": [
+        "E-124"
+      ],
+      "store": "Price",
+      "readers": [],
+      "writerActors": [
+        "staff"
+      ],
+      "readerActors": [],
       "crossActor": false,
       "noWriter": false
     },
@@ -16887,6 +16905,20 @@
       "noWriter": false
     },
     {
+      "field": "Wish.allowedStyles",
+      "writers": [
+        "server:api-base-5"
+      ],
+      "store": "Wish",
+      "readers": [],
+      "writerActors": [
+        "server"
+      ],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": false
+    },
+    {
       "field": "Wish.amount",
       "writers": [],
       "store": "Wish",
@@ -17108,6 +17140,20 @@
       "noWriter": true
     },
     {
+      "field": "Wish.content.blessing.note",
+      "writers": [
+        "server:api-base-5"
+      ],
+      "store": "Wish",
+      "readers": [],
+      "writerActors": [
+        "server"
+      ],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": false
+    },
+    {
       "field": "Wish.content.cover",
       "writers": [],
       "store": "Wish",
@@ -17128,6 +17174,20 @@
       "noWriter": true
     },
     {
+      "field": "Wish.content.cover.born",
+      "writers": [
+        "server:api-base-5"
+      ],
+      "store": "Wish",
+      "readers": [],
+      "writerActors": [
+        "server"
+      ],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": false
+    },
+    {
       "field": "Wish.content.cover.more",
       "writers": [
         "E-225"
@@ -17144,6 +17204,34 @@
       "readerActors": [
         "business"
       ],
+      "crossActor": false,
+      "noWriter": false
+    },
+    {
+      "field": "Wish.content.cover.school",
+      "writers": [
+        "server:api-base-5"
+      ],
+      "store": "Wish",
+      "readers": [],
+      "writerActors": [
+        "server"
+      ],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": false
+    },
+    {
+      "field": "Wish.content.cover.years",
+      "writers": [
+        "server:api-base-5"
+      ],
+      "store": "Wish",
+      "readers": [],
+      "writerActors": [
+        "server"
+      ],
+      "readerActors": [],
       "crossActor": false,
       "noWriter": false
     },
@@ -17338,6 +17426,20 @@
       "noWriter": true
     },
     {
+      "field": "Wish.content.letter.line",
+      "writers": [
+        "server:api-base-5"
+      ],
+      "store": "Wish",
+      "readers": [],
+      "writerActors": [
+        "server"
+      ],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": false
+    },
+    {
       "field": "Wish.content.links",
       "writers": [],
       "store": "Wish",
@@ -17358,6 +17460,20 @@
       "noWriter": true
     },
     {
+      "field": "Wish.content.links.download",
+      "writers": [
+        "server:api-base-5"
+      ],
+      "store": "Wish",
+      "readers": [],
+      "writerActors": [
+        "server"
+      ],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": false
+    },
+    {
       "field": "Wish.content.memory",
       "writers": [],
       "store": "Wish",
@@ -17376,6 +17492,20 @@
       ],
       "crossActor": false,
       "noWriter": true
+    },
+    {
+      "field": "Wish.content.memory.quote",
+      "writers": [
+        "server:api-base-5"
+      ],
+      "store": "Wish",
+      "readers": [],
+      "writerActors": [
+        "server"
+      ],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": false
     },
     {
       "field": "Wish.content.note",
@@ -19435,6 +19565,20 @@
       "noWriter": true
     },
     {
+      "field": "Wish.styleLevel",
+      "writers": [
+        "server:api-base-5"
+      ],
+      "store": "Wish",
+      "readers": [],
+      "writerActors": [
+        "server"
+      ],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": false
+    },
+    {
       "field": "Wish.ticket",
       "writers": [
         "E-231"
@@ -20262,5 +20406,5 @@
     }
   ],
   "crossActor": 34,
-  "noWriter": 648
+  "noWriter": 647
 }

@@ -125,7 +125,7 @@ export class AdminBusinessesController {
   @StaffRoles("finance", "ops", "owner")
   @Get()
   list(@Query() q: GetAdminBusinessesQueryDto): Promise<Page<Business>> {
-    return this.business.adminList(q.cursor, q.limit ?? DEFAULT_LIMIT);
+    return this.business.adminList(q.cursor, q.limit ?? DEFAULT_LIMIT, q.q);
   }
 
   @StaffRoles("finance", "ops", "owner")

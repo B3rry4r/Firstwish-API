@@ -7,6 +7,9 @@ import type { GetAdminBusinessesByIdParams, GetAdminBusinessesQuery, PatchBusine
 export class GetAdminBusinessesQueryDto implements GetAdminBusinessesQuery {
   @IsOptional()
   @IsString()
+  q?: string;
+  @IsOptional()
+  @IsString()
   cursor?: string;
   @IsOptional()
   @Type(() => Number)

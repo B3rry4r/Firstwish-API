@@ -34,6 +34,11 @@ export class AdminPaymentsQueryDto extends CursorQueryDto {
   @IsString()
   @MaxLength(64)
   flag?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(32)
+  state?: string;
 }
 
 /** E-63 with the day to show (YYYY-MM-DD); without it, the latest day checked. */

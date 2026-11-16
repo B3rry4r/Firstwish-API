@@ -14,6 +14,9 @@ export class GetAdminPaymentsQueryDto implements GetAdminPaymentsQuery {
   q?: string;
   @IsOptional()
   @IsString()
+  state?: string;
+  @IsOptional()
+  @IsString()
   cursor?: string;
   @IsOptional()
   @Type(() => Number)

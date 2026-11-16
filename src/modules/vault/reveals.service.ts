@@ -158,14 +158,14 @@ export class RevealsService {
   /**
    * EB1: sending a reveal is limited to 5 emails a day to one address from one business and 100 a day for a business (PROVISIONAL). Counted
    * from the day's reveal emails in the database in one statement, under the owner's lock the send holds (so 20 sends at once with 2 left
-   * send 2); a count that cannot be made throws, and nothing is sent (fail closed). The day is the database's own UTC day, the same clock that stamps each email row.
+   * send 2); a count that cannot be made throws, and nothing is sent (fail closed). The day is the clock port's UTC day.
    */
   private async takeEmailRoom(tx: Tx, businessId: string, email: string): Promise<void> {
     const [n] = await tx.$queryRaw<{ address: number; business: number }[]>`
       SELECT (count(*) FILTER (WHERE lower(d."to") = ${email.toLowerCase()}))::int AS address, count(*)::int AS business
         FROM message_delivery d
         JOIN client_wish c ON c.id = (CASE WHEN d."idempotencyKey" ~ '^reveal:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}:' THEN substr(d."idempotencyKey", 8, 36)::uuid END)
-       WHERE c."businessId" = ${businessId}::uuid AND d."createdAt" >= date_trunc('day', now() AT TIME ZONE 'UTC') AT TIME ZONE 'UTC'`;
+       WHERE c."businessId" = ${businessId}::uuid AND d."createdAt" >= date_trunc('day', ${this.clock.now()}::timestamptz AT TIME ZONE 'UTC') AT TIME ZONE 'UTC'`;
     if (!n) throw new Error("the day's reveal emails could not be counted");
     if (n.address >= REVEAL_EMAILS_PER_ADDRESS_PER_DAY) throw new AppError(429, "too_many_requests", `You have sent ${REVEAL_EMAILS_PER_ADDRESS_PER_DAY} reveals to this address today. Try again tomorrow.`);
     if (n.business >= REVEAL_EMAILS_PER_BUSINESS_PER_DAY) throw new AppError(429, "too_many_requests", `Your business has sent ${REVEAL_EMAILS_PER_BUSINESS_PER_DAY} reveal emails today. Try again tomorrow.`);

@@ -110,7 +110,10 @@ export class AdminPeopleService {
     requireActionRole(PERSON_ACTION_ROLES, action, roles);
     const reason = requireReason(reasonText);
     if (!UUID.test(id)) throw AppError.notFound("No such person.");
-    if (!(await this.db.account.findUnique({ where: { id }, select: { id: true } }))) throw AppError.notFound("No such person.");
+    const found = await this.db.account.findUnique({ where: { id }, select: { id: true, erasedAt: true } });
+    if (!found) throw AppError.notFound("No such person.");
+    // a repeat changes nothing, so it says so: an erased person cannot be erased again, banned or lifted
+    if (found.erasedAt) throw AppError.conflict("already_erased", action === "erase" ? "This account was already erased." : "This account was erased, so nothing can change on it.");
     if (action === "ban") await this.bans.create({ accountId: id, reason, scope: "account" }, actor);
     else if (action === "lift") {
       const now = this.clock.now();

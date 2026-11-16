@@ -67,6 +67,29 @@ describe("API-BASE-4 wishes (through the real routes)", () => {
     });
   });
 
+  describe("L1 and L2 a draft never holds a pair the server would refuse", () => {
+    it("L1: occasion or kind null (or not text) is 422 on that field, never 500", async () => {
+      const u = await user();
+      const w = await start(u);
+      for (const body of [{ occasion: null }, { kind: null }, { occasion: 5 }]) {
+        const r = await save(u, w.id, { version: w.version, ...body });
+        expect(r.status).toBe(422);
+        expect(JSON.stringify(r.body)).toContain(Object.keys(body)[0]);
+      }
+    });
+    it("L2: a kind alone that leaves an occasion the new kind lacks is 422 naming occasion; both together save", async () => {
+      const u = await user();
+      const w = await start(u);
+      const alone = await save(u, w.id, { version: w.version, kind: "wedding" });
+      expect(alone.status).toBe(422);
+      expect(JSON.stringify(alone.body)).toContain("occasion");
+      expect(((await read(u, w.id)).body as { kind: string; occasion: string })).toMatchObject({ kind: "love", occasion: "birthday" });
+      const both = await save(u, w.id, { version: w.version, kind: "wedding", occasion: "save-the-date" });
+      expect(both.status).toBe(200);
+      expect((await save(u, w.id, { version: both.body.version, kind: "wedding" })).status).toBe(200);
+    });
+  });
+
   describe("HP3 and HP5 the owner's read", () => {
     async function file(u: U, status: "ready" | "screening" | "rejected", bytes: string) {
       const id = nid();

@@ -84,7 +84,7 @@ describe("API-BASE-4 HP12 staff reads (through the real routes)", () => {
     const thisMonth = now.toISOString().slice(0, 7);
     const back = (n: number) => new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - n, 15)).toISOString().slice(0, 7);
     const pay = (m: string) => db.payment.create({ data: { id: t.id(), accountId, purpose: "ticket", subjectId: t.id(), lines: [], amountKobo: 1000n, currency: "NGN", priceBookVersion: 1, status: "succeeded", provider: "paystack", providerReference: `ab4-${run}-${m}`, idempotencyKey: `ab4-${run}-${m}`, verifiedAt: now, options: {} } });
-    for (const [m, kobo] of [[back(3), 500000n], [back(2), 300000n], [back(1), 200000n], [thisMonth, 100000n]] as [string, bigint][]) {
+    for (const [m, kobo] of [[back(3), 500000n], [back(2), 300000n], [back(1), 2000000n], [thisMonth, 100000n]] as [string, bigint][]) {
       const p = await pay(m);
       await db.royaltyAccrual.create({ data: { id: t.id(), creatorId, styleSlug: "classic", paymentId: p.id, basis: "pro_wish", amountKobo: kobo, month: m } });
     }
@@ -102,7 +102,7 @@ describe("API-BASE-4 HP12 staff reads (through the real routes)", () => {
     expect(me?.payoutMonths).toEqual([
       { month: back(3), earnedKobo: 500000, payoutStatus: "succeeded", due: false },
       { month: back(2), earnedKobo: 300000, payoutStatus: "failed", due: true },
-      { month: back(1), earnedKobo: 200000, payoutStatus: null, due: true },
+      { month: back(1), earnedKobo: 2000000, payoutStatus: null, due: true },
       { month: thisMonth, earnedKobo: 100000, payoutStatus: null, due: false },
     ]);
   });

@@ -500,6 +500,59 @@ describe("creators' money (B16)", () => {
       expect((await t.http().get(path).query({ limit: 99 }).set(bearer("staff-finance"))).status).toBe(422);
     });
 
+    describe("HP12 payoutMonths: due follows how the run pays (the running balance)", () => {
+      async function months(creatorId: string) {
+        let cursor: string | null = null;
+        do {
+          const r: { body: { items: { id: string; payoutMonths: { month: string; earnedKobo: number; payoutStatus: string | null; due: boolean }[] }[]; nextCursor: string | null } } =
+            await t.http().get("/v1/admin/creators").query(cursor ? { limit: 50, cursor } : { limit: 50 }).set(bearer("staff-finance"));
+          const f = r.body.items.find((i) => i.id === creatorId);
+          if (f) return f.payoutMonths;
+          cursor = r.body.nextCursor;
+        } while (cursor);
+        throw new Error("creator not listed");
+      }
+      async function withMonths(name: string, amounts: Record<string, bigint>) {
+        const c = await creator(name);
+        const s = await style(`${name}-hp12-${++seq}`.toLowerCase(), "premium", { creatorId: c.creatorId });
+        for (const [m, k] of Object.entries(amounts)) await earn(s, `${m}-15T10:00:00Z`, k);
+        return c;
+      }
+      async function payoutOf(c: { creatorId: string; bankId: string | null }, month: string, kobo: bigint, status: "succeeded" | "failed" | "pending" | "sent") {
+        const id = ids.next();
+        await db.$transaction(async (tx) => {
+          await tx.payout.create({ data: { id, creatorId: c.creatorId, month, amountKobo: kobo, status, bankAccountId: c.bankId! } });
+          await tx.$executeRaw`INSERT INTO payout_detail ("payoutId") VALUES (${id}::uuid)`;
+        });
+      }
+
+      it("a month a later succeeded payout covered is not due (the verifier's case: 85000 and 30000 inside a 615000 payout for the next month)", async () => {
+        const c = await withMonths("Ida", { "2026-09": 85000n, "2026-10": 30000n, "2026-11": 500000n });
+        await payoutOf(c, "2026-11", 615000n, "succeeded");
+        const m = await months(c.creatorId);
+        expect(m.map((x) => [x.month, x.earnedKobo, x.due])).toEqual([["2026-09", 85000, false], ["2026-10", 30000, false], ["2026-11", 500000, false]]);
+      });
+      it("a balance under the threshold is not due (the run would not pay it); at the threshold the months it holds are due", async () => {
+        const c = await withMonths("Ola", { "2026-09": 85000n, "2026-10": 30000n });
+        const slug = String((await db.style.findFirstOrThrow({ where: { creator: { path: ["creatorId"], equals: c.creatorId } } })).slug);
+        expect((await months(c.creatorId)).map((x) => x.due)).toEqual([false, false]);
+        await earn(slug, "2026-11-15T10:00:00Z", 385000n);
+        expect((await months(c.creatorId)).map((x) => [x.month, x.due])).toEqual([["2026-09", true], ["2026-10", true], ["2026-11", true]]);
+      });
+      it("a failed payout covers nothing: its months are due again", async () => {
+        const c = await withMonths("Eze", { "2026-10": 600000n });
+        await payoutOf(c, "2026-10", 600000n, "failed");
+        expect((await months(c.creatorId)).map((x) => [x.month, x.payoutStatus, x.due])).toEqual([["2026-10", "failed", true]]);
+      });
+      it("a creator paid in full has no month due and the amounts equal the ledger", async () => {
+        const c = await withMonths("Uche", { "2026-10": 300000n, "2026-11": 400000n });
+        await payoutOf(c, "2026-11", 700000n, "succeeded");
+        const m = await months(c.creatorId);
+        expect(m.some((x) => x.due)).toBe(false);
+        expect(BigInt(m.reduce((n, x) => n + x.earnedKobo, 0))).toBe(await payable(c.creatorId));
+      });
+    });
+
     const markBody = (month: string, reason = "Paid by transfer TX-4411") => ({ month, reason });
     async function duePayout(name: string, month: string) {
       const c = await creator(name);

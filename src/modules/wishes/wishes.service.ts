@@ -239,6 +239,8 @@ export class WishesService {
   // ---- the draft ----
 
   private slugOf(label: string, field: string): string {
+    // L1: the contract's kind and occasion are strings (no null): null or any other type is a 422 on the field, never a 500
+    if (typeof label !== "string") throw AppError.validation({ [field]: "Must be text." });
     const v = label.trim().toLowerCase().replace(/[\s_]+/g, "-");
     if (!SLUG.test(v)) throw AppError.validation({ [field]: "Use the kind's own name, letters, numbers and dashes." });
     return v;
@@ -433,6 +435,10 @@ export class WishesService {
       // HP2: an occasion must be one the (new or current) kind has; the kind may be changed in the same save
       if (occasion !== undefined && !kindHasOccasion(kind ?? cur.kind, occasion)) {
         throw AppError.validation({ occasion: `The ${kind ?? cur.kind} kind has no occasion called ${occasion}.` });
+      }
+      // L2: a new kind sent alone must still fit the occasion the draft holds; the person sends both to change both
+      if (kind !== undefined && occasion === undefined && kind !== cur.kind && !kindHasOccasion(kind, cur.occasion)) {
+        throw AppError.validation({ occasion: `The ${kind} kind has no occasion called ${cur.occasion}. Send the kind and an occasion it has.` });
       }
       const data: Prisma.WishUncheckedUpdateInput = { version: { increment: 1 } };
       if (kind !== undefined) data.kind = kind;

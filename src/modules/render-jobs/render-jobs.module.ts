@@ -11,6 +11,6 @@ import { NoVideoRenderer, VideoRenderer } from "./video-renderer";
   imports: [JobsModule, PriceBookModule, ServerFilesModule],
   controllers: [RenderJobsController],
   providers: [RenderJobsService, { provide: VideoRenderer, useClass: NoVideoRenderer }],
-  exports: [RenderJobsService],
+  exports: [RenderJobsService, VideoRenderer],
 })
 export class RenderJobsModule {}

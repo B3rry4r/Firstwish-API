@@ -1,3 +1,5 @@
+import type { PortPing } from "./ping";
+
 export interface SignUpload {
   key: string;
   contentType: string;
@@ -35,4 +37,6 @@ export abstract class StoragePort {
    * the type from its own bytes; never called inside a database transaction.
    */
   abstract putObject(key: string, bytes: Buffer, contentType: string): Promise<void>;
+  /** FB4: one cheap authenticated read. Answers ok, or the provider's error; a stand-in answers "stand-in". Never carries a secret. */
+  abstract ping(): Promise<PortPing>;
 }

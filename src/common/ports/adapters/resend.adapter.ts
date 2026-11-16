@@ -1,5 +1,6 @@
 import { EmailPort, OutgoingEmail, ReceivedEmail, SentEmail } from "../email.port";
 import { getJson, postJson, ProviderError } from "./http";
+import { PING_OK, type PortPing, pingError } from "../ping";
 
 export const RESEND_BASE_URL = "https://api.resend.com";
 
@@ -25,6 +26,20 @@ export class ResendEmail extends EmailPort {
       ...(email.replyTo ? { reply_to: [email.replyTo] } : {}),
     });
     return { id: r.id };
+  }
+
+  /**
+   * FB4: one authenticated read of the domain list. A key that may only send answers 401 restricted_api_key: the key is good, so that
+   * reads as ok. NOT RUN against Resend: the shape follows Resend's documentation.
+   */
+  async ping(): Promise<PortPing> {
+    try {
+      await getJson("resend", `${this.baseUrl}/domains`, { authorization: `Bearer ${this.apiKey}` });
+      return PING_OK;
+    } catch (e) {
+      if (e instanceof ProviderError && e.status === 401 && /restricted_api_key/.test(e.message)) return PING_OK;
+      return pingError(e, [this.apiKey]);
+    }
   }
 
   /** GET /emails/receiving/:id. NOT RUN against Resend (YY2): the shape follows Resend's documentation. */

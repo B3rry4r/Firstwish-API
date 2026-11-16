@@ -1,3 +1,5 @@
+import type { PortPing } from "./ping";
+
 export interface OutgoingEmail {
   to: string;
   subject: string;
@@ -28,4 +30,6 @@ export abstract class EmailPort {
   abstract send(email: OutgoingEmail): Promise<SentEmail>;
   /** The received email with this provider id, or null when the provider has none. Never called inside a database transaction. */
   abstract fetchReceived(id: string): Promise<ReceivedEmail | null>;
+  /** FB4: one cheap authenticated read. Answers ok, or the provider's error; a stand-in answers "stand-in". Never carries a secret. */
+  abstract ping(): Promise<PortPing>;
 }

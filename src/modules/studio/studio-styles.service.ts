@@ -8,6 +8,7 @@ import { Clock } from "../../common/ports/clock.port";
 import { IdGenerator } from "../../common/ports/ids.port";
 import { toWireInstant } from "../../common/time/time";
 import type { StudioStyle } from "../../contracts";
+import { FileJobs } from "../stored-files/file-jobs";
 import { StylesService } from "../styles/styles.service";
 import { CreatorStateService, type Plan } from "./creator-state.service";
 import { cleanDoc, EDITABLE, isObj, json, metaOf, obj, type Obj, type ReviewView, toWire, UUID } from "./studio-doc";
@@ -27,6 +28,7 @@ export class StudioStylesService {
     private readonly ids: IdGenerator,
     private readonly state: CreatorStateService,
     private readonly styles: StylesService,
+    private readonly files: FileJobs,
   ) {}
 
   // ------------------------------------------------------------------ reads
@@ -224,15 +226,21 @@ export class StudioStylesService {
     return (await this.wire(tx, [saved]))[0];
   }
 
-  /** E-189: delete a draft. A style with Firstwish or live is not deleted: wishes may already be made in it (T-62). */
+  /**
+   * E-189: delete a draft (HX3): its files go with it, bytes included, and an upload still waiting for its confirm is refused from then
+   * on. A style with Firstwish or live is not deleted: wishes may already be made in it (T-62).
+   */
   async remove(accountId: string, id: string): Promise<true> {
     if (!UUID.test(id)) throw notFound();
-    await this.db.$transaction(async (tx) => {
+    const retired = await this.db.$transaction(async (tx) => {
       await lockAccount(tx, accountId);
       const row = await this.lockOwn(tx, accountId, id);
       if (!EDITABLE.includes(row.status ?? "")) throw locked();
+      const ids = await this.files.retireStyleFiles(tx, id);
       await tx.studioStyle.delete({ where: { id } });
+      return ids;
     });
+    await this.files.dropRetired(retired);
     return true;
   }
 

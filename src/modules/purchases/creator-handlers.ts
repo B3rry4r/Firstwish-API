@@ -18,6 +18,7 @@ interface State {
   reviewsLeft: number | null;
   renews: Date | null;
   periodEndsAt: Date | null;
+  signedUntil: Date | null;
 }
 
 /** The creator plan, Signed, credit packs and extra reviews: counters on the account's CreatorState, from the entitlements row. */
@@ -42,7 +43,7 @@ export class CreatorHandlers {
       VALUES (${this.ids.id()}::uuid, ${accountId}::uuid, ${rules.creditsOnce}, 0, 0, 'open', ${rules.reviewsPerMonth("open")}, true, false, ${nextMonthStart(this.clock.now())}, 0)
       ON CONFLICT ("accountId") DO NOTHING`;
     const rows = await tx.$queryRaw<State[]>`
-      SELECT id::text AS id, credits, "extraReviews", packs, plan, signed, "reviewsLeft", renews, "periodEndsAt" FROM creator_state WHERE "accountId" = ${accountId}::uuid FOR UPDATE`;
+      SELECT id::text AS id, credits, "extraReviews", packs, plan, signed, "reviewsLeft", renews, "periodEndsAt", "signedUntil" FROM creator_state WHERE "accountId" = ${accountId}::uuid FOR UPDATE`;
     return rows[0] ?? null;
   }
 
@@ -62,16 +63,19 @@ export class CreatorHandlers {
         const credits = num(g.credits);
         await tx.creatorState.update({
           where: { id: s.id },
-          data: { plan: "creator", credits: num(s.credits) + credits, reviewsLeft: num(g.reviewsPerMonth), renews, periodEndsAt: renews, ...bump },
+          // HW3: a payment is a plan that stands again: an "ending" mark from before is cleared
+          data: { plan: "creator", credits: num(s.credits) + credits, reviewsLeft: num(g.reviewsPerMonth), renews, periodEndsAt: renews, planEnding: false, ...bump },
         });
         await this.store.record(tx, grantId, { credits, reviewsPerMonth: num(g.reviewsPerMonth) }, renews);
         break;
       }
       case "signed": {
-        await tx.creatorState.update({ where: { id: s.id }, data: { signed: true, ...bump } });
-        // The period ends at its start plus the price-book line's days; the grant says so (endsAt), and the daily job reads it.
+        // The period ends at its start (or the end of the one still running) plus the price-book line's days; the grant says so (endsAt).
         const days = num(g.days) > 0 ? num(g.days) : SIGNED_DEFAULT_DAYS;
-        await this.store.record(tx, grantId, { signed: true, days }, addDays(now, days));
+        const from = s.signed && s.signedUntil && s.signedUntil.getTime() > now.getTime() ? s.signedUntil : now;
+        const until = addDays(from, days);
+        await tx.creatorState.update({ where: { id: s.id }, data: { signed: true, signedUntil: until, signedEnding: false, ...bump } });
+        await this.store.record(tx, grantId, { signed: true, days }, until);
         break;
       }
       case "credit-pack": {
@@ -127,7 +131,8 @@ export class CreatorHandlers {
       });
     } else if (g.sku === "creator.signed") {
       const rest = await this.standing(tx, g.accountId, "creator.signed", g.id);
-      await tx.creatorState.update({ where: { id: s.id }, data: { signed: rest.length > 0, ...bump } });
+      const until = rest.reduce<Date | null>((m, r) => (r.endsAt && (!m || r.endsAt.getTime() > m.getTime()) ? r.endsAt : m), null);
+      await tx.creatorState.update({ where: { id: s.id }, data: { signed: rest.length > 0, signedUntil: rest.length > 0 ? until : null, ...bump } });
     } else if (g.sku === "creator.credit-pack") {
       await tx.creatorState.update({ where: { id: s.id }, data: { credits: take(s.credits, d.credits), packs: take(s.packs, d.packs), ...bump } });
     } else {

@@ -23,6 +23,8 @@ export const SIGNATURES: Record<string, Sniffer> = {
   "video/mp4": (b) => at(b, 4, "ftyp"),
   "video/quicktime": (b) => at(b, 4, "ftyp") || at(b, 4, "moov") || at(b, 4, "wide"),
   "video/webm": (b) => bytes(b, [0x1a, 0x45, 0xdf, 0xa3]),
+  /** HW2: a binary glTF model starts with its magic word */
+  "model/gltf-binary": (b) => at(b, 0, "glTF"),
 };
 
 /**

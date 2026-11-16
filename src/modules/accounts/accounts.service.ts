@@ -1,3 +1,4 @@
+import { SignedUrlsService } from "../stored-files/signed-urls.service";
 import { isTimeZone } from "../../common/time/time";
 import { Injectable } from "@nestjs/common";
 import { Account as AccountRow, DateRow as DateRowRecord, Prisma } from "@prisma/client";
@@ -35,6 +36,8 @@ export type MeView = Pick<Account, "id" | "mode" | "timeZone" | "sides" | "creat
   dates: MeDate[];
   /** HR3: the business the person owns (role owner) and every business they hold a login on (role login, with the login's state), owner first */
   businesses: MeBusiness[];
+  /** HW2: the creator's profile picture, read through a signed address */
+  picture: { fileId: string; url: string; expiresAt: string } | null;
 };
 
 export interface MeBusiness {
@@ -57,6 +60,7 @@ export class AccountsService {
     private readonly prisma: PrismaService,
     private readonly ids: IdGenerator,
     private readonly clock: Clock,
+    private readonly signed: SignedUrlsService,
   ) {}
 
   /**
@@ -159,8 +163,18 @@ export class AccountsService {
       erased: row.erasedAt !== null,
       joined: toWireInstant(row.createdAt),
       wishCount,
+      picture: await this.pictureOf(row),
       dates: dates.map((d: DateRowRecord) => ({ id: d.id, name: d.name, who: d.who, what: d.what, date: d.date ? dateOnlyOf(d.date) : null })),
     };
+  }
+
+  /** HW2: the creator's profile picture as a signed read (the creator's own, so a picture still in screening reads too); null when there is none. */
+  private async pictureOf(row: AccountRow): Promise<MeView["picture"]> {
+    if (row.erasedAt) return null;
+    const c = await this.prisma.creator.findUnique({ where: { accountId: row.id }, select: { img: true } });
+    if (!c?.img || !/^[0-9a-f-]{36}$/i.test(c.img)) return null;
+    const s = await this.signed.signedRead({ fileId: c.img }, { type: "owner", accountId: row.id }).catch(() => null);
+    return s ? { fileId: s.fileId, url: s.url, expiresAt: s.expiresAt } : null;
   }
 
   /** HR3: the owned business first, then each business the person's sign-in email is a login of (the login's state is the server's: invited, active or removed). */

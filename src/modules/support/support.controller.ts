@@ -90,7 +90,7 @@ export class SupportController {
   @AdminRoute(SECTION, "ops", "owner", "support")
   @Post("admin/support/saved-replies")
   @HttpCode(201)
-  addSaved(@Body() b: PostAdminSupportSavedRepliesBodyDto, @StaffActor() actor: AuditActor): Promise<SavedReply> {
+  addSavedReply(@Body() b: PostAdminSupportSavedRepliesBodyDto, @StaffActor() actor: AuditActor): Promise<SavedReply> {
     return this.support.addSavedReply(b.name, b.text, b.reason, actor);
   }
 
@@ -98,7 +98,7 @@ export class SupportController {
   @AdminRoute(SECTION, "ops", "owner", "support")
   @Patch("admin/support/saved-replies/:id")
   @HttpCode(200)
-  changeSaved(@Param() p: PatchAdminSupportSavedRepliesByIdParamsDto, @Body() b: PatchAdminSupportSavedRepliesByIdBodyDto, @StaffActor() actor: AuditActor): Promise<SavedReply> {
+  changeSavedReply(@Param() p: PatchAdminSupportSavedRepliesByIdParamsDto, @Body() b: PatchAdminSupportSavedRepliesByIdBodyDto, @StaffActor() actor: AuditActor): Promise<SavedReply> {
     return this.support.changeSavedReply(p.id, { name: b.name, text: b.text }, b.reason, actor);
   }
 
@@ -106,7 +106,7 @@ export class SupportController {
   @AdminRoute(SECTION, "ops", "owner", "support")
   @Delete("admin/support/saved-replies/:id")
   @HttpCode(204)
-  async removeSaved(@Param() p: DeleteAdminSupportSavedRepliesByIdParamsDto, @Body() b: DeleteAdminSupportSavedRepliesByIdBodyDto, @StaffActor() actor: AuditActor): Promise<void> {
+  async removeSavedReply(@Param() p: DeleteAdminSupportSavedRepliesByIdParamsDto, @Body() b: DeleteAdminSupportSavedRepliesByIdBodyDto, @StaffActor() actor: AuditActor): Promise<void> {
     await this.support.removeSavedReply(p.id, b.reason, actor);
   }
 
@@ -129,7 +129,7 @@ export class SupportController {
   @AdminRoute(SECTION, "ops", "owner", "support")
   @Post("admin/support/threads/:id/state")
   @HttpCode(200)
-  state(@Param() p: PostAdminSupportThreadsByIdStateParamsDto, @Body() b: PostAdminSupportThreadsByIdStateBodyDto, @StaffActor() actor: AuditActor): Promise<ThreadDetail> {
+  setState(@Param() p: PostAdminSupportThreadsByIdStateParamsDto, @Body() b: PostAdminSupportThreadsByIdStateBodyDto, @StaffActor() actor: AuditActor): Promise<ThreadDetail> {
     return this.support.setState(p.id, b.state, b.reason, actor);
   }
 

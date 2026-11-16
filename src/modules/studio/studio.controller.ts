@@ -16,11 +16,20 @@ import {
   PostStudioStylesByIdSubmissionsBodyDto,
   PostStudioStylesByIdSubmissionsParamsDto,
   PostStudioStylesByIdWithdrawParamsDto,
+  GetStudioStylesByIdFilesByFileIdParamsDto,
+  GetStudioStylesByIdFilesParamsDto,
+  GetStudioStylesByIdFilesQueryDto,
+  GetWBySlugStyleFilesParamsDto,
   type CreatorState,
   type StudioPrefs,
+  type StyleFile,
+  type StyleFiles,
   type StudioStyle,
 } from "../../contracts";
 import { accountOf } from "../people/business-of";
+import { Public } from "../../common/auth/decorators";
+import { AppError } from "../../common/errors/app-error";
+import { StudioFilesService } from "./studio-files.service";
 import { CreatorStateService } from "./creator-state.service";
 import { PatchStudioPrefsLocalBodyDto, PostStudioStylesWithdrawLocalBodyDto } from "./studio-bodies";
 import { StudioPrefsService } from "./studio-prefs.service";
@@ -37,6 +46,7 @@ export class StudioController {
     private readonly prefs: StudioPrefsService,
     private readonly styles: StudioStylesService,
     private readonly submissions: SubmissionsService,
+    private readonly files: StudioFilesService,
   ) {}
 
   /** E-43 */
@@ -50,6 +60,8 @@ export class StudioController {
   @Roles("creator")
   @Patch("me")
   setMe(@Body() body: PatchStudioMeBodyDto, @CurrentPrincipal() p: Principal | undefined): Promise<CreatorState> {
+    if (body.signed !== undefined || body.plan !== undefined) return this.state.setPlan(accountOf(p), body);
+    if (body.on === undefined) throw AppError.validation({ on: "Say on, signed or plan." });
     return this.state.setOn(accountOf(p), body.on);
   }
 
@@ -88,6 +100,20 @@ export class StudioController {
     return this.styles.one(accountOf(p), params.id);
   }
 
+  /** HW2: the owner's signed reads of a style's files (a draft's too) */
+  @Roles("creator")
+  @Get("styles/:id/files")
+  listFiles(@Param() params: GetStudioStylesByIdFilesParamsDto, @Query() q: GetStudioStylesByIdFilesQueryDto, @CurrentPrincipal() p: Principal | undefined): Promise<Page<StyleFile>> {
+    return this.files.list(accountOf(p), params.id, q);
+  }
+
+  /** HW2: the owner's signed read of one file of a style */
+  @Roles("creator")
+  @Get("styles/:id/files/:fileId")
+  oneFile(@Param() params: GetStudioStylesByIdFilesByFileIdParamsDto, @CurrentPrincipal() p: Principal | undefined): Promise<StyleFile> {
+    return this.files.one(accountOf(p), params.id, params.fileId);
+  }
+
   /** E-191 */
   @Roles("creator")
   @Patch("styles/:id")
@@ -117,5 +143,17 @@ export class StudioController {
   @Post("styles/:id/submissions")
   submit(@Param() params: PostStudioStylesByIdSubmissionsParamsDto, @Body() body: PostStudioStylesByIdSubmissionsBodyDto, @CurrentPrincipal() p: Principal | undefined): Promise<unknown> {
     return this.submissions.submit(accountOf(p), params.id, body);
+  }
+}
+
+/** HW2: a player of a wish reads the files of the wish's style once that style is approved. By the wish's link; no sign-in. */
+@Controller("w/:slug/style-files")
+export class StyleFilesPlayerController {
+  constructor(private readonly files: StudioFilesService) {}
+
+  @Public()
+  @Get()
+  read(@Param() p: GetWBySlugStyleFilesParamsDto): Promise<StyleFiles> {
+    return this.files.forPlayer(p.slug);
   }
 }

@@ -1,6 +1,7 @@
 import type { StaffAccount as StaffRow, StaffAccountRoles } from "@prisma/client";
 import { toWireInstant } from "../../common/time/time";
 import type { StaffAccount } from "../../contracts";
+import { actionsFor } from "../staff-reads/action-roles";
 
 export const STAFF_ROLES: readonly StaffAccountRoles[] = ["owner", "ops", "moderator", "reviewer", "support", "finance", "maker"];
 
@@ -26,6 +27,7 @@ export function staffToWire(row: StaffRow, sections: string[]): StaffAccount {
     createdAt: toWireInstant(row.createdAt),
     updatedAt: toWireInstant(row.updatedAt),
     sections,
+    actions: actionsFor(row.roles, sections),
     version: row.version,
     code: "",
     reason: "",

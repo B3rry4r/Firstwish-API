@@ -368,6 +368,9 @@ model CreatorState {
   renews       DateTime? @db.Timestamptz(3)
   reviewsLeft  Int?
   signed       Boolean?
+  signedUntil  DateTime? @db.Timestamptz(3)
+  signedEnding Boolean   @default(false)
+  planEnding   Boolean   @default(false)
   version      Int       @default(0)
   account      Account?  @relation("CreatorState_accountId", fields: [accountId], references: [id])
 
@@ -563,23 +566,28 @@ model LedgerEntry {
 
 /// config: one row of lifecycle terms served inside the public price book (DEC-70); staff change it
 model LifecycleConfig {
-  id                    String  @id @db.Uuid
-  HOLD_DAYS             Int?
-  KEEPS                 BigInt?
-  OFF                   Int?
-  OFF_LINE              Json?
-  RESTORE_DAYS          Int?
-  TERM_DAYS             Json?
-  eraseWithin           String?
-  friendMessagesMax     Int?
-  keepsakeExtrasCeiling BigInt?
-  maxPhotos             Int?
-  noticeBeforeTermEnds  String?
-  restingHoldMonths     Int?
-  restoreWindow         String?
-  restoreWindowDays     Int?
-  termRestWindow        String?
-  wishContentMaxBytes   Int     @default(262144)
+  id                     String  @id @db.Uuid
+  HOLD_DAYS              Int?
+  KEEPS                  BigInt?
+  OFF                    Int?
+  OFF_LINE               Json?
+  RESTORE_DAYS           Int?
+  TERM_DAYS              Json?
+  eraseWithin            String?
+  friendMessagesMax      Int?
+  keepsakeExtrasCeiling  BigInt?
+  maxPhotos              Int?
+  noticeBeforeTermEnds   String?
+  restingHoldMonths      Int?
+  restoreWindow          String?
+  restoreWindowDays      Int?
+  termRestWindow         String?
+  wishContentMaxBytes    Int     @default(262144)
+  photoMaxBytes          Int     @default(15728640)
+  soundMaxBytes          Int     @default(10485760)
+  modelMaxBytes          Int     @default(15728640)
+  conciergeDeliveryHours Int     @default(3)
+  unopenedDays           Int     @default(365)
 
   @@map("lifecycle_config")
 }
@@ -1287,7 +1295,7 @@ model StoredFile {
   kind                       StoredFileKind?
   styleId                    String?           @db.Uuid
   business                   Business?         @relation("StoredFile_businessId", fields: [businessId], references: [id])
-  style                      Style?            @relation("StoredFile_styleId", fields: [styleId], references: [id])
+  style                      StudioStyle?      @relation("StoredFile_styleId", fields: [styleId], references: [id], onDelete: SetNull)
   ownerAccount               Account?          @relation("StoredFile_ownerAccountId", fields: [ownerAccountId], references: [id])
   file                       StoredFile?       @relation("StoredFile_fileId", fields: [fileId], references: [id], onDelete: SetNull, onUpdate: SetNull)
   aiRequestByInputFile       AiRequest[]       @relation("AiRequest_inputFileId")
@@ -1323,14 +1331,15 @@ model StudioPrefs {
 
 /// document: a Studio style (DEC-65: StudioStyle is the document), stored whole as validated JSON with its owner and state as columns
 model StudioStyle {
-  id          String    @id @db.Uuid
-  liveAt      DateTime? @db.Timestamptz(3)
-  status      String?
-  submittedAt DateTime? @db.Timestamptz(3)
-  document    Json
-  version     Int       @default(0)
-  accountId   String?   @db.Uuid
-  account     Account?  @relation("StudioStyle_accountId", fields: [accountId], references: [id])
+  id                String       @id @db.Uuid
+  liveAt            DateTime?    @db.Timestamptz(3)
+  status            String?
+  submittedAt       DateTime?    @db.Timestamptz(3)
+  document          Json
+  version           Int          @default(0)
+  accountId         String?      @db.Uuid
+  account           Account?     @relation("StudioStyle_accountId", fields: [accountId], references: [id])
+  storedFileByStyle StoredFile[] @relation("StoredFile_styleId")
 
   @@index([accountId, id])
   @@map("studio_style")
@@ -1372,7 +1381,6 @@ model Style {
   tier                   String?
   aiRequestByStyle       AiRequest[]       @relation("AiRequest_styleId")
   reportByStyle          Report[]          @relation("Report_styleId")
-  storedFileByStyle      StoredFile[]      @relation("StoredFile_styleId")
   styleSubmissionByStyle StyleSubmission[] @relation("StyleSubmission_styleId")
 
   @@unique([slug])
@@ -2456,14 +2464,15 @@ enum StaffAccountStatus {
 }
 
 enum StoredFilePurpose {
-  wish_photo   @map("wish-photo")
-  voice_note   @map("voice-note")
-  video_clip   @map("video-clip")
-  vault_file   @map("vault-file")
-  studio_asset @map("studio-asset")
-  brand_logo   @map("brand-logo")
+  wish_photo      @map("wish-photo")
+  voice_note      @map("voice-note")
+  video_clip      @map("video-clip")
+  vault_file      @map("vault-file")
+  studio_asset    @map("studio-asset")
+  brand_logo      @map("brand-logo")
+  profile_picture @map("profile-picture")
   render
-  qr_card      @map("qr-card")
+  qr_card         @map("qr-card")
   export
 }
 

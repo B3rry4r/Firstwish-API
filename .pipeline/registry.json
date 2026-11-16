@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "frozenAt": "2026-11-16T17:44:36Z",
+  "frozenAt": "2026-11-16T20:10:26Z",
   "framework": "nestjs",
   "generatedBy": "tools/pipeline/reconcile.py",
   "resources": [
@@ -379,6 +379,18 @@
           "supersedes": [
             "S-27: sign-in by email code or Google only; phone is an optional plain detail stored E.164 when given, never verified, never an account key"
           ]
+        },
+        {
+          "name": "picture",
+          "type": "object",
+          "classes": [
+            "object"
+          ],
+          "nullable": true,
+          "provenance": [
+            "DEC-245"
+          ],
+          "supersedes": []
         },
         {
           "name": "pro",
@@ -5980,6 +5992,42 @@
           "supersedes": []
         },
         {
+          "name": "planEnding",
+          "type": "boolean",
+          "classes": [
+            "boolean"
+          ],
+          "nullable": false,
+          "provenance": [
+            "DEC-246"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "planEndsOn",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": true,
+          "provenance": [
+            "DEC-246"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "planUntil",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": true,
+          "provenance": [
+            "DEC-246"
+          ],
+          "supersedes": []
+        },
+        {
           "name": "renews",
           "type": "time",
           "classes": [
@@ -6015,6 +6063,42 @@
           "provenance": [
             "studio-editor",
             "studio-home"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "signedEnding",
+          "type": "boolean",
+          "classes": [
+            "boolean"
+          ],
+          "nullable": false,
+          "provenance": [
+            "DEC-246"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "signedEndsOn",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": true,
+          "provenance": [
+            "DEC-246"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "signedUntil",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": true,
+          "provenance": [
+            "DEC-246"
           ],
           "supersedes": []
         }
@@ -6064,10 +6148,25 @@
           "body": [
             {
               "name": "on",
-              "type": "boolean",
+              "type": "boolean (optional: the Studio on or off)",
               "from": [
+                "DEC-246",
                 "studio-editor",
                 "studio-home"
+              ]
+            },
+            {
+              "name": "plan",
+              "type": "string (optional: open moves from Creator to Open and runs to the paid day, creator moves back before that day)",
+              "from": [
+                "DEC-246"
+              ]
+            },
+            {
+              "name": "signed",
+              "type": "boolean (optional: false turns Signed off, true turns it back on before its paid day)",
+              "from": [
+                "DEC-246"
               ]
             }
           ],
@@ -6086,6 +6185,7 @@
             }
           ],
           "notes": [
+            "body by DEC-246",
             "route by conventions naming"
           ]
         }
@@ -8438,6 +8538,18 @@
           "supersedes": []
         },
         {
+          "name": "conciergeDeliveryHours",
+          "type": "number",
+          "classes": [
+            "integer"
+          ],
+          "nullable": false,
+          "provenance": [
+            "DEC-248"
+          ],
+          "supersedes": []
+        },
+        {
           "name": "eraseWithin",
           "type": "string",
           "classes": [
@@ -8488,6 +8600,18 @@
           "supersedes": []
         },
         {
+          "name": "modelMaxBytes",
+          "type": "number",
+          "classes": [
+            "integer"
+          ],
+          "nullable": false,
+          "provenance": [
+            "DEC-248"
+          ],
+          "supersedes": []
+        },
+        {
           "name": "noticeBeforeTermEnds",
           "type": "string",
           "classes": [
@@ -8496,6 +8620,18 @@
           "nullable": false,
           "provenance": [
             "site-pricing"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "photoMaxBytes",
+          "type": "number",
+          "classes": [
+            "integer"
+          ],
+          "nullable": false,
+          "provenance": [
+            "DEC-248"
           ],
           "supersedes": []
         },
@@ -8536,6 +8672,18 @@
           "supersedes": []
         },
         {
+          "name": "soundMaxBytes",
+          "type": "number",
+          "classes": [
+            "integer"
+          ],
+          "nullable": false,
+          "provenance": [
+            "DEC-248"
+          ],
+          "supersedes": []
+        },
+        {
           "name": "termRestWindow",
           "type": "string",
           "classes": [
@@ -8544,6 +8692,18 @@
           "nullable": false,
           "provenance": [
             "site-pricing"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "unopenedDays",
+          "type": "number",
+          "classes": [
+            "integer"
+          ],
+          "nullable": false,
+          "provenance": [
+            "DEC-248"
           ],
           "supersedes": []
         }
@@ -13157,7 +13317,7 @@
         },
         {
           "name": "kind",
-          "type": "enum(naira|date)",
+          "type": "enum(naira|date|bytes|hours|days)",
           "classes": [
             "money-kobo"
           ],
@@ -13168,7 +13328,7 @@
           "supersedes": [
             "S-1: integer kobo, currency NGN, over the wire and in storage; prices only from the price book"
           ],
-          "typeBy": "DEC-142"
+          "typeBy": "DEC-252"
         },
         {
           "name": "lead",
@@ -13468,6 +13628,13 @@
               "from": [
                 "DEC-138"
               ]
+            },
+            {
+              "name": "value",
+              "type": "integer (optional; the new value of a limit line limits.photoMaxBytes, limits.soundMaxBytes, limits.modelMaxBytes, limits.conciergeDeliveryHours or limits.unopenedDays, in the line's kind: bytes, hours or days; a limit line takes it alone) (DEC-252)",
+              "from": [
+                "DEC-138"
+              ]
             }
           ],
           "response": {
@@ -13498,7 +13665,7 @@
           "response": {
             "entity": "PriceBook",
             "cardinality": "page",
-            "note": "{version, items, promotion, lifecycle, entitlements, nextCursor} (DEC-161)"
+            "note": "{version, items, promotion, lifecycle, entitlements, payout, nextCursor} (DEC-161, DEC-247)"
           },
           "sources": [
             {
@@ -13652,7 +13819,7 @@
           ],
           "notes": [
             "auth by DEC-96",
-            "body by DEC-161",
+            "body by DEC-247",
             "route by DEC-96"
           ]
         }
@@ -15077,6 +15244,31 @@
           "notes": [
             "body by DEC-182",
             "route by DEC-101"
+          ]
+        },
+        {
+          "id": "E-266",
+          "method": "GET",
+          "path": "/v1/w/:slug/style-files",
+          "auth": [
+            {
+              "kind": "public"
+            }
+          ],
+          "body": [],
+          "response": {
+            "entity": "PublicWishView",
+            "cardinality": "single",
+            "note": "{style, items: StyleFile[]}: the files of the wish's style once that style is approved, files that passed screening only (DEC-245)"
+          },
+          "sources": [
+            {
+              "src": "DEC-245",
+              "via": "ruling:DEC-245"
+            }
+          ],
+          "notes": [
+            "body by DEC-245"
           ]
         },
         {
@@ -21895,6 +22087,58 @@
             }
           ],
           "notes": []
+        },
+        {
+          "id": "E-267",
+          "method": "GET",
+          "path": "/v1/studio/styles/:id/files",
+          "auth": [
+            {
+              "kind": "role",
+              "role": "creator"
+            }
+          ],
+          "body": [],
+          "response": {
+            "entity": "StudioStyle",
+            "cardinality": "page",
+            "note": "StyleFile[]: {fileId, purpose, kind image, sound or model, contentType, bytes, status, url, expiresAt, createdAt}: the owner's signed reads of the style's files, a draft's too (DEC-245)"
+          },
+          "sources": [
+            {
+              "src": "DEC-245",
+              "via": "ruling:DEC-245"
+            }
+          ],
+          "notes": [
+            "body by DEC-245"
+          ]
+        },
+        {
+          "id": "E-268",
+          "method": "GET",
+          "path": "/v1/studio/styles/:id/files/:fileId",
+          "auth": [
+            {
+              "kind": "role",
+              "role": "creator"
+            }
+          ],
+          "body": [],
+          "response": {
+            "entity": "StudioStyle",
+            "cardinality": "single",
+            "note": "one StyleFile as the list gives it (DEC-245)"
+          },
+          "sources": [
+            {
+              "src": "DEC-245",
+              "via": "ruling:DEC-245"
+            }
+          ],
+          "notes": [
+            "body by DEC-245"
+          ]
         },
         {
           "id": "E-192",

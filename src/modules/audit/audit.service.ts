@@ -29,6 +29,8 @@ export interface AuditInput {
   reason: string | null;
   /** Names of the fields that changed, never their values. */
   changedFields: string[];
+  /** A limit change only: the key and the old and new number (no personal value), kept in `before` and `after`. */
+  values?: { key: string; old: number; new: number };
 }
 
 export const MIN_REASON = 4;
@@ -84,8 +86,8 @@ export class AuditService {
         subjectId: input.target.id,
         section: input.section,
         reason,
-        before: Prisma.DbNull,
-        after: { fields: [...input.changedFields] },
+        before: input.values ? { key: input.values.key, value: input.values.old } : Prisma.DbNull,
+        after: { fields: [...input.changedFields], ...(input.values ? { key: input.values.key, value: input.values.new } : {}) },
         ip: networkOf(input.actor.ip),
         requestId: input.actor.requestId,
         // INT-7 (B21): stamped from the clock port, not the database default, so every reader of the log counts on one clock.
@@ -133,8 +135,8 @@ export class AuditService {
       section: r.section,
       subjectType: r.subjectType,
       subjectId: r.subjectId,
-      before: null,
-      after: { fields },
+      before: (r.before as Record<string, unknown> | null) ?? null,
+      after: { ...((r.after ?? {}) as Record<string, unknown>), fields },
       reason: r.reason,
       ip: r.ip,
       requestId: r.requestId,

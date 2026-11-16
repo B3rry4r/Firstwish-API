@@ -43,7 +43,7 @@ export class AdminStylesController {
   /** E-197 */
   @AdminRoute("/admin/styles", "ops", "owner", "reviewer")
   @Put(":slug/level")
-  move(@Param() p: PutAdminStylesBySlugLevelParamsDto, @Body() body: PutAdminStylesBySlugLevelBodyDto, @StaffActor() actor: AuditActor): Promise<StyleOut> {
+  moveLevel(@Param() p: PutAdminStylesBySlugLevelParamsDto, @Body() body: PutAdminStylesBySlugLevelBodyDto, @StaffActor() actor: AuditActor): Promise<StyleOut> {
     return this.styles.moveLevel(p.slug, body, actor);
   }
 }

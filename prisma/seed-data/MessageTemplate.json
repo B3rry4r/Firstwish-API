@@ -109,6 +109,24 @@
    "locale": "en-NG",
    "subject": "{business} sent you your photos",
    "version": 1
+  },
+  {
+   "seedKey": "receipt:en-NG:1",
+   "body": "Hi {name},\n\nThank you. We received your payment of {amount}.\n\n{items}\n\nReference: {reference}\n\nFirstwish",
+   "channel": "email",
+   "key": "receipt",
+   "locale": "en-NG",
+   "subject": "Your Firstwish receipt",
+   "version": 1
+  },
+  {
+   "seedKey": "refund:en-NG:1",
+   "body": "Hi {name},\n\nYour refund of {amount} is on its way back to you. It can take a few days to show with your bank.\nReference: {reference}\n\nFirstwish",
+   "channel": "email",
+   "key": "refund",
+   "locale": "en-NG",
+   "subject": "Your Firstwish refund",
+   "version": 1
   }
  ]
 }

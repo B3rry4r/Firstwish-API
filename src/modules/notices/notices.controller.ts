@@ -39,7 +39,7 @@ export class NoticesController {
   /** E-76 */
   @AdminRoute("/admin/messages", "ops", "owner", "support")
   @Put("admin/messages/templates/:key")
-  edit(@Param() p: PutAdminMessagesTemplatesByKeyParamsDto, @Body() b: PutAdminMessagesTemplatesByKeyBodyDto, @StaffActor() actor: AuditActor): Promise<MessageTemplate> {
+  editTemplate(@Param() p: PutAdminMessagesTemplatesByKeyParamsDto, @Body() b: PutAdminMessagesTemplatesByKeyBodyDto, @StaffActor() actor: AuditActor): Promise<MessageTemplate> {
     return this.admin.edit(p.key, b, actor);
   }
 

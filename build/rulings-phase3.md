@@ -531,3 +531,19 @@ YY3 (B20) Next shared base: RESEND_WEBHOOK_SECRET in the env schema; a `resend` 
     tables as models; the index on MessageDelivery.providerMessageId in schema.prisma.
 YY4 (B20) Setting refund_due goes through the refunds helper. (Wave 5 join.) The notices changes (support template, replyTo
     in vars, the suppression check) are accepted.
+ZZ1 (B16 verify, medium) A transfer event counts only when its amount is a whole number equal to the payout's amount; a float,
+    a string or no amount changes nothing and flags the payout for staff. (B16 patch.)
+ZZ2 (B16 verify, medium) No payout stays stuck: every run first takes up payouts left pending from any earlier month; a payout
+    left sent with no news for 24 hours is looked up at the provider (the port gains a lookup; NOT RUN against Paystack) and
+    settled by what it says. (B16 patch.)
+ZZ3 (B16 verify, medium) A creator whose account is banned is not paid while the ban stands; the balance waits. Default (lead),
+    owner may override. (B16 patch.)
+ZZ4 (B16 verify) A wish paid for with a ticket earns 20% of the premium style price in force, whoever pays (a person or a
+    business) and whatever else was in the payment. (B16 patch.)
+ZZ5 (B16 verify; T-66) A client wish drawn from a Pro plan month or a pack earns the creator of its Premium style 20% of that
+    wish's share of what the business paid (the plan payment divided by the plan's wishes, the pack payment by the pack's
+    size, rounded down), written when the wish is drawn, one per wish; a refund of that payment takes them back. NOT BUILT
+    YET: it needs the accrual's unique to include the wish (next shared base), then a patch. Until then a Pro wish earns a
+    creator nothing: this is owed, not accepted.
+ZZ6 (B16 verify) A reverse that comes before the accrue leaves a mark so a later accrue of that payment earns nothing. (B16 patch.)
+ZZ7 (B16 verify) Marking a payout paid by hand (E-114) is refused while a send is in flight (409). (B16 patch.)

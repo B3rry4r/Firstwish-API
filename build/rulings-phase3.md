@@ -669,3 +669,7 @@ ZB5 (P-B17b verify, medium) A wish that carries a business is reached only throu
 GA2 (lead) The 30 INTERNAL endpoints: 29 have code and tests (the daily settlement job, sending a message, the 24 fulfilment
     handlers, screening, signed reads, the wish number). E-89 (concierge.rush) has none because rush is not sold (Z2): the
     closing base removes E-89 and its declared price-book line from the registry.
+GB1 (P-B16b hand-back) Every client wish earns at its seal whichever way it was made: the ordinary seal of a wish that carries a
+    business calls the same accrual, reading what it was counted against (month or pack) from its client-wish record.
+    (Wave 6 join.) A banned creator still earns and the payout waits (ZZ3): accepted. The draw accrues at the seal because
+    the style can change until then: accepted.

@@ -521,3 +521,13 @@ XX3 (B15) Open's 3 credits are given once whichever code creates the creator's r
 XX4 (B15) Accepted: a submitted Studio style holds a catalogue Style row (off, slug studio-<id>) from its first submit; the
     changes in StylesService, the erase and the seed. Next shared base: the snapshot table and a version column as models, a
     job kind for the checks, bodies for E-186 and E-192, SubmissionView.snapshot.
+YY1 (B20) The email port carries replyTo and the Resend adapter sends it (next shared base, kernel). Until then a reply by email
+    cannot reach its thread on the real provider: NOT RUN, and the Support bundle is not counted as working with real email.
+YY2 (B20) Resend's received-email event carries no body: the email port gains a call that fetches a received email by id and
+    the webhook uses it (next shared base; NOT RUN against Resend).
+YY3 (B20) Next shared base: RESEND_WEBHOOK_SECRET in the env schema; a `resend` webhook provider in the guard; the contact-page
+    route and the saved-reply routes (list, add, change, remove: a saved reply needs a writer) in the registry; ThreadDetail
+    as a type; a `name` column for a contact-page thread; bounced and complained as delivery status values; the two raw-SQL
+    tables as models; the index on MessageDelivery.providerMessageId in schema.prisma.
+YY4 (B20) Setting refund_due goes through the refunds helper. (Wave 5 join.) The notices changes (support template, replyTo
+    in vars, the suppression check) are accepted.

@@ -3,7 +3,10 @@ import { PrismaService } from "../../common/db/prisma.service";
 import { lockAccount } from "../../common/db/account-lock";
 import { AppError } from "../../common/errors/app-error";
 import { Clock } from "../../common/ports/clock.port";
-import type { PostWishesByIdKeepBody, PostWishesByIdKeepResponse, PublicWishView, Wish } from "../../contracts";
+import { IdGenerator } from "../../common/ports/ids.port";
+import { toWireInstant } from "../../common/time/time";
+import type { GetWBySlugKeepByReferenceResponse, PostWBySlugKeepBody, PostWBySlugKeepResponse, PostWishesByIdKeepBody, PostWishesByIdKeepResponse, PublicWishView, Wish } from "../../contracts";
+import { PriceBookService } from "../price-book/price-book.service";
 import { FulfilmentRegistry } from "../payments/fulfilment.registry";
 import { PaymentsService } from "../payments/payments.service";
 import { PublicWishesService } from "../public-wishes/public-wishes.service";
@@ -23,6 +26,11 @@ export interface LinkHold {
   token?: string;
   address: string | null;
 }
+/** HS2: what a link holder with no account carries: the link (slug), its unlock token where there is a passcode, and the signed proof the public view gave. */
+export interface LinkProof extends LinkHold {
+  proof?: string;
+}
+const EMAIL = /^[^\s@]{1,64}@[^\s@]{1,190}\.[^\s@]{2,}$/;
 export type KeepLength = (typeof KEEP_LENGTHS)[number];
 
 /**
@@ -43,9 +51,13 @@ export class WishKeepsService implements OnModuleInit {
     private readonly links: PublicWishesService,
     private readonly proofs: KeepProofs,
     private readonly cover: PassCover,
+    private readonly ids: IdGenerator,
+    private readonly prices: PriceBookService,
   ) {}
 
   onModuleInit(): void {
+    // HS2: the public view of a held link carries the wish's id, a signed proof and the keeps on offer
+    this.links.useOffers((h) => this.offerFor(h));
     // CB1 for a keep: one open keep payment per wish. The start holds the account lock, so two starts cannot both pass this.
     this.registry.onStart(async (accountId, request, skus, tx) => {
       if (request.purpose !== "keep" || !UUID.test(request.subjectId ?? "")) return;
@@ -114,15 +126,7 @@ export class WishKeepsService implements OnModuleInit {
     const id = wishId.toLowerCase();
     const length = await this.lengthOf(body, false);
     const who = await this.who(accountId, id, link);
-    const w = await this.db.wish.findUnique({ where: { id }, select: { id: true, status: true, erasedAt: true, ticket: true } });
-    if (!w) throw AppError.notFound("No such wish.");
-    const state = stateOf(w);
-    if (state === "erased") throw AppError.conflict("wish_erased", REASON_TEXT.wish_erased);
-    if (state === "taken_down") throw AppError.conflict("wish_removed", REASON_TEXT.wish_removed);
-    if (state !== "live" && state !== "resting") throw AppError.conflict("wish_not_live", REASON_TEXT.wish_not_live);
-    if (grantOf(await this.entitlements.row(), `ticket.${w.ticket ?? "moment"}`)?.keepable !== true) {
-      throw AppError.conflict("ticket_not_keepable", "A Moment cannot be kept. Make it a Keepsake first, and it can be kept.");
-    }
+    await this.assertKeepable(id);
     if (who.owner) {
       const covered = await this.db.$transaction(async (tx) => {
         await lockAccount(tx, accountId);
@@ -150,17 +154,111 @@ export class WishKeepsService implements OnModuleInit {
     if (bodyWishId !== undefined && bodyWishId.toLowerCase() !== wishId.toLowerCase()) throw AppError.validation({ wishId: "Must be the wish in the address." });
     const id = wishId.toLowerCase();
     const who = await this.who(accountId, id, link);
+    await this.wakeNow(accountId, id, who.owner);
+  }
+
+  /** The wake itself, for an owner or a receiver: `lockId` is the account lock that lines the moves up (a link holder with no account uses the wish owner's). */
+  private async wakeNow(lockId: string, id: string, owner: boolean): Promise<void> {
     await this.db.$transaction(async (tx) => {
-      await lockAccount(tx, accountId);
+      await lockAccount(tx, lockId);
       const locked = await this.lifecycle.lock(tx, id);
       if (stateOf(locked) !== "resting") throw AppError.conflict("not_allowed", "Only a resting wish can be woken.");
       const now = this.clock.now();
       // HB1: the end is worked out by applyEnd; here only whether something that this asker may use covers now
       const r = await endOf(tx, id, { now });
       const paid = r.keepsEnd && r.keepsEnd.getTime() > now.getTime();
-      const pass = who.owner && r.passEnd && r.passEnd.getTime() > now.getTime();
+      const pass = owner && r.passEnd && r.passEnd.getTime() > now.getTime();
       if (!paid && !pass) throw new AppError(402, "keep_needed", "Keep this wish for a month, six months or a year to wake it.");
-      await this.cover.applyEnd(tx, id, { wake: true, cause: pass ? "pass.cover" : who.owner ? "owner.wake" : "receiver.wake" });
+      await this.cover.applyEnd(tx, id, { wake: true, cause: pass ? "pass.cover" : owner ? "owner.wake" : "receiver.wake" });
     });
   }
+
+  /** The public view's word for where a wish stands: live is "open". */
+  private viewState(state: string): string {
+    return state === "live" ? "open" : state;
+  }
+
+  /** A wish that may be kept now: live or resting, not erased or taken down, on a ticket the price book lets be kept. */
+  private async assertKeepable(id: string): Promise<void> {
+    const w = await this.db.wish.findUnique({ where: { id }, select: { id: true, status: true, erasedAt: true, ticket: true } });
+    if (!w) throw AppError.notFound("No such wish.");
+    const state = stateOf(w);
+    if (state === "erased") throw AppError.conflict("wish_erased", REASON_TEXT.wish_erased);
+    if (state === "taken_down") throw AppError.conflict("wish_removed", REASON_TEXT.wish_removed);
+    if (state !== "live" && state !== "resting") throw AppError.conflict("wish_not_live", REASON_TEXT.wish_not_live);
+    if (grantOf(await this.entitlements.row(), `ticket.${w.ticket ?? "moment"}`)?.keepable !== true) {
+      throw AppError.conflict("ticket_not_keepable", "A Moment cannot be kept. Make it a Keepsake first, and it can be kept.");
+    }
+  }
+
+  /**
+   * HS2: what the public view of a held link gives a keep or wake start: the wish's id, the proof the link's holder signs with (it names this
+   * link and this wish), and the keeps on offer with their price book prices. A wish whose ticket cannot be kept offers nothing.
+   */
+  private async offerFor(h: { wishId: string; linkId: string; resting: boolean }): Promise<Record<string, unknown> | null> {
+    const w = await this.db.wish.findUnique({ where: { id: h.wishId }, select: { ticket: true } });
+    const book = await this.entitlements.row();
+    if (grantOf(book, `ticket.${w?.ticket ?? "moment"}`)?.keepable !== true) return null;
+    const quote = await this.prices.quote(KEEP_LENGTHS.map((l) => ({ sku: `keep.${l}` })), this.clock.now());
+    const given = this.proofs.issueHold(h.linkId, h.wishId);
+    return {
+      wishId: h.wishId,
+      proof: given.proof,
+      proofExpiresAt: toWireInstant(given.expiresAt),
+      resting: h.resting,
+      wake: h.resting,
+      keeps: quote.lines.map((l) => ({ key: l.sku.slice("keep.".length), name: l.name, days: grantOf(book, l.sku)?.termDays ?? null, priceKobo: l.unitKobo })),
+    };
+  }
+
+  /** HS2: the holder of a link with no account: the link (and its unlock) lets them in, and the signed proof of THIS link and wish must be good. Else 403. */
+  private async holder(slug: string, hold: LinkProof): Promise<{ wishId: string; linkId: string; summary: (state: string) => PublicWishView }> {
+    const held = await this.links.holdLink(slug, { address: hold.address, token: hold.token });
+    if (!this.proofs.validHold(hold.proof, held.linkId, held.wishId)) throw new AppError(403, "proof_needed", "Open this wish's link again, then keep or wake it from there.");
+    return held;
+  }
+
+  /** The payer a holder with no account is: one guest account per email (no side, so it cannot sign in as a person); a later sign-in with that email finds it. */
+  private async guest(email: unknown): Promise<string> {
+    const e = typeof email === "string" ? email.trim().toLowerCase() : "";
+    if (!EMAIL.test(e)) throw AppError.validation({ email: "Give the email the receipt should go to." });
+    const found = await this.db.account.findFirst({ where: { contact: e, sides: { isEmpty: true }, erasedAt: null }, select: { id: true } });
+    if (found) return found.id;
+    const id = this.ids.id();
+    await this.db.account.create({ data: { id, contact: e, sides: [], lastSide: "person" } });
+    return id;
+  }
+
+  /**
+   * HS2: a keep (or, on a resting wish, a wake: the keep wakes it when it is paid) started by the holder of the wish's link with no account.
+   * The payment is a guest payer's own, priced by the price book; the answer carries the public view of the wish only.
+   */
+  async keepByLink(slug: string, body: PostWBySlugKeepBody, idempotencyKey: string | undefined, hold: LinkProof): Promise<{ answer: PostWBySlugKeepResponse; status: 200 | 201 }> {
+    const length = await this.lengthOf(body, true);
+    const held = await this.holder(slug, hold);
+    const id = held.wishId;
+    await this.assertKeepable(id);
+    const payer = await this.guest(body.email);
+    const options = { receiverProof: this.proofs.issue(payer, id) };
+    const r = await this.payments.start(payer, { purpose: "keep", id: length as KeepLength, subjectId: id, way: body.paymentWay, options }, idempotencyKey);
+    return { answer: { payment: r.started.payment, item: held.summary(this.viewState(stateOf(await this.db.wish.findUniqueOrThrow({ where: { id }, select: { status: true, erasedAt: true } })))) }, status: r.status };
+  }
+
+  /** HS2: the result of a link holder's keep payment, read back with the same proof (the payment must be a guest payment for this wish). */
+  async keepResult(slug: string, reference: string, hold: LinkProof): Promise<GetWBySlugKeepByReferenceResponse> {
+    const held = await this.holder(slug, hold);
+    const p = await this.db.payment.findFirst({ where: { providerReference: reference, subjectId: held.wishId, purpose: "keep", account: { sides: { isEmpty: true } } }, select: { accountId: true } });
+    if (!p?.accountId) throw AppError.notFound("No such payment.");
+    const payment = await this.payments.verifyOwn(p.accountId, reference);
+    const fresh = await this.db.wish.findUniqueOrThrow({ where: { id: held.wishId }, select: { status: true, erasedAt: true } });
+    return { payment: payment as unknown as GetWBySlugKeepByReferenceResponse["payment"], item: held.summary(this.viewState(stateOf(fresh))) };
+  }
+
+  /** HS2: the holder with no account wakes a resting wish that a paid keep covers now (a Pass covers only its owner). */
+  async wakeByLink(slug: string, hold: LinkProof): Promise<void> {
+    const held = await this.holder(slug, hold);
+    const owner = await this.db.wish.findUniqueOrThrow({ where: { id: held.wishId }, select: { accountId: true } });
+    await this.wakeNow(owner.accountId, held.wishId, false);
+  }
 }
+

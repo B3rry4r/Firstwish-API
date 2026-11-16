@@ -3284,6 +3284,57 @@ export type PostWBySlugOpensBody = Record<string, never>;
 export type PostWBySlugOpensHeaders = Record<string, never>;
 export type PostWBySlugOpensResponse = PublicWishView;
 
+/** E-257 POST /v1/w/:slug/keep. Auth: public, the link's holder (HS2). */
+export interface PostWBySlugKeepParams {
+  slug: string;
+}
+export interface PostWBySlugKeepBody {
+  /** number 30|182|365 */
+  days?: number;
+  /** string (the payer's email: the receipt goes there; no account is made a person) */
+  email: string;
+  /** enum(month|half|year) */
+  keep?: unknown;
+  /** 'month'|'half'|'year' */
+  keepKey?: "month" | "half" | "year";
+  /** 'card'|'transfer'|'ussd' (PaySheet, not passed on) */
+  paymentWay?: "card" | "transfer" | "ussd";
+}
+export interface PostWBySlugKeepHeaders {
+  "idempotency-key": string;
+  "x-unlock-token"?: string;
+  /** the signed proof PublicWishView.keepOffer.proof gave (HS2) */
+  "x-wish-proof": string;
+}
+export type PostWBySlugKeepResponse = PaymentStarted<PublicWishView>;
+
+/** E-258 POST /v1/w/:slug/wake. Auth: public, the link's holder (HS2). */
+export interface PostWBySlugWakeParams {
+  slug: string;
+}
+export type PostWBySlugWakeBody = Record<string, never>;
+export interface PostWBySlugWakeHeaders {
+  "x-unlock-token"?: string;
+  "x-wish-proof": string;
+}
+/** 204 No Content: the response has no body (Q12). */
+export type PostWBySlugWakeResponse = void;
+
+/** E-259 GET /v1/w/:slug/keep/:reference. Auth: public, the link's holder (HS2). */
+export interface GetWBySlugKeepByReferenceParams {
+  slug: string;
+  reference: string;
+}
+export type GetWBySlugKeepByReferenceQuery = Record<string, never>;
+export interface GetWBySlugKeepByReferenceHeaders {
+  "x-unlock-token"?: string;
+  "x-wish-proof": string;
+}
+export interface GetWBySlugKeepByReferenceResponse {
+  payment: GetPaymentsByReferenceResponse;
+  item: PublicWishView;
+}
+
 /** E-132 POST /v1/w/:slug/reaction. Auth: public. */
 export interface PostWBySlugReactionParams {
   slug: string;
@@ -4754,6 +4805,9 @@ export interface EndpointContracts {
   "E-129": { params: GetWBySlugParams; query: GetWBySlugQuery; headers: GetWBySlugHeaders; response: GetWBySlugResponse };
   "E-130": { params: PostWBySlugFavouritesParams; body: PostWBySlugFavouritesBody; headers: PostWBySlugFavouritesHeaders; response: PostWBySlugFavouritesResponse };
   "E-131": { params: PostWBySlugOpensParams; body: PostWBySlugOpensBody; headers: PostWBySlugOpensHeaders; response: PostWBySlugOpensResponse };
+  "E-257": { params: PostWBySlugKeepParams; body: PostWBySlugKeepBody; headers: PostWBySlugKeepHeaders; response: PostWBySlugKeepResponse };
+  "E-258": { params: PostWBySlugWakeParams; body: PostWBySlugWakeBody; headers: PostWBySlugWakeHeaders; response: PostWBySlugWakeResponse };
+  "E-259": { params: GetWBySlugKeepByReferenceParams; query: GetWBySlugKeepByReferenceQuery; headers: GetWBySlugKeepByReferenceHeaders; response: GetWBySlugKeepByReferenceResponse };
   "E-132": { params: PostWBySlugReactionParams; body: PostWBySlugReactionBody; headers: PostWBySlugReactionHeaders; response: PostWBySlugReactionResponse };
   "E-133": { params: PostWBySlugTakeDownParams; body: PostWBySlugTakeDownBody; headers: PostWBySlugTakeDownHeaders; response: PostWBySlugTakeDownResponse };
   "E-134": { params: PostWBySlugUnlockParams; body: PostWBySlugUnlockBody; headers: PostWBySlugUnlockHeaders; response: PostWBySlugUnlockResponse };

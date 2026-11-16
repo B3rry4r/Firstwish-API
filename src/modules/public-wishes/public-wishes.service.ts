@@ -48,7 +48,10 @@ interface Row {
 }
 
 /** What the server decided for a link at this moment. */
-export type Standing = "countdown" | "locked" | "open";
+export type Standing = "countdown" | "locked" | "open" | "resting";
+
+/** HS2: made by the keep service; the public view carries what it answers as `keepOffer` (the wish's id, the signed proof, the keeps on offer). */
+export type OfferMaker = (hold: { wishId: string; linkId: string; resting: boolean }) => Promise<Record<string, unknown> | null>;
 
 export interface Resolved {
   row: Row;
@@ -112,16 +115,29 @@ export class PublicWishesService {
     private readonly life: WishLifecycleService,
   ) {}
 
+  private offerMaker: OfferMaker | null = null;
+  /** The keep service registers how a view's `keepOffer` is made (the keep service needs this service, so this one cannot import it). */
+  useOffers(maker: OfferMaker): void {
+    this.offerMaker = maker;
+  }
+  private offer(row: Row, resting: boolean): Promise<Record<string, unknown> | null> {
+    return this.offerMaker ? this.offerMaker({ wishId: row.id, linkId: row.linkId, resting }) : Promise.resolve(null);
+  }
+
   /**
    * E-129. A read never starts the term (NN2): before the first opening it answers the opening view only (state sealed,
    * openable true once the open time has passed); after it, the full view.
    */
   async view(slug: string, c: Caller, depth = 0): Promise<PublicWishView> {
     await this.limits.take("read", this.limits.keyOf(c.address), READS_PER_MINUTE, 60);
-    const r = await this.resolve(slug, c);
+    const r = await this.resolve(slug, c, true);
     const { row } = r;
     const base = this.base(slug, row);
     const opening = openingOf(row.content);
+    // HS2: a resting wish's link says it is resting (no content) and offers the wake; a passcode still comes first (a locked standing)
+    if (r.standing === "resting") {
+      return { ...base, state: "resting", openable: false, openedAt: row.openedAt ? toWireInstant(row.openedAt) : null, endsAt: row.endsAt ? toWireInstant(row.endsAt) : null, keepOffer: c.head ? null : await this.offer(row, true) };
+    }
     if (r.standing === "countdown") return { ...base, state: "countdown", openable: false, content: sceneOf(row.content), opening };
     if (r.standing === "locked") {
       const q = questionOf(row.content);
@@ -161,13 +177,13 @@ export class PublicWishesService {
     const files = await this.fileLinks(row.id);
     const done = await this.recordRead(row, this.clock.now(), c, kind);
     if (done === "refused") return "refused";
-    return { ...base, ...done.times, state: "open", openable: true, content: { ...stored, files }, files, opening: null };
+    return { ...base, ...done.times, state: "open", openable: true, content: { ...stored, files }, files, opening: null, keepOffer: await this.offer(row, false) };
   }
 
   /** E-134: a passcode (or the answer of a question). Counted before it is compared; a locked link says when to come back. */
   async unlock(slug: string, c: Caller, input: { passcode?: string; answer?: string; opening?: Record<string, unknown> }): Promise<UnlockResult> {
     await this.limits.take("read", this.limits.keyOf(c.address), READS_PER_MINUTE, 60);
-    const { row } = await this.resolve(slug, c);
+    const { row } = await this.resolve(slug, c, true);
     const now = this.clock.now();
     if (!row.opensAt || row.opensAt.getTime() > now.getTime()) throw AppError.conflict("not_open_yet", "This wish is not open yet.");
     if (!row.passcodeHash) return { ok: true };
@@ -233,7 +249,7 @@ export class PublicWishesService {
    * erased, taken down or whose owner was erased, are the same 404. Where the wish has a passcode the link's own unlock token must
    * be good (else 409 not_open; a locked link refuses as the unlock does, 429 with the time to come back). Answers the wish id.
    */
-  async holdLink(slug: string, c: Caller): Promise<{ wishId: string; summary: (state: string) => PublicWishView }> {
+  async holdLink(slug: string, c: Caller): Promise<{ wishId: string; linkId: string; summary: (state: string) => PublicWishView }> {
     const row = await this.rowOf(slug);
     if (!row.active || row.erasedAt || row.removedAt || (row.ownerErasedAt && !row.businessId) || row.status === "removed") throw AppError.notFound("No wish is at this link.");
     if (row.passcodeHash && !this.tokens.valid(c.token, row.linkId, row.passcodeHash)) {
@@ -244,7 +260,7 @@ export class PublicWishesService {
       }
       throw AppError.conflict("not_open", "Enter the passcode for this wish first.");
     }
-    return { wishId: row.id, summary: (state) => this.summary(slug, row, state) };
+    return { wishId: row.id, linkId: row.linkId, summary: (state) => this.summary(slug, row, state) };
   }
 
   /** What a receiver who keeps a wish may see of it: the link's own public facts and where the wish stands. Nothing of the owner's account, no content, and no read is recorded. */
@@ -253,11 +269,16 @@ export class PublicWishesService {
   }
 
   /** The row for a slug and where it stands; 404 for an unknown slug, 410 for a wish that is not here. Both do the same one query. */
-  async resolve(slug: string, c: Caller): Promise<Resolved> {
+  async resolve(slug: string, c: Caller, restingOk = false): Promise<Resolved> {
     const row = await this.rowOf(slug);
     const now = this.clock.now().getTime();
     const resting = row.status === "resting" || (row.status === "live" && (!row.endsAt || row.endsAt.getTime() <= now));
-    if (!row.active || row.erasedAt || row.removedAt || (row.ownerErasedAt && !row.businessId) || row.status === "removed" || resting) throw gone();
+    if (!row.active || row.erasedAt || row.removedAt || (row.ownerErasedAt && !row.businessId) || row.status === "removed" || (resting && !restingOk)) throw gone();
+    // HS2: a resting wish stays at its link (its state, no content); a passcode wish asks for its unlock first
+    if (resting) {
+      const lockedStill = row.passcodeHash !== null && !this.tokens.valid(c.token, row.linkId, row.passcodeHash);
+      return { row, standing: lockedStill ? "locked" : "resting", needsPasscode: row.passcodeHash !== null };
+    }
     if (!row.opensAt || row.opensAt.getTime() > now || (row.status !== "sealed" && row.status !== "live")) {
       return { row, standing: "countdown", needsPasscode: false };
     }

@@ -574,3 +574,10 @@ CA2 (B19) Next shared base: E-34 takes wishIds; E-141's body; the customer's rea
     tables become models).
 CA3 (B19) The customer is told by email when the order is delivered (a "concierge-delivered" message through the notices
     path), and a business order's invoice is linked. (Wave 5 join.) Adding the qrcode library is accepted.
+DA1 (B20 verify, medium) Mail from Firstwish's own addresses (the sending address, any reply+ address, the mail domain), and a
+    bounce or delivery report however it is headed, never starts a thread or lands in one; staff cannot reply to a thread
+    whose contact is one of our own addresses. (B20 patch.)
+DA2 (B20 verify, medium) The complaint list uses the canonical address (letter case and +tag folded), as the contact limits do.
+    (B20 patch.)
+DA3 (B20 verify, low) A webhook secret with an empty key is refused like no secret; a reply token adds at most 30 messages a
+    day to its thread (PROVISIONAL, counted in the database). (B20 patch.)

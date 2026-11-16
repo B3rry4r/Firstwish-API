@@ -133,7 +133,7 @@ export class WishesService {
     await tx.wish.create({
       data: {
         id, accountId: a.accountId, businessId: a.businessId, status: "draft", kind, occasion, styleSlug: style.slug, timeZone: DEFAULT_ZONE,
-        name: this.text(a.name, "name", 120), content: { cover: { from } } as Prisma.InputJsonValue, version: 0,
+        name: this.text(a.name, "name", 120), content: { cover: { from } }, version: 0,
       },
     });
     await this.fulfilTicketIn(tx, id, "signature");

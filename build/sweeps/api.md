@@ -15,3 +15,6 @@
 - B17 logins.service.ts:70: a downgrade that leaves more logins than the plan allows keeps them and says nothing; tell the owner (a notice) and show which to remove.
 - B17 client-wishes.service.ts:70: a login removed while its requests are in flight still lands them; the next is 403.
 - maskEmail exists twice (auth-codes.service.ts:15, notices/catalog.ts:169) and B08 has its own: one masker in src/common at the next shared base.
+- B13 E-133: a code is mailed to any typed address (10 a day per network); add a limit per target email (3 a day).
+- B13 reports.service.ts:~97: the fifth wrong code says code_expired; it should say no tries are left.
+- B13 not exercised by the verifier: staff queue content (flagged photos, minutesLeft, late), fail-closed with Redis or the database down.

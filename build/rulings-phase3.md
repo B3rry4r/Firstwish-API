@@ -471,3 +471,11 @@ RR3 (B17 verify, medium) Erasing a business owner's account closes the business.
     the business's records of the client (name, contact) go at once; the wish's own words and photos stay until then because
     the client was given them. (This wave's join: the erase rule and schema-map.) Default (lead), owner may override.
     Lows (downgrade with seats over the plan gives no notice; a login removed mid-request) -> build/sweeps/api.md.
+SS1 (B13 verify, medium) A wish that is erased, or whose owner is erased, leaves no row in the public list tables: the published
+    row and its request are deleted, not kept. A wish that rests or is taken down also loses its published row, so coming back
+    needs a new review. dropForWishes does the deleting (B13 patch); the lifecycle and the erase call it (this wave's join, QQ4).
+SS2 (B13 verify) Asking to publish needs the creator side, as the registry says (T-25; the phone part fell away with R11): a
+    person-only account gets 403 naming the creator side. (B13 patch.)
+SS3 (B13 verify) A banned account's old token and refresh answer 401 because its sessions are ended; a new sign-in answers 403
+    account_banned. Accepted. A banned account reads nothing while banned. Default (lead), owner may override.
+    Lows -> build/sweeps/api.md.

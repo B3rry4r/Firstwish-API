@@ -479,3 +479,14 @@ SS2 (B13 verify) Asking to publish needs the creator side, as the registry says 
 SS3 (B13 verify) A banned account's old token and refresh answer 401 because its sessions are ended; a new sign-in answers 403
     account_banned. Accepted. A banned account reads nothing while banned. Default (lead), owner may override.
     Lows -> build/sweeps/api.md.
+TT1 (B08 verify, high) One send asks the provider once. A send claims the refund in one statement (approved -> sending) before
+    it asks; a send that loses the claim answers 409 and asks nothing. A time-out leaves it claimable again; before any second
+    ask the adapter first looks the refund up at the provider by the payment's reference and creates one only if none is
+    there (the stand-in models this; NOT RUN against Paystack). (B08 patch.)
+TT2 (B08 verify, medium) PP5 in the seed: support holds the section E-145 checks. (B08 patch; scripts/seed.mjs, that row only.)
+TT3 (B08 verify) E-86 keeps the two-person rule: it starts the refund and sends it in the same step only for the owner role;
+    for anyone else it leaves the refund waiting for a second person (E-146). Default (lead), owner may override. (B08 patch.)
+TT4 (B08 verify) refund_amount_mismatch is cleared when the refund succeeds. (B08 patch.)
+TT5 (B08 verify) Refunding one pack takes away that pack's wishes only: left = max(0, left - the refunded pack's size); what
+    was already used is written on the refund.kept row. (B08 patch; purchases/business-handlers.ts, the revoke only.)
+TT6 (B08 verify) A provider error on the settlement check answers 502 in the envelope, never 500. (B08 patch.)

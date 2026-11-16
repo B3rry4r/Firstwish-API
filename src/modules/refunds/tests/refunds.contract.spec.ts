@@ -7,6 +7,7 @@ import { JobsService } from "../../jobs/jobs.service";
 import { SettlementService } from "../../payments/settlement.service";
 import { makeStaff, seedRoleTable } from "../../staff-accounts/tests/staff-kit";
 import { DAILY_SETTLEMENT_KEY, RefundsModule } from "../refunds.module";
+import { BusinessHandlers } from "../../purchases/business-handlers";
 import { StandinRefundProvider } from "../standin-refund-provider";
 import { RefundProviderPort } from "../refund-provider.port";
 
@@ -63,15 +64,17 @@ describe("B08 refunds, the settlement check and staff payments (contract)", () =
     return id;
   };
   /** A payment as the start would store it, then the provider's good answer through the one settle path. */
-  async function pay(accountId: string, sku = "ticket.keepsake", request: Record<string, unknown> = {}, fee: bigint | null = 150n) {
+  async function pay(accountId: string, sku = "ticket.keepsake", request: Record<string, unknown> = {}, fee: bigint | null = 150n, o: { qty?: number; businessId?: string } = {}) {
     const book = await db.price.findFirstOrThrow({ where: { sku }, orderBy: { version: "desc" } });
-    const total = book.promoKobo ?? book.listKobo;
+    const qty = o.qty ?? 1;
+    const unit = book.promoKobo ?? book.listKobo;
+    const total = unit * BigInt(qty);
     const id = ids.next();
     const reference = `fw-${id}`;
     await db.payment.create({
       data: {
-        id, accountId, payerContact: null, purpose: "ticket", subjectId: (request.subjectId as string) ?? null,
-        lines: [{ sku, name: sku, qty: 1, unitKobo: Number(total), totalKobo: Number(total) }], amountKobo: total, currency: "NGN", priceBookVersion: book.version,
+        id, accountId, businessId: o.businessId ?? null, payerContact: null, purpose: "ticket", subjectId: (request.subjectId as string) ?? null,
+        lines: [{ sku, name: sku, qty, unitKobo: Number(unit), totalKobo: Number(total) }], amountKobo: total, currency: "NGN", priceBookVersion: book.version,
         status: "pending", provider: "paystack", providerReference: reference, idempotencyKey: `${accountId}:${id}`, channel: "card",
         options: { request: { purpose: "x", ...request }, server: { fingerprint: id } },
       },
@@ -303,7 +306,7 @@ describe("B08 refunds, the settlement check and staff payments (contract)", () =
     const mine = itemsOf(list).find((i) => i.reference === p.reference);
     expect(mine?.flags).toEqual(expect.arrayContaining(["refund_due", "account_erased"]));
     expect(itemsOf(list).every((i) => i.flags.includes("refund_due"))).toBe(true);
-    const r = await t.http().post(`/v1/admin/payments/${p.reference}/refund`).set(auth(staff.financeA.token)).send({ reason: REASON });
+    const r = await t.http().post(`/v1/admin/payments/${p.reference}/refund`).set(auth(staff.owner.token)).send({ reason: REASON });
     expect(r.status).toBe(200);
     expect(r.body).toMatchObject({ reference: p.reference, state: "refund-started" });
     expect((await db.payment.findUniqueOrThrow({ where: { id: p.id } })).flags).toContain("refund_due");
@@ -370,6 +373,116 @@ describe("B08 refunds, the settlement check and staff payments (contract)", () =
     expect((await t.http().get("/v1/admin/payments/fw-nope").set(auth(staff.ops.token))).status).toBe(404);
   });
 
+  const e86 = (token: string, reference: string) => t.http().post(`/v1/admin/payments/${reference}/refund`).set(auth(token)).send({ reason: REASON });
+
+  it("TT1: 20 sends at once: the provider is asked once, one answer 200, the rest 409", async () => {
+    const p = await paidTicket();
+    const s = await start(staff.financeA.token, p.id, { amountKobo: Number(p.total) });
+    const out = await Promise.all(Array.from({ length: 20 }, (_, i) => send(i % 2 ? staff.financeB.token : staff.owner.token, s.body.id)));
+    const codes = out.map((o) => o.status);
+    expect(codes.filter((c) => c === 200 || c === 504)).toHaveLength(1);
+    expect(codes.filter((c) => c === 409)).toHaveLength(19);
+    expect(provider.asked.filter((a) => a.refundId === s.body.id)).toHaveLength(1);
+    expect((await refundOf(p.id)).status).toBe("sent");
+    expect(await db.auditEntry.count({ where: { subjectId: s.body.id, action: "refund.send" } })).toBe(1);
+  });
+
+  it("TT1: a time-out that did land at the provider, then send again: no second refund is created", async () => {
+    const p = await paidTicket();
+    const s = await start(staff.financeA.token, p.id, { amountKobo: Number(p.total) });
+    provider.hanging(true);
+    expect((await send(staff.financeB.token, s.body.id)).status).toBe(504);
+    expect((await refundOf(p.id)).status).toBe("approved");
+    expect(provider.creations.filter((c) => c === s.body.id)).toHaveLength(1);
+    provider.hanging(false);
+    const again = await send(staff.owner.token, s.body.id);
+    expect(again.status).toBe(200);
+    expect(again.body).toMatchObject({ status: "sent", providerReference: `standin-refund-${s.body.id}` });
+    expect(provider.asked.filter((a) => a.refundId === s.body.id)).toHaveLength(2);
+    expect(provider.creations.filter((c) => c === s.body.id)).toHaveLength(1);
+    expect(await db.refund.count({ where: { paymentId: p.id } })).toBe(1);
+  });
+
+  it("TT2: support starts a refund (E-145) and cannot send one or read the payments pages", async () => {
+    const p = await paidTicket();
+    const s = await start(staff.support.token, p.id, { amountKobo: Number(p.total) });
+    expect(s.status).toBe(201);
+    expect((await send(staff.support.token, s.body.id)).status).toBe(403);
+    expect((await send(staff.financeB.token, s.body.id)).status).toBe(200);
+    for (const path of ["/v1/admin/payments", `/v1/admin/payments/${p.reference}`, "/v1/admin/ledger"]) {
+      expect((await t.http().get(path).set(auth(staff.support.token))).status).toBe(403);
+    }
+    expect((await e86(staff.support.token, p.reference)).status).toBe(403);
+    expect((await t.http().post("/v1/admin/reconciliations").set(auth(staff.support.token)).send({ day: "2031-03-01", reason: REASON })).status).toBe(403);
+  });
+
+  it("TT3: E-86 sends in the same step only for the owner; anyone else leaves it waiting and the answer says so", async () => {
+    const mine = await paidTicket();
+    const waiting = await e86(staff.financeA.token, mine.reference);
+    expect(waiting.status).toBe(200);
+    expect(waiting.body).toMatchObject({ reference: mine.reference, state: "refund-waiting" });
+    const rf = await refundOf(mine.id);
+    expect(rf.status).toBe("requested");
+    expect(provider.asked.filter((a) => a.refundId === rf.id)).toHaveLength(0);
+    expect((await send(staff.financeA.token, rf.id)).status).toBe(403); // the same person
+    expect((await send(staff.financeB.token, rf.id)).status).toBe(200);
+    const ops = await paidTicket();
+    expect((await e86(staff.ops.token, ops.reference)).body.state).toBe("refund-waiting");
+    expect((await refundOf(ops.id)).status).toBe("requested");
+    const own = await paidTicket();
+    const sent = await e86(staff.owner.token, own.reference);
+    expect(sent.body.state).toBe("refund-started");
+    expect((await refundOf(own.id)).status).toBe("sent");
+  });
+
+  it("TT4: the amount-mismatch flag is cleared in the transaction that marks the refund succeeded", async () => {
+    const p = await paidTicket();
+    await sentRefund(p);
+    expect((await processed(p.reference, Number(p.total) - 1)).status).toBe(200);
+    expect((await db.payment.findUniqueOrThrow({ where: { id: p.id } })).flags).toContain("refund_amount_mismatch");
+    expect((await processed(p.reference, Number(p.total))).status).toBe(200);
+    const after = await db.payment.findUniqueOrThrow({ where: { id: p.id } });
+    expect(after.status).toBe("refunded");
+    expect(after.flags).not.toContain("refund_amount_mismatch");
+  });
+
+  it("TT5: two packs, the first partly used, the second refunded: 10 + 5 bought, 6 used, refund the 5: 4 left; then the 10 refunded: 0 left, never below, the kept row says 6 were used", async () => {
+    const a = await account();
+    const b = ids.next();
+    await db.business.create({ data: { id: b, accountId: a, name: "Studio" } });
+    const biz = t.app.get(BusinessHandlers);
+    const first = await pay(a, "pro.pack", {}, 150n, { qty: 2, businessId: b });
+    const second = await pay(a, "pro.pack", {}, 150n, { businessId: b });
+    expect((await db.business.findUniqueOrThrow({ where: { id: b } })).pack).toBe(15);
+    for (let i = 0; i < 6; i++) expect(await db.$transaction((tx) => biz.draw(tx, b))).toBe("pack");
+    expect((await db.business.findUniqueOrThrow({ where: { id: b } })).pack).toBe(9); // 15 - 6
+    await sentRefund(second);
+    expect((await processed(second.reference, Number(second.total))).status).toBe(200);
+    const row = await db.business.findUniqueOrThrow({ where: { id: b } });
+    expect(row.pack).toBe(4); // 9 - 5, the first pack's unused wishes stay
+    expect(row.plan).toBe("pack");
+    const rf = await refundOf(second.id);
+    expect(await db.auditEntry.count({ where: { subjectId: rf.id, action: "refund.kept" } })).toBe(0); // all 5 of its wishes were unused
+    expect((await db.payment.findUniqueOrThrow({ where: { id: first.id } })).status).toBe("succeeded");
+    // never below zero: the first pack refunded too, 4 left, 10 to take off
+    await sentRefund(first);
+    expect((await processed(first.reference, Number(first.total))).status).toBe(200);
+    const end = await db.business.findUniqueOrThrow({ where: { id: b } });
+    expect(end.pack).toBe(0);
+    expect(end.plan).toBeNull();
+    const note2 = await db.auditEntry.findFirstOrThrow({ where: { subjectId: (await refundOf(first.id)).id, action: "refund.kept" } });
+    expect(note2.reason).toContain("6_of_10_wishes_already_used");
+  });
+
+  it("TT6: a plain provider error on the settlement check is 502 in the envelope and writes no row", async () => {
+    const spy = jest.spyOn(provider, "settlement").mockRejectedValueOnce(new Error("socket hang up"));
+    const r = await t.http().post("/v1/admin/reconciliations").set(auth(staff.financeA.token)).send({ day: "2031-02-20", reason: REASON });
+    spy.mockRestore();
+    expect(r.status).toBe(502);
+    expect(r.body.error.code).toBe("provider_unavailable");
+    expect(await db.reconciliation.count({ where: { day: new Date("2031-02-20T00:00:00.000Z") } })).toBe(0);
+  });
+
   describe("settlement check", () => {
     const DAY_X = "2031-04-02";
     let refs: { a: string; b: string; c: string; d: string };
@@ -391,8 +504,10 @@ describe("B08 refunds, the settlement check and staff payments (contract)", () =
           // refs.c is in ours, not at the provider
         ],
       });
-      const ledgerBefore = await db.ledgerEntry.count();
-      const paymentsBefore = await db.payment.count();
+      // counted for this test's own payments only: other specs write ledger rows and payments at the same time in the shared database
+      const mine = { id: { in: [pa.id, pb.id, pc.id] } };
+      const ledgerBefore = await db.ledgerEntry.count({ where: { paymentId: mine.id } });
+      const paymentsBefore = await db.payment.count({ where: mine });
       expect((await t.http().post("/v1/admin/reconciliations").set(auth(staff.financeA.token)).send({ day: DAY_X, reason: REASON })).status).toBe(422); // not over yet
       t.clock.set(new Date(`2031-04-03T01:00:00.000Z`));
       const r = await t.http().post("/v1/admin/reconciliations").set(auth(staff.financeA.token)).send({ day: DAY_X, reason: REASON });
@@ -415,8 +530,8 @@ describe("B08 refunds, the settlement check and staff payments (contract)", () =
       expect(again.body).toEqual(r.body);
       expect(await db.reconciliation.count({ where: { day: new Date(`${DAY_X}T00:00:00.000Z`) } })).toBe(1);
       expect(await db.auditEntry.count({ where: { subjectId: r.body.id } })).toBe(1);
-      expect(await db.ledgerEntry.count()).toBe(ledgerBefore);
-      expect(await db.payment.count()).toBe(paymentsBefore);
+      expect(await db.ledgerEntry.count({ where: { paymentId: mine.id } })).toBe(ledgerBefore);
+      expect(await db.payment.count({ where: mine })).toBe(paymentsBefore);
       const view = await t.http().get(`/v1/admin/ledger?day=${DAY_X}`).set(auth(staff.ops.token));
       expect(view.status).toBe(200);
       expect(view.body).toMatchObject({ ours: Number(ours), theirs: r.body.providerTotalKobo, oursCount: 3, theirsCount: 3 });

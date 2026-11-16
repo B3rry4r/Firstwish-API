@@ -39,7 +39,8 @@ const ROLE_SECTIONS = {
   ops: ALL.filter((h) => !["/admin/team", "/admin/settings"].includes(h)),
   moderator: ["/admin", "/admin/wishes", "/admin/people", "/admin/moderation", "/admin/showing"],
   reviewer: ["/admin", "/admin/styles", "/admin/styles/review", "/admin/creators"],
-  support: ["/admin", "/admin/wishes", "/admin/people", "/admin/support", "/admin/messages"],
+  // TT2: support holds /admin/payments for E-145 (start a refund); every other payments route lists roles that leave support out.
+  support: ["/admin", "/admin/wishes", "/admin/people", "/admin/payments", "/admin/support", "/admin/messages"],
   finance: ["/admin", "/admin/payments", "/admin/businesses", "/admin/creators", "/admin/prices", "/admin/numbers"],
   maker: ["/admin", "/admin/concierge"],
 };

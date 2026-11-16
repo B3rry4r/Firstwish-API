@@ -37,6 +37,11 @@ export class RefundRefused extends Error {
 export abstract class RefundProviderPort {
   /** Asks for a refund of the whole payment. Rejects with RefundRefused when the provider refuses. */
   abstract refund(input: RefundRequest): Promise<RefundAccepted>;
+  /**
+   * The refund the provider already holds for this payment's reference (not a failed one), or null. The adapter calls it before any
+   * ask, so a time-out that did land at the provider never makes a second refund (TT1).
+   */
+  abstract findRefund(paymentReference: string): Promise<RefundAccepted | null>;
   /** The provider's settlement for one UTC day ("YYYY-MM-DD"): a total and one line per payment. */
   abstract settlement(day: string): Promise<ProviderSettlement>;
 }

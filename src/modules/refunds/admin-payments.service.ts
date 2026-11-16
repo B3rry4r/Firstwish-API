@@ -41,6 +41,7 @@ export type AdminPayment = Omit<PaymentView, "state"> & {
 };
 
 const PAYMENT_STATE_STARTED = "refund-started";
+const PAYMENT_STATE_WAITING = "refund-waiting";
 
 /**
  * Staff read of payments (E-84, E-85) and the refund's effect on how one reads. The payer's email is always masked. The detail adds
@@ -172,6 +173,10 @@ export class AdminPaymentsService {
     const p = await this.db.payment.findUnique({ where: { providerReference: reference } });
     if (!p) throw AppError.notFound("No such payment.");
     const open = (await this.openRefunds([p.id])).has(p.id);
-    return this.present(p, await this.people([p]), open, await this.wishNumbers([p]));
+    const view = this.present(p, await this.people([p]), open, await this.wishNumbers([p]));
+    if (open) return view;
+    // Started by someone who may not send it: it waits for a second person (TT3).
+    const waiting = await this.db.refund.findFirst({ where: { paymentId: p.id, status: { in: ["requested", "approved"] } }, select: { id: true } });
+    return waiting ? { ...view, state: PAYMENT_STATE_WAITING } : view;
   }
 }

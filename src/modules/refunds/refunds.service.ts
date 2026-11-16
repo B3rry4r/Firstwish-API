@@ -56,10 +56,14 @@ export class RefundsService {
     return refundView(await this.dispatch(id, requireReason(reason), actor, false));
   }
 
-  /** E-86: one staff member starts and sends it from the payment's page. Answers the refund as it stands. */
-  async startAndSend(reference: string, reason: string, actor: AuditActor): Promise<Refund> {
+  /**
+   * E-86: the owner starts and sends it from the payment's page. Anyone else starts it and leaves it waiting for a second person
+   * (E-146), the two-person rule (TT3). Answers the refund as it stands and whether it was sent.
+   */
+  async startAndSend(reference: string, reason: string, actor: AuditActor, isOwner: boolean): Promise<{ refund: Refund; sent: boolean }> {
     const made = await this.create({ reference, reason }, actor);
-    return this.dispatch(made.id, null, actor, true);
+    if (!isOwner) return { refund: made, sent: false };
+    return { refund: await this.dispatch(made.id, null, actor, true), sent: true };
   }
 
   private async create(input: StartInput, actor: AuditActor): Promise<Refund> {
@@ -84,8 +88,10 @@ export class RefundsService {
   }
 
   /**
-   * Moves a refund to approved (one transaction, one audit row when `reason` is given), asks the provider (outside it), then moves
-   * it to sent, or to failed with the provider's words. A time-out or an unknown answer changes nothing more: it stays approved.
+   * Moves a refund to approved (one transaction, one audit row when `reason` is given), claims it with ONE statement
+   * (approved -> sent, RETURNING: the send that gets the row asks, every other send is 409), asks the provider outside any
+   * transaction, then writes the provider's id, or failed with its words (TT1). A time-out or an unknown answer puts the claim back
+   * (approved) so it can be sent again; the adapter looks the payment's refund up at the provider before a second ask.
    */
   private async dispatch(id: string, reason: string | null, actor: AuditActor, allowSelf: boolean): Promise<Refund> {
     if (!UUID.test(id)) throw AppError.notFound("No such refund.");
@@ -103,23 +109,34 @@ export class RefundsService {
       if (reason !== null) {
         await this.audit.write(tx, { actor, section: SECTION, action: "refund.send", target: { type: "refund", id }, reason, changedFields: ["status", "approvedBy"] });
       }
+      const claimed = await tx.$queryRaw<{ id: string }[]>`
+        UPDATE refund SET status = 'sent', "updatedAt" = ${this.clock.now()}::timestamptz WHERE id = ${id}::uuid AND status = 'approved' RETURNING id::text AS id`;
+      if (claimed.length === 0) throw AppError.conflict("refund_not_sendable", "This refund is already started.");
       return tx.refund.findUniqueOrThrow({ where: { id }, include: { payment: { select: { providerReference: true } } } });
     });
 
     let accepted: { providerReference: string } | null = null;
     let refusal: string | null = null;
+    let failure: unknown = null;
     try {
       accepted = await this.provider.refund({ refundId: id, paymentReference: ready.payment.providerReference, amount: Money.kobo(ready.amountKobo) });
     } catch (e) {
       if (e instanceof RefundRefused) refusal = refusalText(e.message);
-      else if (isPortTimeout(e) || e instanceof AppError) throw e;
-      else throw new AppError(HttpStatus.BAD_GATEWAY, "provider_unavailable", "The payment service did not answer. The refund is kept; send it again in a moment.");
+      else failure = e;
+    }
+
+    if (failure !== null) {
+      // Not known: put the claim back so it can be sent again (the adapter looks the refund up first).
+      await this.db.$executeRaw`
+        UPDATE refund SET status = 'approved', "updatedAt" = ${this.clock.now()}::timestamptz WHERE id = ${id}::uuid AND status = 'sent' AND "providerReference" IS NULL`;
+      if (isPortTimeout(failure) || failure instanceof AppError) throw failure;
+      throw new AppError(HttpStatus.BAD_GATEWAY, "provider_unavailable", "The payment service did not answer. The refund is kept; send it again in a moment.");
     }
 
     return this.db.$transaction(async (tx) => {
       await this.lock(tx, pre.payment);
       const r = await tx.refund.findUniqueOrThrow({ where: { id } });
-      if (r.status !== "approved") return r; // the provider's webhook got here first, or a second send did
+      if (r.status !== "sent" || r.providerReference !== null) return r; // the provider's webhook got here first
       if (refusal !== null) {
         await tx.refund.update({ where: { id }, data: { status: "failed", updatedAt: this.clock.now() } });
         await this.audit.write(tx, {
@@ -131,7 +148,7 @@ export class RefundsService {
           changedFields: ["status"],
         });
       } else if (accepted) {
-        await tx.refund.update({ where: { id }, data: { status: "sent", providerReference: accepted.providerReference, updatedAt: this.clock.now() } });
+        await tx.refund.update({ where: { id }, data: { providerReference: accepted.providerReference, updatedAt: this.clock.now() } });
       }
       return tx.refund.findUniqueOrThrow({ where: { id } });
     });

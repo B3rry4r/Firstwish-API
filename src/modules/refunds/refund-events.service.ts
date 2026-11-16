@@ -84,7 +84,7 @@ export class RefundEvents implements RefundEventSink {
     });
     const revoked = await this.purchases.revoke(tx, payment);
     await tx.refund.update({ where: { id: refund.id }, data: { status: "succeeded", updatedAt: now } });
-    await tx.payment.update({ where: { id: paymentId }, data: { status: "refunded", flags: payment.flags.filter((f) => f !== "refund_due"), updatedAt: now } });
+    await tx.payment.update({ where: { id: paymentId }, data: { status: "refunded", flags: payment.flags.filter((f) => f !== "refund_due" && f !== "refund_amount_mismatch"), updatedAt: now } });
     const kept = revoked.filter((r) => !NOTHING_KEPT.has(r.result));
     if (kept.length) {
       await this.audit.write(tx, {

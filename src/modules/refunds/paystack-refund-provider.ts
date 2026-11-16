@@ -7,6 +7,10 @@ interface Envelope<T> {
   message: string;
   data: T;
 }
+interface RefundRow {
+  id: number | string;
+  status?: string | null;
+}
 interface SettlementRow {
   id: number | string;
   total_amount: number;
@@ -36,7 +40,16 @@ export class PaystackRefundProvider extends RefundProviderPort {
     return { authorization: `Bearer ${this.secretKey}` };
   }
 
+  /** Paystack's list of refunds for one transaction: the first that has not failed. NOT RUN against Paystack. */
+  async findRefund(paymentReference: string): Promise<RefundAccepted | null> {
+    const r = await getJson<Envelope<RefundRow[]>>("paystack", `${this.baseUrl}/refund?transaction=${encodeURIComponent(paymentReference)}&perPage=${PER_PAGE}`, this.auth);
+    const live = (r.data ?? []).find((x) => x.status !== "failed");
+    return live ? { providerReference: String(live.id) } : null;
+  }
+
   async refund(input: RefundRequest): Promise<RefundAccepted> {
+    const held = await this.findRefund(input.paymentReference);
+    if (held) return held;
     try {
       const r = await postJson<Envelope<{ id: number | string }>>("paystack", `${this.baseUrl}/refund`, this.auth, {
         transaction: input.paymentReference,

@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { HttpStatus, Injectable } from "@nestjs/common";
 import type { Prisma, Reconciliation } from "@prisma/client";
 import { PrismaService } from "../../common/db/prisma.service";
 import { AppError } from "../../common/errors/app-error";
@@ -59,7 +59,11 @@ export class ReconciliationService {
     if (have) return { row: have, created: false };
 
     const ours = await this.oursFor(day);
-    const theirs = await this.provider.settlement(day); // outside any transaction
+    // Outside any transaction. A time-out is 504 (the port); any other provider error is 502 in the envelope and writes no row (TT6).
+    const theirs = await this.provider.settlement(day).catch((e: unknown) => {
+      if (e instanceof AppError) throw e;
+      throw new AppError(HttpStatus.BAD_GATEWAY, "provider_unavailable", "The payment service did not answer the settlement check. Nothing was stored; try again in a moment.");
+    });
     const diffs = compare(ours, new Map(theirs.lines.map((l) => [l.reference, l.netKobo])));
     const oursTotal = [...ours.values()].reduce((a, b) => a + b, 0n);
     const difference = oursTotal - theirs.totalKobo;

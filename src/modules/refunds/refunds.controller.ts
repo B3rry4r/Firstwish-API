@@ -13,6 +13,8 @@ import {
   type PostAdminReconciliationsResponse,
   type PostAdminRefundsResponse,
 } from "../../contracts";
+import { CurrentPrincipal } from "../../common/auth/decorators";
+import type { Principal } from "../../common/auth/principal";
 import { CursorQueryDto } from "../../common/pagination/cursor";
 import { IsDateOnly } from "../../common/validation/decorators";
 import type { AuditActor } from "../audit/audit.service";
@@ -64,12 +66,16 @@ export class AdminPaymentsController {
     return this.payments.detail(p.reference);
   }
 
-  /** E-86 (finance, ops, owner): start the refund and send it, one staff member. Answers the payment as it reads now. */
+  /**
+   * E-86 (finance, ops, owner): start the refund and, for the owner only, send it in the same step. Anyone else leaves it waiting
+   * for a second person (E-146); the answer's state says "refund-waiting". Answers the payment as it reads now.
+   */
   @AdminRoute(SECTION, "finance", "ops", "owner")
   @Post(":reference/refund")
   @HttpCode(200)
-  async refund(@Param() p: PostAdminPaymentsByReferenceRefundParamsDto, @Body() b: PostAdminPaymentsByReferenceRefundBodyDto, @StaffActor() actor: AuditActor) {
-    await this.refunds.startAndSend(p.reference, b.reason, actor);
+  async refund(@Param() p: PostAdminPaymentsByReferenceRefundParamsDto, @Body() b: PostAdminPaymentsByReferenceRefundBodyDto, @StaffActor() actor: AuditActor, @CurrentPrincipal() who: Principal | undefined) {
+    const isOwner = who?.kind === "staff" && who.roles.includes("owner");
+    await this.refunds.startAndSend(p.reference, b.reason, actor, isOwner);
     return this.payments.byReference(p.reference);
   }
 }

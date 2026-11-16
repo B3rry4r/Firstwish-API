@@ -20,7 +20,7 @@ Work: local branch `int-5` from claude/sleepy-mayer-f0hkb8 (the head in your spa
     every table in build/baselines/drift-tables.txt and every other raw-SQL table of the bundles becomes a model with erase
     rules (the baseline file ends empty and check-drift passes); PP3 (Refund.note); StudioStyle.version; a `name` on a
     contact-page thread; ConciergeOrder's states (given, being made), paid and due times, links to its wishes and payment;
-    ClientWish.wishId (ZB1); the accrual's unique includes the wish (ZZ5); the index on MessageDelivery.providerMessageId.
+    ClientWish.wishId (ZB1); the accrual's unique includes the wish (ZZ5); a paid-by-hand mark on Payout (ZZ8: the join reads an audit row for it today); the index on MessageDelivery.providerMessageId is already in schema.prisma: put it in schema-map so gen_schema keeps it.
  3. Kernel: one email masker in src/common (the copies in auth-codes, notices and refunds use it); the refund and payout
     provider ports move to src/common/ports beside the payments port (PP1, WW3); the email port carries replyTo and the
     Resend adapter sends it, and gains a call that fetches a received email by id which the support webhook uses (YY1, YY2;

@@ -34,3 +34,4 @@
 - B18 reveals-public.service.ts play: a visit count can be inflated with fresh x-reveal-session ids (bounded by 60 reads a minute).
 - B18: 30 wrong passcode tries lock a reveal link for an hour for everyone (same as the receiver link, NN6).
 - Join 5: a refund.processed event that arrives before the refund is recorded as sent is left for the provider's retry; apply it when the refund is claimed too.
+- B21 admin-wishes.service.ts resend: the day is counted on the database's clock, not the Clock port (a fake clock does not roll the day).

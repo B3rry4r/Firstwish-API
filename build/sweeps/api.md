@@ -21,3 +21,5 @@
 - B08 paystack-refund-provider.ts findRefund (~43-48): takes the first non-failed refund by transaction reference with no amount check; fine for whole refunds; NOT RUN against Paystack.
 - B16: the payout stand-in cannot tell an unknown bank (any 3 to 6 digit code passes); the real list comes from the provider (NOT RUN).
 - B15 studio-ai.service.ts:118,141: target, made and ask reach the AI as typed; only style is filtered (the server holds no customer data there).
+- Join 4 (J8): a slug whose random tail is under 8 characters keeps its name after an erase (issued tails are 12, so only an odd or old slug).
+- Join 4 (J1): the rolled-back-settle test is a savepoint around issue(), not a failing handler.

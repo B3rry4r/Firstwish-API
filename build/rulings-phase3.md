@@ -561,3 +561,5 @@ SA4 (B15 verify, medium) After a creator's erase an accepted style stays in the 
     may override. (B15 patch.)
 SA5 (B15 verify) A wish can pick only a style that is on; a held or returned Studio style cannot be picked (wishes already
     made keep theirs). A style in review refuses every change, `on` too. (B15 patch.)
+RR4 (join 4 verify, medium) A client wish carries its business: the code that makes a client wish writes wish.businessId, in
+    the same transaction, so RR3 works for real wishes and not only for rows set by hand. (Join patch.) Lows -> sweep.

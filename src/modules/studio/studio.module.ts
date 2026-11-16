@@ -28,6 +28,6 @@ import { SubmissionsService } from "./submissions.service";
     StudioErasure,
     { provide: AI_AVAILABILITY, inject: [ENV], useFactory: (env: Env) => new AiAvailability(env) },
   ],
-  exports: [StudioErasure, CreatorStateService],
+  exports: [StudioErasure, CreatorStateService, AI_AVAILABILITY],
 })
 export class StudioModule {}

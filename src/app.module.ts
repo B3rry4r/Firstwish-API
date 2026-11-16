@@ -74,6 +74,9 @@ import { PayoutsModule } from "./modules/payouts/payouts.module";
 /** Registration entry: each resource module adds one import line here. */
 import { ModerationModule } from "./modules/moderation/moderation.module";
 import { ShowingModule } from "./modules/showing/showing.module";
+import { AiWritingModule } from "./modules/ai-writing/ai-writing.module";
+import { ReferenceDataModule } from "./modules/reference-data/reference-data.module";
+
 @Module({
   imports: [
     CommonModule,
@@ -159,6 +162,10 @@ import { ShowingModule } from "./modules/showing/showing.module";
     QrCardsModule,
     RenderJobsModule,
     // end B19
+    // B23
+    AiWritingModule,
+    ReferenceDataModule,
+    // end B23
   ],
 })
 export class AppModule {}

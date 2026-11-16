@@ -54,6 +54,10 @@ import { JobHandlersModule } from "./modules/job-handlers/job-handlers.module";
 import { NoticesModule } from "./modules/notices/notices.module";
 // end B11
 
+// B08
+import { RefundsModule } from "./modules/refunds/refunds.module";
+// end B08
+
 /** Registration entry: each resource module adds one import line here. */
 import { ModerationModule } from "./modules/moderation/moderation.module";
 import { ShowingModule } from "./modules/showing/showing.module";
@@ -121,6 +125,9 @@ import { ShowingModule } from "./modules/showing/showing.module";
     ShowingModule,
     ModerationModule,
     // end B13
+    // B08: refunds, the settlement check, staff payments
+    RefundsModule,
+    // end B08
   ],
 })
 export class AppModule {}

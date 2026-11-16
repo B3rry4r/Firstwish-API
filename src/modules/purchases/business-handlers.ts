@@ -216,8 +216,16 @@ export class BusinessHandlers {
     if (!b) return "business_gone";
     const now = this.clock.now();
     const d = g.detail;
+    let result = "revoked";
     if (g.kind === "wish-pack") {
-      const pack = Math.max(num(b.pack) - num(d.wishes), 0);
+      // TT5: this pack's size comes off what is left, never below 0; what was already used is not taken back and is written on the refund.
+      const size = num(d.wishes);
+      const pack = Math.max(num(b.pack) - size, 0);
+      const used = size - (num(b.pack) - pack);
+      if (used > 0) {
+        await this.store.markRevoked(tx, g.id);
+        result = `revoked_${used}_of_${size}_wishes_already_used`;
+      }
       const rest = await this.standing(tx, b.id, "wish-pack", g.id);
       const ends = rest.reduce<Date | null>((m, r) => (r.endsAt && (!m || r.endsAt.getTime() > m.getTime()) ? r.endsAt : m), null);
       await tx.business.update({
@@ -236,6 +244,6 @@ export class BusinessHandlers {
           : { plan: num(b.pack) > 0 ? "pack" : null, allowance: null, renews: null, version: { increment: 1 } },
       });
     }
-    return "revoked";
+    return result;
   }
 }

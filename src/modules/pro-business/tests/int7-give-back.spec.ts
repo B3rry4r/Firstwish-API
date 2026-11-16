@@ -7,6 +7,7 @@ import { createTestApp, TestApp } from "../../../../test/kit/app";
 import { JobsService } from "../../jobs/jobs.service";
 import { WishLifecycleService } from "../../wishes/wish-lifecycle.service";
 import { AccountErasureService } from "../../accounts/account-erasure.service";
+import { SettlementService } from "../../payments/settlement.service";
 import { giveBackDraws } from "../../purchases/draw-giveback";
 
 const ROOT = join(__dirname, "../../../..");
@@ -45,8 +46,26 @@ describe("INT-7: a business draft client wish removed for good gives its drawn w
   };
   /** A Starter plan live in December with `used` wishes already drawn. */
   const monthly = (used: number) => owner({ plan: "starter", allowance: 10, used, rolled: 0, month: "2026-12", renews: new Date("2027-01-01T09:00:00.000Z") });
-  /** No plan, a pack of `pack` wishes. */
-  const packed = (pack: number) => owner({ pack, packEnds: new Date("2027-03-01T00:00:00.000Z") });
+  /** A real (stand-in) pack payment settles and grants the pack (5 wishes); the count is then set to `pack` where the case needs fewer, the grant stays. */
+  async function packed(pack: number) {
+    const o = await owner({});
+    const book = await db.price.findFirstOrThrow({ where: { sku: "pro.pack" }, orderBy: { version: "desc" } });
+    const total = book.promoKobo ?? book.listKobo;
+    const id = ids.next();
+    const reference = `fw-${id}`;
+    await db.payment.create({
+      data: {
+        id, accountId: o.accountId, businessId: o.businessId, payerContact: "x@example.com", purpose: "ticket", subjectId: null,
+        lines: [{ sku: "pro.pack", name: "Wish pack", qty: 1, unitKobo: Number(total), totalKobo: Number(total) }], amountKobo: total, currency: "NGN", priceBookVersion: book.version,
+        status: "pending", provider: "paystack", providerReference: reference, idempotencyKey: `${o.accountId}:${id}`, channel: "card",
+        options: { request: { purpose: "x" }, server: { fingerprint: id, flags: [] } },
+      },
+    });
+    const out = await t.app.get(SettlementService).settle({ reference, status: "success", amountKobo: total, currency: "NGN", paidAt: t.clock.now() });
+    expect(out.outcome).toBe("fulfilled");
+    if ((await biz(o.businessId)).pack !== pack) await db.business.update({ where: { id: o.businessId }, data: { pack } });
+    return o;
+  }
   const biz = (id: string) => db.business.findUniqueOrThrow({ where: { id } });
 
   async function make(o: { token: string; businessId: string }, from: "month" | "pack") {

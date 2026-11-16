@@ -41,6 +41,9 @@ export async function giveBackDraws(tx: Tx, wishIds: string[], now: Date): Promi
     // looked at in a statement of its own, so what it sees is what the refund committed. A source that no longer stands (its grant
     // revoked or refused, a pack that has ended) takes nothing back: the record stays marked given back, the counter does not move.
     await tx.$queryRaw`SELECT id FROM business WHERE id = ${c.businessId}::uuid FOR UPDATE`;
+    // API-BASE-2: a pack wish goes back to a pack only when it can be traced to a pack grant that still stands; a record that names no
+    // payment returns nothing. (A month wish naming no payment still only lowers the month's count, as before.)
+    if (c.drawFrom === "pack" && !c.drawPaymentId) continue;
     if (c.drawPaymentId && !(await sourceStands(tx, c.businessId, c.drawPaymentId, c.drawFrom, now))) continue;
     if (c.drawFrom === "pack") {
       await tx.$executeRaw`UPDATE business SET pack = COALESCE(pack, 0) + 1, version = version + 1 WHERE id = ${c.businessId}::uuid`;

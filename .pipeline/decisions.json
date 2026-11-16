@@ -3206,6 +3206,26 @@
       "confidence": "high",
       "source": "build/prompts/INT-7.md",
       "decidedAt": "2026-11-22T12:00:00Z"
+    },
+    {
+      "id": "DEC-212",
+      "topic": "A Concierge give carries the maker the staff member saw",
+      "closes": [],
+      "decision": "HG1: POST /v1/admin/concierge/orders/:id/maker (E-39) gains the required body field expectedMaker (a Maker.id, or an empty string when the order had no maker when the staff member looked). A give whose expectedMaker is not the order's maker now is 409 order_changed and nothing changes (no wish moved, no give audit row, no email). A give without the field is 422 naming expectedMaker. No endpoint is added or removed; ids already issued do not change.",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (HG1); build/prompts/API-BASE-2.md",
+      "decidedAt": "2026-11-23T12:00:00Z"
+    },
+    {
+      "id": "DEC-213",
+      "topic": "registry re-freeze (tenth reopen)",
+      "closes": [],
+      "decision": "The registry is re-frozen after HG1 (DEC-212) by tools/pipeline/freeze.py; reconcile.py was run twice with --reopen (identical outputs, EXIT 0, 0 open conflicts, both admin gate lines 0). E-39 gains expectedMaker; endpoint ids already issued are unchanged, none added or removed. The other two lines of the bundle (draw give-back to a pack, pack draw counting) change code, not the wire.",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/prompts/API-BASE-2.md",
+      "decidedAt": "2026-11-23T12:00:00Z"
     }
   ]
 }

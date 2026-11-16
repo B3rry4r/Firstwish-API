@@ -4,16 +4,16 @@ prisma through schema-map.json + gen_schema.py and ONE new migration, src/common
 build/baselines/drift-tables.txt (remove a line when its table becomes a model; never add one); and you may touch
 src/modules/** only where a shared change forces it (list each touch).
 Read /home/user/Firstwish-API/build/common-rules.md, build/prompts/P5-COMMON.md, build/prompts/INT-4.md (how the last one was done), then in
-build/rulings-phase3.md the lines OO4, PP1-PP3, QQ1, QQ2, QQ6, VV1, VV3, WW3, WW4, WW7, XX4, YY1-YY3, ZZ5, ZB1, CA2, CB3, CB4, and the
+build/rulings-phase3.md the lines OO4, PP1-PP3, QQ1, QQ2, QQ6, VV1, VV3, ZB3, EA1, EA2, WW3, WW4, WW7, XX4, YY1-YY3, ZZ5, ZB1, CA2, CB3, CB4, and the
 rows of build/sweeps/api.md that say "next shared base" or "one masker".
 Work: local branch `int-5` from claude/sleepy-mayer-f0hkb8 (the head in your spawn line) of /home/user/Firstwish-API; worktree
 /tmp/claude-0/-home-user/533566a9-6497-503f-863f-065ac253d739/scratchpad/build/wt/b-int-5 (`npm ci`); ports 4890-4899; TEST_DB_PREFIX=int5 for every run.
  1. Registry, ONE reopen (list every id before you start; a second reopen is a finding): PP2 (E-84 q and flag; E-63 day),
     QQ1 (E-133 optional code; the answer when no code), QQ2 (DELETE /v1/admin/bans/:id, owner and ops), VV1 (E-231 answers
-    PaymentStartedOrCovered), VV3 (Wish gains hasPasscode, loses the legacy fields), WW7 (RoyaltyAccrual loses rows and total;
+    PaymentStartedOrCovered), VV3 (Wish gains hasPasscode, loses the legacy fields), ZB3 (the seal body gains usePlan), WW7 (RoyaltyAccrual loses rows and total;
     E-154 gains summary; E-41 gains bank), XX4 (bodies for E-186 and E-192; SubmissionView.snapshot; a job kind for the
     checks), YY3 (the contact-page route; saved replies list, add, change, remove; ThreadDetail; delivery status gains bounced
-    and complained), CA2 (E-34 wishIds; E-141's body; the customer's Concierge read, list, cancel and the staff cancel; E-36 a
+    and complained), EA2 (switching a reveal link off; the client link GET /v1/r/:code and its unlock; RevealPlay), CA2 (E-34 wishIds; E-141's body; the customer's Concierge read, list, cancel and the staff cancel; E-36 a
     page; E-148 PaymentStartedOrCovered). Decisions citing the ids, `reconcile.py --reopen "<ids>"` twice identical, 0 open
     conflicts, both ADMIN lines 0, then freeze.py. Endpoint ids already issued never change.
  2. Schema, one new migration through schema-map.json and gen_schema.py, tried on rows shaped like live data (no row lost):

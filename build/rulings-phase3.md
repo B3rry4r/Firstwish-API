@@ -618,3 +618,17 @@ EA4 (B18) After an owner's erase the client wish's reveal (name, note, credits) 
 ZB2 (lead; replaces ZB1 pending the facts) B18 shows that a client wish plays at its own link (the reveal player), not as an
     ordinary wish with a ticket. ZB1 is on hold: the web app's own flow is being read (R5) before anything is built. The
     dead branch for wishes with a business (wave 4 join, J5) is reviewed with it.
+ZB3 (lead, from the web app's own flow, R5; replaces ZB1 and ZB2) A business's client wish is made five ways in the app and
+    each counts once against the plan. With a reveal (the reveal form; a reveal sent from a Vault shoot) it plays at the
+    client's link through the reveal player (B18). With no reveal (the "New client wish" sheet; approving a person's date; a
+    wish made in the maker by a business, which the app seals "on the plan" as a Signature with no ticket sold, Maker.tsx
+    sealOnPlan) it is an ordinary wish: the client-wish record links to a wish (wishId) that carries the business, takes its
+    Signature ticket from the same draw in the same transaction, shares its number, is written in the maker and opens at the
+    ordinary receiver's link. For the maker's path the seal takes `usePlan` (as it takes usePass): it draws, writes the
+    client-wish record and gives the ticket. Only wishes made these ways carry the business; a business owner's personal
+    wishes do not. RR3 (keep playing to the end of the term after the owner's erase) covers both kinds.
+    Known gaps in the app itself, owed to Phase 6: a client wish made from the sheet or a date has no words of its own today
+    (the client would see sample wording): the sheet and the approval must open the maker on the new wish; `madeOwn` has no
+    writer anywhere: it is set when a person who opened a client wish seals their first own wish (a mark carried from the
+    link), or the number is cut from the dashboard. NOT BUILT: next shared base (ClientWish.wishId, seal `usePlan`), then a
+    Business patch.

@@ -709,3 +709,7 @@ HB3 (P-B22 hand-back; T-14) A wish never rests while its owner's Pass is live: t
     (its holder wakes it free).
 HB4 (P-B22 re-check, medium, older than the patch) Cancelling a job never throws: a job with run history is marked cancelled,
     not deleted, so a keep payment's settle cannot fail on it. An ended Pass does not count as live. (Wave 6 join, J10.)
+HC1 (join 6 hand-back) After an owner's erase, the Vault files a reveal still shows are kept until that reveal's term ends,
+    then removed with it (as a kept wish's own files are): a reveal that plays must have its photos. (Join 6 patch.)
+HC2 (join 6 hand-back) Closing base: a `cancelled` job status (the join marks a cancelled job with history as succeeded for
+    now); the schema-map erase rule for ClientWish.reveal says what the code does (blanked at the end of the term).

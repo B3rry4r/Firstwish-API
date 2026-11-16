@@ -24,3 +24,17 @@
 - A signed picture url is stateless: one given before a take-down still serves its bytes until its 10 minutes end. Accepted.
 - The database's now() in notices.service.ts:216-224 and vault/reveals.service.ts:168 ignores the test clock offset
   (not on the wish path): use the Clock port there (API-BASE-5).
+
+## For API-BASE-6 (16 Nov: handed back by API-BASE-5 and found by W8's verifier)
+- Handed back by API-BASE-5: typed staff reads (its case 6); keep and wake by link for a receiver (case 8); house
+  showcase wishes per style (case 9: the seed has 43 house styles and no house wish); ending-purposes display name
+  and line; a friend adding a voice through the gather link (needs the flow ruled).
+- HR1: the plan read says, per plan on offer, what a payment now would do (adds a month to which day; replaces the
+  live plan and what becomes of paid time); a second plan start while one is pending is 409 with words.
+- HR3: /me carries the businesses the person is a login of (and the role); a removed login's reads answer with words.
+- HR4: the removed draft's read (or the client-wish list) gives the day its wish returns to the pack.
+- HR5: the people import answers per row (accepted, refused with the field and words); a phone that is not one is
+  refused, not stored blank; the same person twice is reported.
+- A read address for a brand logo (brand.logo is a file id): a signed read like the wish's pictures.
+- The payments module writes a `reason` on a failed payment (the web shows its own words today).
+- Contract: GET /business/plan (E-27) is typed NoContent though it answers the plan state.

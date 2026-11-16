@@ -55,7 +55,6 @@ model Account {
   studioPrefsByAccount      StudioPrefs?       @relation("StudioPrefs_accountId")
   studioStyleByAccount      StudioStyle[]      @relation("StudioStyle_accountId")
   storedFileByOwnerAccount  StoredFile[]       @relation("StoredFile_ownerAccountId")
-  purchaseGrantByAccount    PurchaseGrant[]    @relation("PurchaseGrant_accountId")
   passDrawByAccount         PassDraw[]         @relation("PassDraw_accountId")
 
   @@unique([contact])
@@ -225,7 +224,6 @@ model Business {
   revealLinkByBusiness     RevealLink[]     @relation("RevealLink_businessId")
   shootByBusiness          Shoot[]          @relation("Shoot_businessId")
   approvedDateByBusiness   ApprovedDate[]   @relation("ApprovedDate_businessId")
-  purchaseGrantByBusiness  PurchaseGrant[]  @relation("PurchaseGrant_businessId")
 
   @@index([accountId, id])
   @@map("business")
@@ -1580,7 +1578,7 @@ model WishNumberSequence {
   @@map("wish_number_sequence")
 }
 
-/// table: written by server:wish-link (E-131 records an opening of the public link); LL1: the wish it belongs to, the kind of row (read or play), whether it was the first opening and the opening session (a hash, never an address)
+/// table: written by server:wish-link (E-131 records an opening of the public link); LL1: the wish it is for, the kind of row (read or play), whether it was the first opening and the opening session (a hash, never an address)
 model WishOpen {
   id        String   @id @db.Uuid
   slug      String?
@@ -1639,7 +1637,7 @@ model JobKindConfig {
   @@map("job_kind_config")
 }
 
-/// table: GG1: what each paid line granted, one row per payment and line (a handler claims its row first, a refund reads it to take the grant back); written by SQL inside the payment's own transaction
+/// table: GG1: what each paid line granted, one row per payment and line (a handler claims its row first, a refund reads it to take the grant back); written by SQL inside the payment's own transaction; accountId and businessId are plain ids (no relation to Account or Business, so the table is not an owned table of the erase gate; its text columns hold no person, rules below)
 model PurchaseGrant {
   id            String    @id @db.Uuid
   paymentId     String    @db.Uuid
@@ -1655,16 +1653,13 @@ model PurchaseGrant {
   revokedAt     DateTime? @db.Timestamptz(3)
   createdAt     DateTime  @db.Timestamptz(3)
   payment       Payment   @relation("PurchaseGrant_paymentId", fields: [paymentId], references: [id], onDelete: Restrict, onUpdate: Restrict)
-  account       Account?  @relation("PurchaseGrant_accountId", fields: [accountId], references: [id], onDelete: Restrict, onUpdate: Restrict)
-  business      Business? @relation("PurchaseGrant_businessId", fields: [businessId], references: [id], onDelete: Restrict, onUpdate: Restrict)
   wish          Wish?     @relation("PurchaseGrant_wishId", fields: [wishId], references: [id], onDelete: Restrict, onUpdate: Restrict)
 
   @@unique([paymentId, sku])
   @@index([paymentId, id])
-  @@index([accountId, id])
-  @@index([businessId, id])
   @@index([wishId, id])
   @@index([businessId, kind])
+  @@index([accountId, kind])
   @@map("purchase_grant")
 }
 

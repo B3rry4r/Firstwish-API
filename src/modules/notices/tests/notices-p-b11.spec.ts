@@ -81,7 +81,7 @@ describe("P-B11 notices patch", () => {
   it("KK1 a delivery whose caller died mid-try is picked up again after 5 minutes, and a fresh one is left alone", async () => {
     const a = await account();
     const id = await queue(a);
-    await db.$executeRaw`UPDATE message_delivery SET status = 'sent', attempts = 1 WHERE id = ${id}::uuid`;
+    await db.$executeRaw`UPDATE message_delivery SET status = 'sending', attempts = 1 WHERE id = ${id}::uuid`;
     expect((await notices.deliver(id)).outcome).toBe("skipped");
     await db.$executeRaw`UPDATE message_delivery SET "updatedAt" = now() - interval '6 minutes' WHERE id = ${id}::uuid`;
     expect((await notices.deliver(id)).outcome).toBe("delivered");
@@ -91,7 +91,7 @@ describe("P-B11 notices patch", () => {
   it("J1 (MM2) a sender that dies on its third try ends failed for staff, never in flight for good", async () => {
     const a = await account();
     const id = await queue(a);
-    await db.$executeRaw`UPDATE message_delivery SET status = 'sent', attempts = 3 WHERE id = ${id}::uuid`;
+    await db.$executeRaw`UPDATE message_delivery SET status = 'sending', attempts = 3 WHERE id = ${id}::uuid`;
     expect((await notices.deliver(id)).outcome).toBe("skipped"); // fresh: its caller may still be working
     await db.$executeRaw`UPDATE message_delivery SET "updatedAt" = now() - interval '6 minutes' WHERE id = ${id}::uuid`;
     const spy = jest.spyOn(t.email, "send");
@@ -182,7 +182,7 @@ describe("P-B11 notices patch", () => {
     await jobs.runDue(100, [ida, idb]);
     for (const id of [ida, idb]) {
       const r = await row(id);
-      expect(r.status).toBe("undeliverable");
+      expect(r.status).toBe("dropped");
       expect(r.error).toContain("Dropped");
       expect(r.error).not.toContain("No value");
     }

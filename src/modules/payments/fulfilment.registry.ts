@@ -68,6 +68,11 @@ export class FulfilmentRegistry {
     this.startChecks.push(check);
   }
 
+  /** Test helper: a payments-core spec that replaces the handlers also drops the fulfilment bundle's start check. */
+  clearStartChecks(): void {
+    this.startChecks.length = 0;
+  }
+
   /** Runs the start checks in the order they were registered; the first to throw refuses the start. */
   async checkStart(accountId: string, request: PaymentRequestInfo, skus: string[], tx: Prisma.TransactionClient): Promise<void> {
     for (const check of this.startChecks) await check(accountId, request, skus, tx);

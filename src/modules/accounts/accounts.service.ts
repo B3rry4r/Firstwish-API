@@ -1,3 +1,4 @@
+import { isTimeZone } from "../../common/time/time";
 import { Injectable } from "@nestjs/common";
 import { Account as AccountRow, DateRow as DateRowRecord, Prisma } from "@prisma/client";
 import type { Account, PatchMeBody } from "../../contracts";
@@ -22,7 +23,7 @@ export interface MeDate {
  * The signed-in person's own account (E-6, E-7). Fields an erase blanks, or that are not set yet, are null.
  * contact and email are the sign-in email (S-27); phone is a plain detail, never verified and never a key (R11).
  */
-export type MeView = Pick<Account, "id" | "mode" | "sides" | "creator" | "erased" | "joined" | "lastSide" | "wishCount"> & {
+export type MeView = Pick<Account, "id" | "mode" | "timeZone" | "sides" | "creator" | "erased" | "joined" | "lastSide" | "wishCount"> & {
   name: string | null;
   email: string | null;
   contact: string | null;
@@ -86,6 +87,10 @@ export class AccountsService {
           else data.name = name;
         }
         if (body.mode !== undefined) data.mode = body.mode;
+        if (body.timeZone !== undefined) {
+          if (!isTimeZone(body.timeZone)) fields.timeZone = "Not a time zone, for example Africa/Lagos.";
+          else data.timeZone = body.timeZone;
+        }
         if (body.bio !== undefined) {
           const bio = body.bio.trim();
           data.bio = bio === "" ? null : bio;
@@ -136,6 +141,7 @@ export class AccountsService {
       handle: row.handle,
       business: row.business,
       mode: row.mode,
+      timeZone: row.timeZone,
       sides,
       space: row.space,
       lastSide: row.lastSide,

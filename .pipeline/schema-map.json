@@ -2175,7 +2175,7 @@
   },
   "WishOpen": {
    "class": "table",
-   "reason": "written by server:wish-link (E-131 records an opening of the public link); LL1: the wish it belongs to, the kind of row (read or play), whether it was the first opening and the opening session (a hash, never an address)",
+   "reason": "written by server:wish-link (E-131 records an opening of the public link); LL1: the wish it is for, the kind of row (read or play), whether it was the first opening and the opening session (a hash, never an address)",
    "columns": {
     "wishId": {
      "type": "String",
@@ -2296,7 +2296,7 @@
    ]
   },
   "PurchaseGrant": {
-   "reason": "GG1: what each paid line granted, one row per payment and line (a handler claims its row first, a refund reads it to take the grant back); written by SQL inside the payment's own transaction",
+   "reason": "GG1: what each paid line granted, one row per payment and line (a handler claims its row first, a refund reads it to take the grant back); written by SQL inside the payment's own transaction; accountId and businessId are plain ids (no relation to Account or Business, so the table is not an owned table of the erase gate; its text columns hold no person, rules below)",
    "columns": {
     "paymentId": {
      "type": "String",
@@ -2361,14 +2361,10 @@
    },
    "refs": {
     "paymentId": "Payment",
-    "accountId": "Account",
-    "businessId": "Business",
     "wishId": "Wish"
    },
    "refOnDelete": {
     "paymentId": "Restrict",
-    "accountId": "Restrict",
-    "businessId": "Restrict",
     "wishId": "Restrict"
    },
    "unique": [
@@ -2380,6 +2376,10 @@
    "indexes": [
     [
      "businessId",
+     "kind"
+    ],
+    [
+     "accountId",
      "kind"
     ]
    ],

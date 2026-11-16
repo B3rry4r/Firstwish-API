@@ -114,7 +114,7 @@ export class AccountErasureService {
     await tx.account.update({
       where: { id: accountId },
       data: {
-        name: null, contact: null, phone: null, bio: null, handle: null, dates: Prisma.DbNull, business: null,
+        name: null, contact: null, phone: null, bio: null, handle: null, timeZone: null, dates: Prisma.DbNull, business: null,
         sides: ["person"], space: null, lastSide: "person", erasedAt: now,
       },
     });

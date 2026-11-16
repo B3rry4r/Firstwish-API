@@ -2,7 +2,7 @@
 -- zone (II4), the delivery purpose and status values (II5, MM1) and the Pass draws (GG3, GG5). Every step keeps the rows that exist.
 --  * message_delivery: a key used twice keeps its oldest row; the others get the row id appended to the key (nothing is deleted).
 --  * message_delivery.status: "sent" (a try in flight before this) becomes "sending", "undeliverable" becomes "dropped".
---  * purchase_grant: a reference to an account, business or wish that no longer exists is cleared before its foreign key is added.
+--  * purchase_grant: a reference to a wish that no longer exists is cleared before its foreign key is added.
 
 -- II3: a key used twice keeps its oldest row
 WITH ranked AS (
@@ -12,13 +12,14 @@ WITH ranked AS (
 UPDATE "message_delivery" m SET "idempotencyKey" = m."idempotencyKey" || '#dup:' || m."id"
   FROM ranked r WHERE r."id" = m."id" AND r.rn > 1;
 
--- GG1: references that point at nothing are cleared before the foreign keys are added
-UPDATE "purchase_grant" SET "accountId" = NULL WHERE "accountId" IS NOT NULL AND NOT EXISTS (SELECT 1 FROM "account" a WHERE a."id" = "purchase_grant"."accountId");
-UPDATE "purchase_grant" SET "businessId" = NULL WHERE "businessId" IS NOT NULL AND NOT EXISTS (SELECT 1 FROM "business" b WHERE b."id" = "purchase_grant"."businessId");
+-- GG1: a wish reference that points at nothing is cleared before the foreign key is added
 UPDATE "purchase_grant" SET "wishId" = NULL WHERE "wishId" IS NOT NULL AND NOT EXISTS (SELECT 1 FROM "wish" w WHERE w."id" = "purchase_grant"."wishId");
 
 -- CreateEnum
 CREATE TYPE "PassDrawKind" AS ENUM ('wish', 'upgrade');
+
+-- AlterEnum
+ALTER TYPE "JobType" ADD VALUE 'clean-link-hits';
 
 -- AlterEnum
 -- This migration adds more than one value to an enum.
@@ -54,6 +55,10 @@ DROP INDEX "wish_open_wishId_idx";
 -- AlterTable
 ALTER TABLE "account" ADD COLUMN     "timeZone" TEXT;
 
+-- AlterTable
+ALTER TABLE "message_template" ADD COLUMN     "editedAt" TIMESTAMPTZ(3),
+ADD COLUMN     "editedBy" UUID;
+
 -- CreateTable
 CREATE TABLE "pass_draw" (
     "id" UUID NOT NULL,
@@ -85,13 +90,10 @@ CREATE UNIQUE INDEX "message_delivery_idempotencyKey_key" ON "message_delivery"(
 CREATE INDEX "purchase_grant_paymentId_id_idx" ON "purchase_grant"("paymentId", "id");
 
 -- CreateIndex
-CREATE INDEX "purchase_grant_accountId_id_idx" ON "purchase_grant"("accountId", "id");
-
--- CreateIndex
-CREATE INDEX "purchase_grant_businessId_id_idx" ON "purchase_grant"("businessId", "id");
-
--- CreateIndex
 CREATE INDEX "purchase_grant_wishId_id_idx" ON "purchase_grant"("wishId", "id");
+
+-- CreateIndex
+CREATE INDEX "purchase_grant_accountId_kind_idx" ON "purchase_grant"("accountId", "kind");
 
 -- CreateIndex
 CREATE INDEX "wish_favourite_wishId_id_idx" ON "wish_favourite"("wishId", "id");
@@ -106,12 +108,6 @@ CREATE INDEX "wish_reaction_wishId_id_idx" ON "wish_reaction"("wishId", "id");
 ALTER TABLE "purchase_grant" ADD CONSTRAINT "purchase_grant_paymentId_fkey" FOREIGN KEY ("paymentId") REFERENCES "payment"("id") ON DELETE RESTRICT ON UPDATE RESTRICT;
 
 -- AddForeignKey
-ALTER TABLE "purchase_grant" ADD CONSTRAINT "purchase_grant_accountId_fkey" FOREIGN KEY ("accountId") REFERENCES "account"("id") ON DELETE RESTRICT ON UPDATE RESTRICT;
-
--- AddForeignKey
-ALTER TABLE "purchase_grant" ADD CONSTRAINT "purchase_grant_businessId_fkey" FOREIGN KEY ("businessId") REFERENCES "business"("id") ON DELETE RESTRICT ON UPDATE RESTRICT;
-
--- AddForeignKey
 ALTER TABLE "purchase_grant" ADD CONSTRAINT "purchase_grant_wishId_fkey" FOREIGN KEY ("wishId") REFERENCES "wish"("id") ON DELETE RESTRICT ON UPDATE RESTRICT;
 
 -- AddForeignKey
@@ -122,10 +118,3 @@ ALTER TABLE "pass_draw" ADD CONSTRAINT "pass_draw_wishId_fkey" FOREIGN KEY ("wis
 
 -- AddForeignKey
 ALTER TABLE "pass_draw" ADD CONSTRAINT "pass_draw_membershipId_fkey" FOREIGN KEY ("membershipId") REFERENCES "pass_membership"("id") ON DELETE RESTRICT ON UPDATE RESTRICT;
-
--- LL4: the timed job that removes old link hits
-ALTER TYPE "JobType" ADD VALUE 'clean-link-hits';
-
--- II2: who last changed a message's wording, and when
-ALTER TABLE "message_template" ADD COLUMN     "editedAt" TIMESTAMPTZ(3),
-ADD COLUMN     "editedBy" UUID;

@@ -1641,7 +1641,7 @@ export interface WishNumberSequence {
     next: number;
     updatedAt: Instant;
 }
-/** WishOpen: table. written by server:wish-link (E-131 records an opening of the public link); LL1: the wish it belongs to, the kind of row (read or play), whether it was the first opening and the opening session (a hash, never an address) */
+/** WishOpen: table. written by server:wish-link (E-131 records an opening of the public link); LL1: the wish it is for, the kind of row (read or play), whether it was the first opening and the opening session (a hash, never an address) */
 export interface WishOpen {
     slug: string;
 }

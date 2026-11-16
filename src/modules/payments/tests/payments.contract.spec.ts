@@ -26,6 +26,7 @@ describe("payments core E-87, E-88, E-217 (contract)", () => {
     db = t.app.get(PrismaService);
     book = t.app.get(PriceBookService);
     registry = t.app.get(FulfilmentRegistry);
+    registry.clearStartChecks(); // INT-4 (GG3): this spec tests the payments core with stand-in handlers, not the start check
     const r = spawnSync(process.execPath, [join(ROOT, "scripts/seed.mjs")], { cwd: ROOT, env: process.env, encoding: "utf8" });
     if (r.status !== 0) throw new Error(`seed failed: ${r.stderr}`);
     for (const sku of ["ticket.keepsake", "extra.five-photos", "pro.pack", "pass.year", "keep.month"]) {

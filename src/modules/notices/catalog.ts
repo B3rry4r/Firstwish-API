@@ -62,6 +62,12 @@ export const CODE_WORDING_FALLBACK = {
   body: "Your code is {code}. It works for 10 minutes. If you did not ask for it, you can leave this email.\n\nFirstwish",
 } as const;
 
+/** The staff invite's wording when no row exists yet (a database before its seed): an invited member must still get a code. Same words as the seed. */
+export const INVITE_WORDING_FALLBACK = {
+  subject: "You are invited to the Firstwish team",
+  body: "Hi,\n\nYou are invited to the Firstwish team. Use this code to sign in: {code}. It works for 10 minutes.\n\nIf you did not expect this, you can leave this email.\n\nFirstwish",
+} as const;
+
 /** A delivery gets 3 tries (the first counts), with these waits before try 2 and try 3 (declared, PROVISIONAL). */
 export const DELIVERY_TRIES = 3;
 export const RETRY_WAIT_MS: readonly number[] = [60_000, 5 * 60_000];

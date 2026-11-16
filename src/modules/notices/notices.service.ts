@@ -13,7 +13,7 @@ import { isTimeZone } from "../../common/time/time";
 import { ProviderError } from "../../common/ports/adapters/http";
 import { JobContext, JobResult, JobsService } from "../jobs/jobs.service";
 import {
-  CODE_WORDING_FALLBACK, DELIVERY_TRIES, fill, fillSubject, scrubReason, isTemplateKey, MissingValueError, missingValues, NOTICE_HOUR_LOCAL, RETRY_WAIT_MS, scrubEmails, TEMPLATES, TemplateKey, type TemplateSpec,
+  CODE_WORDING_FALLBACK, INVITE_WORDING_FALLBACK, DELIVERY_TRIES, fill, fillSubject, scrubReason, isTemplateKey, MissingValueError, missingValues, NOTICE_HOUR_LOCAL, RETRY_WAIT_MS, scrubEmails, TEMPLATES, TemplateKey, type TemplateSpec,
 } from "./catalog";
 import { atLocalHour, dayText } from "./zoned";
 
@@ -155,7 +155,8 @@ export class NoticesService implements OnModuleInit {
   async template(db: Pick<Tx, "messageTemplate">, key: string): Promise<{ id: string; subject: string; body: string; version: number } | null> {
     const row = await db.messageTemplate.findFirst({ where: { key, channel: "email", locale: LANG }, orderBy: { version: "desc" } });
     if (row) return { id: row.id, subject: row.subject ?? "", body: row.body, version: row.version };
-    return key === "code" ? { id: "", ...CODE_WORDING_FALLBACK, version: 0 } : null;
+    if (key === "code") return { id: "", ...CODE_WORDING_FALLBACK, version: 0 };
+    return key === "invite" ? { id: "", ...INVITE_WORDING_FALLBACK, version: 0 } : null;
   }
 
   /** Why this message cannot be written with these values (a missing wording or a placeholder with no value), or null. */

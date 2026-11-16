@@ -818,3 +818,18 @@ HG1 (give race) Two staff giving one Concierge order: the code is right (overlap
 - HO7 (W11 verify, mediums): the staff sign-in says "If this email is on the team, a code is on its way." (it must not
   say Sent for an address that is not staff or is over the limit); the Audit filters offer every section the contract has
   and every staff member the Team read gives the role, not only what the loaded rows hold. With the one-client change (HN2).
+
+## HP (16 Nov 2026, the lead: what the wiring found the API still owes; API-BASE-4). Default (lead), owner may override.
+- HP1: the staff "me" read and the Team read carry what the role may open (the contract's RoleAccess), so the admin
+  shell stops keeping its own copy of the role table (HN1).
+- HP2: a wish's PATCH refuses an occasion the kind does not have and a step out of range (422 on the field).
+- HP3: the owner's own wish read gives a signed, short-lived read url for the cover and each photo beside its id, so
+  the owner's cards and detail can show pictures; the public link's rules for a receiver are unchanged.
+- HP4: the contract says what the server sends: the link read answers {link, slug}; Wish.no is nullable; the wish's
+  state values are the server's (one name, state or status, whichever the server sends).
+- HP5: the wish read carries the video's state (none, asked, rendering, ready, failed), so the app asks for the video
+  only when there is one.
+- HP6: test stacks can move time: a clock offset the stand-in clock reads (STANDIN_CLOCK_OFFSET, seconds), refused at
+  boot in production or with live providers, so a verifier can reach "resting", "ended" and "window over" the real way.
+- HP7: two staff changing one team member: the change carries the version it saw; the second gets 409 with words.
+- HP8: the staff Team read leaves out removed staff unless asked for them.

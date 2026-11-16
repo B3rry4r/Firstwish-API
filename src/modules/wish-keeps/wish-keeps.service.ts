@@ -199,7 +199,9 @@ export class WishKeepsService implements OnModuleInit {
     const w = await this.db.wish.findUnique({ where: { id: h.wishId }, select: { ticket: true } });
     const book = await this.entitlements.row();
     if (grantOf(book, `ticket.${w?.ticket ?? "moment"}`)?.keepable !== true) return null;
-    const quote = await this.prices.quote(KEEP_LENGTHS.map((l) => ({ sku: `keep.${l}` })), this.clock.now());
+    // a view is never refused for want of a price: with no price book in force there is simply no offer
+    const quote = await this.prices.quote(KEEP_LENGTHS.map((l) => ({ sku: `keep.${l}` })), this.clock.now()).catch(() => null);
+    if (!quote) return null;
     const given = this.proofs.issueHold(h.linkId, h.wishId);
     return {
       wishId: h.wishId,

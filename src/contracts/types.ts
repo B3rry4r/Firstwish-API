@@ -1444,6 +1444,8 @@ export interface Style {
   record: unknown[];
   sample: Record<string, unknown>;
   say?: string | null;
+  /** HS3: the slug of the house wish that plays this style, at /w/<slug> (null when the style has none or is off) */
+  showcaseSlug?: string | null;
   slug: string;
   tier: string;
 }

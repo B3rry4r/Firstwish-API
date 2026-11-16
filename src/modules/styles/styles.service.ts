@@ -100,7 +100,8 @@ export class StylesService {
     });
     const page = toPage(rows, limit, (r) => ({ key: r.slug ?? "", id: r.id }));
     const counts = await this.countsFor(page.items.map((r) => r.slug ?? ""));
-    return { items: page.items.map((r) => styleToWire(r, counts.get(r.slug ?? "") ?? zero(), false)), nextCursor: page.nextCursor };
+    const shows = await this.showcases(page.items.map((r) => r.slug ?? ""));
+    return { items: page.items.map((r) => styleToWire(r, counts.get(r.slug ?? "") ?? zero(), false, shows.get(r.slug ?? "") ?? null)), nextCursor: page.nextCursor };
   }
 
   /** E-196: one style that is on, by slug (or its id). A style that is off or unknown is 404. */
@@ -110,7 +111,7 @@ export class StylesService {
     const row = await this.db.style.findFirst({ where: { ...where, on: true } });
     if (!row) throw AppError.notFound("No style has this name.");
     const counts = await this.countsFor([row.slug ?? ""]);
-    return styleToWire(row, counts.get(row.slug ?? "") ?? zero(), false);
+    return styleToWire(row, counts.get(row.slug ?? "") ?? zero(), false, (await this.showcases([row.slug ?? ""])).get(row.slug ?? "") ?? null);
   }
 
   // ------------------------------------------------------------------ the Studio's entry (B15: a creator's style joins the catalogue here)
@@ -174,7 +175,8 @@ export class StylesService {
     });
     const page = toPage(rows, limit, (r) => ({ key: r.slug ?? "", id: r.id }));
     const counts = await this.countsFor(page.items.map((r) => r.slug ?? ""));
-    return { items: page.items.map((r) => styleToWire(r, counts.get(r.slug ?? "") ?? zero(), true)), nextCursor: page.nextCursor };
+    const shows = await this.showcases(page.items.map((r) => r.slug ?? ""));
+    return { items: page.items.map((r) => styleToWire(r, counts.get(r.slug ?? "") ?? zero(), true, shows.get(r.slug ?? "") ?? null)), nextCursor: page.nextCursor };
   }
 
   /**
@@ -216,6 +218,9 @@ export class StylesService {
         where: { id: style.id },
         data: { on: body.on, record: [...recordOf(style), entry] as unknown as Prisma.InputJsonArray },
       });
+      // HS3: a style that is off has its house wish unlisted (its link off); on again, the link is back
+      await tx.$executeRaw`
+        UPDATE wish_link SET active = ${body.on} WHERE "wishId" IN (SELECT w.id FROM wish w JOIN account a ON a.id = w."accountId" WHERE a.handle = 'firstwish' AND w."styleSlug" = ${slug} AND w.content->>'house' = 'true')`;
       await this.audit.write(tx, { actor, section: SECTION, action: body.on ? "style.switch-on" : "style.switch-off", target: { type: "Style", id: style.id }, reason, changedFields: ["on"] });
       return updated;
     });
@@ -263,7 +268,16 @@ export class StylesService {
 
   private async staffOne(row: StyleRow): Promise<StyleOut> {
     const counts = await this.countsFor([row.slug ?? ""]);
-    return styleToWire(row, counts.get(row.slug ?? "") ?? zero(), true);
+    return styleToWire(row, counts.get(row.slug ?? "") ?? zero(), true, (await this.showcases([row.slug ?? ""])).get(row.slug ?? "") ?? null);
+  }
+
+  /** HS3: the link of each style's house wish (the house creator's live wish that plays it, its link on); a style with none has no entry. */
+  private async showcases(slugs: string[]): Promise<Map<string, string>> {
+    if (!slugs.length) return new Map();
+    const rows = await this.db.$queryRaw<{ style: string; slug: string }[]>`
+      SELECT w."styleSlug" AS style, l.slug FROM wish w JOIN wish_link l ON l."wishId" = w.id AND l.active JOIN account a ON a.id = w."accountId"
+       WHERE a.handle = 'firstwish' AND w.status = 'live' AND w.content->>'house' = 'true' AND w."styleSlug" = ANY(${slugs})`;
+    return new Map(rows.map((r) => [r.style, r.slug]));
   }
 
   /** A slug the registry could know, else 404 (never a 500): trimmed, lowercased, then matched exactly. */

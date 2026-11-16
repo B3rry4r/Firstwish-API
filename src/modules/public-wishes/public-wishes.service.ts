@@ -6,7 +6,7 @@ import { RateLimited } from "../../common/errors/rate-limited";
 import { Clock } from "../../common/ports/clock.port";
 import { IdGenerator } from "../../common/ports/ids.port";
 import { toWireInstant } from "../../common/time/time";
-import type { PublicWishView } from "../../contracts";
+import type { PublicWishView, ReactionResult, UnlockResult } from "../../contracts";
 import { SignedUrlsService } from "../stored-files/signed-urls.service";
 import { WishLifecycleService } from "../wishes/wish-lifecycle.service";
 import { LINK_LOCK_SECONDS, LINK_WRONG_TRIES, LinkLimits, READS_PER_MINUTE, UNLOCKS_PER_HOUR } from "./link-limits";
@@ -69,6 +69,12 @@ function questionOf(content: unknown): string | null {
   return typeof q === "string" && q.trim() ? q.trim() : null;
 }
 
+/** LL2: the opening scene {id, scene} the view carries beside `content` while the wish is not open (null when the wish names none). */
+function openingOf(content: unknown): Record<string, unknown> | null {
+  const o = sceneOf(content);
+  return o ? (o.opening as Record<string, unknown>) : null;
+}
+
 /** The only part of a sealed wish a link may show: which opening scene it has. */
 function sceneOf(content: unknown): Record<string, unknown> | undefined {
   if (!plain(content) || !plain(content.opening)) return undefined;
@@ -114,12 +120,13 @@ export class PublicWishesService {
     const r = await this.resolve(slug, c);
     const { row } = r;
     const base = this.base(slug, row);
-    if (r.standing === "countdown") return { ...base, state: "countdown", openable: false, content: sceneOf(row.content) };
+    const opening = openingOf(row.content);
+    if (r.standing === "countdown") return { ...base, state: "countdown", openable: false, content: sceneOf(row.content), opening };
     if (r.standing === "locked") {
       const q = questionOf(row.content);
-      return { ...base, state: q ? "question" : "passcode", openable: true, prompt: q, content: sceneOf(row.content) };
+      return { ...base, state: q ? "question" : "passcode", openable: true, prompt: q, content: sceneOf(row.content), opening };
     }
-    if (!row.openedAt) return { ...base, state: "sealed", openable: true, content: sceneOf(row.content) };
+    if (!row.openedAt) return { ...base, state: "sealed", openable: true, content: sceneOf(row.content), opening };
     const served = await this.serve(row, base, c, "read");
     if (served === "refused") {
       if (depth > 0) throw gone();
@@ -153,11 +160,11 @@ export class PublicWishesService {
     const files = await this.fileLinks(row.id);
     const done = await this.recordRead(row, this.clock.now(), c, kind);
     if (done === "refused") return "refused";
-    return { ...base, ...done.times, state: "open", openable: true, content: { ...stored, files } };
+    return { ...base, ...done.times, state: "open", openable: true, content: { ...stored, files }, files, opening: null };
   }
 
   /** E-134: a passcode (or the answer of a question). Counted before it is compared; a locked link says when to come back. */
-  async unlock(slug: string, c: Caller, input: { passcode?: string; answer?: string; opening?: Record<string, unknown> }): Promise<Record<string, unknown>> {
+  async unlock(slug: string, c: Caller, input: { passcode?: string; answer?: string; opening?: Record<string, unknown> }): Promise<UnlockResult> {
     await this.limits.take("read", this.limits.keyOf(c.address), READS_PER_MINUTE, 60);
     const { row } = await this.resolve(slug, c);
     const now = this.clock.now();
@@ -186,7 +193,7 @@ export class PublicWishesService {
   }
 
   /** E-132: one reaction per opening session, changeable; the counts come from the rows. */
-  async react(slug: string, c: Caller, input: { reaction: string; wishId: string }): Promise<{ reaction: string; counts: Record<string, number> }> {
+  async react(slug: string, c: Caller, input: { reaction: string; wishId: string }): Promise<ReactionResult> {
     const reaction = input.reaction.trim();
     if (!reaction || reaction.length > 40 || [...reaction].some((ch) => ch.charCodeAt(0) < 32)) throw AppError.validation({ reaction: "Use 1 to 40 characters." });
     // NN5: no direction-override, zero-width or other invisible (format) character, and no line or paragraph separator
@@ -258,16 +265,15 @@ export class PublicWishesService {
   }
 
   private async reactionCounts(wishId: string): Promise<Record<string, number>> {
-    const rows = await this.db.$queryRaw<{ reaction: string; n: bigint }[]>`
-      SELECT reaction, count(*)::bigint AS n FROM wish_reaction WHERE "wishId" = ${wishId}::uuid GROUP BY reaction`;
-    return Object.fromEntries(rows.map((r) => [r.reaction, Number(r.n)]));
+    const rows = await this.db.wishReaction.groupBy({ by: ["reaction"], where: { wishId }, _count: { _all: true } });
+    return Object.fromEntries(rows.map((r) => [r.reaction, r._count._all]));
   }
 
   private base(slug: string, row: Row): PublicWishView {
     return {
       slug, kind: row.kind, occasion: row.occasion, styleSlug: row.styleSlug, state: "countdown", openable: false,
       serverTime: toWireInstant(this.clock.now()), opensAt: row.opensAt ? toWireInstant(row.opensAt) : null, timeZone: row.timeZone,
-      receiverName: row.name, wishNo: row.no,
+      receiverName: row.name, wishNo: row.no, files: [],
     };
   }
 
@@ -305,9 +311,7 @@ export class PublicWishesService {
     });
   }
 
-  private async insertOpen(db: Pick<PrismaService, "$executeRaw">, row: Row, kind: "read" | "play", first: boolean, at: Date, c: Caller): Promise<void> {
-    await db.$executeRaw`
-      INSERT INTO wish_open (id, slug, "wishId", kind, first, session, "createdAt")
-      VALUES (${this.ids.id()}::uuid, ${row.slug}, ${row.id}::uuid, ${kind}, ${first}, ${this.sessionOf(row, c)}, ${at})`;
+  private async insertOpen(db: Pick<PrismaService, "wishOpen">, row: Row, kind: "read" | "play", first: boolean, at: Date, c: Caller): Promise<void> {
+    await db.wishOpen.create({ data: { id: this.ids.id(), slug: row.slug, wishId: row.id, kind, first, session: this.sessionOf(row, c), createdAt: at } });
   }
 }

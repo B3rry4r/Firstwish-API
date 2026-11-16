@@ -42,6 +42,12 @@ export interface FulfilmentContext {
 export type FulfilmentHandler = (ctx: FulfilmentContext) => Promise<void>;
 
 /**
+ * A check made when a payment STARTS (GG3), in the start's own transaction with the account locked: it throws the 422 that tells the
+ * buyer a line can never be granted, before any money is asked for. The fulfilment bundle registers its own (assertStartable).
+ */
+export type StartCheck = (accountId: string, request: PaymentRequestInfo, skus: string[], tx: Prisma.TransactionClient) => Promise<void>;
+
+/**
  * The fulfilment frame: handlers register by price-book line (sku). The payment core calls the registered handler once
  * per line of a payment that has just become paid, never twice, and never for a line nobody registered (that fails the whole
  * settle, so the next delivery retries once a handler exists). The handlers themselves belong to the fulfilment bundle.
@@ -49,11 +55,22 @@ export type FulfilmentHandler = (ctx: FulfilmentContext) => Promise<void>;
 @Injectable()
 export class FulfilmentRegistry {
   private readonly handlers = new Map<string, FulfilmentHandler>();
+  private readonly startChecks: StartCheck[] = [];
 
   /** Registers the handler of one line. A second registration for the same line is a programming error. */
   register(sku: string, handler: FulfilmentHandler): void {
     if (this.handlers.has(sku)) throw new Error(`fulfilment: ${sku} already has a handler`);
     this.handlers.set(sku, handler);
+  }
+
+  /** Registers a check run at the start of every payment (GG3). */
+  onStart(check: StartCheck): void {
+    this.startChecks.push(check);
+  }
+
+  /** Runs the start checks in the order they were registered; the first to throw refuses the start. */
+  async checkStart(accountId: string, request: PaymentRequestInfo, skus: string[], tx: Prisma.TransactionClient): Promise<void> {
+    for (const check of this.startChecks) await check(accountId, request, skus, tx);
   }
 
   /** Test helper and hot-swap: replaces whatever is registered. */

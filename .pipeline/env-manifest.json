@@ -233,6 +233,12 @@
       "introducedBy": "int-3",
       "purpose": "time limit of one call to a provider port, as port=milliseconds pairs (FF1); payments 10000 unless changed",
       "secret": false
+    },
+    {
+      "name": "JSON_BODY_LIMIT_BYTES",
+      "introducedBy": "int-4",
+      "purpose": "the largest JSON body the API reads, in bytes (JJ1); 512 KB, above the 256 KB wish content limit so an oversize wish gets the service's 422",
+      "secret": false
     }
   ]
 }

@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "frozenAt": "2026-11-15T22:37:20Z",
+  "frozenAt": "2026-11-15T22:40:31Z",
   "framework": "nestjs",
   "generatedBy": "tools/pipeline/reconcile.py",
   "resources": [
@@ -7402,7 +7402,7 @@
         },
         {
           "name": "type",
-          "type": "string",
+          "type": "enum(open-wish|rest-wish|erase-wish|restore-window-end|erase-now|send-notice|send-message|make-image-sizes|screen-file|render-video|make-qr-card|abandon-payment|reconcile-ledger|pass-period|plan-period|creator-period|vault-billing|royalty-accrual|payout-run|style-level-review|upload-cleanup|clean-link-hits)",
           "classes": [
             "enum",
             "string"
@@ -7411,7 +7411,8 @@
           "provenance": [
             "jobs"
           ],
-          "supersedes": []
+          "supersedes": [],
+          "typeBy": "DEC-188"
         }
       ],
       "endpoints": [

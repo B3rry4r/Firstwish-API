@@ -169,10 +169,11 @@ export class BusinessHandlers {
    */
   async extraGb(tx: Tx, businessId: string): Promise<number> {
     const now = this.clock.now();
-    const rows = await tx.$queryRaw<{ gb: number | null }[]>`
-      SELECT COALESCE(sum((detail->>'gb')::int), 0)::int AS gb FROM purchase_grant
-       WHERE "businessId" = ${businessId}::uuid AND kind = 'vault-space' AND "revokedAt" IS NULL AND "refusedReason" IS NULL AND "endsAt" > ${now}::timestamptz`;
-    return rows[0]?.gb ?? 0;
+    const rows = await tx.purchaseGrant.findMany({
+      where: { businessId, kind: "vault-space", revokedAt: null, refusedReason: null, endsAt: { gt: now } },
+      select: { detail: true },
+    });
+    return rows.reduce((sum, r) => sum + num((r.detail as Record<string, unknown> | null)?.gb), 0);
   }
 
   /**
@@ -196,11 +197,13 @@ export class BusinessHandlers {
   }
 
   /** The grants of a kind for a business that still stand (not revoked, not refused), newest first, leaving out `except` (HH3). */
-  private standing(tx: Tx, businessId: string, kind: string, except: string): Promise<{ detail: Record<string, unknown>; endsAt: Date | null }[]> {
-    return tx.$queryRaw<{ detail: Record<string, unknown>; endsAt: Date | null }[]>`
-      SELECT detail, "endsAt" FROM purchase_grant
-       WHERE "businessId" = ${businessId}::uuid AND kind = ${kind} AND "revokedAt" IS NULL AND "refusedReason" IS NULL AND id <> ${except}::uuid
-       ORDER BY "createdAt" DESC, id DESC`;
+  private async standing(tx: Tx, businessId: string, kind: string, except: string): Promise<{ detail: Record<string, unknown>; endsAt: Date | null }[]> {
+    const rows = await tx.purchaseGrant.findMany({
+      where: { businessId, kind, revokedAt: null, refusedReason: null, id: { not: except } },
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      select: { detail: true, endsAt: true },
+    });
+    return rows.map((r) => ({ detail: (r.detail ?? {}) as Record<string, unknown>, endsAt: r.endsAt }));
   }
 
   /**

@@ -6,7 +6,7 @@ import { Clock } from "../../common/ports/clock.port";
 import { IdGenerator } from "../../common/ports/ids.port";
 import { decodeCursor, Page, toPage } from "../../common/pagination/cursor";
 import { toWireInstant } from "../../common/time/time";
-import type { MessageDelivery, Notice } from "../../contracts";
+import type { MessageDelivery, MessageTemplate } from "../../contracts";
 import { AuditActor, AuditService, requireReason } from "../audit/audit.service";
 import { isTemplateKey, maskEmail, scrubEmails, scrubReason, TEMPLATES, TemplateKey, wordingProblems } from "./catalog";
 import { LANG, NoticesService } from "./notices.service";
@@ -26,26 +26,25 @@ export class NoticesAdminService {
     private readonly notices: NoticesService,
   ) {}
 
-  private wording(row: { id: string; key: string; subject: string | null; body: string; version: number }, reason: string): Notice {
+  /** II2: the wording in force for one message, as a MessageTemplate (editedAt and editedBy are null until staff first change it). */
+  private wording(row: { key: string; subject: string | null; body: string; version: number; editedAt: Date | null; editedBy: string | null; channel: string; locale: string }): MessageTemplate {
     const spec = TEMPLATES[row.key as TemplateKey];
-    const at = toWireInstant(this.clock.now());
     return {
-      id: row.id, key: row.key, kind: spec.noticeKind === "opened" ? "opened" : spec.noticeKind ?? "publish-notice", name: spec.label, subject: row.subject ?? "",
-      body: row.body, when: spec.when, to: spec.audience, reason, status: "scheduled", dueAt: at, createdAt: at,
-      edited: row.version > 1 ? { version: row.version } : null,
+      key: row.key, name: spec.label, subject: row.subject ?? "", body: row.body, placeholders: [...spec.allowed], version: row.version,
+      editedAt: row.editedAt ? toWireInstant(row.editedAt) : null, editedBy: row.editedBy, channel: row.channel, locale: row.locale,
     };
   }
 
-  /** E-75. The five messages with the wording now in force. */
-  async templates(limit: number, cursor?: string): Promise<Page<Notice>> {
+  /** E-75. The messages with the wording now in force. */
+  async templates(limit: number, cursor?: string): Promise<Page<MessageTemplate>> {
     const after = cursor ? String(decodeCursor(cursor).key) : "";
     const rows = await this.prisma.messageTemplate.findMany({ where: { channel: "email", locale: LANG, key: { in: Object.keys(TEMPLATES) } }, orderBy: [{ key: "asc" }, { version: "desc" }] });
     const latest = rows.filter((r, i) => i === 0 || rows[i - 1].key !== r.key).filter((r) => r.key > after).slice(0, limit + 1);
-    return toPage(latest.map((r) => this.wording(r, "")), limit, (n) => ({ key: n.key, id: n.id }));
+    return toPage(latest.map((r) => this.wording(r)), limit, (n) => ({ key: n.key, id: n.key }));
   }
 
   /** E-76. New wording for one message: kept words only, every placeholder it needs, a reason, one audit row. */
-  async edit(key: string, body: { subject: string; body: string; reason: string }, actor: AuditActor): Promise<Notice> {
+  async edit(key: string, body: { subject: string; body: string; reason: string }, actor: AuditActor): Promise<MessageTemplate> {
     if (!isTemplateKey(key)) throw AppError.notFound();
     const reason = requireReason(body.reason);
     const subject = body.subject.trim();
@@ -56,11 +55,11 @@ export class NoticesAdminService {
       const cur = await tx.messageTemplate.findFirst({ where: { key, channel: "email", locale: LANG }, orderBy: { version: "desc" } });
       if (!cur) throw AppError.notFound();
       await tx.$queryRaw`SELECT id FROM message_template WHERE id = ${cur.id}::uuid FOR UPDATE`;
-      const next = await tx.messageTemplate.update({ where: { id: cur.id }, data: { subject, body: text, version: { increment: 1 } } });
+      const next = await tx.messageTemplate.update({ where: { id: cur.id }, data: { subject, body: text, version: { increment: 1 }, editedAt: this.clock.now(), editedBy: actor.id ?? null } });
       await this.audit.write(tx, { actor, section: SECTION, action: "messages.template_edit", target: { type: "message_template", id: next.id }, reason, changedFields: ["subject", "body"] });
       return next;
     });
-    return this.wording(row, reason);
+    return this.wording(row);
   }
 
   /** Wire shape of a delivery for staff: the address masked, the sign-in code never shown. */
@@ -126,6 +125,7 @@ export class NoticesAdminService {
 const PURPOSE: Record<string, MessageDelivery["purpose"]> = {
   auth_code: "auth-code", wish_delivery: "wish-delivery", opened: "opened", term_notice: "term-notice", anniversary: "anniversary",
   date_reminder: "date-reminder", publish_notice: "publish-notice", pass: "pass", plan: "plan", invite: "invite", receipt: "receipt", support: "support",
+  sealed: "sealed", opens: "opens",
 };
 function purposeWire(p: string): MessageDelivery["purpose"] {
   return PURPOSE[p] ?? "support";

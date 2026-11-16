@@ -248,6 +248,7 @@ export const ENDPOINTS: readonly EndpointRow[] = [
   { id: "E-227", method: "POST", path: "/v1/wishes/:id/erase", resource: "Wish", operation: "PostWishesByIdErase", request: "PostWishesByIdEraseBodyDto", rawBody: false, noContent: true },
   { id: "E-228", method: "POST", path: "/v1/wishes/:id/keep", resource: "Wish", operation: "PostWishesByIdKeep", request: "PostWishesByIdKeepBodyDto", rawBody: false, noContent: false },
   { id: "E-229", method: "GET", path: "/v1/wishes/:id/link", resource: "Wish", operation: "GetWishesByIdLink", request: "GetWishesByIdLinkQueryDto", rawBody: false, noContent: false },
+  { id: "E-241", method: "POST", path: "/v1/wishes/:id/pass-upgrade", resource: "Wish", operation: "PostWishesByIdPassUpgrade", request: "PostWishesByIdPassUpgradeBodyDto", rawBody: false, noContent: false },
   { id: "E-230", method: "POST", path: "/v1/wishes/:id/restore", resource: "Wish", operation: "PostWishesByIdRestore", request: "PostWishesByIdRestoreBodyDto", rawBody: false, noContent: false },
   { id: "E-231", method: "POST", path: "/v1/wishes/:id/seal", resource: "Wish", operation: "PostWishesByIdSeal", request: "PostWishesByIdSealBodyDto", rawBody: false, noContent: false },
   { id: "E-232", method: "POST", path: "/v1/wishes/:id/wake", resource: "Wish", operation: "PostWishesByIdWake", request: "PostWishesByIdWakeBodyDto", rawBody: false, noContent: true },

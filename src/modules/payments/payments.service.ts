@@ -10,6 +10,7 @@ import { PaymentsPort } from "../../common/ports/payments.port";
 import type { PostPaymentsBody, PaymentStart, PaymentStarted } from "../../contracts";
 import { BusinessOf } from "../people/business-of";
 import { PriceBookService } from "../price-book/price-book.service";
+import { FulfilmentRegistry } from "./fulfilment.registry";
 import { paidLines, SettlementService, type SettleResult } from "./settlement.service";
 import { parseRequest } from "./payment-request";
 import { readOptions, writeOptions } from "./payment-options";
@@ -61,6 +62,7 @@ export class PaymentsService {
     private readonly book: PriceBookService,
     private readonly settlement: SettlementService,
     private readonly businesses: BusinessOf,
+    private readonly registry: FulfilmentRegistry,
   ) {}
 
   /**
@@ -86,6 +88,8 @@ export class PaymentsService {
       if (existing) return { row: existing, fresh: false };
       const now = this.clock.now();
       const quote = await this.book.quote(req.lines, now, { db: tx });
+      // GG3: what the fulfilment bundle knows can never be granted is refused now (422), before the buyer pays
+      await this.registry.checkStart(accountId, req.info, quote.lines.map((l) => l.sku), tx);
       const id = this.ids.id();
       const row = await tx.payment.create({
         data: {

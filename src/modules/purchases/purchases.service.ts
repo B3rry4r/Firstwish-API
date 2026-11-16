@@ -67,6 +67,8 @@ export class PurchasesService implements OnModuleInit {
     on(SOLD_SKUS.vault, (c) => this.business.vault(c));
     on(SOLD_SKUS.creator, (c) => this.creator.fulfil(c));
     on(SOLD_SKUS.concierge, (c) => this.concierge(c));
+    // GG3: the payments frame asks at start what can never be granted (assertStartable)
+    this.registry.onStart((accountId, request, skus, tx) => this.assertStartable(accountId, request, skus, tx));
   }
 
   /** Concierge: the order is B19's. This records that the payment for it was good (the order id the buyer named), nothing more. */
@@ -137,6 +139,8 @@ export class PurchasesService implements OnModuleInit {
       const lines = new Map((await this.book.versionAt(this.clock.now(), db)).lines.map((l) => [l.sku, l.listKobo]));
       why = assessExtra(w, accountId, sku, book, (s) => lines.get(s) ?? 0n);
     }
+    // GG3: the app sells no paid upgrade, so a ticket line for a wish that already has a ticket (paid or from the Pass) is refused at start
+    if (!why && group === "ticket" && w?.ticket) why = "wish_has_ticket";
     if (why) throw AppError.validation({ subjectId: REASON_TEXT[why] ?? "This cannot be bought for this wish." });
   }
 }

@@ -15,6 +15,7 @@ import { EntitlementsService, grantOf } from "../price-book/entitlements.service
 import type { Entitlements as EntitlementsRow } from "@prisma/client";
 import { JobsService } from "../jobs/jobs.service";
 import { BusinessOf } from "../people/business-of";
+import { PassDrawService } from "../purchases/pass-draws";
 import { localToUtc, parseOpening, utcToLocal } from "./local-time";
 import { CHAPTER_KEYS, DEFAULT_CONTENT_MAX_BYTES, FileRef, hasBody, readContent } from "./wish-content";
 import { UNOPENED_DAYS, WishLifecycleService } from "./wish-lifecycle.service";
@@ -27,6 +28,7 @@ export const DEFAULT_ZONE = "Africa/Lagos";
 /** The id of the one wish_number_sequence row. */
 const SEQUENCE_ID = "00000000-0000-7000-8000-0000000000b6";
 const TICKETS = ["moment", "keepsake", "signature", "premiere"] as const;
+export type Ticket = (typeof TICKETS)[number];
 const SLUG = /^[a-z0-9][a-z0-9-]{0,39}$/;
 const MINUTE = 60_000;
 const DAY = 24 * 60 * MINUTE;
@@ -58,6 +60,8 @@ export interface PatchInput {
 }
 export interface SealInput {
   version: number;
+  /** GG5: draw one wish from the Pass in place of a ticket payment. */
+  usePass?: boolean;
   opensAt?: unknown;
   openNow?: boolean;
   timeZone?: string;
@@ -85,6 +89,7 @@ export class WishesService {
     private readonly jobs: JobsService,
     private readonly business: BusinessOf,
     private readonly activity: ReceiverActivityService,
+    private readonly passDraws: PassDrawService,
   ) {}
 
   // ---- reads ----
@@ -377,16 +382,68 @@ export class WishesService {
   // ---- paid, seal ----
 
   /**
-   * The ticket is fulfilled: what the payments bundle calls once a verified payment is good (until it merges, tests call it).
-   * Only a draft takes it; a second call with the same ticket changes nothing.
+   * GG2: gives a draft its ticket inside the caller's transaction. It is the one way a wish gets its ticket: the ticket handler of a
+   * paid line (purchases) and the Pass upgrade both call it. Only a draft takes it; a second call with the same ticket changes nothing.
    */
-  async fulfilTicket(wishId: string, ticket: (typeof TICKETS)[number]): Promise<void> {
-    await this.prisma.$transaction(async (tx) => {
-      const w = await this.lifecycle.lock(tx, wishId);
-      if (w.ticket === ticket) return;
-      if (stateOf(w) !== "draft") throw AppError.conflict("wish_locked", "This wish is already sealed.");
-      await tx.wish.update({ where: { id: wishId }, data: { ticket, version: { increment: 1 } } });
+  async fulfilTicketIn(tx: Tx, wishId: string, ticket: Ticket): Promise<void> {
+    const w = await this.lifecycle.lock(tx, wishId);
+    if (w.ticket === ticket) return;
+    if (stateOf(w) !== "draft") throw AppError.conflict("wish_locked", "This wish is already sealed.");
+    await tx.wish.update({ where: { id: wishId }, data: { ticket, version: { increment: 1 } } });
+  }
+
+  /** fulfilTicketIn in a transaction of its own. */
+  async fulfilTicket(wishId: string, ticket: Ticket): Promise<void> {
+    await this.prisma.$transaction((tx) => this.fulfilTicketIn(tx, wishId, ticket));
+  }
+
+  /**
+   * GG3: a draft becomes a Signature wish by drawing one of the Pass's upgrades. No money moves. The wish is the caller's own; a draft
+   * with no ticket, a Moment or a Keepsake may take it. The draw is one conditional statement on the Pass, so 20 upgrades at once with
+   * 1 left give exactly one. A paid upgrade is not sold (the app and the documents give it no price).
+   */
+  async passUpgrade(accountId: string, id: string): Promise<Obj> {
+    if (!isUuidV7(id)) throw AppError.notFound("No such wish.");
+    const biz = await this.business.find(accountId);
+    const row = await this.prisma.$transaction(async (tx) => {
+      await lockAccount(tx, accountId);
+      const own = await this.owned(tx, accountId, id, biz);
+      if (own.accountId !== accountId) throw AppError.notFound("No such wish.");
+      const locked = await this.lifecycle.lock(tx, id);
+      if (stateOf(locked) !== "draft") throw AppError.conflict("not_allowed", "Only a draft can take a Pass upgrade.");
+      const w = await tx.wish.findUniqueOrThrow({ where: { id } });
+      if (w.ticket === "signature" || w.ticket === "premiere") throw AppError.conflict("already_signature", "This wish is already a Signature wish or better.");
+      if ((await this.passDraws.drawFor(tx, accountId, id, "upgrade")) === "none") throw AppError.conflict("no_pass_upgrade", "Your Pass has no upgrade left.");
+      await this.fulfilTicketIn(tx, id, "signature");
+      return tx.wish.findUniqueOrThrow({ where: { id } });
     });
+    return this.wire(row, (await this.linksFor([id])).get(id));
+  }
+
+  /**
+   * GG5: what the seal does about payment, in the sealing transaction. Without usePass the wish must hold a ticket (and a Signature
+   * that only a Pass upgrade made needs its Pass wish: an upgrade alone never seals for free). With usePass it draws one Pass wish
+   * (a wish with no ticket becomes a Keepsake); a wish that already holds a paid ticket needs no Pass wish and is refused (422).
+   * 20 at once with 1 left: one seals (the account lock queues them and the draw is one conditional statement).
+   */
+  private async payForSeal(tx: Tx, accountId: string, w: Wish, usePass: boolean | undefined): Promise<void> {
+    const draws = await tx.passDraw.findMany({ where: { wishId: w.id }, select: { kind: true } });
+    const upgraded = draws.some((d) => d.kind === "upgrade");
+    const drawn = draws.some((d) => d.kind === "wish");
+    if (!usePass) {
+      if (!w.ticket) throw new AppError(402, "payment_required", "Pay for this wish first.");
+      if (upgraded && !drawn && (await tx.purchaseGrant.count({ where: { wishId: w.id, kind: "ticket", revokedAt: null, refusedReason: null } })) === 0) {
+        throw new AppError(402, "payment_required", "Pay for this wish first, or seal it with your Pass.");
+      }
+      return;
+    }
+    if (w.accountId !== accountId) throw AppError.validation({ usePass: "Only the person who owns this wish can use their Pass on it." });
+    if (drawn) return;
+    if (w.ticket && !(w.ticket === "signature" && upgraded)) throw AppError.validation({ usePass: "This wish already has a ticket, so it needs no Pass wish." });
+    if ((await this.passDraws.drawFor(tx, accountId, w.id, "wish")) === "none") {
+      throw new AppError(402, "payment_required", "Your Pass has no wish left. Pay for this wish instead.");
+    }
+    if (!w.ticket) await this.fulfilTicketIn(tx, w.id, "keepsake");
   }
 
   /** The next wish number, in order, no gaps: one statement on the one sequence row, inside the sealing transaction. */
@@ -426,7 +483,7 @@ export class WishesService {
       if (input.version !== w.version) {
         throw new AppError(409, "stale_version", "This wish changed somewhere else. Load it again.", { version: String(w.version) });
       }
-      if (!w.ticket) throw new AppError(402, "payment_required", "Pay for this wish first.");
+      if (!w.ticket && !input.usePass) throw new AppError(402, "payment_required", "Pay for this wish first.");
       const missing: Record<string, string> = {};
       if (!w.name?.trim()) missing.name = "Who is it for?";
       if (!hasBody(w.content as Obj | null)) missing.content = "Write at least one part of the wish.";
@@ -434,6 +491,7 @@ export class WishesService {
       const now = this.clock.now();
       const zone = input.timeZone ?? w.timeZone;
       const opensAt = this.openTime(input, w, zone, now);
+      await this.payForSeal(tx, accountId, w, input.usePass);
       const no = await this.issueNumber(tx);
       await this.issueSlug(tx, id, w.name ?? "");
       await this.lifecycle.move(tx, locked, "sealed", { cause: "owner.seal", data: { no, sealedAt: now, opensAt, timeZone: zone } });

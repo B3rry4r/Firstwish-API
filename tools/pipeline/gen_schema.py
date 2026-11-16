@@ -478,7 +478,7 @@ SPECIAL_RESP = {
     "StudioStyle (withdraw, back to draft) | SubmittedStyle (template)": "StudioStyle | SubmittedStyle",
     "AuthResult": "AuthResult", "StaffAuthResult": "StaffAuthResult", "GoogleStart": "GoogleStart",
     "TicketQuote": "TicketQuote", "PriceBook": "PriceBook",
-    "WishSaved": "WishSaved", "PeopleImportResult": "PeopleImportResult",
+    "WishSaved": "WishSaved", "PeopleImportResult": "PeopleImportResult", "ReactionResult": "ReactionResult", "UnlockResult": "UnlockResult",
 }
 
 SHARED_TYPES = '''/** A UUIDv7 id issued by the server. */
@@ -569,8 +569,16 @@ export interface ShootFilesAdded {
   added: number;
   previews: number;
 }
-/** E-134. */
-export type UnlockResult = { ok: true } | { ok: false; error: string };
+/** E-132 (LL2, DEC-182): the reaction as kept and how many of each reaction the wish holds. Never the sender's wish. */
+export interface ReactionResult {
+  reaction: string;
+  counts: Record<string, number>;
+}
+/**
+ * E-134 (LL2, DEC-182): ok with a token (and when it stops working) once a passcode or an answer was right; an unprotected wish
+ * answers ok alone. The page sends the token back in the x-unlock-token header.
+ */
+export type UnlockResult = { ok: true; token?: string; expiresAt?: Instant } | { ok: false; error: string };
 /** E-15, E-16 (shape in the registry note of E-15). */
 export interface StyleChange {
   base?: string;

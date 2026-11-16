@@ -2,7 +2,7 @@ import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, Query } fr
 import {
   DeleteWishesByIdBodyDto, DeleteWishesByIdParamsDto, GetWishesByIdLinkParamsDto, GetWishesByIdParamsDto, GetWishesQueryDto,
   PatchWishesByIdParamsDto, PostWishesBodyDto, PostWishesByIdAddPhotosBodyDto, PostWishesByIdAddPhotosParamsDto,
-  PostWishesByIdEraseParamsDto, PostWishesByIdRestoreParamsDto, PostWishesByIdSealBodyDto, PostWishesByIdSealParamsDto,
+  PostWishesByIdEraseParamsDto, PostWishesByIdPassUpgradeParamsDto, PostWishesByIdRestoreParamsDto, PostWishesByIdSealBodyDto, PostWishesByIdSealParamsDto,
 } from "../../contracts";
 import type { WishSaved } from "../../contracts";
 import { CurrentPrincipal, Roles } from "../../common/auth/decorators";
@@ -71,7 +71,15 @@ export class WishesController {
   @Post(":id/seal")
   @HttpCode(200)
   seal(@Param() params: PostWishesByIdSealParamsDto, @Body() body: PostWishesByIdSealBodyDto, @CurrentPrincipal() p: Principal | undefined) {
-    return this.wishes.seal(accountOf(p), params.id, { version: body.version, opensAt: body.opensAt, openNow: body.openNow, timeZone: body.timeZone });
+    return this.wishes.seal(accountOf(p), params.id, { version: body.version, opensAt: body.opensAt, openNow: body.openNow, timeZone: body.timeZone, usePass: body.usePass });
+  }
+
+  /** E-241 (GG3): a draft becomes a Signature wish by drawing one Pass upgrade. */
+  @Roles("person", "creator", "business")
+  @Post(":id/pass-upgrade")
+  @HttpCode(200)
+  passUpgrade(@Param() params: PostWishesByIdPassUpgradeParamsDto, @CurrentPrincipal() p: Principal | undefined) {
+    return this.wishes.passUpgrade(accountOf(p), params.id);
   }
 
   @Roles("person", "creator", "business")

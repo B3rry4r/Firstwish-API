@@ -2929,23 +2929,24 @@
     },
     {
       "id": "DEC-188",
-      "topic": "delivery purpose and status",
+      "topic": "delivery purpose and status, a job kind for old link hits",
       "closes": [],
-      "decision": "II5, MM1: MessageDelivery.purpose gains `sealed` and `opens` (the two messages that had no purpose of their own). MessageDelivery.status is enum(queued|sending|sent|delivered|failed|dropped): `sending` is a try in flight (the stand-in `sent` of wave 3), `sent` is handed to the provider and waiting for its receipt, `dropped` is a message never sent because the account was erased or the address is gone (the stand-in `undeliverable` with a `Dropped` reason). `undeliverable` is no longer a status.",
+      "decision": "II5, MM1: MessageDelivery.purpose gains `sealed` and `opens` (the two messages that had no purpose of their own). MessageDelivery.status is enum(queued|sending|sent|delivered|failed|dropped): `sending` is a try in flight (the stand-in `sent` of wave 3), `sent` is handed to the provider and waiting for its receipt, `dropped` is a message never sent because the account was erased or the address is gone (the stand-in `undeliverable` with a `Dropped` reason). `undeliverable` is no longer a status. LL4: Job.type gains `clean-link-hits`, the timed job that removes link_hit rows past the longest limit window (2 hours); it runs every 10 minutes.",
       "approvedBy": "lead default, owner may override",
       "confidence": "high",
-      "source": "build/rulings-phase3.md II5, MM1",
+      "source": "build/rulings-phase3.md II5, MM1, LL4",
       "decidedAt": "2026-11-17T12:00:00Z",
       "fieldTypes": {
         "MessageDelivery.purpose": "enum(auth-code|wish-delivery|opened|term-notice|anniversary|date-reminder|publish-notice|pass|plan|invite|receipt|support|sealed|opens)",
-        "MessageDelivery.status": "enum(queued|sending|sent|delivered|failed|dropped)"
+        "MessageDelivery.status": "enum(queued|sending|sent|delivered|failed|dropped)",
+        "Job.type": "enum(open-wish|rest-wish|erase-wish|restore-window-end|erase-now|send-notice|send-message|make-image-sizes|screen-file|render-video|make-qr-card|abandon-payment|reconcile-ledger|pass-period|plan-period|creator-period|vault-billing|royalty-accrual|payout-run|style-level-review|upload-cleanup|clean-link-hits)"
       }
     },
     {
       "id": "DEC-187",
       "topic": "registry re-freeze (sixth reopen)",
       "closes": [],
-      "decision": "The registry is re-frozen after GG3, GG5, GG7, HH8, II2, II4, II5, LL2, LL3, LL5, MM1 and NN7 (DEC-176..186 and DEC-188) by tools/pipeline/freeze.py; reconcile.py was run twice with --reopen (identical outputs, EXIT 0, 0 open conflicts, both admin gate lines 0). Endpoint ids already issued are unchanged (new: E-241 POST /v1/wishes/:id/pass-upgrade). The other wave 4 shared rulings (GG1, GG2, GG4, II3, JJ1, LL1, LL4) change storage, code or the seed only. The enum values II5 and MM1 add are on the wire (the staff delivery log), so they went into the same freeze.",
+      "decision": "The registry is re-frozen after GG3, GG5, GG7, HH8, II2, II4, II5, LL2, LL3, LL4, LL5, MM1 and NN7 (DEC-176..186 and DEC-188) by tools/pipeline/freeze.py; reconcile.py was run twice with --reopen (identical outputs, EXIT 0, 0 open conflicts, both admin gate lines 0). Endpoint ids already issued are unchanged (new: E-241 POST /v1/wishes/:id/pass-upgrade). The other wave 4 shared rulings (GG1, GG2, GG4, II3, JJ1, LL1) change storage, code or the seed only. The enum values II5, MM1 and LL4 add are on the wire (the staff delivery log, the job list), so they went into the same freeze.",
       "approvedBy": "lead default, owner may override",
       "confidence": "high",
       "source": "build/rulings-phase3.md (INT-4)",

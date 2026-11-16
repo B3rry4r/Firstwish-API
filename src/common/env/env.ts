@@ -44,6 +44,8 @@ export interface Env {
   TRUST_PROXY_HOPS: number;
   /** FF1: port=milliseconds pairs that change a provider port's time limit (see ports/time-limit.ts). */
   PORT_TIMEOUTS_MS?: string;
+  /** JJ1: the largest JSON body the API reads, in bytes. It must stay above the wish content limit so an oversize wish gets the service's 422, not a bare 413. */
+  JSON_BODY_LIMIT_BYTES: number;
 }
 
 /** Raised when the environment is incomplete or wrong. The message names every bad variable. */

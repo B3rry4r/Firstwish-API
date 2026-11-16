@@ -92,8 +92,16 @@ export interface ShootFilesAdded {
   added: number;
   previews: number;
 }
-/** E-134. */
-export type UnlockResult = { ok: true } | { ok: false; error: string };
+/** E-132 (LL2, DEC-182): the reaction as kept and how many of each reaction the wish holds. Never the sender's wish. */
+export interface ReactionResult {
+  reaction: string;
+  counts: Record<string, number>;
+}
+/**
+ * E-134 (LL2, DEC-182): ok with a token (and when it stops working) once a passcode or an answer was right; an unprotected wish
+ * answers ok alone. The page sends the token back in the x-unlock-token header.
+ */
+export type UnlockResult = { ok: true; token?: string; expiresAt?: Instant } | { ok: false; error: string };
 /** E-15, E-16 (shape in the registry note of E-15). */
 export interface StyleChange {
   base?: string;
@@ -215,6 +223,7 @@ export interface Account {
   side: unknown;
   sides: Array<"person" | "creator" | "business">;
   space?: "me" | "business" | "creator" | null;
+  timeZone?: string | null;
   wishCount: number;
   wishes: unknown[];
 }
@@ -562,7 +571,7 @@ export interface Job {
   runAt: Instant;
   status: "scheduled" | "running" | "succeeded" | "failed" | "dead";
   subjectId: string;
-  type: "open-wish" | "rest-wish" | "erase-wish" | "restore-window-end" | "erase-now" | "send-notice" | "send-message" | "make-image-sizes" | "screen-file" | "render-video" | "make-qr-card" | "abandon-payment" | "reconcile-ledger" | "pass-period" | "plan-period" | "creator-period" | "vault-billing" | "royalty-accrual" | "payout-run" | "style-level-review" | "upload-cleanup";
+  type: "open-wish" | "rest-wish" | "erase-wish" | "restore-window-end" | "erase-now" | "send-notice" | "send-message" | "make-image-sizes" | "screen-file" | "render-video" | "make-qr-card" | "abandon-payment" | "reconcile-ledger" | "pass-period" | "plan-period" | "creator-period" | "vault-billing" | "royalty-accrual" | "payout-run" | "style-level-review" | "upload-cleanup" | "clean-link-hits";
 }
 
 /** JobRun: table. written by server:jobs (a recorded run of a job) */
@@ -636,7 +645,7 @@ export interface Maker {
   open: number;
 }
 
-/** MessageDelivery: table. written by E-70, E-72, E-73 and server:messages-email */
+/** MessageDelivery: table. written by E-70, E-72, E-73 and server:messages-email; II3: idempotencyKey is unique, so one key is one email (the advisory lock is gone) */
 export interface MessageDelivery {
   at: Instant;
   attempts: number;
@@ -647,11 +656,11 @@ export interface MessageDelivery {
   id: string;
   idempotencyKey: string;
   providerMessageId?: string | null;
-  purpose: "auth-code" | "wish-delivery" | "opened" | "term-notice" | "anniversary" | "date-reminder" | "publish-notice" | "pass" | "plan" | "invite" | "receipt" | "support";
+  purpose: "auth-code" | "wish-delivery" | "opened" | "term-notice" | "anniversary" | "date-reminder" | "publish-notice" | "pass" | "plan" | "invite" | "receipt" | "support" | "sealed" | "opens";
   reason: string;
   resent?: unknown;
   state: string;
-  status: "queued" | "sent" | "delivered" | "failed" | "undeliverable";
+  status: "queued" | "sending" | "sent" | "delivered" | "failed" | "dropped";
   templateKey: string;
   to: string;
   updatedAt: Instant;
@@ -665,8 +674,13 @@ export interface MessageTemplate {
   approvedRef?: string | null;
   body: string;
   channel: string;
+  editedAt?: Instant | null;
+  editedBy?: string | null;
   key: string;
   locale: string;
+  name: string;
+  placeholders: unknown[];
+  subject: string;
   version: number;
 }
 
@@ -967,11 +981,13 @@ export interface Provider {
 export interface PublicWishView {
   content?: Record<string, unknown> | null;
   endsAt?: Instant | null;
+  files: unknown[];
   keepOffer?: Record<string, unknown> | null;
   kind: string;
   occasion: string;
   openable: boolean;
   openedAt?: Instant | null;
+  opening?: Record<string, unknown> | null;
   opensAt?: Instant | null;
   prompt?: string | null;
   receiverName?: string | null;
@@ -1593,6 +1609,7 @@ export interface WebhookEvent {
 export interface Wish {
   accountId: string;
   action: unknown;
+  activity?: Record<string, unknown> | null;
   adds: unknown[];
   amount: Kobo;
   at: Instant;
@@ -1711,7 +1728,7 @@ export interface WishNumberSequence {
   updatedAt: Instant;
 }
 
-/** WishOpen: table. written by server:wish-link (E-131 records an opening of the public link) */
+/** WishOpen: table. written by server:wish-link (E-131 records an opening of the public link); LL1: the wish it belongs to, the kind of row (read or play), whether it was the first opening and the opening session (a hash, never an address) */
 export interface WishOpen {
   slug: string;
 }
@@ -1802,6 +1819,8 @@ export interface PatchMeBody {
   name?: string;
   /** 'me'|'business'|'creator' */
   space?: "me" | "business" | "creator";
+  /** string (an IANA zone name such as Africa/Lagos) */
+  timeZone?: string;
 }
 export type PatchMeHeaders = Record<string, never>;
 export type PatchMeResponse = Account;
@@ -2585,7 +2604,7 @@ export interface GetAdminMessagesTemplatesQuery {
   limit?: number;
 }
 export type GetAdminMessagesTemplatesHeaders = Record<string, never>;
-export type GetAdminMessagesTemplatesResponse = PaginatedList<Notice>;
+export type GetAdminMessagesTemplatesResponse = PaginatedList<MessageTemplate>;
 
 /** E-76 PUT /v1/admin/messages/templates/:key. Auth: ops,owner,support. */
 export interface PutAdminMessagesTemplatesByKeyParams {
@@ -2600,7 +2619,7 @@ export interface PutAdminMessagesTemplatesByKeyBody {
   subject: string;
 }
 export type PutAdminMessagesTemplatesByKeyHeaders = Record<string, never>;
-export type PutAdminMessagesTemplatesByKeyResponse = Template;
+export type PutAdminMessagesTemplatesByKeyResponse = MessageTemplate;
 
 /** E-77 GET /v1/me/notices. Auth: signed in. */
 export type GetMeNoticesParams = Record<string, never>;
@@ -2718,8 +2737,8 @@ export interface PostPaymentsBody {
   purpose?: string;
   /** string */
   subjectId?: string;
-  /** 'keepsake' */
-  ticket?: "keepsake";
+  /** 'moment'|'keepsake'|'signature'|'premiere' */
+  ticket?: "moment" | "keepsake" | "signature" | "premiere";
   /** string */
   title?: string;
   /** 'card'|'transfer'|'ussd' (PaySheet) */
@@ -3143,7 +3162,7 @@ export interface PostWBySlugOpensParams {
 }
 export type PostWBySlugOpensBody = Record<string, never>;
 export type PostWBySlugOpensHeaders = Record<string, never>;
-export type PostWBySlugOpensResponse = Empty;
+export type PostWBySlugOpensResponse = PublicWishView;
 
 /** E-132 POST /v1/w/:slug/reaction. Auth: public. */
 export interface PostWBySlugReactionParams {
@@ -3156,7 +3175,7 @@ export interface PostWBySlugReactionBody {
   wishId: string;
 }
 export type PostWBySlugReactionHeaders = Record<string, never>;
-export type PostWBySlugReactionResponse = Wish;
+export type PostWBySlugReactionResponse = ReactionResult;
 
 /** E-133 POST /v1/w/:slug/take-down. Auth: public. */
 export interface PostWBySlugTakeDownParams {
@@ -4186,72 +4205,30 @@ export interface PatchWishesByIdParams {
   id: string;
 }
 export interface PatchWishesByIdBody {
-  /** content.blessing={verse,cite?} */
-  blessing?: unknown;
-  /** string */
-  call?: string;
-  /** content.story.captions=string[] one per photo after the cover, max 10, trailing blanks trimmed */
-  captions?: unknown;
-  /** ChapterType */
-  chapter?: unknown;
   /** object (content.cover.more, content.details, content.ending.id, content.ending.scene, content.ending.values, content.on, content.opening.id, content.opening.scene, content.opening.values, content.partner, content.studio, content.voices.ask, content.voices.items) */
   content?: Record<string, unknown>;
-  /** content.credits=[{role,name,handle?}] */
-  credits?: unknown;
-  /** content.details=[{label,value}], with a leading {label:'The day',value:longDay(wedding)} when a wedding day is set */
-  details?: unknown;
-  /** for rule 'on' writes content.off (add/remove type); for rule '+' writes content.on (add/remove type); locked ignored */
-  effect?: unknown;
-  /** content.gift={title:first sentence,text:rest} */
-  finale?: unknown;
   /** 'month'|'half'|'year'|null (optional; null clears it, DEC-84) */
   keep?: "month" | "half" | "year" | null;
   /** string */
   kind?: string;
-  /** content.letter={paras:string[] split on blank lines}; love also mirrors Wish.letter string */
-  letter?: unknown;
-  /** content.links={files?,book?} URLs */
-  links?: unknown;
   /** object (makerNote.chosen.kind, makerNote.chosen.occasion, makerNote.given.occasion, makerNote.note, makerNote.now, makerNote.wedding, makerNote.wishId) */
   makerNote?: Record<string, unknown>;
-  /** content.memory={title:first sentence,text:rest} */
-  memory?: unknown;
   /** string, untrimmed as typed */
   name?: string;
-  /** content.note={from:'Everyone at <studio>'|studio|from|'Me',text} */
-  note?: unknown;
   /** string */
   occasion?: string;
-  /** boolean (Skip on an optional chapter writes content.off; continuing from an answered one turns it back on) */
-  off?: boolean;
   /** string ISO-8601 from local date+time via new Date(`${day}T${time}:00`).toISOString() (browser's own time zone, no zone sent) */
   opensAt?: string;
-  /** Partial<Wish> (whole Wish object is written today via saveWish/putWish, lib/maker.ts:40-46) */
-  patch?: unknown;
-  /** string[] reordered, chosen photo moved to index 0 */
-  photos?: string;
-  /** content.reasons=[{title}] (max ask.max, default 5); love mirrors Wish.reasons string[] */
-  reasons?: unknown;
+  /** string, at least 4 chars, max 64 (write only: stored hashed, never returned; null clears it) */
+  passcode?: string;
   /** number 0..5 */
   step?: number;
   /** string */
   style?: string;
-  /** TicketSlug */
-  ticket?: unknown;
   /** string (optional; an IANA zone name such as Africa/Lagos) */
   timeZone?: string;
-  /** content.timeline=[{when,what}] */
-  timeline?: unknown;
-  /** ChapterType */
-  type?: unknown;
   /** integer (the version the page last read; the write is refused 409 when it is older) */
   version: number;
-  /** content.voices.items=[{name,text,role?}] (name defaults 'A friend') */
-  voices?: unknown;
-  /** full Wish object (spread of previous plus patch) */
-  wish?: unknown;
-  /** string */
-  wishId?: string;
 }
 export type PatchWishesByIdHeaders = Record<string, never>;
 export type PatchWishesByIdResponse = WishSaved;
@@ -4310,6 +4287,14 @@ export type GetWishesByIdLinkQuery = Record<string, never>;
 export type GetWishesByIdLinkHeaders = Record<string, never>;
 export type GetWishesByIdLinkResponse = string;
 
+/** E-241 POST /v1/wishes/:id/pass-upgrade. Auth: business; signed in. */
+export interface PostWishesByIdPassUpgradeParams {
+  id: string;
+}
+export type PostWishesByIdPassUpgradeBody = Record<string, never>;
+export type PostWishesByIdPassUpgradeHeaders = Record<string, never>;
+export type PostWishesByIdPassUpgradeResponse = Wish;
+
 /** E-230 POST /v1/wishes/:id/restore. Auth: business; signed in. */
 export interface PostWishesByIdRestoreParams {
   id: string;
@@ -4346,6 +4331,8 @@ export interface PostWishesByIdSealBody {
   ticket?: unknown;
   /** string (optional; an IANA zone name) */
   timeZone?: string;
+  /** boolean (optional; true draws one wish from the Pass in place of a ticket payment) */
+  usePass?: boolean;
   /** integer (the version the page last read) */
   version: number;
   /** string */
@@ -4615,6 +4602,7 @@ export interface EndpointContracts {
   "E-227": { params: PostWishesByIdEraseParams; body: PostWishesByIdEraseBody; headers: PostWishesByIdEraseHeaders; response: PostWishesByIdEraseResponse };
   "E-228": { params: PostWishesByIdKeepParams; body: PostWishesByIdKeepBody; headers: PostWishesByIdKeepHeaders; response: PostWishesByIdKeepResponse };
   "E-229": { params: GetWishesByIdLinkParams; query: GetWishesByIdLinkQuery; headers: GetWishesByIdLinkHeaders; response: GetWishesByIdLinkResponse };
+  "E-241": { params: PostWishesByIdPassUpgradeParams; body: PostWishesByIdPassUpgradeBody; headers: PostWishesByIdPassUpgradeHeaders; response: PostWishesByIdPassUpgradeResponse };
   "E-230": { params: PostWishesByIdRestoreParams; body: PostWishesByIdRestoreBody; headers: PostWishesByIdRestoreHeaders; response: PostWishesByIdRestoreResponse };
   "E-231": { params: PostWishesByIdSealParams; body: PostWishesByIdSealBody; headers: PostWishesByIdSealHeaders; response: PostWishesByIdSealResponse };
   "E-232": { params: PostWishesByIdWakeParams; body: PostWishesByIdWakeBody; headers: PostWishesByIdWakeHeaders; response: PostWishesByIdWakeResponse };

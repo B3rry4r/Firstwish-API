@@ -12,6 +12,8 @@ export const READS_PER_MINUTE = 60;
 export const UNLOCKS_PER_HOUR = 10;
 export const LINK_WRONG_TRIES = 30;
 export const LINK_LOCK_SECONDS = 3600;
+/** LL4: the longest window a limit counts over is an hour; a hit older than twice that is of no use, and the timed job removes it. */
+export const LINK_HIT_KEEP_SECONDS = 2 * 3600;
 
 /**
  * Limits counted in the database (they fail closed: a dead database refuses the request). A take is ONE statement (insert
@@ -52,7 +54,11 @@ export class LinkLimits {
       const wait = Math.max(1, Math.ceil((first.getTime() + windowSeconds * 1000 - now.getTime()) / 1000));
       throw new RateLimited(wait, `Too many tries. Try again in ${wait} seconds.`);
     }
-    // old rows are cleared now and then, never on the path of the limit itself
-    if (Math.random() < 0.02) void this.db.$executeRaw`DELETE FROM link_hit WHERE at < ${new Date(now.getTime() - 2 * 3600 * 1000)}`.catch(() => undefined);
+  }
+
+  /** LL4: removes the hits past their keeping time. The timed job "clean-link-hits" (registered with the jobs frame) calls it; never the path of a limit. */
+  async removeOld(): Promise<number> {
+    const gone = await this.db.linkHit.deleteMany({ where: { at: { lt: new Date(this.clock.now().getTime() - LINK_HIT_KEEP_SECONDS * 1000) } } });
+    return gone.count;
   }
 }

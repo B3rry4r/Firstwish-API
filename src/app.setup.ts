@@ -23,6 +23,9 @@ export function setupApp(app: INestApplication): INestApplication {
   // V4: the client address is read past exactly TRUST_PROXY_HOPS trusted proxies; 0 (default) reads the socket address.
   express.set("trust proxy", env.TRUST_PROXY_HOPS);
   express.set("json replacer", wireReplacer);
+  // JJ1: the JSON body limit is a config value (512 KB by default), above the wish content limit (256 KB), so an oversize wish
+  // reaches the service and gets its 422 with the reason, not a bare 413 from the parser. The raw body stays kept for webhooks.
+  express.useBodyParser("json", { limit: env.JSON_BODY_LIMIT_BYTES });
   app.use(requestIdMiddleware);
   app.setGlobalPrefix(API_PREFIX);
   // AA3: control characters are refused (422) before validation, for every body, query and path value.

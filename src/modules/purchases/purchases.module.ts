@@ -6,6 +6,7 @@ import { WishesModule } from "../wishes/wishes.module";
 import { BusinessHandlers } from "./business-handlers";
 import { CreatorHandlers } from "./creator-handlers";
 import { GrantStore } from "./grants";
+import { PassDrawsModule } from "./pass-draws";
 import { PassService } from "./pass.service";
 import { PurchasesService } from "./purchases.service";
 import { WishHandlers } from "./wish-handlers";
@@ -16,7 +17,7 @@ import { WishHandlers } from "./wish-handlers";
  * (draw a client wish, extraGb of Vault space).
  */
 @Module({
-  imports: [PaymentsModule, WishesModule, JobsModule, EventsModule],
+  imports: [PaymentsModule, WishesModule, JobsModule, EventsModule, PassDrawsModule],
   providers: [GrantStore, WishHandlers, PassService, BusinessHandlers, CreatorHandlers, PurchasesService],
   exports: [PurchasesService, PassService, BusinessHandlers, GrantStore],
 })

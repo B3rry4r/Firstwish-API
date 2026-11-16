@@ -5,3 +5,6 @@ coverage/
 .env.*
 !.env.example
 *.log
+
+# process id files a test stack writes (never part of the repo)
+*.pid

@@ -65,6 +65,12 @@ export const MANIFEST_VARS: readonly VarSpec[] = [
     default: "live",
   },
   {
+    name: "STANDIN_MAIL_OUTBOX",
+    need: "optional",
+    kind: "string",
+    purpose: "HK1: a file the stand-in email appends each message to, one JSON line (to, template, subject, text, at); tests only, refused with PROVIDERS=live or NODE_ENV=production",
+  },
+  {
     name: "INTERNAL_TOKEN",
     need: "always",
     kind: "secret",

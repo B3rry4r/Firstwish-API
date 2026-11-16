@@ -67,7 +67,7 @@ const providers: Provider[] = [
   {
     provide: EmailPort,
     inject: [ENV],
-    useFactory: (env: Env) => limited(env, "email", standin(env) ? new StandinEmail() : new ResendEmail(need(env.RESEND_API_KEY), need(env.MAIL_FROM))),
+    useFactory: (env: Env) => limited(env, "email", standin(env) ? new StandinEmail(env.STANDIN_MAIL_OUTBOX) : new ResendEmail(need(env.RESEND_API_KEY), need(env.MAIL_FROM))),
   },
   {
     provide: StoragePort,

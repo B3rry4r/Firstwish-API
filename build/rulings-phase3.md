@@ -765,3 +765,10 @@ HG1 (give race) Two staff giving one Concierge order: the code is right (overlap
   because nothing is kept in the browser (R10). The session screen holds its neutral loading state until /v1/me answers
   and only then paints, so no wrong mode flashes on a signed-in screen; the public website keeps the device's own
   preference (prefers-color-scheme) with no store (W1). Measured by the W0b verifier; a fix is a W3 case if it flashes.
+- HK2 (revised 16 Nov after W0b's verifier measured it): a person who chose light and reloads a signed-in screen sees dark
+  for about 0.4 s until the server answers. Painting the device's preference first would be worse (most accounts are dark,
+  many devices light). The only cure is a small server-set cookie holding "light" or "dark", which touches the owner's rule
+  R10, so it is the OWNER'S call (asked 16 Nov); until then the flash stays, recorded in build/sweeps/web.md.
+- HL1 (16 Nov, W0b verify, medium): lib/maker.ts saveWish wrote the whole account (name, email) to localStorage after a
+  real sign-in. Identity is never in a browser store from W0b on: that write goes now (P-W0b); the maker's own draft
+  store (fw-maker, voice notes) goes with W4 and W5, the website's mode store with W1, as the baseline says.

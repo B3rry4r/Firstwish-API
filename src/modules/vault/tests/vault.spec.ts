@@ -206,8 +206,10 @@ describe("B18 Vault: shoots, space, reveal links, plays, E-33", () => {
     // The 20 confirms line up on the one account lock, and each waits up to 15 s for its turn: on a loaded machine one can be
     // answered with a wait that ran out (neither 200 nor vault_full), once in a while 4 refusals where 5 were expected. A confirm
     // that was not answered is sent again, as a client would; the counts below are exactly as before.
+    // INT-7: only the wait that ran out is sent again; any other answer (a 500 included) stays as it is and fails the counts below.
+    const waitedOut = (r: { status: number }) => r.status === 503; // the wait that ran out answers 503 (U2)
     for (let i = 0; i < confirmed.length; i++) {
-      for (let again = 0; again < 3 && !(confirmed[i].status === 200 || (confirmed[i].status === 409 && confirmed[i].body.error.code === "vault_full")); again++) {
+      for (let again = 0; again < 3 && !(confirmed[i].status === 200 || (confirmed[i].status === 409 && confirmed[i].body.error.code === "vault_full")) && waitedOut(confirmed[i]); again++) {
         confirmed[i] = await post(`/v1/uploads/${made[i].body.id}/confirm`, o.token, { fileId: made[i].body.id });
       }
     }

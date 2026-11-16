@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "frozenAt": "2026-11-16T05:44:51Z",
+  "frozenAt": "2026-11-16T07:47:35Z",
   "framework": "nestjs",
   "generatedBy": "tools/pipeline/reconcile.py",
   "resources": [
@@ -8483,6 +8483,18 @@
           "supersedes": [
             "S-2: server-issued UUIDv7 ids"
           ]
+        },
+        {
+          "name": "overPlan",
+          "type": "boolean",
+          "classes": [
+            "boolean"
+          ],
+          "nullable": false,
+          "provenance": [
+            "DEC-210"
+          ],
+          "supersedes": []
         },
         {
           "name": "status",

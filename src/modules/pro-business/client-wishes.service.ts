@@ -117,8 +117,8 @@ export class ClientWishesService implements OnModuleInit {
   }
 
   /**
-   * HD3: the caller's right to the business, read under the owner's lock (the one every login removal takes): the owner, or an invited or
-   * active login. A login removed while the request waited gets 404 and nothing is drawn, so no wish lands on a removed login.
+   * HD3: the caller's right to the business, read under the owner's lock (the one every login removal takes): the owner, or an active login (an invited login that
+   * has not accepted is not a member yet: the same rule as paying for the business, INT-7). A login removed while the request waited gets 404 and nothing is drawn, so no wish lands on a removed login.
    */
   private async requireMember(tx: Tx, accountId: string, businessId: string): Promise<void> {
     const rows = await tx.$queryRaw<{ ok: number }[]>`
@@ -126,7 +126,7 @@ export class ClientWishesService implements OnModuleInit {
       UNION ALL
       SELECT 1 AS ok FROM login l JOIN account a ON a.id = ${accountId}::uuid
        WHERE l."businessId" = ${businessId}::uuid AND a.contact IS NOT NULL AND a."erasedAt" IS NULL
-         AND lower(trim(l.contact)) = lower(a.contact) AND l.status IN ('invited', 'active')
+         AND lower(trim(l.contact)) = lower(a.contact) AND l.status = 'active'
       LIMIT 1`;
     if (!rows.length) throw AppError.notFound();
   }

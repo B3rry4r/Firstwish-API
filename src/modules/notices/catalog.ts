@@ -3,7 +3,7 @@ import { maskEmail } from "../../common/normalise/mask-email";
  * The messages Firstwish sends (B11; B18 adds the reveal message; INT-4 adds the staff invite, B17 the business login invite, WW5 the bank-changed message). Every one goes by email (R11). The wording lives in the MessageTemplate table
  * (seeded from the web app, edited by staff); this file holds what the wording may name and what the code needs from it.
  */
-export type TemplateKey = "sealed" | "opens" | "opened" | "resting" | "code" | "invite" | "login-invite" | "bank-changed" | "support" | "concierge-delivered" | "reveal";
+export type TemplateKey = "sealed" | "opens" | "opened" | "resting" | "code" | "invite" | "login-invite" | "logins-over" | "bank-changed" | "support" | "concierge-delivered" | "reveal";
 
 export interface TemplateSpec {
   key: TemplateKey;
@@ -53,6 +53,10 @@ export const TEMPLATES: Readonly<Record<TemplateKey, TemplateSpec>> = {
   "login-invite": {
     key: "login-invite", label: "You are invited to a business", when: "When a business owner adds a login for an email address.", audience: "The person invited",
     allowed: ["business"], needs: ["business"], purpose: "invite", noticeKind: null, mutable: false,
+  },
+  "logins-over": {
+    key: "logins-over", label: "Your plan has fewer logins", when: "When a business's plan changes to one with fewer logins than the business has: the logins stay, and the owner chooses which to remove (B17).", audience: "The business owner",
+    allowed: ["business", "allowed", "used"], needs: ["allowed", "used"], purpose: "support", noticeKind: null, mutable: false,
   },
   "bank-changed": {
     key: "bank-changed", label: "Your payout bank account changed", when: "When a creator saves a new payout bank account.", audience: "The creator",

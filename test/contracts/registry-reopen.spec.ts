@@ -74,10 +74,18 @@ describe("P1 (DEC-132): NumbersTarget stores one target per line and month", () 
     await db.$disconnect();
   });
   it("keeps targetKobo as a whole kobo BigInt and refuses a second row for the same line and period", async () => {
-    const row = { line: "extras" as const, period: "month" as const, targetKobo: 12_000_000n, setBy: ids.next(), setAt: new Date() };
+    const staff = ids.next();
+    await db.staffAccount.create({ data: { id: staff, email: `int7-target-${process.pid}-${Date.now()}@example.com`, name: "Staff", roles: ["finance"], status: "active" } });
+    const row = { line: "extras" as const, period: "month" as const, targetKobo: 12_000_000n, setBy: staff, setAt: new Date() };
     const made = await db.numbersTarget.create({ data: { id: ids.next(), ...row } });
     expect(made.targetKobo).toBe(12_000_000n);
     const e: unknown = await db.numbersTarget.create({ data: { id: ids.next(), ...row } }).catch((x: unknown) => x);
     expect(e instanceof Prisma.PrismaClientKnownRequestError ? e.code : undefined).toBe("P2002");
+  });
+  it("INT-7: refuses a target whose setBy is no staff account (the foreign key)", async () => {
+    // (keeps, month) is this test's own pair: a row another run left there is cleared first, so the unique key cannot answer before the foreign key.
+    await db.numbersTarget.deleteMany({ where: { line: "keeps", period: "month" } });
+    const e: unknown = await db.numbersTarget.create({ data: { id: ids.next(), line: "keeps", period: "month", targetKobo: 1n, setBy: ids.next(), setAt: new Date() } }).catch((x: unknown) => x);
+    expect(e instanceof Prisma.PrismaClientKnownRequestError ? e.code : undefined).toBe("P2003");
   });
 });

@@ -1,5 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { Clock } from "../../common/ports/clock.port";
+import { NoticesService } from "../notices/notices.service";
 import { InvoicesService } from "../pro-business/invoices.service";
 import type { FulfilmentContext } from "../payments/fulfilment.registry";
 import { addDays, addMonths, GrantStore, monthKey, num, type GrantRow, type Tx } from "./grants";
@@ -51,7 +52,33 @@ export class BusinessHandlers {
     private readonly store: GrantStore,
     private readonly clock: Clock,
     private readonly invoices: InvoicesService,
+    private readonly notices: NoticesService,
   ) {}
+
+  /**
+   * B17: a plan that allows fewer logins than the business has keeps every login (nobody is removed behind the owner's back) and tells
+   * the owner once per change, by email, what the plan allows and how many there are. The page shows which logins are over (Login.overPlan).
+   * The owner's address is read without a lock: the business row is already locked here and the owner's account is locked first elsewhere.
+   */
+  private async loginsOverNotice(tx: Tx, businessId: string, allowed: number): Promise<void> {
+    if (allowed < 1) allowed = 1;
+    const rows = await tx.$queryRaw<{ used: number; gone: number; contact: string | null; name: string | null; business: string | null }[]>`
+      SELECT 1 + (SELECT count(*) FROM login WHERE "businessId" = b.id AND coalesce(status, '') <> 'removed')::int AS used,
+             (SELECT count(*) FROM login WHERE "businessId" = b.id AND status = 'removed')::int AS gone,
+             a.contact, b.name, b.business
+        FROM business b LEFT JOIN account a ON a.id = b."accountId" WHERE b.id = ${businessId}::uuid`;
+    const r = rows[0];
+    if (!r || r.used <= allowed || !r.contact) return;
+    await this.notices.send(tx, {
+      template: "logins-over",
+      toEmail: r.contact,
+      data: { business: r.business ?? r.name ?? "Your business", allowed: String(allowed), used: String(r.used) },
+      // HF3: the key is the business and its over-plan state (what the plan allows, the logins it has, the logins removed so far), not
+      // the payment: a second payment while the state is the same sends none; logins removed to bring it in line change the state, so
+      // a later downgrade that puts it over again sends one again.
+      key: `logins-over:${businessId}:${allowed}:${r.used}:${r.gone}`,
+    });
+  }
 
   /** Locks the business and rolls its month to the clock's month (a no-op inside the month). Answers the row as it now stands. */
   private async lockBusiness(tx: Tx, id: string | null): Promise<Biz | null> {
@@ -132,6 +159,7 @@ export class BusinessHandlers {
       { plan, wishes: num(g.wishes), logins: num(g.logins), vaultGb: num(g.vaultGb), pushed: live, month: b.month ?? monthKey(now) },
       data.renews as Date,
     );
+    await this.loginsOverNotice(tx, b.id, num(g.logins));
     await this.invoices.issue(tx, ctx.payment);
   }
 
@@ -250,6 +278,8 @@ export class BusinessHandlers {
           ? { plan: String(newest.detail.plan), allowance: num(newest.detail.wishes), renews: ends, version: { increment: 1 } }
           : { plan: num(b.pack) > 0 ? "pack" : null, allowance: null, renews: null, version: { increment: 1 } },
       });
+      // B17: the plan that stands after a refund may have fewer logins than the business has (none, when no plan stands).
+      await this.loginsOverNotice(tx, b.id, stands && newest ? num(newest.detail.logins) : 1);
     }
     return result;
   }

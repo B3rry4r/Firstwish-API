@@ -1,3 +1,4 @@
+import type { Money } from "../../money/money";
 import { PAYSTACK_BASE_URL } from "./paystack.adapter";
 import { getJson, postJson, ProviderError } from "./http";
 import { type PortPing, pingWith } from "../ping";
@@ -11,6 +12,8 @@ interface Envelope<T> {
 interface RefundRow {
   id: number | string;
   status?: string | null;
+  /** The refund's amount in kobo. */
+  amount?: number | string | null;
 }
 interface SettlementRow {
   id: number | string;
@@ -46,15 +49,15 @@ export class PaystackRefundProvider extends RefundProviderPort {
     return pingWith(() => getJson("paystack", `${this.baseUrl}/refund?perPage=1`, this.auth), [this.secretKey]);
   }
 
-  /** Paystack's list of refunds for one transaction: the first that has not failed. NOT RUN against Paystack. */
-  async findRefund(paymentReference: string): Promise<RefundAccepted | null> {
+  /** Paystack's list of refunds for one transaction: the first that has not failed and is for this amount (INT-7: a refund of another amount is not ours). NOT RUN against Paystack. */
+  async findRefund(paymentReference: string, amount: Money): Promise<RefundAccepted | null> {
     const r = await getJson<Envelope<RefundRow[]>>("paystack", `${this.baseUrl}/refund?transaction=${encodeURIComponent(paymentReference)}&perPage=${PER_PAGE}`, this.auth);
-    const live = (r.data ?? []).find((x) => x.status !== "failed");
+    const live = (r.data ?? []).find((x) => x.status !== "failed" && x.amount !== undefined && x.amount !== null && Number(x.amount) === amount.kobo);
     return live ? { providerReference: String(live.id) } : null;
   }
 
   async refund(input: RefundRequest): Promise<RefundAccepted> {
-    const held = await this.findRefund(input.paymentReference);
+    const held = await this.findRefund(input.paymentReference, input.amount);
     if (held) return held;
     try {
       const r = await postJson<Envelope<{ id: number | string }>>("paystack", `${this.baseUrl}/refund`, this.auth, {

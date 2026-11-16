@@ -3186,6 +3186,26 @@
       "confidence": "high",
       "source": "build/rulings-phase3.md (INT-6)",
       "decidedAt": "2026-11-20T12:00:00Z"
+    },
+    {
+      "id": "DEC-210",
+      "topic": "Login says which logins are over the plan",
+      "closes": [],
+      "decision": "B17 (sweep line): Login gains overPlan (boolean). After a downgrade that leaves more logins than the plan allows the logins stay, the owner gets one email (message `logins-over`), and GET /v1/business/logins answers overPlan true on each login past the plan's seats (the owner's own seat counts first; logins are taken oldest first), false on the others, so the page can show which to remove. No endpoint is added or removed; ids already issued do not change.",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/sweeps/api.md (Left for a shared change, B17); build/prompts/INT-7.md",
+      "decidedAt": "2026-11-22T12:00:00Z"
+    },
+    {
+      "id": "DEC-211",
+      "topic": "registry re-freeze (ninth reopen)",
+      "closes": [],
+      "decision": "The registry is re-frozen after B17 (DEC-210) by tools/pipeline/freeze.py; reconcile.py was run twice with --reopen (identical outputs, EXIT 0, 0 open conflicts, both admin gate lines 0). Login gains overPlan; endpoint ids already issued are unchanged, none added or removed. The other four lines of the sweep (account delete trigger, NumbersTarget.setBy foreign key, Paystack refund match, audit rows from the Clock port) change storage and code, not the wire.",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/prompts/INT-7.md",
+      "decidedAt": "2026-11-22T12:00:00Z"
     }
   ]
 }

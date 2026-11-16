@@ -2,6 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
 import { lockAccount } from "../../common/db/account-lock";
 import { PrismaService } from "../../common/db/prisma.service";
+import { giveBackDraws } from "../purchases/draw-giveback";
 import { AppError } from "../../common/errors/app-error";
 import { Clock } from "../../common/ports/clock.port";
 import { IdGenerator } from "../../common/ports/ids.port";
@@ -211,6 +212,8 @@ export class AccountErasureService {
       await tx.qrCard.updateMany({ where: { wishId: { in: wishIds } }, data: { names: Prisma.DbNull } });
       await tx.publishedWish.updateMany({ where: { wish: { in: wishIds } }, data: { forName: null, from: null, name: null } });
     }
+    // INT-7: a draft a business drew a wish for gives the wish back when the account's erase removes it (once; a sealed wish gives nothing).
+    await giveBackDraws(tx, wishIds, now);
     // Every wish transition is recorded (wish lifecycle declaration); ids are UUIDv7 made here, one per wish that moves.
     const moving = await tx.wish.findMany({ where: { id: { in: wishIds }, status: { not: "removed" } }, select: { id: true, status: true } });
     if (moving.length) {

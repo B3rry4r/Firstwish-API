@@ -500,8 +500,10 @@ describe("price book (contract)", () => {
 
     it("Z3: a change that changes nothing is 409 not_allowed with no version and no audit row, one at a time or at once", async () => {
       const cur = (await get("extra.five-photos")).price;
-      // The threshold is set here, not left from an earlier test: setting it to 660000 is 200 or, when it already is, 409.
-      expect([200, 409]).toContain((await put("finance", "payout.thresholdKobo", { priceKobo: 660000 })).status);
+      // INT-7: the threshold is set here by two real changes, whatever an earlier test left: first to a figure it is not, then to 660000.
+      const now = (await get("payout.thresholdKobo")).price;
+      expect((await put("finance", "payout.thresholdKobo", { priceKobo: now === 650000 ? 640000 : 650000 })).status).toBe(200);
+      expect((await put("finance", "payout.thresholdKobo", { priceKobo: 660000 })).status).toBe(200);
       const c0 = await counts();
       const same = await put("owner", "extra.five-photos", { priceKobo: cur });
       expect(same.status).toBe(409);

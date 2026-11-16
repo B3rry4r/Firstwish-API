@@ -618,8 +618,14 @@ export class WishesService {
     const row = await this.prisma.$transaction(async (tx) => {
       await lockAccount(tx, accountId);
       await this.owned(tx, accountId, id, biz);
-      await this.lifecycle.move(tx, await this.lifecycle.lock(tx, id), "taken_down", { cause: "owner.remove" });
-      return tx.wish.findUniqueOrThrow({ where: { id } });
+      const locked = await this.lifecycle.lock(tx, id);
+      const wasDraft = stateOf(locked) === "draft";
+      await this.lifecycle.move(tx, locked, "taken_down", { cause: "owner.remove" });
+      const gone = await tx.wish.findUniqueOrThrow({ where: { id } });
+      // INT-7: a business's draft that is removed can be brought back within the restore window; when the window ends the draft is erased
+      // and the wish its draw took goes back to the business (the move to erased does that).
+      if (wasDraft && gone.businessId) await this.jobs.schedule("restore-window-end", new Date(this.clock.now().getTime() + (await this.lifecycle.restoreDays(tx)) * DAY), id, tx);
+      return gone;
     });
     return this.wire(row);
   }
@@ -649,7 +655,12 @@ export class WishesService {
         const last = await tx.wishTransition.findFirst({ where: { wishId: id, to: "taken_down" }, orderBy: { id: "desc" } });
         if (last?.cause !== "owner.remove") throw AppError.forbidden("Only the team can bring this wish back.");
         const to = await this.lifecycle.stateBeforeTakeDown(tx, id);
+        // INT-7: a business's removed draft comes back only inside the restore window (after it the draft is erased and its draw is given back).
+        if (to === "draft" && (await tx.wish.findUniqueOrThrow({ where: { id }, select: { businessId: true } })).businessId && last.createdAt.getTime() + (await this.lifecycle.restoreDays(tx)) * DAY <= this.clock.now().getTime()) {
+          throw AppError.conflict("not_allowed", "This wish cannot be brought back.");
+        }
         await this.lifecycle.move(tx, w, to, { cause: "owner.restore" });
+        await this.jobs.cancel("restore-window-end", id, tx);
         const back = await tx.wish.findUniqueOrThrow({ where: { id } });
         if (to === "sealed") await this.scheduleOpening(tx, id, back.opensAt ?? this.clock.now());
         if (to === "live") await this.jobs.schedule("rest-wish", back.endsAt ?? this.clock.now(), id, tx);

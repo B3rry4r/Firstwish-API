@@ -1,3 +1,4 @@
+import type { Money } from "../../money/money";
 import { PING_STAND_IN, type PortPing } from "../ping";
 import { RefundAccepted, ProviderSettlement, RefundProviderPort, RefundRefused, RefundRequest } from "../refund-provider.port";
 
@@ -35,25 +36,38 @@ export class StandinRefundProvider extends RefundProviderPort {
     this.settlements.set(day, s);
   }
 
-  findRefund(paymentReference: string): Promise<RefundAccepted | null> {
-    return Promise.resolve(this.created.get(paymentReference) ?? null);
+  /** HF3: like the real adapter, a refund is found by its payment's reference AND its amount (the amounts this stand-in was asked for are kept). */
+  findRefund(paymentReference: string, amount?: Money): Promise<RefundAccepted | null> {
+    const held = this.created.get(paymentReference);
+    if (!held) return Promise.resolve(null);
+    if (amount === undefined) return Promise.resolve(held);
+    const kept = (this.amounts.get(paymentReference) ?? []).find((a) => a.kobo === amount.kobo);
+    // A refund put in `created` by hand (a test's first ask that landed) carries no amount: it matches whatever amount asks.
+    if (kept) return Promise.resolve(kept.accepted);
+    return Promise.resolve(this.amounts.has(paymentReference) ? null : held);
+  }
+
+  private readonly amounts = new Map<string, { kobo: number; accepted: RefundAccepted }[]>();
+  private keep(reference: string, amount: Money, accepted: RefundAccepted): void {
+    this.created.set(reference, accepted);
+    this.amounts.set(reference, [...(this.amounts.get(reference) ?? []), { kobo: amount.kobo, accepted }]);
   }
 
   /** Looks the payment's refund up first, as the real adapter does, and creates one only when none is there. */
   async refund(input: RefundRequest): Promise<RefundAccepted> {
     this.asked.push(input);
-    const held = await this.findRefund(input.paymentReference);
+    const held = await this.findRefund(input.paymentReference, input.amount);
     if (held) return held;
     if (this.hang) {
       if (this.landing) {
-        this.created.set(input.paymentReference, { providerReference: `standin-refund-${input.refundId}` });
+        this.keep(input.paymentReference, input.amount, { providerReference: `standin-refund-${input.refundId}` });
         this.creations.push(input.refundId);
       }
       return new Promise<RefundAccepted>(() => undefined);
     }
     if (this.refuse !== null) throw new RefundRefused(this.refuse);
     const made = { providerReference: `standin-refund-${input.refundId}` };
-    this.created.set(input.paymentReference, made);
+    this.keep(input.paymentReference, input.amount, made);
     this.creations.push(input.refundId);
     return made;
   }

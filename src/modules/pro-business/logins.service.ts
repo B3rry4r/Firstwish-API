@@ -16,7 +16,7 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 /** The message a new login gets (the wording is a MessageTemplate row of this key). */
 export const INVITE_TEMPLATE = "login-invite" satisfies TemplateKey;
 
-const wire = (l: { id: string; contact: string | null; status: string | null }): Login => ({ id: l.id, contact: l.contact ?? "", status: l.status ?? "invited" });
+const wire = (l: { id: string; contact: string | null; status: string | null }, overPlan = false): Login => ({ id: l.id, contact: l.contact ?? "", status: l.status ?? "invited", overPlan });
 
 /**
  * The extra logins of a business (E-66 to E-68). Only the owner manages them. The plan's number of seats comes from the
@@ -41,7 +41,11 @@ export class LoginsService {
     }
     const rows = await this.prisma.login.findMany({ where: { businessId, id: { gt: after }, NOT: { status: "removed" } }, orderBy: { id: "asc" }, take: limit + 1 });
     const page = toPage(rows, limit, (r) => ({ key: r.id, id: r.id }));
-    return { items: page.items.map(wire), nextCursor: page.nextCursor };
+    // B17: after a downgrade the logins stay. Seats go oldest first with the owner's own seat first; a login past the plan's seats is overPlan.
+    const state = await this.plan.peek(this.prisma, businessId);
+    const allowed = await this.plan.loginsAllowed(this.prisma, state?.plan ?? null);
+    const before = await this.prisma.login.count({ where: { businessId, id: { lte: after }, NOT: { status: "removed" } } });
+    return { items: page.items.map((l, i) => wire(l, before + i + 2 > allowed)), nextCursor: page.nextCursor };
   }
 
   /** E-67: invite a login by email. Inviting an email that already stands answers the login it has. */
@@ -54,7 +58,7 @@ export class LoginsService {
       if (normaliseEmail(owner.account?.contact ?? "") === email) throw AppError.conflict("already_member", "That is your own sign-in email.");
       const same = await tx.$queryRaw<{ id: string; contact: string | null; status: string | null }[]>`
         SELECT id::text AS id, contact, status FROM login WHERE "businessId" = ${businessId}::uuid AND lower(trim(contact)) = ${email} AND coalesce(status, '') <> 'removed' LIMIT 1`;
-      if (same[0]) return wire(same[0]);
+      if (same[0]) return wire(same[0]); // a login that already stands is within the plan when it was invited (invites past the seats are refused)
       // Count the seats under the same lock that every login change takes (the owner's account), so two invites cannot both take the last one.
       const state = await this.plan.peek(tx, businessId);
       const allowed = await this.plan.loginsAllowed(tx, state?.plan ?? null);
@@ -63,7 +67,7 @@ export class LoginsService {
       const id = this.ids.id();
       await tx.login.create({ data: { id, businessId, contact: email, status: "invited" } });
       await this.notices.send(tx, { template: INVITE_TEMPLATE, toEmail: email, data: { business: owner.business ?? owner.name ?? "A business" }, key: `login-invite:${id}` });
-      return { id, contact: email, status: "invited" };
+      return { id, contact: email, status: "invited", overPlan: false };
     });
   }
 

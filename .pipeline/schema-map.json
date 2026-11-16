@@ -488,6 +488,12 @@
      "attrs": "",
      "opt": true,
      "why": "HD2: how many wishes that line gave (the plan's wishes for the month, or the pack's size): the share of the line is its cost over this"
+    },
+    "drawnBackAt": {
+     "type": "DateTime",
+     "attrs": "@db.Timestamptz(3)",
+     "opt": true,
+     "why": "INT-7: when the draw of a draft that was removed for good was given back to the business (once per wish); null while it stands or was never given back"
     }
    },
    "refs": {
@@ -884,6 +890,9 @@
      "rule": "keep",
      "why": "state"
     }
+   },
+   "omit": {
+    "overPlan": "worked out on read from the plan's seats and the logins that stand (B17, DEC-210); not stored"
    }
   },
   "Maker": {
@@ -1024,10 +1033,9 @@
     "setBy",
     "setAt"
    ],
-   "dbTypes": {
-    "setBy": "@db.Uuid"
-   },
-   "setByNote": "Q10: setBy is a staff account id kept as a uuid without a foreign key, because test/contracts/registry-reopen.spec.ts (DEC-132, not this pass's to edit) stores a target with no staff row; reported to the lead."
+   "refs": {
+    "setBy": "StaffAccount"
+   }
   },
   "OpeningDef": {
    "class": "config",

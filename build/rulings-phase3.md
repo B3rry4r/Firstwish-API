@@ -839,3 +839,7 @@ HG1 (give race) Two staff giving one Concierge order: the code is right (overlap
 - HP11: there is no "payment left" call: a payment the person leaves stays pending until the provider's session ends,
   and starting again for the same thing reuses it (seen: the same reference came back). Stories and a Following list
   have no server read and are not drawn; they are product additions for the owner to ask for, not gaps.
+- HP12 (W13's hand-back): staff people search takes a wish number; a moderator can see the held photo they are judging
+  (a signed short-lived read, audited); the wish-of-the-day picks for today and the next 6 days can be read back; the
+  creators list says which payout months are due. Now Showing has no order control: the list is newest first (no
+  reorder in the contract; an addition for the owner to ask for).

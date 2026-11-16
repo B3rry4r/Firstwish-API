@@ -1,4 +1,4 @@
-BUILDER API-BASE-4 | TIER T2 | Budget 150 steps. Nine named items the wiring found; change nothing else.
+BUILDER API-BASE-4 | TIER T2 | Budget 190 steps. Ten named items the wiring found; change nothing else.
 Machine: 4 CPUs, 15 GB; a heavy job only at 5 GB available. Kill what you start by PID.
 Read /home/user/Firstwish-API/build/common-rules.md, rulings HP1-HP8 (and HN1, FC1, HA1) in build/rulings-phase3.md, and how API-BASE-3
 reopened the registry (build/prompts/API-BASE-3.md). ONE reopen for all registry changes here, decisions citing the
@@ -31,6 +31,10 @@ Cases (through the real routes; a test for each):
     answer ({reaction, wish}), PublishedWish.creator ({handle, name}), PlayWish.wish and data, and the loose fields
     the web had to cast (lib/person.ts on the web branch w3-app lists ten named casts with the request beside each:
     read them: /home/user/Firstwish-web, `git show w3-app:lib/person.ts`). No change on the wire unless a ruling says so.
+10. HP12 (staff, from W13): GET /v1/admin/people also searches by wish number; staff who may moderate get a signed,
+    short-lived read url for a held photo on the moderation item (never for other roles; in the audit); a read of the
+    wish-of-the-day picks for today and the next 6 days; the creators list carries each creator's payout months and
+    which are due. Each as the registry would shape it (one reopen with the rest).
  9. The two low lines in build/sweeps/api.md under "For the next API base": the stored makerNote is bounded (not
     only the incoming one) and a body nested too deep is 422, never 500.
 Checks (quiet logs, EXIT lines): typecheck, lint on changed files, gates.sh, check-contracts, check-drift, check-routes,

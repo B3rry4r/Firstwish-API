@@ -24,6 +24,8 @@ const CREDITS_MAX = 12;
 const DAY = /^\d{4}-\d{2}-\d{2}$/;
 const STYLE = /^[a-z0-9][a-z0-9-]{0,39}$/;
 const IDEM_MAX = 120;
+const REVEAL_EMAILS_PER_ADDRESS_PER_DAY = 5;
+const REVEAL_EMAILS_PER_BUSINESS_PER_DAY = 100;
 
 /** What a reveal says: the words only. The client's address, the passcode and the end date never go into the stored words. */
 interface Words {
@@ -154,6 +156,22 @@ export class RevealsService {
   }
 
   /**
+   * EB1: sending a reveal is limited to 5 emails a day to one address from one business and 100 a day for a business (PROVISIONAL). Counted
+   * from the day's reveal emails in the database in one statement, under the owner's lock the send holds (so 20 sends at once with 2 left
+   * send 2); a count that cannot be made throws, and nothing is sent (fail closed). The day is the database's own UTC day, the same clock that stamps each email row.
+   */
+  private async takeEmailRoom(tx: Tx, businessId: string, email: string): Promise<void> {
+    const [n] = await tx.$queryRaw<{ address: number; business: number }[]>`
+      SELECT (count(*) FILTER (WHERE lower(d."to") = ${email.toLowerCase()}))::int AS address, count(*)::int AS business
+        FROM message_delivery d
+        JOIN client_wish c ON c.id = (CASE WHEN d."idempotencyKey" ~ '^reveal:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}:' THEN substr(d."idempotencyKey", 8, 36)::uuid END)
+       WHERE c."businessId" = ${businessId}::uuid AND d."createdAt" >= date_trunc('day', now() AT TIME ZONE 'UTC') AT TIME ZONE 'UTC'`;
+    if (!n) throw new Error("the day's reveal emails could not be counted");
+    if (n.address >= REVEAL_EMAILS_PER_ADDRESS_PER_DAY) throw new AppError(429, "too_many_requests", `You have sent ${REVEAL_EMAILS_PER_ADDRESS_PER_DAY} reveals to this address today. Try again tomorrow.`);
+    if (n.business >= REVEAL_EMAILS_PER_BUSINESS_PER_DAY) throw new AppError(429, "too_many_requests", `Your business has sent ${REVEAL_EMAILS_PER_BUSINESS_PER_DAY} reveal emails today. Try again tomorrow.`);
+  }
+
+  /**
    * E-33. `:id` is the client wish (made by E-30, which counted it); the reveal from `shoot`'s `set` goes on it. With an Idempotency-Key
    * the same key again answers the first result and sends nothing; without one, or with a new key, it sends again on purpose.
    */
@@ -189,6 +207,7 @@ export class RevealsService {
       if (!fileIds.length) throw AppError.validation({ set: `There are no ${set} in this shoot yet.` });
       const biz = await tx.business.findUniqueOrThrow({ where: { id: businessId }, select: { business: true, name: true } });
       const passHash = s.passcode ? await hashPasscode(s.passcode) : null;
+      if (s.email) await this.takeEmailRoom(tx, businessId, s.email);
 
       const existing = await tx.$queryRaw<{ linkId: string; code: string }[]>`SELECT "linkId"::text AS "linkId", code FROM reveal_access WHERE "wishId" = ${wishId}::uuid FOR UPDATE`;
       let linkId: string;

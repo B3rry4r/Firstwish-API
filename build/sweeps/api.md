@@ -13,14 +13,24 @@
 - Draft client wishes removed before 16 Nov's change have no window job, so they give nothing back (there are none: nothing
   is live).
 
-## From W13's verifier (low, staff routes; for API-BASE-5)
-- Erasing an erased person again answers 200; a take-down on an already removed wish answers 200; a second ban of the
-  same scope is allowed: each should answer 409 with words. Staff erase is immediate (no waiting period): as ruled (FC1)?
-- Staff wish search is exact (the number is case-sensitive, the email must be whole).
-- From W12's builder: PUT /admin/prices has no payout-day field (R14 wants threshold and day editable); a price-book
-  versions read open to finance (who and when); a state filter on the payments list and a search on businesses.
+## Closed by API-BASE-5 (DEC-229 to DEC-234)
+- W13's verifier: erasing an erased person is 409 (the repeat of a take-down on a taken-down or erased wish and of a ban of the same scope
+  already answered 409 with words on the routes checked: the old line was stale); staff erase is immediate as FC1 rules (no waiting
+  period; the 30 days and the 24 hours in the documents are a deleted wish's restore window and Erase now); staff wish search takes the
+  number in any case and a piece of an email; the payout day, the price-book versions read, the payments state filter and the
+  businesses search are in.
+- API-BASE-4's verifier: the Clock port in notices.service.ts and vault/reveals.service.ts (a delivery row is stamped from it too).
 
-## From API-BASE-4's verifier (low; accepted or for API-BASE-5)
+## For the next API base (API-BASE-6: one registry reopen)
+- Case 6: the staff reads typed as the server answers (payment detail, refund, ledger, business, wish, person, creator, moderation,
+  showing): shape types by decision, from the web's lib/admin/w13-api.ts and c-live.ts.
+- Case 7, the part not done: ending-purposes rows carry a display name and a line; today `name` is the slug (the registry has id,
+  line, name and no slug field, so it needs one).
+- Case 8: the receiver's keep and wake by link (HA1, HA2), a resting wish's "resting" state at its link, weddingDate on the public view.
+- Case 9: the house showcase wish of each style and showcaseSlug on the styles read (the seed holds 43 styles, every one a house style).
+- A friend with a wish's link has no route to add a voice (HQ4's "friends add voices"): the contribution flow is a product decision.
+- Test stacks: the stand-in storage accepts the signed put only after the upload ticket was signed in the same process (its bound map is
+  in memory); a restart between the ticket and the put refuses it.
+
+## From API-BASE-4's verifier (accepted)
 - A signed picture url is stateless: one given before a take-down still serves its bytes until its 10 minutes end. Accepted.
-- The database's now() in notices.service.ts:216-224 and vault/reveals.service.ts:168 ignores the test clock offset
-  (not on the wish path): use the Clock port there (API-BASE-5).

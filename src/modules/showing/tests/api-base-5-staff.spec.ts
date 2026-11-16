@@ -1,20 +1,29 @@
 import { spawnSync } from "node:child_process";
 import { join } from "node:path";
 import { PrismaService } from "../../../common/db/prisma.service";
+import { holdSettingLock } from "../../../../test/kit/setting-lock";
 import { account, B12App, b13App, bearer, liveWish, staffOf } from "./b13-kit";
 
 /** API-BASE-5 case 5 (R14 and the staff gaps), through the real routes. */
 describe("API-BASE-5 staff and money (through the real routes)", () => {
   let t: B12App;
   let db: PrismaService;
+  let releaseSetting: () => Promise<void>;
+  let original: unknown = null;
   beforeAll(async () => {
+    releaseSetting = await holdSettingLock(); // the payout setting is one row every spec shares
     t = await b13App();
     db = t.db;
     const root = join(__dirname, "../../../..");
     const r = spawnSync(process.execPath, [join(root, "scripts/seed.mjs")], { cwd: root, env: process.env, encoding: "utf8" });
     if (r.status !== 0) throw new Error(`seed failed: ${r.stderr}`);
+    original = (await db.$queryRaw<{ choice: unknown }[]>`SELECT choice FROM settings WHERE key = to_jsonb('payout.thresholdKobo'::text) LIMIT 1`)[0]?.choice ?? null;
   });
-  afterAll(() => t.close());
+  afterAll(async () => {
+    if (original) await db.$executeRaw`UPDATE settings SET choice = ${JSON.stringify(original)}::jsonb WHERE key = to_jsonb('payout.thresholdKobo'::text)`; // as found
+    await t.close();
+    await releaseSetting();
+  });
   const setting = (choice: Record<string, unknown>) => db.$executeRaw`UPDATE settings SET choice = ${JSON.stringify(choice)}::jsonb WHERE key = to_jsonb('payout.thresholdKobo'::text)`;
   const put = (token: string, key: string, body: Record<string, unknown>) => t.http().put(`/v1/admin/prices/${key}`).set(bearer(token)).send({ sku: key, ...body });
 

@@ -264,7 +264,10 @@ describe("B10 rulings NN1 NN2 NN3 NN4 NN5 and the proofs that stay (real databas
       ];
       expect(rs.map((r) => r.status)).toEqual([200, 410, 200, 410]);
       expect(rs[0].body.state).toBe("resting");
-      for (const r of rs) expect(JSON.stringify(r.body)).not.toMatch(/Chidi|Happy|noir|love|birthday\./);
+      // the resting view carries the link's public facts (kind, style, the receiver's name) like the counting view, and no content
+      expect(rs[0].body.content ?? null).toBeNull();
+      expect(JSON.stringify(rs[0].body)).not.toMatch(/Happy|birthday\.$/);
+      for (const r of rs.slice(1)) expect(JSON.stringify(r.body)).not.toMatch(/Chidi|Happy|noir|love|birthday\./);
     });
 
     it("the passcode lock: 40 addresses at once with the right code inside: at most 30 checked, the rest locked", async () => {

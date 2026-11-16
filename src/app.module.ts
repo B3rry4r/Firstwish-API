@@ -17,6 +17,9 @@ import { StylesModule } from "./modules/styles/styles.module";
 import { TemplatesModule } from "./modules/templates/templates.module";
 // end B14
 // B04: the price book
+import { ConciergeModule } from "./modules/concierge/concierge.module";
+import { QrCardsModule } from "./modules/qr-cards/qr-cards.module";
+import { RenderJobsModule } from "./modules/render-jobs/render-jobs.module";
 import { PriceBookModule } from "./modules/price-book/price-book.module";
 // end B04
 // B02: account sides, creators, business profile, follow
@@ -111,6 +114,11 @@ import { NoticesModule } from "./modules/notices/notices.module";
     // B11
     NoticesModule,
     // end B11
+    // B19
+    ConciergeModule,
+    QrCardsModule,
+    RenderJobsModule,
+    // end B19
   ],
 })
 export class AppModule {}

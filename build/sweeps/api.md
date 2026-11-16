@@ -23,3 +23,8 @@
 - Staff wish search is exact (the number is case-sensitive, the email must be whole).
 - From W12's builder: PUT /admin/prices has no payout-day field (R14 wants threshold and day editable); a price-book
   versions read open to finance (who and when); a state filter on the payments list and a search on businesses.
+
+## From API-BASE-4's verifier (low; accepted or for API-BASE-5)
+- A signed picture url is stateless: one given before a take-down still serves its bytes until its 10 minutes end. Accepted.
+- The database's now() in notices.service.ts:216-224 and vault/reveals.service.ts:168 ignores the test clock offset
+  (not on the wish path): use the Clock port there (API-BASE-5).

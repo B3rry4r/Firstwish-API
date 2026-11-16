@@ -646,3 +646,9 @@ FB3 (B21) Storage is chosen at deploy (R2: two adapters, one env value). The sta
     changed from the screen: a change is 422 saying so. No control that does nothing. (B21 patch.)
 FB4 (B21) "Connected" is read from evidence of a real call until the ports gain a ping (INT-6). Sending a wish's link again
     uses the "opens" message. Extend adds 7 days (the admin app's number). Masks as built. Accepted.
+FC1 (B21 verify, high) An action reached through the staff wish and person screens needs the same role as the route that owns
+    it: ban: moderator, owner; lift a ban: owner, ops (QQ2); erase an account: owner only; take down and restore: moderator,
+    ops, owner; start a refund: finance, ops, owner (sent in the same step only by the owner, TT3); extend and send the link
+    again: support, ops, owner. Any other role gets 403 and nothing changes. Default (lead), owner may override. (B21 patch.)
+FC2 (B21 verify, low) Staff may add at most 30 days in all to one wish, and send its link again at most 3 times a day
+    (PROVISIONAL), counted in the database. (B21 patch.)

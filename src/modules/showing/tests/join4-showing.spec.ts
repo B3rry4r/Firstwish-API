@@ -1,7 +1,7 @@
 import { PrismaService } from "../../../common/db/prisma.service";
 import { AccountErasureService } from "../../accounts/account-erasure.service";
 import { WishLifecycleService } from "../../wishes/wish-lifecycle.service";
-import { account, B12App, b13App, bearer, liveWish, staffOf } from "./b13-kit";
+import { account, B12App, b13App, bearer, liveWish, NOW, staffOf } from "./b13-kit";
 
 describe("Wave 4 join: Now showing with the wish lifecycle (J2, J3)", () => {
   let t: B12App;
@@ -78,7 +78,18 @@ describe("Wave 4 join: Now showing with the wish lifecycle (J2, J3)", () => {
     }
   });
 
+  // Restoring a resting wish schedules its rest-wish job at now + the restore window. Specs share one job table: this test runs on a
+  // clock no other spec reaches, so that job can never be due under another spec's clock (every other runDue names its own keys).
   it("J3: a resting wish that comes back is live and not listed; it needs a new ask and a new approval", async () => {
+    t.clock.set(new Date("2300-01-01T09:00:00.000Z"));
+    try {
+      await comesBack();
+    } finally {
+      t.clock.set(NOW);
+    }
+  });
+
+  async function comesBack() {
     const x = await listed();
     const lifecycle = t.app.get(WishLifecycleService);
     await db.$transaction(async (tx) => lifecycle.move(tx, await lifecycle.lock(tx, x.w.id), "resting", { cause: "test.rest", data: { restingSince: t.clock.now() } }));
@@ -89,5 +100,5 @@ describe("Wave 4 join: Now showing with the wish lifecycle (J2, J3)", () => {
     expect(again.status).toBe(201);
     expect(again.body.publish).toMatchObject({ status: "waiting", listed: false });
     expect(await publicHas(x.w.id)).toBe(false);
-  });
+  }
 });

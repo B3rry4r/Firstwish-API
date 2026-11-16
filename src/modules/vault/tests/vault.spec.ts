@@ -310,13 +310,15 @@ describe("B18 Vault: shoots, space, reveal links, plays, E-33", () => {
     const jobs = t.app.get(JobsService);
     notices.registerAll();
     const sentTo = () => t.email.sent.filter((e) => e.to === addr);
+    // Specs share one job table: run only the send jobs of this test's own deliveries.
+    const mine = async () => (await db.messageDelivery.findMany({ where: { to: addr }, select: { id: true } })).map((d) => d.id);
     const first = await post(url, o.token, { ...body, reveal: { ...reveal, email: `  ADA-${run}@Example.com ` } }, { "idempotency-key": `k-${run}-1` });
     expect(first.status).toBe(200);
     expect(first.body.wish).toMatchObject({ id: wish, shoot, set: "finals", client: "Ada Obi" });
     expect(first.body.wish.reveal).toMatchObject({ client: "Ada Obi", occasion: "Wedding", city: "Lagos", style: "golden", booking: "https://example.com/book", credits: [{ role: "Made by", name: "Lens House", handle: "" }] });
     expect(first.body.shoot).toMatchObject({ id: shoot, wishState: "finals", finalsReveal: { wish, no: expect.any(String) } });
     expect(JSON.stringify(first.body)).not.toMatch(/ada-\d+@|passcodeHash/);
-    await jobs.runDue(50);
+    await jobs.runDue(50, await mine());
     expect(sentTo()).toHaveLength(1);
     const link = (await db.$queryRaw<{ link: string }[]>`SELECT l.link FROM reveal_link l JOIN reveal_access a ON a."linkId" = l.id WHERE a."wishId" = ${wish}::uuid`)[0].link;
     expect(sentTo()[0].text).toContain(link);
@@ -325,7 +327,7 @@ describe("B18 Vault: shoots, space, reveal links, plays, E-33", () => {
     const dbl = await Promise.all([1, 2, 3].map(() => post(url, o.token, { ...body, reveal: { ...reveal, email: addr } }, { "idempotency-key": `k-${run}-1` })));
     expect(dbl.map((r) => r.status)).toEqual([200, 200, 200]);
     expect(dbl[0].body.wish.id).toBe(wish);
-    await jobs.runDue(50);
+    await jobs.runDue(50, await mine());
     expect(sentTo()).toHaveLength(1);
     // the same key for another wish is refused
     const w2 = await clientWish(o);
@@ -333,7 +335,7 @@ describe("B18 Vault: shoots, space, reveal links, plays, E-33", () => {
     // on purpose: a new key, or none, sends again; the link stays the same
     expect((await post(url, o.token, body, { "idempotency-key": `k-${run}-2` })).status).toBe(200);
     expect((await post(url, o.token, body)).status).toBe(200);
-    await jobs.runDue(50);
+    await jobs.runDue(50, await mine());
     expect(sentTo()).toHaveLength(3);
     expect(await db.$queryRaw`SELECT 1 FROM reveal_access WHERE "wishId" = ${wish}::uuid`).toHaveLength(1);
     // no email in the reveal: no email sent

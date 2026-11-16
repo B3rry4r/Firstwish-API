@@ -200,7 +200,7 @@ describe("jobs frame", () => {
       return { changed: {} };
     });
     await jobs.schedule("send-message", NOW, k);
-    await jobs.startPolling(200);
+    await jobs.startPolling(200, [k]);
     for (let i = 0; i < 40 && !ran; i++) await new Promise((r) => setTimeout(r, 150));
     expect(ran).toBe(true);
     void nid;

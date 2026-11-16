@@ -216,13 +216,16 @@ export class JobsService implements OnApplicationBootstrap {
     return n > 0;
   }
 
-  /** A BullMQ repeating tick that calls runDue. Not started in tests (NODE_ENV=test); a test starts it by hand. */
-  async startPolling(everyMs = 5000): Promise<void> {
+  /**
+   * A BullMQ repeating tick that calls runDue. Not started in tests (NODE_ENV=test); a test starts it by hand, with `only` so that
+   * the tick runs just its own subject keys (specs share one job table). Production passes nothing.
+   */
+  async startPolling(everyMs = 5000, only?: string[]): Promise<void> {
     if (this.worker) return;
     const q = this.queues.queue("jobs-tick");
     await q.upsertJobScheduler("due-jobs", { every: everyMs }, { name: "tick" });
     this.worker = this.queues.worker("jobs-tick", async () => {
-      await this.runDue();
+      await this.runDue(100, only);
     });
     this.worker.on("error", () => undefined);
   }

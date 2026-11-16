@@ -889,3 +889,14 @@ HG1 (give race) Two staff giving one Concierge order: the code is right (overlap
 - HS3 (house wishes): each style that is on has one house wish that plays it, made by the house creator from the
   style's own package and sample content that is marked as the house's (never shown as a person's), published, and
   linked from the styles read. A style with no house wish has no link.
+
+## HT (16 Nov 2026, the lead, on W5's second check). Default (lead), owner may override.
+- HT1: W5's second check was its last round. What it found is new work that only real uploads could show, so it is
+  re-cut as its own small task (W5b: the maker's photos under real uploads and the preview with photos), with its own
+  builder and verifier, on the same branch. W5 merges with W5b.
+- HT2: two tabs or two devices adding photos to one draft never lose a photo without a word: the add retries on the
+  server's 409 with the newest draft, and if a photo still cannot be kept the tile says so with the server's words.
+- HT3: the preview (/w/mine) plays what the maker's "See it so far" plays for the same draft, for every kind, with
+  or without a letter; it never crashes on a draft the server holds.
+- HT4: a style's tile in the picker is the style's own demo and may play the house's sample (it is a picture of the
+  style, not the person's wish). It carries no words that claim it is theirs. Allowed as it is.

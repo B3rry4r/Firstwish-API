@@ -42,7 +42,7 @@ export async function makeWish(db: PrismaService, accountId: string, over: Recor
   const id = ids.next();
   const no = `T${hex(5)}`;
   const w = await db.wish.create({
-    data: { id, accountId, status: "sealed", kind: "love", occasion: "birthday", styleSlug: "classic", timeZone: "Africa/Lagos", no, name: "Ada", letter: "SECRET WORDS OF THE LETTER", photos: [{ file: "SECRET-PHOTO" }], ...over } as never,
+    data: { id, accountId, status: "sealed", kind: "love", occasion: "birthday", styleSlug: "classic", timeZone: "Africa/Lagos", no, name: "Ada", content: { letter: "SECRET WORDS OF THE LETTER", photos: [{ file: "SECRET-PHOTO" }] }, ...over } as never,
   });
   const slug = `ada-${hex(2)}`;
   await db.wishLink.create({ data: { id: ids.next(), slug, wishId: id, active: true } });

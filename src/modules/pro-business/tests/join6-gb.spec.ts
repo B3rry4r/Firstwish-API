@@ -59,7 +59,7 @@ describe("GB1: every client wish earns at its seal, whichever way it was made", 
     return slug;
   };
   async function pay(o: { accountId: string; businessId: string }, sku: string) {
-    const book = await db.price.findFirstOrThrow({ where: { sku }, orderBy: { version: "desc" } });
+    const book = await db.price.findFirstOrThrow({ where: { sku, version: 1 } });
     const total = book.promoKobo ?? book.listKobo;
     const id = ids.next();
     const reference = `fw-${id}`;

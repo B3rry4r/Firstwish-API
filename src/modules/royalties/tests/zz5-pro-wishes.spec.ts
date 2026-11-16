@@ -78,7 +78,7 @@ describe("ZZ5: client wishes drawn from a plan or a pack earn the creator of the
     return slug;
   };
   async function pay(o: { accountId: string; businessId: string }, sku: string) {
-    const book = await db.price.findFirstOrThrow({ where: { sku }, orderBy: { version: "desc" } });
+    const book = await db.price.findFirstOrThrow({ where: { sku, version: 1 } });
     const total = book.promoKobo ?? book.listKobo;
     const id = ids.next();
     const reference = `fw-${id}`;
@@ -135,7 +135,7 @@ describe("ZZ5: client wishes drawn from a plan or a pack earn the creator of the
   };
 
   it("the seeded price book gives the figures worked by hand (Starter 3,500,000 for 10, Studio 10,500,000 for 35, pack 1,750,000 for 5)", async () => {
-    const price = async (sku: string) => (await db.price.findFirstOrThrow({ where: { sku }, orderBy: { version: "desc" } })).promoKobo;
+    const price = async (sku: string) => (await db.price.findFirstOrThrow({ where: { sku, version: 1 } })).promoKobo;
     expect(await price("pro.starter")).toBe(3_500_000n);
     expect(await price("pro.studio")).toBe(10_500_000n);
     expect(await price("pro.pack")).toBe(1_750_000n);

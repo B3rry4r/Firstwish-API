@@ -50,20 +50,20 @@ describe("EA4 (wave 6 join): after an owner's erase a client wish's reveal is bl
     t.tokens.set(token, { kind: "user", accountId, sides: ["person", "business"] });
     const businessId = ids.next();
     await db.business.create({ data: { id: businessId, accountId, name: "Studio", business: "Lens House", since: NOW, plan: "starter", renews: new Date("2027-12-01T09:00:00.000Z"), allowance: 10, used: 0, rolled: 0, month: "2027-08" } });
-    const shoot = await t.http().post("/v1/business/shoots").set(auth(token)).send({ client: "Zorbaquux Ibeji", date: "2027-07-20", title: "Wedding" });
+    const shoot = await t.http().post("/v1/business/shoots").set(auth(token)).send({ client: `Zorbaquux${run} Ibeji`, date: "2027-07-20", title: "Wedding" });
     expect(shoot.status).toBe(201);
     const file = ids.next();
     await db.storedFile.create({ data: { id: file, ownerAccountId: accountId, businessId, purpose: "vault_file", objectKey: `vault-file/${file}/k`, contentType: "image/jpeg", bytes: 1000n, status: "ready", variants: [], driver: "r2" } });
     expect((await t.http().post(`/v1/business/shoots/${shoot.body.id}/files`).set(auth(token)).send({ files: [file], set: "proofs", shoot: shoot.body.id })).status).toBe(201);
     const cw = ids.next();
-    await db.clientWish.create({ data: { id: cw, businessId, client: "Zorbaquux Ibeji", kind: "photographers", occasion: "wedding", day: new Date("2027-08-02T00:00:00Z"), no: `08${++seq}`, key: `k-${cw}`, wish: "", shoot: "", hearts: [], sentAt: NOW } });
+    await db.clientWish.create({ data: { id: cw, businessId, client: `Zorbaquux${run} Ibeji`, kind: "photographers", occasion: "wedding", day: new Date("2027-08-02T00:00:00Z"), no: `08${++seq}`, key: `k-${cw}`, wish: "", shoot: "", hearts: [], sentAt: NOW } });
     const reveal = {
-      client: "Zorbaquux Ibeji", occasion: "Wedding", city: "Ouagadougou", date: "2027-07-20", note: "Marmalade zebra remembers you.",
-      credits: [{ role: "Made by", name: "Quillfeather Studios", handle: "" }], booking: "https://example.com/book", style: "golden", email: "zorba@example.com", endsOn: "2027-08-12",
+      client: `Zorbaquux${run} Ibeji`, occasion: "Wedding", city: `Ouagadougou${run}`, date: "2027-07-20", note: `Marmalade${run} zebra remembers you.`,
+      credits: [{ role: "Made by", name: `Quillfeather${run} Studios`, handle: "" }], booking: "https://example.com/book", style: "golden", email: "zorba@example.com", endsOn: "2027-08-12",
     };
     const sent = await t.http().post(`/v1/business/client-wishes/${cw}/send-reveal`).set(auth(token)).send({ shoot: shoot.body.id, set: "proofs", reveal });
     expect(sent.status).toBe(200);
-    const strings = ["Zorbaquux", "Ouagadougou", "Marmalade zebra", "Quillfeather"];
+    const strings = [`Zorbaquux${run}`, `Ouagadougou${run}`, `Marmalade${run} zebra`, `Quillfeather${run}`];
     expect((await holders(strings)).filter((h) => h.startsWith("client_wish."))).not.toEqual([]); // the words are there before the erase
 
     await t.app.get(AccountErasureService).erase(accountId, { actor: { type: "system", id: null, requestId: "j6ea4" }, reason: "test" });
@@ -71,17 +71,17 @@ describe("EA4 (wave 6 join): after an owner's erase a client wish's reveal is bl
     // inside the term the reveal still plays: its words stay in the client wish
     const during = await db.clientWish.findUniqueOrThrow({ where: { id: cw } });
     expect(during.client).toBeNull();
-    expect(JSON.stringify(during.reveal)).toContain("Marmalade zebra");
+    expect(JSON.stringify(during.reveal)).toContain(`Marmalade${run} zebra`);
     t.clock.set(new Date(NOW.getTime() + 5 * DAY));
     await t.app.get(JobsService).runDue(50, [`client-wish:${cw}`]);
-    expect(JSON.stringify((await db.clientWish.findUniqueOrThrow({ where: { id: cw } })).reveal)).toContain("Marmalade zebra");
+    expect(JSON.stringify((await db.clientWish.findUniqueOrThrow({ where: { id: cw } })).reveal)).toContain(`Marmalade${run} zebra`);
 
     // after the end day: blanked with the rest, in every table
     t.clock.set(new Date(NOW.getTime() + 11 * DAY));
     await t.app.get(JobsService).runDue(50, [`client-wish:${cw}`]);
     const after = await db.clientWish.findUniqueOrThrow({ where: { id: cw } });
     expect(after).toMatchObject({ client: null, from: null, wish: null });
-    expect(JSON.stringify(after.reveal)).not.toMatch(/Zorbaquux|Ouagadougou|Marmalade|Quillfeather/);
+    expect(JSON.stringify(after.reveal)).not.toMatch(new RegExp(`Zorbaquux${run}|Ouagadougou${run}|Marmalade${run}|Quillfeather${run}`));
     expect(await holders(strings)).toEqual([]);
     // running it again changes nothing
     await t.app.get(JobsService).runDue(50, [`client-wish:${cw}`]);
@@ -94,8 +94,8 @@ describe("EA4 (wave 6 join): after an owner's erase a client wish's reveal is bl
     const businessId = ids.next();
     await db.business.create({ data: { id: businessId, accountId, name: "Studio", business: "Lens House", since: NOW } });
     const cw = ids.next();
-    await db.clientWish.create({ data: { id: cw, businessId, client: "Nyambura Wekesa", kind: "photographers", occasion: "wedding", no: `07${++seq}`, key: `k-${cw}`, wish: "", hearts: [], sentAt: NOW, reveal: { client: "Nyambura Wekesa", note: "Pineapple note", credits: [{ role: "x", name: "Fjordhaven" }], link: ids.next() } } });
+    await db.clientWish.create({ data: { id: cw, businessId, client: `Nyambura${run} Wekesa`, kind: "photographers", occasion: "wedding", no: `07${++seq}`, key: `k-${cw}`, wish: "", hearts: [], sentAt: NOW, reveal: { client: `Nyambura${run} Wekesa`, note: `Pineapple${run} note`, credits: [{ role: "x", name: `Fjordhaven${run}` }], link: ids.next() } } });
     await t.app.get(AccountErasureService).erase(accountId, { actor: { type: "system", id: null, requestId: "j6ea4" }, reason: "test" });
-    expect(await holders(["Nyambura", "Pineapple note", "Fjordhaven"])).toEqual([]);
+    expect(await holders(["Nyambura", `Pineapple${run} note`, `Fjordhaven${run}`])).toEqual([]);
   });
 });

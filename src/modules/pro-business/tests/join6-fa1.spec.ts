@@ -21,9 +21,14 @@ describe("FA1: the invoice and the ledger agree on VAT", () => {
   let t: TestApp;
   let db: PrismaService;
 
+  // Invoice numbers come from one counter every spec shares: the settle leaves its invoice out, and the real issue runs in a transaction that is rolled back.
+  const realIssue = InvoicesService.prototype.issue;
+  class Rollback extends Error {}
+
   beforeAll(async () => {
     t = await createTestApp({ now: NOW });
     db = t.app.get(PrismaService);
+    jest.spyOn(t.app.get(InvoicesService), "issue").mockResolvedValue(null);
     const r = spawnSync(process.execPath, [join(ROOT, "scripts/seed.mjs")], { cwd: ROOT, env: process.env, encoding: "utf8" });
     if (r.status !== 0) throw new Error(`seed failed: ${r.stderr}`);
   });
@@ -34,7 +39,7 @@ describe("FA1: the invoice and the ledger agree on VAT", () => {
     await db.account.create({ data: { id: accountId, contact: `j6fa1-${run}-${ids.next()}@example.com`, name: "Ada Obi", sides: ["person", "business"], lastSide: "person" } });
     const businessId = ids.next();
     await db.business.create({ data: { id: businessId, accountId, name: "Studio", business: "Studio", since: NOW } });
-    const book = await db.price.findFirstOrThrow({ where: { sku }, orderBy: { version: "desc" } });
+    const book = await db.price.findFirstOrThrow({ where: { sku, version: 1 } });
     const total = book.promoKobo ?? book.listKobo;
     const id = ids.next();
     const reference = `fw-${id}`;
@@ -48,8 +53,16 @@ describe("FA1: the invoice and the ledger agree on VAT", () => {
     });
     await t.app.get(SettlementService).settle({ reference, status: "success", amountKobo: total, currency: "NGN", paidAt: t.clock.now() });
     const payment = await db.payment.findUniqueOrThrow({ where: { id } });
-    const invoiceId = await db.$transaction((tx) => t.app.get(InvoicesService).issue(tx, payment));
-    const inv = (await db.invoice.findUniqueOrThrow({ where: { id: invoiceId as string } }));
+    let inv!: { vat: bigint | null; amount: bigint | null };
+    await db
+      .$transaction(async (tx) => {
+        const invoiceId = await realIssue.call(t.app.get(InvoicesService), tx, payment);
+        inv = await tx.invoice.findUniqueOrThrow({ where: { id: invoiceId as string } });
+        throw new Rollback();
+      })
+      .catch((e: unknown) => {
+        if (!(e instanceof Rollback)) throw e;
+      });
     const entries = await db.ledgerEntry.findMany({ where: { paymentId: id, account: "vat_payable" } });
     const ledgerVat = entries.reduce((n, e) => n + (e.direction === "credit" ? e.amountKobo : -e.amountKobo), 0n);
     return { total, inv, ledgerVat, entries, accountId, businessId };

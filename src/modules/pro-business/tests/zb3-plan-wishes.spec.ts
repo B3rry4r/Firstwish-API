@@ -2,7 +2,7 @@ import { spawnSync } from "node:child_process";
 import { join } from "node:path";
 import { PrismaService } from "../../../common/db/prisma.service";
 import { UuidV7Maker } from "../../../common/ids/uuidv7";
-import { createTestApp, TestApp } from "../../../../test/kit/app";
+import { createTestApp, TestApp, uniqueAddress } from "../../../../test/kit/app";
 import { AccountErasureService } from "../../accounts/account-erasure.service";
 import { JobsService } from "../../jobs/jobs.service";
 import { SettlementService } from "../../payments/settlement.service";
@@ -26,6 +26,19 @@ describe("ZB3: a business's client wishes are wishes (no reveal) and the maker s
 
   beforeAll(async () => {
     t = await createTestApp({ now: NOW });
+    // J7: public reads are counted per address; this spec's requests come from an address of its own, so no other spec's reads count against them.
+    const address = uniqueAddress();
+    const plain = t.http;
+    t.http = () => {
+      const agent = plain();
+      const verbs = new Set(["get", "post", "put", "patch", "delete", "head", "options"]);
+      return new Proxy(agent, {
+        get: (target, prop) => {
+          const v = (target as unknown as Record<string | symbol, unknown>)[prop];
+          return typeof prop === "string" && verbs.has(prop) ? (url: string) => (v as (u: string) => { set: (k: string, x: string) => unknown }).call(target, url).set("x-forwarded-for", address) : v;
+        },
+      });
+    };
     db = t.app.get(PrismaService);
     life = t.app.get(WishLifecycleService);
     wishes = t.app.get(WishesService);
@@ -74,7 +87,7 @@ describe("ZB3: a business's client wishes are wishes (no reveal) and the maker s
     return t.http().post(`/v1/wishes/${id}/seal`).set({ ...bearer(token), ...headers }).send({ version: row.version, openNow: true, ...extra });
   };
   async function pay(o: { accountId: string; businessId: string }, sku: string) {
-    const book = await db.price.findFirstOrThrow({ where: { sku }, orderBy: { version: "desc" } });
+    const book = await db.price.findFirstOrThrow({ where: { sku, version: 1 } });
     const total = book.promoKobo ?? book.listKobo;
     const id = ids.next();
     const reference = `fw-${id}`;

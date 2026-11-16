@@ -62,12 +62,12 @@ export async function monthSource(tx: Tx, businessId: string, now: Date): Promis
 
 /**
  * The pack payment a wish drawn from packs is paid by: packs are used oldest first, so the n-th pack wish the business has drawn
- * (counted from its client-wish records, this wish's own record left out) is paid by the grant where the running total of pack
+ * (counted from its client-wish records, this wish's own and those already given back left out: HF2) is paid by the grant where the running total of pack
  * sizes passes n. A refunded pack counts only the wishes drawn from it before the refund (recorded on the grant when it was revoked).
  */
 export async function packSource(tx: Tx, businessId: string, wishId: string): Promise<DrawSource | null> {
   const [n] = await tx.$queryRaw<{ n: number }[]>`
-    SELECT count(*)::int AS n FROM client_wish WHERE "businessId" = ${businessId}::uuid AND COALESCE("drawFrom"::text, "from") = 'pack' AND "wishId" IS DISTINCT FROM ${wishId}::uuid`;
+    SELECT count(*)::int AS n FROM client_wish WHERE "businessId" = ${businessId}::uuid AND COALESCE("drawFrom"::text, "from") = 'pack' AND "drawnBackAt" IS NULL AND "wishId" IS DISTINCT FROM ${wishId}::uuid`;
   let before = n?.n ?? 0;
   for (const g of await grantsOf(tx, businessId, "wish-pack")) {
     const size = g.revokedAt ? num(g.detail.drawn) : num(g.detail.wishes);

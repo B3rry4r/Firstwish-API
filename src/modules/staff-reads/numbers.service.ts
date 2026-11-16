@@ -88,6 +88,9 @@ export class NumbersService {
     const staffId = actor.id as string;
     return this.db.$transaction(async (tx) => {
       const now = this.clock.now();
+      // HF3: the target names the staff member who set it (a foreign key): a principal with no staff row is refused, not a 500.
+      const known = await tx.$queryRaw<{ id: string }[]>`SELECT id::text AS id FROM staff_account WHERE id = ${staffId}::uuid`;
+      if (!known.length) throw AppError.forbidden("Only a team member can set a target.");
       const rows = await tx.$queryRaw<{ targetKobo: bigint; setAt: Date }[]>`
         INSERT INTO numbers_target (id, line, period, "setAt", "setBy", "targetKobo")
         VALUES (${this.ids.id()}::uuid, ${body.line}::"NumbersTargetLine", ${body.period}::"NumbersTargetPeriod", ${now}, ${staffId}::uuid, ${BigInt(body.targetKobo)})

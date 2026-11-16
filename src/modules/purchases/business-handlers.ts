@@ -60,10 +60,11 @@ export class BusinessHandlers {
    * the owner once per change, by email, what the plan allows and how many there are. The page shows which logins are over (Login.overPlan).
    * The owner's address is read without a lock: the business row is already locked here and the owner's account is locked first elsewhere.
    */
-  private async loginsOverNotice(tx: Tx, businessId: string, allowed: number, key: string): Promise<void> {
+  private async loginsOverNotice(tx: Tx, businessId: string, allowed: number): Promise<void> {
     if (allowed < 1) allowed = 1;
-    const rows = await tx.$queryRaw<{ used: number; contact: string | null; name: string | null; business: string | null }[]>`
+    const rows = await tx.$queryRaw<{ used: number; gone: number; contact: string | null; name: string | null; business: string | null }[]>`
       SELECT 1 + (SELECT count(*) FROM login WHERE "businessId" = b.id AND coalesce(status, '') <> 'removed')::int AS used,
+             (SELECT count(*) FROM login WHERE "businessId" = b.id AND status = 'removed')::int AS gone,
              a.contact, b.name, b.business
         FROM business b LEFT JOIN account a ON a.id = b."accountId" WHERE b.id = ${businessId}::uuid`;
     const r = rows[0];
@@ -72,7 +73,10 @@ export class BusinessHandlers {
       template: "logins-over",
       toEmail: r.contact,
       data: { business: r.business ?? r.name ?? "Your business", allowed: String(allowed), used: String(r.used) },
-      key,
+      // HF3: the key is the business and its over-plan state (what the plan allows, the logins it has, the logins removed so far), not
+      // the payment: a second payment while the state is the same sends none; logins removed to bring it in line change the state, so
+      // a later downgrade that puts it over again sends one again.
+      key: `logins-over:${businessId}:${allowed}:${r.used}:${r.gone}`,
     });
   }
 
@@ -155,7 +159,7 @@ export class BusinessHandlers {
       { plan, wishes: num(g.wishes), logins: num(g.logins), vaultGb: num(g.vaultGb), pushed: live, month: b.month ?? monthKey(now) },
       data.renews as Date,
     );
-    await this.loginsOverNotice(tx, b.id, num(g.logins), `logins-over:${grantId}`);
+    await this.loginsOverNotice(tx, b.id, num(g.logins));
     await this.invoices.issue(tx, ctx.payment);
   }
 
@@ -275,7 +279,7 @@ export class BusinessHandlers {
           : { plan: num(b.pack) > 0 ? "pack" : null, allowance: null, renews: null, version: { increment: 1 } },
       });
       // B17: the plan that stands after a refund may have fewer logins than the business has (none, when no plan stands).
-      await this.loginsOverNotice(tx, b.id, stands && newest ? num(newest.detail.logins) : 1, `logins-over:revoke:${g.id}`);
+      await this.loginsOverNotice(tx, b.id, stands && newest ? num(newest.detail.logins) : 1);
     }
     return result;
   }

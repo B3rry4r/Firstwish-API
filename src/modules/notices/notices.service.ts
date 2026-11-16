@@ -258,7 +258,7 @@ export class NoticesService implements OnModuleInit {
     }
 
     try {
-      const sent = await this.email.send({ to, subject, text, idempotencyKey: `delivery:${row.id}`, ...(vars.replyTo ? { replyTo: vars.replyTo } : {}) });
+      const sent = await this.email.send({ to, subject, text, idempotencyKey: `delivery:${row.id}`, template: key, ...(vars.replyTo ? { replyTo: vars.replyTo } : {}) });
       return this.settle(row.id, key, "delivered", null, sent.id);
     } catch (e) {
       const { forGood, reason } = classify(e);

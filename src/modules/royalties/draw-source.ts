@@ -68,24 +68,40 @@ export async function monthSource(tx: Tx, businessId: string, now: Date): Promis
  * the record kept one) fill the oldest packs first.
  */
 export async function packSource(tx: Tx, businessId: string, wishId: string): Promise<DrawSource | null> {
-  const rows = await tx.$queryRaw<{ pid: string | null; n: number }[]>`
-    SELECT "drawPaymentId"::text AS pid, count(*)::int AS n FROM client_wish
-     WHERE "businessId" = ${businessId}::uuid AND COALESCE("drawFrom"::text, "from") = 'pack' AND "drawnBackAt" IS NULL AND "wishId" IS DISTINCT FROM ${wishId}::uuid
-     GROUP BY "drawPaymentId"`;
-  const own = new Map(rows.filter((r) => r.pid).map((r) => [r.pid as string, r.n]));
-  let loose = rows.find((r) => !r.pid)?.n ?? 0;
-  for (const g of await grantsOf(tx, businessId, "wish-pack")) {
-    if (g.revokedAt) continue;
-    const size = num(g.detail.wishes);
-    let free = size - (own.get(g.paymentId) ?? 0);
-    const take = Math.min(loose, Math.max(free, 0));
-    loose -= take;
-    free -= take;
-    if (free > 0) return withLine(tx, g, size);
+  for (const p of await packPlaces(tx, businessId, wishId)) {
+    if (p.size - p.drawn > 0) {
+      const g = p.grant;
+      return withLine(tx, g, p.size);
+    }
   }
   return null;
 }
 
+/**
+ * HJ1: each standing pack's size and its own standing draws, counted the one way packSource counts them (the client-wish records naming
+ * that pack's payment, given-back ones and `exceptWishId` left out: HF2; records naming no payment fill the oldest packs first).
+ * Packs already revoked are left out. The revoke of a pack reads its own unused places from here, so there is no second count.
+ */
+export async function packPlaces(tx: Tx, businessId: string, exceptWishId: string | null): Promise<{ paymentId: string; size: number; drawn: number; grant: Candidate }[]> {
+  const rows = await tx.$queryRaw<{ pid: string | null; n: number }[]>`
+    SELECT "drawPaymentId"::text AS pid, count(*)::int AS n FROM client_wish
+     WHERE "businessId" = ${businessId}::uuid AND COALESCE("drawFrom"::text, "from") = 'pack' AND "drawnBackAt" IS NULL
+       AND (${exceptWishId}::uuid IS NULL OR "wishId" IS DISTINCT FROM ${exceptWishId}::uuid)
+     GROUP BY "drawPaymentId"`;
+  const own = new Map(rows.filter((r) => r.pid).map((r) => [r.pid as string, r.n]));
+  let loose = rows.find((r) => !r.pid)?.n ?? 0;
+  const out: { paymentId: string; size: number; drawn: number; grant: Candidate }[] = [];
+  for (const g of await grantsOf(tx, businessId, "wish-pack")) {
+    if (g.revokedAt) continue;
+    const size = num(g.detail.wishes);
+    let drawn = own.get(g.paymentId) ?? 0;
+    const take = Math.min(loose, Math.max(size - drawn, 0));
+    loose -= take;
+    drawn += take;
+    out.push({ paymentId: g.paymentId, size, drawn, grant: g });
+  }
+  return out;
+}
 
 /** HD2: where a draw was counted from and the payment it was counted against, as the client-wish record keeps them. */
 export interface DrawColumns {

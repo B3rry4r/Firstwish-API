@@ -1,4 +1,5 @@
 import { createHash, createHmac, timingSafeEqual } from "node:crypto";
+import { appendFileSync } from "node:fs";
 import { ImageSizesPort, ResizeInput } from "../image-sizes.port";
 import { Money } from "../../money/money";
 import { AiWritingPort, WriteRequest, WriteResult } from "../ai.port";
@@ -81,11 +82,19 @@ export class StandinEmail extends EmailPort {
   readonly sent: (OutgoingEmail & { id: string })[] = [];
   private seq = 0;
 
+  /** HK1: when `outbox` names a file, each message is also appended there as one JSON line (to, template, subject, text, at). Unset: nothing is written. */
+  constructor(private readonly outbox?: string) {
+    super();
+  }
+
   send(email: OutgoingEmail): Promise<SentEmail> {
     const repeat = email.idempotencyKey ? this.sent.find((e) => e.idempotencyKey === email.idempotencyKey) : undefined;
     if (repeat) return Promise.resolve({ id: repeat.id });
     const id = `standin-email-${++this.seq}`;
     this.sent.push({ ...email, id });
+    if (this.outbox) {
+      appendFileSync(this.outbox, `${JSON.stringify({ to: email.to, template: email.template ?? null, subject: email.subject, text: email.text, at: new Date().toISOString() })}\n`);
+    }
     return Promise.resolve({ id });
   }
 

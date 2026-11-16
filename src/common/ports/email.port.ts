@@ -9,6 +9,8 @@ export interface OutgoingEmail {
   idempotencyKey?: string;
   /** YY1: where an answer to this email goes (a reply+<token>@ address that reaches its support thread). */
   replyTo?: string;
+  /** HK1: the notice template this message was made from (the stand-in outbox line names it); a provider ignores it. */
+  template?: string;
 }
 /** An email Firstwish received, as the provider holds it (YY2: the webhook event carries no body, so it is fetched by id). */
 export interface ReceivedEmail {

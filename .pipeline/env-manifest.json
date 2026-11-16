@@ -223,6 +223,12 @@
       "secret": false
     },
     {
+      "name": "STANDIN_MAIL_OUTBOX",
+      "introducedBy": "p-pack-refund",
+      "purpose": "HK1: a file the stand-in email appends each message to, one JSON line (to, template, subject, text, at); tests only, refused with PROVIDERS=live or NODE_ENV=production",
+      "secret": false
+    },
+    {
       "name": "INTERNAL_TOKEN",
       "introducedBy": "api-0",
       "purpose": "shared secret an internal route needs in the x-internal-token header (32 or more characters)",

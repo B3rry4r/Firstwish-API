@@ -1,5 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { Clock } from "../../common/ports/clock.port";
+import { packPlaces } from "../royalties/draw-source";
 import { NoticesService } from "../notices/notices.service";
 import { InvoicesService } from "../pro-business/invoices.service";
 import type { FulfilmentContext } from "../payments/fulfilment.registry";
@@ -251,10 +252,14 @@ export class BusinessHandlers {
     const d = g.detail;
     let result = "revoked";
     if (g.kind === "wish-pack") {
-      // TT5: this pack's size comes off what is left, never below 0; what was already used is not taken back and is written on the refund.
+      // HJ1 (revises TT5): off the counter come this pack's own unused places (its size less its own standing draws, counted by
+      // draw-source), never below 0; its own standing draws are written on the refund. Other packs' places are not touched.
       const size = num(d.wishes);
-      const pack = Math.max(num(b.pack) - size, 0);
-      const used = size - (num(b.pack) - pack);
+      const mine = (await packPlaces(tx, b.id, null)).find((p) => p.paymentId === g.paymentId);
+      const recorded = Math.min(mine ? mine.drawn : 0, size);
+      const pack = Math.max(num(b.pack) - (size - recorded), 0);
+      // A draw that left no record cannot be traced to a pack: it falls back to TT5 (what the counter lost beyond this pack's unused places).
+      const used = Math.max(recorded, size - (num(b.pack) - pack));
       if (used > 0) {
         // ZZ5: how many wishes were drawn from this pack stays on the grant, so the later packs still line up with the wishes drawn from them.
         await this.store.record(tx, g.id, { ...d, drawn: used }, g.endsAt);

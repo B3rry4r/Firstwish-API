@@ -6,6 +6,7 @@ export interface Env {
   NODE_ENV: "development" | "test" | "production";
   PORT: number;
   PROVIDERS: "live" | "standin";
+  STANDIN_MAIL_OUTBOX?: string;
   INTERNAL_TOKEN: string;
   DATABASE_URL: string;
   REDIS_URL: string;
@@ -144,6 +145,10 @@ export function loadEnv(raw: Record<string, string | undefined> = process.env): 
   if (timeouts.problem) problems.push({ name: "PORT_TIMEOUTS_MS", problem: timeouts.problem });
   if (out.NODE_ENV === "production" && providers === "standin") {
     problems.push({ name: "PROVIDERS", problem: "standin is refused when NODE_ENV=production" });
+  }
+  // HK1: the stand-in email's outbox file is for tests only: never with the real email provider, never in production.
+  if (get("STANDIN_MAIL_OUTBOX") !== undefined && (providers !== "standin" || out.NODE_ENV === "production")) {
+    problems.push({ name: "STANDIN_MAIL_OUTBOX", problem: "refused: it is for the stand-in email only (needs PROVIDERS=standin and a NODE_ENV other than production)" });
   }
   if (problems.length) throw new EnvError(problems);
   return out as unknown as Env;

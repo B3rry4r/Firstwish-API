@@ -673,3 +673,7 @@ GB1 (P-B16b hand-back) Every client wish earns at its seal whichever way it was 
     business calls the same accrual, reading what it was counted against (month or pack) from its client-wish record.
     (Wave 6 join.) A banned creator still earns and the payout waits (ZZ3): accepted. The draw accrues at the seal because
     the style can change until then: accepted.
+GC1 (B23) E-12 and E-14 take `transcript` (the text the browser's own dictation or the keyboard gave); voiceFileId is optional
+    and never read (R13: no audio reaches the AI). Any signed-in person may ask (a sender is a person). The AiRequest answer
+    carries only the fields that apply to its kind. Registry at the closing base. The daily cap of 20 is PROVISIONAL.
+GC2 (B23) A voice file named in an AI request can still be deleted or erased: the link is cleared, not refused (closing base).

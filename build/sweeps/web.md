@@ -26,3 +26,9 @@
 - W12 (verify 16 Nov): lib/admin/c-types.ts and c-live.ts type the staff payment, refund, ledger and business reads by
   hand with `as unknown as` (the contract is loose there: an API contract fix, API-BASE-5, then the casts go); a price
   typed 0, negative or not a number gets the screen's own words and is never sent; finance sees no "Changes" block.
+- W7 (verify 16 Nov), for other bundles: W6: components/app/maker/Seal.tsx:86 tells the maker to send /w/mine?id= as
+  the receiver's link (a stranger meets "Sign in"): it must be the server's /w/<slug>. W8: components/app/pro/ui.tsx:114
+  and W9: components/app/pro/vault.tsx:20 build /w/mine?name=&no= links that now land on Wishes. WEB-API-4: lib/api.ts's
+  headers option must not let a caller overwrite Authorization or the Idempotency-Key. API-BASE-5: keep and wake by
+  link (item 8) and house showcase wishes (item 9); then a small web bundle draws them. The receiver page is dark in
+  light mode too (check against the design before changing).

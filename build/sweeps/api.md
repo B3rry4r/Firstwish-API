@@ -14,3 +14,4 @@
 - Wave 3 join (note): a staff invite email now uses the sign-in code wording (the invite's own lead line is gone): add an 'invite' message with its wording in INT-4 (MessageTemplate seed).
 - B17 logins.service.ts:70: a downgrade that leaves more logins than the plan allows keeps them and says nothing; tell the owner (a notice) and show which to remove.
 - B17 client-wishes.service.ts:70: a login removed while its requests are in flight still lands them; the next is 403.
+- maskEmail exists twice (auth-codes.service.ts:15, notices/catalog.ts:169) and B08 has its own: one masker in src/common at the next shared base.

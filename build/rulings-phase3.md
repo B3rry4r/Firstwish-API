@@ -639,3 +639,10 @@ EB2 (B18 verify, medium) A signed file address already handed out lives up to 10
 FA1 (join 5 verify) An invoice's VAT part and the ledger always agree. Concierge carries VAT (T-12 says one VAT invoice): its
     payments book vat_payable like Pro's. Creator plans, credit packs and reviews: no document says they carry VAT, so their
     invoices state the total with no VAT part until the owner says (OWNER QUESTION, a tax matter). (Wave 6 join.)
+FB1 (B21) The contact reveal answers {phone, email} once (A19, DEC-130 outrank the 204 of Q12): registry at the closing base
+    (INT-6); the service already returns both.
+FB2 (B21) Numbers.lines is a list of {line, name, definition, amount} in the registry (INT-6).
+FB3 (B21) Storage is chosen at deploy (R2: two adapters, one env value). The staff setting shows which one runs and cannot be
+    changed from the screen: a change is 422 saying so. No control that does nothing. (B21 patch.)
+FB4 (B21) "Connected" is read from evidence of a real call until the ports gain a ping (INT-6). Sending a wish's link again
+    uses the "opens" message. Extend adds 7 days (the admin app's number). Masks as built. Accepted.

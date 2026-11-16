@@ -45,13 +45,15 @@ const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 /**
  * Vault space (GG4): the plan's GB plus the GB of every live grant: a wish pack's (its vaultGb, for its 90 days) and bought Vault
  * space (its gb, for its period), read from the grants (not refunded, not refused, not past their end). business.pack is wishes left.
+ * EA3: the plan's space counts only while the plan is live (its renewal date not past), as the Vault's own standing counts it.
  */
-export async function vaultLimitBytes(tx: Tx, biz: Pick<Business, "id" | "plan">, now: Date): Promise<number> {
+export async function vaultLimitBytes(tx: Tx, biz: Pick<Business, "id" | "plan" | "renews">, now: Date): Promise<number> {
   const e = await tx.entitlements.findFirst();
   if (!e) throw new AppError(HttpStatus.SERVICE_UNAVAILABLE, "entitlements_missing", "Vault space cannot be worked out right now.");
   const pro = (e.pro ?? {}) as Record<string, { vaultGb?: unknown } | undefined>;
   const gb = (x: unknown) => (typeof x === "number" && x > 0 ? x : 0);
-  const planGb = biz.plan && biz.plan !== "pack" ? gb(pro[biz.plan]?.vaultGb) : 0;
+  const planLive = !!biz.plan && biz.plan !== "pack" && !!biz.renews && biz.renews.getTime() > now.getTime();
+  const planGb = planLive && biz.plan ? gb(pro[biz.plan]?.vaultGb) : 0;
   const grants = await tx.purchaseGrant.findMany({
     where: { businessId: biz.id, kind: { in: ["wish-pack", "vault-space"] }, revokedAt: null, refusedReason: null, endsAt: { gt: now } },
     select: { kind: true, detail: true },
@@ -290,14 +292,18 @@ export class StoredFilesService {
         if (row.businessId && row.purpose === "vault_file") {
           const biz = await tx.business.findUniqueOrThrow({ where: { id: row.businessId } });
           const limit = await vaultLimitBytes(tx, biz, this.clock.now());
-          const counted = await tx.$queryRaw<{ id: string }[]>`
+          const counted = await tx.$queryRaw<{ id: string; vault: bigint }[]>`
             UPDATE business SET vault = COALESCE(vault, 0) + ${obj.size}, version = version + 1
             WHERE id = ${row.businessId}::uuid AND COALESCE(vault, 0) + ${obj.size} <= ${limit}
-            RETURNING id`;
+            RETURNING id, vault`;
           if (!counted.length) {
             await this.removeRows(tx, id);
             return { row, removeKeys: [objectKey, staging], error: AppError.conflict("vault_full", "This file would go over your Vault space.") };
           }
+          // EA3: the month's peak is lifted here too, in one statement (extra space is billed by the most the month held).
+          await tx.$executeRaw`
+            INSERT INTO vault_peak ("businessId", month, bytes) VALUES (${row.businessId}::uuid, ${this.clock.now().toISOString().slice(0, 7)}, ${counted[0].vault})
+            ON CONFLICT ("businessId", month) DO UPDATE SET bytes = GREATEST(vault_peak.bytes, EXCLUDED.bytes)`;
         }
         const ready = await tx.storedFile.update({
           where: { id },

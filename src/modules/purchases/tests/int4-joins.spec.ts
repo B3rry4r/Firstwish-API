@@ -128,18 +128,19 @@ describe("INT-4 joins", () => {
   it("GG4: business.pack is wishes left, and the Vault limit is the plan's GB plus the GB of live grants", async () => {
     const a = await account();
     const b = ids.next();
-    await db.business.create({ data: { id: b, accountId: a.id, name: "Studio", plan: "starter" } });
-    const plan = await db.$transaction((tx) => vaultLimitBytes(tx, { id: b, plan: "starter" }, t.clock.now()));
+    const renews = new Date(NOW.getTime() + 1000 * DAY); // EA3: the plan's space counts while the plan is live
+    await db.business.create({ data: { id: b, accountId: a.id, name: "Studio", plan: "starter", renews } });
+    const plan = await db.$transaction((tx) => vaultLimitBytes(tx, { id: b, plan: "starter", renews }, t.clock.now()));
     const pk = await pay(a.id, "pro.pack", {}, { businessId: b });
     expect((await db.business.findUniqueOrThrow({ where: { id: b } })).pack).toBe(5); // wishes left, not a count of packs
     const g = await db.purchaseGrant.findFirstOrThrow({ where: { paymentId: pk } });
-    const withPack = await db.$transaction((tx) => vaultLimitBytes(tx, { id: b, plan: "starter" }, t.clock.now()));
+    const withPack = await db.$transaction((tx) => vaultLimitBytes(tx, { id: b, plan: "starter", renews }, t.clock.now()));
     expect(withPack - plan).toBe(Number((g.detail as { vaultGb: number }).vaultGb) * GB);
     await pay(a.id, "vault.block", {}, { businessId: b });
-    const withVault = await db.$transaction((tx) => vaultLimitBytes(tx, { id: b, plan: "starter" }, t.clock.now()));
+    const withVault = await db.$transaction((tx) => vaultLimitBytes(tx, { id: b, plan: "starter", renews }, t.clock.now()));
     expect(withVault).toBeGreaterThan(withPack);
     t.clock.set(new Date(NOW.getTime() + 400 * DAY)); // every grant has ended
-    expect(await db.$transaction((tx) => vaultLimitBytes(tx, { id: b, plan: "starter" }, t.clock.now()))).toBe(plan);
+    expect(await db.$transaction((tx) => vaultLimitBytes(tx, { id: b, plan: "starter", renews }, t.clock.now()))).toBe(plan);
   });
 
   it("GG5: seal with usePass draws one Pass wish in the seal transaction; 20 at once with 1 left: one seals", async () => {

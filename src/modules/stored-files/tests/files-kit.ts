@@ -65,9 +65,12 @@ export async function makeAccount(db: PrismaService, t: TestApp, sides: ("person
   return { id, token };
 }
 
-export async function makeBusiness(db: PrismaService, accountId: string, over: { plan?: string | null; vault?: bigint; pack?: number; packEnds?: Date } = {}): Promise<string> {
+export async function makeBusiness(db: PrismaService, accountId: string, over: { plan?: string | null; vault?: bigint; pack?: number; packEnds?: Date; renews?: Date | null } = {}): Promise<string> {
   const id = ids.next();
-  await db.business.create({ data: { id, accountId, plan: over.plan === undefined ? "starter" : over.plan, vault: over.vault ?? 0n, pack: over.pack, packEnds: over.packEnds } });
+  const plan = over.plan === undefined ? "starter" : over.plan;
+  // EA3: the plan's Vault space counts only while the plan is live, so a plan made here renews far ahead unless a test says otherwise.
+  const renews = over.renews === undefined ? (plan ? new Date("2999-01-01T00:00:00.000Z") : null) : over.renews;
+  await db.business.create({ data: { id, accountId, plan, renews, vault: over.vault ?? 0n, pack: over.pack, packEnds: over.packEnds } });
   return id;
 }
 

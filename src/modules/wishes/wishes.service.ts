@@ -20,7 +20,8 @@ import { ProAccess } from "../pro-business/pro-access";
 import { ShowingLink } from "../showing/showing-link";
 import { localToUtc, parseOpening, utcToLocal } from "./local-time";
 import { CHAPTER_KEYS, DEFAULT_CONTENT_MAX_BYTES, FileRef, hasBody, readContent } from "./wish-content";
-import { UNOPENED_DAYS, WishLifecycleService } from "./wish-lifecycle.service";
+import { readLimits } from "../price-book/book-limits";
+import { WishLifecycleService } from "./wish-lifecycle.service";
 import { stateOf } from "./wish-state";
 import { WishPictures } from "./wish-pictures";
 import { kindHasOccasion, LAST_STEP } from "./kind-occasions";
@@ -178,7 +179,9 @@ export class WishesService {
     const shown = rows.slice(0, limit).map((r) => r.id);
     const [pics, videos] = await Promise.all([this.pictures.forWishes(shown), this.pictures.videoStates(shown)]);
     const book = await this.entitlements.row();
-    const one = (r: Wish): Obj => ({ ...this.wire(r, links.get(r.id)), pictures: pics.get(r.id) ?? [], video: videos.get(r.id) ?? "none", styleLevel: allowedLevel(book, r.ticket, r.adds) });
+    // the list carries `publish` as the detail does (where the owner's ask to be shown stands; null when none was made)
+    const publishes = await this.showing.showing.publishStateOf(shown);
+    const one = (r: Wish): Obj => ({ ...this.wire(r, links.get(r.id)), pictures: pics.get(r.id) ?? [], video: videos.get(r.id) ?? "none", styleLevel: allowedLevel(book, r.ticket, r.adds), publish: publishes.get(r.id) ?? null });
     return toPage(rows.map(one), limit, (r) => ({ key: String(r.id), id: String(r.id) }));
   }
 
@@ -705,7 +708,7 @@ export class WishesService {
   /** The open job at the open time, and the rest job for a wish nobody opens (EE9). */
   private async scheduleOpening(tx: Tx, id: string, opensAt: Date): Promise<void> {
     await this.jobs.schedule("open-wish", opensAt, id, tx);
-    await this.jobs.schedule("rest-wish", new Date(opensAt.getTime() + UNOPENED_DAYS * DAY), id, tx);
+    await this.jobs.schedule("rest-wish", new Date(opensAt.getTime() + (await readLimits(tx)).unopenedDays * DAY), id, tx);
   }
 
   /**

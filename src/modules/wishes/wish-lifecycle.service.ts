@@ -1,3 +1,4 @@
+import { readLimits } from "../price-book/book-limits";
 import { Injectable, OnModuleInit } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
 import { PrismaService } from "../../common/db/prisma.service";
@@ -20,8 +21,6 @@ type Tx = Prisma.TransactionClient;
 const DAY = 24 * 60 * 60 * 1000;
 /** The notice goes out three days before the term ends (conventions: Timed work). */
 export const NOTICE_DAYS = 3;
-/** A sealed wish nobody opens rests this long after its open time (EE9, PROVISIONAL). */
-export const UNOPENED_DAYS = 365;
 /** The upload-cleanup jobs that remove one file a erased wish named (EE4): the subject is this prefix and the file's id. */
 export const ERASE_WISH_FILE_PREFIX = "erase-wish-file:";
 
@@ -289,7 +288,7 @@ export class WishLifecycleService implements OnModuleInit {
         await this.jobs.cancel("rest-wish", w.id, tx);
         w = await this.lock(tx, c.subjectId);
       }
-      const due = state === "sealed" ? (w.opensAt ? new Date(w.opensAt.getTime() + UNOPENED_DAYS * DAY) : null) : w.endsAt;
+      const due = state === "sealed" ? (w.opensAt ? new Date(w.opensAt.getTime() + (await readLimits(tx)).unopenedDays * DAY) : null) : w.endsAt;
       if (state === "sealed" && !due) return { skipped: true };
       if (due && due.getTime() > c.now.getTime()) return { skipped: true, again: due };
       const eraseAfter = new Date(c.now.getTime() + (await this.holdDays(tx)) * DAY);

@@ -1,12 +1,14 @@
 import { Module } from "@nestjs/common";
 import { ENV } from "../../common/env/env.module";
 import type { Env } from "../../common/env/env";
+import { StoredFilesModule } from "../stored-files/stored-files.module";
 import { StylesModule } from "../styles/styles.module";
 import { CreatorStateService } from "./creator-state.service";
 import { AI_AVAILABILITY, AiAvailability, StudioAiService } from "./studio-ai.service";
 import { StudioAiController } from "./studio-ai.controller";
-import { StudioController } from "./studio.controller";
+import { StudioController, StyleFilesPlayerController } from "./studio.controller";
 import { StudioErasure } from "./studio-erasure";
+import { StudioFilesService } from "./studio-files.service";
 import { StudioPrefsService } from "./studio-prefs.service";
 import { StudioStylesService } from "./studio-styles.service";
 import { StyleReviewController } from "./style-review.controller";
@@ -17,12 +19,13 @@ import { SubmissionsService } from "./submissions.service";
  * account erase.
  */
 @Module({
-  imports: [StylesModule],
-  controllers: [StudioController, StudioAiController, StyleReviewController],
+  imports: [StylesModule, StoredFilesModule],
+  controllers: [StudioController, StudioAiController, StyleReviewController, StyleFilesPlayerController],
   providers: [
     CreatorStateService,
     StudioPrefsService,
     StudioStylesService,
+    StudioFilesService,
     SubmissionsService,
     StudioAiService,
     StudioErasure,

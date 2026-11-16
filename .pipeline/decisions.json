@@ -3569,6 +3569,86 @@
       "source": "build/rulings-phase3.md (HU1 to HU6); build/prompts/P-API-BASE-6.md",
       "decidedAt": "2026-11-27T18:00:00Z",
       "decision": "The registry is re-frozen after the patch of API-BASE-6 (DEC-242, HU1 to HU6) by tools/pipeline/freeze.py; reconcile.py was run twice with --reopen (identical outputs). No endpoint id is added or changed and no field is added or removed."
+    },
+    {
+      "id": "DEC-244",
+      "topic": "Receipts and refund notices by email (HW1, R11)",
+      "decision": "HW1: every settled payment sends one receipt email (message receipt: what was paid for, the amount, the VAT part where a line has one, the reference) to the account's email or, for a link holder (HU1), to the payer's email kept on the payment; the key is the payment's id, so a replayed webhook, a second settle and a retried settle send none, and a payment that is refund due or whose account is erased sends none. A refund the provider confirms sends one notice (message refund). Both are listed with the other messages in staff Messages (E-75). No endpoint or field changes.",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md; build/prompts/API-BASE-7.md",
+      "decidedAt": "2026-11-28T12:00:00Z"
+    },
+    {
+      "id": "DEC-245",
+      "topic": "Studio files (HW2)",
+      "decision": "HW2: POST /v1/uploads (E-182) takes the purposes picture, poster, sound, model (a Studio style's files, stored as studio-asset) and profile (profile-picture), and a draft's styleId (the draft and the style it becomes share one id; the id must be the caller's own Studio style, another creator's is 404); sizes come from the price book's lifecycle row (DEC-248). The owner reads a style's files with signed reads: GET /v1/studio/styles/:id/files (list) and GET /v1/studio/styles/:id/files/:fileId (one); another creator's style is 404. A player of a wish in an approved (live) style reads that style's files that passed screening with GET /v1/w/:slug/style-files; a draft's files are never readable there. A confirmed profile picture is the creator's img; the public creator read and /me carry its signed read. The file's style id is no longer a key to the style table (migration 20261127090000).",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md; build/prompts/API-BASE-7.md",
+      "decidedAt": "2026-11-28T12:00:00Z"
+    },
+    {
+      "id": "DEC-246",
+      "topic": "Signed off and the Creator plan's end (HW3)",
+      "decision": "HW3: PATCH /v1/studio/me (E-44) takes signed (false turns Signed off, true turns it back on before its paid day) and plan (open moves from Creator to Open, creator moves back before the paid day). Neither refunds and neither writes a ledger row: what is paid runs to its paid day and is not renewed; back on before that day costs nothing, after it a payment is needed (402). CreatorState (E-43, E-44) says planUntil, planEndsOn, planEnding, signedUntil, signedEndsOn and signedEnding. Signed now runs for the days its payment bought (signedUntil) and a paid Signed again adds to the day it already runs to.",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md; build/prompts/API-BASE-7.md",
+      "decidedAt": "2026-11-28T12:00:00Z"
+    },
+    {
+      "id": "DEC-247",
+      "topic": "The payout setting in the price-book read (HW4, R14)",
+      "decision": "HW4: GET /v1/price-book (E-125) carries payout {thresholdKobo, day, schedule, status, provisional}: the setting the payout run acts on and staff change in Prices (audited, E-124); the PROVISIONAL mark stays until the owner confirms.",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md; build/prompts/API-BASE-7.md",
+      "decidedAt": "2026-11-28T12:00:00Z"
+    },
+    {
+      "id": "DEC-248",
+      "topic": "One source for the book's limits (HW6)",
+      "decision": "HW6: the lifecycle row served inside the price book (LifecycleConfig) carries photoMaxBytes, soundMaxBytes, modelMaxBytes, conciergeDeliveryHours (3) and unopenedDays (365); the upload size check, the Concierge due time and the wish lifecycle (and the account erase) read the same row, and every price line says the same conciergeDeliveryHours (it said 0). The erase-now period is read as the unopened wish's wait before it is erased (unopenedDays) beside HOLD_DAYS (the resting hold), both from the book. The photo limit is photoMaxBytes; the count of photos stays per ticket in the entitlements.",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md; build/prompts/API-BASE-7.md",
+      "decidedAt": "2026-11-28T12:00:00Z"
+    },
+    {
+      "id": "DEC-249",
+      "topic": "Typed staff reads and per-section actions (HW7)",
+      "decision": "HW7: the staff session (StaffAccount, every staff read of the person) carries actions {section: [action]} for the sections the role opens, from the tables the routes check. Closed loose shapes in the contract: Payment.lines (PaymentLine[]), Payment.options (request: PaymentRequestView), LedgerDay.diffs (LedgerDiff[]), Numbers.keeps, kinds, occasions and styles (NumbersCount[]), Numbers.opens (NumbersOpenDay[]), Numbers.targets (a map of kobo or null), Payout.rows (PayoutStyleRow[]), Payout.paid (decision, at, reason), WishDetail.messages (StaffWishMessage[]), WishDetail.payments and PersonDetail.payments (StaffPaymentRow[]), WishDetail.person, WishDetail.wish and PersonDetail.wishes (StaffWish), PersonDetail.person (StaffPerson). The registry is corrected, not the wire.",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md; build/prompts/API-BASE-7.md",
+      "decidedAt": "2026-11-28T12:00:00Z"
+    },
+    {
+      "id": "DEC-250",
+      "topic": "Uploads nothing names are swept after 7 days (HW5); the wish list carries publish",
+      "decision": "HW5: a confirmed upload attached to no wish, style, profile, brand, shoot or playing reveal is removed 7 days after its confirm by the upload-cleanup job; a Vault file belongs to its business and a render, card or export to its owner, so they are left. GET /v1/wishes (E-221) rows carry publish as the detail does.",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md; build/prompts/API-BASE-7.md",
+      "decidedAt": "2026-11-28T12:00:00Z"
+    },
+    {
+      "id": "DEC-251",
+      "topic": "The registry is frozen again after HW1 to HW7",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md; build/prompts/API-BASE-7.md",
+      "decidedAt": "2026-11-28T12:00:00Z",
+      "decision": "The registry is re-frozen after DEC-244 to DEC-250 by tools/pipeline/freeze.py; reconcile.py was run twice with --reopen (identical outputs; .pipeline/ui-align-tasks.json restored byte for byte). Endpoint ids already issued are unchanged; E-265 was the last issued before, and the three new endpoints take E-266 (GET /v1/w/:slug/style-files), E-267 (GET /v1/studio/styles/:id/files) and E-268 (GET /v1/studio/styles/:id/files/:fileId)."
     }
   ]
 }

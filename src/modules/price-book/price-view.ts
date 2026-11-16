@@ -18,6 +18,8 @@ export interface LineContext {
   reason?: string;
   /** The public book: a promoted price is shown only while the promotion is on (staff always see the stored one). */
   public?: boolean;
+  /** HW6: the book's Concierge delivery hours (the lifecycle row), served on every line instead of the grant's own field */
+  deliveryHours?: number;
 }
 
 const groupOf = (sku: string) => sku.slice(0, Math.max(0, sku.indexOf("."))) || sku;
@@ -52,7 +54,7 @@ export function priceOf(line: BookLine, ctx: LineContext): Price {
     sla: "",
     reason: ctx.reason ?? "",
     items: ctx.grant ? [ctx.grant] : [],
-    conciergeDeliveryHours: num(ctx.grant?.deliveryHours),
+    conciergeDeliveryHours: ctx.deliveryHours ?? num(ctx.grant?.deliveryHours),
     conciergeSingleWish: single ? safe(PriceBookService.chargedAt(single, ctx.at)) : 0,
     changed: ctx.changed ?? false,
   };

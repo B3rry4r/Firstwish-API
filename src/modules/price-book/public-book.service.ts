@@ -5,6 +5,8 @@ import { decodeCursor, DEFAULT_LIMIT, toPage } from "../../common/pagination/cur
 import type { GetPriceBookQuery, LifecycleConfig, PriceBook, TicketQuote } from "../../contracts";
 import { EntitlementsService, grantOf } from "./entitlements.service";
 import { PriceBookService, safe } from "./price-book.service";
+import { readLimits } from "./book-limits";
+import { readPayoutSetting } from "./payout-setting";
 import { priceOf, promotionOf } from "./price-view";
 
 /**
@@ -28,16 +30,18 @@ export class PublicBookService {
     const ent = await this.entitlements.row();
     const limit = q.limit ?? DEFAULT_LIMIT;
     const after = q.cursor ? String(decodeCursor(q.cursor).key) : null;
+    const deliveryHours = (await readLimits(this.db)).conciergeDeliveryHours;
     const lines = after === null ? book.lines : book.lines.filter((l) => l.sku > after);
     const page = toPage(lines.slice(0, limit + 1), limit, (l) => ({ key: l.sku, id: l.id }));
     const promo = PriceBookService.promotionAt(book, at);
     const body: PublicBook = {
-      items: page.items.map((l) => priceOf(l, { at, book, grant: grantOf(ent, l.sku), public: true })),
+      items: page.items.map((l) => priceOf(l, { at, book, grant: grantOf(ent, l.sku), public: true, deliveryHours })),
       nextCursor: page.nextCursor,
       version: book.version,
       promotion: promo ? promotionOf(promo) : null,
       lifecycle: await this.lifecycle(),
       entitlements: await this.entitlements.wire(),
+      payout: await readPayoutSetting(this.db),
     };
     // A cache may keep the answer for a minute, never past the promotion's end: then the price changes.
     const untilEnd = promo ? Math.floor((promo.endsAt.getTime() - at.getTime()) / 1000) : 60;
@@ -47,7 +51,7 @@ export class PublicBookService {
   private async lifecycle(): Promise<LifecycleConfig | null> {
     const r = await this.db.lifecycleConfig.findFirst({ orderBy: { id: "desc" } });
     if (!r) return null;
-    const { id: _id, KEEPS, keepsakeExtrasCeiling, ...rest } = r;
+    const { id: _id, KEEPS, keepsakeExtrasCeiling, ...rest } = r; // rest carries photoMaxBytes, soundMaxBytes, modelMaxBytes, conciergeDeliveryHours and unopenedDays (HW6)
     return {
       ...rest,
       KEEPS: KEEPS === null ? null : safe(KEEPS),

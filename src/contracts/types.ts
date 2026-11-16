@@ -182,7 +182,20 @@ export interface PriceBook {
   promotion: Promotion | null;
   lifecycle: LifecycleConfig | null;
   entitlements: Entitlements;
+  /** HW4 (R14): the creators' payout threshold and day, with the PROVISIONAL mark; null when the book has none */
+  payout: PayoutSetting | null;
   nextCursor: string | null;
+}
+/** HW4 (R14): the payout setting the price book serves and the payout run acts on. */
+export interface PayoutSetting {
+  thresholdKobo: Kobo;
+  /** the day of the month the payout run starts (1 to 28) */
+  day: number;
+  /** the day in words: "the 5th of each month" */
+  schedule: string;
+  /** PROVISIONAL until the owner confirms (CONFIRMED) */
+  status: string;
+  provisional: boolean;
 }
 /** E-225 (CC1, DEC-170): a saved draft: the version to send with the next write, and when this one landed. */
 export interface WishSaved {
@@ -241,6 +254,8 @@ export interface Account {
   action: "ban" | "lift" | "erase";
   /** HR3 (E-6, E-7): the business the person owns and every business they are a login of, owner first: id, name, role and the login's state */
   businesses?: Array<{ id: string; name: string; role: "owner" | "login"; state: "owner" | "invited" | "active" | "removed" }>;
+  /** HW2 (E-6, E-7): the creator's profile picture, read through a signed address; null when there is none */
+  picture?: { fileId: string; url: string; expiresAt: Instant } | null;
   ban?: Record<string, unknown> | null;
   bio?: string | null;
   business: string;
@@ -420,6 +435,120 @@ export interface ClientWish {
   wishId?: string | null;
 }
 
+/** HW2: one file a Studio style holds, read through a signed address (url is null while the file is not ready to be read). */
+export interface StyleFile {
+  fileId: string;
+  purpose: StoredFile["purpose"];
+  kind: "image" | "sound" | "model" | "video";
+  contentType: string;
+  bytes: number;
+  status: StoredFile["status"];
+  url: string | null;
+  expiresAt: Instant | null;
+  createdAt: Instant;
+}
+/** HW2: the files of the style a wish is played in (the style is approved), those that passed screening. */
+export interface StyleFiles {
+  style: string;
+  items: StyleFile[];
+}
+/** HW7: a wish as the staff lists and details read it: number, state and term, never its words or photos. */
+export interface StaffWish {
+  no: string;
+  link: string;
+  forName: string;
+  person: string;
+  kind: string;
+  occasion: string;
+  ticket: string;
+  extras: string[];
+  state: string;
+  opensAt: Instant | "";
+  endsAt?: Instant;
+  isPublic: boolean;
+  timeline: Array<{ at: Instant; what: string; by?: string; reason?: string }>;
+}
+/** HW7: a person as the staff person screen reads it (contact masked). */
+export interface StaffPerson {
+  id: string;
+  name: string;
+  phone: string;
+  email: string;
+  contact: string;
+  joined: Instant;
+  sides: Array<{ side: string; name: string }>;
+  pass: { active: boolean; endsAt: Instant } | null;
+  ban: { at: Instant; by: string; reason: string } | null;
+  erased: boolean;
+  wishCount: number;
+  record: Array<{ at: Instant; what: string; by?: string; reason?: string }>;
+}
+/** HW7: one line of a payment. */
+export interface PaymentLine {
+  sku: string;
+  name: string;
+  qty: number;
+  unitKobo: Kobo;
+  totalKobo: Kobo;
+}
+/** HW7: what a payment's start request named. */
+export interface PaymentRequestView {
+  purpose?: string;
+  subjectId?: string;
+  id?: string;
+  key?: string;
+  plan?: string;
+  packs?: number;
+  ticket?: string;
+  title?: string;
+  way?: string;
+}
+/** HW7: one place the ledger and the provider differ. */
+export interface LedgerDiff {
+  kind: "provider_only" | "ours_only" | "amount_differs";
+  reference: string;
+  oursKobo: Kobo;
+  theirsKobo: Kobo;
+}
+/** HW7: a figure counted for a kind, an occasion, a style or a keep length. */
+export interface NumbersCount {
+  key: string;
+  name: string;
+  count: number;
+  paid?: number;
+}
+/** HW7: wishes opened on one day. */
+export interface NumbersOpenDay {
+  day: DateOnly;
+  count: number;
+}
+/** HW7: what one style earned in a payout's month. */
+export interface PayoutStyleRow {
+  styleSlug: string;
+  amountKobo: Kobo;
+}
+/** HW7: an email sent about a wish, as staff read it. */
+export interface StaffWishMessage {
+  id: string;
+  what: string;
+  channel: "email";
+  to: string;
+  state: string;
+  at: Instant;
+  wish: string;
+}
+/** HW7: a payment as the staff wish and person screens list it. */
+export interface StaffPaymentRow {
+  ref: string;
+  what: string;
+  line: string | null;
+  amount: Kobo;
+  state: string;
+  at: Instant;
+  person: string;
+  wish?: string;
+}
+
 /** ConciergeOrder: table. written by E-34, E-35, E-39, E-40 and server:concierge-orders */
 export interface ConciergeOrder {
   accountId: string;
@@ -510,6 +639,16 @@ export interface CreatorState {
   renews: Instant;
   reviewsLeft: number;
   signed: boolean;
+  /** HW3: the end of the Creator plan's paid time (null on the Open plan) and its Lagos day */
+  planUntil?: Instant | null;
+  planEndsOn?: DateOnly | null;
+  /** HW3: the plan was moved to Open and runs to planUntil without renewing */
+  planEnding?: boolean;
+  /** HW3: the end of Signed's paid time (null when Signed is off) and its Lagos day */
+  signedUntil?: Instant | null;
+  signedEndsOn?: DateOnly | null;
+  /** HW3: Signed was turned off and runs to signedUntil without renewing */
+  signedEnding?: boolean;
 }
 
 /** DateRow: table. written by E-46, E-47 (a person's remembered dates) */
@@ -648,7 +787,8 @@ export interface JobRun {
 /** LedgerDay: view. one day of ledger totals against the provider's settlement */
 export interface LedgerDay {
   day: Instant;
-  diffs: unknown[];
+  /** HW7: where the ledger and the provider differ for this day */
+  diffs: LedgerDiff[];
   ours: Kobo;
   oursCount: number;
   theirs: number;
@@ -684,6 +824,16 @@ export interface LifecycleConfig {
   friendMessagesMax: number;
   keepsakeExtrasCeiling: Kobo;
   maxPhotos: number;
+  /** HW6: the most one picture, poster, cover or profile picture may weigh (bytes); the upload check reads the same number */
+  photoMaxBytes: number;
+  /** HW6: the most one Studio sound may weigh (bytes) */
+  soundMaxBytes: number;
+  /** HW6: the most one Studio 3D model may weigh (bytes) */
+  modelMaxBytes: number;
+  /** HW6: hours within which one Concierge wish is delivered after payment; the Concierge code reads the same number */
+  conciergeDeliveryHours: number;
+  /** HW6: days a sealed wish nobody opens waits after its open time before it is erased; the lifecycle reads the same number */
+  unopenedDays: number;
   noticeBeforeTermEnds: string;
   restingHoldMonths: number;
   restoreWindow: string;
@@ -794,16 +944,18 @@ export interface NoticePrefs {
 /** Numbers: view. figures worked out by the server (DEC-113); each line's target is read from NumbersTarget, null when no target is set (DEC-132, which closes HALT-1) */
 export interface Numbers {
   days: number;
-  keeps: unknown[];
-  kinds: unknown[];
+  keeps: NumbersCount[];
+  kinds: NumbersCount[];
   lines: NumbersLine[];
-  occasions: unknown[];
-  opens: Record<string, unknown>;
+  occasions: NumbersCount[];
+  /** HW7: wishes opened, a count for each day */
+  opens: NumbersOpenDay[];
   paid: number;
   period: string;
   previews: number;
-  styles: unknown[];
-  targets: unknown;
+  styles: NumbersCount[];
+  /** HW7: the monthly target of each money line, null where none is set */
+  targets: Record<string, Kobo | null>;
 }
 
 /** NumbersTarget: config. monthly targets per money line that staff set by E-80 (DEC-132); one row per line and period, no seed rows (no target set reads null) */
@@ -877,8 +1029,10 @@ export interface Payment {
   id: string;
   idempotencyKey: string;
   line: string;
-  lines: unknown[];
-  options: Record<string, unknown>;
+  /** HW7: what the payment was for, one entry per price-book line */
+  lines: PaymentLine[];
+  /** HW7: what the buyer asked for, as the start request named it (no money in it) */
+  options: { request?: PaymentRequestView };
   payerContact?: string | null;
   person: string;
   personName: string;
@@ -913,11 +1067,12 @@ export interface Payout {
   id: string;
   month: string;
   name: string;
-  paid?: Record<string, unknown> | null;
+  paid?: { decision: string; at: Instant | null; reason: string } | null;
   payDay: string;
   providerReference?: string | null;
   reason: string;
-  rows: unknown[];
+  /** HW7: what each style earned in the month */
+  rows: PayoutStyleRow[];
   state: string;
   status: "pending" | "sent" | "succeeded" | "failed";
   threshold: Kobo;
@@ -937,9 +1092,9 @@ export interface Person {
 
 /** PersonDetail: view. staff view of one account with its payments and wishes (DEC-113) */
 export interface PersonDetail {
-  payments: unknown[];
-  person: unknown;
-  wishes: unknown[];
+  payments: StaffPaymentRow[];
+  person: StaffPerson;
+  wishes: StaffWish[];
 }
 
 /** PlayWish: view. a wish and its content for playing in the app */
@@ -1351,6 +1506,8 @@ export interface StaffAccount {
   role: unknown;
   roles: unknown[];
   sections: string[];
+  /** HW7: for each section this role opens that has actions, the actions the role may do there (take_down, ban, mark_paid, set_target and the like) */
+  actions: Record<string, string[]>;
   seen?: Instant | null;
   since: Instant;
   state: string;
@@ -1377,7 +1534,7 @@ export interface StoredFile {
   kind: "image" | "sound" | "model" | "video";
   objectKey: string;
   ownerAccountId?: string | null;
-  purpose: "wish-photo" | "voice-note" | "video-clip" | "vault-file" | "studio-asset" | "brand-logo" | "render" | "qr-card" | "export";
+  purpose: "wish-photo" | "voice-note" | "video-clip" | "vault-file" | "studio-asset" | "brand-logo" | "profile-picture" | "render" | "qr-card" | "export";
   sha256?: string | null;
   status: "pending" | "uploaded" | "screening" | "ready" | "rejected" | "deleted";
   styleId: string;
@@ -1770,10 +1927,11 @@ export interface WishData {
 
 /** WishDetail: view. staff view of one wish with its messages, payments and person (DEC-113) */
 export interface WishDetail {
-  messages: unknown[];
-  payments: unknown[];
-  person?: unknown;
-  wish: unknown;
+  /** HW7: the emails sent about the wish */
+  messages: StaffWishMessage[];
+  payments: StaffPaymentRow[];
+  person?: { id: string; name: string } | null;
+  wish: StaffWish;
 }
 
 /** WishLink: table. written by server:wish-link (a wish's public slug) */
@@ -2442,8 +2600,12 @@ export type GetStudioMeResponse = CreatorState;
 /** E-44 PATCH /v1/studio/me. Auth: creator. */
 export type PatchStudioMeParams = Record<string, never>;
 export interface PatchStudioMeBody {
-  /** boolean */
-  on: boolean;
+  /** boolean: the Studio on or off */
+  on?: boolean;
+  /** HW3: false turns Signed off (it runs to its paid day and is not renewed); true turns it back on before that day, at no cost */
+  signed?: boolean;
+  /** HW3: open moves from the Creator plan to Open (the paid time runs on, nothing is refunded); creator moves back before the paid day, at no cost */
+  plan?: "open" | "creator";
 }
 export type PatchStudioMeHeaders = Record<string, never>;
 export type PatchStudioMeResponse = CreatorState;
@@ -4165,6 +4327,31 @@ export interface GetStudioStylesByIdParams {
 export type GetStudioStylesByIdQuery = Record<string, never>;
 export type GetStudioStylesByIdHeaders = Record<string, never>;
 export type GetStudioStylesByIdResponse = StudioStyle;
+/** E-267 GET /v1/studio/styles/:id/files. Auth: creator; own style (HW2). */
+export interface GetStudioStylesByIdFilesParams {
+  id: string;
+}
+export interface GetStudioStylesByIdFilesQuery {
+  cursor?: string;
+  limit?: number;
+}
+export type GetStudioStylesByIdFilesHeaders = Record<string, never>;
+export type GetStudioStylesByIdFilesResponse = PaginatedList<StyleFile>;
+/** E-268 GET /v1/studio/styles/:id/files/:fileId. Auth: creator; own style (HW2). */
+export interface GetStudioStylesByIdFilesByFileIdParams {
+  id: string;
+  fileId: string;
+}
+export type GetStudioStylesByIdFilesByFileIdQuery = Record<string, never>;
+export type GetStudioStylesByIdFilesByFileIdHeaders = Record<string, never>;
+export type GetStudioStylesByIdFilesByFileIdResponse = StyleFile;
+/** E-266 GET /v1/w/:slug/style-files. Auth: public, by the wish's link (HW2). */
+export interface GetWBySlugStyleFilesParams {
+  slug: string;
+}
+export type GetWBySlugStyleFilesQuery = Record<string, never>;
+export type GetWBySlugStyleFilesHeaders = Record<string, never>;
+export type GetWBySlugStyleFilesResponse = StyleFiles;
 
 /** E-191 PATCH /v1/studio/styles/:id. Auth: creator. */
 export interface PatchStudioStylesByIdParams {
@@ -5029,6 +5216,9 @@ export interface EndpointContracts {
   "E-188": { params: PostStudioStylesParams; body: PostStudioStylesBody; headers: PostStudioStylesHeaders; response: PostStudioStylesResponse };
   "E-189": { params: DeleteStudioStylesByIdParams; body: DeleteStudioStylesByIdBody; headers: DeleteStudioStylesByIdHeaders; response: DeleteStudioStylesByIdResponse };
   "E-190": { params: GetStudioStylesByIdParams; query: GetStudioStylesByIdQuery; headers: GetStudioStylesByIdHeaders; response: GetStudioStylesByIdResponse };
+  "E-267": { params: GetStudioStylesByIdFilesParams; query: GetStudioStylesByIdFilesQuery; headers: GetStudioStylesByIdFilesHeaders; response: GetStudioStylesByIdFilesResponse };
+  "E-268": { params: GetStudioStylesByIdFilesByFileIdParams; query: GetStudioStylesByIdFilesByFileIdQuery; headers: GetStudioStylesByIdFilesByFileIdHeaders; response: GetStudioStylesByIdFilesByFileIdResponse };
+  "E-266": { params: GetWBySlugStyleFilesParams; query: GetWBySlugStyleFilesQuery; headers: GetWBySlugStyleFilesHeaders; response: GetWBySlugStyleFilesResponse };
   "E-191": { params: PatchStudioStylesByIdParams; body: PatchStudioStylesByIdBody; headers: PatchStudioStylesByIdHeaders; response: PatchStudioStylesByIdResponse };
   "E-192": { params: PostStudioStylesByIdWithdrawParams; body: PostStudioStylesByIdWithdrawBody; headers: PostStudioStylesByIdWithdrawHeaders; response: PostStudioStylesByIdWithdrawResponse };
   "E-193": { params: GetAdminStylesParams; query: GetAdminStylesQuery; headers: GetAdminStylesHeaders; response: GetAdminStylesResponse };

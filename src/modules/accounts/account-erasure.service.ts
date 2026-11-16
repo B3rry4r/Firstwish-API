@@ -10,7 +10,8 @@ import { AuditActor, AuditService } from "../audit/audit.service";
 import { ShowingLink } from "../showing/showing-link";
 import { SavedWishesService } from "../saved-wishes/saved-wishes.service";
 import { JobsService } from "../jobs/jobs.service";
-import { ERASE_WISH_FILE_PREFIX, UNOPENED_DAYS } from "../wishes/wish-lifecycle.service";
+import { readLimits } from "../price-book/book-limits";
+import { ERASE_WISH_FILE_PREFIX } from "../wishes/wish-lifecycle.service";
 import { StudioErasure } from "../studio/studio-erasure";
 import { FileJobs } from "../stored-files/file-jobs";
 import { passBusinessWishesToOwner } from "../wishes/business-wishes";
@@ -172,7 +173,8 @@ export class AccountErasureService {
       await tx.clientWish.updateMany({ where: inBusiness, data: { from: null, client: null } });
       // A record with a wish (ZB3) follows that wish: kept while the wish plays, blanked at once when the wish is erased now. A record with
       // no wish (a reveal) keeps its own term.
-      const keptDue = new Map(sentForClient.map((w) => [w.id, w.status === "live" ? w.endsAt : new Date((w.opensAt ?? now).getTime() + UNOPENED_DAYS * 86_400_000)] as const));
+      const unopenedMs = (await readLimits(tx)).unopenedDays * 86_400_000;
+      const keptDue = new Map(sentForClient.map((w) => [w.id, w.status === "live" ? w.endsAt : new Date((w.opensAt ?? now).getTime() + unopenedMs)] as const));
       const rows = await tx.clientWish.findMany({ where: inBusiness, select: { id: true, wishId: true, sentAt: true, endsAt: true, wish: true } });
       // EA4: a reveal sent from the Vault ends where its link ends (the owner's end day), unless the link was switched off.
       const links = await tx.$queryRaw<{ wishId: string; endsAt: Date | null }[]>`
@@ -254,7 +256,7 @@ export class AccountErasureService {
     for (const w of sentForClient) {
       await this.jobs.cancel("rest-wish", w.id, tx);
       await this.jobs.cancel("send-notice", w.id, tx);
-      const due = w.status === "live" ? w.endsAt : new Date((w.opensAt ?? now).getTime() + UNOPENED_DAYS * 86_400_000);
+      const due = w.status === "live" ? w.endsAt : new Date((w.opensAt ?? now).getTime() + (await readLimits(tx)).unopenedDays * 86_400_000);
       if (due) await this.jobs.schedule("erase-now", due, w.id, tx);
     }
     // BB6: every saved list drops the wishes (a feed row's id too); the account's own saved rows go with it.

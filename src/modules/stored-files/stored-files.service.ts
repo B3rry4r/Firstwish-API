@@ -18,6 +18,7 @@ import {
   isUuid,
   looksLikeSvg,
   MAX_VOICE_SECONDS,
+  maxBytesFor,
   mediaKindOf,
   normaliseType,
   purposeOf,
@@ -29,6 +30,7 @@ import {
   UPLOAD_TTL_SECONDS,
   variantsOf,
 } from "./file-rules";
+import { readLimits } from "../price-book/book-limits";
 import { ScreeningService } from "./screening.service";
 
 type Tx = Prisma.TransactionClient;
@@ -123,7 +125,7 @@ export class StoredFilesService {
    */
   async createTicket(p: UserPrincipal, body: PostUploadsBody, opts: { gather?: boolean } = {}): Promise<UploadTicket> {
     const rule = purposeOf(body.purpose);
-    if (!rule) throw AppError.validation({ purpose: "Must be one of photo, voice, clip, vault, studio or brand." });
+    if (!rule) throw AppError.validation({ purpose: "Must be one of photo, voice, clip, vault, studio, picture, poster, sound, model, profile or brand." });
     const contentType = normaliseType(body.contentType);
     if (!contentType || !rule.types.includes(contentType)) {
       throw AppError.validation({ contentType: contentType === "image/svg+xml" ? "An SVG is not taken as a picture." : `Not a type taken for ${rule.purpose}.` });
@@ -132,11 +134,14 @@ export class StoredFilesService {
     if (body.kind !== undefined && body.kind !== mediaKindOf(contentType)) throw AppError.validation({ kind: "Does not match the type." });
     const bytes = body.bytes;
     if (typeof bytes !== "number" || !Number.isInteger(bytes) || bytes <= 0) throw AppError.validation({ bytes: "Must be the file's size in bytes." });
-    if (bytes > rule.maxBytes) throw AppError.validation({ bytes: `Too large: at most ${rule.maxBytes / (1024 * 1024)} MB.` });
+    // HW6: the largest size is the price book's own (one source for this check and for what the book serves)
+    const maxBytes = maxBytesFor(rule, await readLimits(this.db));
+    if (bytes > maxBytes) throw AppError.validation({ bytes: `Too large: at most ${Math.floor((maxBytes * 10) / (1024 * 1024)) / 10} MB.` });
     if (body.seconds !== undefined && (rule.purpose !== "voice-note" || !(body.seconds > 0 && body.seconds <= MAX_VOICE_SECONDS))) {
       throw AppError.validation({ seconds: `A voice note is 1 to ${MAX_VOICE_SECONDS} seconds.` });
     }
-    if (rule.purpose === "studio-asset" && body.styleId !== undefined && !isUuid(body.styleId)) throw AppError.validation({ styleId: "Must be a style id." });
+    const studioFile = rule.purpose === "studio-asset" || rule.purpose === "studio-sound" || rule.purpose === "studio-model";
+    if (studioFile && body.styleId !== undefined && !isUuid(body.styleId)) throw AppError.validation({ styleId: "Must be a style id." });
 
     const id = this.ids.id();
     const objectKey = `${rule.purpose}/${id}/${this.codes.token(16)}`;
@@ -157,8 +162,12 @@ export class StoredFilesService {
       } else if (wishFile) {
         await this.checkWish(tx, p, rule, body.subjectId, opts.gather === true);
         if (rule.purpose === "voice-note" && body.subjectId !== undefined) await this.checkVoiceRoom(tx, body.subjectId, opts.gather === true);
-      } else if (body.styleId !== undefined) {
-        if (!(await tx.style.findUnique({ where: { id: body.styleId }, select: { id: true } }))) throw AppError.validation({ styleId: "No such style." });
+      } else if (rule.purpose === "profile-picture") {
+        // HW2: a creator's own profile picture: the account needs its creator profile
+        if (!(await tx.creator.findUnique({ where: { accountId: p.accountId }, select: { id: true } }))) throw AppError.forbidden("Make your creator profile first.");
+      } else if (studioFile && body.styleId !== undefined) {
+        // HW2: the style is the caller's own Studio style (a draft or one sent in; the style and its draft share one id). Another creator's is 404.
+        if (!(await tx.studioStyle.findFirst({ where: { id: body.styleId, accountId: p.accountId }, select: { id: true } }))) throw AppError.notFound("No style has this id.");
         styleId = body.styleId;
       }
       await tx.storedFile.create({
@@ -338,6 +347,8 @@ export class StoredFilesService {
           where: { id },
           data: { status: screened.verdict === "pass" ? "ready" : "screening", bytes: BigInt(obj.size), kind },
         });
+        // HW2: a confirmed profile picture is the creator's picture from now on (the one before it is no longer attached)
+        if (row.purpose === "profile_picture" && row.ownerAccountId) await tx.creator.updateMany({ where: { accountId: row.ownerAccountId }, data: { img: id } });
         if (isImage(type)) {
           const at = this.clock.now();
           await tx.job.upsert({

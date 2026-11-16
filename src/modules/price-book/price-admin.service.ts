@@ -20,6 +20,7 @@ import { AuditActor, AuditService, requireReason } from "../audit/audit.service"
 import { EntitlementsService, grantOf } from "./entitlements.service";
 import { promotionLabel } from "./price-math";
 import { BookLine, BookVersion, PriceBookService, safe } from "./price-book.service";
+import { readLimits } from "./book-limits";
 import { PAYOUT_KEY, payoutLineOf, priceOf, PROMOTION_KEY, promotionLineOf, versionOf } from "./price-view";
 
 const SECTION = "/admin/prices";
@@ -95,10 +96,11 @@ export class PriceAdminService {
     const previous = book.version > 1 ? await this.book.load(book.version - 1).catch(() => null) : null;
     const ent = await this.entitlements.row();
     const reasons = await this.lastReasons();
+    const deliveryHours = (await readLimits(this.db)).conciergeDeliveryHours;
     const items: Price[] = book.lines.map((l) => {
       const before = previous?.lines.find((p) => p.sku === l.sku);
       const changed = !!before && (before.listKobo !== l.listKobo || before.promoKobo !== l.promoKobo);
-      return priceOf(l, { at, book, grant: grantOf(ent, l.sku), changed, reason: reasons.get(l.sku) ?? "" });
+      return priceOf(l, { at, book, grant: grantOf(ent, l.sku), changed, reason: reasons.get(l.sku) ?? "", deliveryHours });
     });
     const promo = PriceBookService.promotionAt(book, at) ?? book.lines.find((l) => l.promotion)?.promotion ?? null;
     if (promo) items.push(promotionLineOf(promo, book, reasons.get(PROMOTION_KEY) ?? "", reasons.has(PROMOTION_KEY)));
@@ -185,7 +187,7 @@ export class PriceAdminService {
           return promotionLineOf(p!, v, reason, true);
         }
         const line = v.lines.find((l) => l.sku === key) as BookLine;
-        return priceOf(line, { at: now, book: v, grant: grantOf(await this.entitlements.row(tx), key), changed: true, reason });
+        return priceOf(line, { at: now, book: v, grant: grantOf(await this.entitlements.row(tx), key), changed: true, reason, deliveryHours: (await readLimits(tx)).conciergeDeliveryHours });
       });
     } catch (e) {
       if (isUniqueViolation(e)) throw AppError.conflict("price_book_busy", "Another price change landed first. Load the prices again.");

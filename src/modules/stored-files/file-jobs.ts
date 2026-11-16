@@ -7,6 +7,9 @@ import { IMAGE_WIDTHS, isImage, STAGING_PREFIX, stagingKeyOf, UNCONFIRMED_MAX_AG
 import { IdGenerator } from "../../common/ports/ids.port";
 import { ImageSizesPort } from "../../common/ports/image-sizes.port";
 
+/** HW5: a confirmed upload that nothing names is removed once it is this old. */
+export const UNATTACHED_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+
 /** The subject of an upload-cleanup job that removes every stored file of one account (X10). */
 export const ERASE_FILES_PREFIX = "erase-files:";
 
@@ -79,6 +82,49 @@ export class FileJobs {
     return removed;
   }
 
+  /**
+   * HW5: a confirmed upload attached to nothing is removed after 7 days (from its confirm). Attached means a wish names it (a wish file or
+   * a voice note of a wish), a style holds it (Studio files), a creator's profile shows it, a business's brand or one of its shoots
+   * names it, or a reveal that is on names it. A Vault file is held by its business's Vault, and a render, a card and an export by their
+   * owners: they are not swept here. A file attached when the sweep looks is never touched; each row is checked again in the claim.
+   */
+  async sweepUnattached(batch = 100): Promise<number> {
+    const before = new Date(this.clock.now().getTime() - UNATTACHED_MAX_AGE_MS);
+    const old = await this.db.$queryRaw<{ id: string }[]>`
+      SELECT f.id::text AS id FROM stored_file f
+       WHERE f.status IN ('ready', 'screening') AND f.purpose IN ('wish-photo', 'voice-note', 'video-clip', 'studio-asset', 'brand-logo', 'profile-picture')
+         AND f."updatedAt" < ${before}
+         AND f."styleId" IS NULL
+         AND NOT EXISTS (SELECT 1 FROM wish_file w WHERE w."fileId" = f.id)
+         AND NOT EXISTS (SELECT 1 FROM voice_note v WHERE v.id = f.id AND v."wishId" IS NOT NULL)
+         AND NOT EXISTS (SELECT 1 FROM creator c WHERE c.img = f.id::text)
+         AND NOT EXISTS (SELECT 1 FROM business b WHERE b.brand::text LIKE '%' || f.id::text || '%')
+         AND NOT EXISTS (SELECT 1 FROM shoot s WHERE s.files::text LIKE '%' || f.id::text || '%')
+         AND NOT EXISTS (SELECT 1 FROM reveal_access a WHERE a."fileIds" @> to_jsonb(f.id::text))
+       ORDER BY f.id LIMIT ${batch}`;
+    let removed = 0;
+    for (const { id } of old) {
+      // claimed one row at a time: the row is re-read under the same conditions, so a file attached since is left alone
+      const gone = await this.db.$transaction(async (tx) => {
+        const rows = await tx.$queryRaw<{ id: string; objectKey: string; variants: Prisma.JsonValue }[]>`
+          SELECT f.id::text AS id, f."objectKey", f.variants FROM stored_file f
+           WHERE f.id = ${id}::uuid AND f.status IN ('ready', 'screening') AND f."updatedAt" < ${before} AND f."styleId" IS NULL
+             AND NOT EXISTS (SELECT 1 FROM wish_file w WHERE w."fileId" = f.id)
+             AND NOT EXISTS (SELECT 1 FROM voice_note v WHERE v.id = f.id AND v."wishId" IS NOT NULL)
+             AND NOT EXISTS (SELECT 1 FROM creator c WHERE c.img = f.id::text)
+             AND NOT EXISTS (SELECT 1 FROM business b WHERE b.brand::text LIKE '%' || f.id::text || '%')
+             AND NOT EXISTS (SELECT 1 FROM shoot s WHERE s.files::text LIKE '%' || f.id::text || '%')
+             AND NOT EXISTS (SELECT 1 FROM reveal_access a WHERE a."fileIds" @> to_jsonb(f.id::text))
+           FOR UPDATE SKIP LOCKED`;
+        return rows[0] ?? null;
+      });
+      if (!gone) continue;
+      await this.dropFile(gone);
+      removed++;
+    }
+    return removed;
+  }
+
   /** One staging key's job (Y1): removes whatever a signed PUT left there. Safe to run twice (deleting nothing is fine). */
   async sweepStagingKey(key: string): Promise<void> {
     await this.storage.delete(key);
@@ -93,6 +139,7 @@ export class FileJobs {
   async cleanupUnconfirmed(batch = 100): Promise<{ removed: number; swept: number }> {
     const now = this.clock.now();
     let removed = await this.sweepUnconfirmed(batch);
+    removed += await this.sweepUnattached(batch);
     let swept = 0;
     const due = await this.db.job.findMany({
       where: { type: "upload_cleanup", status: "scheduled", runAt: { lte: now }, subjectId: { startsWith: STAGING_PREFIX } },

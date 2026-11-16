@@ -581,3 +581,11 @@ DA2 (B20 verify, medium) The complaint list uses the canonical address (letter c
     (B20 patch.)
 DA3 (B20 verify, low) A webhook secret with an empty key is refused like no secret; a reply token adds at most 30 messages a
     day to its thread (PROVISIONAL, counted in the database). (B20 patch.)
+ZB1 (join 4 fix, lead) The fix for RR4 showed the real gap: making a client wish writes only a ClientWish record and no wish
+    that plays; nothing gives a business's plan wish its Signature ticket. Ruling: making a client wish also makes a wish
+    (a draft owned by the maker, carrying the business) and the draw gives it its Signature ticket in the same transaction;
+    ClientWish links to it (wishId), and sent, opened and ends are read from that wish. Only a wish made this way carries the
+    business: a business owner's own wishes do not. RR3 then holds for real client wishes. NOT BUILT: needs ClientWish.wishId
+    (next shared base), then a Business patch. The RR4 attempt (branch rr4-attempt, 02cca9e) marked every wish of an account
+    that has a business, which would keep a person's own wishes after their erase, so it is NOT merged. Until then: an erased
+    owner's wishes are all erased at once (private by default), and a Pro plan wish cannot be sealed without a ticket: owed.

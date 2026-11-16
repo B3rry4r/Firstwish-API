@@ -846,3 +846,17 @@ HG1 (give race) Two staff giving one Concierge order: the code is right (overlap
 - HP13 (W3 round 2): a published wish reaches the feed with its creator's handle (when there is a creator side) and its
   cover picture; today the server's publish writes neither, so a real row has no "@" and no picture. API-BASE-4 item 11.
   The web never draws "@" or a creator button for a row with no handle (P-W3b).
+
+## HQ (16 Nov 2026, the lead, on W5's hand-back). Default (lead), owner may override.
+- HQ1: nothing a person types in a designed field of the maker is thrown away. The fields the contract's content shape
+  lacks (the cover's school, years and born; the letter's line; the reasons' note; the memory's quote; the blessing's
+  note; the download link) are added to the contract and saved (API-BASE-5); until then a field that cannot be saved
+  is not drawn. Dropping it on the wire while still drawing it is a defect.
+- HQ2: no sample photo, name or text ever stands in for the person's own in the maker, the preview or /w/mine: where
+  the server gives no picture yet, the tile shows the mark and says the photo is saved.
+- HQ3: test stacks can take an upload: the stand-in storage receives the signed put (as it already serves the signed
+  read), refused in production and with live providers (API-BASE-5). The stand-in AI answers in the contract's shape.
+- HQ4: a person can ask friends for voices by a link of their own (the gather link): the API serves it to the wish's
+  owner, not only to a business (API-BASE-5; the screen is drawn when it does).
+- HQ5: which styles a ticket may use is the server's rule (the style's level against the ticket's): the API enforces
+  it on the draft and at the seal and says so in words; lib/levels.ts as a local rule goes (API-BASE-5, then W6).

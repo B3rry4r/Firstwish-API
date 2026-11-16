@@ -15,6 +15,8 @@ import { refundView } from "./refund-wire";
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export const OPEN_REFUND = ["requested", "approved", "sent"] as const;
 const SECTION = "/admin/payments";
+/** UU1: a claim with no answer after this long can be sent again. */
+const STALE_CLAIM_MS = 10 * 60 * 1000;
 
 export interface StartInput {
   paymentId?: string;
@@ -103,6 +105,8 @@ export class RefundsService {
       if (r.status === "requested") {
         if (!allowSelf && r.requestedBy === actor.id) throw AppError.forbidden("A refund is sent by someone other than who asked for it.");
         await tx.refund.update({ where: { id }, data: { status: "approved", approvedBy: staffId(actor), updatedAt: this.clock.now() } });
+      } else if (r.status === "sent" && r.providerReference === null && r.updatedAt.getTime() <= this.clock.now().getTime() - STALE_CLAIM_MS) {
+        // UU1: claimed, never answered, for 10 minutes or more: it can be sent again (the lookup at the provider runs first).
       } else if (r.status !== "approved") {
         throw AppError.conflict("refund_not_sendable", r.status === "sent" ? "This refund is already started." : `This refund is ${r.status}.`);
       }
@@ -110,7 +114,7 @@ export class RefundsService {
         await this.audit.write(tx, { actor, section: SECTION, action: "refund.send", target: { type: "refund", id }, reason, changedFields: ["status", "approvedBy"] });
       }
       const claimed = await tx.$queryRaw<{ id: string }[]>`
-        UPDATE refund SET status = 'sent', "updatedAt" = ${this.clock.now()}::timestamptz WHERE id = ${id}::uuid AND status = 'approved' RETURNING id::text AS id`;
+        UPDATE refund SET status = 'sent', "updatedAt" = ${this.clock.now()}::timestamptz WHERE id = ${id}::uuid AND (status = 'approved' OR (status = 'sent' AND "providerReference" IS NULL AND "updatedAt" <= ${new Date(this.clock.now().getTime() - STALE_CLAIM_MS)}::timestamptz)) RETURNING id::text AS id`;
       if (claimed.length === 0) throw AppError.conflict("refund_not_sendable", "This refund is already started.");
       return tx.refund.findUniqueOrThrow({ where: { id }, include: { payment: { select: { providerReference: true } } } });
     });

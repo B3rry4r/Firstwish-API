@@ -483,6 +483,37 @@ describe("B08 refunds, the settlement check and staff payments (contract)", () =
     expect(await db.reconciliation.count({ where: { day: new Date("2031-02-20T00:00:00.000Z") } })).toBe(0);
   });
 
+  describe("UU1: a claim left with no answer", () => {
+    const claimed = async (minutesAgo: number, landed: boolean) => {
+      const p = await paidTicket();
+      const s = await start(staff.financeA.token, p.id, { amountKobo: Number(p.total) });
+      const at = new Date(NOW.getTime() - minutesAgo * 60_000);
+      await db.refund.update({ where: { id: s.body.id }, data: { status: "sent", approvedBy: staff.financeB.id, updatedAt: at } });
+      if (landed) provider.created.set(p.reference, { providerReference: "standin-first-ask" });
+      return { p, id: s.body.id as string };
+    };
+    it("(a) claimed 11 minutes ago, the first ask never reached the provider: sent again, one creation", async () => {
+      const { p, id } = await claimed(11, false);
+      const r = await send(staff.owner.token, id);
+      expect(r.status).toBe(200);
+      expect(r.body).toMatchObject({ status: "sent", providerReference: `standin-refund-${id}` });
+      expect(provider.creations.filter((c) => c === id)).toHaveLength(1);
+      expect(await db.refund.count({ where: { paymentId: p.id } })).toBe(1);
+    });
+    it("(b) claimed 11 minutes ago and the first ask did land: no second creation, the refund takes that reference", async () => {
+      const { id } = await claimed(11, true);
+      const r = await send(staff.owner.token, id);
+      expect(r.status).toBe(200);
+      expect(r.body).toMatchObject({ status: "sent", providerReference: "standin-first-ask" });
+      expect(provider.creations.filter((c) => c === id)).toHaveLength(0);
+    });
+    it("(c) claimed 2 minutes ago: 409 and the provider is not asked", async () => {
+      const { id } = await claimed(2, false);
+      expect((await send(staff.owner.token, id)).status).toBe(409);
+      expect(provider.asked.filter((a) => a.refundId === id)).toHaveLength(0);
+    });
+  });
+
   describe("settlement check", () => {
     const DAY_X = "2031-04-02";
     let refs: { a: string; b: string; c: string; d: string };

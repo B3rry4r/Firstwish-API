@@ -4,6 +4,7 @@ import { NoticesAdminService } from "./notices-admin.service";
 import { NoticesController } from "./notices.controller";
 import { NoticesMeService } from "./notices-me.service";
 import { NoticesService } from "./notices.service";
+import { EmailSuppression } from "./suppression";
 
 /**
  * Email notices (B11): the five messages and their wording, the delivery log, notice choices, and the jobs that send.
@@ -12,7 +13,7 @@ import { NoticesService } from "./notices.service";
 @Module({
   imports: [RoleAccessModule],
   controllers: [NoticesController],
-  providers: [NoticesService, NoticesAdminService, NoticesMeService],
-  exports: [NoticesService],
+  providers: [NoticesService, NoticesAdminService, NoticesMeService, EmailSuppression],
+  exports: [NoticesService, EmailSuppression],
 })
 export class NoticesModule {}

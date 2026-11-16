@@ -55,6 +55,15 @@
    "locale": "en-NG",
    "subject": "You are invited to the Firstwish team",
    "version": 1
+  },
+  {
+   "seedKey": "support:en-NG:1",
+   "body": "{text}\n\nYou can answer this email to reach us again.\n\nFirstwish",
+   "channel": "email",
+   "key": "support",
+   "locale": "en-NG",
+   "subject": "Re: {subject}",
+   "version": 1
   }
  ]
 }

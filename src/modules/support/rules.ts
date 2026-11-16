@@ -1,0 +1,79 @@
+import { createHmac, timingSafeEqual } from "node:crypto";
+import { CONTROL_CHARS, LONE_SURROGATE } from "../../common/validation/control-chars.pipe";
+import { normaliseEmail } from "../../common/normalise/email";
+
+export const SUBJECT_MAX = 150;
+/** A message's size limit, in characters (a customer's or staff's text). */
+export const MESSAGE_MAX = 5000;
+/** Threads one address (network) and one email may open in one UTC day from the contact page. */
+export const THREADS_PER_DAY = 5;
+export const REPLY_LOCAL = "reply";
+export const FALLBACK_REPLY_DOMAIN = "reply.firstwish.test";
+
+const ZERO_WIDTH = new RegExp("[\\u200b-\\u200f\\u2060-\\u2064\\ufeff\\u00ad\\u202a-\\u202e\\u2066-\\u2069]");
+
+/** What is wrong with a piece of text a person or staff typed, as a plain message, or null. Plain text only: no tags. */
+export function textProblem(text: string, max: number, label: string): string | null {
+  const t = text.trim();
+  if (!t) return `Write the ${label}.`;
+  if (t.length > max) return `Keep the ${label} to ${max} characters or fewer.`;
+  if (CONTROL_CHARS.test(t) || ZERO_WIDTH.test(t) || LONE_SURROGATE.test(t)) return "Leave out hidden and control characters.";
+  if (/<\/?[a-zA-Z!][^>]*>?/.test(t)) return "Plain text only: leave out tags.";
+  return null;
+}
+
+/** Text that came in by email: made safe rather than refused (control characters out, cut to the limit). */
+export function cleanInbound(text: string, max: number): string {
+  return text
+    // eslint-disable-next-line no-control-regex
+    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, "")
+    .replace(new RegExp(LONE_SURROGATE.source, "g"), "")
+    .replace(/\r\n?/g, "\n")
+    .trim()
+    .slice(0, max);
+}
+
+/** An email with its address part shown in part: "a***@mail.com". */
+export function maskContact(email: string): string {
+  const at = email.lastIndexOf("@");
+  if (at < 1) return email ? "***" : "";
+  return `${email.slice(0, 1)}***${email.slice(at)}`;
+}
+
+const compact = (id: string): string => id.replace(/-/g, "").toLowerCase();
+const expand = (c: string): string => `${c.slice(0, 8)}-${c.slice(8, 12)}-${c.slice(12, 16)}-${c.slice(16, 20)}-${c.slice(20)}`;
+
+const mac = (secret: string, threadId: string, contact: string): string =>
+  createHmac("sha256", secret).update(`support-reply|${threadId.toLowerCase()}|${contact}`).digest("hex").slice(0, 20);
+
+/**
+ * The reply token of a thread: its id and a keyed mark over the id and the person's address, 52 hex characters. Firstwish puts
+ * it in the Reply-To address (reply+<token>@<domain>), so an answer by email is matched by it and never by the subject.
+ */
+export function replyToken(secret: string, threadId: string, contact: string): string {
+  return compact(threadId) + mac(secret, threadId, contact);
+}
+
+/** The thread id a token names, or null when it is not a token. */
+export function threadOfToken(token: string): string | null {
+  return /^[0-9a-f]{52}$/.test(token) ? expand(token.slice(0, 32)) : null;
+}
+
+/** Whether the token's mark holds for this thread and the contact the thread was opened with. */
+export function tokenHolds(secret: string, token: string, threadId: string, contact: string): boolean {
+  if (!contact || threadOfToken(token) !== threadId.toLowerCase()) return false;
+  const want = Buffer.from(mac(secret, threadId, contact));
+  const got = Buffer.from(token.slice(32));
+  return want.length === got.length && timingSafeEqual(want, got);
+}
+
+/** The token a `to` address carries: reply+<token>@anything, in any letter case. */
+export function tokenFromAddress(address: string): string | null {
+  const m = /^reply\+([0-9a-f]{52})@[^@\s]+$/i.exec(address.trim().replace(/^.*<([^>]+)>\s*$/, "$1"));
+  return m ? m[1].toLowerCase() : null;
+}
+
+export function replyDomain(mailFrom: string | undefined): string {
+  const e = mailFrom ? normaliseEmail(mailFrom.replace(/^.*<([^>]+)>\s*$/, "$1")) : null;
+  return e ? e.slice(e.lastIndexOf("@") + 1) : FALLBACK_REPLY_DOMAIN;
+}

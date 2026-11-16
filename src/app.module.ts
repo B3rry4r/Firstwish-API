@@ -49,6 +49,10 @@ import { PurchasesModule } from "./modules/purchases/purchases.module";
 import { JobHandlersModule } from "./modules/job-handlers/job-handlers.module";
 // end INT-3
 
+// B20: support
+import { SupportModule } from "./modules/support/support.module";
+// end B20
+
 // B11: email notices
 import { NoticesModule } from "./modules/notices/notices.module";
 // end B11
@@ -111,6 +115,9 @@ import { NoticesModule } from "./modules/notices/notices.module";
     // B11
     NoticesModule,
     // end B11
+    // B20
+    SupportModule,
+    // end B20
   ],
 })
 export class AppModule {}

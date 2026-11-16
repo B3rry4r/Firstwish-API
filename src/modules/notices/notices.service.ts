@@ -13,8 +13,9 @@ import { isTimeZone } from "../../common/time/time";
 import { ProviderError } from "../../common/ports/adapters/http";
 import { JobContext, JobResult, JobsService } from "../jobs/jobs.service";
 import {
-  CODE_WORDING_FALLBACK, INVITE_WORDING_FALLBACK, DELIVERY_TRIES, fill, fillSubject, scrubReason, isTemplateKey, MissingValueError, missingValues, NOTICE_HOUR_LOCAL, RETRY_WAIT_MS, scrubEmails, TEMPLATES, TemplateKey, type TemplateSpec,
+  CODE_WORDING_FALLBACK, INVITE_WORDING_FALLBACK, SUPPORT_WORDING_FALLBACK, DELIVERY_TRIES, fill, fillSubject, scrubReason, isTemplateKey, MissingValueError, missingValues, NOTICE_HOUR_LOCAL, RETRY_WAIT_MS, scrubEmails, TEMPLATES, TemplateKey, type TemplateSpec,
 } from "./catalog";
+import { EmailSuppression } from "./suppression";
 import { atLocalHour, dayText } from "./zoned";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -41,6 +42,8 @@ export interface SendNotice {
   key: string;
   /** The wish this is about, when there is one. */
   wishId?: string;
+  /** B20: Reply-To for the email (a support reply's token address). */
+  replyTo?: string;
 }
 
 export type SendOutcome =
@@ -50,6 +53,8 @@ export type SendOutcome =
   | { status: "skipped"; deliveryId: null; reason: "muted" | "erased" };
 
 interface Vars {
+  /** B20: the address a support reply asks the person to answer to (it carries the thread's reply token). */
+  replyTo?: string;
   accountId?: string;
   wishId?: string;
   data: Record<string, string | number>;
@@ -78,6 +83,7 @@ export class NoticesService implements OnModuleInit {
     private readonly email: EmailPort,
     private readonly jobs: JobsService,
     @Inject(ENV) private readonly env: Env,
+    private readonly suppression: EmailSuppression,
   ) {}
 
   /** Not in tests (NODE_ENV=test), like the other handlers: specs share a database. A spec calls registerAll() itself. */
@@ -121,7 +127,7 @@ export class NoticesService implements OnModuleInit {
     }
 
     const id = this.ids.id();
-    const vars: Vars = { data: input.data, ...(accountId ? { accountId } : {}), ...(input.wishId ? { wishId: input.wishId } : {}) };
+    const vars: Vars = { data: input.data, ...(accountId ? { accountId } : {}), ...(input.wishId ? { wishId: input.wishId } : {}), ...(input.replyTo ? { replyTo: input.replyTo } : {}) };
     const problem = !to ? "The account has no email address." : await this.wordingProblem(tx, input.template, input.data);
     const now = this.clock.now();
     const made = await tx.messageDelivery.createMany({
@@ -156,6 +162,7 @@ export class NoticesService implements OnModuleInit {
     const row = await db.messageTemplate.findFirst({ where: { key, channel: "email", locale: LANG }, orderBy: { version: "desc" } });
     if (row) return { id: row.id, subject: row.subject ?? "", body: row.body, version: row.version };
     if (key === "code") return { id: "", ...CODE_WORDING_FALLBACK, version: 0 };
+    if (key === "support") return { id: "", ...SUPPORT_WORDING_FALLBACK, version: 0 };
     return key === "invite" ? { id: "", ...INVITE_WORDING_FALLBACK, version: 0 } : null;
   }
 
@@ -236,6 +243,8 @@ export class NoticesService implements OnModuleInit {
       if (!a || a.erasedAt) return this.settle(row.id, key, "dropped", "Dropped: the account was erased.");
       to = normaliseEmail(a.contact ?? "") ?? row.to;
     }
+    // B20: an address that complained gets nothing more (the sign-in code is exempt: the person asked for it just now).
+    if (key !== "code" && (await this.suppression.has(to))) return this.settle(row.id, key, "dropped", "Dropped: this address asked not to get email.");
     const t = await this.template(this.prisma, key);
     if (!t) return this.settle(row.id, key, "failed", "There is no wording for this message.");
     let subject: string;
@@ -249,7 +258,7 @@ export class NoticesService implements OnModuleInit {
     }
 
     try {
-      const sent = await this.email.send({ to, subject, text, idempotencyKey: `delivery:${row.id}` });
+      const sent = await this.email.send({ to, subject, text, idempotencyKey: `delivery:${row.id}`, ...(vars.replyTo ? { replyTo: vars.replyTo } : {}) });
       return this.settle(row.id, key, "delivered", null, sent.id);
     } catch (e) {
       const { forGood, reason } = classify(e);

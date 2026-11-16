@@ -607,3 +607,14 @@ CB4 (P-B19 hand-back) E-141 reading the token itself is accepted only until the 
     of the order). The changes in payments.service and fulfilment.registry (the start check may set the price and answer a
     pending payment) are accepted subject to the re-check.
 CB5 (P-B19 hand-back) A staff quote cannot be changed while a payment for that order is pending (409). (Wave 5 join.)
+EA1 (B18) Its four raw-SQL tables (reveal_access, reveal_play, reveal_send, vault_peak) get baseline lines when the branch
+    merges (lead) and become models with erase rules at the next shared base.
+EA2 (B18) Registry at the next shared base: switching a reveal link off; the client's link (GET /v1/r/:code and its unlock);
+    RevealPlay's answer shape.
+EA3 (B18) The Vault's limit counts the plan's space only while the plan is live, so a lapsed plan is refused at the upload
+    ticket too (stored-files; wave 6 join). The peak is lifted on the file-confirm path as well (wave 6 join).
+EA4 (B18) After an owner's erase the client wish's reveal (name, note, credits) is blanked at the end of its term with the
+    rest (wave 6 join). The shared wrong-try lock, the exported passcode hash and the "reveal" message are accepted.
+ZB2 (lead; replaces ZB1 pending the facts) B18 shows that a client wish plays at its own link (the reveal player), not as an
+    ordinary wish with a ticket. ZB1 is on hold: the web app's own flow is being read (R5) before anything is built. The
+    dead branch for wishes with a business (wave 4 join, J5) is reviewed with it.

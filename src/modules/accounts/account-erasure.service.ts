@@ -160,6 +160,8 @@ export class AccountErasureService {
       });
       await tx.messageDelivery.updateMany({ where: { to: email }, data: { to: "", vars: Prisma.DbNull } });
     }
+    // HD1: this person's own address in every business's login rows (as a member of other businesses) goes too.
+    if (email) await tx.$executeRaw`UPDATE login SET contact = NULL WHERE contact IS NOT NULL AND lower(trim(contact)) = lower(trim(${email}))`;
     await tx.externalIdentity.updateMany({ where: { accountId }, data: { email: null, subject: "" } });
     await tx.creator.updateMany({ where: { accountId }, data: { name: null, person: null, line: null, href: null, img: null } });
     if (creatorIds.length) await tx.bankAccount.updateMany({ where: { creatorId: { in: creatorIds } }, data: { accountNumber: null } });

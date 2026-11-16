@@ -60,12 +60,13 @@ export class RevealsPublicService {
     if (!CODE.test(code)) throw AppError.notFound();
     const rows = await this.db.$queryRaw<Row[]>`
       SELECT a."linkId"::text AS "linkId", a."set", a."fileIds", a."passcodeHash", a."endsAt", a."offAt",
-             w.no AS "wishNo", w."endsAt" AS "wishEndsAt", w."sentAt", w.reveal,
+             w.no AS "wishNo", COALESCE(w."endsAt", ww."endsAt", a."endsAt") AS "wishEndsAt", w."sentAt", w.reveal,
              (o."erasedAt" IS NOT NULL) AS "ownerErased", b.business
         FROM reveal_access a
         JOIN business b ON b.id = a."businessId"
         LEFT JOIN account o ON o.id = b."accountId"
         LEFT JOIN client_wish w ON w.id = a."wishId"
+        LEFT JOIN wish ww ON ww.id = w."wishId"
        WHERE a.code = ${code}`;
     const r = rows[0];
     if (!r) throw AppError.notFound();

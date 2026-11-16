@@ -2,7 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { ReceiverActivityService } from "../public-wishes/receiver-activity.service";
 import { Prisma, Wish } from "@prisma/client";
 import { randomBytes, scrypt } from "node:crypto";
-import { lockAccount } from "../../common/db/account-lock";
+import { lockAccount, lockBusinessOwner } from "../../common/db/account-lock";
 import { PrismaService } from "../../common/db/prisma.service";
 import { AppError } from "../../common/errors/app-error";
 import { isUuidV7 } from "../../common/ids/uuidv7";
@@ -541,6 +541,11 @@ export class WishesService {
     if (input.usePlan && !plan) throw AppError.forbidden("You are not part of a business.");
     const biz = plan ? plan.businessId : await this.business.find(accountId);
     const row = await this.prisma.$transaction(async (tx) => {
+      // HD3: one lock order for everything a business's money touches: the owner's account first, then the caller's. A seal that took the
+      // caller's account first and the owner's second deadlocked with a client wish being made (it takes the owner's, then writes a row
+      // that needs the caller's account); the cause of the 500 on POST /v1/business/client-wishes under load.
+      const carried = plan ? plan.businessId : (await tx.$queryRaw<{ businessId: string | null }[]>`SELECT "businessId"::text AS "businessId" FROM wish WHERE id = ${id}::uuid`)[0]?.businessId;
+      if (carried) await lockBusinessOwner(tx, carried);
       await lockAccount(tx, accountId);
       await this.owned(tx, accountId, id, biz);
       const locked = await this.lifecycle.lock(tx, id);

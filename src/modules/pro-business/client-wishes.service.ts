@@ -8,6 +8,7 @@ import { decodeCursor, Page, toPage } from "../../common/pagination/cursor";
 import { isUuidV7 } from "../../common/ids/uuidv7";
 import { Clock } from "../../common/ports/clock.port";
 import { IdGenerator } from "../../common/ports/ids.port";
+import { FileJobs } from "../stored-files/file-jobs";
 import { blankRevealWords, CLIENT_WISH_PREFIX } from "../accounts/account-erasure.service";
 import { JobContext, JobResult, JobsService } from "../jobs/jobs.service";
 import { BusinessHandlers } from "../purchases/business-handlers";
@@ -48,6 +49,7 @@ export class ClientWishesService implements OnModuleInit {
     private readonly jobs: JobsService,
     private readonly wishes: WishesService,
     private readonly royalties: RoyaltiesService,
+    private readonly fileJobs: FileJobs,
   ) {}
 
   onModuleInit(): void {
@@ -68,7 +70,9 @@ export class ClientWishesService implements OnModuleInit {
     const r = await this.prisma.clientWish.updateMany({ where: { id, OR: [{ wish: { not: null } }, { client: { not: null } }, { from: { not: null } }] }, data: { wish: null, from: null, client: null } });
     // EA4: the reveal's words (name, note, credits) go with the rest at the end of the term.
     const w = await blankRevealWords(this.prisma, [id]);
-    return r.count || w ? { changed: { erased: 1 } } : { skipped: true };
+    // HC1: the Vault files the reveal showed go with its words.
+    const files = await this.fileJobs.removeRevealFiles(id);
+    return r.count || w || files ? { changed: { erased: 1 } } : { skipped: true };
   }
 
   async list(businessId: string, cursor: string | undefined, limit: number): Promise<Page<ClientWish>> {
@@ -111,9 +115,25 @@ export class ClientWishesService implements OnModuleInit {
     return this.prisma.$transaction((tx) => this.make(tx, accountId, businessId, w));
   }
 
+  /**
+   * HD3: the caller's right to the business, read under the owner's lock (the one every login removal takes): the owner, or an invited or
+   * active login. A login removed while the request waited gets 404 and nothing is drawn, so no wish lands on a removed login.
+   */
+  private async requireMember(tx: Tx, accountId: string, businessId: string): Promise<void> {
+    const rows = await tx.$queryRaw<{ ok: number }[]>`
+      SELECT 1 AS ok FROM business b WHERE b.id = ${businessId}::uuid AND b."accountId" = ${accountId}::uuid
+      UNION ALL
+      SELECT 1 AS ok FROM login l JOIN account a ON a.id = ${accountId}::uuid
+       WHERE l."businessId" = ${businessId}::uuid AND a.contact IS NOT NULL AND a."erasedAt" IS NULL
+         AND lower(trim(l.contact)) = lower(a.contact) AND l.status IN ('invited', 'active')
+      LIMIT 1`;
+    if (!rows.length) throw AppError.notFound();
+  }
+
   /** The wish row and its draw, in the caller's transaction (the owner's account is locked first). */
   private async make(tx: Tx, accountId: string, businessId: string, w: NewWish): Promise<ClientWish> {
     await lockBusinessOwner(tx, businessId);
+    await this.requireMember(tx, accountId, businessId);
     if (w.key) {
       const again = await tx.clientWish.findFirst({ where: { businessId, key: w.key }, include: WITH_WISH });
       if (again) return clientWishWire(again);
@@ -145,6 +165,7 @@ export class ClientWishesService implements OnModuleInit {
   private async sealOnPlan(tx: Tx, call: PlanSealCall): Promise<void> {
     const { wish, businessId } = call;
     await lockBusinessOwner(tx, businessId);
+    await this.requireMember(tx, wish.accountId, businessId);
     const from = await this.handlers.draw(tx, businessId);
     if (!from) throw await this.nothingLeft(tx, businessId);
     await tx.wish.update({ where: { id: wish.id }, data: { businessId } });

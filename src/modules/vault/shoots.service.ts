@@ -10,6 +10,7 @@ import { Clock } from "../../common/ports/clock.port";
 import { IdGenerator } from "../../common/ports/ids.port";
 import { toWireInstant } from "../../common/time/time";
 import { StoredFilesService } from "../stored-files/stored-files.service";
+import { playingRevealNames } from "../stored-files/file-jobs";
 import { SignedUrlsService } from "../stored-files/signed-urls.service";
 import { fileName, idsOf, MAX_FILES_PER_ADD, SetName, UUID } from "./vault-shared";
 import { VaultSpaceService } from "./vault-space.service";
@@ -154,6 +155,7 @@ export class ShootsService {
     }
     for (const fid of done.ids) {
       if (kept.has(fid)) continue;
+      if (await playingRevealNames(this.db, fid, this.clock.now())) continue; // HC1: a reveal that still plays shows it
       try {
         await this.files.remove({ kind: "user", accountId: done.accountId, sides: ["person", "business"] }, fid, {});
       } catch (e) {

@@ -468,7 +468,7 @@ export class WishesService {
       if (input.style !== undefined) {
         data.styleSlug = await this.styleSlug(tx, input.style, cur.styleSlug);
         // HQ5: once a ticket is chosen, a style above what it allows is refused with words
-        if (data.styleSlug !== cur.styleSlug) await this.checkStyleLevel(tx, book, cur.ticket, cur.adds, data.styleSlug as string);
+        if (data.styleSlug !== cur.styleSlug) await this.checkStyleLevel(tx, book, cur.ticket, cur.adds, data.styleSlug);
       }
       if (input.keep !== undefined) data.keep = input.keep;
       if (input.step !== undefined) data.step = input.step;
@@ -672,8 +672,6 @@ export class WishesService {
       }
       if (plan && w.ticket) throw AppError.conflict("already_ticketed", "This wish already has a ticket, so nothing is drawn from the plan for it.");
       if (!w.ticket && !input.usePass && !plan) throw new AppError(402, "payment_required", "Pay for this wish first.");
-      // HQ5: the style the wish is on must be one its ticket allows (a wish with no ticket yet draws its ticket below)
-      if (w.ticket) await this.checkStyleLevel(tx, book, w.ticket, w.adds, w.styleSlug);
       const missing: Record<string, string> = {};
       if (!w.name?.trim()) missing.name = "Who is it for?";
       if (!hasBody(w.content as Obj | null)) missing.content = "Write at least one part of the wish.";
@@ -689,6 +687,10 @@ export class WishesService {
         // GB1: a wish that carries a business earns its creator at this seal too (it was drawn from the plan when it was made).
         if (w.businessId && this.sealAccrual) await this.sealAccrual(tx, w);
       }
+      // HQ5: the style is checked against the ticket the seal REALLY ends with (a paid ticket, or the one a Pass, plan or pack just drew).
+      // A refusal rolls the whole transaction back: nothing drawn, charged or sealed.
+      const ended = await tx.wish.findUniqueOrThrow({ where: { id }, select: { ticket: true, adds: true, styleSlug: true } });
+      await this.checkStyleLevel(tx, book, ended.ticket, ended.adds, ended.styleSlug);
       const no = await this.issueNumber(tx);
       // ZB3: a client wish shares its wish's number once the wish has one.
       await tx.clientWish.updateMany({ where: { wishId: id }, data: { no } });

@@ -659,3 +659,7 @@ ZB4 (P-B17b hand-back) A client wish belongs to the business, not to the login w
     playing; the login's personal data goes. (Wave 6 join.) ClientWish.wishId joins the contract at the closing base. A
     client wish takes its wish's number at the seal (no gaps): accepted. A refund of the plan payment does not unseal wishes
     already made: accepted (the existing revoke).
+GA1 (lead, my miss) The route check found 13 registry endpoints with no route and no bundle: keep and wake (owed since CC5 and
+    never tracked), the Pass read, approved dates' writes, the staff ledger rows (bundle B22), the sender's AI writing and the
+    maker's four reference reads (bundle B23). The check now runs in CI with a lead-owned baseline that only shrinks, so an
+    endpoint cannot be left out again. The 30 INTERNAL endpoints (in-app ports) get the same check before Phase 5 closes.

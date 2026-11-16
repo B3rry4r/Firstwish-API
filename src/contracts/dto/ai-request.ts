@@ -5,7 +5,10 @@ import type { PostAiLetterBody, PostAiPickPhotosBody, PostAiReasonsBody, PostAiS
 /** E-12 POST /v1/ai/letter (body). */
 export class PostAiLetterBodyDto implements PostAiLetterBody {
   @IsString()
-  voiceFileId!: string;
+  transcript!: string;
+  @IsOptional()
+  @IsString()
+  voiceFileId?: string;
   @IsString()
   wishId!: string;
 }
@@ -22,7 +25,10 @@ export class PostAiPickPhotosBodyDto implements PostAiPickPhotosBody {
 /** E-14 POST /v1/ai/reasons (body). */
 export class PostAiReasonsBodyDto implements PostAiReasonsBody {
   @IsString()
-  voiceFileId!: string;
+  transcript!: string;
+  @IsOptional()
+  @IsString()
+  voiceFileId?: string;
   @IsString()
   wishId!: string;
 }

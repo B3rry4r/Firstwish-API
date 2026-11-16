@@ -269,13 +269,13 @@ model ClientWish {
   wish               String?
   wishId             String?        @db.Uuid
   businessId         String?        @db.Uuid
-  business           Business?      @relation("ClientWish_businessId", fields: [businessId], references: [id])
   wishRef            Wish?          @relation("ClientWish_wishId", fields: [wishId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  business           Business?      @relation("ClientWish_businessId", fields: [businessId], references: [id])
   revealAccessByWish RevealAccess[] @relation("RevealAccess_wishId")
 
   @@unique([wishId])
-  @@index([businessId, id])
   @@index([wishId, id])
+  @@index([businessId, id])
   @@map("client_wish")
 }
 
@@ -1539,6 +1539,7 @@ model Wish {
   account                  Account             @relation("Wish_accountId", fields: [accountId], references: [id])
   business                 Business?           @relation("Wish_businessId", fields: [businessId], references: [id])
   aiRequestByWish          AiRequest[]         @relation("AiRequest_wishId")
+  clientWishByWish         ClientWish?         @relation("ClientWish_wishId")
   eventByWish              Event[]             @relation("Event_wishId")
   noticeByWish             Notice[]            @relation("Notice_wishId")
   publishRequestByWish     PublishRequest[]    @relation("PublishRequest_wishId")
@@ -1548,7 +1549,6 @@ model Wish {
   voiceNoteByWish          VoiceNote[]         @relation("VoiceNote_wishId")
   wishLinkByWish           WishLink[]          @relation("WishLink_wishId")
   wishTransitionByWish     WishTransition[]    @relation("WishTransition_wishId")
-  clientWishByWish         ClientWish?         @relation("ClientWish_wishId")
   publishedWishByWish      PublishedWish[]     @relation("PublishedWish_wishId")
   royaltyAccrualByWish     RoyaltyAccrual[]    @relation("RoyaltyAccrual_wishId")
   wishOpenByWish           WishOpen[]          @relation("WishOpen_wishId")

@@ -1,6 +1,6 @@
 {
  "phase": "SCHEMA (Phase 4)",
- "registrySha256": "1dbcbd0c3dd9e15d43131127fb6ac5c178fbe5f9ddf87ca170256298034aa256",
+ "registrySha256": "6ab4467ee017db6d078b6b8afde022a525a8ff8afe2b1c2bfbc07c5e57a6aca4",
  "rules": [
   "table: something writes it (a POST, PUT, PATCH, DELETE or INTERNAL route, or a server:* declaration). A GET's query parameters are not writers.",
   "view: read only, worked out on read from the tables named in 'of'. No table of its own.",
@@ -1061,6 +1061,14 @@
      "rule": "keep",
      "why": "how it was paid"
     }
+   },
+   "omit": {
+    "live": "worked out on read from the membership and its grant (HA3, DEC-206); not stored",
+    "endsAt": "worked out on read from the membership and its grant (HA3, DEC-206); not stored",
+    "wishesTotal": "worked out on read from the membership and its grant (HA3, DEC-206); not stored",
+    "wishesLeft": "worked out on read from the membership and its grant (HA3, DEC-206); not stored",
+    "upgradesTotal": "worked out on read from the membership and its grant (HA3, DEC-206); not stored",
+    "upgradesLeft": "worked out on read from the membership and its grant (HA3, DEC-206); not stored"
    }
   },
   "PassOffer": {
@@ -2266,6 +2274,13 @@
   "WishTransition": {
    "class": "table",
    "reason": "written by server:wish-lifecycle (every state change of a wish, with the job run that made it)"
+  },
+  "ContactReveal": {
+   "class": "view",
+   "reason": "a person's phone and email, answered once to staff with a reason (FB1, DEC-201)",
+   "of": [
+    "Account"
+   ]
   }
  },
  "joinTables": {

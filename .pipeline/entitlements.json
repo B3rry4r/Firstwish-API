@@ -218,11 +218,6 @@
           "endpoint": "E-246",
           "route": "POST /v1/concierge-orders/:id/cancel",
           "matchedBy": "words: concierge"
-        },
-        {
-          "endpoint": "E-89",
-          "route": "INTERNAL port:fulfilment#concierge.rush",
-          "matchedBy": "words: rush"
         }
       ],
       "test": "src/concierge-order/tests/concierge-order.contract.spec.ts > entitlement T-13"
@@ -977,58 +972,6 @@
         }
       ],
       "test": "src/payment/tests/payment.contract.spec.ts > entitlement concierge.single"
-    },
-    {
-      "id": "concierge.rush",
-      "source": "price-book",
-      "statement": "Concierge rush within 1 hour concierge rush",
-      "purchase": [
-        "POST /v1/admin/payments/:reference/refund",
-        "POST /v1/payments"
-      ],
-      "endpoints": [
-        {
-          "endpoint": "E-89",
-          "route": "INTERNAL port:fulfilment#concierge.rush",
-          "matchedBy": "ruling DEC-87"
-        },
-        {
-          "endpoint": "E-243",
-          "route": "POST /v1/admin/concierge/orders/:id/cancel",
-          "matchedBy": "words: concierge"
-        },
-        {
-          "endpoint": "E-246",
-          "route": "POST /v1/concierge-orders/:id/cancel",
-          "matchedBy": "words: concierge"
-        },
-        {
-          "endpoint": "E-34",
-          "route": "POST /v1/admin/concierge-orders/:id/delivery",
-          "matchedBy": "words: concierge"
-        },
-        {
-          "endpoint": "E-35",
-          "route": "POST /v1/admin/concierge-orders/:id/quote",
-          "matchedBy": "words: concierge"
-        },
-        {
-          "endpoint": "E-39",
-          "route": "POST /v1/admin/concierge/orders/:id/maker",
-          "matchedBy": "words: concierge"
-        },
-        {
-          "endpoint": "E-40",
-          "route": "POST /v1/concierge-orders",
-          "matchedBy": "words: concierge"
-        },
-        {
-          "endpoint": "E-89",
-          "route": "INTERNAL port:fulfilment#concierge.rush",
-          "matchedBy": "words: rush"
-        }
-      ],
-      "test": "src/payment/tests/payment.contract.spec.ts > entitlement concierge.rush"
     },
     {
       "id": "pro.starter",

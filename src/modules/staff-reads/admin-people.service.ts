@@ -6,7 +6,7 @@ import { RateLimited } from "../../common/errors/rate-limited";
 import { Clock } from "../../common/ports/clock.port";
 import { decodeCursor, DEFAULT_LIMIT, type Page, toPage } from "../../common/pagination/cursor";
 import { toWireInstant } from "../../common/time/time";
-import type { Account, PersonDetail } from "../../contracts";
+import type { Account, ContactReveal, PersonDetail } from "../../contracts";
 import { AccountErasureService } from "../accounts/account-erasure.service";
 import { type AuditActor, AuditService, requireReason } from "../audit/audit.service";
 import { BansService } from "../moderation/bans.service";
@@ -116,7 +116,7 @@ export class AdminPeopleService {
    * while a lock on the staff member is held, so 50 at once let exactly 20 through; a database that cannot answer refuses the
    * reveal. One audit row, with field names only (never the values). Answers the values to the service's caller.
    */
-  async reveal(id: string, reasonText: string, actor: AuditActor): Promise<{ phone: string; email: string }> {
+  async reveal(id: string, reasonText: string, actor: AuditActor): Promise<ContactReveal> {
     const reason = requireReason(reasonText);
     if (!UUID.test(id)) throw AppError.notFound("No such person.");
     const staffId = actor.id as string;

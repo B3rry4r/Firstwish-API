@@ -434,7 +434,8 @@ describe("staff reads (B21)", () => {
       expect((await post(url, { reason: "customer on the phone" }, "reviewer")).status).toBe(403);
       expect((await post(url, { reason: "customer on the phone" })).status).toBe(401);
       const ok = await post(url, { reason: "customer on the phone" }, "support");
-      expect(ok.status).toBe(204);
+      expect(ok.status).toBe(200);
+      expect(ok.body).toEqual({ phone: expect.any(String), email: a.contact });
       const rows = await auditRows(k.db, "person.contact_reveal", a.id);
       expect(rows).toHaveLength(1);
       expect(rows[0].actorId).toBe(k.staffIds.support);
@@ -446,10 +447,10 @@ describe("staff reads (B21)", () => {
       const a = await makeAccount(k.db);
       const url = `/v1/admin/people/${a.id}/contact-reveal`;
       const rs = await Promise.all(Array.from({ length: 30 }, () => post(url, { reason: "checking an order" }, "moderator")));
-      expect(rs.filter((r) => r.status === 204)).toHaveLength(20);
+      expect(rs.filter((r) => r.status === 200)).toHaveLength(20);
       expect(rs.filter((r) => r.status === 429)).toHaveLength(10);
       expect(await k.db.auditEntry.count({ where: { action: "person.contact_reveal", actorId: k.staffIds.moderator } })).toBe(20);
-      expect((await post(url, { reason: "another one please" }, "ops")).status).toBe(204);
+      expect((await post(url, { reason: "another one please" }, "ops")).status).toBe(200);
     });
   });
 

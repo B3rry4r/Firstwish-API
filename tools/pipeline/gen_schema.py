@@ -421,6 +421,8 @@ def ts_field_type(res: str, f: dict) -> str:
         return "SignedUpload"  # X20 (DEC-163)
     elif t.startswith("object {active: boolean, endsAt: time}"):
         return "{ active: boolean; endsAt: Instant } | null"
+    elif t.startswith("array<object {line: enum("):
+        return "NumbersLine[]"  # FB2 (DEC-202)
     elif t.startswith("array<enum("):
         vals = ENUM_IN.search(t).group(1).split("|")
         return "Array<" + " | ".join(json.dumps(v) for v in vals) + ">"
@@ -538,6 +540,13 @@ export interface PaymentStartedOrCovered<T> {
   item: T | null;
 }
 
+/** One earning line of the numbers page (FB2): the key staff set targets by, the words staff read, and the kobo earned. */
+export interface NumbersLine {
+  line: NumbersTarget["line"];
+  name: string;
+  definition: string;
+  amount: Kobo;
+}
 /** E-5. */
 export interface HandleCheck {
   free: boolean;
@@ -800,7 +809,7 @@ def split_body(e: dict):
     for b in e["body"]:
         n, t = b["name"], b["type"]
         if t.strip().lower().startswith("header"):
-            headers.append(n)
+            headers.append(n if "optional" not in t.lower() else n + "?")
             continue
         if n == "raw body":
             raw = True
@@ -916,7 +925,7 @@ for r in REG["resources"]:
             dto.append("}")
         TYPE_LINES.append(f"export interface {op}Headers {{")
         for h in headers:
-            TYPE_LINES.append(f"  {json.dumps(h.lower())}: string;")
+            TYPE_LINES.append(f"  {json.dumps(h.lower().rstrip('?'))}{'?' if h.endswith('?') else ''}: string;")
         TYPE_LINES.append("}")
         rtype = response_type(e)
         no_content = rtype == "void" and e["method"] != "INTERNAL"

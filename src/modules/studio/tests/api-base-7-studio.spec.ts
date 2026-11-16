@@ -172,9 +172,11 @@ describe("HW2 Studio files, HW3 Signed off, HW5 sweep, wish list publish", () =>
     expect(before.signedUntil).toBe(new Date(NOW.getTime() + 30 * DAY).toISOString());
     expect(before.planEndsOn).toBe("2034-06-10");
     expect(before.signedEndsOn).toBe("2034-06-09");
-    const ledger = () => db.ledgerEntry.count();
+    // this account's own rows only: other specs share the database and add rows in parallel
+    const mine = { payment: { accountId: c.id } };
+    const ledger = () => db.ledgerEntry.count({ where: mine });
     const rows = await ledger();
-    const refunds = await db.refund.count();
+    const refunds = await db.refund.count({ where: mine });
     // Signed off: still on until its day, not renewed
     const off = await t.http().patch("/v1/studio/me").set(c.auth).send({ signed: false });
     expect(off.status).toBe(200);
@@ -184,7 +186,7 @@ describe("HW2 Studio files, HW3 Signed off, HW5 sweep, wish list publish", () =>
     const back = await t.http().patch("/v1/studio/me").set(c.auth).send({ signed: true, plan: "creator" });
     expect(back.body).toMatchObject({ signed: true, signedEnding: false, planEnding: false, signedUntil: before.signedUntil });
     expect(await ledger()).toBe(rows);
-    expect(await db.refund.count()).toBe(refunds);
+    expect(await db.refund.count({ where: mine })).toBe(refunds);
     expect((await t.http().patch("/v1/studio/me").set(c.auth).send({ plan: "bogus" })).status).toBe(422);
     // turn both off and let the days pass: nothing renews and nothing is refunded
     await t.http().patch("/v1/studio/me").set(c.auth).send({ signed: false, plan: "open" });
@@ -198,7 +200,7 @@ describe("HW2 Studio files, HW3 Signed off, HW5 sweep, wish list publish", () =>
     expect((await t.http().patch("/v1/studio/me").set(c.auth).send({ plan: "creator" })).status).toBe(402);
     expect((await t.http().patch("/v1/studio/me").set(c.auth).send({ signed: true })).status).toBe(402);
     expect(await ledger()).toBe(rows);
-    expect(await db.refund.count()).toBe(refunds);
+    expect(await db.refund.count({ where: mine })).toBe(refunds);
   });
 
   it("7. the sweep removes a confirmed, unattached upload after 7 days and never one that is attached", async () => {

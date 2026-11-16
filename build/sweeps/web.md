@@ -36,3 +36,9 @@
   load; ruling: send none and let the server's own link+address+browser hash decide: a small web change with
   WEB-API-4's follow-up); links to a style's wish still drawn from fixtures at components/site/ShowingGallery.tsx:77,140
   (W2) and components/admin/b/Review.tsx:48 (W14); the style scenes' voices chapters show text only.
+- W8 (second check 16 Nov), accepted at the merge and owed: a team LOGIN cannot use the business screens (the app
+  shell gates on the owner's side and shows "Add a business"; /me does not say who is a login: API-BASE-6 case 3, then
+  the shell opens the pages for a login); two tabs can both pay for a plan (API-BASE-6 case 2 refuses the second);
+  an import counts as added a row whose phone or birthday the server stored blank (API-BASE-6 case 7, then the
+  screen shows the server's per-row answer); lib/site-plans.ts is a second copy of the plan prices drawn by the
+  website's ProPlans (W1 reads the price book and deletes it); the "light" pictures of these screens look dark.

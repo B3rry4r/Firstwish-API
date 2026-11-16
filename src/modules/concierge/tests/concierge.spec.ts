@@ -164,19 +164,56 @@ describe("concierge orders B19", () => {
     await http().get("/v1/admin/concierge/orders").expect(401);
   });
 
-  it("2. two staff giving the same order at once: one wins, the other is told it changed", async () => {
+  it("2. giving at once: the same maker is won by one; different makers each win in turn (give again, ruling A9), never two owners", async () => {
     const a = await k.account();
-    const [m1, m2, ops1, ops2] = [await k.staff(["maker"]), await k.staff(["maker"]), await k.staff(["ops"]), await k.staff(["ops"])];
-    const id = (await place(a.auth)).body.id;
-    await pay(a.id, id);
-    const [r1, r2] = await Promise.all([
-      http().post(`/v1/admin/concierge/orders/${id}/maker`).set("Authorization", ops1.auth).send({ makerId: m1.id, reason: "race one" }),
-      http().post(`/v1/admin/concierge/orders/${id}/maker`).set("Authorization", ops2.auth).send({ makerId: m2.id, reason: "race two" }),
+    const makers = [await k.staff(["maker"]), await k.staff(["maker"]), await k.staff(["maker"])];
+    const ops = await k.staff(["ops"]);
+    const give = (id: string, makerId: string, reason: string) =>
+      http().post(`/v1/admin/concierge/orders/${id}/maker`).set("Authorization", ops.auth).send({ makerId, reason });
+    const fresh = async () => {
+      const id = (await place(a.auth)).body.id as string;
+      await pay(a.id, id);
+      return id;
+    };
+    // (a) 50 gives of one order to one maker at once: exactly one 200, every other 409 with nothing written
+    const same = await fresh();
+    const rs = await Promise.all(Array.from({ length: 50 }, (_, i) => give(same, makers[0].id, `same ${i} reason`)));
+    expect(rs.filter((r) => r.status === 200)).toHaveLength(1);
+    expect(rs.filter((r) => r.status === 409)).toHaveLength(49);
+    expect((await db.conciergeOrder.findUniqueOrThrow({ where: { id: same } })).makerId).toBe(makers[0].id);
+    expect(await db.auditEntry.count({ where: { subjectId: same } })).toBe(1);
+    // (b) 50 gives to three makers at once: a second give after the first has landed is a legal give again, so how many
+    // answer 200 depends on timing; what never depends on it: each 200 wrote one audit row, each other answer is 409 and wrote none,
+    // and the order has one of the three makers.
+    const mixed = await fresh();
+    const rm = await Promise.all(Array.from({ length: 50 }, (_, i) => give(mixed, makers[i % 3].id, `mixed ${i} reason`)));
+    const won = rm.filter((r) => r.status === 200).length;
+    expect(won).toBeGreaterThanOrEqual(1);
+    expect(rm.filter((r) => r.status !== 200).every((r) => r.status === 409)).toBe(true);
+    const rows = await db.auditEntry.findMany({ where: { subjectId: mixed }, orderBy: [{ createdAt: "desc" }, { id: "desc" }] });
+    expect(rows).toHaveLength(won);
+    expect(rows.filter((r) => r.action === "concierge.give")).toHaveLength(1);
+    const order = await db.conciergeOrder.findUniqueOrThrow({ where: { id: mixed } });
+    expect(makers.map((m) => m.id)).toContain(order.makerId);
+    expect(order.status).toBe("given");
+    // (c) one after the other, as the ruling allows: A gives to X, then B gives again to Y with a reason; both 200, two rows
+    const turn = await fresh();
+    await give(turn, makers[0].id, "first give").expect(200);
+    await give(turn, makers[1].id, "give again to Y").expect(200);
+    expect((await db.conciergeOrder.findUniqueOrThrow({ where: { id: turn } })).makerId).toBe(makers[1].id);
+    expect((await db.auditEntry.findMany({ where: { subjectId: turn }, select: { action: true } })).map((r) => r.action).sort()).toEqual(["concierge.give", "concierge.give-again"]);
+    await give(turn, makers[1].id, "same again").expect(409);
+    // (d) a give racing a cancel: one order, one end; a give that lost is 409 and wrote nothing
+    const rc = await fresh();
+    const [g, c] = await Promise.all([
+      give(rc, makers[0].id, "give vs cancel"),
+      http().post(`/v1/admin/concierge/orders/${rc}/cancel`).set("Authorization", ops.auth).send({ reason: "cancel vs give" }),
     ]);
-    expect([r1.status, r2.status].sort()).toEqual([200, 409]);
-    const winner = r1.status === 200 ? m1.id : m2.id;
-    expect((await db.conciergeOrder.findUniqueOrThrow({ where: { id } })).makerId).toBe(winner);
-    expect(await db.auditEntry.count({ where: { subjectId: id } })).toBe(1);
+    const end = await db.conciergeOrder.findUniqueOrThrow({ where: { id: rc } });
+    expect(c.status).toBe(200);
+    expect([200, 409]).toContain(g.status);
+    expect(end.status).toBe("cancelled");
+    expect(await db.auditEntry.count({ where: { subjectId: rc, action: { startsWith: "concierge.give" } } })).toBe(g.status === 200 ? 1 : 0);
   });
 
   it("3. delivery: the maker names real wishes of that order; the customer reads which were opened", async () => {

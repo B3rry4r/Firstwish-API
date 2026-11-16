@@ -3,8 +3,10 @@ import { Clock } from "../../common/ports/clock.port";
 import { IdGenerator } from "../../common/ports/ids.port";
 import { EntitlementsService } from "../price-book/entitlements.service";
 import { nextMonthStart, rulesFrom } from "../studio/creator-state.service";
+import { SIGNED_DEFAULT_DAYS } from "../payouts/signed-period.service";
+import { InvoicesService } from "../pro-business/invoices.service";
 import type { FulfilmentContext } from "../payments/fulfilment.registry";
-import { addMonths, GrantStore, num, type GrantRow, type Tx } from "./grants";
+import { addDays, addMonths, GrantStore, num, type GrantRow, type Tx } from "./grants";
 
 interface State {
   id: string;
@@ -26,6 +28,7 @@ export class CreatorHandlers {
     private readonly clock: Clock,
     private readonly ids: IdGenerator,
     private readonly ent: EntitlementsService,
+    private readonly invoices: InvoicesService,
   ) {}
 
   /** The account's CreatorState, made if it has none, and locked. */
@@ -62,18 +65,20 @@ export class CreatorHandlers {
           data: { plan: "creator", credits: num(s.credits) + credits, reviewsLeft: num(g.reviewsPerMonth), renews, periodEndsAt: renews, ...bump },
         });
         await this.store.record(tx, grantId, { credits, reviewsPerMonth: num(g.reviewsPerMonth) }, renews);
-        return;
+        break;
       }
       case "signed": {
         await tx.creatorState.update({ where: { id: s.id }, data: { signed: true, ...bump } });
-        await this.store.record(tx, grantId, { signed: true, days: num(g.days) });
-        return;
+        // The period ends at its start plus the price-book line's days; the grant says so (endsAt), and the daily job reads it.
+        const days = num(g.days) > 0 ? num(g.days) : SIGNED_DEFAULT_DAYS;
+        await this.store.record(tx, grantId, { signed: true, days }, addDays(now, days));
+        break;
       }
       case "credit-pack": {
         const credits = num(g.credits) * line.qty;
         await tx.creatorState.update({ where: { id: s.id }, data: { credits: num(s.credits) + credits, packs: num(s.packs) + line.qty, ...bump } });
         await this.store.record(tx, grantId, { credits, packs: line.qty });
-        return;
+        break;
       }
       default: {
         const reviews = num(g.reviews, 1) * line.qty;
@@ -81,6 +86,8 @@ export class CreatorHandlers {
         await this.store.record(tx, grantId, { reviews });
       }
     }
+    // CA3 (T-40): a business that pays for a creator line gets an invoice; a person's payment names no business and gets none.
+    await this.invoices.issue(tx, ctx.payment);
   }
 
   /** The grants of one line for an account that still stand (not revoked, not refused), newest first, leaving out `except` (HH3). */

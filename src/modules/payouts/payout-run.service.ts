@@ -26,6 +26,8 @@ export const REFERENCE_PREFIX = "fw-payout-";
 const SECTION = "/admin/creators";
 /** ZZ1: the staff note left on a payout whose event named a wrong amount. */
 const FLAG_AMOUNT = "A provider event named a different amount: nothing was changed. Check with the provider.";
+/** ZZ8: the staff note added to a payout marked paid by hand when the provider's event for it comes later. */
+const FLAG_HAND = "The provider sent news for a payout marked paid by hand: nothing was changed. Check with the provider.";
 const notAllowed = (message: string) => new AppError(HttpStatus.CONFLICT, "not_allowed", message);
 
 export interface RunResult {
@@ -292,6 +294,11 @@ export class PayoutRunService implements PayoutEventSink {
     const rows = await tx.$queryRaw<{ amountKobo: bigint; status: string }[]>`SELECT "amountKobo", status::text AS status FROM payout WHERE id = ${id}::uuid FOR UPDATE`;
     const p = rows[0];
     if (!p) return "unknown_reference";
+    // ZZ8: a payout marked paid by hand (finance or the owner wrote one audit row, payout.mark-paid) ignores every later provider event and flags it for staff.
+    if (p.status === "succeeded" && (await tx.auditEntry.count({ where: { subjectType: "Payout", subjectId: id, action: "payout.mark-paid" } })) > 0) {
+      await tx.$executeRaw`UPDATE payout_detail SET note = CASE WHEN note IS NULL THEN ${FLAG_HAND} WHEN position(${FLAG_HAND} in note) > 0 THEN note ELSE note || ' ' || ${FLAG_HAND} END WHERE "payoutId" = ${id}::uuid`;
+      return "paid_by_hand";
+    }
     if (kind !== "lost" && !(typeof amount === "number" && Number.isSafeInteger(amount) && amount >= 0 && BigInt(amount) === p.amountKobo)) {
       await tx.$executeRaw`UPDATE payout_detail SET note = COALESCE(note, ${FLAG_AMOUNT}) WHERE "payoutId" = ${id}::uuid`;
       return "amount_mismatch";

@@ -10,9 +10,10 @@ import { toWireInstant } from "../../common/time/time";
 import type { ConciergeOrder, Maker } from "../../contracts";
 import { AuditActor, AuditService, requireReason } from "../audit/audit.service";
 import { FulfilmentRegistry, type FulfilmentContext } from "../payments/fulfilment.registry";
-import { withFlag } from "../payments/payment-options";
+import { flagRefundDue } from "../refunds/refund-due";
 import { EntitlementsService } from "../price-book/entitlements.service";
 import { NoticesService } from "../notices/notices.service";
+import { InvoicesService } from "../pro-business/invoices.service";
 import { PriceBookService } from "../price-book/price-book.service";
 import { discounted } from "../price-book/price-math";
 import { BusinessOf } from "../people/business-of";
@@ -59,6 +60,7 @@ export class ConciergeService implements OnModuleInit {
     private readonly activity: ReceiverActivityService,
     private readonly registry: FulfilmentRegistry,
     private readonly notices: NoticesService,
+    private readonly invoices: InvoicesService,
   ) {}
 
   onModuleInit(): void {
@@ -199,6 +201,9 @@ export class ConciergeService implements OnModuleInit {
     await this.db.$transaction(async (tx) => {
       const o = await this.lock(tx, id, {});
       if (!canMove(o.status, "quoted")) throw AppError.conflict("order_not_quotable", "Only an order that is not paid yet can be priced.");
+      // CB5: while a payment for this order is pending its price cannot move (the start's own check locked this row first, so the two never pass each other)
+      const pending = await tx.payment.findFirst({ where: { purpose: "concierge", subjectId: id, status: "pending" }, select: { id: true } });
+      if (pending) throw AppError.conflict("payment_pending", "A payment for this order is under way. Try again when it ends.");
       // CB3 (PROVISIONAL): a quote is at most 100 times the order's list price
       const list = (await tx.$queryRaw<{ listKobo: bigint }[]>`SELECT "listKobo" FROM concierge_order_ext WHERE "orderId" = ${id}::uuid`)[0]?.listKobo ?? 0n;
       if (BigInt(body.quoteKobo) > list * 100n) throw AppError.validation({ quoteKobo: "A price is at most 100 times the list price of this order." });
@@ -299,8 +304,7 @@ export class ConciergeService implements OnModuleInit {
     const ext = (await tx.$queryRaw<Ext[]>`UPDATE concierge_order_ext SET "cancelledAt" = ${now} WHERE "orderId" = ${o.id}::uuid RETURNING "paymentId"::text AS "paymentId"`)[0];
     // paid: a person sends the refund, so the payment says so (the refund itself is not made here)
     if (ext?.paymentId) {
-      const p = await tx.payment.findUniqueOrThrow({ where: { id: ext.paymentId } });
-      await tx.payment.update({ where: { id: p.id }, data: { flags: withFlag(withFlag(p.flags, "refund_due"), "refund_due:concierge_cancelled") } });
+      await flagRefundDue(tx, ext.paymentId, "concierge_cancelled");
     }
     if (actor) {
       await this.audit.write(tx, { actor, section: SECTION, action: "concierge.cancel", target: { type: "ConciergeOrder", id: o.id }, reason, changedFields: ["status"] });
@@ -312,9 +316,7 @@ export class ConciergeService implements OnModuleInit {
     const { tx, payment } = ctx;
     const orderId = ctx.request.subjectId ?? payment.subjectId ?? "";
     const refuse = async (why: string) => {
-      const p = await tx.payment.findUniqueOrThrow({ where: { id: payment.id } });
-      const flags = withFlag(withFlag(p.flags, "refund_due"), `refund_due:${why}`);
-      if (flags.length !== p.flags.length) await tx.payment.update({ where: { id: p.id }, data: { flags } });
+      await flagRefundDue(tx, payment.id, why);
     };
     if (!UUID.test(orderId)) return refuse("order_missing");
     const rows = await tx.$queryRaw<OrderRow[]>`SELECT * FROM concierge_order WHERE id = ${orderId}::uuid FOR UPDATE`;
@@ -331,6 +333,9 @@ export class ConciergeService implements OnModuleInit {
     const dueAt = dueAtFor(o.kind, now, hours);
     await tx.conciergeOrder.update({ where: { id: orderId }, data: { status: "paid", deliverBy: dueAt } });
     await tx.$executeRaw`UPDATE concierge_order_ext SET "paymentId" = ${payment.id}::uuid, "paidAt" = ${now}, "dueAt" = ${dueAt} WHERE "orderId" = ${orderId}::uuid`;
+    // CA3 (T-40): a business's order leaves an invoice, linked on the order; a person's payment names no business and leaves none.
+    const invoiceId = await this.invoices.issue(tx, payment);
+    if (invoiceId) await tx.conciergeOrder.update({ where: { id: orderId }, data: { invoiceId } });
   }
 
   /** Locks the order's row (FOR UPDATE) when it matches the filter; a miss is 404, a uuid that is not one is 404. */

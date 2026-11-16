@@ -232,7 +232,8 @@ describe("B08 refunds, the settlement check and staff payments (contract)", () =
     const rows = await db.ledgerEntry.findMany({ where: { paymentId: p.id }, orderBy: { id: "asc" } });
     const mine = rows.filter((r) => r.refundId === rf.id);
     expect(mine.length).toBeGreaterThan(0);
-    expect(rows.filter((r) => r.refundId === null)).toEqual(before);
+    // the zero-kobo "reversed before accrual" mark (ZZ6) is the one row a refund of a ticket payment may leave beside the originals
+    expect(rows.filter((r) => r.refundId === null && !r.memo.startsWith("Royalty reversed before accrual"))).toEqual(before);
     expect(signed(rows)).toEqual([]);
     expect(signed(mine)).toEqual([]);
     const clearing = (rs: typeof rows) => rs.filter((r) => r.account === "provider_clearing").reduce((a, r) => a + (r.direction === "debit" ? r.amountKobo : -r.amountKobo), 0n);

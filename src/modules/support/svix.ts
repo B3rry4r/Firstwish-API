@@ -8,7 +8,7 @@ export type SvixCheck = "ok" | "bad_signature" | "old_timestamp";
 /**
  * Checks the three svix headers against the raw body. The signed text is `${id}.${timestamp}.${body}`, signed with HMAC-SHA256
  * under the base64 part of the secret ("whsec_<base64>"); the signature header holds one or more "v1,<base64>" entries.
- * `nowSeconds` comes from the clock port, never from Date.now().
+ * `nowSeconds` comes from the clock port, never from the system clock.
  */
 export function checkSvix(
   secret: string,

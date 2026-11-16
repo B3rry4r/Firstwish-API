@@ -9,6 +9,7 @@ import { withFlag } from "../payments/payment-options";
 import { AuditService } from "../audit/audit.service";
 import { InvoicesService } from "../pro-business/invoices.service";
 import { PurchasesService } from "../purchases/purchases.service";
+import { RoyaltiesService } from "../royalties/royalties.service";
 import { reversalEntries } from "./ledger-reversal";
 import { OPEN_REFUND, refusalText } from "./refunds.service";
 
@@ -35,6 +36,7 @@ export class RefundEvents implements RefundEventSink {
     private readonly audit: AuditService,
     private readonly purchases: PurchasesService,
     private readonly invoices: InvoicesService,
+    private readonly royalties: RoyaltiesService,
   ) {}
 
   async apply(eventRowId: string, type: string, data: Record<string, unknown>): Promise<void> {
@@ -86,6 +88,8 @@ export class RefundEvents implements RefundEventSink {
     });
     const revoked = await this.purchases.revoke(tx, payment);
     await this.invoices.voidFor(tx, paymentId);
+    // WW2: the royalties this payment earned are taken back in the same transaction (one reversal per accrual; a second call changes nothing).
+    await this.royalties.reverse(tx, paymentId);
     await tx.refund.update({ where: { id: refund.id }, data: { status: "succeeded", updatedAt: now } });
     await tx.payment.update({ where: { id: paymentId }, data: { status: "refunded", flags: payment.flags.filter((f) => f !== "refund_due" && f !== "refund_amount_mismatch"), updatedAt: now } });
     const kept = revoked.filter((r) => !NOTHING_KEPT.has(r.result));

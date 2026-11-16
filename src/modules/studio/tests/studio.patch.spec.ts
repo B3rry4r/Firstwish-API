@@ -320,8 +320,8 @@ describe("SA5: only a style that is on can be picked", () => {
     expect((await wish(c, `studio-${styleId}`)).status).toBe(422);
     expect((await db.wish.findUniqueOrThrow({ where: { id: wishId } })).styleSlug).toBe(`studio-${styleId}`);
     const repick = await t.http().patch(`/v1/wishes/${wishId}`).set(c.h).send({ version: 0, style: `studio-${styleId}` });
-    expect(repick.status).toBe(422);
-    expect(repick.body.error.fields).toHaveProperty("style");
+    // J8: a draft saved again with its own current style is accepted after that style went off (only a CHANGE to an off style is 422)
+    expect(repick.status).toBe(200);
     // returned by staff
     const second = await waiting(c);
     expect((await decide(second.sid, { decision: "return", reason: "Not this one", note: "Not this one" })).status).toBe(200);

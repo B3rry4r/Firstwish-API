@@ -11,6 +11,7 @@ import { scrubReason } from "../notices/catalog";
 import { EmailSuppression } from "../notices/suppression";
 import { IntakeLimits } from "./intake-limits";
 import { cleanInbound, isDeliveryReport, isOwnAddress, MESSAGE_MAX, SUBJECT_MAX, threadOfToken, tokenFromAddress, tokenHolds } from "./rules";
+import { flagRefundDue } from "../refunds/refund-due";
 import { checkSvix } from "./svix";
 import { SupportService } from "./support.service";
 
@@ -134,7 +135,7 @@ export class EmailWebhookService {
   /**
    * PP6: a wish's delivery email that fails for good puts refund_due on the payment that paid for that wish (found through the
    * purchase grant that names the wish). One UPDATE per payment that cannot lose another change to the flags; nothing refunds
-   * by itself. (The refunds module's own helper is not in this base: the flag is set here, on payment.flags.)
+   * by itself. (YY4: the flag is set by the refunds module's helper, flagRefundDue.)
    */
   private async flagRefundDue(tx: Tx, vars: Prisma.JsonValue): Promise<void> {
     const wishId = str(obj(vars).wishId);
@@ -142,9 +143,7 @@ export class EmailWebhookService {
     const grants = await tx.purchaseGrant.findMany({ where: { wishId }, select: { paymentId: true }, distinct: ["paymentId"] });
     const paymentIds = grants.map((g) => g.paymentId);
     if (!paymentIds.length) return;
-    await tx.$executeRaw`
-      UPDATE payment SET flags = flags || ARRAY['refund_due']::text[] || ARRAY['refund_due:delivery_email_failed']::text[]
-      WHERE id = ANY(${paymentIds}::uuid[]) AND status IN ('succeeded', 'partly-refunded') AND NOT ('refund_due' = ANY(flags))`;
+    await flagRefundDue(tx, paymentIds, "delivery_email_failed");
   }
 
   // ---------- inbound mail (case 2) ----------

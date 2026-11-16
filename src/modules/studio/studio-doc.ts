@@ -40,6 +40,10 @@ export function shapeParts(input: Obj, field: string, out: Obj): ErrorFields {
     if (typeof input.theme === "string" || isObj(input.theme)) out.theme = input.theme;
     else fields[`${field}.theme`] = "Must be a theme object or the name of one.";
   }
+  if (input.art !== undefined && input.art !== null) {
+    if (!Array.isArray(input.art) || input.art.length > MAX_ART) fields[`${field}.art`] = `Must be a list of at most ${MAX_ART} things.`;
+    else out.art = input.art;
+  }
   return fields;
 }
 
@@ -64,10 +68,6 @@ export function cleanDoc(input: unknown, field = "style"): Obj {
     else out[k] = t;
   }
   Object.assign(fields, shapeParts(input, field, out));
-  if (input.art !== undefined && input.art !== null) {
-    if (!Array.isArray(input.art) || input.art.length > MAX_ART) fields[`${field}.art`] = `Must be a list of at most ${MAX_ART} things.`;
-    else out.art = input.art;
-  }
   for (const k of ["style", "seen"] as const) if (input[k] !== undefined && input[k] !== null) out[k] = input[k];
   if (Object.keys(fields).length) throw AppError.validation(fields);
   if (Buffer.byteLength(JSON.stringify(out), "utf8") > MAX_DOC_BYTES) throw AppError.validation({ [field]: "This style is too big to save." });

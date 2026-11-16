@@ -7,6 +7,7 @@ import { PriceBookService } from "../price-book/price-book.service";
 import { EventsService } from "../events/events.service";
 import type { FulfilmentContext } from "../payments/fulfilment.registry";
 import { JobsService } from "../jobs/jobs.service";
+import { RoyaltiesService } from "../royalties/royalties.service";
 import { NOTICE_DAYS, WishLifecycleService } from "../wishes/wish-lifecycle.service";
 import { WishesService } from "../wishes/wishes.service";
 import { addDays, DAY_MS, GrantStore, num, type GrantRow, type Tx } from "./grants";
@@ -37,6 +38,7 @@ export class WishHandlers {
     private readonly jobs: JobsService,
     private readonly clock: Clock,
     private readonly wishes: WishesService,
+    private readonly royalties: RoyaltiesService,
   ) {}
 
   /** Locks the wish the payment names (a missing one or one that is no uuid is null) and reads it under that lock. */
@@ -64,6 +66,8 @@ export class WishHandlers {
     await this.store.record(tx, grantId, { wishId: w.id, ticket, previousTicket: w.ticket, termDays: num(grant.termDays), photos: num(grant.photos) });
     await this.store.nameWish(tx, grantId, w.id);
     await this.paidInStyle(tx, ctx, w.id);
+    // WW2: a wish paid in a creator's Premium style earns the creator, in this same settle transaction.
+    await this.royalties.accrue(tx, ctx.payment);
   }
 
   /** The "paid in a style" event of a ticket line: the settle wrote it by the request's style; this adds the wish and its own style. */
@@ -92,6 +96,7 @@ export class WishHandlers {
     await tx.wish.update({ where: { id: w.id }, data: { adds: [...w.adds, line.sku], version: { increment: 1 } } });
     await this.store.record(tx, grantId, { wishId: w.id, extra: line.sku, ticket: w.ticket, gives: grant });
     await this.store.nameWish(tx, grantId, w.id);
+    await this.royalties.accrue(tx, ctx.payment);
   }
 
   async keep(ctx: FulfilmentContext): Promise<void> {

@@ -78,10 +78,10 @@ export function replyDomain(mailFrom: string | undefined): string {
 }
 
 /** The system senders of a mail domain: a bounce or a no-reply box is never a person. */
-const SYSTEM_LOCALS = new Set(["mailer-daemon", "postmaster", "noreply", "no-reply", "do-not-reply", "donotreply", "bounce", "bounces", REPLY_LOCAL]);
+const SYSTEM_LOCALS = new Set(["mailer-daemon", "postmaster", "noreply", "no-reply", "do-not-reply", "donotreply", "bounce", "bounces"]);
 
 /**
- * DA1: whether an address is one of ours or a machine's: empty, the sending address (MAIL_FROM), any reply+ address, or a system
+ * DA1: whether an address is one of ours or a machine's: empty, the sending address (MAIL_FROM), any reply or reply+ address on the mail domain, or a system
  * box (mailer-daemon, postmaster, no-reply) on any domain. A person on the mail domain itself is not excluded by the domain alone.
  */
 export function isOwnAddress(mailFrom: string | undefined, address: string | null | undefined): boolean {
@@ -93,7 +93,8 @@ export function isOwnAddress(mailFrom: string | undefined, address: string | nul
   if (SYSTEM_LOCALS.has(base)) return true;
   const from = mailFrom ? normaliseEmail(mailFrom.replace(/^.*<([^>]+)>\s*$/, "$1")) : null;
   if (from && (from === a || canonicalEmail(from) === canonicalEmail(a))) return true;
-  return a.slice(at + 1) === replyDomain(mailFrom) && local.startsWith(`${REPLY_LOCAL}+`);
+  // B20: the reply box is ours only on the mail domain: a person whose address is reply@ some other domain is a person.
+  return a.slice(at + 1) === replyDomain(mailFrom) && (base === REPLY_LOCAL || local.startsWith(`${REPLY_LOCAL}+`));
 }
 
 /** DA1: a delivery report by its content type, whatever other headers it has. */

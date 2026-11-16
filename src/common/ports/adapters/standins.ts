@@ -184,6 +184,26 @@ export class StandinStorage extends StoragePort {
     return true;
   }
 
+  /** HQ3: what a signed PUT url asked for (null when no upload was signed for the key). */
+  boundFor(key: string): { contentType: string; contentLength: number } | null {
+    return this.bound.get(key) ?? null;
+  }
+
+  /**
+   * HQ3: the signed PUT as a real storage takes it. The signature binds the key, the expiry, the content type and the exact length,
+   * so a wrong, expired or borrowed signature, another kind and another size are each refused and nothing is stored.
+   */
+  receive(key: string, expires: number, signature: string, contentType: string, bytes: Buffer): { ok: true } | { ok: false; status: number; message: string } {
+    if (!Number.isFinite(expires) || expires * 1000 < this.clock.now().getTime()) return { ok: false, status: 403, message: "This upload link has expired." };
+    const b = this.bound.get(key);
+    if (!b) return { ok: false, status: 403, message: "This upload link is not valid." };
+    if (signature !== this.sig(key, expires, `${b.contentType}:${b.contentLength}`)) return { ok: false, status: 403, message: "This upload link is not valid." };
+    if (contentType !== b.contentType) return { ok: false, status: 403, message: "The file is not the kind this upload was asked for." };
+    if (bytes.length !== b.contentLength) return { ok: false, status: 403, message: "The file is not the size this upload was asked for." };
+    this.objects.set(key, { bytes, contentType });
+    return { ok: true };
+  }
+
   signDownload(key: string, expiresInSeconds: number): Promise<string> {
     const exp = Math.floor(this.clock.now().getTime() / 1000) + expiresInSeconds;
     return Promise.resolve(`${this.base}/${this.bucket}/${encodeURI(key)}?expires=${exp}&signature=${this.sig(key, exp)}`);
@@ -240,6 +260,24 @@ export class StandinImageSizes extends ImageSizesPort {
   }
 }
 
+/**
+ * HQ3: with nothing queued the stand-in answers in the shape each AI route asks for (the system text names it), so a request on a
+ * stack is answered for real: a letter's paragraphs, the reasons, a photo order, a style change. Marked as stand-in text; any
+ * other request gets the marked plain line.
+ */
+function standinAnswer(input: WriteRequest): string {
+  const sys = input.system ?? "";
+  const quoted = input.prompt.replace(/\s+/g, " ").slice(0, 80);
+  if (sys.includes('"paras"')) return JSON.stringify({ paras: [`[stand-in writing] ${quoted}`] });
+  if (sys.includes('"reasons"')) return JSON.stringify({ reasons: [{ title: "[stand-in writing]" }] });
+  if (sys.includes('"order"')) {
+    const n = Number(/There are (\d+) photos/.exec(input.prompt)?.[1] ?? 1);
+    return JSON.stringify({ order: Array.from({ length: Math.max(1, n) }, (_, i) => i + 1) });
+  }
+  if (sys.includes("Studio style")) return JSON.stringify({ said: ["[stand-in writing] Nothing was changed."], ops: [] });
+  return `[stand-in writing] ${input.prompt.slice(0, 80)}`;
+}
+
 export class StandinAiWriting extends AiWritingPort {
   /** FB4: a stand-in calls nothing. */
   ping(): Promise<PortPing> {
@@ -256,7 +294,7 @@ export class StandinAiWriting extends AiWritingPort {
 
   write(input: WriteRequest): Promise<WriteResult> {
     this.requests.push(input);
-    const text = this.queued.shift() ?? `[stand-in writing] ${input.prompt.slice(0, 80)}`;
+    const text = this.queued.shift() ?? standinAnswer(input);
     return Promise.resolve({ text, model: "standin" });
   }
 }

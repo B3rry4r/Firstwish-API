@@ -11,7 +11,7 @@ export const STANDIN_STORAGE = Symbol("STANDIN_STORAGE");
 export function standinStorageMiddleware(storage: StandinStorage | null): RequestHandler {
   return (req: Request, res: Response): void => {
     const none = () => void res.status(404).json({ error: { code: "not_found", message: "Not found." } });
-    if (!storage || (req.method !== "GET" && req.method !== "HEAD")) return none();
+    if (!storage || !["GET", "HEAD", "PUT"].includes(req.method)) return none();
     const path = req.path.replace(/^\/+/, "");
     const slash = path.indexOf("/");
     if (slash < 1) return none();
@@ -22,8 +22,33 @@ export function standinStorageMiddleware(storage: StandinStorage | null): Reques
       return none();
     }
     const q = req.query as Record<string, unknown>;
-    const hit = path.slice(0, slash) === storage.bucket ? storage.serve(key, Number(q.expires), typeof q.signature === "string" ? q.signature : "") : null;
+    const sig = typeof q.signature === "string" ? q.signature : "";
+    if (path.slice(0, slash) !== storage.bucket) return none();
+    if (req.method === "PUT") return void receivePut(storage, req, res, key, Number(q.expires), sig);
+    const hit = storage.serve(key, Number(q.expires), sig);
     if (!hit) return none();
     res.status(200).setHeader("content-type", hit.contentType).setHeader("cache-control", "private, no-store").send(hit.bytes);
   };
+}
+
+/** HQ3: reads the body (never more than the size the upload was asked for, plus one byte) and hands it to the stand-in storage. */
+function receivePut(storage: StandinStorage, req: Request, res: Response, key: string, expires: number, signature: string): void {
+  const refuse = (status: number, message: string) => void res.status(status).json({ error: { code: status === 403 ? "forbidden" : "too_large", message } });
+  const bound = storage.boundFor(key);
+  if (!bound) return refuse(403, "This upload link is not valid.");
+  const chunks: Buffer[] = [];
+  let size = 0;
+  let over = false;
+  req.on("data", (c: Buffer) => {
+    size += c.length;
+    if (size > bound.contentLength) over = true;
+    else chunks.push(c);
+  });
+  req.on("end", () => {
+    if (over) return refuse(403, "The file is not the size this upload was asked for.");
+    const r = storage.receive(key, expires, signature, String(req.headers["content-type"] ?? ""), Buffer.concat(chunks));
+    if (!r.ok) return refuse(r.status, r.message);
+    res.status(200).end();
+  });
+  req.on("error", () => refuse(400, "The upload was cut off."));
 }

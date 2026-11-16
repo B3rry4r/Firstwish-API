@@ -78,9 +78,8 @@ describe("Wave 4 join: Now showing with the wish lifecycle (J2, J3)", () => {
     }
   });
 
-  // Restoring a resting wish schedules its rest-wish job at now + the restore window. Specs share one job table, and jobs.spec runs a
-  // BullMQ tick (unrestricted runDue) on its own clock in 2061: on a clock it reaches, that job is due and the tick rests this wish
-  // between the restore and the ask (the ask then answers 409 "only a live wish"). This test runs on a clock nothing reaches.
+  // Restoring a resting wish schedules its rest-wish job at now + the restore window. Specs share one job table: this test runs on a
+  // clock no other spec reaches, so that job can never be due under another spec's clock (every other runDue names its own keys).
   it("J3: a resting wish that comes back is live and not listed; it needs a new ask and a new approval", async () => {
     t.clock.set(new Date("2300-01-01T09:00:00.000Z"));
     try {

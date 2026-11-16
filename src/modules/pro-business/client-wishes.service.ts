@@ -52,6 +52,7 @@ export class ClientWishesService implements OnModuleInit {
 
   onModuleInit(): void {
     this.wishes.registerPlanSeal((tx, call) => this.sealOnPlan(tx, call));
+    this.wishes.registerSealAccrual((tx, wish) => this.accrueAtSeal(tx, wish));
     this.jobs.registerSubject("erase-now", CLIENT_WISH_PREFIX, (c) => this.eraseWords(c));
   }
 
@@ -156,6 +157,18 @@ export class ClientWishesService implements OnModuleInit {
     });
     // ZZ5: the style is final at the seal; the creator of a Premium style earns on this draw, in this transaction.
     await this.royalties.accrueForDraw(tx, { businessId, from, wishId: wish.id, styleSlug: wish.styleSlug });
+  }
+
+  /**
+   * GB1: the ordinary seal of a wish made from the sheet or a date (it carries the business and has its client-wish record): the same
+   * accrual as the maker's seal, reading month or pack from the record. A wish with no record, or one that earned already, earns nothing here.
+   */
+  private async accrueAtSeal(tx: Tx, wish: { id: string; businessId: string | null; styleSlug: string }): Promise<void> {
+    if (!wish.businessId) return;
+    const rec = await tx.clientWish.findUnique({ where: { wishId: wish.id }, select: { from: true } });
+    if (rec?.from !== "month" && rec?.from !== "pack") return;
+    await lockBusinessOwner(tx, wish.businessId);
+    await this.royalties.accrueForDraw(tx, { businessId: wish.businessId, from: rec.from, wishId: wish.id, styleSlug: wish.styleSlug });
   }
 
   /** 402 naming what to buy: a wish pack always; a plan too when there is none or it has lapsed. */

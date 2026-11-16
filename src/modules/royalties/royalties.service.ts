@@ -171,6 +171,8 @@ export class RoyaltiesService {
   async accrueForDraw(tx: Tx, d: DrawAccrual): Promise<AccrualMade[]> {
     if (!UUID.test(d.businessId) || !UUID.test(d.wishId) || !SLUG.test(d.styleSlug)) return [];
     await tx.$queryRaw`SELECT id FROM business WHERE id = ${d.businessId}::uuid FOR UPDATE`;
+    // A wish earns once, whichever seal runs and whichever payment it is counted against (month or pack): a wish with a draw accrual earns nothing more.
+    if ((await tx.royaltyAccrual.count({ where: { wishId: d.wishId } })) > 0) return [];
     const style = await tx.style.findUnique({ where: { slug: d.styleSlug }, select: { level: true, creator: true, house: true } });
     if (!style || style.house || style.level !== "premium") return [];
     const owners = readStyleOwners(style.creator);

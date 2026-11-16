@@ -82,6 +82,8 @@ export interface PlanSealCall {
 }
 /** Draws one wish from the business and writes the client-wish record (registered by the business module: wishes never import it). */
 export type PlanSealFn = (tx: Tx, call: PlanSealCall) => Promise<void>;
+/** GB1: called at the ordinary seal of a wish that carries a business: the creator's share of its draw (registered by the business module). */
+export type SealAccrualFn = (tx: Tx, wish: Wish) => Promise<void>;
 
 export const hashPasscode = (p: string): Promise<string> =>
   new Promise((resolve, reject) => {
@@ -115,6 +117,13 @@ export class WishesService {
   /** The business module hands over the draw and the client-wish write for a seal on the plan (ZB3). */
   registerPlanSeal(fn: PlanSealFn): void {
     this.planSeal = fn;
+  }
+
+  private sealAccrual: SealAccrualFn | null = null;
+
+  /** GB1: the business module hands over the accrual an ordinary seal of a business's wish calls. */
+  registerSealAccrual(fn: SealAccrualFn): void {
+    this.sealAccrual = fn;
   }
 
   /**
@@ -552,7 +561,11 @@ export class WishesService {
       if (plan) {
         if (!this.planSeal) throw new Error("the plan seal is not registered");
         await this.planSeal(tx, { wish: w, businessId: plan.businessId, opensAt, zone });
-      } else await this.payForSeal(tx, accountId, w, input.usePass);
+      } else {
+        await this.payForSeal(tx, accountId, w, input.usePass);
+        // GB1: a wish that carries a business earns its creator at this seal too (it was drawn from the plan when it was made).
+        if (w.businessId && this.sealAccrual) await this.sealAccrual(tx, w);
+      }
       const no = await this.issueNumber(tx);
       // ZB3: a client wish shares its wish's number once the wish has one.
       await tx.clientWish.updateMany({ where: { wishId: id }, data: { no } });

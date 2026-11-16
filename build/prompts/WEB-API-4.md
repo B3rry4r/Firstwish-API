@@ -5,7 +5,8 @@ HK1, HM6, HP1-HP13 in /home/user/Firstwish-API/build/rulings-phase3.md and the t
 This is the ONE bundle allowed to change the shared modules (lib/api.ts, lib/session.ts, lib/staff-session.ts,
 scripts/live/**): keep every exported name other bundles import working (builders for the maker, the receiver and the
 business screens are running on older copies), and list every signature you changed.
-Branch `web-api-4` (base head in your spawn line; the contract types there are already the new API's); worktrees
+Branch `web-api-4` (base head in your spawn line). FIRST run `API_DIR=<your API worktree> npm run contracts:sync` and
+commit the copied contract file on your branch: the web branch keeps the older file until this bundle lands. Worktrees
 /tmp/claude-0/-home-user/533566a9-6497-503f-863f-065ac253d739/scratchpad/build/wt/web-api-4 (web) and /tmp/claude-0/-home-user/533566a9-6497-503f-863f-065ac253d739/scratchpad/build/wt/web-api-4-api (API at the commit in your spawn line); ports
 5480-5499; stack prefix wa4; measure file /tmp/claude-0/-home-user/533566a9-6497-503f-863f-065ac253d739/scratchpad/build/logs/web-api-4-measure.txt; pictures /tmp/claude-0/-home-user/533566a9-6497-503f-863f-065ac253d739/scratchpad/build/logs/web-api-4-pics/.
 You own for this bundle: lib/api.ts, lib/session.ts, lib/staff-session.ts, lib/person.ts, lib/admin/w13-api.ts,

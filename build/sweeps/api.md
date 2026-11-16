@@ -73,3 +73,4 @@
   always serves the one current row; the audit carries each change's old and new value); an erased creator's live
   style row still carries the account id (existing T-62 behaviour: check against the erase rule in Phase 7); the
   refusal's per-field words for a bad limit were not read; PATCH signed:false after the backfill not run end to end.
+- (API) P-CI-275's fix scopes the 'ledger untouched by the switch' counts to rows linked to the account's payments: a ledger row the switch wrote with no payment would not be seen (the second check's own probe saw the ledger not move): tighten in Phase 7 if a ledger-wide per-test window is added.

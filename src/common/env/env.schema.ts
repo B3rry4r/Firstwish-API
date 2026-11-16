@@ -71,6 +71,12 @@ export const MANIFEST_VARS: readonly VarSpec[] = [
     purpose: "HK1: a file the stand-in email appends each message to, one JSON line (to, template, subject, text, at); tests only, refused with PROVIDERS=live or NODE_ENV=production",
   },
   {
+    name: "STANDIN_CLOCK_OFFSET",
+    need: "optional",
+    kind: "string",
+    purpose: "HP6: whole seconds (a minus sign allowed) added to the stand-in clock, read once at boot, so a test stack can reach resting, ended and the end of the restore window through the real jobs; refused with PROVIDERS=live or NODE_ENV=production",
+  },
+  {
     name: "INTERNAL_TOKEN",
     need: "always",
     kind: "secret",

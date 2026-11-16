@@ -7,6 +7,8 @@ export interface Env {
   PORT: number;
   PROVIDERS: "live" | "standin";
   STANDIN_MAIL_OUTBOX?: string;
+  /** HP6: seconds added to the stand-in clock (read at boot); tests and verifier stacks only. */
+  STANDIN_CLOCK_OFFSET?: string;
   INTERNAL_TOKEN: string;
   DATABASE_URL: string;
   REDIS_URL: string;
@@ -149,6 +151,15 @@ export function loadEnv(raw: Record<string, string | undefined> = process.env): 
   // HK1: the stand-in email's outbox file is for tests only: never with the real email provider, never in production.
   if (get("STANDIN_MAIL_OUTBOX") !== undefined && (providers !== "standin" || out.NODE_ENV === "production")) {
     problems.push({ name: "STANDIN_MAIL_OUTBOX", problem: "refused: it is for the stand-in email only (needs PROVIDERS=standin and a NODE_ENV other than production)" });
+  }
+  // HP6: the clock offset moves time, so it is never allowed where real money or real people are: not with live providers, not in production.
+  const offset = get("STANDIN_CLOCK_OFFSET");
+  if (offset !== undefined) {
+    if (providers !== "standin" || out.NODE_ENV === "production") {
+      problems.push({ name: "STANDIN_CLOCK_OFFSET", problem: "refused: it moves the stand-in clock only (needs PROVIDERS=standin and a NODE_ENV other than production)" });
+    } else if (!/^-?\d{1,10}$/.test(offset)) {
+      problems.push({ name: "STANDIN_CLOCK_OFFSET", problem: "must be a whole number of seconds, for example 86400" });
+    }
   }
   if (problems.length) throw new EnvError(problems);
   return out as unknown as Env;

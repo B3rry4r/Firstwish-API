@@ -30,4 +30,9 @@ export abstract class StoragePort {
   abstract delete(key: string): Promise<void>;
   /** Copies an object inside storage (Y1: a confirmed upload moves from its staging key to a final key no PUT was signed for). */
   abstract copy(fromKey: string, toKey: string): Promise<void>;
+  /**
+   * CA2: the server writes an object itself (a QR card the server drew), with no signed upload. The caller decides the key and
+   * the type from its own bytes; never called inside a database transaction.
+   */
+  abstract putObject(key: string, bytes: Buffer, contentType: string): Promise<void>;
 }

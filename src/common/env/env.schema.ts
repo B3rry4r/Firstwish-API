@@ -53,6 +53,7 @@ export const MANIFEST_VARS: readonly VarSpec[] = [
   { name: "ANTHROPIC_MODEL", need: "live", kind: "string", purpose: "model id used for writing" },
   { name: "RENDER_CONCURRENCY", need: "optional", kind: "int", purpose: "parallel render workers", default: "2" },
   { name: "RESEND_API_KEY", need: "live", kind: "string", purpose: "Resend API auth (R12)" },
+  { name: "RESEND_WEBHOOK_SECRET", need: "live", kind: "string", purpose: "signing secret of Resend's webhook stream: delivery news and received mail (YY3)" },
   { name: "MAIL_FROM", need: "live", kind: "email", purpose: "sender address for every email (R12)" },
   { name: "NODE_ENV", need: "optional", kind: { oneOf: ["development", "test", "production"] }, purpose: "process mode", default: "development" },
   { name: "PORT", need: "optional", kind: "int", purpose: "HTTP port", default: "3000" },

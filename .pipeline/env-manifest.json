@@ -193,6 +193,12 @@
       "secret": true
     },
     {
+      "name": "RESEND_WEBHOOK_SECRET",
+      "introducedBy": "messages-email",
+      "purpose": "signing secret of Resend's webhook stream: delivery news and received mail (YY3)",
+      "secret": true
+    },
+    {
       "name": "MAIL_FROM",
       "introducedBy": "messages-email",
       "purpose": "sender address for every email (R12)",

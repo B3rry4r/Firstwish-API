@@ -7,7 +7,7 @@ import {
   PostSupportMessagesBodyDto, PostSupportThreadsBodyDto,
 } from "../../contracts";
 import type { SavedReply, SupportMessage, SupportThread, ThreadCounts } from "../../contracts";
-import { CurrentPrincipal, Public, Roles } from "../../common/auth/decorators";
+import { CurrentPrincipal, Public, Roles, WebhookSignature } from "../../common/auth/decorators";
 import type { Principal } from "../../common/auth/principal";
 import { withRetryAfter } from "../../common/errors/rate-limited";
 import { DEFAULT_LIMIT } from "../../common/pagination/cursor";
@@ -122,7 +122,7 @@ export class SupportController {
 export class EmailWebhookController {
   constructor(private readonly hooks: EmailWebhookService) {}
 
-  @Public()
+  @WebhookSignature("resend")
   @Post()
   @HttpCode(200)
   async news(@Req() req: Request & { rawBody?: Buffer }, @Headers("svix-id") id?: string, @Headers("svix-timestamp") timestamp?: string, @Headers("svix-signature") signature?: string): Promise<Record<string, never>> {
@@ -130,7 +130,7 @@ export class EmailWebhookController {
     return {};
   }
 
-  @Public()
+  @WebhookSignature("resend")
   @Post("inbound")
   @HttpCode(200)
   async inbound(@Req() req: Request & { rawBody?: Buffer }, @Headers("svix-id") id?: string, @Headers("svix-timestamp") timestamp?: string, @Headers("svix-signature") signature?: string): Promise<Record<string, never>> {

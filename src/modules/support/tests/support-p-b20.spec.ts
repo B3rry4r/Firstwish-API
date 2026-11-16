@@ -1,3 +1,5 @@
+import { ENV } from "../../../common/env/env.module";
+import type { Env } from "../../../common/env/env";
 import { PrismaService } from "../../../common/db/prisma.service";
 import { UuidV7Maker } from "../../../common/ids/uuidv7";
 import { createTestApp, TestApp, uniqueAddress } from "../../../../test/kit/app";
@@ -5,7 +7,7 @@ import { NoticesService } from "../../notices/notices.service";
 import { EmailSuppression } from "../../notices/suppression";
 import { makeStaff, seedRoleTable } from "../../staff-accounts/tests/staff-kit";
 import { replyToken } from "../rules";
-import { signSvix } from "../svix";
+import { signSvix } from "../../../common/auth/svix";
 
 const NOW = new Date("2031-03-12T09:00:00.000Z");
 const SECRET = `whsec_${Buffer.from("pb20-test-signing-secret-0123456789").toString("base64")}`;
@@ -116,9 +118,10 @@ describe("P-B20 patch (DA1 DA2 DA3)", () => {
 
   describe("DA3: secret and token limit", () => {
     it('"whsec_" with nothing after it is 503, like no secret', async () => {
-      process.env.RESEND_WEBHOOK_SECRET = "whsec_";
+      const env = t.app.get<Env>(ENV);
+      env.RESEND_WEBHOOK_SECRET = "whsec_";
       const r = await event("email.received", { from: address(), to: ["x@example.test"], text: "t" }, "whsec_");
-      process.env.RESEND_WEBHOOK_SECRET = SECRET;
+      env.RESEND_WEBHOOK_SECRET = SECRET;
       expect(r.status).toBe(503);
     });
     it("the 31st message in a day by one token is refused and stored nowhere; the next day starts again", async () => {

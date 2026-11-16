@@ -128,8 +128,17 @@ const TABLES = {
   },
   MessageTemplate: {
     from: "lib/admin/d-fixtures.ts (templates)", key: (r) => `${r.key}:${r.locale}:${r.version}`,
-    // INT-4: the staff invite has its own wording (plain short words); the web app's fixtures hold no such message.
-    rows: () => web("lib/admin/d-fixtures.ts").templates.map((t) => ({ key: t.key, channel: "email", locale: "en-NG", version: 1, subject: t.subject, body: t.body })).concat([INVITE]),
+    // INT-5: messages that exist only on the server (the staff invite, INT-4, and any a later wave added to the file by hand) are kept:
+    // a row of the file already written whose key the web app's fixtures do not hold stays as it is. The invite is the first of them.
+    rows: () => {
+      const web_ = web("lib/admin/d-fixtures.ts").templates.map((t) => ({ key: t.key, channel: "email", locale: "en-NG", version: 1, subject: t.subject, body: t.body }));
+      const webKeys = new Set(web_.map((r) => r.key));
+      const kept = existsSync(join(OUT, "MessageTemplate.json"))
+        ? JSON.parse(readFileSync(join(OUT, "MessageTemplate.json"), "utf8")).rows.filter((r) => !webKeys.has(r.key)).map(({ seedKey: _seedKey, ...r }) => r)
+        : [];
+      if (!kept.some((r) => r.key === INVITE.key) && !webKeys.has(INVITE.key)) kept.push(INVITE);
+      return web_.concat(kept);
+    },
   },
 };
 

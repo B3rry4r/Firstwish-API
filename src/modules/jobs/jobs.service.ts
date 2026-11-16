@@ -94,9 +94,17 @@ export class JobsService implements OnApplicationBootstrap {
     return rows[0].id;
   }
 
-  /** Takes a waiting job for `kind` and `key` off the table (a wish taken down no longer opens). */
+  /**
+   * Takes a waiting job for `kind` and `key` off the table (a wish taken down no longer opens). It never throws and is one statement:
+   * a waiting job with no run history is deleted; one that already has job_run history (a job that ran and was scheduled again) cannot
+   * be deleted (the history names it), so it is marked succeeded, which the runner never claims again. A job that is running, already
+   * ran (succeeded, failed, dead) or is not there is left as it is. Scheduling it again later makes it wait again.
+   */
   async cancel(kind: string, key: string, db: Db = this.prisma): Promise<void> {
-    await db.$executeRaw`DELETE FROM job WHERE type = ${dbType(kind)}::"JobType" AND "subjectId" = ${key} AND status = 'scheduled'`;
+    await db.$executeRaw`
+      WITH j AS (SELECT id FROM job WHERE type = ${dbType(kind)}::"JobType" AND "subjectId" = ${key} AND status = 'scheduled' FOR UPDATE),
+           gone AS (DELETE FROM job USING j WHERE job.id = j.id AND NOT EXISTS (SELECT 1 FROM job_run r WHERE r."jobId" = j.id) RETURNING job.id)
+      UPDATE job SET status = 'succeeded' FROM j WHERE job.id = j.id AND job.id NOT IN (SELECT id FROM gone)`;
   }
 
   /**

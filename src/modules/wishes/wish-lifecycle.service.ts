@@ -71,6 +71,9 @@ interface Locked {
   eraseAfter: Date | null;
 }
 
+/** Works a live or resting wish's end out again from the rows and writes it with its rest job; answers the end, or null when it holds none. */
+export type EndFn = (tx: Tx, wishId: string, opt: { wake?: boolean; cause?: string }) => Promise<Date | null>;
+
 export interface MoveOptions {
   cause: string;
   jobRunId?: string | null;
@@ -101,6 +104,13 @@ export class WishLifecycleService implements OnModuleInit {
     private readonly storage: StoragePort,
     private readonly showing: ShowingLink,
   ) {}
+
+  private endHook: EndFn | null = null;
+
+  /** HB3: the purchases module hands over the one end function (PassCover.applyEnd): wishes cannot import purchases. */
+  registerEnd(fn: EndFn): void {
+    this.endHook = fn;
+  }
 
   onModuleInit(): void {
     this.jobs.register("open-wish", (c) => this.openJob(c));
@@ -238,6 +248,10 @@ export class WishLifecycleService implements OnModuleInit {
       // RR3: the owner of this client wish was erased: it plays to the end of its term and is erased then (it does not rest a year); nobody is told.
       await this.jobs.schedule("erase-now", endsAt, w.id, tx);
     } else {
+      // HB3: a wish opened while its owner holds a live Pass ends with the Pass, not with its own term: the one end function says (and
+      // writes the end, the mark and the rest job and notice itself); with none it gives back null and the term stands.
+      const held = this.endHook ? await this.endHook(tx, w.id, { cause: "receiver.open" }) : null;
+      if (held) return { opened: true, openedAt: at, endsAt: held };
       await this.jobs.schedule("rest-wish", endsAt, w.id, tx);
       await this.jobs.schedule("send-notice", new Date(endsAt.getTime() - NOTICE_DAYS * DAY), w.id, tx);
     }
@@ -258,9 +272,18 @@ export class WishLifecycleService implements OnModuleInit {
    */
   async restJob(c: JobContext): Promise<JobResult> {
     return this.prisma.$transaction(async (tx) => {
-      const w = await this.lock(tx, c.subjectId);
+      let w = await this.lock(tx, c.subjectId);
       const state = stateOf(w);
       if (state !== "live" && state !== "sealed") return { skipped: true };
+      if (state === "live" && this.endHook) {
+        // HB3: never rest a wish a live Pass or a paid keep still covers: the one end function works the end out again; a later end
+        // is the next rest time (it has scheduled this job there already).
+        const end = await this.endHook(tx, w.id, { cause: "job.rest" });
+        if (end && end.getTime() > c.now.getTime()) return { skipped: true, again: end };
+        // nothing covers it: the end function put this job at "now" again; this run is that run, so the job stands down
+        await this.jobs.cancel("rest-wish", w.id, tx);
+        w = await this.lock(tx, c.subjectId);
+      }
       const due = state === "sealed" ? (w.opensAt ? new Date(w.opensAt.getTime() + UNOPENED_DAYS * DAY) : null) : w.endsAt;
       if (state === "sealed" && !due) return { skipped: true };
       if (due && due.getTime() > c.now.getTime()) return { skipped: true, again: due };

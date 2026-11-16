@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, OnModuleInit } from "@nestjs/common";
 import type { $Enums } from "@prisma/client";
 import { Clock } from "../../common/ports/clock.port";
 import { JobsService } from "../jobs/jobs.service";
@@ -58,9 +58,10 @@ export async function endOf(tx: Tx, wishId: string, opt: { now: Date; except?: s
     keepsEnd = running;
     if (k.length && KEEP_RANK[k.length] && (!keep || KEEP_RANK[k.length] > KEEP_RANK[keep])) keep = k.length;
   }
+  // a Pass that is over (its end not after now) is not shown: no end and no keptBy come from it
   const pass = await tx.$queryRaw<{ started: boolean | null; ends: Date | null }[]>`
     SELECT bool_or(since <= ${opt.now}::timestamptz) AS started, max((("validUntil" #>> '{}'))::timestamptz) AS ends
-      FROM pass_membership WHERE "accountId" = ${w.accountId}::uuid AND state = 'active'`;
+      FROM pass_membership WHERE "accountId" = ${w.accountId}::uuid AND state = 'active' AND (("validUntil" #>> '{}'))::timestamptz > ${opt.now}::timestamptz`;
   const passEnd = pass[0]?.started && pass[0].ends ? pass[0].ends : null;
   const end = [running, passEnd].reduce<Date | null>((m, d) => (d && (!m || d.getTime() > m.getTime()) ? d : m), null);
   const by = passEnd && (!running || passEnd.getTime() > running.getTime()) ? "pass" : keepsEnd ? "keep" : null;
@@ -73,12 +74,17 @@ export async function endOf(tx: Tx, wishId: string, opt: { now: Date; except?: s
  * it with the rest job to match. Nothing else does date arithmetic. Callers hold the account lock.
  */
 @Injectable()
-export class PassCover {
+export class PassCover implements OnModuleInit {
   constructor(
     private readonly clock: Clock,
     private readonly lifecycle: WishLifecycleService,
     private readonly jobs: JobsService,
   ) {}
+
+  /** HB3: the lifecycle cannot import this module, so it is handed the one end function here, at boot (as the plan seal is registered). */
+  onModuleInit(): void {
+    this.lifecycle.registerEnd((tx, wishId, opt) => this.applyEnd(tx, wishId, opt));
+  }
 
   /** When the account's Pass cover ends (the last end of its contiguous Passes), or null when no Pass is live now. */
   async liveUntil(tx: Tx, accountId: string): Promise<Date | null> {

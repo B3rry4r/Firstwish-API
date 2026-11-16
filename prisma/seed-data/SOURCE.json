@@ -498,7 +498,7 @@
   },
   {
    "path": "lib/account.ts",
-   "sha256": "5fc45e232e3ca58593f7f24de5dd19971a5693735355ba31a2009721ba9041e8"
+   "sha256": "9287aa8daa07cc3adb2d763159a363e0cb7d2e90e50160933656acb6db7c87ee"
   },
   {
    "path": "lib/admin-types.ts",
@@ -519,6 +519,10 @@
   {
    "path": "lib/admin/d-types.ts",
    "sha256": "feb85131a0450675efe09f745ce2ea9e1f5999f3dc6f0883c0defe752105f681"
+  },
+  {
+   "path": "lib/api.ts",
+   "sha256": "0d8e2dcd95f7657f85c2808573bb04967dd3af0811d7c46af8e90f1c47dc0e5a"
   },
   {
    "path": "lib/catalog.ts",
@@ -550,11 +554,15 @@
   },
   {
    "path": "lib/maker.ts",
-   "sha256": "f17ba610aa040f700356d29467395c356290785bc39fa14042ef7bdc2a407caa"
+   "sha256": "54e5d878e0be999a8724ae8e49f70f6edf60e9561a71efd9ac92ccb748c44c75"
   },
   {
    "path": "lib/occasions.ts",
    "sha256": "30fb4272e76e32972b98243cc76f199161a5c936adb7d804268cbd37a6d3472b"
+  },
+  {
+   "path": "lib/session.ts",
+   "sha256": "0ff5347a2440d6233fce99e299588a9ee065173c5fc4cfebf815f63f831a9008"
   },
   {
    "path": "lib/studio.ts",

@@ -703,3 +703,7 @@ HB1 (B22 verify, high) A wish's end is always worked out from scratch by one fun
     covers the wish counts its days from the day it was bought.
 HB2 (B22 verify, low) The Pass read shows the end of the last live Pass when two are stacked; a refund schedules no rest job
     for a wish that already rests. (Both with HB1: B22 patch.)
+HB3 (P-B22 hand-back; T-14) A wish never rests while its owner's Pass is live: the first open and the rest job both work the
+    end out with the same function (HB1) before they act, so a Pass bought before the wish was opened counts from the start.
+    (Wave 6 join.) Accepted: on a tie a paid keep holds the end; a Pass bought later does not wake a wish that already rests
+    (its holder wakes it free).

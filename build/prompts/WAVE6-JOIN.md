@@ -36,3 +36,7 @@ database, `npm test` (the full suite, --maxWorkers=2) THREE times (a failure in 
 cause); then `scripts/stack.sh up pjoin6 5020`, GET /v1/health and one unauthenticated call per new module, then down.
 Commit (do not push); remove your worktree and databases. Hand back in 14 lines: head sha; J0 to J8 closed or not with test
 names; the baseline lines to remove; any test that failed in any run and why; counts; EXIT lines.
+ J9 (HB3, added by the lead): the wish's first open and the rest job call the one end function (PassCover.applyEnd, through a
+    hook registered at boot as registerPlanSeal is, since wishes cannot import purchases) before they act: a wish opened
+    while its owner holds a live Pass ends with the Pass, not with its own term; the rest job never rests a wish a live Pass
+    or a paid keep still covers (it sets the next rest time instead). Tests by hand.

@@ -663,3 +663,6 @@ GA1 (lead, my miss) The route check found 13 registry endpoints with no route an
     never tracked), the Pass read, approved dates' writes, the staff ledger rows (bundle B22), the sender's AI writing and the
     maker's four reference reads (bundle B23). The check now runs in CI with a lead-owned baseline that only shrinks, so an
     endpoint cannot be left out again. The 30 INTERNAL endpoints (in-app ports) get the same check before Phase 5 closes.
+ZB5 (P-B17b verify, medium) A wish that carries a business is reached only through the business. When a login is removed, or
+    their own account is erased (ZB4), the business's wishes they made pass to the business owner's account in the same
+    transaction; the removed login gets 404 on them and can neither read nor seal them. (Wave 6 join.)

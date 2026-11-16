@@ -160,6 +160,8 @@ export class WishLifecycleService implements OnModuleInit {
         await this.forgetLinkNames(tx, [wish.id]);
         await forgetAiWords(tx, [wish.id]);
         await this.releaseFiles(tx, wish.id, now);
+        // HU1 (AA2): what a link holder's keep payment kept about the payer (the email, on the payment only) goes with the wish
+        await tx.payment.updateMany({ where: { accountId: null, purpose: "keep", subjectId: wish.id }, data: { payerContact: null } });
         // INT-7: a draft a business drew a wish for gives the wish back when it is erased (once; a sealed wish gives nothing).
         await giveBackDraws(tx, [wish.id], now);
         // ZB3: a client wish's record reads its wish; when the wish is erased the record's words go with it.

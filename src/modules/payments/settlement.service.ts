@@ -9,7 +9,7 @@ import { PriceBookService } from "../price-book/price-book.service";
 import { EventsService } from "../events/events.service";
 import { FulfilmentRegistry, type PaidLineInfo } from "./fulfilment.registry";
 import { paymentEntries } from "./ledger";
-import { readOptions, withFlag } from "./payment-options";
+import { readOptions, withFlag, writeOptions } from "./payment-options";
 
 /** What the provider says about one payment: from a verify call or a webhook event. Never from a request the payer sent. */
 export interface ProviderAnswer {
@@ -46,6 +46,8 @@ const EVENT_LINE: Record<string, "tickets" | "extras" | "keeps" | "pass" | "pro"
   concierge: "concierge",
   creator: "creator",
 };
+/** HU6: the purposes that are one per intent (a pack, a vault block or an extra photo may be bought again at once; these may not). */
+const ONE_PER_INTENT = new Set(["ticket", "keep", "pass", "pro_plan", "creator_plan"]);
 const SLUG = /^[a-z0-9][a-z0-9-]{0,63}$/;
 
 /**
@@ -70,6 +72,21 @@ export class SettlementService {
    * outcome), so a rollback leaves it unprocessed and the next delivery retries.
    */
   async settle(answer: ProviderAnswer, webhookEventId?: string): Promise<SettleResult> {
+    try {
+      return await this.settleOnce(answer, webhookEventId);
+    } catch (e) {
+      // a deadlock (40P01) or a serialization failure (40001) rolled the whole settle back: run it once more
+      if (!isLockConflict(e)) throw e;
+      return this.settleOnce(answer, webhookEventId);
+    }
+  }
+
+  /**
+   * THE LOCK ORDER of every settle, owner's or link holder's, whatever the line: the account (when the payment has one), then the
+   * payment row, then the wish the line names (before its grant row is claimed: the grant's foreign key to the wish takes a share
+   * lock on it, and two settles holding that share lock would each wait for the other's exclusive one), then anything else.
+   */
+  private async settleOnce(answer: ProviderAnswer, webhookEventId?: string): Promise<SettleResult> {
     const pre = await this.db.payment.findUnique({ where: { providerReference: answer.reference }, select: { accountId: true } });
     return this.db.$transaction(async (tx) => {
       if (pre?.accountId) await lockAccount(tx, pre.accountId, { allowErased: true });
@@ -94,7 +111,9 @@ export class SettlementService {
 
     if (a.status === "failed") {
       if (p.status === "failed") return { outcome: "already", flagged: false };
-      await tx.payment.update({ where: { id: p.id }, data: { status: "failed", updatedAt: now } });
+      // API-BASE-6: the payment says why it failed, in words the payer can read
+      const reason = "The payment did not go through. Your card or bank did not approve it. Try again, or use another way to pay.";
+      await tx.payment.update({ where: { id: p.id }, data: { status: "failed", updatedAt: now, options: writeOptions({ ...opts, server: { ...opts.server, reason } }) } });
       return { outcome: "failed", flagged: false };
     }
     if (a.status !== "success") return { outcome: "not_paid", flagged: false };
@@ -116,6 +135,12 @@ export class SettlementService {
       flagged = true;
     }
 
+    // HU6: a payment the sweep closed (or that failed) and the provider later reports paid: if the same thing was paid for since, this one gave nothing and is refund due
+    const superseded = !erased && (p.status === "abandoned" || p.status === "failed") && (await this.paidSince(tx, p));
+    if (superseded) {
+      flags = withFlag(withFlag(flags, "refund_due"), "refund_due:paid_after_lapse");
+      flagged = true;
+    }
     const lines = paidLines(p);
     await this.writeLedger(tx, p, a, lines);
     await tx.payment.update({
@@ -125,20 +150,44 @@ export class SettlementService {
         verifiedAt: a.paidAt ?? now,
         channel: a.channel ?? p.channel,
         feeKobo: a.feeKobo ?? null,
-        fulfilledAt: erased ? null : now,
+        fulfilledAt: erased || superseded ? null : now,
         flags,
         updatedAt: now,
       },
     });
     const paid = await tx.payment.findUniqueOrThrow({ where: { id: p.id } });
     await this.record(tx, paid, lines);
-    if (erased) return { outcome: "recorded_unfulfilled", flagged };
+    if (erased || superseded) return { outcome: "recorded_unfulfilled", flagged };
     for (const line of lines) {
       const handler = this.registry.get(line.sku);
       if (!handler) throw new Error(`fulfilment: no handler registered for ${line.sku}`);
       await handler({ tx, payment: paid, line, request: opts.request, grant: () => this.grantIn(tx, line.sku) });
     }
     return { outcome: "fulfilled", flagged };
+  }
+
+  /**
+   * HU6: has anything else paid for the same intent since this payment started? The intent is the payer's own (their account, or a link
+   * holder's email), the purpose and the wish (or, for a plan, the business: one plan is applied once for one intent, whichever plan it was).
+   */
+  private async paidSince(tx: Prisma.TransactionClient, p: Payment): Promise<boolean> {
+    if (!ONE_PER_INTENT.has(p.purpose)) return false;
+    if (!p.accountId && !p.payerContact) return false;
+    const plan = p.purpose === "pro_plan";
+    const others = await tx.payment.findMany({
+      where: {
+        id: { not: p.id },
+        purpose: p.purpose,
+        status: { in: ["succeeded", "refunded", "partly_refunded"] },
+        verifiedAt: { gt: p.createdAt },
+        ...(p.accountId ? { accountId: p.accountId } : { accountId: null, payerContact: p.payerContact }),
+        ...(plan ? { businessId: p.businessId } : { subjectId: p.subjectId }),
+      },
+      select: { lines: true },
+      take: 20,
+    });
+    const sku = (x: Pick<Payment, "lines">) => paidLines(x)[0]?.sku;
+    return others.some((o) => plan || sku(o) === sku(p));
   }
 
   /** What the book grants for a line, read on the settle transaction's own connection (never the pool: HH2). */
@@ -192,6 +241,13 @@ export class SettlementService {
       tx,
     );
   }
+}
+
+/** Postgres says "deadlock detected" (40P01) or "could not serialize" (40001), as the driver or Prisma (P2034) reports it. */
+export function isLockConflict(e: unknown): boolean {
+  const x = e as { code?: string; meta?: { code?: string; message?: string }; message?: string } | null;
+  const text = `${x?.code ?? ""} ${x?.meta?.code ?? ""} ${x?.meta?.message ?? ""} ${x?.message ?? ""}`;
+  return /P2034|40P01|40001|deadlock detected|could not serialize/i.test(text);
 }
 
 /** The lines a payment kept when it was started (what the buyer was charged, at the version it names). */

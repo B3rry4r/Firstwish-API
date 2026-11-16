@@ -7,7 +7,7 @@ import type { FulfilmentContext } from "../payments/fulfilment.registry";
 import { RoyaltiesService } from "../royalties/royalties.service";
 import { WishLifecycleService } from "../wishes/wish-lifecycle.service";
 import { WishesService } from "../wishes/wishes.service";
-import { KeepProofs } from "./keep-proof";
+import { holderKey, KeepProofs } from "./keep-proof";
 import { PassCover } from "./pass-cover";
 import { GrantStore, num, type GrantRow, type Tx } from "./grants";
 import { assessExtra, assessKeep, assessTicket, readWish, TICKET_ORDER, type WishFacts } from "./wish-rules";
@@ -47,10 +47,11 @@ export class WishHandlers {
 
   async ticket(ctx: FulfilmentContext): Promise<void> {
     const { tx, line } = ctx;
+    // lock order (see SettlementService.settle): the wish is locked before the grant row is claimed
+    const w = await this.lockWish(tx, ctx);
     const grantId = await this.store.claim(tx, ctx, "ticket", { wishId: ctx.request.subjectId });
     if (!grantId) return;
     const ticket = line.sku.slice("ticket.".length) as TicketName;
-    const w = await this.lockWish(tx, ctx);
     const why = assessTicket(w, ctx.payment.accountId, ticket);
     if (why || !w) return this.store.refuse(tx, ctx, grantId, why ?? "wish_not_payers");
     const grant = await ctx.grant();
@@ -77,9 +78,9 @@ export class WishHandlers {
 
   async extra(ctx: FulfilmentContext): Promise<void> {
     const { tx, line } = ctx;
+    const w = await this.lockWish(tx, ctx);
     const grantId = await this.store.claim(tx, ctx, "extra", { wishId: ctx.request.subjectId });
     if (!grantId) return;
-    const w = await this.lockWish(tx, ctx);
     const book = await this.entitlements.row(tx);
     const lines = new Map((await this.book.load(ctx.payment.priceBookVersion, tx)).lines.map((l) => [l.sku, l.listKobo]));
     const why = assessExtra(w, ctx.payment.accountId, line.sku, book, (s) => lines.get(s) ?? 0n);
@@ -93,13 +94,19 @@ export class WishHandlers {
 
   async keep(ctx: FulfilmentContext): Promise<void> {
     const { tx, line } = ctx;
+    const w = await this.lockWish(tx, ctx);
     const grantId = await this.store.claim(tx, ctx, "keep", { wishId: ctx.request.subjectId });
     if (!grantId) return;
     const length = line.sku.slice("keep.".length) as "month" | "half" | "year";
-    const w = await this.lockWish(tx, ctx);
-    const byLink = this.proofs.valid(ctx.request.options?.receiverProof, ctx.payment.accountId, w?.id ?? null, false);
-    const why = assessKeep(w, ctx.payment.accountId, await this.entitlements.row(tx), byLink);
+    const payer = ctx.payment.accountId ?? (ctx.payment.payerContact ? holderKey(ctx.payment.payerContact) : null);
+    const byLink = this.proofs.valid(ctx.request.options?.receiverProof, payer, w?.id ?? null, false);
+    const why = assessKeep(w, payer, await this.entitlements.row(tx), byLink);
     if (why || !w) return this.store.refuse(tx, ctx, grantId, why ?? "wish_not_payers");
+    // HU3: a keep paid for the same wish and term while this one waited has already done the work (the first to settle keeps or wakes): this one is refund due
+    // (another payer's: one payer cannot have two keeps open at once, so a payer's own later keep stacks as before)
+    const other = ctx.payment.accountId ? { OR: [{ accountId: null }, { accountId: { not: ctx.payment.accountId } }] } : { OR: [{ accountId: { not: null } }, { payerContact: { not: ctx.payment.payerContact } }] };
+    const first = await tx.purchaseGrant.findFirst({ where: { wishId: w.id, kind: "keep", sku: line.sku, revokedAt: null, refusedReason: null, id: { not: grantId }, createdAt: { gte: ctx.payment.createdAt }, payment: other }, select: { id: true } });
+    if (first) return this.store.refuse(tx, ctx, grantId, "keep_already_paid");
     const days = num((await ctx.grant()).termDays);
     const before = await tx.wish.findUniqueOrThrow({ where: { id: w.id }, select: { keep: true, keptUntil: true, keptBy: true, endsAt: true } });
     // the grant row holds the length and days (and its claim time is the moment bought); the end is worked out from the rows (HB1)

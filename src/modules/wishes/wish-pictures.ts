@@ -7,6 +7,8 @@ export interface WishPicture {
   fileId: string;
   role: "photo" | "cover";
   status: "ready" | "screening" | "refused";
+  /** the server's words for a refused photo (null otherwise) */
+  reason?: string | null;
   url: string | null;
   expiresAt: string | null;
 }
@@ -35,17 +37,19 @@ export class WishPictures {
     const rows = await this.db.wishFile.findMany({
       where: { wishId: { in: ids }, role: { in: ["photo", "cover"] }, file: { status: { in: ["ready", "screening", "rejected"] } } },
       orderBy: [{ createdAt: "asc" }, { id: "asc" }],
-      select: { wishId: true, fileId: true, role: true, file: { select: { status: true } } },
+      select: { wishId: true, fileId: true, role: true, file: { select: { status: true, screeningResultByFile: { orderBy: { createdAt: "desc" }, take: 1, select: { labels: true } } } } },
     });
     for (const r of rows) {
       const list = out.get(r.wishId) as WishPicture[];
       const status = r.file.status === "ready" ? "ready" : r.file.status === "rejected" ? "refused" : "screening";
       if (status !== "ready") {
-        list.push({ fileId: r.fileId, role: r.role as "photo" | "cover", status, url: null, expiresAt: null });
+        const labels = Array.isArray(r.file.screeningResultByFile[0]?.labels) ? (r.file.screeningResultByFile[0].labels as unknown[]).filter((l): l is string => typeof l === "string") : [];
+        const why = labels.at(-1)?.trim().replace(/[.\s]+$/, "");
+        list.push({ fileId: r.fileId, role: r.role as "photo" | "cover", status, reason: status === "refused" ? (why ? `This photo was not accepted: ${why}. Choose another.` : "This photo was not accepted. Choose another.") : null, url: null, expiresAt: null });
         continue;
       }
       const s = await this.signed.signedRead({ fileId: r.fileId }, { type: "allowed" });
-      list.push({ fileId: r.fileId, role: r.role as "photo" | "cover", status, url: s.url, expiresAt: s.expiresAt });
+      list.push({ fileId: r.fileId, role: r.role as "photo" | "cover", status, reason: null, url: s.url, expiresAt: s.expiresAt });
     }
     return out;
   }

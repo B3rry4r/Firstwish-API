@@ -4,6 +4,8 @@ import { PrismaService } from "../../common/db/prisma.service";
 import type { Principal } from "../../common/auth/principal";
 import { AppError } from "../../common/errors/app-error";
 
+import { loginRemoved as REMOVED, loginWasRemoved } from "../../common/auth/login-removed";
+
 export interface ProCaller {
   accountId: string;
   businessId: string;
@@ -40,7 +42,7 @@ export class ProAccess {
       const want = header.trim().toLowerCase();
       // The person's own business wins when it is the one named, even if they are also a login of it.
       r = rows.find((x) => x.id === want);
-      if (!r) throw AppError.forbidden("You are not part of that business.");
+      if (!r) throw (await loginWasRemoved(this.prisma, accountId, want)) ? REMOVED() : AppError.forbidden("You are not part of that business.");
     }
     if (!r) return null;
     if (!r.owner && r.loginId) {
@@ -49,11 +51,11 @@ export class ProAccess {
     return { accountId, businessId: r.id, owner: r.owner };
   }
 
-  /** The caller's business (owner or login), or 403. */
+  /** The caller's business (owner or login), or 403 (with words that say so when their login was removed). */
   async require(p: Principal | undefined, header?: string): Promise<ProCaller> {
     if (!p || p.kind !== "user") throw AppError.forbidden();
     const c = await this.find(p.accountId, header);
-    if (!c) throw AppError.forbidden("You are not part of a business.");
+    if (!c) throw (await loginWasRemoved(this.prisma, p.accountId)) ? REMOVED() : AppError.forbidden("You are not part of a business.");
     return c;
   }
 

@@ -21,6 +21,7 @@ export * from "./dto/ending-purpose";
 export * from "./dto/event";
 export * from "./dto/external-identity";
 export * from "./dto/follow";
+export * from "./dto/gather";
 export * from "./dto/invoice";
 export * from "./dto/job";
 export * from "./dto/ledger-day";

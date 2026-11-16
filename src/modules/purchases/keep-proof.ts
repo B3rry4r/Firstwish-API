@@ -5,6 +5,8 @@ import { ENV } from "../../common/env/env.module";
 import { Clock } from "../../common/ports/clock.port";
 
 const HOUR = 3600;
+/** HU1: the name a link holder with no account signs under: the email the receipt goes to (never an Account). */
+export const holderKey = (email: string): string => `hold:${email.trim().toLowerCase()}`;
 /** How long a receiver's proof may be used to START a keep payment. A payment already started settles whenever it is paid. */
 export const PROOF_START_HOURS = 2;
 
@@ -36,6 +38,31 @@ export class KeepProofs {
     const want = Buffer.from(this.sign(accountId, wishId.toLowerCase(), exp));
     const got = Buffer.from(m[2]);
     return want.length === got.length && timingSafeEqual(want, got);
+  }
+
+  /**
+   * HS2: the proof a link holder with no account carries. The public view gives it (only to a holder the link, and its unlock where it has a
+   * passcode, let in); it names the link and the wish, so it works for that wish only and for no other. Signed, not stored.
+   */
+  issueHold(linkId: string, wishId: string): { proof: string; expiresAt: Date } {
+    const exp = (Math.floor(this.clock.now().getTime() / 1000 / HOUR) + PROOF_START_HOURS) * HOUR;
+    return { proof: `${exp}.${this.signHold(linkId, wishId.toLowerCase(), exp)}`, expiresAt: new Date(exp * 1000) };
+  }
+
+  validHold(proof: unknown, linkId: string, wishId: string): boolean {
+    if (typeof proof !== "string") return false;
+    const m = /^(\d{1,12})\.([A-Za-z0-9_-]{43})$/.exec(proof);
+    if (!m) return false;
+    const exp = Number(m[1]);
+    if (exp * 1000 <= this.clock.now().getTime()) return false;
+    const want = Buffer.from(this.signHold(linkId, wishId.toLowerCase(), exp));
+    const got = Buffer.from(m[2]);
+    return want.length === got.length && timingSafeEqual(want, got);
+  }
+
+  private signHold(linkId: string, wishId: string, exp: number): string {
+    const key = createHmac("sha256", this.env.JWT_ACCESS_SECRET).update("hold-by-link").digest();
+    return createHmac("sha256", key).update(`${linkId}.${wishId}.${exp}`).digest("base64url");
   }
 
   private sign(accountId: string, wishId: string, exp: number): string {

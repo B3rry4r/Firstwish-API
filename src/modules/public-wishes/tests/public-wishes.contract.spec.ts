@@ -189,12 +189,11 @@ describe("public wishes E-129 E-130 E-131 E-132 E-134 and the feed's E-122 E-142
     expect((await t.http().post(`/v1/w/${w.slug}/unlock`).send({ opening: { answer: "Lagos" } })).body.ok).toBe(true);
   });
 
-  it("resting, taken down, removed, erased and an erased owner answer gone; an unknown or inexact slug is 404", async () => {
+  // API-BASE-6 (HS2): a resting wish (and a live one past its term) no longer answers 410 on the read: its link says "resting" (see api-base-6-hold.spec.ts)
+  it("taken down, removed, erased and an erased owner answer gone; an unknown or inexact slug is 404", async () => {
     const cases: [string, Record<string, unknown>, { active?: boolean }][] = [
-      ["resting", { status: "resting" }, {}],
       ["taken down", { status: "removed", removedAt: NOW }, { active: false }],
       ["erased", { status: "removed", removedAt: NOW, erasedAt: NOW, content: null }, { active: false }],
-      ["live past its term", { status: "live", openedAt: NOW, endsAt: new Date(NOW.getTime() - 1000) }, {}],
     ];
     for (const [, over, link] of cases) {
       const w = await wish(over, link);

@@ -1,4 +1,6 @@
 import { Injectable } from "@nestjs/common";
+import { Prisma } from "@prisma/client";
+import { NOT_HOUSE_SQL } from "../wishes/house";
 import { PrismaService } from "../../common/db/prisma.service";
 import type { StaffRole } from "../../common/auth/principal";
 import { AppError } from "../../common/errors/app-error";
@@ -48,7 +50,7 @@ export class OverviewService {
     if (wishes) {
       const [r] = await this.db.$queryRaw<{ sealed: bigint; opened: bigint }[]>`
         SELECT count(*) FILTER (WHERE "sealedAt" >= ${from} AND "sealedAt" < ${to}) AS sealed,
-               count(*) FILTER (WHERE "openedAt" >= ${from} AND "openedAt" < ${to}) AS opened FROM wish`;
+               count(*) FILTER (WHERE "openedAt" >= ${from} AND "openedAt" < ${to}) AS opened FROM wish WHERE ${Prisma.raw(NOT_HOUSE_SQL)}`;
       today.sealed = Number(r.sealed);
       today.opened = Number(r.opened);
     }

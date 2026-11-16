@@ -115,8 +115,8 @@ describe("API-BASE-4 wishes (through the real routes)", () => {
       expect(by.get(cover.id)).toMatchObject({ status: "ready", role: "photo" });
       expect(by.get(cover.id)?.url).toContain(cover.objectKey);
       expect(by.get(p1.id)?.url).toContain(p1.objectKey);
-      expect(by.get(p2.id)).toEqual({ fileId: p2.id, role: "photo", status: "screening", url: null, expiresAt: null });
-      expect(by.get(p3.id)).toEqual({ fileId: p3.id, role: "photo", status: "refused", url: null, expiresAt: null });
+      expect(by.get(p2.id)).toEqual({ fileId: p2.id, role: "photo", status: "screening", reason: null, url: null, expiresAt: null }); // API-BASE-6: pictures carry reason (null unless refused)
+      expect(by.get(p3.id)).toEqual({ fileId: p3.id, role: "photo", status: "refused", reason: expect.stringMatching(/not accepted/), url: null, expiresAt: null }); // API-BASE-6: the server's words for a refused photo
       const life = new Date(by.get(p1.id)?.expiresAt as string).getTime() - t.clock.now().getTime();
       expect(life).toBeGreaterThan(0);
       expect(life).toBeLessThanOrEqual(15 * 60 * 1000);

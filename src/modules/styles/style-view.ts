@@ -44,7 +44,7 @@ export function recordOf(row: Pick<StyleRow, "record">): RecordEntry[] {
 }
 
 /** staff: true shows the record (staff names and reasons); the public read leaves it out. */
-export function styleToWire(row: StyleRow, counts: Counts, staff: boolean): StyleOut {
+export function styleToWire(row: StyleRow, counts: Counts, staff: boolean, showcaseSlug: string | null = null): StyleOut {
   const level = isLevel(row.level) ? row.level : "starter";
   return {
     slug: row.slug ?? "",
@@ -73,6 +73,7 @@ export function styleToWire(row: StyleRow, counts: Counts, staff: boolean): Styl
     img: row.img ?? "",
     pos: row.pos ?? "",
     packaged: row.packaged ?? false,
+    showcaseSlug,
     sample: obj(row.sample) ?? {},
     previews: counts.previews,
     paid: counts.paid,

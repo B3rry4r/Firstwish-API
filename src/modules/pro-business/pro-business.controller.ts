@@ -20,7 +20,7 @@ import { DEFAULT_LIMIT, Page } from "../../common/pagination/cursor";
 import { ClientWishesService } from "./client-wishes.service";
 import { InvoicesService } from "./invoices.service";
 import { LoginsService } from "./logins.service";
-import { PlanState } from "./plan-view";
+import { PendingPlan, PlanOffer, PlanState } from "./plan-view";
 import { BusinessHeader, ProAccess } from "./pro-access";
 import { AdminBusiness, ProBusinessService, UsageAnswer } from "./pro-business.service";
 
@@ -44,8 +44,8 @@ export class ProBusinessController {
 
   @Roles("person", "business")
   @Get("plan")
-  async plan(@CurrentPrincipal() p: Principal | undefined, @BusinessHeader() h: string | undefined): Promise<UsageAnswer> {
-    return this.business.usageOf((await this.access.require(p, h)).businessId);
+  async plan(@CurrentPrincipal() p: Principal | undefined, @BusinessHeader() h: string | undefined): Promise<UsageAnswer & { offers: PlanOffer[]; pending: PendingPlan | null }> {
+    return this.business.planOf((await this.access.require(p, h)).businessId);
   }
 
   @Roles("person", "business")

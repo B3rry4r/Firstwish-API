@@ -8,7 +8,7 @@ import type { PaymentRequestInfo } from "./fulfilment.registry";
  */
 export interface PaymentOptions {
   request: PaymentRequestInfo;
-  server: { authorizationUrl?: string; fingerprint: string };
+  server: { authorizationUrl?: string; fingerprint: string; reason?: string };
 }
 
 const obj = (v: unknown): Record<string, unknown> => (v && typeof v === "object" && !Array.isArray(v) ? (v as Record<string, unknown>) : {});
@@ -21,6 +21,7 @@ export function readOptions(json: Prisma.JsonValue | null): PaymentOptions {
     server: {
       authorizationUrl: typeof s.authorizationUrl === "string" ? s.authorizationUrl : undefined,
       fingerprint: typeof s.fingerprint === "string" ? s.fingerprint : "",
+      reason: typeof s.reason === "string" ? s.reason : undefined,
     },
   };
 }
@@ -28,6 +29,7 @@ export function readOptions(json: Prisma.JsonValue | null): PaymentOptions {
 export function writeOptions(o: PaymentOptions): Prisma.InputJsonObject {
   const server: Record<string, Prisma.InputJsonValue> = { fingerprint: o.server.fingerprint };
   if (o.server.authorizationUrl) server.authorizationUrl = o.server.authorizationUrl;
+  if (o.server.reason) server.reason = o.server.reason;
   return { request: o.request as unknown as Prisma.InputJsonObject, server };
 }
 

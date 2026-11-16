@@ -62,7 +62,7 @@ export async function vaultLimitBytes(tx: Tx, biz: Pick<Business, "id" | "plan" 
   return (planGb + grantGb) * GB;
 }
 
-/** A wish holds at most this many voice notes (the price book's friend-message ceiling is 10; 12 is the content default). */
+/** A wish holds at most this many voice notes from friends (the price book's friend-message ceiling is 10; 12 is the content default), and the owner's own voice notes are counted apart: at most this many too. */
 export const MAX_VOICE_NOTES_PER_WISH = 12;
 
 @Injectable()
@@ -86,16 +86,20 @@ export class StoredFilesService {
     return biz;
   }
 
-  /** A wish holds at most MAX_VOICE_NOTES_PER_WISH voice notes (those not deleted or refused count); the next one is 409 with words. */
-  private async checkVoiceRoom(tx: Tx, wishId: string): Promise<void> {
+  /**
+   * HU4: a wish holds at most MAX_VOICE_NOTES_PER_WISH voice notes from friends and, counted apart, as many of the owner's own (the owner's own
+   * voice is never counted against what friends may send). Only one that has arrived (uploaded, screening or ready) counts, so an ask never
+   * uploaded holds no place. The next one is 409 with words.
+   */
+  private async checkVoiceRoom(tx: Tx, wishId: string, friends: boolean, except?: string): Promise<void> {
     const [n] = await tx.$queryRaw<{ n: number }[]>`
       SELECT count(*)::int AS n FROM voice_note v JOIN stored_file f ON f.id = v.id
-       WHERE v."wishId" = ${wishId}::uuid AND f.status NOT IN ('deleted', 'rejected')`;
-    if ((n?.n ?? 0) >= MAX_VOICE_NOTES_PER_WISH) throw AppError.conflict("voice_notes_full", `A wish holds at most ${MAX_VOICE_NOTES_PER_WISH} voice notes. Remove one to add another.`);
+       WHERE v."wishId" = ${wishId}::uuid AND f.status IN ('uploaded', 'screening', 'ready') AND EXISTS (SELECT 1 FROM wish_gather_voice g WHERE g.id = v.id) = ${friends} AND (${except ?? null}::uuid IS NULL OR v.id <> ${except ?? null}::uuid)`;
+    if ((n?.n ?? 0) >= MAX_VOICE_NOTES_PER_WISH) throw AppError.conflict("voice_notes_full", `A wish holds at most ${MAX_VOICE_NOTES_PER_WISH} voice notes from friends and ${MAX_VOICE_NOTES_PER_WISH} of the owner's own. Remove one to add another.`);
   }
 
   /** The subject wish, the caller's own and not yet sealed; a clip also needs a ticket that takes clips. */
-  private async checkWish(tx: Tx, p: UserPrincipal, rule: PurposeRule, subjectId: string | undefined): Promise<void> {
+  private async checkWish(tx: Tx, p: UserPrincipal, rule: PurposeRule, subjectId: string | undefined, gather = false): Promise<void> {
     if (subjectId === undefined) {
       if (rule.purpose === "video-clip") throw AppError.validation({ subjectId: "Say which wish the clip is for." });
       return;
@@ -103,7 +107,8 @@ export class StoredFilesService {
     if (!isUuid(subjectId)) throw AppError.validation({ subjectId: "Must be a wish id." });
     const wish = await tx.wish.findFirst({ where: { id: subjectId, accountId: p.accountId }, select: { status: true, ticket: true } });
     if (!wish) throw AppError.notFound("No such wish.");
-    if (wish.status !== "draft") throw AppError.conflict("wish_sealed", "This wish is sealed; its files cannot change.");
+    // HS1: a friend's voice through the gather link may arrive while the wish is a draft or sealed and not yet open
+    if (wish.status !== "draft" && !(gather && wish.status === "sealed")) throw AppError.conflict("wish_sealed", "This wish is sealed; its files cannot change.");
     if (rule.purpose === "video-clip") {
       const e = await tx.entitlements.findFirst();
       const tickets = (e?.tickets ?? {}) as Record<string, { clips?: unknown } | undefined>;
@@ -116,7 +121,7 @@ export class StoredFilesService {
    * E-182: checks purpose, type, size and entitlement, then issues a signed PUT for one STAGING key (Y1), good for 15 minutes and
    * bound to the type and the exact length (X26). The file's own key is made here too but is never signed for a PUT.
    */
-  async createTicket(p: UserPrincipal, body: PostUploadsBody): Promise<UploadTicket> {
+  async createTicket(p: UserPrincipal, body: PostUploadsBody, opts: { gather?: boolean } = {}): Promise<UploadTicket> {
     const rule = purposeOf(body.purpose);
     if (!rule) throw AppError.validation({ purpose: "Must be one of photo, voice, clip, vault, studio or brand." });
     const contentType = normaliseType(body.contentType);
@@ -150,8 +155,8 @@ export class StoredFilesService {
           if (Number(biz.vault ?? 0n) + bytes > limit) throw AppError.conflict("vault_full", "This file would go over your Vault space.");
         }
       } else if (wishFile) {
-        await this.checkWish(tx, p, rule, body.subjectId);
-        if (rule.purpose === "voice-note" && body.subjectId !== undefined) await this.checkVoiceRoom(tx, body.subjectId);
+        await this.checkWish(tx, p, rule, body.subjectId, opts.gather === true);
+        if (rule.purpose === "voice-note" && body.subjectId !== undefined) await this.checkVoiceRoom(tx, body.subjectId, opts.gather === true);
       } else if (body.styleId !== undefined) {
         if (!(await tx.style.findUnique({ where: { id: body.styleId }, select: { id: true } }))) throw AppError.validation({ styleId: "No such style." });
         styleId = body.styleId;
@@ -294,6 +299,18 @@ export class StoredFilesService {
         await lockAccount(tx, p.accountId);
         const locked = await tx.$queryRaw<{ id: string }[]>`SELECT id FROM stored_file WHERE id = ${id}::uuid AND status = 'uploaded' FOR UPDATE`;
         if (!locked.length) return { row, removeKeys: [objectKey, staging], error: refused("The file was removed.") };
+        // HU4: the room is counted again as a voice arrives (the asks made while it was free are many; the arrivals are what fill it)
+        const voice = await tx.voiceNote.findUnique({ where: { id }, select: { wishId: true } });
+        if (voice?.wishId) {
+          try {
+            const [g] = await tx.$queryRaw<{ n: number }[]>`SELECT count(*)::int AS n FROM wish_gather_voice WHERE id = ${id}::uuid`;
+            await this.checkVoiceRoom(tx, voice.wishId, (g?.n ?? 0) > 0, id);
+          } catch (e) {
+            if (!(e instanceof AppError)) throw e;
+            await this.removeRows(tx, id);
+            return { row, removeKeys: [objectKey, staging], error: e };
+          }
+        }
         await this.screening.record(tx, id, screened);
         await this.sweepStagingLater(tx, objectKey);
         const kind = mediaKindOf(type);
@@ -339,7 +356,7 @@ export class StoredFilesService {
   }
 
   /** E-183 (Y5, X23): removes the row, then the objects (and sizes). A file a wish or a card names (a real foreign key) is 409. */
-  async remove(p: UserPrincipal, id: string, body: DeleteUploadsByIdBody): Promise<void> {
+  async remove(p: UserPrincipal, id: string, body: DeleteUploadsByIdBody, opts: { gather?: boolean } = {}): Promise<void> {
     if (!isUuid(id)) throw AppError.notFound("No such file.");
     if (body.fileId !== undefined && body.fileId !== id) throw AppError.validation({ fileId: "Must be the id in the path." });
     const row = await this.db.$transaction(
@@ -352,7 +369,7 @@ export class StoredFilesService {
           WHERE w.id IN (SELECT "wishId" FROM wish_file WHERE "fileId" = ${id}::uuid)
              OR w.id IN (SELECT "wishId" FROM voice_note WHERE id = ${id}::uuid AND "wishId" IS NOT NULL)
           FOR UPDATE`;
-        if (wishes.some((w) => w.status !== "draft")) throw AppError.conflict("file_in_use", "A sealed wish still uses this file.");
+        if (wishes.some((w) => w.status !== "draft" && !(opts.gather && w.status === "sealed"))) throw AppError.conflict("file_in_use", "A sealed wish still uses this file.");
         await tx.$executeRaw`DELETE FROM wish_file WHERE "fileId" = ${id}::uuid`;
         if (r.businessId && r.purpose === "vault_file" && (r.status === "ready" || r.status === "screening")) {
           await tx.$executeRaw`UPDATE business SET vault = GREATEST(COALESCE(vault, 0) - ${r.bytes}, 0), version = version + 1 WHERE id = ${r.businessId}::uuid`;

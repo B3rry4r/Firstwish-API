@@ -205,6 +205,8 @@ export class AccountErasureService {
     await tx.dateRow.updateMany({ where: { accountId }, data: { name: null, who: null, what: null, person: Prisma.DbNull, for: Prisma.DbNull } });
     await tx.notice.updateMany({ where: { accountId }, data: { body: null, subject: null } });
     await tx.payment.updateMany({ where: { OR: [{ accountId }, inBusiness] }, data: { payerContact: null } });
+    // HU1 (AA2): a link holder's keep payment for an erased wish keeps no email either
+    if (wishIds.length) await tx.payment.updateMany({ where: { accountId: null, purpose: "keep", subjectId: { in: wishIds } }, data: { payerContact: null } });
     await tx.report.updateMany({ where: { accountId }, data: { reporterContact: null, contact: null, note: null } });
     if (threadIds.length) await tx.supportMessage.updateMany({ where: { threadId: { in: threadIds } }, data: { body: "" } });
     await tx.supportThread.updateMany({ where: { accountId }, data: { contact: "", subject: "", body: null, text: null, name: null } });

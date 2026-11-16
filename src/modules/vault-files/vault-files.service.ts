@@ -7,6 +7,7 @@ import { decodeCursor, DEFAULT_LIMIT, toPage } from "../../common/pagination/cur
 import type { GetBusinessVaultFilesQuery, GetBusinessVaultFilesResponse } from "../../contracts";
 import { isUuid } from "../stored-files/file-rules";
 import { SignedUrlsService } from "../stored-files/signed-urls.service";
+import { notInBusiness } from "../../common/auth/login-removed";
 import { businessAccessOf } from "../stored-files/vault-access";
 
 const EXT: Record<string, string> = {
@@ -33,7 +34,7 @@ export class VaultFilesService {
     // X27: the business's owner, or one of its logins. An owner sees held files too; a member sees only files that passed screening.
     const access = await businessAccessOf(this.db, p.accountId);
     const businessId = access.owned[0] ?? access.member[0];
-    if (!businessId) throw AppError.forbidden("Vault files need a business.");
+    if (!businessId) throw await notInBusiness(this.db, p.accountId, "Vault files need a business.");
     const isOwner = access.owned.includes(businessId);
     const limit = q.limit ?? DEFAULT_LIMIT;
     const where: Prisma.StoredFileWhereInput = { businessId, purpose: "vault_file", status: isOwner ? { in: ["ready", "screening"] } : "ready" };

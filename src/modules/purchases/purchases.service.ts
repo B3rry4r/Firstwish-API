@@ -9,7 +9,7 @@ import { FulfilmentRegistry, type FulfilmentContext, type PaymentRequestInfo } f
 import { BusinessHandlers } from "./business-handlers";
 import { CreatorHandlers } from "./creator-handlers";
 import { GrantStore, type GrantRow, type Tx } from "./grants";
-import { KeepProofs } from "./keep-proof";
+import { holderKey, KeepProofs } from "./keep-proof";
 import { PassService } from "./pass.service";
 import { WishHandlers } from "./wish-handlers";
 import { assessExtra, assessKeep, assessTicket, readWish, REASON_TEXT } from "./wish-rules";
@@ -70,7 +70,7 @@ export class PurchasesService implements OnModuleInit {
     on(SOLD_SKUS.creator, (c) => this.creator.fulfil(c));
     on(SOLD_SKUS.concierge, (c) => this.concierge(c));
     // GG3: the payments frame asks at start what can never be granted (assertStartable)
-    this.registry.onStart((accountId, request, skus, tx) => this.assertStartable(accountId, request, skus, tx));
+    this.registry.onStart((accountId, request, skus, tx, _quote, holderEmail) => this.assertStartable(accountId ?? (holderEmail ? holderKey(holderEmail) : null), request, skus, tx));
   }
 
   /** Concierge: the order is B19's. This records that the payment for it was good (the order id the buyer named), nothing more. */
@@ -126,12 +126,13 @@ export class PurchasesService implements OnModuleInit {
    * At START (E-87, quote time): the checks that decide a ticket, extra or keep can never be granted, so the buyer is told before paying
    * (422 with the field) and not after. The same rules run again at fulfilment. Lines of other kinds pass.
    */
-  async assertStartable(accountId: string, request: PaymentRequestInfo, skus: string[], db: PrismaService | Tx = this.db): Promise<void> {
+  async assertStartable(accountId: string | null, request: PaymentRequestInfo, skus: string[], db: PrismaService | Tx = this.db): Promise<void> {
     const sku = skus[0] ?? "";
     const group = sku.slice(0, sku.indexOf("."));
     if (!["ticket", "extra", "keep"].includes(group)) return;
     const wishId = request.subjectId;
     if (!wishId) throw AppError.validation({ subjectId: "Name the wish this is for." });
+    if (!accountId) throw AppError.validation({ subjectId: "Name one of your own wishes." });
     const w = await readWish(db, wishId);
     const book = await this.entitlements.row(db);
     let why: string | null;

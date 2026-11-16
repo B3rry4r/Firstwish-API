@@ -110,6 +110,36 @@ async function seedHouse(db) {
   await db.creator.upsert({ where: { accountId: HOUSE_ACCOUNT_ID }, create: { id: creatorId, ...creator }, update: creator });
 }
 
+/* HS3: each style that is on has one house wish that plays it: made by the house account (the house creator) from the style's own
+   package (its slug, look, line and the words it says), with sample content marked as the house's (content.house: never shown as a
+   person's), live, and linked at /w/house-<slug> (the styles read gives the link). Created once: a re-run makes no second one and never
+   undoes a link staff switched off with the style. */
+export async function seedHouseWishes(db) {
+  const at = new Date(SEED_MS);
+  const ends = new Date(Date.UTC(2099, 11, 31));
+  const opened = new Date(Date.UTC(2020, 0, 1)); // a house wish is always showing: it opened before any clock a stack can run on
+  const styles = await db.style.findMany({ where: { on: true, slug: { not: null }, packaged: true }, orderBy: { slug: "asc" } });
+  for (const st of styles) {
+    const kinds = Array.isArray(st.kinds) ? st.kinds : [];
+    const kind = typeof kinds[0] === "string" ? kinds[0] : "celebration";
+    const id = seedId(`HouseWish:${st.slug}`);
+    const content = {
+      house: true,
+      from: "Firstwish",
+      letter: { paras: [st.say, st.feel].filter((x) => typeof x === "string" && x), line: st.line ?? undefined },
+      note: { from: "Firstwish", text: `A sample of ${st.name ?? st.slug}, made by Firstwish.` },
+    };
+    const row = {
+      accountId: HOUSE_ACCOUNT_ID, status: "live", ticket: "premiere", kind, occasion: kind === "love" ? "anniversary" : "birthday", styleSlug: st.slug,
+      timeZone: "Africa/Lagos", name: "You", no: `FW-HOUSE-${st.slug.toUpperCase()}`.slice(0, 40), content, step: 5,
+      sealedAt: opened, opensAt: opened, openedAt: opened, endsAt: ends,
+    };
+    await db.wish.upsert({ where: { id }, create: { id, ...row, createdAt: at }, update: {} });
+    const lid = seedId(`HouseWishLink:${st.slug}`);
+    await db.wishLink.upsert({ where: { slug: `house-${st.slug}`.slice(0, 32) }, create: { id: lid, slug: `house-${st.slug}`.slice(0, 32), wishId: id, active: true, createdAt: at }, update: {} });
+  }
+}
+
 /* Lifecycle terms (DEC-70), from the wish-lifecycle declaration and the app's account.ts. */
 const LIFECYCLE = {
   HOLD_DAYS: 365,
@@ -209,6 +239,7 @@ export async function seed(db) {
   await seedCatalogues(db);
   await seedStyles(db);
   await seedHouse(db);
+  await seedHouseWishes(db);
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
@@ -219,7 +250,7 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
     db.$transaction(
       async (tx) => {
         await tx.$executeRaw`SELECT pg_advisory_xact_lock(748201)`;
-        return process.argv[2] === "styles" ? seedStyles(tx) : seed(tx);
+        return process.argv[2] === "styles" ? seedStyles(tx).then(() => seedHouse(tx)).then(() => seedHouseWishes(tx)) : seed(tx);
       },
       { timeout: 120_000, maxWait: 120_000 },
     );

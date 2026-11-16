@@ -58,3 +58,6 @@
   the photo limit (the website's restored sentences read them).
 - OWNER asked: reactions for every ticket (as the API does) or Keepsake and above (as the product document says).
 - Per-action role reads for the staff wish, person, payout and numbers-target actions (the web keeps ACTION_ROLES).
+- (API-BASE-7) No receipt email is sent after any payment (owner or link holder): R11 says every message goes by
+  email: a receipt after a settled payment, to the account's email or the payer's email on the payment (default
+  (lead): yes; a template the staff Messages screen lists).

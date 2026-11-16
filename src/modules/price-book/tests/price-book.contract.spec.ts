@@ -6,6 +6,7 @@ import type { StaffRole } from "../../../common/auth/principal";
 import { createTestApp, TestApp } from "../../../../test/kit/app";
 import { holdSettingLock } from "../../../../test/kit/setting-lock";
 import { EntitlementsService, grantOf } from "../entitlements.service";
+import { PayoutRunService } from "../../payouts/payout-run.service";
 import { PriceAdminService } from "../price-admin.service";
 import { PriceBookService } from "../price-book.service";
 
@@ -411,7 +412,7 @@ describe("price book (contract)", () => {
     it("X14: the public book is {version, items, promotion, lifecycle, entitlements, nextCursor}; items are Price lines", async () => {
       const r = await t.http().get("/v1/price-book").query({ limit: 5 });
       expect(r.status).toBe(200);
-      expect(Object.keys(r.body).sort()).toEqual(["entitlements", "items", "lifecycle", "nextCursor", "promotion", "version"]);
+      expect(Object.keys(r.body).sort()).toEqual(["entitlements", "items", "lifecycle", "nextCursor", "payout", "promotion", "version"]);
       expect(typeof r.body.version).toBe("number");
       expect(r.body.items).toHaveLength(5);
       expect(typeof r.body.nextCursor).toBe("string");
@@ -582,4 +583,25 @@ describe("price book (contract)", () => {
     });
 
   });
+  describe("API-BASE-7 the payout setting in the price-book read (HW4)", () => {
+    it("the read serves the payout threshold and day with the provisional mark; staff Prices changes them (audited); the payout run reads them", async () => {
+      const run = t.app.get(PayoutRunService);
+      const book = () => t.http().get("/v1/price-book").query({ limit: 5 });
+      // this test makes its own setting (earlier tests leave the row changed): provisional, 500000, the 5th
+      await db.$executeRaw`UPDATE settings SET choice = choice || ${JSON.stringify({ value: 500000, day: 5, schedule: "monthly on the 5th", status: "PROVISIONAL" })}::jsonb WHERE key = to_jsonb('payout.thresholdKobo'::text)`;
+      expect((await book()).body.payout).toMatchObject({ thresholdKobo: 500000, day: 5, provisional: true, status: "PROVISIONAL" });
+      const audits = await db.auditEntry.count({ where: { subjectId: "payout.thresholdKobo" } });
+      const r = await put("finance", "payout.thresholdKobo", { priceKobo: 750000, payoutDay: 12, reason: "Raised after review" });
+      expect(r.status).toBe(200);
+      expect((await book()).body.payout).toMatchObject({ thresholdKobo: 750000, day: 12, schedule: "the 12th of each month", provisional: true });
+      expect(await db.auditEntry.count({ where: { subjectId: "payout.thresholdKobo" } })).toBe(audits + 1);
+      expect(await run.threshold()).toBe(750000);
+      expect(await run.runDay()).toBe(12);
+      // the owner role confirms: the mark goes
+      expect((await put("owner", "payout.thresholdKobo", { priceKobo: 700000, reason: "Confirmed by the owner" })).status).toBe(200);
+      expect((await book()).body.payout).toMatchObject({ thresholdKobo: 700000, day: 12, provisional: false, status: "CONFIRMED" });
+      expect(await run.threshold()).toBe(700000);
+    });
+  });
+
 });

@@ -463,7 +463,7 @@ export interface StaffWish {
   ticket: string;
   extras: string[];
   state: string;
-  opensAt: Instant | "";
+  opensAt: string;
   endsAt?: Instant;
   isPublic: boolean;
   timeline: Array<{ at: Instant; what: string; by?: string; reason?: string }>;

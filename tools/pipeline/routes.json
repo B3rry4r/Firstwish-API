@@ -1679,6 +1679,17 @@
         "staff:ops"
       ],
       "decision": "DEC-199"
+    },
+    {
+      "resource": "DayPick",
+      "method": "GET",
+      "path": "/v1/admin/showing/days",
+      "auth": [
+        "staff:moderator",
+        "staff:ops",
+        "staff:owner"
+      ],
+      "decision": "DEC-226"
     }
   ],
   "fulfilment": {
@@ -2498,6 +2509,20 @@
         "entity": "WishLinkRead {link,slug}",
         "cardinality": "single",
         "note": "{link, slug}: the path of the public link and its slug (DEC-221)"
+      }
+    },
+    "GET /v1/admin/showing/days": {
+      "decision": "DEC-226",
+      "response": {
+        "entity": "DayPick",
+        "cardinality": "list",
+        "note": "the wish-of-the-day picks from today to the next 6 days, by date; a day with no pick is left out (DEC-226)"
+      }
+    },
+    "GET /v1/admin/people": {
+      "decision": "DEC-226",
+      "set": {
+        "q": "string (optional; a name, an email, an account id or a wish number)"
       }
     }
   },

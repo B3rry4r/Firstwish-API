@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "frozenAt": "2026-11-16T13:00:43Z",
+  "frozenAt": "2026-11-16T13:12:06Z",
   "framework": "nestjs",
   "generatedBy": "tools/pipeline/reconcile.py",
   "resources": [
@@ -588,7 +588,15 @@
               ]
             }
           ],
-          "body": [],
+          "body": [
+            {
+              "name": "q",
+              "type": "string (optional; a name, an email, an account id or a wish number)",
+              "from": [
+                "DEC-226"
+              ]
+            }
+          ],
           "response": {
             "entity": "Account",
             "cardinality": "list"
@@ -600,6 +608,7 @@
             }
           ],
           "notes": [
+            "body by DEC-226",
             "route by DEC-112"
           ]
         },
@@ -5368,7 +5377,9 @@
         "app-home",
         "site-showing"
       ],
-      "sourceDeclarations": [],
+      "sourceDeclarations": [
+        "api-base-4"
+      ],
       "embedded": [],
       "fields": [
         {
@@ -5535,6 +5546,19 @@
             "app-home"
           ],
           "supersedes": []
+        },
+        {
+          "name": "payoutMonths",
+          "type": "shape array<{month: string, earnedKobo: integer, payoutStatus: enum(pending|sent|succeeded|failed) | null, due: boolean}>",
+          "classes": [
+            "array"
+          ],
+          "nullable": true,
+          "provenance": [
+            "api-base-4"
+          ],
+          "supersedes": [],
+          "typeBy": "DEC-226"
         },
         {
           "name": "person",
@@ -6463,6 +6487,36 @@
           ],
           "notes": [
             "route by DEC-112"
+          ]
+        },
+        {
+          "id": "E-255",
+          "method": "GET",
+          "path": "/v1/admin/showing/days",
+          "auth": [
+            {
+              "kind": "staff role",
+              "roles": [
+                "moderator",
+                "ops",
+                "owner"
+              ]
+            }
+          ],
+          "body": [],
+          "response": {
+            "entity": "DayPick",
+            "cardinality": "list",
+            "note": "the wish-of-the-day picks from today to the next 6 days, by date; a day with no pick is left out (DEC-226)"
+          },
+          "sources": [
+            {
+              "src": "DEC-226",
+              "via": "ruling:DEC-226"
+            }
+          ],
+          "notes": [
+            "body by DEC-226"
           ]
         }
       ]
@@ -16823,6 +16877,7 @@
         "admin-moderation"
       ],
       "sourceDeclarations": [
+        "api-base-4",
         "moderation"
       ],
       "embedded": [],
@@ -16959,6 +17014,19 @@
             "admin-moderation"
           ],
           "supersedes": []
+        },
+        {
+          "name": "heldPhoto",
+          "type": "shape {url: string, expiresAt: time} | null",
+          "classes": [
+            "object"
+          ],
+          "nullable": true,
+          "provenance": [
+            "api-base-4"
+          ],
+          "supersedes": [],
+          "typeBy": "DEC-226"
         },
         {
           "name": "id",

@@ -84,6 +84,13 @@ export class ShowingController {
     return this.showing.unlist(p.no, b, actor);
   }
 
+  /** HP12: the picks for today and the next 6 days. */
+  @AdminRoute("/admin/showing", "moderator", "ops", "owner")
+  @Get("admin/showing/days")
+  days() {
+    return this.showing.picks();
+  }
+
   /** E-49. */
   @AdminRoute("/admin/showing", "moderator", "ops", "owner")
   @Put("admin/showing/day/:date")

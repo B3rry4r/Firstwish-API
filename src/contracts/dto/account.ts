@@ -8,6 +8,9 @@ import type { DeleteMeBusinessBody, GetAdminPeopleByIdParams, GetAdminPeopleQuer
 export class GetAdminPeopleQueryDto implements GetAdminPeopleQuery {
   @IsOptional()
   @IsString()
+  q?: string;
+  @IsOptional()
+  @IsString()
   cursor?: string;
   @IsOptional()
   @Type(() => Number)

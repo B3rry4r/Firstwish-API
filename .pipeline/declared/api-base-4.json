@@ -50,6 +50,34 @@
       "cardinality": "single",
       "filtersOrSort": [],
       "pagination": "none"
+    },
+    {
+      "entity": "Creator",
+      "fields": [
+        {
+          "name": "payoutMonths",
+          "type": "array",
+          "nullable": true,
+          "note": "HP12: staff list only"
+        }
+      ],
+      "cardinality": "single",
+      "filtersOrSort": [],
+      "pagination": "none"
+    },
+    {
+      "entity": "Report",
+      "fields": [
+        {
+          "name": "heldPhoto",
+          "type": "object",
+          "nullable": true,
+          "note": "HP12: staff who may moderate, a held photo"
+        }
+      ],
+      "cardinality": "single",
+      "filtersOrSort": [],
+      "pagination": "none"
     }
   ],
   "actions": [],

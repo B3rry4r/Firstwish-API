@@ -463,6 +463,7 @@ export interface Creator {
   line: string;
   name: string;
   own?: boolean | null;
+  payoutMonths?: Array<{ month: string; earnedKobo: number; payoutStatus: "pending" | "sent" | "succeeded" | "failed" | null; due: boolean }>;
   person: string;
   plan: string;
   signed: boolean;
@@ -1176,6 +1177,7 @@ export interface Report {
   dueAt: Instant;
   forName: string;
   from: string;
+  heldPhoto?: { url: string; expiresAt: Instant } | null;
   id: string;
   late: boolean;
   minutesLeft: number;
@@ -1780,6 +1782,8 @@ export interface WishTransition {
 /** E-1 GET /v1/admin/people. Auth: moderator,ops,owner,support. */
 export type GetAdminPeopleParams = Record<string, never>;
 export interface GetAdminPeopleQuery {
+  /** string (optional; a name, an email, an account id or a wish number) */
+  q?: string;
   cursor?: string;
   limit?: number;
 }
@@ -2437,6 +2441,15 @@ export interface PutAdminShowingDayByDateBody {
 }
 export type PutAdminShowingDayByDateHeaders = Record<string, never>;
 export type PutAdminShowingDayByDateResponse = DayPick;
+
+/** E-255 GET /v1/admin/showing/days. Auth: moderator,ops,owner. */
+export type GetAdminShowingDaysParams = Record<string, never>;
+export interface GetAdminShowingDaysQuery {
+  cursor?: string;
+  limit?: number;
+}
+export type GetAdminShowingDaysHeaders = Record<string, never>;
+export type GetAdminShowingDaysResponse = PaginatedList<DayPick>;
 
 /** E-50 GET /v1/admin/earnings. Auth: finance,owner. */
 export type GetAdminEarningsParams = Record<string, never>;
@@ -4639,6 +4652,7 @@ export interface EndpointContracts {
   "E-47": { params: DeleteMeDatesByIdParams; body: DeleteMeDatesByIdBody; headers: DeleteMeDatesByIdHeaders; response: DeleteMeDatesByIdResponse };
   "E-48": { params: GetMeDatesByIdParams; query: GetMeDatesByIdQuery; headers: GetMeDatesByIdHeaders; response: GetMeDatesByIdResponse };
   "E-49": { params: PutAdminShowingDayByDateParams; body: PutAdminShowingDayByDateBody; headers: PutAdminShowingDayByDateHeaders; response: PutAdminShowingDayByDateResponse };
+  "E-255": { params: GetAdminShowingDaysParams; query: GetAdminShowingDaysQuery; headers: GetAdminShowingDaysHeaders; response: GetAdminShowingDaysResponse };
   "E-50": { params: GetAdminEarningsParams; query: GetAdminEarningsQuery; headers: GetAdminEarningsHeaders; response: GetAdminEarningsResponse };
   "E-51": { params: GetEndingPurposesParams; query: GetEndingPurposesQuery; headers: GetEndingPurposesHeaders; response: GetEndingPurposesResponse };
   "E-52": { params: PostEventsParams; body: PostEventsBody; headers: PostEventsHeaders; response: PostEventsResponse };

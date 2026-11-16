@@ -3381,13 +3381,37 @@
     },
     {
       "id": "DEC-226",
+      "topic": "Four staff gaps from W13",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md; build/prompts/API-BASE-4.md",
+      "decidedAt": "2026-11-25T12:00:00Z",
+      "decision": "HP12: GET /v1/admin/people takes q as a name, an email, an account id or a wish number; a moderation item for a held photo carries heldPhoto {url, expiresAt} (a signed read, ten minutes) for moderator, ops and owner only, each one an audit row; GET /v1/admin/showing/days reads the wish-of-the-day picks from today to the next 6 days; each creator on the staff list carries payoutMonths (month, earned, payout status, due).",
+      "fieldTypes": {
+        "Creator.payoutMonths": "shape array<{month: string, earnedKobo: integer, payoutStatus: enum(pending|sent|succeeded|failed) | null, due: boolean}>",
+        "Report.heldPhoto": "shape {url: string, expiresAt: time} | null"
+      }
+    },
+    {
+      "id": "DEC-227",
+      "topic": "A published row carries its creator's handle and cover",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md; build/prompts/API-BASE-4.md",
+      "decidedAt": "2026-11-25T12:00:00Z",
+      "decision": "HP13: a row of GET /v1/showing is read together with its wish each time: creator {handle, name} when the publisher still has the creator side and a handle ({name} only otherwise), img the cover as a signed read url that is only given for a file that passed screening (\"\" otherwise), pos \"50% 50%\" with a picture. Done on read, so rows published before get the same; nothing is stored. No registry shape changes."
+    },
+    {
+      "id": "DEC-228",
       "topic": "registry re-freeze (twelfth reopen)",
       "closes": [],
       "approvedBy": "lead default, owner may override",
       "confidence": "high",
       "source": "build/rulings-phase3.md; build/prompts/API-BASE-4.md",
       "decidedAt": "2026-11-25T12:00:00Z",
-      "decision": "The registry is re-frozen after HP1 to HP10 (DEC-218 to DEC-225) by tools/pipeline/freeze.py; reconcile.py was run twice with --reopen (identical outputs). Endpoint ids already issued are unchanged."
+      "decision": "The registry is re-frozen after HP1 to HP13 (DEC-218 to DEC-227) by tools/pipeline/freeze.py; reconcile.py was run twice with --reopen (identical outputs). Endpoint ids already issued are unchanged."
     }
   ]
 }

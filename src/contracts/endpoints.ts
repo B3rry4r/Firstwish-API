@@ -70,6 +70,7 @@ export const ENDPOINTS: readonly EndpointRow[] = [
   { id: "E-47", method: "DELETE", path: "/v1/me/dates/:id", resource: "DateRow", operation: "DeleteMeDatesById", request: "DeleteMeDatesByIdBodyDto", rawBody: false, noContent: true },
   { id: "E-48", method: "GET", path: "/v1/me/dates/:id", resource: "DateRow", operation: "GetMeDatesById", request: "GetMeDatesByIdQueryDto", rawBody: false, noContent: false },
   { id: "E-49", method: "PUT", path: "/v1/admin/showing/day/:date", resource: "DayPick", operation: "PutAdminShowingDayByDate", request: "PutAdminShowingDayByDateBodyDto", rawBody: false, noContent: false },
+  { id: "E-255", method: "GET", path: "/v1/admin/showing/days", resource: "DayPick", operation: "GetAdminShowingDays", request: "GetAdminShowingDaysQueryDto", rawBody: false, noContent: false },
   { id: "E-50", method: "GET", path: "/v1/admin/earnings", resource: "EarningsSummary", operation: "GetAdminEarnings", request: "GetAdminEarningsQueryDto", rawBody: false, noContent: false },
   { id: "E-51", method: "GET", path: "/v1/ending-purposes", resource: "EndingPurpose", operation: "GetEndingPurposes", request: "GetEndingPurposesQueryDto", rawBody: false, noContent: false },
   { id: "E-52", method: "POST", path: "/v1/events", resource: "Event", operation: "PostEvents", request: "PostEventsBodyDto", rawBody: false, noContent: false },

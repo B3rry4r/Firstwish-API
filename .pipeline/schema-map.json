@@ -568,7 +568,8 @@
    },
    "omit": {
     "handle": "Q7: one handle namespace; the handle lives on Account and the creator profile reads it",
-    "bank": "joined from BankAccount on read, the number masked (WW7)"
+    "bank": "joined from BankAccount on read, the number masked (WW7)",
+    "payoutMonths": "HP12: read from payouts and accruals, not a column"
    },
    "erase": {
     "name": {
@@ -603,7 +604,8 @@
      "rule": "keep",
      "why": "style slugs; a live style stays in the catalogue (DEC-69)"
     }
-   }
+   },
+   "declaredAs": "CreatorProfile"
   },
   "CreatorOffer": {
    "class": "view",
@@ -1519,6 +1521,9 @@
      "rule": "keep",
      "why": "what was reported"
     }
+   },
+   "omit": {
+    "heldPhoto": "HP12: signed when a moderator reads, not a column"
    }
   },
   "RevealLink": {

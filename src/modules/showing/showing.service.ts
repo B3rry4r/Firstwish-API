@@ -386,6 +386,19 @@ export class ShowingService implements OnModuleInit {
     });
   }
 
+  /** HP12: the wish-of-the-day picks from today to the next 6 days (Lagos days), by date; a day with no pick is left out. */
+  async picks(): Promise<Page<DayPick>> {
+    const today = lagosToday(this.clock.now());
+    const first = new Date(`${today}T00:00:00.000Z`);
+    const last = new Date(first.getTime() + PICK_DAYS * DAY_MS);
+    const rows = await this.db.dayPick.findMany({ where: { date: { gte: first, lte: last } }, orderBy: { date: "asc" } });
+    const items = rows.map((r) => {
+      const pick = (r.pick ?? {}) as { publishedId?: string; wishId?: string; reason?: string };
+      return { date: (r.date as Date).toISOString().slice(0, 10), wish: r.wish ?? "", reason: pick.reason ?? "", pick: { publishedId: pick.publishedId, wishId: pick.wishId } };
+    });
+    return { items: items as unknown as DayPick[], nextCursor: null };
+  }
+
   /** The number of requests waiting for a person (the Overview's count). */
   waitingCount(): Promise<number> {
     return this.db.publishRequest.count({ where: { status: "waiting" } });

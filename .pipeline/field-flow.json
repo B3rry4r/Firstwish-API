@@ -3500,6 +3500,20 @@
       "noWriter": true
     },
     {
+      "field": "Creator.payoutMonths",
+      "writers": [
+        "server:api-base-4"
+      ],
+      "store": "Creator",
+      "readers": [],
+      "writerActors": [
+        "server"
+      ],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": false
+    },
+    {
       "field": "Creator.person",
       "writers": [],
       "store": "Creator",
@@ -11145,6 +11159,20 @@
       ],
       "crossActor": false,
       "noWriter": true
+    },
+    {
+      "field": "Report.heldPhoto",
+      "writers": [
+        "server:api-base-4"
+      ],
+      "store": "Report",
+      "readers": [],
+      "writerActors": [
+        "server"
+      ],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": false
     },
     {
       "field": "Report.id",

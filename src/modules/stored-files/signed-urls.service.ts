@@ -13,9 +13,10 @@ import { businessAccessOf } from "./vault-access";
 /**
  * Who reads. "owner": the file's owner, checked here as a query condition. "allowed": a caller that has already proved the reader
  * may see the wish or shoot that holds the file (the receiver's read, B10); it gets only files that passed screening, never a held one.
+ * "staff" (HP12): a staff member who may moderate reads a photo held by screening; the caller checks the role and writes the audit row.
  * "vault" (X27): a Vault file read by its business's owner (a held file too) or by one of the business's logins (passed files only).
  */
-export type Reader = { type: "owner"; accountId: string } | { type: "allowed" } | { type: "vault"; accountId: string };
+export type Reader = { type: "owner"; accountId: string } | { type: "allowed" } | { type: "vault"; accountId: string } | { type: "staff" };
 
 /** E-173's SignedUrl ({url, expiresAt}, X20) and which file and size it is for. */
 export interface SignedRead extends SignedUrl {
@@ -47,7 +48,8 @@ export class SignedUrlsService {
           { businessId: { in: access.member }, status: "ready" },
         ],
       };
-    } else where = { id: input.fileId, status: "ready" };
+    } else if (reader.type === "staff") where = { id: input.fileId, status: { in: ["ready", "screening"] } };
+    else where = { id: input.fileId, status: "ready" };
     const file = await this.db.storedFile.findFirst({ where });
     if (!file) throw AppError.notFound("No such file.");
     const variant = input.variant ?? "original";

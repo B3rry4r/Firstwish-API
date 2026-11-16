@@ -1,3 +1,4 @@
+import { StoredFilesModule } from "../stored-files/stored-files.module";
 import { Module } from "@nestjs/common";
 import { NoticesModule } from "../notices/notices.module";
 import { RoleAccessModule } from "../role-access/role-access.module";
@@ -13,7 +14,7 @@ import { ReportsService } from "./reports.service";
  * ReportsService.counts() is for the Overview; BansService.lift() has no registry route yet.
  */
 @Module({
-  imports: [RoleAccessModule, NoticesModule, ShowingModule, WishesModule],
+  imports: [StoredFilesModule, RoleAccessModule, NoticesModule, ShowingModule, WishesModule],
   controllers: [ModerationController],
   providers: [ReportsService, BansService, ReportLimits],
   exports: [ReportsService, BansService],

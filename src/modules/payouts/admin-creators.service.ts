@@ -43,6 +43,31 @@ export class AdminCreatorsService {
     private readonly clock: Clock,
   ) {}
 
+  /**
+   * HP12: each creator's months with money: what was earned (accruals less reversals), the payout made for it and its state, and whether
+   * it is due: a month before this one with something earned and no payout sent or paid for it (none made, or the last one failed).
+   */
+  private async addPayoutMonths(items: AdminCreator[], thisMonth: string): Promise<void> {
+    const ids = items.map((i) => i.id);
+    if (!ids.length) return;
+    const [accr, rev, pay] = await Promise.all([
+      this.db.royaltyAccrual.groupBy({ by: ["creatorId", "month"], where: { creatorId: { in: ids } }, _sum: { amountKobo: true } }),
+      this.db.royaltyReversal.groupBy({ by: ["creatorId", "month"], where: { creatorId: { in: ids } }, _sum: { amountKobo: true } }),
+      this.db.payout.findMany({ where: { creatorId: { in: ids } }, select: { creatorId: true, month: true, status: true } }),
+    ]);
+    for (const it of items) {
+      const earned = new Map<string, bigint>();
+      for (const r of [...accr, ...rev]) if (r.creatorId === it.id) earned.set(r.month, (earned.get(r.month) ?? 0n) + (r._sum.amountKobo ?? 0n));
+      const paid = new Map(pay.filter((p) => p.creatorId === it.id).map((p) => [p.month, p.status]));
+      const months = [...new Set([...earned.keys(), ...paid.keys()])].sort();
+      it.payoutMonths = months.map((month) => {
+        const e = earned.get(month) ?? 0n;
+        const status = paid.get(month) ?? null;
+        return { month, earnedKobo: Number(e), payoutStatus: status, due: month < thisMonth && e > 0n && (status === null || status === "failed") };
+      });
+    }
+  }
+
   async list(cursor: string | undefined, limit = DEFAULT_LIMIT): Promise<{ items: AdminCreator[]; nextCursor: string | null }> {
     let after: string | null = null;
     if (cursor) {
@@ -91,6 +116,7 @@ export class AdminCreatorsService {
         bank: r.bankCode && r.accountNumber ? { bankCode: r.bankCode, accountNumber: maskNumber(r.accountNumber) } : null,
       }),
     );
+    await this.addPayoutMonths(items, month);
     const last = page[page.length - 1];
     return { items, nextCursor: rows.length > limit && last ? encodeCursor({ key: 0, id: last.id }) : null };
   }

@@ -24,6 +24,9 @@ function sorted(v: unknown): unknown {
   if (v && typeof v === "object") return Object.fromEntries(Object.keys(v).sort().map((k) => [k, sorted((v as Row)[k])]));
   return v;
 }
+/** API-BASE-6 (case 7): an ending purpose is served with `slug` (the web app's own word, the seed's `name`) and the words a person reads as `name` and `line`; so only the word is compared with the seed. */
+const purposeWords = (items: Row[]): string[] => items.map((r) => String(r.slug)).sort();
+const seededWords = (table: string): string[] => (JSON.parse(readFileSync(join(ROOT, `prisma/seed-data/${table}.json`), "utf8")).rows as Row[]).map((r) => String(r.name)).sort();
 const served = (items: Row[], drop: string[] = []): string[] => items.map((r) => JSON.stringify(sorted(Object.fromEntries(Object.entries(r).filter(([k]) => !drop.includes(k)))))).sort();
 
 beforeAll(async () => {
@@ -51,10 +54,10 @@ describe("reference reads (E-28, E-51, E-74, E-81)", () => {
     expect(cs.body.nextCursor).toBeNull();
     expect(served(cs.body.items)).toEqual(seeded("ChapterSpec"));
     const ep = await t.http().get("/v1/ending-purposes").set(biz);
-    expect(served(ep.body.items, ["id"])).toEqual(seeded("EndingPurpose"));
+    expect(purposeWords(ep.body.items)).toEqual(seededWords("EndingPurpose")); // API-BASE-6: name and line are display words now
     expect((ep.body.items as Row[]).every((r) => typeof r.id === "string")).toBe(true);
     const od = await t.http().get("/v1/opening-defs").set(person);
-    expect(served(od.body.items, ["id"])).toEqual(seeded("OpeningDef"));
+    expect(served(od.body.items, ["id", "slug"])).toEqual(seeded("OpeningDef")); // API-BASE-6: opening defs also carry a slug
   });
 
   it("each of the four lists is served row for row and count for count as prisma/seed-data holds it (GD3, runs in CI)", async () => {
@@ -73,7 +76,9 @@ describe("reference reads (E-28, E-51, E-74, E-81)", () => {
       const items = await page(path);
       const want = seeded(table);
       expect(items.length).toBe(want.length);
-      expect(served(nonNull(items), drop)).toEqual(want);
+      // API-BASE-6: ending purposes are served as slug + display name + line; opening defs carry a slug
+      if (table === "EndingPurpose") expect(purposeWords(items)).toEqual(seededWords(table));
+      else expect(served(nonNull(items), table === "OpeningDef" ? [...drop, "slug"] : drop)).toEqual(want);
     }
   });
 
@@ -102,12 +107,12 @@ describe("reference reads (E-28, E-51, E-74, E-81)", () => {
     const purposes = [...block.matchAll(/\|\s*"([a-z-]+)"\s*(?:\/\/\s*(.*))?/g)].map((m) => ({ name: m[1], line: (m[2] || "").trim() }));
     const ep = (await t.http().get("/v1/ending-purposes").set(person)).body.items as Row[];
     expect(ep.length).toBe(purposes.length);
-    expect(got(ep)).toEqual(want(purposes as Row[]));
+    expect(purposeWords(ep)).toEqual(purposes.map((x) => x.name).sort()); // API-BASE-6: name and line are display words now
 
     const openings = (loadWeb("engine/registry.ts").OPENINGS as Row[]).map((o) => Object.fromEntries(["name", "line", "lock", "fields"].filter((k) => o[k] !== undefined).map((k) => [k, o[k]])));
     const od = (await t.http().get("/v1/opening-defs").set(person)).body.items as Row[];
     expect(od.length).toBe(openings.length);
-    expect(got(od)).toEqual(want(openings));
+    expect(got(od.map(({ slug: _s, ...r }) => r))).toEqual(want(openings)); // API-BASE-6: opening defs also carry a slug
 
     const manifests = (loadWeb("engine/moments.ts").momentManifests as () => Row[])();
     const all: Row[] = [];

@@ -50,11 +50,16 @@ describe("HS3 house wishes", () => {
     const r = await t.http().get("/v1/styles/noir");
     expect(r.status).toBe(200);
     expect(r.body.showcaseSlug).toBe("house-noir");
-    const list = await t.http().get("/v1/styles").query({ limit: 50 });
-    expect(list.status).toBe(200);
-    const withLink = (list.body.items as { slug: string; showcaseSlug: string | null }[]).filter((i) => i.slug && !i.slug.startsWith("t-"));
-    for (const i of withLink.filter((x) => x.showcaseSlug !== null)) expect(i.showcaseSlug).toBe(`house-${i.slug}`.slice(0, 32));
-    expect(withLink.some((i) => i.showcaseSlug === "house-noir")).toBe(true);
+    const items: { slug: string; showcaseSlug: string | null }[] = [];
+    let cursor: string | null = null;
+    do {
+      const page: { status: number; body: { items: typeof items; nextCursor: string | null } } = await t.http().get("/v1/styles").query(cursor ? { limit: 50, cursor } : { limit: 50 });
+      expect(page.status).toBe(200);
+      items.push(...page.body.items);
+      cursor = page.body.nextCursor;
+    } while (cursor);
+    for (const i of items.filter((x) => x.showcaseSlug !== null)) expect(i.showcaseSlug).toBe(`house-${i.slug}`.slice(0, 32));
+    expect(items.some((i) => i.showcaseSlug === "house-noir")).toBe(true);
     const w = await t.http().get("/v1/w/house-noir").set("x-forwarded-for", address);
     expect({ status: w.status, body: w.status === 200 ? null : w.body }).toEqual({ status: 200, body: null });
     expect(w.body).toMatchObject({ state: "open", styleSlug: "noir" });

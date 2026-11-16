@@ -17,7 +17,7 @@ describe("HS1 the gather link", () => {
     const me = await makeAccount(db, t);
     await db.account.update({ where: { id: me.id }, data: { name: "Ada Obi" } });
     const id = (await import("../stored-files/tests/files-kit")).ids.next();
-    await db.wish.create({ data: { id, accountId: me.id, status, ticket: "keepsake", kind: "birthday", occasion: "birthday", styleSlug: "classic", timeZone: "Africa/Lagos", name: "Chidi Eze", content: { letter: { paras: ["private words"] } }, ...(status !== "draft" ? { no: `FW-G${id.slice(-6)}`, sealedAt: new Date(), opensAt: new Date(Date.now() + 86400000) } : {}), ...over } as never });
+    await db.wish.create({ data: { id, accountId: me.id, status, ticket: "keepsake", kind: "birthday", occasion: "birthday", styleSlug: "classic", timeZone: "Africa/Lagos", name: "Chidi Eze", content: { letter: { paras: ["private words"] } }, ...(status !== "draft" ? { no: `FW-G${id.slice(-6)}`, sealedAt: new Date("2026-01-01T00:00:00.000Z"), opensAt: new Date("2099-01-01T00:00:00.000Z") } : {}), ...over } as never });
     const auth = { authorization: `Bearer ${me.token}` };
     const link = await t.http().get(`/v1/wishes/${id}/gather`).set(auth);
     expect(link.status).toBe(200);
@@ -107,14 +107,14 @@ describe("HS1 the gather link", () => {
     const w = await setup("sealed");
     expect((await friend(w.slug)).body.open).toBe(true);
     expect((await add(w.slug)).confirm.status).toBe(200);
-    await db.wish.update({ where: { id: w.id }, data: { status: "live", openedAt: new Date() } });
+    await db.wish.update({ where: { id: w.id }, data: { status: "live", openedAt: new Date("2026-02-01T00:00:00.000Z") } });
     const v = await friend(w.slug);
     expect(v.status).toBe(200);
     expect(v.body).toMatchObject({ open: false, reason: "This wish is no longer taking voices." });
     const r = await ask(w.slug);
     expect(r.status).toBe(409);
     expect(r.body.error.code).toBe("gather_closed");
-    await db.wish.update({ where: { id: w.id }, data: { status: "removed", removedAt: new Date() } });
+    await db.wish.update({ where: { id: w.id }, data: { status: "removed", removedAt: new Date("2026-02-02T00:00:00.000Z") } });
     expect((await friend(w.slug)).status).toBe(404);
   });
 

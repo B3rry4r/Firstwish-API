@@ -153,13 +153,21 @@ describe("B12 patch", () => {
       rows: [{ name: "Kemi", birthday: "1992-03-04" }, { name: "", birthday: "1992-03-04" }, { name: "No date" }, "x", { name: "Kemi", birthday: "1992-03-04" }],
     });
     expect(res.status).toBe(200);
+    // API-BASE-6 (HR5): each skipped row names its field, a person twice in the file says so, and `rows` answers every row sent
     expect(res.body).toEqual({
       added: 1,
       skipped: [
-        { row: 2, reason: "Needs a name." },
-        { row: 3, reason: "Needs a birthday or start date we can read." },
-        { row: 4, reason: "Not a person." },
-        { row: 5, reason: "Already on your list." },
+        { row: 2, reason: "Needs a name.", field: "name" },
+        { row: 3, reason: "Needs a birthday or start date we can read.", field: "birthday" },
+        { row: 4, reason: "Not a person.", field: "row" },
+        { row: 5, reason: "The same person is in this file twice.", field: "name" },
+      ],
+      rows: [
+        { row: 1, state: "accepted" },
+        { row: 2, state: "refused", field: "name", reason: "Needs a name." },
+        { row: 3, state: "refused", field: "birthday", reason: "Needs a birthday or start date we can read." },
+        { row: 4, state: "refused", field: "row", reason: "Not a person." },
+        { row: 5, state: "duplicate", field: "name", reason: "The same person is in this file twice." },
       ],
     });
   });

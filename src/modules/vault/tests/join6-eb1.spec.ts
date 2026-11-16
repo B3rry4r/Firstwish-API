@@ -66,8 +66,8 @@ describe("EB1 (wave 6 join): sending a reveal is limited to 5 emails a day to on
     // another business may write to the same address; the next day the count starts again
     const other = await business();
     expect((await send(other, await wishFor(other.businessId), address)).status).toBe(200);
-    // the next day: the day's emails are counted from the start of the database's UTC day, so yesterday's no longer count
-    await db.$executeRaw`UPDATE message_delivery SET "createdAt" = now() - interval '2 days' WHERE "idempotencyKey" LIKE 'reveal:%' AND "to" = ${address}`;
+    // the next day: the day's emails are counted from the start of the clock port's UTC day, so yesterday's no longer count
+    await db.$executeRaw`UPDATE message_delivery SET "createdAt" = ${new Date(t.clock.now().getTime() - 2 * 86_400_000)} WHERE "idempotencyKey" LIKE 'reveal:%' AND "to" = ${address}`;
     expect((await send(b, await wishFor(b.businessId), address)).status).toBe(200);
   });
 
@@ -86,7 +86,7 @@ describe("EB1 (wave 6 join): sending a reveal is limited to 5 emails a day to on
     const b = await business();
     const w = await wishFor(b.businessId);
     for (let i = 0; i < 98; i++) {
-      await db.messageDelivery.create({ data: { id: ids.next(), templateKey: "reveal", channel: "email", to: `old-${i}-${run}@example.com`, purpose: "opened", status: "sent", attempts: 1, idempotencyKey: `reveal:${w}:seed-${i}` } as never });
+      await db.messageDelivery.create({ data: { id: ids.next(), templateKey: "reveal", channel: "email", to: `old-${i}-${run}@example.com`, purpose: "opened", status: "sent", attempts: 1, idempotencyKey: `reveal:${w}:seed-${i}`, createdAt: t.clock.now() } as never });
     }
     expect((await todays(b.businessId))[0].n).toBe(98);
     const wishes = await Promise.all(Array.from({ length: 20 }, () => wishFor(b.businessId)));

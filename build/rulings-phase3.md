@@ -932,3 +932,24 @@ HG1 (give race) Two staff giving one Concierge order: the code is right (overlap
 - For the next API round: the price book serves the Concierge delivery hours (the code uses 3; the field says 0), the
   erase-now period and the photo limit, so the website's sentences read them; and reactions: the product says Keepsake
   and above, the API lets any ticket react: OWNER to say which.
+
+## HW (16 Nov 2026, the lead: the seventh API round). Default (lead), owner may override.
+- HW1 (R11): every settled payment sends one receipt by email: to the account's email, or to the payer's email kept on
+  the payment when a link holder paid (HU1). It says what was paid for, the amount, the VAT part where the invoice
+  has one, and the reference. One per payment (a replayed webhook sends none); a refund sends its own notice. The
+  templates are listed where staff Messages lists the others.
+- HW2 (Studio files): a creator's style may hold pictures, a poster, sound and a 3D model, and a creator a profile
+  picture, each through the same signed put, confirm and screening as any file, with a draft's style id accepted.
+  Limits until the owner says: a picture and a poster as a wish photo; sound 10 MB; a model 15 MB (PROVISIONAL, in
+  the price book's limits, changeable in staff Prices). The style's owner reads its files by signed read; so does
+  anyone playing a wish in that style once the style is approved. Nothing else of a draft is readable by others.
+- HW3 (Signed and the Creator plan): a creator can turn Signed off and move from Creator to Open. Neither refunds:
+  what is paid runs to its paid day and is not renewed; the read says until which day. Turning it back on before
+  that day costs nothing more for that period.
+- HW4 (R14): the payout threshold and the payout day are price-book values served by the price-book read with their
+  provisional mark; no screen types them.
+- HW5: a confirmed upload attached to nothing (no wish, brand, shoot, style or profile) is removed after 7 days.
+- HW6: the price book is the one source for the Concierge delivery hours (3), the erase-now period and the photo
+  limits; the code reads the book (a field that says 0 while the code uses 3 is a defect).
+- HW7: the staff session read says, per section, which actions this role may do; staff reads are typed in the
+  contract (no loose object where a screen draws fields).

@@ -9,3 +9,11 @@
   screen shows no words. The server answers a refresh with no cookie and a refresh of an ended session with the same 401
   words, so the page cannot tell a new visitor from an ended session. Cure with an API base: a refresh with no cookie
   answers a distinct error code (no words shown for it); then the page shows the server's words for every other refusal.
+- W3 (merged 16 Nov): after a reload a heart or a save shows as not set (the server's feed row has no "mine": HP9,
+  API-BASE-4); the payments module never writes a `reason`, so a failed payment shows the app's own words; wish cards
+  show the mark until the owner's read gives photo urls (HP3); UA-758 (the style page's sample Preview) and three
+  not-measured ids (UA-544, 545, 763) stay open; the 10 named casts in lib/person.ts go when API-BASE-4 fixes the contract.
+- The live driver: scripts/live/flows/w11.mjs:69 deletes payments while purchase grants exist (FK error) once another
+  flow has made payments; W11's "numbers empty" check fails when it does not run first. The driver's flows must each
+  own their data (WEB-SHARED-1).
+- W4: one uncaught "Event" console line at the wedding-day step, seen 3 times by different agents (W5 finds the cause).

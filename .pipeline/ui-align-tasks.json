@@ -90,7 +90,8 @@
         "lib/catalog.ts"
       ],
       "change": "integer kobo, currency NGN, over the wire and in storage; prices only from the price book",
-      "status": "open"
+      "status": "done",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-9",
@@ -101,7 +102,8 @@
         "lib/catalog.ts"
       ],
       "change": "integer kobo, currency NGN, over the wire and in storage; prices only from the price book",
-      "status": "open"
+      "status": "done",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-10",
@@ -112,7 +114,8 @@
         "lib/catalog.ts"
       ],
       "change": "integer kobo, currency NGN, over the wire and in storage; prices only from the price book",
-      "status": "open"
+      "status": "done",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-11",
@@ -123,7 +126,8 @@
         "lib/pro-data.ts"
       ],
       "change": "integer kobo, currency NGN, over the wire and in storage; prices only from the price book",
-      "status": "open"
+      "status": "not-applicable",
+      "resolution": "W3 verify, 16 Nov: no longer applies"
     },
     {
       "id": "UA-12",
@@ -756,7 +760,8 @@
         "lib/account.ts"
       ],
       "change": "server-issued UUIDv7 ids",
-      "status": "open"
+      "status": "done",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-67",
@@ -767,7 +772,8 @@
         "lib/account.ts"
       ],
       "change": "server-issued UUIDv7 ids",
-      "status": "open"
+      "status": "done",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-68",
@@ -778,7 +784,8 @@
         "lib/account.ts"
       ],
       "change": "server-issued UUIDv7 ids",
-      "status": "open"
+      "status": "done",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-69",
@@ -789,7 +796,8 @@
         "lib/account.ts"
       ],
       "change": "server-issued UUIDv7 ids",
-      "status": "open"
+      "status": "done",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-70",
@@ -800,7 +808,8 @@
         "lib/account.ts"
       ],
       "change": "server-issued UUIDv7 ids",
-      "status": "open"
+      "status": "done",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-71",
@@ -812,7 +821,8 @@
         "lib/pro-data.ts"
       ],
       "change": "server-issued UUIDv7 ids",
-      "status": "open"
+      "status": "done",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-72",
@@ -1565,7 +1575,8 @@
         "components/app/life/sheets.tsx"
       ],
       "change": "public link /w/<readable>-<4 random> resolved by the server (wish-link)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-140",
@@ -1576,7 +1587,8 @@
         "components/app/life/sheets.tsx"
       ],
       "change": "public link /w/<readable>-<4 random> resolved by the server (wish-link)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-141",
@@ -1633,7 +1645,8 @@
         "components/app/Pay.tsx"
       ],
       "change": "Paystack start, verify and signed webhook (payments)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-146",
@@ -1644,7 +1657,8 @@
         "components/app/Pay.tsx"
       ],
       "change": "Paystack start, verify and signed webhook (payments)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-147",
@@ -1996,7 +2010,8 @@
         "lib/pro-data.ts"
       ],
       "change": "the server (business, members, client wishes, people, invoices)",
-      "status": "open"
+      "status": "not-applicable",
+      "resolution": "W3 verify, 16 Nov: no longer applies"
     },
     {
       "id": "UA-179",
@@ -2193,7 +2208,8 @@
         "lib/feed-api.ts"
       ],
       "change": "the server (Vault shoots and files, reactions/saves/follows, Studio plan/credits/reviews/drafts/submissions, Pass period)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-196",
@@ -2204,7 +2220,8 @@
         "app/app/pass/page.tsx"
       ],
       "change": "the server (Vault shoots and files, reactions/saves/follows, Studio plan/credits/reviews/drafts/submissions, Pass period)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-197",
@@ -2215,7 +2232,8 @@
         "lib/feed-api.ts"
       ],
       "change": "the server (Vault shoots and files, reactions/saves/follows, Studio plan/credits/reviews/drafts/submissions, Pass period)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-198",
@@ -2226,7 +2244,8 @@
         "lib/feed-api.ts"
       ],
       "change": "the server (Vault shoots and files, reactions/saves/follows, Studio plan/credits/reviews/drafts/submissions, Pass period)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-199",
@@ -2876,7 +2895,8 @@
         "lib/account.ts"
       ],
       "change": "the web reads GET /v1/prices; the server charges only from the price book",
-      "status": "open"
+      "status": "done",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-257",
@@ -2888,7 +2908,8 @@
         "lib/catalog.ts"
       ],
       "change": "the web reads GET /v1/prices; the server charges only from the price book",
-      "status": "open"
+      "status": "done",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-258",
@@ -2900,7 +2921,8 @@
         "lib/catalog.ts"
       ],
       "change": "the web reads GET /v1/prices; the server charges only from the price book",
-      "status": "open"
+      "status": "done",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-259",
@@ -2912,7 +2934,8 @@
         "lib/catalog.ts"
       ],
       "change": "the web reads GET /v1/prices; the server charges only from the price book",
-      "status": "open"
+      "status": "done",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-260",
@@ -2923,7 +2946,8 @@
         "lib/account.ts"
       ],
       "change": "the web reads GET /v1/prices; the server charges only from the price book",
-      "status": "open"
+      "status": "done",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-261",
@@ -2935,7 +2959,8 @@
         "lib/pro-data.ts"
       ],
       "change": "the web reads GET /v1/prices; the server charges only from the price book",
-      "status": "open"
+      "status": "done",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-262",
@@ -3620,7 +3645,8 @@
         "components/app/life/wish.ts"
       ],
       "change": "the price book's promotion with endsAt 2027-02-01 00:00 Africa/Lagos, checked by the server on every quote",
-      "status": "open"
+      "status": "done",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-321",
@@ -3631,7 +3657,8 @@
         "components/app/life/wish.ts"
       ],
       "change": "the price book's promotion with endsAt 2027-02-01 00:00 Africa/Lagos, checked by the server on every quote",
-      "status": "open"
+      "status": "done",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-322",
@@ -3928,7 +3955,8 @@
         "app/app/you/page.tsx"
       ],
       "change": "removed from production; house showcase wishes served by the server (feed, Now Showing)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-349",
@@ -4094,7 +4122,8 @@
         "app/app/wishes/[id]/page.tsx"
       ],
       "change": "render job and delivery by message (video-render)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-364",
@@ -4127,7 +4156,8 @@
         "lib/levels.ts"
       ],
       "change": "GET /v1/styles/levels served by the server, moved by staff (style-levels)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-367",
@@ -4138,7 +4168,8 @@
         "lib/levels.ts"
       ],
       "change": "GET /v1/styles/levels served by the server, moved by staff (style-levels)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-368",
@@ -4149,7 +4180,8 @@
         "lib/levels.ts"
       ],
       "change": "GET /v1/styles/levels served by the server, moved by staff (style-levels)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-369",
@@ -4237,7 +4269,8 @@
         "lib/account.ts"
       ],
       "change": "every epoch-ms `at` becomes createdAt/updatedAt ISO-8601 UTC strings set by the server; calendar dates are YYYY-MM-DD strings (date-only canon)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-377",
@@ -4248,7 +4281,8 @@
         "lib/account.ts"
       ],
       "change": "every epoch-ms `at` becomes createdAt/updatedAt ISO-8601 UTC strings set by the server; calendar dates are YYYY-MM-DD strings (date-only canon)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-378",
@@ -4259,7 +4293,8 @@
         "lib/account.ts"
       ],
       "change": "every epoch-ms `at` becomes createdAt/updatedAt ISO-8601 UTC strings set by the server; calendar dates are YYYY-MM-DD strings (date-only canon)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-379",
@@ -4270,7 +4305,8 @@
         "lib/account.ts"
       ],
       "change": "every epoch-ms `at` becomes createdAt/updatedAt ISO-8601 UTC strings set by the server; calendar dates are YYYY-MM-DD strings (date-only canon)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-380",
@@ -4281,7 +4317,8 @@
         "lib/account.ts"
       ],
       "change": "every epoch-ms `at` becomes createdAt/updatedAt ISO-8601 UTC strings set by the server; calendar dates are YYYY-MM-DD strings (date-only canon)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-381",
@@ -4293,7 +4330,8 @@
         "lib/pro-data.ts"
       ],
       "change": "every epoch-ms `at` becomes createdAt/updatedAt ISO-8601 UTC strings set by the server; calendar dates are YYYY-MM-DD strings (date-only canon)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-382",
@@ -5069,7 +5107,8 @@
         "components/app/Pay.tsx"
       ],
       "change": "the client never sends an amount; Payment.amountKobo is set by the server from the price book",
-      "status": "open"
+      "status": "done",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-452",
@@ -5081,7 +5120,8 @@
         "components/app/Pay.tsx"
       ],
       "change": "the client never sends an amount; Payment.amountKobo is set by the server from the price book",
-      "status": "open"
+      "status": "done",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-453",
@@ -5182,7 +5222,8 @@
         "lib/account.ts"
       ],
       "change": "every read or write of localStorage/sessionStorage/IndexedDB is replaced by its endpoint; the session is an httpOnly refresh cookie plus an in-memory access token; mode (light/dark) is a field on the account; choices before sign-in travel in the link; the build fails on the words localStorage, sessionStorage, IndexedDB in app/, components/, lib/",
-      "status": "open"
+      "status": "done",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-462",
@@ -5194,7 +5235,8 @@
         "lib/feed-api.ts"
       ],
       "change": "every read or write of localStorage/sessionStorage/IndexedDB is replaced by its endpoint; the session is an httpOnly refresh cookie plus an in-memory access token; mode (light/dark) is a field on the account; choices before sign-in travel in the link; the build fails on the words localStorage, sessionStorage, IndexedDB in app/, components/, lib/",
-      "status": "open"
+      "status": "done",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-463",
@@ -5206,7 +5248,8 @@
         "lib/account.ts"
       ],
       "change": "every read or write of localStorage/sessionStorage/IndexedDB is replaced by its endpoint; the session is an httpOnly refresh cookie plus an in-memory access token; mode (light/dark) is a field on the account; choices before sign-in travel in the link; the build fails on the words localStorage, sessionStorage, IndexedDB in app/, components/, lib/",
-      "status": "open"
+      "status": "done",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-464",
@@ -5217,7 +5260,8 @@
         "lib/feed-api.ts"
       ],
       "change": "every read or write of localStorage/sessionStorage/IndexedDB is replaced by its endpoint; the session is an httpOnly refresh cookie plus an in-memory access token; mode (light/dark) is a field on the account; choices before sign-in travel in the link; the build fails on the words localStorage, sessionStorage, IndexedDB in app/, components/, lib/",
-      "status": "open"
+      "status": "done",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-465",
@@ -5228,7 +5272,8 @@
         "lib/feed-api.ts"
       ],
       "change": "every read or write of localStorage/sessionStorage/IndexedDB is replaced by its endpoint; the session is an httpOnly refresh cookie plus an in-memory access token; mode (light/dark) is a field on the account; choices before sign-in travel in the link; the build fails on the words localStorage, sessionStorage, IndexedDB in app/, components/, lib/",
-      "status": "open"
+      "status": "done",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-466",
@@ -5239,7 +5284,8 @@
         "lib/account.ts"
       ],
       "change": "every read or write of localStorage/sessionStorage/IndexedDB is replaced by its endpoint; the session is an httpOnly refresh cookie plus an in-memory access token; mode (light/dark) is a field on the account; choices before sign-in travel in the link; the build fails on the words localStorage, sessionStorage, IndexedDB in app/, components/, lib/",
-      "status": "open"
+      "status": "done",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-467",
@@ -5250,7 +5296,8 @@
         "lib/account.ts"
       ],
       "change": "every read or write of localStorage/sessionStorage/IndexedDB is replaced by its endpoint; the session is an httpOnly refresh cookie plus an in-memory access token; mode (light/dark) is a field on the account; choices before sign-in travel in the link; the build fails on the words localStorage, sessionStorage, IndexedDB in app/, components/, lib/",
-      "status": "open"
+      "status": "done",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-468",
@@ -5262,7 +5309,8 @@
         "lib/pro-data.ts"
       ],
       "change": "every read or write of localStorage/sessionStorage/IndexedDB is replaced by its endpoint; the session is an httpOnly refresh cookie plus an in-memory access token; mode (light/dark) is a field on the account; choices before sign-in travel in the link; the build fails on the words localStorage, sessionStorage, IndexedDB in app/, components/, lib/",
-      "status": "open"
+      "status": "done",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-469",
@@ -6106,7 +6154,8 @@
       ],
       "change": "implement the designed loading state",
       "enterCondition": "a request for this surface is in flight (conventions Runtime contract)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-536",
@@ -6119,7 +6168,8 @@
       ],
       "change": "implement the designed error state",
       "enterCondition": "the request fails; show retry",
-      "status": "open"
+      "status": "done",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-537",
@@ -6133,7 +6183,8 @@
       ],
       "change": "make the coded state reachable: empty (for-you / styles)",
       "enterCondition": "none: no empty card; list simply ends with EndCard",
-      "status": "open"
+      "status": "done",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-538",
@@ -6146,7 +6197,8 @@
       ],
       "change": "implement the designed loading state",
       "enterCondition": "a request for this surface is in flight (conventions Runtime contract)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-539",
@@ -6159,7 +6211,8 @@
       ],
       "change": "implement the designed error state",
       "enterCondition": "the request fails; show retry",
-      "status": "open"
+      "status": "done",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-540",
@@ -6173,7 +6226,8 @@
       ],
       "change": "implement the designed error state",
       "enterCondition": "the request fails; show retry",
-      "status": "open"
+      "status": "done",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-541",
@@ -6187,7 +6241,8 @@
       ],
       "change": "implement the designed loading state",
       "enterCondition": "a request for this surface is in flight (conventions Runtime contract)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-542",
@@ -6201,7 +6256,8 @@
       ],
       "change": "implement the designed error state",
       "enterCondition": "the request fails; show retry",
-      "status": "open"
+      "status": "done",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-543",
@@ -6215,7 +6271,8 @@
       ],
       "change": "implement the designed error state",
       "enterCondition": "the request fails; show retry",
-      "status": "open"
+      "status": "done",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-544",
@@ -8573,7 +8630,8 @@
         "components/app/Pay.tsx:18"
       ],
       "change": "replace: Paystack payment (start, verify, webhook) for tickets, extras, keeps, the Pass, Pro plans and wish packs, Studio plan/credits/extra reviews",
-      "status": "open"
+      "status": "done",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-714",
@@ -8837,7 +8895,8 @@
         "app/app/dates/page.tsx:57"
       ],
       "change": "replace: date reminder jobs",
-      "status": "open"
+      "status": "done",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-738",
@@ -8848,7 +8907,8 @@
         "lib/account.ts:6"
       ],
       "change": "replace: persistence of dates",
-      "status": "open"
+      "status": "done",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-739",
@@ -8859,7 +8919,8 @@
         "components/app/life/DateForm.tsx:111"
       ],
       "change": "replace: server-issued id",
-      "status": "open"
+      "status": "done",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-740",
@@ -8870,7 +8931,8 @@
         "lib/feed-api.ts:3-12 and 136-146"
       ],
       "change": "replace: the server for reactions, saves, follows",
-      "status": "open"
+      "status": "done",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-741",
@@ -8881,7 +8943,8 @@
         "lib/feed-api.ts:185-189"
       ],
       "change": "replace: server-side counts",
-      "status": "open"
+      "status": "done",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-742",
@@ -8892,7 +8955,8 @@
         "lib/feed-fixtures.ts:10-29 and lib/vault-fixtures samplesOn()"
       ],
       "change": "replace: other creators and their public wishes",
-      "status": "open"
+      "status": "done",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-743",
@@ -8903,7 +8967,8 @@
         "lib/feed-api.ts:262ff newStyles()"
       ],
       "change": "replace: style publication dates",
-      "status": "open"
+      "status": "done",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-744",
@@ -8914,7 +8979,8 @@
         "lib/feed-api.ts:101-104 listCreators()"
       ],
       "change": "replace: real follower/wish/style counts",
-      "status": "open"
+      "status": "done",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-745",
@@ -8925,7 +8991,8 @@
         "components/app/feed/Feed.tsx:103"
       ],
       "change": "replace: promo scheduling",
-      "status": "open"
+      "status": "not-applicable",
+      "resolution": "W3 verify, 16 Nov: no longer applies"
     },
     {
       "id": "UA-746",
@@ -8936,7 +9003,8 @@
         "components/app/feed/Cards.tsx:152-160"
       ],
       "change": "replace: offer window and prices from configuration",
-      "status": "open"
+      "status": "done",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-747",
@@ -8947,7 +9015,8 @@
         "components/app/feed/Cards.tsx PromoCard pass/concierge"
       ],
       "change": "replace: prices from configuration",
-      "status": "open"
+      "status": "done",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-748",
@@ -8958,7 +9027,8 @@
         "lib/feed-api.ts:163 share()"
       ],
       "change": "replace: server-recorded share and short link",
-      "status": "open"
+      "status": "done",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-749",
@@ -8969,7 +9039,8 @@
         "lib/account.ts:1-8,56-63"
       ],
       "change": "replace: account, sides, wishes, dates store",
-      "status": "open"
+      "status": "done",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-750",
@@ -8980,7 +9051,8 @@
         "components/app/feed/spaces.ts:~85 TAKEN set"
       ],
       "change": "replace: handle availability",
-      "status": "open"
+      "status": "not-applicable",
+      "resolution": "W3 verify, 16 Nov: no longer applies"
     },
     {
       "id": "UA-751",
@@ -8991,7 +9063,8 @@
         "components/app/Switcher.tsx signOut"
       ],
       "change": "replace: session sign-out",
-      "status": "open"
+      "status": "done",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-752",
@@ -9002,7 +9075,8 @@
         "lib/levels.ts:~46"
       ],
       "change": "replace: admin-set style levels",
-      "status": "open"
+      "status": "done",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-753",
@@ -9013,7 +9087,8 @@
         "components/app/Pay.tsx:258"
       ],
       "change": "replace: Paystack charge and webhook",
-      "status": "open"
+      "status": "done",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-754",
@@ -9024,7 +9099,8 @@
         "app/app/pass/page.tsx:351-352"
       ],
       "change": "replace: real usage counters for Keepsake wishes and Signature upgrades",
-      "status": "open"
+      "status": "done",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-755",
@@ -9035,7 +9111,8 @@
         "app/app/pass/page.tsx:302,315,323"
       ],
       "change": "replace: Pass purchase date from server",
-      "status": "open"
+      "status": "done",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-756",
@@ -9046,7 +9123,8 @@
         "app/app/pass/page.tsx:319"
       ],
       "change": "replace: server-held expiry",
-      "status": "open"
+      "status": "done",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-757",
@@ -9057,7 +9135,8 @@
         "lib/catalog.ts:419-431"
       ],
       "change": "replace: price configuration",
-      "status": "open"
+      "status": "done",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-758",
@@ -9079,7 +9158,8 @@
         "app/app/styles/[slug]/page.tsx:7-10"
       ],
       "change": "replace: server style catalogue",
-      "status": "open"
+      "status": "done",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-760",
@@ -9090,7 +9170,8 @@
         "lib/feed-api.ts:215"
       ],
       "change": "replace: server catalogue",
-      "status": "open"
+      "status": "done",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-761",
@@ -9101,7 +9182,8 @@
         "lib/feed-api.ts:215-217 listNewStyles()"
       ],
       "change": "replace: server style catalogue",
-      "status": "open"
+      "status": "done",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-762",
@@ -9112,7 +9194,8 @@
         "lib/feed-api.ts:262"
       ],
       "change": "replace: style dates",
-      "status": "open"
+      "status": "done",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-763",
@@ -9134,7 +9217,8 @@
         "lib/levels.ts:46-49"
       ],
       "change": "replace: admin levels",
-      "status": "open"
+      "status": "done",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-765",
@@ -9145,7 +9229,8 @@
         "components/app/feed/Gallery.tsx useLevels/listNewStyles"
       ],
       "change": "replace: error path",
-      "status": "open"
+      "status": "done",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-766",
@@ -9156,7 +9241,8 @@
         "app/app/wishes/[id]/page.tsx:92-93"
       ],
       "change": "replace: video render order and file delivery",
-      "status": "open"
+      "status": "done",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-767",
@@ -9167,7 +9253,8 @@
         "lib/account.ts:6"
       ],
       "change": "replace: all wish storage and lifecycle",
-      "status": "open"
+      "status": "done",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-768",
@@ -9178,7 +9265,8 @@
         "components/app/life/sheets.tsx:16,25"
       ],
       "change": "replace: server-issued public wish link slug",
-      "status": "open"
+      "status": "done",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-769",
@@ -9189,7 +9277,8 @@
         "components/app/life/wish.ts:83-84,226-227"
       ],
       "change": "replace: promo configuration with an end date",
-      "status": "open"
+      "status": "done",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-770",
@@ -9200,7 +9289,8 @@
         "lib/account.ts:109-113"
       ],
       "change": "replace: price configuration table",
-      "status": "open"
+      "status": "done",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-771",
@@ -9211,7 +9301,8 @@
         "components/app/life/sheets.tsx:125"
       ],
       "change": "replace: receiver consent step for publishing",
-      "status": "open"
+      "status": "done",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-772",
@@ -9222,7 +9313,8 @@
         "lib/account.ts:133-145"
       ],
       "change": "replace: real wishes",
-      "status": "open"
+      "status": "done",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-773",
@@ -9233,7 +9325,8 @@
         "lib/account.ts:6-8,56-63"
       ],
       "change": "replace: the account's wishes store",
-      "status": "open"
+      "status": "done",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-774",
@@ -9244,7 +9337,8 @@
         "components/app/life/wish.ts:~83-97"
       ],
       "change": "replace: prices and offer from configuration",
-      "status": "open"
+      "status": "done",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-775",
@@ -9255,7 +9349,8 @@
         "lib/account.ts:~84-90"
       ],
       "change": "replace: pricing/term configuration",
-      "status": "open"
+      "status": "done",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-776",
@@ -9266,7 +9361,8 @@
         "lib/account.ts sampleWishes()"
       ],
       "change": "replace: seed demo data into the same read path",
-      "status": "open"
+      "status": "done",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-777",
@@ -9277,7 +9373,8 @@
         "components/app/life/wish.ts:~64-70 stands()/ready()"
       ],
       "change": "replace: server-decided opening state",
-      "status": "open"
+      "status": "done",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-778",
@@ -9288,7 +9385,8 @@
         "app/app/wishes/page.tsx restore()"
       ],
       "change": "replace: server restore",
-      "status": "open"
+      "status": "done",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-779",
@@ -9299,7 +9397,8 @@
         "app/app/you/page.tsx:176-181"
       ],
       "change": "replace: seed switch ('For review.')",
-      "status": "open"
+      "status": "done",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-780",
@@ -9310,7 +9409,8 @@
         "app/app/you/page.tsx:182"
       ],
       "change": "replace: server sign-out and token revoke",
-      "status": "open"
+      "status": "done",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-781",
@@ -9321,7 +9421,8 @@
         "app/app/you/page.tsx:199"
       ],
       "change": "replace: typed contact fields",
-      "status": "open"
+      "status": "done",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-782",
@@ -11115,8 +11216,9 @@
         "lib/occasions.ts"
       ],
       "change": "the server populates what this screen reads (feed-api listFeed/listCreators/getWish: house content from lib/catalog + lib/engine/packages (static), the viewer's own ); triggers: on page load, after sign-in, when the tab becomes visible again, and after any write. A manual button is not a trigger.",
-      "status": "open",
-      "provenance": "mixed"
+      "status": "done",
+      "provenance": "mixed",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-943",
@@ -11127,8 +11229,9 @@
         "lib/account.ts"
       ],
       "change": "the server populates what this screen reads (localStorage 'fw-account' (whole Account blob: profile, sides, pass flag, dates[], wishes[]) via useAccount()/readAccoun); triggers: on page load, after sign-in, when the tab becomes visible again, and after any write. A manual button is not a trigger.",
-      "status": "open",
-      "provenance": "repository-local-store"
+      "status": "done",
+      "provenance": "repository-local-store",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-944",
@@ -11140,8 +11243,9 @@
         "lib/catalog.ts"
       ],
       "change": "the server populates what this screen reads (localStorage 'fw-account' (whole Account blob: profile, sides, pass flag, dates[], wishes[]) via useAccount()/readAccoun); triggers: on page load, after sign-in, when the tab becomes visible again, and after any write. A manual button is not a trigger.",
-      "status": "open",
-      "provenance": "mixed"
+      "status": "done",
+      "provenance": "mixed",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-945",
@@ -11152,8 +11256,9 @@
         "lib/account.ts"
       ],
       "change": "the server populates what this screen reads (Account.dates[] in 'fw-account'); triggers: on page load, after sign-in, when the tab becomes visible again, and after any write. A manual button is not a trigger.",
-      "status": "open",
-      "provenance": "repository-local-store"
+      "status": "done",
+      "provenance": "repository-local-store",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-946",
@@ -11165,8 +11270,9 @@
         "lib/pro-data.ts"
       ],
       "change": "the server populates what this screen reads (Account in 'fw-account'; writes 'fw-mode' (theme)); triggers: on page load, after sign-in, when the tab becomes visible again, and after any write. A manual button is not a trigger.",
-      "status": "open",
-      "provenance": "repository-local-store"
+      "status": "done",
+      "provenance": "repository-local-store",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-947",
@@ -11178,8 +11284,9 @@
         "lib/catalog.ts"
       ],
       "change": "the server populates what this screen reads (Account.pass in 'fw-account' plus localStorage 'fw-pass-at' (purchase date)); triggers: on page load, after sign-in, when the tab becomes visible again, and after any write. A manual button is not a trigger.",
-      "status": "open",
-      "provenance": "mixed"
+      "status": "done",
+      "provenance": "mixed",
+      "resolution": "W3 (web w3-app c2ca75a), verified 16 Nov"
     },
     {
       "id": "UA-948",

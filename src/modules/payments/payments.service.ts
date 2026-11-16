@@ -21,6 +21,8 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /** The payer's own view of a payment: no idempotency key, no staff flags, no provider detail. */
 export interface PaymentView {
+  /** API-BASE-6: why the payment failed, in words the payer can read ("" unless it failed) */
+  reason: string;
   id: string;
   reference: string;
   state: PaymentStart["state"];
@@ -150,7 +152,9 @@ export class PaymentsService {
       });
       authorizationUrl = started.authorizationUrl;
     } catch {
-      await this.db.payment.updateMany({ where: { id: created.row.id, status: "pending" }, data: { status: "failed", updatedAt: this.clock.now() } });
+      const o = readOptions(created.row.options);
+      o.server.reason = "We could not reach the payment provider, so nothing was charged. Try again in a moment.";
+      await this.db.payment.updateMany({ where: { id: created.row.id, status: "pending" }, data: { status: "failed", updatedAt: this.clock.now(), options: writeOptions(o) } });
       throw new AppError(502, "payment_provider_unavailable", "We could not reach the payment provider. Try again.");
     }
     const opts = readOptions(created.row.options);
@@ -260,6 +264,7 @@ export class PaymentsService {
       updatedAt: p.updatedAt.toISOString(),
       verifiedAt: p.verifiedAt ? p.verifiedAt.toISOString() : null,
       fulfilled: p.fulfilledAt !== null,
+      reason: p.status === "failed" ? (opts.server.reason ?? "The payment did not go through.") : "",
     };
   }
 }

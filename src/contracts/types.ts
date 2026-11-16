@@ -193,11 +193,23 @@ export interface WishSaved {
 export interface PeopleImportSkipped {
   row: number;
   reason: string;
+  /** the field that was refused (API-BASE-6) */
+  field?: string;
 }
 /** E-121 (BB8, DEC-169): how many people were added and which rows were skipped. */
 export interface PeopleImportResult {
   added: number;
   skipped: PeopleImportSkipped[];
+  /** HR5: one entry for every row sent, in order: accepted, or refused with the field and the words; a person twice is a duplicate */
+  rows: PeopleImportRow[];
+}
+/** HR5: what became of one row of an import. */
+export interface PeopleImportRow {
+  row: number;
+  state: "accepted" | "refused" | "duplicate";
+  /** the field that was refused: name, birthday, start, phone or row */
+  field?: string;
+  reason?: string;
 }
 /** E-19: the registry names the response SignInCode and gives no fields. */
 export type SignInCode = Record<string, unknown>;
@@ -398,6 +410,8 @@ export interface ClientWish {
   occasion: string;
   openedAt?: Instant | null;
   reveal?: Record<string, unknown> | null;
+  /** HR4: the day (date only) the wish a removed draft took goes back to the business's pack: the day its restore window ends; absent unless the draft is removed and waiting */
+  returnsToPackOn?: DateOnly | null;
   sample?: boolean | null;
   sentAt: Instant;
   set: "proofs" | "finals";
@@ -534,8 +548,12 @@ export interface EarningsSummary {
 /** EndingPurpose: config. the ending catalogue served by GET /v1/ending-purposes; staff keep it */
 export interface EndingPurpose {
   id: string;
+  /** the line a person reads under the name */
   line: string;
+  /** the name a person reads (API-BASE-6) */
   name: string;
+  /** the purpose's own word: wish, question, reveal, date, credits or close (API-BASE-6) */
+  slug: string;
 }
 
 /** Entitlements: config. price-book declaration: what each ticket, plan and pass includes; changed by staff as part of a price-book version */
@@ -801,6 +819,8 @@ export interface NumbersTarget {
 export interface OpeningDef {
   fields: Record<string, unknown>;
   id: string;
+  /** the id the maker and a wish's opening use: sealed, countdown, passcode, question, presents or open (API-BASE-6) */
+  slug: string;
   line: string;
   lock: string;
   name: string;

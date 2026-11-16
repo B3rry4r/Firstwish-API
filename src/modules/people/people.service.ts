@@ -26,7 +26,9 @@ interface PersonInput {
 /** E-121's answer. */
 export interface ImportAnswer {
   added: number;
-  skipped: { row: number; reason: string }[];
+  skipped: { row: number; reason: string; field?: string }[];
+  /** HR5: one entry for every row sent, in order: accepted, or refused with the field and the words (a person twice is reported as a duplicate) */
+  rows: { row: number; state: "accepted" | "refused" | "duplicate"; field?: string; reason?: string }[];
 }
 
 const asDate = (d: string | null): Date | null => (d ? new Date(`${d}T00:00:00.000Z`) : null);
@@ -110,21 +112,24 @@ export class PeopleService {
     if (!Array.isArray(raw)) throw AppError.validation({ rows: "Must be a list of people." });
     if (raw.length > IMPORT_MAX) throw AppError.validation({ rows: `Send at most ${IMPORT_MAX} people at once.` });
     const skipped: ImportAnswer["skipped"] = [];
+    const duplicates = new Set<number>();
     const inputs: { row: number; input: PersonInput }[] = [];
     raw.forEach((item, i) => {
       const row = i + 1;
-      if (!item || typeof item !== "object") return void skipped.push({ row, reason: "Not a person." });
+      if (!item || typeof item !== "object") return void skipped.push({ row, reason: "Not a person.", field: "row" });
       const r = item as Record<string, unknown>;
       const text = (k: string) => (typeof r[k] === "string" ? r[k].trim().slice(0, PERSON_TEXT_MAX) : "");
       const name = text("name");
       const birthday = normaliseDateOnly(text("birthday"));
       const start = normaliseDateOnly(text("start"));
-      if (!name) return void skipped.push({ row, reason: "Needs a name." });
-      if (!birthday && !start) return void skipped.push({ row, reason: "Needs a birthday or start date we can read." });
+      if (!name) return void skipped.push({ row, reason: "Needs a name.", field: "name" });
+      if (!birthday && !start) return void skipped.push({ row, reason: "Needs a birthday or start date we can read.", field: text("birthday") || !text("start") ? "birthday" : "start" });
+      // HR5: a phone that is not one is refused, not stored blank
       const phone = text("phone") ? normalisePhone(text("phone")) : null;
+      if (text("phone") && !phone) return void skipped.push({ row, reason: "That is not a phone number we can use. Write it with its country code, or leave it empty.", field: "phone" });
       inputs.push({ row, input: { name, phone, team: text("team") || null, birthday, start } });
     });
-    if (!inputs.length) return { added: 0, skipped };
+    if (!inputs.length) return { added: 0, skipped, rows: this.rowsOf(raw.length, skipped, duplicates) };
     const added = await this.prisma.$transaction(async (tx) => {
       await lockBusinessOwner(tx, businessId);
       await this.lock(tx, businessId);
@@ -134,7 +139,8 @@ export class PeopleService {
       const fresh = inputs.filter(({ row, input: i }) => {
         const k = sig(i.name, i.birthday, i.start);
         if (seen.has(k)) {
-          skipped.push({ row, reason: "Already on your list." });
+          duplicates.add(row);
+          skipped.push({ row, reason: have.some((h) => sig(h.name ?? "", h.birthday ? dateOnlyOf(h.birthday) : null, h.start ? dateOnlyOf(h.start) : null) === k) ? "Already on your list." : "The same person is in this file twice.", field: "name" });
           return false;
         }
         seen.add(k);
@@ -146,7 +152,18 @@ export class PeopleService {
       return made.count;
     });
     skipped.sort((a, b) => a.row - b.row);
-    return { added, skipped };
+    return { added, skipped, rows: this.rowsOf(raw.length, skipped, duplicates) };
+  }
+
+  /** HR5: the per-row answer: every row sent is accepted, refused (with its field and words) or a duplicate. */
+  private rowsOf(count: number, skipped: ImportAnswer["skipped"], duplicates: Set<number>): ImportAnswer["rows"] {
+    const by = new Map(skipped.map((s) => [s.row, s]));
+    return Array.from({ length: count }, (_, i) => {
+      const row = i + 1;
+      const s = by.get(row);
+      if (!s) return { row, state: "accepted" as const };
+      return { row, state: duplicates.has(row) ? ("duplicate" as const) : ("refused" as const), ...(s.field ? { field: s.field } : {}), reason: s.reason };
+    });
   }
 
   /** E-17: the dates this business has approved; an approval's key names one of its people (`${personId}:b|s:${year}`). */

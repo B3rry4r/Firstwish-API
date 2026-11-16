@@ -9,7 +9,7 @@ import { PriceBookService } from "../price-book/price-book.service";
 import { EventsService } from "../events/events.service";
 import { FulfilmentRegistry, type PaidLineInfo } from "./fulfilment.registry";
 import { paymentEntries } from "./ledger";
-import { readOptions, withFlag } from "./payment-options";
+import { readOptions, withFlag, writeOptions } from "./payment-options";
 
 /** What the provider says about one payment: from a verify call or a webhook event. Never from a request the payer sent. */
 export interface ProviderAnswer {
@@ -94,7 +94,9 @@ export class SettlementService {
 
     if (a.status === "failed") {
       if (p.status === "failed") return { outcome: "already", flagged: false };
-      await tx.payment.update({ where: { id: p.id }, data: { status: "failed", updatedAt: now } });
+      // API-BASE-6: the payment says why it failed, in words the payer can read
+      const reason = "The payment did not go through. Your card or bank did not approve it. Try again, or use another way to pay.";
+      await tx.payment.update({ where: { id: p.id }, data: { status: "failed", updatedAt: now, options: writeOptions({ ...opts, server: { ...opts.server, reason } }) } });
       return { outcome: "failed", flagged: false };
     }
     if (a.status !== "success") return { outcome: "not_paid", flagged: false };

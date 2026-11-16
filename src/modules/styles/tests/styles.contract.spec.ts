@@ -34,6 +34,22 @@ async function allLevels(): Promise<Record<string, string>> {
   return out;
 }
 
+/**
+ * Replays an ETag the server just gave and wants 304. Other specs share this database and may add or move a style between two
+ * reads, which honestly changes the ETag, so a 200 with a DIFFERENT etag means the data moved under us: replay that one (at most
+ * 5 moves). A 200 with the SAME etag is the failure this proves against, and fails at once.
+ */
+async function expectNotModified(first: string): Promise<void> {
+  let held = first;
+  let answer = await t.http().get("/v1/styles/levels").set("If-None-Match", held);
+  for (let moves = 0; answer.status === 200 && moves < 5; moves++) {
+    expect(String(answer.headers.etag)).not.toBe(held);
+    held = String(answer.headers.etag);
+    answer = await t.http().get("/v1/styles/levels").set("If-None-Match", held);
+  }
+  expect(answer.status).toBe(304);
+}
+
 const auditRows = (styleSlug: string) =>
   db.style.findUniqueOrThrow({ where: { slug: styleSlug } }).then((s) => db.auditEntry.findMany({ where: { subjectType: "Style", subjectId: s.id } }));
 
@@ -78,8 +94,17 @@ describe("E-198 GET /v1/styles/levels (case 1)", () => {
     expect(etag).toMatch(/^"/);
     const item = (a.body.items as Body[])[0];
     expect(Object.keys(item).sort()).toEqual(["by", "level", "reason", "since", "slug", "styleSlug"]);
-    const b = await t.http().get("/v1/styles/levels").set("If-None-Match", etag);
-    expect(b.status).toBe(304);
+    await expectNotModified(etag);
+  });
+
+  it("answers 200 with a new ETag once a level is written after the first read (the case the replay above tolerates)", async () => {
+    const first = await t.http().get("/v1/styles/levels");
+    const etag = String(first.headers.etag);
+    await addStyle();
+    const second = await t.http().get("/v1/styles/levels").set("If-None-Match", etag);
+    expect(second.status).toBe(200);
+    expect(String(second.headers.etag)).not.toBe(etag);
+    await expectNotModified(String(second.headers.etag));
   });
 
   it("is one answer (X28): no paging, a stray cursor or limit is refused", async () => {
@@ -340,6 +365,6 @@ describe("contract shapes and the one-answer levels read", () => {
     expect(mv.status).toBe(200);
     const b = await t.http().get("/v1/styles/levels");
     expect(b.headers.etag).not.toBe(a.headers.etag);
-    expect((await t.http().get("/v1/styles/levels").set("If-None-Match", String(b.headers.etag))).status).toBe(304);
+    await expectNotModified(String(b.headers.etag));
   });
 });

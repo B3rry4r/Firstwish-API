@@ -5913,7 +5913,8 @@
       ],
       "change": "implement the designed empty state",
       "enterCondition": "the server returns no items",
-      "status": "open"
+      "status": "done",
+      "resolution": "W13 (web c8c2d28), verified 16 Nov"
     },
     {
       "id": "UA-519",
@@ -6000,7 +6001,8 @@
       ],
       "change": "implement the designed loading state",
       "enterCondition": "a request for this surface is in flight (conventions Runtime contract)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W13 (web c8c2d28), verified 16 Nov"
     },
     {
       "id": "UA-525",
@@ -6014,7 +6016,8 @@
       ],
       "change": "implement the designed loading state",
       "enterCondition": "a request for this surface is in flight (conventions Runtime contract)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W13 (web c8c2d28), verified 16 Nov"
     },
     {
       "id": "UA-526",
@@ -6028,7 +6031,8 @@
       ],
       "change": "implement the designed error state",
       "enterCondition": "the request fails; show retry",
-      "status": "open"
+      "status": "done",
+      "resolution": "W13 (web c8c2d28), verified 16 Nov"
     },
     {
       "id": "UA-527",
@@ -6113,7 +6117,8 @@
       ],
       "change": "implement the designed loading state",
       "enterCondition": "a request for this surface is in flight (conventions Runtime contract)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W13 (web c8c2d28), verified 16 Nov"
     },
     {
       "id": "UA-533",
@@ -6127,7 +6132,8 @@
       ],
       "change": "implement the designed loading state",
       "enterCondition": "a request for this surface is in flight (conventions Runtime contract)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W13 (web c8c2d28), verified 16 Nov"
     },
     {
       "id": "UA-534",
@@ -6141,7 +6147,8 @@
       ],
       "change": "implement the designed error state",
       "enterCondition": "the request fails; show retry",
-      "status": "open"
+      "status": "done",
+      "resolution": "W13 (web c8c2d28), verified 16 Nov"
     },
     {
       "id": "UA-535",

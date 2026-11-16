@@ -17,3 +17,9 @@
   flow has made payments; W11's "numbers empty" check fails when it does not run first. The driver's flows must each
   own their data (WEB-SHARED-1).
 - W4: one uncaught "Event" console line at the wedding-day step, seen 3 times by different agents (W5 finds the cause).
+- W13 (merged 16 Nov): the held photo is not drawn and days 1-6 of the wish of the day are not shown after a reload
+  (API-BASE-4 gives both: WEB-API-4 draws them); lib/admin/w13-api.ts re-declares about 20 staff view types by hand
+  (the contract's staff reads are row-shaped: API-BASE-5 or WEB-API-4); Mark paid, the payout run and bans send no
+  Idempotency-Key; a creator's waiting amount can show negative ("-₦2,500": the server's figure); Mark paid stays drawn
+  after a payout succeeded; the Mark-paid sheet's X touches its title at 390; a 404 wish or person shows "Try again";
+  "Picked just now" names an unlisted wish until a reload. UA-3, UA-252, UA-316 stay open for the Studio bundle (W10).

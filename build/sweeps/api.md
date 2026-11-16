@@ -16,3 +16,10 @@
 ## Cannot be given back
 - Draft client wishes removed before 16 Nov's change have no window job, so they give nothing back (there are none: nothing
   is live).
+
+## From W13's verifier (low, staff routes; for API-BASE-5)
+- Erasing an erased person again answers 200; a take-down on an already removed wish answers 200; a second ban of the
+  same scope is allowed: each should answer 409 with words. Staff erase is immediate (no waiting period): as ruled (FC1)?
+- Staff wish search is exact (the number is case-sensitive, the email must be whole).
+- From W12's builder: PUT /admin/prices has no payout-day field (R14 wants threshold and day editable); a price-book
+  versions read open to finance (who and when); a state filter on the payments list and a search on businesses.

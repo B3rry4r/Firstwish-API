@@ -1,4 +1,4 @@
-import { HttpStatus, Injectable } from "@nestjs/common";
+import { forwardRef, HttpStatus, Inject, Injectable } from "@nestjs/common";
 import type { Payment, Prisma, Refund } from "@prisma/client";
 import { lockAccount } from "../../common/db/account-lock";
 import { PrismaService } from "../../common/db/prisma.service";
@@ -10,6 +10,7 @@ import { isPortTimeout } from "../../common/ports/time-limit";
 import type { Refund as RefundWire } from "../../contracts";
 import { AuditActor, AuditService, requireReason } from "../audit/audit.service";
 import { RefundProviderPort, RefundRefused } from "../../common/ports/refund-provider.port";
+import { RefundEvents } from "./refund-events.service";
 import { refundView } from "./refund-wire";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -46,6 +47,8 @@ export class RefundsService {
     private readonly ids: IdGenerator,
     private readonly audit: AuditService,
     private readonly provider: RefundProviderPort,
+    // refund-events.service imports OPEN_REFUND from this file, so the two reach each other by a forward reference
+    @Inject(forwardRef(() => RefundEvents)) private readonly events: RefundEvents,
   ) {}
 
   /** E-145: a refund asked for, by one staff member. */
@@ -137,10 +140,10 @@ export class RefundsService {
       throw new AppError(HttpStatus.BAD_GATEWAY, "provider_unavailable", "The payment service did not answer. The refund is kept; send it again in a moment.");
     }
 
-    return this.db.$transaction(async (tx) => {
+    await this.db.$transaction(async (tx) => {
       await this.lock(tx, pre.payment);
       const r = await tx.refund.findUniqueOrThrow({ where: { id } });
-      if (r.status !== "sent" || r.providerReference !== null) return r; // the provider's webhook got here first
+      if (r.status !== "sent" || r.providerReference !== null) return; // the provider's webhook got here first
       if (refusal !== null) {
         await tx.refund.update({ where: { id }, data: { status: "failed", note: refusal, updatedAt: this.clock.now() } });
         await this.audit.write(tx, {
@@ -154,8 +157,10 @@ export class RefundsService {
       } else if (accepted) {
         await tx.refund.update({ where: { id }, data: { providerReference: accepted.providerReference, updatedAt: this.clock.now() } });
       }
-      return tx.refund.findUniqueOrThrow({ where: { id } });
     });
+    // Join 5: an event that came before this refund was recorded as sent is applied now (outside the transaction above).
+    await this.events.applyPending(pre.payment.id);
+    return this.db.refund.findUniqueOrThrow({ where: { id } });
   }
 
   private async findPayment(input: StartInput): Promise<Pick<Payment, "id" | "accountId">> {

@@ -31,3 +31,5 @@
 - B19 not run by the verifier: erase (claim 8), a price-book change after placing, a customer cancel while with a maker.
 - B19 concierge start: a pending payment for an order is answered again however old; a pending payment should lapse (say after 24 hours) so a new start makes a new one.
 - B19 E-141 sets no req.principal and words its 401 differently from the guard (goes away with CB4 at the next shared base).
+- B18 reveals-public.service.ts play: a visit count can be inflated with fresh x-reveal-session ids (bounded by 60 reads a minute).
+- B18: 30 wrong passcode tries lock a reveal link for an hour for everyone (same as the receiver link, NN6).

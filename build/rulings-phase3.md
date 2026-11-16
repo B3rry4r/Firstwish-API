@@ -632,3 +632,7 @@ ZB3 (lead, from the web app's own flow, R5; replaces ZB1 and ZB2) A business's c
     writer anywhere: it is set when a person who opened a client wish seals their first own wish (a mark carried from the
     link), or the number is cut from the dashboard. NOT BUILT: next shared base (ClientWish.wishId, seal `usePlan`), then a
     Business patch.
+EB1 (B18 verify, medium) Sending a reveal is limited: 5 emails a day to one address from one business and 100 a day for a
+    business (PROVISIONAL), counted in the database, fail closed. (Wave 6 join.)
+EB2 (B18 verify, medium) A signed file address already handed out lives up to 10 minutes after a link is switched off: accepted
+    (the next read is refused; a signed address cannot be recalled). Lows -> sweep.

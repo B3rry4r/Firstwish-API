@@ -5892,7 +5892,8 @@
       ],
       "change": "implement the designed empty state",
       "enterCondition": "the server returns no items",
-      "status": "open"
+      "status": "done",
+      "resolution": "W11 (web 77c0470), verified 16 Nov"
     },
     {
       "id": "UA-521",
@@ -5906,7 +5907,8 @@
       ],
       "change": "implement the designed error state",
       "enterCondition": "the request fails; show retry",
-      "status": "open"
+      "status": "done",
+      "resolution": "W11 (web 77c0470), verified 16 Nov"
     },
     {
       "id": "UA-522",
@@ -5920,7 +5922,8 @@
       ],
       "change": "implement the designed loading state",
       "enterCondition": "a request for this surface is in flight (conventions Runtime contract)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W11 (web 77c0470), verified 16 Nov"
     },
     {
       "id": "UA-523",
@@ -5934,7 +5937,8 @@
       ],
       "change": "implement the designed error state",
       "enterCondition": "the request fails; show retry",
-      "status": "open"
+      "status": "done",
+      "resolution": "W11 (web 77c0470), verified 16 Nov"
     },
     {
       "id": "UA-524",
@@ -6003,7 +6007,8 @@
       ],
       "change": "implement the designed empty state",
       "enterCondition": "the server returns no items",
-      "status": "open"
+      "status": "done",
+      "resolution": "W11 (web 77c0470), verified 16 Nov"
     },
     {
       "id": "UA-529",
@@ -6017,7 +6022,8 @@
       ],
       "change": "make the coded state reachable: busy",
       "enterCondition": "busy true during send/check",
-      "status": "open"
+      "status": "done",
+      "resolution": "W11 (web 77c0470), verified 16 Nov"
     },
     {
       "id": "UA-530",
@@ -6044,7 +6050,8 @@
       ],
       "change": "implement the designed empty state",
       "enterCondition": "the server returns no items",
-      "status": "open"
+      "status": "done",
+      "resolution": "W11 (web 77c0470), verified 16 Nov"
     },
     {
       "id": "UA-532",

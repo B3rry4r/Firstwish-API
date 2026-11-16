@@ -797,3 +797,24 @@ HG1 (give race) Two staff giving one Concierge order: the code is right (overlap
   changes to shared modules).
 - HN3: the old seam code and fixtures of wired screens are removed by the bundle that wires the LAST screen using a file;
   a file shared with a later bundle (lib/admin/d-api.ts, the admin fixtures) is cleaned by that later bundle (W12-W14).
+
+## HO (16 Nov 2026, the lead, on the verdicts for API-BASE-3, W3 and W11). Default (lead), owner may override.
+- HO1 (revises HM3; API-BASE-3 verify, high): a start NEVER changes a draft that exists. The only draft handed back is one
+  made by a bare start (no kind, occasion or style sent) that has never been written since (no PATCH, no upload, nothing:
+  its version is the one it was made with), and it is handed back only to another bare start, unchanged. A start that
+  carries a kind, occasion or style always makes a new draft (unless its key repeats). The derived "untouched" test goes.
+- HO2: a remembered Idempotency-Key answers its wish only while that wish is still a live draft; once the wish is removed,
+  sealed or erased the key is spent and the start answers 409 (key_spent) with words; it never hands back a removed or
+  sealed wish as if just started.
+- HO3: the makerNote size limit holds for every note, not only one with a wedding.
+- HO4 (W3 verify, high): Home keeps every control the server can serve: react, save, share, the creator and follow, open
+  and play, and the list from /v1/showing; a part with no server behind it (stories, a "Following" list if the API has no
+  such read) is not drawn and is listed as an API request, never silently dropped.
+- HO5: removing a draft asks first, then leaves the removed wish's page for Wishes; a payment that failed or was left
+  shows the server's reason where it gives one; Wake sends one request however many taps.
+- HO6: the app's types for what the server sends come from the contract file; where the contract is wrong (the link
+  read, Wish fields) that is an API fix, and until it lands the web keeps ONE named cast per shape in lib/person.ts with
+  the API request beside it, not a parallel type.
+- HO7 (W11 verify, mediums): the staff sign-in says "If this email is on the team, a code is on its way." (it must not
+  say Sent for an address that is not staff or is over the limit); the Audit filters offer every section the contract has
+  and every staff member the Team read gives the role, not only what the loaded rows hold. With the one-client change (HN2).

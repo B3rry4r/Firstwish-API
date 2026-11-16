@@ -54,6 +54,10 @@ jobs:
         run: node scripts/check-drift.mjs
         env:
           DATABASE_URL: postgresql://firstwish:firstwish@localhost:5432/firstwish
+      - name: Every registry endpoint has a route
+        run: node scripts/check-routes.mjs
+        env:
+          DATABASE_URL: postgresql://firstwish:firstwish@localhost:5432/firstwish
       - name: Seed (reference rows, twice)
         run: node scripts/seed.mjs && node scripts/seed.mjs
         env:

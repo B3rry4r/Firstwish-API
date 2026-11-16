@@ -20,7 +20,7 @@ import { UnlockTokens } from "./unlock-token";
   imports: [WishesModule, StoredFilesModule],
   controllers: [PublicWishesController, FeedWishesController],
   providers: [PublicWishesService, FeedWishesService, ReceiverActivityService, LinkLimits, UnlockTokens],
-  exports: [ReceiverActivityService, LinkLimits],
+  exports: [ReceiverActivityService, LinkLimits, PublicWishesService],
 })
 export class PublicWishesModule implements OnModuleInit {
   constructor(private readonly adapter: HttpAdapterHost) {}

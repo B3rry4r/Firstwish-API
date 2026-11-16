@@ -10,6 +10,7 @@ import { JobsService } from "../jobs/jobs.service";
 import { RoyaltiesService } from "../royalties/royalties.service";
 import { NOTICE_DAYS, WishLifecycleService } from "../wishes/wish-lifecycle.service";
 import { WishesService } from "../wishes/wishes.service";
+import { KeepProofs } from "./keep-proof";
 import { addDays, DAY_MS, GrantStore, num, type GrantRow, type Tx } from "./grants";
 import { assessExtra, assessKeep, assessTicket, readWish, TICKET_ORDER, type WishFacts } from "./wish-rules";
 
@@ -39,6 +40,7 @@ export class WishHandlers {
     private readonly clock: Clock,
     private readonly wishes: WishesService,
     private readonly royalties: RoyaltiesService,
+    private readonly proofs: KeepProofs,
   ) {}
 
   /** Locks the wish the payment names (a missing one or one that is no uuid is null) and reads it under that lock. */
@@ -105,7 +107,8 @@ export class WishHandlers {
     if (!grantId) return;
     const length = line.sku.slice("keep.".length) as "month" | "half" | "year";
     const w = await this.lockWish(tx, ctx);
-    const why = assessKeep(w, ctx.payment.accountId, await this.entitlements.row(tx));
+    const byLink = this.proofs.valid(ctx.request.options?.receiverProof, ctx.payment.accountId, w?.id ?? null, false);
+    const why = assessKeep(w, ctx.payment.accountId, await this.entitlements.row(tx), byLink);
     if (why || !w) return this.store.refuse(tx, ctx, grantId, why ?? "wish_not_payers");
     const days = num((await ctx.grant()).termDays);
     const now = this.clock.now();

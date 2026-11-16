@@ -9,6 +9,7 @@ import { FulfilmentRegistry, type FulfilmentContext, type PaymentRequestInfo } f
 import { BusinessHandlers } from "./business-handlers";
 import { CreatorHandlers } from "./creator-handlers";
 import { GrantStore, type GrantRow, type Tx } from "./grants";
+import { KeepProofs } from "./keep-proof";
 import { PassService } from "./pass.service";
 import { WishHandlers } from "./wish-handlers";
 import { assessExtra, assessKeep, assessTicket, readWish, REASON_TEXT } from "./wish-rules";
@@ -54,6 +55,7 @@ export class PurchasesService implements OnModuleInit {
     private readonly creator: CreatorHandlers,
     private readonly entitlements: EntitlementsService,
     private readonly book: PriceBookService,
+    private readonly proofs: KeepProofs,
   ) {}
 
   onModuleInit(): void {
@@ -134,7 +136,7 @@ export class PurchasesService implements OnModuleInit {
     const book = await this.entitlements.row(db);
     let why: string | null;
     if (group === "ticket") why = assessTicket(w, accountId, sku.slice("ticket.".length));
-    else if (group === "keep") why = assessKeep(w, accountId, book);
+    else if (group === "keep") why = assessKeep(w, accountId, book, this.proofs.valid(request.options?.receiverProof, accountId, wishId, true));
     else {
       const lines = new Map((await this.book.versionAt(this.clock.now(), db)).lines.map((l) => [l.sku, l.listKobo]));
       why = assessExtra(w, accountId, sku, book, (s) => lines.get(s) ?? 0n);

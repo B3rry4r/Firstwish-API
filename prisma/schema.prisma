@@ -56,6 +56,7 @@ model Account {
   studioStyleByAccount      StudioStyle[]      @relation("StudioStyle_accountId")
   storedFileByOwnerAccount  StoredFile[]       @relation("StoredFile_ownerAccountId")
   passDrawByAccount         PassDraw[]         @relation("PassDraw_accountId")
+  wishStartByAccount        WishStart[]        @relation("WishStart_accountId")
 
   @@unique([contact])
   @@unique([handle])
@@ -1514,7 +1515,7 @@ model WebhookEvent {
   @@map("webhook_event")
 }
 
-/// table: written by E-220, E-222..E-233 and server:wish-lifecycle; content is a document column; content is JSON (DEC-64 typed WishData, DEC-82 Wish.content.details object) though the registry's top-level type reads string
+/// table: written by E-220, E-222..E-233 and server:wish-lifecycle; content is a document column; content is JSON (DEC-64 typed WishData, DEC-82 Wish.content.details object) typed object in the registry (HM4, DEC-215)
 model Wish {
   id                       String              @id @db.Uuid
   accountId                String              @db.Uuid
@@ -1570,6 +1571,7 @@ model Wish {
   passDrawByWish           PassDraw[]          @relation("PassDraw_wishId")
   takeDownCodeByWish       TakeDownCode[]      @relation("TakeDownCode_wishId")
   conciergeOrderWishByWish ConciergeOrderWish? @relation("ConciergeOrderWish_wishId")
+  wishStartByWish          WishStart[]         @relation("WishStart_wishId")
 
   @@unique([no])
   @@index([accountId, id])
@@ -1970,6 +1972,22 @@ model VaultPeak {
 
   @@id([businessId, month])
   @@map("vault_peak")
+}
+
+/// table: HM3 (DEC-214): the Idempotency-Key a person started a wish with and the draft it answered, so the same key answers the same draft whatever happened to the draft since
+model WishStart {
+  id        String   @id @db.Uuid
+  accountId String   @db.Uuid
+  key       String
+  wishId    String   @db.Uuid
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  account   Account  @relation("WishStart_accountId", fields: [accountId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  wish      Wish     @relation("WishStart_wishId", fields: [wishId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@unique([accountId, key])
+  @@index([accountId, id])
+  @@index([wishId, id])
+  @@map("wish_start")
 }
 
 enum AccountSides {

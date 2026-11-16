@@ -2095,7 +2095,7 @@
   },
   "Wish": {
    "class": "table",
-   "reason": "written by E-220, E-222..E-233 and server:wish-lifecycle; content is a document column; content is JSON (DEC-64 typed WishData, DEC-82 Wish.content.details object) though the registry's top-level type reads string",
+   "reason": "written by E-220, E-222..E-233 and server:wish-lifecycle; content is a document column; content is JSON (DEC-64 typed WishData, DEC-82 Wish.content.details object) typed object in the registry (HM4, DEC-215)",
    "alias": {
     "state": "status",
     "style": "styleSlug",
@@ -3567,6 +3567,51 @@
     "month": {
      "rule": "keep",
      "why": "a month key"
+    }
+   }
+  },
+  "WishStart": {
+   "reason": "HM3 (DEC-214): the Idempotency-Key a person started a wish with and the draft it answered, so the same key answers the same draft whatever happened to the draft since",
+   "columns": {
+    "accountId": {
+     "type": "String",
+     "attrs": "@db.Uuid",
+     "opt": false
+    },
+    "key": {
+     "type": "String",
+     "attrs": "",
+     "opt": false
+    },
+    "wishId": {
+     "type": "String",
+     "attrs": "@db.Uuid",
+     "opt": false
+    },
+    "createdAt": {
+     "type": "DateTime",
+     "attrs": "@default(now()) @db.Timestamptz(3)",
+     "opt": false
+    }
+   },
+   "refs": {
+    "accountId": "Account",
+    "wishId": "Wish"
+   },
+   "refOnDelete": {
+    "accountId": "Restrict",
+    "wishId": "Cascade"
+   },
+   "unique": [
+    [
+     "accountId",
+     "key"
+    ]
+   ],
+   "erase": {
+    "key": {
+     "rule": "keep",
+     "why": "a random request key the web made, no person; it only lets a repeated start find its draft"
     }
    }
   }

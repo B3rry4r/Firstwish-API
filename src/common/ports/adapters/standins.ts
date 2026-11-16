@@ -1,5 +1,6 @@
 import { createHash, createHmac, timingSafeEqual } from "node:crypto";
-import { appendFileSync } from "node:fs";
+import { appendFileSync, chmodSync, closeSync, fstatSync, openSync } from "node:fs";
+import { EnvError } from "../../env/env";
 import { ImageSizesPort, ResizeInput } from "../image-sizes.port";
 import { Money } from "../../money/money";
 import { AiWritingPort, WriteRequest, WriteResult } from "../ai.port";
@@ -73,6 +74,29 @@ export class StandinPayments extends PaymentsPort {
   }
 }
 
+/**
+ * The outbox holds sign-in codes, so it is made for its owner alone (mode 0600, also when the file was there already), and a path
+ * that cannot be written (a directory, a folder that is not there, no permission) is a config error when the app starts, not a
+ * throw at the first send while the request still answers "sent".
+ */
+function prepareOutbox(path: string): void {
+  const bad = (why: string): never => {
+    throw new EnvError([{ name: "STANDIN_MAIL_OUTBOX", problem: `${why}: ${path} must be a file this app can write` }]);
+  };
+  let fd: number;
+  try {
+    fd = openSync(path, "a", 0o600);
+  } catch (e) {
+    return bad((e as NodeJS.ErrnoException).code === "EISDIR" ? "it is a directory" : `it cannot be opened for writing (${(e as NodeJS.ErrnoException).code ?? "error"})`);
+  }
+  try {
+    if (!fstatSync(fd).isFile()) bad("it is not a file");
+    chmodSync(path, 0o600);
+  } finally {
+    closeSync(fd);
+  }
+}
+
 export class StandinEmail extends EmailPort {
   /** FB4: a stand-in calls nothing. */
   ping(): Promise<PortPing> {
@@ -85,6 +109,7 @@ export class StandinEmail extends EmailPort {
   /** HK1: when `outbox` names a file, each message is also appended there as one JSON line (to, template, subject, text, at). Unset: nothing is written. */
   constructor(private readonly outbox?: string) {
     super();
+    if (outbox) prepareOutbox(outbox);
   }
 
   send(email: OutgoingEmail): Promise<SentEmail> {
@@ -93,7 +118,7 @@ export class StandinEmail extends EmailPort {
     const id = `standin-email-${++this.seq}`;
     this.sent.push({ ...email, id });
     if (this.outbox) {
-      appendFileSync(this.outbox, `${JSON.stringify({ to: email.to, template: email.template ?? null, subject: email.subject, text: email.text, at: new Date().toISOString() })}\n`);
+      appendFileSync(this.outbox, `${JSON.stringify({ to: email.to, template: email.template ?? null, subject: email.subject, text: email.text, at: new Date().toISOString() })}\n`, { mode: 0o600 });
     }
     return Promise.resolve({ id });
   }

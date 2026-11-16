@@ -1040,6 +1040,10 @@ def main():
             row_f = {"name": fname, "type": (fams[0] if fams else classes[0]) if len(fams) <= 1 else "CONFLICT:" + "|".join(fams),
                      "classes": classes, "nullable": (True in f["nullable"]),
                      "provenance": sorted(set(s["src"] for s in f["seen"])), "supersedes": ann}
+            # HM4 (DEC-215): a field the sources give named children (content.cover, makerNote.chosen, ...) is an object, whatever
+            # class a bare mention of it carried (Wish.content was typed text from an enum and a named-type mention)
+            if any(k.startswith(fname + ".") or k.startswith(fname + "[") for k in r["fields"]) and row_f["type"] != "object":
+                row_f["type"] = "object"
             if "%s.%s" % (rname, fname) in field_types:
                 row_f["type"], row_f["typeBy"] = field_types["%s.%s" % (rname, fname)]
             fields.append(row_f)

@@ -1,4 +1,5 @@
-import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, Query } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Headers, HttpCode, Param, Patch, Post, Query, Res } from "@nestjs/common";
+import type { Response } from "express";
 import {
   DeleteWishesByIdBodyDto, DeleteWishesByIdParamsDto, GetWishesByIdLinkParamsDto, GetWishesByIdParamsDto, GetWishesQueryDto,
   PatchWishesByIdParamsDto, PostWishesBodyDto, PostWishesByIdAddPhotosBodyDto, PostWishesByIdAddPhotosParamsDto,
@@ -28,8 +29,12 @@ export class WishesController {
 
   @Roles("person", "creator", "business")
   @Post()
-  create(@Body() body: PostWishesBodyDto, @CurrentPrincipal() p: Principal | undefined) {
-    return this.wishes.create(accountOf(p), body);
+  @HttpCode(201)
+  /** 201 for a new draft; 200 when the start answers a draft already made (the same Idempotency-Key, or the person's untouched draft: HM3). */
+  async create(@Body() body: PostWishesBodyDto, @CurrentPrincipal() p: Principal | undefined, @Headers("idempotency-key") key: string | undefined, @Res({ passthrough: true }) res: Response) {
+    const r = await this.wishes.create(accountOf(p), body, key?.trim() || undefined);
+    res.status(r.fresh ? 201 : 200);
+    return r.wish;
   }
 
   @Roles("person", "creator", "business")

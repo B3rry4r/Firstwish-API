@@ -74,13 +74,16 @@ function endingPurposes() {
   return [...block.matchAll(/\|\s*"([a-z-]+)"\s*(?:\/\/\s*(.*))?/g)].map((m) => ({ name: m[1], line: (m[2] || "").trim() }));
 }
 
+/** JSON with every object's keys sorted at every depth: two rows differing only in a nested field get different keys (GD3). */
+const stable = (v) => JSON.stringify(v, (_k, x) => (x && typeof x === "object" && !Array.isArray(x) ? Object.fromEntries(Object.keys(x).sort().map((k) => [k, x[k]])) : x));
+
 function chapterSpecs() {
   const { RECIPES } = web("lib/occasions.ts");
   const seen = new Map();
   for (const r of RECIPES) {
     for (const c of r.chapters) {
       const row = pick(c, ["type", "title", "heading", "line", "ask", "rule", "why"]);
-      const k = JSON.stringify(row, Object.keys(row).sort());
+      const k = stable(row);
       if (!seen.has(k)) seen.set(k, row);
     }
   }

@@ -1,5 +1,5 @@
 import { HttpStatus, Inject, Injectable } from "@nestjs/common";
-import type { Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import { lockAccount } from "../../common/db/account-lock";
 import { PrismaService } from "../../common/db/prisma.service";
 import { AppError } from "../../common/errors/app-error";
@@ -54,7 +54,15 @@ const SYSTEM = {
   ].join(" "),
 };
 
-const plainText = (v: unknown, max: number): v is string => typeof v === "string" && v.trim() !== "" && v.length <= max;
+/** Control characters other than tab, line feed and carriage return (a NUL, a bell, an escape): never plain text, and the database refuses a NUL (GD1). */
+const CONTROL = /[^\P{Cc}\t\n\r]/u;
+const plainText = (v: unknown, max: number): v is string => typeof v === "string" && v.trim() !== "" && v.length <= max && !CONTROL.test(v);
+
+/** GD2: the words of a wish's AI requests (what was said, what came back) go when the wish is erased, as an account erase blanks them. The rows stay. */
+export async function forgetForWishes(tx: Prisma.TransactionClient, wishIds: string[]): Promise<void> {
+  if (!wishIds.length) return;
+  await tx.aiRequest.updateMany({ where: { wishId: { in: wishIds } }, data: { transcript: null, output: Prisma.DbNull } });
+}
 
 function jsonIn(text: string): Record<string, unknown> | null {
   const a = text.indexOf("{");
@@ -176,6 +184,17 @@ export class AiWritingService {
     const now = this.clock.now();
     await this.reserve(accountId, id, r, now);
     const asked = await askAi(this.ai, { system, prompt, maxTokens: MAX_TOKENS }, parse);
+    try {
+      return await this.finish(id, r, now, asked);
+    } catch (e) {
+      // GD1: whatever goes wrong once the provider has answered (a refused answer, a failed save) marks the row failed, which gives the place back.
+      await this.db.aiRequest.updateMany({ where: { id, status: "queued" }, data: { status: "failed" } }).catch(() => undefined);
+      if (e instanceof AppError || isPortTimeout(e)) throw e;
+      throw new AppError(HttpStatus.BAD_GATEWAY, "ai_failed", "The AI helper could not answer. Nothing was kept.");
+    }
+  }
+
+  private async finish(id: string, r: Reserved, now: Date, asked: { value: Record<string, unknown> | null; model: string; failure: unknown }): Promise<AiRequestView> {
     if (asked.value !== null) {
       const output = asked.value as Prisma.InputJsonValue;
       const kept = await this.db.aiRequest.updateMany({ where: { id, status: "queued" }, data: { status: "done", model: asked.model, output } });

@@ -6,6 +6,7 @@ import { Clock } from "../../common/ports/clock.port";
 import { isUuidV7 } from "../../common/ids/uuidv7";
 import { IdGenerator } from "../../common/ports/ids.port";
 import { StoragePort } from "../../common/ports/storage.port";
+import { forgetForWishes as forgetAiWords } from "../ai-writing/ai-writing.service";
 import { stagingKeyOf, variantsOf } from "../stored-files/file-rules";
 import { localToUtc } from "./local-time";
 import { EntitlementsService, grantOf } from "../price-book/entitlements.service";
@@ -113,6 +114,7 @@ export class WishLifecycleService implements OnModuleInit {
       await tx.wishLink.updateMany({ where: { wishId: wish.id }, data: { active: false } });
       if (to === "erased") {
         await this.forgetLinkNames(tx, [wish.id]);
+        await forgetAiWords(tx, [wish.id]);
         await this.releaseFiles(tx, wish.id, now);
       }
       for (const kind of ["open-wish", "rest-wish", "erase-wish", "restore-window-end", "send-notice"]) await this.jobs.cancel(kind, wish.id, tx);

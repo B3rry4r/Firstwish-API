@@ -1,7 +1,6 @@
 import { createHash } from "node:crypto";
 import { Controller, Get, Query, Res } from "@nestjs/common";
 import type { Response } from "express";
-import { Roles } from "../../common/auth/decorators";
 import { CursorQueryDto, type Page } from "../../common/pagination/cursor";
 import type { ChapterSpec, EndingPurpose, Moment, OpeningDef } from "../../contracts";
 import { ReferenceDataService } from "./reference-data.service";
@@ -24,8 +23,7 @@ export class ReferenceDataController {
     return tag(res, await this.ref.chapterSpecs());
   }
 
-  /** E-51: business */
-  @Roles("business")
+  /** E-51: signed in (GD4: the maker every sender uses reads it; the registry is corrected at the closing base) */
   @Get("ending-purposes")
   async endingPurposes(@Res({ passthrough: true }) res: Response): Promise<Page<EndingPurpose>> {
     return tag(res, await this.ref.endingPurposes());

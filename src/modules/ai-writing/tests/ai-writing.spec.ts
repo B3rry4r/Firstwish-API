@@ -7,6 +7,7 @@ import { AiWritingPort } from "../../../common/ports/ai.port";
 import { createTestApp, TestApp } from "../../../../test/kit/app";
 import { tag } from "../../staff-accounts/tests/staff-kit";
 import { AI_AVAILABILITY, AiAvailability } from "../../studio/studio-ai.service";
+import { WishLifecycleService } from "../../wishes/wish-lifecycle.service";
 import { AI_DAILY_CAP } from "../ai-writing.service";
 
 const ROOT = join(__dirname, "../../../..");
@@ -98,6 +99,69 @@ describe("E-12 and E-14: letter and reasons", () => {
     expect((await post(s, "letter", { wishId: s.wishId, transcript: "words" })).status).toBe(200);
     t.ai.queue(JSON.stringify({ reasons: [{ title: "x".repeat(121) }] }));
     expect((await post(s, "reasons", { wishId: s.wishId, transcript: "words" })).status).toBe(502);
+  });
+
+  it("a NUL, a bell and an escape in an answer, on every route: 502, the row failed, the place back, no 500 (GD1)", async () => {
+    const s = await sender();
+    const photo = await file(s.id, "wish_photo");
+    await db.wish.update({ where: { id: s.wishId }, data: { content: { story: { photos: [{ photoId: photo, caption: "Cake" }] } } } });
+    let n = 0;
+    for (const ch of ["\u0000", "\u0007", "\u001b"]) {
+      const answers: [string, Body, string][] = [
+        ["letter", { transcript: "words" }, JSON.stringify({ paras: [`Dear${ch}you`] })],
+        ["reasons", { transcript: "words" }, JSON.stringify({ reasons: [{ title: `Your${ch}laugh` }] })],
+      ];
+      for (const [path, body, answer] of answers) {
+        t.ai.queue(answer);
+        const r = await post(s, path, { wishId: s.wishId, ...body });
+        expect(r.status).toBe(502);
+        expect(r.body.error.code).toBe("ai_failed");
+        n++;
+      }
+      // photo-pick answers hold numbers only: its control character sits in the text around the JSON and is not kept, so a bad answer there is the shape check's
+      t.ai.queue(`${ch}{"order": [1, "${ch}"]}`);
+      expect((await post(s, "pick-photos", { wishId: s.wishId, fileIds: [photo] })).status).toBe(502);
+      n++;
+    }
+    const all = await rows(s.id);
+    expect(all).toHaveLength(n);
+    expect(all.every((x) => x.status === "failed" && x.output === null)).toBe(true);
+    await spend(s.id, s.wishId, AI_DAILY_CAP - 1);
+    t.ai.queue(letterJson);
+    expect((await post(s, "letter", { wishId: s.wishId, transcript: "words" })).status).toBe(200);
+  });
+
+  it("a database failure while saving the answer: 502, the row failed, the place back, no 500 (GD1)", async () => {
+    const s = await sender();
+    const spy = jest.spyOn(db.aiRequest, "updateMany");
+    spy.mockRejectedValueOnce(new Error("database went away"));
+    t.ai.queue(letterJson);
+    const r = await post(s, "letter", { wishId: s.wishId, transcript: "words" });
+    spy.mockRestore();
+    expect(r.status).toBe(502);
+    expect(r.body.error.code).toBe("ai_failed");
+    expect((await rows(s.id)).map((x) => [x.status, x.output])).toEqual([["failed", null]]);
+    await spend(s.id, s.wishId, AI_DAILY_CAP - 1);
+    t.ai.queue(letterJson);
+    expect((await post(s, "letter", { wishId: s.wishId, transcript: "words" })).status).toBe(200);
+  });
+
+  it("erasing one wish blanks the words of its requests; another wish's requests are untouched (GD2)", async () => {
+    const s = await sender();
+    const other = await db.wish.create({ data: { id: ids.next(), accountId: s.id, status: "draft", kind: "birthday", occasion: "birthday", styleSlug: "golden", timeZone: "Africa/Lagos" } as never });
+    t.ai.queue(letterJson);
+    expect((await post(s, "letter", { wishId: s.wishId, transcript: "erase-me words" })).status).toBe(200);
+    t.ai.queue(letterJson);
+    expect((await post(s, "letter", { wishId: other.id, transcript: "keep-me words" })).status).toBe(200);
+    await db.wish.update({ where: { id: s.wishId }, data: { status: "live" } }); // a live wish can be erased now
+    await t.app.get(WishLifecycleService).eraseNow(s.wishId, "test");
+    const mine = await db.aiRequest.findMany({ where: { wishId: s.wishId } });
+    expect(mine).toHaveLength(1);
+    expect(mine[0].transcript).toBeNull();
+    expect(mine[0].output).toBeNull();
+    const kept = await db.aiRequest.findMany({ where: { wishId: other.id } });
+    expect(kept[0].transcript).toBe("keep-me words");
+    expect(kept[0].output).toEqual({ paras: ["You made every year better.", "Thank you."] });
   });
 
   it("a provider that throws or times out gives no answer and gives the place back", async () => {

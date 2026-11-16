@@ -58,3 +58,8 @@
 - W10 (builder, 16 Nov): lib/account.ts fromMe keeps the switcher's creator side after Close (`me.creator ||
   base.creator`: use `me.creator`; WEB-API-6B's file); UA-345, UA-346, UA-347 (a promotion's end date) and UA-922
   (base look read on the server) stay open; the app frame stays dark under light mode (check against the base).
+- W10 (check 16 Nov): FIX FIRST: an uploaded Studio picture is blank after a reload (no server read yet): P-W10 stops
+  drawing Studio uploads until API-BASE-7; then a web bundle WEB-API-7 draws Studio files (pictures, poster, sound,
+  model, profile picture), Signed off / move to Open, the payout threshold from the book, `publish` on the list.
+  The Studio design draws no speak control (R13 is the maker's letter): not a finding. Not run by the checker: a
+  reversed credit payment, a failed AI ask giving the credit back, a placed picture after a reload.

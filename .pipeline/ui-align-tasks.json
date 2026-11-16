@@ -541,7 +541,8 @@
         "lib/catalog.ts"
       ],
       "change": "integer kobo, currency NGN, over the wire and in storage; prices only from the price book",
-      "status": "open"
+      "status": "done",
+      "resolution": "W7 (web w7-receiver a216aa4), verified 16 Nov"
     },
     {
       "id": "UA-47",
@@ -1204,7 +1205,8 @@
         "lib/account.ts"
       ],
       "change": "server-issued UUIDv7 ids",
-      "status": "open"
+      "status": "done",
+      "resolution": "W7 (web w7-receiver a216aa4), verified 16 Nov"
     },
     {
       "id": "UA-106",
@@ -1570,7 +1572,8 @@
         "lib/maker.ts"
       ],
       "change": "wish number issued in payment order by the server (wish-number)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W7 (web w7-receiver a216aa4), verified 16 Nov"
     },
     {
       "id": "UA-139",
@@ -1605,7 +1608,8 @@
         "lib/engine/unlock.ts"
       ],
       "change": "the server decides the state from its own time and never sends content or answers early (wish-link)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W7 (web w7-receiver a216aa4), verified 16 Nov"
     },
     {
       "id": "UA-142",
@@ -1616,7 +1620,8 @@
         "lib/engine/unlock.ts"
       ],
       "change": "the server decides the state from its own time and never sends content or answers early (wish-link)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W7 (web w7-receiver a216aa4), verified 16 Nov"
     },
     {
       "id": "UA-143",
@@ -4723,7 +4728,8 @@
         "lib/account.ts"
       ],
       "change": "every epoch-ms `at` becomes createdAt/updatedAt ISO-8601 UTC strings set by the server; calendar dates are YYYY-MM-DD strings (date-only canon)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W7 (web w7-receiver a216aa4), verified 16 Nov"
     },
     {
       "id": "UA-416",
@@ -5768,7 +5774,8 @@
         "lib/vault-api.ts"
       ],
       "change": "every read or write of localStorage/sessionStorage/IndexedDB is replaced by its endpoint; the session is an httpOnly refresh cookie plus an in-memory access token; mode (light/dark) is a field on the account; choices before sign-in travel in the link; the build fails on the words localStorage, sessionStorage, IndexedDB in app/, components/, lib/",
-      "status": "open"
+      "status": "done",
+      "resolution": "W7 (web w7-receiver a216aa4), verified 16 Nov"
     },
     {
       "id": "UA-505",
@@ -7666,7 +7673,8 @@
       ],
       "change": "implement the designed loading state",
       "enterCondition": "a request for this surface is in flight (conventions Runtime contract)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W7 (web w7-receiver a216aa4), verified 16 Nov"
     },
     {
       "id": "UA-642",
@@ -7680,7 +7688,8 @@
       ],
       "change": "implement the designed empty state",
       "enterCondition": "the server returns no items",
-      "status": "open"
+      "status": "done",
+      "resolution": "W7 (web w7-receiver a216aa4), verified 16 Nov"
     },
     {
       "id": "UA-643",
@@ -7694,7 +7703,8 @@
       ],
       "change": "implement the designed loaded state",
       "enterCondition": "as designed: loaded",
-      "status": "open"
+      "status": "done",
+      "resolution": "W7 (web w7-receiver a216aa4), verified 16 Nov"
     },
     {
       "id": "UA-644",
@@ -7722,7 +7732,8 @@
       ],
       "change": "make the coded state reachable: error (server)",
       "enterCondition": "none in code: no request is made on the showcase",
-      "status": "open"
+      "status": "done",
+      "resolution": "W7 (web w7-receiver a216aa4), verified 16 Nov"
     },
     {
       "id": "UA-646",
@@ -10262,7 +10273,8 @@
         "app/w/mine/page.tsx:15-24, 28"
       ],
       "change": "replace: fetching the wish by its public link",
-      "status": "open"
+      "status": "done",
+      "resolution": "W7 (web w7-receiver a216aa4), verified 16 Nov"
     },
     {
       "id": "UA-856",
@@ -10273,7 +10285,8 @@
         "app/w/mine/page.tsx:35-36"
       ],
       "change": "replace: the real client wish's content",
-      "status": "open"
+      "status": "done",
+      "resolution": "W7 (web w7-receiver a216aa4), verified 16 Nov"
     },
     {
       "id": "UA-857",
@@ -10284,7 +10297,8 @@
         "app/w/mine/page.tsx:46"
       ],
       "change": "replace: a server-decided resting/gone state for a receiver",
-      "status": "open"
+      "status": "done",
+      "resolution": "W7 (web w7-receiver a216aa4), verified 16 Nov"
     },
     {
       "id": "UA-858",
@@ -10295,7 +10309,8 @@
         "app/w/mine/page.tsx:53"
       ],
       "change": "replace: POST of the receiver's answer to the wish's sender",
-      "status": "open"
+      "status": "done",
+      "resolution": "W7 (web w7-receiver a216aa4), verified 16 Nov"
     },
     {
       "id": "UA-859",
@@ -10328,7 +10343,8 @@
         "lib/maker.ts:36"
       ],
       "change": "replace: the stored voice note file",
-      "status": "open"
+      "status": "done",
+      "resolution": "W7 (web w7-receiver a216aa4), verified 16 Nov"
     },
     {
       "id": "UA-862",
@@ -10350,7 +10366,8 @@
         "lib/engine/unlock.ts:25-33"
       ],
       "change": "replace: server-side passcode/question check (secret never sent to receiver)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W7 (web w7-receiver a216aa4), verified 16 Nov"
     },
     {
       "id": "UA-864",
@@ -10361,7 +10378,8 @@
         "lib/engine/unlock.ts:17-20 and components/engine/Host.tsx:153-156"
       ],
       "change": "replace: server-decided seal moment and time left",
-      "status": "open"
+      "status": "done",
+      "resolution": "W7 (web w7-receiver a216aa4), verified 16 Nov"
     },
     {
       "id": "UA-865",
@@ -10394,7 +10412,8 @@
         "components/wish/Showcase.tsx:26"
       ],
       "change": "replace: a real wish number",
-      "status": "open"
+      "status": "done",
+      "resolution": "W7 (web w7-receiver a216aa4), verified 16 Nov"
     },
     {
       "id": "UA-868",
@@ -11920,8 +11939,9 @@
         "lib/engine/unlock.ts"
       ],
       "change": "the server populates what this screen reads (the Wish by id from 'fw-account', note from 'fw-maker', voice from 'fw-voice-<id>'; a business client wish's reveal from); triggers: on page load, after sign-in, when the tab becomes visible again, and after any write. A manual button is not a trigger.",
-      "status": "open",
-      "provenance": "repository-local-store"
+      "status": "done",
+      "provenance": "repository-local-store",
+      "resolution": "W7 (web w7-receiver a216aa4), verified 16 Nov"
     }
   ],
   "countsByKind": {

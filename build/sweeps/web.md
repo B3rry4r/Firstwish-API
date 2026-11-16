@@ -32,3 +32,7 @@
   headers option must not let a caller overwrite Authorization or the Idempotency-Key. API-BASE-5: keep and wake by
   link (item 8) and house showcase wishes (item 9); then a small web bundle draws them. The receiver page is dark in
   light mode too (check against the design before changing).
+- W7 (merged 16 Nov): a reload then "Yes" on the ring counts as a second person (the web sends a new visit id each
+  load; ruling: send none and let the server's own link+address+browser hash decide: a small web change with
+  WEB-API-4's follow-up); links to a style's wish still drawn from fixtures at components/site/ShowingGallery.tsx:77,140
+  (W2) and components/admin/b/Review.tsx:48 (W14); the style scenes' voices chapters show text only.

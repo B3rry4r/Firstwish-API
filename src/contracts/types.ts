@@ -674,6 +674,7 @@ export interface LifecycleConfig {
 export interface Login {
   contact: string;
   id: string;
+  overPlan: boolean;
   status: string;
 }
 

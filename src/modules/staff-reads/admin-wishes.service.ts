@@ -197,9 +197,12 @@ export class AdminWishesService {
           tx.wishLink.findFirst({ where: { wishId: w.id, active: true }, orderBy: { id: "desc" } }),
         ]);
         if (!link) throw AppError.conflict("not_allowed", "This wish has no link yet.");
+        // INT-7 (B21): the UTC day is the clock port's, and audit rows are stamped from the same clock.
+        const dayStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+        const dayEnd = new Date(dayStart.getTime() + 86_400_000);
         const [sent] = await tx.$queryRaw<{ n: bigint }[]>`
           SELECT count(*) AS n FROM audit_entry WHERE action = 'wish.resend' AND "subjectType" = 'Wish' AND "subjectId" = ${w.id}
-            AND "createdAt" >= (date_trunc('day', now() AT TIME ZONE 'UTC') AT TIME ZONE 'UTC')`;
+            AND "createdAt" >= ${dayStart} AND "createdAt" < ${dayEnd}`;
         if (Number(sent.n) >= MAX_RESENDS_PER_DAY) throw new RateLimited(3600, "This link has been sent again as often as allowed today. Try again tomorrow.");
         const owner = await tx.account.findUnique({ where: { id: row.accountId }, select: { name: true } });
         const out = await this.notices.send(tx, {

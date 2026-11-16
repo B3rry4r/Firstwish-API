@@ -2,6 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { Prisma, type AuditEntry as AuditRow } from "@prisma/client";
 import { PrismaService } from "../../common/db/prisma.service";
 import { AppError } from "../../common/errors/app-error";
+import { Clock } from "../../common/ports/clock.port";
 import { IdGenerator } from "../../common/ports/ids.port";
 import { decodeCursor, DEFAULT_LIMIT, Page, toPage } from "../../common/pagination/cursor";
 import { toWireInstant } from "../../common/time/time";
@@ -61,6 +62,7 @@ export class AuditService {
   constructor(
     private readonly db: PrismaService,
     private readonly ids: IdGenerator,
+    private readonly clock: Clock,
   ) {}
 
   /**
@@ -86,6 +88,8 @@ export class AuditService {
         after: { fields: [...input.changedFields] },
         ip: networkOf(input.actor.ip),
         requestId: input.actor.requestId,
+        // INT-7 (B21): stamped from the clock port, not the database default, so every reader of the log counts on one clock.
+        createdAt: this.clock.now(),
       },
     });
     return id;

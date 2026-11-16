@@ -1,3 +1,4 @@
+import type { Money } from "../../money/money";
 import { PING_STAND_IN, type PortPing } from "../ping";
 import { RefundAccepted, ProviderSettlement, RefundProviderPort, RefundRefused, RefundRequest } from "../refund-provider.port";
 
@@ -35,14 +36,14 @@ export class StandinRefundProvider extends RefundProviderPort {
     this.settlements.set(day, s);
   }
 
-  findRefund(paymentReference: string): Promise<RefundAccepted | null> {
+  findRefund(paymentReference: string, _amount?: Money): Promise<RefundAccepted | null> {
     return Promise.resolve(this.created.get(paymentReference) ?? null);
   }
 
   /** Looks the payment's refund up first, as the real adapter does, and creates one only when none is there. */
   async refund(input: RefundRequest): Promise<RefundAccepted> {
     this.asked.push(input);
-    const held = await this.findRefund(input.paymentReference);
+    const held = await this.findRefund(input.paymentReference, input.amount);
     if (held) return held;
     if (this.hang) {
       if (this.landing) {

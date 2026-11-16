@@ -2739,6 +2739,13 @@
       "type": "string",
       "nullable": true,
       "decision": "DEC-207"
+    },
+    {
+      "resource": "Login",
+      "name": "overPlan",
+      "type": "boolean",
+      "nullable": false,
+      "decision": "DEC-210"
     }
   ],
   "dropFields": [

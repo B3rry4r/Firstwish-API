@@ -352,6 +352,6 @@ describe("P-B05: the abandon job on the tick (clock port)", () => {
     await db.jobRun.deleteMany({ where: { jobId: job.id } });
     await db.job.delete({ where: { id: job.id } });
     await db.payment.deleteMany({ where: { id: { in: [old, older, young, paid] } } });
-    await db.account.delete({ where: { id: accountId } });
+    // INT-7: an account row is never deleted (the database refuses it); the test leaves its own account row.
   });
 });

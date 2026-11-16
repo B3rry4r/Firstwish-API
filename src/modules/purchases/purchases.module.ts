@@ -1,6 +1,7 @@
 import { Module } from "@nestjs/common";
 import { EventsModule } from "../events/events.module";
 import { JobsModule } from "../jobs/jobs.module";
+import { NoticesModule } from "../notices/notices.module";
 import { PaymentsModule } from "../payments/payments.module";
 import { InvoicesModule } from "../pro-business/invoices.module";
 import { RoyaltiesModule } from "../royalties/royalties.module";
@@ -21,7 +22,7 @@ import { WishHandlers } from "./wish-handlers";
  * (draw a client wish, extraGb of Vault space).
  */
 @Module({
-  imports: [PaymentsModule, WishesModule, JobsModule, EventsModule, PassDrawsModule, InvoicesModule, RoyaltiesModule],
+  imports: [PaymentsModule, WishesModule, JobsModule, EventsModule, PassDrawsModule, InvoicesModule, RoyaltiesModule, NoticesModule],
   providers: [GrantStore, KeepProofs, PassCover, WishHandlers, PassService, BusinessHandlers, CreatorHandlers, PurchasesService],
   exports: [PurchasesService, PassService, BusinessHandlers, GrantStore, KeepProofs, PassCover],
 })

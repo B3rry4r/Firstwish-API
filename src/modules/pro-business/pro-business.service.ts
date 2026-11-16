@@ -44,7 +44,9 @@ export class ProBusinessService {
   /** A business's Login rows that stand (not removed), oldest first. */
   private async loginsOf(businessId: string, masked = false): Promise<Login[]> {
     const rows = await this.prisma.login.findMany({ where: { businessId, NOT: { status: "removed" } }, orderBy: { id: "asc" } });
-    return rows.map((l) => ({ id: l.id, contact: masked ? maskEmail(l.contact ?? "") : (l.contact ?? ""), status: l.status ?? "invited" }));
+    // B17: the owner's seat is first, then the logins oldest first; those past the plan's seats are overPlan.
+    const allowed = await this.plan.loginsAllowed(this.prisma, (await this.plan.peek(this.prisma, businessId))?.plan ?? null);
+    return rows.map((l, i) => ({ id: l.id, contact: masked ? maskEmail(l.contact ?? "") : (l.contact ?? ""), status: l.status ?? "invited", overPlan: i + 2 > allowed }));
   }
 
   /**

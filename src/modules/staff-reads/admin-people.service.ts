@@ -122,8 +122,9 @@ export class AdminPeopleService {
     const staffId = actor.id as string;
     return this.db.$transaction(async (tx) => {
       await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`reveal:${staffId}`}, 0))`;
+      const since = new Date(this.clock.now().getTime() - 3_600_000); // the hour is the clock port's: audit rows are stamped from it (B21)
       const [used] = await tx.$queryRaw<{ n: bigint }[]>`
-        SELECT count(*) AS n FROM audit_entry WHERE action = 'person.contact_reveal' AND "actorId" = ${staffId}::uuid AND "createdAt" > now() - interval '1 hour'`;
+        SELECT count(*) AS n FROM audit_entry WHERE action = 'person.contact_reveal' AND "actorId" = ${staffId}::uuid AND "createdAt" > ${since}`;
       if (Number(used.n) >= REVEALS_PER_HOUR) throw new RateLimited(60, "You have used your reveals for this hour. Try again later.");
       const a = await tx.account.findUnique({ where: { id }, select: { contact: true, phone: true, erasedAt: true } });
       if (!a) throw AppError.notFound("No such person.");

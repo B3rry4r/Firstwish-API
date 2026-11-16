@@ -884,6 +884,9 @@
      "rule": "keep",
      "why": "state"
     }
+   },
+   "omit": {
+    "overPlan": "worked out on read from the plan's seats and the logins that stand (B17, DEC-210); not stored"
    }
   },
   "Maker": {
@@ -1024,10 +1027,9 @@
     "setBy",
     "setAt"
    ],
-   "dbTypes": {
-    "setBy": "@db.Uuid"
-   },
-   "setByNote": "Q10: setBy is a staff account id kept as a uuid without a foreign key, because test/contracts/registry-reopen.spec.ts (DEC-132, not this pass's to edit) stores a target with no staff row; reported to the lead."
+   "refs": {
+    "setBy": "StaffAccount"
+   }
   },
   "OpeningDef": {
    "class": "config",

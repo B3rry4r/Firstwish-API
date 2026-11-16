@@ -75,6 +75,15 @@
    "version": 1
   },
   {
+   "seedKey": "logins-over:en-NG:1",
+   "body": "Hi,\n\nYour plan for {business} now has {allowed} login(s) and you have {used}. Nobody is removed. Open Logins in your business page to see which are over the plan and take them out, or choose a bigger plan.\n\nFirstwish",
+   "channel": "email",
+   "key": "logins-over",
+   "locale": "en-NG",
+   "subject": "{business} has more logins than its plan",
+   "version": 1
+  },
+  {
    "seedKey": "bank-changed:en-NG:1",
    "body": "Payouts will now go to the account ending {last4} at bank {bank}. If this was not you, sign in and change it back, then write to us.\n\nFirstwish",
    "channel": "email",

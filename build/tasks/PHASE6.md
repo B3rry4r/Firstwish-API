@@ -60,3 +60,9 @@ W12 = payments, prices, businesses, a business's detail (4 screens; lib/admin/c-
 a person's detail, creators, moderation, Now Showing (7 screens; lib/admin-api.ts and lib/admin/b-*). W14 unchanged.
 W5 also takes what W4 left: the call screen, the start's Idempotency-Key, resume without &at, the walk of W4's ui-align ids.
 W7, W8 and W10 start after W3 is merged (they use its payment start, components/app/life/PayStart.tsx).
+
+## The web repo's CI does not run (found 16 Nov)
+All five runs of web.yml on B3rry4r/Firstwish-web failed in 3 to 5 seconds with no runner: GitHub's annotation says "The job
+was not started because recent account payments have failed or your spending limit needs to be increased" (Billing and
+plans). The owner's account, the owner's to fix (told 16 Nov). Until it runs, the lead runs the same checks on this machine
+at every web merge (typecheck, lint, check:css, test:client, gates, check_baseline, build) and says so; the API repo's CI runs.

@@ -22,7 +22,7 @@ Work: local branch `int-6` from claude/sleepy-mayer-f0hkb8 (the head in your spa
     counted against); the business draw writes it at the draw; the royalty accrual at the seal reads it instead of working
     the source out at seal time. Test with the verifier's case by hand: April Starter with 4 used, May Studio (6 rolled),
     8 sheet wishes drawn then all sealed in a creator's Premium style: six earn 70,000 and two earn 60,000; the usePlan
-    seal (draw and seal together) is unchanged. Also HC2: a \`cancelled\` job status used by JobsService.cancel; the
+    seal (draw and seal together) is unchanged. Also HC2: a `cancelled` job status used by JobsService.cancel; the
     schema-map erase rule for ClientWish.reveal says blanked at the end of the term.
  3. Kernel: every provider port (payments, refunds, payouts, email, storage, AI, screening, video render) gains ping(): the
     real adapter makes one cheap authenticated read and answers ok or the provider's error; a stand-in answers "stand-in".

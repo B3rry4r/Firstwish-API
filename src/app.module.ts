@@ -53,6 +53,11 @@ import { JobHandlersModule } from "./modules/job-handlers/job-handlers.module";
 import { NoticesModule } from "./modules/notices/notices.module";
 // end B11
 
+// B16: creators' money (royalties, bank account, payouts, the monthly run)
+import { RoyaltiesModule } from "./modules/royalties/royalties.module";
+import { PayoutsModule } from "./modules/payouts/payouts.module";
+// end B16
+
 /** Registration entry: each resource module adds one import line here. */
 @Module({
   imports: [
@@ -111,6 +116,10 @@ import { NoticesModule } from "./modules/notices/notices.module";
     // B11
     NoticesModule,
     // end B11
+    // B16
+    RoyaltiesModule,
+    PayoutsModule,
+    // end B16
   ],
 })
 export class AppModule {}

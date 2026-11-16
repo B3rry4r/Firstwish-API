@@ -16,6 +16,8 @@ scripts/seed.mjs; any other shared change (src/common, registry, schema.prisma, 
  J2 (GB1): the ordinary seal of a wish that carries a business calls the same royalty accrual as the maker's usePlan seal,
     reading month or pack from its client-wish record. Tests: a wish made from the sheet (E-30) and from a date (E-32),
     style changed to a creator's Premium style, sealed: the right share by hand; Standard: none; a replay adds nothing.
+    A wish earns once whichever seal runs and whichever payment it is counted against: accrueForDraw refuses a wish that
+    already has a draw accrual (the verifier wrote two by calling it with pack then month). Test.
  J3 (EA3): the Vault's limit counts the plan's space only while the plan is live (a lapsed plan is refused at the upload
     ticket too); the peak is lifted on the file-confirm path. Tests.
  J4 (EA4): after an owner's erase, a client wish's reveal (name, note, credits) is blanked at the end of its term with the

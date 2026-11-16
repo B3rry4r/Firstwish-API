@@ -69,3 +69,7 @@
   passcode-locked wish (an approved style's files are catalogue assets: accepted); a link payer whose payment is
   marked refund due still gets the "paid" receipt and the refund notice only when the refund runs; a failed receipt
   is retried by a queued job (not timed in the check). Not run: a payout run either side of a moved threshold.
+- API-BASE-7 (second check 16 Nov, accepted by the lead): a book version does not hold its own limits (the read
+  always serves the one current row; the audit carries each change's old and new value); an erased creator's live
+  style row still carries the account id (existing T-62 behaviour: check against the erase rule in Phase 7); the
+  refusal's per-field words for a bad limit were not read; PATCH signed:false after the backfill not run end to end.

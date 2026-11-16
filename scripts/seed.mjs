@@ -73,8 +73,8 @@ const ENTITLEMENTS = {
   conciergePassDiscountPercent: 20,
   vatRate: "7.5",
   creator: {
-    open: { creditsOnce: 3, reviewsPerMonth: 1 },
-    creator: { credits: 10, reviewsPerMonth: 2 },
+    open: { creditsOnce: 3, reviewsPerMonth: 1, drafts: 1 },
+    creator: { credits: 10, reviewsPerMonth: 2, drafts: "unlimited" },
     signed: { signed: true, days: 30 },
     creditPack: { credits: 5 },
     extraReview: { reviews: 1 },

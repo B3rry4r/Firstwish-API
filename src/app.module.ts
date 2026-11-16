@@ -51,6 +51,7 @@ import { JobHandlersModule } from "./modules/job-handlers/job-handlers.module";
 
 // B11: email notices
 import { NoticesModule } from "./modules/notices/notices.module";
+import { StudioModule } from "./modules/studio/studio.module";
 // end B11
 
 /** Registration entry: each resource module adds one import line here. */
@@ -111,6 +112,9 @@ import { NoticesModule } from "./modules/notices/notices.module";
     // B11
     NoticesModule,
     // end B11
+    // B15
+    StudioModule,
+    // end B15
   ],
 })
 export class AppModule {}

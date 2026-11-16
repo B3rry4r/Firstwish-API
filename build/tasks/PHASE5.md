@@ -31,9 +31,18 @@ After Phase 5: Phase 6 wires the 89 screens (bundles of 3 to 5 by area, from .pi
 store) as the exit; Phase 7 smoke; Phase 8 live gate.
 
 ## Current state
-- 16 Nov ~01:30 UTC: wave 3 MERGED into the API branch (8692576): B05 payments, B06 the wish, B07 what a payment buys,
-  B11 email, B10 the receiver's link, on top of waves 1 and 2. 12 of 21 bundles in. Registry DEC-175: 106 resources, 240
-  endpoints; about 95 endpoint ids are in the code. 653 tests.
-- Next wave (all Sonnet): INT-4 base (GG1-GG7, II2-II5, JJ1, LL1-LL4, MM1, NN7 in build/rulings-phase3.md), then B08 refunds,
-  B13 Now Showing and moderation, B17 business, B15 Studio, B16 creators' money, B18 Vault, B19 Concierge, B20 Support,
-  B21 staff reads. Briefs to write.
+CLOSED on 16 Nov 2026 (the API on stand-ins; NOT RUN against Paystack, Google, Resend, Anthropic, R2 or Spaces).
+- 23 bundles in (the 21 cut on 15 Nov plus B22 keep, wake, Pass read, approved dates, ledger rows and B23 the sender's AI writing
+  and the maker's reads, found missing by the route check: ruling GA1). Six shared bases (INT-1 to INT-6), six wave joins.
+- Registry frozen at DEC-209: 107 resources, 253 endpoints (224 HTTP, every one with a route; 29 internal, every one with code).
+- Gates in CI: gates.sh, check-contracts (with the erase rules), check-drift and check-routes, both baselines empty; the full
+  suite: 1122 tests in 104 suites.
+- Every bundle, base, join and patch was checked by a separate Sonnet agent; rulings in build/rulings-phase3.md (S1 to HE1).
+- Left open, listed in build/sweeps/api.md: five lows that need a shared change, five lows from the sweep's check, and one
+  open line (a removed draft client wish does not give its plan wish back): one small API bundle during Phase 6.
+- Owner questions open: which lines carry VAT beyond Pro plans, wish packs and Concierge (creator plans, credit packs, extra
+  reviews, extra Vault space). Owner items still needed: Paystack test keys, Google client ID, Anthropic key, Resend account
+  and DNS, DigitalOcean access, R2 or Spaces, the domain.
+- Spend (build/spend/phase-5.txt, the skill's example rates): 168 agent runs, 142 Sonnet and 24 Opus (the early mistake),
+  about $376; 96% of it in round 1; no run over 200 steps.
+Next: Phase 6 (build/tasks/PHASE6.md).

@@ -55,3 +55,6 @@
   public/fonts; first paint follows the device's light or dark (the base was always dark; R10's mode change).
 - W2 and W14 (from API-BASE-6): "Watch it play" and every link to a style's wish use the style read's showcaseSlug
   (/w/<slug>), never a fixture (components/site/ShowingGallery.tsx:77,140; components/admin/b/Review.tsx:48).
+- W10 (builder, 16 Nov): lib/account.ts fromMe keeps the switcher's creator side after Close (`me.creator ||
+  base.creator`: use `me.creator`; WEB-API-6B's file); UA-345, UA-346, UA-347 (a promotion's end date) and UA-922
+  (base look read on the server) stay open; the app frame stays dark under light mode (check against the base).

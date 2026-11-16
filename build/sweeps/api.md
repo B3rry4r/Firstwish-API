@@ -61,3 +61,7 @@
 - (API-BASE-7) No receipt email is sent after any payment (owner or link holder): R11 says every message goes by
   email: a receipt after a settled payment, to the account's email or the payer's email on the payment (default
   (lead): yes; a template the staff Messages screen lists).
+- (API-BASE-7, from W10's builder) Studio files: a signed read address for a studio file, and POST /uploads taking a
+  DRAFT's styleId (today "No such style"); upload purposes for sound, a 3D model, a poster and a creator's profile
+  picture; a route to turn Signed off or move a style to Open; the payout threshold and day in the price-book read
+  with their provisional mark (R14); GET /v1/wishes carries `publish` (today only the detail does).

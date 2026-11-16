@@ -39,5 +39,10 @@ W1, W2). Each bundle: build -> a separate verifier drives the real screens in a 
 re-check -> merge -> deploy only verified work. Exit: every ui-align task done or deferred by the owner; every stub resolved;
 the R10 gate green; no fixture on a live path; then Phase 7 (API smoke) and Phase 8 (the live gate with real providers).
 
+## Deploys during Phase 6
+The live site has no API behind it yet (hosting waits for the owner's DigitalOcean access), so a wired screen cannot work
+there. W0c (rule fixes, no wiring) is deployed when checked. After it, wiring merges to the work branch and is NOT deployed
+until the API is hosted (Phase 8). A fix the live site needs meanwhile branches from the last deployed commit.
+
 ## Current state
 16 Nov: W0a in (the web gates, a baseline of 526 findings each with its bundle, the live driver: wired 0 of 89, web CI). W0c running. Then W0b, then the screen bundles.

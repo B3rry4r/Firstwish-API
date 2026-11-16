@@ -9,6 +9,7 @@ import { toWireInstant } from "../../common/time/time";
 import type { CreatorState } from "../../contracts";
 import { EntitlementsService } from "../price-book/entitlements.service";
 import { addMonths } from "../purchases/grants";
+import { lastDayInLagos } from "../price-book/price-math";
 import { obj, type Obj } from "./studio-doc";
 
 type Tx = Prisma.TransactionClient;
@@ -27,6 +28,9 @@ interface Row {
   reviewsLeft: number | null;
   renews: Date | null;
   periodEndsAt: Date | null;
+  signedUntil: Date | null;
+  signedEnding: boolean;
+  planEnding: boolean;
 }
 
 const n = (v: unknown, fallback = 0): number => (typeof v === "number" && Number.isFinite(v) ? v : fallback);
@@ -94,7 +98,7 @@ export class CreatorStateService {
       VALUES (${this.ids.id()}::uuid, ${accountId}::uuid, ${rules.creditsOnce}, 0, 0, 'open', ${rules.reviewsPerMonth("open")}, true, false, ${nextMonthStart(now)}, 0)
       ON CONFLICT ("accountId") DO NOTHING`;
     const rows = await tx.$queryRaw<Row[]>`
-      SELECT id::text AS id, plan, credits, "extraReviews", packs, "on", signed, "reviewsLeft", renews, "periodEndsAt"
+      SELECT id::text AS id, plan, credits, "extraReviews", packs, "on", signed, "reviewsLeft", renews, "periodEndsAt", "signedUntil", "signedEnding", "planEnding"
         FROM creator_state WHERE "accountId" = ${accountId}::uuid FOR UPDATE`;
     const s = rows[0];
     if (!s) throw AppError.notFound();
@@ -104,6 +108,20 @@ export class CreatorStateService {
     if (s.plan === "creator" && !paid) {
       data.plan = "open";
       s.plan = "open";
+    }
+    // HW3: a plan that was moved to Open runs to its paid day and is not renewed: after that day nothing is left of it
+    if (!paid && s.planEnding) {
+      data.planEnding = false;
+      s.planEnding = false;
+    }
+    // HW3: Signed runs to its paid day; after it Signed is off whether it was turned off or not
+    if (s.signed && s.signedUntil !== null && s.signedUntil.getTime() <= now.getTime()) {
+      data.signed = false;
+      data.signedEnding = false;
+      data.signedUntil = null;
+      s.signed = false;
+      s.signedEnding = false;
+      s.signedUntil = null;
     }
     if (s.periodEndsAt === null || s.periodEndsAt.getTime() <= now.getTime()) {
       const next = effective === "creator" && s.renews ? s.renews : nextMonthStart(now);
@@ -128,7 +146,60 @@ export class CreatorStateService {
       renews: toWireInstant(s.renews ?? s.periodEndsAt ?? addMonths(this.clock.now(), 1)),
       reviewsLeft: n(s.reviewsLeft),
       signed: s.signed ?? false,
+      ...this.ending(s),
     };
+  }
+
+  /** HW3: each read says until which day the Creator plan and Signed run, and whether each was turned off (then it is not renewed). */
+  private ending(s: Row & { effective: Plan }): Pick<CreatorState, "planUntil" | "planEndsOn" | "planEnding" | "signedUntil" | "signedEndsOn" | "signedEnding"> {
+    const planOn = s.effective === "creator" && s.renews !== null;
+    const signedOn = s.signed === true && s.signedUntil !== null;
+    return {
+      planUntil: planOn && s.renews ? toWireInstant(s.renews) : null,
+      planEndsOn: planOn && s.renews ? lastDayInLagos(s.renews) : null,
+      planEnding: planOn && s.planEnding,
+      signedUntil: signedOn && s.signedUntil ? toWireInstant(s.signedUntil) : null,
+      signedEndsOn: signedOn && s.signedUntil ? lastDayInLagos(s.signedUntil) : null,
+      signedEnding: signedOn && s.signedEnding,
+    };
+  }
+
+  /**
+   * HW3 (E-44): turn Signed off or back on, and move from Creator to Open or back. Neither refunds and neither writes a ledger row:
+   * what is paid runs to its paid day and is not renewed. Back on before that day costs nothing more for the period; after it the
+   * plan is Open and Signed is off, so a new payment is the way back (402).
+   */
+  async setPlan(accountId: string, body: { signed?: boolean; plan?: string }): Promise<CreatorState> {
+    return this.db.$transaction(async (tx) => {
+      await lockAccount(tx, accountId);
+      const s = await this.lockRolled(tx, accountId);
+      const data: Prisma.CreatorStateUpdateInput = {};
+      if (body.signed !== undefined) {
+        const running = s.signed === true && s.signedUntil !== null;
+        if (body.signed === false) {
+          if (!running) throw AppError.conflict("not_signed", "Signed is not on.");
+          data.signedEnding = true;
+          s.signedEnding = true;
+        } else if (running) {
+          data.signedEnding = false;
+          s.signedEnding = false;
+        } else throw new AppError(402, "signed_needed", "Signed is not paid for. Pay for Signed to turn it on.");
+      }
+      if (body.plan !== undefined) {
+        const running = s.effective === "creator" && s.renews !== null;
+        if (body.plan === "open") {
+          if (!running) throw AppError.conflict("already_open", "You are on the Open plan.");
+          data.planEnding = true;
+          s.planEnding = true;
+        } else if (body.plan === "creator") {
+          if (!running) throw new AppError(402, "plan_needed", "The Creator plan is not paid for. Pay for it to move back.");
+          data.planEnding = false;
+          s.planEnding = false;
+        } else throw AppError.validation({ plan: "Must be open or creator." });
+      }
+      if (Object.keys(data).length) await tx.creatorState.update({ where: { id: s.id }, data: { ...data, version: { increment: 1 } } });
+      return this.toWire(accountId, s);
+    });
   }
 
   /** E-43. Reading rolls the month, so it is a write: it takes the account lock like every write on an account (AA1). */

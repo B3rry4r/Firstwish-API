@@ -7,6 +7,8 @@ import { IdGenerator } from "../../common/ports/ids.port";
 import type { RefundEventSink } from "../payments/refund-event-sink";
 import { withFlag } from "../payments/payment-options";
 import { AuditService } from "../audit/audit.service";
+import { NoticesService } from "../notices/notices.service";
+import { nairaText } from "../payments/receipt";
 import { InvoicesService } from "../pro-business/invoices.service";
 import { PurchasesService } from "../purchases/purchases.service";
 import { RoyaltiesService } from "../royalties/royalties.service";
@@ -37,6 +39,7 @@ export class RefundEvents implements RefundEventSink {
     private readonly purchases: PurchasesService,
     private readonly invoices: InvoicesService,
     private readonly royalties: RoyaltiesService,
+    private readonly notices: NoticesService,
   ) {}
 
   async apply(eventRowId: string, type: string, data: Record<string, unknown>): Promise<void> {
@@ -54,6 +57,24 @@ export class RefundEvents implements RefundEventSink {
       const outcome = await this.applyLocked(tx, eventRowId, type, data, pre.id);
       await this.finish(tx, eventRowId, outcome.outcome, outcome.detail);
     });
+    await this.sendNoticeNow(pre.id);
+  }
+
+  /** The refund notice was queued with the refund's own transaction; once that has committed it goes at once. */
+  private async sendNoticeNow(paymentId: string): Promise<void> {
+    const refund = await this.db.refund.findFirst({ where: { paymentId, status: "succeeded" }, select: { id: true } });
+    if (!refund) return;
+    const row = await this.db.messageDelivery.findFirst({ where: { idempotencyKey: `refund:${refund.id}`, status: "queued" }, select: { id: true } });
+    if (row) await this.notices.deliverNow(row.id);
+  }
+
+  /** HW1: the refund's own notice, to the account's email or the payer's email on the payment (once per refund). */
+  private async notice(tx: Prisma.TransactionClient, payment: { accountId: string | null; payerContact: string | null; providerReference: string }, refundId: string, amountKobo: bigint): Promise<void> {
+    const name = payment.accountId ? (await tx.account.findUnique({ where: { id: payment.accountId }, select: { name: true } }))?.name ?? null : null;
+    const data = { name: name?.trim() || "there", amount: nairaText(amountKobo), reference: payment.providerReference };
+    const key = `refund:${refundId}`;
+    if (payment.accountId) await this.notices.send(tx, { template: "refund", toAccountId: payment.accountId, data, key });
+    else if (payment.payerContact) await this.notices.send(tx, { template: "refund", toEmail: payment.payerContact, data, key });
   }
 
   /**
@@ -113,6 +134,7 @@ export class RefundEvents implements RefundEventSink {
     await this.royalties.reverse(tx, paymentId);
     await tx.refund.update({ where: { id: refund.id }, data: { status: "succeeded", updatedAt: now } });
     await tx.payment.update({ where: { id: paymentId }, data: { status: "refunded", flags: payment.flags.filter((f) => f !== "refund_due" && f !== "refund_amount_mismatch"), updatedAt: now } });
+    await this.notice(tx, payment, refund.id, refund.amountKobo);
     const kept = revoked.filter((r) => !NOTHING_KEPT.has(r.result));
     if (kept.length) {
       const keptText = refusalText(`Money went back; kept: ${kept.map((k) => `${k.sku} (${k.result})`).join(", ")}`);

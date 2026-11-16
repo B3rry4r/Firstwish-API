@@ -78,7 +78,7 @@ export class JobHandlers implements OnModuleInit, OnApplicationBootstrap {
       const removed = await this.files.eraseFilesOf(c.subjectId.slice(ERASE_FILES_PREFIX.length));
       return { changed: { removed } };
     }
-    const removed = await this.files.sweepUnconfirmed();
+    const removed = (await this.files.sweepUnconfirmed()) + (await this.files.sweepUnattached());
     return { changed: { removed }, again: new Date(c.now.getTime() + UPLOAD_CLEANUP_EVERY_MS) };
   }
 

@@ -8,6 +8,7 @@ import { BookLine, BookVersion, PriceBookService, safe } from "./price-book.serv
 /** The two setting lines staff change through the same book. */
 export const PROMOTION_KEY = "promotion.endsAt";
 import { DEFAULT_RUN_DAY } from "../payouts/run-day";
+import type { LimitLine } from "./book-limits";
 export const PAYOUT_KEY = "payout.thresholdKobo";
 
 export interface LineContext {
@@ -18,6 +19,8 @@ export interface LineContext {
   reason?: string;
   /** The public book: a promoted price is shown only while the promotion is on (staff always see the stored one). */
   public?: boolean;
+  /** HW6: the book's Concierge delivery hours (the lifecycle row), served on every line instead of the grant's own field */
+  deliveryHours?: number;
 }
 
 const groupOf = (sku: string) => sku.slice(0, Math.max(0, sku.indexOf("."))) || sku;
@@ -52,7 +55,7 @@ export function priceOf(line: BookLine, ctx: LineContext): Price {
     sla: "",
     reason: ctx.reason ?? "",
     items: ctx.grant ? [ctx.grant] : [],
-    conciergeDeliveryHours: num(ctx.grant?.deliveryHours),
+    conciergeDeliveryHours: ctx.deliveryHours ?? num(ctx.grant?.deliveryHours),
     conciergeSingleWish: single ? safe(PriceBookService.chargedAt(single, ctx.at)) : 0,
     changed: ctx.changed ?? false,
   };
@@ -83,6 +86,21 @@ export function payoutLineOf(valueKobo: number, status: string, schedule: string
     per: schedule,
     payoutDay,
     lead: status,
+    reason,
+    changed,
+  };
+}
+
+/** One of the book's limits (HX1) as a setting line: value is the number in its unit (bytes, hours or days); the code that acts on it reads the same row. */
+export function limitLineView(def: LimitLine, value: number, book: BookVersion, reason = "", changed = false): Price {
+  return {
+    ...settingBase(def.key, def.name, "limits", book.version),
+    kind: def.unit,
+    price: value,
+    value,
+    was: value,
+    per: def.unit,
+    lead: "PROVISIONAL",
     reason,
     changed,
   };

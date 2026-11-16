@@ -18,6 +18,7 @@ import { PriceBookService } from "../price-book/price-book.service";
 import { discounted } from "../price-book/price-math";
 import { BusinessOf } from "../people/business-of";
 import { ReceiverActivityService } from "../public-wishes/receiver-activity.service";
+import { readLimits } from "../price-book/book-limits";
 import { canMove, dueAtFor, OPEN, stateOf, UUID } from "./order-state";
 
 const SECTION = "/admin/concierge";
@@ -333,9 +334,8 @@ export class ConciergeService implements OnModuleInit {
     if (!canMove(o.status, "paid")) return refuse("order_not_open");
     if (ext.amountKobo !== payment.amountKobo) return refuse("amount_mismatch");
     const now = this.clock.now();
-    const grant = await ctx.grant();
-    const hours = typeof grant.deliveryHours === "number" ? grant.deliveryHours : null;
-    const dueAt = dueAtFor(o.kind, now, hours);
+    // HW6: one source: the book's lifecycle row says how many hours one wish takes
+    const dueAt = dueAtFor(o.kind, now, (await readLimits(tx)).conciergeDeliveryHours);
     await tx.conciergeOrder.update({ where: { id: orderId }, data: { status: "paid", deliverBy: dueAt } });
     await tx.$executeRaw`UPDATE concierge_order_ext SET "paymentId" = ${payment.id}::uuid, "paidAt" = ${now}, "dueAt" = ${dueAt} WHERE "orderId" = ${orderId}::uuid`;
     // CA3 (T-40): a business's order leaves an invoice, linked on the order; a person's payment names no business and leaves none.

@@ -9,7 +9,8 @@ import {
 } from "../../contracts";
 import type { PostAdminPeopleByIdContactRevealResponse } from "../../contracts";
 import type { AuditActor } from "../audit/audit.service";
-import { AdminRoute, StaffActor } from "../role-access/staff-section.guard";
+import { AdminRoute, StaffActions, StaffActor } from "../role-access/staff-section.guard";
+import { PERSON_ACTION_ROLES, WISH_ACTION_ROLES } from "./action-roles";
 import { AdminJobsService } from "./admin-jobs.service";
 import { AdminPeopleService } from "./admin-people.service";
 import { AdminWishesService } from "./admin-wishes.service";
@@ -100,6 +101,7 @@ export class AdminWishesController {
   /** E-220: take_down, restore, extend, resend or refund, each with a reason. */
   @AdminRoute("/admin/wishes", "moderator", "ops", "owner", "support")
   @Post(":no/actions")
+  @StaffActions(WISH_ACTION_ROLES)
   @HttpCode(200)
   act(@Param() p: PostAdminWishesByNoActionsParamsDto, @Body() b: PostAdminWishesByNoActionsBodyDto, @StaffActor() actor: AuditActor, @CurrentPrincipal() who: Principal | undefined) {
     return this.wishes.act(p.no, b.action, b.reason, actor, rolesOf(who).includes("owner"), rolesOf(who));
@@ -127,6 +129,7 @@ export class AdminPeopleController {
   /** E-3: ban, lift or erase, with a reason. */
   @AdminRoute("/admin/people", "moderator", "ops", "owner", "support")
   @Post(":id/actions")
+  @StaffActions(PERSON_ACTION_ROLES)
   @HttpCode(200)
   act(@Param() p: PostAdminPeopleByIdActionsParamsDto, @Body() b: PostAdminPeopleByIdActionsBodyDto, @StaffActor() actor: AuditActor, @CurrentPrincipal() who: Principal | undefined) {
     return this.people.act(p.id, b.action, b.reason, actor, rolesOf(who));
@@ -136,7 +139,7 @@ export class AdminPeopleController {
   @AdminRoute("/admin/people", "moderator", "ops", "owner", "support")
   @Post(":id/contact-reveal")
   @HttpCode(200)
-  reveal(@Param() p: PostAdminPeopleByIdContactRevealParamsDto, @Body() b: PostAdminPeopleByIdContactRevealBodyDto, @StaffActor() actor: AuditActor): Promise<PostAdminPeopleByIdContactRevealResponse> {
+  contactReveal(@Param() p: PostAdminPeopleByIdContactRevealParamsDto, @Body() b: PostAdminPeopleByIdContactRevealBodyDto, @StaffActor() actor: AuditActor): Promise<PostAdminPeopleByIdContactRevealResponse> {
     return this.people.reveal(p.id, b.reason, actor);
   }
 }

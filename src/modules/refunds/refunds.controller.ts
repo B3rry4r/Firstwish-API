@@ -92,7 +92,7 @@ export class AdminRefundsController {
   /** E-145 (registry auth: finance, owner, support): ask for a refund of a whole, paid payment. */
   @AdminRoute(SECTION, "finance", "owner", "support")
   @Post()
-  start(@Body() b: PostAdminRefundsBodyDto, @StaffActor() actor: AuditActor): Promise<PostAdminRefundsResponse> {
+  startRefund(@Body() b: PostAdminRefundsBodyDto, @StaffActor() actor: AuditActor): Promise<PostAdminRefundsResponse> {
     return this.refunds.start({ paymentId: b.paymentId, amountKobo: b.amountKobo, reason: b.reason }, actor);
   }
 
@@ -100,7 +100,7 @@ export class AdminRefundsController {
   @AdminRoute(SECTION, "finance", "owner")
   @Post(":id/approve-refund")
   @HttpCode(200)
-  approve(@Param() p: PostAdminRefundsByIdApproveRefundParamsDto, @Body() b: PostAdminRefundsByIdApproveRefundBodyDto, @StaffActor() actor: AuditActor) {
+  approveRefund(@Param() p: PostAdminRefundsByIdApproveRefundParamsDto, @Body() b: PostAdminRefundsByIdApproveRefundBodyDto, @StaffActor() actor: AuditActor) {
     return this.refunds.approve(p.id, b.reason, actor);
   }
 }
@@ -124,7 +124,7 @@ export class AdminReconciliationsController {
   /** E-144 (finance, owner): check a finished day against the provider now. A day already checked answers its stored row. */
   @AdminRoute(SECTION, "finance", "owner")
   @Post()
-  run(@Body() b: PostAdminReconciliationsBodyDto, @StaffActor() actor: AuditActor): Promise<PostAdminReconciliationsResponse> {
+  runReconciliation(@Body() b: PostAdminReconciliationsBodyDto, @StaffActor() actor: AuditActor): Promise<PostAdminReconciliationsResponse> {
     return this.days.runByStaff(b.day, b.reason, actor);
   }
 }

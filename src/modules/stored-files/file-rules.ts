@@ -21,7 +21,7 @@ export const IMAGE_WIDTHS = [320, 768, 1600] as const;
 /** The contract's longest voice note (E-182: up to 180 s). */
 export const MAX_VOICE_SECONDS = 180;
 
-export type UploadPurpose = "wish-photo" | "voice-note" | "video-clip" | "vault-file" | "studio-asset" | "brand-logo";
+export type UploadPurpose = "wish-photo" | "voice-note" | "video-clip" | "vault-file" | "studio-asset" | "studio-sound" | "studio-model" | "brand-logo" | "profile-picture";
 
 /** Y1: a signed PUT points at this staging key only; the file's own key (objectKey) is never signed for a PUT. */
 export const STAGING_PREFIX = "incoming/";
@@ -32,6 +32,7 @@ export const STAGING_SWEEP_AFTER_SECONDS = UPLOAD_TTL_SECONDS + 60;
 const IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/heic", "image/gif"];
 const AUDIO_TYPES = ["audio/webm", "audio/mpeg", "audio/mp4", "audio/x-m4a", "audio/ogg", "audio/wav"];
 const VIDEO_TYPES = ["video/mp4", "video/quicktime", "video/webm"];
+const MODEL_TYPES = ["model/gltf-binary"];
 
 export interface PurposeRule {
   purpose: UploadPurpose;
@@ -49,7 +50,29 @@ export const RULES: Record<UploadPurpose, PurposeRule> = {
   /** Studio assets and (AA5) a brand logo take the photo rules: the same image types, no SVG, the same size. */
   "studio-asset": { purpose: "studio-asset", db: "studio_asset", maxBytes: 15 * MB, types: IMAGE_TYPES },
   "brand-logo": { purpose: "brand-logo", db: "brand_logo", maxBytes: 15 * MB, types: IMAGE_TYPES },
+  /** HW2: a style's sound and 3D model are Studio files too (kind sound, kind model); the size limits come from the price book (readLimits). */
+  "studio-sound": { purpose: "studio-sound", db: "studio_asset", maxBytes: 10 * MB, types: AUDIO_TYPES },
+  "studio-model": { purpose: "studio-model", db: "studio_asset", maxBytes: 15 * MB, types: MODEL_TYPES },
+  /** HW2: a creator's profile picture takes the photo rules. */
+  "profile-picture": { purpose: "profile-picture", db: "profile_picture", maxBytes: 15 * MB, types: IMAGE_TYPES },
 };
+
+/** HW2/HW6: the most a purpose's file may weigh, from the price book's limits (a purpose with no book limit keeps its own). */
+export function maxBytesFor(rule: PurposeRule, limits: { photoMaxBytes: number; soundMaxBytes: number; modelMaxBytes: number }): number {
+  switch (rule.purpose) {
+    case "wish-photo":
+    case "studio-asset":
+    case "brand-logo":
+    case "profile-picture":
+      return limits.photoMaxBytes;
+    case "studio-sound":
+      return limits.soundMaxBytes;
+    case "studio-model":
+      return limits.modelMaxBytes;
+    default:
+      return rule.maxBytes;
+  }
+}
 
 const PURPOSE_ALIASES: Record<string, UploadPurpose> = {
   photo: "wish-photo",
@@ -62,6 +85,16 @@ const PURPOSE_ALIASES: Record<string, UploadPurpose> = {
   "vault-file": "vault-file",
   studio: "studio-asset",
   "studio-asset": "studio-asset",
+  picture: "studio-asset",
+  "style-picture": "studio-asset",
+  poster: "studio-asset",
+  "style-poster": "studio-asset",
+  sound: "studio-sound",
+  "style-sound": "studio-sound",
+  model: "studio-model",
+  "style-model": "studio-model",
+  profile: "profile-picture",
+  "profile-picture": "profile-picture",
   brand: "brand-logo",
   "brand-logo": "brand-logo",
 };

@@ -4,6 +4,7 @@ import { decodeCursor, DEFAULT_LIMIT, encodeCursor, Page } from "../../common/pa
 import { Clock } from "../../common/ports/clock.port";
 import { isUuidV7 } from "../../common/ids/uuidv7";
 import { AppError } from "../../common/errors/app-error";
+import { SignedUrlsService } from "../stored-files/signed-urls.service";
 import { findPublicCreator, listPublicCreators, lookupHandle, PublicCreator, toPublicCreator } from "../accounts/public-creators";
 
 /** E-42: creators to follow: every public creator page, in join order. Public fields only. */
@@ -12,6 +13,7 @@ export class CreatorsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly clock: Clock,
+    private readonly signed: SignedUrlsService,
   ) {}
 
   async list(viewerId: string | null, cursor: string | undefined, limit = DEFAULT_LIMIT): Promise<Page<PublicCreator>> {
@@ -28,7 +30,7 @@ export class CreatorsService {
       for (const f of mine) if (f.handle) follows.add(f.handle);
     }
     const page = rows.slice(0, limit);
-    const items = page.map((r) => toPublicCreator(r, { accountId: viewerId, follows }));
+    const items = await Promise.all(page.map(async (r) => ({ ...toPublicCreator(r, { accountId: viewerId, follows }), img: await this.pictureOf(r.img) })));
     const last = page[page.length - 1];
     return { items, nextCursor: rows.length > limit && last ? encodeCursor({ key: 0, id: last.creatorId }) : null };
   }
@@ -48,6 +50,12 @@ export class CreatorsService {
       const mine = await this.prisma.follow.findFirst({ where: { accountId: viewerId, handle: row.handle }, select: { id: true } });
       if (mine) follows.add(row.handle);
     }
-    return toPublicCreator(row, { accountId: viewerId, follows });
+    return { ...toPublicCreator(row, { accountId: viewerId, follows }), img: await this.pictureOf(row.img) };
+  }
+
+  /** HW2: a profile picture is a file id on the creator row; anyone reads it as a signed address once it passed screening (any other text stays as it was). */
+  private async pictureOf(img: string | null): Promise<string | null> {
+    if (!img || !/^[0-9a-f-]{36}$/i.test(img)) return img;
+    return (await this.signed.signedRead({ fileId: img }, { type: "allowed" }).catch(() => null))?.url ?? null;
   }
 }

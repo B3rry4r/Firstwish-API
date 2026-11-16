@@ -1788,6 +1788,33 @@
         "public"
       ],
       "decision": "DEC-238"
+    },
+    {
+      "resource": "StudioStyle",
+      "method": "GET",
+      "path": "/v1/studio/styles/:id/files",
+      "auth": [
+        "role:creator"
+      ],
+      "decision": "DEC-245"
+    },
+    {
+      "resource": "StudioStyle",
+      "method": "GET",
+      "path": "/v1/studio/styles/:id/files/:fileId",
+      "auth": [
+        "role:creator"
+      ],
+      "decision": "DEC-245"
+    },
+    {
+      "resource": "PublicWishView",
+      "method": "GET",
+      "path": "/v1/w/:slug/style-files",
+      "auth": [
+        "public"
+      ],
+      "decision": "DEC-245"
     }
   ],
   "fulfilment": {
@@ -1968,7 +1995,8 @@
         "priceKobo": "integer (kobo, optional; at least one of priceKobo, listKobo, promotionEndsAt, payoutDay)",
         "listKobo": "integer (kobo, optional; at least one of priceKobo, listKobo, promotionEndsAt, payoutDay)",
         "promotionEndsAt": "time (ISO-8601, optional; at least one of priceKobo, listKobo, promotionEndsAt, payoutDay)",
-        "payoutDay": "integer (optional; a whole day 1 to 28, the payout run's day; at least one of priceKobo, listKobo, promotionEndsAt, payoutDay) (DEC-233)"
+        "payoutDay": "integer (optional; a whole day 1 to 28, the payout run's day; at least one of priceKobo, listKobo, promotionEndsAt, payoutDay) (DEC-233)",
+        "value": "integer (optional; the new value of a limit line limits.photoMaxBytes, limits.soundMaxBytes, limits.modelMaxBytes, limits.conciergeDeliveryHours or limits.unopenedDays, in the line's kind: bytes, hours or days; a limit line takes it alone) (DEC-252)"
       }
     },
     "POST /v1/admin/refunds": {
@@ -2109,11 +2137,11 @@
       }
     },
     "GET /v1/price-book": {
-      "decision": "DEC-161",
+      "decision": "DEC-247",
       "response": {
         "entity": "PriceBook",
         "cardinality": "page",
-        "note": "{version, items, promotion, lifecycle, entitlements, nextCursor} (DEC-161)"
+        "note": "{version, items, promotion, lifecycle, entitlements, payout, nextCursor} (DEC-161, DEC-247)"
       }
     },
     "POST /v1/uploads": {
@@ -2737,6 +2765,38 @@
         "cardinality": "single",
         "note": "the plan state with the usage fields first, offers[] (what a payment for each plan would do), pending (the waiting plan payment) (DEC-236)"
       }
+    },
+    "GET /v1/studio/styles/:id/files": {
+      "decision": "DEC-245",
+      "response": {
+        "entity": "StudioStyle",
+        "cardinality": "page",
+        "note": "StyleFile[]: {fileId, purpose, kind image, sound or model, contentType, bytes, status, url, expiresAt, createdAt}: the owner's signed reads of the style's files, a draft's too (DEC-245)"
+      }
+    },
+    "GET /v1/studio/styles/:id/files/:fileId": {
+      "decision": "DEC-245",
+      "response": {
+        "entity": "StudioStyle",
+        "cardinality": "single",
+        "note": "one StyleFile as the list gives it (DEC-245)"
+      }
+    },
+    "GET /v1/w/:slug/style-files": {
+      "decision": "DEC-245",
+      "response": {
+        "entity": "PublicWishView",
+        "cardinality": "single",
+        "note": "{style, items: StyleFile[]}: the files of the wish's style once that style is approved, files that passed screening only (DEC-245)"
+      }
+    },
+    "PATCH /v1/studio/me": {
+      "decision": "DEC-246",
+      "set": {
+        "on": "boolean (optional: the Studio on or off)",
+        "signed": "boolean (optional: false turns Signed off, true turns it back on before its paid day)",
+        "plan": "string (optional: open moves from Creator to Open and runs to the paid day, creator moves back before that day)"
+      }
     }
   },
   "extraFields": [
@@ -3145,6 +3205,90 @@
       "type": "string",
       "nullable": false,
       "decision": "DEC-240"
+    },
+    {
+      "resource": "CreatorState",
+      "name": "planUntil",
+      "type": "string",
+      "nullable": true,
+      "decision": "DEC-246"
+    },
+    {
+      "resource": "CreatorState",
+      "name": "planEndsOn",
+      "type": "string",
+      "nullable": true,
+      "decision": "DEC-246"
+    },
+    {
+      "resource": "CreatorState",
+      "name": "planEnding",
+      "type": "boolean",
+      "nullable": false,
+      "decision": "DEC-246"
+    },
+    {
+      "resource": "CreatorState",
+      "name": "signedUntil",
+      "type": "string",
+      "nullable": true,
+      "decision": "DEC-246"
+    },
+    {
+      "resource": "CreatorState",
+      "name": "signedEndsOn",
+      "type": "string",
+      "nullable": true,
+      "decision": "DEC-246"
+    },
+    {
+      "resource": "CreatorState",
+      "name": "signedEnding",
+      "type": "boolean",
+      "nullable": false,
+      "decision": "DEC-246"
+    },
+    {
+      "resource": "LifecycleConfig",
+      "name": "photoMaxBytes",
+      "type": "integer",
+      "nullable": false,
+      "decision": "DEC-248"
+    },
+    {
+      "resource": "LifecycleConfig",
+      "name": "soundMaxBytes",
+      "type": "integer",
+      "nullable": false,
+      "decision": "DEC-248"
+    },
+    {
+      "resource": "LifecycleConfig",
+      "name": "modelMaxBytes",
+      "type": "integer",
+      "nullable": false,
+      "decision": "DEC-248"
+    },
+    {
+      "resource": "LifecycleConfig",
+      "name": "conciergeDeliveryHours",
+      "type": "integer",
+      "nullable": false,
+      "decision": "DEC-248"
+    },
+    {
+      "resource": "LifecycleConfig",
+      "name": "unopenedDays",
+      "type": "integer",
+      "nullable": false,
+      "decision": "DEC-248"
+    },
+    {
+      "resource": "Account",
+      "name": "picture",
+      "type": "object",
+      "nullable": true,
+      "decision": "DEC-245"
     }
   ],
   "dropFields": [

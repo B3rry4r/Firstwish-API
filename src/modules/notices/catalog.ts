@@ -3,7 +3,7 @@ import { maskEmail } from "../../common/normalise/mask-email";
  * The messages Firstwish sends (B11; B18 adds the reveal message; INT-4 adds the staff invite, B17 the business login invite, WW5 the bank-changed message). Every one goes by email (R11). The wording lives in the MessageTemplate table
  * (seeded from the web app, edited by staff); this file holds what the wording may name and what the code needs from it.
  */
-export type TemplateKey = "sealed" | "opens" | "opened" | "resting" | "code" | "invite" | "login-invite" | "logins-over" | "bank-changed" | "support" | "concierge-delivered" | "reveal";
+export type TemplateKey = "sealed" | "opens" | "opened" | "resting" | "code" | "invite" | "login-invite" | "logins-over" | "bank-changed" | "support" | "concierge-delivered" | "reveal" | "receipt" | "refund";
 
 export interface TemplateSpec {
   key: TemplateKey;
@@ -73,6 +73,14 @@ export const TEMPLATES: Readonly<Record<TemplateKey, TemplateSpec>> = {
   reveal: {
     key: "reveal", label: "Your photos are ready", when: "When a business sends a client the proofs or finals of a shoot (B18).", audience: "The client of the business",
     allowed: ["name", "business", "link"], needs: ["business", "link"], purpose: "wish-delivery", noticeKind: null, mutable: false,
+  },
+  receipt: {
+    key: "receipt", label: "Your receipt", when: "When a payment settles (HW1): one email for each payment, whatever it paid for.", audience: "The account that paid, or the link holder who paid",
+    allowed: ["name", "amount", "items", "reference"], needs: ["amount", "items", "reference"], purpose: "receipt", noticeKind: null, mutable: false,
+  },
+  refund: {
+    key: "refund", label: "Your refund", when: "When the provider confirms a refund (HW1).", audience: "The account that was refunded, or the link holder who paid",
+    allowed: ["name", "amount", "reference"], needs: ["amount", "reference"], purpose: "receipt", noticeKind: null, mutable: false,
   },
 };
 

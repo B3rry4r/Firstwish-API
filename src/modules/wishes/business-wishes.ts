@@ -3,7 +3,7 @@ import type { Prisma } from "@prisma/client";
 type Tx = Prisma.TransactionClient;
 
 /**
- * ZB4, ZB5: a wish that carries a business belongs to the business, not to the login who made it. Every wish of the business
+ * ZB4, ZB5: a wish that carries a business is the business's, not the login's who made it. Every wish of the business
  * made from one of `fromAccountIds` (drafts, sealed, live, resting) passes to the business owner's account. One statement, in
  * the caller's transaction. A business whose owner is erased is left alone (its erase handles its wishes). Answers how many moved.
  */

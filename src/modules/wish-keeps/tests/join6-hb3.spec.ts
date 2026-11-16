@@ -150,7 +150,7 @@ describe("join 6: the end function at first open and rest; cancelling a job; an 
     await pay(o.accountId, "pass.year", null);
     expect((await endOf(db as never, w, { now: t.clock.now() })).by).toBe("pass");
     const later = at(400);
-    const e = await endOf(db as never, w, { now: later });
+    const e = await endOf(db, w, { now: later });
     expect(e.passEnd).toBeNull();
     expect(e.by).toBeNull();
     expect(e.end!.getTime()).toBe(at(2).getTime());

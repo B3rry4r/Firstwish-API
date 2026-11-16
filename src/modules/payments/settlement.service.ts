@@ -7,9 +7,11 @@ import { IdGenerator } from "../../common/ports/ids.port";
 import { EntitlementsService, grantOf } from "../price-book/entitlements.service";
 import { PriceBookService } from "../price-book/price-book.service";
 import { EventsService } from "../events/events.service";
+import { NoticesService } from "../notices/notices.service";
 import { FulfilmentRegistry, type PaidLineInfo } from "./fulfilment.registry";
 import { paymentEntries } from "./ledger";
 import { readOptions, withFlag, writeOptions } from "./payment-options";
+import { receiptData } from "./receipt";
 
 /** What the provider says about one payment: from a verify call or a webhook event. Never from a request the payer sent. */
 export interface ProviderAnswer {
@@ -65,6 +67,7 @@ export class SettlementService {
     private readonly entitlements: EntitlementsService,
     private readonly events: EventsService,
     private readonly registry: FulfilmentRegistry,
+    private readonly notices: NoticesService,
   ) {}
 
   /**
@@ -72,13 +75,24 @@ export class SettlementService {
    * outcome), so a rollback leaves it unprocessed and the next delivery retries.
    */
   async settle(answer: ProviderAnswer, webhookEventId?: string): Promise<SettleResult> {
+    let result: SettleResult;
     try {
-      return await this.settleOnce(answer, webhookEventId);
+      result = await this.settleOnce(answer, webhookEventId);
     } catch (e) {
       // a deadlock (40P01) or a serialization failure (40001) rolled the whole settle back: run it once more
       if (!isLockConflict(e)) throw e;
-      return this.settleOnce(answer, webhookEventId);
+      result = await this.settleOnce(answer, webhookEventId);
     }
+    if (result.outcome === "fulfilled") await this.sendReceiptNow(answer.reference);
+    return result;
+  }
+
+  /** The receipt was queued in the settle transaction; once that has committed it goes at once instead of at the next tick. */
+  private async sendReceiptNow(reference: string): Promise<void> {
+    const p = await this.db.payment.findUnique({ where: { providerReference: reference }, select: { id: true } });
+    if (!p) return;
+    const row = await this.db.messageDelivery.findFirst({ where: { idempotencyKey: `receipt:${p.id}`, status: "queued" }, select: { id: true } });
+    if (row) await this.notices.deliverNow(row.id);
   }
 
   /**
@@ -142,7 +156,7 @@ export class SettlementService {
       flagged = true;
     }
     const lines = paidLines(p);
-    await this.writeLedger(tx, p, a, lines);
+    const vatKobo = await this.writeLedger(tx, p, a, lines);
     await tx.payment.update({
       where: { id: p.id },
       data: {
@@ -163,6 +177,7 @@ export class SettlementService {
       if (!handler) throw new Error(`fulfilment: no handler registered for ${line.sku}`);
       await handler({ tx, payment: paid, line, request: opts.request, grant: () => this.grantIn(tx, line.sku) });
     }
+    await this.receipt(tx, paid, lines, vatKobo);
     return { outcome: "fulfilled", flagged };
   }
 
@@ -197,7 +212,19 @@ export class SettlementService {
     return g;
   }
 
-  private async writeLedger(tx: Prisma.TransactionClient, p: Payment, a: ProviderAnswer, lines: PaidLineInfo[]): Promise<void> {
+  /**
+   * HW1 (R11): one receipt email for the settled payment, in the settle transaction, to the account's email or the payer's email kept
+   * on the payment when a link holder paid. The key is the payment's id, so a second settle, a replayed webhook or a retry sends none.
+   */
+  private async receipt(tx: Prisma.TransactionClient, p: Payment, lines: PaidLineInfo[], vatKobo: bigint): Promise<void> {
+    const name = p.accountId ? (await tx.account.findUnique({ where: { id: p.accountId }, select: { name: true } }))?.name ?? null : null;
+    const data = receiptData(p, lines, vatKobo, name);
+    const key = `receipt:${p.id}`;
+    if (p.accountId) await this.notices.send(tx, { template: "receipt", toAccountId: p.accountId, data, key });
+    else if (p.payerContact) await this.notices.send(tx, { template: "receipt", toEmail: p.payerContact, data, key });
+  }
+
+  private async writeLedger(tx: Prisma.TransactionClient, p: Payment, a: ProviderAnswer, lines: PaidLineInfo[]): Promise<bigint> {
     const book = await this.book.load(p.priceBookVersion, tx);
     const vatIncluded = new Map(book.lines.map((l) => [l.sku, l.vatIncluded]));
     const entitlements = await this.entitlements.row(tx);
@@ -222,6 +249,7 @@ export class SettlementService {
         createdAt: at,
       })),
     });
+    return drafts.filter((d) => d.account === "vat_payable").reduce((sum, d) => sum + d.amountKobo, 0n);
   }
 
   /** The server's own "paid" event, in the payment's transaction (once per reference). A style named in the request counts the style. */

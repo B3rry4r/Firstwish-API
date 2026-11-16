@@ -1,5 +1,6 @@
 import { Module } from "@nestjs/common";
 import { EventsModule } from "../events/events.module";
+import { NoticesModule } from "../notices/notices.module";
 import { PeopleModule } from "../people/people.module";
 import { AbandonPayments } from "./abandon";
 import { FulfilmentRegistry } from "./fulfilment.registry";
@@ -13,7 +14,7 @@ import { WebhookService } from "./webhook.service";
  * FulfilmentRegistry and registers one handler per price-book line.
  */
 @Module({
-  imports: [EventsModule, PeopleModule],
+  imports: [EventsModule, PeopleModule, NoticesModule],
   controllers: [PaymentsController, PaystackWebhookController],
   providers: [PaymentsService, SettlementService, WebhookService, FulfilmentRegistry, AbandonPayments],
   exports: [PaymentsService, SettlementService, FulfilmentRegistry, AbandonPayments],

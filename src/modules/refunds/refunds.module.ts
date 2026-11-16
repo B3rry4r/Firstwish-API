@@ -1,6 +1,7 @@
 import { Global, Logger, Module, OnApplicationBootstrap, OnModuleInit } from "@nestjs/common";
 import { Clock } from "../../common/ports/clock.port";
 import { JobContext, JobResult, JobsService } from "../jobs/jobs.service";
+import { NoticesModule } from "../notices/notices.module";
 import { PaymentsModule } from "../payments/payments.module";
 import { REFUND_EVENT_SINK } from "../payments/refund-event-sink";
 import { InvoicesModule } from "../pro-business/invoices.module";
@@ -23,7 +24,7 @@ const DAY_MS = 86_400_000;
  */
 @Global()
 @Module({
-  imports: [PaymentsModule, PurchasesModule, InvoicesModule, RoyaltiesModule],
+  imports: [PaymentsModule, NoticesModule, PurchasesModule, InvoicesModule, RoyaltiesModule],
   controllers: [AdminPaymentsController, AdminRefundsController, AdminLedgerController, AdminReconciliationsController],
   providers: [
     RefundsService,

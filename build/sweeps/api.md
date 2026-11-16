@@ -20,3 +20,4 @@
 - B13 not exercised by the verifier: staff queue content (flagged photos, minutesLeft, late), fail-closed with Redis or the database down.
 - B08 paystack-refund-provider.ts findRefund (~43-48): takes the first non-failed refund by transaction reference with no amount check; fine for whole refunds; NOT RUN against Paystack.
 - B16: the payout stand-in cannot tell an unknown bank (any 3 to 6 digit code passes); the real list comes from the provider (NOT RUN).
+- B15 studio-ai.service.ts:118,141: target, made and ask reach the AI as typed; only style is filtered (the server holds no customer data there).

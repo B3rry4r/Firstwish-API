@@ -547,3 +547,17 @@ ZZ5 (B16 verify; T-66) A client wish drawn from a Pro plan month or a pack earns
     creator nothing: this is owed, not accepted.
 ZZ6 (B16 verify) A reverse that comes before the accrue leaves a mark so a later accrue of that payment earns nothing. (B16 patch.)
 ZZ7 (B16 verify) Marking a payout paid by hand (E-114) is refused while a send is in flight (409). (B16 patch.)
+SA1 (B15 verify, high) Staff deciding and a creator withdrawing take their locks in one order (the studio style, then the
+    submission); the one that loses answers 409, never 500. (B15 patch.)
+SA2 (B15 verify, high; XX1) The server's eight checks are the web app's checks function (Firstwish-web lib/studio.ts:620-680)
+    rule for rule: holds takes bars, fills or breaks as the web writes them; chapters by kind and occasion with hidden layers
+    and no kind chosen failing; readable on each scene ground and layer; only effects that are not calm count; a flat fallback
+    manifest; the ending fails only when its action is hidden; pieces skip chapters, fallback and ending. Kept stricter on the
+    server: a file that is unknown or not ready fails. (B15 patch; tests use style documents shaped as the web app makes them.)
+SA3 (B15 verify, medium) What the AI returns is checked with the same shape check as a save; anything that breaks it is 502
+    and the credits come back; `said` is plain text. (B15 patch.)
+SA4 (B15 verify, medium) After a creator's erase an accepted style stays in the catalogue (T-62) with no person on it: the
+    byline and Style.by are empty, the free-text brief is blanked, the snapshot keeps the design only. Default (lead), owner
+    may override. (B15 patch.)
+SA5 (B15 verify) A wish can pick only a style that is on; a held or returned Studio style cannot be picked (wishes already
+    made keep theirs). A style in review refuses every change, `on` too. (B15 patch.)

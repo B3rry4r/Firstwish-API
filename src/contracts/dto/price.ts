@@ -23,6 +23,9 @@ export class PutAdminPricesByKeyBodyDto implements PutAdminPricesByKeyBody {
   @IsKobo()
   listKobo?: Kobo;
   @IsOptional()
+  @IsInt()
+  payoutDay?: number;
+  @IsOptional()
   @IsKobo()
   priceKobo?: Kobo;
   @IsOptional()
@@ -30,7 +33,7 @@ export class PutAdminPricesByKeyBodyDto implements PutAdminPricesByKeyBody {
   promotionEndsAt?: Instant;
   @IsString()
   @MinTrimmed(4)
-  @RequireOneOf(["priceKobo", "listKobo", "promotionEndsAt"])
+  @RequireOneOf(["priceKobo", "listKobo", "promotionEndsAt", "payoutDay"])
   reason!: string;
   @IsString()
   sku!: string;

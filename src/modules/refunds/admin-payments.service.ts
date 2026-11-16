@@ -20,7 +20,12 @@ export interface AdminPaymentsQuery {
   q?: string;
   /** Only payments carrying this flag ("refund_due": paid, granted nothing, waiting for a refund). */
   flag?: string;
+  /** Only payments reading as this state: a payment's own state, or "refund-started" or "refund-waiting" (what the row says). */
+  state?: string;
 }
+
+/** The states a payment can read as (its status as the wire spells it, then the two a refund gives it). */
+export const PAYMENT_STATES = ["started", "pending", "succeeded", "failed", "abandoned", "refunded", "partly-refunded", "refund-started", "refund-waiting"] as const;
 
 type PaymentView = ReturnType<PaymentsService["view"]>;
 export type AdminPayment = Omit<PaymentView, "state"> & {
@@ -62,6 +67,7 @@ export class AdminPaymentsService {
       where.push({ flags: { has: q.flag } });
     }
     if (q.q !== undefined && q.q.trim() !== "") where.push(await this.search(q.q.trim()));
+    if (q.state !== undefined) where.push(await this.stateWhere(q.state));
     if (q.cursor !== undefined) {
       const c = decodeCursor(q.cursor);
       if (typeof c.key !== "string" || !UUID.test(c.id)) throw AppError.validation({ cursor: "Must be a cursor from a previous page." });
@@ -73,6 +79,18 @@ export class AdminPaymentsService {
     const people = await this.people(page.items);
     const wishes = await this.wishNumbers(page.items);
     return { items: page.items.map((p) => this.present(p, people, refunds.has(p.id), wishes)), nextCursor: page.nextCursor };
+  }
+
+  /** HQ-staff: a state filter as the list's own rows read: a refund sent or waiting takes the row's state over its status. */
+  private async stateWhere(state: string): Promise<Prisma.PaymentWhereInput> {
+    if (!(PAYMENT_STATES as readonly string[]).includes(state)) throw AppError.validation({ state: `Must be one of ${PAYMENT_STATES.join(", ")}.` });
+    const idsOf = async (status: ("sent" | "requested" | "approved")[]) =>
+      (await this.db.refund.findMany({ where: { status: { in: status } }, select: { paymentId: true }, distinct: ["paymentId"] })).map((r) => r.paymentId);
+    const started = await idsOf(["sent"]);
+    if (state === "refund-started") return { id: { in: started } };
+    const waiting = (await idsOf(["requested", "approved"])).filter((id) => !started.includes(id));
+    if (state === "refund-waiting") return { id: { in: waiting } };
+    return { status: state.replace("-", "_") as Prisma.PaymentWhereInput["status"], id: { notIn: [...started, ...waiting] } };
   }
 
   async detail(reference: string) {

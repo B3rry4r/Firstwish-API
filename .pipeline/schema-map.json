@@ -1298,7 +1298,10 @@
      "sku",
      "version"
     ]
-   ]
+   ],
+   "omit": {
+    "payoutDay": "R14: read from the payout setting, not a price column"
+   }
   },
   "PriceBookVersion": {
    "class": "config",
@@ -2143,7 +2146,9 @@
     "hasPasscode": "worked out on read: passcodeHash is not null (VV3)",
     "publish": "HP10: read from the publish request, not a column",
     "video": "HP5: read from the render job, not a column",
-    "pictures": "HP3: signed reads made when the wish is read, not a column"
+    "pictures": "HP3: signed reads made when the wish is read, not a column",
+    "styleLevel": "HQ5: worked out on read from the ticket and the price book, not a column",
+    "allowedStyles": "HQ5: worked out on read from the styles that are on, not a column"
    },
    "unique": [
     [

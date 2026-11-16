@@ -506,7 +506,7 @@
   },
   {
    "path": "lib/admin/c-types.ts",
-   "sha256": "9e4d7bf433420a825d4597b51170414f81c65c2fa6a862fe34ca310ca271ecdc"
+   "sha256": "5b08c911c1ebf4345a225119b71b1a03b7e83c3d2299ba845de08e2d0ed88559"
   },
   {
    "path": "lib/admin/d-fixtures.ts",
@@ -519,10 +519,6 @@
   {
    "path": "lib/catalog.ts",
    "sha256": "a9e58664cb0bda3906a2fbe1ab4ae95634bb06eae99f1728c624dd5e3ff0f401"
-  },
-  {
-   "path": "lib/engine/adapt.ts",
-   "sha256": "798aa90365c4854d0f048b47d1b37d611fa8feae43944a5b9aa7464815c4be73"
   },
   {
    "path": "lib/engine/moments.ts",
@@ -538,15 +534,11 @@
   },
   {
    "path": "lib/engine/types.ts",
-   "sha256": "6e4db519bb0ca17b2f7537900a351ff250c9fdd828676c56a07dc559430dd31a"
+   "sha256": "0f5b567a73207eecddab75d03aceef815f1949a8e776772d096b37212dd2e8ae"
   },
   {
    "path": "lib/levels.ts",
    "sha256": "00b43b2b233a126830c880c2c94720b3b2f703eb1497b9fddc1bce37ade6a453"
-  },
-  {
-   "path": "lib/maker.ts",
-   "sha256": "4ce69b074a9fd47f6029aca23ed5350b99464d00512cabb40dd5e91ca1364dc3"
   },
   {
    "path": "lib/occasions.ts",
@@ -559,10 +551,6 @@
   {
    "path": "lib/styles.ts",
    "sha256": "8aab11f987ddb482b1498f2ce32ca24c4c6eab4efb032172b9ceaf20a923fb78"
-  },
-  {
-   "path": "lib/wish-model.ts",
-   "sha256": "32067deef1285770929aaa2d7faf73ef73cd33bb2d304c7f6062903c1b4495c4"
   }
  ]
 }

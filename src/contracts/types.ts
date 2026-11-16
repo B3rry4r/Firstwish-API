@@ -940,6 +940,7 @@ export interface Price {
   lead?: string | null;
   listKobo?: number | null;
   name: string;
+  payoutDay?: number | null;
   per?: string | null;
   price?: Kobo | null;
   promoKobo?: Kobo | null;
@@ -1662,6 +1663,7 @@ export interface Wish {
   action: unknown;
   activity?: { opens: number; plays: number; reactions: Record<string, number>; favourites: number; shares: number } | null;
   adds: unknown[];
+  allowedStyles?: Array<string> | null;
   amount: Kobo;
   at: Instant;
   businessId?: string | null;
@@ -1711,6 +1713,7 @@ export interface Wish {
   status: "draft" | "sealed" | "live" | "resting" | "removed";
   step: number;
   style: string;
+  styleLevel?: "starter" | "standard" | "premium" | null;
   ticket?: "moment" | "keepsake" | "signature" | "premiere" | null;
   timeZone: string;
   updatedAt: Instant;
@@ -2112,6 +2115,8 @@ export type PostBankAccountsResponse = BankAccount;
 /** E-23 GET /v1/admin/businesses. Auth: finance,ops,owner. */
 export type GetAdminBusinessesParams = Record<string, never>;
 export interface GetAdminBusinessesQuery {
+  /** string (optional; part of the business name, the owner's name or email) */
+  q?: string;
   cursor?: string;
   limit?: number;
 }
@@ -2794,6 +2799,8 @@ export interface GetAdminPaymentsQuery {
   flag?: string;
   /** string (optional; a reference, a wish number or the payer's email) */
   q?: string;
+  /** string (optional; a payment's state, refund-started or refund-waiting) */
+  state?: string;
   cursor?: string;
   limit?: number;
 }
@@ -3179,11 +3186,13 @@ export interface PutAdminPricesByKeyParams {
   key: string;
 }
 export interface PutAdminPricesByKeyBody {
-  /** integer (kobo, optional; at least one of priceKobo, listKobo, promotionEndsAt) */
+  /** integer (kobo, optional; at least one of priceKobo, listKobo, promotionEndsAt, payoutDay) */
   listKobo?: Kobo;
-  /** integer (kobo, optional; at least one of priceKobo, listKobo, promotionEndsAt) */
+  /** integer (optional; a whole day 1 to 28, the payout run's day; at least one of priceKobo, listKobo, promotionEndsAt, payoutDay) (DEC-233) */
+  payoutDay?: number;
+  /** integer (kobo, optional; at least one of priceKobo, listKobo, promotionEndsAt, payoutDay) */
   priceKobo?: Kobo;
-  /** time (ISO-8601, optional; at least one of priceKobo, listKobo, promotionEndsAt) */
+  /** time (ISO-8601, optional; at least one of priceKobo, listKobo, promotionEndsAt, payoutDay) */
   promotionEndsAt?: Instant;
   /** string (trimmed, 4 or more characters; the Confirm dialog disables the button below 4, the seam throws 'failed') */
   reason: string;
@@ -3201,6 +3210,15 @@ export interface GetPriceBookQuery {
 }
 export type GetPriceBookHeaders = Record<string, never>;
 export type GetPriceBookResponse = PriceBook;
+
+/** E-256 GET /v1/admin/price-book-versions. Auth: finance,ops,owner. */
+export type GetAdminPriceBookVersionsParams = Record<string, never>;
+export interface GetAdminPriceBookVersionsQuery {
+  cursor?: string;
+  limit?: number;
+}
+export type GetAdminPriceBookVersionsHeaders = Record<string, never>;
+export type GetAdminPriceBookVersionsResponse = PaginatedList<PriceBookVersion>;
 
 /** E-126 POST /v1/admin/price-book-versions. Auth: finance,owner. */
 export type PostAdminPriceBookVersionsParams = Record<string, never>;
@@ -4502,7 +4520,7 @@ export interface PostWishesByIdKeepHeaders {
 }
 export type PostWishesByIdKeepResponse = PaymentStartedOrCovered<Wish>;
 
-/** E-229 GET /v1/wishes/:id/link. Auth: business; own records. */
+/** E-229 GET /v1/wishes/:id/link. Auth: own records. */
 export interface GetWishesByIdLinkParams {
   id: string;
 }
@@ -4729,6 +4747,7 @@ export interface EndpointContracts {
   "E-123": { params: GetAdminPricesParams; query: GetAdminPricesQuery; headers: GetAdminPricesHeaders; response: GetAdminPricesResponse };
   "E-124": { params: PutAdminPricesByKeyParams; body: PutAdminPricesByKeyBody; headers: PutAdminPricesByKeyHeaders; response: PutAdminPricesByKeyResponse };
   "E-125": { params: GetPriceBookParams; query: GetPriceBookQuery; headers: GetPriceBookHeaders; response: GetPriceBookResponse };
+  "E-256": { params: GetAdminPriceBookVersionsParams; query: GetAdminPriceBookVersionsQuery; headers: GetAdminPriceBookVersionsHeaders; response: GetAdminPriceBookVersionsResponse };
   "E-126": { params: PostAdminPriceBookVersionsParams; body: PostAdminPriceBookVersionsBody; headers: PostAdminPriceBookVersionsHeaders; response: PostAdminPriceBookVersionsResponse };
   "E-127": { params: PostAdminPriceBookVersionsByIdPublishParams; body: PostAdminPriceBookVersionsByIdPublishBody; headers: PostAdminPriceBookVersionsByIdPublishHeaders; response: PostAdminPriceBookVersionsByIdPublishResponse };
   "E-128": { params: GetBusinessUsageParams; query: GetBusinessUsageQuery; headers: GetBusinessUsageHeaders; response: GetBusinessUsageResponse };

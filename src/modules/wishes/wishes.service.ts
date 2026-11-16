@@ -24,6 +24,8 @@ import { UNOPENED_DAYS, WishLifecycleService } from "./wish-lifecycle.service";
 import { stateOf } from "./wish-state";
 import { WishPictures } from "./wish-pictures";
 import { kindHasOccasion, LAST_STEP } from "./kind-occasions";
+import { isLevel } from "../styles/style-view";
+import { allowedLevel, levelRank, styleRefusal } from "./style-rule";
 import { DEFAULT_KIND, DEFAULT_OCCASION, isBareStart, START_KEY } from "./wish-start";
 
 type Tx = Prisma.TransactionClient;
@@ -175,7 +177,8 @@ export class WishesService {
     const links = await this.linksFor(rows.map((r) => r.id));
     const shown = rows.slice(0, limit).map((r) => r.id);
     const [pics, videos] = await Promise.all([this.pictures.forWishes(shown), this.pictures.videoStates(shown)]);
-    const one = (r: Wish): Obj => ({ ...this.wire(r, links.get(r.id)), pictures: pics.get(r.id) ?? [], video: videos.get(r.id) ?? "none" });
+    const book = await this.entitlements.row();
+    const one = (r: Wish): Obj => ({ ...this.wire(r, links.get(r.id)), pictures: pics.get(r.id) ?? [], video: videos.get(r.id) ?? "none", styleLevel: allowedLevel(book, r.ticket, r.adds) });
     return toPage(rows.map(one), limit, (r) => ({ key: String(r.id), id: String(r.id) }));
   }
 
@@ -187,7 +190,16 @@ export class WishesService {
     const publish = (await this.showing.showing.publishStateOf([row.id])).get(row.id) ?? null;
     const pictures = (await this.pictures.forWishes([row.id])).get(row.id) ?? [];
     const video = (await this.pictures.videoStates([row.id])).get(row.id) ?? "none";
-    return { ...this.wire(row, (await this.linksFor([id])).get(id)), activity, publish, pictures, video };
+    const book = await this.entitlements.row();
+    const styleLevel = allowedLevel(book, row.ticket, row.adds);
+    const allowedStyles = await this.allowedStyles(styleLevel);
+    return { ...this.wire(row, (await this.linksFor([id])).get(id)), activity, publish, pictures, video, styleLevel, allowedStyles };
+  }
+
+  /** HQ5: the slugs of the styles that are on and that a ticket taking up to `level` may use (every style that is on when no ticket is chosen yet). */
+  private async allowedStyles(level: ReturnType<typeof allowedLevel>): Promise<string[]> {
+    const rows = await this.prisma.style.findMany({ where: { on: true }, select: { slug: true, level: true }, orderBy: { slug: "asc" } });
+    return rows.filter((r) => !!r.slug && (level === null || levelRank(isLevel(r.level) ? r.level : "starter") <= levelRank(level))).map((r) => r.slug as string);
   }
 
   async link(accountId: string, id: string): Promise<{ link: string; slug: string }> {
@@ -333,6 +345,15 @@ export class WishesService {
     return s.slug;
   }
 
+  /** HQ5: the style's level against the highest the ticket allows (price book `styleLevel`, a premium-style extra lifts it): 422 on `style`, with words. */
+  private async checkStyleLevel(db: Tx | PrismaService, book: EntitlementsRow, ticket: string | null, adds: unknown, slug: string): Promise<void> {
+    const allowed = allowedLevel(book, ticket, adds);
+    if (allowed === null) return;
+    const style = await db.style.findUnique({ where: { slug }, select: { name: true, level: true } });
+    const words = style ? styleRefusal(allowed, ticket, style) : null;
+    if (words) throw AppError.validation({ style: words }, words);
+  }
+
   /** What the ticket allows. A wish with no paid ticket is on Starter (the moment line). */
   private limitsOf(book: EntitlementsRow, ticket: string | null, adds: unknown): { photos: number; voices: number; chapters: number | null; ticket: string } {
     const slug = ticket && (TICKETS as readonly string[]).includes(ticket) ? ticket : "moment";
@@ -444,7 +465,11 @@ export class WishesService {
       if (kind !== undefined) data.kind = kind;
       if (occasion !== undefined) data.occasion = occasion;
       if (name !== undefined) data.name = name;
-      if (input.style !== undefined) data.styleSlug = await this.styleSlug(tx, input.style, cur.styleSlug);
+      if (input.style !== undefined) {
+        data.styleSlug = await this.styleSlug(tx, input.style, cur.styleSlug);
+        // HQ5: once a ticket is chosen, a style above what it allows is refused with words
+        if (data.styleSlug !== cur.styleSlug) await this.checkStyleLevel(tx, book, cur.ticket, cur.adds, data.styleSlug);
+      }
       if (input.keep !== undefined) data.keep = input.keep;
       if (input.step !== undefined) data.step = input.step;
       if (passHash !== undefined) data.passcodeHash = passHash;
@@ -630,6 +655,7 @@ export class WishesService {
     const plan = input.usePlan ? await this.access.find(accountId, input.businessHeader) : null;
     if (input.usePlan && !plan) throw AppError.forbidden("You are not part of a business.");
     const biz = plan ? plan.businessId : await this.business.find(accountId);
+    const book = await this.entitlements.row(); // read before the transaction: a pool connection is never held while another is asked for
     const row = await this.prisma.$transaction(async (tx) => {
       // HD3: one lock order for everything a business's money touches: the owner's account first, then the caller's. A seal that took the
       // caller's account first and the owner's second deadlocked with a client wish being made (it takes the owner's, then writes a row
@@ -661,6 +687,10 @@ export class WishesService {
         // GB1: a wish that carries a business earns its creator at this seal too (it was drawn from the plan when it was made).
         if (w.businessId && this.sealAccrual) await this.sealAccrual(tx, w);
       }
+      // HQ5: the style is checked against the ticket the seal REALLY ends with (a paid ticket, or the one a Pass, plan or pack just drew).
+      // A refusal rolls the whole transaction back: nothing drawn, charged or sealed.
+      const ended = await tx.wish.findUniqueOrThrow({ where: { id }, select: { ticket: true, adds: true, styleSlug: true } });
+      await this.checkStyleLevel(tx, book, ended.ticket, ended.adds, ended.styleSlug);
       const no = await this.issueNumber(tx);
       // ZB3: a client wish shares its wish's number once the wish has one.
       await tx.clientWish.updateMany({ where: { wishId: id }, data: { no } });

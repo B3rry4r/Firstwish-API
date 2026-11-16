@@ -111,7 +111,7 @@ export class NoticesAdminService {
       }
       const newId = this.ids.id();
       await tx.messageDelivery.create({
-        data: { id: newId, templateKey: orig.templateKey, channel: "email", to: orig.to, purpose: orig.purpose, status: "queued", attempts: 0, idempotencyKey: `${origKey}${RESEND_SUFFIX}`, vars: orig.vars as Prisma.InputJsonValue },
+        data: { id: newId, templateKey: orig.templateKey, channel: "email", to: orig.to, purpose: orig.purpose, status: "queued", attempts: 0, idempotencyKey: `${origKey}${RESEND_SUFFIX}`, vars: orig.vars as Prisma.InputJsonValue, createdAt: this.clock.now(), updatedAt: this.clock.now() },
       });
       await this.notices.queueJob(tx, newId);
       await this.audit.write(tx, { actor, section: SECTION, action: "messages.resend", target: { type: "message_delivery", id: orig.id }, reason, changedFields: ["status"] });

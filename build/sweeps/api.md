@@ -38,3 +38,14 @@
 - A read address for a brand logo (brand.logo is a file id): a signed read like the wish's pictures.
 - The payments module writes a `reason` on a failed payment (the web shows its own words today).
 - Contract: GET /business/plan (E-27) is typed NoContent though it answers the plan state.
+
+## After API-BASE-5 (verified twice, merged 16 Nov)
+- Closed by it: the stand-in put and AI shape (HQ3), the maker's fields (HQ1), the gather link read for the owner
+  (HQ4), styles by ticket on PATCH and on every seal path (HQ5), the payout day, the price-book versions read, the
+  payments state filter, the businesses search, erase of an erased person 409, the Clock port in notices and reveals,
+  the voice-note limit (12). The staff lines above under "From W13's verifier" are closed or were stale.
+- Open, low: api-base-5-seal-style.spec.ts lowers the price book's Signature styleLevel for about a second in two
+  tests (shared by every spec in the run; no spec fails today): give those tests their own price-book version or run
+  them alone. A settled premium-style extra on a draft with no ticket is not attached until a ticket is (a UI note for
+  W6). A draft's gather link answers 404 until the wish is sealed. A put to a landed key answers 409 before the
+  signature check (test stacks only).

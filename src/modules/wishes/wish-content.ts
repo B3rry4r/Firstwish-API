@@ -21,7 +21,8 @@ export interface FileRef {
 
 /** The closed shape of the content document (EE3): every level lists the keys it may hold; anything else is 422. */
 type Shape =
-  | { t: "str" }
+  | { t: "str"; max?: number }
+  | { t: "num"; max: number }
   | { t: "bool" }
   | { t: "file"; role: FileRole }
   | { t: "list"; of: Shape; max: number }
@@ -30,6 +31,9 @@ type Shape =
   | { t: "either"; of: Shape[] };
 
 const str: Shape = { t: "str" };
+/** HQ1: the maker's own words are bounded: a text of at most `max` characters, a whole number from 0 to `max`. */
+const text = (max: number): Shape => ({ t: "str", max });
+const count = (max: number): Shape => ({ t: "num", max });
 const list = (of: Shape, max = 200): Shape => ({ t: "list", of, max });
 const obj = (keys: Record<string, Shape>): Shape => ({ t: "obj", keys });
 const file = (role: FileRole): Shape => ({ t: "file", role });
@@ -41,22 +45,22 @@ const titleText = obj({ title: str, text: str });
  * receiver's links can come from the wish_file rows alone (the rows are written from exactly these places).
  */
 const SHAPE: Record<(typeof CONTENT_KEYS)[number], Shape> = {
-  blessing: obj({ verse: str, cite: str }),
-  cover: obj({ from: str, title: str, more: list(str, 20), photoId: file("photo"), coverId: file("cover") }),
+  blessing: obj({ verse: str, cite: str, note: text(500) }),
+  cover: obj({ from: str, title: str, more: list(str, 20), photoId: file("photo"), coverId: file("cover"), school: text(120), years: text(60), born: text(60) }),
   credits: list(obj({ role: str, name: str, handle: str }), 50),
   details: { t: "either", of: [list(obj({ label: str, value: str }), 50), { t: "map" }] },
   ending: obj({ id: str, scene: str, values: { t: "map" }, soundId: file("sound") }),
   finale: obj({ title: str, text: str, sign: str }),
   gift: titleText,
-  letter: obj({ paras: list(str, 200) }),
-  links: obj({ files: str, book: str }),
-  memory: titleText,
+  letter: obj({ paras: list(str, 200), line: text(300) }),
+  links: obj({ files: str, book: str, download: obj({ count: count(10000), size: text(40), files: list(text(200), 100) }) }),
+  memory: obj({ title: str, text: str, quote: text(500) }),
   note: obj({ from: str, text: str }),
   off: list(str, 30),
   on: list(str, 30),
   opening: obj({ id: str, scene: str, values: { t: "map" }, soundId: file("sound") }),
   partner: str,
-  reasons: list(obj({ title: str }), 50),
+  reasons: list(obj({ title: str, note: text(500) }), 50),
   story: obj({
     title: str, text: str, captions: list(str, 60), modelId: file("model"),
     photos: list(obj({ photoId: file("photo"), caption: str }), 200),
@@ -74,6 +78,10 @@ function walk(v: unknown, shape: Shape, path: string, bad: string[], refs: Map<s
   switch (shape.t) {
     case "str":
       if (typeof v !== "string") return bad.push(`${path} must be text`), false;
+      if (shape.max !== undefined && [...v].length > shape.max) return bad.push(`${path} is too long (at most ${shape.max} characters)`), false;
+      return true;
+    case "num":
+      if (typeof v !== "number" || !Number.isInteger(v) || v < 0 || v > shape.max) return bad.push(`${path} must be a whole number from 0 to ${shape.max}`), false;
       return true;
     case "bool":
       if (typeof v !== "boolean") return bad.push(`${path} must be true or false`), false;

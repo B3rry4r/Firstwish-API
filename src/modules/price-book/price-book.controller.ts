@@ -6,6 +6,7 @@ import { ArrayMaxSize, IsArray, IsOptional, IsString } from "class-validator";
 import type { Principal } from "../../common/auth/principal";
 import { Public, Roles } from "../../common/auth/decorators";
 import {
+  GetAdminPriceBookVersionsQueryDto,
   GetAdminPricesQueryDto,
   GetPriceBookQueryDto,
   PostAdminPriceBookVersionsBodyDto,
@@ -19,6 +20,7 @@ import {
   type PriceBookVersion,
   type TicketQuote,
 } from "../../contracts";
+import type { Page } from "../../common/pagination/cursor";
 import type { AuditActor } from "../audit/audit.service";
 import { AdminRoute, StaffActor } from "../role-access/staff-section.guard";
 import { PriceAdminService } from "./price-admin.service";
@@ -72,6 +74,13 @@ export class PriceBookController {
   @Get("admin/prices")
   list(@Query() q: GetAdminPricesQueryDto): Promise<GetAdminPricesResponse> {
     return this.admin.list(q);
+  }
+
+  /** The price book's versions, who made each and when (owner, ops and finance read; the draft and publish routes keep their roles). */
+  @AdminRoute("/admin/prices", "finance", "ops", "owner")
+  @Get("admin/price-book-versions")
+  versions(@Query() q: GetAdminPriceBookVersionsQueryDto): Promise<Page<PriceBookVersion>> {
+    return this.admin.versions(q);
   }
 
   /** E-124 */

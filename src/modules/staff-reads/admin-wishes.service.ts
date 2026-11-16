@@ -71,9 +71,10 @@ export class AdminWishesService {
       const byLink = await this.db.wishLink.findMany({ where: { slug }, select: { wishId: true } });
       and.push({
         OR: [
-          { no },
+          { no: { equals: no, mode: "insensitive" as const } },
           ...(byLink.length ? [{ id: { in: byLink.map((l) => l.wishId) } }] : []),
-          ...(t.includes("@") ? [{ account: { contact: t.toLowerCase() } }] : []),
+          // an email, or a piece of one (three letters or more), in any case
+          ...(t.length >= 3 && !/^(#|no\.?\s*)/i.test(t) ? [{ account: { contact: { contains: t, mode: "insensitive" as const } } }] : []),
         ],
       });
     }
@@ -164,6 +165,9 @@ export class AdminWishesService {
       };
       let changed: string[] = ["status"];
       if (action === "take_down") {
+        // a repeat changes nothing, so it says so (409), as the state machine would
+        if (state === "taken_down") throw AppError.conflict("already_taken_down", "This wish is already taken down.");
+        if (state === "erased") throw AppError.conflict("already_erased", "This wish was erased, so it cannot be taken down.");
         await this.lifecycle.move(tx, w, "taken_down", { cause: "staff-take-down" });
       } else if (action === "restore") {
         if (state === "resting") await this.lifecycle.restoreResting(tx, w, "staff-restore");

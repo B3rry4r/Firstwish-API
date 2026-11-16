@@ -29,8 +29,6 @@ export function setupApp(app: INestApplication): INestApplication {
   // reaches the service and gets its 422 with the reason, not a bare 413 from the parser. The raw body stays kept for webhooks.
   express.useBodyParser("json", { limit: env.JSON_BODY_LIMIT_BYTES });
   app.use(requestIdMiddleware);
-  // HP3: a stand-in stack serves the bytes behind the signed urls its stand-in storage gives (nothing with real providers)
-  if (env.PROVIDERS === "standin") app.use(`/${API_PREFIX}/standin-storage`, standinStorageMiddleware(app.get<StandinStorage | null>(STANDIN_STORAGE)));
   app.setGlobalPrefix(API_PREFIX);
   // AA3: control characters are refused (422) before validation, for every body, query and path value.
   app.useGlobalPipes(new ControlCharsPipe(), makeValidationPipe());
@@ -41,5 +39,8 @@ export function setupApp(app: INestApplication): INestApplication {
     credentials: true,
     exposedHeaders: ["x-request-id"],
   });
+  // HP3, HQ3: a stand-in stack serves the bytes behind the signed urls its stand-in storage gives and takes the signed put
+  // (after CORS, so the browser's preflight for a put is answered); nothing with real providers.
+  if (env.PROVIDERS === "standin") app.use(`/${API_PREFIX}/standin-storage`, standinStorageMiddleware(app.get<StandinStorage | null>(STANDIN_STORAGE)));
   return app;
 }

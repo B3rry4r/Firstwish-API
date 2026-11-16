@@ -136,13 +136,23 @@ export class StandinEmail extends EmailPort {
   }
 }
 
+/** M2: the stand-in storage (test stacks only) holds at most this many bytes in all. */
+export const STANDIN_MAX_BYTES = 256 * 1024 * 1024;
+const DROPPED_KEEP = 10_000;
+
 export class StandinStorage extends StoragePort {
   /** FB4: a stand-in calls nothing. */
   ping(): Promise<PortPing> {
     return Promise.resolve(PING_STAND_IN);
   }
 
+  /** Oldest first (a Map keeps the order keys were first set in). Bounded by `maxBytes` in total: see store(). */
   private readonly objects = new Map<string, { bytes: Buffer; contentType: string }>();
+  private total = 0;
+  /** Keys the cap dropped, so a read can say so instead of "not found" (a key is short; the list is cut at DROPPED_KEEP). */
+  private readonly dropped = new Set<string>();
+  /** Keys a signed put has already filled: a second put to the same ticket is refused, even after the cap dropped the bytes (L1). */
+  private readonly landed = new Set<string>();
 
   /**
    * `base` is where the urls point. Tests keep the host that never resolves; a stack points it at the API's own
@@ -152,8 +162,46 @@ export class StandinStorage extends StoragePort {
     private readonly clock: Clock,
     readonly bucket = "standin-bucket",
     private readonly base = `https://storage.${STANDIN_HOST}`,
+    /** Test stacks only: the most bytes the stand-in holds in total (M2). The oldest objects go first. */
+    readonly maxBytes = STANDIN_MAX_BYTES,
   ) {
     super();
+  }
+
+  /** The one place an object is stored: replaces the key's old bytes, then drops the oldest objects until the total fits the cap. */
+  private store(key: string, bytes: Buffer, contentType: string): void {
+    const old = this.objects.get(key);
+    if (old) {
+      this.total -= old.bytes.length;
+      this.objects.delete(key); // re-set below, so it counts as the newest
+    }
+    this.dropped.delete(key);
+    this.objects.set(key, { bytes, contentType });
+    this.total += bytes.length;
+    for (const k of this.objects.keys()) {
+      if (this.total <= this.maxBytes || k === key) break;
+      this.total -= this.objects.get(k)?.bytes.length ?? 0;
+      this.objects.delete(k);
+      this.dropped.add(k);
+      if (this.dropped.size > DROPPED_KEEP) this.dropped.delete(this.dropped.values().next().value as string);
+    }
+  }
+
+  private remove(key: string): void {
+    const o = this.objects.get(key);
+    if (o) this.total -= o.bytes.length;
+    this.objects.delete(key);
+    this.dropped.delete(key);
+  }
+
+  /** True when the cap dropped this object (a read meets "gone", not "never there"). */
+  wasDropped(key: string): boolean {
+    return this.dropped.has(key);
+  }
+
+  /** True when a signed put has filled this key already (the first put is the one kept). */
+  hasLanded(key: string): boolean {
+    return this.landed.has(key);
   }
 
   /** What each signed PUT bound (X26): the type and the exact length. */
@@ -180,13 +228,41 @@ export class StandinStorage extends StoragePort {
   putSigned(key: string, bytes: Buffer, contentType: string): boolean {
     const b = this.bound.get(key);
     if (!b || b.contentType !== contentType || b.contentLength !== bytes.length) return false;
-    this.objects.set(key, { bytes, contentType });
+    this.store(key, bytes, contentType);
+    this.landed.add(key);
     return true;
+  }
+
+  /** HQ3: what a signed PUT url asked for (null when no upload was signed for the key). */
+  boundFor(key: string): { contentType: string; contentLength: number } | null {
+    return this.bound.get(key) ?? null;
+  }
+
+  /**
+   * HQ3: the signed PUT as a real storage takes it. The signature binds the key, the expiry, the content type and the exact length,
+   * so a wrong, expired or borrowed signature, another kind and another size are each refused and nothing is stored.
+   */
+  receive(key: string, expires: number, signature: string, contentType: string, bytes: Buffer): { ok: true } | { ok: false; status: number; message: string } {
+    if (!Number.isFinite(expires) || expires * 1000 < this.clock.now().getTime()) return { ok: false, status: 403, message: "This upload link has expired." };
+    const b = this.bound.get(key);
+    if (!b) return { ok: false, status: 403, message: "This upload link is not valid." };
+    if (signature !== this.sig(key, expires, `${b.contentType}:${b.contentLength}`)) return { ok: false, status: 403, message: "This upload link is not valid." };
+    if (contentType !== b.contentType) return { ok: false, status: 403, message: "The file is not the kind this upload was asked for." };
+    if (bytes.length !== b.contentLength) return { ok: false, status: 403, message: "The file is not the size this upload was asked for." };
+    if (this.landed.has(key)) return { ok: false, status: 409, message: "This upload already has its file. Ask for a new upload link." };
+    this.store(key, bytes, contentType);
+    this.landed.add(key);
+    return { ok: true };
   }
 
   signDownload(key: string, expiresInSeconds: number): Promise<string> {
     const exp = Math.floor(this.clock.now().getTime() / 1000) + expiresInSeconds;
     return Promise.resolve(`${this.base}/${this.bucket}/${encodeURI(key)}?expires=${exp}&signature=${this.sig(key, exp)}`);
+  }
+
+  /** True when the signature and expiry are right for a signed read of `key` (whether or not the object is still there). */
+  signedRead(key: string, expires: number, signature: string): boolean {
+    return Number.isFinite(expires) && expires * 1000 >= this.clock.now().getTime() && signature === this.sig(key, expires);
   }
 
   /** HP3: the bytes behind a signed download url, or null when the signature is wrong, the url has expired or there is no object. */
@@ -199,7 +275,7 @@ export class StandinStorage extends StoragePort {
 
   /** Puts an object, as the browser's signed upload would. */
   put(key: string, bytes: Buffer, contentType: string): void {
-    this.objects.set(key, { bytes, contentType });
+    this.store(key, bytes, contentType);
   }
 
   /** The server's own write (CA2). */
@@ -219,14 +295,14 @@ export class StandinStorage extends StoragePort {
   }
 
   delete(key: string): Promise<void> {
-    this.objects.delete(key);
+    this.remove(key);
     return Promise.resolve();
   }
 
   copy(fromKey: string, toKey: string): Promise<void> {
     const o = this.objects.get(fromKey);
     if (!o) return Promise.reject(new Error(`No object at ${fromKey}`));
-    this.objects.set(toKey, { bytes: Buffer.from(o.bytes), contentType: o.contentType });
+    this.store(toKey, Buffer.from(o.bytes), o.contentType);
     return Promise.resolve();
   }
 }
@@ -238,6 +314,24 @@ export class StandinImageSizes extends ImageSizesPort {
     this.made.push(input);
     return Promise.resolve();
   }
+}
+
+/**
+ * HQ3: with nothing queued the stand-in answers in the shape each AI route asks for (the system text names it), so a request on a
+ * stack is answered for real: a letter's paragraphs, the reasons, a photo order, a style change. Marked as stand-in text; any
+ * other request gets the marked plain line.
+ */
+function standinAnswer(input: WriteRequest): string {
+  const sys = input.system ?? "";
+  const quoted = input.prompt.replace(/\s+/g, " ").slice(0, 80);
+  if (sys.includes('"paras"')) return JSON.stringify({ paras: [`[stand-in writing] ${quoted}`] });
+  if (sys.includes('"reasons"')) return JSON.stringify({ reasons: [{ title: "[stand-in writing]" }] });
+  if (sys.includes('"order"')) {
+    const n = Number(/There are (\d+) photos/.exec(input.prompt)?.[1] ?? 1);
+    return JSON.stringify({ order: Array.from({ length: Math.max(1, n) }, (_, i) => i + 1) });
+  }
+  if (sys.includes("Studio style")) return JSON.stringify({ said: ["[stand-in writing] Nothing was changed."], ops: [] });
+  return `[stand-in writing] ${input.prompt.slice(0, 80)}`;
 }
 
 export class StandinAiWriting extends AiWritingPort {
@@ -256,7 +350,7 @@ export class StandinAiWriting extends AiWritingPort {
 
   write(input: WriteRequest): Promise<WriteResult> {
     this.requests.push(input);
-    const text = this.queued.shift() ?? `[stand-in writing] ${input.prompt.slice(0, 80)}`;
+    const text = this.queued.shift() ?? standinAnswer(input);
     return Promise.resolve({ text, model: "standin" });
   }
 }

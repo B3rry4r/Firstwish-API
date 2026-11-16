@@ -558,4 +558,28 @@ describe("price book (contract)", () => {
       });
     });
   });
+
+  /** API-BASE-5 (R14): the payout day, last in this file because the earlier test counts the audit rows of this line. */
+  describe("API-BASE-5 the payout day", () => {
+    it("PUT /v1/admin/prices/payout.thresholdKobo takes payoutDay (1 to 28) with or without the threshold, and the line reads it back", async () => {
+            const key = "payout.thresholdKobo";
+      await db.$executeRaw`UPDATE settings SET choice = ${JSON.stringify({ value: 500000, unit: "kobo", schedule: "the 5th of each month", status: "PROVISIONAL" })}::jsonb WHERE key = to_jsonb('payout.thresholdKobo'::text)`;
+      const day = await put("finance", key, { payoutDay: 12, reason: "Moved the run" });
+      expect(day.status).toBe(200);
+      expect(day.body).toMatchObject({ key, payoutDay: 12, price: 500000, per: "the 12th of each month" });
+      const both = await put("owner", key, { priceKobo: 600000, payoutDay: 21, reason: "Both together" });
+      expect(both.body).toMatchObject({ price: 600000, payoutDay: 21, per: "the 21st of each month", lead: "CONFIRMED" });
+      const list = await t.http().get("/v1/admin/prices?limit=50").set(bearer("owner"));
+      const line = (list.body.items as { key: string; payoutDay?: number }[]).find((i) => i.key === key);
+      expect(line?.payoutDay).toBe(21);
+      for (const bad of [0, 29, 2.5, "5"]) {
+        const r = await put("owner", key, { payoutDay: bad, reason: "Not a day" });
+        expect([bad, r.status]).toEqual([bad, 422]);
+      }
+      expect((await put("owner", key, { payoutDay: 21, reason: "Same again" })).status).toBe(409);
+      expect((await put("owner", key, { listKobo: 1, payoutDay: 3, reason: "Mixed" })).status).toBe(422);
+      expect((await t.http().put(`/v1/admin/prices/${key}`).set(bearer("support")).send({ sku: key, payoutDay: 3, reason: "No role" })).status).toBe(403);
+    });
+
+  });
 });

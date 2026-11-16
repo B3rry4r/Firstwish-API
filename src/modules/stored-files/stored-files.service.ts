@@ -62,6 +62,9 @@ export async function vaultLimitBytes(tx: Tx, biz: Pick<Business, "id" | "plan" 
   return (planGb + grantGb) * GB;
 }
 
+/** A wish holds at most this many voice notes (the price book's friend-message ceiling is 10; 12 is the content default). */
+export const MAX_VOICE_NOTES_PER_WISH = 12;
+
 @Injectable()
 export class StoredFilesService {
   constructor(
@@ -81,6 +84,14 @@ export class StoredFilesService {
     const biz = await tx.business.findFirst({ where: { accountId: p.accountId } });
     if (!biz) throw AppError.forbidden("Vault files need a business.");
     return biz;
+  }
+
+  /** A wish holds at most MAX_VOICE_NOTES_PER_WISH voice notes (those not deleted or refused count); the next one is 409 with words. */
+  private async checkVoiceRoom(tx: Tx, wishId: string): Promise<void> {
+    const [n] = await tx.$queryRaw<{ n: number }[]>`
+      SELECT count(*)::int AS n FROM voice_note v JOIN stored_file f ON f.id = v.id
+       WHERE v."wishId" = ${wishId}::uuid AND f.status NOT IN ('deleted', 'rejected')`;
+    if ((n?.n ?? 0) >= MAX_VOICE_NOTES_PER_WISH) throw AppError.conflict("voice_notes_full", `A wish holds at most ${MAX_VOICE_NOTES_PER_WISH} voice notes. Remove one to add another.`);
   }
 
   /** The subject wish, the caller's own and not yet sealed; a clip also needs a ticket that takes clips. */
@@ -140,6 +151,7 @@ export class StoredFilesService {
         }
       } else if (wishFile) {
         await this.checkWish(tx, p, rule, body.subjectId);
+        if (rule.purpose === "voice-note" && body.subjectId !== undefined) await this.checkVoiceRoom(tx, body.subjectId);
       } else if (body.styleId !== undefined) {
         if (!(await tx.style.findUnique({ where: { id: body.styleId }, select: { id: true } }))) throw AppError.validation({ styleId: "No such style." });
         styleId = body.styleId;

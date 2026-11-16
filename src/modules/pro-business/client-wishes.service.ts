@@ -8,7 +8,7 @@ import { decodeCursor, Page, toPage } from "../../common/pagination/cursor";
 import { isUuidV7 } from "../../common/ids/uuidv7";
 import { Clock } from "../../common/ports/clock.port";
 import { IdGenerator } from "../../common/ports/ids.port";
-import { CLIENT_WISH_PREFIX } from "../accounts/account-erasure.service";
+import { blankRevealWords, CLIENT_WISH_PREFIX } from "../accounts/account-erasure.service";
 import { JobContext, JobResult, JobsService } from "../jobs/jobs.service";
 import { BusinessHandlers } from "../purchases/business-handlers";
 import type { Tx } from "../purchases/grants";
@@ -61,12 +61,14 @@ export class ClientWishesService implements OnModuleInit {
     const id = c.subjectId.slice(CLIENT_WISH_PREFIX.length);
     if (!UUID.test(id)) return { skipped: true };
     // ZB3: the term is the linked wish's own (one truth); a row with no wish keeps its own end.
-    const row = await this.prisma.clientWish.findUnique({ where: { id }, select: { endsAt: true, wishRef: { select: { endsAt: true } } } });
+    const row = await this.prisma.clientWish.findUnique({ where: { id }, select: { endsAt: true, wishRef: { select: { endsAt: true } }, revealAccessByWish: { select: { endsAt: true } } } });
     if (!row) return { skipped: true };
-    const ends = row.wishRef ? row.wishRef.endsAt : row.endsAt;
+    const ends = row.wishRef ? row.wishRef.endsAt : row.endsAt ?? row.revealAccessByWish[0]?.endsAt ?? null;
     if (ends && ends.getTime() > c.now.getTime()) return { skipped: true, again: ends };
     const r = await this.prisma.clientWish.updateMany({ where: { id, OR: [{ wish: { not: null } }, { client: { not: null } }, { from: { not: null } }] }, data: { wish: null, from: null, client: null } });
-    return r.count ? { changed: { erased: 1 } } : { skipped: true };
+    // EA4: the reveal's words (name, note, credits) go with the rest at the end of the term.
+    const w = await blankRevealWords(this.prisma, [id]);
+    return r.count || w ? { changed: { erased: 1 } } : { skipped: true };
   }
 
   async list(businessId: string, cursor: string | undefined, limit: number): Promise<Page<ClientWish>> {

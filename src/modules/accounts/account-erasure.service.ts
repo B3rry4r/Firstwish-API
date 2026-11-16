@@ -55,6 +55,21 @@ export const NOT_THIS_ACCOUNT: Record<string, string> = {
 /** The subject prefix of an erase-now job that blanks one client wish row when its term ends (RR3). */
 export const CLIENT_WISH_PREFIX = "client-wish:";
 
+/**
+ * EA4: a client wish's reveal words (the client's name, the note, the credits, the city, the booking link) are blanked; only the link id
+ * stays (a key, nothing personal). `ids` are client-wish ids. One statement; safe to repeat.
+ */
+export async function blankRevealWords(tx: Pick<Prisma.TransactionClient, "$executeRaw">, ids: string[]): Promise<number> {
+  if (!ids.length) return 0;
+  // The email that carried the client's name to the client (key reveal:<client wish>:<send>) keeps neither address nor words.
+  const mails = await tx.$executeRaw`
+    UPDATE message_delivery SET vars = NULL, "to" = ''
+     WHERE "idempotencyKey" LIKE ANY(SELECT 'reveal:' || x || ':%' FROM unnest(${ids}::text[]) AS x) AND (vars IS NOT NULL OR "to" <> '')`;
+  return mails + await tx.$executeRaw`
+    UPDATE client_wish SET reveal = CASE WHEN reveal ? 'link' THEN jsonb_build_object('link', reveal -> 'link') ELSE '{}'::jsonb END
+     WHERE id = ANY(${ids}::uuid[]) AND reveal IS NOT NULL AND reveal <> CASE WHEN reveal ? 'link' THEN jsonb_build_object('link', reveal -> 'link') ELSE '{}'::jsonb END`;
+}
+
 /** The job kinds that wait on one wish (its id is the job's subject): the lifecycle's timed moves and its notice. */
 const WISH_JOB_KINDS = ["open_wish", "rest_wish", "erase_wish", "erase_now", "restore_window_end", "send_notice"] as const;
 
@@ -156,12 +171,20 @@ export class AccountErasureService {
       // no wish (a reveal) keeps its own term.
       const keptDue = new Map(sentForClient.map((w) => [w.id, w.status === "live" ? w.endsAt : new Date((w.opensAt ?? now).getTime() + UNOPENED_DAYS * 86_400_000)] as const));
       const rows = await tx.clientWish.findMany({ where: inBusiness, select: { id: true, wishId: true, sentAt: true, endsAt: true, wish: true } });
+      // EA4: a reveal sent from the Vault ends where its link ends (the owner's end day), unless the link was switched off.
+      const links = await tx.$queryRaw<{ wishId: string; endsAt: Date | null }[]>`
+        SELECT "wishId"::text AS "wishId", "endsAt" FROM reveal_access WHERE "businessId" = ANY(${businessIds}::uuid[]) AND "wishId" IS NOT NULL AND "offAt" IS NULL`;
+      const linkEnds = new Map(links.map((l) => [l.wishId, l.endsAt] as const));
       const playing: { id: string; endsAt: Date }[] = [];
       for (const c of rows) {
-        const due = c.wishId ? keptDue.get(c.wishId) ?? null : c.sentAt && c.endsAt && c.endsAt > now && c.wish !== null ? c.endsAt : null;
+        const ends = c.endsAt ?? linkEnds.get(c.id) ?? null;
+        const due = c.wishId ? keptDue.get(c.wishId) ?? null : c.sentAt && ends && ends > now && c.wish !== null ? ends : null;
         if (due) playing.push({ id: c.id, endsAt: due });
       }
-      await tx.clientWish.updateMany({ where: { ...inBusiness, id: { notIn: playing.map((c) => c.id) } }, data: { wish: null } });
+      const notPlaying = { ...inBusiness, id: { notIn: playing.map((c) => c.id) } };
+      await tx.clientWish.updateMany({ where: notPlaying, data: { wish: null } });
+      // EA4: a reveal's words (name, note, credits) follow the same term: gone at once for a record not playing, at the end of its term for one that is.
+      await blankRevealWords(tx, (await tx.clientWish.findMany({ where: notPlaying, select: { id: true } })).map((c) => c.id));
       for (const c of playing) await this.jobs.schedule("erase-now", c.endsAt, `${CLIENT_WISH_PREFIX}${c.id}`, tx);
       // RR3: closing the business: its logins can no longer act.
       await tx.login.updateMany({ where: inBusiness, data: { contact: null, status: "removed" } });

@@ -116,7 +116,7 @@ describe("API-BASE-3 HM1 HM3 HM4 (through the real routes)", () => {
       expect(await drafts(u.accountId)).toBe(1);
     });
 
-    it("10 bare starts at once, each with its own key, make one draft (the untouched draft is handed back)", async () => {
+    it("10 bare starts at once, each with its own key, make one draft", async () => {
       const u = await user();
       const rs = await Promise.all(Array.from({ length: 10 }, (_, i) => start(u, {}, k(`own${i}`))));
       expect(new Set(rs.map((r) => String(r.body.id))).size).toBe(1);
@@ -124,7 +124,7 @@ describe("API-BASE-3 HM1 HM3 HM4 (through the real routes)", () => {
       expect(await drafts(u.accountId)).toBe(1);
     });
 
-    it("a different key makes another draft when the first was given an answer (a start that carries a kind or style is one)", async () => {
+    it("a different key makes another draft when the start carries a kind, occasion or style", async () => {
       const u = await user();
       const a = await start(u, carry, k("a"));
       const b = await start(u, carry, k("b"));
@@ -134,73 +134,84 @@ describe("API-BASE-3 HM1 HM3 HM4 (through the real routes)", () => {
       expect((a.body as W).makerNote).toEqual({ chosen: { kind: true, occasion: true, style: true } });
     });
 
-    it("a person with an untouched draft gets it back (200, the same id), with or without a key", async () => {
+    it("HO1 bare start twice (with or without a key): the same draft, byte for byte unchanged, name and cover too", async () => {
       const u = await user();
       const a = await start(u);
       expect(a.status).toBe(201);
-      expect((a.body as W).makerNote).toBeNull();
-      const b = await start(u);
+      const b = await start(u, { name: "Someone Else", from: "Zed", studio: "Zed Studio" });
       const c = await start(u, {}, k("c"));
       expect([b.status, b.body.id, c.status, c.body.id]).toEqual([200, a.body.id, 200, a.body.id]);
+      expect(b.body).toEqual(a.body);
+      expect(c.body).toEqual(a.body);
       expect(await drafts(u.accountId)).toBe(1);
-      // the key of the second start is remembered: it keeps answering that draft once it is touched
-      const d = a.body as W;
-      await save(u, d.id, { version: d.version, content: { letter: { paras: ["Words."] } } });
-      const key = k("c");
-      const first = await start(u, {}, key);
-      expect([first.status, first.body.id === d.id]).toEqual([201, false]);
     });
 
-    it("a start that carries a kind or style fills the untouched draft; the draft is then touched", async () => {
+    it("HO1 PATCH kind then a start with another kind: a NEW draft, the old one unchanged", async () => {
       const u = await user();
       const a = (await start(u)).body as W;
-      const defaults = { kind: a.kind, occasion: a.occasion, style: a.style };
-      expect(defaults.kind).toBe("love");
-      const filled = await start(u, { kind: "Celebration", style: "noir" });
-      expect(filled.status).toBe(200);
-      expect(filled.body.id).toBe(a.id);
-      expect(filled.body.kind).toBe("celebration");
-      expect(filled.body.occasion).toBe(defaults.occasion);
-      expect(filled.body.style).toBe("noir");
-      expect(filled.body.makerNote).toEqual({ chosen: { kind: true, style: true } });
-      expect(filled.body.version).toBe(a.version + 1);
-      const next = await start(u);
-      expect([next.status, next.body.id === a.id]).toEqual([201, false]);
-      expect(await drafts(u.accountId)).toBe(2);
+      expect((await save(u, a.id, { version: a.version, kind: "celebration" })).status).toBe(200);
+      const before = (await read(u, a.id)).body;
+      const b = await start(u, { kind: "love" });
+      expect([b.status, b.body.id === a.id, b.body.kind]).toEqual([201, false, "love"]);
+      expect((await read(u, a.id)).body).toEqual(before);
+      expect(before.kind).toBe("celebration");
     });
 
-    it("a touched draft is never handed back; one touched then cleared is untouched again", async () => {
+    it("HO1 PATCH style then a start with another style: a new draft, the PATCHed style kept", async () => {
       const u = await user();
       const a = (await start(u)).body as W;
-      const s1 = await save(u, a.id, { version: a.version, content: { letter: { paras: ["Dear Chidi."] } }, makerNote: { chosen: { kind: true, occasion: false } } });
+      expect((await save(u, a.id, { version: a.version, style: "noir" })).status).toBe(200);
+      const b = await start(u, { style: a.style === "noir" ? "golden" : a.style });
+      expect([b.status, b.body.id === a.id]).toEqual([201, false]);
+      expect((await read(u, a.id)).body.style).toBe("noir");
+    });
+
+    it("HO1 the web's usual PATCH (makerNote.chosen replaced whole) then a start: a new draft, the old one unchanged", async () => {
+      const u = await user();
+      const a = (await start(u, { kind: "celebration", style: "noir" })).body as W;
+      const note = { chosen: { kind: false, occasion: false }, given: { kind: false, occasion: false }, note: "", now: false, wedding: null };
+      expect((await save(u, a.id, { version: a.version, makerNote: note })).status).toBe(200);
+      const b = await start(u, { kind: "love" });
+      expect([b.status, b.body.id === a.id]).toEqual([201, false]);
+      const old = (await read(u, a.id)).body as W;
+      expect([old.kind, old.style]).toEqual(["celebration", "noir"]);
+      const c = await start(u);
+      expect([c.status, c.body.id === a.id]).toEqual([201, false]);
+    });
+
+    it("HO1 bare, then PATCH name, then bare: a new draft; the PATCHed name stays", async () => {
+      const u = await user();
+      const a = (await start(u)).body as W;
+      expect((await save(u, a.id, { version: a.version, name: "Mine" })).status).toBe(200);
+      const b = await start(u);
+      expect([b.status, b.body.id === a.id]).toEqual([201, false]);
+      expect((await read(u, a.id)).body.name).toBe("Mine");
+    });
+
+    it("HO1 a touched draft (note, open time, passcode, even cleared again) is never handed back", async () => {
+      const u = await user();
+      const a = (await start(u)).body as W;
+      const s1 = await save(u, a.id, { version: a.version, content: { letter: { paras: ["Dear Chidi."] } } });
       expect(s1.status).toBe(200);
-      const touched = await start(u);
-      expect([touched.status, touched.body.id === a.id]).toEqual([201, false]);
-      expect(touched.body.id).not.toBe(a.id);
-      // the first draft is touched, so the second (made untouched) is what a third start gets
-      expect((await start(u)).body.id).toBe(touched.body.id);
-      // clear everything the first one was given: the first is untouched again, the NEWEST untouched one is what comes back
-      await db.wish.delete({ where: { id: touched.body.id } });
-      const s2 = await save(u, a.id, { version: s1.body.version, content: { letter: null }, makerNote: { chosen: { kind: false, occasion: false } } });
-      expect(s2.status).toBe(200);
-      const read2 = (await read(u, a.id)).body as W;
-      expect(read2.content).toEqual({ cover: { from: "Ada" } });
-      const cleared = await start(u);
-      expect([cleared.status, cleared.body.id, cleared.body.version]).toEqual([200, a.id, s2.body.version]);
+      await save(u, a.id, { version: s1.body.version, content: { letter: null } });
+      const b = await start(u);
+      expect([b.status, b.body.id === a.id]).toEqual([201, false]);
+      const v = await user();
+      const c = (await start(v)).body as W;
+      expect((await save(v, c.id, { version: c.version, opensAt: "2027-03-01T09:00" })).status).toBe(200);
+      expect((await start(v)).body.id).not.toBe(c.id);
     });
 
-    it("an open time, a passcode or a photo also make a draft touched", async () => {
+    it("HO1 a start with a kind never hands back a bare draft", async () => {
       const u = await user();
       const a = (await start(u)).body as W;
-      expect((await save(u, a.id, { version: a.version, opensAt: "2027-03-01T09:00" })).status).toBe(200);
-      expect((await start(u)).body.id).not.toBe(a.id);
-      const v = await user();
-      const b = (await start(v)).body as W;
-      expect((await save(v, b.id, { version: b.version, passcode: "open sesame" })).status).toBe(200);
-      expect((await start(v)).body.id).not.toBe(b.id);
+      const b = await start(u, { kind: "celebration" });
+      expect([b.status, b.body.id === a.id]).toEqual([201, false]);
+      const same = (await read(u, a.id)).body as W;
+      expect([same.version, same.kind, same.makerNote, same.content]).toEqual([a.version, a.kind, a.makerNote, a.content]);
     });
 
-    it("another person's untouched draft is never handed over, and a removed draft is not handed back", async () => {
+    it("another person's bare draft is never handed over, and a removed draft is not handed back", async () => {
       const u = await user();
       const other = await user();
       const a = (await start(u)).body as W;
@@ -209,6 +220,35 @@ describe("API-BASE-3 HM1 HM3 HM4 (through the real routes)", () => {
       expect((await t.http().delete(`/v1/wishes/${a.id}`).set(bearer(u.token)).send({})).status).toBe(200);
       const after = await start(u);
       expect([after.status, after.body.id === a.id]).toEqual([201, false]);
+    });
+
+    it("HO2 a remembered key whose wish is removed, sealed or erased is 409 key_spent with words; while a draft it is 200", async () => {
+      const u = await user();
+      const key = k("spent");
+      const a = (await start(u, {}, key)).body as W;
+      expect((await start(u, {}, key)).status).toBe(200);
+      expect((await t.http().delete(`/v1/wishes/${a.id}`).set(bearer(u.token)).send({})).status).toBe(200);
+      const r = await start(u, {}, key);
+      expect([r.status, r.body.error.code]).toEqual([409, "key_spent"]);
+      expect(String(r.body.error.message).length).toBeGreaterThan(10);
+      const k2 = k("spent2");
+      const b = (await start(u, { kind: "love" }, k2)).body as W;
+      await db.wish.update({ where: { id: b.id }, data: { status: "sealed" as never } });
+      expect((await start(u, { kind: "love" }, k2)).status).toBe(409);
+      const k3 = k("spent3");
+      const c = (await start(u, { kind: "love" }, k3)).body as W;
+      await db.wish.update({ where: { id: c.id }, data: { erasedAt: new Date() } });
+      expect((await start(u, { kind: "love" }, k3)).body.error.code).toBe("key_spent");
+    });
+
+    it("HO3 a makerNote over the limit is 422 naming makerNote, with or without a wedding", async () => {
+      const u = await user();
+      const a = (await start(u)).body as W;
+      const big = await save(u, a.id, { version: a.version, makerNote: { note: "x".repeat(9000) } });
+      expect([big.status, big.body.error.fields.makerNote !== undefined]).toEqual([422, true]);
+      const withWedding = await save(u, a.id, { version: a.version, makerNote: { note: "x".repeat(9000), wedding: "2027-06-12" } });
+      expect(withWedding.status).toBe(422);
+      expect((await save(u, a.id, { version: a.version, makerNote: { note: "ok" } })).status).toBe(200);
     });
 
     it("a bad key is 422 naming the header; a start with a bad kind is still 422", async () => {

@@ -34,7 +34,7 @@
 - Routes: kebab-case nouns, plural (`/v1/wishes/:id`, `/v1/styles/levels`). Actions as sub-resources (`POST /v1/wishes/:id/seal`).
 - Writes that take money or send something accept an `Idempotency-Key` header; a repeat returns the first result.
 - Starting a wish (`POST /v1/wishes`) takes an optional `Idempotency-Key` too (HM3): the same key answers the same draft; a person's untouched draft is handed back (200) instead of a new one.
-- Error codes the web branches on: `unauthorized` (an ended, reused or erased session; words kept), `no_session` (a refresh with no cookie or a malformed one, HM6: 401, nothing to say to a first-time visitor), `stale_version`, `wish_locked`, `order_changed`, `idempotency_key_reused`.
+- Error codes the web branches on: `unauthorized` (an ended, reused or erased session; words kept), `no_session` (a refresh with no cookie or a malformed one, HM6: 401, nothing to say to a first-time visitor), `stale_version`, `wish_locked`, `order_changed`, `idempotency_key_reused`, `key_spent` (HO2: a start whose Idempotency-Key was used for a wish now removed, sealed or erased: 409 with words).
 
 ## Identity and format canon (the server normalises on ingest; it never trusts the client's spelling)
 - Phone: an optional plain detail, never verified and never an account key (O R11); stored E.164 (`+2348031472093`) when given, default country Nigeria.

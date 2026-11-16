@@ -22,11 +22,10 @@ import { localToUtc, parseOpening, utcToLocal } from "./local-time";
 import { CHAPTER_KEYS, DEFAULT_CONTENT_MAX_BYTES, FileRef, hasBody, readContent } from "./wish-content";
 import { UNOPENED_DAYS, WishLifecycleService } from "./wish-lifecycle.service";
 import { stateOf } from "./wish-state";
-import { DEFAULT_KIND, DEFAULT_OCCASION, isUntouched, START_KEY } from "./wish-start";
+import { DEFAULT_KIND, DEFAULT_OCCASION, isBareStart, START_KEY } from "./wish-start";
 
 type Tx = Prisma.TransactionClient;
 type Obj = Record<string, unknown>;
-const obj = (v: unknown): Obj => (v && typeof v === "object" && !Array.isArray(v) ? (v as Obj) : {});
 
 export const DEFAULT_ZONE = "Africa/Lagos";
 /** The id of the one wish_number_sequence row. */
@@ -248,12 +247,14 @@ export class WishesService {
   }
 
   /**
-   * E-222 (HM3). Starting a wish is safe to repeat, all under the account lock (so ten at once are one start):
-   *  1. an Idempotency-Key seen before answers the draft it answered (200), whatever became of it since, unless that wish is erased;
-   *  2. else a draft of the caller's own that is untouched (isUntouched) is handed back (200). A kind, occasion or style the
-   *     start carries is an answer: it is filled into that draft, and the draft then counts as touched;
-   *  3. else a new draft is made (201); with a kind, occasion or style carried it begins touched.
-   * `fresh` tells the controller which status to send. A touched draft is never handed back by rule 2.
+   * E-222 (HM3, revised by HO1 and HO2). Starting a wish is safe to repeat, all under the account lock (so ten at once are one start):
+   *  1. an Idempotency-Key seen before answers the draft it answered (200) while that wish is still a live draft; once it is
+   *     removed, sealed or erased the key is spent: 409 key_spent (HO2), never a wish handed back as if just started;
+   *  2. else a bare start (no kind, occasion or style) hands back a draft made by a bare start and never written since (200),
+   *     byte for byte unchanged (isBareStart: version 0 and no makerNote; every write bumps the version and a start that carries
+   *     a kind, occasion or style records `makerNote.chosen`). A start never changes a draft that exists (HO1);
+   *  3. else a new draft is made (201); a start that carries a kind, occasion or style always makes one.
+   * `fresh` tells the controller which status to send.
    */
   async create(accountId: string, input: DraftInput, key?: string): Promise<{ wish: Obj; fresh: boolean }> {
     if (key !== undefined && !START_KEY.test(key)) throw AppError.validation({ "Idempotency-Key": "Must be 8 to 100 letters, digits or . _ : -" });
@@ -281,25 +282,18 @@ export class WishesService {
       if (key !== undefined) {
         const seen = await tx.wishStart.findUnique({ where: { accountId_key: { accountId, key } } });
         const was = seen ? await tx.wish.findUnique({ where: { id: seen.wishId } }) : null;
-        if (was && !was.erasedAt) return { row: was, fresh: false };
+        if (was) {
+          if (was.status === "draft" && !was.erasedAt && !was.removedAt) return { row: was, fresh: false };
+          throw AppError.conflict("key_spent", "This start was already used and that wish is gone. Start a new wish.");
+        }
       }
-      const mine = await tx.wish.findMany({ where: { accountId, businessId: null, status: "draft", erasedAt: null, removedAt: null }, orderBy: { id: "desc" }, take: 20 });
-      const open = mine.find(isUntouched);
-      if (open) {
-        const data: Prisma.WishUncheckedUpdateInput = { name, version: { increment: 1 } };
-        const cover = { ...(((open.content ?? {}) as Obj).cover as Obj | undefined) };
-        const content: Obj = { ...((open.content ?? {}) as Obj), cover: { ...cover, from } };
-        if (studio) content.studio = studio;
-        data.content = content as Prisma.InputJsonValue;
-        if (kindIn) data.kind = kind;
-        if (occasionIn) data.occasion = occasion;
-        if (styleIn) data.styleSlug = await this.styleSlug(tx, styleIn, open.styleSlug);
-        if (answered) data.makerNote = { ...((open.makerNote ?? {}) as Obj), chosen: { ...(obj(((open.makerNote ?? {}) as Obj).chosen)), ...chosen } } as Prisma.InputJsonValue;
-        const same = JSON.stringify([open.name, open.content]) === JSON.stringify([name, content]);
-        // nothing new to fill in: the draft is handed back as it is, its version unchanged (the page's next save still fits)
-        const row = same && !answered ? open : await tx.wish.update({ where: { id: open.id }, data });
-        await remember(row.id);
-        return { row, fresh: false };
+      if (!answered) {
+        const mine = await tx.wish.findMany({ where: { accountId, businessId: null, status: "draft", erasedAt: null, removedAt: null }, orderBy: { id: "desc" }, take: 20 });
+        const open = mine.find(isBareStart);
+        if (open) {
+          await remember(open.id);
+          return { row: open, fresh: false };
+        }
       }
       const styleSlug = styleIn ? await this.styleSlug(tx, styleIn) : await this.defaultStyle(tx);
       const content: Obj = { cover: { from } };
@@ -456,8 +450,9 @@ export class WishesService {
 
   /** makerNote.wedding: a date (yyyy-mm-dd) or null. Answers undefined when the note does not say. */
   private weddingOf(note: Obj | undefined): { date: Date | null } | undefined {
-    if (!note || !("wedding" in note)) return undefined;
+    if (!note) return undefined;
     if (JSON.stringify(note).length > 8192) throw AppError.validation({ makerNote: "Too large." });
+    if (!("wedding" in note)) return undefined;
     const v = note.wedding;
     if (v === null || v === "") return { date: null };
     const d = typeof v === "string" && DATE_ONLY.test(v) ? new Date(`${v}T00:00:00.000Z`) : null;

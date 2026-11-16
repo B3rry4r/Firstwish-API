@@ -61,18 +61,27 @@ export async function monthSource(tx: Tx, businessId: string, now: Date): Promis
 }
 
 /**
- * The pack payment a wish drawn from packs is paid by: packs are used oldest first, so the n-th pack wish the business has drawn
- * (counted from its client-wish records, this wish's own and those already given back left out: HF2) is paid by the grant where the running total of pack
- * sizes passes n. A refunded pack counts only the wishes drawn from it before the refund (recorded on the grant when it was revoked).
+ * The pack payment a wish drawn from packs is paid by: packs are used oldest first, and each pack's standing draws are counted on their own
+ * (the client-wish records naming that pack's payment, this wish's own and those already given back left out: HF2). The wish goes to the
+ * oldest pack that is not full, so a wish given back from the first pack leaves a place there that the next draw takes, and no pack is
+ * ever named for more wishes than it sold. A refunded pack is closed: it takes no new draw. Records that name no payment (drawn before
+ * the record kept one) fill the oldest packs first.
  */
 export async function packSource(tx: Tx, businessId: string, wishId: string): Promise<DrawSource | null> {
-  const [n] = await tx.$queryRaw<{ n: number }[]>`
-    SELECT count(*)::int AS n FROM client_wish WHERE "businessId" = ${businessId}::uuid AND COALESCE("drawFrom"::text, "from") = 'pack' AND "drawnBackAt" IS NULL AND "wishId" IS DISTINCT FROM ${wishId}::uuid`;
-  let before = n?.n ?? 0;
+  const rows = await tx.$queryRaw<{ pid: string | null; n: number }[]>`
+    SELECT "drawPaymentId"::text AS pid, count(*)::int AS n FROM client_wish
+     WHERE "businessId" = ${businessId}::uuid AND COALESCE("drawFrom"::text, "from") = 'pack' AND "drawnBackAt" IS NULL AND "wishId" IS DISTINCT FROM ${wishId}::uuid
+     GROUP BY "drawPaymentId"`;
+  const own = new Map(rows.filter((r) => r.pid).map((r) => [r.pid as string, r.n]));
+  let loose = rows.find((r) => !r.pid)?.n ?? 0;
   for (const g of await grantsOf(tx, businessId, "wish-pack")) {
-    const size = g.revokedAt ? num(g.detail.drawn) : num(g.detail.wishes);
-    if (before < size) return g.revokedAt ? null : withLine(tx, g, size);
-    before -= size;
+    if (g.revokedAt) continue;
+    const size = num(g.detail.wishes);
+    let free = size - (own.get(g.paymentId) ?? 0);
+    const take = Math.min(loose, Math.max(free, 0));
+    loose -= take;
+    free -= take;
+    if (free > 0) return withLine(tx, g, size);
   }
   return null;
 }

@@ -137,21 +137,21 @@ describe("concierge orders B19", () => {
     const a = await k.account();
     const [m1, m2, ops, owner] = [await k.staff(["maker"]), await k.staff(["maker"]), await k.staff(["ops"]), await k.staff(["owner"])];
     const id = (await place(a.auth)).body.id;
-    const give = (auth: string, order: string, makerId: string, reason = "first give") =>
-      http().post(`/v1/admin/concierge/orders/${order}/maker`).set("Authorization", auth).send({ makerId, reason });
+    const give = (auth: string, order: string, makerId: string, reason = "first give", expectedMaker = "") =>
+      http().post(`/v1/admin/concierge/orders/${order}/maker`).set("Authorization", auth).send({ makerId, reason, expectedMaker });
     expect((await give(ops.auth, id, m1.id)).status).toBe(409); // not paid yet
     await pay(a.id, id);
     expect((await give(m1.auth, id, m1.id)).status).toBe(403);
     expect((await give(ops.auth, id, m1.id, "ab")).status).toBe(422);
     expect((await give(ops.auth, id, ids.next())).status).toBe(422);
-    await http().post(`/v1/admin/concierge/orders/${id}/maker`).set("Authorization", ops.auth).send({ reason: "no maker named" }).expect(422);
+    await http().post(`/v1/admin/concierge/orders/${id}/maker`).set("Authorization", ops.auth).send({ reason: "no maker named", expectedMaker: "" }).expect(422);
     const g = await give(ops.auth, id, m1.id).expect(200);
     expect(g.body).toMatchObject({ makerId: m1.id, status: "given" });
     expect((await give(ops.auth, id, m1.id)).status).toBe(409);
     expect((await http().get(`/v1/admin/concierge/orders/${id}`).set("Authorization", m1.auth)).status).toBe(200);
     expect((await http().get(`/v1/admin/concierge/orders/${id}`).set("Authorization", m2.auth)).status).toBe(404);
     expect((await http().get(`/v1/admin/concierge/orders/${id}`).set("Authorization", owner.auth)).status).toBe(200);
-    await give(owner.auth, id, m2.id, "m1 is away").expect(200);
+    await give(owner.auth, id, m2.id, "m1 is away", m1.id).expect(200);
     expect((await http().get(`/v1/admin/concierge/orders/${id}`).set("Authorization", m1.auth)).status).toBe(404);
     const mine = await http().get("/v1/admin/concierge/orders").set("Authorization", m2.auth).expect(200);
     expect(idsOf(mine)).toEqual([id]);
@@ -168,8 +168,8 @@ describe("concierge orders B19", () => {
     const a = await k.account();
     const makers = [await k.staff(["maker"]), await k.staff(["maker"]), await k.staff(["maker"])];
     const ops = await k.staff(["ops"]);
-    const give = (id: string, makerId: string, reason: string) =>
-      http().post(`/v1/admin/concierge/orders/${id}/maker`).set("Authorization", ops.auth).send({ makerId, reason });
+    const give = (id: string, makerId: string, reason: string, expectedMaker = "") =>
+      http().post(`/v1/admin/concierge/orders/${id}/maker`).set("Authorization", ops.auth).send({ makerId, reason, expectedMaker });
     const fresh = async () => {
       const id = (await place(a.auth)).body.id as string;
       await pay(a.id, id);
@@ -199,10 +199,10 @@ describe("concierge orders B19", () => {
     // (c) one after the other, as the ruling allows: A gives to X, then B gives again to Y with a reason; both 200, two rows
     const turn = await fresh();
     await give(turn, makers[0].id, "first give").expect(200);
-    await give(turn, makers[1].id, "give again to Y").expect(200);
+    await give(turn, makers[1].id, "give again to Y", makers[0].id).expect(200);
     expect((await db.conciergeOrder.findUniqueOrThrow({ where: { id: turn } })).makerId).toBe(makers[1].id);
     expect((await db.auditEntry.findMany({ where: { subjectId: turn }, select: { action: true } })).map((r) => r.action).sort()).toEqual(["concierge.give", "concierge.give-again"]);
-    await give(turn, makers[1].id, "same again").expect(409);
+    await give(turn, makers[1].id, "same again", makers[1].id).expect(409);
     // (d) a give racing a cancel: one order, one end; a give that lost is 409 and wrote nothing
     const rc = await fresh();
     const [g, c] = await Promise.all([
@@ -227,7 +227,7 @@ describe("concierge orders B19", () => {
     const foreign = await k.wish(stranger.id);
     const deliver = (auth: string, wishIds: string[], reason = "all made") =>
       http().post(`/v1/admin/concierge-orders/${id}/delivery`).set("Authorization", auth).send({ reason, wishIds });
-    await http().post(`/v1/admin/concierge/orders/${id}/maker`).set("Authorization", ops.auth).send({ makerId: m1.id, reason: "to m1" }).expect(200);
+    await http().post(`/v1/admin/concierge/orders/${id}/maker`).set("Authorization", ops.auth).send({ makerId: m1.id, reason: "to m1", expectedMaker: "" }).expect(200);
     expect((await deliver(ops.auth, [w1])).status).toBe(403);
     expect((await deliver(m2.auth, [w1])).status).toBe(404);
     expect((await deliver(m1.auth, [w1], "no")).status).toBe(422);
@@ -241,7 +241,7 @@ describe("concierge orders B19", () => {
     // a wish is delivered under one order only
     const other = (await place(a.auth)).body.id;
     await pay(a.id, other);
-    await http().post(`/v1/admin/concierge/orders/${other}/maker`).set("Authorization", ops.auth).send({ makerId: m1.id, reason: "to m1" }).expect(200);
+    await http().post(`/v1/admin/concierge/orders/${other}/maker`).set("Authorization", ops.auth).send({ makerId: m1.id, reason: "to m1", expectedMaker: "" }).expect(200);
     expect((await http().post(`/v1/admin/concierge-orders/${other}/delivery`).set("Authorization", m1.auth).send({ reason: "dup one", wishIds: [w1] })).status).toBe(422);
     // the report reads the receiver's opens; nothing is copied
     await db.wishOpen.create({ data: { id: ids.next(), wishId: w1, slug: "x", kind: "read", first: true, session: "s", createdAt: NOW } });
@@ -278,7 +278,7 @@ describe("concierge orders B19", () => {
     const maker = await k.staff(["maker"]);
     const making = (await place(a.auth)).body.id;
     await pay(a.id, making);
-    await http().post(`/v1/admin/concierge/orders/${making}/maker`).set("Authorization", ops.auth).send({ makerId: maker.id, reason: "to maker" }).expect(200);
+    await http().post(`/v1/admin/concierge/orders/${making}/maker`).set("Authorization", ops.auth).send({ makerId: maker.id, reason: "to maker", expectedMaker: "" }).expect(200);
     expect((await http().post(`/v1/concierge-orders/${making}/cancel`).set("Authorization", a.auth)).status).toBe(409);
   });
 

@@ -96,7 +96,7 @@ describe("P-B19: the concierge start, delivery, card and email", () => {
         status: "pending", provider: "paystack", providerReference: `fw-${payId}`, idempotencyKey: `${a.id}:${payId}`, channel: "card", options: { request: { purpose: "concierge", subjectId: id }, server: { fingerprint: payId, flags: [] } } },
     });
     await k.t.app.get(SettlementService).settle({ reference: `fw-${payId}`, status: "success", amountKobo: amt, currency: "NGN", paidAt: NOW });
-    await http().post(`/v1/admin/concierge/orders/${id}/maker`).set("Authorization", ops.auth).send({ makerId: maker.id, reason: "to maker" }).expect(200);
+    await http().post(`/v1/admin/concierge/orders/${id}/maker`).set("Authorization", ops.auth).send({ makerId: maker.id, reason: "to maker", expectedMaker: "" }).expect(200);
     return { a, maker, ops, id };
   }
   const deliver = (auth: string, id: string, wishIds: string[]) => http().post(`/v1/admin/concierge-orders/${id}/delivery`).set("Authorization", auth).send({ reason: "all made", wishIds });

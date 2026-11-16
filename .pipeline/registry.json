@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "frozenAt": "2026-11-16T07:47:35Z",
+  "frozenAt": "2026-11-16T09:40:23Z",
   "framework": "nestjs",
   "generatedBy": "tools/pipeline/reconcile.py",
   "resources": [
@@ -5135,6 +5135,15 @@
           ],
           "body": [
             {
+              "name": "expectedMaker",
+              "type": "string Maker.id (the maker the staff member saw on the order; an empty string when it had none; a different maker now answers 409 order_changed and nothing changes)",
+              "from": [
+                "DEC-212",
+                "admin-concierge",
+                "concierge-orders"
+              ]
+            },
+            {
               "name": "id",
               "type": "string (path: order id)",
               "from": [
@@ -5179,6 +5188,7 @@
             }
           ],
           "notes": [
+            "body by DEC-212",
             "route by DEC-112"
           ]
         },

@@ -49,3 +49,12 @@
   them alone. A settled premium-style extra on a draft with no ticket is not attached until a ticket is (a UI note for
   W6). A draft's gather link answers 404 until the wish is sealed. A put to a landed key answers 409 before the
   signature check (test stacks only).
+
+## For API-BASE-7 (16 Nov)
+- Typed staff reads (handed back twice: API-BASE-5 case 6, API-BASE-6 case 6).
+- A sweep for an upload that was confirmed but never attached to a wish, a brand or a shoot (today only unconfirmed
+  uploads are swept after 24 h).
+- The price book serves the Concierge delivery hours (the code uses 3; the field says 0), the erase-now period and
+  the photo limit (the website's restored sentences read them).
+- OWNER asked: reactions for every ticket (as the API does) or Keepsake and above (as the product document says).
+- Per-action role reads for the staff wish, person, payout and numbers-target actions (the web keeps ACTION_ROLES).

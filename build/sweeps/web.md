@@ -42,3 +42,12 @@
   an import counts as added a row whose phone or birthday the server stored blank (API-BASE-6 case 7, then the
   screen shows the server's per-row answer); lib/site-plans.ts is a second copy of the plan prices drawn by the
   website's ProPlans (W1 reads the price book and deletes it); the "light" pictures of these screens look dark.
+- W5 + W5b (checked 16 Nov; waits for WEB-API-4 to merge): scripts/live/drive.mjs calls the w5b flow with no pics
+  folder and the flow dies at its first screenshot (fix at the merge: skip the picture when pics is null); the 7th
+  photo's tile shows the server's short message, not its exact field text; /w/mine's empty line says "Write a
+  letter" for kinds that offer no letter (group, wedding, teams); a wedding save-the-date has no note chapter.
+- WEB-API-4 (checked 16 Nov, patch running): the maker threw an uncaught "Event" on every /app/new screen when the
+  web-font host cannot be reached; WishCard does not retry a failed picture; Ban sends no Idempotency-Key.
+- THE MERGE CHAIN (lead): WEB-API-4 first (it changes scripts/live: plantCode is gone); then a merge agent takes
+  w8-business1, w5-maker2 and w1-site1 in turn: merge the web head in, move each flow to codeFor(), run the checks
+  and the whole driver, hand back; the lead merges each.

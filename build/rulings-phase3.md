@@ -677,3 +677,13 @@ GC1 (B23) E-12 and E-14 take `transcript` (the text the browser's own dictation 
     and never read (R13: no audio reaches the AI). Any signed-in person may ask (a sender is a person). The AiRequest answer
     carries only the fields that apply to its kind. Registry at the closing base. The daily cap of 20 is PROVISIONAL.
 GC2 (B23) A voice file named in an AI request can still be deleted or erased: the link is cleared, not refused (closing base).
+HA1 (B22; T-48 and the pricing page "You can keep it, or they can") The receiver can keep and wake a wish too. A signed-in
+    person who holds the wish's link (and has passed its passcode where one is set) may buy a keep for it and wake it: the
+    payment is theirs, the keep moves the wish's end as the owner's does, a refund takes it back, and they see nothing of
+    the owner's account. (B22 patch.) Sold on the pricing page, so it is built before Phase 5 closes.
+HA2 (B22; T-14 "keeps every wish its holder made live while the Pass is active") For the Pass holder's own wishes a keep or a
+    wake is covered: no payment (payment: null), the wish is live until the Pass ends, and it rests again when the Pass ends
+    unless a paid keep covers it. Anyone else pays. (B22 patch: build on what the Pass code already does, or say it does
+    nothing yet.)
+HA3 (B22) E-232 follows the registry: the owner, or a signed-in receiver who holds the link; a stranger is refused. Approving
+    a date needs the person's matching date: accepted. E-83 and E-64 gain their extra fields in the registry (closing base).

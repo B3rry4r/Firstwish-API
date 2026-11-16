@@ -74,6 +74,10 @@ import { PayoutsModule } from "./modules/payouts/payouts.module";
 /** Registration entry: each resource module adds one import line here. */
 import { ModerationModule } from "./modules/moderation/moderation.module";
 import { ShowingModule } from "./modules/showing/showing.module";
+import { WishKeepsModule } from "./modules/wish-keeps/wish-keeps.module";
+import { MePassModule } from "./modules/me-pass/me-pass.module";
+import { LedgerEntriesModule } from "./modules/ledger-entries/ledger-entries.module";
+
 @Module({
   imports: [
     CommonModule,
@@ -159,6 +163,11 @@ import { ShowingModule } from "./modules/showing/showing.module";
     QrCardsModule,
     RenderJobsModule,
     // end B19
+    // B22
+    WishKeepsModule,
+    MePassModule,
+    LedgerEntriesModule,
+    // end B22
   ],
 })
 export class AppModule {}

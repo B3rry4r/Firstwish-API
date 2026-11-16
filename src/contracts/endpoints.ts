@@ -42,7 +42,7 @@ export const ENDPOINTS: readonly EndpointRow[] = [
   { id: "E-24", method: "GET", path: "/v1/admin/businesses/:id", resource: "Business", operation: "GetAdminBusinessesById", request: "GetAdminBusinessesByIdQueryDto", rawBody: false, noContent: false },
   { id: "E-25", method: "GET", path: "/v1/business", resource: "Business", operation: "GetBusiness", request: "GetBusinessQueryDto", rawBody: false, noContent: false },
   { id: "E-26", method: "PATCH", path: "/v1/business", resource: "Business", operation: "PatchBusiness", request: "PatchBusinessBodyDto", rawBody: false, noContent: false },
-  { id: "E-27", method: "GET", path: "/v1/business/plan", resource: "Business", operation: "GetBusinessPlan", request: "GetBusinessPlanQueryDto", rawBody: false, noContent: true },
+  { id: "E-27", method: "GET", path: "/v1/business/plan", resource: "Business", operation: "GetBusinessPlan", request: "GetBusinessPlanQueryDto", rawBody: false, noContent: false },
   { id: "E-28", method: "GET", path: "/v1/chapter-specs", resource: "ChapterSpec", operation: "GetChapterSpecs", request: "GetChapterSpecsQueryDto", rawBody: false, noContent: false },
   { id: "E-29", method: "GET", path: "/v1/business/client-wishes", resource: "ClientWish", operation: "GetBusinessClientWishes", request: "GetBusinessClientWishesQueryDto", rawBody: false, noContent: false },
   { id: "E-30", method: "POST", path: "/v1/business/client-wishes", resource: "ClientWish", operation: "PostBusinessClientWishes", request: "PostBusinessClientWishesBodyDto", rawBody: false, noContent: false },

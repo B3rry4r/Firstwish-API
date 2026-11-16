@@ -227,6 +227,8 @@ export interface RoyaltyEarnings extends PaginatedList<RoyaltyAccrual> {
 /** Account: table. written by E-3, E-7, E-9, E-11 and server:sessions; the person's account (sessions declaration Me); erase really removes personal fields, so name, contact (the email, S-27), phone, bio and handle are nullable in storage */
 export interface Account {
   action: "ban" | "lift" | "erase";
+  /** HR3 (E-6, E-7): the business the person owns and every business they are a login of, owner first: id, name, role and the login's state */
+  businesses?: Array<{ id: string; name: string; role: "owner" | "login"; state: "owner" | "invited" | "active" | "removed" }>;
   ban?: Record<string, unknown> | null;
   bio?: string | null;
   business: string;
@@ -2150,8 +2152,41 @@ export type PatchBusinessResponse = Business["brand"];
 export type GetBusinessPlanParams = Record<string, never>;
 export type GetBusinessPlanQuery = Record<string, never>;
 export type GetBusinessPlanHeaders = Record<string, never>;
-/** 204 No Content: the response has no body (Q12). */
-export type GetBusinessPlanResponse = NoContent;
+/** HR1: what a payment for one plan would do now, in the server's terms. */
+export interface PlanOffer {
+  plan: string;
+  name: string;
+  priceKobo: Kobo;
+  wishes: number;
+  logins: number;
+  vaultGb: number;
+  /** starts: none live, a month from now; adds_month: the same plan is live, a month is added to its end; replaces_plan: another plan is live and is replaced from now (the time paid for is kept) */
+  effect: "starts" | "adds_month" | "replaces_plan";
+  startsAt: Instant;
+  runsUntil: Instant;
+  addsTo: Instant | null;
+  replaces: string | null;
+  words: string;
+}
+/** HR1: a plan payment of the business that still waits to be paid. */
+export interface PendingPlan {
+  reference: string;
+  plan: string;
+  startedAt: Instant;
+}
+/** E-27 answers the plan state (the usage fields first), what each plan on offer would do, and the plan payment still waiting (HR1). */
+export interface BusinessPlanAnswer extends ProUsage {
+  plan: string | null;
+  live: boolean;
+  month: string | null;
+  renews: Instant | null;
+  packEnds: Instant | null;
+  logins: { used: number; allowed: number };
+  vault: { usedGb: number; allowedGb: number; billedKobo: Kobo };
+  offers: PlanOffer[];
+  pending: PendingPlan | null;
+}
+export type GetBusinessPlanResponse = BusinessPlanAnswer;
 
 /** E-28 GET /v1/chapter-specs. Auth: signed in. */
 export type GetChapterSpecsParams = Record<string, never>;

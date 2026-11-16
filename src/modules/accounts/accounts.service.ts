@@ -33,7 +33,16 @@ export type MeView = Pick<Account, "id" | "mode" | "timeZone" | "sides" | "creat
   business: string | null;
   space: Account["space"];
   dates: MeDate[];
+  /** HR3: the business the person owns (role owner) and every business they hold a login on (role login, with the login's state), owner first */
+  businesses: MeBusiness[];
 };
+
+export interface MeBusiness {
+  id: string;
+  name: string;
+  role: "owner" | "login";
+  state: "owner" | "invited" | "active" | "removed";
+}
 
 type Db = Prisma.TransactionClient | PrismaService;
 type Side = Account["sides"][number];
@@ -132,6 +141,7 @@ export class AccountsService {
     ]);
     const sides = this.sidesOf(row);
     return {
+      businesses: await this.businessesOf(row),
       id: row.id,
       name: row.name,
       email: row.contact,
@@ -151,6 +161,19 @@ export class AccountsService {
       wishCount,
       dates: dates.map((d: DateRowRecord) => ({ id: d.id, name: d.name, who: d.who, what: d.what, date: d.date ? dateOnlyOf(d.date) : null })),
     };
+  }
+
+  /** HR3: the owned business first, then each business the person's sign-in email is a login of (the login's state is the server's: invited, active or removed). */
+  private async businessesOf(row: AccountRow): Promise<MeBusiness[]> {
+    const own = await this.prisma.business.findMany({ where: { accountId: row.id }, select: { id: true, name: true, business: true }, orderBy: { id: "asc" } });
+    const mine = own.map((b): MeBusiness => ({ id: b.id, name: b.name ?? b.business ?? "", role: "owner", state: "owner" }));
+    if (!row.contact || row.erasedAt) return mine;
+    const logins = await this.prisma.$queryRaw<{ id: string; name: string | null; business: string | null; status: string | null }[]>`
+      SELECT b.id::text AS id, b.name, b.business, l.status
+        FROM login l JOIN business b ON b.id = l."businessId"
+       WHERE lower(trim(l.contact)) = lower(${row.contact}) AND b."accountId" <> ${row.id}::uuid
+       ORDER BY l.id`;
+    return [...mine, ...logins.map((l): MeBusiness => ({ id: l.id, name: l.name ?? l.business ?? "", role: "login", state: l.status === "removed" ? "removed" : l.status === "active" ? "active" : "invited" }))];
   }
 
   private sidesOf(row: AccountRow): Side[] {

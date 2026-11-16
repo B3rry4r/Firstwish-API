@@ -2,6 +2,7 @@ import { Injectable } from "@nestjs/common";
 import type { Payment } from "@prisma/client";
 import { PrismaService } from "../../common/db/prisma.service";
 import { lockAccount } from "../../common/db/account-lock";
+import { PAYMENTS_ABANDON_AFTER_MINUTES as PLAN_PENDING_MINUTES } from "./abandon";
 import { AppError } from "../../common/errors/app-error";
 import { Money } from "../../common/money/money";
 import { Clock } from "../../common/ports/clock.port";
@@ -88,6 +89,17 @@ export class PaymentsService {
       if (existing) return { row: existing, fresh: false, sameThing: false };
       const now = this.clock.now();
       const quote = await this.book.quote(req.lines, now, { db: tx });
+      // HR1: one plan payment at a time for a business. The same plan again hands back the payment that waits; another plan is 409 with its reference.
+      if (req.purpose === "pro_plan" && businessId) {
+        await tx.$queryRaw`SELECT id FROM business WHERE id = ${businessId}::uuid FOR UPDATE`;
+        const since = new Date(now.getTime() - PLAN_PENDING_MINUTES * 60_000);
+        const waiting = await tx.payment.findFirst({ where: { businessId, purpose: "pro_plan", status: { in: ["pending", "started"] }, fulfilledAt: null, createdAt: { gt: since } }, orderBy: { id: "desc" } });
+        if (waiting) {
+          const wasSku = (Array.isArray(waiting.lines) ? (waiting.lines[0] as { sku?: string } | undefined) : undefined)?.sku;
+          if (wasSku === quote.lines[0]?.sku) return { row: waiting, fresh: false, sameThing: true };
+          throw new AppError(409, "plan_payment_pending", "A payment for a plan is waiting to be paid. Finish it, or wait for it to lapse, before you start another.", { reference: waiting.providerReference });
+        }
+      }
       // GG3: what the fulfilment bundle knows can never be granted is refused now (422), before the buyer pays
       const open = await this.registry.checkStart(accountId, req.info, quote.lines.map((l) => l.sku), tx, quote);
       // CB1: a payment already open for the same order is answered again: no new row, no new provider call

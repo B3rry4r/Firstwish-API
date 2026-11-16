@@ -2,7 +2,9 @@ import { Injectable } from "@nestjs/common";
 import { PrismaService } from "../../common/db/prisma.service";
 import { AppError } from "../../common/errors/app-error";
 import { Clock } from "../../common/ports/clock.port";
-import { EntitlementsService } from "../price-book/entitlements.service";
+import { PAYMENTS_ABANDON_AFTER_MINUTES as PLAN_PENDING_MINUTES } from "../payments/abandon";
+import { EntitlementsService, grantOf } from "../price-book/entitlements.service";
+import { PriceBookService } from "../price-book/price-book.service";
 import type { PlanUsage } from "../purchases/business-handlers";
 import { BusinessHandlers } from "../purchases/business-handlers";
 import { addMonths, monthKey, num } from "../purchases/grants";
@@ -31,6 +33,35 @@ export interface PlanState {
   vault: { usedGb: number; allowedGb: number; billedKobo: number };
 }
 
+/** HR1: what a payment for one plan would do now, in the server's terms (the Plan screen says it before the business pays). */
+export interface PlanOffer {
+  plan: string;
+  name: string;
+  priceKobo: number;
+  wishes: number;
+  logins: number;
+  vaultGb: number;
+  /** starts: no live plan, a month from now; adds_month: the same plan is live, a month is added to its end; replaces_plan: another plan is live and is replaced from now */
+  effect: "starts" | "adds_month" | "replaces_plan";
+  startsAt: string;
+  /** the day the plan runs to after this payment */
+  runsUntil: string;
+  /** the live plan's end, the day a month is added to (null when none is live) */
+  addsTo: string | null;
+  /** the live plan this payment replaces (null unless it replaces one) */
+  replaces: string | null;
+  words: string;
+}
+
+/** HR1: a plan payment of this business that is still waiting (so the screen can carry on with it). */
+export interface PendingPlan {
+  reference: string;
+  plan: string;
+  startedAt: string;
+}
+
+const PLANS_ON_OFFER = ["starter", "studio"];
+const day = (d: Date): string => d.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
 const obj = (v: unknown): Record<string, unknown> => (v && typeof v === "object" && !Array.isArray(v) ? (v as Record<string, unknown>) : {});
 const int = (v: unknown): number => (typeof v === "number" && Number.isFinite(v) ? v : 0);
 
@@ -44,6 +75,7 @@ export class PlanView {
     private readonly clock: Clock,
     private readonly handlers: BusinessHandlers,
     private readonly entitlements: EntitlementsService,
+    private readonly prices: PriceBookService,
   ) {}
 
   /** The seats the plan allows (the owner's own included), from the entitlements row; a business with no plan has its owner's seat. */
@@ -120,6 +152,65 @@ export class PlanView {
       logins: { used: await this.seatsUsed(tx, businessId), allowed: await this.loginsAllowed(tx, u.plan) },
       vault: { usedGb: Math.ceil(Number(bytes[0]?.n ?? 0n) / GB), allowedGb: planGb + (grants[0]?.gb ?? 0) + extra, billedKobo: Number(b.vault ?? 0n) },
     };
+  }
+
+  /** The plan payment of this business that is still waiting (started under the lapse time), newest first; null when none. */
+  async pending(tx: Tx, businessId: string): Promise<PendingPlan | null> {
+    const since = new Date(this.clock.now().getTime() - PLAN_PENDING_MINUTES * 60_000);
+    const p = await tx.payment.findFirst({
+      where: { businessId, purpose: "pro_plan", status: { in: ["pending", "started"] }, fulfilledAt: null, createdAt: { gt: since } },
+      orderBy: { id: "desc" },
+      select: { providerReference: true, lines: true, createdAt: true },
+    });
+    if (!p) return null;
+    const sku = (Array.isArray(p.lines) ? (p.lines[0] as { sku?: string } | undefined) : undefined)?.sku ?? "";
+    return { reference: p.providerReference, plan: sku.slice("pro.".length), startedAt: p.createdAt.toISOString() };
+  }
+
+  /**
+   * HR1: for each plan on offer, what a payment now would do. Same rule as the plan handler (BusinessHandlers.plan): with a live plan
+   * the plan paid for replaces it from now (its wish allowance too; the wishes already used this month stay counted) and the end is
+   * pushed one month on from the end already paid, so the time paid for is kept; with none live the plan starts today for a month.
+   */
+  async offers(tx: Tx, businessId: string): Promise<PlanOffer[]> {
+    const u = await this.peek(tx, businessId);
+    if (!u) throw AppError.notFound();
+    const now = this.clock.now();
+    const ent = await this.entitlements.row(tx);
+    const quote = await this.prices.quote(PLANS_ON_OFFER.map((k) => ({ sku: `pro.${k}` })), now, { db: tx });
+    const nameOf = (plan: string | null): string => (plan ? (quote.lines.find((l) => l.sku === `pro.${plan}`)?.name ?? plan) : "");
+    return quote.lines.map((line): PlanOffer => {
+      const plan = line.sku.slice("pro.".length);
+      const g = grantOf(ent, line.sku);
+      const live = u.live && u.renews;
+      const effect = !live ? "starts" : u.plan === plan ? "adds_month" : "replaces_plan";
+      const ends = addMonths(live && u.renews ? u.renews : now, 1);
+      const words =
+        effect === "starts"
+          ? `Paying starts ${line.name} today. It runs to ${day(ends)}.`
+          : effect === "adds_month"
+            ? `You are on ${line.name} until ${day(u.renews as Date)}. Paying adds a month: it then runs to ${day(ends)}.`
+            : `You are on ${nameOf(u.plan)} until ${day(u.renews as Date)}. Paying for ${line.name} swaps it in from today. The time you paid for is kept: ${line.name} runs to ${day(ends)}. This month's wishes already made stay counted.`;
+      return {
+        plan,
+        name: line.name,
+        priceKobo: line.unitKobo,
+        wishes: num(g?.wishes),
+        logins: num(g?.logins),
+        vaultGb: num(g?.vaultGb),
+        effect,
+        startsAt: now.toISOString(),
+        runsUntil: ends.toISOString(),
+        addsTo: live && u.renews ? u.renews.toISOString() : null,
+        replaces: effect === "replaces_plan" ? u.plan : null,
+        words,
+      };
+    });
+  }
+
+  /** E-27: the plan state with what each plan on offer would do, and the plan payment still waiting. */
+  async planOf(businessId: string): Promise<PlanState & { offers: PlanOffer[]; pending: PendingPlan | null }> {
+    return this.prisma.$transaction(async (tx) => ({ ...(await this.state(tx, businessId)), offers: await this.offers(tx, businessId), pending: await this.pending(tx, businessId) }));
   }
 
   /** The same, in a transaction of its own (a read: nothing is written). */

@@ -37,6 +37,11 @@ export class ProBusinessService {
     return { ...state };
   }
 
+  /** E-27 (HR1): the usage fields and plan state, what a payment for each plan would do, and the plan payment still waiting. */
+  planOf(businessId: string): ReturnType<PlanView["planOf"]> {
+    return this.plan.planOf(businessId);
+  }
+
   async usageOf(businessId: string): Promise<UsageAnswer> {
     return this.usage(await this.plan.stateOf(businessId));
   }

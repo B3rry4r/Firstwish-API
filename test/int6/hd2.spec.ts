@@ -33,8 +33,12 @@ describe("HD2: the draw records its source; the seal reads it", () => {
     t = await createTestApp({ now: APRIL });
     db = t.app.get(PrismaService);
     jest.spyOn(t.app.get(InvoicesService), "issue").mockResolvedValue(null);
-    const r = spawnSync(process.execPath, [join(ROOT, "scripts/seed.mjs")], { cwd: ROOT, env: process.env, encoding: "utf8" });
-    if (r.status !== 0) throw new Error(`seed failed: ${r.stderr}`);
+    // The seed puts the reference rows back to their seeded figures (the payout threshold among them) while other specs may be reading them: run it
+    // only when the price book this spec needs is not there yet.
+    if (!(await db.price.findFirst({ where: { sku: "pro.studio", version: 1 } }))) {
+      const r = spawnSync(process.execPath, [join(ROOT, "scripts/seed.mjs")], { cwd: ROOT, env: process.env, encoding: "utf8" });
+      if (r.status !== 0) throw new Error(`seed failed: ${r.stderr}`);
+    }
   });
   afterAll(() => t.close());
   beforeEach(() => t.clock.set(APRIL));

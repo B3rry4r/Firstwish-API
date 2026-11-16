@@ -9,7 +9,8 @@
         "pro-data.ts"
       ],
       "change": "integer kobo, currency NGN, over the wire and in storage; prices only from the price book",
-      "status": "open"
+      "status": "done",
+      "resolution": "W12 (web w12-staff2 f67d8d3), verified 16 Nov"
     },
     {
       "id": "UA-2",
@@ -20,7 +21,8 @@
         "pro-data.ts"
       ],
       "change": "integer kobo, currency NGN, over the wire and in storage; prices only from the price book",
-      "status": "open"
+      "status": "done",
+      "resolution": "W12 (web w12-staff2 f67d8d3), verified 16 Nov"
     },
     {
       "id": "UA-3",
@@ -45,7 +47,8 @@
         "studio.ts"
       ],
       "change": "integer kobo, currency NGN, over the wire and in storage; prices only from the price book",
-      "status": "open"
+      "status": "done",
+      "resolution": "W12 (web w12-staff2 f67d8d3), verified 16 Nov"
     },
     {
       "id": "UA-5",
@@ -727,7 +730,8 @@
         "pro-data.ts"
       ],
       "change": "server-issued UUIDv7 ids",
-      "status": "open"
+      "status": "done",
+      "resolution": "W12 (web w12-staff2 f67d8d3), verified 16 Nov"
     },
     {
       "id": "UA-64",
@@ -738,7 +742,8 @@
         "pro-data.ts"
       ],
       "change": "server-issued UUIDv7 ids",
-      "status": "open"
+      "status": "done",
+      "resolution": "W12 (web w12-staff2 f67d8d3), verified 16 Nov"
     },
     {
       "id": "UA-65",
@@ -749,7 +754,8 @@
         "pro-data.ts"
       ],
       "change": "server-issued UUIDv7 ids",
-      "status": "open"
+      "status": "done",
+      "resolution": "W12 (web w12-staff2 f67d8d3), verified 16 Nov"
     },
     {
       "id": "UA-66",
@@ -1977,7 +1983,8 @@
         "lib/pro-data.ts"
       ],
       "change": "the server (business, members, client wishes, people, invoices)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W12 (web w12-staff2 f67d8d3), verified 16 Nov"
     },
     {
       "id": "UA-176",
@@ -1988,7 +1995,8 @@
         "lib/pro-data.ts"
       ],
       "change": "the server (business, members, client wishes, people, invoices)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W12 (web w12-staff2 f67d8d3), verified 16 Nov"
     },
     {
       "id": "UA-177",
@@ -1999,7 +2007,8 @@
         "lib/pro-data.ts"
       ],
       "change": "the server (business, members, client wishes, people, invoices)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W12 (web w12-staff2 f67d8d3), verified 16 Nov"
     },
     {
       "id": "UA-178",
@@ -2826,7 +2835,8 @@
         "lib/pro-data.ts"
       ],
       "change": "the web reads GET /v1/prices; the server charges only from the price book",
-      "status": "open"
+      "status": "done",
+      "resolution": "W12 (web w12-staff2 f67d8d3), verified 16 Nov"
     },
     {
       "id": "UA-251",
@@ -2837,7 +2847,8 @@
         "lib/pro-data.ts"
       ],
       "change": "the web reads GET /v1/prices; the server charges only from the price book",
-      "status": "open"
+      "status": "done",
+      "resolution": "W12 (web w12-staff2 f67d8d3), verified 16 Nov"
     },
     {
       "id": "UA-252",
@@ -2861,7 +2872,8 @@
         "lib/studio.ts"
       ],
       "change": "the web reads GET /v1/prices; the server charges only from the price book",
-      "status": "open"
+      "status": "done",
+      "resolution": "W12 (web w12-staff2 f67d8d3), verified 16 Nov"
     },
     {
       "id": "UA-254",
@@ -3612,7 +3624,8 @@
         "lib/studio.ts"
       ],
       "change": "the price book's promotion with endsAt 2027-02-01 00:00 Africa/Lagos, checked by the server on every quote",
-      "status": "open"
+      "status": "done",
+      "resolution": "W12 (web w12-staff2 f67d8d3), verified 16 Nov"
     },
     {
       "id": "UA-318",
@@ -4236,7 +4249,8 @@
         "pro-data.ts"
       ],
       "change": "every epoch-ms `at` becomes createdAt/updatedAt ISO-8601 UTC strings set by the server; calendar dates are YYYY-MM-DD strings (date-only canon)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W12 (web w12-staff2 f67d8d3), verified 16 Nov"
     },
     {
       "id": "UA-374",
@@ -4247,7 +4261,8 @@
         "pro-data.ts"
       ],
       "change": "every epoch-ms `at` becomes createdAt/updatedAt ISO-8601 UTC strings set by the server; calendar dates are YYYY-MM-DD strings (date-only canon)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W12 (web w12-staff2 f67d8d3), verified 16 Nov"
     },
     {
       "id": "UA-375",
@@ -4258,7 +4273,8 @@
         "pro-data.ts"
       ],
       "change": "every epoch-ms `at` becomes createdAt/updatedAt ISO-8601 UTC strings set by the server; calendar dates are YYYY-MM-DD strings (date-only canon)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W12 (web w12-staff2 f67d8d3), verified 16 Nov"
     },
     {
       "id": "UA-376",
@@ -5177,7 +5193,8 @@
         "lib/pro-data.ts"
       ],
       "change": "every read or write of localStorage/sessionStorage/IndexedDB is replaced by its endpoint; the session is an httpOnly refresh cookie plus an in-memory access token; mode (light/dark) is a field on the account; choices before sign-in travel in the link; the build fails on the words localStorage, sessionStorage, IndexedDB in app/, components/, lib/",
-      "status": "open"
+      "status": "done",
+      "resolution": "W12 (web w12-staff2 f67d8d3), verified 16 Nov"
     },
     {
       "id": "UA-458",
@@ -5188,7 +5205,8 @@
         "lib/pro-data.ts"
       ],
       "change": "every read or write of localStorage/sessionStorage/IndexedDB is replaced by its endpoint; the session is an httpOnly refresh cookie plus an in-memory access token; mode (light/dark) is a field on the account; choices before sign-in travel in the link; the build fails on the words localStorage, sessionStorage, IndexedDB in app/, components/, lib/",
-      "status": "open"
+      "status": "done",
+      "resolution": "W12 (web w12-staff2 f67d8d3), verified 16 Nov"
     },
     {
       "id": "UA-459",
@@ -5200,7 +5218,8 @@
         "lib/pro-data.ts"
       ],
       "change": "every read or write of localStorage/sessionStorage/IndexedDB is replaced by its endpoint; the session is an httpOnly refresh cookie plus an in-memory access token; mode (light/dark) is a field on the account; choices before sign-in travel in the link; the build fails on the words localStorage, sessionStorage, IndexedDB in app/, components/, lib/",
-      "status": "open"
+      "status": "done",
+      "resolution": "W12 (web w12-staff2 f67d8d3), verified 16 Nov"
     },
     {
       "id": "UA-460",

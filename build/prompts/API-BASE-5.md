@@ -1,4 +1,4 @@
-BUILDER API-BASE-5 | TIER T2 | Budget 190 steps. What the maker's content screens and the staff screens found; change nothing else.
+BUILDER API-BASE-5 | TIER T2 | Budget 220 steps. What the maker's content screens and the staff screens found; change nothing else.
 Machine: 4 CPUs, 15 GB; a heavy job only at 5 GB available. Kill what you start by PID.
 Read /home/user/Firstwish-API/build/common-rules.md, rulings HQ1-HQ5, R14, FC1 in build/rulings.md and build/rulings-phase3.md, the lists
 build/sweeps/api.md (the sections "From W13's verifier" and "From API-BASE-4's verifier") and how API-BASE-4 reopened
@@ -18,7 +18,7 @@ Cases (through the real routes; a test for each; in this order: if the budget ru
  2. HQ1 the maker's fields: the contract's wish content gains what the maker's designed screens collect and the
     contract lacks: the cover's school, years and born; letter.line; reasons.note; memory.quote; blessing.note;
     links.download (check each against the web's maker on its branch: /home/user/Firstwish-web, `git show w5-maker2:lib/draft.ts`
-    lists what it maps and what it drops; add only fields a screen collects); saved, read back, length-bounded,
+    lists what it maps and what it drops, and the maker BEFORE the wiring, `git show c223c96:components/app/maker/Fields.tsx` or wherever the steps' fields live, shows which inputs the design drew; add only fields a designed screen collects); saved, read back, length-bounded,
     covered by the erase rules (the AA2 gate) and shown to the receiver only where the wish's player uses them.
  3. HQ4 the gather link: the wish's owner (a person, not only a business) can read the link friends use to add a
     voice (find the business-only read: GET /v1/wishes/:id/link or as the registry names it) and what a friend's
@@ -39,6 +39,16 @@ Cases (through the real routes; a test for each; in this order: if the budget ru
     voice-note count per wish; the Clock port (not the database's now()) in notices.service.ts:216-224 and
     vault/reveals.service.ts:168; an account's own erase and a staff erase: say what waiting period the rulings give
     and whether the code follows it (no change without a ruling: report).
+ 8. The receiver's keep and wake by link (rulings HA1, HA2; found by W7): today the public wish view has no handle
+    the keep and wake routes accept (they take the wish's UUID and say "signed in") and a resting wish's link answers
+    410, so a receiver can never wake it. The link holder (the link, and the unlock token where the wish has a
+    passcode, in the HA1 headers) can read a resting wish's "resting" state at its link (no content) and can start a
+    keep or a wake payment for it with no account (by the slug or a handle the public view gives); an ended, removed
+    or taken-down wish stays 410. The public view also carries weddingDate where the player needs it.
+ 9. House showcase wishes (the supersedes entry "house showcase wishes served by the server"; found by W7): each
+    style has a house wish that plays it, published by the house creator and seeded, and the styles read gives its
+    link (showcaseSlug or as the registry would name it), so "Watch it play" on a style opens a real wish at
+    /w/<slug>. Say how many styles the seed can cover from prisma/seed-data today and what is missing.
 Checks (quiet logs, EXIT lines): typecheck, lint on changed files, gates.sh, check-contracts, check-drift, check-routes,
 the affected specs, then `npm test -- --maxWorkers=2` twice. Commit on api-base-5; do not push; remove your worktree and
 databases; leave no background jobs. Hand back ONCE in 12 lines of claims (one per line, each testable): head, DEC ids,

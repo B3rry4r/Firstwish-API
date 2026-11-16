@@ -240,10 +240,12 @@ describe("wishes E-221 E-222 E-224 E-225 E-229 E-231 (contract)", () => {
     const id = await ready(u);
     const r = await sealIt(u, id, { opensAt: "2027-02-14T09:00", timeZone: "Africa/Lagos" });
     expect(r.status).toBe(200);
-    expect(r.body).toMatchObject({ status: "sealed", state: "sealed", opensAt: "2027-02-14T08:00:00.000Z", timeZone: "Africa/Lagos" });
-    expect(r.body.no).toMatch(/^\d{4,}$/);
-    expect(r.body.link).toMatch(/^\/w\/[a-z0-9-]{8,32}$/);
-    const slug = (r.body.link as string).slice(3);
+    expect(r.body.payment).toBeNull(); // VV1: {payment, item}; no money moves at the seal
+    const item = r.body.item;
+    expect(item).toMatchObject({ status: "sealed", state: "sealed", opensAt: "2027-02-14T08:00:00.000Z", timeZone: "Africa/Lagos" });
+    expect(item.no).toMatch(/^\d{4,}$/);
+    expect(item.link).toMatch(/^\/w\/[a-z0-9-]{8,32}$/);
+    const slug = (item.link as string).slice(3);
     expect(slug.length).toBeGreaterThanOrEqual(8);
     expect(slug.length).toBeLessThanOrEqual(32);
     const tr = await db.wishTransition.findMany({ where: { wishId: id } });

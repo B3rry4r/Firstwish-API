@@ -259,8 +259,8 @@ export class StudioStylesService {
         const waiting = await tx.styleSubmission.findFirst({ where: { styleId: id, status: "review" }, orderBy: { id: "desc" } });
         if (waiting) {
           await tx.styleSubmission.update({ where: { id: waiting.id }, data: { status: "returned", decision: "return", note: "Taken back by its creator." } });
-          const snap = await tx.$queryRaw<{ used: "plan" | "extra" }[]>`SELECT used FROM style_submission_snapshot WHERE "submissionId" = ${waiting.id}::uuid`;
-          if (snap[0]) await this.state.giveReviewBack(tx, accountId, snap[0].used);
+          const snap = await tx.styleSubmissionSnapshot.findUnique({ where: { submissionId: waiting.id }, select: { used: true } });
+          if (snap) await this.state.giveReviewBack(tx, accountId, snap.used as "plan" | "extra");
           await tx.$executeRaw`DELETE FROM job WHERE type = 'style-level-review'::"JobType" AND "subjectId" = ${`check:${waiting.id}`} AND status = 'scheduled'`;
         }
         status = "draft";

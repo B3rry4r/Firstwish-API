@@ -99,10 +99,11 @@ export class SubmissionsService implements OnModuleInit {
   async runCheckJob(c: JobContext): Promise<JobResult> {
     const submissionId = c.subjectId.slice(CHECK_PREFIX.length);
     if (!UUID.test(submissionId)) return { skipped: true };
-    const snap = await this.db.$queryRaw<{ accountId: string; document: Obj; used: "plan" | "extra" }[]>`
-      SELECT "accountId"::text AS "accountId", document, used FROM style_submission_snapshot WHERE "submissionId" = ${submissionId}::uuid`;
-    if (!snap[0]) return { skipped: true };
-    const { accountId, document, used } = snap[0];
+    const snap = await this.db.styleSubmissionSnapshot.findUnique({ where: { submissionId }, select: { accountId: true, document: true, used: true } });
+    if (!snap) return { skipped: true };
+    const accountId = snap.accountId;
+    const document = obj(snap.document);
+    const used = snap.used as "plan" | "extra";
     const ids = fileIdsOf(document);
     const files = new Map<string, UsedFile>();
     if (ids.length) {
@@ -175,8 +176,8 @@ export class SubmissionsService implements OnModuleInit {
   /** One submission as staff see it: the style, its creator, the stored result of each check, and the frozen draft. */
   private async view(id: string): Promise<SubmissionView> {
     const sub = await this.db.styleSubmission.findUniqueOrThrow({ where: { id }, include: { creator: { include: { account: true } } } });
-    const snap = await this.db.$queryRaw<{ document: Obj }[]>`SELECT document FROM style_submission_snapshot WHERE "submissionId" = ${id}::uuid`;
-    const doc = obj(snap[0]?.document);
+    const snap = await this.db.styleSubmissionSnapshot.findUnique({ where: { submissionId: id }, select: { document: true } });
+    const doc = obj(snap?.document);
     const made = obj(doc.made);
     const base = typeof doc.base === "string" ? doc.base : "";
     const tpl = base ? await this.db.template.findFirst({ where: { base } }) : null;
@@ -214,16 +215,16 @@ export class SubmissionsService implements OnModuleInit {
       const sub = await tx.styleSubmission.findUniqueOrThrow({ where: { id } });
       if (sub.status !== "review") throw notAllowed("This submission is already decided.");
       if (!allPass(arr(sub.checks) as CheckResult[])) throw notAllowed("The checks have not passed yet.");
-      const snap = await tx.$queryRaw<{ accountId: string; document: Obj }[]>`SELECT "accountId"::text AS "accountId", document FROM style_submission_snapshot WHERE "submissionId" = ${id}::uuid`;
-      if (!snap[0]) throw new AppError(HttpStatus.INTERNAL_SERVER_ERROR, "snapshot_missing", "This submission has no saved draft.");
-      const doc = snap[0].document;
+      const snap = await tx.styleSubmissionSnapshot.findUnique({ where: { submissionId: id }, select: { accountId: true, document: true } });
+      if (!snap) throw new AppError(HttpStatus.INTERNAL_SERVER_ERROR, "snapshot_missing", "This submission has no saved draft.");
+      const doc = obj(snap.document);
       const now = this.clock.now();
       const staff = actor.id ? await tx.staffAccount.findUnique({ where: { id: actor.id }, select: { name: true } }) : null;
       let level: "standard" | "premium" | null = null;
       if (body.decision === "approve") {
         if (obj(doc.rights).confirmed === false) throw notAllowed("The creator has not confirmed their rights to this style.");
         level = body.level ?? "standard";
-        const account = await tx.account.findUnique({ where: { id: snap[0].accountId }, select: { handle: true } });
+        const account = await tx.account.findUnique({ where: { id: snap.accountId }, select: { handle: true } });
         await this.styles.enterStudioStyle(tx, entryOf(sub.styleId, doc, account?.handle ?? "", metaOf(doc).byline, sub.creatorId, await this.templateCreator(tx, doc)), level, staff?.name ?? "Staff", actor.id ?? "staff", reason);
       }
       const updated = await tx.styleSubmission.update({

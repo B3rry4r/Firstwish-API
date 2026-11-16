@@ -127,3 +127,15 @@ UPDATE "payout" p SET "paidByHandAt" = a."at"
 
 -- ZZ5: the accrual is one per payment and creator when it has no wish (a paid wish), and one per wish when it has
 CREATE UNIQUE INDEX "royalty_accrual_paymentId_creatorId_nowish_key" ON "royalty_accrual"("paymentId", "creatorId") WHERE "wishId" IS NULL;
+
+-- XX4: studio_style.version is the document's own version (the studio code keeps it inside the document): the column is filled from it
+-- now and by a trigger on every later write, so the two can never differ.
+UPDATE "studio_style" SET "version" = COALESCE(NULLIF("document" ->> 'version', '')::integer, 0);
+CREATE OR REPLACE FUNCTION "studio_style_version_from_document"() RETURNS trigger AS $$
+BEGIN
+  NEW."version" := COALESCE(NULLIF(NEW."document" ->> 'version', '')::integer, 0);
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+CREATE TRIGGER "studio_style_version_sync" BEFORE INSERT OR UPDATE OF "document" ON "studio_style"
+  FOR EACH ROW EXECUTE FUNCTION "studio_style_version_from_document"();

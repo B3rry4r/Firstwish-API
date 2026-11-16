@@ -242,12 +242,14 @@ describe("INT-7 patch: HF1 HF2 HF3", () => {
     });
 
     it("a Numbers target set by a principal with no staff row is refused with a 4xx, never 500", async () => {
+      // (vault_space, month) is this test's own pair: no other spec uses it; any row left there is cleared first.
+      await db.numbersTarget.deleteMany({ where: { line: "vault_space", period: "month" } });
       const ghost = ids.next();
       const tk = `pi7-ghost-${ghost}`;
       t.tokens.set(tk, { kind: "staff", staffId: ghost, roles: ["finance"] });
-      const g = await t.http().put("/v1/admin/numbers/targets").set(bearer(tk)).send({ line: "keeps", period: "month", targetKobo: 100, reason: "plan" });
+      const g = await t.http().put("/v1/admin/numbers/targets").set(bearer(tk)).send({ line: "vault_space", period: "month", targetKobo: 100, reason: "plan" });
       expect([403, 422]).toContain(g.status);
-      const ok = await t.http().put("/v1/admin/numbers/targets").set(bearer(staff.financeA.token)).send({ line: "keeps", period: "month", targetKobo: 200, reason: "plan" });
+      const ok = await t.http().put("/v1/admin/numbers/targets").set(bearer(staff.financeA.token)).send({ line: "vault_space", period: "month", targetKobo: 200, reason: "plan" });
       expect(ok.status).toBe(200);
     });
   });

@@ -83,6 +83,8 @@ describe("P1 (DEC-132): NumbersTarget stores one target per line and month", () 
     expect(e instanceof Prisma.PrismaClientKnownRequestError ? e.code : undefined).toBe("P2002");
   });
   it("INT-7: refuses a target whose setBy is no staff account (the foreign key)", async () => {
+    // (keeps, month) is this test's own pair: a row another run left there is cleared first, so the unique key cannot answer before the foreign key.
+    await db.numbersTarget.deleteMany({ where: { line: "keeps", period: "month" } });
     const e: unknown = await db.numbersTarget.create({ data: { id: ids.next(), line: "keeps", period: "month", targetKobo: 1n, setBy: ids.next(), setAt: new Date() } }).catch((x: unknown) => x);
     expect(e instanceof Prisma.PrismaClientKnownRequestError ? e.code : undefined).toBe("P2003");
   });

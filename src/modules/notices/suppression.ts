@@ -4,7 +4,7 @@ import type { Prisma } from "@prisma/client";
 import { PrismaService } from "../../common/db/prisma.service";
 import { ENV } from "../../common/env/env.module";
 import type { Env } from "../../common/env/env";
-import { normaliseEmail } from "../../common/normalise/email";
+import { canonicalEmail } from "../../common/normalise/email";
 
 type Db = Pick<Prisma.TransactionClient, "$queryRaw" | "$executeRaw">;
 
@@ -19,9 +19,9 @@ export class EmailSuppression {
     @Inject(ENV) private readonly env: Env,
   ) {}
 
-  /** The keyed hash of an address as the email canon spells it. */
+  /** The keyed hash of an address in the canonical form (letter case and +tag folded). */
   hashOf(address: string): string {
-    const canon = normaliseEmail(address) ?? address.trim().toLowerCase();
+    const canon = canonicalEmail(address) ?? address.trim().toLowerCase();
     return createHmac("sha256", this.env.AUTH_CODE_PEPPER).update(`suppress|${canon}`).digest("hex");
   }
 

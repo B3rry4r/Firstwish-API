@@ -15,7 +15,7 @@ import { AuditActor, AuditService, requireReason } from "../audit/audit.service"
 import { NoticesService } from "../notices/notices.service";
 import { EmailSuppression } from "../notices/suppression";
 import { IntakeLimits } from "./intake-limits";
-import { maskContact, MESSAGE_MAX, replyDomain, REPLY_LOCAL, replyToken, SUBJECT_MAX, textProblem } from "./rules";
+import { isOwnAddress, maskContact, MESSAGE_MAX, replyDomain, REPLY_LOCAL, replyToken, SUBJECT_MAX, textProblem } from "./rules";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export const SECTION = "/admin/support";
@@ -226,6 +226,7 @@ export class SupportService {
     const { detail, deliveryId } = await this.prisma.$transaction(async (tx) => {
       const t = await this.lockThread(tx, id);
       if (!t.contact) throw AppError.validation({ id: "This person's details were erased: there is no address to write to." });
+      if (isOwnAddress(this.env.MAIL_FROM, t.contact)) throw AppError.validation({ id: "This thread's contact is one of our own addresses: there is no one to write to." });
       if (await this.suppression.has(t.contact, tx)) throw AppError.conflict("address_complained", "This address asked not to get email, so a reply cannot be sent.");
       const now = this.clock.now();
       const mid = this.ids.id();

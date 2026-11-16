@@ -10,7 +10,7 @@ import { IdGenerator } from "../../common/ports/ids.port";
 import { scrubReason } from "../notices/catalog";
 import { EmailSuppression } from "../notices/suppression";
 import { IntakeLimits } from "./intake-limits";
-import { cleanInbound, MESSAGE_MAX, SUBJECT_MAX, threadOfToken, tokenFromAddress, tokenHolds } from "./rules";
+import { cleanInbound, isDeliveryReport, isOwnAddress, MESSAGE_MAX, SUBJECT_MAX, threadOfToken, tokenFromAddress, tokenHolds } from "./rules";
 import { checkSvix } from "./svix";
 import { SupportService } from "./support.service";
 
@@ -55,7 +55,7 @@ export class EmailWebhookService {
   async receive(raw: Buffer | undefined, h: SvixHeaders): Promise<void> {
     // RESEND_WEBHOOK_SECRET is not in the env schema yet (hand-back: HALT 1), so it is read here, at the time of the request.
     const secret = process.env.RESEND_WEBHOOK_SECRET;
-    if (!secret) throw new AppError(503, "webhook_not_configured", "The email webhook has no signing secret.");
+    if (!secret || secret.trim() === "" || secret.trim() === "whsec_") throw new AppError(503, "webhook_not_configured", "The email webhook has no signing secret.");
     if (!raw) throw AppError.unauthorized("The signature does not match.");
     const check = checkSvix(secret, raw, h, Math.floor(this.clock.now().getTime() / 1000));
     if (check === "bad_signature") throw AppError.unauthorized("The signature does not match.");
@@ -157,6 +157,8 @@ export class EmailWebhookService {
     // Mail from a machine (an out-of-office, a bounce notice) is never a thread: it would answer our answer, and again.
     const auto = headers["auto-submitted"];
     if ((auto && auto.toLowerCase() !== "no") || headers["x-autoreply"] || headers["x-auto-response-suppress"] || /bulk|junk|list/i.test(headers.precedence ?? "")) return "ignored";
+    // Our own addresses and delivery reports (by content type) never start a thread or land in one, with or without Auto-Submitted.
+    if (isOwnAddress(this.env.MAIL_FROM, sender) || isDeliveryReport(headers["content-type"])) return "ignored";
     const text = cleanInbound(str(data.text), MESSAGE_MAX);
     if (!text) return "ignored";
 
@@ -171,6 +173,7 @@ export class EmailWebhookService {
       // The mark must hold for the thread's own contact AND the sender must be that contact: a token with another sender's
       // address never lands in someone else's thread; it starts a thread of its own.
       if (tokenHolds(this.env.AUTH_CODE_PEPPER, token, t.id, t.contact) && t.contact === sender) {
+        if (!(await this.limits.takeToken(tx, token))) return "limited";
         await this.support.addCustomerMessage(tx, t.id, text);
         return "appended";
       }

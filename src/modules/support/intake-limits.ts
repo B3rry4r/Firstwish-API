@@ -8,7 +8,7 @@ import { canonicalEmail } from "../../common/normalise/email";
 import { Clock } from "../../common/ports/clock.port";
 import { dateOnlyOf } from "../../common/time/time";
 import { networkOf } from "../audit/ip-network";
-import { THREADS_PER_DAY } from "./rules";
+import { THREADS_PER_DAY, TOKEN_MESSAGES_PER_DAY } from "./rules";
 
 type Tx = Pick<Prisma.TransactionClient, "$queryRaw" | "$executeRaw">;
 
@@ -54,6 +54,20 @@ export class IntakeLimits {
     const rows = await tx.$queryRaw<{ count: number }[]>`
       INSERT INTO support_intake_count (kind, key, day, count) VALUES ('email', ${key}, ${day}::date, 1)
       ON CONFLICT (kind, key, day) DO UPDATE SET count = support_intake_count.count + 1 WHERE support_intake_count.count < ${THREADS_PER_DAY}
+      RETURNING count`;
+    return rows.length > 0;
+  }
+
+  /**
+   * DA3: one place for a reply token's message today, or false when it has had TOKEN_MESSAGES_PER_DAY. One statement counts it in the
+   * database (the kind column is "email": the key is a hash of the token, so it never meets an address's key).
+   */
+  async takeToken(tx: Tx, token: string): Promise<boolean> {
+    const day = dateOnlyOf(this.clock.now());
+    const key = this.key("email", `token|${token}`);
+    const rows = await tx.$queryRaw<{ count: number }[]>`
+      INSERT INTO support_intake_count (kind, key, day, count) VALUES ('email', ${key}, ${day}::date, 1)
+      ON CONFLICT (kind, key, day) DO UPDATE SET count = support_intake_count.count + 1 WHERE support_intake_count.count < ${TOKEN_MESSAGES_PER_DAY}
       RETURNING count`;
     return rows.length > 0;
   }

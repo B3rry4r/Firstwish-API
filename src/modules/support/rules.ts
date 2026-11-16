@@ -1,6 +1,6 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { CONTROL_CHARS, LONE_SURROGATE } from "../../common/validation/control-chars.pipe";
-import { normaliseEmail } from "../../common/normalise/email";
+import { canonicalEmail, normaliseEmail } from "../../common/normalise/email";
 
 export const SUBJECT_MAX = 150;
 /** A message's size limit, in characters (a customer's or staff's text). */
@@ -77,3 +77,30 @@ export function replyDomain(mailFrom: string | undefined): string {
   const e = mailFrom ? normaliseEmail(mailFrom.replace(/^.*<([^>]+)>\s*$/, "$1")) : null;
   return e ? e.slice(e.lastIndexOf("@") + 1) : FALLBACK_REPLY_DOMAIN;
 }
+
+/** The system senders of a mail domain: a bounce or a no-reply box is never a person. */
+const SYSTEM_LOCALS = new Set(["mailer-daemon", "postmaster", "noreply", "no-reply", "do-not-reply", "donotreply", "bounce", "bounces", REPLY_LOCAL]);
+
+/**
+ * DA1: whether an address is one of ours or a machine's: empty, the sending address (MAIL_FROM), any reply+ address, or a system
+ * box (mailer-daemon, postmaster, no-reply) on any domain. A person on the mail domain itself is not excluded by the domain alone.
+ */
+export function isOwnAddress(mailFrom: string | undefined, address: string | null | undefined): boolean {
+  const a = address ? normaliseEmail(address) : null;
+  if (!a) return true;
+  const at = a.lastIndexOf("@");
+  const local = a.slice(0, at);
+  const base = local.split("+")[0];
+  if (SYSTEM_LOCALS.has(base)) return true;
+  const from = mailFrom ? normaliseEmail(mailFrom.replace(/^.*<([^>]+)>\s*$/, "$1")) : null;
+  if (from && (from === a || canonicalEmail(from) === canonicalEmail(a))) return true;
+  return a.slice(at + 1) === replyDomain(mailFrom) && local.startsWith(`${REPLY_LOCAL}+`);
+}
+
+/** DA1: a delivery report by its content type, whatever other headers it has. */
+export function isDeliveryReport(contentType: string | undefined): boolean {
+  return /multipart\/report|message\/delivery-status|message\/disposition-notification/i.test(contentType ?? "");
+}
+
+/** DA3: a reply token may add this many messages to its thread in one UTC day. */
+export const TOKEN_MESSAGES_PER_DAY = 30;

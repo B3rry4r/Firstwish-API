@@ -1,4 +1,4 @@
-BUILDER API-BASE-4 | TIER T2 | Budget 150 steps. Eight named items the wiring found; change nothing else.
+BUILDER API-BASE-4 | TIER T2 | Budget 150 steps. Nine named items the wiring found; change nothing else.
 Machine: 4 CPUs, 15 GB; a heavy job only at 5 GB available. Kill what you start by PID.
 Read /home/user/Firstwish-API/build/common-rules.md, rulings HP1-HP8 (and HN1, FC1, HA1) in build/rulings-phase3.md, and how API-BASE-3
 reopened the registry (build/prompts/API-BASE-3.md). ONE reopen for all registry changes here, decisions citing the
@@ -25,7 +25,13 @@ Cases (through the real routes; a test for each):
     .pipeline/env-manifest.json.
  7. HP7: a team member's change carries the version it saw (registry: the field or header, as other versioned writes
     have it); two at once: one 200, one 409 with words. HP8: removed staff are left out of the Team read by default.
- 8. Leftovers in build/sweeps/api.md under "For the next API base" that are still open after API-BASE-3: close each or
+ 8. HP9: each row of GET /v1/showing (and the creator's wishes) carries the viewer's own mark: {reaction, saved} when
+    signed in (so a heart and a save survive a reload), nothing for a visitor. HP10: the contract matches the server
+    for: the follow routes' body (E-57, E-58: the server refuses a body `handle`; the registry lists one), the react
+    answer ({reaction, wish}), PublishedWish.creator ({handle, name}), PlayWish.wish and data, and the loose fields
+    the web had to cast (lib/person.ts on the web branch w3-app lists ten named casts with the request beside each:
+    read them: /home/user/Firstwish-web, `git show w3-app:lib/person.ts`). No change on the wire unless a ruling says so.
+ 9. Leftovers in build/sweeps/api.md under "For the next API base" that are still open after API-BASE-3: close each or
     say why not.
 Checks (quiet logs, EXIT lines): typecheck, lint on changed files, gates.sh, check-contracts, check-drift, check-routes,
 the affected specs, then `npm test -- --maxWorkers=2` twice (the reference-data "seed equals the web app's own files"

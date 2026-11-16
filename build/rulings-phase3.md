@@ -833,3 +833,9 @@ HG1 (give race) Two staff giving one Concierge order: the code is right (overlap
   boot in production or with live providers, so a verifier can reach "resting", "ended" and "window over" the real way.
 - HP7: two staff changing one team member: the change carries the version it saw; the second gets 409 with words.
 - HP8: the staff Team read leaves out removed staff unless asked for them.
+- HP9: a feed row carries the viewer's own reaction and saved mark, so they survive a reload (W3 patch, request 7).
+- HP10: the contract matches the server where the web had to cast (the follow body, the react answer, the published
+  wish's creator, the play read, loose price-book, style and date fields). The registry is corrected, not the wire.
+- HP11: there is no "payment left" call: a payment the person leaves stays pending until the provider's session ends,
+  and starting again for the same thing reuses it (seen: the same reference came back). Stories and a Following list
+  have no server read and are not drawn; they are product additions for the owner to ask for, not gaps.

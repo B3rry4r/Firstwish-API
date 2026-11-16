@@ -54,3 +54,9 @@ are no wider than the screen, no native control, no page error).
 The board (https://claude.ai/artifact/LBEcB94oHCu8BVW44QQb1k; file scratchpad/tracker/firstwish-build-board.html) shows the
 wiring parts as pills with screens done of total, and the part in flight with its stage (Build, Check, Fix, In). The lead
 republishes it at EVERY change of state: a spawn, a hand-back, a verdict, a patch, a merge; never only at merges.
+
+## Re-cut 16 Nov (the lead): the staff bundles follow the web's seam files so two builders never edit one file
+W12 = payments, prices, businesses, a business's detail (4 screens; lib/admin/c-*). W13 = wishes, a wish's detail, people,
+a person's detail, creators, moderation, Now Showing (7 screens; lib/admin-api.ts and lib/admin/b-*). W14 unchanged.
+W5 also takes what W4 left: the call screen, the start's Idempotency-Key, resume without &at, the walk of W4's ui-align ids.
+W7, W8 and W10 start after W3 is merged (they use its payment start, components/app/life/PayStart.tsx).

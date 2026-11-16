@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { PrismaService } from "../../../common/db/prisma.service";
 import { UuidV7Maker } from "../../../common/ids/uuidv7";
 import { PortTimeoutError } from "../../../common/ports/time-limit";
+import { holdSettingLock } from "../../../../test/kit/setting-lock";
 import { createTestApp, TestApp } from "../../../../test/kit/app";
 import { AccountErasureService } from "../../accounts/account-erasure.service";
 import { RoyaltiesService } from "../../royalties/royalties.service";
@@ -30,7 +31,9 @@ describe("creators' money (B16)", () => {
   let provider: StandinPayoutProvider;
   const tag = `b16${process.pid}`;
 
+  let releaseSetting: () => Promise<void>;
   beforeAll(async () => {
+    releaseSetting = await holdSettingLock();
     t = await createTestApp({ now: NOW });
     db = t.app.get(PrismaService);
     royalties = t.app.get(RoyaltiesService);
@@ -42,9 +45,16 @@ describe("creators' money (B16)", () => {
       t.tokens.set(`staff-${role}`, { kind: "staff", staffId: ids.next(), roles: [role] });
     }
   });
-  afterAll(() => t.close());
-  beforeEach(() => {
+  afterAll(async () => {
+    await t.close();
+    await releaseSetting();
+  });
+  beforeEach(async () => {
     provider.refusing(null);
+    // HE1: the seed leaves a figure staff set, and the price-book spec changes it in the same database, so each test sets
+    // the threshold it counts against itself.
+    const threshold = await db.settings.findFirstOrThrow({ where: { key: { equals: "payout.thresholdKobo" } } });
+    await db.settings.update({ where: { id: threshold.id }, data: { choice: { ...(threshold.choice as object), value: 500000 } } });
   });
 
   async function creator(handle: string, opts: { house?: boolean; bank?: boolean } = {}) {

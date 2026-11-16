@@ -20,6 +20,10 @@ export const MAX_CARD_WISHES = 24;
 const MAX_NAME = 80;
 
 /** The QR card (B19): a print-ready file made on the server that carries each wish's link. */
+/** How long a second asker waits for the first ask's file: 30 looks, 100 ms apart. */
+const WAIT_TRIES = 30;
+const WAIT_STEP_MS = 100;
+
 @Injectable()
 export class QrCardsService {
   constructor(
@@ -64,19 +68,25 @@ export class QrCardsService {
       const entries = wishIds.map((w, i) => ({ url: `${base}/w/${slugOf.get(w)}`, name: names[i] || null }));
       const same = await tx.qrCard.findMany({ where: { kind, wishIds: { equals: wishIds }, names: names.length ? { equals: names } : { equals: Prisma.DbNull } }, orderBy: { id: "desc" }, take: 5 });
       const mine = same.find((c) => c.status !== "failed") ?? same[0];
-      if (mine && mine.status !== "failed") return { id: mine.id, entries, run: false };
+      if (mine && mine.status !== "failed") return { id: mine.id, entries, run: false, wait: mine.status === "queued" };
       if (mine) {
         await tx.qrCard.update({ where: { id: mine.id }, data: { status: "queued" } });
-        return { id: mine.id, entries, run: true };
+        return { id: mine.id, entries, run: true, wait: false };
       }
       const id = this.ids.id();
       await tx.qrCard.create({
         data: { id, wishId: wishIds[0], kind, status: "queued", wishIds, names: names.length ? names : Prisma.DbNull, createdAt: this.clock.now() },
       });
-      return { id, entries, run: true };
+      return { id, entries, run: true, wait: false };
     });
     if (made.run) await this.render(accountId, made.id, made.entries);
-    const row = await this.db.qrCard.findUniqueOrThrow({ where: { id: made.id } });
+    let row = await this.db.qrCard.findUniqueOrThrow({ where: { id: made.id } });
+    // B19: an asker who comes while the first ask is still making the file waits for it (up to 3 seconds) and so gets the file id,
+    // not a queued card with none; a card still queued after that is answered as it stands.
+    for (let i = 0; made.wait && row.status === "queued" && i < WAIT_TRIES; i++) {
+      await new Promise((r) => setTimeout(r, WAIT_STEP_MS));
+      row = await this.db.qrCard.findUniqueOrThrow({ where: { id: made.id } });
+    }
     return this.wire(row);
   }
 

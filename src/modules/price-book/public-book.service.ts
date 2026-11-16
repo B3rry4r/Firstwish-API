@@ -32,7 +32,7 @@ export class PublicBookService {
     const page = toPage(lines.slice(0, limit + 1), limit, (l) => ({ key: l.sku, id: l.id }));
     const promo = PriceBookService.promotionAt(book, at);
     const body: PublicBook = {
-      items: page.items.map((l) => priceOf(l, { at, book, grant: grantOf(ent, l.sku) })),
+      items: page.items.map((l) => priceOf(l, { at, book, grant: grantOf(ent, l.sku), public: true })),
       nextCursor: page.nextCursor,
       version: book.version,
       promotion: promo ? promotionOf(promo) : null,

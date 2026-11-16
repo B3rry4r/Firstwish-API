@@ -204,6 +204,29 @@ describe("wave 5 join: money (J1 to J5)", () => {
       expect(await payableOf(c.creatorId)).toBe(0n);
     });
 
+    it("Join 5: a refund.processed that comes before the refund is recorded as sent is kept, and applied when the refund is sent", async () => {
+      const c = await creator();
+      const standard = await style("pend", "standard", c.creatorId);
+      const payer = await account();
+      const w = await wish(payer, standard);
+      const p = await pay(payer, "ticket.keepsake", { subjectId: w, options: { style: standard } });
+      expect(p.outcome).toBe("fulfilled");
+      const started = await t.http().post("/v1/admin/refunds").set(auth(staff.financeA.token)).send({ paymentId: p.id, reason: REASON, amountKobo: Number(p.total) });
+      expect(started.status).toBe(201);
+      const eventId = 7300 + ++seq;
+      // the provider's news comes while the refund is only asked for: nothing is matched, the event waits unprocessed
+      expect((await hook("refund.processed", { id: eventId, transaction_reference: p.reference, amount: Number(p.total), status: "processed" })).status).toBe(200);
+      const waiting = await db.webhookEvent.findFirstOrThrow({ where: { type: "refund.processed", payload: { path: ["data", "id"], equals: eventId } } });
+      expect(waiting).toMatchObject({ processedAt: null, outcome: "unknown_refund" });
+      expect((await db.payment.findUniqueOrThrow({ where: { id: p.id } })).status).not.toBe("refunded");
+      // the second staff member sends it: the waiting event is applied then, without a retry from the provider
+      expect((await t.http().post(`/v1/admin/refunds/${started.body.id}/approve-refund`).set(auth(staff.financeB.token)).send({ reason: REASON })).status).toBe(200);
+      expect((await db.payment.findUniqueOrThrow({ where: { id: p.id } })).status).toBe("refunded");
+      expect((await db.refund.findUniqueOrThrow({ where: { id: started.body.id } })).status).toBe("succeeded");
+      expect((await db.webhookEvent.findUniqueOrThrow({ where: { id: waiting.id } })).processedAt).not.toBeNull();
+      expect(await db.ledgerEntry.count({ where: { paymentId: p.id, refundId: started.body.id } })).toBeGreaterThan(0);
+    });
+
     it("a Standard style earns nothing, and its refund makes no reversal", async () => {
       const c = await creator();
       const standard = await style("std", "standard", c.creatorId);

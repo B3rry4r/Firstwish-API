@@ -56,6 +56,26 @@ export class RefundEvents implements RefundEventSink {
     });
   }
 
+  /**
+   * Join 5: an event that came before its refund was recorded as sent was left unprocessed (outcome unknown_refund) for the
+   * provider's retry. When the refund is claimed and answered, the events stored for its payment are applied here, oldest first,
+   * so the money does not wait for a retry that may be hours away. One already closed is never touched.
+   */
+  async applyPending(paymentId: string): Promise<void> {
+    const pay = await this.db.payment.findUnique({ where: { id: paymentId }, select: { providerReference: true } });
+    if (!pay?.providerReference) return;
+    const rows = await this.db.webhookEvent.findMany({
+      where: { processedAt: null, outcome: "unknown_refund", type: { startsWith: "refund." } },
+      orderBy: { id: "asc" },
+      select: { id: true, type: true, payload: true },
+    });
+    for (const r of rows) {
+      const data = (r.payload as { data?: Record<string, unknown> } | null)?.data ?? {};
+      if ((str(data.transaction_reference) || str(data.reference)) !== pay.providerReference) continue;
+      await this.apply(r.id, r.type, data);
+    }
+  }
+
   private async applyLocked(tx: Prisma.TransactionClient, eventRowId: string, type: string, data: Record<string, unknown>, paymentId: string): Promise<{ outcome: RefundEventOutcome; detail?: Prisma.InputJsonObject }> {
     const now = this.clock.now();
     const payment = await tx.payment.findUniqueOrThrow({ where: { id: paymentId } });

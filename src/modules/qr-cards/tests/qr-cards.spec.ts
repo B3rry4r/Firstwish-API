@@ -102,6 +102,24 @@ describe("QR card B19", () => {
     expect(await k.db.qrCard.count({ where: { wishId: w2.id } })).toBe(1);
   });
 
+  it("B19: an asker who comes while the first ask is still making the file gets the file id, not a queued card with none", async () => {
+    const a = await k.account();
+    const w = await owned(a.id, { ticket: "signature" });
+    const first = await post(a.auth, { wishId: w.id }).expect(200);
+    const fileId = first.body.fileId as string;
+    // the first ask is, for the moment, still making its file
+    await k.db.qrCard.update({ where: { id: first.body.id }, data: { status: "queued", fileId: null } });
+    const finishing = new Promise<void>((resolve) => {
+      setTimeout(() => {
+        void k.db.qrCard.update({ where: { id: first.body.id }, data: { status: "done", fileId } }).then(() => resolve());
+      }, 400);
+    });
+    const racing = await post(a.auth, { wishId: w.id }).expect(200);
+    await finishing;
+    expect(racing.body).toMatchObject({ id: first.body.id, status: "done", fileId });
+    expect(await k.db.qrCard.count({ where: { wishId: w.id } })).toBe(1);
+  });
+
   it("6. erase: the names on a card go with the account", async () => {
     const a = await k.account();
     const w = await owned(a.id, { ticket: "signature" });

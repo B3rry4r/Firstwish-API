@@ -6,7 +6,7 @@ import { createTestApp, TestApp, uniqueAddress } from "../../../../test/kit/app"
 import { NoticesService } from "../../notices/notices.service";
 import { EmailSuppression } from "../../notices/suppression";
 import { makeStaff, seedRoleTable } from "../../staff-accounts/tests/staff-kit";
-import { replyToken } from "../rules";
+import { isOwnAddress, replyToken } from "../rules";
 import { signSvix } from "../../../common/auth/svix";
 
 const NOW = new Date("2031-03-12T09:00:00.000Z");
@@ -59,17 +59,20 @@ describe("P-B20 patch (DA1 DA2 DA3)", () => {
 
   describe("DA1: our own addresses and bounces", () => {
     const own = ["wishes@example.test", "Firstwish <WISHES@example.test>", "reply+abc@example.test", "reply@example.test", "mailer-daemon@other.test", "postmaster@other.test"];
+    // The thread table is shared with every other spec in the run's database: each mail here carries its own words and the
+    // count is of the threads that hold them, never of the whole table.
+    const threadsWith = (words: string) => db.supportThread.count({ where: { body: { contains: words } } });
     it.each(own)("mail from %s starts no thread, with or without Auto-Submitted", async (from) => {
-      const before = await db.supportThread.count();
-      expect((await inbound({ from, to: ["support@example.test"], subject: "x", text: "body" })).status).toBe(200);
-      expect((await inbound({ from, to: ["support@example.test"], subject: "x", text: "body", headers: { "Auto-Submitted": "no" } })).status).toBe(200);
-      expect(await db.supportThread.count()).toBe(before);
+      const words = `own-${process.pid}-${++n}-${Date.now()}`;
+      expect((await inbound({ from, to: ["support@example.test"], subject: "x", text: words })).status).toBe(200);
+      expect((await inbound({ from, to: ["support@example.test"], subject: "x", text: words, headers: { "Auto-Submitted": "no" } })).status).toBe(200);
+      expect(await threadsWith(words)).toBe(0);
     });
     it("an empty sender starts no thread", async () => {
-      const before = await db.supportThread.count();
-      await inbound({ from: "", to: ["support@example.test"], subject: "x", text: "body" });
-      await inbound({ from: "<>", to: ["support@example.test"], subject: "x", text: "body" });
-      expect(await db.supportThread.count()).toBe(before);
+      const words = `empty-${process.pid}-${++n}-${Date.now()}`;
+      await inbound({ from: "", to: ["support@example.test"], subject: "x", text: words });
+      await inbound({ from: "<>", to: ["support@example.test"], subject: "x", text: words });
+      expect(await threadsWith(words)).toBe(0);
     });
     it("a delivery report by content type starts no thread and never lands in one, from an ordinary sender", async () => {
       const a = address();
@@ -141,5 +144,19 @@ describe("P-B20 patch (DA1 DA2 DA3)", () => {
       await Promise.all(Array.from({ length: 31 }, (_, i) => inbound({ from: w.email, to: [w.to], subject: "s", text: `par ${i}` })));
       expect(await db.supportMessage.count({ where: { threadId: w.th } })).toBe(base + 30);
     });
+  });
+});
+
+describe("B20 isOwnAddress: the reply box is ours only on the mail domain", () => {
+  const FROM = "Firstwish <hello@mail.firstwish.test>";
+  it("reply@ and reply+x@ on the mail domain are ours; reply@ on any other domain is a person", () => {
+    expect(isOwnAddress(FROM, "reply@mail.firstwish.test")).toBe(true);
+    expect(isOwnAddress(FROM, "reply+abc@mail.firstwish.test")).toBe(true);
+    expect(isOwnAddress(FROM, "Reply@Mail.Firstwish.Test")).toBe(true);
+    expect(isOwnAddress(FROM, "reply@gmail.com")).toBe(false);
+    expect(isOwnAddress(FROM, "reply+abc@gmail.com")).toBe(false);
+    expect(isOwnAddress(FROM, "noreply@gmail.com")).toBe(true);
+    expect(isOwnAddress(FROM, "mailer-daemon@anywhere.org")).toBe(true);
+    expect(isOwnAddress(FROM, "ada@gmail.com")).toBe(false);
   });
 });

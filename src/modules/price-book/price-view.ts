@@ -15,6 +15,8 @@ export interface LineContext {
   grant?: Grant | null;
   changed?: boolean;
   reason?: string;
+  /** The public book: a promoted price is shown only while the promotion is on (staff always see the stored one). */
+  public?: boolean;
 }
 
 const groupOf = (sku: string) => sku.slice(0, Math.max(0, sku.indexOf("."))) || sku;
@@ -39,7 +41,7 @@ export function priceOf(line: BookLine, ctx: LineContext): Price {
     value: charged,
     listKobo: safe(line.listKobo),
     was: safe(line.listKobo),
-    promoKobo: line.promoKobo === null ? null : safe(line.promoKobo),
+    promoKobo: line.promoKobo === null || (ctx.public === true && !PriceBookService.promoOn(line, ctx.at)) ? null : safe(line.promoKobo),
     discountable: line.discountable,
     vatIncluded: line.vatIncluded,
     version: line.version,

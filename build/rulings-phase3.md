@@ -565,3 +565,12 @@ RR4 (join 4 verify, medium) A client wish carries its business: the code that ma
     the same transaction, so RR3 works for real wishes and not only for rows set by hand. (Join patch.) Lows -> sweep.
 ZZ8 (P-B16 hand-back) A failed payout may be marked paid by hand by finance or the owner with a reason (money that went out
     another way); it posts the payout journal again and writes one audit row. Accepted. Default (lead), owner may override.
+CA1 (B19) The payments start prices a Concierge order from the order's own row (count, the Pass holder's 20% off, a quoted
+    price), not as one unit: every order that can be placed can be paid. Until this lands only a single wish with no Pass can
+    be paid: owed, not accepted. (Wave 5 join.)
+CA2 (B19) Next shared base: E-34 takes wishIds; E-141's body; the customer's read, list and cancel and the staff cancel as
+    registry routes; E-36 answers a page; E-148 answers PaymentStartedOrCovered; the storage port gains a server-side put;
+    ConciergeOrder gains given and being-made states, paid and due times and links to its wishes and payment (the two raw-SQL
+    tables become models).
+CA3 (B19) The customer is told by email when the order is delivered (a "concierge-delivered" message through the notices
+    path), and a business order's invoice is linked. (Wave 5 join.) Adding the qrcode library is accepted.

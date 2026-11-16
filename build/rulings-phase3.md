@@ -513,3 +513,11 @@ WW6 (B16, B15) Style.creator is {creatorId, templateCreatorId?}; Studio writes i
 WW7 (B16) Registry at the next shared base: RoyaltyAccrual loses rows and total; E-154 gains summary; E-41 gains bank.
     E-115's :id is the month (YYYY-MM): accepted.
 WW8 (B16) The timed job that ends a creator's Signed period (GG6) is built in the B16 patch.
+XX1 (B15) The eight submission checks on the server follow the web app's own checks (R5: /home/user/Firstwish-web/lib, the Studio
+    checks function): same rules, same limits. A difference is a finding.
+XX2 (B15) An AI request left waiting with no answer for 5 minutes gives its credits back and is marked failed (a sweep). No
+    credit is lost to a crash. (B15 patch.)
+XX3 (B15) Open's 3 credits are given once whichever code creates the creator's row first. (B15 patch.)
+XX4 (B15) Accepted: a submitted Studio style holds a catalogue Style row (off, slug studio-<id>) from its first submit; the
+    changes in StylesService, the erase and the seed. Next shared base: the snapshot table and a version column as models, a
+    job kind for the checks, bodies for E-186 and E-192, SubmissionView.snapshot.

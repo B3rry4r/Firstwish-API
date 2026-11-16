@@ -79,3 +79,7 @@
 - HY1: a route for the owner to drop a pending plan payment at once (abandoned; a late "paid" follows HU6); the plan
   read says when a pending payment lapses. Found by the Business patch: a login's unpaid plan start blocks the
   owner's next start for up to 60 minutes.
+- (API-BASE-8, from W14's builder) a staff list a support member may read for a thread hand-over (today /admin/team
+  is owner-only); the Concierge order wire carries its payment's id and reference; a read giving a maker the
+  buyer's wish ids for an order (delivery takes wish ids); "refuse" a style submission has no route (decide takes
+  approve or return): the lead rules after the check says whether the design draws it.

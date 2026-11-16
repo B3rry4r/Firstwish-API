@@ -772,3 +772,18 @@ HG1 (give race) Two staff giving one Concierge order: the code is right (overlap
 - HL1 (16 Nov, W0b verify, medium): lib/maker.ts saveWish wrote the whole account (name, email) to localStorage after a
   real sign-in. Identity is never in a browser store from W0b on: that write goes now (P-W0b); the maker's own draft
   store (fw-maker, voice notes) goes with W4 and W5, the website's mode store with W1, as the baseline says.
+
+## HM (16 Nov 2026, the lead, on W4's hand-back). Default (lead), owner may override.
+- HM1: GET /v1/wishes/:id (and the list where the contract says so) returns makerNote as the contract has it; the maker's
+  call screen is drawn only once it can be read back (W4 leaves it undrawn until then).
+- HM2: kinds and occasions are values of the contract (what the server's styles and the wish's enum give); the words shown
+  for a value are copy in the web app (lib/catalog), not data. No reference read is added for them.
+- HM3: starting a wish is safe to repeat: POST /v1/wishes takes an Idempotency-Key (the same key answers the same draft),
+  and a person who already has an UNTOUCHED draft (made, never given any answer) gets that draft back instead of a new
+  one, so empty drafts do not pile up. A kind or style sent with the start counts as an answer.
+- HM4: Wish.content is an object in the contract (the generator typed a parent with named children as text); a registry
+  correction, no change on the wire.
+- HM5: a removed wish stays readable to its owner with status removed while it can be restored; the page's own line for
+  that state is copy for a state, not a made-up error.
+- HM6: a refresh with no cookie answers 401 with its own error code (no_session), so the web shows the server's words for
+  an ended session and nothing to a first-time visitor (W0b F3).

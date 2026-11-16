@@ -3549,6 +3549,26 @@
       "source": "build/rulings-phase3.md; build/prompts/API-BASE-6.md",
       "decidedAt": "2026-11-27T12:00:00Z",
       "decision": "The registry is re-frozen after HS1, HS2, HS3, HR1, HR3, HR4 and HR5 (DEC-235 to DEC-240) by tools/pipeline/freeze.py; reconcile.py was run twice with --reopen (identical outputs). Endpoint ids already issued are unchanged; E-256 was the last issued before and the nine new endpoints take E-257 to E-265."
+    },
+    {
+      "id": "DEC-242",
+      "topic": "Correction of the endpoint ids in DEC-235 and DEC-238; keep by link is no account (HU1 to HU6)",
+      "decision": "Decisions are never edited, so this one makes the record true. The endpoint ids are the registry's: POST /v1/w/:slug/keep is E-257, GET /v1/w/:slug/keep/:reference (the payment read back) is E-258, POST /v1/w/:slug/wake is E-259 (DEC-235 named wake E-258 and the result E-259). The friend's gather endpoints are GET /v1/g/:slug E-260, POST /v1/g/:slug/voice E-261 and POST /v1/g/:slug/voice/:id/confirm E-262; the owner's are GET /v1/wishes/:id/gather E-263, POST /v1/wishes/:id/gather/off E-264 and DELETE /v1/wishes/:id/gather/voices/:voiceId E-265 (DEC-238 named them the other way round). Also, where DEC-235 says the keep payment is a guest payer's own: HU1 replaces it. The link holder's payment belongs to the wish and the holder's proof, the payer's email is kept on the payment row only (receipt and refund), no Account is made or read by that email, and an email that has an account gets the same answers as one that has none. HU2: a house wish has no keepOffer and keep, wake and report are refused 409 house_wish with words; it is left out of staff Numbers. HU3: each payer has one open keep payment of their own; the first to settle keeps or wakes the wish and a later settle for the same wish and term is marked refund due (reason keep_already_paid), and the payment's own reason says so. HU4: only a voice that has arrived counts against the wish's 12, an ask never uploaded lapses with its signed put, and asks are limited to 5 an hour per address and 30 a day per link. HU5: a removed login gets 403 login_removed on every business read and GET /v1/me leaves the business out. HU6: a payment the sweep closed and the provider later reports paid is fulfilled only if nothing else paid for the same intent since, else it is marked refund due (paid_after_lapse); ClientWish.returnsToPackOn is the business's local day (Africa/Lagos, UTC+1), the day the job that gives the wish back runs; the public gather read sends Cache-Control no-store.",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (HU1 to HU6); build/prompts/P-API-BASE-6.md",
+      "decidedAt": "2026-11-27T18:00:00Z"
+    },
+    {
+      "id": "DEC-243",
+      "topic": "registry re-freeze (fifteenth reopen)",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (HU1 to HU6); build/prompts/P-API-BASE-6.md",
+      "decidedAt": "2026-11-27T18:00:00Z",
+      "decision": "The registry is re-frozen after the patch of API-BASE-6 (DEC-242, HU1 to HU6) by tools/pipeline/freeze.py; reconcile.py was run twice with --reopen (identical outputs). No endpoint id is added or changed and no field is added or removed."
     }
   ]
 }

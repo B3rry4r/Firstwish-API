@@ -843,3 +843,6 @@ HG1 (give race) Two staff giving one Concierge order: the code is right (overlap
   (a signed short-lived read, audited); the wish-of-the-day picks for today and the next 6 days can be read back; the
   creators list says which payout months are due. Now Showing has no order control: the list is newest first (no
   reorder in the contract; an addition for the owner to ask for).
+- HP13 (W3 round 2): a published wish reaches the feed with its creator's handle (when there is a creator side) and its
+  cover picture; today the server's publish writes neither, so a real row has no "@" and no picture. API-BASE-4 item 11.
+  The web never draws "@" or a creator button for a row with no handle (P-W3b).

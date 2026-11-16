@@ -8,13 +8,12 @@ import { isUuidV7 } from "../../common/ids/uuidv7";
 import { normaliseEmail } from "../../common/normalise/email";
 import { IdGenerator } from "../../common/ports/ids.port";
 import { NoticesService } from "../notices/notices.service";
-import { isTemplateKey, type TemplateKey } from "../notices/catalog";
-import { BusinessHandlers } from "../purchases/business-handlers";
+import type { TemplateKey } from "../notices/catalog";
 import { PlanView } from "./plan-view";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 /** The message a new login gets (the wording is a MessageTemplate row of this key). */
-export const INVITE_TEMPLATE = "login-invite" as TemplateKey;
+export const INVITE_TEMPLATE = "login-invite" satisfies TemplateKey;
 
 const wire = (l: { id: string; contact: string | null; status: string | null }): Login => ({ id: l.id, contact: l.contact ?? "", status: l.status ?? "invited" });
 
@@ -29,7 +28,6 @@ export class LoginsService {
     private readonly prisma: PrismaService,
     private readonly ids: IdGenerator,
     private readonly plan: PlanView,
-    private readonly handlers: BusinessHandlers,
     private readonly notices: NoticesService,
   ) {}
 
@@ -57,15 +55,13 @@ export class LoginsService {
         SELECT id::text AS id, contact, status FROM login WHERE "businessId" = ${businessId}::uuid AND lower(trim(contact)) = ${email} AND coalesce(status, '') <> 'removed' LIMIT 1`;
       if (same[0]) return wire(same[0]);
       // Count the seats under the same lock that every login change takes (the owner's account), so two invites cannot both take the last one.
-      const state = await this.handlers.read(tx, businessId);
+      const state = await this.plan.peek(tx, businessId);
       const allowed = await this.plan.loginsAllowed(tx, state?.plan ?? null);
       const used = await this.plan.seatsUsed(tx, businessId);
       if (used >= allowed) throw AppError.conflict("logins_full", `Your plan has ${allowed} login${allowed === 1 ? "" : "s"} and all are in use.`);
       const id = this.ids.id();
       await tx.login.create({ data: { id, businessId, contact: email, status: "invited" } });
-      if (isTemplateKey(INVITE_TEMPLATE)) {
-        await this.notices.send(tx, { template: INVITE_TEMPLATE, toEmail: email, data: { business: owner.business ?? owner.name ?? "A business" }, key: `login-invite:${id}` });
-      }
+      await this.notices.send(tx, { template: INVITE_TEMPLATE, toEmail: email, data: { business: owner.business ?? owner.name ?? "A business" }, key: `login-invite:${id}` });
       return { id, contact: email, status: "invited" };
     });
   }

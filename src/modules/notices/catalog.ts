@@ -1,8 +1,8 @@
 /**
- * The five messages Firstwish sends (B11). Every one goes by email (R11). The wording lives in the MessageTemplate table
+ * The messages Firstwish sends (B11). Every one goes by email (R11). The wording lives in the MessageTemplate table
  * (seeded from the web app, edited by staff); this file holds what the wording may name and what the code needs from it.
  */
-export type TemplateKey = "sealed" | "opens" | "opened" | "resting" | "code";
+export type TemplateKey = "sealed" | "opens" | "opened" | "resting" | "code" | "login-invite";
 
 export interface TemplateSpec {
   key: TemplateKey;
@@ -17,7 +17,7 @@ export interface TemplateSpec {
   /** The placeholders the message needs: wording that drops one is refused (422). */
   needs: readonly string[];
   /** The delivery log's purpose for this message. */
-  purpose: "auth-code" | "wish-delivery" | "opened" | "term-notice";
+  purpose: "auth-code" | "wish-delivery" | "opened" | "term-notice" | "invite";
   /** The in-app notice kind written for it (E-77), when it has one. */
   noticeKind: "opened" | "term-ends-soon" | null;
   /** A person may turn it off. The sign-in code never can. */
@@ -44,6 +44,10 @@ export const TEMPLATES: Readonly<Record<TemplateKey, TemplateSpec>> = {
   code: {
     key: "code", label: "Your sign-in code", when: "When someone asks for a sign-in code.", audience: "The person signing in",
     allowed: ["code"], needs: ["code"], purpose: "auth-code", noticeKind: null, mutable: false,
+  },
+  "login-invite": {
+    key: "login-invite", label: "You are invited to a business", when: "When a business owner adds a login for an email address.", audience: "The person invited",
+    allowed: ["business"], needs: ["business"], purpose: "invite", noticeKind: null, mutable: false,
   },
 };
 

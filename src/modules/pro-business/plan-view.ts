@@ -3,11 +3,14 @@ import { PrismaService } from "../../common/db/prisma.service";
 import { AppError } from "../../common/errors/app-error";
 import { Clock } from "../../common/ports/clock.port";
 import { EntitlementsService } from "../price-book/entitlements.service";
+import type { PlanUsage } from "../purchases/business-handlers";
 import { BusinessHandlers } from "../purchases/business-handlers";
+import { addMonths, monthKey, num } from "../purchases/grants";
 import type { Tx } from "../purchases/grants";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const GB = 1_000_000_000;
+const MONTHLY = new Set(["starter", "studio"]);
 
 /** The plan and what it has left, all worked out here (E-27, E-128, and the Business shape). */
 export interface PlanState {
@@ -32,8 +35,7 @@ const obj = (v: unknown): Record<string, unknown> => (v && typeof v === "object"
 const int = (v: unknown): number => (typeof v === "number" && Number.isFinite(v) ? v : 0);
 
 /**
- * Reads one business's plan state in one transaction: the month is rolled first by BusinessHandlers.read (the purchases bundle's own
- * function, HH1), then everything else is counted from the rows. Logins and Vault limits come from the entitlements row.
+ * Reads one business's plan state in one transaction: the month is rolled in memory (peek, OO6: a read writes nothing), then everything else is counted from the rows. Logins and Vault limits come from the entitlements row.
  */
 @Injectable()
 export class PlanView {
@@ -56,9 +58,37 @@ export class PlanView {
     return 1 + (rows[0]?.n ?? 0);
   }
 
+  /**
+   * The business's usage as it stands in the clock's month, WITHOUT writing (OO6): the month is rolled in memory by the same rule as
+   * BusinessHandlers (carry once from last month, nothing after a gap), and no row is locked or changed. The roll is written only
+   * when a wish is drawn or a payment lands (BusinessHandlers).
+   */
+  async peek(tx: Tx, businessId: string): Promise<PlanUsage | null> {
+    if (!UUID.test(businessId)) return null;
+    const b = await tx.business.findUnique({ where: { id: businessId }, select: { plan: true, allowance: true, used: true, rolled: true, month: true, renews: true, pack: true } });
+    if (!b) return null;
+    const now = this.clock.now();
+    const key = monthKey(now);
+    let used = num(b.used);
+    let rolled = num(b.rolled);
+    let month = b.month;
+    if (b.month && b.month < key) {
+      const last = monthKey(addMonths(new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)), -1));
+      const monthly = b.plan !== null && MONTHLY.has(b.plan);
+      rolled = b.month === last && monthly ? Math.max(num(b.allowance) - Math.max(used - rolled, 0), 0) : 0;
+      used = 0;
+      month = key;
+    }
+    const live = b.renews !== null && b.renews.getTime() > now.getTime() && b.plan !== null && MONTHLY.has(b.plan);
+    const allowance = num(b.allowance);
+    const total = allowance + rolled;
+    const left = live ? Math.max(total - used, 0) : 0;
+    return { plan: b.plan, month, renews: b.renews, live, allowance, rolled, used, total, left, pack: num(b.pack), canMake: left + num(b.pack) > 0 };
+  }
+
   async state(tx: Tx, businessId: string): Promise<PlanState> {
     if (!UUID.test(businessId)) throw AppError.notFound();
-    const u = await this.handlers.read(tx, businessId);
+    const u = await this.peek(tx, businessId);
     if (!u) throw AppError.notFound();
     const b = await tx.business.findUniqueOrThrow({ where: { id: businessId }, select: { packEnds: true, vault: true } });
     const now = this.clock.now();
@@ -92,7 +122,7 @@ export class PlanView {
     };
   }
 
-  /** The same, in a transaction of its own (the roll is written under the row lock). */
+  /** The same, in a transaction of its own (a read: nothing is written). */
   stateOf(businessId: string): Promise<PlanState> {
     return this.prisma.$transaction((tx) => this.state(tx, businessId));
   }

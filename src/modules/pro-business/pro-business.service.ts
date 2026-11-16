@@ -1,5 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import type { Business, Invoice, Login, ProUsage } from "../../contracts";
+import { maskEmail } from "../notices/catalog";
 import { PrismaService } from "../../common/db/prisma.service";
 import { AppError } from "../../common/errors/app-error";
 import { decodeCursor, Page, toPage } from "../../common/pagination/cursor";
@@ -41,16 +42,16 @@ export class ProBusinessService {
   }
 
   /** A business's Login rows that stand (not removed), oldest first. */
-  private async loginsOf(businessId: string): Promise<Login[]> {
+  private async loginsOf(businessId: string, masked = false): Promise<Login[]> {
     const rows = await this.prisma.login.findMany({ where: { businessId, NOT: { status: "removed" } }, orderBy: { id: "asc" } });
-    return rows.map((l) => ({ id: l.id, contact: l.contact ?? "", status: l.status ?? "invited" }));
+    return rows.map((l) => ({ id: l.id, contact: masked ? maskEmail(l.contact ?? "") : (l.contact ?? ""), status: l.status ?? "invited" }));
   }
 
   /**
    * The Business shape. A login (not the owner) is shown no billing: `invoices` (the total invoiced) is 0 and the logins list is
    * left empty, because billing and the team belong to the owner.
    */
-  async view(businessId: string, owner: boolean): Promise<Business> {
+  async view(businessId: string, owner: boolean, staff = false): Promise<Business> {
     const state = await this.plan.stateOf(businessId);
     const b = await this.prisma.business.findUniqueOrThrow({ where: { id: businessId } });
     const wishes = await this.prisma.clientWish.findMany({ where: { businessId }, orderBy: { id: "desc" }, take: 50 });
@@ -60,7 +61,7 @@ export class ProBusinessService {
       allowance: state.allowance,
       business: b.business ?? "",
       invoices: billed,
-      logins: owner ? await this.loginsOf(businessId) : [],
+      logins: owner ? await this.loginsOf(businessId, staff) : [],
       month: state.month ?? "",
       name: b.name ?? "",
       ownerName: b.ownerName ?? "",
@@ -88,7 +89,7 @@ export class ProBusinessService {
     return Number(rows[0]?.n ?? 0n);
   }
 
-  /** E-23: every business, newest first. Usage is worked out for each (its month rolled first, as for the owner). */
+  /** E-23: every business, newest first. Usage is worked out for each (its month shown rolled, nothing written). */
   async adminList(cursor: string | undefined, limit: number): Promise<Page<Business>> {
     let before = "ffffffff-ffff-ffff-ffff-ffffffffffff";
     if (cursor) {
@@ -99,7 +100,7 @@ export class ProBusinessService {
     const rows = await this.prisma.business.findMany({ where: { id: { lt: before } }, orderBy: { id: "desc" }, take: limit + 1, select: { id: true } });
     const page = toPage(rows, limit, (r) => ({ key: r.id, id: r.id }));
     const items: Business[] = [];
-    for (const r of page.items) items.push(await this.view(r.id, true));
+    for (const r of page.items) items.push(await this.view(r.id, true, true));
     return { items, nextCursor: page.nextCursor };
   }
 
@@ -108,7 +109,7 @@ export class ProBusinessService {
     if (!UUID.test(id)) throw AppError.notFound();
     const exists = await this.prisma.business.findUnique({ where: { id }, select: { id: true } });
     if (!exists) throw AppError.notFound();
-    const base = await this.view(id, true);
+    const base = await this.view(id, true, true);
     const state = await this.plan.stateOf(id);
     const invoices = await this.prisma.$queryRaw<InvoiceRow[]>`
       SELECT i.id::text AS id, i.amount, i.date, i.key, i.lines, i.no, i.vat, i.what, k."voidedAt" AS "voidedAt"
@@ -117,7 +118,7 @@ export class ProBusinessService {
     return {
       ...base,
       state,
-      loginList: await this.loginsOf(id),
+      loginList: await this.loginsOf(id, true),
       invoiceList: invoices.map(invoiceWire),
       latestFailedPayment: failed ? { id: failed.id, amount: Number(failed.amountKobo), at: failed.updatedAt.toISOString() } : null,
     };

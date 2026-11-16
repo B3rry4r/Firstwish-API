@@ -7,6 +7,8 @@ import { createTestApp, TestApp } from "../../../../test/kit/app";
 import { FulfilmentRegistry } from "../../payments/fulfilment.registry";
 import { SettlementService } from "../../payments/settlement.service";
 import { InvoicesService } from "../invoices.service";
+import { NoticesService } from "../../notices/notices.service";
+import { JobsService } from "../../jobs/jobs.service";
 
 const ROOT = join(__dirname, "../../../..");
 const NOW = new Date("2026-12-01T09:00:00.000Z");
@@ -92,7 +94,7 @@ describe("B17 business: plan, usage, client wishes, invoices, logins, staff", ()
     expect(res.body.resets).toBe("2027-01-01T00:00:00.000Z");
     expect(res.body.logins).toEqual({ used: 2, allowed: 1 });
     expect(res.body.vault).toMatchObject({ usedGb: 0, allowedGb: 100 });
-    expect((await db.business.findUniqueOrThrow({ where: { id: o.businessId } })).month).toBe("2026-12");
+    expect((await db.business.findUniqueOrThrow({ where: { id: o.businessId } })).month).toBe("2026-11"); // OO6: a read writes no roll
     const plan = await get("/v1/business/plan", o.token);
     expect(plan.status).toBe(200);
     expect(plan.body.plan).toBe("starter");
@@ -361,5 +363,106 @@ describe("B17 business: plan, usage, client wishes, invoices, logins, staff", ()
     await db.login.create({ data: { id: ids.next(), businessId: o.businessId, contact: removed.email, status: "removed" } });
     expect((await get("/v1/business/client-wishes", removed.token)).status).toBe(403);
     expect((await get("/v1/business", other.token)).body.id).toBe(other.businessId);
+  });
+  it("RR1 staff answers (E-23, E-24) show every login's email masked in the raw answer", async () => {
+    const o = await live();
+    const addr = `rr1-${run}@studio.ng`;
+    await db.login.create({ data: { id: ids.next(), businessId: o.businessId, contact: addr, status: "invited" } });
+    const token = staffToken(["finance"]);
+    const one = await get(`/v1/admin/businesses/${o.businessId}`, token);
+    const list = await get("/v1/admin/businesses?limit=50", token);
+    for (const res of [one, list]) {
+      expect(res.status).toBe(200);
+      expect(res.text).not.toContain(addr);
+      expect(res.text).not.toContain(`rr1-${run}`);
+    }
+    expect(one.body.loginList[0].contact).toBe(`r***@studio.ng`);
+    // the owner still sees the full address of their own logins
+    expect((await get("/v1/business", o.token)).body.logins[0].contact).toBe(addr);
+  });
+
+  it("RR2 a login of A and B reads each through x-business-id and never the other; a forged header is 403; no header is the oldest login", async () => {
+    const a = await live({ name: "Alpha" });
+    const b = await live({ name: "Beta" });
+    const m = await who([]);
+    for (const o of [a, b]) {
+      expect((await t.http().post("/v1/business/logins").set(bearer(o.token)).send({ contact: m.email })).status).toBe(201);
+    }
+    const wishA = await t.http().post("/v1/business/client-wishes").set(bearer(a.token)).send({ ...wishBody, client: "OnlyA" });
+    const wishB = await t.http().post("/v1/business/client-wishes").set(bearer(b.token)).send({ ...wishBody, client: "OnlyB" });
+    const read = (id?: string) => (id ? t.http().get("/v1/business").set(bearer(m.token)).set("x-business-id", id) : get("/v1/business", m.token));
+    const ra = await read(a.businessId);
+    const rb = await read(b.businessId);
+    expect(ra.body.id).toBe(a.businessId);
+    expect(rb.body.id).toBe(b.businessId);
+    expect(ra.text).toContain("OnlyA");
+    expect(ra.text).not.toContain("OnlyB");
+    expect(rb.text).toContain("OnlyB");
+    expect(rb.text).not.toContain("OnlyA");
+    const lw = await t.http().get("/v1/business/client-wishes").set(bearer(m.token)).set("x-business-id", b.businessId);
+    expect((lw.body as { items: { id: string }[] }).items.map((w) => w.id)).toEqual([wishB.body.id as string]);
+    expect((await t.http().get(`/v1/business/client-wishes/${wishA.body.id}`).set(bearer(m.token)).set("x-business-id", b.businessId)).status).toBe(404);
+    expect((await read()).body.id).toBe(a.businessId);
+    const stranger = await live();
+    expect((await read(stranger.businessId)).status).toBe(403);
+    expect((await read("not-a-uuid")).status).toBe(403);
+    expect((await t.http().get("/v1/business").set(bearer(stranger.token)).set("x-business-id", a.businessId)).status).toBe(403);
+    expect((await t.http().post("/v1/business/client-wishes").set(bearer(m.token)).set("x-business-id", stranger.businessId).send(wishBody)).status).toBe(403);
+  });
+
+  it("RR2 an owner of B invited to A uses A through the header, and own business with no header; a login needs no business side (OO1)", async () => {
+    const a = await live({ name: "Alpha" });
+    const b = await live({ name: "Beta" });
+    expect((await t.http().post("/v1/business/logins").set(bearer(a.token)).send({ contact: b.email })).status).toBe(201);
+    const viaHeader = await t.http().get("/v1/business").set(bearer(b.token)).set("x-business-id", a.businessId);
+    expect(viaHeader.body.id).toBe(a.businessId);
+    expect(viaHeader.body.logins).toEqual([]);
+    expect((await get("/v1/business", b.token)).body.id).toBe(b.businessId);
+    expect((await t.http().get("/v1/business").set(bearer(b.token)).set("x-business-id", b.businessId)).body.id).toBe(b.businessId);
+    const bare = await who([]);
+    t.tokens.set(bare.token, { kind: "user", accountId: bare.accountId, sides: ["person"] });
+    await t.http().post("/v1/business/logins").set(bearer(a.token)).send({ contact: bare.email });
+    expect((await get("/v1/business/usage", bare.token)).status).toBe(200);
+  });
+
+  it("OO2 the invite sends one login-invite email through the notices path; a repeat of the same invite sends none", async () => {
+    const o = await live();
+    const to = `oo2-${run}@studio.ng`;
+    const jobs = t.app.get(JobsService);
+    const before = t.email.sent.filter((e) => e.to === to).length;
+    const first = await t.http().post("/v1/business/logins").set(bearer(o.token)).send({ contact: to });
+    const again = await t.http().post("/v1/business/logins").set(bearer(o.token)).send({ contact: to.toUpperCase() });
+    expect(again.body.id).toBe(first.body.id);
+    const d = await db.messageDelivery.findMany({ where: { idempotencyKey: `login-invite:${first.body.id}` } });
+    expect(d).toHaveLength(1);
+    expect(d[0].templateKey).toBe("login-invite");
+    await jobs.runDue(100, [d[0].id]);
+    await t.app.get(NoticesService).deliverNow(d[0].id);
+    const sent = t.email.sent.filter((e) => e.to === to);
+    expect(sent.length - before).toBe(1);
+    expect(JSON.stringify(sent[sent.length - 1])).toContain("Studio");
+    expect(await db.messageDelivery.count({ where: { templateKey: "login-invite", to } })).toBe(1);
+  });
+
+  it("OO6 two reads in a new month leave the row unchanged; a draw writes the roll", async () => {
+    const o = await live({ used: 10, rolled: 0, renews: new Date("2027-02-01T09:00:00.000Z") });
+    t.clock.set(new Date("2027-01-05T09:00:00.000Z"));
+    const snap = () => db.business.findUniqueOrThrow({ where: { id: o.businessId } });
+    const before = await snap();
+    const r1 = await get("/v1/business", o.token);
+    const r2 = await get("/v1/business/usage", o.token);
+    const staff = await get(`/v1/admin/businesses/${o.businessId}`, staffToken(["ops"]));
+    expect(r1.body).toMatchObject({ month: "2027-01", used: 0, rolled: 25 });
+    expect(r2.body).toMatchObject({ month: "2027-01", used: 0, rolled: 25 });
+    expect(staff.body.state).toMatchObject({ month: "2027-01", used: 0, rolled: 25 });
+    const after = await snap();
+    expect(after).toEqual(before);
+    expect(after.month).toBe("2026-12");
+    const made = await t.http().post("/v1/business/client-wishes").set(bearer(o.token)).send(wishBody);
+    expect(made.status).toBe(201);
+    const drawn = await snap();
+    expect(drawn.month).toBe("2027-01");
+    expect(drawn.used).toBe(1);
+    expect(drawn.rolled).toBe(25);
   });
 });

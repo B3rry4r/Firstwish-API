@@ -17,7 +17,7 @@ import { RoyaltiesService } from "../royalties.service";
  *   Template style: the 70,000 royalty gives 25% = 17,500 to the original creator, out of it: 52,500 and 17,500 (sum 70,000)
  */
 const ROOT = join(__dirname, "../../../..");
-const NOW = new Date("2031-04-02T09:00:00.000Z");
+const NOW = new Date("2036-04-02T09:00:00.000Z");
 const ids = new UuidV7Maker();
 const run = `${process.pid}${Date.now() % 100000}`;
 let seq = 0;
@@ -149,7 +149,7 @@ describe("ZZ5: client wishes drawn from a plan or a pack earn the creator of the
     const wish = await sealNew(o, s);
     const rows = await accrualsOf(wish);
     expect(rows).toHaveLength(1);
-    expect(rows[0]).toMatchObject({ creatorId: c.creatorId, basis: "pro_wish", paymentId: p.id, styleSlug: s, month: "2031-04", amountKobo: 70_000n });
+    expect(rows[0]).toMatchObject({ creatorId: c.creatorId, basis: "pro_wish", paymentId: p.id, styleSlug: s, month: "2036-04", amountKobo: 70_000n });
     expect(await payableOf(c.creatorId)).toBe(70_000n);
     expect(await balanced(p.id)).toBe(true);
     const sum = await royalties.summary(c.creatorId);
@@ -184,12 +184,12 @@ describe("ZZ5: client wishes drawn from a plan or a pack earn the creator of the
     const s = await style("premium", { creatorId: c.creatorId });
     const o = await owner();
     const starter = await pay(o, "pro.starter"); // April: 10 wishes, none used, so 10 roll into May
-    t.clock.set(new Date("2031-05-01T09:00:00.000Z"));
+    t.clock.set(new Date("2036-05-01T09:00:00.000Z"));
     const studio = await pay(o, "pro.studio"); // May: allowance 35, the 10 rolled stay
-    expect(await db.business.findUniqueOrThrow({ where: { id: o.businessId } })).toMatchObject({ allowance: 35, rolled: 10, used: 0, month: "2031-05" });
+    expect(await db.business.findUniqueOrThrow({ where: { id: o.businessId } })).toMatchObject({ allowance: 35, rolled: 10, used: 0, month: "2036-05" });
     await db.business.update({ where: { id: o.businessId }, data: { used: 9 } }); // nine rolled wishes already counted: the next is the tenth rolled one
     const tenth = await accrualsOf(await sealNew(o, s));
-    expect(tenth[0]).toMatchObject({ paymentId: starter.id, amountKobo: 70_000n, month: "2031-05" });
+    expect(tenth[0]).toMatchObject({ paymentId: starter.id, amountKobo: 70_000n, month: "2036-05" });
     const eleventh = await accrualsOf(await sealNew(o, s));
     expect(eleventh[0]).toMatchObject({ paymentId: studio.id, amountKobo: 60_000n });
   });
@@ -317,7 +317,7 @@ describe("ZZ5: client wishes drawn from a plan or a pack earn the creator of the
     await sealNew(o, s);
     const bankId = ids.next();
     await db.bankAccount.create({ data: { id: bankId, creatorId: c.creatorId, accountNumber: "0123456789", bankCode: "058" } });
-    await db.payout.create({ data: { id: ids.next(), creatorId: c.creatorId, month: "2031-04", amountKobo: 140_000n, status: "succeeded", bankAccountId: bankId, createdAt: NOW } });
+    await db.payout.create({ data: { id: ids.next(), creatorId: c.creatorId, month: "2036-04", amountKobo: 140_000n, status: "succeeded", bankAccountId: bankId, createdAt: NOW } });
     expect(await royalties.balance(db, c.creatorId, null)).toBe(0n);
     await refund(p);
     expect(await royalties.balance(db, c.creatorId, null)).toBe(-140_000n);

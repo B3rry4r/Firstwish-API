@@ -51,7 +51,7 @@ jobs:
         env:
           DATABASE_URL: postgresql://firstwish:firstwish@localhost:5432/firstwish
       - name: No drift between migrations and schema
-        run: npx prisma migrate diff --from-url "$DATABASE_URL" --to-schema-datamodel prisma/schema.prisma --exit-code
+        run: node scripts/check-drift.mjs
         env:
           DATABASE_URL: postgresql://firstwish:firstwish@localhost:5432/firstwish
       - name: Seed (reference rows, twice)

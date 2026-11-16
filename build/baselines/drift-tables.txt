@@ -1,0 +1,6 @@
+# Raw-SQL tables with no Prisma model yet. Format: table | migration that made it | plan | owner. Lead-owned; the list only shrinks.
+invoice_counter | 20261118170000_business_invoices | model at the next shared base (INT-5) | owner: lead
+invoice_link | 20261118170000_business_invoices | model at the next shared base (INT-5) | owner: lead
+moderation_decision | 20261118130000_showing_moderation | model at the next shared base (INT-5) | owner: lead
+report_hit | 20261118130000_showing_moderation | model at the next shared base (INT-5) | owner: lead
+take_down_code | 20261118130000_showing_moderation | model at the next shared base (INT-5) | owner: lead

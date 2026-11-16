@@ -5,6 +5,7 @@ import { UuidV7Maker } from "../../../common/ids/uuidv7";
 import { createTestApp, TestApp } from "../../../../test/kit/app";
 import { SettlementService } from "../../payments/settlement.service";
 import { makeStaff, seedRoleTable } from "../../staff-accounts/tests/staff-kit";
+import { InvoicesService } from "../../pro-business/invoices.service";
 import { RoyaltiesService } from "../royalties.service";
 
 /*
@@ -35,6 +36,9 @@ describe("ZZ5: client wishes drawn from a plan or a pack earn the creator of the
     db = t.app.get(PrismaService);
     settle = t.app.get(SettlementService);
     royalties = t.app.get(RoyaltiesService);
+    // Invoices are not this spec's subject, and their numbers come from one counter every spec shares (a spec that checks the numbers in a row
+    // would see this spec's): the plan and pack handlers are run with the invoice left out.
+    jest.spyOn(t.app.get(InvoicesService), "issue").mockResolvedValue(null);
     const r = spawnSync(process.execPath, [join(ROOT, "scripts/seed.mjs")], { cwd: ROOT, env: process.env, encoding: "utf8" });
     if (r.status !== 0) throw new Error(`seed failed: ${r.stderr}`);
     await seedRoleTable(db);

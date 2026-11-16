@@ -2304,6 +2304,15 @@
         "note": "{ok: true, token, expiresAt} or {ok: false, error} (DEC-198)"
       }
     },
+    "POST /v1/admin/concierge/orders/:id/maker": {
+      "decision": "DEC-212",
+      "set": {
+        "expectedMaker": "string Maker.id (the maker the staff member saw on the order; an empty string when it had none; a different maker now answers 409 order_changed and nothing changes)"
+      },
+      "require": [
+        "expectedMaker"
+      ]
+    },
     "POST /v1/admin/concierge-orders/:id/delivery": {
       "decision": "DEC-199",
       "set": {

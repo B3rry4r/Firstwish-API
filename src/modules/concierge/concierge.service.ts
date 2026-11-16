@@ -218,16 +218,20 @@ export class ConciergeService implements OnModuleInit {
    * E-39: gives a paid order to a maker, or gives it again to another with a reason. Two staff giving at once: the order is read
    * before the lock and checked again under it, so the one that finds the order changed since it looked gets 409 order_changed.
    */
-  async give(id: string, body: { maker?: string; makerId?: string; reason?: string }, actor: AuditActor): Promise<ConciergeOrder> {
+  async give(id: string, body: { maker?: string; makerId?: string; expectedMaker?: string; reason?: string }, actor: AuditActor): Promise<ConciergeOrder> {
     const reason = requireReason(body.reason);
     const makerId = (body.makerId ?? body.maker ?? "").trim();
     if (!UUID.test(makerId)) throw AppError.validation({ maker: "Pick a maker." });
     if (!UUID.test(id)) throw AppError.notFound();
+    // HG1: the maker the staff member saw on the order ("" when it had none); the give is refused when the order's maker is another
+    if (typeof body.expectedMaker !== "string") throw AppError.validation({ expectedMaker: "Send the maker you saw on this order, or an empty value when it had none." });
+    const expected = body.expectedMaker.trim().toLowerCase();
+    if (expected !== "" && !UUID.test(expected)) throw AppError.validation({ expectedMaker: "Send the maker you saw on this order, or an empty value when it had none." });
     const seen = await this.db.conciergeOrder.findUnique({ where: { id }, select: { status: true, makerId: true } });
     if (!seen) throw AppError.notFound();
     await this.db.$transaction(async (tx) => {
       const o = await this.lock(tx, id, {});
-      if (o.status !== seen.status || o.makerId !== seen.makerId) throw AppError.conflict("order_changed", "Someone else changed this order. Look again.");
+      if (o.status !== seen.status || (o.makerId ?? "") !== expected) throw AppError.conflict("order_changed", "Someone else changed this order. Look again.");
       if (!canMove(o.status, "given")) throw AppError.conflict("order_not_paid", "Only a paid order can be given to a maker.");
       const maker = await tx.staffAccount.findUnique({ where: { id: makerId } });
       if (!maker || maker.status !== "active" || !maker.roles.includes("maker")) throw AppError.validation({ maker: "Pick a maker." });

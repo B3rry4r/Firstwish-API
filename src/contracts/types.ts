@@ -2284,6 +2284,8 @@ export interface PostAdminConciergeOrdersByIdMakerParams {
   id: string;
 }
 export interface PostAdminConciergeOrdersByIdMakerBody {
+  /** string Maker.id (the maker the staff member saw on the order; an empty string when it had none; a different maker now answers 409 order_changed and nothing changes) */
+  expectedMaker: string;
   /** string Maker.id (required: the button is disabled until one is picked) */
   maker?: string;
   /** string */

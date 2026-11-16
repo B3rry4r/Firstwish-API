@@ -77,6 +77,8 @@ export class PostAdminConciergeOrdersByIdCancelParamsDto implements PostAdminCon
 
 /** E-39 POST /v1/admin/concierge/orders/:id/maker (body). */
 export class PostAdminConciergeOrdersByIdMakerBodyDto implements PostAdminConciergeOrdersByIdMakerBody {
+  @IsString()
+  expectedMaker!: string;
   @IsOptional()
   @IsString()
   maker?: string;

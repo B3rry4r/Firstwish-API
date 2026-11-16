@@ -7,16 +7,15 @@ import { Clock } from "../../common/ports/clock.port";
 import { IdGenerator } from "../../common/ports/ids.port";
 import { toWireInstant } from "../../common/time/time";
 import type { GatherFriendView, GatherOwnerView, GatherVoiceAdded, PostGBySlugVoiceBody, UploadTicket } from "../../contracts";
-import { LinkLimits } from "../public-wishes/link-limits";
+import { GATHER_ASKS_PER_ADDRESS_PER_HOUR, GATHER_ASKS_PER_LINK_PER_DAY, LinkLimits } from "../public-wishes/link-limits";
 import { BusinessOf } from "../people/business-of";
-import { isUuid, MAX_VOICE_SECONDS } from "../stored-files/file-rules";
+import { isUuid, MAX_VOICE_SECONDS, UPLOAD_TTL_SECONDS } from "../stored-files/file-rules";
 import { SignedUrlsService } from "../stored-files/signed-urls.service";
 import { MAX_VOICE_NOTES_PER_WISH, StoredFilesService } from "../stored-files/stored-files.service";
 
 const SLUG = /^g[A-Za-z0-9_-]{8,30}$/;
-/** What one address may do at a gather link: look 60 times a minute; ask for 20 uploads an hour. */
+/** What one address may do at a gather link: look 60 times a minute (asks are limited in link-limits: HU4). */
 const LOOKS_PER_MINUTE = 60;
-const ADDS_PER_HOUR = 20;
 const NAME_MAX = 40;
 const VOICE_MAX_BYTES = 10 * 1024 * 1024;
 
@@ -58,10 +57,22 @@ export class GatherService {
     return this.db.wishGather.create({ data: row }).catch(async () => this.db.wishGather.findUniqueOrThrow({ where: { wishId } }));
   }
 
-  /** The room left: voices of the wish that count against its 12 (not deleted or refused). */
+  /** HU4: the voices that have really arrived count against the wish's 12 (an ask that was never uploaded holds no place). */
   private async count(wishId: string): Promise<number> {
-    const [n] = await this.db.$queryRaw<{ n: number }[]>`SELECT count(*)::int AS n FROM voice_note v JOIN stored_file f ON f.id = v.id WHERE v."wishId" = ${wishId}::uuid AND f.status NOT IN ('deleted', 'rejected')`;
+    const [n] = await this.db.$queryRaw<{ n: number }[]>`SELECT count(*)::int AS n FROM voice_note v JOIN stored_file f ON f.id = v.id WHERE v."wishId" = ${wishId}::uuid AND f.status IN ('uploaded', 'screening', 'ready')`;
     return n?.n ?? 0;
+  }
+
+  /** HU4: an ask whose upload was never confirmed lapses when its signed put has (15 minutes): its rows go. Safe to repeat. */
+  private async lapse(w: { id: string; accountId: string }): Promise<void> {
+    const before = new Date(this.clock.now().getTime() - UPLOAD_TTL_SECONDS * 1000);
+    const stale = await this.db.$queryRaw<{ id: string }[]>`
+      SELECT g.id::text AS id FROM wish_gather_voice g JOIN stored_file f ON f.id = g.id
+       WHERE g."wishId" = ${w.id}::uuid AND f.status = 'pending' AND f."createdAt" < ${before}`;
+    for (const r of stale) {
+      await this.files.remove(this.ownerOf(w.accountId), r.id, {}, { gather: true }).catch(() => undefined);
+      await this.db.wishGatherVoice.deleteMany({ where: { id: r.id } });
+    }
   }
 
   private canAdd(w: { status: string; openedAt: Date | null }): boolean {
@@ -71,6 +82,7 @@ export class GatherService {
   /** E-263: the owner reads the gather link (made at the first read, also for a draft) and the voices that came through it, each as it arrives. */
   async ownerView(accountId: string, id: string): Promise<GatherOwnerView> {
     const w = await this.owned(accountId, id);
+    await this.lapse(w);
     const link = (await this.linkOf(w.id, true)) as { id: string; slug: string; active: boolean };
     const rows = await this.db.$queryRaw<{ id: string; fromName: string; seconds: number | null; status: string; createdAt: Date }[]>`
       SELECT g.id::text AS id, g."fromName", v.seconds, f.status::text AS status, g."createdAt"
@@ -163,7 +175,10 @@ export class GatherService {
     const name = typeof body.name === "string" ? body.name.trim().replace(/\s+/g, " ") : "";
     if (!name || name.length > NAME_MAX || /[\p{Cc}\p{Cf}<>]/u.test(name)) throw AppError.validation({ name: `Your first name, up to ${NAME_MAX} letters.` });
     const { w } = await this.openLink(slug, address);
-    await this.limits.take("gather-add", this.limits.keyOf(address, slug), ADDS_PER_HOUR, 3600);
+    // HU4: asks are limited per address (any link) and per link, whether or not they ever upload
+    await this.limits.take("gather-add", this.limits.keyOf(address), GATHER_ASKS_PER_ADDRESS_PER_HOUR, 3600);
+    await this.limits.take("gather-add-link", this.limits.keyOf(slug), GATHER_ASKS_PER_LINK_PER_DAY, 86_400);
+    await this.lapse(w);
     const ticket: UploadTicket = await this.files.createTicket(this.ownerOf(w.accountId), { purpose: "voice", contentType: body.contentType, bytes: body.bytes, seconds: body.seconds, subjectId: w.id }, { gather: true });
     await this.db.wishGatherVoice.create({ data: { id: ticket.id, wishId: w.id, fromName: firstName(name) || name, createdAt: this.clock.now() } });
     return { id: ticket.id, upload: ticket.upload };

@@ -86,11 +86,11 @@ export class StoredFilesService {
     return biz;
   }
 
-  /** A wish holds at most MAX_VOICE_NOTES_PER_WISH voice notes (those not deleted or refused count); the next one is 409 with words. */
-  private async checkVoiceRoom(tx: Tx, wishId: string): Promise<void> {
+  /** HU4: a wish holds at most MAX_VOICE_NOTES_PER_WISH voice notes; only one that has arrived (uploaded, screening or ready) counts, so an ask never uploaded holds no place. The next one is 409 with words. */
+  private async checkVoiceRoom(tx: Tx, wishId: string, except?: string): Promise<void> {
     const [n] = await tx.$queryRaw<{ n: number }[]>`
       SELECT count(*)::int AS n FROM voice_note v JOIN stored_file f ON f.id = v.id
-       WHERE v."wishId" = ${wishId}::uuid AND f.status NOT IN ('deleted', 'rejected')`;
+       WHERE v."wishId" = ${wishId}::uuid AND f.status IN ('uploaded', 'screening', 'ready') AND (${except ?? null}::uuid IS NULL OR v.id <> ${except ?? null}::uuid)`;
     if ((n?.n ?? 0) >= MAX_VOICE_NOTES_PER_WISH) throw AppError.conflict("voice_notes_full", `A wish holds at most ${MAX_VOICE_NOTES_PER_WISH} voice notes. Remove one to add another.`);
   }
 
@@ -295,6 +295,17 @@ export class StoredFilesService {
         await lockAccount(tx, p.accountId);
         const locked = await tx.$queryRaw<{ id: string }[]>`SELECT id FROM stored_file WHERE id = ${id}::uuid AND status = 'uploaded' FOR UPDATE`;
         if (!locked.length) return { row, removeKeys: [objectKey, staging], error: refused("The file was removed.") };
+        // HU4: the room is counted again as a voice arrives (the asks made while it was free are many; the arrivals are what fill it)
+        const voice = await tx.voiceNote.findUnique({ where: { id }, select: { wishId: true } });
+        if (voice?.wishId) {
+          try {
+            await this.checkVoiceRoom(tx, voice.wishId, id);
+          } catch (e) {
+            if (!(e instanceof AppError)) throw e;
+            await this.removeRows(tx, id);
+            return { row, removeKeys: [objectKey, staging], error: e };
+          }
+        }
         await this.screening.record(tx, id, screened);
         await this.sweepStagingLater(tx, objectKey);
         const kind = mediaKindOf(type);

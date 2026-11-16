@@ -118,7 +118,7 @@ describe("P-API-BASE-6 HU1 to HU3", () => {
       const e = email();
       const rs = await Promise.all([1, 2, 3, 4].map((i) => start(w.slug, { keepKey: "month", email: e }, h, `ab6p-${run}-r${round}-${i}`)));
       for (const r of rs) expect([200, 201]).toContain(r.status);
-      expect(new Set(rs.map((r) => r.body.payment.reference)).size).toBe(1);
+      expect(new Set(rs.map((r) => String(r.body.payment.reference))).size).toBe(1);
       expect(await db.payment.count({ where: { subjectId: w.id, purpose: "keep" } })).toBe(1);
     }
   });

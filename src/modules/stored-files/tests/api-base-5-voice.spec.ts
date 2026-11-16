@@ -24,13 +24,17 @@ describe("API-BASE-5 voice notes per wish", () => {
       expect(r.status).toBe(201);
       first.push(r.body.id as string);
     }
+    // HU4: only a voice that has arrived counts against the 12 (an ask never uploaded holds no place)
+    await db.storedFile.updateMany({ where: { id: { in: first } }, data: { status: "uploaded" } });
     const over = await ask(wish);
     expect(over.status).toBe(409);
     expect(over.body.error.code).toBe("voice_notes_full");
     expect(over.body.error.message).toMatch(/at most 12 voice notes/);
     expect((await ask(other)).status).toBe(201);
     await db.storedFile.update({ where: { id: first[0] }, data: { status: "deleted" } });
-    expect((await ask(wish)).status).toBe(201);
+    const again = await ask(wish);
+    expect(again.status).toBe(201);
+    await db.storedFile.update({ where: { id: again.body.id as string }, data: { status: "uploaded" } });
     expect((await ask(wish)).status).toBe(409);
   });
 });

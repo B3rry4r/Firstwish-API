@@ -377,7 +377,7 @@ describe("B22 keep (E-228) and wake (E-232) (contract)", () => {
     expect(await paymentsFor(w)).toHaveLength(2);
     expect(t.payments.started.length).toBe(calls + 2);
     expect(rs.every((r) => r.status === 201)).toBe(true);
-    expect(new Set(rs.map((r) => r.body.payment.reference)).size).toBe(2);
+    expect(new Set(rs.map((r) => String(r.body.payment.reference))).size).toBe(2);
   });
 
   it("15. HA3 wake by a receiver who holds the link (a paid keep covers it); a stranger is refused; no keep is 402", async () => {

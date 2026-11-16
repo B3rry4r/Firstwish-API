@@ -13,8 +13,11 @@ export const READS_PER_MINUTE = 60;
 export const UNLOCKS_PER_HOUR = 10;
 export const LINK_WRONG_TRIES = 30;
 export const LINK_LOCK_SECONDS = 3600;
-/** LL4: the longest window a limit counts over is an hour; a hit older than twice that is of no use, and the timed job removes it. */
-export const LINK_HIT_KEEP_SECONDS = 2 * 3600;
+/** LL4: the longest window a limit counts over is a day; a hit older than twice that is of no use, and the timed job removes it. */
+export const LINK_HIT_KEEP_SECONDS = 2 * 86_400;
+/** HU4 (PROVISIONAL, owner may change): voice asks at a gather link: per address an hour, per link a day. */
+export const GATHER_ASKS_PER_ADDRESS_PER_HOUR = 5;
+export const GATHER_ASKS_PER_LINK_PER_DAY = 30;
 
 /**
  * Limits counted in the database (they fail closed: a dead database refuses the request). A take is ONE statement (insert

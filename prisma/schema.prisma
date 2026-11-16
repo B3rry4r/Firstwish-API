@@ -272,6 +272,7 @@ model ClientWish {
   drawPaymentId      String?             @db.Uuid
   drawSku            String?
   drawWishes         Int?
+  drawnBackAt        DateTime?           @db.Timestamptz(3)
   businessId         String?             @db.Uuid
   wishRef            Wish?               @relation("ClientWish_wishId", fields: [wishId], references: [id], onDelete: SetNull, onUpdate: Cascade)
   business           Business?           @relation("ClientWish_businessId", fields: [businessId], references: [id])

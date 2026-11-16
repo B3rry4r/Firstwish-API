@@ -488,6 +488,12 @@
      "attrs": "",
      "opt": true,
      "why": "HD2: how many wishes that line gave (the plan's wishes for the month, or the pack's size): the share of the line is its cost over this"
+    },
+    "drawnBackAt": {
+     "type": "DateTime",
+     "attrs": "@db.Timestamptz(3)",
+     "opt": true,
+     "why": "INT-7: when the draw of a draft that was removed for good was given back to the business (once per wish); null while it stands or was never given back"
     }
    },
    "refs": {

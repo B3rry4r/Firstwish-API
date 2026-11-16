@@ -44,6 +44,7 @@ describe("INT-7 B17: a downgrade keeps the logins, tells the owner once, and the
   };
   const live = (over: Record<string, unknown> = {}) =>
     owner({ plan: "studio", allowance: 35, used: 0, rolled: 0, month: "2026-12", renews: new Date("2027-01-01T09:00:00.000Z"), ...over });
+  const flags = async (token: string) => ((await get("/v1/business/logins", token)).body.items as { id: string; overPlan: boolean }[]).map((x) => x.overPlan);
   const get = (path: string, token?: string) => (token ? t.http().get(path).set(bearer(token)) : t.http().get(path));
 
   async function pay(o: { accountId: string; businessId: string }, sku: string) {
@@ -70,23 +71,22 @@ describe("INT-7 B17: a downgrade keeps the logins, tells the owner once, and the
     const b = await t.http().post("/v1/business/logins").set(bearer(o.token)).send({ contact: `b-${run}@studio.ng` });
     expect([a.status, b.status]).toEqual([201, 201]);
     expect(a.body.overPlan).toBe(false);
-    const before = await get("/v1/business/logins", o.token);
-    expect(before.body.items.map((x: { overPlan: boolean }) => x.overPlan)).toEqual([false, false]);
+    expect(await flags(o.token)).toEqual([false, false]);
     expect(await db.messageDelivery.count({ where: { templateKey: "logins-over", to: o.email } })).toBe(0);
 
     await pay(o, "pro.starter");
     const after = await get("/v1/business/logins", o.token);
     expect(after.status).toBe(200);
-    expect(after.body.items.map((x: { id: string; overPlan: boolean }) => [x.id, x.overPlan])).toEqual([[a.body.id, true], [b.body.id, true]]);
+    expect((after.body.items as { id: string; overPlan: boolean }[]).map((x) => [x.id, x.overPlan])).toEqual([[a.body.id, true], [b.body.id, true]]);
     expect(await db.login.count({ where: { businessId: o.businessId, NOT: { status: "removed" } } })).toBe(2);
     const mail = await db.messageDelivery.findMany({ where: { templateKey: "logins-over", to: o.email } });
     expect(mail).toHaveLength(1);
     expect(JSON.stringify(mail[0].vars)).toContain('"allowed":"1"');
-    expect((await get("/v1/business", o.token)).body.logins.map((x: { overPlan: boolean }) => x.overPlan)).toEqual([true, true]);
+    expect(((await get("/v1/business", o.token)).body.logins as { overPlan: boolean }[]).map((x) => x.overPlan)).toEqual([true, true]);
 
     // The owner removes one: the other is still over a plan of one seat; the invite for a new one is still refused.
     expect((await t.http().delete(`/v1/business/logins/${a.body.id}`).set(bearer(o.token))).status).toBe(204);
-    expect((await get("/v1/business/logins", o.token)).body.items.map((x: { overPlan: boolean }) => x.overPlan)).toEqual([true]);
+    expect(await flags(o.token)).toEqual([true]);
     expect((await t.http().post("/v1/business/logins").set(bearer(o.token)).send({ contact: `c-${run}@studio.ng` })).status).toBe(409);
   });
 
@@ -94,7 +94,7 @@ describe("INT-7 B17: a downgrade keeps the logins, tells the owner once, and the
     const o = await live();
     await t.http().post("/v1/business/logins").set(bearer(o.token)).send({ contact: `d-${run}@studio.ng` });
     await pay(o, "pro.studio");
-    expect((await get("/v1/business/logins", o.token)).body.items.map((x: { overPlan: boolean }) => x.overPlan)).toEqual([false]);
+    expect(await flags(o.token)).toEqual([false]);
     expect(await db.messageDelivery.count({ where: { templateKey: "logins-over", to: o.email } })).toBe(0);
   });
 

@@ -8,6 +8,7 @@ import { IdGenerator } from "../../common/ports/ids.port";
 import { StoragePort } from "../../common/ports/storage.port";
 import { forgetForWishes as forgetAiWords } from "../ai-writing/ai-writing.service";
 import { stagingKeyOf, variantsOf } from "../stored-files/file-rules";
+import { giveBackDraws } from "../purchases/draw-giveback";
 import { localToUtc } from "./local-time";
 import { EntitlementsService, grantOf } from "../price-book/entitlements.service";
 import { JobsService, JobContext, JobResult } from "../jobs/jobs.service";
@@ -159,6 +160,8 @@ export class WishLifecycleService implements OnModuleInit {
         await this.forgetLinkNames(tx, [wish.id]);
         await forgetAiWords(tx, [wish.id]);
         await this.releaseFiles(tx, wish.id, now);
+        // INT-7: a draft a business drew a wish for gives the wish back when it is erased (once; a sealed wish gives nothing).
+        await giveBackDraws(tx, [wish.id], now);
         // ZB3: a client wish's record reads its wish; when the wish is erased the record's words go with it.
         await tx.clientWish.updateMany({ where: { wishId: wish.id }, data: { wish: null, from: null, client: null } });
       }
@@ -314,9 +317,27 @@ export class WishLifecycleService implements OnModuleInit {
 
   /** The restore window closes: nothing moves, the run says it closed (a restore after it is refused). */
   async windowEndJob(c: JobContext): Promise<JobResult> {
-    const w = await this.prisma.wish.findUnique({ where: { id: c.subjectId }, select: { status: true, erasedAt: true } });
+    const w = await this.prisma.wish.findUnique({ where: { id: c.subjectId }, select: { status: true, erasedAt: true, businessId: true } });
+    if (w && stateOf(w) === "taken_down" && w.businessId) return this.draftWindowEnd(c);
     if (!w || stateOf(w) !== "resting") return { skipped: true };
     return { changed: { restoreWindow: "closed" } };
+  }
+
+  /**
+   * INT-7: a business's draft that its maker removed and did not bring back is erased when its window ends, and its draw goes back to
+   * the business (the erase does that). Only a draft the owner removed: a wish taken down by staff, or one that was ever sealed, is left alone.
+   */
+  private async draftWindowEnd(c: JobContext): Promise<JobResult> {
+    return this.prisma.$transaction(async (tx) => {
+      const w = await this.lock(tx, c.subjectId);
+      if (stateOf(w) !== "taken_down") return { skipped: true };
+      const last = await tx.wishTransition.findFirst({ where: { wishId: w.id, to: "taken_down" }, orderBy: { id: "desc" } });
+      if (last?.cause !== "owner.remove" || last.from !== "draft") return { skipped: true };
+      const ends = new Date(last.createdAt.getTime() + (await this.restoreDays(tx)) * DAY);
+      if (ends.getTime() > c.now.getTime()) return { skipped: true, again: ends };
+      await this.move(tx, w, "erased", { cause: "job.restore-window-end", jobRunId: c.jobRunId });
+      return { changed: { from: "taken_down", to: "erased", restoreWindow: "closed" } };
+    });
   }
 
   /**

@@ -4,6 +4,7 @@ import { PrismaService } from "../../../common/db/prisma.service";
 import { UuidV7Maker } from "../../../common/ids/uuidv7";
 import type { StaffRole } from "../../../common/auth/principal";
 import { createTestApp, TestApp } from "../../../../test/kit/app";
+import { holdSettingLock } from "../../../../test/kit/setting-lock";
 import { EntitlementsService, grantOf } from "../entitlements.service";
 import { PriceAdminService } from "../price-admin.service";
 import { PriceBookService } from "../price-book.service";
@@ -46,7 +47,9 @@ describe("price book (contract)", () => {
   const put = (token: string, key: string, body: Record<string, unknown>) =>
     t.http().put(`/v1/admin/prices/${key}`).set(bearer(token)).send({ sku: key, reason: "Price review", ...body });
 
+  let releaseSetting: () => Promise<void>;
   beforeAll(async () => {
+    releaseSetting = await holdSettingLock();
     t = await createTestApp({ now: NOW });
     db = t.app.get(PrismaService);
     book = t.app.get(PriceBookService);
@@ -59,7 +62,10 @@ describe("price book (contract)", () => {
     t.tokens.set("person", { kind: "user", accountId: ids.next(), sides: ["person"] });
     t.tokens.set("business", { kind: "user", accountId: ids.next(), sides: ["person", "business"] });
   });
-  afterAll(() => t.close());
+  afterAll(async () => {
+    await t.close();
+    await releaseSetting();
+  });
 
   describe("E-125 GET /v1/price-book", () => {
     it("is public: every seeded line in kobo with price now and list price, the promotion, lifecycle terms and entitlements", async () => {
@@ -480,6 +486,8 @@ describe("price book (contract)", () => {
 
     it("Z3: a change that changes nothing is 409 not_allowed with no version and no audit row, one at a time or at once", async () => {
       const cur = (await get("extra.five-photos")).price;
+      // The threshold is set here, not left from an earlier test: setting it to 660000 is 200 or, when it already is, 409.
+      expect([200, 409]).toContain((await put("finance", "payout.thresholdKobo", { priceKobo: 660000 })).status);
       const c0 = await counts();
       const same = await put("owner", "extra.five-photos", { priceKobo: cur });
       expect(same.status).toBe(409);

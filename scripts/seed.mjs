@@ -3,7 +3,7 @@
 // sections each opens, the lifecycle terms and the PROVISIONAL payout threshold, and the catalogues the web app holds as
 // constants (prisma/seed-data/*.json, written by scripts/export-seed-data.mjs; ruling Q11). Never people or wishes; the one
 // account is the house (X8): handle firstwish, a creator side, no email, so it can never sign in.
-// Running it twice gives the same rows: every row has a fixed id made from its natural key and is upserted.
+// Running it twice gives the same rows: every row has a fixed id made from its natural key and is upserted. HE1: a price, the promotion and a setting are only created when absent; a figure staff changed is never put back.
 //   DATABASE_URL=... node scripts/seed.mjs            (node scripts/seed.mjs styles: the styles alone)
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
@@ -177,7 +177,7 @@ export async function seed(db) {
       vatIncluded: /VAT included/i.test(p.name) || p.sku.startsWith("concierge."),
       version,
     };
-    await db.price.upsert({ where: { sku_version: { sku: p.sku, version } }, create: { id: seedId(`price:${p.sku}:${version}`), ...row }, update: row });
+    await db.price.upsert({ where: { sku_version: { sku: p.sku, version } }, create: { id: seedId(`price:${p.sku}:${version}`), ...row }, update: {} });
   }
   const promo = priceBook.seed.promotion;
   const promoRow = {
@@ -187,7 +187,7 @@ export async function seed(db) {
     appliesTo: SOLD_PRICES.filter((p) => p.promoKobo !== null).map((p) => p.sku),
   };
   await db.price.deleteMany({ where: { sku: { in: [...NOT_SOLD] }, version } });
-  await db.promotion.upsert({ where: { id: seedId("promotion:launch-40") }, create: { id: seedId("promotion:launch-40"), ...promoRow }, update: promoRow });
+  await db.promotion.upsert({ where: { id: seedId("promotion:launch-40") }, create: { id: seedId("promotion:launch-40"), ...promoRow }, update: {} });
   await db.entitlements.upsert({ where: { id: seedId("entitlements:1") }, create: { id: seedId("entitlements:1"), ...ENTITLEMENTS }, update: ENTITLEMENTS });
   for (const [kind, timeLimitSeconds] of Object.entries(JOB_TIME_LIMITS)) {
     const id = seedId(`job-kind:${kind}`);
@@ -204,7 +204,7 @@ export async function seed(db) {
   await db.settings.upsert({
     where: { id: seedId("setting:payout.thresholdKobo") },
     create: { id: seedId("setting:payout.thresholdKobo"), key: "payout.thresholdKobo", choice },
-    update: { key: "payout.thresholdKobo", choice },
+    update: {},
   });
   await seedCatalogues(db);
   await seedStyles(db);

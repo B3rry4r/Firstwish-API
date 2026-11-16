@@ -7,6 +7,7 @@ import {
   PostAdminWishesByNoActionsBodyDto, PostAdminWishesByNoActionsParamsDto, PutAdminNumbersTargetsBodyDto, PutAdminSettingsStorageBodyDto,
   PutAdminSettingsSwitchesByKeyBodyDto, PutAdminSettingsSwitchesByKeyParamsDto,
 } from "../../contracts";
+import type { PostAdminPeopleByIdContactRevealResponse } from "../../contracts";
 import type { AuditActor } from "../audit/audit.service";
 import { AdminRoute, StaffActor } from "../role-access/staff-section.guard";
 import { AdminJobsService } from "./admin-jobs.service";
@@ -131,12 +132,12 @@ export class AdminPeopleController {
     return this.people.act(p.id, b.action, b.reason, actor, rolesOf(who));
   }
 
-  /** E-4: audited and limited; the registry answers 204 with no body (Q12), so the values it reads are not sent (see the hand-back). */
+  /** E-4 (FB1, DEC-201): audited and limited; answers {phone, email} once. The values are never written to the audit row. */
   @AdminRoute("/admin/people", "moderator", "ops", "owner", "support")
   @Post(":id/contact-reveal")
-  @HttpCode(204)
-  async reveal(@Param() p: PostAdminPeopleByIdContactRevealParamsDto, @Body() b: PostAdminPeopleByIdContactRevealBodyDto, @StaffActor() actor: AuditActor): Promise<void> {
-    await this.people.reveal(p.id, b.reason, actor);
+  @HttpCode(200)
+  reveal(@Param() p: PostAdminPeopleByIdContactRevealParamsDto, @Body() b: PostAdminPeopleByIdContactRevealBodyDto, @StaffActor() actor: AuditActor): Promise<PostAdminPeopleByIdContactRevealResponse> {
+    return this.people.reveal(p.id, b.reason, actor);
   }
 }
 

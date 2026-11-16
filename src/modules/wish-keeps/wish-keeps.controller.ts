@@ -10,8 +10,7 @@ import { WishKeepsService, type LinkHold } from "./wish-keeps.service";
 
 /**
  * E-228 keep a wish and E-232 wake it: the owner, or (HA1, HA3) a signed-in receiver who holds the wish's link. The link travels in
- * x-wish-link (its slug) with x-unlock-token (the link's own token, where the wish has a passcode); the registry's bodies cannot
- * carry it. A stranger is refused, and signing in comes first (DD1).
+ * x-wish-link (its slug) with x-unlock-token (the link's own token, where the wish has a passcode): the registry's headers (DEC-205). A stranger is refused, and signing in comes first (DD1).
  */
 const holdOf = (req: Request, slug: string | undefined, token: string | undefined): LinkHold => ({ slug: slug?.trim() || undefined, token, address: req.ip ?? null });
 

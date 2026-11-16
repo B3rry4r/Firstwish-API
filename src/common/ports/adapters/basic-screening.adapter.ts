@@ -1,3 +1,4 @@
+import { PING_OK, type PortPing } from "../ping";
 import { ScreenInput, ScreenResult, UploadScreeningPort } from "../screening.port";
 
 export const MAX_UPLOAD_BYTES = 500 * 1024 * 1024;
@@ -29,6 +30,11 @@ export const SIGNATURES: Record<string, Sniffer> = {
  * and the file must be within the size limit.
  */
 export class BasicScreening extends UploadScreeningPort {
+  /** FB4: screening runs inside the app (file signature and size); there is no provider to reach, so it answers ok. */
+  ping(): Promise<PortPing> {
+    return Promise.resolve(PING_OK);
+  }
+
   screen(input: ScreenInput): Promise<ScreenResult> {
     const type = input.contentType.toLowerCase().split(";")[0].trim();
     const sniff = SIGNATURES[type];

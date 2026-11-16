@@ -1,6 +1,6 @@
 {
  "phase": "SCHEMA (Phase 4)",
- "registrySha256": "1dbcbd0c3dd9e15d43131127fb6ac5c178fbe5f9ddf87ca170256298034aa256",
+ "registrySha256": "6ab4467ee017db6d078b6b8afde022a525a8ff8afe2b1c2bfbc07c5e57a6aca4",
  "rules": [
   "table: something writes it (a POST, PUT, PATCH, DELETE or INTERNAL route, or a server:* declaration). A GET's query parameters are not writers.",
   "view: read only, worked out on read from the tables named in 'of'. No table of its own.",
@@ -127,7 +127,7 @@
    },
    "refOnDelete": {
     "inputFileId": "Restrict",
-    "voiceFileId": "Restrict"
+    "voiceFileId": "SetNull"
    },
    "erase": {
     "transcript": {
@@ -174,6 +174,9 @@
      "rule": "keep",
      "why": "ids only; the files go by the erase files job (X10)"
     }
+   },
+   "refOnUpdate": {
+    "voiceFileId": "Restrict"
    }
   },
   "ApprovedDate": {
@@ -444,11 +447,15 @@
     },
     "reveal": {
      "rule": "keep",
-     "why": "reveal settings"
+     "why": "HC2: reveal settings. An account's erase keeps the reveal for the term of its wish: the link id stays and the words (the client's name, the note, the credits, the city, the booking link) and the Vault files are blanked and removed when the term ends (HC1, EA4), not at once"
     },
     "shoot": {
      "rule": "keep",
      "why": "the shoot it came from"
+    },
+    "drawSku": {
+     "rule": "keep",
+     "why": "a sku, not personal (HD2)"
     }
    },
    "columns": {
@@ -457,13 +464,39 @@
      "attrs": "@db.Uuid",
      "opt": true,
      "why": "ZB1: the wish a client wish made without a reveal plays as (an ordinary wish carrying the business); null for a client wish that plays at its reveal link"
+    },
+    "drawFrom": {
+     "type": "enum(month|pack)",
+     "attrs": "",
+     "opt": true,
+     "why": "HD2: where the business draw counted this wish from, written at the draw (the plan's month or a pack); null for a wish made before this column"
+    },
+    "drawPaymentId": {
+     "type": "String",
+     "attrs": "@db.Uuid",
+     "opt": true,
+     "why": "HD2: the plan or pack payment the draw was counted against, written at the draw; the royalty at the seal reads it"
+    },
+    "drawSku": {
+     "type": "String",
+     "attrs": "",
+     "opt": true,
+     "why": "HD2: the sku of the plan or pack line of that payment (pro.starter, pro.studio, pro.pack)"
+    },
+    "drawWishes": {
+     "type": "Int",
+     "attrs": "",
+     "opt": true,
+     "why": "HD2: how many wishes that line gave (the plan's wishes for the month, or the pack's size): the share of the line is its cost over this"
     }
    },
    "refs": {
-    "wishId": "Wish"
+    "wishId": "Wish",
+    "drawPaymentId": "Payment"
    },
    "refOnDelete": {
-    "wishId": "SetNull"
+    "wishId": "SetNull",
+    "drawPaymentId": "SetNull"
    },
    "unique": [
     [
@@ -471,7 +504,8 @@
     ]
    ],
    "refOnUpdate": {
-    "wishId": "Cascade"
+    "wishId": "Cascade",
+    "drawPaymentId": "Cascade"
    }
   },
   "ConciergeOrder": {
@@ -1061,6 +1095,14 @@
      "rule": "keep",
      "why": "how it was paid"
     }
+   },
+   "omit": {
+    "live": "worked out on read from the membership and its grant (HA3, DEC-206); not stored",
+    "endsAt": "worked out on read from the membership and its grant (HA3, DEC-206); not stored",
+    "wishesTotal": "worked out on read from the membership and its grant (HA3, DEC-206); not stored",
+    "wishesLeft": "worked out on read from the membership and its grant (HA3, DEC-206); not stored",
+    "upgradesTotal": "worked out on read from the membership and its grant (HA3, DEC-206); not stored",
+    "upgradesLeft": "worked out on read from the membership and its grant (HA3, DEC-206); not stored"
    }
   },
   "PassOffer": {
@@ -2266,6 +2308,13 @@
   "WishTransition": {
    "class": "table",
    "reason": "written by server:wish-lifecycle (every state change of a wish, with the job run that made it)"
+  },
+  "ContactReveal": {
+   "class": "view",
+   "reason": "a person's phone and email, answered once to staff with a reason (FB1, DEC-201)",
+   "of": [
+    "Account"
+   ]
   }
  },
  "joinTables": {

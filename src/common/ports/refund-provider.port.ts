@@ -1,4 +1,5 @@
 import type { Money } from "../money/money";
+import type { PortPing } from "./ping";
 
 export interface RefundRequest {
   /** Our refund's id: the provider is asked once for it, however many times we ask. */
@@ -44,4 +45,6 @@ export abstract class RefundProviderPort {
   abstract findRefund(paymentReference: string): Promise<RefundAccepted | null>;
   /** The provider's settlement for one UTC day ("YYYY-MM-DD"): a total and one line per payment. */
   abstract settlement(day: string): Promise<ProviderSettlement>;
+  /** FB4: one cheap authenticated read. Answers ok, or the provider's error; a stand-in answers "stand-in". Never carries a secret. */
+  abstract ping(): Promise<PortPing>;
 }

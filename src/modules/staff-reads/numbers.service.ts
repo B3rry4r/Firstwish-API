@@ -70,7 +70,7 @@ export class NumbersService {
     return {
       period,
       days,
-      lines: LINES.map((l) => ({ line: l.line, name: l.name, definition: l.definition, amount: earned[l.line] })) as unknown as Numbers["lines"],
+      lines: LINES.map((l) => ({ line: l.line, name: l.name, definition: l.definition, amount: earned[l.line] })),
       targets: await this.targets(),
       previews: Number(tot?.previews ?? 0),
       paid: Number(tot?.paid ?? 0),

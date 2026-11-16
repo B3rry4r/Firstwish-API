@@ -12,27 +12,17 @@ import { askAi } from "../studio/ai-call";
 import { AI_AVAILABILITY, AI_WAIT_MS, AiAvailability } from "../studio/studio-ai.service";
 import type { AiPickPhotosBodyDto, AiWordsBodyDto } from "./ai-writing-bodies";
 
+import type { AiRequest } from "../../contracts";
 /** Requests a sender may make in one UTC day (DEC-53, PROVISIONAL: no config or price-book line carries it yet; the owner may override). */
 export const AI_DAILY_CAP = 20;
 const MAX_WORDS_CHARS = 6000;
 const MAX_TOKENS = 3000;
 
 type Kind = "letter_from_voice" | "reasons_from_voice" | "photo_pick";
-const KIND_WIRE: Record<Kind, string> = { letter_from_voice: "letter-from-voice", reasons_from_voice: "reasons-from-voice", photo_pick: "photo-pick" };
+const KIND_WIRE: Record<Kind, AiRequest["kind"]> = { letter_from_voice: "letter-from-voice", reasons_from_voice: "reasons-from-voice", photo_pick: "photo-pick" };
 
-export interface AiRequestView {
-  id: string;
-  kind: string;
-  status: string;
-  creditsSpent: number;
-  model: string;
-  createdAt: string;
-  wishId?: string;
-  voiceFileId?: string;
-  transcript?: string;
-  fileIds?: string[];
-  output?: Record<string, unknown>;
-}
+/** What E-12, E-13 and E-14 answer: the contract's AiRequest, carrying only the fields that apply to its kind (GC1, DEC-203). */
+export type AiRequestView = AiRequest;
 
 const SYSTEM = {
   letter: [
@@ -246,7 +236,7 @@ function captionsOf(content: unknown): Map<string, string> {
   return out;
 }
 
-function view(id: string, r: Reserved, status: string, model: string, createdAt: Date, output: Record<string, unknown>): AiRequestView {
+function view(id: string, r: Reserved, status: AiRequest["status"], model: string, createdAt: Date, output: Record<string, unknown>): AiRequestView {
   const f = r.fields;
   const o: AiRequestView = { id, kind: KIND_WIRE[r.kind], status, creditsSpent: 0, model, createdAt: toWireInstant(createdAt), wishId: f.wishId, output };
   if (f.transcript) o.transcript = f.transcript;

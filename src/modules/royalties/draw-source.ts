@@ -67,7 +67,7 @@ export async function monthSource(tx: Tx, businessId: string, now: Date): Promis
  */
 export async function packSource(tx: Tx, businessId: string, wishId: string): Promise<DrawSource | null> {
   const [n] = await tx.$queryRaw<{ n: number }[]>`
-    SELECT count(*)::int AS n FROM client_wish WHERE "businessId" = ${businessId}::uuid AND "from" = 'pack' AND "wishId" IS DISTINCT FROM ${wishId}::uuid`;
+    SELECT count(*)::int AS n FROM client_wish WHERE "businessId" = ${businessId}::uuid AND COALESCE("drawFrom"::text, "from") = 'pack' AND "wishId" IS DISTINCT FROM ${wishId}::uuid`;
   let before = n?.n ?? 0;
   for (const g of await grantsOf(tx, businessId, "wish-pack")) {
     const size = g.revokedAt ? num(g.detail.drawn) : num(g.detail.wishes);
@@ -77,3 +77,30 @@ export async function packSource(tx: Tx, businessId: string, wishId: string): Pr
   return null;
 }
 
+
+/** HD2: where a draw was counted from and the payment it was counted against, as the client-wish record keeps them. */
+export interface DrawColumns {
+  drawFrom: "month" | "pack";
+  drawPaymentId: string | null;
+  drawSku: string | null;
+  drawWishes: number | null;
+}
+
+/**
+ * HD2: the source of a draw, worked out AT the draw (the business row and the grants are as the draw left them) and written on the
+ * client-wish record with it. The royalty at the seal reads it back with `sourceOfRecord`; it never works the source out again, so a
+ * month's wishes sealed late (or after the month rolled again) earn from the payment they were counted against.
+ */
+export async function drawColumnsAt(tx: Tx, businessId: string, from: "month" | "pack", wishId: string, now: Date): Promise<DrawColumns> {
+  const src = from === "month" ? await monthSource(tx, businessId, now) : await packSource(tx, businessId, wishId);
+  return { drawFrom: from, drawPaymentId: src?.paymentId ?? null, drawSku: src?.sku ?? null, drawWishes: src?.wishes ?? null };
+}
+
+/**
+ * HD2: the source a client-wish record names. The line's cost is read from the payment as it stands: a payment that was refunded in
+ * full (or is not paid) no longer pays a royalty. Null when the record names no payment (a wish drawn before the record kept one).
+ */
+export async function sourceOfRecord(tx: Tx, rec: { drawPaymentId: string | null; drawSku: string | null; drawWishes: number | null }): Promise<DrawSource | null> {
+  if (!rec.drawPaymentId || !rec.drawSku || !rec.drawWishes) return null;
+  return withLine(tx, { paymentId: rec.drawPaymentId, sku: rec.drawSku, detail: {}, createdAt: new Date(0), revokedAt: null }, rec.drawWishes);
+}

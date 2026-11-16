@@ -1,9 +1,9 @@
 import { ArrayMaxSize, ArrayMinSize, IsArray, IsOptional, IsString, IsUUID, MaxLength } from "class-validator";
 
 /**
- * E-12 and E-14. The registry's body is {voiceFileId, wishId} only, but a voice file is audio and R13 says no audio reaches the AI
- * (the browser's own dictation gives text). `transcript` is the sender's words as text; `voiceFileId` stays accepted (optional) and is
- * only recorded, never read. Shared change wanted: the registry's body gains `transcript` (HALT list in the hand-back).
+ * E-12 and E-14 (GC1, DEC-203). A voice file is audio and R13 says no audio reaches the AI (the browser's own dictation gives text).
+ * `transcript` is the sender's words as text; `voiceFileId` stays accepted (optional) and is only recorded, never read. These classes
+ * keep the checks the generated bodies do not carry (the ids are uuids, the words are capped), over the same fields.
  */
 export class AiWordsBodyDto {
   @IsUUID(undefined, { message: "Must be the id of one of your wishes." })

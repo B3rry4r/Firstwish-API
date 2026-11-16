@@ -1,5 +1,6 @@
 import { PAYSTACK_BASE_URL } from "./paystack.adapter";
 import { getJson, postJson, ProviderError } from "./http";
+import { type PortPing, pingWith } from "../ping";
 import { AccountNotFound, PayoutProviderPort, ResolveAccount, TransferAccepted, TransferLookup, TransferRefused, TransferRequest } from "../payout-provider.port";
 
 interface Envelope<T> {
@@ -22,6 +23,11 @@ export class PaystackPayoutProvider extends PayoutProviderPort {
 
   private get auth(): Record<string, string> {
     return { authorization: `Bearer ${this.secretKey}` };
+  }
+
+  /** FB4: one authenticated read of the transfer list (a page of one); it moves no money. NOT RUN against Paystack. */
+  ping(): Promise<PortPing> {
+    return pingWith(() => getJson("paystack", `${this.baseUrl}/transfer?perPage=1`, this.auth), [this.secretKey]);
   }
 
   async resolveAccount(input: ResolveAccount): Promise<{ accountName: string }> {

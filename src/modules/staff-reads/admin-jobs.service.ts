@@ -9,7 +9,7 @@ import { type AuditActor, AuditService, requireReason } from "../audit/audit.ser
 import { JobsService } from "../jobs/jobs.service";
 import { UUID } from "./mask";
 
-const STATUSES = ["scheduled", "running", "succeeded", "failed", "dead"];
+const STATUSES = ["scheduled", "running", "succeeded", "failed", "dead", "cancelled"];
 
 /** Staff reads of timed jobs and the retry of a parked one (E-61, E-62). */
 @Injectable()

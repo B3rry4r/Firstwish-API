@@ -91,7 +91,7 @@ model AiRequest {
   style        Style?          @relation("AiRequest_styleId", fields: [styleId], references: [id])
   wish         Wish?           @relation("AiRequest_wishId", fields: [wishId], references: [id])
   inputFile    StoredFile?     @relation("AiRequest_inputFileId", fields: [inputFileId], references: [id], onDelete: Restrict, onUpdate: Restrict)
-  voiceFile    StoredFile?     @relation("AiRequest_voiceFileId", fields: [voiceFileId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  voiceFile    StoredFile?     @relation("AiRequest_voiceFileId", fields: [voiceFileId], references: [id], onDelete: SetNull, onUpdate: Restrict)
 
   @@index([accountId, id])
   @@index([styleId, id])
@@ -248,11 +248,11 @@ model ChapterSpec {
 
 /// table: written by E-30, E-32, E-33 (a business's wish for a client)
 model ClientWish {
-  id                 String         @id @db.Uuid
+  id                 String              @id @db.Uuid
   client             String?
-  createdAt          DateTime       @default(now()) @db.Timestamptz(3)
-  day                DateTime?      @db.Date
-  endsAt             DateTime?      @db.Timestamptz(3)
+  createdAt          DateTime            @default(now()) @db.Timestamptz(3)
+  day                DateTime?           @db.Date
+  endsAt             DateTime?           @db.Timestamptz(3)
   from               String?
   hearts             Json?
   key                String?
@@ -260,22 +260,28 @@ model ClientWish {
   madeOwn            Boolean?
   no                 String?
   occasion           String?
-  openedAt           DateTime?      @db.Timestamptz(3)
+  openedAt           DateTime?           @db.Timestamptz(3)
   reveal             Json?
   sample             Boolean?
-  sentAt             DateTime?      @db.Timestamptz(3)
+  sentAt             DateTime?           @db.Timestamptz(3)
   set                ClientWishSet?
   shoot              String?
   wish               String?
-  wishId             String?        @db.Uuid
-  businessId         String?        @db.Uuid
-  business           Business?      @relation("ClientWish_businessId", fields: [businessId], references: [id])
-  wishRef            Wish?          @relation("ClientWish_wishId", fields: [wishId], references: [id], onDelete: SetNull, onUpdate: Cascade)
-  revealAccessByWish RevealAccess[] @relation("RevealAccess_wishId")
+  wishId             String?             @db.Uuid
+  drawFrom           ClientWishDrawFrom?
+  drawPaymentId      String?             @db.Uuid
+  drawSku            String?
+  drawWishes         Int?
+  businessId         String?             @db.Uuid
+  wishRef            Wish?               @relation("ClientWish_wishId", fields: [wishId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  business           Business?           @relation("ClientWish_businessId", fields: [businessId], references: [id])
+  drawPayment        Payment?            @relation("ClientWish_drawPaymentId", fields: [drawPaymentId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  revealAccessByWish RevealAccess[]      @relation("RevealAccess_wishId")
 
   @@unique([wishId])
-  @@index([businessId, id])
   @@index([wishId, id])
+  @@index([businessId, id])
+  @@index([drawPaymentId, id])
   @@map("client_wish")
 }
 
@@ -767,6 +773,7 @@ model Payment {
   ledgerEntryByPayment       LedgerEntry[]      @relation("LedgerEntry_paymentId")
   refundByPayment            Refund[]           @relation("Refund_paymentId")
   royaltyAccrualByPayment    RoyaltyAccrual[]   @relation("RoyaltyAccrual_paymentId")
+  clientWishByDrawPayment    ClientWish[]       @relation("ClientWish_drawPaymentId")
   passMembershipByPayment    PassMembership?    @relation("PassMembership_paymentId")
   purchaseGrantByPayment     PurchaseGrant[]    @relation("PurchaseGrant_paymentId")
   invoiceLinkByPayment       InvoiceLink?       @relation("InvoiceLink_paymentId")
@@ -1539,6 +1546,7 @@ model Wish {
   account                  Account             @relation("Wish_accountId", fields: [accountId], references: [id])
   business                 Business?           @relation("Wish_businessId", fields: [businessId], references: [id])
   aiRequestByWish          AiRequest[]         @relation("AiRequest_wishId")
+  clientWishByWish         ClientWish?         @relation("ClientWish_wishId")
   eventByWish              Event[]             @relation("Event_wishId")
   noticeByWish             Notice[]            @relation("Notice_wishId")
   publishRequestByWish     PublishRequest[]    @relation("PublishRequest_wishId")
@@ -1548,7 +1556,6 @@ model Wish {
   voiceNoteByWish          VoiceNote[]         @relation("VoiceNote_wishId")
   wishLinkByWish           WishLink[]          @relation("WishLink_wishId")
   wishTransitionByWish     WishTransition[]    @relation("WishTransition_wishId")
-  clientWishByWish         ClientWish?         @relation("ClientWish_wishId")
   publishedWishByWish      PublishedWish[]     @relation("PublishedWish_wishId")
   royaltyAccrualByWish     RoyaltyAccrual[]    @relation("RoyaltyAccrual_wishId")
   wishOpenByWish           WishOpen[]          @relation("WishOpen_wishId")
@@ -2028,6 +2035,11 @@ enum ClientWishSet {
   finals
 }
 
+enum ClientWishDrawFrom {
+  month
+  pack
+}
+
 enum ConciergeOrderKind {
   single
   list
@@ -2105,6 +2117,7 @@ enum JobStatus {
   succeeded
   failed
   dead
+  cancelled
 }
 
 enum JobRunOutcome {

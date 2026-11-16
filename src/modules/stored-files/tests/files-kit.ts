@@ -19,6 +19,9 @@ export class ScoredScreening extends UploadScreeningPort {
   /** Labels for the next answers (X21), in step with `next`. */
   readonly nextLabels: string[][] = [];
   readonly screened: ScreenInput[] = [];
+  ping(): Promise<{ state: "stand-in" }> {
+    return Promise.resolve({ state: "stand-in" });
+  }
   screen(input: ScreenInput): Promise<ScreenResult> {
     this.screened.push(input);
     const score = this.next.shift() ?? 0;

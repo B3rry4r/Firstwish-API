@@ -3087,6 +3087,105 @@
       "confidence": "high",
       "source": "build/rulings-phase3.md (INT-5)",
       "decidedAt": "2026-11-19T12:00:00Z"
+    },
+    {
+      "id": "DEC-201",
+      "topic": "staff contact reveal answers the contact",
+      "closes": [],
+      "decision": "FB1: E-4 POST /v1/admin/people/:id/contact-reveal answers ContactReveal {phone, email} (200), once, with the reason and the audit row as before; the values are never written to the audit row. It replaces the 204 of Q12 (A19, DEC-130 outrank it).",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md FB1",
+      "decidedAt": "2026-11-20T12:00:00Z"
+    },
+    {
+      "id": "DEC-202",
+      "topic": "Numbers.lines is a list",
+      "closes": [],
+      "decision": "FB2: Numbers.lines is a list of {line, name, definition, amount}: the eight earning lines (line is the key staff targets use, name and definition are the words staff read, amount is kobo).",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md FB2",
+      "decidedAt": "2026-11-20T12:00:00Z",
+      "fieldTypes": {
+        "Numbers.lines": "array<object {line: enum(tickets|extras|keeps|pass|pro_plans|vault_space|concierge|creator_plans), name: string, definition: string, amount: integer (kobo)}>"
+      }
+    },
+    {
+      "id": "DEC-203",
+      "topic": "AI writing: transcript, any signed-in person, fields by kind",
+      "closes": [],
+      "decision": "GC1: E-12 POST /v1/ai/letter and E-14 POST /v1/ai/reasons take `transcript` (string, the text the browser's own dictation or the keyboard gave) and `wishId`; `voiceFileId` stays optional and is never read (R13). E-12, E-13 and E-14 may be called by any signed-in person (a sender is a person). The AiRequest answer carries only the fields that apply to its kind: id, kind, status, creditsSpent, model, createdAt and output always; transcript and voiceFileId for the two voice kinds, fileIds for photo-pick, wishId when the request names a wish; the studio fields (ask, base, description, instruction, made, prompt, styleId, target) for the two studio kinds.",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md GC1",
+      "decidedAt": "2026-11-20T12:00:00Z"
+    },
+    {
+      "id": "DEC-204",
+      "topic": "ending purposes for any signed-in person",
+      "closes": [],
+      "decision": "GD4: E-51 GET /v1/ending-purposes may be read by any signed-in person (the maker every sender uses reads them), not only a business.",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md GD4",
+      "decidedAt": "2026-11-20T12:00:00Z"
+    },
+    {
+      "id": "DEC-205",
+      "topic": "keep and wake: the link in headers, who may call",
+      "closes": [],
+      "decision": "HA1, HA3: E-228 POST /v1/wishes/:id/keep and E-232 POST /v1/wishes/:id/wake take the wish's link and its unlock token in the headers x-wish-link (the link's slug) and x-unlock-token (the token a passcode gives), both optional. Who may call: any signed-in person; the owner of the wish, or a signed-in receiver who holds the link (and has unlocked it where a passcode is set); a stranger is refused. E-232 is no longer public.",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md HA1, HA3",
+      "decidedAt": "2026-11-20T12:00:00Z"
+    },
+    {
+      "id": "DEC-206",
+      "topic": "extra fields the code answers",
+      "closes": [],
+      "decision": "HA3: E-83 GET /v1/me/pass answers, beside the membership, live (boolean), endsAt (the end of the last live Pass, or null), wishesTotal, wishesLeft, upgradesTotal and upgradesLeft (whole numbers) as the code answers them. E-64 GET /v1/admin/ledger-entries answers each entry with the window it was read in as `from` and `to` (instants); the registry already carries both, so its shape is confirmed as the code answers it.",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md HA3",
+      "decidedAt": "2026-11-20T12:00:00Z"
+    },
+    {
+      "id": "DEC-207",
+      "topic": "ClientWish.wishId in the contract",
+      "closes": [
+        {
+          "conflict": "C-20",
+          "key": "possible-alias|ClientWish|ClientWish fields wish / wishId may be one field",
+          "detail": "ClientWish fields wish / wishId may be one field"
+        }
+      ],
+      "decision": "ZB4: ClientWish gains wishId (the wish a client wish made without a reveal plays as; null for a client wish that plays at its reveal link). Different fields: `wish` is the client wish's own words (a document), `wishId` is the id of the ordinary wish it plays as.",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md ZB4",
+      "decidedAt": "2026-11-20T12:00:00Z"
+    },
+    {
+      "id": "DEC-208",
+      "topic": "rush is not sold: E-89 removed",
+      "closes": [],
+      "decision": "GA2: E-89 (INTERNAL port:fulfilment#concierge.rush) and the declared price-book line concierge.rush are removed: rush is not sold (Z2). The endpoint id E-89 is never reused.",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md GA2",
+      "decidedAt": "2026-11-20T12:00:00Z"
+    },
+    {
+      "id": "DEC-209",
+      "topic": "registry re-freeze (eighth reopen)",
+      "closes": [],
+      "decision": "The registry is re-frozen after FB1, FB2, GC1, GD4, HA1, HA3, ZB4 and GA2 (DEC-201..208) by tools/pipeline/freeze.py; reconcile.py was run twice with --reopen (identical outputs, EXIT 0, 0 open conflicts, both admin gate lines 0). Endpoint ids already issued are unchanged; E-89 is removed and never reused; no new ids. FB4 (ping on every port) and HC2 and GC2 and HD2 change code and storage, not the wire.",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (INT-6)",
+      "decidedAt": "2026-11-20T12:00:00Z"
     }
   ]
 }

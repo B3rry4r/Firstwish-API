@@ -1,5 +1,6 @@
 import { AiWritingPort, WriteRequest, WriteResult } from "../ai.port";
-import { postJson } from "./http";
+import { getJson, postJson } from "./http";
+import { type PortPing, pingWith } from "../ping";
 
 export const ANTHROPIC_BASE_URL = "https://api.anthropic.com";
 
@@ -16,6 +17,11 @@ export class AnthropicWriting extends AiWritingPort {
     private readonly baseUrl = ANTHROPIC_BASE_URL,
   ) {
     super();
+  }
+
+  /** FB4: one authenticated read of the model list (a page of one); it costs nothing. NOT RUN against Anthropic. */
+  ping(): Promise<PortPing> {
+    return pingWith(() => getJson("anthropic", `${this.baseUrl}/v1/models?limit=1`, { "x-api-key": this.apiKey, "anthropic-version": "2023-06-01" }), [this.apiKey]);
   }
 
   async write(input: WriteRequest): Promise<WriteResult> {

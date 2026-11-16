@@ -170,7 +170,7 @@ describe("join 6: the end function at first open and rest; cancelling a job; an 
     const id = await jobs.schedule("rest-wish", at(1), withHistory);
     await history(id);
     await expect(jobs.cancel("rest-wish", withHistory)).resolves.toBeUndefined();
-    expect(await jobRow(withHistory)).toMatchObject({ id, status: "succeeded" });
+    expect(await jobRow(withHistory)).toMatchObject({ id, status: "cancelled" }); // HC2
     t.clock.set(at(2));
     expect(await jobs.runDue(20, [withHistory])).toBe(0); // the runner skips it
     // scheduled again, it waits again
@@ -197,7 +197,7 @@ describe("join 6: the end function at first open and rest; cancelling a job; an 
     expect(res.filter((r) => r.status === "rejected")).toHaveLength(0);
     for (const [i, k] of keys.entries()) {
       const j = await jobRow(k);
-      if (i % 2) expect(j!.status).toBe("succeeded");
+      if (i % 2) expect(j!.status).toBe("cancelled");
       else expect(j).toBeNull();
     }
   });

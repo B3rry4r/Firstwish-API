@@ -1,3 +1,5 @@
+import type { PortPing } from "./ping";
+
 export interface ScreenInput {
   key: string;
   contentType: string;
@@ -17,4 +19,6 @@ export type ScreenResult =
 /** Upload screening: runs on every confirmed upload before the file is used. */
 export abstract class UploadScreeningPort {
   abstract screen(input: ScreenInput): Promise<ScreenResult>;
+  /** FB4: one cheap authenticated read. Answers ok, or the provider's error; a stand-in answers "stand-in". Never carries a secret. */
+  abstract ping(): Promise<PortPing>;
 }

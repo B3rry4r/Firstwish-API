@@ -1,4 +1,5 @@
 import type { Money } from "../money/money";
+import type { PortPing } from "./ping";
 
 export interface ResolveAccount {
   bankCode: string;
@@ -51,4 +52,6 @@ export abstract class PayoutProviderPort {
   abstract transfer(input: TransferRequest): Promise<TransferAccepted>;
   /** What became of the transfer made with this reference (ZZ2). Never sends money. */
   abstract lookup(reference: string): Promise<TransferLookup>;
+  /** FB4: one cheap authenticated read. Answers ok, or the provider's error; a stand-in answers "stand-in". Never carries a secret. */
+  abstract ping(): Promise<PortPing>;
 }

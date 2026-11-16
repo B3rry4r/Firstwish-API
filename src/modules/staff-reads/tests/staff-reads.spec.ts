@@ -1,9 +1,6 @@
 import { PrismaService } from "../../../common/db/prisma.service";
 import { TableProbe } from "../table-probe";
 import { AdminJobsService } from "../admin-jobs.service";
-import { AuditService } from "../../audit/audit.service";
-import { SettingsService } from "../settings.service";
-import { IdGenerator } from "../../../common/ports/ids.port";
 import { requireActionRole, WISH_ACTION_ROLES } from "../action-roles";
 import { hex, ids, Kit, makeAccount, makeKit, makePayment, makeWish } from "./kit";
 
@@ -179,24 +176,14 @@ describe("staff reads (B21)", () => {
       expect(Number((await k.db.$queryRaw<{ n: bigint }[]>`SELECT count(*) AS n FROM settings WHERE key = to_jsonb(${"storage"}::text)`)[0].n)).toBe(0);
     });
 
-    it("a provider is connected only after a real call worked; stand-ins and no news read not_connected; no secret appears", async () => {
+    it("on stand-ins every provider reads not_connected and no secret appears (FB4: the live cases are in test/int6/ping.spec.ts)", async () => {
       const standin = await get("/v1/admin/settings", "owner");
       expect(standin.body.providers.length).toBeGreaterThan(0);
-      for (const p of standin.body.providers as { state: string }[]) expect(p.state).toBe("not_connected");
+      for (const p of standin.body.providers as { state: string; line: string }[]) {
+        expect(p.state).toBe("not_connected");
+        expect(p.line).toMatch(/stand-ins/);
+      }
       expect(JSON.stringify(standin.body)).not.toMatch(/sk_|secret|re_[a-z0-9]{8}/i);
-
-      const db = k.db;
-      const env = { PROVIDERS: "live", PAYSTACK_SECRET_KEY: "sk_live_SHOULD_NEVER_SHOW" } as never;
-      const none = { provider: { findMany: () => Promise.resolve([]) }, $queryRaw: () => Promise.resolve([]) } as never;
-      const quiet = await new SettingsService(none, k.app.get(IdGenerator), k.app.get(AuditService), env).providers();
-      expect(quiet.map((p) => p.state)).toEqual(["not_connected", "not_connected", "not_connected", "not_connected"]);
-      let calls = 0;
-      const paymentsWorked = { provider: { findMany: () => Promise.resolve([]) }, $queryRaw: () => Promise.resolve(calls++ === 0 ? [{ x: 1 }] : []) } as never;
-      const some = await new SettingsService(paymentsWorked, k.app.get(IdGenerator), k.app.get(AuditService), env).providers();
-      expect(some.find((p) => p.key === "payments")!.state).toBe("connected");
-      expect(some.find((p) => p.key === "email")!.state).toBe("not_connected");
-      expect(JSON.stringify(some)).not.toContain("SHOULD_NEVER_SHOW");
-      void db;
     });
   });
 
@@ -434,7 +421,8 @@ describe("staff reads (B21)", () => {
       expect((await post(url, { reason: "customer on the phone" }, "reviewer")).status).toBe(403);
       expect((await post(url, { reason: "customer on the phone" })).status).toBe(401);
       const ok = await post(url, { reason: "customer on the phone" }, "support");
-      expect(ok.status).toBe(204);
+      expect(ok.status).toBe(200);
+      expect(ok.body).toEqual({ phone: expect.any(String), email: a.contact });
       const rows = await auditRows(k.db, "person.contact_reveal", a.id);
       expect(rows).toHaveLength(1);
       expect(rows[0].actorId).toBe(k.staffIds.support);
@@ -446,10 +434,10 @@ describe("staff reads (B21)", () => {
       const a = await makeAccount(k.db);
       const url = `/v1/admin/people/${a.id}/contact-reveal`;
       const rs = await Promise.all(Array.from({ length: 30 }, () => post(url, { reason: "checking an order" }, "moderator")));
-      expect(rs.filter((r) => r.status === 204)).toHaveLength(20);
+      expect(rs.filter((r) => r.status === 200)).toHaveLength(20);
       expect(rs.filter((r) => r.status === 429)).toHaveLength(10);
       expect(await k.db.auditEntry.count({ where: { action: "person.contact_reveal", actorId: k.staffIds.moderator } })).toBe(20);
-      expect((await post(url, { reason: "another one please" }, "ops")).status).toBe(204);
+      expect((await post(url, { reason: "another one please" }, "ops")).status).toBe(200);
     });
   });
 

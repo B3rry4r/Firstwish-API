@@ -2,6 +2,7 @@ import { Money } from "../../money/money";
 import { PaymentsPort, PaymentStatus, StartPayment, StartedPayment, VerifiedPayment } from "../payments.port";
 import { signatureMatches } from "../signature";
 import { getJson, postJson } from "./http";
+import { type PortPing, pingWith } from "../ping";
 
 export const PAYSTACK_BASE_URL = "https://api.paystack.co";
 
@@ -54,6 +55,11 @@ export class PaystackPayments extends PaymentsPort {
       amount: Money.kobo(r.data.amount),
       paidAt: r.data.paid_at ? new Date(r.data.paid_at) : null,
     };
+  }
+
+  /** FB4: one authenticated read of the transaction list (a page of one). NOT RUN against Paystack: the owner gives the test keys later. */
+  ping(): Promise<PortPing> {
+    return pingWith(() => getJson("paystack", `${this.baseUrl}/transaction?perPage=1`, this.auth), [this.secretKey]);
   }
 
   verifySignature(rawBody: Buffer, signature: string | undefined): boolean {

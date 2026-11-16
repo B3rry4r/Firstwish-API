@@ -54,6 +54,13 @@ export interface PaymentStartedOrCovered<T> {
   item: T | null;
 }
 
+/** One earning line of the numbers page (FB2): the key staff set targets by, the words staff read, and the kobo earned. */
+export interface NumbersLine {
+  line: NumbersTarget["line"];
+  name: string;
+  definition: string;
+  amount: Kobo;
+}
 /** E-5. */
 export interface HandleCheck {
   free: boolean;
@@ -250,29 +257,29 @@ export interface Account {
 
 /** AiRequest: table. written by E-12..E-16 and server:ai-writing (one row per AI request, credits charged) */
 export interface AiRequest {
-  accountId: string;
-  ask: string;
-  base: string;
+  accountId?: string | null;
+  ask?: string | null;
+  base?: string | null;
   createdAt: Instant;
   creditsSpent: number;
-  description: string;
-  fileIds: unknown[];
+  description?: string | null;
+  fileIds?: unknown[] | null;
   id: string;
   inputFileId?: string | null;
   inputTokens?: number | null;
-  instruction: string;
+  instruction?: string | null;
   kind: "letter-from-voice" | "reasons-from-voice" | "photo-pick" | "studio-draft" | "studio-change";
-  made: unknown;
+  made?: unknown;
   model: string;
   output?: Record<string, unknown> | null;
   outputTokens?: number | null;
-  prompt: string;
+  prompt?: string | null;
   status: "queued" | "done" | "failed";
-  styleId: string;
-  target: Record<string, unknown>;
+  styleId?: string | null;
+  target?: Record<string, unknown> | null;
   transcript?: string | null;
-  voiceFileId: string;
-  wishId: string;
+  voiceFileId?: string | null;
+  wishId?: string | null;
 }
 
 /** ApprovedDate: table. the dates a business has approved for its people, read by GET /v1/business/approved-dates and written by POST and DELETE /v1/business/approved-dates (BB1, DEC-168); each row is one business's */
@@ -394,6 +401,7 @@ export interface ClientWish {
   set: "proofs" | "finals";
   shoot: string;
   wish: string;
+  wishId?: string | null;
 }
 
 /** ConciergeOrder: table. written by E-34, E-35, E-39, E-40 and server:concierge-orders */
@@ -432,6 +440,12 @@ export interface ConciergeOrder {
   to: Instant;
   updatedAt: Instant;
   wishIds: unknown[];
+}
+
+/** ContactReveal: view. a person's phone and email, answered once to staff with a reason (FB1, DEC-201) */
+export interface ContactReveal {
+  email: string;
+  phone: string;
 }
 
 /** Creator: table. the public creator profile, 1:1 with an account (DEC-76); credits, plan and signed are written by payment fulfilment (E-91, E-93, E-94) */
@@ -594,7 +608,7 @@ export interface Job {
   createdAt: Instant;
   id: string;
   runAt: Instant;
-  status: "scheduled" | "running" | "succeeded" | "failed" | "dead";
+  status: "scheduled" | "running" | "succeeded" | "failed" | "dead" | "cancelled";
   subjectId: string;
   type: "open-wish" | "rest-wish" | "erase-wish" | "restore-window-end" | "erase-now" | "send-notice" | "send-message" | "make-image-sizes" | "screen-file" | "render-video" | "make-qr-card" | "abandon-payment" | "reconcile-ledger" | "pass-period" | "plan-period" | "creator-period" | "vault-billing" | "royalty-accrual" | "payout-run" | "style-level-review" | "upload-cleanup" | "clean-link-hits" | "check-style-submission";
 }
@@ -760,7 +774,7 @@ export interface Numbers {
   days: number;
   keeps: unknown[];
   kinds: unknown[];
-  lines: Kobo;
+  lines: NumbersLine[];
   occasions: unknown[];
   opens: Record<string, unknown>;
   paid: number;
@@ -801,10 +815,16 @@ export interface Overview {
 /** PassMembership: table. a Pass bought by an account, granted by payment fulfilment E-104 (DEC-94); read by E-83 */
 export interface PassMembership {
   amount: Kobo;
+  endsAt?: Instant | null;
+  live: boolean;
   since?: Instant | null;
+  upgradesLeft: number;
+  upgradesTotal: number;
   upgradesUsed: number;
   validUntil: unknown;
   way: string;
+  wishesLeft: number;
+  wishesTotal: number;
   wishesUsed: number;
 }
 
@@ -1790,8 +1810,7 @@ export interface PostAdminPeopleByIdContactRevealBody {
   reason: string;
 }
 export type PostAdminPeopleByIdContactRevealHeaders = Record<string, never>;
-/** 204 No Content: the response has no body (Q12). */
-export type PostAdminPeopleByIdContactRevealResponse = NoContent;
+export type PostAdminPeopleByIdContactRevealResponse = ContactReveal;
 
 /** E-5 GET /v1/handles/:handle. Auth: signed in. */
 export interface GetHandlesByHandleParams {
@@ -1897,18 +1916,20 @@ export type PostMeEraseHeaders = Record<string, never>;
 /** 204 No Content: the response has no body (Q12). */
 export type PostMeEraseResponse = NoContent;
 
-/** E-12 POST /v1/ai/letter. Auth: creator; signed in. */
+/** E-12 POST /v1/ai/letter. Auth: signed in. */
 export type PostAiLetterParams = Record<string, never>;
 export interface PostAiLetterBody {
-  /** string */
-  voiceFileId: string;
+  /** string (the text the browser's own dictation or the keyboard gave; at most 20000 characters) */
+  transcript: string;
+  /** string (optional; accepted and never read: R13) */
+  voiceFileId?: string;
   /** string */
   wishId: string;
 }
 export type PostAiLetterHeaders = Record<string, never>;
 export type PostAiLetterResponse = AiRequest;
 
-/** E-13 POST /v1/ai/pick-photos. Auth: creator; signed in. */
+/** E-13 POST /v1/ai/pick-photos. Auth: signed in. */
 export type PostAiPickPhotosParams = Record<string, never>;
 export interface PostAiPickPhotosBody {
   /** array<string> */
@@ -1919,11 +1940,13 @@ export interface PostAiPickPhotosBody {
 export type PostAiPickPhotosHeaders = Record<string, never>;
 export type PostAiPickPhotosResponse = AiRequest;
 
-/** E-14 POST /v1/ai/reasons. Auth: creator; signed in. */
+/** E-14 POST /v1/ai/reasons. Auth: signed in. */
 export type PostAiReasonsParams = Record<string, never>;
 export interface PostAiReasonsBody {
-  /** string */
-  voiceFileId: string;
+  /** string (the text the browser's own dictation or the keyboard gave; at most 20000 characters) */
+  transcript: string;
+  /** string (optional; accepted and never read: R13) */
+  voiceFileId?: string;
   /** string */
   wishId: string;
 }
@@ -2420,7 +2443,7 @@ export interface GetAdminEarningsQuery {
 export type GetAdminEarningsHeaders = Record<string, never>;
 export type GetAdminEarningsResponse = PaginatedList<EarningsSummary>;
 
-/** E-51 GET /v1/ending-purposes. Auth: business. */
+/** E-51 GET /v1/ending-purposes. Auth: signed in. */
 export type GetEndingPurposesParams = Record<string, never>;
 export interface GetEndingPurposesQuery {
   cursor?: string;
@@ -2822,14 +2845,6 @@ export interface GetPaymentsByReferenceParams {
 export type GetPaymentsByReferenceQuery = Record<string, never>;
 export type GetPaymentsByReferenceHeaders = Record<string, never>;
 export type GetPaymentsByReferenceResponse = Payment;
-
-/** E-89 INTERNAL port:fulfilment#concierge.rush. Auth: internal. */
-export interface InternalFulfilmentConciergeRushParams {
-  fulfilment: string;
-}
-export type InternalFulfilmentConciergeRushBody = Record<string, never>;
-export type InternalFulfilmentConciergeRushHeaders = Record<string, never>;
-export type InternalFulfilmentConciergeRushResponse = void;
 
 /** E-90 INTERNAL port:fulfilment#concierge.single. Auth: internal. */
 export interface InternalFulfilmentConciergeSingleParams {
@@ -4433,7 +4448,7 @@ export type PostWishesByIdEraseHeaders = Record<string, never>;
 /** 204 No Content: the response has no body (Q12). */
 export type PostWishesByIdEraseResponse = NoContent;
 
-/** E-228 POST /v1/wishes/:id/keep. Auth: business; signed in. */
+/** E-228 POST /v1/wishes/:id/keep. Auth: signed in. */
 export interface PostWishesByIdKeepParams {
   id: string;
 }
@@ -4451,6 +4466,8 @@ export interface PostWishesByIdKeepBody {
 }
 export interface PostWishesByIdKeepHeaders {
   "idempotency-key": string;
+  "x-unlock-token"?: string;
+  "x-wish-link"?: string;
 }
 export type PostWishesByIdKeepResponse = PaymentStartedOrCovered<Wish>;
 
@@ -4518,7 +4535,7 @@ export interface PostWishesByIdSealBody {
 export type PostWishesByIdSealHeaders = Record<string, never>;
 export type PostWishesByIdSealResponse = PaymentStartedOrCovered<Wish>;
 
-/** E-232 POST /v1/wishes/:id/wake. Auth: public; business; signed in. */
+/** E-232 POST /v1/wishes/:id/wake. Auth: signed in. */
 export interface PostWishesByIdWakeParams {
   id: string;
 }
@@ -4526,7 +4543,10 @@ export interface PostWishesByIdWakeBody {
   /** string */
   wishId: string;
 }
-export type PostWishesByIdWakeHeaders = Record<string, never>;
+export interface PostWishesByIdWakeHeaders {
+  "x-unlock-token"?: string;
+  "x-wish-link"?: string;
+}
 /** 204 No Content: the response has no body (Q12). */
 export type PostWishesByIdWakeResponse = NoContent;
 
@@ -4641,7 +4661,6 @@ export interface EndpointContracts {
   "E-240": { params: GetPaymentsParams; query: GetPaymentsQuery; headers: GetPaymentsHeaders; response: GetPaymentsResponse };
   "E-87": { params: PostPaymentsParams; body: PostPaymentsBody; headers: PostPaymentsHeaders; response: PostPaymentsResponse };
   "E-88": { params: GetPaymentsByReferenceParams; query: GetPaymentsByReferenceQuery; headers: GetPaymentsByReferenceHeaders; response: GetPaymentsByReferenceResponse };
-  "E-89": { params: InternalFulfilmentConciergeRushParams; body: InternalFulfilmentConciergeRushBody; headers: InternalFulfilmentConciergeRushHeaders; response: InternalFulfilmentConciergeRushResponse };
   "E-90": { params: InternalFulfilmentConciergeSingleParams; body: InternalFulfilmentConciergeSingleBody; headers: InternalFulfilmentConciergeSingleHeaders; response: InternalFulfilmentConciergeSingleResponse };
   "E-91": { params: InternalFulfilmentCreatorCreditPackParams; body: InternalFulfilmentCreatorCreditPackBody; headers: InternalFulfilmentCreatorCreditPackHeaders; response: InternalFulfilmentCreatorCreditPackResponse };
   "E-92": { params: InternalFulfilmentCreatorExtraReviewParams; body: InternalFulfilmentCreatorExtraReviewBody; headers: InternalFulfilmentCreatorExtraReviewHeaders; response: InternalFulfilmentCreatorExtraReviewResponse };

@@ -1,5 +1,6 @@
 import { PAYSTACK_BASE_URL } from "./paystack.adapter";
 import { getJson, postJson, ProviderError } from "./http";
+import { type PortPing, pingWith } from "../ping";
 import { ProviderSettlement, RefundAccepted, RefundProviderPort, RefundRefused, RefundRequest, SettlementLine } from "../refund-provider.port";
 
 interface Envelope<T> {
@@ -38,6 +39,11 @@ export class PaystackRefundProvider extends RefundProviderPort {
 
   private get auth(): Record<string, string> {
     return { authorization: `Bearer ${this.secretKey}` };
+  }
+
+  /** FB4: one authenticated read of the refund list (a page of one). NOT RUN against Paystack. */
+  ping(): Promise<PortPing> {
+    return pingWith(() => getJson("paystack", `${this.baseUrl}/refund?perPage=1`, this.auth), [this.secretKey]);
   }
 
   /** Paystack's list of refunds for one transaction: the first that has not failed. NOT RUN against Paystack. */

@@ -1381,6 +1381,42 @@
         "user"
       ],
       "decision": "DEC-159"
+    },
+    "POST /v1/ai/letter": {
+      "auth": [
+        "user"
+      ],
+      "decision": "DEC-203"
+    },
+    "POST /v1/ai/pick-photos": {
+      "auth": [
+        "user"
+      ],
+      "decision": "DEC-203"
+    },
+    "POST /v1/ai/reasons": {
+      "auth": [
+        "user"
+      ],
+      "decision": "DEC-203"
+    },
+    "GET /v1/ending-purposes": {
+      "auth": [
+        "user"
+      ],
+      "decision": "DEC-204"
+    },
+    "POST /v1/wishes/:id/keep": {
+      "auth": [
+        "user"
+      ],
+      "decision": "DEC-205"
+    },
+    "POST /v1/wishes/:id/wake": {
+      "auth": [
+        "user"
+      ],
+      "decision": "DEC-205"
     }
   },
   "extraEndpoints": [
@@ -1707,18 +1743,27 @@
         }
       }
     ],
-    "POST /v1/wishes/:id/keep": {
-      "decision": "DEC-134",
-      "drop": [
-        "price"
-      ],
-      "response": {
-        "entity": "Wish",
-        "cardinality": "single",
-        "paymentStart": "optional",
-        "note": "{payment, item}: payment null when the Pass covers the keep; item is the wish, status live, endsAt = max(endsAt, now)+days for live; now+days for resting (DEC-139)"
+    "POST /v1/wishes/:id/keep": [
+      {
+        "decision": "DEC-134",
+        "drop": [
+          "price"
+        ],
+        "response": {
+          "entity": "Wish",
+          "cardinality": "single",
+          "paymentStart": "optional",
+          "note": "{payment, item}: payment null when the Pass covers the keep; item is the wish, status live, endsAt = max(endsAt, now)+days for live; now+days for resting (DEC-139)"
+        }
+      },
+      {
+        "decision": "DEC-205",
+        "set": {
+          "x-wish-link": "header (optional: the slug of the wish's link, for a receiver)",
+          "x-unlock-token": "header (optional: the link's unlock token, where the wish has a passcode)"
+        }
       }
-    },
+    ],
     "POST /v1/wishes/:id/seal": [
       {
         "decision": "DEC-134",
@@ -2312,7 +2357,44 @@
         "cardinality": "list",
         "note": "a page of the orders due in the window (DEC-199)"
       }
-    }
+    },
+    "POST /v1/admin/people/:id/contact-reveal": {
+      "decision": "DEC-201",
+      "response": {
+        "entity": "ContactReveal",
+        "cardinality": "single",
+        "note": "{phone, email}: the person's contact, answered once (DEC-201)"
+      }
+    },
+    "POST /v1/ai/letter": {
+      "decision": "DEC-203",
+      "set": {
+        "transcript": "string (the text the browser's own dictation or the keyboard gave; at most 20000 characters)",
+        "voiceFileId": "string (optional; accepted and never read: R13)"
+      },
+      "require": [
+        "transcript"
+      ]
+    },
+    "POST /v1/ai/reasons": {
+      "decision": "DEC-203",
+      "set": {
+        "transcript": "string (the text the browser's own dictation or the keyboard gave; at most 20000 characters)",
+        "voiceFileId": "string (optional; accepted and never read: R13)"
+      },
+      "require": [
+        "transcript"
+      ]
+    },
+    "POST /v1/wishes/:id/wake": [
+      {
+        "decision": "DEC-205",
+        "set": {
+          "x-wish-link": "header (optional: the slug of the wish's link, for a receiver)",
+          "x-unlock-token": "header (optional: the link's unlock token, where the wish has a passcode)"
+        }
+      }
+    ]
   },
   "extraFields": [
     {
@@ -2594,6 +2676,69 @@
       "type": "array<string>",
       "nullable": false,
       "decision": "DEC-199"
+    },
+    {
+      "resource": "ContactReveal",
+      "name": "phone",
+      "type": "string",
+      "nullable": false,
+      "decision": "DEC-201"
+    },
+    {
+      "resource": "ContactReveal",
+      "name": "email",
+      "type": "string",
+      "nullable": false,
+      "decision": "DEC-201"
+    },
+    {
+      "resource": "PassMembership",
+      "name": "live",
+      "type": "boolean",
+      "nullable": false,
+      "decision": "DEC-206"
+    },
+    {
+      "resource": "PassMembership",
+      "name": "endsAt",
+      "type": "time",
+      "nullable": true,
+      "decision": "DEC-206"
+    },
+    {
+      "resource": "PassMembership",
+      "name": "wishesTotal",
+      "type": "integer",
+      "nullable": false,
+      "decision": "DEC-206"
+    },
+    {
+      "resource": "PassMembership",
+      "name": "wishesLeft",
+      "type": "integer",
+      "nullable": false,
+      "decision": "DEC-206"
+    },
+    {
+      "resource": "PassMembership",
+      "name": "upgradesTotal",
+      "type": "integer",
+      "nullable": false,
+      "decision": "DEC-206"
+    },
+    {
+      "resource": "PassMembership",
+      "name": "upgradesLeft",
+      "type": "integer",
+      "nullable": false,
+      "decision": "DEC-206"
+    },
+    {
+      "resource": "ClientWish",
+      "name": "wishId",
+      "type": "string",
+      "nullable": true,
+      "decision": "DEC-207"
     }
   ],
   "dropFields": [
@@ -2878,6 +3023,66 @@
       "resource": "RevealPlay",
       "name": "style",
       "decision": "DEC-198"
+    },
+    {
+      "resource": "AiRequest",
+      "name": "accountId",
+      "decision": "DEC-203"
+    },
+    {
+      "resource": "AiRequest",
+      "name": "ask",
+      "decision": "DEC-203"
+    },
+    {
+      "resource": "AiRequest",
+      "name": "base",
+      "decision": "DEC-203"
+    },
+    {
+      "resource": "AiRequest",
+      "name": "description",
+      "decision": "DEC-203"
+    },
+    {
+      "resource": "AiRequest",
+      "name": "fileIds",
+      "decision": "DEC-203"
+    },
+    {
+      "resource": "AiRequest",
+      "name": "instruction",
+      "decision": "DEC-203"
+    },
+    {
+      "resource": "AiRequest",
+      "name": "made",
+      "decision": "DEC-203"
+    },
+    {
+      "resource": "AiRequest",
+      "name": "prompt",
+      "decision": "DEC-203"
+    },
+    {
+      "resource": "AiRequest",
+      "name": "styleId",
+      "decision": "DEC-203"
+    },
+    {
+      "resource": "AiRequest",
+      "name": "target",
+      "decision": "DEC-203"
+    },
+    {
+      "resource": "AiRequest",
+      "name": "voiceFileId",
+      "decision": "DEC-203"
+    },
+    {
+      "resource": "AiRequest",
+      "name": "wishId",
+      "decision": "DEC-203"
     }
   ]
 }

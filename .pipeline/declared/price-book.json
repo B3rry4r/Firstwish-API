@@ -388,13 +388,6 @@
         "source": "catalog.ts:397"
       },
       {
-        "sku": "concierge.rush",
-        "name": "Concierge rush within 1 hour",
-        "listKobo": 800000,
-        "promoKobo": 480000,
-        "source": "product-plan.txt L142 (T-36); not in the app"
-      },
-      {
         "sku": "pro.starter",
         "name": "Pro Starter, a month (VAT included)",
         "listKobo": 5800000,

@@ -1,8 +1,9 @@
-import { CopyObjectCommand, DeleteObjectCommand, GetObjectCommand, HeadObjectCommand, PutObjectCommand, S3Client, S3ServiceException } from "@aws-sdk/client-s3";
+import { CopyObjectCommand, DeleteObjectCommand, GetObjectCommand, HeadBucketCommand, HeadObjectCommand, PutObjectCommand, S3Client, S3ServiceException } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import type { Env } from "../../env/env";
 import { SignUpload, SignedUpload, StoragePort, StoredObject } from "../storage.port";
 import { Clock, SystemClock } from "../clock.port";
+import { type PortPing, pingWith } from "../ping";
 
 export const R2_HOST_SUFFIX = "r2.cloudflarestorage.com";
 
@@ -70,6 +71,11 @@ export class S3Storage extends StoragePort {
 
   async signDownload(key: string, expiresInSeconds: number): Promise<string> {
     return getSignedUrl(this.client, new GetObjectCommand({ Bucket: this.config.bucket, Key: key }), { expiresIn: expiresInSeconds });
+  }
+
+  /** FB4: one authenticated read: the bucket's own head. NOT RUN against R2 or Spaces: the owner gives the keys later. */
+  ping(): Promise<PortPing> {
+    return pingWith(() => this.client.send(new HeadBucketCommand({ Bucket: this.config.bucket })), [this.config.secretAccessKey, this.config.accessKeyId]);
   }
 
   async head(key: string): Promise<StoredObject | null> {

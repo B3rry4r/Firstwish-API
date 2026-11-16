@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "frozenAt": "2026-11-16T02:33:08Z",
+  "frozenAt": "2026-11-16T05:44:51Z",
   "framework": "nestjs",
   "generatedBy": "tools/pipeline/reconcile.py",
   "resources": [
@@ -721,7 +721,11 @@
               ]
             }
           ],
-          "response": null,
+          "response": {
+            "entity": "ContactReveal",
+            "cardinality": "single",
+            "note": "{phone, email}: the person's contact, answered once (DEC-201)"
+          },
           "sources": [
             {
               "src": "DEC-130",
@@ -729,6 +733,7 @@
             }
           ],
           "notes": [
+            "body by DEC-201",
             "reason by DEC-125"
           ]
         },
@@ -1366,7 +1371,7 @@
           "classes": [
             "string"
           ],
-          "nullable": false,
+          "nullable": true,
           "provenance": [
             "ai-writing"
           ],
@@ -1378,7 +1383,7 @@
           "classes": [
             "string"
           ],
-          "nullable": false,
+          "nullable": true,
           "provenance": [
             "ai-writing"
           ],
@@ -1390,7 +1395,7 @@
           "classes": [
             "string"
           ],
-          "nullable": false,
+          "nullable": true,
           "provenance": [
             "studio-editor"
           ],
@@ -1426,7 +1431,7 @@
           "classes": [
             "string"
           ],
-          "nullable": false,
+          "nullable": true,
           "provenance": [
             "studio-editor",
             "studio-home",
@@ -1440,7 +1445,7 @@
           "classes": [
             "array"
           ],
-          "nullable": false,
+          "nullable": true,
           "provenance": [
             "ai-writing"
           ],
@@ -1488,7 +1493,7 @@
           "classes": [
             "string"
           ],
-          "nullable": false,
+          "nullable": true,
           "provenance": [
             "studio-editor"
           ],
@@ -1512,7 +1517,7 @@
           "classes": [
             "named"
           ],
-          "nullable": false,
+          "nullable": true,
           "provenance": [
             "studio-editor"
           ],
@@ -1560,7 +1565,7 @@
           "classes": [
             "string"
           ],
-          "nullable": false,
+          "nullable": true,
           "provenance": [
             "ai-writing"
           ],
@@ -1585,7 +1590,7 @@
             "named",
             "string"
           ],
-          "nullable": false,
+          "nullable": true,
           "provenance": [
             "ai-writing",
             "studio-editor"
@@ -1600,7 +1605,7 @@
           "classes": [
             "object"
           ],
-          "nullable": false,
+          "nullable": true,
           "provenance": [
             "studio-editor"
           ],
@@ -1624,7 +1629,7 @@
           "classes": [
             "string"
           ],
-          "nullable": false,
+          "nullable": true,
           "provenance": [
             "ai-writing"
           ],
@@ -1636,7 +1641,7 @@
           "classes": [
             "string"
           ],
-          "nullable": false,
+          "nullable": true,
           "provenance": [
             "ai-writing"
           ],
@@ -1650,19 +1655,24 @@
           "path": "/v1/ai/letter",
           "auth": [
             {
-              "kind": "role",
-              "role": "creator"
-            },
-            {
               "kind": "user",
               "scope": "signed in"
             }
           ],
           "body": [
             {
-              "name": "voiceFileId",
-              "type": "string",
+              "name": "transcript",
+              "type": "string (the text the browser's own dictation or the keyboard gave; at most 20000 characters)",
               "from": [
+                "DEC-203",
+                "ai-writing"
+              ]
+            },
+            {
+              "name": "voiceFileId",
+              "type": "string (optional; accepted and never read: R13)",
+              "from": [
+                "DEC-203",
                 "ai-writing"
               ]
             },
@@ -1685,6 +1695,8 @@
             }
           ],
           "notes": [
+            "auth by DEC-203",
+            "body by DEC-203",
             "route by DEC-106"
           ]
         },
@@ -1693,10 +1705,6 @@
           "method": "POST",
           "path": "/v1/ai/pick-photos",
           "auth": [
-            {
-              "kind": "role",
-              "role": "creator"
-            },
             {
               "kind": "user",
               "scope": "signed in"
@@ -1729,6 +1737,7 @@
             }
           ],
           "notes": [
+            "auth by DEC-203",
             "route by conventions naming"
           ]
         },
@@ -1738,19 +1747,24 @@
           "path": "/v1/ai/reasons",
           "auth": [
             {
-              "kind": "role",
-              "role": "creator"
-            },
-            {
               "kind": "user",
               "scope": "signed in"
             }
           ],
           "body": [
             {
-              "name": "voiceFileId",
-              "type": "string",
+              "name": "transcript",
+              "type": "string (the text the browser's own dictation or the keyboard gave; at most 20000 characters)",
               "from": [
+                "DEC-203",
+                "ai-writing"
+              ]
+            },
+            {
+              "name": "voiceFileId",
+              "type": "string (optional; accepted and never read: R13)",
+              "from": [
+                "DEC-203",
                 "ai-writing"
               ]
             },
@@ -1773,6 +1787,8 @@
             }
           ],
           "notes": [
+            "auth by DEC-203",
+            "body by DEC-203",
             "route by DEC-106"
           ]
         },
@@ -4151,6 +4167,18 @@
             "pro-vault-shoot"
           ],
           "supersedes": []
+        },
+        {
+          "name": "wishId",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": true,
+          "provenance": [
+            "DEC-207"
+          ],
+          "supersedes": []
         }
       ],
       "endpoints": [
@@ -5289,6 +5317,39 @@
           ]
         }
       ]
+    },
+    {
+      "name": "ContactReveal",
+      "sourceScreens": [],
+      "sourceDeclarations": [],
+      "embedded": [],
+      "fields": [
+        {
+          "name": "email",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "DEC-201"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "phone",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "DEC-201"
+          ],
+          "supersedes": []
+        }
+      ],
+      "endpoints": []
     },
     {
       "name": "Creator",
@@ -6576,8 +6637,8 @@
           "path": "/v1/ending-purposes",
           "auth": [
             {
-              "kind": "role",
-              "role": "business"
+              "kind": "user",
+              "scope": "signed in"
             }
           ],
           "body": [],
@@ -6591,7 +6652,9 @@
               "via": "read:EndingPurpose (reference data)"
             }
           ],
-          "notes": []
+          "notes": [
+            "auth by DEC-204"
+          ]
         }
       ]
     },
@@ -9910,7 +9973,7 @@
         },
         {
           "name": "lines",
-          "type": "money",
+          "type": "array<object {line: enum(tickets|extras|keeps|pass|pro_plans|vault_space|concierge|creator_plans), name: string, definition: string, amount: integer (kobo)}>",
           "classes": [
             "money-kobo"
           ],
@@ -9920,7 +9983,8 @@
           ],
           "supersedes": [
             "S-1: integer kobo, currency NGN, over the wire and in storage; prices only from the price book"
-          ]
+          ],
+          "typeBy": "DEC-202"
         },
         {
           "name": "occasions",
@@ -10422,6 +10486,30 @@
           ]
         },
         {
+          "name": "endsAt",
+          "type": "time",
+          "classes": [
+            "time-iso"
+          ],
+          "nullable": true,
+          "provenance": [
+            "DEC-206"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "live",
+          "type": "boolean",
+          "classes": [
+            "boolean"
+          ],
+          "nullable": false,
+          "provenance": [
+            "DEC-206"
+          ],
+          "supersedes": []
+        },
+        {
           "name": "since",
           "type": "time",
           "classes": [
@@ -10430,6 +10518,30 @@
           "nullable": true,
           "provenance": [
             "app-pass"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "upgradesLeft",
+          "type": "number",
+          "classes": [
+            "integer"
+          ],
+          "nullable": false,
+          "provenance": [
+            "DEC-206"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "upgradesTotal",
+          "type": "number",
+          "classes": [
+            "integer"
+          ],
+          "nullable": false,
+          "provenance": [
+            "DEC-206"
           ],
           "supersedes": []
         },
@@ -10466,6 +10578,30 @@
           "nullable": false,
           "provenance": [
             "app-pass"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "wishesLeft",
+          "type": "number",
+          "classes": [
+            "integer"
+          ],
+          "nullable": false,
+          "provenance": [
+            "DEC-206"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "wishesTotal",
+          "type": "number",
+          "classes": [
+            "integer"
+          ],
+          "nullable": false,
+          "provenance": [
+            "DEC-206"
           ],
           "supersedes": []
         },
@@ -11423,28 +11559,6 @@
           ],
           "notes": [
             "auth by DEC-116"
-          ]
-        },
-        {
-          "id": "E-89",
-          "method": "INTERNAL",
-          "path": "port:fulfilment#concierge.rush",
-          "auth": [
-            {
-              "kind": "internal",
-              "note": "queue job or port; no HTTP route"
-            }
-          ],
-          "body": [],
-          "response": null,
-          "sources": [
-            {
-              "src": "DEC-87",
-              "via": "ruling:DEC-87 fulfilment of concierge.rush"
-            }
-          ],
-          "notes": [
-            "runs on a verified payment (webhook); a replayed webhook adds nothing"
           ]
         },
         {
@@ -28404,10 +28518,6 @@
           "path": "/v1/wishes/:id/keep",
           "auth": [
             {
-              "kind": "role",
-              "role": "business"
-            },
-            {
               "kind": "user",
               "scope": "signed in"
             }
@@ -28461,6 +28571,20 @@
               "from": [
                 "wish-lifecycle"
               ]
+            },
+            {
+              "name": "x-unlock-token",
+              "type": "header (optional: the link's unlock token, where the wish has a passcode)",
+              "from": [
+                "DEC-205"
+              ]
+            },
+            {
+              "name": "x-wish-link",
+              "type": "header (optional: the slug of the wish's link, for a receiver)",
+              "from": [
+                "DEC-205"
+              ]
             }
           ],
           "response": {
@@ -28484,7 +28608,9 @@
             }
           ],
           "notes": [
-            "body by DEC-134"
+            "auth by DEC-205",
+            "body by DEC-134",
+            "body by DEC-205"
           ]
         },
         {
@@ -28757,13 +28883,6 @@
           "path": "/v1/wishes/:id/wake",
           "auth": [
             {
-              "kind": "public"
-            },
-            {
-              "kind": "role",
-              "role": "business"
-            },
-            {
               "kind": "user",
               "scope": "signed in"
             }
@@ -28775,6 +28894,20 @@
               "from": [
                 "receiver-wish-mine"
               ]
+            },
+            {
+              "name": "x-unlock-token",
+              "type": "header (optional: the link's unlock token, where the wish has a passcode)",
+              "from": [
+                "DEC-205"
+              ]
+            },
+            {
+              "name": "x-wish-link",
+              "type": "header (optional: the slug of the wish's link, for a receiver)",
+              "from": [
+                "DEC-205"
+              ]
             }
           ],
           "response": null,
@@ -28785,6 +28918,8 @@
             }
           ],
           "notes": [
+            "auth by DEC-205",
+            "body by DEC-205",
             "route by DEC-93"
           ]
         },

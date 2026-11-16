@@ -801,7 +801,6 @@
       "store": "AiRequest",
       "readers": [],
       "writerActors": [
-        "creator",
         "person"
       ],
       "readerActors": [],
@@ -1015,12 +1014,13 @@
     {
       "field": "AiRequest.transcript",
       "writers": [
-        "server:ai-writing"
+        "E-12",
+        "E-14"
       ],
       "store": "AiRequest",
       "readers": [],
       "writerActors": [
-        "server"
+        "person"
       ],
       "readerActors": [],
       "crossActor": false,
@@ -1035,7 +1035,6 @@
       "store": "AiRequest",
       "readers": [],
       "writerActors": [
-        "creator",
         "person"
       ],
       "readerActors": [],
@@ -1052,7 +1051,6 @@
       "store": "AiRequest",
       "readers": [],
       "writerActors": [
-        "creator",
         "person"
       ],
       "readerActors": [],
@@ -2775,6 +2773,16 @@
       "noWriter": true
     },
     {
+      "field": "ClientWish.wishId",
+      "writers": [],
+      "store": "ClientWish",
+      "readers": [],
+      "writerActors": [],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
       "field": "ConciergeOrder.accountId",
       "writers": [
         "server:concierge-orders"
@@ -3262,6 +3270,26 @@
       "readerActors": [],
       "crossActor": false,
       "noWriter": false
+    },
+    {
+      "field": "ContactReveal.email",
+      "writers": [],
+      "store": "ContactReveal",
+      "readers": [],
+      "writerActors": [],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "ContactReveal.phone",
+      "writers": [],
+      "store": "ContactReveal",
+      "readers": [],
+      "writerActors": [],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": true
     },
     {
       "field": "Creator.bank",
@@ -6965,6 +6993,26 @@
       "noWriter": true
     },
     {
+      "field": "PassMembership.endsAt",
+      "writers": [],
+      "store": "PassMembership",
+      "readers": [],
+      "writerActors": [],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "PassMembership.live",
+      "writers": [],
+      "store": "PassMembership",
+      "readers": [],
+      "writerActors": [],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
       "field": "PassMembership.since",
       "writers": [],
       "store": "PassMembership",
@@ -6975,6 +7023,26 @@
       "readerActors": [
         "person"
       ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "PassMembership.upgradesLeft",
+      "writers": [],
+      "store": "PassMembership",
+      "readers": [],
+      "writerActors": [],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "PassMembership.upgradesTotal",
+      "writers": [],
+      "store": "PassMembership",
+      "readers": [],
+      "writerActors": [],
+      "readerActors": [],
       "crossActor": false,
       "noWriter": true
     },
@@ -7017,6 +7085,26 @@
       "readerActors": [
         "person"
       ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "PassMembership.wishesLeft",
+      "writers": [],
+      "store": "PassMembership",
+      "readers": [],
+      "writerActors": [],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "PassMembership.wishesTotal",
+      "writers": [],
+      "store": "PassMembership",
+      "readers": [],
+      "writerActors": [],
+      "readerActors": [],
       "crossActor": false,
       "noWriter": true
     },
@@ -17593,7 +17681,6 @@
         "app-wish-detail"
       ],
       "writerActors": [
-        "business",
         "person"
       ],
       "readerActors": [
@@ -17944,7 +18031,6 @@
         "app-wish-detail"
       ],
       "writerActors": [
-        "business",
         "person"
       ],
       "readerActors": [
@@ -18784,7 +18870,6 @@
         "app-wish-detail"
       ],
       "writerActors": [
-        "business",
         "person"
       ],
       "readerActors": [
@@ -19492,7 +19577,6 @@
       "writerActors": [
         "business",
         "person",
-        "public",
         "server"
       ],
       "readerActors": [
@@ -20075,5 +20159,5 @@
     }
   ],
   "crossActor": 34,
-  "noWriter": 637
+  "noWriter": 646
 }

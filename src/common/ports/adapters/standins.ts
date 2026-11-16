@@ -11,6 +11,7 @@ import { Clock } from "../clock.port";
 import { GoogleAuthorizationRequest, GoogleIdClaims, GoogleIdentityPort } from "../google.port";
 import { decodePart } from "./google.adapter";
 import { ProviderError } from "./http";
+import { PING_STAND_IN, type PortPing } from "../ping";
 
 /*
  * In-process stand-ins for every provider. They never make a network call. Each keeps what it was asked to do,
@@ -23,6 +24,11 @@ export const STANDIN_HOST = "standin.invalid";
 export const STANDIN_PAYSTACK_SECRET = "standin-paystack-secret";
 
 export class StandinPayments extends PaymentsPort {
+  /** FB4: a stand-in calls nothing. */
+  ping(): Promise<PortPing> {
+    return Promise.resolve(PING_STAND_IN);
+  }
+
   readonly started: StartPayment[] = [];
   private readonly payments = new Map<string, { amount: Money; status: PaymentStatus; paidAt: Date | null }>();
 
@@ -67,6 +73,11 @@ export class StandinPayments extends PaymentsPort {
 }
 
 export class StandinEmail extends EmailPort {
+  /** FB4: a stand-in calls nothing. */
+  ping(): Promise<PortPing> {
+    return Promise.resolve(PING_STAND_IN);
+  }
+
   readonly sent: (OutgoingEmail & { id: string })[] = [];
   private seq = 0;
 
@@ -92,6 +103,11 @@ export class StandinEmail extends EmailPort {
 }
 
 export class StandinStorage extends StoragePort {
+  /** FB4: a stand-in calls nothing. */
+  ping(): Promise<PortPing> {
+    return Promise.resolve(PING_STAND_IN);
+  }
+
   private readonly objects = new Map<string, { bytes: Buffer; contentType: string }>();
 
   constructor(
@@ -178,6 +194,11 @@ export class StandinImageSizes extends ImageSizesPort {
 }
 
 export class StandinAiWriting extends AiWritingPort {
+  /** FB4: a stand-in calls nothing. */
+  ping(): Promise<PortPing> {
+    return Promise.resolve(PING_STAND_IN);
+  }
+
   readonly requests: WriteRequest[] = [];
   private readonly queued: string[] = [];
 
@@ -194,6 +215,11 @@ export class StandinAiWriting extends AiWritingPort {
 }
 
 export class StandinScreening extends UploadScreeningPort {
+  /** FB4: a stand-in calls nothing. */
+  ping(): Promise<PortPing> {
+    return Promise.resolve(PING_STAND_IN);
+  }
+
   readonly screened: ScreenInput[] = [];
 
   /** Clean (score 0) unless the key contains "reject" (score 1, label "stand-in"). */

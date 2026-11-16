@@ -6,6 +6,7 @@ import { AppError } from "../../common/errors/app-error";
 import { IdGenerator } from "../../common/ports/ids.port";
 import type { Provider, Settings } from "../../contracts";
 import { type AuditActor, AuditService, requireReason } from "../audit/audit.service";
+import { ProviderStatus } from "./provider-status";
 
 export const SWITCH_KEYS = ["off40", "samplesOff"] as const;
 export type SwitchKey = (typeof SWITCH_KEYS)[number];
@@ -21,9 +22,9 @@ const DEFAULT_PROVIDERS = [
 
 /**
  * Settings (E-163 to E-165, owner only) and the provider list. Staff settings live on the server (R10): one `settings` row per
- * setting, keyed by its name. A provider reads "connected" only when the app runs on real providers AND a real call has
- * succeeded and left its mark (a verified payment, an email the provider accepted, an AI request answered, a file stored);
- * anything else reads "not_connected". No key, secret or address is ever in the answer.
+ * setting, keyed by its name. A provider reads "connected" only when the app runs on real providers AND its port's ping answered ok
+ * just now (FB4: ProviderStatus, cached for a minute); never from rows left by old calls. Anything else reads "not_connected". No key,
+ * secret or address is ever in the answer.
  */
 @Injectable()
 export class SettingsService {
@@ -32,6 +33,7 @@ export class SettingsService {
     private readonly ids: IdGenerator,
     private readonly audit: AuditService,
     @Inject(ENV) private readonly env: Env,
+    private readonly status: ProviderStatus,
   ) {}
 
   private async row(key: string): Promise<{ choice: unknown; on: boolean | null } | null> {
@@ -50,31 +52,15 @@ export class SettingsService {
     return out;
   }
 
-  private async evidence(): Promise<Record<string, boolean>> {
-    const [pay, mail, ai, file] = await Promise.all([
-      this.db.$queryRaw<{ x: number }[]>`SELECT 1 AS x FROM payment WHERE "verifiedAt" IS NOT NULL AND status::text IN ('succeeded', 'refunded', 'partly-refunded') LIMIT 1`,
-      this.db.$queryRaw<{ x: number }[]>`SELECT 1 AS x FROM message_delivery WHERE status::text IN ('sent', 'delivered') AND "providerMessageId" IS NOT NULL LIMIT 1`,
-      this.db.$queryRaw<{ x: number }[]>`SELECT 1 AS x FROM ai_request WHERE status::text = 'done' LIMIT 1`,
-      this.db.$queryRaw<{ x: number }[]>`SELECT 1 AS x FROM stored_file WHERE status::text IN ('uploaded', 'screening', 'ready') LIMIT 1`,
-    ]);
-    return { payments: pay.length > 0, email: mail.length > 0, ai: ai.length > 0, storage: file.length > 0 };
-  }
-
   async providers(): Promise<Provider[]> {
     const rows = await this.db.provider.findMany({ orderBy: { id: "asc" } });
     const base = rows.length ? rows.map((r) => ({ key: r.key ?? "", name: r.name ?? r.key ?? "", who: r.who ?? "" })) : DEFAULT_PROVIDERS;
-    const live = this.env.PROVIDERS === "live";
-    const seen = await this.evidence();
-    return base.map((p) => {
-      const connected = live && seen[p.key] === true;
-      return {
-        key: p.key,
-        name: p.name,
-        who: p.who,
-        state: connected ? "connected" : "not_connected",
-        line: connected ? "A real call to the provider has worked." : live ? "No real call to the provider has worked yet." : "Running on stand-ins, so nothing real has been called.",
-      };
-    });
+    return Promise.all(
+      base.map(async (p) => {
+        const s = await this.status.state(p.key);
+        return { key: p.key, name: p.name, who: p.who, state: s.connected ? "connected" : "not_connected", line: s.line };
+      }),
+    );
   }
 
   /** E-163. */

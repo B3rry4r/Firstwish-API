@@ -26,6 +26,9 @@ class NeverAnswers extends PaymentsPort {
   verifySignature(): boolean {
     return true;
   }
+  ping(): Promise<{ state: "stand-in" }> {
+    return Promise.resolve({ state: "stand-in" });
+  }
 }
 
 describe("withTimeLimit", () => {

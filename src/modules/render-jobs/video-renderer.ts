@@ -1,3 +1,5 @@
+import { PING_STAND_IN, type PortPing, pingError } from "../../common/ports/ping";
+
 export type RenderKind = "status-video" | "keepsake-export";
 
 export interface RenderRequest {
@@ -19,6 +21,8 @@ export interface RenderedFile {
  */
 export abstract class VideoRenderer {
   abstract configured(): boolean;
+  /** FB4: a real renderer makes one cheap read of its service and answers ok or its error; a stand-in answers "stand-in". */
+  abstract ping(): Promise<PortPing>;
   abstract render(input: RenderRequest, signal?: AbortSignal): Promise<RenderedFile>;
 }
 
@@ -26,6 +30,9 @@ export abstract class VideoRenderer {
 export class NoVideoRenderer extends VideoRenderer {
   configured(): boolean {
     return false;
+  }
+  ping(): Promise<PortPing> {
+    return Promise.resolve(pingError("No video renderer is configured."));
   }
   render(): Promise<RenderedFile> {
     return Promise.reject(new Error("no video renderer is configured"));
@@ -35,6 +42,9 @@ export class NoVideoRenderer extends VideoRenderer {
 /** The test stand-in: a small marked file, or a failure on demand. */
 export class StandinVideoRenderer extends VideoRenderer {
   readonly rendered: RenderRequest[] = [];
+  ping(): Promise<PortPing> {
+    return Promise.resolve(PING_STAND_IN);
+  }
   failWith: string | null = null;
   /** A test turns the renderer off to see the 503. */
   on = true;

@@ -56,6 +56,7 @@ import { SupportModule } from "./modules/support/support.module";
 
 // B11: email notices
 import { NoticesModule } from "./modules/notices/notices.module";
+import { StudioModule } from "./modules/studio/studio.module";
 // end B11
 
 // B08
@@ -143,6 +144,9 @@ import { ShowingModule } from "./modules/showing/showing.module";
     // B20
     SupportModule,
     // end B20
+    // B15
+    StudioModule,
+    // end B15
   ],
 })
 export class AppModule {}

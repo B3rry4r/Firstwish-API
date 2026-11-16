@@ -10,6 +10,7 @@ import { ShowingLink } from "../showing/showing-link";
 import { SavedWishesService } from "../saved-wishes/saved-wishes.service";
 import { JobsService } from "../jobs/jobs.service";
 import { UNOPENED_DAYS } from "../wishes/wish-lifecycle.service";
+import { StudioErasure } from "../studio/studio-erasure";
 import { FileJobs } from "../stored-files/file-jobs";
 import type { Db } from "./account-rules";
 
@@ -82,6 +83,7 @@ export class AccountErasureService {
     private readonly fileJobs: FileJobs,
     private readonly showing: ShowingLink,
     private readonly jobs: JobsService,
+    private readonly studio: StudioErasure,
   ) {}
 
   async erase(accountId: string, req: EraseRequest): Promise<void> {
@@ -217,6 +219,8 @@ export class AccountErasureService {
     await tx.savedWish.deleteMany({ where: { accountId } });
     // X10: the account's stored files are removed after this commits: one job row now, the storage calls by the cleanup handler (Y4).
     await this.fileJobs.removeAccountFiles(accountId, tx);
+    // B15: Studio drafts and settings go; a live style stays (T-62).
+    await this.studio.forget(tx, accountId);
     await tx.follow.deleteMany({ where: { accountId } });
     if (handle) await tx.follow.deleteMany({ where: { handle } });
   }

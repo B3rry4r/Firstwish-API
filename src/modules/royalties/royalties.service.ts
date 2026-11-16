@@ -13,7 +13,7 @@ import { revenueAccount } from "../payments/ledger";
 import { EntitlementsService } from "../price-book/entitlements.service";
 import { PriceBookService } from "../price-book/price-book.service";
 import { monthOf, percentOf, splitRoyalty } from "./royalty-math";
-import { monthSource, packSource, type DrawSource } from "./draw-source";
+import { monthSource, packSource, sourceOfRecord, type DrawSource } from "./draw-source";
 import { readStyleOwners } from "./style-owners";
 
 type Tx = Prisma.TransactionClient;
@@ -162,7 +162,8 @@ export class RoyaltiesService {
   /**
    * ZZ5 (T-66): a client wish drawn from a Pro plan month or a pack earns the creator of its Premium style 20% of that wish's share
    * of what the business paid: the plan payment's line divided by the plan's wishes for the month the wish came from (a rolled-over
-   * wish: the month it rolled from), or the pack line divided by the pack's size. The share rounds down, then the 20% rounds down;
+   * wish: the month it rolled from), or the pack line divided by the pack's size. Which payment that is was written on the client-wish
+   * record at the draw (HD2); this reads it. The share rounds down, then the 20% rounds down;
    * a template style gives a quarter of it to the original creator, out of it. Standard, Starter and house styles, and a creator
    * whose account is erased, earn nothing. A creator whose account is banned still accrues; the payout waits (ZZ3).
    * The wish earns once per creator, however often this is called. Runs under the business row lock (taken here again; the draw
@@ -181,7 +182,12 @@ export class RoyaltiesService {
     if (!creator) return [];
     const templateCreator = owners.templateCreatorId ? await this.payable(tx, owners.templateCreatorId) : null;
     const now = this.clock.now();
-    const source: DrawSource | null = d.from === "month" ? await monthSource(tx, d.businessId, now) : await packSource(tx, d.businessId, d.wishId);
+    // HD2: the source was worked out at the draw and kept on the wish's client-wish record: read it. A record that names no payment (a
+    // wish drawn before the record kept one, or one asked for with no record) is worked out here from the business, as it always was.
+    const rec = await tx.clientWish.findUnique({ where: { wishId: d.wishId }, select: { drawPaymentId: true, drawSku: true, drawWishes: true } });
+    const source: DrawSource | null = rec?.drawPaymentId
+      ? await sourceOfRecord(tx, rec)
+      : d.from === "month" ? await monthSource(tx, d.businessId, now) : await packSource(tx, d.businessId, d.wishId);
     if (!source) return [];
 
     const cfg = ((await this.entitlements.row(tx)).creator ?? {}) as Record<string, unknown>;

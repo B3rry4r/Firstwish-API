@@ -14,6 +14,7 @@ import { JobContext, JobResult, JobsService } from "../jobs/jobs.service";
 import { BusinessHandlers } from "../purchases/business-handlers";
 import type { Tx } from "../purchases/grants";
 import { utcToLocal } from "../wishes/local-time";
+import { drawColumnsAt } from "../royalties/draw-source";
 import { RoyaltiesService } from "../royalties/royalties.service";
 import { WishesService } from "../wishes/wishes.service";
 import type { PlanSealCall } from "../wishes/wishes.service";
@@ -151,6 +152,7 @@ export class ClientWishesService implements OnModuleInit {
       include: WITH_WISH,
       data: {
         id, businessId, wishId, createdAt: now, sentAt: now, client: w.client, kind: w.kind, occasion: w.occasion, day: new Date(`${w.day}T00:00:00Z`), from, no,
+        ...(await drawColumnsAt(tx, businessId, from, wishId, now)),
         key: w.key ?? `cw-${no}`, wish: "", shoot: "", hearts: [] as Prisma.InputJsonArray, madeOwn: false,
       },
     });
@@ -176,6 +178,7 @@ export class ClientWishesService implements OnModuleInit {
       data: {
         id: this.ids.id(), businessId, wishId: wish.id, createdAt: now, sentAt: now, client: (wish.name ?? "").trim(), kind: wish.kind, occasion: wish.occasion,
         day: new Date(`${day}T00:00:00Z`), from, key: `wish:${wish.id}`, wish: "", shoot: "", hearts: [] as Prisma.InputJsonArray, madeOwn: false,
+        ...(await drawColumnsAt(tx, businessId, from, wish.id, now)),
       },
     });
     // ZZ5: the style is final at the seal; the creator of a Premium style earns on this draw, in this transaction.
@@ -184,14 +187,16 @@ export class ClientWishesService implements OnModuleInit {
 
   /**
    * GB1: the ordinary seal of a wish made from the sheet or a date (it carries the business and has its client-wish record): the same
-   * accrual as the maker's seal, reading month or pack from the record. A wish with no record, or one that earned already, earns nothing here.
+   * accrual as the maker's seal, reading the source of its draw (month or pack, and the payment) from the record (HD2). A wish with no record, or one that earned already, earns nothing here.
    */
   private async accrueAtSeal(tx: Tx, wish: { id: string; businessId: string | null; styleSlug: string }): Promise<void> {
     if (!wish.businessId) return;
-    const rec = await tx.clientWish.findUnique({ where: { wishId: wish.id }, select: { from: true } });
-    if (rec?.from !== "month" && rec?.from !== "pack") return;
+    const rec = await tx.clientWish.findUnique({ where: { wishId: wish.id }, select: { from: true, drawFrom: true } });
+    // HD2: the record's own draw columns say where it was counted from (the `from` column is blanked when its owner is erased).
+    const from = rec?.drawFrom ?? rec?.from;
+    if (from !== "month" && from !== "pack") return;
     await lockBusinessOwner(tx, wish.businessId);
-    await this.royalties.accrueForDraw(tx, { businessId: wish.businessId, from: rec.from, wishId: wish.id, styleSlug: wish.styleSlug });
+    await this.royalties.accrueForDraw(tx, { businessId: wish.businessId, from, wishId: wish.id, styleSlug: wish.styleSlug });
   }
 
   /** 402 naming what to buy: a wish pack always; a plan too when there is none or it has lapsed. */

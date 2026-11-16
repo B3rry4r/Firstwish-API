@@ -608,7 +608,7 @@ export interface Job {
   createdAt: Instant;
   id: string;
   runAt: Instant;
-  status: "scheduled" | "running" | "succeeded" | "failed" | "dead";
+  status: "scheduled" | "running" | "succeeded" | "failed" | "dead" | "cancelled";
   subjectId: string;
   type: "open-wish" | "rest-wish" | "erase-wish" | "restore-window-end" | "erase-now" | "send-notice" | "send-message" | "make-image-sizes" | "screen-file" | "render-video" | "make-qr-card" | "abandon-payment" | "reconcile-ledger" | "pass-period" | "plan-period" | "creator-period" | "vault-billing" | "royalty-accrual" | "payout-run" | "style-level-review" | "upload-cleanup" | "clean-link-hits" | "check-style-submission";
 }

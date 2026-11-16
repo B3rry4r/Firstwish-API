@@ -1,0 +1,28 @@
+# W1 copy audit (branch w1-site1 930d175 against f3cb452)
+Truth ids are in /home/user/Firstwish-API/.pipeline/product-truths.json. Verdicts: RESTORE / KEEP REMOVED / OWNER.
+
+| Before | After | Page | What backs the BEFORE | Verdict |
+|---|---|---|---|---|
+| Proof: three quotes (Dayo, Ngozi, Emeka) | removed ("Facts about every wish.") | home (cinema/Proof) | nothing found; no review or quote store in the API | KEEP REMOVED (made up; owner may supply real ones) |
+| "1 min" Running time, from voice note to finished wish | removed | home | nothing found; no job measures it | KEEP REMOVED |
+| BUT "About a minute" still stands: "Three acts. About a minute." (home How.tsx:9, how/page.tsx:14 meta, :21, :59) | unchanged | home, how | nothing found | OWNER (same unbacked claim the builder removed elsewhere; gate missed it) |
+| Soon cards: Churches & communities, Schools & alumni | removed (page, Nav dd-soon and mm-soon, footer) and `soon` list | business, Nav, footer | nothing found; R8 bans "coming soon" | KEEP REMOVED |
+| "Most popular" pop on Keepsake | "40% off" tag (only when a was price exists) | pricing, home | nothing found; no sales ranking served | KEEP REMOVED |
+| Concierge: "A single wish is ₦15,000, delivered within three hours" / "then ₦25,000, delivered within 3 hours" | price only, "VAT included" | make, pricing, home, business, FAQ | T-13; API concierge/order-state.ts SINGLE_WISH_HOURS=3 sets dueAt. Price book field conciergeDeliveryHours is 0 | RESTORE (product and API back 3 hours) |
+| FAQ delete: "Ask us to erase it now and it is gone for good within 24 hours" | removed | pricing | T-50; erase-now job in wishes/wish-lifecycle.service.ts. Price book lifecycle eraseWithin is null | RESTORE |
+| "three months ahead by transfer" (Pro plans lead) | removed | business, pricing | T-38 (product-plan L158) | RESTORE (owner's promise, product backs it) |
+| "Join before then and keep that price 12 months" | removed | business, pricing | T-38 | RESTORE |
+| "Add a wish to a package for ₦8,000 to ₦12,000 and keep the difference" (and catalog note ₦7,000 to ₦12,000) | "at your own price" | business, business kind | no line backs the range (two different ranges in the files); not in price book | KEEP REMOVED (hand-typed price; owner may supply) |
+| "Both included on Signature" (QR card / WhatsApp message) | removed | how | T-04: QR card is on Signature; a "ready message to forward" has no route (R11) | RESTORE for the QR card; the message part OWNER |
+| "On Keepsake and above, they can send a reaction straight to you" | "They can send a reaction straight to you" | how | T-03 says reaction is Keepsake; the API has no tier gate on reactions | OWNER (product says Keepsake, API ungated) |
+| "A message the second it opens" | "An email the second it opens" | how | R11, email only | KEEP (change is right) |
+| Ticket list lines: Moment "The midnight seal"; Keepsake "Voice note or song link", "Know when it's opened", "They can send a reaction" | gone from the ticket cards (cards are now built from the server entitlements) | pricing, home | T-03 (all three), T-72 | RESTORE (owner's words dropped, a Keepsake card now lacks what T-03 lists) |
+| "A wish holds 20 photos at most" bullet; "Keepsake takes up to ₦7,500 of extras..." bullet; extras table (prices, Yes/No per ticket) | rows reduced to "Become the next ticket"; ceiling and 20-photo lines not on the page | pricing | T-09, T-30, T-33 | RESTORE (price book maxPhotos is null so nothing feeds it; ceiling is in lifecycle only if set) |
+| Creators: "Twenty percent, every time your style sells" | "You earn each time your style sells" plus a big 20% | creators | T-65 | KEEP (wording ok) |
+| Creators: ₦800 each paid wish, ₦80,000 from a hundred wishes | still shown, now computed from LIST price (20% of ₦4,000) | creators | T-65: ₦800 at list, ₦480 while 40% off runs; API royalties.service.ts ZZ4 pays 20% of the price in force (₦2,400 now, so ₦480) | FIX: figures are wrong until 31 January (₦480 and ₦48,000); contradicted by the API |
+| "Seven to choose from" styles | "<server count> to choose from" | how | styles read | KEEP |
+| "Six kinds of wish" and counts 7/13 occasions per card | server-open kinds, word count | home, make, wishes, Nav, footer | styles read | KEEP |
+| FAQ: "kept in your account for twelve months", "wake it for a month, six months or a year", "bring it back for 30 days" | now from lifecycle fields, dropped when the field is null | pricing | T-49, T-48, T-50 | fine while fields are served (they are, restingHoldMonths 12, restoreWindowDays 30) |
+| Pricing title "40% off until 31 January." and meta with prices | live headline and live prices | pricing | price-book promotion | KEEP |
+| Fallback headline "Pay only when it looks right." | new, typed in file when headline is empty | pricing, home | none | low: new words, owner may accept |
+| Footer/Nav "All six kinds", "All 43 styles" | "All kinds", count from read | Nav, footer | styles read | KEEP |

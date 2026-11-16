@@ -917,3 +917,18 @@ HG1 (give race) Two staff giving one Concierge order: the code is right (overlap
   a business the person was removed from.
 - HU6: a payment the sweep closed as abandoned that the provider later reports paid is fulfilled only if nothing else
   has since paid for the same thing; otherwise it is marked refund due. A plan is never applied twice for one intent.
+
+## HV (16 Nov 2026, the lead, on W1's verdict). The website's words are the owner's.
+- HV1: no bundle deletes or rewrites a sentence of the owner's website on its own judgment. Where the product
+  documents or the API back a sentence, it stays (and a comment names what delivers it: the unbacked-promises gate's
+  MECHANISM marker). Where nothing backs it, it is listed for the owner (build/owner/website-copy-audit-16nov.md) and
+  stays as the owner wrote it until the owner answers, except: made-up customer quotes, "coming soon" cards and a
+  hand-typed price that the price book contradicts come off the page now (the owner's own rules: no faked content,
+  no "coming soon", prices from the server).
+- HV2: a figure worked out from a price uses the price in force (the offer), as the API pays: a creator's share shown
+  on the website is 20% of what the buyer pays today, with the list figure beside it only if the page says which is which.
+- HV3: a public page keeps its last good copy when the API cannot be reached at refresh; it never swaps prices for
+  "could not be loaded" while a good copy exists.
+- For the next API round: the price book serves the Concierge delivery hours (the code uses 3; the field says 0), the
+  erase-now period and the photo limit, so the website's sentences read them; and reactions: the product says Keepsake
+  and above, the API lets any ticket react: OWNER to say which.

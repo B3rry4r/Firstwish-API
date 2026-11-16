@@ -33,3 +33,4 @@
 - B19 E-141 sets no req.principal and words its 401 differently from the guard (goes away with CB4 at the next shared base).
 - B18 reveals-public.service.ts play: a visit count can be inflated with fresh x-reveal-session ids (bounded by 60 reads a minute).
 - B18: 30 wrong passcode tries lock a reveal link for an hour for everyone (same as the receiver link, NN6).
+- Join 5: a refund.processed event that arrives before the refund is recorded as sent is left for the provider's retry; apply it when the refund is claimed too.

@@ -636,3 +636,6 @@ EB1 (B18 verify, medium) Sending a reveal is limited: 5 emails a day to one addr
     business (PROVISIONAL), counted in the database, fail closed. (Wave 6 join.)
 EB2 (B18 verify, medium) A signed file address already handed out lives up to 10 minutes after a link is switched off: accepted
     (the next read is refused; a signed address cannot be recalled). Lows -> sweep.
+FA1 (join 5 verify) An invoice's VAT part and the ledger always agree. Concierge carries VAT (T-12 says one VAT invoice): its
+    payments book vat_payable like Pro's. Creator plans, credit packs and reviews: no document says they carry VAT, so their
+    invoices state the total with no VAT part until the owner says (OWNER QUESTION, a tax matter). (Wave 6 join.)

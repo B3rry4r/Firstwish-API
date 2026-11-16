@@ -46,3 +46,11 @@ until the API is hosted (Phase 8). A fix the live site needs meanwhile branches 
 
 ## Current state
 16 Nov: W0a in (the web gates, a baseline of 526 findings each with its bundle, the live driver: wired 0 of 89, web CI). W0c running. Then W0b, then the screen bundles.
+
+Last deployed commit (web): 71113ca (W0c, 16 Nov; Vercel dpl_35J67ou9fZPYKwwk436NcPVtRPfq; live read at 360: /, /pricing, /app/pro/people
+are no wider than the screen, no native control, no page error).
+
+## The owner's board (owner's words, 16 Nov: "I expect you consistently update the build board ... I need to be seeing everything")
+The board (https://claude.ai/artifact/LBEcB94oHCu8BVW44QQb1k; file scratchpad/tracker/firstwish-build-board.html) shows the
+wiring parts as pills with screens done of total, and the part in flight with its stage (Build, Check, Fix, In). The lead
+republishes it at EVERY change of state: a spawn, a hand-back, a verdict, a patch, a merge; never only at merges.

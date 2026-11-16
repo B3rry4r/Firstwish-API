@@ -748,3 +748,9 @@ HG1 (give race) Two staff giving one Concierge order: the code is right (overlap
 - HH3: the web files the seed is drawn from changed with W0c (8d97b86: lib/account.ts, lib/engine/types.ts, lib/studio.ts).
   The seed is re-drawn from the web head; if what the API serves changes (a word, a label), the seed changes with it and the
   record of hashes (prisma/seed-data/SOURCE.json) is refreshed; a hash is never refreshed without the comparison.
+- HJ1 (16 Nov, the lead, on API-BASE-2's verifier; revises TT5). Refunding one pack takes away THAT pack's own unused
+  places and no other pack's: off the counter comes (the pack's size - the standing draws sourced to it by drawPaymentId),
+  never below 0. The refund records the pack's own standing draws as its `drawn`. TT5 worked from the business's total
+  because draws could not be traced to a pack then; since ZZ5/HF2/API-BASE-2 they can. Seen: pack A full (5 drawn), pack B
+  with 2 drawn; refunding A left the counter at 0, so B's 3 paid places were lost, and A's drawn read 2. Draws made before
+  drawPaymentId existed (none: nothing is live) fall back to TT5. Default (lead), owner may override.

@@ -95,9 +95,10 @@ describe("concierge orders B19", () => {
     expect((await start(a.auth, "not-an-id")).status).toBe(422);
     const ok = await start(a.auth, mine);
     expect([200, 201]).toContain(ok.status);
-    // a list order costs more than the one line the start would charge: refused before any money is asked for
+    // CA1: a list order is charged its own price (count x unit), not one unit
     const list = (await place(a.auth, { kind: "list", count: 2 })).body.id;
-    expect((await start(a.auth, list)).status).toBe(422);
+    const listStart = await start(a.auth, list);
+    expect(listStart.body.payment.amountKobo).toBe(Number(await unit()) * 2);
   });
 
   it("1. payment moves the order to paid once; a single wish is due 3 hours after payment and shows late after that", async () => {

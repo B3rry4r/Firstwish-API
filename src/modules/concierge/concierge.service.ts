@@ -12,6 +12,7 @@ import { AuditActor, AuditService, requireReason } from "../audit/audit.service"
 import { FulfilmentRegistry, type FulfilmentContext } from "../payments/fulfilment.registry";
 import { withFlag } from "../payments/payment-options";
 import { EntitlementsService } from "../price-book/entitlements.service";
+import { NoticesService } from "../notices/notices.service";
 import { PriceBookService } from "../price-book/price-book.service";
 import { discounted } from "../price-book/price-math";
 import { BusinessOf } from "../people/business-of";
@@ -57,23 +58,32 @@ export class ConciergeService implements OnModuleInit {
     private readonly businesses: BusinessOf,
     private readonly activity: ReceiverActivityService,
     private readonly registry: FulfilmentRegistry,
+    private readonly notices: NoticesService,
   ) {}
 
   onModuleInit(): void {
     // the payments start asks first (GG3): only the buyer's own open order, at the price the payment would charge
-    this.registry.onStart(async (accountId, request, _skus, tx) => {
+    this.registry.onStart(async (accountId, request, _skus, tx, quote) => {
       if (request.purpose !== "concierge") return;
       const orderId = request.subjectId ?? "";
+      // CB1: the order's row is locked, so two starts for it cannot both go past the check below
       const rows = UUID.test(orderId)
-        ? await tx.$queryRaw<{ status: string; amountKobo: bigint }[]>`
-            SELECT o.status::text AS status, e."amountKobo" FROM concierge_order o JOIN concierge_order_ext e ON e."orderId" = o.id
-             WHERE o.id = ${orderId}::uuid AND o."accountId" = ${accountId}::uuid`
+        ? await tx.$queryRaw<{ status: string; count: number; amountKobo: bigint; listKobo: bigint }[]>`
+            SELECT o.status::text AS status, o.count, e."amountKobo", e."listKobo" FROM concierge_order o JOIN concierge_order_ext e ON e."orderId" = o.id
+             WHERE o.id = ${orderId}::uuid AND o."accountId" = ${accountId}::uuid FOR UPDATE OF o`
         : [];
       const o = rows[0];
       if (!o) throw AppError.validation({ subjectId: "Name one of your own Concierge orders." });
-      if (o.status !== "brief" && o.status !== "quoted") throw AppError.validation({ subjectId: "This order cannot be paid for now." });
-      const charged = BigInt((await this.book.quote([{ sku: `concierge.${request.id ?? "single"}` }], this.clock.now(), { db: tx })).totalKobo);
-      if (charged !== o.amountKobo) throw AppError.validation({ subjectId: "This order's price cannot be paid yet." });
+      if (o.status !== "brief" && o.status !== "quoted") throw AppError.conflict("order_not_payable", "This order is paid for or finished.");
+      const pending = await tx.payment.findFirst({ where: { purpose: "concierge", subjectId: orderId, accountId, status: "pending" }, orderBy: { id: "desc" }, select: { id: true } });
+      if (pending) return { existingPaymentId: pending.id };
+      // CA1: the charge is the order's own stored price (count x unit, the Pass holder's discount, or the staff quote), never a unit price
+      if (o.amountKobo <= 0n || o.amountKobo > BigInt(Number.MAX_SAFE_INTEGER)) throw AppError.validation({ subjectId: "This order's price cannot be paid yet." });
+      const total = Number(o.amountKobo);
+      const list = Number(o.listKobo);
+      quote.lines = [{ sku: SKU, name: quote.lines[0]?.name ?? "Concierge", qty: o.count, listKobo: Math.floor(list / o.count), unitKobo: Math.floor(total / o.count), totalKobo: total, discounted: total !== list }];
+      quote.totalKobo = total;
+      quote.listTotalKobo = list;
     });
     // after the purchases line records the grant, the order becomes paid in the same payment transaction
     const prior = this.registry.get(SKU);
@@ -189,6 +199,9 @@ export class ConciergeService implements OnModuleInit {
     await this.db.$transaction(async (tx) => {
       const o = await this.lock(tx, id, {});
       if (!canMove(o.status, "quoted")) throw AppError.conflict("order_not_quotable", "Only an order that is not paid yet can be priced.");
+      // CB3 (PROVISIONAL): a quote is at most 100 times the order's list price
+      const list = (await tx.$queryRaw<{ listKobo: bigint }[]>`SELECT "listKobo" FROM concierge_order_ext WHERE "orderId" = ${id}::uuid`)[0]?.listKobo ?? 0n;
+      if (BigInt(body.quoteKobo) > list * 100n) throw AppError.validation({ quoteKobo: "A price is at most 100 times the list price of this order." });
       await tx.conciergeOrder.update({ where: { id }, data: { quoteKobo: BigInt(body.quoteKobo), status: "quoted" } });
       await tx.$executeRaw`UPDATE concierge_order_ext SET "amountKobo" = ${BigInt(body.quoteKobo)} WHERE "orderId" = ${id}::uuid`;
       await this.audit.write(tx, { actor, section: SECTION, action: "concierge.quote", target: { type: "ConciergeOrder", id }, reason, changedFields: ["quoteKobo", "status"] });
@@ -236,10 +249,14 @@ export class ConciergeService implements OnModuleInit {
       if (!canMove(o.status, "delivered")) throw AppError.conflict("order_not_being_made", "Only an order that is with a maker can be delivered.");
       if (wishIds.length > o.count) throw AppError.validation({ wishIds: `This order is for ${o.count} wish${o.count === 1 ? "" : "es"}.` });
       const wishes = await tx.wish.findMany({
-        where: { id: { in: wishIds }, accountId: o.accountId, erasedAt: null, removedAt: null, ...(o.businessId ? { businessId: o.businessId } : {}) },
+        where: { id: { in: wishIds }, accountId: o.accountId, erasedAt: null, removedAt: null, status: { in: ["sealed", "live"] }, ...(o.businessId ? { businessId: o.businessId } : {}) },
         select: { id: true },
       });
-      if (wishes.length !== wishIds.length) throw AppError.validation({ wishIds: "Every wish must be one made for this order's buyer." });
+      if (wishes.length !== wishIds.length) {
+        const drafts = await tx.wish.findMany({ where: { id: { in: wishIds }, accountId: o.accountId, status: "draft" }, select: { id: true } });
+        if (drafts.length) throw AppError.validation({ wishIds: `A draft is not made yet: ${drafts.map((d) => d.id).join(", ")}. Seal it first.` });
+        throw AppError.validation({ wishIds: "Every wish must be one made for this order's buyer." });
+      }
       const now = this.clock.now();
       try {
         for (const w of wishIds) {
@@ -253,6 +270,11 @@ export class ConciergeService implements OnModuleInit {
       }
       await tx.conciergeOrder.update({ where: { id }, data: { status: "delivered" } });
       await tx.$executeRaw`UPDATE concierge_order_ext SET "deliveredAt" = ${now} WHERE "orderId" = ${id}::uuid`;
+      // CA3: one email to the customer, once per order (the key), counting the wishes and naming no receiver
+      await this.notices.send(tx, {
+        template: "concierge-delivered", toAccountId: o.accountId, key: `concierge-delivered:${id}`,
+        data: { count: `${wishIds.length} wish${wishIds.length === 1 ? "" : "es"}` },
+      });
       await this.audit.write(tx, { actor, section: SECTION, action: "concierge.deliver", target: { type: "ConciergeOrder", id }, reason, changedFields: ["status", "wishes"] });
     });
     return this.one({}, id);

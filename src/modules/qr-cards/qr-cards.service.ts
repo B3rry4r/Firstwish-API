@@ -32,7 +32,7 @@ export class QrCardsService {
   ) {}
 
   /** E-141. 404 for a wish that is not the caller's, 402 when a wish does not have the card. The same ask gives the same card. */
-  async make(accountId: string, body: { wishId?: string; wishIds?: string[]; names?: string[] }): Promise<QrCard> {
+  async make(accountId: string, body: { wishId?: string; wishIds?: string[]; names?: string[] }, forOrder = false): Promise<QrCard> {
     const asked = body.wishIds?.length ? body.wishIds : body.wishId ? [body.wishId] : [];
     if (!asked.length) throw AppError.validation({ wishIds: "Name the wish." });
     if (asked.length > MAX_CARD_WISHES) throw AppError.validation({ wishIds: `A card holds up to ${MAX_CARD_WISHES} wishes.` });
@@ -54,7 +54,8 @@ export class QrCardsService {
       if (wishes.length !== wishIds.length) throw AppError.notFound();
       await tx.$queryRaw`SELECT id FROM wish WHERE id = ANY(${key}::uuid[]) ORDER BY id FOR UPDATE`;
       const book = await this.entitlements.row(tx);
-      if (wishes.some((w) => !wishHas(book, w, "qrCard"))) throw new AppError(402, "payment_required", "This wish needs the QR card. Get the card to print it.");
+      // an order's card is part of the order (the maker makes it), so the wish need not carry the card itself
+      if (!forOrder && wishes.some((w) => !wishHas(book, w, "qrCard"))) throw new AppError(402, "payment_required", "This wish needs the QR card. Get the card to print it.");
       const links = await tx.wishLink.findMany({ where: { wishId: { in: wishIds }, active: true }, orderBy: { id: "asc" } });
       const slugOf = new Map<string, string>();
       for (const l of links) if (!slugOf.has(l.wishId)) slugOf.set(l.wishId, l.slug);
@@ -77,6 +78,25 @@ export class QrCardsService {
     if (made.run) await this.render(accountId, made.id, made.entries);
     const row = await this.db.qrCard.findUniqueOrThrow({ where: { id: made.id } });
     return this.wire(row);
+  }
+
+  /**
+   * E-141 for a maker: the wishes must all be wishes delivered for orders given to this maker (the owner: any order), and of one
+   * buyer; any other wish reads as missing (404). The file is that buyer's.
+   */
+  async makeForOrder(who: { staffId: string; all: boolean }, body: { wishId?: string; wishIds?: string[]; names?: string[] }): Promise<QrCard> {
+    const asked = body.wishIds?.length ? body.wishIds : body.wishId ? [body.wishId] : [];
+    if (!asked.length) throw AppError.validation({ wishIds: "Name the wish." });
+    const wishIds = [...new Set(asked.map((w) => String(w).trim().toLowerCase()))];
+    if (wishIds.some((w) => !UUID.test(w))) throw AppError.notFound();
+    const maker = who.all ? Prisma.empty : Prisma.sql`AND o."makerId" = ${who.staffId}::uuid`;
+    const rows = await this.db.$queryRaw<{ wishId: string; accountId: string }[]>`
+      SELECT DISTINCT l."wishId"::text AS "wishId", o."accountId"::text AS "accountId"
+        FROM concierge_order_wish l JOIN concierge_order o ON o.id = l."orderId"
+       WHERE l."wishId" = ANY(${wishIds}::uuid[]) AND o.status = 'delivered' ${maker}`;
+    const accounts = new Set(rows.map((r) => r.accountId));
+    if (new Set(rows.map((r) => r.wishId)).size !== wishIds.length || accounts.size !== 1) throw AppError.notFound();
+    return this.make([...accounts][0], body, true);
   }
 
   /** The file is made and stored outside the database transaction (Y4); the row then says done, or failed with a way to ask again. */

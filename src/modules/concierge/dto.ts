@@ -1,5 +1,5 @@
 import { CursorQueryDto } from "../../common/pagination/cursor";
-import { Transform, Type } from "class-transformer";
+import { Transform } from "class-transformer";
 import { ArrayMaxSize, ArrayMinSize, ArrayUnique, IsArray, IsBoolean, IsIn, IsInt, IsOptional, IsString, Max, MaxLength, Min } from "class-validator";
 import { IsDateOnly, MinTrimmed } from "../../common/validation/decorators";
 
@@ -9,7 +9,6 @@ export class PlaceOrderBodyDto {
   @MinTrimmed(1)
   @MaxLength(2000)
   brief!: string;
-  @Type(() => Number)
   @IsInt()
   @Min(1)
   @Max(1000)

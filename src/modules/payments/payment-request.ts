@@ -38,7 +38,7 @@ export interface ParsedRequest {
  * field, so `amount` or `price` is a 422 before this runs). Default (lead), owner may override: the line is named by the group
  * the purpose is in and the name in `ticket`, `key` or `id`:
  *   ticket -> ticket.<ticket|id>, extra -> extra.<id>, keep -> keep.<id>, pass -> pass.year, pro-plan -> pro.<key>,
- *   wish-pack -> pro.pack x packs, vault-space -> vault.<id> x packs, concierge -> concierge.<id>, creator-plan -> creator.plan,
+ *   wish-pack -> pro.pack x packs, vault-space -> vault.<id> x packs, concierge -> concierge.single (priced from the order), creator-plan -> creator.plan,
  *   signed -> creator.signed, credit-pack -> creator.credit-pack x packs, extra-review -> creator.extra-review.
  */
 export function parseRequest(body: PostPaymentsBody): ParsedRequest {
@@ -77,7 +77,7 @@ export function parseRequest(body: PostPaymentsBody): ParsedRequest {
       line = { sku: `vault.${name("id", body.id)}`, qty: packs };
       break;
     case "concierge":
-      line = { sku: `concierge.${name("id", body.id)}` };
+      line = { sku: "concierge.single" }; // CA1: the start charges the order's own stored price (the concierge start check sets it)
       break;
     case "creator-plan":
       line = { sku: "creator.plan" };

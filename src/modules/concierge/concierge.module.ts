@@ -1,3 +1,4 @@
+import { NoticesModule } from "../notices/notices.module";
 import { Module } from "@nestjs/common";
 import { PaymentsModule } from "../payments/payments.module";
 import { PeopleModule } from "../people/people.module";
@@ -12,7 +13,7 @@ import { ConciergeService } from "./concierge.service";
  * this module wraps it: the order becomes paid in the same transaction that records the purchase.
  */
 @Module({
-  imports: [PaymentsModule, PurchasesModule, PeopleModule, PriceBookModule, PublicWishesModule],
+  imports: [PaymentsModule, PurchasesModule, PeopleModule, PriceBookModule, PublicWishesModule, NoticesModule],
   controllers: [ConciergeOrdersController, ConciergeAdminController],
   providers: [ConciergeService],
   exports: [ConciergeService],

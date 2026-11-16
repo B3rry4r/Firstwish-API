@@ -240,7 +240,8 @@ MODELS = OrderedDict((n, model_columns(n)) for n in RES if n in STORED)
 for _n, _m in JOIN.items():
     MAP[_n] = dict(_m, **{"class": "table"})
     _cols: "OrderedDict[str, dict]" = OrderedDict()
-    _cols["id"] = {"type": "String", "attrs": "@id @db.Uuid", "opt": False, "kind": "id"}
+    if not _m.get("pk"):  # INT-5: a table that already has its own key (schema-map 'pk': the key columns) keeps it
+        _cols["id"] = {"type": "String", "attrs": "@id @db.Uuid", "opt": False, "kind": "id"}
     for _c, _v in _m["columns"].items():
         _t = _v["type"]
         if ENUM_IN.match(_t):
@@ -285,7 +286,7 @@ for a, m in MAP.items():
         cols = MODELS[a]
         assert col in cols and b in MODELS, f"{a}.{col} -> {b}: schema-map refs names a missing column or model"
         cols[col]["type"] = "String"
-        cols[col]["attrs"] = "@db.Uuid"
+        cols[col]["attrs"] = "@id @db.Uuid" if m.get("pk") == [col] else "@db.Uuid"
         cols[col]["kind"] = "fk"
         if (a, b, col) not in RELS:
             RELS.append((a, b, col))
@@ -298,6 +299,8 @@ for n, cols in MODELS.items():
 # ---------------------------------------------------------------- indexes: list filters, cursors, foreign keys
 INDEXES = defaultdict(list)
 for a, b, col in RELS:
+    if MAP[a].get("explicitIndexes"):  # INT-5: a raw-SQL table taken as a model keeps exactly the indexes it has
+        continue
     INDEXES[a].append([col, "id"])
 for n in MODELS:
     for e in (RES[n]["endpoints"] if n in RES else []):
@@ -308,7 +311,7 @@ for n in MODELS:
             if c in MODELS[n] and c != "id" and not any(c in u and len(u) == 1 for u in MAP[n].get("unique", [])):
                 INDEXES[n].append([c, "id"])
     for c in ("status", "state"):
-        if c in MODELS[n] and MODELS[n][c]["kind"] == "enum":
+        if not MAP[n].get("explicitIndexes") and c in MODELS[n] and MODELS[n][c]["kind"] == "enum":
             INDEXES[n].append([c, "id"])
     for ix in MAP[n].get("indexes", []):  # indexes a ruling asks for (schema-map 'indexes')
         assert all(c in MODELS[n] for c in ix), f"{n}: schema-map indexes names a column the model does not have"
@@ -355,12 +358,15 @@ def render_schema() -> str:
             field = stem if stem not in cols else stem + "Ref"
             q = "?" if cols[col]["opt"] else ""
             od = m.get("refOnDelete", {}).get(col, m.get("onDelete"))
-            rule = f", onDelete: {od}, onUpdate: {od}" if od else ""
+            ou = m.get("refOnUpdate", {}).get(col, od)
+            rule = f", onDelete: {od}, onUpdate: {ou}" if od else ""
             out.append(f"  {field} {b}{q} @relation({rel}, fields: [{col}], references: [id]{rule})")
         for a, col in back[n]:
-            one = [col] in MAP[a].get("unique", [])
+            one = [col] in MAP[a].get("unique", []) or MAP[a].get("pk") == [col]
             stem = col[:-2] if col.endswith("Id") else col
             out.append(f'  {camel(a)}By{pascal(stem)} {a}{"?" if one else "[]"} @relation("{a}_{col}")')
+        if m.get("pk") and len(m["pk"]) > 1:
+            out.append(f"  @@id([{', '.join(m['pk'])}])")
         for u in m.get("unique", []):
             out.append(f"  @@unique([{', '.join(u)}])")
         seen = set()
@@ -370,7 +376,7 @@ def render_schema() -> str:
                 continue
             seen.add(k)
             out.append(f"  @@index([{', '.join(ix)}])")
-        out.append(f'  @@map("{snake(n)}")')
+        out.append(f'  @@map("{m.get("map", snake(n))}")')
         out.append("}")
         out.append("")
     for en, vals in ENUMS.items():
@@ -466,7 +472,7 @@ def resource_interface(r: dict) -> str:
 SPECIAL_RESP = {
     "None": "void", "none": "void", "Empty": "Empty", "true": "true", "link string": "string", "string link (clipboard, local)": "string",
     "OrderRow": "ConciergeOrder", "PayoutRow": "Payout", "Member": "StaffAccount", "Staff": "StaffAccount", "ModView": "Report",
-    "PublishView": "PublishedWish", "Listed": "PublishedWish", "Submission": "StyleSubmission", "ThreadDetail": "SupportThread",
+    "PublishView": "PublishedWish", "Listed": "PublishedWish", "Submission": "StyleSubmission", "ThreadDetail": "ThreadDetail",
     "Delivery": "MessageDelivery", "StyleRow": "Style", "Brand": 'Business["brand"]', "Payment (new state)": "Payment", "VideoOrder": "RenderJob",
     "SubmittedStyle": "SubmittedStyle", "StyleChange": "StyleChange", "SignInCode": "SignInCode", "InvoiceFile": "InvoiceFile",
     "HandleCheck {free:boolean, problem?:string}": "HandleCheck", "FollowResponse {handle,following:false}": "FollowResponse",
@@ -479,6 +485,7 @@ SPECIAL_RESP = {
     "AuthResult": "AuthResult", "StaffAuthResult": "StaffAuthResult", "GoogleStart": "GoogleStart",
     "TicketQuote": "TicketQuote", "PriceBook": "PriceBook",
     "WishSaved": "WishSaved", "PeopleImportResult": "PeopleImportResult", "ReactionResult": "ReactionResult", "UnlockResult": "UnlockResult",
+    "TakeDownResult": "TakeDownResult", "RoyaltyEarnings": "RoyaltyEarnings",
 }
 
 SHARED_TYPES = '''/** A UUIDv7 id issued by the server. */
@@ -673,6 +680,26 @@ export interface PeopleImportResult {
 export type SignInCode = Record<string, unknown>;
 /** E-202 (DEC-65): a read view of a live StudioStyle with its submission. */
 export type SubmittedStyle = StudioStyle & { submission?: StyleSubmission | null };
+/** A support thread with its messages: what E-207, E-208, E-209 and the contact page answer (YY3). */
+export type ThreadDetail = SupportThread & { messages: SupportMessage[] };
+/** E-133 without a code: the code was mailed, nothing is filed yet (QQ1). */
+export interface TakeDownSent {
+  sent: true;
+  expiresAt: Instant;
+}
+export type TakeDownResult = Report | TakeDownSent;
+/** What the creator's earnings list carries beside the page (WW7). */
+export interface RoyaltySummary {
+  thisMonthKobo: Kobo;
+  waitingKobo: Kobo;
+  sendingKobo: Kobo;
+  paidKobo: Kobo;
+  byStyle: { styleSlug: string; amountKobo: Kobo }[];
+}
+/** E-154: the creator's accruals and reversals, newest first, with the summary (WW7). */
+export interface RoyaltyEarnings extends PaginatedList<RoyaltyAccrual> {
+  summary: RoyaltySummary;
+}
 '''
 
 

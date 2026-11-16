@@ -49,7 +49,10 @@ const resMissing = registry.resources.filter((r) => !new RegExp(`export interfac
 report(`every registry resource (${registry.resources.length}) has a shape`, resMissing);
 
 // 3. schema-map against schema.prisma
-const schemaMap = JSON.parse(read(".pipeline/schema-map.json")).resources;
+const schemaMapFile = JSON.parse(read(".pipeline/schema-map.json"));
+const schemaMap = schemaMapFile.resources;
+// tables a ruling adds that are no registry resource (schema-map joinTables) carry their own erase rules (INT-5: owned ones are checked too)
+const joinTables = schemaMapFile.joinTables ?? {};
 const schema = read("prisma/schema.prisma");
 const models = new Map();
 for (const m of schema.matchAll(/^model (\w+) \{([\s\S]*?)^\}/gm)) {
@@ -102,7 +105,7 @@ for (const m of schema.matchAll(/^model (\w+) \{([\s\S]*?)^\}/gm)) {
   const name = m[1];
   const owned = name === "Account" || [...m[2].matchAll(/^\s+\w+\s+(\w+)\??\s+@relation\("[^"]+", fields: \[/gm)].some((x) => OWNERS.has(x[1]));
   if (!owned) continue;
-  const rules = schemaMap[name]?.erase ?? {};
+  const rules = schemaMap[name]?.erase ?? joinTables[name]?.erase ?? {};
   for (const [col, type] of models.get(name)) {
     if (!/^(String|Json)(\[\])?\??$/.test(type) || col === "id" || col.endsWith("Id")) continue;
     const r = rules[col];

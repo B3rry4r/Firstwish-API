@@ -2151,7 +2151,7 @@
       "decision": "DEC-195",
       "response": {
         "entity": "RoyaltyEarnings",
-        "cardinality": "single",
+        "cardinality": "page",
         "note": "{items: RoyaltyAccrual[], nextCursor, summary} (DEC-195)"
       }
     },
@@ -2638,12 +2638,6 @@
       "name": "variant",
       "decision": "DEC-163",
       "why": "X20: SignedUrl is {url, expiresAt}"
-    },
-    {
-      "resource": "Wish",
-      "name": "adds",
-      "decision": "DEC-194",
-      "why": "VV3: legacy whole-wish field; the words are in content"
     },
     {
       "resource": "Wish",

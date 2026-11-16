@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "frozenAt": "2026-11-16T02:26:48Z",
+  "frozenAt": "2026-11-16T02:33:08Z",
   "framework": "nestjs",
   "generatedBy": "tools/pipeline/reconcile.py",
   "resources": [
@@ -17632,7 +17632,7 @@
           "body": [],
           "response": {
             "entity": "RoyaltyEarnings",
-            "cardinality": "single",
+            "cardinality": "page",
             "note": "{items: RoyaltyAccrual[], nextCursor, summary} (DEC-195)"
           },
           "sources": [
@@ -25274,6 +25274,18 @@
           "nullable": true,
           "provenance": [
             "DEC-186"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "adds",
+          "type": "array",
+          "classes": [
+            "array"
+          ],
+          "nullable": false,
+          "provenance": [
+            "maker-ticket"
           ],
           "supersedes": []
         },

@@ -1,17 +1,1 @@
 # Raw-SQL tables with no Prisma model yet. Format: table | migration that made it | plan | owner. Lead-owned; the list only shrinks.
-invoice_counter | 20261118170000_business_invoices | model at the next shared base (INT-5) | owner: lead
-invoice_link | 20261118170000_business_invoices | model at the next shared base (INT-5) | owner: lead
-moderation_decision | 20261118130000_showing_moderation | model at the next shared base (INT-5) | owner: lead
-report_hit | 20261118130000_showing_moderation | model at the next shared base (INT-5) | owner: lead
-take_down_code | 20261118130000_showing_moderation | model at the next shared base (INT-5) | owner: lead
-concierge_order_ext | 20261119190000_concierge_cards_video | model at the next shared base (INT-5) | owner: lead
-concierge_order_wish | 20261119190000_concierge_cards_video | model at the next shared base (INT-5) | owner: lead
-email_suppression | 20261119200000_support_email | model at the next shared base (INT-5) | owner: lead
-support_intake_count | 20261119200000_support_email | model at the next shared base (INT-5) | owner: lead
-payout_detail | 20261119160000_creators_money | model at the next shared base (INT-5) | owner: lead
-royalty_reversal | 20261119160000_creators_money | model at the next shared base (INT-5) | owner: lead
-style_submission_snapshot | 20261119150000_studio | model at the next shared base (INT-5) | owner: lead
-reveal_access | 20261119180000_vault_reveal | model at the next shared base (INT-5) | owner: lead
-reveal_play | 20261119180000_vault_reveal | model at the next shared base (INT-5) | owner: lead
-reveal_send | 20261119180000_vault_reveal | model at the next shared base (INT-5) | owner: lead
-vault_peak | 20261119180000_vault_reveal | model at the next shared base (INT-5) | owner: lead

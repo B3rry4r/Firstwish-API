@@ -450,6 +450,28 @@
      "rule": "keep",
      "why": "the shoot it came from"
     }
+   },
+   "columns": {
+    "wishId": {
+     "type": "String",
+     "attrs": "@db.Uuid",
+     "opt": true,
+     "why": "ZB1: the wish a client wish made without a reveal plays as (an ordinary wish carrying the business); null for a client wish that plays at its reveal link"
+    }
+   },
+   "refs": {
+    "wishId": "Wish"
+   },
+   "refOnDelete": {
+    "wishId": "SetNull"
+   },
+   "unique": [
+    [
+     "wishId"
+    ]
+   ],
+   "refOnUpdate": {
+    "wishId": "Cascade"
    }
   },
   "ConciergeOrder": {
@@ -459,7 +481,11 @@
     "maker": "makerId"
    },
    "omit": {
-    "to": "date-only query window of 'Due this week', not a field of the order (DEC-128)"
+    "to": "date-only query window of 'Due this week', not a field of the order (DEC-128)",
+    "paidAt": "read from ConciergeOrderExt and ConciergeOrderWish (CA2)",
+    "dueAt": "read from ConciergeOrderExt and ConciergeOrderWish (CA2)",
+    "paymentId": "read from ConciergeOrderExt and ConciergeOrderWish (CA2)",
+    "wishIds": "read from ConciergeOrderExt and ConciergeOrderWish (CA2)"
    },
    "refs": {
     "makerId": "StaffAccount",
@@ -475,6 +501,10 @@
      "rule": "blank",
      "why": "the person's brief"
     }
+   },
+   "skipEdges": {
+    "Payment": "CA2: the payment is on ConciergeOrderExt",
+    "Wish": "CA2: the wishes are on ConciergeOrderWish"
    }
   },
   "Creator": {
@@ -497,7 +527,8 @@
     }
    },
    "omit": {
-    "handle": "Q7: one handle namespace; the handle lives on Account and the creator profile reads it"
+    "handle": "Q7: one handle namespace; the handle lives on Account and the creator profile reads it",
+    "bank": "joined from BankAccount on read, the number masked (WW7)"
    },
    "erase": {
     "name": {
@@ -846,6 +877,11 @@
     [
      "idempotencyKey"
     ]
+   ],
+   "indexes": [
+    [
+     "providerMessageId"
+    ]
    ]
   },
   "MessageTemplate": {
@@ -1137,6 +1173,14 @@
      "rule": "keep",
      "why": "money record"
     }
+   },
+   "columns": {
+    "paidByHandAt": {
+     "type": "DateTime",
+     "attrs": "@db.Timestamptz(3)",
+     "opt": true,
+     "why": "ZZ8: the time finance or the owner marked a failed payout paid by hand (money that went out another way); null otherwise"
+    }
    }
   },
   "Person": {
@@ -1363,6 +1407,20 @@
    "refs": {
     "requestedBy": "StaffAccount",
     "approvedBy": "StaffAccount"
+   },
+   "columns": {
+    "note": {
+     "type": "String",
+     "attrs": "",
+     "opt": true,
+     "why": "PP3: the staff note of a refund (a short line beside the reason); kept with the money record"
+    }
+   },
+   "erase": {
+    "note": {
+     "rule": "keep",
+     "why": "a staff note on a money record, names no person"
+    }
    }
   },
   "RenderJob": {
@@ -1439,7 +1497,8 @@
    "unique": [
     [
      "paymentId",
-     "creatorId"
+     "creatorId",
+     "wishId"
     ]
    ],
    "erase": {
@@ -1451,6 +1510,23 @@
      "rule": "keep",
      "why": "a month key"
     }
+   },
+   "columns": {
+    "wishId": {
+     "type": "String",
+     "attrs": "@db.Uuid",
+     "opt": true,
+     "why": "ZZ5: the client wish a Pro plan or pack draw earned this accrual for; null for an accrual of a paid wish"
+    }
+   },
+   "refs": {
+    "wishId": "Wish"
+   },
+   "refOnDelete": {
+    "wishId": "Restrict"
+   },
+   "refOnUpdate": {
+    "wishId": "Cascade"
    }
   },
   "SavedReply": {
@@ -1728,6 +1804,14 @@
      "rule": "keep",
      "why": "the creator's style work; a live style stays in the catalogue (DEC-69)"
     }
+   },
+   "columns": {
+    "version": {
+     "type": "Int",
+     "attrs": "@default(0)",
+     "opt": false,
+     "why": "XX4: a counter on the style's own row; a save checks and bumps it so two editors cannot both overwrite"
+    }
    }
   },
   "Style": {
@@ -1820,7 +1904,22 @@
     "subject": {
      "rule": "blank",
      "why": "what the person wrote"
+    },
+    "name": {
+     "rule": "blank",
+     "why": "personal"
     }
+   },
+   "columns": {
+    "name": {
+     "type": "String",
+     "attrs": "",
+     "opt": true,
+     "why": "YY3: the name a contact-page thread shows (the contact's own name, or the start of the address); null for a thread opened signed in, whose name is the account's"
+    }
+   },
+   "omit": {
+    "email": "the contact is kept in `contact`; the contact route's `email` is that value (YY3)"
    }
   },
   "Template": {
@@ -1970,7 +2069,8 @@
     "from": "the sender's name, kept in content",
     "files": "upload input of E-226, kept as StoredFile rows",
     "openable": "worked out on read: sealed, the open time reached, and not yet opened or still inside its term (EE7)",
-    "activity": "worked out on read from opens, reactions, favourites and shares (LL5, ReceiverActivityService)"
+    "activity": "worked out on read from opens, reactions, favourites and shares (LL5, ReceiverActivityService)",
+    "hasPasscode": "worked out on read: passcodeHash is not null (VV3)"
    },
    "unique": [
     [
@@ -2585,6 +2685,905 @@
      "kind"
     ]
    ]
+  },
+  "InvoiceCounter": {
+   "reason": "OO4 (B17): the invoice number counter, one row (id 1), taken with a row lock inside the settle transaction so numbers run in order with no gaps; a config table, no contract shape",
+   "columns": {
+    "id": {
+     "type": "Int",
+     "attrs": "@id",
+     "opt": false
+    },
+    "last": {
+     "type": "Int",
+     "attrs": "",
+     "opt": false
+    }
+   },
+   "explicitIndexes": true,
+   "pk": [
+    "id"
+   ]
+  },
+  "InvoiceLink": {
+   "reason": "OO4 (B17): what ties an invoice to the payment it came from, its period and whether a refund voided it; one row per invoice",
+   "columns": {
+    "invoiceId": {
+     "type": "String",
+     "attrs": "@id @db.Uuid",
+     "opt": false
+    },
+    "paymentId": {
+     "type": "String",
+     "attrs": "@db.Uuid",
+     "opt": false
+    },
+    "periodStart": {
+     "type": "DateTime",
+     "attrs": "@db.Timestamptz(3)",
+     "opt": true
+    },
+    "periodEnd": {
+     "type": "DateTime",
+     "attrs": "@db.Timestamptz(3)",
+     "opt": true
+    },
+    "voidedAt": {
+     "type": "DateTime",
+     "attrs": "@db.Timestamptz(3)",
+     "opt": true
+    }
+   },
+   "explicitIndexes": true,
+   "pk": [
+    "invoiceId"
+   ],
+   "refs": {
+    "invoiceId": "Invoice",
+    "paymentId": "Payment"
+   },
+   "refOnDelete": {
+    "invoiceId": "Restrict",
+    "paymentId": "Restrict"
+   },
+   "refOnUpdate": {
+    "invoiceId": "Cascade",
+    "paymentId": "Cascade"
+   },
+   "unique": [
+    [
+     "paymentId"
+    ]
+   ]
+  },
+  "ModerationDecision": {
+   "reason": "QQ6 (B13): the staff reason for one decision (a publish request or a report), read back by the owner (decline) and the staff queues; the subject is one of two tables, so no foreign key",
+   "columns": {
+    "subject": {
+     "type": "String",
+     "attrs": "",
+     "opt": false
+    },
+    "subjectId": {
+     "type": "String",
+     "attrs": "@db.Uuid",
+     "opt": false
+    },
+    "reason": {
+     "type": "String",
+     "attrs": "",
+     "opt": false
+    },
+    "decidedAt": {
+     "type": "DateTime",
+     "attrs": "@db.Timestamptz(3)",
+     "opt": false
+    }
+   },
+   "explicitIndexes": true,
+   "pk": [
+    "subject",
+    "subjectId"
+   ],
+   "erase": {
+    "subject": {
+     "rule": "keep",
+     "why": "the kind of record decided (publish_request or report), no person"
+    },
+    "reason": {
+     "rule": "keep",
+     "why": "the staff reason for a decision on a record; it names no account and is read by the owner of a declined request while the request exists"
+    }
+   }
+  },
+  "ReportHit": {
+   "reason": "QQ6 (B13): the report limit per address, counted in the database: a key (an HMAC of the address, never the address) and the time",
+   "columns": {
+    "id": {
+     "type": "String",
+     "attrs": "@id @db.Uuid",
+     "opt": false
+    },
+    "bucket": {
+     "type": "String",
+     "attrs": "",
+     "opt": false
+    },
+    "key": {
+     "type": "String",
+     "attrs": "",
+     "opt": false
+    },
+    "at": {
+     "type": "DateTime",
+     "attrs": "@db.Timestamptz(3)",
+     "opt": false
+    }
+   },
+   "explicitIndexes": true,
+   "indexes": [
+    [
+     "bucket",
+     "key",
+     "at"
+    ]
+   ],
+   "erase": {
+    "bucket": {
+     "rule": "keep",
+     "why": "which limit, no person"
+    },
+    "key": {
+     "rule": "keep",
+     "why": "a keyed hash of the address, never the address: nothing to blank"
+    }
+   }
+  },
+  "TakeDownCode": {
+   "reason": "QQ6 (B13): 'This is me, take it down': the code mailed to the address before a report counts; short lived, removed once used or expired",
+   "columns": {
+    "id": {
+     "type": "String",
+     "attrs": "@id @db.Uuid",
+     "opt": false
+    },
+    "wishId": {
+     "type": "String",
+     "attrs": "@db.Uuid",
+     "opt": false
+    },
+    "email": {
+     "type": "String",
+     "attrs": "",
+     "opt": false
+    },
+    "codeHash": {
+     "type": "String",
+     "attrs": "",
+     "opt": false
+    },
+    "tries": {
+     "type": "Int",
+     "attrs": "@default(0)",
+     "opt": false
+    },
+    "expiresAt": {
+     "type": "DateTime",
+     "attrs": "@db.Timestamptz(3)",
+     "opt": false
+    },
+    "usedAt": {
+     "type": "DateTime",
+     "attrs": "@db.Timestamptz(3)",
+     "opt": true
+    },
+    "createdAt": {
+     "type": "DateTime",
+     "attrs": "@db.Timestamptz(3)",
+     "opt": false
+    }
+   },
+   "explicitIndexes": true,
+   "refs": {
+    "wishId": "Wish"
+   },
+   "refOnDelete": {
+    "wishId": "Cascade"
+   },
+   "refOnUpdate": {
+    "wishId": "Cascade"
+   },
+   "indexes": [
+    [
+     "wishId",
+     "email"
+    ]
+   ],
+   "erase": {
+    "email": {
+     "rule": "keep",
+     "why": "the reporter's address, not an account's; removed by the take-down flow once the code is used or expired"
+    },
+    "codeHash": {
+     "rule": "keep",
+     "why": "a hash of a short-lived code, no person"
+    }
+   }
+  },
+  "ConciergeOrderExt": {
+   "reason": "CA2 (B19): a Concierge order's own price (kobo, fixed when it is placed), its payment and its times",
+   "columns": {
+    "orderId": {
+     "type": "String",
+     "attrs": "@id @db.Uuid",
+     "opt": false
+    },
+    "amountKobo": {
+     "type": "BigInt",
+     "attrs": "",
+     "opt": false
+    },
+    "listKobo": {
+     "type": "BigInt",
+     "attrs": "",
+     "opt": false
+    },
+    "paymentId": {
+     "type": "String",
+     "attrs": "@db.Uuid",
+     "opt": true
+    },
+    "paidAt": {
+     "type": "DateTime",
+     "attrs": "@db.Timestamptz(3)",
+     "opt": true
+    },
+    "dueAt": {
+     "type": "DateTime",
+     "attrs": "@db.Timestamptz(3)",
+     "opt": true
+    },
+    "givenAt": {
+     "type": "DateTime",
+     "attrs": "@db.Timestamptz(3)",
+     "opt": true
+    },
+    "deliveredAt": {
+     "type": "DateTime",
+     "attrs": "@db.Timestamptz(3)",
+     "opt": true
+    },
+    "cancelledAt": {
+     "type": "DateTime",
+     "attrs": "@db.Timestamptz(3)",
+     "opt": true
+    },
+    "createdAt": {
+     "type": "DateTime",
+     "attrs": "@default(now()) @db.Timestamptz(3)",
+     "opt": false
+    }
+   },
+   "explicitIndexes": true,
+   "pk": [
+    "orderId"
+   ],
+   "refs": {
+    "orderId": "ConciergeOrder",
+    "paymentId": "Payment"
+   },
+   "refOnDelete": {
+    "orderId": "Cascade",
+    "paymentId": "Restrict"
+   },
+   "refOnUpdate": {
+    "orderId": "Cascade",
+    "paymentId": "Cascade"
+   },
+   "unique": [
+    [
+     "paymentId"
+    ]
+   ],
+   "indexes": [
+    [
+     "dueAt"
+    ]
+   ]
+  },
+  "ConciergeOrderWish": {
+   "reason": "CA2 (B19): the wishes a maker delivered for an order (a wish is delivered under one order only)",
+   "columns": {
+    "orderId": {
+     "type": "String",
+     "attrs": "@db.Uuid",
+     "opt": false
+    },
+    "wishId": {
+     "type": "String",
+     "attrs": "@db.Uuid",
+     "opt": false
+    },
+    "deliveredAt": {
+     "type": "DateTime",
+     "attrs": "@default(now()) @db.Timestamptz(3)",
+     "opt": false
+    }
+   },
+   "explicitIndexes": true,
+   "pk": [
+    "orderId",
+    "wishId"
+   ],
+   "refs": {
+    "orderId": "ConciergeOrder",
+    "wishId": "Wish"
+   },
+   "refOnDelete": {
+    "orderId": "Cascade",
+    "wishId": "Restrict"
+   },
+   "refOnUpdate": {
+    "orderId": "Cascade",
+    "wishId": "Cascade"
+   },
+   "unique": [
+    [
+     "wishId"
+    ]
+   ],
+   "indexes": [
+    [
+     "wishId"
+    ]
+   ]
+  },
+  "EmailSuppression": {
+   "reason": "YY3 (B20): an address that complained: no more email goes to it; keyed by the address's keyed hash",
+   "columns": {
+    "hash": {
+     "type": "String",
+     "attrs": "@id",
+     "opt": false
+    },
+    "reason": {
+     "type": "String",
+     "attrs": "",
+     "opt": false
+    },
+    "createdAt": {
+     "type": "DateTime",
+     "attrs": "@default(now()) @db.Timestamptz(3)",
+     "opt": false
+    }
+   },
+   "explicitIndexes": true,
+   "pk": [
+    "hash"
+   ],
+   "erase": {
+    "hash": {
+     "rule": "keep",
+     "why": "a keyed hash of the address (HMAC), never the address: nothing to blank"
+    },
+    "reason": {
+     "rule": "keep",
+     "why": "a reason code, no person"
+    }
+   }
+  },
+  "SupportIntakeCount": {
+   "reason": "YY3 (B20): contact-page and inbound-mail intake: one row per (kind, key, UTC day), raised by one conditional statement so two requests at once cannot both pass the last place",
+   "columns": {
+    "kind": {
+     "type": "String",
+     "attrs": "",
+     "opt": false
+    },
+    "key": {
+     "type": "String",
+     "attrs": "",
+     "opt": false
+    },
+    "day": {
+     "type": "DateTime",
+     "attrs": "@db.Date",
+     "opt": false
+    },
+    "count": {
+     "type": "Int",
+     "attrs": "",
+     "opt": false
+    }
+   },
+   "explicitIndexes": true,
+   "pk": [
+    "kind",
+    "key",
+    "day"
+   ],
+   "indexes": [
+    [
+     "day"
+    ]
+   ],
+   "erase": {
+    "kind": {
+     "rule": "keep",
+     "why": "network or email, no person"
+    },
+    "key": {
+     "rule": "keep",
+     "why": "a keyed hash of the address or network, never the address: nothing to blank"
+    }
+   }
+  },
+  "PayoutDetail": {
+   "reason": "WW4 (B16): what the payout table has no column for: when it was handed to the provider and when it was paid, why it failed, the staff note of a manual paid, and the short lease that keeps two runs from sending one payout at once",
+   "columns": {
+    "payoutId": {
+     "type": "String",
+     "attrs": "@id @db.Uuid",
+     "opt": false
+    },
+    "sentAt": {
+     "type": "DateTime",
+     "attrs": "@db.Timestamptz(3)",
+     "opt": true
+    },
+    "paidAt": {
+     "type": "DateTime",
+     "attrs": "@db.Timestamptz(3)",
+     "opt": true
+    },
+    "failedAt": {
+     "type": "DateTime",
+     "attrs": "@db.Timestamptz(3)",
+     "opt": true
+    },
+    "failureReason": {
+     "type": "String",
+     "attrs": "",
+     "opt": true
+    },
+    "note": {
+     "type": "String",
+     "attrs": "",
+     "opt": true
+    },
+    "sendingUntil": {
+     "type": "DateTime",
+     "attrs": "@db.Timestamptz(3)",
+     "opt": true
+    }
+   },
+   "explicitIndexes": true,
+   "pk": [
+    "payoutId"
+   ],
+   "refs": {
+    "payoutId": "Payout"
+   },
+   "refOnDelete": {
+    "payoutId": "Restrict"
+   },
+   "refOnUpdate": {
+    "payoutId": "Cascade"
+   },
+   "erase": {
+    "failureReason": {
+     "rule": "keep",
+     "why": "the provider's reason, no person"
+    },
+    "note": {
+     "rule": "keep",
+     "why": "a staff note on a money record, names no person"
+    }
+   }
+  },
+  "RoyaltyReversal": {
+   "reason": "WW4 (B16): the negative row of a refunded payment's royalty: one row per accrual, never a delete of the accrual",
+   "columns": {
+    "id": {
+     "type": "String",
+     "attrs": "@id @db.Uuid",
+     "opt": false
+    },
+    "accrualId": {
+     "type": "String",
+     "attrs": "@db.Uuid",
+     "opt": false
+    },
+    "creatorId": {
+     "type": "String",
+     "attrs": "@db.Uuid",
+     "opt": false
+    },
+    "paymentId": {
+     "type": "String",
+     "attrs": "@db.Uuid",
+     "opt": false
+    },
+    "amountKobo": {
+     "type": "BigInt",
+     "attrs": "",
+     "opt": false
+    },
+    "month": {
+     "type": "String",
+     "attrs": "",
+     "opt": false
+    },
+    "createdAt": {
+     "type": "DateTime",
+     "attrs": "@db.Timestamptz(3)",
+     "opt": false
+    }
+   },
+   "explicitIndexes": true,
+   "refs": {
+    "accrualId": "RoyaltyAccrual",
+    "creatorId": "Creator",
+    "paymentId": "Payment"
+   },
+   "refOnDelete": {
+    "accrualId": "Restrict",
+    "creatorId": "Restrict",
+    "paymentId": "Restrict"
+   },
+   "refOnUpdate": {
+    "accrualId": "Cascade",
+    "creatorId": "Cascade",
+    "paymentId": "Cascade"
+   },
+   "unique": [
+    [
+     "accrualId"
+    ]
+   ],
+   "indexes": [
+    [
+     "creatorId",
+     "id"
+    ],
+    [
+     "paymentId"
+    ]
+   ],
+   "erase": {
+    "month": {
+     "rule": "keep",
+     "why": "a month key; money record"
+    }
+   }
+  },
+  "StyleSubmissionSnapshot": {
+   "reason": "XX4 (B15): the frozen draft of each submission (T-63: the checks and the reviewer read the snapshot, never the live draft); accountId is a plain id (no relation, so the table is not an owned table of the erase gate)",
+   "columns": {
+    "id": {
+     "type": "String",
+     "attrs": "@id @db.Uuid",
+     "opt": false
+    },
+    "submissionId": {
+     "type": "String",
+     "attrs": "@db.Uuid",
+     "opt": false
+    },
+    "accountId": {
+     "type": "String",
+     "attrs": "@db.Uuid",
+     "opt": false
+    },
+    "document": {
+     "type": "Json",
+     "attrs": "",
+     "opt": false
+    },
+    "used": {
+     "type": "String",
+     "attrs": "",
+     "opt": false
+    },
+    "createdAt": {
+     "type": "DateTime",
+     "attrs": "@default(now()) @db.Timestamptz(3)",
+     "opt": false
+    }
+   },
+   "explicitIndexes": true,
+   "refs": {
+    "submissionId": "StyleSubmission"
+   },
+   "refOnDelete": {
+    "submissionId": "Cascade"
+   },
+   "refOnUpdate": {
+    "submissionId": "Cascade"
+   },
+   "unique": [
+    [
+     "submissionId"
+    ]
+   ],
+   "indexes": [
+    [
+     "accountId"
+    ]
+   ],
+   "erase": {
+    "document": {
+     "rule": "keep",
+     "why": "the creator's own style work: deleted with a submission that never went live, kept for one that did (T-62), by StudioErasure"
+    },
+    "used": {
+     "rule": "keep",
+     "why": "which review was spent (plan or extra), not personal"
+    }
+   }
+  },
+  "RevealAccess": {
+   "reason": "EA1 (B18): what a reveal link holds beyond reveal_link: its code, passcode, wrong tries, end, switched off, the chosen files; the one-per-client-wish rule is a partial unique index kept in SQL",
+   "columns": {
+    "linkId": {
+     "type": "String",
+     "attrs": "@id @db.Uuid",
+     "opt": false
+    },
+    "businessId": {
+     "type": "String",
+     "attrs": "@db.Uuid",
+     "opt": false
+    },
+    "shootId": {
+     "type": "String",
+     "attrs": "@db.Uuid",
+     "opt": true
+    },
+    "wishId": {
+     "type": "String",
+     "attrs": "@db.Uuid",
+     "opt": true
+    },
+    "setName": {
+     "type": "String",
+     "attrs": "@map(\"set\")",
+     "opt": false
+    },
+    "code": {
+     "type": "String",
+     "attrs": "",
+     "opt": false
+    },
+    "fileIds": {
+     "type": "Json",
+     "attrs": "@default(\"[]\")",
+     "opt": false
+    },
+    "passcodeHash": {
+     "type": "String",
+     "attrs": "",
+     "opt": true
+    },
+    "tries": {
+     "type": "Int",
+     "attrs": "@default(0)",
+     "opt": false
+    },
+    "lockedUntil": {
+     "type": "DateTime",
+     "attrs": "@db.Timestamptz(3)",
+     "opt": true
+    },
+    "endsAt": {
+     "type": "DateTime",
+     "attrs": "@db.Timestamptz(3)",
+     "opt": true
+    },
+    "offAt": {
+     "type": "DateTime",
+     "attrs": "@db.Timestamptz(3)",
+     "opt": true
+    },
+    "createdAt": {
+     "type": "DateTime",
+     "attrs": "@default(now()) @db.Timestamptz(3)",
+     "opt": false
+    }
+   },
+   "explicitIndexes": true,
+   "pk": [
+    "linkId"
+   ],
+   "refs": {
+    "linkId": "RevealLink",
+    "businessId": "Business",
+    "shootId": "Shoot",
+    "wishId": "ClientWish"
+   },
+   "refOnDelete": {
+    "linkId": "Cascade",
+    "businessId": "Cascade",
+    "shootId": "SetNull",
+    "wishId": "SetNull"
+   },
+   "refOnUpdate": {
+    "linkId": "Cascade",
+    "businessId": "Cascade",
+    "shootId": "Cascade",
+    "wishId": "Cascade"
+   },
+   "unique": [
+    [
+     "code"
+    ]
+   ],
+   "indexes": [
+    [
+     "businessId"
+    ],
+    [
+     "shootId"
+    ]
+   ],
+   "erase": {
+    "setName": {
+     "rule": "keep",
+     "why": "proofs or finals, no person"
+    },
+    "code": {
+     "rule": "keep",
+     "why": "the link's own code, a secret that ends with the link (switched off or past its end)"
+    },
+    "fileIds": {
+     "rule": "keep",
+     "why": "ids of stored files, which the erase of a business's files removes"
+    },
+    "passcodeHash": {
+     "rule": "keep",
+     "why": "a hash of the passcode the business chose; the link is switched off by an erase"
+    }
+   }
+  },
+  "RevealVisit": {
+   "reason": "EA1 (B18): one row per visit of a reveal link, holding a keyed hash of the visitor and never the visitor (the table is named reveal_play)",
+   "columns": {
+    "id": {
+     "type": "String",
+     "attrs": "@id @db.Uuid",
+     "opt": false
+    },
+    "linkId": {
+     "type": "String",
+     "attrs": "@db.Uuid",
+     "opt": false
+    },
+    "visit": {
+     "type": "String",
+     "attrs": "",
+     "opt": false
+    },
+    "at": {
+     "type": "DateTime",
+     "attrs": "@db.Timestamptz(3)",
+     "opt": false
+    }
+   },
+   "explicitIndexes": true,
+   "map": "reveal_play",
+   "refs": {
+    "linkId": "RevealLink"
+   },
+   "refOnDelete": {
+    "linkId": "Cascade"
+   },
+   "refOnUpdate": {
+    "linkId": "Cascade"
+   },
+   "unique": [
+    [
+     "linkId",
+     "visit"
+    ]
+   ],
+   "erase": {
+    "visit": {
+     "rule": "keep",
+     "why": "a keyed hash of one visit, never the visitor: nothing to blank"
+    }
+   }
+  },
+  "RevealSend": {
+   "reason": "EA1 (B18): the sends of a reveal that carried an Idempotency-Key, so a repeat sends nothing twice",
+   "columns": {
+    "id": {
+     "type": "String",
+     "attrs": "@id @db.Uuid",
+     "opt": false
+    },
+    "businessId": {
+     "type": "String",
+     "attrs": "@db.Uuid",
+     "opt": false
+    },
+    "key": {
+     "type": "String",
+     "attrs": "",
+     "opt": false
+    },
+    "wishId": {
+     "type": "String",
+     "attrs": "@db.Uuid",
+     "opt": false
+    },
+    "createdAt": {
+     "type": "DateTime",
+     "attrs": "@default(now()) @db.Timestamptz(3)",
+     "opt": false
+    }
+   },
+   "explicitIndexes": true,
+   "refs": {
+    "businessId": "Business"
+   },
+   "refOnDelete": {
+    "businessId": "Cascade"
+   },
+   "refOnUpdate": {
+    "businessId": "Cascade"
+   },
+   "unique": [
+    [
+     "businessId",
+     "key"
+    ]
+   ],
+   "erase": {
+    "key": {
+     "rule": "keep",
+     "why": "the caller's Idempotency-Key, a random string, no person"
+    }
+   }
+  },
+  "VaultPeak": {
+   "reason": "EA1 (B18): the most a business's Vault held in a month, in bytes (the peak the monthly billing reads)",
+   "columns": {
+    "businessId": {
+     "type": "String",
+     "attrs": "@db.Uuid",
+     "opt": false
+    },
+    "month": {
+     "type": "String",
+     "attrs": "",
+     "opt": false
+    },
+    "bytes": {
+     "type": "BigInt",
+     "attrs": "",
+     "opt": false
+    }
+   },
+   "explicitIndexes": true,
+   "pk": [
+    "businessId",
+    "month"
+   ],
+   "refs": {
+    "businessId": "Business"
+   },
+   "refOnDelete": {
+    "businessId": "Cascade"
+   },
+   "refOnUpdate": {
+    "businessId": "Cascade"
+   },
+   "erase": {
+    "month": {
+     "rule": "keep",
+     "why": "a month key"
+    }
+   }
   }
  }
 }

@@ -46,10 +46,7 @@ export interface MoveOptions {
 
 /** The columns that hold what the sender wrote or chose: blank when a wish is erased. The row, its number and its kind stay. */
 const PERSONAL_BLANK = {
-  content: Prisma.DbNull, photos: Prisma.DbNull, letter: null, name: null, note: null, blessing: Prisma.DbNull, call: null,
-  captions: Prisma.DbNull, chapter: Prisma.DbNull, credits: Prisma.DbNull, details: Prisma.DbNull, effect: Prisma.DbNull,
-  finale: Prisma.DbNull, links: Prisma.DbNull, memory: Prisma.DbNull, reasons: Prisma.DbNull, timeline: Prisma.DbNull,
-  type: Prisma.DbNull, voices: Prisma.DbNull, makerNote: Prisma.DbNull, studio: null, adds: Prisma.DbNull, passcodeHash: null,
+  content: Prisma.DbNull, name: null, makerNote: Prisma.DbNull, adds: Prisma.DbNull, passcodeHash: null,
 } satisfies Prisma.WishUncheckedUpdateInput;
 
 /**

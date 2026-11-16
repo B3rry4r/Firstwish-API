@@ -1,25 +1,26 @@
 import type { ConciergeOrderStatus } from "@prisma/client";
 
 /**
- * The life of an order. `brief` is placed, `quoted` is placed with a price staff set, `making` is given to a maker (and being made).
+ * The life of an order. `brief` is placed, `quoted` is placed with a price staff set, `given` is handed to a maker who has not started, `making` is being made.
  * Every state that is not an end has a way out; delivered and cancelled are the ends.
  */
 export const NEXT: Record<ConciergeOrderStatus, ConciergeOrderStatus[]> = {
   brief: ["quoted", "paid", "cancelled"],
   quoted: ["quoted", "paid", "cancelled"],
-  paid: ["making", "cancelled"],
-  making: ["making", "delivered", "cancelled"],
+  paid: ["given", "making", "cancelled"],
+  given: ["given", "making", "delivered", "cancelled"],
+  making: ["given", "making", "delivered", "cancelled"],
   delivered: [],
   cancelled: [],
 };
 
 export const ENDS: ConciergeOrderStatus[] = ["delivered", "cancelled"];
-export const OPEN: ConciergeOrderStatus[] = ["brief", "quoted", "paid", "making"];
+export const OPEN: ConciergeOrderStatus[] = ["brief", "quoted", "paid", "given", "making"];
 
 export const canMove = (from: ConciergeOrderStatus, to: ConciergeOrderStatus): boolean => NEXT[from].includes(to);
 
 /** The word the apps show for an order. */
-export function stateOf(status: ConciergeOrderStatus): "placed" | "quoted" | "paid" | "making" | "delivered" | "cancelled" {
+export function stateOf(status: ConciergeOrderStatus): "placed" | "quoted" | "paid" | "given" | "making" | "delivered" | "cancelled" {
   return status === "brief" ? "placed" : status;
 }
 

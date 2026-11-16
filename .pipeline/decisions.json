@@ -3006,7 +3006,7 @@
       "id": "DEC-194",
       "topic": "wish: hasPasscode in, legacy fields out",
       "closes": [],
-      "decision": "VV3: the Wish contract gains `hasPasscode` (boolean: the wish has a passcode or an answer to ask; the passcode itself is never returned) and loses the legacy whole-wish fields the old app wrote (adds, blessing, call, captions, chapter, credits, details, effect, finale, letter, links, memory, note, off, on, photos, reasons, studio, timeline, type, voices and the like). A wish's words are in `content`.",
+      "decision": "VV3: the Wish contract gains `hasPasscode` (boolean: the wish has a passcode or an answer to ask; the passcode itself is never returned) and loses the legacy whole-wish fields the old app wrote (blessing, call, captions, chapter, credits, details, effect, finale, letter, links, memory, note, off, on, photos, reasons, studio, timeline, type, voices and the like). A wish's words are in `content`.",
       "approvedBy": "lead default, owner may override",
       "confidence": "high",
       "source": "build/rulings-phase3.md VV3",

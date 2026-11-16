@@ -196,6 +196,26 @@ export interface PeopleImportResult {
 export type SignInCode = Record<string, unknown>;
 /** E-202 (DEC-65): a read view of a live StudioStyle with its submission. */
 export type SubmittedStyle = StudioStyle & { submission?: StyleSubmission | null };
+/** A support thread with its messages: what E-207, E-208, E-209 and the contact page answer (YY3). */
+export type ThreadDetail = SupportThread & { messages: SupportMessage[] };
+/** E-133 without a code: the code was mailed, nothing is filed yet (QQ1). */
+export interface TakeDownSent {
+  sent: true;
+  expiresAt: Instant;
+}
+export type TakeDownResult = Report | TakeDownSent;
+/** What the creator's earnings list carries beside the page (WW7). */
+export interface RoyaltySummary {
+  thisMonthKobo: Kobo;
+  waitingKobo: Kobo;
+  sendingKobo: Kobo;
+  paidKobo: Kobo;
+  byStyle: { styleSlug: string; amountKobo: Kobo }[];
+}
+/** E-154: the creator's accruals and reversals, newest first, with the summary (WW7). */
+export interface RoyaltyEarnings extends PaginatedList<RoyaltyAccrual> {
+  summary: RoyaltySummary;
+}
 
 /** Account: table. written by E-3, E-7, E-9, E-11 and server:sessions; the person's account (sessions declaration Me); erase really removes personal fields, so name, contact (the email, S-27), phone, bio and handle are nullable in storage */
 export interface Account {
@@ -386,6 +406,7 @@ export interface ConciergeOrder {
   createdAt: Instant;
   deliverBy?: Instant | null;
   due: unknown[];
+  dueAt?: Instant | null;
   from: string;
   id: string;
   invoiceId?: string | null;
@@ -396,6 +417,8 @@ export interface ConciergeOrder {
   namesFileId?: string | null;
   nextDate?: Instant | null;
   occasion: string;
+  paidAt?: Instant | null;
+  paymentId?: string | null;
   person?: string | null;
   placed: Instant;
   quoteKobo?: Kobo | null;
@@ -404,14 +427,16 @@ export interface ConciergeOrder {
   reportFileId?: string | null;
   rush: boolean;
   shape: string;
-  state: string;
-  status: "brief" | "quoted" | "paid" | "making" | "delivered" | "cancelled";
+  state: "placed" | "quoted" | "paid" | "given" | "making" | "delivered" | "cancelled";
+  status: "brief" | "quoted" | "paid" | "given" | "making" | "delivered" | "cancelled";
   to: Instant;
   updatedAt: Instant;
+  wishIds: unknown[];
 }
 
 /** Creator: table. the public creator profile, 1:1 with an account (DEC-76); credits, plan and signed are written by payment fulfilment (E-91, E-93, E-94) */
 export interface Creator {
+  bank?: Record<string, unknown> | null;
   counts: Record<string, unknown>;
   credits: number;
   earned: Kobo;
@@ -571,7 +596,7 @@ export interface Job {
   runAt: Instant;
   status: "scheduled" | "running" | "succeeded" | "failed" | "dead";
   subjectId: string;
-  type: "open-wish" | "rest-wish" | "erase-wish" | "restore-window-end" | "erase-now" | "send-notice" | "send-message" | "make-image-sizes" | "screen-file" | "render-video" | "make-qr-card" | "abandon-payment" | "reconcile-ledger" | "pass-period" | "plan-period" | "creator-period" | "vault-billing" | "royalty-accrual" | "payout-run" | "style-level-review" | "upload-cleanup" | "clean-link-hits";
+  type: "open-wish" | "rest-wish" | "erase-wish" | "restore-window-end" | "erase-now" | "send-notice" | "send-message" | "make-image-sizes" | "screen-file" | "render-video" | "make-qr-card" | "abandon-payment" | "reconcile-ledger" | "pass-period" | "plan-period" | "creator-period" | "vault-billing" | "royalty-accrual" | "payout-run" | "style-level-review" | "upload-cleanup" | "clean-link-hits" | "check-style-submission";
 }
 
 /** JobRun: table. written by server:jobs (a recorded run of a job) */
@@ -660,7 +685,7 @@ export interface MessageDelivery {
   reason: string;
   resent?: unknown;
   state: string;
-  status: "queued" | "sending" | "sent" | "delivered" | "failed" | "dropped";
+  status: "queued" | "sending" | "sent" | "delivered" | "failed" | "dropped" | "bounced" | "complained";
   templateKey: string;
   to: string;
   updatedAt: Instant;
@@ -1158,12 +1183,14 @@ export interface RevealLink {
 
 /** RevealPlay: view. a client wish's reveal as the receiver plays it */
 export interface RevealPlay {
-  content: unknown;
-  date: Instant;
-  index: unknown[];
-  no: string;
-  photos: unknown[];
-  style: string;
+  business?: string | null;
+  content?: unknown;
+  date?: Instant | null;
+  index?: unknown[] | null;
+  no?: string | null;
+  photos?: unknown[] | null;
+  state: string;
+  style?: string | null;
 }
 
 /** RoleAccess: config. the Team access table: which admin sections each staff role opens (DEC-112); seeded */
@@ -1181,9 +1208,7 @@ export interface RoyaltyAccrual {
   id: string;
   month: string;
   paymentId: string;
-  rows: Kobo;
   styleSlug: string;
-  total: Kobo;
 }
 
 /** SavedReply: config. support saved replies that staff keep */
@@ -1447,6 +1472,7 @@ export interface SubmissionView {
   name: string;
   plan: string;
   rights: Record<string, unknown>;
+  snapshot?: Record<string, unknown> | null;
   still: string;
   style: string;
 }
@@ -1613,17 +1639,10 @@ export interface Wish {
   adds: unknown[];
   amount: Kobo;
   at: Instant;
-  blessing: unknown;
   businessId?: string | null;
-  call: string;
-  captions: unknown;
-  chapter: unknown;
   content?: string | null;
   createdAt: Instant;
-  credits: unknown;
   days: number;
-  details: unknown;
-  effect: unknown;
   endsAt?: Instant | null;
   eraseAfter?: Instant | null;
   erasedAt?: Instant | null;
@@ -1631,9 +1650,9 @@ export interface Wish {
   extraDays: number;
   extras: unknown[];
   files: unknown;
-  finale: unknown;
   forName: string;
   from: string;
+  hasPasscode: boolean;
   id: string;
   isPublic?: boolean | null;
   keep: null | "month" | "half" | "year";
@@ -1641,16 +1660,10 @@ export interface Wish {
   keptBy?: "pass" | "now-showing" | "pro-plan" | "keep" | null;
   keptUntil?: Instant | null;
   kind: string;
-  letter: string;
   link: string;
-  links: unknown;
-  memory: unknown;
   name: string;
   no: string;
-  note: string;
   occasion: string;
-  off: boolean;
-  on: boolean;
   openable: boolean;
   openedAt?: Instant | null;
   opensAt?: Instant | null;
@@ -1659,11 +1672,9 @@ export interface Wish {
   paymentWay: "card" | "transfer" | "ussd";
   person: string;
   personName: string;
-  photos: unknown[];
   price: Kobo;
   reaction?: string | null;
   reason: string;
-  reasons: unknown[];
   removedAt?: Instant | null;
   restingSince?: Instant | null;
   result: unknown;
@@ -1672,15 +1683,11 @@ export interface Wish {
   state: string;
   status: "draft" | "sealed" | "live" | "resting" | "removed";
   step: number;
-  studio: string;
   style: string;
   ticket?: "moment" | "keepsake" | "signature" | "premiere" | null;
   timeZone: string;
-  timeline: unknown[];
-  type: unknown;
   updatedAt: Instant;
   version: number;
-  voices: unknown;
   weddingDate?: Instant | null;
   wishId: string;
   makerNote?: Record<string, unknown> | null;
@@ -2047,6 +2054,17 @@ export interface PostAdminBansBody {
 export type PostAdminBansHeaders = Record<string, never>;
 export type PostAdminBansResponse = Ban;
 
+/** E-242 DELETE /v1/admin/bans/:id. Auth: ops,owner. */
+export interface DeleteAdminBansByIdParams {
+  id: string;
+}
+export interface DeleteAdminBansByIdBody {
+  /** string (4 or more characters; written to the audit row) */
+  reason: string;
+}
+export type DeleteAdminBansByIdHeaders = Record<string, never>;
+export type DeleteAdminBansByIdResponse = Ban;
+
 /** E-22 POST /v1/bank-accounts. Auth: creator. */
 export type PostBankAccountsParams = Record<string, never>;
 export interface PostBankAccountsBody {
@@ -2181,6 +2199,8 @@ export interface PostAdminConciergeOrdersByIdDeliveryParams {
 export interface PostAdminConciergeOrdersByIdDeliveryBody {
   /** string (4 or more characters; written to the audit row) */
   reason: string;
+  /** array<string> (1 to 1000 ids of the wishes made for the order) */
+  wishIds: string[];
 }
 export type PostAdminConciergeOrdersByIdDeliveryHeaders = Record<string, never>;
 export type PostAdminConciergeOrdersByIdDeliveryResponse = ConciergeOrder;
@@ -2200,9 +2220,12 @@ export type PostAdminConciergeOrdersByIdQuoteResponse = ConciergeOrder;
 
 /** E-36 GET /v1/admin/concierge/due. Auth: maker,ops,owner. */
 export type GetAdminConciergeDueParams = Record<string, never>;
-export type GetAdminConciergeDueQuery = Record<string, never>;
+export interface GetAdminConciergeDueQuery {
+  cursor?: string;
+  limit?: number;
+}
 export type GetAdminConciergeDueHeaders = Record<string, never>;
-export type GetAdminConciergeDueResponse = ConciergeOrder;
+export type GetAdminConciergeDueResponse = PaginatedList<ConciergeOrder>;
 
 /** E-37 GET /v1/admin/concierge/orders. Auth: maker,ops,owner. */
 export type GetAdminConciergeOrdersParams = Record<string, never>;
@@ -2221,6 +2244,17 @@ export type GetAdminConciergeOrdersByIdQuery = Record<string, never>;
 export type GetAdminConciergeOrdersByIdHeaders = Record<string, never>;
 export type GetAdminConciergeOrdersByIdResponse = ConciergeOrder;
 
+/** E-243 POST /v1/admin/concierge/orders/:id/cancel. Auth: ops,owner. */
+export interface PostAdminConciergeOrdersByIdCancelParams {
+  id: string;
+}
+export interface PostAdminConciergeOrdersByIdCancelBody {
+  /** string (4 or more characters; written to the audit row) */
+  reason: string;
+}
+export type PostAdminConciergeOrdersByIdCancelHeaders = Record<string, never>;
+export type PostAdminConciergeOrdersByIdCancelResponse = ConciergeOrder;
+
 /** E-39 POST /v1/admin/concierge/orders/:id/maker. Auth: ops,owner. */
 export interface PostAdminConciergeOrdersByIdMakerParams {
   id: string;
@@ -2236,6 +2270,15 @@ export interface PostAdminConciergeOrdersByIdMakerBody {
 export type PostAdminConciergeOrdersByIdMakerHeaders = Record<string, never>;
 export type PostAdminConciergeOrdersByIdMakerResponse = ConciergeOrder;
 
+/** E-244 GET /v1/concierge-orders. Auth: own records. */
+export type GetConciergeOrdersParams = Record<string, never>;
+export interface GetConciergeOrdersQuery {
+  cursor?: string;
+  limit?: number;
+}
+export type GetConciergeOrdersHeaders = Record<string, never>;
+export type GetConciergeOrdersResponse = PaginatedList<ConciergeOrder>;
+
 /** E-40 POST /v1/concierge-orders. Auth: business; signed in. */
 export type PostConciergeOrdersParams = Record<string, never>;
 export interface PostConciergeOrdersBody {
@@ -2250,6 +2293,22 @@ export interface PostConciergeOrdersBody {
 }
 export type PostConciergeOrdersHeaders = Record<string, never>;
 export type PostConciergeOrdersResponse = ConciergeOrder;
+
+/** E-245 GET /v1/concierge-orders/:id. Auth: own records. */
+export interface GetConciergeOrdersByIdParams {
+  id: string;
+}
+export type GetConciergeOrdersByIdQuery = Record<string, never>;
+export type GetConciergeOrdersByIdHeaders = Record<string, never>;
+export type GetConciergeOrdersByIdResponse = ConciergeOrder;
+
+/** E-246 POST /v1/concierge-orders/:id/cancel. Auth: own records. */
+export interface PostConciergeOrdersByIdCancelParams {
+  id: string;
+}
+export type PostConciergeOrdersByIdCancelBody = Record<string, never>;
+export type PostConciergeOrdersByIdCancelHeaders = Record<string, never>;
+export type PostConciergeOrdersByIdCancelResponse = ConciergeOrder;
 
 /** E-41 GET /v1/admin/creators. Auth: finance,ops,owner,reviewer. */
 export type GetAdminCreatorsParams = Record<string, never>;
@@ -2480,7 +2539,10 @@ export type PostAdminJobsByIdRetryResponse = Job;
 
 /** E-63 GET /v1/admin/ledger. Auth: finance,ops,owner. */
 export type GetAdminLedgerParams = Record<string, never>;
-export type GetAdminLedgerQuery = Record<string, never>;
+export interface GetAdminLedgerQuery {
+  /** string YYYY-MM-DD (optional; the day to show, default the latest day checked) */
+  day?: DateOnly;
+}
 export type GetAdminLedgerHeaders = Record<string, never>;
 export type GetAdminLedgerResponse = LedgerDay;
 
@@ -2684,6 +2746,10 @@ export type GetMePassResponse = PassMembership;
 /** E-84 GET /v1/admin/payments. Auth: finance,ops,owner. */
 export type GetAdminPaymentsParams = Record<string, never>;
 export interface GetAdminPaymentsQuery {
+  /** string (optional; such as refund_due) */
+  flag?: string;
+  /** string (optional; a reference, a wish number or the payer's email) */
+  q?: string;
   cursor?: string;
   limit?: number;
 }
@@ -3182,11 +3248,13 @@ export interface PostWBySlugTakeDownParams {
   slug: string;
 }
 export interface PostWBySlugTakeDownBody {
+  /** string (optional; the code mailed to the contact address) */
+  code?: string;
   /** string */
   contact: string;
 }
 export type PostWBySlugTakeDownHeaders = Record<string, never>;
-export type PostWBySlugTakeDownResponse = Report;
+export type PostWBySlugTakeDownResponse = TakeDownResult;
 
 /** E-134 POST /v1/w/:slug/unlock. Auth: public. */
 export interface PostWBySlugUnlockParams {
@@ -3282,12 +3350,12 @@ export type GetShowingResponse = PaginatedList<PublishedWish>;
 /** E-141 POST /v1/qr-cards. Auth: business; maker; signed in. */
 export type PostQrCardsParams = Record<string, never>;
 export interface PostQrCardsBody {
-  /** array<string> */
-  names: string[];
-  /** string */
-  wishId: string;
-  /** array<string> */
-  wishIds: string[];
+  /** array<string> (optional; up to 100, each up to 200 characters) */
+  names?: string[];
+  /** string (optional; a wish of the caller's own) */
+  wishId?: string;
+  /** array<string> (optional; up to 100: the wishes of an order given to the maker) */
+  wishIds?: string[];
 }
 export type PostQrCardsHeaders = Record<string, never>;
 export type PostQrCardsResponse = QrCard;
@@ -3368,7 +3436,7 @@ export interface PostWishesByIdVideoBody {
   wishId?: string;
 }
 export type PostWishesByIdVideoHeaders = Record<string, never>;
-export type PostWishesByIdVideoResponse = PaymentStarted<RenderJob>;
+export type PostWishesByIdVideoResponse = PaymentStartedOrCovered<RenderJob>;
 
 /** E-149 GET /v1/admin/moderation. Auth: moderator,ops,owner. */
 export type GetAdminModerationParams = Record<string, never>;
@@ -3424,6 +3492,33 @@ export interface PostBusinessRevealLinksByIdCopyLinkBody {
 export type PostBusinessRevealLinksByIdCopyLinkHeaders = Record<string, never>;
 export type PostBusinessRevealLinksByIdCopyLinkResponse = string;
 
+/** E-247 POST /v1/business/reveal-links/:id/off. Auth: business. */
+export interface PostBusinessRevealLinksByIdOffParams {
+  id: string;
+}
+export type PostBusinessRevealLinksByIdOffBody = Record<string, never>;
+export type PostBusinessRevealLinksByIdOffHeaders = Record<string, never>;
+export type PostBusinessRevealLinksByIdOffResponse = RevealLink;
+
+/** E-248 GET /v1/r/:code. Auth: public. */
+export interface GetRByCodeParams {
+  code: string;
+}
+export type GetRByCodeQuery = Record<string, never>;
+export type GetRByCodeHeaders = Record<string, never>;
+export type GetRByCodeResponse = RevealPlay;
+
+/** E-249 POST /v1/r/:code/unlock. Auth: public. */
+export interface PostRByCodeUnlockParams {
+  code: string;
+}
+export interface PostRByCodeUnlockBody {
+  /** string */
+  passcode: string;
+}
+export type PostRByCodeUnlockHeaders = Record<string, never>;
+export type PostRByCodeUnlockResponse = UnlockResult;
+
 /** E-154 GET /v1/creator/earnings. Auth: creator. */
 export type GetCreatorEarningsParams = Record<string, never>;
 export interface GetCreatorEarningsQuery {
@@ -3431,7 +3526,56 @@ export interface GetCreatorEarningsQuery {
   limit?: number;
 }
 export type GetCreatorEarningsHeaders = Record<string, never>;
-export type GetCreatorEarningsResponse = PaginatedList<RoyaltyAccrual>;
+export type GetCreatorEarningsResponse = RoyaltyEarnings;
+
+/** E-250 GET /v1/admin/support/saved-replies. Auth: ops,owner,support. */
+export type GetAdminSupportSavedRepliesParams = Record<string, never>;
+export interface GetAdminSupportSavedRepliesQuery {
+  cursor?: string;
+  limit?: number;
+}
+export type GetAdminSupportSavedRepliesHeaders = Record<string, never>;
+export type GetAdminSupportSavedRepliesResponse = PaginatedList<SavedReply>;
+
+/** E-251 POST /v1/admin/support/saved-replies. Auth: ops,owner,support. */
+export type PostAdminSupportSavedRepliesParams = Record<string, never>;
+export interface PostAdminSupportSavedRepliesBody {
+  /** string (1 to 80 characters) */
+  name: string;
+  /** string (4 or more characters; written to the audit row) */
+  reason: string;
+  /** string (non-empty, at most 4000 characters) */
+  text: string;
+}
+export type PostAdminSupportSavedRepliesHeaders = Record<string, never>;
+export type PostAdminSupportSavedRepliesResponse = SavedReply;
+
+/** E-252 DELETE /v1/admin/support/saved-replies/:id. Auth: ops,owner,support. */
+export interface DeleteAdminSupportSavedRepliesByIdParams {
+  id: string;
+}
+export interface DeleteAdminSupportSavedRepliesByIdBody {
+  /** string (4 or more characters; written to the audit row) */
+  reason: string;
+}
+export type DeleteAdminSupportSavedRepliesByIdHeaders = Record<string, never>;
+/** 204 No Content: the response has no body (Q12). */
+export type DeleteAdminSupportSavedRepliesByIdResponse = NoContent;
+
+/** E-253 PATCH /v1/admin/support/saved-replies/:id. Auth: ops,owner,support. */
+export interface PatchAdminSupportSavedRepliesByIdParams {
+  id: string;
+}
+export interface PatchAdminSupportSavedRepliesByIdBody {
+  /** string (optional; 1 to 80 characters) */
+  name?: string;
+  /** string (4 or more characters; written to the audit row) */
+  reason: string;
+  /** string (optional; at most 4000 characters) */
+  text?: string;
+}
+export type PatchAdminSupportSavedRepliesByIdHeaders = Record<string, never>;
+export type PatchAdminSupportSavedRepliesByIdResponse = SavedReply;
 
 /** E-155 DELETE /v1/feed/wishes/:id/save. Auth: business; creator; signed in. */
 export interface DeleteFeedWishesByIdSaveParams {
@@ -3799,7 +3943,22 @@ export type GetStudioPrefsResponse = StudioPrefs;
 
 /** E-186 PATCH /v1/studio/prefs. Auth: creator. */
 export type PatchStudioPrefsParams = Record<string, never>;
-export type PatchStudioPrefsBody = Record<string, never>;
+export interface PatchStudioPrefsBody {
+  /** string (optional) */
+  addTab?: string;
+  /** string (optional) */
+  bottom?: string;
+  /** boolean (optional) */
+  coached?: boolean;
+  /** array (optional) */
+  fav?: unknown[];
+  /** array (optional) */
+  looks?: unknown[];
+  /** array (optional) */
+  recent?: unknown[];
+  /** string (optional) */
+  span?: string;
+}
 export type PatchStudioPrefsHeaders = Record<string, never>;
 export type PatchStudioPrefsResponse = StudioPrefs;
 
@@ -3854,7 +4013,10 @@ export type PatchStudioStylesByIdResponse = StudioStyle;
 export interface PostStudioStylesByIdWithdrawParams {
   id: string;
 }
-export type PostStudioStylesByIdWithdrawBody = Record<string, never>;
+export interface PostStudioStylesByIdWithdrawBody {
+  /** boolean (optional; the setTemplate form) */
+  on?: boolean;
+}
 export type PostStudioStylesByIdWithdrawHeaders = Record<string, never>;
 export type PostStudioStylesByIdWithdrawResponse = StudioStyle | SubmittedStyle;
 
@@ -4030,7 +4192,7 @@ export interface PostAdminSupportThreadsByIdReplyBody {
   text: string;
 }
 export type PostAdminSupportThreadsByIdReplyHeaders = Record<string, never>;
-export type PostAdminSupportThreadsByIdReplyResponse = SupportThread;
+export type PostAdminSupportThreadsByIdReplyResponse = ThreadDetail;
 
 /** E-209 POST /v1/admin/support/threads/:id/state. Auth: ops,owner,support. */
 export interface PostAdminSupportThreadsByIdStateParams {
@@ -4043,7 +4205,7 @@ export interface PostAdminSupportThreadsByIdStateBody {
   state: "closed" | "open";
 }
 export type PostAdminSupportThreadsByIdStateHeaders = Record<string, never>;
-export type PostAdminSupportThreadsByIdStateResponse = SupportThread;
+export type PostAdminSupportThreadsByIdStateResponse = ThreadDetail;
 
 /** E-210 POST /v1/support-threads. Auth: signed in. */
 export type PostSupportThreadsParams = Record<string, never>;
@@ -4055,6 +4217,19 @@ export interface PostSupportThreadsBody {
 }
 export type PostSupportThreadsHeaders = Record<string, never>;
 export type PostSupportThreadsResponse = SupportThread;
+
+/** E-254 POST /v1/support-threads/contact. Auth: public. */
+export type PostSupportThreadsContactParams = Record<string, never>;
+export interface PostSupportThreadsContactBody {
+  /** string */
+  body: string;
+  /** string (an email address) */
+  email: string;
+  /** string */
+  subject: string;
+}
+export type PostSupportThreadsContactHeaders = Record<string, never>;
+export type PostSupportThreadsContactResponse = ThreadDetail;
 
 /** E-211 POST /v1/webhooks/email/inbound. Auth: webhook signature. */
 export type PostWebhooksEmailInboundParams = Record<string, never>;
@@ -4333,13 +4508,15 @@ export interface PostWishesByIdSealBody {
   timeZone?: string;
   /** boolean (optional; true draws one wish from the Pass in place of a ticket payment) */
   usePass?: boolean;
+  /** boolean (optional; true draws one wish from the business's plan in place of a ticket payment) */
+  usePlan?: boolean;
   /** integer (the version the page last read) */
   version: number;
   /** string */
   wishId?: string;
 }
 export type PostWishesByIdSealHeaders = Record<string, never>;
-export type PostWishesByIdSealResponse = PaymentStarted<Wish>;
+export type PostWishesByIdSealResponse = PaymentStartedOrCovered<Wish>;
 
 /** E-232 POST /v1/wishes/:id/wake. Auth: public; business; signed in. */
 export interface PostWishesByIdWakeParams {
@@ -4390,6 +4567,7 @@ export interface EndpointContracts {
   "E-19": { params: PostAuthCodesParams; body: PostAuthCodesBody; headers: PostAuthCodesHeaders; response: PostAuthCodesResponse };
   "E-20": { params: PostAuthCodesVerifyParams; body: PostAuthCodesVerifyBody; headers: PostAuthCodesVerifyHeaders; response: PostAuthCodesVerifyResponse };
   "E-21": { params: PostAdminBansParams; body: PostAdminBansBody; headers: PostAdminBansHeaders; response: PostAdminBansResponse };
+  "E-242": { params: DeleteAdminBansByIdParams; body: DeleteAdminBansByIdBody; headers: DeleteAdminBansByIdHeaders; response: DeleteAdminBansByIdResponse };
   "E-22": { params: PostBankAccountsParams; body: PostBankAccountsBody; headers: PostBankAccountsHeaders; response: PostBankAccountsResponse };
   "E-23": { params: GetAdminBusinessesParams; query: GetAdminBusinessesQuery; headers: GetAdminBusinessesHeaders; response: GetAdminBusinessesResponse };
   "E-24": { params: GetAdminBusinessesByIdParams; query: GetAdminBusinessesByIdQuery; headers: GetAdminBusinessesByIdHeaders; response: GetAdminBusinessesByIdResponse };
@@ -4407,8 +4585,12 @@ export interface EndpointContracts {
   "E-36": { params: GetAdminConciergeDueParams; query: GetAdminConciergeDueQuery; headers: GetAdminConciergeDueHeaders; response: GetAdminConciergeDueResponse };
   "E-37": { params: GetAdminConciergeOrdersParams; query: GetAdminConciergeOrdersQuery; headers: GetAdminConciergeOrdersHeaders; response: GetAdminConciergeOrdersResponse };
   "E-38": { params: GetAdminConciergeOrdersByIdParams; query: GetAdminConciergeOrdersByIdQuery; headers: GetAdminConciergeOrdersByIdHeaders; response: GetAdminConciergeOrdersByIdResponse };
+  "E-243": { params: PostAdminConciergeOrdersByIdCancelParams; body: PostAdminConciergeOrdersByIdCancelBody; headers: PostAdminConciergeOrdersByIdCancelHeaders; response: PostAdminConciergeOrdersByIdCancelResponse };
   "E-39": { params: PostAdminConciergeOrdersByIdMakerParams; body: PostAdminConciergeOrdersByIdMakerBody; headers: PostAdminConciergeOrdersByIdMakerHeaders; response: PostAdminConciergeOrdersByIdMakerResponse };
+  "E-244": { params: GetConciergeOrdersParams; query: GetConciergeOrdersQuery; headers: GetConciergeOrdersHeaders; response: GetConciergeOrdersResponse };
   "E-40": { params: PostConciergeOrdersParams; body: PostConciergeOrdersBody; headers: PostConciergeOrdersHeaders; response: PostConciergeOrdersResponse };
+  "E-245": { params: GetConciergeOrdersByIdParams; query: GetConciergeOrdersByIdQuery; headers: GetConciergeOrdersByIdHeaders; response: GetConciergeOrdersByIdResponse };
+  "E-246": { params: PostConciergeOrdersByIdCancelParams; body: PostConciergeOrdersByIdCancelBody; headers: PostConciergeOrdersByIdCancelHeaders; response: PostConciergeOrdersByIdCancelResponse };
   "E-41": { params: GetAdminCreatorsParams; query: GetAdminCreatorsQuery; headers: GetAdminCreatorsHeaders; response: GetAdminCreatorsResponse };
   "E-42": { params: GetCreatorsParams; query: GetCreatorsQuery; headers: GetCreatorsHeaders; response: GetCreatorsResponse };
   "E-236": { params: GetCreatorsByHandleParams; query: GetCreatorsByHandleQuery; headers: GetCreatorsByHandleHeaders; response: GetCreatorsByHandleResponse };
@@ -4524,7 +4706,14 @@ export interface EndpointContracts {
   "E-151": { params: PostReportsParams; body: PostReportsBody; headers: PostReportsHeaders; response: PostReportsResponse };
   "E-152": { params: GetBusinessRevealLinksByIdParams; query: GetBusinessRevealLinksByIdQuery; headers: GetBusinessRevealLinksByIdHeaders; response: GetBusinessRevealLinksByIdResponse };
   "E-153": { params: PostBusinessRevealLinksByIdCopyLinkParams; body: PostBusinessRevealLinksByIdCopyLinkBody; headers: PostBusinessRevealLinksByIdCopyLinkHeaders; response: PostBusinessRevealLinksByIdCopyLinkResponse };
+  "E-247": { params: PostBusinessRevealLinksByIdOffParams; body: PostBusinessRevealLinksByIdOffBody; headers: PostBusinessRevealLinksByIdOffHeaders; response: PostBusinessRevealLinksByIdOffResponse };
+  "E-248": { params: GetRByCodeParams; query: GetRByCodeQuery; headers: GetRByCodeHeaders; response: GetRByCodeResponse };
+  "E-249": { params: PostRByCodeUnlockParams; body: PostRByCodeUnlockBody; headers: PostRByCodeUnlockHeaders; response: PostRByCodeUnlockResponse };
   "E-154": { params: GetCreatorEarningsParams; query: GetCreatorEarningsQuery; headers: GetCreatorEarningsHeaders; response: GetCreatorEarningsResponse };
+  "E-250": { params: GetAdminSupportSavedRepliesParams; query: GetAdminSupportSavedRepliesQuery; headers: GetAdminSupportSavedRepliesHeaders; response: GetAdminSupportSavedRepliesResponse };
+  "E-251": { params: PostAdminSupportSavedRepliesParams; body: PostAdminSupportSavedRepliesBody; headers: PostAdminSupportSavedRepliesHeaders; response: PostAdminSupportSavedRepliesResponse };
+  "E-252": { params: DeleteAdminSupportSavedRepliesByIdParams; body: DeleteAdminSupportSavedRepliesByIdBody; headers: DeleteAdminSupportSavedRepliesByIdHeaders; response: DeleteAdminSupportSavedRepliesByIdResponse };
+  "E-253": { params: PatchAdminSupportSavedRepliesByIdParams; body: PatchAdminSupportSavedRepliesByIdBody; headers: PatchAdminSupportSavedRepliesByIdHeaders; response: PatchAdminSupportSavedRepliesByIdResponse };
   "E-155": { params: DeleteFeedWishesByIdSaveParams; body: DeleteFeedWishesByIdSaveBody; headers: DeleteFeedWishesByIdSaveHeaders; response: DeleteFeedWishesByIdSaveResponse };
   "E-156": { params: PutFeedWishesByIdSaveParams; body: PutFeedWishesByIdSaveBody; headers: PutFeedWishesByIdSaveHeaders; response: PutFeedWishesByIdSaveResponse };
   "E-237": { params: GetAdminScreeningResultsParams; query: GetAdminScreeningResultsQuery; headers: GetAdminScreeningResultsHeaders; response: GetAdminScreeningResultsResponse };
@@ -4583,6 +4772,7 @@ export interface EndpointContracts {
   "E-208": { params: PostAdminSupportThreadsByIdReplyParams; body: PostAdminSupportThreadsByIdReplyBody; headers: PostAdminSupportThreadsByIdReplyHeaders; response: PostAdminSupportThreadsByIdReplyResponse };
   "E-209": { params: PostAdminSupportThreadsByIdStateParams; body: PostAdminSupportThreadsByIdStateBody; headers: PostAdminSupportThreadsByIdStateHeaders; response: PostAdminSupportThreadsByIdStateResponse };
   "E-210": { params: PostSupportThreadsParams; body: PostSupportThreadsBody; headers: PostSupportThreadsHeaders; response: PostSupportThreadsResponse };
+  "E-254": { params: PostSupportThreadsContactParams; body: PostSupportThreadsContactBody; headers: PostSupportThreadsContactHeaders; response: PostSupportThreadsContactResponse };
   "E-211": { params: PostWebhooksEmailInboundParams; body: PostWebhooksEmailInboundBody; headers: PostWebhooksEmailInboundHeaders; response: PostWebhooksEmailInboundResponse };
   "E-212": { params: GetStudioTemplatesParams; query: GetStudioTemplatesQuery; headers: GetStudioTemplatesHeaders; response: GetStudioTemplatesResponse };
   "E-213": { params: GetTicketOffersParams; query: GetTicketOffersQuery; headers: GetTicketOffersHeaders; response: GetTicketOffersResponse };

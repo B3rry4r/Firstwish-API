@@ -652,3 +652,5 @@ FC1 (B21 verify, high) An action reached through the staff wish and person scree
     again: support, ops, owner. Any other role gets 403 and nothing changes. Default (lead), owner may override. (B21 patch.)
 FC2 (B21 verify, low) Staff may add at most 30 days in all to one wish, and send its link again at most 3 times a day
     (PROVISIONAL), counted in the database. (B21 patch.)
+FC3 (P-B21 hand-back) Finance starts refunds from the payments screen, which its role opens; the wish screen is not open to
+    finance, so the refund action there is for ops and the owner. Accepted.

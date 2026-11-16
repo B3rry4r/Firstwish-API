@@ -103,6 +103,33 @@ describe("Moderation: reports, take-down asks, decisions, bans, queues (B13)", (
     expect((await post("nothing-here", { contact: email })).status).toBe(404);
   });
 
+  it("B13: the fifth wrong code says no tries are left, not that the code ran out", async () => {
+    const w = await liveWish(t, await account(t, ["creator"]));
+    const email = `me-${t.id()}@example.com`;
+    const ip = uniqueAddress();
+    const post = (body: object) => t.http().post(`/v1/w/${w.slug}/take-down`).set("X-Forwarded-For", ip).send(body);
+    await post({ contact: email });
+    const code = /\b(\d{6})\b/.exec(`${t.email.lastTo(email)?.subject ?? ""} ${t.email.lastTo(email)?.text ?? ""}`)?.[1] as string;
+    const bad = code === "000000" ? "111111" : "000000";
+    const answers = [];
+    for (let i = 0; i < 5; i++) answers.push(await post({ contact: email, code: bad }));
+    expect(answers.slice(0, 4).map((r) => r.body.error.message)).toEqual([1, 2, 3, 4].map((i) => `That code is not right. ${5 - i} ${5 - i === 1 ? "try" : "tries"} left.`));
+    expect(answers[4].status).toBe(400);
+    expect(answers[4].body.error).toMatchObject({ code: "code_wrong", message: "That code is not right. No tries are left. Ask for a new one." });
+  });
+
+  it("B13 E-133: one email address is mailed at most 3 codes a day, from any network", async () => {
+    const w = await liveWish(t, await account(t, ["creator"]));
+    const email = `me-${t.id()}@example.com`;
+    const ask = (ip: string) => t.http().post(`/v1/w/${w.slug}/take-down`).set("X-Forwarded-For", ip).send({ contact: email });
+    expect((await ask(uniqueAddress())).status).toBe(200);
+    expect((await ask(uniqueAddress())).status).toBe(200);
+    expect((await ask(uniqueAddress())).status).toBe(200);
+    const fourth = await ask(uniqueAddress());
+    expect(fourth.status).toBe(429);
+    expect(t.email.sent.filter((e) => e.to === email)).toHaveLength(3);
+  });
+
   it("case 6: take down moves the wish through the lifecycle: off every list, its link gone, one audit row, one decision at once", async () => {
     const x = await listed();
     const saver = await account(t, ["creator"]);

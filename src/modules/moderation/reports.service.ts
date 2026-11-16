@@ -19,7 +19,7 @@ import { WishLifecycleService } from "../wishes/wish-lifecycle.service";
 import { outOfSight, stateOf } from "../wishes/wish-state";
 import { activeBanScopes, REPORT_HOURS, UPHELD_LIMIT } from "./ban-rules";
 import { BansService } from "./bans.service";
-import { ReportLimits } from "./report-limits";
+import { ReportLimits, TAKE_DOWN_CODES_PER_EMAIL_PER_DAY } from "./report-limits";
 
 type Tx = Prisma.TransactionClient;
 type Obj = Record<string, unknown>;
@@ -109,7 +109,7 @@ export class ReportsService {
       return { kind: "ok" as const, id, at: now };
     });
     if (out.kind === "wrong") {
-      if (out.left <= 0) throw this.codeDead();
+      if (out.left <= 0) throw new AppError(HttpStatus.BAD_REQUEST, "code_wrong", "That code is not right. No tries are left. Ask for a new one.");
       throw new AppError(HttpStatus.BAD_REQUEST, "code_wrong", `That code is not right. ${out.left} ${out.left === 1 ? "try" : "tries"} left.`);
     }
     if (out.kind !== "ok") throw this.codeDead();
@@ -122,6 +122,8 @@ export class ReportsService {
 
   private async sendCode(slug: string, email: string, address: string | null): Promise<Obj> {
     await this.limits.take("take-down", address);
+    // B13: a code is mailed to a typed address, so one address is also limited on its own, whoever asks and from wherever.
+    await this.limits.take("take-down-email", email, TAKE_DOWN_CODES_PER_EMAIL_PER_DAY);
     const now = this.clock.now();
     const id = this.ids.id();
     const code = this.codes.digits(6);

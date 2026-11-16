@@ -1,8 +1,8 @@
 /**
- * The seven messages Firstwish sends (B11; INT-4 adds the staff invite, B17 the business login invite). Every one goes by email (R11). The wording lives in the MessageTemplate table
+ * The messages Firstwish sends (B11; INT-4 adds the staff invite, B17 the business login invite, WW5 the bank-changed message). Every one goes by email (R11). The wording lives in the MessageTemplate table
  * (seeded from the web app, edited by staff); this file holds what the wording may name and what the code needs from it.
  */
-export type TemplateKey = "sealed" | "opens" | "opened" | "resting" | "code" | "invite" | "login-invite";
+export type TemplateKey = "sealed" | "opens" | "opened" | "resting" | "code" | "invite" | "login-invite" | "bank-changed";
 
 export interface TemplateSpec {
   key: TemplateKey;
@@ -17,7 +17,7 @@ export interface TemplateSpec {
   /** The placeholders the message needs: wording that drops one is refused (422). */
   needs: readonly string[];
   /** The delivery log's purpose for this message (II5: sealed and opens have their own). */
-  purpose: "auth-code" | "wish-delivery" | "opened" | "term-notice" | "sealed" | "opens" | "invite";
+  purpose: "auth-code" | "wish-delivery" | "opened" | "term-notice" | "sealed" | "opens" | "invite" | "support";
   /** The in-app notice kind written for it (E-77), when it has one. */
   noticeKind: "opened" | "term-ends-soon" | null;
   /** A person may turn it off. The sign-in code never can. */
@@ -52,6 +52,10 @@ export const TEMPLATES: Readonly<Record<TemplateKey, TemplateSpec>> = {
   "login-invite": {
     key: "login-invite", label: "You are invited to a business", when: "When a business owner adds a login for an email address.", audience: "The person invited",
     allowed: ["business"], needs: ["business"], purpose: "invite", noticeKind: null, mutable: false,
+  },
+  "bank-changed": {
+    key: "bank-changed", label: "Your payout bank account changed", when: "When a creator saves a new payout bank account.", audience: "The creator",
+    allowed: ["last4", "bank"], needs: ["last4", "bank"], purpose: "support", noticeKind: null, mutable: false,
   },
 };
 

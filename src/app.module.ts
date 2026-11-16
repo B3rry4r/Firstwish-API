@@ -57,6 +57,10 @@ import { NoticesModule } from "./modules/notices/notices.module";
 // B08
 import { RefundsModule } from "./modules/refunds/refunds.module";
 // end B08
+// B16: creators' money (royalties, bank account, payouts, the monthly run)
+import { RoyaltiesModule } from "./modules/royalties/royalties.module";
+import { PayoutsModule } from "./modules/payouts/payouts.module";
+// end B16
 
 /** Registration entry: each resource module adds one import line here. */
 import { ModerationModule } from "./modules/moderation/moderation.module";
@@ -128,6 +132,10 @@ import { ShowingModule } from "./modules/showing/showing.module";
     // B08: refunds, the settlement check, staff payments
     RefundsModule,
     // end B08
+    // B16
+    RoyaltiesModule,
+    PayoutsModule,
+    // end B16
   ],
 })
 export class AppModule {}

@@ -1,11 +1,10 @@
-import { Injectable, Logger } from "@nestjs/common";
+import { Injectable } from "@nestjs/common";
 import { PrismaService } from "../../common/db/prisma.service";
 import { lockAccount } from "../../common/db/account-lock";
 import { AppError } from "../../common/errors/app-error";
-import { EmailPort } from "../../common/ports/email.port";
 import { IdGenerator } from "../../common/ports/ids.port";
-import { normaliseEmail } from "../../common/normalise/email";
 import type { BankAccount, PostBankAccountsBody } from "../../contracts";
+import { NoticesService } from "../notices/notices.service";
 import { maskNumber } from "./payout-wire";
 import { AccountNotFound, PayoutProviderPort } from "./payout-provider.port";
 
@@ -20,13 +19,11 @@ const BANK_CODE = /^\d{3,6}$/;
  */
 @Injectable()
 export class BankAccountsService {
-  private readonly log = new Logger("bank-accounts");
-
   constructor(
     private readonly db: PrismaService,
     private readonly ids: IdGenerator,
     private readonly provider: PayoutProviderPort,
-    private readonly email: EmailPort,
+    private readonly notices: NoticesService,
   ) {}
 
   async set(accountId: string, body: PostBankAccountsBody): Promise<BankAccount> {
@@ -53,30 +50,11 @@ export class BankAccountsService {
       if (now && now.accountNumber === accountNumber && now.bankCode === bankCode) return null;
       const id = this.ids.id();
       await tx.bankAccount.create({ data: { id, creatorId: creator.id, accountNumber, bankCode } });
-      return { id, replaced: now !== null };
+      // WW5: one notice per change, through the notices path, saved with the change; the key is the new bank row's id.
+      const sent = await this.notices.send(tx, { template: "bank-changed", toAccountId: accountId, data: { last4: accountNumber.slice(-4), bank: bankCode }, key: `bank-change:${id}` });
+      return { deliveryId: sent.deliveryId };
     });
-    if (made) await this.notify(accountId, made.id, bankCode, accountNumber, made.replaced);
+    if (made) await this.notices.deliverNow(made.deliveryId);
     return { accountNumber: maskNumber(accountNumber), bankCode };
-  }
-
-  /**
-   * The notice of a change: plain words, the last four digits only, to the account's email. Sent after the change is saved: a mail
-   * that fails never undoes a bank change, and is logged. The key makes a second send of one change a no-op at the provider.
-   */
-  private async notify(accountId: string, bankRowId: string, bankCode: string, accountNumber: string, replaced: boolean): Promise<void> {
-    try {
-      const a = await this.db.account.findUnique({ where: { id: accountId }, select: { contact: true, erasedAt: true } });
-      const to = a && !a.erasedAt ? normaliseEmail(a.contact ?? "") : null;
-      if (!to) return;
-      const last4 = accountNumber.slice(-4);
-      await this.email.send({
-        to,
-        subject: replaced ? "Your payout bank account was changed" : "Your payout bank account was added",
-        text: `Payouts will now go to the account ending ${last4} at bank ${bankCode}. If this was not you, sign in and change it back, then write to us.`,
-        idempotencyKey: `bank-change:${bankRowId}`,
-      });
-    } catch (e) {
-      this.log.error(`bank change notice not sent: ${String(e)}`);
-    }
   }
 }

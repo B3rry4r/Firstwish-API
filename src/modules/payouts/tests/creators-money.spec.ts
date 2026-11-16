@@ -8,7 +8,8 @@ import { AccountErasureService } from "../../accounts/account-erasure.service";
 import { RoyaltiesService } from "../../royalties/royalties.service";
 import { percentOf, splitRoyalty } from "../../royalties/royalty-math";
 import { readStyleOwners } from "../../royalties/style-owners";
-import { PayoutRunService, REFERENCE_PREFIX } from "../payout-run.service";
+import { NO_NEWS_MS, PayoutRunService, REFERENCE_PREFIX, SEND_LEASE_MS } from "../payout-run.service";
+import { SignedPeriodService } from "../signed-period.service";
 import { PayoutProviderPort } from "../payout-provider.port";
 import { StandinPayoutProvider } from "../standin-payout-provider";
 import { nextFifth } from "../payouts.module";
@@ -93,6 +94,21 @@ describe("creators' money (B16)", () => {
       },
     });
   }
+  /** A royalty of exactly `kobo` for the creator of `styleSlug`, written as the accrual writes it (row and journal), on a payment of its own. */
+  async function earn(styleSlug: string, at: string, kobo: bigint) {
+    const owner = await db.style.findUniqueOrThrow({ where: { slug: styleSlug }, select: { creator: true } });
+    const creatorId = (owner.creator as { creatorId: string }).creatorId;
+    const b = await business();
+    const p = await paid({ styleSlug, at, businessId: b.id, accountId: b.accountId });
+    await db.royaltyAccrual.create({ data: { id: ids.next(), creatorId, styleSlug, paymentId: p.id, basis: "pro_wish", amountKobo: kobo, month: at.slice(0, 7), createdAt: new Date(at) } });
+    const journalId = ids.next();
+    const memo = `Royalty ${creatorId} pro_wish ${p.providerReference}`;
+    await db.ledgerEntry.createMany({ data: [
+      { id: ids.next(), journalId, account: "revenue_tickets", direction: "debit", amountKobo: kobo, currency: "NGN", paymentId: p.id, memo, createdAt: new Date(at) },
+      { id: ids.next(), journalId, account: "royalties_payable", direction: "credit", amountKobo: kobo, currency: "NGN", paymentId: p.id, memo, createdAt: new Date(at) },
+    ] });
+    return p;
+  }
   const accrue = (p: Awaited<ReturnType<typeof paid>>) => db.$transaction((tx) => royalties.accrue(tx, p));
   const rowsOf = (creatorId: string) => db.royaltyAccrual.findMany({ where: { creatorId }, orderBy: { id: "asc" } });
   async function journals(where: Record<string, unknown>) {
@@ -119,12 +135,28 @@ describe("creators' money (B16)", () => {
       expect(rows.map((r) => [r.basis, r.amountKobo, r.month, r.styleSlug])).toEqual([["premium_style", 48000n, "2026-11", s], ["premium_style", 80000n, "2027-02", s]]);
     });
 
-    it("T-66: a business's paid wish earns 20% of what the business paid, whatever the premium price is", async () => {
+    it("T-66 and ZZ4: a business's paid wish earns 20% of the premium price in force, not of what it paid", async () => {
       const c = await creator("Bola");
       const s = await style("bola-premium", "premium", { creatorId: c.creatorId });
       const b = await business();
       const made = await accrue(await paid({ styleSlug: s, at: "2026-11-11T10:00:00Z", amount: 2_500_000n, businessId: b.id, accountId: b.accountId }));
-      expect(made).toMatchObject([{ basis: "pro_wish", amountKobo: 500000n }]);
+      expect(made).toMatchObject([{ basis: "pro_wish", amountKobo: 48000n }]);
+    });
+
+    it("ZZ4: a wish paid with a ticket earns 20% of the premium style price whoever pays and whatever else is in the payment (work 3000000 with an extra by hand)", async () => {
+      const c = await creator("Zuri");
+      const s = await style("zuri-premium", "premium", { creatorId: c.creatorId });
+      const b = await business();
+      const person1 = await paid({ styleSlug: s, at: "2027-02-10T10:00:00Z", amount: 3_000_000n });
+      await db.payment.update({
+        where: { id: person1.id },
+        data: { lines: [{ sku: "ticket.keepsake", name: "t", qty: 1, unitKobo: 2_500_000, totalKobo: 2_500_000 }, { sku: "extra.music", name: "e", qty: 1, unitKobo: 500_000, totalKobo: 500_000 }] },
+      });
+      const viaPerson = await accrue(await db.payment.findUniqueOrThrow({ where: { id: person1.id } }));
+      expect(viaPerson).toMatchObject([{ basis: "premium_style", amountKobo: 80000n }]);
+      const viaBusiness = await accrue(await paid({ styleSlug: s, at: "2027-02-11T10:00:00Z", amount: 3_000_000n, businessId: b.id, accountId: b.accountId }));
+      expect(viaBusiness).toMatchObject([{ basis: "pro_wish", amountKobo: 80000n }]);
+      expect(await rowsOf(c.creatorId)).toHaveLength(2);
     });
 
     it("T-77: a Pass wish earns nothing (no payment of its own, and the Pass payment names no style); Standard, Starter, house and style-less payments earn nothing", async () => {
@@ -148,15 +180,10 @@ describe("creators' money (B16)", () => {
       expect(readStyleOwners({ id: maker.creatorId, template: { creatorId: original.creatorId } })).toEqual({ creatorId: maker.creatorId, templateCreatorId: original.creatorId });
     });
 
-    it("half a kobo rounds down to the creator and the rest stays with Firstwish", async () => {
+    it("half a kobo rounds down to the creator and the rest stays with Firstwish", () => {
       expect(percentOf(240005n, 20)).toBe(48001n);
       expect(splitRoyalty(48001n, 25, true)).toEqual({ template: 12000n, creator: 36001n });
       expect(percentOf(1003n, 20)).toBe(200n);
-      const c = await creator("Fola");
-      const s = await style("fola-premium", "premium", { creatorId: c.creatorId });
-      const b = await business();
-      const made = await accrue(await paid({ styleSlug: s, at: "2026-11-11T10:00:00Z", amount: 4003n, businessId: b.id, accountId: b.accountId }));
-      expect(made[0].amountKobo).toBe(800n); // 800.6 kobo
     });
 
     it("one accrual per payment and creator: a replay changes nothing; a second payment for the same wish earns nothing more", async () => {
@@ -190,10 +217,9 @@ describe("creators' money (B16)", () => {
     it("the summary equals the ledger; the run pays the whole balance once, sends keyed by the payout id, and the signed event pays it", async () => {
       const a = await creator("Ife");
       const s = await style("ife-premium", "premium", { creatorId: a.creatorId });
-      const b = await business();
       await accrue(await paid({ styleSlug: s, at: "2026-11-10T10:00:00Z" })); //  48000
       await accrue(await paid({ styleSlug: s, at: "2026-11-12T10:00:00Z" })); //  48000
-      await accrue(await paid({ styleSlug: s, at: "2026-11-20T10:00:00Z", amount: 2_500_000n, businessId: b.id, accountId: b.accountId })); // 500000
+      await earn(s, "2026-11-20T10:00:00Z", 500000n); // 500000
       await accrue(await paid({ styleSlug: s, at: "2026-12-02T10:00:00Z" })); // 48000, this month
       const thin = await creator("Jide");
       const ts = await style("jide-premium", "premium", { creatorId: thin.creatorId });
@@ -254,8 +280,7 @@ describe("creators' money (B16)", () => {
       for (const name of ["Kemi", "Lola", "Moyo"]) {
         const c = await creator(name);
         const s = await style(`${name}-premium`.toLowerCase(), "premium", { creatorId: c.creatorId });
-        const b = await business();
-        await accrue(await paid({ styleSlug: s, at: "2026-11-15T10:00:00Z", amount: 3_000_000n, businessId: b.id, accountId: b.accountId })); // 600000
+        await earn(s, "2026-11-15T10:00:00Z", 600000n); // 600000
         cs.push(c);
       }
       await Promise.all([1, 2, 3, 4, 5].map(() => runs.run("2026-11")));
@@ -271,8 +296,7 @@ describe("creators' money (B16)", () => {
     it("a refusal marks the payout failed and the balance returns; the next month's run pays it", async () => {
       const c = await creator("Nene");
       const s = await style("nene-premium", "premium", { creatorId: c.creatorId });
-      const b = await business();
-      await accrue(await paid({ styleSlug: s, at: "2026-10-15T10:00:00Z", amount: 3_000_000n, businessId: b.id, accountId: b.accountId }));
+      await earn(s, "2026-10-15T10:00:00Z", 600000n);
       provider.refusing("Account is closed.");
       await runs.run("2026-10");
       const p = await db.payout.findFirstOrThrow({ where: { creatorId: c.creatorId } });
@@ -295,28 +319,26 @@ describe("creators' money (B16)", () => {
     it("a time-out leaves the payout sent, never paid; a failed event after that gives the balance back", async () => {
       const c = await creator("Ola");
       const s = await style("ola-premium", "premium", { creatorId: c.creatorId });
-      const b = await business();
-      await accrue(await paid({ styleSlug: s, at: "2026-09-15T10:00:00Z", amount: 3_000_000n, businessId: b.id, accountId: b.accountId }));
+      await earn(s, "2026-09-15T10:00:00Z", 600000n);
       const spy = jest.spyOn(provider, "transfer").mockRejectedValueOnce(new PortTimeoutError("payments", "transfer", 1));
       await runs.run("2026-09");
       spy.mockRestore();
       const p = await db.payout.findFirstOrThrow({ where: { creatorId: c.creatorId } });
       expect(p).toMatchObject({ status: "sent", providerReference: null });
       const ev = await db.webhookEvent.create({ data: { id: ids.next(), provider: "paystack", eventId: `transfer.failed:${++seq}:${p.id}`, type: "transfer.failed", signatureValid: true, payload: {} } });
-      await runs.apply(ev.id, "transfer.failed", { reference: REFERENCE_PREFIX + p.id });
+      await runs.apply(ev.id, "transfer.failed", { reference: REFERENCE_PREFIX + p.id, amount: Number(p.amountKobo) });
       expect((await db.payout.findUniqueOrThrow({ where: { id: p.id } })).status).toBe("failed");
       expect(await royalties.balance(db, c.creatorId, null)).toBe(600000n);
       // a late success after a failure does not pay it
       const late = await db.webhookEvent.create({ data: { id: ids.next(), provider: "paystack", eventId: `transfer.success:${++seq}:${p.id}`, type: "transfer.success", signatureValid: true, payload: {} } });
-      await runs.apply(late.id, "transfer.success", { reference: REFERENCE_PREFIX + p.id });
+      await runs.apply(late.id, "transfer.success", { reference: REFERENCE_PREFIX + p.id, amount: Number(p.amountKobo) });
       expect((await db.payout.findUniqueOrThrow({ where: { id: p.id } })).status).toBe("failed");
     });
 
     it("an amount that is not the payout's marks the event and changes nothing", async () => {
       const c = await creator("Pere");
       const s = await style("pere-premium", "premium", { creatorId: c.creatorId });
-      const b = await business();
-      await accrue(await paid({ styleSlug: s, at: "2026-08-15T10:00:00Z", amount: 3_000_000n, businessId: b.id, accountId: b.accountId }));
+      await earn(s, "2026-08-15T10:00:00Z", 600000n);
       await runs.run("2026-08");
       const p = await db.payout.findFirstOrThrow({ where: { creatorId: c.creatorId } });
       const ev = await db.webhookEvent.create({ data: { id: ids.next(), provider: "paystack", eventId: `transfer.success:${++seq}:${p.id}`, type: "transfer.success", signatureValid: true, payload: {} } });
@@ -336,9 +358,7 @@ describe("creators' money (B16)", () => {
     it("a negative row, never a delete; after a payout the balance goes below zero; the next run pays the difference less", async () => {
       const c = await creator("Qudus");
       const s = await style("qudus-premium", "premium", { creatorId: c.creatorId });
-      const b = await business();
-      const nov = await paid({ styleSlug: s, at: "2026-07-15T10:00:00Z", amount: 3_000_000n, businessId: b.id, accountId: b.accountId }); // 600000
-      await accrue(nov);
+      const nov = await earn(s, "2026-07-15T10:00:00Z", 600000n);
       await runs.run("2026-07");
       const first = await db.payout.findFirstOrThrow({ where: { creatorId: c.creatorId, month: "2026-07" } });
       expect(first.amountKobo).toBe(600000n);
@@ -354,7 +374,7 @@ describe("creators' money (B16)", () => {
       const j = await journals({ paymentId: nov.id });
       expect(j.unbalanced).toEqual([]);
       expect(await payable(c.creatorId)).toBe(-600000n);
-      await accrue(await paid({ styleSlug: s, at: "2026-08-15T10:00:00Z", amount: 7_500_000n, businessId: b.id, accountId: b.accountId })); // 1500000
+      await earn(s, "2026-08-15T10:00:00Z", 1500000n); // 1500000
       expect(await payable(c.creatorId)).toBe(900000n);
 
       // the reversal is dated this month (2026-12): the run for December, on 6 January, takes it off what is owed
@@ -414,6 +434,12 @@ describe("creators' money (B16)", () => {
       expect(changed.body).toEqual({ accountNumber: "******3210", bankCode: "044" });
       expect(await db.bankAccount.count({ where: { creatorId: c.creatorId } })).toBe(2); // earlier payouts keep the account they went to
       expect(t.email.sent.slice(sentBefore)).toHaveLength(2);
+      // WW5: one bank-changed notice per change, by the notices path
+      const rows = await db.bankAccount.findMany({ where: { creatorId: c.creatorId } });
+      for (const r of rows) expect(await db.messageDelivery.count({ where: { templateKey: "bank-changed", idempotencyKey: `bank-change:${r.id}` } })).toBe(1);
+      const sentTo = t.email.sent.slice(sentBefore).map((m) => m.text);
+      expect(sentTo[1]).toContain("3210");
+      expect(sentTo[1]).not.toContain("9876543210");
     });
   });
 
@@ -423,9 +449,8 @@ describe("creators' money (B16)", () => {
       const other = await creator("Uche");
       const s = await style("tola-premium", "premium", { creatorId: mine.creatorId });
       const os = await style("uche-premium", "premium", { creatorId: other.creatorId });
-      const b = await business();
-      await accrue(await paid({ styleSlug: s, at: "2026-06-10T10:00:00Z", amount: 3_000_000n, businessId: b.id, accountId: b.accountId }));
-      await accrue(await paid({ styleSlug: os, at: "2026-06-10T10:00:00Z", amount: 3_000_000n, businessId: b.id, accountId: b.accountId }));
+      await earn(s, "2026-06-10T10:00:00Z", 600000n);
+      await earn(os, "2026-06-10T10:00:00Z", 600000n);
       await runs.run("2026-06");
       for (const path of ["/v1/creator/earnings", "/v1/creator/payouts"]) {
         expect((await t.http().get(path)).status).toBe(401);
@@ -469,8 +494,7 @@ describe("creators' money (B16)", () => {
     async function duePayout(name: string, month: string) {
       const c = await creator(name);
       const s = await style(`${name}-premium`.toLowerCase(), "premium", { creatorId: c.creatorId });
-      const b = await business();
-      await accrue(await paid({ styleSlug: s, at: `${month}-15T10:00:00Z`, amount: 3_000_000n, businessId: b.id, accountId: b.accountId }));
+      await earn(s, `${month}-15T10:00:00Z`, 600000n);
       const bank = await db.bankAccount.findFirstOrThrow({ where: { creatorId: c.creatorId } });
       const id = ids.next();
       // a payout the run made but could not hand over yet: due
@@ -505,8 +529,7 @@ describe("creators' money (B16)", () => {
     it("E-115: only finance and owner; reason and month; runs the month with an audit row; the rows are the run's payouts; running again changes nothing", async () => {
       const c = await creator("Xena");
       const s = await style("xena-premium", "premium", { creatorId: c.creatorId });
-      const b = await business();
-      await accrue(await paid({ styleSlug: s, at: "2026-04-15T10:00:00Z", amount: 3_000_000n, businessId: b.id, accountId: b.accountId }));
+      await earn(s, "2026-04-15T10:00:00Z", 600000n);
       const url = "/v1/admin/payout-runs/2026-04/approve";
       expect((await t.http().post(url).send(markBody("2026-04"))).status).toBe(401);
       expect((await t.http().post(url).set(bearer("staff-ops")).send(markBody("2026-04"))).status).toBe(403);
@@ -550,9 +573,7 @@ describe("creators' money (B16)", () => {
     it("the bank account and personal data go; the money rows stay without them; an erased creator is never paid", async () => {
       const c = await creator("Yemi");
       const s = await style("yemi-premium", "premium", { creatorId: c.creatorId });
-      const b = await business();
-      const p = await paid({ styleSlug: s, at: "2026-03-15T10:00:00Z", amount: 3_000_000n, businessId: b.id, accountId: b.accountId });
-      await accrue(p);
+      await earn(s, "2026-03-15T10:00:00Z", 600000n);
       await t.app.get(AccountErasureService).erase(c.accountId, { actor: { type: "system", id: null, requestId: "r" }, reason: null });
       expect(await db.bankAccount.findUniqueOrThrow({ where: { id: c.bankId as string } })).toMatchObject({ accountNumber: null });
       expect(await db.royaltyAccrual.count({ where: { creatorId: c.creatorId } })).toBe(1); // money rows stay
@@ -567,8 +588,7 @@ describe("creators' money (B16)", () => {
     it("a payout made before the erase is not sent after it: it fails and the balance is kept", async () => {
       const c = await creator("Zane");
       const s = await style("zane-premium", "premium", { creatorId: c.creatorId });
-      const b = await business();
-      await accrue(await paid({ styleSlug: s, at: "2026-02-15T10:00:00Z", amount: 3_000_000n, businessId: b.id, accountId: b.accountId }));
+      await earn(s, "2026-02-15T10:00:00Z", 600000n);
       const bank = await db.bankAccount.findFirstOrThrow({ where: { creatorId: c.creatorId } });
       const id = ids.next();
       await db.$transaction(async (tx) => {
@@ -580,6 +600,232 @@ describe("creators' money (B16)", () => {
       expect(await runs.sendOne(id)).toBe("failed");
       expect(provider.asked.length).toBe(asked);
       expect((await db.payout.findUniqueOrThrow({ where: { id } })).status).toBe("failed");
+    });
+  });
+
+  describe("7. P-B16: the verifier's findings (ZZ1 to ZZ4, ZZ6, ZZ7, WW5, WW8)", () => {
+    const HOUR = 3_600_000;
+    afterEach(() => {
+      t.clock.set(NOW);
+      provider.refusing(null);
+    });
+    /** A creator with 600000 earned in `month` and the payout the run would make, written by hand with its journal. */
+    async function owed(name: string, month: string, o: { status?: "pending" | "sent" | "failed"; sendingUntil?: Date | null; sentAt?: Date | null } = {}) {
+      const c = await creator(name);
+      const s = await style(`${name}-p`.toLowerCase(), "premium", { creatorId: c.creatorId });
+      await earn(s, `${month}-15T10:00:00Z`, 600000n);
+      const id = ids.next();
+      const at = new Date(`${month}-28T10:00:00Z`);
+      await db.$transaction(async (tx) => {
+        await tx.payout.create({ data: { id, creatorId: c.creatorId, month, amountKobo: 600000n, status: o.status ?? "pending", bankAccountId: c.bankId as string, createdAt: at } });
+        await tx.$executeRaw`INSERT INTO payout_detail ("payoutId", "sendingUntil", "sentAt") VALUES (${id}::uuid, ${o.sendingUntil ?? null}, ${o.sentAt ?? null})`;
+        const journalId = ids.next();
+        await tx.ledgerEntry.createMany({ data: [
+          { id: ids.next(), journalId, account: "royalties_payable", direction: "debit", amountKobo: 600000n, currency: "NGN", payoutId: id, memo: `Payout ${c.creatorId} ${month}`, createdAt: at },
+          { id: ids.next(), journalId, account: "payouts", direction: "credit", amountKobo: 600000n, currency: "NGN", payoutId: id, memo: `Payout ${c.creatorId} ${month}`, createdAt: at },
+        ] });
+      });
+      return { c, id, ref: REFERENCE_PREFIX + id };
+    }
+    const status = async (id: string) => (await db.payout.findUniqueOrThrow({ where: { id } })).status;
+    const event = (type: string, id: string, amount: unknown) =>
+      db.webhookEvent.create({ data: { id: ids.next(), provider: "paystack", eventId: `${type}:${++seq}:${id}`, type, signatureValid: true, payload: {} } }).then(async (ev) => {
+        await runs.apply(ev.id, type, { reference: REFERENCE_PREFIX + id, ...(amount === undefined ? {} : { amount }) });
+        return db.webhookEvent.findUniqueOrThrow({ where: { id: ev.id } });
+      });
+
+    it("ZZ1: an event counts only with a whole-number amount equal to the payout's: a float, a string, null, missing, negative and one kobo off change nothing and flag the payout", async () => {
+      const { id } = await owed("zz1", "2026-01", { status: "sent", sentAt: NOW });
+      for (const bad of [600000.5, "600000", null, undefined, -600000, 600001, 599999]) {
+        for (const type of ["transfer.success", "transfer.failed", "transfer.reversed"]) {
+          const ev = await event(type, id, bad);
+          expect(ev.outcome).toBe("amount_mismatch");
+          expect(await status(id)).toBe("sent");
+        }
+      }
+      expect((await db.$queryRaw<{ note: string | null }[]>`SELECT note FROM payout_detail WHERE "payoutId" = ${id}::uuid`)[0].note).toContain("different amount");
+      expect(await db.ledgerEntry.count({ where: { payoutId: id } })).toBe(2); // no journal moved
+      expect((await event("transfer.success", id, 600000)).outcome).toBe("paid");
+      expect(await status(id)).toBe("succeeded");
+    });
+
+    it("ZZ2: a claim left by a dead process is paid by the next month's run, once; a live claim is left alone", async () => {
+      const dead = await owed("zz2dead", "2026-01", { sendingUntil: new Date(NOW.getTime() - HOUR) });
+      const live = await owed("zz2live", "2026-01", { sendingUntil: new Date(NOW.getTime() + SEND_LEASE_MS) });
+      const next = await runs.run("2026-11"); // a later month's run
+      expect(next.sent).toBeGreaterThanOrEqual(1);
+      expect(await status(dead.id)).toBe("sent");
+      expect(provider.asked.filter((x) => x.reference === dead.ref)).toHaveLength(1);
+      expect(await status(live.id)).toBe("pending");
+      expect(provider.asked.filter((x) => x.reference === live.ref)).toHaveLength(0);
+      expect((await event("transfer.success", dead.id, 600000)).outcome).toBe("paid");
+      await runs.run("2026-11");
+      await runs.run("2026-11");
+      expect(provider.asked.filter((x) => x.reference === dead.ref)).toHaveLength(1); // never two transfers
+      expect(await status(dead.id)).toBe("succeeded");
+    });
+
+    it("ZZ2: a payout sent with no news for 24 hours is looked up: success pays, failed returns the balance, pending waits, unknown at the provider fails and the balance returns", async () => {
+      const ok = await owed("zz2ok", "2026-01", { status: "sent", sentAt: NOW });
+      const bad = await owed("zz2bad", "2026-01", { status: "sent", sentAt: NOW });
+      const wait = await owed("zz2wait", "2026-01", { status: "sent", sentAt: NOW });
+      const lost = await owed("zz2lost", "2026-01", { status: "sent", sentAt: NOW });
+      const fresh = await owed("zz2fresh", "2026-01", { status: "sent", sentAt: new Date(NOW.getTime() + 30 * HOUR) });
+      for (const x of [ok, bad, wait]) await provider.transfer({ reference: x.ref, amount: { kobo: 600000 } as never, bankCode: "058", accountNumber: "0123456789", narration: "x" });
+      provider.settled(ok.ref, "success");
+      provider.settled(bad.ref, "failed");
+      const asked = provider.asked.length;
+      await runs.run("2026-11"); // clock still inside the 24 hours: nobody is looked up
+      expect(await status(ok.id)).toBe("sent");
+      t.clock.set(new Date(NOW.getTime() + NO_NEWS_MS + HOUR));
+      const r = await runs.run("2026-11");
+      expect(r.looked).toBeGreaterThanOrEqual(3);
+      expect(await status(ok.id)).toBe("succeeded");
+      expect(await status(bad.id)).toBe("failed");
+      expect(await status(wait.id)).toBe("sent");
+      expect(await status(lost.id)).toBe("failed");
+      expect(await status(fresh.id)).toBe("sent"); // sent 30 hours after NOW: only 6 hours old at this clock
+      // the balance came back and the same run paid it again, in a payout of the run's month
+      for (const x of [bad, lost]) expect(await db.payout.findFirstOrThrow({ where: { creatorId: x.c.creatorId, month: "2026-11" } })).toMatchObject({ amountKobo: 600000n, status: "sent" });
+      expect(await royalties.balance(db, ok.c.creatorId, null)).toBe(0n);
+      expect(await db.payout.count({ where: { creatorId: ok.c.creatorId } })).toBe(1);
+      // looking up sends nothing: the looked-up payouts were not asked for again
+      for (const x of [ok, bad, wait, lost]) expect(provider.asked.slice(asked).filter((q) => q.reference === x.ref)).toHaveLength(0);
+      await runs.run("2026-11");
+      expect(await status(ok.id)).toBe("succeeded"); // run again: nothing changes
+      const j = await journals({ payoutId: { in: [ok.id, bad.id, lost.id] } });
+      expect(j.unbalanced).toEqual([]);
+    });
+
+    it("ZZ3: a creator whose account is banned is skipped and the balance waits; lifting the ban lets the next run pay", async () => {
+      const c = await creator("zz3");
+      const s = await style("zz3-p", "premium", { creatorId: c.creatorId });
+      await earn(s, "2026-01-15T10:00:00Z", 600000n);
+      const banId = ids.next();
+      await db.ban.create({ data: { id: banId, accountId: c.accountId, scope: "account", reason: "test ban", by: "staff", createdAt: NOW } });
+      await db.ban.create({ data: { id: ids.next(), accountId: c.accountId, scope: "publishing", reason: "other kind", until: null, by: "staff", createdAt: NOW } });
+      await runs.run("2026-11");
+      expect(await db.payout.count({ where: { creatorId: c.creatorId } })).toBe(0);
+      expect(await royalties.balance(db, c.creatorId, "2026-11")).toBe(600000n);
+      await db.ban.delete({ where: { id: banId } });
+      await db.ban.updateMany({ where: { accountId: c.accountId }, data: { until: new Date(NOW.getTime() - HOUR) } });
+      await runs.run("2026-11");
+      expect(await db.payout.findFirstOrThrow({ where: { creatorId: c.creatorId } })).toMatchObject({ amountKobo: 600000n, status: "sent" });
+      // a ban set after the payout was made holds the sending too
+      const d = await creator("zz3b");
+      const ds = await style("zz3b-p", "premium", { creatorId: d.creatorId });
+      await earn(ds, "2026-01-15T10:00:00Z", 600000n);
+      await db.ban.create({ data: { id: ids.next(), accountId: d.accountId, scope: "account", reason: "later", until: new Date(NOW.getTime() + 30 * 86_400_000), by: "staff", createdAt: NOW } });
+      const asked = provider.asked.length;
+      await runs.run("2026-11");
+      expect(provider.asked.length).toBe(asked + (await db.payout.count({ where: { creatorId: d.creatorId } })));
+      expect(await db.payout.count({ where: { creatorId: d.creatorId } })).toBe(0);
+    });
+
+    it("ZZ6: a reverse that comes before the accrue leaves a mark, once; a later accrue of that payment earns nothing", async () => {
+      const c = await creator("zz6");
+      const s = await style("zz6-p", "premium", { creatorId: c.creatorId });
+      const p = await paid({ styleSlug: s, at: "2026-11-10T10:00:00Z" });
+      expect(await db.$transaction((tx) => royalties.reverse(tx, p.id))).toEqual([]);
+      expect(await db.$transaction((tx) => royalties.reverse(tx, p.id))).toEqual([]);
+      expect(await db.ledgerEntry.count({ where: { paymentId: p.id } })).toBe(2); // one mark: a pair of zero lines
+      expect(await accrue(p)).toEqual([]);
+      expect(await rowsOf(c.creatorId)).toEqual([]);
+      expect(await royalties.balance(db, c.creatorId, null)).toBe(0n);
+    });
+
+    it("ZZ6 at once: a reverse and an accrue of one payment together leave the creator with nothing, whichever wins", async () => {
+      for (let i = 0; i < 5; i += 1) {
+        const c = await creator(`zz6x${i}`);
+        const s = await style(`zz6x${i}-p`, "premium", { creatorId: c.creatorId });
+        const p = await paid({ styleSlug: s, at: "2026-11-10T10:00:00Z" });
+        await Promise.all([db.$transaction((tx) => royalties.reverse(tx, p.id)), accrue(p)]);
+        expect(await royalties.balance(db, c.creatorId, null)).toBe(0n);
+        const rows = await rowsOf(c.creatorId);
+        expect(rows.length).toBeLessThanOrEqual(1);
+        expect(await db.$queryRaw<{ n: bigint }[]>`SELECT count(*)::bigint AS n FROM royalty_reversal WHERE "creatorId" = ${c.creatorId}::uuid`).toEqual([{ n: BigInt(rows.length) }]);
+        expect((await journals({ paymentId: p.id })).unbalanced).toEqual([]);
+      }
+    });
+
+    it("ZZ7: E-114 while a send holds its lease is 409; after the lease, or after a failure, it works", async () => {
+      const held = await owed("zz7held", "2026-01", { sendingUntil: new Date(NOW.getTime() + SEND_LEASE_MS) });
+      const url = (c: { creatorId: string }) => `/v1/admin/creators/payouts/${c.creatorId}/paid`;
+      const body = { month: "2026-01", reason: "Paid by transfer TX-7" };
+      const refused = await t.http().post(url(held.c)).set(bearer("staff-finance")).send(body);
+      expect(refused.status).toBe(409);
+      expect(await status(held.id)).toBe("pending");
+      expect(await db.auditEntry.count({ where: { subjectId: held.id } })).toBe(0);
+      t.clock.set(new Date(NOW.getTime() + SEND_LEASE_MS + 1000));
+      const after = await t.http().post(url(held.c)).set(bearer("staff-finance")).send(body);
+      expect(after.status).toBe(200);
+      expect(await status(held.id)).toBe("succeeded");
+      t.clock.set(NOW);
+
+      // after a failure: the provider refuses, the payout fails and the balance returns; staff then pay it by hand
+      const f = await owed("zz7fail", "2026-01", { status: "failed" });
+      const ok = await t.http().post(url(f.c)).set(bearer("staff-finance")).send(body);
+      expect(ok.status).toBe(200);
+      expect(await status(f.id)).toBe("succeeded");
+      const j = await journals({ payoutId: f.id });
+      expect(j.unbalanced).toEqual([]);
+    });
+
+    it("ZZ7: a send that fails after taking its lease frees it", async () => {
+      const c = await creator("zz7b");
+      const s = await style("zz7b-p", "premium", { creatorId: c.creatorId });
+      await earn(s, "2025-12-15T10:00:00Z", 600000n);
+      provider.refusing("no");
+      await runs.run("2025-12");
+      provider.refusing(null);
+      const p = await db.payout.findFirstOrThrow({ where: { creatorId: c.creatorId } });
+      expect(p.status).toBe("failed");
+      expect((await db.$queryRaw<{ sendingUntil: Date | null }[]>`SELECT "sendingUntil" FROM payout_detail WHERE "payoutId" = ${p.id}::uuid`)[0].sendingUntil).toBeNull();
+      const r = await t.http().post(`/v1/admin/creators/payouts/${c.creatorId}/paid`).set(bearer("staff-finance")).send({ month: "2025-12", reason: "Paid by transfer TX-8" });
+      expect(r.status).toBe(200);
+    });
+
+    it("WW8: at the period's end the creator stops being signed; run twice changes nothing; a standing, longer or explicit period holds; the job is not registered in tests", async () => {
+      const svc = t.app.get(SignedPeriodService);
+      async function signer(name: string, grants: { start: string; days?: number; endsAt?: string; revoked?: boolean }[]) {
+        const c = await creator(name);
+        await db.creatorState.create({ data: { id: ids.next(), accountId: c.accountId, signed: true, credits: 0, plan: "open", version: 0 } });
+        await db.creator.update({ where: { id: c.creatorId }, data: { signed: true } });
+        for (const g of grants) {
+          const pay = await paid({ styleSlug: `${tag}-none`, at: g.start, accountId: c.accountId, amount: 500_000n, sku: "creator.signed", purpose: "extra" });
+          await db.purchaseGrant.create({
+            data: {
+              id: ids.next(), paymentId: pay.id, sku: "creator.signed", kind: "creator", accountId: c.accountId, detail: g.days === undefined ? {} : { signed: true, days: g.days },
+              startsAt: new Date(g.start), endsAt: g.endsAt ? new Date(g.endsAt) : null, revokedAt: g.revoked ? new Date(g.start) : null, createdAt: new Date(g.start),
+            },
+          });
+        }
+        return c;
+      }
+      const flags = async (c: { accountId: string; creatorId: string }) => ({
+        state: (await db.creatorState.findUniqueOrThrow({ where: { accountId: c.accountId } })).signed,
+        creator: (await db.creator.findUniqueOrThrow({ where: { id: c.creatorId } })).signed,
+        version: (await db.creatorState.findUniqueOrThrow({ where: { accountId: c.accountId } })).version,
+      });
+      const over = await signer("ww8over", [{ start: "2026-10-01T10:00:00Z", days: 30 }]);
+      const nodays = await signer("ww8nodays", [{ start: "2026-10-01T10:00:00Z" }]);
+      const revoked = await signer("ww8revoked", [{ start: "2026-12-01T10:00:00Z", days: 30, revoked: true }]);
+      const standing = await signer("ww8standing", [{ start: "2026-10-01T10:00:00Z", days: 30 }, { start: "2026-12-01T10:00:00Z", days: 30 }]);
+      const explicit = await signer("ww8explicit", [{ start: "2026-10-01T10:00:00Z", days: 30, endsAt: "2027-01-10T10:00:00Z" }]);
+      const n1 = await svc.endDue();
+      expect(n1).toBeGreaterThanOrEqual(3);
+      for (const c of [over, nodays, revoked]) expect(await flags(c)).toMatchObject({ state: false, creator: false });
+      for (const c of [standing, explicit]) expect(await flags(c)).toMatchObject({ state: true, creator: true });
+      const before = await flags(over);
+      expect(await svc.endDue()).toBe(0);
+      expect(await flags(over)).toEqual(before);
+      // the standing one ends when its latest period does
+      t.clock.set(new Date("2027-02-01T10:00:00Z"));
+      await svc.endDue();
+      expect(await flags(standing)).toMatchObject({ state: false, creator: false });
+      expect(await flags(explicit)).toMatchObject({ state: false, creator: false });
+      const jobs = await db.$queryRaw<{ n: bigint }[]>`SELECT count(*)::bigint AS n FROM job WHERE type::text = 'creator-period'`;
+      expect(jobs[0].n).toBe(0n);
     });
   });
 });

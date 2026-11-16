@@ -12,7 +12,7 @@ import { AuditService, requireReason, type AuditActor } from "../audit/audit.ser
 import { RoyaltiesService } from "../royalties/royalties.service";
 import { isMonth, monthOf } from "../royalties/royalty-math";
 import type { PayoutEventSink } from "./payout-event-sink";
-import { PayoutProviderPort, TransferRefused } from "./payout-provider.port";
+import { PayoutProviderPort, TransferRefused, type TransferLookup } from "./payout-provider.port";
 import { payoutWire, type PayoutFacts } from "./payout-wire";
 
 type Tx = Prisma.TransactionClient;
@@ -20,8 +20,12 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export const PAYOUT_KEY = "payout.thresholdKobo";
 /** How long one run holds a payout it is sending; a run that dies leaves it, and the next run sends it again (keyed by the payout id). */
 export const SEND_LEASE_MS = 5 * 60_000;
+/** ZZ2: a payout left sent with no news for this long is looked up at the provider. */
+export const NO_NEWS_MS = 24 * 3_600_000;
 export const REFERENCE_PREFIX = "fw-payout-";
 const SECTION = "/admin/creators";
+/** ZZ1: the staff note left on a payout whose event named a wrong amount. */
+const FLAG_AMOUNT = "A provider event named a different amount: nothing was changed. Check with the provider.";
 const notAllowed = (message: string) => new AppError(HttpStatus.CONFLICT, "not_allowed", message);
 
 export interface RunResult {
@@ -29,6 +33,8 @@ export interface RunResult {
   created: number;
   sent: number;
   failed: number;
+  /** ZZ2: payouts sent long ago and settled by what the provider said. */
+  looked: number;
 }
 
 interface Row {
@@ -90,17 +96,23 @@ export class PayoutRunService implements PayoutEventSink {
          AND (EXISTS (SELECT 1 FROM royalty_accrual r WHERE r."creatorId" = c.id AND r.month <= ${month})
            OR EXISTS (SELECT 1 FROM royalty_reversal r WHERE r."creatorId" = c.id AND r.month <= ${month}))
        ORDER BY c.id`;
-    let created = 0;
-    for (const c of candidates) if (await this.makeFor(c.id, c.accountId, month, threshold)) created += 1;
-    const pending = await this.db.$queryRaw<{ id: string }[]>`SELECT id::text AS id FROM payout WHERE month = ${month} AND status = 'pending' ORDER BY id`;
     let sent = 0;
     let failed = 0;
-    for (const p of pending) {
-      const out = await this.sendOne(p.id);
-      if (out === "sent") sent += 1;
-      if (out === "failed") failed += 1;
-    }
-    return { month, created, sent, failed };
+    const take = async (): Promise<void> => {
+      // ZZ2: payouts left pending (a run that died) from any month up to this one, whatever their month.
+      const pending = await this.db.$queryRaw<{ id: string }[]>`SELECT id::text AS id FROM payout WHERE month <= ${month} AND status = 'pending' ORDER BY month, id`;
+      for (const p of pending) {
+        const out = await this.sendOne(p.id);
+        if (out === "sent") sent += 1;
+        if (out === "failed") failed += 1;
+      }
+    };
+    const looked = await this.lookUpStale();
+    await take();
+    let created = 0;
+    for (const c of candidates) if (await this.makeFor(c.id, c.accountId, month, threshold)) created += 1;
+    await take();
+    return { month, created, sent, failed, looked };
   }
 
   private assertOver(month: string): void {
@@ -118,6 +130,7 @@ export class PayoutRunService implements PayoutEventSink {
         throw e;
       }
       await tx.$queryRaw`SELECT id FROM creator WHERE id = ${creatorId}::uuid FOR UPDATE`;
+      if (await this.banned(tx, accountId)) return false; // ZZ3: the balance waits while the ban stands
       if (await tx.payout.findUnique({ where: { creatorId_month: { creatorId, month } }, select: { id: true } })) return false;
       const bank = await tx.bankAccount.findFirst({ where: { creatorId, accountNumber: { not: null } }, orderBy: { id: "desc" }, select: { id: true } });
       if (!bank) return false;
@@ -143,15 +156,57 @@ export class PayoutRunService implements PayoutEventSink {
     });
   }
 
+  /** ZZ3: an account-scope ban in force now (no end, or an end still ahead). Lifting it (removing it or ending it) lets the next run pay. */
+  private async banned(db: PrismaService | Tx, accountId: string | null): Promise<boolean> {
+    if (!accountId) return false;
+    const rows = await db.$queryRaw<{ n: number }[]>`
+      SELECT 1 AS n FROM ban WHERE "accountId" = ${accountId}::uuid AND scope = 'account' AND (until IS NULL OR until > ${this.clock.now()}) LIMIT 1`;
+    return rows.length > 0;
+  }
+
+  /**
+   * ZZ2: payouts sent and still sent after 24 hours (no event came: it may be lost) are asked about at the provider, outside any
+   * transaction, and settled by the answer: success pays, failed or reversed fails (the balance returns), pending waits, and a transfer
+   * the provider has never heard of, past the send lease, fails so the balance returns. An answer that cannot be had leaves it as it is.
+   */
+  async lookUpStale(): Promise<number> {
+    const now = this.clock.now();
+    const cutoff = new Date(now.getTime() - NO_NEWS_MS);
+    const stale = await this.db.$queryRaw<{ id: string; sentAt: Date }[]>`
+      SELECT p.id::text AS id, d."sentAt" FROM payout p JOIN payout_detail d ON d."payoutId" = p.id
+       WHERE p.status = 'sent' AND d."sentAt" IS NOT NULL AND d."sentAt" <= ${cutoff} ORDER BY d."sentAt", p.id`;
+    let settled = 0;
+    for (const p of stale) {
+      let answer: TransferLookup;
+      try {
+        answer = await this.provider.lookup(REFERENCE_PREFIX + p.id);
+      } catch (e) {
+        this.log.warn(`payout ${p.id} lookup gave no answer: ${e instanceof Error ? e.name : "unknown"}`);
+        continue;
+      }
+      const lease = now.getTime() - p.sentAt.getTime() > SEND_LEASE_MS;
+      const kind = answer.state === "success" || answer.state === "failed" || answer.state === "reversed" ? answer.state : answer.state === "unknown" && lease ? "lost" : null;
+      if (!kind) continue;
+      const outcome = await this.db.$transaction((tx) => this.settleIn(tx, p.id, kind, answer.amount));
+      if (outcome === "paid" || outcome === "failed") settled += 1;
+    }
+    return settled;
+  }
+
   /** Hands one pending payout to the provider, outside any transaction. */
   async sendOne(payoutId: string): Promise<"sent" | "failed" | "skipped"> {
     const now = this.clock.now();
     const until = new Date(now.getTime() + SEND_LEASE_MS);
-    const claimed = await this.db.$executeRaw`
-      UPDATE payout_detail d SET "sendingUntil" = ${until}
-        FROM payout p WHERE p.id = d."payoutId" AND d."payoutId" = ${payoutId}::uuid AND p.status = 'pending'
-         AND (d."sendingUntil" IS NULL OR d."sendingUntil" < ${now})`;
-    if (claimed === 0) return "skipped";
+    // The payout row is locked while the lease is taken, so E-114 (which locks it too) sees either the lease or the finished state.
+    const claimed = await this.db.$transaction(async (tx) => {
+      const own = await tx.$queryRaw<{ accountId: string | null }[]>`
+        SELECT c."accountId"::text AS "accountId" FROM payout p JOIN creator c ON c.id = p."creatorId" WHERE p.id = ${payoutId}::uuid AND p.status = 'pending' FOR UPDATE OF p`;
+      if (!own.length || (await this.banned(tx, own[0].accountId))) return false; // ZZ3: not sent while a ban stands; it stays pending
+      const n = await tx.$executeRaw`
+        UPDATE payout_detail SET "sendingUntil" = ${until} WHERE "payoutId" = ${payoutId}::uuid AND ("sendingUntil" IS NULL OR "sendingUntil" < ${now})`;
+      return n === 1;
+    });
+    if (!claimed) return "skipped";
     const rows = await this.db.$queryRaw<{ amountKobo: bigint; accountNumber: string | null; bankCode: string | null; erasedAt: Date | null }[]>`
       SELECT p."amountKobo", b."accountNumber", b."bankCode", a."erasedAt"
         FROM payout p JOIN bank_account b ON b.id = p."bankAccountId" JOIN creator c ON c.id = p."creatorId" LEFT JOIN account a ON a.id = c."accountId"
@@ -215,32 +270,40 @@ export class PayoutRunService implements PayoutEventSink {
       await done(this.db, "unknown_reference");
       return;
     }
-    const at = this.clock.now();
+    const kind = type === "transfer.success" ? "success" : type === "transfer.failed" ? "failed" : type === "transfer.reversed" ? "reversed" : null;
     await this.db.$transaction(async (tx) => {
-      const rows = await tx.$queryRaw<{ amountKobo: bigint; status: string }[]>`SELECT "amountKobo", status::text AS status FROM payout WHERE id = ${id}::uuid FOR UPDATE`;
-      const p = rows[0];
-      if (!p) {
-        await done(tx, "unknown_reference");
+      if (!kind) {
+        const known = await tx.$queryRaw<{ id: string }[]>`SELECT id::text AS id FROM payout WHERE id = ${id}::uuid`;
+        await done(tx, known.length ? "ignored" : "unknown_reference");
         return;
       }
-      if (typeof data.amount === "number" && Number.isSafeInteger(data.amount) && BigInt(data.amount) !== p.amountKobo) {
-        await done(tx, "amount_mismatch");
-        return;
-      }
-      if (type === "transfer.success") {
-        const moved = await tx.$executeRaw`UPDATE payout SET status = 'succeeded' WHERE id = ${id}::uuid AND status IN ('sent', 'pending')`;
-        if (moved === 1) await tx.$executeRaw`UPDATE payout_detail SET "paidAt" = ${at}, "sendingUntil" = NULL WHERE "payoutId" = ${id}::uuid`;
-        await done(tx, moved === 1 ? "paid" : "already");
-        return;
-      }
-      if (type === "transfer.failed" || type === "transfer.reversed") {
-        const reason = type === "transfer.reversed" ? "The transfer was reversed." : "The transfer failed.";
-        const failed = await this.failIn(tx, id, reason, type === "transfer.reversed" ? ["pending", "sent", "succeeded"] : ["pending", "sent"]);
-        await done(tx, failed ? "failed" : "already");
-        return;
-      }
-      await done(tx, "ignored");
+      await done(tx, await this.settleIn(tx, id, kind, data.amount));
     });
+  }
+
+  /**
+   * One outcome for one payout, in the caller's transaction (the provider's event, or the lookup of a payout with no news). The
+   * payout row is locked. ZZ1: the amount must be a whole number of kobo equal to the payout's, whatever the outcome says; a float, a
+   * string, null, nothing, a negative or one kobo off changes nothing and flags the payout for staff. `lost` (lookup only: the provider
+   * has no such transfer) fails a sent payout without an amount to check.
+   */
+  private async settleIn(tx: Tx, id: string, kind: "success" | "failed" | "reversed" | "lost", amount: unknown): Promise<string> {
+    const at = this.clock.now();
+    const rows = await tx.$queryRaw<{ amountKobo: bigint; status: string }[]>`SELECT "amountKobo", status::text AS status FROM payout WHERE id = ${id}::uuid FOR UPDATE`;
+    const p = rows[0];
+    if (!p) return "unknown_reference";
+    if (kind !== "lost" && !(typeof amount === "number" && Number.isSafeInteger(amount) && amount >= 0 && BigInt(amount) === p.amountKobo)) {
+      await tx.$executeRaw`UPDATE payout_detail SET note = COALESCE(note, ${FLAG_AMOUNT}) WHERE "payoutId" = ${id}::uuid`;
+      return "amount_mismatch";
+    }
+    if (kind === "success") {
+      const moved = await tx.$executeRaw`UPDATE payout SET status = 'succeeded' WHERE id = ${id}::uuid AND status IN ('sent', 'pending')`;
+      if (moved === 1) await tx.$executeRaw`UPDATE payout_detail SET "paidAt" = ${at}, "sendingUntil" = NULL WHERE "payoutId" = ${id}::uuid`;
+      return moved === 1 ? "paid" : "already";
+    }
+    const reason = kind === "reversed" ? "The transfer was reversed." : kind === "lost" ? "The provider has no record of this transfer." : "The transfer failed.";
+    const failed = await this.failIn(tx, id, reason, kind === "reversed" ? ["pending", "sent", "succeeded"] : kind === "lost" ? ["sent"] : ["pending", "sent"]);
+    return failed ? "failed" : "already";
   }
 
   private async failIn(tx: Tx, payoutId: string, reason: string, from: string[]): Promise<boolean> {
@@ -285,11 +348,25 @@ export class PayoutRunService implements PayoutEventSink {
     if (!UUID.test(creatorId)) throw AppError.notFound();
     const at = this.clock.now();
     const id = await this.db.$transaction(async (tx) => {
-      const rows = await tx.$queryRaw<{ id: string; status: string }[]>`
-        SELECT id::text AS id, status::text AS status FROM payout WHERE "creatorId" = ${creatorId}::uuid AND month = ${body.month} FOR UPDATE`;
+      const rows = await tx.$queryRaw<{ id: string; status: string; amountKobo: bigint; creatorId: string; month: string; sendingUntil: Date | null }[]>`
+        SELECT p.id::text AS id, p.status::text AS status, p."amountKobo", p."creatorId"::text AS "creatorId", p.month, d."sendingUntil"
+          FROM payout p LEFT JOIN payout_detail d ON d."payoutId" = p.id WHERE p."creatorId" = ${creatorId}::uuid AND p.month = ${body.month} FOR UPDATE OF p`;
       const p = rows[0];
       if (!p) throw AppError.notFound("No payout for that creator and month.");
-      if (p.status !== "pending") throw notAllowed("Only a payout that is due can be marked paid.");
+      // ZZ7: while a send holds its lease the transfer may be going out; marking it paid now could pay twice.
+      if (p.status === "pending" && p.sendingUntil && p.sendingUntil.getTime() > at.getTime()) throw notAllowed("A send is under way for this payout. Try again when it ends.");
+      if (p.status !== "pending" && p.status !== "failed") throw notAllowed("Only a payout that is due can be marked paid.");
+      if (p.status === "failed") {
+        // A failed payout gave its balance back; paid by hand, it takes the balance out again (the journal the first way round).
+        const journalId = this.ids.id();
+        const memo = `Payout ${p.creatorId} ${p.month} paid by hand`;
+        await tx.ledgerEntry.createMany({
+          data: [
+            { id: this.ids.id(), journalId, account: "royalties_payable", direction: "debit", amountKobo: p.amountKobo, currency: "NGN", payoutId: p.id, memo, createdAt: at },
+            { id: this.ids.id(), journalId, account: "payouts", direction: "credit", amountKobo: p.amountKobo, currency: "NGN", payoutId: p.id, memo, createdAt: at },
+          ],
+        });
+      }
       await tx.$executeRaw`UPDATE payout SET status = 'succeeded' WHERE id = ${p.id}::uuid`;
       await tx.$executeRaw`UPDATE payout_detail SET "paidAt" = ${at}, note = ${reason}, "sendingUntil" = NULL WHERE "payoutId" = ${p.id}::uuid`;
       await this.audit.write(tx, { actor, section: SECTION, action: "payout.mark-paid", target: { type: "Payout", id: p.id }, reason, changedFields: ["status"] });

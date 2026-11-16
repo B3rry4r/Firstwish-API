@@ -55,6 +55,15 @@
    "locale": "en-NG",
    "subject": "You are invited to the Firstwish team",
    "version": 1
+  },
+  {
+   "seedKey": "bank-changed:en-NG:1",
+   "body": "Payouts will now go to the account ending {last4} at bank {bank}. If this was not you, sign in and change it back, then write to us.\n\nFirstwish",
+   "channel": "email",
+   "key": "bank-changed",
+   "locale": "en-NG",
+   "subject": "Your payout bank account changed",
+   "version": 1
   }
  ]
 }

@@ -18,6 +18,13 @@ export interface TransferAccepted {
   providerReference: string;
 }
 
+/** What the provider says about a transfer we asked for by reference (ZZ2). `unknown`: it has no transfer by that reference. */
+export interface TransferLookup {
+  state: "success" | "failed" | "reversed" | "pending" | "unknown";
+  /** Kobo, when the provider says. */
+  amount?: number;
+}
+
 /** The provider said no and the answer is final, unlike a time-out. `message` is plain words for staff. */
 export class TransferRefused extends Error {
   constructor(message: string) {
@@ -42,4 +49,6 @@ export abstract class PayoutProviderPort {
   abstract resolveAccount(input: ResolveAccount): Promise<{ accountName: string }>;
   /** Sends money to a bank account. Rejects with TransferRefused when the provider refuses. Paid is told later by a signed event. */
   abstract transfer(input: TransferRequest): Promise<TransferAccepted>;
+  /** What became of the transfer made with this reference (ZZ2). Never sends money. */
+  abstract lookup(reference: string): Promise<TransferLookup>;
 }

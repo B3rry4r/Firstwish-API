@@ -23,7 +23,7 @@ const address = () => `b11-${process.pid}-${Date.now()}-${++n}@example.test`;
 describe("notice wording (seed)", () => {
   const seed = JSON.parse(readFileSync(join(ROOT, "prisma/seed-data/MessageTemplate.json"), "utf8")) as { rows: { key: string; subject: string; body: string; channel: string }[] };
 
-  it("the five messages are all there, by email only", () => {
+  it("the messages are all there, by email only", () => {
     expect(seed.rows.map((r) => r.key).sort()).toEqual([...TEMPLATE_KEYS].sort());
     expect(new Set(seed.rows.map((r) => r.channel))).toEqual(new Set(["email"]));
   });
@@ -368,17 +368,17 @@ describe("notices (contract)", () => {
       expect((await t.http().get("/v1/admin/messages/templates").set(bearer("finance"))).status).toBe(403);
       expect((await edit("moderator", "opened", good)).status).toBe(403);
     });
-    it("owner, ops and support read the six messages", async () => {
+    it("owner, ops and support read the seven messages", async () => {
       for (const who of ["owner", "ops", "support"]) {
         const r = await t.http().get("/v1/admin/messages/templates").set(bearer(who));
         expect(r.status).toBe(200);
-        expect((r.body.items as { key: string }[]).map((i) => i.key)).toEqual(["code", "invite", "opened", "opens", "resting", "sealed"]);
+        expect((r.body.items as { key: string }[]).map((i) => i.key)).toEqual(["bank-changed", "code", "invite", "opened", "opens", "resting", "sealed"]);
         expect(r.body.nextCursor).toBeNull();
       }
       const p = await t.http().get("/v1/admin/messages/templates").query({ limit: 2 }).set(bearer("ops"));
       expect(p.body.items).toHaveLength(2);
       const p2 = await t.http().get("/v1/admin/messages/templates").query({ limit: 2, cursor: p.body.nextCursor }).set(bearer("ops"));
-      expect((p2.body.items as { key: string }[]).map((i) => i.key)).toEqual(["opened", "opens"]);
+      expect((p2.body.items as { key: string }[]).map((i) => i.key)).toEqual(["invite", "opened"]);
     });
     it("422 for a short reason, a dropped placeholder, an unknown one, an emoji, a banned word or an empty body; 404 for an unknown message", async () => {
       expect((await edit("ops", "opened", { ...good, reason: "ab" })).status).toBe(422);

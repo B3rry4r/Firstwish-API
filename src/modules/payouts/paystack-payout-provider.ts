@@ -1,6 +1,6 @@
 import { PAYSTACK_BASE_URL } from "../../common/ports/adapters/paystack.adapter";
 import { getJson, postJson, ProviderError } from "../../common/ports/adapters/http";
-import { AccountNotFound, PayoutProviderPort, ResolveAccount, TransferAccepted, TransferRefused, TransferRequest } from "./payout-provider.port";
+import { AccountNotFound, PayoutProviderPort, ResolveAccount, TransferAccepted, TransferLookup, TransferRefused, TransferRequest } from "./payout-provider.port";
 
 interface Envelope<T> {
   status: boolean;
@@ -57,6 +57,22 @@ export class PaystackPayoutProvider extends PayoutProviderPort {
     } catch (e) {
       if (e instanceof AccountNotFound) throw new TransferRefused(e.message);
       if (e instanceof ProviderError && e.status >= 400 && e.status < 500) throw new TransferRefused(e.message);
+      throw e;
+    }
+  }
+
+  /** GET /transfer/verify/:reference. A 404 is "no such transfer". NOT RUN against the real service. */
+  async lookup(reference: string): Promise<TransferLookup> {
+    try {
+      const r = await getJson<Envelope<{ status?: string; amount?: number }>>("paystack", `${this.baseUrl}/transfer/verify/${encodeURIComponent(reference)}`, this.auth);
+      const status = r.data?.status;
+      const amount = typeof r.data?.amount === "number" ? r.data.amount : undefined;
+      if (status === "success") return { state: "success", amount };
+      if (status === "failed") return { state: "failed", amount };
+      if (status === "reversed") return { state: "reversed", amount };
+      return { state: "pending", amount };
+    } catch (e) {
+      if (e instanceof ProviderError && e.status === 404) return { state: "unknown" };
       throw e;
     }
   }

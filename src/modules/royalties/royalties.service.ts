@@ -19,6 +19,7 @@ type Tx = Prisma.TransactionClient;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const SLUG = /^[a-z0-9][a-z0-9-]{0,63}$/;
 const PREMIUM_STYLE_SKU = "extra.premium-style";
+const REVERSED_FIRST = "Royalty reversed before accrual ";
 
 export interface AccrualMade {
   accrualId: string;
@@ -48,7 +49,7 @@ const num = (v: bigint | number | null | undefined): number => Number(v ?? 0);
  *
  * What earns (T-65, T-66, T-67, T-77): a person's paid wish in a creator's Premium style earns the creator 20% of the premium
  * style's price in force at that payment (the payment's own price-book version and moment); a business's paid wish in a creator's
- * Premium style earns 20% of what the business paid; a Pass wish earns nothing (it draws from the Pass, so there is no payment of
+ * Premium style earns the same (ZZ4: 20% of the premium style's price in force, never of what else the payment held); a Pass wish earns nothing (it draws from the Pass, so there is no payment of
  * its own to accrue from: set nowhere); a Standard or Starter style, and a house style, earn nothing. A style made from another
  * creator's template gives a quarter of the royalty to that creator, out of it. Every share rounds down to the kobo; the rest
  * stays with Firstwish. A wish earns once: a second payment for a wish whose royalty stands changes nothing.
@@ -67,6 +68,9 @@ export class RoyaltiesService {
     const lines = paidLines(payment);
     const wishLine = lines.find((l) => l.sku.startsWith("ticket.") || l.sku === PREMIUM_STYLE_SKU);
     if (!wishLine || payment.status !== "succeeded" || (!payment.accountId && !payment.businessId)) return [];
+    // ZZ6: the payment row is locked first (a reverse takes the same lock first), so a reverse and an accrue of one payment never pass each other.
+    await tx.$queryRaw`SELECT id FROM payment WHERE id = ${payment.id}::uuid FOR UPDATE`;
+    if (await this.reversedFirst(tx, payment.id)) return [];
 
     const request = readOptions(payment.options).request;
     const named = typeof request.options?.style === "string" ? request.options.style.trim().toLowerCase() : "";
@@ -91,13 +95,10 @@ export class RoyaltiesService {
     const templatePercent = Number(cfg.templateRoyaltyPercent);
     if (!Number.isSafeInteger(sharePercent) || !Number.isSafeInteger(templatePercent)) throw new Error("price book: the creator share is not set");
 
+    // ZZ4: whoever pays, and whatever else is in the payment, the base is the premium style's price in force at that payment.
     const business = payment.businessId !== null;
-    let base: bigint;
-    if (business) base = payment.amountKobo;
-    else {
-      const q = await this.book.quote([{ sku: PREMIUM_STYLE_SKU }], payment.createdAt, { version: payment.priceBookVersion, db: tx });
-      base = BigInt(q.lines[0].unitKobo);
-    }
+    const q = await this.book.quote([{ sku: PREMIUM_STYLE_SKU }], payment.createdAt, { version: payment.priceBookVersion, db: tx });
+    const base = BigInt(q.lines[0].unitKobo);
     const royalty = percentOf(base, sharePercent);
     if (royalty === 0n) return [];
 
@@ -149,9 +150,13 @@ export class RoyaltiesService {
    */
   async reverse(tx: Tx, paymentId: string): Promise<{ creatorId: string; amountKobo: bigint }[]> {
     if (!UUID.test(paymentId)) throw AppError.notFound();
+    await tx.$queryRaw`SELECT id FROM payment WHERE id = ${paymentId}::uuid FOR UPDATE`;
     const accruals = await tx.$queryRaw<{ id: string; creatorId: string; amountKobo: bigint }[]>`
       SELECT id::text AS id, "creatorId"::text AS "creatorId", "amountKobo" FROM royalty_accrual WHERE "paymentId" = ${paymentId}::uuid ORDER BY id`;
-    if (!accruals.length) return [];
+    if (!accruals.length) {
+      await this.markReversedFirst(tx, paymentId);
+      return [];
+    }
     const lockIds = [...new Set(accruals.map((a) => a.creatorId))].sort();
     await tx.$queryRaw`SELECT id FROM creator WHERE id = ANY(${lockIds}::uuid[]) ORDER BY id FOR UPDATE`;
     const payment = await tx.payment.findUniqueOrThrow({ where: { id: paymentId } });
@@ -179,6 +184,29 @@ export class RoyaltiesService {
       out.push({ creatorId: a.creatorId, amountKobo: negative });
     }
     return out;
+  }
+
+  /** ZZ6: has a reverse of this payment already come (before any accrual of it)? The mark is a pair of zero-kobo ledger lines. */
+  private async reversedFirst(tx: Tx, paymentId: string): Promise<boolean> {
+    const rows = await tx.$queryRaw<{ n: number }[]>`
+      SELECT 1 AS n FROM ledger_entry WHERE "paymentId" = ${paymentId}::uuid AND account = 'royalties-payable' AND memo = ${REVERSED_FIRST + paymentId} LIMIT 1`;
+    return rows.length > 0;
+  }
+
+  /** ZZ6: a reverse that finds no accrual leaves the mark, once, when the payment is one a royalty could come from. */
+  private async markReversedFirst(tx: Tx, paymentId: string): Promise<void> {
+    const payment = await tx.payment.findUnique({ where: { id: paymentId } });
+    if (!payment || !paidLines(payment).some((l) => l.sku.startsWith("ticket.") || l.sku === PREMIUM_STYLE_SKU)) return;
+    if (await this.reversedFirst(tx, paymentId)) return;
+    const journalId = this.ids.id();
+    const at = this.clock.now();
+    const memo = REVERSED_FIRST + paymentId;
+    await tx.ledgerEntry.createMany({
+      data: [
+        { id: this.ids.id(), journalId, account: "royalties_payable", direction: "debit", amountKobo: 0n, currency: "NGN", paymentId, memo, createdAt: at },
+        { id: this.ids.id(), journalId, account: "royalties_payable", direction: "credit", amountKobo: 0n, currency: "NGN", paymentId, memo, createdAt: at },
+      ],
+    });
   }
 
   /** A creator that can be paid: not house, its account not erased. */

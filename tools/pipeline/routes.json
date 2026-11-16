@@ -1886,14 +1886,24 @@
         "note": "{staff, accessToken, accessTokenExpiresAt}; the refresh token only in the httpOnly staff cookie (DEC-148)"
       }
     },
-    "POST /v1/admin/auth/refresh": {
-      "decision": "DEC-148",
-      "response": {
-        "entity": "StaffAuthResult",
-        "cardinality": "single",
-        "note": "{staff, accessToken, accessTokenExpiresAt}; rotates the staff cookie, 10-second grace, a reused old cookie ends the family (DEC-148)"
+    "POST /v1/admin/auth/refresh": [
+      {
+        "decision": "DEC-148",
+        "response": {
+          "entity": "StaffAuthResult",
+          "cardinality": "single",
+          "note": "{staff, accessToken, accessTokenExpiresAt}; rotates the staff cookie, 10-second grace, a reused old cookie ends the family (DEC-148)"
+        }
+      },
+      {
+        "decision": "DEC-216",
+        "response": {
+          "entity": "StaffAuthResult",
+          "cardinality": "single",
+          "note": "{staff, accessToken, accessTokenExpiresAt}; rotates the staff cookie, 10-second grace, a reused old cookie ends the family (DEC-148); 401 no_session when the request carries no staff cookie or a malformed one (HM6); an ended, reused or ended-staff session keeps 401 unauthorized"
+        }
       }
-    },
+    ],
     "POST /v1/auth/codes/verify": {
       "decision": "DEC-150",
       "response": {
@@ -1910,14 +1920,24 @@
         "note": "AuthResult with returnTo; the refresh token only in the httpOnly cookie (DEC-150)"
       }
     },
-    "POST /v1/auth/refresh": {
-      "decision": "DEC-150",
-      "response": {
-        "entity": "AuthResult",
-        "cardinality": "single",
-        "note": "AuthResult; rotates the cookie, 10-second grace, a reused old cookie ends its family (DEC-150)"
+    "POST /v1/auth/refresh": [
+      {
+        "decision": "DEC-150",
+        "response": {
+          "entity": "AuthResult",
+          "cardinality": "single",
+          "note": "AuthResult; rotates the cookie, 10-second grace, a reused old cookie ends its family (DEC-150)"
+        }
+      },
+      {
+        "decision": "DEC-216",
+        "response": {
+          "entity": "AuthResult",
+          "cardinality": "single",
+          "note": "AuthResult; rotates the cookie, 10-second grace, a reused old cookie ends its family (DEC-150); 401 no_session when the request carries no refresh cookie or a malformed one (HM6); an ended, reused or erased session keeps 401 unauthorized"
+        }
       }
-    },
+    ],
     "POST /v1/auth/google/start": {
       "decision": "DEC-151",
       "response": {
@@ -2403,7 +2423,16 @@
           "x-unlock-token": "header (optional: the link's unlock token, where the wish has a passcode)"
         }
       }
-    ]
+    ],
+    "POST /v1/wishes": {
+      "decision": "DEC-214",
+      "set": {
+        "kind": "string (optional; the kind chosen so far: a start that carries one counts as an answer; absent, the draft starts on the default kind)",
+        "occasion": "string (optional; the occasion chosen so far: counts as an answer when sent)",
+        "style": "string (optional; the style chosen so far: counts as an answer when sent; absent, the default style)",
+        "idempotency-key": "header (optional: 8 to 100 letters, digits or . _ : -; the same key answers the same draft, one row)"
+      }
+    }
   },
   "extraFields": [
     {

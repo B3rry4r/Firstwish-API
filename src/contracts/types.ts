@@ -1652,7 +1652,7 @@ export interface WebhookEvent {
   type: string;
 }
 
-/** Wish: table. written by E-220, E-222..E-233 and server:wish-lifecycle; content is a document column; content is JSON (DEC-64 typed WishData, DEC-82 Wish.content.details object) though the registry's top-level type reads string */
+/** Wish: table. written by E-220, E-222..E-233 and server:wish-lifecycle; content is a document column; content is JSON (DEC-64 typed WishData, DEC-82 Wish.content.details object) typed object in the registry (HM4, DEC-215) */
 export interface Wish {
   accountId: string;
   action: unknown;
@@ -1661,7 +1661,7 @@ export interface Wish {
   amount: Kobo;
   at: Instant;
   businessId?: string | null;
-  content?: string | null;
+  content?: Record<string, unknown> | null;
   createdAt: Instant;
   days: number;
   endsAt?: Instant | null;
@@ -4354,18 +4354,20 @@ export type PostWishesParams = Record<string, never>;
 export interface PostWishesBody {
   /** string (account.name) */
   from: string;
-  /** string */
-  kind: string;
+  /** string (optional; the kind chosen so far: a start that carries one counts as an answer; absent, the draft starts on the default kind) */
+  kind?: string;
   /** string (from ?for=) */
   name: string;
-  /** string */
-  occasion: string;
+  /** string (optional; the occasion chosen so far: counts as an answer when sent) */
+  occasion?: string;
   /** string (account.pro.business) teams/photographers only */
   studio: string;
-  /** string (default styleFor, or ?style= when it fits) */
-  style: string;
+  /** string (optional; the style chosen so far: counts as an answer when sent; absent, the default style) */
+  style?: string;
 }
-export type PostWishesHeaders = Record<string, never>;
+export interface PostWishesHeaders {
+  "idempotency-key"?: string;
+}
 export type PostWishesResponse = Wish;
 
 /** E-223 DELETE /v1/wishes/:id. Auth: business; signed in. */

@@ -37,6 +37,8 @@ type Db = Prisma.TransactionClient | PrismaService;
 
 const COOKIE = /^([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\.([A-Za-z0-9_-]{16,200})$/;
 const ENDED = () => AppError.unauthorized("Your session has ended. Sign in again.");
+/** HM6: a refresh with no cookie, or one that is not a refresh cookie at all, is a visitor with no session: its own code, so the web shows nothing. */
+const NO_SESSION = () => new AppError(401, "no_session", "There is no session. Sign in to continue.");
 
 /**
  * Session families, shared by the user and the staff sign-in (T4, V1, V2). A sign-in starts a family; each refresh rotates the
@@ -69,7 +71,7 @@ export class SessionFamilies {
    */
   async rotate(cookie: string | null, kind: Holder["kind"], meta: ClientMeta, life: SessionLife): Promise<StartedSession> {
     const parsed = cookie ? COOKIE.exec(cookie) : null;
-    if (!parsed) throw ENDED();
+    if (!parsed) throw NO_SESSION();
     const [, id, token] = parsed;
     const outcome = await this.prisma.$transaction(async (tx) => {
       const now = this.clock.now();

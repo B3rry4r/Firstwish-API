@@ -460,6 +460,8 @@ def resource_interface(r: dict) -> str:
     for n, f in plain.items():
         q = "?" if f["nullable"] else ""
         t = ts_field_type(r["name"], f)
+        if n in tree:
+            t = "Record<string, unknown>"  # HM4: a parent with named children is an object, never the text a bare mention typed it as
         if f["nullable"] and "null" not in t and t != "unknown":
             t = f"{t} | null"
         lines.append(f"  {prop(n)}{q}: {t};")

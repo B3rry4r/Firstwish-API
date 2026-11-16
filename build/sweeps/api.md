@@ -35,3 +35,4 @@
 - B18: 30 wrong passcode tries lock a reveal link for an hour for everyone (same as the receiver link, NN6).
 - Join 5: a refund.processed event that arrives before the refund is recorded as sent is left for the provider's retry; apply it when the refund is claimed too.
 - B21 admin-wishes.service.ts resend: the day is counted on the database's clock, not the Clock port (a fake clock does not roll the day).
+- B(INT-5) migration 20261120090000: the legacy-wish check tests "off" IS NOT NULL, so a wish with off=false and no words would block it (no live rows today).

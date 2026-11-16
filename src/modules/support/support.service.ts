@@ -278,4 +278,55 @@ export class SupportService {
     const rows = await this.prisma.savedReply.findMany({ orderBy: [{ name: "asc" }, { id: "asc" }] });
     return rows.map((r) => ({ id: r.id, name: r.name ?? "", text: r.text ?? "" }));
   }
+
+  /** E-251: add a saved reply. A name and the words, both plain text; one audit row in the same transaction. */
+  async addSavedReply(nameIn: string, textIn: string, reasonIn: string, actor: AuditActor): Promise<SavedReply> {
+    const reason = requireReason(reasonIn);
+    const name = this.savedName(nameIn);
+    const text = this.savedText(textIn);
+    return this.prisma.$transaction(async (tx) => {
+      const row = await tx.savedReply.create({ data: { id: this.ids.id(), name, text } });
+      await this.audit.write(tx, { actor, section: SECTION, action: "support.saved-reply.add", target: { type: "saved_reply", id: row.id }, reason, changedFields: ["name", "text"] });
+      return { id: row.id, name, text };
+    });
+  }
+
+  /** E-253: change a saved reply's name or text (at least one). The reply is locked while it changes. */
+  async changeSavedReply(id: string, change: { name?: string; text?: string }, reasonIn: string, actor: AuditActor): Promise<SavedReply> {
+    const reason = requireReason(reasonIn);
+    if (change.name === undefined && change.text === undefined) throw AppError.validation({ name: "Send a name or the words to change." });
+    const name = change.name === undefined ? undefined : this.savedName(change.name);
+    const text = change.text === undefined ? undefined : this.savedText(change.text);
+    if (!UUID.test(id)) throw AppError.notFound("No such saved reply.");
+    return this.prisma.$transaction(async (tx) => {
+      const found = await tx.$queryRaw<{ id: string }[]>`SELECT id::text AS id FROM saved_reply WHERE id = ${id}::uuid FOR UPDATE`;
+      if (!found[0]) throw AppError.notFound("No such saved reply.");
+      const row = await tx.savedReply.update({ where: { id }, data: { ...(name !== undefined ? { name } : {}), ...(text !== undefined ? { text } : {}) } });
+      await this.audit.write(tx, { actor, section: SECTION, action: "support.saved-reply.change", target: { type: "saved_reply", id }, reason, changedFields: [...(name !== undefined ? ["name"] : []), ...(text !== undefined ? ["text"] : [])] });
+      return { id: row.id, name: row.name ?? "", text: row.text ?? "" };
+    });
+  }
+
+  /** E-252: remove a saved reply. */
+  async removeSavedReply(id: string, reasonIn: string, actor: AuditActor): Promise<void> {
+    const reason = requireReason(reasonIn);
+    if (!UUID.test(id)) throw AppError.notFound("No such saved reply.");
+    await this.prisma.$transaction(async (tx) => {
+      const gone = await tx.savedReply.deleteMany({ where: { id } });
+      if (!gone.count) throw AppError.notFound("No such saved reply.");
+      await this.audit.write(tx, { actor, section: SECTION, action: "support.saved-reply.remove", target: { type: "saved_reply", id }, reason, changedFields: ["name", "text"] });
+    });
+  }
+
+  private savedName(v: string): string {
+    const name = v.replace(/\s+/g, " ").trim();
+    if (!name || name.length > 80) throw AppError.validation({ name: "Give it a name of 1 to 80 characters." });
+    return name;
+  }
+
+  private savedText(v: string): string {
+    const problem = textProblem(v, 4000, "reply");
+    if (problem) throw AppError.validation({ text: problem });
+    return v.trim();
+  }
 }

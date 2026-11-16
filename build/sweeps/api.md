@@ -1,13 +1,12 @@
 # API: what is still open (16 Nov 2026, after the leftovers bundle INT-7). Closed lines are in api-closed.md.
 
 ## For the next API base (a registry or shared change)
-- HG1 (ruling): a Concierge give carries the maker the staff member saw (expected maker); a mismatch is 409 order_changed and
-  nothing changes. The give route's body gains the field; the staff Concierge screen (W14) sends it.
-- draw-giveback.ts:44: a client-wish record with drawFrom "pack" and NO payment recorded skips the "source still stands"
-  test, so a hand-built record could return a wish to a refunded pack. No route makes such a record and none exists (the
-  column was filled for every row at the migration). Give back to a pack only when the business holds a standing pack grant.
-- royalties/draw-source.ts:70: with two packs, after a wish of the first pack is given back, the next draw is sourced to the
-  second pack (so it can be named for a sixth wish). Count each pack's standing draws separately.
+- A refresh with no cookie answers a distinct error code, so the web can show the server's words for an ended session
+  without showing them to a first-time visitor (build/sweeps/web.md, W0b F3).
+- standins.ts:96 (the stand-in mail file, test stacks only): the file is mode 0644 and holds sign-in codes: make it 0600;
+  a bad path (a directory) makes each send throw while the code request still answers "sent": check the path at boot.
+- Pack fallback (TT5 path, draws with no record: none exist, nothing is live): at most one paid place can be lost on a
+  refund when an unrecorded draw was really the refunded pack's. Accepted.
 
 ## Not run against the real provider
 - B08 and INT-7: the Paystack refund lookup by amount, the refund, the payout and the settlement calls (stand-ins and a local

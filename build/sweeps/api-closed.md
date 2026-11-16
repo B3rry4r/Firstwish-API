@@ -32,3 +32,14 @@
 - B23 stale cut and closing mark: theoretical (port limit 60 s); a typed closing mark only affects the caller's own request.
 - E-228: wish-keeps.service.ts accepts days, keep and keepKey; two that disagree are 422.
 - Wave 3 join invite email wording: the invite template is in the seed.
+
+## Closed 16 Nov by API-BASE-2 and P-PACK-REFUND (verified)
+- HG1 (ruling): a Concierge give carries the maker the staff member saw (expected maker); a mismatch is 409 order_changed and
+  nothing changes. The give route's body gains the field; the staff Concierge screen (W14) sends it.
+- draw-giveback.ts:44: a client-wish record with drawFrom "pack" and NO payment recorded skips the "source still stands"
+  test, so a hand-built record could return a wish to a refunded pack. No route makes such a record and none exists (the
+  column was filled for every row at the migration). Give back to a pack only when the business holds a standing pack grant.
+- royalties/draw-source.ts:70: with two packs, after a wish of the first pack is given back, the next draw is sourced to the
+  second pack (so it can be named for a sixth wish). Count each pack's standing draws separately.
+
+- HJ1: a pack refund takes away only that pack's own unused places. HK1: the stand-in mail file for test stacks.

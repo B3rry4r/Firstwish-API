@@ -16,3 +16,4 @@
 - price-book.contract.spec.ts Z3: the setup accepts 200 or 409 on the threshold put.
 - moderation/reports.service.ts:125: the per-email limit treats a+1@ and a+2@ as different addresses (use canonicalEmail).
 - pro-business/client-wishes.service.ts:129: an invited, not yet active, login counts as a member for making client wishes, while purchases/business-handlers.ts:80 needs an active one: make both need an active login.
+- HG1 (ruling): a Concierge give carries the maker the staff member saw (expected maker); a mismatch is 409 order_changed. Needs the registry body of the give route to gain the field; the staff screen (W14) sends it.

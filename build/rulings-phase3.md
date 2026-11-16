@@ -734,3 +734,8 @@ HF2 (INT-7 verify, medium) Working out which pack a wish is drawn from ignores r
 HF3 (INT-7 verify, low) The "more logins than the plan allows" notice is sent once while that stays true, not once per payment;
     the stand-in refund lookup matches the amount as the real adapter does; a Numbers target set by a principal with no staff
     row is refused with a 4xx. (INT-7 patch.) A draft drawn last month and removed this month gives nothing back: accepted.
+HG1 (give race) Two staff giving one Concierge order: the code is right (overlapping gives end one 200 and one 409; a give
+    after another has landed is a "give again", which A9 allows). The gap: a staff member acting on a stale screen silently
+    replaces the maker. A give carries what the staff member saw (the order's maker, or none); if the order no longer
+    matches it answers 409 order_changed and changes nothing. A body field, so a registry change: with the next API base,
+    and the staff Concierge screen (W14) sends it. Default (lead), owner may override.

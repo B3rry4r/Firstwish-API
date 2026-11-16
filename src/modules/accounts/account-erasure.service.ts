@@ -12,6 +12,7 @@ import { JobsService } from "../jobs/jobs.service";
 import { ERASE_WISH_FILE_PREFIX, UNOPENED_DAYS } from "../wishes/wish-lifecycle.service";
 import { StudioErasure } from "../studio/studio-erasure";
 import { FileJobs } from "../stored-files/file-jobs";
+import { passBusinessWishesToOwner } from "../wishes/business-wishes";
 import type { Db } from "./account-rules";
 
 /** How young the session family (the sign-in) must be for a person to erase their own account. */
@@ -115,6 +116,8 @@ export class AccountErasureService {
 
   private async blankAll(tx: Db, accountId: string, email: string | null, handle: string | null): Promise<void> {
     const now = this.clock.now();
+    // ZB4: the business wishes this login made (drafts and sealed) pass to the business owner's account and keep playing; the rest of this account goes.
+    await passBusinessWishesToOwner(tx, { fromAccountIds: [accountId] });
     const businessIds = (await tx.business.findMany({ where: { accountId }, select: { id: true } })).map((b) => b.id);
     const creatorIds = (await tx.creator.findMany({ where: { accountId }, select: { id: true } })).map((c) => c.id);
     // RR3 / ZB3: the account's own wishes, and the wishes made for its businesses (a login's client wishes carry the business).

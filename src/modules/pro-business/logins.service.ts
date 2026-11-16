@@ -9,6 +9,7 @@ import { normaliseEmail } from "../../common/normalise/email";
 import { IdGenerator } from "../../common/ports/ids.port";
 import { NoticesService } from "../notices/notices.service";
 import type { TemplateKey } from "../notices/catalog";
+import { passBusinessWishesToOwner } from "../wishes/business-wishes";
 import { PlanView } from "./plan-view";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -71,8 +72,13 @@ export class LoginsService {
     if (!UUID.test(id)) throw AppError.notFound();
     await this.prisma.$transaction(async (tx) => {
       await lockBusinessOwner(tx, businessId);
-      const n = await tx.$executeRaw`UPDATE login SET status = 'removed' WHERE id = ${id}::uuid AND "businessId" = ${businessId}::uuid AND coalesce(status, '') <> 'removed'`;
-      if (n === 0) throw AppError.notFound();
+      const gone = await tx.$queryRaw<{ contact: string | null }[]>`UPDATE login SET status = 'removed' WHERE id = ${id}::uuid AND "businessId" = ${businessId}::uuid AND coalesce(status, '') <> 'removed' RETURNING contact`;
+      if (gone.length === 0) throw AppError.notFound();
+      // ZB5: the business's wishes this login made (drafts and sealed) pass to the owner's account in this same transaction.
+      const email = normaliseEmail(gone[0].contact ?? "");
+      if (!email) return;
+      const accounts = await tx.$queryRaw<{ id: string }[]>`SELECT id::text AS id FROM account WHERE "erasedAt" IS NULL AND lower(trim(contact)) = ${email}`;
+      await passBusinessWishesToOwner(tx, { fromAccountIds: accounts.map((x) => x.id), businessId });
     });
   }
 }

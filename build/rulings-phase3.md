@@ -713,3 +713,14 @@ HC1 (join 6 hand-back) After an owner's erase, the Vault files a reveal still sh
     then removed with it (as a kept wish's own files are): a reveal that plays must have its photos. (Join 6 patch.)
 HC2 (join 6 hand-back) Closing base: a `cancelled` job status (the join marks a cancelled job with history as succeeded for
     now); the schema-map erase rule for ClientWish.reveal says what the code does (blanked at the end of the term).
+HD1 (join 6 verify, medium) A login's own erase blanks their contact in the business's login rows too. (Join 6 patch.)
+HD2 (join 6 verify, medium) A client wish earns from the payment it was DRAWN against, not from what the business holds when
+    it is sealed: the draw records its source (month or pack, and which payment) on the client-wish record at the draw; the
+    seal reads it. Needs a column (closing base), built there with the verifier's case (April Starter 4 used, May Studio, 8
+    sheet wishes: six at 70,000, two at 60,000). Until then a sheet or date wish sealed in a later month can earn the wrong
+    share: owed, not accepted.
+HD3 (join 6 verify) The login check for making a business wish runs under the business owner's lock, so a wish made while its
+    login is being removed belongs to the owner; POST /v1/business/client-wishes never answers 500 under load (find the
+    cause). (Join 6 patch.)
+HD4 (join 6 verify) Extra Vault space shows no VAT line and books none, like the creator lines: OWNER QUESTION with them
+    (which lines carry VAT beyond Pro plans, wish packs and Concierge). Until answered the invoice states the total only.

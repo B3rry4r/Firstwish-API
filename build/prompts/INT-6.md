@@ -4,7 +4,7 @@ prisma through schema-map.json + gen_schema.py and ONE new migration, src/common
 build/baselines/** (remove a line when it no longer applies; never add one); and you may touch src/modules/** only where a
 shared change forces it (list each touch).
 Read /home/user/Firstwish-API/build/common-rules.md, build/prompts/P5-COMMON.md, build/prompts/INT-5.md (how the last one was done), then in
-build/rulings-phase3.md the lines FB1, FB2, FB4, GA2, GC1, GC2, GD4, HA1, HA3, ZB4 (ClientWish.wishId in the contract), CB4, and
+build/rulings-phase3.md the lines FB1, FB2, FB4, GA2, GC1, GC2, GD4, HA1, HA3, HC2, HD2, ZB4 (ClientWish.wishId in the contract), CB4, and
 any line the lead adds to this brief below.
 Work: local branch `int-6` from claude/sleepy-mayer-f0hkb8 (the head in your spawn line) of /home/user/Firstwish-API; worktree
 /tmp/claude-0/-home-user/533566a9-6497-503f-863f-065ac253d739/scratchpad/build/wt/b-int-6 (`npm ci`); ports 5050-5059; TEST_DB_PREFIX=int6 for every run.
@@ -18,6 +18,12 @@ Work: local branch `int-6` from claude/sleepy-mayer-f0hkb8 (the head in your spa
     around these gaps are replaced by the generated ones where it is a small change (else leave it and say so).
  2. Schema, one migration: GC2 (ai_request.voiceFileId: deleting or erasing the voice file clears the link); anything the
     reopen forces. Tried on rows shaped like live data; check-drift passes with an empty baseline.
+ 2b. HD2 (ruling in build/rulings-phase3.md): ClientWish gains the source of its draw (month or pack, and the payment it was
+    counted against); the business draw writes it at the draw; the royalty accrual at the seal reads it instead of working
+    the source out at seal time. Test with the verifier's case by hand: April Starter with 4 used, May Studio (6 rolled),
+    8 sheet wishes drawn then all sealed in a creator's Premium style: six earn 70,000 and two earn 60,000; the usePlan
+    seal (draw and seal together) is unchanged. Also HC2: a \`cancelled\` job status used by JobsService.cancel; the
+    schema-map erase rule for ClientWish.reveal says blanked at the end of the term.
  3. Kernel: every provider port (payments, refunds, payouts, email, storage, AI, screening, video render) gains ping(): the
     real adapter makes one cheap authenticated read and answers ok or the provider's error; a stand-in answers "stand-in".
     The staff Providers read shows connected ONLY when the real adapter is configured AND its ping succeeded now (cached for

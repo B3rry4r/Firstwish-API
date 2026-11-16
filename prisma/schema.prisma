@@ -597,6 +597,7 @@ model MessageDelivery {
   @@unique([idempotencyKey])
   @@index([status, id])
   @@index([createdAt, id])
+  @@index([providerMessageId], map: "message_delivery_providerMessageId_idx")
   @@map("message_delivery")
 }
 

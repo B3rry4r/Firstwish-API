@@ -10,6 +10,7 @@ import type { Account, PersonDetail } from "../../contracts";
 import { AccountErasureService } from "../accounts/account-erasure.service";
 import { type AuditActor, AuditService, requireReason } from "../audit/audit.service";
 import { BansService } from "../moderation/bans.service";
+import { PERSON_ACTION_ROLES, requireActionRole } from "./action-roles";
 import { UUID } from "./mask";
 import { maskEmail, maskPhone, paymentWire, wishWire } from "./wire";
 
@@ -94,7 +95,8 @@ export class AdminPeopleService {
   }
 
   /** E-3: ban (sign-in), lift (every ban in force) or erase. Each is one transaction with its audit row, written by the service that does it. */
-  async act(id: string, action: string, reasonText: string, actor: AuditActor): Promise<PersonDetail> {
+  async act(id: string, action: string, reasonText: string, actor: AuditActor, roles: readonly string[]): Promise<PersonDetail> {
+    requireActionRole(PERSON_ACTION_ROLES, action, roles);
     const reason = requireReason(reasonText);
     if (!UUID.test(id)) throw AppError.notFound("No such person.");
     if (!(await this.db.account.findUnique({ where: { id }, select: { id: true } }))) throw AppError.notFound("No such person.");

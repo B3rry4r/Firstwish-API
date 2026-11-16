@@ -61,12 +61,12 @@ export class SettingsController {
     return this.settings.read();
   }
 
-  /** E-164 (owner): 204; nothing changes when the choice is already in force. */
+  /** E-164 (owner): storage is set at deploy (FB3): 204 for the adapter that runs, 422 for a change. */
   @AdminRoute("/admin/settings", "owner")
   @Put("storage")
   @HttpCode(204)
-  async storage(@Body() b: PutAdminSettingsStorageBodyDto, @StaffActor() actor: AuditActor): Promise<void> {
-    await this.settings.setStorage(b.choice, b.reason, actor);
+  storage(@Body() b: PutAdminSettingsStorageBodyDto): void {
+    this.settings.setStorage(b.choice, b.reason);
   }
 
   /** E-165 (owner): 204. */
@@ -101,7 +101,7 @@ export class AdminWishesController {
   @Post(":no/actions")
   @HttpCode(200)
   act(@Param() p: PostAdminWishesByNoActionsParamsDto, @Body() b: PostAdminWishesByNoActionsBodyDto, @StaffActor() actor: AuditActor, @CurrentPrincipal() who: Principal | undefined) {
-    return this.wishes.act(p.no, b.action, b.reason, actor, rolesOf(who).includes("owner"));
+    return this.wishes.act(p.no, b.action, b.reason, actor, rolesOf(who).includes("owner"), rolesOf(who));
   }
 }
 
@@ -127,8 +127,8 @@ export class AdminPeopleController {
   @AdminRoute("/admin/people", "moderator", "ops", "owner", "support")
   @Post(":id/actions")
   @HttpCode(200)
-  act(@Param() p: PostAdminPeopleByIdActionsParamsDto, @Body() b: PostAdminPeopleByIdActionsBodyDto, @StaffActor() actor: AuditActor) {
-    return this.people.act(p.id, b.action, b.reason, actor);
+  act(@Param() p: PostAdminPeopleByIdActionsParamsDto, @Body() b: PostAdminPeopleByIdActionsBodyDto, @StaffActor() actor: AuditActor, @CurrentPrincipal() who: Principal | undefined) {
+    return this.people.act(p.id, b.action, b.reason, actor, rolesOf(who));
   }
 
   /** E-4: audited and limited; the registry answers 204 with no body (Q12), so the values it reads are not sent (see the hand-back). */

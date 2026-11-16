@@ -11,7 +11,6 @@ export const SWITCH_KEYS = ["off40", "samplesOff"] as const;
 export type SwitchKey = (typeof SWITCH_KEYS)[number];
 export const STORAGE_CHOICES = ["r2", "spaces"] as const;
 export type StorageChoice = (typeof STORAGE_CHOICES)[number];
-const STORAGE_KEY = "storage";
 
 const DEFAULT_PROVIDERS = [
   { key: "payments", name: "Payments", who: "Paystack" },
@@ -40,9 +39,8 @@ export class SettingsService {
     return rows[0] ?? null;
   }
 
-  async storage(): Promise<StorageChoice> {
-    const v = (await this.row(STORAGE_KEY))?.choice;
-    if (v === "r2" || v === "spaces") return v;
+  /** The adapter that runs: read from the env the ports were built with, never from a stored row. */
+  storage(): StorageChoice {
     return this.env.STORAGE_DRIVER ?? "r2";
   }
 
@@ -81,26 +79,18 @@ export class SettingsService {
 
   /** E-163. */
   async read(): Promise<Settings> {
-    return { providers: await this.providers(), storage: await this.storage(), switches: await this.switches() } as unknown as Settings;
+    return { providers: await this.providers(), storage: this.storage(), switches: await this.switches() } as unknown as Settings;
   }
 
   private async lockKey(tx: Pick<PrismaService, "$executeRaw">, key: string): Promise<void> {
     await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`settings:${key}`}, 0))`;
   }
 
-  /** E-164: nothing changes (and no audit row is written) when the choice is the one already in force. */
-  async setStorage(choice: string, reasonText: string, actor: AuditActor): Promise<void> {
-    const reason = requireReason(reasonText);
+  /** E-164: storage is set at deploy (FB3). Naming the adapter that runs changes nothing; naming the other one is 422. */
+  setStorage(choice: string, reasonText: string): void {
+    requireReason(reasonText);
     if (!STORAGE_CHOICES.includes(choice as StorageChoice)) throw AppError.validation({ choice: "Must be r2 or spaces." });
-    await this.db.$transaction(async (tx) => {
-      await this.lockKey(tx, STORAGE_KEY);
-      const rows = await tx.$queryRaw<{ id: string; choice: unknown }[]>`SELECT id::text AS id, choice FROM settings WHERE key = to_jsonb(${STORAGE_KEY}::text) ORDER BY id LIMIT 1`;
-      const now = rows[0]?.choice ?? this.env.STORAGE_DRIVER ?? "r2";
-      if (now === choice) return;
-      if (rows[0]) await tx.$executeRaw`UPDATE settings SET choice = to_jsonb(${choice}::text) WHERE id = ${rows[0].id}::uuid`;
-      else await tx.$executeRaw`INSERT INTO settings (id, key, choice) VALUES (${this.ids.id()}::uuid, to_jsonb(${STORAGE_KEY}::text), to_jsonb(${choice}::text))`;
-      await this.audit.write(tx, { actor, section: "/admin/settings", action: "settings.storage", target: { type: "Settings", id: STORAGE_KEY }, reason, changedFields: ["choice"] });
-    });
+    if (choice !== this.storage()) throw AppError.validation({ choice: "Storage is set when the app is deployed, not from this screen." }, "Storage is set at deploy and cannot be changed here.");
   }
 
   /** E-165: the same rule: a switch already in that position changes nothing and writes no audit row. */

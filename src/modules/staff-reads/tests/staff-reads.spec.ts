@@ -4,6 +4,7 @@ import { AdminJobsService } from "../admin-jobs.service";
 import { AuditService } from "../../audit/audit.service";
 import { SettingsService } from "../settings.service";
 import { IdGenerator } from "../../../common/ports/ids.port";
+import { requireActionRole, WISH_ACTION_ROLES } from "../action-roles";
 import { hex, ids, Kit, makeAccount, makeKit, makePayment, makeWish } from "./kit";
 
 const NOW = new Date("2031-06-15T12:00:00.000Z");
@@ -71,16 +72,16 @@ describe("staff reads (B21)", () => {
     });
 
     it("queues read what waits with ages and change nothing; failed jobs are counted for ops and owner only", async () => {
-      const before = await get("/v1/admin/overview", "ops");
-      const q0 = (before.body.queues as { key: string; count: number }[]).find((q) => q.key === "jobs");
-      expect(q0).toBeDefined();
+      const queue = async (role: string) => (((await get("/v1/admin/overview", role)).body.queues as { key: string; count: number; oldest: string | null }[]).find((q) => q.key === "jobs"));
+      expect(await queue("ops")).toBeDefined();
       const old = new Date("2031-06-01T00:00:00.000Z");
-      const job = await k.db.job.create({ data: { id: ids.next(), type: "send_message", subjectId: `q-${hex()}`, runAt: old, status: "dead", attempts: 5 } });
-      const after = await get("/v1/admin/overview", "ops");
-      const q1 = (after.body.queues as { key: string; count: number; oldest: string | null }[]).find((q) => q.key === "jobs");
-      expect(q1!.count).toBeGreaterThanOrEqual(q0!.count + 1);
+      const mine = `q-${hex()}`;
+      const made = await Promise.all([1, 2, 3].map((i) => k.db.job.create({ data: { id: ids.next(), type: "send_message", subjectId: `${mine}-${i}`, runAt: old, status: "dead", attempts: 5 } })));
+      // The queue counts every failed job in the shared database; this spec vouches only for the rows it made.
+      const q1 = await queue("ops");
+      expect(q1!.count).toBeGreaterThanOrEqual(made.length);
       expect(new Date(q1!.oldest as string).getTime()).toBeLessThanOrEqual(old.getTime());
-      expect((await k.db.job.findUnique({ where: { id: job.id } }))!.status).toBe("dead");
+      expect(await k.db.job.count({ where: { subjectId: { startsWith: mine }, status: "dead" } })).toBe(3);
       const support = await get("/v1/admin/overview", "support");
       expect((support.body.queues as { key: string }[]).some((q) => q.key === "jobs")).toBe(false);
     });
@@ -163,15 +164,19 @@ describe("staff reads (B21)", () => {
       await put("/v1/admin/settings/switches/off40", { on: false, reason: "sale over" }, "owner");
     });
 
-    it("storage choice: change once, a repeat changes nothing", async () => {
+    it("storage is set at deploy: the setting shows the adapter that runs, a change is 422 and nothing is written", async () => {
       const cur = (await get("/v1/admin/settings", "owner")).body.storage as string;
+      expect(["r2", "spaces"]).toContain(cur);
       const other = cur === "r2" ? "spaces" : "r2";
       const n0 = await k.db.auditEntry.count({ where: { action: "settings.storage" } });
-      expect((await put("/v1/admin/settings/storage", { choice: other, reason: "owner chose" }, "owner")).status).toBe(204);
-      expect((await put("/v1/admin/settings/storage", { choice: other, reason: "owner chose" }, "owner")).status).toBe(204);
-      expect((await get("/v1/admin/settings", "owner")).body.storage).toBe(other);
-      expect(await k.db.auditEntry.count({ where: { action: "settings.storage" } })).toBe(n0 + 1);
+      const r = await put("/v1/admin/settings/storage", { choice: other, reason: "owner chose" }, "owner");
+      expect(r.status).toBe(422);
+      expect(JSON.stringify(r.body)).toContain("set at deploy");
       expect((await put("/v1/admin/settings/storage", { choice: "ftp", reason: "owner chose" }, "owner")).status).toBe(422);
+      expect((await put("/v1/admin/settings/storage", { choice: other, reason: "owner chose" }, "ops")).status).toBe(403);
+      expect((await get("/v1/admin/settings", "owner")).body.storage).toBe(cur);
+      expect(await k.db.auditEntry.count({ where: { action: "settings.storage" } })).toBe(n0);
+      expect(Number((await k.db.$queryRaw<{ n: bigint }[]>`SELECT count(*) AS n FROM settings WHERE key = to_jsonb(${"storage"}::text)`)[0].n)).toBe(0);
     });
 
     it("a provider is connected only after a real call worked; stand-ins and no news read not_connected; no secret appears", async () => {
@@ -239,11 +244,11 @@ describe("staff reads (B21)", () => {
       expect(down.body.wish.state).toBe("down");
       expect((await post(url, { action: "take_down", reason: "reported twice" }, "moderator")).status).toBe(409);
       expect(await auditRows(k.db, "wish.take_down", w.id)).toHaveLength(1);
-      const up = await post(url, { action: "restore", reason: "was a mistake" }, "support");
+      const up = await post(url, { action: "restore", reason: "was a mistake" }, "ops");
       expect(up.body.wish.state).toBe("live");
       expect(await auditRows(k.db, "wish.restore", w.id)).toHaveLength(1);
-      expect((await post(url, { action: "restore", reason: "again please" }, "support")).status).toBe(409);
-      expect((await post(url, { action: "fly", reason: "again please" }, "support")).status).toBe(422);
+      expect((await post(url, { action: "restore", reason: "again please" }, "ops")).status).toBe(409);
+      expect((await post(url, { action: "fly", reason: "again please" }, "ops")).status).toBe(422);
     });
 
     it("two take-downs at once change the wish once", async () => {
@@ -273,13 +278,116 @@ describe("staff reads (B21)", () => {
     it("refund starts the refund of the wish's paid ticket and answers 409 when there is none", async () => {
       const a = await makeAccount(k.db);
       const w = await makeWish(k.db, a.id);
-      expect((await post(`/v1/admin/wishes/${w.no}/actions`, { action: "refund", reason: "customer asked" }, "support")).status).toBe(409);
+      expect((await post(`/v1/admin/wishes/${w.no}/actions`, { action: "refund", reason: "customer asked" }, "ops")).status).toBe(409);
       const p = await makePayment(k.db, { subjectId: w.id, accountId: a.id });
-      const r = await post(`/v1/admin/wishes/${w.no}/actions`, { action: "refund", reason: "customer asked" }, "support");
+      const r = await post(`/v1/admin/wishes/${w.no}/actions`, { action: "refund", reason: "customer asked" }, "ops");
       expect(r.status).toBe(200);
       const refunds = await k.db.refund.findMany({ where: { paymentId: p.id } });
       expect(refunds).toHaveLength(1);
       expect(refunds[0].status).toBe("requested");
+    });
+  });
+
+  describe("Who may do which action (FC1)", () => {
+    const STAFF = ["owner", "ops", "moderator", "reviewer", "support", "finance", "maker"];
+    const WISH: Record<string, string[]> = {
+      take_down: ["moderator", "ops", "owner"], restore: ["moderator", "ops", "owner"], refund: ["finance", "ops", "owner"],
+      extend: ["support", "ops", "owner"], resend: ["support", "ops", "owner"],
+    };
+    // Finance is in the table for a refund (FC1) but the role table does not open /admin/wishes to finance, so the route refuses it first.
+    const REACHABLE = (action: string, role: string) => WISH[action].includes(role) && !(action === "refund" && role === "finance");
+    const PERSON: Record<string, string[]> = { ban: ["moderator", "owner"], lift: ["ops", "owner"], erase: ["owner"] };
+    const audits = (subjectId: string) => k.db.auditEntry.count({ where: { subjectId } });
+
+    it("every wish action x every staff role: the allowed work; the rest are 403 with no change and no audit row", async () => {
+      for (const action of Object.keys(WISH)) {
+        for (const role of STAFF) {
+          const a = await makeAccount(k.db);
+          const w = await makeWish(k.db, a.id, { status: "live", endsAt: new Date("2031-07-01T00:00:00Z") });
+          const pay = await makePayment(k.db, { subjectId: w.id, accountId: a.id });
+          const url = `/v1/admin/wishes/${w.no}/actions`;
+          if (action === "restore") expect((await post(url, { action: "take_down", reason: "set up the case" }, "owner")).status).toBe(200);
+          const rows0 = await audits(w.id);
+          const state0 = await k.db.wish.findUniqueOrThrow({ where: { id: w.id } });
+          const r = await post(url, { action, reason: "matrix check" }, role);
+          const label = `${action} by ${role}`;
+          if (REACHABLE(action, role)) {
+            expect([label, r.status]).toEqual([label, 200]);
+          } else {
+            expect([label, r.status]).toEqual([label, 403]);
+            expect(await audits(w.id)).toBe(rows0);
+            const now = await k.db.wish.findUniqueOrThrow({ where: { id: w.id } });
+            expect([now.status, now.endsAt, now.version]).toEqual([state0.status, state0.endsAt, state0.version]);
+            expect(await k.db.refund.count({ where: { paymentId: pay.id } })).toBe(0);
+            expect(await k.db.messageDelivery.count({ where: { vars: { path: ["wishId"], equals: w.id } } })).toBe(0);
+          }
+        }
+      }
+    });
+
+    it("the table itself lets finance start a refund and keeps support out of it", () => {
+      expect(() => requireActionRole(WISH_ACTION_ROLES, "refund", ["finance"])).not.toThrow();
+      expect(() => requireActionRole(WISH_ACTION_ROLES, "refund", ["support"])).toThrow();
+    });
+
+    it("every person action x every staff role: the allowed work; the rest are 403 with no change and no audit row", async () => {
+      for (const [action, ok] of Object.entries(PERSON)) {
+        for (const role of STAFF) {
+          const a = await makeAccount(k.db);
+          const url = `/v1/admin/people/${a.id}/actions`;
+          if (action === "lift") expect((await post(url, { action: "ban", reason: "set up the case" }, "owner")).status).toBe(200);
+          const rows0 = await audits(a.id);
+          const bans0 = await k.db.ban.count({ where: { accountId: a.id } });
+          const r = await post(url, { action, reason: "matrix check" }, role);
+          const label = `${action} by ${role}`;
+          if (ok.includes(role)) {
+            expect([label, r.status]).toEqual([label, 200]);
+          } else {
+            expect([label, r.status]).toEqual([label, 403]);
+            expect(await audits(a.id)).toBe(rows0);
+            expect(await k.db.ban.count({ where: { accountId: a.id } })).toBe(bans0);
+            expect((await k.db.account.findUniqueOrThrow({ where: { id: a.id } })).erasedAt).toBeNull();
+          }
+        }
+      }
+    });
+  });
+
+  describe("Limits on extend and resend (FC2)", () => {
+    it("extend: 30 days in all to one wish, summed from the audit rows; the 31st day is 409; 10 at once let 4 through", async () => {
+      const a = await makeAccount(k.db);
+      const w = await makeWish(k.db, a.id, { status: "live", endsAt: new Date("2031-07-01T00:00:00Z") });
+      const url = `/v1/admin/wishes/${w.no}/actions`;
+      for (let i = 0; i < 4; i++) expect((await post(url, { action: "extend", reason: "goodwill call" }, "support")).status).toBe(200);
+      const r = await post(url, { action: "extend", reason: "goodwill call" }, "support");
+      expect(r.status).toBe(409);
+      expect((await k.db.wish.findUniqueOrThrow({ where: { id: w.id } })).endsAt!.toISOString()).toBe("2031-07-29T00:00:00.000Z");
+      expect(await k.db.auditEntry.count({ where: { action: "wish.extend", subjectId: w.id } })).toBe(4);
+
+      const b = await makeWish(k.db, a.id, { status: "live", endsAt: new Date("2031-07-01T00:00:00Z") });
+      const rs = await Promise.all(Array.from({ length: 10 }, () => post(`/v1/admin/wishes/${b.no}/actions`, { action: "extend", reason: "goodwill call" }, "ops")));
+      expect(rs.filter((x) => x.status === 200)).toHaveLength(4);
+      expect(rs.filter((x) => x.status === 409)).toHaveLength(6);
+      expect(await k.db.auditEntry.count({ where: { action: "wish.extend", subjectId: b.id } })).toBe(4);
+    });
+
+    it("resend: the 4th in a UTC day for one wish is 429 and sends nothing; 10 at once let 3 through", async () => {
+      const a = await makeAccount(k.db);
+      const w = await makeWish(k.db, a.id, { status: "live", endsAt: new Date("2031-07-01T00:00:00Z") });
+      const url = `/v1/admin/wishes/${w.no}/actions`;
+      const sent = (id: string) => k.db.messageDelivery.count({ where: { vars: { path: ["wishId"], equals: id } } });
+      for (let i = 0; i < 3; i++) expect((await post(url, { action: "resend", reason: "lost the mail" }, "support")).status).toBe(200);
+      const r = await post(url, { action: "resend", reason: "lost the mail" }, "support");
+      expect(r.status).toBe(429);
+      expect(await sent(w.id)).toBe(3);
+      expect(await k.db.auditEntry.count({ where: { action: "wish.resend", subjectId: w.id } })).toBe(3);
+
+      const b = await makeWish(k.db, a.id, { status: "live", endsAt: new Date("2031-07-01T00:00:00Z") });
+      const rs = await Promise.all(Array.from({ length: 10 }, () => post(`/v1/admin/wishes/${b.no}/actions`, { action: "resend", reason: "lost the mail" }, "ops")));
+      expect(rs.filter((x) => x.status === 200)).toHaveLength(3);
+      expect(rs.filter((x) => x.status === 429)).toHaveLength(7);
+      expect(await sent(b.id)).toBe(3);
+      expect(await k.db.auditEntry.count({ where: { action: "wish.resend", subjectId: b.id } })).toBe(3);
     });
   });
 

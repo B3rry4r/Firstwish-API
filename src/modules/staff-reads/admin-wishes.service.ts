@@ -4,6 +4,7 @@ import { PrismaService } from "../../common/db/prisma.service";
 import type { Env } from "../../common/env/env";
 import { ENV } from "../../common/env/env.module";
 import { AppError } from "../../common/errors/app-error";
+import { RateLimited } from "../../common/errors/rate-limited";
 import { Clock } from "../../common/ports/clock.port";
 import { decodeCursor, DEFAULT_LIMIT, type Page, toPage } from "../../common/pagination/cursor";
 import { toWireInstant } from "../../common/time/time";
@@ -14,6 +15,7 @@ import { NoticesService } from "../notices/notices.service";
 import { RefundsService } from "../refunds/refunds.service";
 import { WishLifecycleService } from "../wishes/wish-lifecycle.service";
 import { stateOf } from "../wishes/wish-state";
+import { requireActionRole, WISH_ACTION_ROLES } from "./action-roles";
 import { UUID } from "./mask";
 import { maskEmail, paymentWire, wishWire } from "./wire";
 
@@ -21,6 +23,9 @@ const SECTION = "/admin/wishes";
 const DAY = 86_400_000;
 /** The days "extend" adds as goodwill (the admin app's own number, 7). */
 export const GOODWILL_DAYS = 7;
+/** Most days staff may add to one wish in all, and most times they may send its link again in a UTC day (FC2, provisional). */
+export const MAX_EXTEND_DAYS = 30;
+export const MAX_RESENDS_PER_DAY = 3;
 export const WISH_ACTIONS = ["take_down", "restore", "extend", "resend", "refund"] as const;
 type WishAction = (typeof WISH_ACTIONS)[number];
 const NO = /^[0-9A-Za-z-]{1,24}$/;
@@ -134,7 +139,8 @@ export class AdminWishesService {
   }
 
   /** E-220: one action, one reason, one audit row in the same transaction as the change (a refund's row is written by the refund itself). */
-  async act(no: string, action: string, reasonText: string, actor: AuditActor, isOwner: boolean): Promise<WishDetail> {
+  async act(no: string, action: string, reasonText: string, actor: AuditActor, isOwner: boolean, roles: readonly string[]): Promise<WishDetail> {
+    requireActionRole(WISH_ACTION_ROLES, action, roles);
     const reason = requireReason(reasonText);
     if (!WISH_ACTIONS.includes(action as WishAction)) throw AppError.validation({ action: `Must be one of ${WISH_ACTIONS.join(", ")}.` });
     const found = await this.findByNo(no);
@@ -172,6 +178,10 @@ export class AdminWishesService {
           }
         } else throw AppError.conflict("not_allowed", `A wish that is ${state.replace("_", " ")} has nothing to restore.`);
       } else if (action === "extend") {
+        if (state === "resting" || state === "live") {
+          const [used] = await tx.$queryRaw<{ n: bigint }[]>`SELECT count(*) AS n FROM audit_entry WHERE action = 'wish.extend' AND "subjectType" = 'Wish' AND "subjectId" = ${w.id}`;
+          if ((Number(used.n) + 1) * GOODWILL_DAYS > MAX_EXTEND_DAYS) throw AppError.conflict("not_allowed", `Staff can add at most ${MAX_EXTEND_DAYS} days in all to one wish.`);
+        }
         if (state === "resting") await termEnd("staff-extend");
         else if (state === "live") {
           const base = w.endsAt && w.endsAt.getTime() > now.getTime() ? w.endsAt : now;
@@ -187,6 +197,10 @@ export class AdminWishesService {
           tx.wishLink.findFirst({ where: { wishId: w.id, active: true }, orderBy: { id: "desc" } }),
         ]);
         if (!link) throw AppError.conflict("not_allowed", "This wish has no link yet.");
+        const [sent] = await tx.$queryRaw<{ n: bigint }[]>`
+          SELECT count(*) AS n FROM audit_entry WHERE action = 'wish.resend' AND "subjectType" = 'Wish' AND "subjectId" = ${w.id}
+            AND "createdAt" >= (date_trunc('day', now() AT TIME ZONE 'UTC') AT TIME ZONE 'UTC')`;
+        if (Number(sent.n) >= MAX_RESENDS_PER_DAY) throw new RateLimited(3600, "This link has been sent again as often as allowed today. Try again tomorrow.");
         const owner = await tx.account.findUnique({ where: { id: row.accountId }, select: { name: true } });
         const out = await this.notices.send(tx, {
           template: "opens", toAccountId: row.accountId, wishId: w.id, key: `staff-resend:${w.id}:${actor.requestId}`,

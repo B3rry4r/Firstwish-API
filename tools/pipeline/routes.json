@@ -1512,6 +1512,133 @@
         "user"
       ],
       "decision": "DEC-176"
+    },
+    {
+      "resource": "Ban",
+      "method": "DELETE",
+      "path": "/v1/admin/bans/:id",
+      "auth": [
+        "staff:owner",
+        "staff:ops"
+      ],
+      "decision": "DEC-191"
+    },
+    {
+      "resource": "SupportThread",
+      "method": "POST",
+      "path": "/v1/support-threads/contact",
+      "auth": [
+        "public"
+      ],
+      "decision": "DEC-197"
+    },
+    {
+      "resource": "SavedReply",
+      "method": "GET",
+      "path": "/v1/admin/support/saved-replies",
+      "auth": [
+        "staff:owner",
+        "staff:ops",
+        "staff:support"
+      ],
+      "decision": "DEC-197"
+    },
+    {
+      "resource": "SavedReply",
+      "method": "POST",
+      "path": "/v1/admin/support/saved-replies",
+      "auth": [
+        "staff:owner",
+        "staff:ops",
+        "staff:support"
+      ],
+      "decision": "DEC-197"
+    },
+    {
+      "resource": "SavedReply",
+      "method": "PATCH",
+      "path": "/v1/admin/support/saved-replies/:id",
+      "auth": [
+        "staff:owner",
+        "staff:ops",
+        "staff:support"
+      ],
+      "decision": "DEC-197"
+    },
+    {
+      "resource": "SavedReply",
+      "method": "DELETE",
+      "path": "/v1/admin/support/saved-replies/:id",
+      "auth": [
+        "staff:owner",
+        "staff:ops",
+        "staff:support"
+      ],
+      "decision": "DEC-197"
+    },
+    {
+      "resource": "RevealLink",
+      "method": "POST",
+      "path": "/v1/business/reveal-links/:id/off",
+      "auth": [
+        "role:business"
+      ],
+      "decision": "DEC-198"
+    },
+    {
+      "resource": "RevealPlay",
+      "method": "GET",
+      "path": "/v1/r/:code",
+      "auth": [
+        "public"
+      ],
+      "decision": "DEC-198"
+    },
+    {
+      "resource": "RevealPlay",
+      "method": "POST",
+      "path": "/v1/r/:code/unlock",
+      "auth": [
+        "public"
+      ],
+      "decision": "DEC-198"
+    },
+    {
+      "resource": "ConciergeOrder",
+      "method": "GET",
+      "path": "/v1/concierge-orders",
+      "auth": [
+        "user:owner"
+      ],
+      "decision": "DEC-199"
+    },
+    {
+      "resource": "ConciergeOrder",
+      "method": "GET",
+      "path": "/v1/concierge-orders/:id",
+      "auth": [
+        "user:owner"
+      ],
+      "decision": "DEC-199"
+    },
+    {
+      "resource": "ConciergeOrder",
+      "method": "POST",
+      "path": "/v1/concierge-orders/:id/cancel",
+      "auth": [
+        "user:owner"
+      ],
+      "decision": "DEC-199"
+    },
+    {
+      "resource": "ConciergeOrder",
+      "method": "POST",
+      "path": "/v1/admin/concierge/orders/:id/cancel",
+      "auth": [
+        "staff:owner",
+        "staff:ops"
+      ],
+      "decision": "DEC-199"
     }
   ],
   "fulfilment": {
@@ -1557,18 +1684,29 @@
         }
       }
     ],
-    "POST /v1/wishes/:id/video": {
-      "decision": "DEC-134",
-      "drop": [
-        "amount"
-      ],
-      "response": {
-        "entity": "VideoOrder",
-        "cardinality": "single",
-        "paymentStart": "required",
-        "note": "{payment, item}: item is the video order, null until the verified payment fulfils it (DEC-139)"
+    "POST /v1/wishes/:id/video": [
+      {
+        "decision": "DEC-134",
+        "drop": [
+          "amount"
+        ],
+        "response": {
+          "entity": "VideoOrder",
+          "cardinality": "single",
+          "paymentStart": "required",
+          "note": "{payment, item}: item is the video order, null until the verified payment fulfils it (DEC-139)"
+        }
+      },
+      {
+        "decision": "DEC-199",
+        "response": {
+          "entity": "VideoOrder",
+          "cardinality": "single",
+          "paymentStart": "optional",
+          "note": "{payment, item}: payment null when the Pass covers the video; item is the video order (DEC-199)"
+        }
       }
-    },
+    ],
     "POST /v1/wishes/:id/keep": {
       "decision": "DEC-134",
       "drop": [
@@ -1614,6 +1752,21 @@
         "decision": "DEC-177",
         "set": {
           "usePass": "boolean (optional; true draws one wish from the Pass in place of a ticket payment)"
+        }
+      },
+      {
+        "decision": "DEC-192",
+        "response": {
+          "entity": "Wish",
+          "cardinality": "single",
+          "paymentStart": "optional",
+          "note": "{payment, item}: payment null when the Pass or the plan covers the seal; item is the wish, sealed once the verified payment fulfils it, or sealed at once when nothing is paid (DEC-192)"
+        }
+      },
+      {
+        "decision": "DEC-193",
+        "set": {
+          "usePlan": "boolean (optional; true draws one wish from the business's plan in place of a ticket payment)"
         }
       }
     ],
@@ -1961,6 +2114,204 @@
         "cardinality": "single",
         "note": "the full view of the open wish (DEC-185)"
       }
+    },
+    "GET /v1/admin/payments": {
+      "decision": "DEC-189",
+      "set": {
+        "q": "string (optional; a reference, a wish number or the payer's email)",
+        "flag": "string (optional; such as refund_due)"
+      }
+    },
+    "GET /v1/admin/ledger": {
+      "decision": "DEC-189",
+      "set": {
+        "day": "string YYYY-MM-DD (optional; the day to show, default the latest day checked)"
+      }
+    },
+    "POST /v1/w/:slug/take-down": {
+      "decision": "DEC-190",
+      "set": {
+        "code": "string (optional; the code mailed to the contact address)"
+      },
+      "response": {
+        "entity": "TakeDownResult",
+        "cardinality": "single",
+        "note": "Report with a code; {sent, expiresAt} without one (DEC-190)"
+      }
+    },
+    "DELETE /v1/admin/bans/:id": {
+      "decision": "DEC-191",
+      "response": {
+        "entity": "Ban",
+        "cardinality": "single",
+        "note": "the ban, with until set to the time it was lifted (DEC-191)"
+      }
+    },
+    "GET /v1/creator/earnings": {
+      "decision": "DEC-195",
+      "response": {
+        "entity": "RoyaltyEarnings",
+        "cardinality": "single",
+        "note": "{items: RoyaltyAccrual[], nextCursor, summary} (DEC-195)"
+      }
+    },
+    "PATCH /v1/studio/prefs": {
+      "decision": "DEC-196",
+      "drop": [
+        "(any of) coached, bottom, span, looks, recent, fav, addTab"
+      ],
+      "set": {
+        "coached": "boolean (optional)",
+        "bottom": "string (optional)",
+        "span": "string (optional)",
+        "addTab": "string (optional)",
+        "looks": "array (optional)",
+        "recent": "array (optional)",
+        "fav": "array (optional)"
+      }
+    },
+    "POST /v1/studio/styles/:id/withdraw": {
+      "decision": "DEC-196",
+      "drop": [
+        "on (setTemplate only)"
+      ],
+      "set": {
+        "on": "boolean (optional; the setTemplate form)"
+      }
+    },
+    "POST /v1/support-threads/contact": {
+      "decision": "DEC-197",
+      "set": {
+        "email": "string (an email address)",
+        "subject": "string",
+        "body": "string"
+      },
+      "response": {
+        "entity": "ThreadDetail",
+        "cardinality": "single",
+        "note": "the thread opened, with its first message (DEC-197)"
+      }
+    },
+    "GET /v1/admin/support/saved-replies": {
+      "decision": "DEC-197",
+      "response": {
+        "entity": "SavedReply",
+        "cardinality": "list",
+        "note": "every saved reply, by name (DEC-197)"
+      }
+    },
+    "POST /v1/admin/support/saved-replies": {
+      "decision": "DEC-197",
+      "set": {
+        "name": "string (1 to 80 characters)",
+        "text": "string (non-empty, at most 4000 characters)"
+      },
+      "response": {
+        "entity": "SavedReply",
+        "cardinality": "single",
+        "note": "the saved reply added (DEC-197)"
+      }
+    },
+    "PATCH /v1/admin/support/saved-replies/:id": {
+      "decision": "DEC-197",
+      "set": {
+        "name": "string (optional; 1 to 80 characters)",
+        "text": "string (optional; at most 4000 characters)"
+      },
+      "response": {
+        "entity": "SavedReply",
+        "cardinality": "single",
+        "note": "the saved reply changed (DEC-197)"
+      }
+    },
+    "DELETE /v1/admin/support/saved-replies/:id": {
+      "decision": "DEC-197",
+      "response": {
+        "entity": null,
+        "cardinality": "none",
+        "note": "204 with no body (DEC-197)"
+      }
+    },
+    "POST /v1/business/reveal-links/:id/off": {
+      "decision": "DEC-198",
+      "response": {
+        "entity": "RevealLink",
+        "cardinality": "single",
+        "note": "the link, switched off (DEC-198)"
+      }
+    },
+    "GET /v1/r/:code": {
+      "decision": "DEC-198",
+      "response": {
+        "entity": "RevealPlay",
+        "cardinality": "single",
+        "note": "{state: 'passcode'} or {state: 'open', ...} (DEC-198)"
+      }
+    },
+    "POST /v1/r/:code/unlock": {
+      "decision": "DEC-198",
+      "set": {
+        "passcode": "string"
+      },
+      "response": {
+        "entity": "UnlockResult",
+        "cardinality": "single",
+        "note": "{ok: true, token, expiresAt} or {ok: false, error} (DEC-198)"
+      }
+    },
+    "POST /v1/admin/concierge-orders/:id/delivery": {
+      "decision": "DEC-199",
+      "set": {
+        "wishIds": "array<string> (1 to 1000 ids of the wishes made for the order)"
+      }
+    },
+    "POST /v1/qr-cards": {
+      "decision": "DEC-199",
+      "set": {
+        "wishId": "string (optional; a wish of the caller's own)",
+        "wishIds": "array<string> (optional; up to 100: the wishes of an order given to the maker)",
+        "names": "array<string> (optional; up to 100, each up to 200 characters)"
+      }
+    },
+    "GET /v1/concierge-orders": {
+      "decision": "DEC-199",
+      "response": {
+        "entity": "ConciergeOrder",
+        "cardinality": "list",
+        "note": "the caller's own orders, newest first (DEC-199)"
+      }
+    },
+    "GET /v1/concierge-orders/:id": {
+      "decision": "DEC-199",
+      "response": {
+        "entity": "ConciergeOrder",
+        "cardinality": "single",
+        "note": "the caller's own order (DEC-199)"
+      }
+    },
+    "POST /v1/concierge-orders/:id/cancel": {
+      "decision": "DEC-199",
+      "response": {
+        "entity": "ConciergeOrder",
+        "cardinality": "single",
+        "note": "the order, cancelled; one that is paid is refunded by staff (DEC-199)"
+      }
+    },
+    "POST /v1/admin/concierge/orders/:id/cancel": {
+      "decision": "DEC-199",
+      "response": {
+        "entity": "ConciergeOrder",
+        "cardinality": "single",
+        "note": "the order, cancelled by staff with a reason (DEC-199)"
+      }
+    },
+    "GET /v1/admin/concierge/due": {
+      "decision": "DEC-199",
+      "response": {
+        "entity": "ConciergeOrder",
+        "cardinality": "list",
+        "note": "a page of the orders due in the window (DEC-199)"
+      }
     }
   },
   "extraFields": [
@@ -2180,6 +2531,69 @@
       "type": "object ({opens, plays, reactions, favourites, shares})",
       "nullable": true,
       "decision": "DEC-186"
+    },
+    {
+      "resource": "Wish",
+      "name": "hasPasscode",
+      "type": "boolean",
+      "nullable": false,
+      "decision": "DEC-194"
+    },
+    {
+      "resource": "Creator",
+      "name": "bank",
+      "type": "object",
+      "nullable": true,
+      "decision": "DEC-195"
+    },
+    {
+      "resource": "SubmissionView",
+      "name": "snapshot",
+      "type": "object",
+      "nullable": true,
+      "decision": "DEC-196"
+    },
+    {
+      "resource": "RevealPlay",
+      "name": "state",
+      "type": "enum(open|passcode)",
+      "nullable": false,
+      "decision": "DEC-198"
+    },
+    {
+      "resource": "RevealPlay",
+      "name": "business",
+      "type": "string",
+      "nullable": true,
+      "decision": "DEC-198"
+    },
+    {
+      "resource": "ConciergeOrder",
+      "name": "paidAt",
+      "type": "time",
+      "nullable": true,
+      "decision": "DEC-199"
+    },
+    {
+      "resource": "ConciergeOrder",
+      "name": "dueAt",
+      "type": "time",
+      "nullable": true,
+      "decision": "DEC-199"
+    },
+    {
+      "resource": "ConciergeOrder",
+      "name": "paymentId",
+      "type": "string",
+      "nullable": true,
+      "decision": "DEC-199"
+    },
+    {
+      "resource": "ConciergeOrder",
+      "name": "wishIds",
+      "type": "array<string>",
+      "nullable": false,
+      "decision": "DEC-199"
     }
   ],
   "dropFields": [
@@ -2224,6 +2638,150 @@
       "name": "variant",
       "decision": "DEC-163",
       "why": "X20: SignedUrl is {url, expiresAt}"
+    },
+    {
+      "resource": "Wish",
+      "name": "adds",
+      "decision": "DEC-194",
+      "why": "VV3: legacy whole-wish field; the words are in content"
+    },
+    {
+      "resource": "Wish",
+      "name": "blessing",
+      "decision": "DEC-194",
+      "why": "VV3: legacy whole-wish field; the words are in content"
+    },
+    {
+      "resource": "Wish",
+      "name": "call",
+      "decision": "DEC-194",
+      "why": "VV3: legacy whole-wish field; the words are in content"
+    },
+    {
+      "resource": "Wish",
+      "name": "captions",
+      "decision": "DEC-194",
+      "why": "VV3: legacy whole-wish field; the words are in content"
+    },
+    {
+      "resource": "Wish",
+      "name": "chapter",
+      "decision": "DEC-194",
+      "why": "VV3: legacy whole-wish field; the words are in content"
+    },
+    {
+      "resource": "Wish",
+      "name": "credits",
+      "decision": "DEC-194",
+      "why": "VV3: legacy whole-wish field; the words are in content"
+    },
+    {
+      "resource": "Wish",
+      "name": "details",
+      "decision": "DEC-194",
+      "why": "VV3: legacy whole-wish field; the words are in content"
+    },
+    {
+      "resource": "Wish",
+      "name": "effect",
+      "decision": "DEC-194",
+      "why": "VV3: legacy whole-wish field; the words are in content"
+    },
+    {
+      "resource": "Wish",
+      "name": "finale",
+      "decision": "DEC-194",
+      "why": "VV3: legacy whole-wish field; the words are in content"
+    },
+    {
+      "resource": "Wish",
+      "name": "letter",
+      "decision": "DEC-194",
+      "why": "VV3: legacy whole-wish field; the words are in content"
+    },
+    {
+      "resource": "Wish",
+      "name": "links",
+      "decision": "DEC-194",
+      "why": "VV3: legacy whole-wish field; the words are in content"
+    },
+    {
+      "resource": "Wish",
+      "name": "memory",
+      "decision": "DEC-194",
+      "why": "VV3: legacy whole-wish field; the words are in content"
+    },
+    {
+      "resource": "Wish",
+      "name": "note",
+      "decision": "DEC-194",
+      "why": "VV3: legacy whole-wish field; the words are in content"
+    },
+    {
+      "resource": "Wish",
+      "name": "off",
+      "decision": "DEC-194",
+      "why": "VV3: legacy whole-wish field; the words are in content"
+    },
+    {
+      "resource": "Wish",
+      "name": "on",
+      "decision": "DEC-194",
+      "why": "VV3: legacy whole-wish field; the words are in content"
+    },
+    {
+      "resource": "Wish",
+      "name": "photos",
+      "decision": "DEC-194",
+      "why": "VV3: legacy whole-wish field; the words are in content"
+    },
+    {
+      "resource": "Wish",
+      "name": "reasons",
+      "decision": "DEC-194",
+      "why": "VV3: legacy whole-wish field; the words are in content"
+    },
+    {
+      "resource": "Wish",
+      "name": "studio",
+      "decision": "DEC-194",
+      "why": "VV3: legacy whole-wish field; the words are in content"
+    },
+    {
+      "resource": "Wish",
+      "name": "timeline",
+      "decision": "DEC-194",
+      "why": "VV3: legacy whole-wish field; the words are in content"
+    },
+    {
+      "resource": "Wish",
+      "name": "type",
+      "decision": "DEC-194",
+      "why": "VV3: legacy whole-wish field; the words are in content"
+    },
+    {
+      "resource": "Wish",
+      "name": "voices",
+      "decision": "DEC-194",
+      "why": "VV3: legacy whole-wish field; the words are in content"
+    },
+    {
+      "resource": "Wish",
+      "name": "voices.ask",
+      "decision": "DEC-194",
+      "why": "VV3: legacy whole-wish field; the words are in content"
+    },
+    {
+      "resource": "RoyaltyAccrual",
+      "name": "rows",
+      "decision": "DEC-195",
+      "why": "WW7: not a field of the accrual"
+    },
+    {
+      "resource": "RoyaltyAccrual",
+      "name": "total",
+      "decision": "DEC-195",
+      "why": "WW7: worked out in the summary"
     }
   ],
   "optionalFields": [
@@ -2296,6 +2854,36 @@
       "resource": "Price",
       "name": "changed",
       "decision": "DEC-162"
+    },
+    {
+      "resource": "RevealPlay",
+      "name": "content",
+      "decision": "DEC-198"
+    },
+    {
+      "resource": "RevealPlay",
+      "name": "date",
+      "decision": "DEC-198"
+    },
+    {
+      "resource": "RevealPlay",
+      "name": "index",
+      "decision": "DEC-198"
+    },
+    {
+      "resource": "RevealPlay",
+      "name": "no",
+      "decision": "DEC-198"
+    },
+    {
+      "resource": "RevealPlay",
+      "name": "photos",
+      "decision": "DEC-198"
+    },
+    {
+      "resource": "RevealPlay",
+      "name": "style",
+      "decision": "DEC-198"
     }
   ]
 }

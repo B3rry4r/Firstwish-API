@@ -1505,11 +1505,11 @@
       "closes": [
         {
           "conflict": "C-34",
-          "key": "truth-mismatch|money|\u20a680,000 shown or sent by a screen is in no product truth and not in the price book seed",
-          "detail": "\u20a680,000 shown or sent by a screen is in no product truth and not in the price book seed"
+          "key": "truth-mismatch|money|₦80,000 shown or sent by a screen is in no product truth and not in the price book seed",
+          "detail": "₦80,000 shown or sent by a screen is in no product truth and not in the price book seed"
         }
       ],
-      "decision": "not a new figure: \u20a680,000 = 100 wishes x the \u20a6800 royalty at list (T-65); the page works it out from the served price book (S-25). Listed to the owner.",
+      "decision": "not a new figure: ₦80,000 = 100 wishes x the ₦800 royalty at list (T-65); the page works it out from the served price book (S-25). Listed to the owner.",
       "approvedBy": "lead default, owner may override",
       "confidence": "medium",
       "source": "build/rulings-phase3.md",
@@ -2083,13 +2083,13 @@
         },
         {
           "conflict": "C-44",
-          "key": "truth-mismatch|money|\u20a617 shown or sent by a screen is in no product truth and not in the price book seed",
-          "detail": "\u20a617 shown or sent by a screen is in no product truth and not in the price book seed"
+          "key": "truth-mismatch|money|₦17 shown or sent by a screen is in no product truth and not in the price book seed",
+          "detail": "₦17 shown or sent by a screen is in no product truth and not in the price book seed"
         },
         {
           "conflict": "C-45",
-          "key": "truth-mismatch|money|\u20a67,000 shown or sent by a screen is in no product truth and not in the price book seed",
-          "detail": "\u20a67,000 shown or sent by a screen is in no product truth and not in the price book seed"
+          "key": "truth-mismatch|money|₦7,000 shown or sent by a screen is in no product truth and not in the price book seed",
+          "detail": "₦7,000 shown or sent by a screen is in no product truth and not in the price book seed"
         }
       ],
       "decision": "A3: Figures in admin fixtures are sample data, not prices: the money truth check skips screens whose data files are the admin fixtures. Price.list and Price.listKobo are one field, listKobo.",
@@ -2951,6 +2951,142 @@
       "confidence": "high",
       "source": "build/rulings-phase3.md (INT-4)",
       "decidedAt": "2026-11-17T12:00:00Z"
+    },
+    {
+      "id": "DEC-189",
+      "topic": "payment list search and ledger day",
+      "closes": [],
+      "decision": "PP2: E-84 GET /v1/admin/payments takes two more optional query parameters: `q` (a reference, a wish number or the payer's email) and `flag` (a flag on the payment, such as refund_due). E-63 GET /v1/admin/ledger takes an optional `day` (YYYY-MM-DD); without it the latest day checked is shown.",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md PP2",
+      "decidedAt": "2026-11-19T12:00:00Z"
+    },
+    {
+      "id": "DEC-190",
+      "topic": "take-down code optional",
+      "closes": [],
+      "decision": "QQ1: E-133 POST /v1/w/:slug/take-down takes an optional `code`. With a code it files the report and answers the Report. Without one it mails a code to the contact address and answers TakeDownSent {sent: true, expiresAt}; nothing is filed until the code comes back.",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md QQ1",
+      "decidedAt": "2026-11-19T12:00:00Z"
+    },
+    {
+      "id": "DEC-191",
+      "topic": "lift a ban",
+      "closes": [],
+      "decision": "QQ2: DELETE /v1/admin/bans/:id (owner and ops) lifts a ban: sign-in works again; the listings it removed stay removed. It carries `reason` (DEC-125), writes one audit row and answers the Ban with `until` set to now. A ban not in force is 409.",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md QQ2",
+      "decidedAt": "2026-11-19T12:00:00Z"
+    },
+    {
+      "id": "DEC-192",
+      "topic": "seal answers started or covered",
+      "closes": [],
+      "decision": "VV1: E-231 POST /v1/wishes/:id/seal answers PaymentStartedOrCovered as E-228 does: {payment: null, item} when no money moves (the Pass or the plan pays), {payment, item} otherwise.",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md VV1",
+      "decidedAt": "2026-11-19T12:00:00Z"
+    },
+    {
+      "id": "DEC-193",
+      "topic": "seal on the plan",
+      "closes": [],
+      "decision": "ZB3: E-231 body gains `usePlan` (boolean, optional). usePlan: true draws one wish from the business's Pro plan month or pack, in the seal transaction, in place of a ticket payment; the wish becomes a Signature with no ticket sold, writes its client-wish record and carries the business. It cannot be sent with usePass or over a wish that already holds a paid ticket (422).",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md ZB3",
+      "decidedAt": "2026-11-19T12:00:00Z"
+    },
+    {
+      "id": "DEC-194",
+      "topic": "wish: hasPasscode in, legacy fields out",
+      "closes": [],
+      "decision": "VV3: the Wish contract gains `hasPasscode` (boolean: the wish has a passcode or an answer to ask; the passcode itself is never returned) and loses the legacy whole-wish fields the old app wrote (adds, blessing, call, captions, chapter, credits, details, effect, finale, letter, links, memory, note, off, on, photos, reasons, studio, timeline, type, voices and the like). A wish's words are in `content`.",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md VV3",
+      "decidedAt": "2026-11-19T12:00:00Z"
+    },
+    {
+      "id": "DEC-195",
+      "topic": "creator earnings: summary, accrual shape, bank",
+      "closes": [],
+      "decision": "WW7: RoyaltyAccrual loses `rows` and `total`. E-154 GET /v1/creator/earnings answers RoyaltyEarnings {items, nextCursor, summary}: the creator's accruals and reversals, newest first, and a summary {thisMonthKobo, waitingKobo, sendingKobo, paidKobo, byStyle[{styleSlug, amountKobo}]}. E-41 GET /v1/admin/creators: each Creator gains `bank` ({bankCode, accountNumber} with the number masked, or null). E-115's :id is the month (YYYY-MM).",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md WW7",
+      "decidedAt": "2026-11-19T12:00:00Z"
+    },
+    {
+      "id": "DEC-196",
+      "topic": "studio bodies, snapshot, style checks job",
+      "closes": [],
+      "decision": "XX4: E-186 PATCH /v1/studio/prefs body is the named keys, each optional: coached (boolean), bottom, span, addTab (strings), looks, recent, fav (arrays); a bad one is 422. E-192 POST /v1/studio/styles/:id/withdraw body is `on` (boolean, optional: the setTemplate form). SubmissionView gains `snapshot`: the frozen draft the checks and the reviewer read (T-63), or null. Job.type gains `check-style-submission`, the job that runs a submission's checks.",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md XX4",
+      "decidedAt": "2026-11-19T12:00:00Z",
+      "fieldTypes": {
+        "Job.type": "enum(open-wish|rest-wish|erase-wish|restore-window-end|erase-now|send-notice|send-message|make-image-sizes|screen-file|render-video|make-qr-card|abandon-payment|reconcile-ledger|pass-period|plan-period|creator-period|vault-billing|royalty-accrual|payout-run|style-level-review|upload-cleanup|clean-link-hits|check-style-submission)"
+      }
+    },
+    {
+      "id": "DEC-197",
+      "topic": "contact page, saved replies, thread detail, delivery news",
+      "closes": [],
+      "decision": "YY3: POST /v1/support-threads/contact (public) opens a thread from the contact page: body {email, subject, body}; answers ThreadDetail; counted per network and per address, 5 a day each. The saved replies have a list and a writer: GET, POST, PATCH /:id and DELETE /:id on /v1/admin/support/saved-replies (ops, owner, support); a change carries `reason` (DEC-125) and writes one audit row; a SavedReply is {id, name, text}. ThreadDetail is a type: SupportThread with its `messages` (E-207, E-208, E-209 and the contact route answer it). MessageDelivery.status gains `bounced` and `complained`.",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md YY3",
+      "decidedAt": "2026-11-19T12:00:00Z",
+      "fieldTypes": {
+        "MessageDelivery.status": "enum(queued|sending|sent|delivered|failed|dropped|bounced|complained)"
+      }
+    },
+    {
+      "id": "DEC-198",
+      "topic": "reveal link off, the client's link, play shape",
+      "closes": [],
+      "decision": "EA2: POST /v1/business/reveal-links/:id/off (business) switches a link off at once and answers the RevealLink. The client's link: GET /v1/r/:code (public, no sign-in; x-unlock-token and x-reveal-session headers) answers RevealPlay: {state: 'passcode'} while a passcode is needed, otherwise {state: 'open', content, date, index, no, photos, style, business}; POST /v1/r/:code/unlock (public) takes {passcode} and answers UnlockResult. RevealPlay gains `state` and `business`; its other fields are absent in the passcode state.",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md EA2",
+      "decidedAt": "2026-11-19T12:00:00Z"
+    },
+    {
+      "id": "DEC-199",
+      "topic": "concierge: delivery, card, customer routes, states",
+      "closes": [
+        {
+          "conflict": "C-21",
+          "key": "possible-alias|ConciergeOrder|ConciergeOrder fields due / dueAt may be one field",
+          "detail": "ConciergeOrder fields due / dueAt may be one field"
+        }
+      ],
+      "decision": "CA2: E-34 POST /v1/admin/concierge-orders/:id/delivery takes `wishIds` (array of wish ids, 1 to 1000: the wishes made for the order) beside `reason`. E-141 POST /v1/qr-cards takes `wishId` or `wishIds` (up to 100) and `names` (up to 100, each up to 200 characters), each optional; one of the two ids is needed. The customer's Concierge routes: GET /v1/concierge-orders (their own, a page), GET /v1/concierge-orders/:id, POST /v1/concierge-orders/:id/cancel (no body: the customer's own cancel); the staff cancel is POST /v1/admin/concierge/orders/:id/cancel (ops and owner; `reason`). E-36 answers a page of ConciergeOrder. E-148 POST /v1/wishes/:id/video answers PaymentStartedOrCovered. ConciergeOrder.status and .state gain `given` (a maker has the order) beside `making` (being made); ConciergeOrder gains paidAt, dueAt, paymentId and wishIds (the wishes delivered under it). ConciergeOrder.due (the list of due dates of a list order) and dueAt (the time a single wish is due) are two fields.",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md CA2",
+      "decidedAt": "2026-11-19T12:00:00Z",
+      "fieldTypes": {
+        "ConciergeOrder.status": "enum(brief|quoted|paid|given|making|delivered|cancelled)",
+        "ConciergeOrder.state": "enum(placed|quoted|paid|given|making|delivered|cancelled)"
+      }
+    },
+    {
+      "id": "DEC-200",
+      "topic": "registry re-freeze (seventh reopen)",
+      "closes": [],
+      "decision": "The registry is re-frozen after PP2, QQ1, QQ2, VV1, VV3, ZB3, WW7, XX4, YY3, EA2 and CA2 (DEC-189..199) by tools/pipeline/freeze.py; reconcile.py was run twice with --reopen (identical outputs, EXIT 0, 0 open conflicts, both admin gate lines 0). Endpoint ids already issued are unchanged; new ids follow. The other shared rulings of this base (OO4, PP1, PP3, QQ6, WW3, WW4, XX4 storage, YY1, YY2, ZZ5, ZB1, CB3, CB4, EA1) change storage, kernel or code, not the wire.",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (INT-5)",
+      "decidedAt": "2026-11-19T12:00:00Z"
     }
   ]
 }

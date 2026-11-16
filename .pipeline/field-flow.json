@@ -1610,7 +1610,8 @@
     {
       "field": "Ban.reason",
       "writers": [
-        "E-21"
+        "E-21",
+        "E-242"
       ],
       "store": "Ban",
       "readers": [],
@@ -2888,6 +2889,16 @@
       "noWriter": true
     },
     {
+      "field": "ConciergeOrder.dueAt",
+      "writers": [],
+      "store": "ConciergeOrder",
+      "readers": [],
+      "writerActors": [],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
       "field": "ConciergeOrder.from",
       "writers": [],
       "store": "ConciergeOrder",
@@ -3043,6 +3054,26 @@
       "noWriter": true
     },
     {
+      "field": "ConciergeOrder.paidAt",
+      "writers": [],
+      "store": "ConciergeOrder",
+      "readers": [],
+      "writerActors": [],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "ConciergeOrder.paymentId",
+      "writers": [],
+      "store": "ConciergeOrder",
+      "readers": [],
+      "writerActors": [],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
       "field": "ConciergeOrder.person",
       "writers": [],
       "store": "ConciergeOrder",
@@ -3089,6 +3120,7 @@
       "writers": [
         "E-34",
         "E-35",
+        "E-243",
         "E-39"
       ],
       "store": "ConciergeOrder",
@@ -3216,6 +3248,30 @@
       "readerActors": [],
       "crossActor": false,
       "noWriter": false
+    },
+    {
+      "field": "ConciergeOrder.wishIds",
+      "writers": [
+        "E-34"
+      ],
+      "store": "ConciergeOrder",
+      "readers": [],
+      "writerActors": [
+        "staff"
+      ],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": false
+    },
+    {
+      "field": "Creator.bank",
+      "writers": [],
+      "store": "Creator",
+      "readers": [],
+      "writerActors": [],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": true
     },
     {
       "field": "Creator.counts",
@@ -4982,17 +5038,21 @@
     },
     {
       "field": "LedgerDay.day",
-      "writers": [],
+      "writers": [
+        "E-63"
+      ],
       "store": "LedgerDay",
       "readers": [
         "admin-payments"
       ],
-      "writerActors": [],
+      "writerActors": [
+        "staff"
+      ],
       "readerActors": [
         "staff"
       ],
       "crossActor": false,
-      "noWriter": true
+      "noWriter": false
     },
     {
       "field": "LedgerDay.diffs",
@@ -11294,6 +11354,16 @@
       "noWriter": false
     },
     {
+      "field": "RevealPlay.business",
+      "writers": [],
+      "store": "RevealPlay",
+      "readers": [],
+      "writerActors": [],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
       "field": "RevealPlay.content",
       "writers": [],
       "store": "RevealPlay",
@@ -11370,6 +11440,16 @@
         "person",
         "public"
       ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "RevealPlay.state",
+      "writers": [],
+      "store": "RevealPlay",
+      "readers": [],
+      "writerActors": [],
+      "readerActors": [],
       "crossActor": false,
       "noWriter": true
     },
@@ -11577,31 +11657,41 @@
     },
     {
       "field": "SavedReply.name",
-      "writers": [],
+      "writers": [
+        "E-251",
+        "E-253"
+      ],
       "store": "SavedReply",
       "readers": [
         "admin-support-detail"
       ],
-      "writerActors": [],
+      "writerActors": [
+        "staff"
+      ],
       "readerActors": [
         "staff"
       ],
       "crossActor": false,
-      "noWriter": true
+      "noWriter": false
     },
     {
       "field": "SavedReply.text",
-      "writers": [],
+      "writers": [
+        "E-251",
+        "E-253"
+      ],
       "store": "SavedReply",
       "readers": [
         "admin-support-detail"
       ],
-      "writerActors": [],
+      "writerActors": [
+        "staff"
+      ],
       "readerActors": [
         "staff"
       ],
       "crossActor": false,
-      "noWriter": true
+      "noWriter": false
     },
     {
       "field": "SavedWish.wish",
@@ -12910,6 +13000,20 @@
     },
     {
       "field": "StudioPrefs.(any of) coached, bottom, span, looks, recent, fav, addTab",
+      "writers": [],
+      "store": "StudioPrefs",
+      "readers": [
+        "studio-editor"
+      ],
+      "writerActors": [],
+      "readerActors": [
+        "creator"
+      ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "StudioPrefs.addTab",
       "writers": [
         "E-186"
       ],
@@ -12927,102 +13031,112 @@
       "noWriter": false
     },
     {
-      "field": "StudioPrefs.addTab",
-      "writers": [],
-      "store": "StudioPrefs",
-      "readers": [
-        "studio-editor"
-      ],
-      "writerActors": [],
-      "readerActors": [
-        "creator"
-      ],
-      "crossActor": false,
-      "noWriter": true
-    },
-    {
       "field": "StudioPrefs.bottom",
-      "writers": [],
+      "writers": [
+        "E-186"
+      ],
       "store": "StudioPrefs",
       "readers": [
         "studio-editor"
       ],
-      "writerActors": [],
+      "writerActors": [
+        "creator"
+      ],
       "readerActors": [
         "creator"
       ],
       "crossActor": false,
-      "noWriter": true
+      "noWriter": false
     },
     {
       "field": "StudioPrefs.coached",
-      "writers": [],
+      "writers": [
+        "E-186"
+      ],
       "store": "StudioPrefs",
       "readers": [
         "studio-editor"
       ],
-      "writerActors": [],
+      "writerActors": [
+        "creator"
+      ],
       "readerActors": [
         "creator"
       ],
       "crossActor": false,
-      "noWriter": true
+      "noWriter": false
     },
     {
       "field": "StudioPrefs.fav",
-      "writers": [],
+      "writers": [
+        "E-186"
+      ],
       "store": "StudioPrefs",
       "readers": [
         "studio-editor"
       ],
-      "writerActors": [],
+      "writerActors": [
+        "creator"
+      ],
       "readerActors": [
         "creator"
       ],
       "crossActor": false,
-      "noWriter": true
+      "noWriter": false
     },
     {
       "field": "StudioPrefs.looks",
-      "writers": [],
+      "writers": [
+        "E-186"
+      ],
       "store": "StudioPrefs",
       "readers": [
         "studio-editor"
       ],
-      "writerActors": [],
+      "writerActors": [
+        "creator"
+      ],
       "readerActors": [
         "creator"
       ],
       "crossActor": false,
-      "noWriter": true
+      "noWriter": false
     },
     {
       "field": "StudioPrefs.recent",
-      "writers": [],
+      "writers": [
+        "E-186"
+      ],
       "store": "StudioPrefs",
       "readers": [
         "studio-editor"
       ],
-      "writerActors": [],
+      "writerActors": [
+        "creator"
+      ],
       "readerActors": [
         "creator"
       ],
       "crossActor": false,
-      "noWriter": true
+      "noWriter": false
     },
     {
       "field": "StudioPrefs.span",
-      "writers": [],
+      "writers": [
+        "E-186"
+      ],
       "store": "StudioPrefs",
       "readers": [
         "studio-editor"
       ],
-      "writerActors": [],
+      "writerActors": [
+        "creator"
+      ],
       "readerActors": [
         "creator"
       ],
       "crossActor": false,
-      "noWriter": true
+      "noWriter": false
     },
     {
       "field": "StudioStyle....StyleSpec",
@@ -13280,7 +13394,8 @@
     {
       "field": "StudioStyle.on",
       "writers": [
-        "E-191"
+        "E-191",
+        "E-192"
       ],
       "store": "StudioStyle",
       "readers": [
@@ -13297,21 +13412,17 @@
     },
     {
       "field": "StudioStyle.on (setTemplate only)",
-      "writers": [
-        "E-192"
-      ],
+      "writers": [],
       "store": "StudioStyle",
       "readers": [
         "studio-editor"
       ],
-      "writerActors": [
-        "creator"
-      ],
+      "writerActors": [],
       "readerActors": [
         "creator"
       ],
       "crossActor": false,
-      "noWriter": false
+      "noWriter": true
     },
     {
       "field": "StudioStyle.opening",
@@ -14932,6 +15043,16 @@
       "noWriter": true
     },
     {
+      "field": "SubmissionView.snapshot",
+      "writers": [],
+      "store": "SubmissionView",
+      "readers": [],
+      "writerActors": [],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
       "field": "SubmissionView.still",
       "writers": [],
       "store": "SubmissionView",
@@ -15074,12 +15195,14 @@
     {
       "field": "SupportThread.body",
       "writers": [
-        "E-210"
+        "E-210",
+        "E-254"
       ],
       "store": "SupportThread",
       "readers": [],
       "writerActors": [
-        "person"
+        "person",
+        "public"
       ],
       "readerActors": [],
       "crossActor": false,
@@ -15115,18 +15238,22 @@
     },
     {
       "field": "SupportThread.email",
-      "writers": [],
+      "writers": [
+        "E-254"
+      ],
       "store": "SupportThread",
       "readers": [
         "admin-support",
         "admin-support-detail"
       ],
-      "writerActors": [],
+      "writerActors": [
+        "public"
+      ],
       "readerActors": [
         "staff"
       ],
-      "crossActor": false,
-      "noWriter": true
+      "crossActor": true,
+      "noWriter": false
     },
     {
       "field": "SupportThread.id",
@@ -15277,7 +15404,8 @@
     {
       "field": "SupportThread.subject",
       "writers": [
-        "E-210"
+        "E-210",
+        "E-254"
       ],
       "store": "SupportThread",
       "readers": [
@@ -15285,7 +15413,8 @@
         "admin-support-detail"
       ],
       "writerActors": [
-        "person"
+        "person",
+        "public"
       ],
       "readerActors": [
         "staff"
@@ -17696,6 +17825,16 @@
       "noWriter": false
     },
     {
+      "field": "Wish.hasPasscode",
+      "writers": [],
+      "store": "Wish",
+      "readers": [],
+      "writerActors": [],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
       "field": "Wish.id",
       "writers": [
         "E-223",
@@ -19935,6 +20074,6 @@
       "noWriter": false
     }
   ],
-  "crossActor": 33,
-  "noWriter": 638
+  "crossActor": 34,
+  "noWriter": 637
 }

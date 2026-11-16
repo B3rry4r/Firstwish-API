@@ -1,8 +1,8 @@
 /**
- * The messages Firstwish sends (B11; INT-4 adds the staff invite, B17 the business login invite, WW5 the bank-changed message). Every one goes by email (R11). The wording lives in the MessageTemplate table
+ * The messages Firstwish sends (B11; B18 adds the reveal message; INT-4 adds the staff invite, B17 the business login invite, WW5 the bank-changed message). Every one goes by email (R11). The wording lives in the MessageTemplate table
  * (seeded from the web app, edited by staff); this file holds what the wording may name and what the code needs from it.
  */
-export type TemplateKey = "sealed" | "opens" | "opened" | "resting" | "code" | "invite" | "login-invite" | "bank-changed" | "support" | "concierge-delivered";
+export type TemplateKey = "sealed" | "opens" | "opened" | "resting" | "code" | "invite" | "login-invite" | "bank-changed" | "support" | "concierge-delivered" | "reveal";
 
 export interface TemplateSpec {
   key: TemplateKey;
@@ -64,6 +64,10 @@ export const TEMPLATES: Readonly<Record<TemplateKey, TemplateSpec>> = {
   "concierge-delivered": {
     key: "concierge-delivered", label: "Your Concierge order is delivered", when: "When the maker delivers a Concierge order.", audience: "The customer who ordered",
     allowed: ["count"], needs: ["count"], purpose: "receipt", noticeKind: null, mutable: true,
+  },
+  reveal: {
+    key: "reveal", label: "Your photos are ready", when: "When a business sends a client the proofs or finals of a shoot (B18).", audience: "The client of the business",
+    allowed: ["name", "business", "link"], needs: ["business", "link"], purpose: "wish-delivery", noticeKind: null, mutable: false,
   },
 };
 

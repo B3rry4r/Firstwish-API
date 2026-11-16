@@ -68,7 +68,7 @@ export interface SealInput {
   timeZone?: string;
 }
 
-const hashPasscode = (p: string): Promise<string> =>
+export const hashPasscode = (p: string): Promise<string> =>
   new Promise((resolve, reject) => {
     const salt = randomBytes(16);
     scrypt(p, salt, 32, (err, key) => (err ? reject(err) : resolve(`scrypt$${salt.toString("hex")}$${key.toString("hex")}`)));

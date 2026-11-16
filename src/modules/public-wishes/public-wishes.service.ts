@@ -2,14 +2,13 @@ import { HttpStatus, Injectable } from "@nestjs/common";
 import { scrypt, timingSafeEqual } from "node:crypto";
 import { PrismaService } from "../../common/db/prisma.service";
 import { AppError } from "../../common/errors/app-error";
-import { RateLimited } from "../../common/errors/rate-limited";
 import { Clock } from "../../common/ports/clock.port";
 import { IdGenerator } from "../../common/ports/ids.port";
 import { toWireInstant } from "../../common/time/time";
 import type { PublicWishView, ReactionResult, UnlockResult } from "../../contracts";
 import { SignedUrlsService } from "../stored-files/signed-urls.service";
 import { WishLifecycleService } from "../wishes/wish-lifecycle.service";
-import { LINK_LOCK_SECONDS, LINK_WRONG_TRIES, LinkLimits, READS_PER_MINUTE, UNLOCKS_PER_HOUR } from "./link-limits";
+import { LinkLimits, READS_PER_MINUTE, UNLOCKS_PER_HOUR } from "./link-limits";
 import { UnlockTokens } from "./unlock-token";
 
 /** Who is asking: the client address (from the trusted proxy setting), the unlock token the page holds, the opening session. */
@@ -86,7 +85,7 @@ function sceneOf(content: unknown): Record<string, unknown> | undefined {
   return Object.keys(out).length ? { opening: out } : undefined;
 }
 
-const verify = (candidate: string, stored: string): Promise<boolean> =>
+export const verify = (candidate: string, stored: string): Promise<boolean> =>
   new Promise((resolve) => {
     const [kind, salt, key] = stored.split("$");
     if (kind !== "scrypt" || !salt || !key) return resolve(false);
@@ -172,19 +171,8 @@ export class PublicWishesService {
     if (!row.opensAt || row.opensAt.getTime() > now.getTime()) throw AppError.conflict("not_open_yet", "This wish is not open yet.");
     if (!row.passcodeHash) return { ok: true };
     await this.limits.take("unlock", this.limits.keyOf(row.linkId, c.address), UNLOCKS_PER_HOUR, 3600);
-    // the try is counted in ONE statement on the link; a link locked until a time refuses with that time
-    const lockTo = new Date(now.getTime() + LINK_LOCK_SECONDS * 1000);
-    const counted = await this.db.$queryRaw<{ tries: number }[]>`
-      UPDATE wish_link SET
-        tries = CASE WHEN "lockedUntil" IS NOT NULL THEN 1 ELSE tries + 1 END,
-        "lockedUntil" = CASE WHEN "lockedUntil" IS NULL AND tries + 1 >= ${LINK_WRONG_TRIES} THEN ${lockTo}::timestamptz ELSE NULL END
-      WHERE id = ${row.linkId}::uuid AND ("lockedUntil" IS NULL OR "lockedUntil" <= ${now})
-      RETURNING tries`;
-    if (!counted.length) {
-      const cur = await this.db.wishLink.findUnique({ where: { id: row.linkId }, select: { lockedUntil: true } });
-      const secs = cur?.lockedUntil ? Math.max(1, Math.ceil((cur.lockedUntil.getTime() - now.getTime()) / 1000)) : LINK_LOCK_SECONDS;
-      throw new RateLimited(secs, `This link is locked. Try again in ${secs} seconds.`);
-    }
+    // the try is counted in ONE statement on the link; a link locked until a time refuses with that time (LinkLimits.countTry, shared with reveal links)
+    await this.limits.countTry("wish_link", row.linkId);
     const candidate = input.passcode ?? input.answer ?? (typeof input.opening?.answer === "string" ? input.opening.answer : "");
     const good = typeof candidate === "string" && candidate.length > 0 && candidate.length <= 200 && (await verify(candidate, row.passcodeHash));
     if (!good) return { ok: false, error: questionOf(row.content) ? "That is not the answer." : "That is not the passcode." };

@@ -1,5 +1,6 @@
 import { createHmac } from "node:crypto";
 import { Inject, Injectable } from "@nestjs/common";
+import { Prisma } from "@prisma/client";
 import type { Env } from "../../common/env/env";
 import { ENV } from "../../common/env/env.module";
 import { PrismaService } from "../../common/db/prisma.service";
@@ -54,6 +55,29 @@ export class LinkLimits {
       const wait = Math.max(1, Math.ceil((first.getTime() + windowSeconds * 1000 - now.getTime()) / 1000));
       throw new RateLimited(wait, `Too many tries. Try again in ${wait} seconds.`);
     }
+  }
+
+  /**
+   * The wrong-try lock of a passcode link, for the receiver's wish link (wish_link) and a reveal link (reveal_access): ONE statement counts
+   * the try; LINK_WRONG_TRIES tries lock the link for LINK_LOCK_SECONDS. A locked link counts nothing and answers how long to wait (RateLimited).
+   * Both links call this one function (B18 took it out of the receiver's unlock so the two cannot differ).
+   */
+  async countTry(table: "wish_link" | "reveal_access", id: string): Promise<number> {
+    const now = this.clock.now();
+    const t = Prisma.raw(table);
+    const col = Prisma.raw(table === "wish_link" ? "id" : '"linkId"');
+    const lockTo = new Date(now.getTime() + LINK_LOCK_SECONDS * 1000);
+    const counted = await this.db.$queryRaw<{ tries: number }[]>`
+      UPDATE ${t} SET
+        tries = CASE WHEN "lockedUntil" IS NOT NULL THEN 1 ELSE tries + 1 END,
+        "lockedUntil" = CASE WHEN "lockedUntil" IS NULL AND tries + 1 >= ${LINK_WRONG_TRIES} THEN ${lockTo}::timestamptz ELSE NULL END
+      WHERE ${col} = ${id}::uuid AND ("lockedUntil" IS NULL OR "lockedUntil" <= ${now})
+      RETURNING tries`;
+    if (counted.length) return counted[0].tries;
+    const cur = await this.db.$queryRaw<{ lockedUntil: Date | null }[]>`SELECT "lockedUntil" FROM ${t} WHERE ${col} = ${id}::uuid`;
+    const until = cur[0]?.lockedUntil;
+    const secs = until ? Math.max(1, Math.ceil((until.getTime() - now.getTime()) / 1000)) : LINK_LOCK_SECONDS;
+    throw new RateLimited(secs, `This link is locked. Try again in ${secs} seconds.`);
   }
 
   /** LL4: removes the hits past their keeping time. The timed job "clean-link-hits" (registered with the jobs frame) calls it; never the path of a limit. */

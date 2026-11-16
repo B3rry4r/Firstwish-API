@@ -93,13 +93,13 @@ describe("P-API-BASE-6 HU1 to HU3", () => {
     const known = email();
     await db.account.create({ data: { id: ids.next(), contact: known, sides: ["person"], lastSide: "person" } });
     const fresh = email();
-    const accountsBefore = await db.account.count();
     const a = await start(w.slug, { keepKey: "month", email: known }, h, `ab6p-${run}-1`);
     const b = await start(w.slug, { keepKey: "month", email: fresh }, h, `ab6p-${run}-2`);
     expect([a.status, b.status]).toEqual([201, 201]);
     expect(Object.keys(a.body).sort()).toEqual(Object.keys(b.body).sort());
     expect(Object.keys(a.body.payment).sort()).toEqual(Object.keys(b.body.payment).sort());
-    expect(await db.account.count()).toBe(accountsBefore);
+    // no Account is made for the new email, and the known one still has exactly its own
+    expect(await db.account.count({ where: { contact: { in: [known, fresh] } } })).toBe(1);
     for (const [r, e] of [[a, known], [b, fresh]] as const) {
       const row = await db.payment.findUniqueOrThrow({ where: { providerReference: r.body.payment.reference } });
       expect(row.accountId).toBeNull();

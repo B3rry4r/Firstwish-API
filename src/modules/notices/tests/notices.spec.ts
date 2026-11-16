@@ -368,11 +368,11 @@ describe("notices (contract)", () => {
       expect((await t.http().get("/v1/admin/messages/templates").set(bearer("finance"))).status).toBe(403);
       expect((await edit("moderator", "opened", good)).status).toBe(403);
     });
-    it("owner, ops and support read the six messages", async () => {
+    it("owner, ops and support read the seven messages", async () => {
       for (const who of ["owner", "ops", "support"]) {
         const r = await t.http().get("/v1/admin/messages/templates").set(bearer(who));
         expect(r.status).toBe(200);
-        expect((r.body.items as { key: string }[]).map((i) => i.key)).toEqual(["code", "invite", "opened", "opens", "resting", "sealed"]);
+        expect((r.body.items as { key: string }[]).map((i) => i.key)).toEqual(["code", "invite", "login-invite", "opened", "opens", "resting", "sealed"]);
         expect(r.body.nextCursor).toBeNull();
       }
       const p = await t.http().get("/v1/admin/messages/templates").query({ limit: 2 }).set(bearer("ops"));

@@ -21,6 +21,7 @@ import { PriceBookModule } from "./modules/price-book/price-book.module";
 // end B04
 // B02: account sides, creators, business profile, follow
 import { BusinessModule } from "./modules/business/business.module";
+import { ProBusinessModule } from "./modules/pro-business/pro-business.module";
 import { CreatorsModule } from "./modules/creators/creators.module";
 import { FollowsModule } from "./modules/follows/follows.module";
 // end B02
@@ -108,6 +109,9 @@ import { NoticesModule } from "./modules/notices/notices.module";
     // INT-3
     JobHandlersModule,
     // end INT-3
+    // B17
+    ProBusinessModule,
+    // end B17
     // B11
     NoticesModule,
     // end B11

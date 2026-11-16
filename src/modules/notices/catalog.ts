@@ -1,8 +1,8 @@
 /**
- * The six messages Firstwish sends (B11; INT-4 adds the staff invite). Every one goes by email (R11). The wording lives in the MessageTemplate table
+ * The seven messages Firstwish sends (B11; INT-4 adds the staff invite, B17 the business login invite). Every one goes by email (R11). The wording lives in the MessageTemplate table
  * (seeded from the web app, edited by staff); this file holds what the wording may name and what the code needs from it.
  */
-export type TemplateKey = "sealed" | "opens" | "opened" | "resting" | "code" | "invite";
+export type TemplateKey = "sealed" | "opens" | "opened" | "resting" | "code" | "invite" | "login-invite";
 
 export interface TemplateSpec {
   key: TemplateKey;
@@ -48,6 +48,10 @@ export const TEMPLATES: Readonly<Record<TemplateKey, TemplateSpec>> = {
   invite: {
     key: "invite", label: "You are invited to the team", when: "When staff invite a new team member.", audience: "The new team member",
     allowed: ["code"], needs: ["code"], purpose: "invite", noticeKind: null, mutable: false,
+  },
+  "login-invite": {
+    key: "login-invite", label: "You are invited to a business", when: "When a business owner adds a login for an email address.", audience: "The person invited",
+    allowed: ["business"], needs: ["business"], purpose: "invite", noticeKind: null, mutable: false,
   },
 };
 

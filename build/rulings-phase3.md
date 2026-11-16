@@ -739,3 +739,12 @@ HG1 (give race) Two staff giving one Concierge order: the code is right (overlap
     replaces the maker. A give carries what the staff member saw (the order's maker, or none); if the order no longer
     matches it answers 409 order_changed and changes nothing. A body field, so a registry change: with the next API base,
     and the staff Concierge screen (W14) sends it. Default (lead), owner may override.
+
+## HH (16 Nov 2026, the lead, on API-BASE-2's hand-back). Default (lead), owner may override.
+- HH1: the give's `expectedMaker` is required (HG1, DEC-212). Every older test that sends a give sends the maker it saw; a
+  test is edited only to add that field, never its expectations.
+- HH2: a test that sets `business.pack` by hand with no pack grant builds the pack by a real (stand-in) payment instead; what
+  it expects stays as it was. A pack with no grant gives nothing back (API-BASE-2 case 2).
+- HH3: the web files the seed is drawn from changed with W0c (8d97b86: lib/account.ts, lib/engine/types.ts, lib/studio.ts).
+  The seed is re-drawn from the web head; if what the API serves changes (a word, a label), the seed changes with it and the
+  record of hashes (prisma/seed-data/SOURCE.json) is refreshed; a hash is never refreshed without the comparison.

@@ -12,6 +12,9 @@ import { FulfilmentRegistry } from "../../payments/fulfilment.registry";
 
 const ROOT = join(__dirname, "../../../..");
 const NOW = new Date("2032-03-10T09:00:00.000Z");
+const TERM_DAYS: Record<string, number> = { moment: 7, keepsake: 14, signature: 30, premiere: 60 };
+/** A wish row's first open is its end less the ticket's term (EE7): the end is worked out from it (HB1). */
+const openedFor = (d: Record<string, unknown>): Date | undefined => (d.endsAt instanceof Date && typeof d.ticket === "string" && TERM_DAYS[d.ticket] ? new Date(d.endsAt.getTime() - TERM_DAYS[d.ticket] * 86_400_000) : undefined);
 const ids = new UuidV7Maker();
 let seq = 0;
 const auth = (token: string) => ({ authorization: `Bearer ${token}` });
@@ -59,7 +62,7 @@ describe("Wave 4 join: invoices with payments and refunds (J1), a refund of a li
   };
   const wish = async (accountId: string, over: Record<string, unknown> = {}) => {
     const id = ids.next();
-    await db.wish.create({ data: { id, accountId, status: "draft", kind: "birthday", occasion: "birthday", styleSlug: "golden", timeZone: "Africa/Lagos", ...over } as never });
+    await db.wish.create({ data: { id, accountId, status: "draft", kind: "birthday", occasion: "birthday", styleSlug: "golden", timeZone: "Africa/Lagos", ...over, ...(openedFor(over) ? { openedAt: openedFor(over) } : {}) } as never });
     return id;
   };
   /** A payment as the start would store it, then the provider's good answer through the one settle path. */
@@ -202,10 +205,11 @@ describe("Wave 4 join: invoices with payments and refunds (J1), a refund of a li
     expect(k.outcome).toBe("fulfilled");
     const grant = await db.purchaseGrant.findFirstOrThrow({ where: { paymentId: k.id } });
     const days = Number((grant.detail as { days: number }).days);
-    await db.wish.update({ where: { id: x.w }, data: { endsAt: new Date(NOW.getTime() + days * 86_400_000 - 3_600_000) } });
+    expect(days).toBe(30);
+    t.clock.set(new Date(NOW.getTime() + 15 * 86_400_000)); // past the wish's own term (HB1 works the end out from it), inside the keep's
     await sentRefund({ id: k.id, total: k.total });
     expect((await processed(k.reference, Number(k.total))).status).toBe(200);
-    expect((await db.wish.findUniqueOrThrow({ where: { id: x.w } })).endsAt!.getTime()).toBeLessThan(NOW.getTime());
+    expect((await db.wish.findUniqueOrThrow({ where: { id: x.w } })).endsAt!.getTime()).toBeLessThan(t.clock.now().getTime());
     await t.app.get(JobsService).runDue(20, [x.w]);
     expect((await db.wish.findUniqueOrThrow({ where: { id: x.w } })).status).toBe("resting");
     expect(await db.publishedWish.count({ where: { wishId: x.w } })).toBe(0);

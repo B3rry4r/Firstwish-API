@@ -8,6 +8,8 @@ import { WishesModule } from "../wishes/wishes.module";
 import { BusinessHandlers } from "./business-handlers";
 import { CreatorHandlers } from "./creator-handlers";
 import { GrantStore } from "./grants";
+import { KeepProofs } from "./keep-proof";
+import { PassCover } from "./pass-cover";
 import { PassDrawsModule } from "./pass-draws";
 import { PassService } from "./pass.service";
 import { PurchasesService } from "./purchases.service";
@@ -20,7 +22,7 @@ import { WishHandlers } from "./wish-handlers";
  */
 @Module({
   imports: [PaymentsModule, WishesModule, JobsModule, EventsModule, PassDrawsModule, InvoicesModule, RoyaltiesModule],
-  providers: [GrantStore, WishHandlers, PassService, BusinessHandlers, CreatorHandlers, PurchasesService],
-  exports: [PurchasesService, PassService, BusinessHandlers, GrantStore],
+  providers: [GrantStore, KeepProofs, PassCover, WishHandlers, PassService, BusinessHandlers, CreatorHandlers, PurchasesService],
+  exports: [PurchasesService, PassService, BusinessHandlers, GrantStore, KeepProofs, PassCover],
 })
 export class PurchasesModule {}

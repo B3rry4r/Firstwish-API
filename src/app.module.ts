@@ -77,6 +77,9 @@ import { ShowingModule } from "./modules/showing/showing.module";
 import { StaffReadsModule } from "./modules/staff-reads/staff-reads.module";
 import { AiWritingModule } from "./modules/ai-writing/ai-writing.module";
 import { ReferenceDataModule } from "./modules/reference-data/reference-data.module";
+import { WishKeepsModule } from "./modules/wish-keeps/wish-keeps.module";
+import { MePassModule } from "./modules/me-pass/me-pass.module";
+import { LedgerEntriesModule } from "./modules/ledger-entries/ledger-entries.module";
 
 @Module({
   imports: [
@@ -170,6 +173,11 @@ import { ReferenceDataModule } from "./modules/reference-data/reference-data.mod
     AiWritingModule,
     ReferenceDataModule,
     // end B23
+    // B22
+    WishKeepsModule,
+    MePassModule,
+    LedgerEntriesModule,
+    // end B22
   ],
 })
 export class AppModule {}

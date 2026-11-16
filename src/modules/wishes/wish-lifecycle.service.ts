@@ -24,6 +24,39 @@ export const UNOPENED_DAYS = 365;
 /** The upload-cleanup jobs that remove one file a erased wish named (EE4): the subject is this prefix and the file's id. */
 export const ERASE_WISH_FILE_PREFIX = "erase-wish-file:";
 
+/**
+ * A wish's own term end (EE7, EE8): its first open plus the ticket's term days; a wedding wish counts from its wedding date and never
+ * ends before it was opened. Null while it has not been opened. The one place this date is worked out (markOpened and HB1's endOf).
+ */
+export async function termEnd(
+  tx: Tx,
+  w: { ticket: string | null; openedAt: Date | null; weddingDate: Date | null; timeZone: string },
+  entitlements: (tx: Tx) => Promise<Parameters<typeof grantOf>[0]>,
+): Promise<Date | null> {
+  if (!w.openedAt) return null;
+  let days = 0;
+  let found = false;
+  if (w.ticket) {
+    const g = grantOf(await entitlements(tx), `ticket.${w.ticket}`);
+    if (g && typeof g.termDays === "number") {
+      days = g.termDays;
+      found = true;
+    }
+  }
+  if (!found) {
+    const cfg = await tx.lifecycleConfig.findFirst({ orderBy: { id: "desc" } });
+    const terms = (cfg?.TERM_DAYS ?? {}) as Record<string, number>;
+    days = (w.ticket && terms[w.ticket]) || 7;
+  }
+  const term = days * DAY;
+  let endsAt = new Date(w.openedAt.getTime() + term);
+  if (w.weddingDate) {
+    const day = localToUtc(`${w.weddingDate.toISOString().slice(0, 10)}T00:00`, w.timeZone);
+    if (day) endsAt = new Date(Math.max(w.openedAt.getTime(), day.getTime() + term));
+  }
+  return endsAt;
+}
+
 interface Locked {
   id: string;
   status: string;
@@ -182,17 +215,6 @@ export class WishLifecycleService implements OnModuleInit {
     await this.jobs.schedule("rest-wish", endsAt, wish.id, tx);
   }
 
-  private async termDays(tx: Tx, ticket: string | null): Promise<number> {
-    if (ticket) {
-      const g = grantOf(await this.entitlements.row(tx), `ticket.${ticket}`);
-      if (g && typeof g.termDays === "number") return g.termDays;
-      // the price book has no line: the lifecycle terms below answer
-    }
-    const cfg = await tx.lifecycleConfig.findFirst({ orderBy: { id: "desc" } });
-    const terms = (cfg?.TERM_DAYS ?? {}) as Record<string, number>;
-    return (ticket && terms[ticket]) || 7;
-  }
-
   /**
    * EE7: the first opening by the receiver (B10 calls it in its own transaction when it serves the first read at or after the open
    * time). In that one transaction: openedAt is set once, the wish becomes live, endsAt = openedAt + the ticket's term (EE8: a
@@ -205,12 +227,7 @@ export class WishLifecycleService implements OnModuleInit {
     if (w.openedAt || stateOf(w) !== "sealed" || !w.opensAt || w.opensAt.getTime() > at.getTime()) {
       return { opened: false, openedAt: w.openedAt, endsAt: w.endsAt };
     }
-    const term = (await this.termDays(tx, w.ticket)) * DAY;
-    let endsAt = new Date(at.getTime() + term);
-    if (w.weddingDate) {
-      const day = localToUtc(`${w.weddingDate.toISOString().slice(0, 10)}T00:00`, w.timeZone);
-      if (day) endsAt = new Date(Math.max(at.getTime(), day.getTime() + term));
-    }
+    const endsAt = (await termEnd(tx, { ticket: w.ticket, openedAt: at, weddingDate: w.weddingDate, timeZone: w.timeZone }, (t) => this.entitlements.row(t))) as Date;
     await this.move(tx, w, "live", { cause: "receiver.open", data: { openedAt: at, endsAt } });
     const owner = await tx.$queryRaw<{ gone: boolean }[]>`
       SELECT (a."erasedAt" IS NOT NULL OR ba."erasedAt" IS NOT NULL) AS gone

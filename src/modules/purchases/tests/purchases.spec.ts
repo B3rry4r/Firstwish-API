@@ -14,6 +14,9 @@ import { PurchasesService } from "../purchases.service";
 const ROOT = join(__dirname, "../../../..");
 const NOW = new Date("2026-12-01T09:00:00.000Z");
 const DAY = 86_400_000;
+const TERM_DAYS: Record<string, number> = { moment: 7, keepsake: 14, signature: 30, premiere: 60 };
+/** A wish row's first open is its end less the ticket's term (EE7): the end is worked out from it (HB1). */
+const openedFor = (d: Record<string, unknown>): Date | undefined => (d.endsAt instanceof Date && typeof d.ticket === "string" && TERM_DAYS[d.ticket] ? new Date(d.endsAt.getTime() - TERM_DAYS[d.ticket] * 86_400_000) : undefined);
 const ids = new UuidV7Maker();
 let seq = 0;
 
@@ -53,7 +56,7 @@ describe("purchases B07: what a payment buys", () => {
   const wish = async (accountId: string, over: Record<string, unknown> = {}) => {
     const id = ids.next();
     await db.wish.create({
-      data: { id, accountId, status: "draft", kind: "birthday", occasion: "birthday", styleSlug: "golden", timeZone: "Africa/Lagos", ...over } as never,
+      data: { id, accountId, status: "draft", kind: "birthday", occasion: "birthday", styleSlug: "golden", timeZone: "Africa/Lagos", ...over, ...(openedFor(over) ? { openedAt: openedFor(over) } : {}) } as never,
     });
     return id;
   };

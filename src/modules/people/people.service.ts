@@ -167,6 +167,49 @@ export class PeopleService {
     return { items: page.items.map((r) => ({ key: r.key })), nextCursor: page.nextCursor };
   }
 
+  /** The person the body names, one of this business's own: another business's person, and an id that is no uuid, are 404. */
+  private async ownPerson(tx: Prisma.TransactionClient, businessId: string, personId: string): Promise<PersonRecord> {
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(personId)) throw AppError.notFound();
+    const person = await tx.person.findFirst({ where: { id: personId.toLowerCase(), businessId } });
+    if (!person) throw AppError.notFound();
+    return person;
+  }
+
+  private approvalYear(year: number): void {
+    if (!Number.isInteger(year) || year < 2000 || year > 2100) throw AppError.validation({ year: "Must be a year from 2000 to 2100." });
+  }
+
+  /**
+   * E-239 (DEC-168): approves one date of one of this business's people. It writes the approval row only; the wish for the date is
+   * made by E-32 (the one place a client wish is made and drawn, keyed by this same key), so approving here never draws. The same
+   * body twice answers the same row (created: false the second time).
+   */
+  async approve(businessId: string, body: { personId: string; kind: "b" | "s"; year: number }): Promise<{ row: ApprovedDate; created: boolean }> {
+    this.approvalYear(body.year);
+    return this.prisma.$transaction(async (tx) => {
+      await lockBusinessOwner(tx, businessId);
+      const person = await this.ownPerson(tx, businessId, body.personId);
+      if (!(body.kind === "b" ? person.birthday : person.start)) {
+        throw AppError.validation({ kind: body.kind === "b" ? "This person has no birthday to approve." : "This person has no start date to approve." });
+      }
+      const key = `${person.id}:${body.kind}:${body.year}`;
+      const made = await tx.$queryRaw<{ id: string }[]>`
+        INSERT INTO approved_date (id, "businessId", key) VALUES (${this.ids.id()}::uuid, ${businessId}::uuid, ${key})
+        ON CONFLICT ("businessId", key) DO NOTHING RETURNING id::text AS id`;
+      return { row: { key }, created: made.length > 0 };
+    });
+  }
+
+  /** E-238 (DEC-168): takes the approval back. A date that was never approved is the same 204. A wish already made for it stays. */
+  async takeBack(businessId: string, body: { personId: string; kind: "b" | "s"; year: number }): Promise<void> {
+    this.approvalYear(body.year);
+    await this.prisma.$transaction(async (tx) => {
+      await lockBusinessOwner(tx, businessId);
+      const person = await this.ownPerson(tx, businessId, body.personId);
+      await tx.$executeRaw`DELETE FROM approved_date WHERE "businessId" = ${businessId}::uuid AND key = ${`${person.id}:${body.kind}:${body.year}`}`;
+    });
+  }
+
   private read(body: PostBusinessPeopleBody): PersonInput {
     const fields: ErrorFields = {};
     const text = (k: "name" | "team", v: unknown): string | null => {

@@ -33,8 +33,8 @@ export async function readWish(db: Pick<Tx, "wish">, wishId: unknown): Promise<W
 }
 
 /** Why a wish cannot be paid for by this payer, or null. Not the payer's, missing and erased all read the same to the payer. */
-function reach(w: WishFacts | null, payerId: string | null): string | null {
-  if (!w || !payerId || w.accountId !== payerId) return "wish_not_payers";
+function reach(w: WishFacts | null, payerId: string | null, byLink = false): string | null {
+  if (!w || !payerId || (!byLink && w.accountId !== payerId)) return "wish_not_payers";
   if (w.state === "erased") return "wish_erased";
   if (w.state === "taken_down") return "wish_removed";
   return null;
@@ -67,8 +67,9 @@ export function assessExtra(w: WishFacts | null, payerId: string | null, sku: st
 }
 
 /** A keep: a wish that is live or resting, on a ticket the book says may be kept (a wish with no ticket is on the moment line). */
-export function assessKeep(w: WishFacts | null, payerId: string | null, book: EntitlementsRow): string | null {
-  const r = reach(w, payerId);
+export function assessKeep(w: WishFacts | null, payerId: string | null, book: EntitlementsRow, byLink = false): string | null {
+  // HA1: byLink is true only for a payer whose proof of holding the wish's link was checked (KeepProofs); the owner needs none.
+  const r = reach(w, payerId, byLink);
   if (r || !w) return r;
   if (w.state !== "live" && w.state !== "resting") return "wish_not_live";
   if (grantOf(book, `ticket.${w.ticket ?? "moment"}`)?.keepable !== true) return "ticket_not_keepable";

@@ -2,6 +2,7 @@ import { HttpStatus, Injectable } from "@nestjs/common";
 import { scrypt, timingSafeEqual } from "node:crypto";
 import { PrismaService } from "../../common/db/prisma.service";
 import { AppError } from "../../common/errors/app-error";
+import { RateLimited } from "../../common/errors/rate-limited";
 import { Clock } from "../../common/ports/clock.port";
 import { IdGenerator } from "../../common/ports/ids.port";
 import { toWireInstant } from "../../common/time/time";
@@ -212,8 +213,8 @@ export class PublicWishesService {
 
   // ---- the shared steps
 
-  /** The row for a slug and where it stands; 404 for an unknown slug, 410 for a wish that is not here. Both do the same one query. */
-  async resolve(slug: string, c: Caller): Promise<Resolved> {
+  /** The row a slug names (404 for an unknown slug, a malformed one or a draft): the one query every link read starts from. */
+  private async rowOf(slug: string): Promise<Row> {
     const key = SLUG_LOOKS.test(slug) ? slug : "-";
     const rows = await this.db.$queryRaw<Row[]>`
       SELECT l.id AS "linkId", l.slug, l.active, l.tries, l."lockedUntil", w.id, w.status::text AS status, w."erasedAt", w."removedAt",
@@ -223,6 +224,37 @@ export class PublicWishesService {
        WHERE l.slug = ${key}`;
     const row = rows[0];
     if (!row || key !== slug || row.status === "draft") throw AppError.notFound("No wish is at this link.");
+    return row;
+  }
+
+  /**
+   * HA1: a signed-in person who holds a wish's link, for keeping or waking it. Unlike a read this also answers for a RESTING wish
+   * (the link of a resting wish is the one a receiver wakes it by). A wrong, unknown or switched-off link, and a wish that is
+   * erased, taken down or whose owner was erased, are the same 404. Where the wish has a passcode the link's own unlock token must
+   * be good (else 409 not_open; a locked link refuses as the unlock does, 429 with the time to come back). Answers the wish id.
+   */
+  async holdLink(slug: string, c: Caller): Promise<{ wishId: string; summary: (state: string) => PublicWishView }> {
+    const row = await this.rowOf(slug);
+    if (!row.active || row.erasedAt || row.removedAt || (row.ownerErasedAt && !row.businessId) || row.status === "removed") throw AppError.notFound("No wish is at this link.");
+    if (row.passcodeHash && !this.tokens.valid(c.token, row.linkId, row.passcodeHash)) {
+      const until = row.lockedUntil;
+      if (until && until.getTime() > this.clock.now().getTime()) {
+        const secs = Math.max(1, Math.ceil((until.getTime() - this.clock.now().getTime()) / 1000));
+        throw new RateLimited(secs, `This link is locked. Try again in ${secs} seconds.`);
+      }
+      throw AppError.conflict("not_open", "Enter the passcode for this wish first.");
+    }
+    return { wishId: row.id, summary: (state) => this.summary(slug, row, state) };
+  }
+
+  /** What a receiver who keeps a wish may see of it: the link's own public facts and where the wish stands. Nothing of the owner's account, no content, and no read is recorded. */
+  private summary(slug: string, row: Row, state: string): PublicWishView {
+    return { ...this.base(slug, row), state: state as PublicWishView["state"], openable: false, openedAt: row.openedAt ? toWireInstant(row.openedAt) : null, endsAt: row.endsAt ? toWireInstant(row.endsAt) : null };
+  }
+
+  /** The row for a slug and where it stands; 404 for an unknown slug, 410 for a wish that is not here. Both do the same one query. */
+  async resolve(slug: string, c: Caller): Promise<Resolved> {
+    const row = await this.rowOf(slug);
     const now = this.clock.now().getTime();
     const resting = row.status === "resting" || (row.status === "live" && (!row.endsAt || row.endsAt.getTime() <= now));
     if (!row.active || row.erasedAt || row.removedAt || (row.ownerErasedAt && !row.businessId) || row.status === "removed" || resting) throw gone();

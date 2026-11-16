@@ -3,6 +3,7 @@ import { Clock } from "../../common/ports/clock.port";
 import { IdGenerator } from "../../common/ports/ids.port";
 import type { FulfilmentContext } from "../payments/fulfilment.registry";
 import { addDays, GrantStore, num, type GrantRow, type Tx } from "./grants";
+import { PassCover } from "./pass-cover";
 import { PassDrawService, type PassCounter } from "./pass-draws";
 
 /**
@@ -17,6 +18,7 @@ export class PassService {
     private readonly clock: Clock,
     private readonly ids: IdGenerator,
     private readonly draws: PassDrawService,
+    private readonly cover: PassCover,
   ) {}
 
   async fulfil(ctx: FulfilmentContext): Promise<void> {
@@ -42,6 +44,8 @@ export class PassService {
       { wishes: num(g.wishes), upgrades: num(g.upgrades), conciergeDiscountPercent: num(g.conciergeDiscountPercent), termDays: days, since: since.toISOString(), validUntil: validUntil.toISOString(), extended: since !== now },
       validUntil,
     );
+    // HB1: a Pass bought moves the end of each live wish of the holder
+    await this.cover.recompute(tx, payment.accountId);
   }
 
   /**
@@ -54,6 +58,8 @@ export class PassService {
 
   async revoke(tx: Tx, g: GrantRow): Promise<string> {
     await tx.passMembership.updateMany({ where: { paymentId: g.paymentId, state: "active" }, data: { state: "refunded", version: { increment: 1 } } });
+    // HA2, HB1: each wish's end is worked out again; the rest job rests the ones nothing covers
+    if (g.accountId) await this.cover.recompute(tx, g.accountId);
     return "revoked";
   }
 }

@@ -4,7 +4,9 @@ import { timingSafeEqual } from "node:crypto";
 import type { Request } from "express";
 import { ENV } from "../env/env.module";
 import type { Env } from "../env/env";
+import { PrismaService } from "../db/prisma.service";
 import { AppError } from "../errors/app-error";
+import { loginRemoved, loginWasRemoved } from "./login-removed";
 import { PaymentsPort } from "../ports/payments.port";
 import { assertCookieOrigin, COOKIE_ORIGIN } from "./cookie-origin";
 import { checkSvix } from "./svix";
@@ -31,6 +33,7 @@ export class AccessGuard implements CanActivate {
     private readonly tokens: AccessTokenVerifier,
     private readonly payments: PaymentsPort,
     private readonly clock: Clock,
+    private readonly db: PrismaService,
     @Inject(ENV) private readonly env: Env,
   ) {}
 
@@ -57,13 +60,13 @@ export class AccessGuard implements CanActivate {
       case "user": {
         const p = await this.principal(req);
         if (p.kind !== "user") throw AppError.forbidden();
-        if (access.sides?.length && !access.sides.some((s) => p.sides.includes(s))) throw AppError.forbidden();
+        if (access.sides?.length && !access.sides.some((s) => p.sides.includes(s))) throw await this.refusedSides(access, p);
         return true;
       }
       case "userOrStaff": {
         const p = await this.principal(req);
         if (p.kind === "user") {
-          if (access.sides?.length && !access.sides.some((s) => p.sides.includes(s))) throw AppError.forbidden();
+          if (access.sides?.length && !access.sides.some((s) => p.sides.includes(s))) throw await this.refusedSides(access, p);
           return true;
         }
         if (!p.roles.includes("owner") && !access.roles.some((r) => p.roles.includes(r))) throw AppError.forbidden();
@@ -76,6 +79,12 @@ export class AccessGuard implements CanActivate {
         return true;
       }
     }
+  }
+
+  /** HU5: the one place a business read is refused for want of the business side: a person whose login was removed is told so, with words. */
+  private async refusedSides(access: { sides?: readonly string[] }, p: Principal): Promise<AppError> {
+    if (p.kind === "user" && access.sides?.includes("business") && (await loginWasRemoved(this.db, p.accountId))) return loginRemoved();
+    return AppError.forbidden();
   }
 
   private async principal(req: Req): Promise<Principal> {

@@ -1,3 +1,5 @@
+import { spawnSync } from "node:child_process";
+import { join } from "node:path";
 import { PrismaService } from "../../../common/db/prisma.service";
 import { UuidV7Maker } from "../../../common/ids/uuidv7";
 import { bearer } from "../../people/tests/b12-kit";
@@ -16,6 +18,9 @@ describe("HR3 logins: /me lists the businesses; a removed login is told", () => 
   beforeAll(async () => {
     t = await createTestApp({ now: NOW });
     db = t.app.get(PrismaService);
+    // the live login's read needs the price book, so this spec seeds it itself (it passed before only when another spec had seeded the shared database)
+    const r = spawnSync(process.execPath, [join(__dirname, "../../../../scripts/seed.mjs")], { env: process.env, encoding: "utf8" });
+    if (r.status !== 0) throw new Error(`seed failed: ${r.stderr}`);
   });
   afterAll(() => t.close());
 
@@ -46,9 +51,10 @@ describe("HR3 logins: /me lists the businesses; a removed login is told", () => 
     await login(c.businessId, p.email, "removed");
     const r = await me(p.token);
     expect(r.status).toBe(200);
+    // HU5: a business the person was removed from (c) is not listed
     expect(r.body.businesses).toEqual([
       { id: p.businessId, name: "Own Shop", role: "owner", state: "owner" },
-      ...[a, b, c].map((x) => ({ id: x.businessId, name: x.name, role: "login", state: ({ [a.businessId]: "active", [b.businessId]: "invited", [c.businessId]: "removed" } as Record<string, string>)[x.businessId] })),
+      ...[a, b].map((x) => ({ id: x.businessId, name: x.name, role: "login", state: ({ [a.businessId]: "active", [b.businessId]: "invited" } as Record<string, string>)[x.businessId] })),
     ]);
   });
 
@@ -66,6 +72,14 @@ describe("HR3 logins: /me lists the businesses; a removed login is told", () => 
     const a = await business("Epsilon Frames");
     const gone = await person();
     await login(a.businessId, gone.email, "removed");
+    const goneBiz = await person(["business"]);
+    await login(a.businessId, goneBiz.email, "removed");
+    // HU5: the same refusal on every business read (people, approved dates and the vault's files too), for a person of any side
+    for (const who of [gone, goneBiz]) for (const path of ["/v1/business/people", "/v1/business/approved-dates", "/v1/business/vault-files"]) {
+      const r = await t.http().get(path).set(bearer(who.token));
+      expect(r.status).toBe(403);
+      expect(r.body.error.code).toBe("login_removed");
+    }
     for (const path of ["/v1/business", "/v1/business/plan", "/v1/business/usage", "/v1/business/client-wishes"]) {
       const plain = await t.http().get(path).set(bearer(gone.token));
       expect(plain.status).toBe(403);

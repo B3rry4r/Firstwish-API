@@ -171,9 +171,10 @@ export class AccountsService {
     const logins = await this.prisma.$queryRaw<{ id: string; name: string | null; business: string | null; status: string | null }[]>`
       SELECT b.id::text AS id, b.name, b.business, l.status
         FROM login l JOIN business b ON b.id = l."businessId"
-       WHERE lower(trim(l.contact)) = lower(${row.contact}) AND b."accountId" <> ${row.id}::uuid
+       WHERE lower(trim(l.contact)) = lower(${row.contact}) AND b."accountId" <> ${row.id}::uuid AND coalesce(l.status, '') <> 'removed'
        ORDER BY l.id`;
-    return [...mine, ...logins.map((l): MeBusiness => ({ id: l.id, name: l.name ?? l.business ?? "", role: "login", state: l.status === "removed" ? "removed" : l.status === "active" ? "active" : "invited" }))];
+    // HU5: a business the person was removed from is not listed
+    return [...mine, ...logins.map((l): MeBusiness => ({ id: l.id, name: l.name ?? l.business ?? "", role: "login", state: l.status === "active" ? "active" : "invited" }))];
   }
 
   private sidesOf(row: AccountRow): Side[] {

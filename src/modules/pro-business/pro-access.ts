@@ -4,8 +4,7 @@ import { PrismaService } from "../../common/db/prisma.service";
 import type { Principal } from "../../common/auth/principal";
 import { AppError } from "../../common/errors/app-error";
 
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const REMOVED = (): AppError => new AppError(403, "login_removed", "You were removed from this business, so you can no longer open its pages. Ask its owner to add you again.");
+import { loginRemoved as REMOVED, loginWasRemoved } from "../../common/auth/login-removed";
 
 export interface ProCaller {
   accountId: string;
@@ -43,7 +42,7 @@ export class ProAccess {
       const want = header.trim().toLowerCase();
       // The person's own business wins when it is the one named, even if they are also a login of it.
       r = rows.find((x) => x.id === want);
-      if (!r) throw (await this.wasRemoved(accountId, want)) ? REMOVED() : AppError.forbidden("You are not part of that business.");
+      if (!r) throw (await loginWasRemoved(this.prisma, accountId, want)) ? REMOVED() : AppError.forbidden("You are not part of that business.");
     }
     if (!r) return null;
     if (!r.owner && r.loginId) {
@@ -52,21 +51,11 @@ export class ProAccess {
     return { accountId, businessId: r.id, owner: r.owner };
   }
 
-  /** HR3: does this person's sign-in email hold a login marked removed (on this business, or on any when none is named)? */
-  private async wasRemoved(accountId: string, businessId?: string): Promise<boolean> {
-    if (businessId !== undefined && !UUID.test(businessId)) return false;
-    const rows = await this.prisma.$queryRaw<{ n: number }[]>`
-      SELECT count(*)::int AS n FROM login l JOIN account a ON a.id = ${accountId}::uuid
-       WHERE a.contact IS NOT NULL AND lower(trim(l.contact)) = lower(a.contact) AND l.status = 'removed'
-         AND (${businessId ?? null}::text IS NULL OR l."businessId" = ${businessId ?? null}::uuid)`;
-    return (rows[0]?.n ?? 0) > 0;
-  }
-
   /** The caller's business (owner or login), or 403 (with words that say so when their login was removed). */
   async require(p: Principal | undefined, header?: string): Promise<ProCaller> {
     if (!p || p.kind !== "user") throw AppError.forbidden();
     const c = await this.find(p.accountId, header);
-    if (!c) throw (await this.wasRemoved(p.accountId)) ? REMOVED() : AppError.forbidden("You are not part of a business.");
+    if (!c) throw (await loginWasRemoved(this.prisma, p.accountId)) ? REMOVED() : AppError.forbidden("You are not part of a business.");
     return c;
   }
 

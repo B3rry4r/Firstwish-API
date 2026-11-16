@@ -109,18 +109,18 @@ describe("S rulings (B03's halts)", () => {
   it("S3: removed is its own status; a removed member holds no role and cannot sign in", async () => {
     const owner = await staffSignIn(["owner"]);
     const m = await staffSignIn(["support"]);
-    expect((await t.http().post(`/v1/admin/team/${m.staff.id}/remove`).set(bearer(owner.token)).send({ reason })).status).toBe(204);
+    expect((await t.http().post(`/v1/admin/team/${m.staff.id}/remove`).set(bearer(owner.token)).send({ version: 0, reason })).status).toBe(204);
     const row = await t.db.staffAccount.findUniqueOrThrow({ where: { id: m.staff.id } });
     expect(row).toMatchObject({ status: "removed", roles: [] });
     expect((await team(m.token)).status).toBe(401);
     const before = t.email.sent.length;
     expect((await staffCode(m.staff.email)).status).toBe(204);
     expect(t.email.sent.length).toBe(before);
-    const list = await t.http().get("/v1/admin/team?limit=50").set(bearer(owner.token));
+    const list = await t.http().get("/v1/admin/team?limit=50&includeRemoved=true").set(bearer(owner.token));
     const all = [...(list.body.items as { id: string; status: string; state: string }[])];
     let cursor = list.body.nextCursor as string | null;
     while (cursor) {
-      const p = await t.http().get(`/v1/admin/team?limit=50&cursor=${cursor}`).set(bearer(owner.token));
+      const p = await t.http().get(`/v1/admin/team?limit=50&includeRemoved=true&cursor=${cursor}`).set(bearer(owner.token));
       all.push(...(p.body.items as { id: string; status: string; state: string }[]));
       cursor = p.body.nextCursor as string | null;
     }
@@ -412,7 +412,7 @@ describe("U rulings (Verify B03; they bind both sign-ins)", () => {
     const inv = (roles: string[]) => t.http().post("/v1/admin/team/invite").set(bearer(owner.token)).send({ email, roles, reason });
     const first = await inv(["support"]);
     expect(first.status).toBe(201);
-    expect((await t.http().post(`/v1/admin/team/${first.body.id as string}/remove`).set(bearer(owner.token)).send({ reason })).status).toBe(204);
+    expect((await t.http().post(`/v1/admin/team/${first.body.id as string}/remove`).set(bearer(owner.token)).send({ version: 0, reason })).status).toBe(204);
     const again = await inv(["finance"]);
     expect(again.status).toBe(201);
     expect(again.body).toMatchObject({ id: first.body.id, status: "invited", roles: ["finance"] });
@@ -427,7 +427,7 @@ describe("U rulings (Verify B03; they bind both sign-ins)", () => {
   it("U6: a reason is 4 to 500 characters", async () => {
     const owner = await staffSignIn(["owner"]);
     const m = await makeStaff(t.db, ["support"]);
-    const patch = (r: string) => t.http().patch(`/v1/admin/staff-accounts/${m.id}`).set(bearer(owner.token)).send({ roles: ["ops"], reason: r });
+    const patch = (r: string) => t.http().patch(`/v1/admin/staff-accounts/${m.id}`).set(bearer(owner.token)).send({ version: 0, roles: ["ops"], reason: r });
     expect((await patch("x".repeat(501))).status).toBe(422);
     expect((await patch("abc")).status).toBe(422);
     expect((await patch("x".repeat(500))).status).toBe(200);

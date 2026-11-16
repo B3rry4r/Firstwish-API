@@ -401,8 +401,76 @@ TS_SCALAR = {
 }
 
 
+
+def shape_ts(desc: str) -> str:
+    """API-BASE-4 (HP4, HP10): a registry type written `shape <descriptor>` is a typed field. Descriptor: string, integer, number,
+    boolean, time, null, unknown, a resource name, enum(a|b), array<D>, map<D>, {key: D, key?: D}, and D | D."""
+    pos = 0
+    n = len(desc)
+
+    def ws():
+        nonlocal pos
+        while pos < n and desc[pos] == " ":
+            pos += 1
+
+    def union() -> str:
+        nonlocal pos
+        parts = [atom()]
+        ws()
+        while pos < n and desc[pos] == "|":
+            pos += 1
+            parts.append(atom())
+            ws()
+        return " | ".join(parts)
+
+    def atom() -> str:
+        nonlocal pos
+        ws()
+        if desc[pos] == "{":
+            pos += 1
+            out = []
+            ws()
+            while desc[pos] != "}":
+                m = re.match(r"([A-Za-z_][A-Za-z0-9_]*)(\??)\s*:", desc[pos:])
+                assert m, "bad shape: " + desc
+                pos += m.end()
+                out.append(f"{m.group(1)}{m.group(2)}: {union()}")
+                ws()
+                if desc[pos] == ",":
+                    pos += 1
+                    ws()
+            pos += 1
+            return "{ " + "; ".join(out) + " }"
+        m = re.match(r"(enum)\(([^)]*)\)", desc[pos:])
+        if m:
+            pos += m.end()
+            return " | ".join("null" if v == "null" else json.dumps(v) for v in m.group(2).split("|"))
+        for kw, tmpl in (("array<", "Array<%s>"), ("map<", "Record<string, %s>")):
+            if desc.startswith(kw, pos):
+                pos += len(kw)
+                inner = union()
+                ws()
+                assert desc[pos] == ">", "bad shape: " + desc
+                pos += 1
+                return tmpl % inner
+        m = re.match(r"[A-Za-z_][A-Za-z0-9_]*", desc[pos:])
+        assert m, "bad shape: " + desc
+        pos += m.end()
+        w = m.group(0)
+        base = {"string": "string", "integer": "number", "number": "number", "boolean": "boolean", "time": "Instant", "null": "null", "unknown": "unknown"}
+        if w in base:
+            return base[w]
+        assert w in RES, "shape names no resource: " + w
+        return w
+
+    out = union()
+    assert pos == n, "bad shape: " + desc
+    return out
+
 def ts_field_type(res: str, f: dict) -> str:
     t = f["type"]
+    if t.startswith("shape "):
+        return shape_ts(t[6:])
     if f["name"] in MAP[res].get("dates", []):
         return "DateOnly"  # a calendar date (C-29, Q4)
     if t.startswith("integer (kobo"):
@@ -474,7 +542,7 @@ def resource_interface(r: dict) -> str:
 
 
 SPECIAL_RESP = {
-    "None": "void", "none": "void", "Empty": "Empty", "true": "true", "link string": "string", "string link (clipboard, local)": "string",
+    "None": "void", "none": "void", "Empty": "Empty", "true": "true", "link string": "string", "WishLinkRead {link,slug}": "{ link: string; slug: string }", "string link (clipboard, local)": "string",
     "OrderRow": "ConciergeOrder", "PayoutRow": "Payout", "Member": "StaffAccount", "Staff": "StaffAccount", "ModView": "Report",
     "PublishView": "PublishedWish", "Listed": "PublishedWish", "Submission": "StyleSubmission", "ThreadDetail": "ThreadDetail",
     "Delivery": "MessageDelivery", "StyleRow": "Style", "Brand": 'Business["brand"]', "Payment (new state)": "Payment", "VideoOrder": "RenderJob",

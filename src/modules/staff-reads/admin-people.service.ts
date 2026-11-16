@@ -63,7 +63,18 @@ export class AdminPeopleService {
     const limit = q.limit ?? DEFAULT_LIMIT;
     const where: Prisma.AccountWhereInput = {};
     const t = q.q?.trim();
-    if (t) where.OR = [{ name: { contains: t, mode: "insensitive" } }, { contact: { contains: t.toLowerCase() } }, ...(UUID.test(t) ? [{ id: t.toLowerCase() }] : [])];
+    if (t) {
+      // HP12: a wish number ("0412" or "Wish № 0412") finds the person who owns that wish
+      const digits = t.replace(/\D/g, "");
+      const nos = [...new Set([t, ...(digits.length >= 1 && /^[\s\d№#.nNoOWwishWISH]*$/.test(t) ? [digits] : [])])];
+      const owners = await this.db.wish.findMany({ where: { no: { in: nos } }, select: { accountId: true } });
+      where.OR = [
+        { name: { contains: t, mode: "insensitive" } },
+        { contact: { contains: t.toLowerCase() } },
+        ...(UUID.test(t) ? [{ id: t.toLowerCase() }] : []),
+        ...(owners.length ? [{ id: { in: owners.map((o) => o.accountId) } }] : []),
+      ];
+    }
     if (q.cursor) {
       const id = decodeCursor(q.cursor).id;
       if (!UUID.test(id)) throw AppError.validation({ cursor: "Must be a cursor from a previous page." });

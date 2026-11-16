@@ -568,7 +568,8 @@
    },
    "omit": {
     "handle": "Q7: one handle namespace; the handle lives on Account and the creator profile reads it",
-    "bank": "joined from BankAccount on read, the number masked (WW7)"
+    "bank": "joined from BankAccount on read, the number masked (WW7)",
+    "payoutMonths": "HP12: read from payouts and accruals, not a column"
    },
    "erase": {
     "name": {
@@ -603,7 +604,8 @@
      "rule": "keep",
      "why": "style slugs; a live style stays in the catalogue (DEC-69)"
     }
-   }
+   },
+   "declaredAs": "CreatorProfile"
   },
   "CreatorOffer": {
    "class": "view",
@@ -671,6 +673,9 @@
      "rule": "keep",
      "why": "a key"
     }
+   },
+   "types": {
+    "for": "Json"
    }
   },
   "DayPick": {
@@ -1388,6 +1393,9 @@
    },
    "refOnDelete": {
     "wishId": "Cascade"
+   },
+   "types": {
+    "mine": "Json"
    }
   },
   "QrCard": {
@@ -1513,6 +1521,9 @@
      "rule": "keep",
      "why": "what was reported"
     }
+   },
+   "omit": {
+    "heldPhoto": "HP12: signed when a moderator reads, not a column"
    }
   },
   "RevealLink": {
@@ -1766,7 +1777,8 @@
     ]
    ],
    "omit": {
-    "code": "the sign-in code input of E-176; kept as an AuthCode"
+    "code": "the sign-in code input of E-176; kept as an AuthCode",
+    "sections": "HP1: read from the role table, not a column"
    },
    "alias": {
     "role": "roles"
@@ -1779,6 +1791,14 @@
     "name": {
      "rule": "blank",
      "why": "personal"
+    }
+   },
+   "columns": {
+    "version": {
+     "type": "Int",
+     "attrs": "@default(0)",
+     "opt": false,
+     "why": "HP7: every team change bumps it; a change carries the version it saw"
     }
    }
   },
@@ -2120,7 +2140,10 @@
     "files": "upload input of E-226, kept as StoredFile rows",
     "openable": "worked out on read: sealed, the open time reached, and not yet opened or still inside its term (EE7)",
     "activity": "worked out on read from opens, reactions, favourites and shares (LL5, ReceiverActivityService)",
-    "hasPasscode": "worked out on read: passcodeHash is not null (VV3)"
+    "hasPasscode": "worked out on read: passcodeHash is not null (VV3)",
+    "publish": "HP10: read from the publish request, not a column",
+    "video": "HP5: read from the render job, not a column",
+    "pictures": "HP3: signed reads made when the wish is read, not a column"
    },
    "unique": [
     [

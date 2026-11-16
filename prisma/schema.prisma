@@ -1247,6 +1247,7 @@ model SignedUrl {
 /// table: written by E-174..E-181 and server:staff-accounts
 model StaffAccount {
   id                      String              @id @db.Uuid
+  version                 Int                 @default(0)
   email                   String
   name                    String
   roles                   StaffAccountRoles[] @default([])

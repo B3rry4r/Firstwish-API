@@ -1,3 +1,4 @@
+import { StoredFilesModule } from "../stored-files/stored-files.module";
 import { Module } from "@nestjs/common";
 import { RoleAccessModule } from "../role-access/role-access.module";
 import { SavedWishesModule } from "../saved-wishes/saved-wishes.module";
@@ -12,7 +13,7 @@ import { ShowingService } from "./showing.service";
  * transaction through ShowingLink, so a wish that rests, is taken down, removed or erased leaves no row here.
  */
 @Module({
-  imports: [ShowingLinkModule, RoleAccessModule, SavedWishesModule, WishesModule],
+  imports: [StoredFilesModule, ShowingLinkModule, RoleAccessModule, SavedWishesModule, WishesModule],
   controllers: [ShowingController],
   providers: [ShowingService],
   exports: [ShowingService],

@@ -229,6 +229,12 @@
       "secret": false
     },
     {
+      "name": "STANDIN_CLOCK_OFFSET",
+      "introducedBy": "api-base-4",
+      "purpose": "HP6: whole seconds added to the stand-in clock, read once at boot; tests and verifier stacks only, refused with PROVIDERS=live or NODE_ENV=production",
+      "secret": false
+    },
+    {
       "name": "INTERNAL_TOKEN",
       "introducedBy": "api-0",
       "purpose": "shared secret an internal route needs in the x-internal-token header (32 or more characters)",

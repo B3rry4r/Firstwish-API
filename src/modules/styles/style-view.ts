@@ -36,6 +36,7 @@ export const isLevel = (v: unknown): v is Level => typeof v === "string" && (LEV
 export const canonSlug = (s: string): string => s.trim().toLowerCase();
 
 const arr = (v: unknown): unknown[] => (Array.isArray(v) ? v : []);
+const strs = (v: unknown): string[] => (Array.isArray(v) ? v.filter((x): x is string => typeof x === "string") : []);
 const obj = (v: unknown): Record<string, unknown> | null => (v && typeof v === "object" && !Array.isArray(v) ? (v as Record<string, unknown>) : null);
 
 export function recordOf(row: Pick<StyleRow, "record">): RecordEntry[] {
@@ -54,7 +55,7 @@ export function styleToWire(row: StyleRow, counts: Counts, staff: boolean): Styl
     on: row.on ?? false,
     by: row.by ?? "",
     house: row.house ?? false,
-    creator: row.creator ?? null,
+    creator: (row.creator ?? null) as { handle: string; name: string } | null,
     addedAt: row.addedAt ? toWireInstant(row.addedAt) : null,
     line: row.line ?? "",
     feel: row.feel ?? "",
@@ -66,8 +67,8 @@ export function styleToWire(row: StyleRow, counts: Counts, staff: boolean): Styl
     orientation: row.orientation ?? "",
     dimension: row.dimension ?? "",
     moves: row.moves ?? "",
-    mood: arr(row.mood),
-    kinds: arr(row.kinds),
+    mood: strs(row.mood),
+    kinds: strs(row.kinds),
     occasions: obj(row.occasions),
     img: row.img ?? "",
     pos: row.pos ?? "",

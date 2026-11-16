@@ -13,6 +13,7 @@ import { ImageSizesPort, MissingImageSizes } from "./image-sizes.port";
 import { LimitedPort, portTimeouts, withTimeLimit } from "./time-limit";
 import { UploadScreeningPort } from "./screening.port";
 import { StoragePort } from "./storage.port";
+import { STANDIN_STORAGE } from "./standin-storage";
 import { AnthropicWriting } from "./adapters/anthropic.adapter";
 import { GoogleOidc } from "./adapters/google.adapter";
 import { BasicScreening } from "./adapters/basic-screening.adapter";
@@ -40,7 +41,7 @@ const limited = <T extends object>(env: Env, name: LimitedPort, port: T): T => w
 
 /** Every port, picked by PROVIDERS (and STORAGE_DRIVER for storage). Inject the abstract class. */
 const providers: Provider[] = [
-  { provide: Clock, inject: [ENV], useFactory: (env: Env) => (standin(env) ? new StandinClock() : new SystemClock()) },
+  { provide: Clock, inject: [ENV], useFactory: (env: Env) => (standin(env) ? new StandinClock(undefined, Number.parseInt(env.STANDIN_CLOCK_OFFSET ?? "0", 10)) : new SystemClock()) },
   {
     provide: IdGenerator,
     inject: [ENV, Clock],
@@ -69,10 +70,17 @@ const providers: Provider[] = [
     inject: [ENV],
     useFactory: (env: Env) => limited(env, "email", standin(env) ? new StandinEmail(env.STANDIN_MAIL_OUTBOX) : new ResendEmail(need(env.RESEND_API_KEY), need(env.MAIL_FROM))),
   },
+  // HP3: the stand-in storage is its own provider too, so the /v1/standin-storage route reads the same object store the port writes
+  {
+    provide: STANDIN_STORAGE,
+    inject: [ENV, Clock],
+    useFactory: (env: Env, clock: Clock) =>
+      standin(env) ? new StandinStorage(clock, undefined, env.NODE_ENV === "test" ? undefined : `${env.API_PUBLIC_URL.replace(/\/+$/, "")}/v1/standin-storage`) : null,
+  },
   {
     provide: StoragePort,
-    inject: [ENV, Clock],
-    useFactory: (env: Env, clock: Clock) => limited(env, "storage", standin(env) ? new StandinStorage(clock) : new S3Storage(s3ConfigFor(env), clock)),
+    inject: [ENV, Clock, STANDIN_STORAGE],
+    useFactory: (env: Env, clock: Clock, fake: StandinStorage | null) => limited(env, "storage", fake ?? new S3Storage(s3ConfigFor(env), clock)),
   },
   {
     provide: AiWritingPort,
@@ -93,6 +101,6 @@ const providers: Provider[] = [
 @Global()
 @Module({
   providers,
-  exports: [Clock, IdGenerator, CodeGenerator, PaymentsPort, RefundProviderPort, PayoutProviderPort, EmailPort, StoragePort, AiWritingPort, UploadScreeningPort, GoogleIdentityPort, ImageSizesPort],
+  exports: [STANDIN_STORAGE, Clock, IdGenerator, CodeGenerator, PaymentsPort, RefundProviderPort, PayoutProviderPort, EmailPort, StoragePort, AiWritingPort, UploadScreeningPort, GoogleIdentityPort, ImageSizesPort],
 })
 export class ProvidersModule {}

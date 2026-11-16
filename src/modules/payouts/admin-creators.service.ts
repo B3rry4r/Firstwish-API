@@ -6,6 +6,7 @@ import { decodeCursor, DEFAULT_LIMIT, encodeCursor } from "../../common/paginati
 import type { Creator } from "../../contracts";
 import { monthOf } from "../royalties/royalty-math";
 import { maskNumber } from "./payout-wire";
+import { PayoutRunService } from "./payout-run.service";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -41,7 +42,44 @@ export class AdminCreatorsService {
   constructor(
     private readonly db: PrismaService,
     private readonly clock: Clock,
+    private readonly runs: PayoutRunService,
   ) {}
+
+  /**
+   * HP12: each creator's months with money: what was earned (accruals less reversals), the payout made for it and its state, and whether
+   * it is due. The run pays the running balance, so the rule is that: payouts that have not failed (any month) use up the oldest
+   * earnings first, a month they cover is not due, and what is left is due only when the balance of the months over is at or above
+   * the threshold (as makeFor counts it); a month with nothing earned, or the current month, is never due.
+   */
+  private async addPayoutMonths(items: AdminCreator[], thisMonth: string): Promise<void> {
+    const ids = items.map((i) => i.id);
+    if (!ids.length) return;
+    // a price book with no threshold yet must not fail the list: any balance above zero then counts
+    const threshold = await this.runs.threshold().catch(() => 0);
+    const [accr, rev, pay] = await Promise.all([
+      this.db.royaltyAccrual.groupBy({ by: ["creatorId", "month"], where: { creatorId: { in: ids } }, _sum: { amountKobo: true } }),
+      this.db.royaltyReversal.groupBy({ by: ["creatorId", "month"], where: { creatorId: { in: ids } }, _sum: { amountKobo: true } }),
+      this.db.payout.findMany({ where: { creatorId: { in: ids } }, select: { creatorId: true, month: true, status: true, amountKobo: true } }),
+    ]);
+    for (const it of items) {
+      const earned = new Map<string, bigint>();
+      for (const r of [...accr, ...rev]) if (r.creatorId === it.id) earned.set(r.month, (earned.get(r.month) ?? 0n) + (r._sum.amountKobo ?? 0n));
+      const paid = new Map(pay.filter((p) => p.creatorId === it.id).map((p) => [p.month, p.status]));
+      const months = [...new Set([...earned.keys(), ...paid.keys()])].sort();
+      const made = pay.filter((p) => p.creatorId === it.id && p.status !== "failed").reduce((n, p) => n + p.amountKobo, 0n);
+      let total = 0n; // earned up to and including the month, in order
+      const through = new Map<string, bigint>();
+      for (const m of months) through.set(m, (total += earned.get(m) ?? 0n));
+      const over = months.filter((m) => m < thisMonth);
+      const left = over.length ? (through.get(over[over.length - 1]) ?? 0n) - made : 0n; // the balance a run for the last month over would count
+      const payable = left > 0n && left >= BigInt(threshold);
+      it.payoutMonths = months.map((month) => {
+        const e = earned.get(month) ?? 0n;
+        const status = paid.get(month) ?? null;
+        return { month, earnedKobo: Number(e), payoutStatus: status, due: payable && month < thisMonth && e > 0n && (through.get(month) ?? 0n) > made };
+      });
+    }
+  }
 
   async list(cursor: string | undefined, limit = DEFAULT_LIMIT): Promise<{ items: AdminCreator[]; nextCursor: string | null }> {
     let after: string | null = null;
@@ -91,6 +129,7 @@ export class AdminCreatorsService {
         bank: r.bankCode && r.accountNumber ? { bankCode: r.bankCode, accountNumber: maskNumber(r.accountNumber) } : null,
       }),
     );
+    await this.addPayoutMonths(items, month);
     const last = page[page.length - 1];
     return { items, nextCursor: rows.length > limit && last ? encodeCursor({ key: 0, id: last.id }) : null };
   }

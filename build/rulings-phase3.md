@@ -589,3 +589,13 @@ ZB1 (join 4 fix, lead) The fix for RR4 showed the real gap: making a client wish
     (next shared base), then a Business patch. The RR4 attempt (branch rr4-attempt, 02cca9e) marked every wish of an account
     that has a business, which would keep a person's own wishes after their erase, so it is NOT merged. Until then: an erased
     owner's wishes are all erased at once (private by default), and a Pro plan wish cannot be sealed without a ticket: owed.
+DA4 (P-B20 hand-back) "Ours" means the sending address, any reply+ address on the mail domain, and system boxes (mailer-daemon,
+    postmaster, no-reply) on any domain; a person who shares the mail domain is still a person. Accepted in place of the
+    whole domain in DA1.
+CB1 (B19 verify, high) An order has one open payment at a time: the start locks the order and, while a payment for it is
+    pending, answers that same payment and asks the provider nothing more; 20 starts at once make one payment and one
+    provider call. (B19 patch.)
+CB2 (B19 verify, medium) A delivery counts only wishes that are sealed or live; a draft is refused. (B19 patch.)
+CB3 (B19 verify, low) The order's maker may make its QR card as the registry says; count must be a whole number (a string is
+    422); a quote is capped at 100 times the list price of the order (PROVISIONAL). (B19 patch.) CA1 and CA3 move into the
+    B19 patch: the payments start prices an order from its own row; the customer is emailed on delivery.

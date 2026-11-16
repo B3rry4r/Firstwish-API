@@ -490,3 +490,7 @@ TT4 (B08 verify) refund_amount_mismatch is cleared when the refund succeeds. (B0
 TT5 (B08 verify) Refunding one pack takes away that pack's wishes only: left = max(0, left - the refunded pack's size); what
     was already used is written on the refund.kept row. (B08 patch; purchases/business-handlers.ts, the revoke only.)
 TT6 (B08 verify) A provider error on the settlement check answers 502 in the envelope, never 500. (B08 patch.)
+UU1 (B08 patch hand-back) A refund left claimed with no answer (status sent, no provider reference) for 10 minutes or more can
+    be sent again by a staff member: the claim accepts it, the lookup at the provider runs first, and nothing is created if
+    the first ask landed. No refund stays stuck. (B08 patch.) The pack revoke works from the business's total left (it cannot
+    tell which pack a used wish came from): accepted.

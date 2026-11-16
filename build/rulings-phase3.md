@@ -494,3 +494,9 @@ UU1 (B08 patch hand-back) A refund left claimed with no answer (status sent, no 
     be sent again by a staff member: the claim accepts it, the lookup at the provider runs first, and nothing is created if
     the first ask landed. No refund stays stuck. (B08 patch.) The pack revoke works from the business's total left (it cannot
     tell which pack a used wish came from): accepted.
+VV1 (INT-4 verify, medium) E-231 (seal) answers PaymentStartedOrCovered as E-228 does: {payment: null, item} when no money
+    moves. Registry reopen at the next shared base (INT-5); until then the seal answers the Wish and the difference is known.
+VV2 (INT-4 verify, medium) An erase leaves no name in a link: the receiver's name at the front of wish_link.slug is cut off
+    (the random tail stays so the old link still answers as an erased wish does, with no name), and the wish's wish_open
+    rows are deleted. The schema-map rules say so. (This wave's join, J8.)
+VV3 (INT-4 verify, low) hasPasscode joins the Wish contract and the legacy fields leave it (INT-5). Lows of the migration accepted.

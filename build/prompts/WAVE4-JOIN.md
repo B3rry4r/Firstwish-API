@@ -32,3 +32,7 @@ its cause); then `scripts/stack.sh up pjoin4 4680`, GET /v1/health and one unaut
 the envelope), then down.
 Commit (do not push); remove your worktree and databases. Hand back in 10 lines: head sha; J0 to J7 closed or not with test names;
 any test that failed in any of the three runs and why; counts (tests, suites); EXIT lines.
+ J8 (VV2, added by the lead): an erase leaves no name in a link. On erasing a wish or its owner, wish_link.slug loses the name
+    at its front (the random tail stays; the old link still answers as an erased wish does today, with no name anywhere in
+    the answer) and the wish's wish_open rows are deleted; the erase rules for WishLink.slug and WishOpen in
+    .pipeline/schema-map.json say so (you may edit those two rules). Test: after an erase no row of any table holds the name.

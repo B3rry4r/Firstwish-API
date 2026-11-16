@@ -18,3 +18,4 @@
 - B13 E-133: a code is mailed to any typed address (10 a day per network); add a limit per target email (3 a day).
 - B13 reports.service.ts:~97: the fifth wrong code says code_expired; it should say no tries are left.
 - B13 not exercised by the verifier: staff queue content (flagged photos, minutesLeft, late), fail-closed with Redis or the database down.
+- B08 paystack-refund-provider.ts findRefund (~43-48): takes the first non-failed refund by transaction reference with no amount check; fine for whole refunds; NOT RUN against Paystack.

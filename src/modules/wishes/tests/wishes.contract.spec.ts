@@ -265,7 +265,11 @@ describe("wishes E-221 E-222 E-224 E-225 E-229 E-231 (contract)", () => {
     expect(out.every((r) => r.status === 200)).toBe(true);
     const nums = out.map((r) => Number(r.body.item.no)).sort((a, b) => a - b);
     expect(new Set(nums).size).toBe(50);
-    expect(nums[49] - nums[0]).toBe(49);
+    // Gapless: every number from the lowest to the highest of these 50 is held by some wish. Other specs share this database and seal wishes
+    // at the same moment, taking numbers from the same sequence, so the range may hold numbers of theirs (INT-6: a range of exactly 49 failed once in three
+    // full runs for that reason); a number held by no wish at all would be a real gap.
+    const range = Array.from({ length: nums[49] - nums[0] + 1 }, (_, i) => String(nums[0] + i).padStart(4, "0"));
+    expect(await db.wish.count({ where: { no: { in: range } } })).toBe(range.length);
     expect(await db.wish.count({ where: { id: { in: idsOf }, no: { not: null } } })).toBe(50);
     expect(new Set(out.map((r) => (r.body as { item: { link: string } }).item.link)).size).toBe(50);
     const seqRow = await db.wishNumberSequence.findMany();

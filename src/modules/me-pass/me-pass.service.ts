@@ -4,15 +4,8 @@ import { Clock } from "../../common/ports/clock.port";
 import { toWireInstant } from "../../common/time/time";
 import type { PassMembership } from "../../contracts";
 
-/** What E-83 answers: the contract's PassMembership, and beside it what the page needs worked out (live, when it ends, what is left). */
-export type PassRead = PassMembership & {
-  live: boolean;
-  endsAt: string | null;
-  wishesTotal: number;
-  wishesLeft: number;
-  upgradesTotal: number;
-  upgradesLeft: number;
-};
+/** What E-83 answers: the contract's PassMembership, with what the page needs worked out beside it (live, when it ends, what is left; HA3, DEC-206). */
+export type PassRead = PassMembership;
 
 const EMPTY: PassRead = {
   amount: 0, since: null, validUntil: null, way: "", wishesUsed: 0, upgradesUsed: 0,

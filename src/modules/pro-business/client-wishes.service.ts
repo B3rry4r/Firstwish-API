@@ -12,7 +12,11 @@ import { CLIENT_WISH_PREFIX } from "../accounts/account-erasure.service";
 import { JobContext, JobResult, JobsService } from "../jobs/jobs.service";
 import { BusinessHandlers } from "../purchases/business-handlers";
 import type { Tx } from "../purchases/grants";
-import { clientWishWire } from "./client-wish-wire";
+import { utcToLocal } from "../wishes/local-time";
+import { RoyaltiesService } from "../royalties/royalties.service";
+import { WishesService } from "../wishes/wishes.service";
+import type { PlanSealCall } from "../wishes/wishes.service";
+import { clientWishWire, WITH_WISH } from "./client-wish-wire";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const SLUG = /^[a-z0-9][a-z0-9-]{0,39}$/;
@@ -42,9 +46,12 @@ export class ClientWishesService implements OnModuleInit {
     private readonly clock: Clock,
     private readonly handlers: BusinessHandlers,
     private readonly jobs: JobsService,
+    private readonly wishes: WishesService,
+    private readonly royalties: RoyaltiesService,
   ) {}
 
   onModuleInit(): void {
+    this.wishes.registerPlanSeal((tx, call) => this.sealOnPlan(tx, call));
     this.jobs.registerSubject("erase-now", CLIENT_WISH_PREFIX, (c) => this.eraseWords(c));
   }
 
@@ -52,7 +59,12 @@ export class ClientWishesService implements OnModuleInit {
   private async eraseWords(c: JobContext): Promise<JobResult> {
     const id = c.subjectId.slice(CLIENT_WISH_PREFIX.length);
     if (!UUID.test(id)) return { skipped: true };
-    const r = await this.prisma.clientWish.updateMany({ where: { id, wish: { not: null }, OR: [{ endsAt: null }, { endsAt: { lte: c.now } }] }, data: { wish: null, from: null, client: null } });
+    // ZB3: the term is the linked wish's own (one truth); a row with no wish keeps its own end.
+    const row = await this.prisma.clientWish.findUnique({ where: { id }, select: { endsAt: true, wishRef: { select: { endsAt: true } } } });
+    if (!row) return { skipped: true };
+    const ends = row.wishRef ? row.wishRef.endsAt : row.endsAt;
+    if (ends && ends.getTime() > c.now.getTime()) return { skipped: true, again: ends };
+    const r = await this.prisma.clientWish.updateMany({ where: { id, OR: [{ wish: { not: null } }, { client: { not: null } }, { from: { not: null } }] }, data: { wish: null, from: null, client: null } });
     return r.count ? { changed: { erased: 1 } } : { skipped: true };
   }
 
@@ -63,14 +75,14 @@ export class ClientWishesService implements OnModuleInit {
       if (!isUuidV7(c.id)) throw AppError.validation({ cursor: "Must be a cursor from a previous page." });
       before = c.id;
     }
-    const rows = await this.prisma.clientWish.findMany({ where: { businessId, id: { lt: before } }, orderBy: { id: "desc" }, take: limit + 1 });
+    const rows = await this.prisma.clientWish.findMany({ where: { businessId, id: { lt: before } }, orderBy: { id: "desc" }, take: limit + 1, include: WITH_WISH });
     const page = toPage(rows, limit, (r) => ({ key: r.id, id: r.id }));
     return { items: page.items.map(clientWishWire), nextCursor: page.nextCursor };
   }
 
   async get(businessId: string, id: string): Promise<ClientWish> {
     if (!UUID.test(id)) throw AppError.notFound();
-    const r = await this.prisma.clientWish.findFirst({ where: { id, businessId } });
+    const r = await this.prisma.clientWish.findFirst({ where: { id, businessId }, include: WITH_WISH });
     if (!r) throw AppError.notFound();
     return clientWishWire(r);
   }
@@ -91,16 +103,16 @@ export class ClientWishesService implements OnModuleInit {
   }
 
   /** E-30: make one wish for a client. 402 when the business has nothing left to count it against. */
-  async create(businessId: string, body: PostBusinessClientWishesBody): Promise<ClientWish> {
+  async create(accountId: string, businessId: string, body: PostBusinessClientWishesBody): Promise<ClientWish> {
     const w = this.read(body);
-    return this.prisma.$transaction((tx) => this.make(tx, businessId, w));
+    return this.prisma.$transaction((tx) => this.make(tx, accountId, businessId, w));
   }
 
   /** The wish row and its draw, in the caller's transaction (the owner's account is locked first). */
-  private async make(tx: Tx, businessId: string, w: NewWish): Promise<ClientWish> {
+  private async make(tx: Tx, accountId: string, businessId: string, w: NewWish): Promise<ClientWish> {
     await lockBusinessOwner(tx, businessId);
     if (w.key) {
-      const again = await tx.clientWish.findFirst({ where: { businessId, key: w.key } });
+      const again = await tx.clientWish.findFirst({ where: { businessId, key: w.key }, include: WITH_WISH });
       if (again) return clientWishWire(again);
     }
     const from = await this.handlers.draw(tx, businessId);
@@ -110,13 +122,40 @@ export class ClientWishesService implements OnModuleInit {
     const no = String(next[0]?.n ?? 901).padStart(4, "0");
     const id = this.ids.id();
     const now = this.clock.now();
+    // ZB3: no reveal, so an ordinary wish: a draft of the caller's that carries the business, its Signature ticket given by this same draw.
+    const wishId = await this.wishes.createBusinessDraftIn(tx, { accountId, businessId, kind: w.kind, occasion: w.occasion, name: w.client });
     const row = await tx.clientWish.create({
+      include: WITH_WISH,
       data: {
-        id, businessId, createdAt: now, sentAt: now, client: w.client, kind: w.kind, occasion: w.occasion, day: new Date(`${w.day}T00:00:00Z`), from, no,
+        id, businessId, wishId, createdAt: now, sentAt: now, client: w.client, kind: w.kind, occasion: w.occasion, day: new Date(`${w.day}T00:00:00Z`), from, no,
         key: w.key ?? `cw-${no}`, wish: "", shoot: "", hearts: [] as Prisma.InputJsonArray, madeOwn: false,
       },
     });
     return clientWishWire(row);
+  }
+
+  /**
+   * ZB3, the maker's path: sealing a draft on the plan draws one wish from the business, marks the wish as the business's, gives it
+   * its Signature ticket and writes the client-wish record (client = the wish's name, kind, occasion and the open day), in the seal's
+   * own transaction. The seal then gives the record the wish's number. 402 as E-30 when nothing is left.
+   */
+  private async sealOnPlan(tx: Tx, call: PlanSealCall): Promise<void> {
+    const { wish, businessId } = call;
+    await lockBusinessOwner(tx, businessId);
+    const from = await this.handlers.draw(tx, businessId);
+    if (!from) throw await this.nothingLeft(tx, businessId);
+    await tx.wish.update({ where: { id: wish.id }, data: { businessId } });
+    await this.wishes.fulfilTicketIn(tx, wish.id, "signature");
+    const now = this.clock.now();
+    const day = utcToLocal(call.opensAt, call.zone).slice(0, 10);
+    await tx.clientWish.create({
+      data: {
+        id: this.ids.id(), businessId, wishId: wish.id, createdAt: now, sentAt: now, client: (wish.name ?? "").trim(), kind: wish.kind, occasion: wish.occasion,
+        day: new Date(`${day}T00:00:00Z`), from, key: `wish:${wish.id}`, wish: "", shoot: "", hearts: [] as Prisma.InputJsonArray, madeOwn: false,
+      },
+    });
+    // ZZ5: the style is final at the seal; the creator of a Premium style earns on this draw, in this transaction.
+    await this.royalties.accrueForDraw(tx, { businessId, from, wishId: wish.id, styleSlug: wish.styleSlug });
   }
 
   /** 402 naming what to buy: a wish pack always; a plan too when there is none or it has lapsed. */
@@ -130,7 +169,7 @@ export class ClientWishesService implements OnModuleInit {
    * E-32: approve a person's date (a staff birthday or work anniversary): the date is approved and one wish is made for it, counted
    * like any other. `:id` is the person; the key names the date (`<person>:b|s:<year>`). The same key twice answers the first wish.
    */
-  async approveDate(businessId: string, personId: string, body: { client: string; day: string; key: string; occasion: unknown }): Promise<ClientWish> {
+  async approveDate(accountId: string, businessId: string, personId: string, body: { client: string; day: string; key: string; occasion: unknown }): Promise<ClientWish> {
     if (!UUID.test(personId)) throw AppError.notFound();
     const occasion = typeof body.occasion === "string" ? body.occasion : "";
     const fields: ErrorFields = {};
@@ -142,7 +181,7 @@ export class ClientWishesService implements OnModuleInit {
       await lockBusinessOwner(tx, businessId);
       const person = await tx.person.findFirst({ where: { id: personId, businessId }, select: { id: true } });
       if (!person) throw AppError.notFound();
-      const made = await this.make(tx, businessId, w);
+      const made = await this.make(tx, accountId, businessId, w);
       await tx.$executeRaw`INSERT INTO approved_date (id, "businessId", key) VALUES (${this.ids.id()}::uuid, ${businessId}::uuid, ${w.key}) ON CONFLICT ("businessId", key) DO NOTHING`;
       return made;
     });

@@ -228,6 +228,8 @@ export class BusinessHandlers {
       const pack = Math.max(num(b.pack) - size, 0);
       const used = size - (num(b.pack) - pack);
       if (used > 0) {
+        // ZZ5: how many wishes were drawn from this pack stays on the grant, so the later packs still line up with the wishes drawn from them.
+        await this.store.record(tx, g.id, { ...d, drawn: used }, g.endsAt);
         await this.store.markRevoked(tx, g.id);
         result = `revoked_${used}_of_${size}_wishes_already_used`;
       }

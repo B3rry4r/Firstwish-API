@@ -63,7 +63,8 @@ export class ProBusinessController {
   @Roles("person", "business")
   @Post("client-wishes")
   async makeWish(@Body() body: PostBusinessClientWishesBodyDto, @CurrentPrincipal() p: Principal | undefined, @BusinessHeader() h: string | undefined): Promise<ClientWish> {
-    return this.wishes.create((await this.access.require(p, h)).businessId, body);
+    const c = await this.access.require(p, h);
+    return this.wishes.create(c.accountId, c.businessId, body);
   }
 
   @Roles("person", "business")
@@ -80,7 +81,8 @@ export class ProBusinessController {
     @CurrentPrincipal() p: Principal | undefined,
     @BusinessHeader() h: string | undefined,
   ): Promise<ClientWish> {
-    return this.wishes.approveDate((await this.access.require(p, h)).businessId, params.id, body);
+    const c = await this.access.require(p, h);
+    return this.wishes.approveDate(c.accountId, c.businessId, params.id, body);
   }
 
   @Roles("person", "business")

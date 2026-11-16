@@ -666,3 +666,6 @@ GA1 (lead, my miss) The route check found 13 registry endpoints with no route an
 ZB5 (P-B17b verify, medium) A wish that carries a business is reached only through the business. When a login is removed, or
     their own account is erased (ZB4), the business's wishes they made pass to the business owner's account in the same
     transaction; the removed login gets 404 on them and can neither read nor seal them. (Wave 6 join.)
+GA2 (lead) The 30 INTERNAL endpoints: 29 have code and tests (the daily settlement job, sending a message, the 24 fulfilment
+    handlers, screening, signed reads, the wish number). E-89 (concierge.rush) has none because rush is not sold (Z2): the
+    closing base removes E-89 and its declared price-book line from the registry.

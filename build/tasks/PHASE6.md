@@ -17,6 +17,7 @@ writer or is cut), X18 (admin Prices keys), HA1 (keep and wake take the link in 
 |---|---|---|---|---|
 | W0a | T1 | The web repo's gates and live harness: no browser storage (R10: localStorage, sessionStorage, IndexedDB, document.cookie writes fail the build), no fixture or sample import on a live path, no dead control; Playwright against a real API stack; CI for the web repo | none | - |
 | W0b | T2 | The shared API client and the session: same-origin /v1, access token in memory, httpOnly refresh cookie, error envelope, kobo formatting, contract types from the API (a check that they match); sign-in, sign-up, welcome | sign-in sign-up welcome | W0a |
+| W0c | T1 | The owner's rules the live site breaks today (found by the new gates): native browser controls in 25 places, "sideways", an emoji, three controls that do nothing, the home page 21 px too wide at 360. One family of the app's own controls. Deployed when checked | pro, maker, auth, life, lab files | W0a |
 | W1 | T1 | Website, prices and reads: the price book, kinds, pricing, business pages | site-home site-make site-wishes site-wishes-kind site-business site-business-cat site-pricing site-how site-creators | W0b |
 | W2 | T1 | Website, catalogue and contact: styles, style page, Now Showing, contact (a support thread), privacy, terms | site-styles site-style-detail site-showing site-contact site-privacy site-terms | W0b |
 | W3 | T2 | App, the person's side: home (feed), wishes, wish detail (share, keep, wake, video, publish), dates, you, Pass | app-home app-wishes app-wish-detail app-dates app-you app-pass app-styles app-style-detail | W0b |
@@ -31,6 +32,7 @@ writer or is cut), X18 (admin Prices keys), HA1 (keep and wake take the link in 
 | W12 | T2 | Staff 2: payments, prices, businesses, creators | admin-payments admin-prices admin-businesses admin-businesses-detail admin-creators | W11 |
 | W13 | T2 | Staff 3: wishes, people, moderation, Now Showing | admin-wishes admin-wishes-detail admin-people admin-people-detail admin-moderation admin-showing | W11 |
 | W14 | T2 | Staff 4: styles and review, support, messages, Concierge | admin-styles admin-styles-review admin-support admin-support-detail admin-messages admin-concierge | W11 |
+| W15 | T1 | The style and moment engine and app/lab: copy and control rules, deferrals, four forked names, hardcoded signals; the gates' baseline ends empty | none (engine files) | W1-W14 |
 
 Order: W0a, then W0b; then three at a time, money and identity first (W3, W4, W11; W5, W7, W8; W6, W9, W12; W10, W13, W14;
 W1, W2). Each bundle: build -> a separate verifier drives the real screens in a browser against a real API stack -> patch ->
@@ -38,4 +40,4 @@ re-check -> merge -> deploy only verified work. Exit: every ui-align task done o
 the R10 gate green; no fixture on a live path; then Phase 7 (API smoke) and Phase 8 (the live gate with real providers).
 
 ## Current state
-Not started. Waiting for Phase 5 to close (INT-6, the sweep bundle).
+16 Nov: W0a in (the web gates, a baseline of 526 findings each with its bundle, the live driver: wired 0 of 89, web CI). W0c running. Then W0b, then the screen bundles.

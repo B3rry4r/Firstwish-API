@@ -1,3 +1,4 @@
+import { RoyaltiesModule } from "../royalties/royalties.module";
 import { Module } from "@nestjs/common";
 import { NoticesModule } from "../notices/notices.module";
 import { PriceBookModule } from "../price-book/price-book.module";
@@ -16,7 +17,7 @@ import { ProBusinessService } from "./pro-business.service";
  * Exports InvoicesService: the plan and pack handlers call issue(tx, payment) and a refund calls voidFor(tx, paymentId).
  */
 @Module({
-  imports: [PurchasesModule, WishesModule, NoticesModule, PriceBookModule, InvoicesModule],
+  imports: [PurchasesModule, WishesModule, NoticesModule, PriceBookModule, InvoicesModule, RoyaltiesModule],
   controllers: [ProBusinessController, AdminBusinessesController],
   providers: [ProAccess, PlanView, ProBusinessService, ClientWishesService, LoginsService],
   exports: [InvoicesModule, ProAccess, PlanView],

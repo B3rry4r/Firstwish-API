@@ -13,6 +13,7 @@ import { JobContext, JobResult, JobsService } from "../jobs/jobs.service";
 import { BusinessHandlers } from "../purchases/business-handlers";
 import type { Tx } from "../purchases/grants";
 import { utcToLocal } from "../wishes/local-time";
+import { RoyaltiesService } from "../royalties/royalties.service";
 import { WishesService } from "../wishes/wishes.service";
 import type { PlanSealCall } from "../wishes/wishes.service";
 import { clientWishWire, WITH_WISH } from "./client-wish-wire";
@@ -46,6 +47,7 @@ export class ClientWishesService implements OnModuleInit {
     private readonly handlers: BusinessHandlers,
     private readonly jobs: JobsService,
     private readonly wishes: WishesService,
+    private readonly royalties: RoyaltiesService,
   ) {}
 
   onModuleInit(): void {
@@ -152,6 +154,8 @@ export class ClientWishesService implements OnModuleInit {
         day: new Date(`${day}T00:00:00Z`), from, key: `wish:${wish.id}`, wish: "", shoot: "", hearts: [] as Prisma.InputJsonArray, madeOwn: false,
       },
     });
+    // ZZ5: the style is final at the seal; the creator of a Premium style earns on this draw, in this transaction.
+    await this.royalties.accrueForDraw(tx, { businessId, from, wishId: wish.id, styleSlug: wish.styleSlug });
   }
 
   /** 402 naming what to buy: a wish pack always; a plan too when there is none or it has lapsed. */

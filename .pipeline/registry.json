@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "frozenAt": "2026-11-16T09:40:23Z",
+  "frozenAt": "2026-11-16T11:37:53Z",
   "framework": "nestjs",
   "generatedBy": "tools/pipeline/reconcile.py",
   "resources": [
@@ -18547,7 +18547,7 @@
           "response": {
             "entity": "AuthResult",
             "cardinality": "single",
-            "note": "AuthResult; rotates the cookie, 10-second grace, a reused old cookie ends its family (DEC-150)"
+            "note": "AuthResult; rotates the cookie, 10-second grace, a reused old cookie ends its family (DEC-150); 401 no_session when the request carries no refresh cookie or a malformed one (HM6); an ended, reused or erased session keeps 401 unauthorized"
           },
           "sources": [
             {
@@ -18557,7 +18557,8 @@
           ],
           "notes": [
             "auth by DEC-152",
-            "body by DEC-150"
+            "body by DEC-150",
+            "body by DEC-216"
           ]
         },
         {
@@ -19711,7 +19712,7 @@
           "response": {
             "entity": "StaffAuthResult",
             "cardinality": "single",
-            "note": "{staff, accessToken, accessTokenExpiresAt}; rotates the staff cookie, 10-second grace, a reused old cookie ends the family (DEC-148)"
+            "note": "{staff, accessToken, accessTokenExpiresAt}; rotates the staff cookie, 10-second grace, a reused old cookie ends the family (DEC-148); 401 no_session when the request carries no staff cookie or a malformed one (HM6); an ended, reused or ended-staff session keeps 401 unauthorized"
           },
           "sources": [
             {
@@ -19720,7 +19721,8 @@
             }
           ],
           "notes": [
-            "body by DEC-148"
+            "body by DEC-148",
+            "body by DEC-216"
           ]
         },
         {
@@ -25497,7 +25499,7 @@
         },
         {
           "name": "content",
-          "type": "string",
+          "type": "object",
           "classes": [
             "enum",
             "named"
@@ -27509,9 +27511,17 @@
               ]
             },
             {
-              "name": "kind",
-              "type": "string",
+              "name": "idempotency-key",
+              "type": "header (optional: 8 to 100 letters, digits or . _ : -; the same key answers the same draft, one row)",
               "from": [
+                "DEC-214"
+              ]
+            },
+            {
+              "name": "kind",
+              "type": "string (optional; the kind chosen so far: a start that carries one counts as an answer; absent, the draft starts on the default kind)",
+              "from": [
+                "DEC-214",
                 "maker-cover",
                 "maker-name"
               ]
@@ -27526,8 +27536,9 @@
             },
             {
               "name": "occasion",
-              "type": "string",
+              "type": "string (optional; the occasion chosen so far: counts as an answer when sent)",
               "from": [
+                "DEC-214",
                 "maker-cover",
                 "maker-name"
               ]
@@ -27542,8 +27553,9 @@
             },
             {
               "name": "style",
-              "type": "string (default styleFor, or ?style= when it fits)",
+              "type": "string (optional; the style chosen so far: counts as an answer when sent; absent, the default style)",
               "from": [
+                "DEC-214",
                 "maker-cover",
                 "maker-name"
               ]
@@ -27563,7 +27575,9 @@
               "via": "action:startDraft"
             }
           ],
-          "notes": []
+          "notes": [
+            "body by DEC-214"
+          ]
         },
         {
           "id": "E-223",

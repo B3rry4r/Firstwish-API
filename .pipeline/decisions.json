@@ -3226,6 +3226,46 @@
       "confidence": "high",
       "source": "build/prompts/API-BASE-2.md",
       "decidedAt": "2026-11-23T12:00:00Z"
+    },
+    {
+      "id": "DEC-214",
+      "topic": "Starting a wish is safe to repeat",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (HM3); build/prompts/API-BASE-3.md",
+      "decidedAt": "2026-11-24T12:00:00Z",
+      "decision": "HM3: POST /v1/wishes (E-222) takes an optional Idempotency-Key header (8 to 100 letters, digits or . _ : -): the same key answers the same draft, one row, also 10 at once. A person who has an UNTOUCHED draft (a draft with no answer: no words, no photos, no call, no open time, no choice) gets that draft back (200, the same id) instead of a new one; a touched draft is never handed back. kind, occasion and style become optional in the start: a start that carries one counts as an answer (a new draft is made with it, or an untouched draft is filled with it). No endpoint added or removed; ids already issued do not change."
+    },
+    {
+      "id": "DEC-215",
+      "topic": "Wish.content is an object",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (HM4); build/prompts/API-BASE-3.md",
+      "decidedAt": "2026-11-24T12:00:00Z",
+      "decision": "HM4: a field the sources give named children is typed object by reconcile.py (Wish.content was typed string from an enum class and a named-type mention); gen_schema.py also emits a parent with named children as an object. Wish.content is Record<string, unknown> | null in the contracts; no change on the wire. No other registry field had the fault (checked: every field with named children)."
+    },
+    {
+      "id": "DEC-216",
+      "topic": "A refresh with no session answers no_session",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (HM6); build/prompts/API-BASE-3.md",
+      "decidedAt": "2026-11-24T12:00:00Z",
+      "decision": "HM6: POST /v1/auth/refresh (E-159) and POST /v1/admin/auth/refresh (E-234) answer 401 with the error code no_session when the request carries no refresh cookie or a malformed one. An ended, reused or erased session keeps 401 unauthorized and its words. The code is listed in the two endpoints' notes and in .pipeline/conventions.md (Shapes)."
+    },
+    {
+      "id": "DEC-217",
+      "topic": "registry re-freeze (eleventh reopen)",
+      "closes": [],
+      "decision": "The registry is re-frozen after HM3, HM4 and HM6 (DEC-214 to DEC-216) by tools/pipeline/freeze.py; reconcile.py was run twice with --reopen (identical outputs). E-222 gains the optional header idempotency-key and optional kind, occasion and style; Wish.content is object; the two refresh notes name no_session. Endpoint ids already issued are unchanged, none added or removed.",
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/prompts/API-BASE-3.md",
+      "decidedAt": "2026-11-24T12:00:00Z"
     }
   ]
 }

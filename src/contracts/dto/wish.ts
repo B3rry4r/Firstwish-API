@@ -54,16 +54,19 @@ export class GetWishesQueryDto implements GetWishesQuery {
 export class PostWishesBodyDto implements PostWishesBody {
   @IsString()
   from!: string;
+  @IsOptional()
   @IsString()
-  kind!: string;
+  kind?: string;
   @IsString()
   name!: string;
+  @IsOptional()
   @IsString()
-  occasion!: string;
+  occasion?: string;
   @IsString()
   studio!: string;
+  @IsOptional()
   @IsString()
-  style!: string;
+  style?: string;
 }
 
 /** E-223 DELETE /v1/wishes/:id (body). */

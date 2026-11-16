@@ -22,9 +22,11 @@ import { localToUtc, parseOpening, utcToLocal } from "./local-time";
 import { CHAPTER_KEYS, DEFAULT_CONTENT_MAX_BYTES, FileRef, hasBody, readContent } from "./wish-content";
 import { UNOPENED_DAYS, WishLifecycleService } from "./wish-lifecycle.service";
 import { stateOf } from "./wish-state";
+import { DEFAULT_KIND, DEFAULT_OCCASION, isUntouched, START_KEY } from "./wish-start";
 
 type Tx = Prisma.TransactionClient;
 type Obj = Record<string, unknown>;
+const obj = (v: unknown): Obj => (v && typeof v === "object" && !Array.isArray(v) ? (v as Obj) : {});
 
 export const DEFAULT_ZONE = "Africa/Lagos";
 /** The id of the one wish_number_sequence row. */
@@ -39,10 +41,11 @@ const MAX_YEARS_AHEAD = 5;
 const DATE_ONLY = /^\d{4}-\d{2}-\d{2}$/;
 
 export interface DraftInput {
-  kind: string;
-  occasion: string;
+  /** HM3: kind, occasion and style are answers; a start that carries one counts it, one that does not begins on the default. */
+  kind?: string;
+  occasion?: string;
   name: string;
-  style: string;
+  style?: string;
   from: string;
   studio?: string;
 }
@@ -207,6 +210,8 @@ export class WishesService {
       removedAt: t(r.removedAt), createdAt: toWireInstant(r.createdAt), updatedAt: toWireInstant(r.updatedAt), version: r.version,
       link: slug ? `/w/${slug}` : null, hasPasscode: r.passcodeHash !== null, weddingDate: t(r.weddingDate),
       openable: this.openable(r),
+      // HM1: the maker's own note, as the contract types it (null until one is saved); only the owner's routes build this wire
+      makerNote: r.makerNote ?? null,
     };
   }
 
@@ -242,23 +247,80 @@ export class WishesService {
     return t;
   }
 
-  async create(accountId: string, input: DraftInput): Promise<Obj> {
-    const kind = this.slugOf(input.kind, "kind");
-    const occasion = this.slugOf(input.occasion, "occasion");
+  /**
+   * E-222 (HM3). Starting a wish is safe to repeat, all under the account lock (so ten at once are one start):
+   *  1. an Idempotency-Key seen before answers the draft it answered (200), whatever became of it since, unless that wish is erased;
+   *  2. else a draft of the caller's own that is untouched (isUntouched) is handed back (200). A kind, occasion or style the
+   *     start carries is an answer: it is filled into that draft, and the draft then counts as touched;
+   *  3. else a new draft is made (201); with a kind, occasion or style carried it begins touched.
+   * `fresh` tells the controller which status to send. A touched draft is never handed back by rule 2.
+   */
+  async create(accountId: string, input: DraftInput, key?: string): Promise<{ wish: Obj; fresh: boolean }> {
+    if (key !== undefined && !START_KEY.test(key)) throw AppError.validation({ "Idempotency-Key": "Must be 8 to 100 letters, digits or . _ : -" });
+    const sent = (v: string | undefined): string | undefined => (v === undefined || v.trim() === "" ? undefined : v);
+    const kindIn = sent(input.kind);
+    const occasionIn = sent(input.occasion);
+    const styleIn = sent(input.style);
+    const kind = this.slugOf(kindIn ?? DEFAULT_KIND, "kind");
+    const occasion = this.slugOf(occasionIn ?? DEFAULT_OCCASION, "occasion");
     const name = this.text(input.name, "name", 120);
     const from = this.text(input.from, "from", 120);
     const studio = this.text(input.studio ?? "", "studio", 120);
+    const chosen: Obj = {};
+    if (kindIn) chosen.kind = true;
+    if (occasionIn) chosen.occasion = true;
+    if (styleIn) chosen.style = true;
+    const answered = Object.keys(chosen).length > 0;
     const id = this.ids.id();
-    const row = await this.prisma.$transaction(async (tx) => {
+    const out = await this.prisma.$transaction(async (tx) => {
       await lockAccount(tx, accountId);
-      const styleSlug = await this.styleSlug(tx, input.style);
+      const remember = async (wishId: string): Promise<void> => {
+        if (key === undefined) return;
+        await tx.wishStart.upsert({ where: { accountId_key: { accountId, key } }, create: { id: this.ids.id(), accountId, key, wishId }, update: { wishId } });
+      };
+      if (key !== undefined) {
+        const seen = await tx.wishStart.findUnique({ where: { accountId_key: { accountId, key } } });
+        const was = seen ? await tx.wish.findUnique({ where: { id: seen.wishId } }) : null;
+        if (was && !was.erasedAt) return { row: was, fresh: false };
+      }
+      const mine = await tx.wish.findMany({ where: { accountId, businessId: null, status: "draft", erasedAt: null, removedAt: null }, orderBy: { id: "desc" }, take: 20 });
+      const open = mine.find(isUntouched);
+      if (open) {
+        const data: Prisma.WishUncheckedUpdateInput = { name, version: { increment: 1 } };
+        const cover = { ...(((open.content ?? {}) as Obj).cover as Obj | undefined) };
+        const content: Obj = { ...((open.content ?? {}) as Obj), cover: { ...cover, from } };
+        if (studio) content.studio = studio;
+        data.content = content as Prisma.InputJsonValue;
+        if (kindIn) data.kind = kind;
+        if (occasionIn) data.occasion = occasion;
+        if (styleIn) data.styleSlug = await this.styleSlug(tx, styleIn, open.styleSlug);
+        if (answered) data.makerNote = { ...((open.makerNote ?? {}) as Obj), chosen: { ...(obj(((open.makerNote ?? {}) as Obj).chosen)), ...chosen } } as Prisma.InputJsonValue;
+        const same = JSON.stringify([open.name, open.content]) === JSON.stringify([name, content]);
+        // nothing new to fill in: the draft is handed back as it is, its version unchanged (the page's next save still fits)
+        const row = same && !answered ? open : await tx.wish.update({ where: { id: open.id }, data });
+        await remember(row.id);
+        return { row, fresh: false };
+      }
+      const styleSlug = styleIn ? await this.styleSlug(tx, styleIn) : await this.defaultStyle(tx);
       const content: Obj = { cover: { from } };
       if (studio) content.studio = studio;
-      return tx.wish.create({
-        data: { id, accountId, status: "draft", kind, occasion, styleSlug, timeZone: DEFAULT_ZONE, name, content: content as Prisma.InputJsonValue, version: 0 },
+      const row = await tx.wish.create({
+        data: {
+          id, accountId, status: "draft", kind, occasion, styleSlug, timeZone: DEFAULT_ZONE, name, content: content as Prisma.InputJsonValue, version: 0,
+          ...(answered ? { makerNote: { chosen } as Prisma.InputJsonValue } : {}),
+        },
       });
+      await remember(row.id);
+      return { row, fresh: true };
     });
-    return this.wire(row);
+    return { wish: this.wire(out.row, out.fresh ? undefined : (await this.linksFor([out.row.id])).get(out.row.id)), fresh: out.fresh };
+  }
+
+  /** The style a start with none begins on: the first style that is on, the house's own first (as a client wish's draft does). */
+  private async defaultStyle(tx: Tx): Promise<string> {
+    const s = await tx.style.findFirst({ where: { on: true }, orderBy: [{ house: { sort: "desc", nulls: "last" } }, { id: "asc" }], select: { slug: true } });
+    if (!s?.slug) throw AppError.conflict("no_style", "No style is on, so a wish cannot be started.");
+    return s.slug;
   }
 
   /** What the ticket allows. A wish with no paid ticket is on Starter (the moment line). */

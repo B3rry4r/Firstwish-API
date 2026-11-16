@@ -26,3 +26,19 @@ Truth ids are in /home/user/Firstwish-API/.pipeline/product-truths.json. Verdict
 | Pricing title "40% off until 31 January." and meta with prices | live headline and live prices | pricing | price-book promotion | KEEP |
 | Fallback headline "Pay only when it looks right." | new, typed in file when headline is empty | pricing, home | none | low: new words, owner may accept |
 | Footer/Nav "All six kinds", "All 43 styles" | "All kinds", count from read | Nav, footer | styles read | KEEP |
+
+## After the second check (16 Nov, evening)
+The copy-only patch (w1-site1 ab56486) put back, word for word, every sentence the second check found changed
+(plan cards, the Vault footnote, the pack card, business Act 01, pricing FAQ lines, ticket card lines, the creators
+plan lines). Figures inside those sentences are read from the price book. The lead read the diff (53 lines, 6 files).
+Rows for the OWNER (each stays as written until answered):
+- pricing: "Prices shown are before the N% off ... Keeps stay at the price shown." The table now shows the offer price
+  beside the struck list price, so the sentence reads wrong on the page. Default (lead) if not answered before the
+  wired site is deployed: "N% off applies to extras until <day>, shown struck through. Keeps stay at the price shown."
+- Pro plans: "Priority support" (nothing in the product gives Studio support ahead of Starter).
+- Wish pack: "Use them whenever you like" (the pack's Vault space is for a set number of days: say if the wishes
+  themselves never run out).
+- Creator plan: "Premium styles as templates" (no part of Studio offers them yet).
+- "Any wish, Shoot Reveal included", "A client dashboard", "For a business that wants to try it first": the product
+  does these (reveals, the business pages, the pack); kept.
+- The words "VAT included" the builder had added (Concierge line, the trust line) went back to your "VAT invoices".

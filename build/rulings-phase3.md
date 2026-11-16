@@ -900,3 +900,20 @@ HG1 (give race) Two staff giving one Concierge order: the code is right (overlap
   or without a letter; it never crashes on a draft the server holds.
 - HT4: a style's tile in the picker is the style's own demo and may play the house's sample (it is a picture of the
   style, not the person's wish). It carries no words that claim it is theirs. Allowed as it is.
+
+## HU (16 Nov 2026, the lead, on API-BASE-6's verdict). Default (lead), owner may override.
+- HU1: a link holder who pays to keep or wake a wish gets NO account. The payment belongs to the wish; the payer's
+  email is kept on the payment only (for the receipt and a refund), never as an Account row, never joined to an
+  account that has that email, and the answer is the same whether or not the email has an account (nobody learns
+  which emails are customers). Staff People lists accounts only.
+- HU2: a house wish is the house's: it cannot be kept, woken, reported or paid for, carries no keep offer, and is
+  left out of staff Numbers, payouts, royalties and the customer counts.
+- HU3: a link holder's unfinished payment never blocks the wish's owner (or another holder) from paying: each payer
+  has their own payment; the first to settle keeps or wakes the wish; a later one that settles for the same wish and
+  term is marked refund due by the existing rule and the payer is told.
+- HU4: only a voice that has really arrived counts against a wish's 12; an ask that never uploads holds no place;
+  asks are limited per address and per link; the owner can always add their own voice and clear what friends sent.
+- HU5: a removed login gets the same refusal (login_removed, with words) on every business read; /me does not list
+  a business the person was removed from.
+- HU6: a payment the sweep closed as abandoned that the provider later reports paid is fulfilled only if nothing else
+  has since paid for the same thing; otherwise it is marked refund due. A plan is never applied twice for one intent.

@@ -138,4 +138,75 @@ describe("API-BASE-5 wishes (through the real routes)", () => {
       }
     });
   });
+  describe("case 4, HQ5: styles by ticket", () => {
+    const letter = { letter: { paras: ["Happy birthday."] } };
+    const ticketed = async (u: U, ticket: string | null, adds: string[] = []) => {
+      const w = await start(u);
+      if (ticket) await db.wish.update({ where: { id: w.id }, data: { ticket, adds } as never });
+      const row = await db.wish.findUniqueOrThrow({ where: { id: w.id } });
+      return { id: w.id, version: row.version };
+    };
+
+    it("a draft with no ticket takes any style; with a ticket the PATCH refuses a style above it, with words, and the draft keeps its style", async () => {
+      const u = await user();
+      const none = await ticketed(u, null);
+      expect((await save(u, none.id, { version: none.version, style: "owambe" })).status).toBe(200);
+      const moment = await ticketed(u, "moment");
+      const ok = await save(u, moment.id, { version: moment.version, style: "letter" });
+      expect(ok.status).toBe(200);
+      const v1 = (await read(u, moment.id)).body as W & { style: string };
+      const standard = await save(u, moment.id, { version: v1.version, style: "status" });
+      expect(standard.status).toBe(422);
+      expect(standard.body.error.fields.style).toMatch(/Standard style\. A Moment ticket takes Starter styles and below/);
+      const premium = await save(u, moment.id, { version: v1.version, style: "owambe" });
+      expect(premium.status).toBe(422);
+      expect(premium.body.error.message).toMatch(/Premium style/);
+      expect(((await read(u, moment.id)).body as W & { style: string }).style).toBe("letter");
+      const keep = await ticketed(u, "keepsake");
+      expect((await save(u, keep.id, { version: keep.version, style: "status" })).status).toBe(200);
+      const k1 = (await read(u, keep.id)).body as W;
+      expect((await save(u, keep.id, { version: k1.version, style: "owambe" })).status).toBe(422);
+      const extra = await ticketed(u, "keepsake", ["extra.premium-style"]);
+      expect((await save(u, extra.id, { version: extra.version, style: "owambe" })).status).toBe(200);
+      for (const ticket of ["signature", "premiere"]) {
+        const w = await ticketed(u, ticket);
+        expect((await save(u, w.id, { version: w.version, style: "owambe" })).status).toBe(200);
+      }
+    });
+
+    it("the wish read tells the maker the level the ticket allows and the styles that are on within it", async () => {
+      const u = await user();
+      const none = (await read(u, (await ticketed(u, null)).id)).body as W & { styleLevel: string | null; allowedStyles: string[] };
+      expect(none.styleLevel).toBeNull();
+      expect(none.allowedStyles).toEqual(expect.arrayContaining(["noir", "status", "owambe"]));
+      const m = await ticketed(u, "moment");
+      const moment = (await read(u, m.id)).body as W & { styleLevel: string | null; allowedStyles: string[] };
+      expect(moment.styleLevel).toBe("starter");
+      expect(moment.allowedStyles).toEqual(expect.arrayContaining(["noir", "letter"]));
+      expect(moment.allowedStyles).not.toContain("status");
+      expect(moment.allowedStyles).not.toContain("owambe");
+      const k = (await read(u, (await ticketed(u, "keepsake")).id)).body as { styleLevel: string; allowedStyles: string[] };
+      expect(k.styleLevel).toBe("standard");
+      expect(k.allowedStyles).toContain("status");
+      expect(k.allowedStyles).not.toContain("owambe");
+      const listed = (await t.http().get("/v1/wishes").set(bearer(u.token))).body.items as { id: string; styleLevel: string | null }[];
+      expect(listed.find((x) => x.id === m.id)?.styleLevel).toBe("starter");
+    });
+
+    it("the seal refuses a style the ticket does not allow, with words, and the draft stays a draft", async () => {
+      const u = await user();
+      const w = await ticketed(u, null);
+      await save(u, w.id, { version: w.version, style: "owambe", content: letter });
+      await db.wish.update({ where: { id: w.id }, data: { ticket: "moment" } }); // the ticket is chosen after the style (a payment settles later)
+      const row = await db.wish.findUniqueOrThrow({ where: { id: w.id } });
+      const sealed = await t.http().post(`/v1/wishes/${w.id}/seal`).set(bearer(u.token)).send({ version: row.version, openNow: true });
+      expect(sealed.status).toBe(422);
+      expect(sealed.body.error.fields.style).toMatch(/Premium style\. A Moment ticket takes Starter styles/);
+      expect((await db.wish.findUniqueOrThrow({ where: { id: w.id } })).status).toBe("draft");
+      const fixed = await save(u, w.id, { version: row.version, style: "noir" });
+      expect(fixed.status).toBe(200);
+      const again = await t.http().post(`/v1/wishes/${w.id}/seal`).set(bearer(u.token)).send({ version: row.version + 1, openNow: true });
+      expect(again.status).toBe(200);
+    });
+  });
 });

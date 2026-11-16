@@ -40,3 +40,6 @@ names; the baseline lines to remove; any test that failed in any run and why; co
     hook registered at boot as registerPlanSeal is, since wishes cannot import purchases) before they act: a wish opened
     while its owner holds a live Pass ends with the Pass, not with its own term; the rest job never rests a wish a live Pass
     or a paid keep still covers (it sets the next rest time instead). Tests by hand.
+ J10 (HB4, added by the lead): cancelling a job never throws (a job with run history is marked cancelled, not deleted; the
+    runner skips it); the order "rests until restore-window-end ran, woken, rests again, a keep is paid" settles; an ended
+    Pass does not count as live in pass-cover. Tests.

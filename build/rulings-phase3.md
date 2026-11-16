@@ -707,3 +707,5 @@ HB3 (P-B22 hand-back; T-14) A wish never rests while its owner's Pass is live: t
     end out with the same function (HB1) before they act, so a Pass bought before the wish was opened counts from the start.
     (Wave 6 join.) Accepted: on a tie a paid keep holds the end; a Pass bought later does not wake a wish that already rests
     (its holder wakes it free).
+HB4 (P-B22 re-check, medium, older than the patch) Cancelling a job never throws: a job with run history is marked cancelled,
+    not deleted, so a keep payment's settle cannot fail on it. An ended Pass does not count as live. (Wave 6 join, J10.)

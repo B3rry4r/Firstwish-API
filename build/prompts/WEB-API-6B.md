@@ -29,3 +29,6 @@ Cases:
  7. Attacks you run yourself: two tabs paying for a plan; a login typing an owner-only request; a login removed
     while their tab is open; an import of 500 rows with 20 bad and 5 doubles; a logo that is not a picture.
 The live flow (wa6b.mjs) makes and removes only its own data and joins `npm run live:drive`, which passes whole.
+
+ADDED 16 Nov: case 2 (the Plan screen: what paying does, the 409, continue the pending payment) was pulled forward into
+the Business branch's own patch (P-W8c) because the driver needs it; if it is already on your base, check it and move on.

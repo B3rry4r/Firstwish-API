@@ -209,7 +209,10 @@ export class WishLifecycleService implements OnModuleInit {
     }
     await this.move(tx, w, "live", { cause: "receiver.open", data: { openedAt: at, endsAt } });
     const owner = await tx.$queryRaw<{ gone: boolean }[]>`
-      SELECT (a."erasedAt" IS NOT NULL) AS gone FROM wish w JOIN account a ON a.id = w."accountId" WHERE w.id = ${w.id}::uuid`;
+      SELECT (a."erasedAt" IS NOT NULL OR ba."erasedAt" IS NOT NULL) AS gone
+        FROM wish w JOIN account a ON a.id = w."accountId"
+        LEFT JOIN business b ON b.id = w."businessId" LEFT JOIN account ba ON ba.id = b."accountId"
+       WHERE w.id = ${w.id}::uuid`;
     if (owner[0]?.gone) {
       // RR3: the owner of this client wish was erased: it plays to the end of its term and is erased then (it does not rest a year); nobody is told.
       await this.jobs.schedule("erase-now", endsAt, w.id, tx);

@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { PrismaService } from "../../../common/db/prisma.service";
 import { UuidV7Maker } from "../../../common/ids/uuidv7";
 import { createTestApp, TestApp, uniqueAddress } from "../../../../test/kit/app";
+import { LinkLimits } from "../../public-wishes/link-limits";
 import { hashPasscode } from "../../wishes/wishes.service";
 import { NoticesService } from "../../notices/notices.service";
 import { JobsService } from "../../jobs/jobs.service";
@@ -19,12 +20,18 @@ const auth = (token: string) => ({ authorization: `Bearer ${token}` });
 describe("B18 Vault: shoots, space, reveal links, plays, E-33", () => {
   let t: TestApp;
   let db: PrismaService;
+  let address: string;
+  /** Clears only this spec's address's hits (reads, and the passcode tries of one link): other specs share link_hit. */
+  const clearHits = async (linkId: string) => {
+    const lim = t.app.get(LinkLimits);
+    await db.$executeRaw`DELETE FROM link_hit WHERE key = ANY(${[lim.keyOf(address), lim.keyOf(linkId, address)]})`;
+  };
 
   beforeAll(async () => {
     t = await createTestApp({ now: NOW });
     db = t.app.get(PrismaService);
     // J7: public reads are counted per address; this spec's requests all come from an address of its own, so no other spec's reads count against them.
-    const address = uniqueAddress();
+    address = uniqueAddress();
     const plain = t.http;
     t.http = () => {
       const agent = plain();
@@ -288,13 +295,13 @@ describe("B18 Vault: shoots, space, reveal links, plays, E-33", () => {
     expect((await t.http().get(`/v1/r/${code}`).set("x-unlock-token", `${good.body.token}x`)).body.state).toBe("passcode");
     // the lock: at 30 wrong tries the link refuses and says when to come back
     await db.$executeRaw`UPDATE reveal_access SET tries = 29 WHERE "linkId" = ${row[0].linkId}::uuid`;
-    await db.$executeRaw`DELETE FROM link_hit`;
+    await clearHits(row[0].linkId);
     expect((await t.http().post(`/v1/r/${code}/unlock`).send({ passcode: "bad" })).body.ok).toBe(false);
     const locked = await t.http().post(`/v1/r/${code}/unlock`).send({ passcode: "blue-door" });
     expect(locked.status).toBe(429);
     expect(Number(locked.headers["retry-after"])).toBe(3600);
     t.clock.advance(3601 * 1000);
-    await db.$executeRaw`DELETE FROM link_hit`;
+    await clearHits(row[0].linkId);
     expect((await t.http().post(`/v1/r/${code}/unlock`).send({ passcode: "blue-door" })).body.ok).toBe(true);
     // the end date: the link answers gone after it
     t.clock.set(new Date("2026-12-21T00:00:00Z"));

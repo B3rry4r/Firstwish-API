@@ -1,8 +1,9 @@
 import { randomBytes, scryptSync } from "node:crypto";
 import { PrismaService } from "../../../common/db/prisma.service";
 import { UuidV7Maker } from "../../../common/ids/uuidv7";
-import { createTestApp, TestApp } from "../../../../test/kit/app";
+import { createTestApp, TestApp, uniqueAddress } from "../../../../test/kit/app";
 import { ensureEntitlements } from "../../stored-files/tests/files-kit";
+import { LinkLimits } from "../link-limits";
 import { ReceiverActivityService } from "../receiver-activity.service";
 
 const NOW = new Date("2027-03-10T09:00:00.000Z");
@@ -15,18 +16,39 @@ describe("public wishes E-129 E-130 E-131 E-132 E-134 and the feed's E-122 E-142
   let db: PrismaService;
   let owner: string;
   let seq = 0;
+  const address = uniqueAddress();
+  const linkIds: string[] = [];
+  /** Removes only this spec's address's hits (reads, and the passcode tries of the links it made): other specs share link_hit. */
+  const clearHits = async (bucket?: string) => {
+    const lim = t.app.get(LinkLimits);
+    const keys = [lim.keyOf(address), ...linkIds.map((l) => lim.keyOf(l, address))];
+    if (bucket) await db.$executeRaw`DELETE FROM link_hit WHERE bucket = ${bucket} AND key = ANY(${keys})`;
+    else await db.$executeRaw`DELETE FROM link_hit WHERE key = ANY(${keys})`;
+  };
   const run = `${process.pid}${Date.now() % 100000}`;
 
   beforeAll(async () => {
     t = await createTestApp({ now: NOW });
     db = t.app.get(PrismaService);
+    // Reads are counted per address and link_hit is shared by every spec: this spec asks from an address of its own and clears only that address's rows.
+    const plain = t.http;
+    t.http = () => {
+      const agent = plain();
+      const verbs = new Set(["get", "post", "put", "patch", "delete", "head", "options"]);
+      return new Proxy(agent, {
+        get: (target, prop) => {
+          const v = (target as unknown as Record<string | symbol, unknown>)[prop];
+          return typeof prop === "string" && verbs.has(prop) ? (url: string) => (v as (u: string) => { set: (k: string, x: string) => unknown }).call(target, url).set("x-forwarded-for", address) : v;
+        },
+      });
+    };
     await ensureEntitlements(db);
     owner = ids.next();
     await db.account.create({ data: { id: owner, sides: ["person"], lastSide: "person" } });
   });
   afterAll(() => t.close());
   beforeEach(async () => {
-    await db.$executeRaw`DELETE FROM link_hit`;
+    await clearHits();
     t.clock.set(NOW);
   });
 
@@ -48,6 +70,7 @@ describe("public wishes E-129 E-130 E-131 E-132 E-134 and the feed's E-122 E-142
       } as never,
     });
     const linkId = ids.next();
+    linkIds.push(linkId);
     await db.wishLink.create({ data: { id: linkId, slug, wishId: id, active: linkOver.active ?? true } });
     return { id, slug, linkId };
   }
@@ -137,7 +160,7 @@ describe("public wishes E-129 E-130 E-131 E-132 E-134 and the feed's E-122 E-142
     t.clock.advance(16 * 60 * 1000);
     expect((await get(w.slug, { "x-unlock-token": ok.body.token })).body.state).toBe("passcode");
     // 10 per hour per link and address: 2 used, 8 more pass, the next is 429 with a time to come back
-    await db.$executeRaw`DELETE FROM link_hit WHERE bucket = 'read'`;
+    await clearHits("read");
     for (let i = 0; i < 8; i++) expect((await t.http().post(`/v1/w/${w.slug}/unlock`).send({ passcode: "x" })).status).toBe(200);
     const limited = await t.http().post(`/v1/w/${w.slug}/unlock`).send({ passcode: "open-sesame" });
     expect(limited.status).toBe(429);
@@ -155,7 +178,7 @@ describe("public wishes E-129 E-130 E-131 E-132 E-134 and the feed's E-122 E-142
     expect(locked.status).toBe(429);
     expect(Number(locked.headers["retry-after"])).toBe(3600);
     t.clock.advance(3601 * 1000);
-    await db.$executeRaw`DELETE FROM link_hit`;
+    await clearHits();
     expect((await t.http().post(`/v1/w/${w.slug}/unlock`).send({ passcode: "abcd" })).body.ok).toBe(true);
   });
 

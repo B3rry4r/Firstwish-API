@@ -4,6 +4,7 @@ import { PrismaService } from "../../common/db/prisma.service";
 import { AppError } from "../../common/errors/app-error";
 import { Clock } from "../../common/ports/clock.port";
 import { IdGenerator } from "../../common/ports/ids.port";
+import { PAYOUT_EVENT_SINK, type PayoutEventSink } from "../payouts/payout-event-sink";
 import { REFUND_EVENT_SINK, type RefundEventSink } from "./refund-event-sink";
 import { SettlementService, type ProviderAnswer } from "./settlement.service";
 
@@ -19,7 +20,7 @@ interface Parsed {
 /**
  * E-217: Paystack's one signed URL. The access guard has already checked the HMAC-SHA512 of the raw body; here the event is stored
  * once by (provider, eventId) and, if it is a charge, settled by the same path as the verify page. A refund event goes to the refunds
- * module (the sink) when one is installed, else it is stored and left unprocessed.
+ * module (the sink) when one is installed, else it is stored and left unprocessed; a transfer event (WW1) goes the same way to the payouts module.
  */
 @Injectable()
 export class WebhookService {
@@ -29,6 +30,7 @@ export class WebhookService {
     private readonly ids: IdGenerator,
     private readonly settlement: SettlementService,
     @Optional() @Inject(REFUND_EVENT_SINK) private readonly refunds?: RefundEventSink,
+    @Optional() @Inject(PAYOUT_EVENT_SINK) private readonly payouts?: PayoutEventSink,
   ) {}
 
   async receive(raw: Buffer): Promise<void> {
@@ -51,6 +53,11 @@ export class WebhookService {
       return;
     }
     if (ev.type.startsWith("refund.")) return;
+    if (ev.type.startsWith("transfer.") && this.payouts) {
+      await this.payouts.apply(row.id, ev.type, ev.data);
+      return;
+    }
+    if (ev.type.startsWith("transfer.")) return;
     await this.db.webhookEvent.update({ where: { id: row.id }, data: { processedAt: this.clock.now(), outcome: "ignored" } });
   }
 }

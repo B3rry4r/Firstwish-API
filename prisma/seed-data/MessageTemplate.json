@@ -48,6 +48,15 @@
    "version": 1
   },
   {
+   "seedKey": "concierge-delivered:en-NG:1",
+   "body": "Your Concierge order is ready: {count} made for you. Open Firstwish to see your order.\n\nFirstwish",
+   "channel": "email",
+   "key": "concierge-delivered",
+   "locale": "en-NG",
+   "subject": "Your Concierge order is delivered",
+   "version": 1
+  },
+  {
    "seedKey": "invite:en-NG:1",
    "body": "Hi,\n\nYou are invited to the Firstwish team. Use this code to sign in: {code}. It works for 10 minutes.\n\nIf you did not expect this, you can leave this email.\n\nFirstwish",
    "channel": "email",
@@ -63,6 +72,24 @@
    "key": "login-invite",
    "locale": "en-NG",
    "subject": "{business} invited you to Firstwish",
+   "version": 1
+  },
+  {
+   "seedKey": "bank-changed:en-NG:1",
+   "body": "Payouts will now go to the account ending {last4} at bank {bank}. If this was not you, sign in and change it back, then write to us.\n\nFirstwish",
+   "channel": "email",
+   "key": "bank-changed",
+   "locale": "en-NG",
+   "subject": "Your payout bank account changed",
+   "version": 1
+  },
+  {
+   "seedKey": "support:en-NG:1",
+   "body": "{text}\n\nYou can answer this email to reach us again.\n\nFirstwish",
+   "channel": "email",
+   "key": "support",
+   "locale": "en-NG",
+   "subject": "Re: {subject}",
    "version": 1
   }
  ]

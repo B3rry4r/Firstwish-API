@@ -3,6 +3,7 @@ import { EventsModule } from "../events/events.module";
 import { JobsModule } from "../jobs/jobs.module";
 import { PaymentsModule } from "../payments/payments.module";
 import { InvoicesModule } from "../pro-business/invoices.module";
+import { RoyaltiesModule } from "../royalties/royalties.module";
 import { WishesModule } from "../wishes/wishes.module";
 import { BusinessHandlers } from "./business-handlers";
 import { CreatorHandlers } from "./creator-handlers";
@@ -18,7 +19,7 @@ import { WishHandlers } from "./wish-handlers";
  * (draw a client wish, extraGb of Vault space).
  */
 @Module({
-  imports: [PaymentsModule, WishesModule, JobsModule, EventsModule, PassDrawsModule, InvoicesModule],
+  imports: [PaymentsModule, WishesModule, JobsModule, EventsModule, PassDrawsModule, InvoicesModule, RoyaltiesModule],
   providers: [GrantStore, WishHandlers, PassService, BusinessHandlers, CreatorHandlers, PurchasesService],
   exports: [PurchasesService, PassService, BusinessHandlers, GrantStore],
 })

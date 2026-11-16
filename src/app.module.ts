@@ -17,6 +17,9 @@ import { StylesModule } from "./modules/styles/styles.module";
 import { TemplatesModule } from "./modules/templates/templates.module";
 // end B14
 // B04: the price book
+import { ConciergeModule } from "./modules/concierge/concierge.module";
+import { QrCardsModule } from "./modules/qr-cards/qr-cards.module";
+import { RenderJobsModule } from "./modules/render-jobs/render-jobs.module";
 import { PriceBookModule } from "./modules/price-book/price-book.module";
 // end B04
 // B02: account sides, creators, business profile, follow
@@ -50,13 +53,22 @@ import { PurchasesModule } from "./modules/purchases/purchases.module";
 import { JobHandlersModule } from "./modules/job-handlers/job-handlers.module";
 // end INT-3
 
+// B20: support
+import { SupportModule } from "./modules/support/support.module";
+// end B20
+
 // B11: email notices
 import { NoticesModule } from "./modules/notices/notices.module";
+import { StudioModule } from "./modules/studio/studio.module";
 // end B11
 
 // B08
 import { RefundsModule } from "./modules/refunds/refunds.module";
 // end B08
+// B16: creators' money (royalties, bank account, payouts, the monthly run)
+import { RoyaltiesModule } from "./modules/royalties/royalties.module";
+import { PayoutsModule } from "./modules/payouts/payouts.module";
+// end B16
 
 /** Registration entry: each resource module adds one import line here. */
 import { ModerationModule } from "./modules/moderation/moderation.module";
@@ -128,6 +140,21 @@ import { ShowingModule } from "./modules/showing/showing.module";
     // B08: refunds, the settlement check, staff payments
     RefundsModule,
     // end B08
+    // B16
+    RoyaltiesModule,
+    PayoutsModule,
+    // end B16
+    // B20
+    SupportModule,
+    // end B20
+    // B15
+    StudioModule,
+    // end B15
+    // B19
+    ConciergeModule,
+    QrCardsModule,
+    RenderJobsModule,
+    // end B19
   ],
 })
 export class AppModule {}

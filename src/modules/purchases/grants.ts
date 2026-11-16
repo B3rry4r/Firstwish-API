@@ -3,7 +3,7 @@ import type { Prisma } from "@prisma/client";
 import { Clock } from "../../common/ports/clock.port";
 import { IdGenerator } from "../../common/ports/ids.port";
 import type { FulfilmentContext } from "../payments/fulfilment.registry";
-import { withFlag } from "../payments/payment-options";
+import { flagRefundDue } from "../refunds/refund-due";
 
 export type Tx = Prisma.TransactionClient;
 export type Detail = Record<string, unknown>;
@@ -82,10 +82,7 @@ export class GrantStore {
   /** Nothing is granted: the reason is kept and the payment is flagged for a refund. */
   async refuse(tx: Tx, ctx: FulfilmentContext, id: string, reason: string): Promise<void> {
     await tx.purchaseGrant.update({ where: { id }, data: { refusedReason: reason } });
-    const p = await tx.payment.findUniqueOrThrow({ where: { id: ctx.payment.id } });
-    const flags = withFlag(withFlag(p.flags, "refund_due"), `refund_due:${reason}`);
-    if (flags.length === p.flags.length) return;
-    await tx.payment.update({ where: { id: p.id }, data: { flags } });
+    await flagRefundDue(tx, ctx.payment.id, reason);
   }
 
   async list(tx: Tx, paymentId: string): Promise<GrantRow[]> {

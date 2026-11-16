@@ -29,6 +29,36 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const notAllowed = (message: string) => new AppError(HttpStatus.CONFLICT, "not_allowed", message);
 const cap = (l: Level) => LEVEL_NAME[l];
 
+/** The slug of a creator's Studio style in the catalogue: `studio-` and its id (a slug has no colon; wishes that name `studio:<id>` mean this). */
+export const studioSlug = (id: string): string => `studio-${id}`;
+
+/** What the catalogue needs to know of a Studio style (read from its document by the Studio module). */
+export interface StudioEntry {
+  id: string;
+  name: string;
+  handle: string;
+  creatorName: string;
+  /** WW6: Style.creator is {creatorId, templateCreatorId?}; the royalties read exactly that. */
+  creatorId: string;
+  templateCreatorId?: string;
+  line: string;
+  kinds: unknown[];
+  mood: unknown[];
+  pace: string;
+  orientation: string;
+  dimension: string;
+  moves: string;
+  light: boolean;
+}
+
+function studioFields(e: StudioEntry) {
+  return {
+    name: e.name, by: e.handle, creator: { creatorId: e.creatorId, ...(e.templateCreatorId ? { templateCreatorId: e.templateCreatorId } : {}) } as Prisma.InputJsonObject, line: e.line, feel: e.line,
+    kinds: e.kinds as Prisma.InputJsonArray, mood: e.mood as Prisma.InputJsonArray, pace: e.pace, orientation: e.orientation,
+    dimension: e.dimension, moves: e.moves, light: e.light,
+  };
+}
+
 @Injectable()
 export class StylesService {
   constructor(
@@ -81,6 +111,53 @@ export class StylesService {
     if (!row) throw AppError.notFound("No style has this name.");
     const counts = await this.countsFor([row.slug ?? ""]);
     return styleToWire(row, counts.get(row.slug ?? "") ?? zero(), false);
+  }
+
+  // ------------------------------------------------------------------ the Studio's entry (B15: a creator's style joins the catalogue here)
+
+  /**
+   * A creator's Studio style has a catalogue row from the moment it is sent in, so a submission can point at it (the registry's
+   * StyleSubmission.styleId is a Style id). The row has the studio style's own id and the slug `studio-<id>`, is off and is not
+   * listed anywhere until staff accept it. Called inside the submit transaction; saying it twice changes nothing.
+   */
+  async holdStudioStyle(tx: Prisma.TransactionClient, e: StudioEntry): Promise<string> {
+    const now = this.clock.now();
+    const fields = studioFields(e);
+    const record: RecordEntry = { at: toWireInstant(now), what: "Sent in for review", by: e.creatorName, reason: "" };
+    await tx.style.upsert({
+      where: { id: e.id },
+      create: {
+        id: e.id, slug: studioSlug(e.id), ...fields, on: false, house: false, level: "standard", tier: LEVEL_NAME.standard, addedAt: null,
+        record: [record] as unknown as Prisma.InputJsonArray, previews: 0, paid: 0, packaged: false,
+      },
+      update: { ...fields },
+    });
+    return e.id;
+  }
+
+  /** Staff accepted it: the style is on, at the level staff chose (Standard unless they say Premium, T-59), with a record entry. */
+  async enterStudioStyle(tx: Prisma.TransactionClient, e: StudioEntry, level: "standard" | "premium", staffName: string, staffId: string, reason: string): Promise<void> {
+    const now = this.clock.now();
+    await this.holdStudioStyle(tx, e);
+    const row = await tx.style.findUniqueOrThrow({ where: { id: e.id } });
+    const entry: RecordEntry = { at: toWireInstant(now), what: `Accepted as ${cap(level)}`, by: staffName, reason };
+    await tx.style.update({
+      where: { id: e.id },
+      data: {
+        on: true, level, tier: LEVEL_NAME[level], addedAt: now, get: await this.getLineFor(tx, level, row.get),
+        record: [...recordOf(row), entry] as unknown as Prisma.InputJsonArray,
+      },
+    });
+    const slug = studioSlug(e.id);
+    await tx.styleLevel.create({ data: { id: this.ids.id(), styleSlug: slug, slug, level, since: now, by: staffId, reason } });
+  }
+
+  /** The creator took their style down: it is off, and a wish already made in it keeps playing (T-62). */
+  async withdrawStudioStyle(tx: Prisma.TransactionClient, id: string, creatorName: string): Promise<void> {
+    const row = await tx.style.findUnique({ where: { id } });
+    if (!row) return;
+    const entry: RecordEntry = { at: toWireInstant(this.clock.now()), what: "Withdrawn by its creator", by: creatorName, reason: "" };
+    await tx.style.update({ where: { id }, data: { on: false, record: [...recordOf(row), entry] as unknown as Prisma.InputJsonArray } });
   }
 
   // ------------------------------------------------------------------ staff

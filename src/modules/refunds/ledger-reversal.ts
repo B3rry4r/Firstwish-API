@@ -10,13 +10,17 @@ export interface PaymentLedgerRow {
   refundId: string | null;
 }
 
+/** What every royalty journal's memo starts with (royalties.service writes them). */
+const ROYALTY_MEMO = "Royalty";
+
 /**
  * The reversing rows of a refund: every journal that sold something (not the provider's fee, which the provider keeps) is written
  * again with its debits and credits swapped, under a journal of its own. Each reversed journal sums to zero because the original
- * did; the original rows are never touched. Rows that already belong to a refund are not reversed again.
+ * did; the original rows are never touched. Rows that already belong to a refund are not reversed again. The royalty journals of the
+ * payment (memo "Royalty ...") are not reversed here: RoyaltiesService.reverse takes each one back itself (WW2), once.
  */
 export function reversalEntries(rows: PaymentLedgerRow[], journal: () => string, reference: string): LedgerDraft[] {
-  const original = rows.filter((r) => r.refundId === null);
+  const original = rows.filter((r) => r.refundId === null && !r.memo.startsWith(ROYALTY_MEMO));
   const feeJournals = new Set(original.filter((r) => r.account === "provider_fees").map((r) => r.journalId));
   const newId = new Map<string, string>();
   const out: LedgerDraft[] = [];

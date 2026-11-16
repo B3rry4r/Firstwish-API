@@ -171,10 +171,13 @@ export class WishesService {
     return v;
   }
 
-  private async styleSlug(db: Tx | PrismaService, raw: string): Promise<string> {
+  private async styleSlug(db: Tx | PrismaService, raw: string, current?: string): Promise<string> {
     const slug = raw.trim().toLowerCase();
-    const found = slug ? await db.style.findUnique({ where: { slug }, select: { id: true } }) : null;
-    if (!found) throw AppError.validation({ style: "That style is not offered." });
+    // A draft saved again with its own current style is accepted even after that style went off: only a CHANGE to an off style is refused.
+    if (current !== undefined && slug === current) return slug;
+    const found = slug ? await db.style.findUnique({ where: { slug }, select: { id: true, on: true } }) : null;
+    // SA5: only a style that is on can be picked (a held, returned or withdrawn Studio style is off); a wish already made keeps its own.
+    if (!found || found.on !== true) throw AppError.validation({ style: "That style is not offered." });
     return slug;
   }
 
@@ -302,7 +305,7 @@ export class WishesService {
       if (kind !== undefined) data.kind = kind;
       if (occasion !== undefined) data.occasion = occasion;
       if (name !== undefined) data.name = name;
-      if (input.style !== undefined) data.styleSlug = await this.styleSlug(tx, input.style);
+      if (input.style !== undefined) data.styleSlug = await this.styleSlug(tx, input.style, cur.styleSlug);
       if (input.keep !== undefined) data.keep = input.keep;
       if (input.step !== undefined) data.step = input.step;
       if (passHash !== undefined) data.passcodeHash = passHash;

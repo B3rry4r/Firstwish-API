@@ -192,9 +192,9 @@ describe("P-B05 rulings (payments)", () => {
     const ev = await db.webhookEvent.findMany({ where: { payload: { path: ["data", "reference"], equals: p.reference } } });
     expect(ev.map((e) => e.outcome).sort()).toEqual(["amount_mismatch", "amount_mismatch", "fulfilled"].sort());
     expect(ev.every((e) => e.event === null)).toBe(true);
-    const ignored = JSON.stringify({ event: "transfer.success", data: { id: 990000 + ++seq } });
+    const ignored = JSON.stringify({ event: "customeridentification.success", data: { id: 990000 + ++seq } });
     expect((await hook(ignored)).status).toBe(200);
-    const ig = await db.webhookEvent.findFirstOrThrow({ where: { type: "transfer.success", eventId: { startsWith: "transfer.success:" }, payload: { path: ["data", "id"], equals: JSON.parse(ignored).data.id } } });
+    const ig = await db.webhookEvent.findFirstOrThrow({ where: { type: "customeridentification.success", eventId: { startsWith: "customeridentification.success:" }, payload: { path: ["data", "id"], equals: JSON.parse(ignored).data.id } } });
     expect(ig).toMatchObject({ outcome: "ignored", event: null });
     expect(ig.processedAt).not.toBeNull();
   });

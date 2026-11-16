@@ -8,6 +8,7 @@ import { PaymentsModule } from "../payments/payments.module";
 import { REFUND_EVENT_SINK } from "../payments/refund-event-sink";
 import { InvoicesModule } from "../pro-business/invoices.module";
 import { PurchasesModule } from "../purchases/purchases.module";
+import { RoyaltiesModule } from "../royalties/royalties.module";
 import { AdminPaymentsService } from "./admin-payments.service";
 import { PaystackRefundProvider } from "./paystack-refund-provider";
 import { ReconciliationService } from "./reconciliation.service";
@@ -28,7 +29,7 @@ const DAY_MS = 86_400_000;
  */
 @Global()
 @Module({
-  imports: [PaymentsModule, PurchasesModule, InvoicesModule],
+  imports: [PaymentsModule, PurchasesModule, InvoicesModule, RoyaltiesModule],
   controllers: [AdminPaymentsController, AdminRefundsController, AdminLedgerController, AdminReconciliationsController],
   providers: [
     {

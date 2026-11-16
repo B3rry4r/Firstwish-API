@@ -57,6 +57,8 @@ export class MePassService {
     // the live one; else the one that ends last (an old one that ended, or one still waiting to start)
     const pick = shaped.find((s) => s.live) ?? [...shaped].sort((a, b) => (b.until?.getTime() ?? 0) - (a.until?.getTime() ?? 0))[0];
     if (!pick) return { ...EMPTY };
+    // HB2: with Passes stacked, the end shown is the last live Pass's (a refunded one is not in `shaped`)
+    const lastEnd = pick.live ? shaped.filter((s) => s.r.state === "active" && s.until && s.until.getTime() > now).reduce<Date>((m, s) => (s.until && s.until > m ? s.until : m), pick.until as Date) : pick.until;
     const wishesTotal = whole(pick.g.wishes);
     const upgradesTotal = whole(pick.g.upgrades);
     const wishesUsed = whole(pick.r.wishesUsed);
@@ -69,7 +71,7 @@ export class MePassService {
       wishesUsed,
       upgradesUsed,
       live: pick.live,
-      endsAt: pick.until ? toWireInstant(pick.until) : null,
+      endsAt: lastEnd ? toWireInstant(lastEnd) : null,
       wishesTotal,
       wishesLeft: Math.max(wishesTotal - wishesUsed, 0),
       upgradesTotal,

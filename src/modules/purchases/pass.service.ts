@@ -44,6 +44,8 @@ export class PassService {
       { wishes: num(g.wishes), upgrades: num(g.upgrades), conciergeDiscountPercent: num(g.conciergeDiscountPercent), termDays: days, since: since.toISOString(), validUntil: validUntil.toISOString(), extended: since !== now },
       validUntil,
     );
+    // HB1: a Pass bought moves the end of each live wish of the holder
+    await this.cover.recompute(tx, payment.accountId);
   }
 
   /**
@@ -56,7 +58,7 @@ export class PassService {
 
   async revoke(tx: Tx, g: GrantRow): Promise<string> {
     await tx.passMembership.updateMany({ where: { paymentId: g.paymentId, state: "active" }, data: { state: "refunded", version: { increment: 1 } } });
-    // HA2: the wishes this Pass covered end where their own term or paid keeps say; the rest job rests the ones nothing covers
+    // HA2, HB1: each wish's end is worked out again; the rest job rests the ones nothing covers
     if (g.accountId) await this.cover.recompute(tx, g.accountId);
     return "revoked";
   }

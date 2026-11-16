@@ -1,26 +1,17 @@
 import { Injectable } from "@nestjs/common";
-import type { $Enums } from "@prisma/client";
 import { AppError } from "../../common/errors/app-error";
-import { Clock } from "../../common/ports/clock.port";
 import { EntitlementsService } from "../price-book/entitlements.service";
 import { PriceBookService } from "../price-book/price-book.service";
 import { EventsService } from "../events/events.service";
 import type { FulfilmentContext } from "../payments/fulfilment.registry";
-import { JobsService } from "../jobs/jobs.service";
 import { RoyaltiesService } from "../royalties/royalties.service";
-import { NOTICE_DAYS, WishLifecycleService } from "../wishes/wish-lifecycle.service";
+import { WishLifecycleService } from "../wishes/wish-lifecycle.service";
 import { WishesService } from "../wishes/wishes.service";
 import { KeepProofs } from "./keep-proof";
-import { addDays, DAY_MS, GrantStore, num, type GrantRow, type Tx } from "./grants";
+import { PassCover } from "./pass-cover";
+import { GrantStore, num, type GrantRow, type Tx } from "./grants";
 import { assessExtra, assessKeep, assessTicket, readWish, TICKET_ORDER, type WishFacts } from "./wish-rules";
 
-const KEEP_RANK: Record<string, number> = { month: 1, half: 2, year: 3 };
-/** The longest of these keeps (null when none is a keep). */
-function longest(lengths: (string | null)[]): $Enums.WishKeep | null {
-  let best: string | null = null;
-  for (const l of lengths) if (l && KEEP_RANK[l] && (!best || KEEP_RANK[l] > KEEP_RANK[best])) best = l;
-  return best as $Enums.WishKeep | null;
-}
 const SLUG = /^[a-z0-9][a-z0-9-]{0,63}$/;
 type TicketName = (typeof TICKET_ORDER)[number];
 
@@ -36,11 +27,10 @@ export class WishHandlers {
     private readonly entitlements: EntitlementsService,
     private readonly book: PriceBookService,
     private readonly events: EventsService,
-    private readonly jobs: JobsService,
-    private readonly clock: Clock,
     private readonly wishes: WishesService,
     private readonly royalties: RoyaltiesService,
     private readonly proofs: KeepProofs,
+    private readonly cover: PassCover,
   ) {}
 
   /** Locks the wish the payment names (a missing one or one that is no uuid is null) and reads it under that lock. */
@@ -111,35 +101,12 @@ export class WishHandlers {
     const why = assessKeep(w, ctx.payment.accountId, await this.entitlements.row(tx), byLink);
     if (why || !w) return this.store.refuse(tx, ctx, grantId, why ?? "wish_not_payers");
     const days = num((await ctx.grant()).termDays);
-    const now = this.clock.now();
-    const before = await tx.wish.findUniqueOrThrow({ where: { id: w.id }, select: { keep: true, keptUntil: true, keptBy: true } });
-    const resting = w.state === "resting";
-    // From its end while it is showing; a resting wish wakes now (E-232). Two keeps at once queue on the wish row: the second adds to the first.
-    const from = resting || !w.endsAt || w.endsAt.getTime() < now.getTime() ? now : w.endsAt;
-    const endsAt = addDays(from, days);
-    // The label is the longest keep that remains: a month keep bought after a year keep does not shorten it.
-    const label = before.keptBy === "keep" && before.keptUntil && before.keptUntil.getTime() > now.getTime() ? longest([before.keep, length]) : length;
-    const data = { endsAt, keep: label, keptUntil: endsAt, keptBy: "keep" as const };
-    if (resting) {
-      const locked = await this.lifecycle.lock(tx, w.id);
-      await this.lifecycle.move(tx, locked, "live", { cause: "purchase.keep", data: { ...data, restingSince: null, eraseAfter: null } });
-      await this.jobs.cancel("erase-wish", w.id, tx);
-      await this.jobs.cancel("restore-window-end", w.id, tx);
-    } else {
-      await tx.wish.update({ where: { id: w.id }, data: { ...data, version: { increment: 1 } } });
-    }
-    await this.jobs.schedule("rest-wish", endsAt, w.id, tx);
-    const notice = addDays(endsAt, -NOTICE_DAYS);
-    if (notice.getTime() > now.getTime()) await this.jobs.schedule("send-notice", notice, w.id, tx);
-    else await this.jobs.cancel("send-notice", w.id, tx);
-    await this.store.record(
-      tx,
-      grantId,
-      { wishId: w.id, length, days, from: from.toISOString(), endsAt: endsAt.toISOString(), wasResting: resting, previousEndsAt: w.endsAt?.toISOString() ?? null,
-        previousKeep: before.keep, previousKeptUntil: before.keptUntil?.toISOString() ?? null, previousKeptBy: before.keptBy },
-      endsAt,
-    );
+    const before = await tx.wish.findUniqueOrThrow({ where: { id: w.id }, select: { keep: true, keptUntil: true, keptBy: true, endsAt: true } });
+    // the grant row holds the length and days (and its claim time is the moment bought); the end is worked out from the rows (HB1)
+    await this.store.record(tx, grantId, { wishId: w.id, length, days, wasResting: w.state === "resting", previousEndsAt: before.endsAt?.toISOString() ?? null, previousKeep: before.keep, previousKeptUntil: before.keptUntil?.toISOString() ?? null, previousKeptBy: before.keptBy });
     await this.store.nameWish(tx, grantId, w.id);
+    const end = await this.cover.applyEnd(tx, w.id, { wake: true, cause: "purchase.keep" });
+    await tx.purchaseGrant.update({ where: { id: grantId }, data: { endsAt: end } });
   }
 
   /** A refund takes the ticket back while the wish is still a draft; a keep takes its days off the end; an extra comes off the list. */
@@ -166,35 +133,9 @@ export class WishHandlers {
       await tx.wish.update({ where: { id: w.id }, data: { adds, version: { increment: 1 } } });
       return "revoked";
     }
-    if (g.kind === "keep" && w.endsAt) {
-      // HH4: the days come off the end, and keep, keptBy and keptUntil are worked out again from the keeps that remain.
-      const endsAt = new Date(w.endsAt.getTime() - num(d.days) * DAY_MS);
-      const rest = (
-        await tx.purchaseGrant.findMany({
-          where: { wishId: w.id, kind: "keep", revokedAt: null, refusedReason: null, id: { not: g.id } },
-          orderBy: [{ createdAt: "desc" }, { id: "desc" }],
-          select: { detail: true },
-        })
-      ).map((r) => ({ detail: (r.detail ?? {}) as Record<string, unknown> }));
-      let marks: { keep: $Enums.WishKeep | null; keptBy: $Enums.WishKeptBy | null; keptUntil: Date | null };
-      if (rest.length) {
-        marks = { keep: longest(rest.map((r) => (typeof r.detail.length === "string" ? r.detail.length : null))), keptBy: "keep", keptUntil: endsAt };
-      } else {
-        // No keep left: what the wish carried before its first keep (revoked ones included) is what it carries again.
-        const first = await tx.purchaseGrant.findFirst({
-          where: { wishId: w.id, kind: "keep", refusedReason: null },
-          orderBy: [{ createdAt: "asc" }, { id: "asc" }],
-          select: { detail: true },
-        });
-        const was = (first?.detail ?? d) as Record<string, unknown>;
-        marks = {
-          keep: typeof was.previousKeep === "string" ? (was.previousKeep as $Enums.WishKeep) : null,
-          keptBy: typeof was.previousKeptBy === "string" ? (was.previousKeptBy as $Enums.WishKeptBy) : null,
-          keptUntil: typeof was.previousKeptUntil === "string" ? new Date(was.previousKeptUntil) : null,
-        };
-      }
-      await tx.wish.update({ where: { id: w.id }, data: { endsAt, ...marks, version: { increment: 1 } } });
-      await this.jobs.schedule("rest-wish", endsAt, w.id, tx);
+    if (g.kind === "keep") {
+      // HH4, HB1: the end, keep, keptBy and keptUntil are worked out again from the keeps that remain (this one left out)
+      await this.cover.applyEnd(tx, w.id, { except: g.id });
       return "revoked";
     }
     return "nothing_granted";

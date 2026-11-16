@@ -14,6 +14,9 @@ const ROOT = join(__dirname, "../../../..");
 // a start no other spec uses
 const NOW = new Date("2032-05-10T09:00:00.000Z");
 const DAY = 86_400_000;
+const TERM_DAYS: Record<string, number> = { moment: 7, keepsake: 14, signature: 30, premiere: 60 };
+/** A wish row's first open is its end less the ticket's term (EE7): the end is worked out from it (HB1). */
+const openedFor = (d: Record<string, unknown>): Date | undefined => (d.endsAt instanceof Date && typeof d.ticket === "string" && TERM_DAYS[d.ticket] ? new Date(d.endsAt.getTime() - TERM_DAYS[d.ticket] * 86_400_000) : undefined);
 const ids = new UuidV7Maker();
 const bearer = (token: string) => ({ authorization: `Bearer ${token}` });
 const run = `${process.pid}${Date.now() % 100000}`;
@@ -52,8 +55,9 @@ describe("B22 keep (E-228) and wake (E-232) (contract)", () => {
   async function wish(accountId: string, over: Record<string, unknown> = {}) {
     const id = ids.next();
     await db.wish.create({
-      data: { id, accountId, status: "live", kind: "birthday", occasion: "birthday", styleSlug: "golden", timeZone: "Africa/Lagos", ticket: "keepsake", no: `22${seq}${id.slice(-4)}`, openedAt: NOW, endsAt: new Date(NOW.getTime() + 5 * DAY), ...over } as never,
+      data: { id, accountId, status: "live", kind: "birthday", occasion: "birthday", styleSlug: "golden", timeZone: "Africa/Lagos", ticket: "keepsake", no: `22${seq}${id.slice(-4)}`, openedAt: NOW, endsAt: new Date(NOW.getTime() + 5 * DAY), ...over, ...(openedFor({ ticket: "keepsake", endsAt: new Date(NOW.getTime() + 5 * DAY), ...over }) ? { openedAt: openedFor({ ticket: "keepsake", endsAt: new Date(NOW.getTime() + 5 * DAY), ...over }) } : {}) } as never,
     });
+
     return id;
   }
   const row = (id: string) => db.wish.findUniqueOrThrow({ where: { id } });
@@ -69,6 +73,17 @@ describe("B22 keep (E-228) and wake (E-232) (contract)", () => {
     const p = await db.payment.findUniqueOrThrow({ where: { providerReference: reference } });
     const out = await settle.settle({ reference, status: "success", amountKobo: p.amountKobo, currency: "NGN", paidAt: t.clock.now() });
     expect(out.outcome).toBe("fulfilled");
+  }
+
+  /** A wish with a paid keep (a real payment, settled) that is put to rest while the keep still covers now: HB1 reads keeps from the grant rows. */
+  async function restingWithKeep(accountId: string, token: string, over: Record<string, unknown> = {}) {
+    const w = await wish(accountId, over);
+    await paid((await keep(token, w, { keepKey: "month" })).body.payment.reference);
+    await db.$transaction(async (tx) => {
+      await lockAccount(tx, accountId);
+      await life.move(tx, await life.lock(tx, w), "resting", { cause: "test", data: { restingSince: NOW, eraseAfter: new Date(NOW.getTime() + 300 * DAY) } });
+    });
+    return w;
   }
 
   it("1. keep: priced from the price book, one payment, the end moves on settle; a repeat answers the same payment", async () => {
@@ -186,8 +201,8 @@ describe("B22 keep (E-228) and wake (E-232) (contract)", () => {
 
   it("8. wake: a resting wish with a keep that covers now goes live in one move, with its jobs", async () => {
     const u = await user();
-    const until = new Date(NOW.getTime() + 20 * DAY);
-    const w = await wish(u.accountId, { status: "resting", endsAt: new Date(NOW.getTime() - DAY), restingSince: new Date(NOW.getTime() - DAY), eraseAfter: new Date(NOW.getTime() + 300 * DAY), keep: "month", keptBy: "keep", keptUntil: until });
+    const w = await restingWithKeep(u.accountId, u.token);
+    const until = new Date(NOW.getTime() + 35 * DAY); // the wish's own end (5 days) and the month after it
     await db.job.create({ data: { id: ids.next(), type: "erase_wish", subjectId: w, runAt: new Date(NOW.getTime() + 300 * DAY), status: "scheduled", attempts: 0 } });
     const r = await wake(u.token, w);
     expect(r.status).toBe(204);
@@ -198,7 +213,7 @@ describe("B22 keep (E-228) and wake (E-232) (contract)", () => {
     expect(after.restingSince).toBeNull();
     expect(after.eraseAfter).toBeNull();
     const moves = await db.wishTransition.findMany({ where: { wishId: w } });
-    expect(moves.map((m) => `${m.from}>${m.to}:${m.cause}`)).toEqual(["resting>live:owner.wake"]);
+    expect(moves.filter((m) => m.cause !== "test").map((m) => `${m.from}>${m.to}:${m.cause}`)).toEqual(["resting>live:owner.wake"]);
     expect(await db.job.count({ where: { subjectId: w, type: "erase_wish", status: "scheduled" } })).toBe(0);
     expect(await db.job.count({ where: { subjectId: w, type: "rest_wish", status: "scheduled" } })).toBe(1);
     // once live it is not resting: 409
@@ -227,15 +242,14 @@ describe("B22 keep (E-228) and wake (E-232) (contract)", () => {
 
   it("10. wake 20 at once changes the wish once; a woken wish is not on Now Showing without a new ask (SS1)", async () => {
     const u = await user();
-    const until = new Date(NOW.getTime() + 20 * DAY);
     const w = await wish(u.accountId, { endsAt: new Date(NOW.getTime() + DAY) });
     await db.publishedWish.create({ data: { id: ids.next(), wishId: w, title: "Shown" } });
+    await paid((await keep(u.token, w, { keepKey: "month" })).body.payment.reference);
     await db.$transaction(async (tx) => {
       await lockAccount(tx, u.accountId);
       await life.move(tx, await life.lock(tx, w), "resting", { cause: "test", data: { restingSince: NOW, eraseAfter: new Date(NOW.getTime() + 300 * DAY) } });
     });
     expect(await db.publishedWish.count({ where: { wishId: w } })).toBe(0);
-    await db.wish.update({ where: { id: w }, data: { keep: "month", keptBy: "keep", keptUntil: until } });
     const rs = await Promise.all(Array.from({ length: 20 }, () => wake(u.token, w)));
     expect(rs.filter((r) => r.status === 204)).toHaveLength(1);
     expect(rs.filter((r) => r.status === 409)).toHaveLength(19);
@@ -375,15 +389,14 @@ describe("B22 keep (E-228) and wake (E-232) (contract)", () => {
     const owner = await user();
     const rec = await user();
     const stranger = await user();
-    const until = new Date(NOW.getTime() + 20 * DAY);
-    const w = await wish(owner.accountId, resting({ keep: "month", keptBy: "keep", keptUntil: until }));
+    const w = await restingWithKeep(owner.accountId, owner.token);
     const l = await link(w);
     expect((await wakeVia(stranger.token, w, null)).status).toBe(404);
     expect((await wakeVia(stranger.token, w, "nosuchslug")).status).toBe(404);
     const ok = await wakeVia(rec.token, w, l.slug);
     expect(ok.status).toBe(204);
     expect((await row(w)).status).toBe("live");
-    expect((await db.wishTransition.findMany({ where: { wishId: w } })).map((m) => m.cause)).toEqual(["receiver.wake"]);
+    expect((await db.wishTransition.findMany({ where: { wishId: w } })).map((m) => m.cause).filter((c) => c !== "test")).toEqual(["receiver.wake"]);
     const w2 = await wish(owner.accountId, resting());
     const l2 = await link(w2);
     const no = await wakeVia(rec.token, w2, l2.slug);
@@ -444,7 +457,8 @@ describe("B22 keep (E-228) and wake (E-232) (contract)", () => {
     const l = await link(b);
     const pay = await keepVia(rec.token, b, l.slug, { keepKey: "year" });
     await paid(pay.body.payment.reference);
-    expect((await row(b)).endsAt?.getTime()).toBe(passEnd.getTime() + 365 * DAY);
+    // HB1 (default, lead): a keep bought while the Pass covers counts its days from the day bought (after the wish's own end), so it outlasts the Pass here
+    expect((await row(b)).endsAt?.getTime()).toBe(NOW.getTime() + (5 + 365) * DAY);
     t.clock.set(new Date(passEnd.getTime() + 1000));
     await jobs.runDue(50, [a, b]);
     expect((await row(a)).status).toBe("resting");

@@ -6,18 +6,16 @@ import { Clock } from "../../common/ports/clock.port";
 import type { PostWishesByIdKeepBody, PostWishesByIdKeepResponse, PublicWishView, Wish } from "../../contracts";
 import { FulfilmentRegistry } from "../payments/fulfilment.registry";
 import { PaymentsService } from "../payments/payments.service";
-import { JobsService } from "../jobs/jobs.service";
 import { PublicWishesService } from "../public-wishes/public-wishes.service";
 import { KeepProofs } from "../purchases/keep-proof";
-import { PassCover } from "../purchases/pass-cover";
+import { endOf, PassCover } from "../purchases/pass-cover";
 import { EntitlementsService, grantOf } from "../price-book/entitlements.service";
 import { REASON_TEXT } from "../purchases/wish-rules";
-import { NOTICE_DAYS, WishLifecycleService } from "../wishes/wish-lifecycle.service";
+import { WishLifecycleService } from "../wishes/wish-lifecycle.service";
 import { stateOf } from "../wishes/wish-state";
 import { WishesService } from "../wishes/wishes.service";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const DAY_MS = 86_400_000;
 export const KEEP_LENGTHS = ["month", "half", "year"] as const;
 /** What a receiver sends to show they hold the wish's link: its slug (x-wish-link) and the link's own unlock token (x-unlock-token). */
 export interface LinkHold {
@@ -42,7 +40,6 @@ export class WishKeepsService implements OnModuleInit {
     private readonly entitlements: EntitlementsService,
     private readonly lifecycle: WishLifecycleService,
     private readonly wishes: WishesService,
-    private readonly jobs: JobsService,
     private readonly links: PublicWishesService,
     private readonly proofs: KeepProofs,
     private readonly cover: PassCover,
@@ -158,21 +155,12 @@ export class WishKeepsService implements OnModuleInit {
       const locked = await this.lifecycle.lock(tx, id);
       if (stateOf(locked) !== "resting") throw AppError.conflict("not_allowed", "Only a resting wish can be woken.");
       const now = this.clock.now();
-      const row = await tx.wish.findUniqueOrThrow({ where: { id }, select: { keptBy: true, keptUntil: true } });
-      const paid = row.keptBy === "keep" && row.keptUntil && row.keptUntil.getTime() > now.getTime() ? row.keptUntil : null;
-      const pass = who.owner ? await this.cover.liveUntil(tx, accountId) : null;
-      if (pass && (!paid || pass.getTime() > paid.getTime())) {
-        await this.cover.apply(tx, accountId, id);
-        return;
-      }
-      if (!paid) throw new AppError(402, "keep_needed", "Keep this wish for a month, six months or a year to wake it.");
-      await this.lifecycle.move(tx, locked, "live", { cause: who.owner ? "owner.wake" : "receiver.wake", data: { endsAt: paid, restingSince: null, eraseAfter: null } });
-      await this.jobs.cancel("erase-wish", id, tx);
-      await this.jobs.cancel("restore-window-end", id, tx);
-      await this.jobs.schedule("rest-wish", paid, id, tx);
-      const notice = new Date(paid.getTime() - NOTICE_DAYS * DAY_MS);
-      if (notice.getTime() > now.getTime()) await this.jobs.schedule("send-notice", notice, id, tx);
-      else await this.jobs.cancel("send-notice", id, tx);
+      // HB1: the end is worked out by applyEnd; here only whether something that this asker may use covers now
+      const r = await endOf(tx, id, { now });
+      const paid = r.keepsEnd && r.keepsEnd.getTime() > now.getTime();
+      const pass = who.owner && r.passEnd && r.passEnd.getTime() > now.getTime();
+      if (!paid && !pass) throw new AppError(402, "keep_needed", "Keep this wish for a month, six months or a year to wake it.");
+      await this.cover.applyEnd(tx, id, { wake: true, cause: pass ? "pass.cover" : who.owner ? "owner.wake" : "receiver.wake" });
     });
   }
 }

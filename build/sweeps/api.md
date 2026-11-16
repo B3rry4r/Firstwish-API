@@ -74,3 +74,8 @@
   style row still carries the account id (existing T-62 behaviour: check against the erase rule in Phase 7); the
   refusal's per-field words for a bad limit were not read; PATCH signed:false after the backfill not run end to end.
 - (API) P-CI-275's fix scopes the 'ledger untouched by the switch' counts to rows linked to the account's payments: a ledger row the switch wrote with no payment would not be seen (the second check's own probe saw the ledger not move): tighten in Phase 7 if a ledger-wide per-test window is added.
+
+## For API-BASE-8 (16 Nov)
+- HY1: a route for the owner to drop a pending plan payment at once (abandoned; a late "paid" follows HU6); the plan
+  read says when a pending payment lapses. Found by the Business patch: a login's unpaid plan start blocks the
+  owner's next start for up to 60 minutes.

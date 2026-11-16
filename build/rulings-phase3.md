@@ -967,3 +967,10 @@ HG1 (give race) Two staff giving one Concierge order: the code is right (overlap
   their files and the profile picture are erased.
 - HX5 (HW7): the staff session's per-section actions cover every staff write, drawn from the same table the guard
   checks (one source), so the two cannot disagree.
+
+## HY (16 Nov 2026, the lead, on the Business Plan patch). Default (lead), owner may override.
+- HY1 (HR1): a pending plan payment never traps the business for the hour it takes to lapse. Whoever may pay for the
+  plan can continue it, and the business's owner can drop it from the Plan screen ("Start again"): the server marks
+  it abandoned at once and a new start is allowed. If the provider later reports the dropped one paid, HU6 applies
+  (fulfilled only if nothing else has paid for a plan since; otherwise refund due). Needs a server route (the next
+  API round) and then the control on the Plan screen; until then the screen offers Continue and says when it lapses.

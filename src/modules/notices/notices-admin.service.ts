@@ -8,7 +8,7 @@ import { decodeCursor, Page, toPage } from "../../common/pagination/cursor";
 import { toWireInstant } from "../../common/time/time";
 import type { MessageDelivery, MessageTemplate } from "../../contracts";
 import { AuditActor, AuditService, requireReason } from "../audit/audit.service";
-import { isTemplateKey, maskEmail, scrubEmails, scrubReason, TEMPLATES, TemplateKey, wordingProblems } from "./catalog";
+import { isTemplateKey, LISTED_KEYS, maskEmail, scrubEmails, scrubReason, TEMPLATES, TemplateKey, wordingProblems } from "./catalog";
 import { LANG, NoticesService } from "./notices.service";
 
 const SECTION = "/admin/messages";
@@ -38,14 +38,14 @@ export class NoticesAdminService {
   /** E-75. The messages with the wording now in force. */
   async templates(limit: number, cursor?: string): Promise<Page<MessageTemplate>> {
     const after = cursor ? String(decodeCursor(cursor).key) : "";
-    const rows = await this.prisma.messageTemplate.findMany({ where: { channel: "email", locale: LANG, key: { in: Object.keys(TEMPLATES) } }, orderBy: [{ key: "asc" }, { version: "desc" }] });
+    const rows = await this.prisma.messageTemplate.findMany({ where: { channel: "email", locale: LANG, key: { in: [...LISTED_KEYS] } }, orderBy: [{ key: "asc" }, { version: "desc" }] });
     const latest = rows.filter((r, i) => i === 0 || rows[i - 1].key !== r.key).filter((r) => r.key > after).slice(0, limit + 1);
     return toPage(latest.map((r) => this.wording(r)), limit, (n) => ({ key: n.key, id: n.key }));
   }
 
   /** E-76. New wording for one message: kept words only, every placeholder it needs, a reason, one audit row. */
   async edit(key: string, body: { subject: string; body: string; reason: string }, actor: AuditActor): Promise<MessageTemplate> {
-    if (!isTemplateKey(key)) throw AppError.notFound();
+    if (!isTemplateKey(key) || !(LISTED_KEYS as readonly string[]).includes(key)) throw AppError.notFound();
     const reason = requireReason(body.reason);
     const subject = body.subject.trim();
     const text = body.body.trim();

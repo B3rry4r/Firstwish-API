@@ -2,7 +2,7 @@
  * The messages Firstwish sends (B11; INT-4 adds the staff invite, B17 the business login invite, WW5 the bank-changed message). Every one goes by email (R11). The wording lives in the MessageTemplate table
  * (seeded from the web app, edited by staff); this file holds what the wording may name and what the code needs from it.
  */
-export type TemplateKey = "sealed" | "opens" | "opened" | "resting" | "code" | "invite" | "login-invite" | "bank-changed";
+export type TemplateKey = "sealed" | "opens" | "opened" | "resting" | "code" | "invite" | "login-invite" | "bank-changed" | "support";
 
 export interface TemplateSpec {
   key: TemplateKey;
@@ -57,9 +57,15 @@ export const TEMPLATES: Readonly<Record<TemplateKey, TemplateSpec>> = {
     key: "bank-changed", label: "Your payout bank account changed", when: "When a creator saves a new payout bank account.", audience: "The creator",
     allowed: ["last4", "bank"], needs: ["last4", "bank"], purpose: "support", noticeKind: null, mutable: false,
   },
+  support: {
+    key: "support", label: "A reply from support", when: "When staff answer a support thread.", audience: "The person who wrote in",
+    allowed: ["subject", "text"], needs: ["text"], purpose: "support", noticeKind: null, mutable: false,
+  },
 };
 
 export const TEMPLATE_KEYS = Object.keys(TEMPLATES) as TemplateKey[];
+/** The messages staff read and edit under /admin/messages (E-75, E-76). A support reply carries the words staff typed in the thread, so it is not one of them. */
+export const LISTED_KEYS = TEMPLATE_KEYS.filter((k) => k !== "support");
 export const MUTABLE_KEYS = TEMPLATE_KEYS.filter((k) => TEMPLATES[k].mutable);
 
 export const isTemplateKey = (k: unknown): k is TemplateKey => typeof k === "string" && Object.prototype.hasOwnProperty.call(TEMPLATES, k);
@@ -74,6 +80,12 @@ export const CODE_WORDING_FALLBACK = {
 export const INVITE_WORDING_FALLBACK = {
   subject: "You are invited to the Firstwish team",
   body: "Hi,\n\nYou are invited to the Firstwish team. Use this code to sign in: {code}. It works for 10 minutes.\n\nIf you did not expect this, you can leave this email.\n\nFirstwish",
+} as const;
+
+/** A support reply's wording when no row exists yet (a database before its seed): an answer must still go out. Same words as the seed. */
+export const SUPPORT_WORDING_FALLBACK = {
+  subject: "Re: {subject}",
+  body: "{text}\n\nYou can answer this email to reach us again.\n\nFirstwish",
 } as const;
 
 /** A delivery gets 3 tries (the first counts), with these waits before try 2 and try 3 (declared, PROVISIONAL). */

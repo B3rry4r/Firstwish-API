@@ -83,3 +83,6 @@
   is owner-only); the Concierge order wire carries its payment's id and reference; a read giving a maker the
   buyer's wish ids for an order (delivery takes wish ids); "refuse" a style submission has no route (decide takes
   approve or return): the lead rules after the check says whether the design draws it.
+- (API-BASE-8, from the Business Plan check) the owner cannot read a plan payment a LOGIN started (GET
+  /payments/{ref} is 404 for the owner, 200 for the login): everyone who may pay for the business's plan reads the
+  business's plan payments; the plan read's `pending` carries when it lapses (lapsesAt).

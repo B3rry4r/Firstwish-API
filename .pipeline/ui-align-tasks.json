@@ -429,7 +429,8 @@
         "lib/pro-data.ts"
       ],
       "change": "integer kobo, currency NGN, over the wire and in storage; prices only from the price book",
-      "status": "open"
+      "status": "done",
+      "resolution": "W8 (web merge 7742f24, with the Plan patch ce3ee3e), verified 16 Nov"
     },
     {
       "id": "UA-37",
@@ -451,7 +452,8 @@
         "lib/pro-data.ts"
       ],
       "change": "integer kobo, currency NGN, over the wire and in storage; prices only from the price book",
-      "status": "open"
+      "status": "done",
+      "resolution": "W8 (web merge 7742f24, with the Plan patch ce3ee3e), verified 16 Nov"
     },
     {
       "id": "UA-39",
@@ -462,7 +464,8 @@
         "lib/pro-data.ts"
       ],
       "change": "integer kobo, currency NGN, over the wire and in storage; prices only from the price book",
-      "status": "open"
+      "status": "done",
+      "resolution": "W8 (web merge 7742f24, with the Plan patch ce3ee3e), verified 16 Nov"
     },
     {
       "id": "UA-40",
@@ -473,7 +476,8 @@
         "lib/pro-data.ts"
       ],
       "change": "integer kobo, currency NGN, over the wire and in storage; prices only from the price book",
-      "status": "open"
+      "status": "done",
+      "resolution": "W8 (web merge 7742f24, with the Plan patch ce3ee3e), verified 16 Nov"
     },
     {
       "id": "UA-41",
@@ -507,7 +511,8 @@
         "lib/pro-data.ts"
       ],
       "change": "integer kobo, currency NGN, over the wire and in storage; prices only from the price book",
-      "status": "open"
+      "status": "done",
+      "resolution": "W8 (web merge 7742f24, with the Plan patch ce3ee3e), verified 16 Nov"
     },
     {
       "id": "UA-44",
@@ -519,7 +524,8 @@
         "lib/pro-data.ts"
       ],
       "change": "integer kobo, currency NGN, over the wire and in storage; prices only from the price book",
-      "status": "open"
+      "status": "done",
+      "resolution": "W8 (web merge 7742f24, with the Plan patch ce3ee3e), verified 16 Nov"
     },
     {
       "id": "UA-45",
@@ -1106,7 +1112,8 @@
         "lib/pro-data.ts"
       ],
       "change": "server-issued UUIDv7 ids",
-      "status": "open"
+      "status": "done",
+      "resolution": "W8 (web merge 7742f24, with the Plan patch ce3ee3e), verified 16 Nov"
     },
     {
       "id": "UA-97",
@@ -1128,7 +1135,8 @@
         "lib/pro-data.ts"
       ],
       "change": "server-issued UUIDv7 ids",
-      "status": "open"
+      "status": "done",
+      "resolution": "W8 (web merge 7742f24, with the Plan patch ce3ee3e), verified 16 Nov"
     },
     {
       "id": "UA-99",
@@ -1139,7 +1147,8 @@
         "lib/pro-data.ts"
       ],
       "change": "server-issued UUIDv7 ids",
-      "status": "open"
+      "status": "done",
+      "resolution": "W8 (web merge 7742f24, with the Plan patch ce3ee3e), verified 16 Nov"
     },
     {
       "id": "UA-100",
@@ -1150,7 +1159,8 @@
         "lib/pro-data.ts"
       ],
       "change": "server-issued UUIDv7 ids",
-      "status": "open"
+      "status": "done",
+      "resolution": "W8 (web merge 7742f24, with the Plan patch ce3ee3e), verified 16 Nov"
     },
     {
       "id": "UA-101",
@@ -1183,7 +1193,8 @@
         "lib/pro-data.ts"
       ],
       "change": "server-issued UUIDv7 ids",
-      "status": "open"
+      "status": "done",
+      "resolution": "W8 (web merge 7742f24, with the Plan patch ce3ee3e), verified 16 Nov"
     },
     {
       "id": "UA-104",
@@ -1194,7 +1205,8 @@
         "lib/pro-data.ts"
       ],
       "change": "server-issued UUIDv7 ids",
-      "status": "open"
+      "status": "done",
+      "resolution": "W8 (web merge 7742f24, with the Plan patch ce3ee3e), verified 16 Nov"
     },
     {
       "id": "UA-105",
@@ -1691,7 +1703,8 @@
         "components/app/Pay.tsx"
       ],
       "change": "Paystack start, verify and signed webhook (payments)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W8 (web merge 7742f24, with the Plan patch ce3ee3e), verified 16 Nov"
     },
     {
       "id": "UA-149",
@@ -2060,7 +2073,8 @@
         "lib/pro-data.ts"
       ],
       "change": "the server (business, members, client wishes, people, invoices)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W8 (web merge 7742f24, with the Plan patch ce3ee3e), verified 16 Nov"
     },
     {
       "id": "UA-182",
@@ -2084,7 +2098,8 @@
         "lib/pro-data.ts"
       ],
       "change": "the server (business, members, client wishes, people, invoices)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W8 (web merge 7742f24, with the Plan patch ce3ee3e), verified 16 Nov"
     },
     {
       "id": "UA-184",
@@ -2096,7 +2111,8 @@
         "lib/pro-data.ts"
       ],
       "change": "the server (business, members, client wishes, people, invoices)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W8 (web merge 7742f24, with the Plan patch ce3ee3e), verified 16 Nov"
     },
     {
       "id": "UA-185",
@@ -2108,7 +2124,8 @@
         "lib/pro-data.ts"
       ],
       "change": "the server (business, members, client wishes, people, invoices)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W8 (web merge 7742f24, with the Plan patch ce3ee3e), verified 16 Nov"
     },
     {
       "id": "UA-186",
@@ -2166,7 +2183,8 @@
         "lib/pro-data.ts"
       ],
       "change": "the server (business, members, client wishes, people, invoices)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W8 (web merge 7742f24, with the Plan patch ce3ee3e), verified 16 Nov"
     },
     {
       "id": "UA-191",
@@ -2178,7 +2196,8 @@
         "lib/pro-data.ts"
       ],
       "change": "the server (business, members, client wishes, people, invoices)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W8 (web merge 7742f24, with the Plan patch ce3ee3e), verified 16 Nov"
     },
     {
       "id": "UA-192",
@@ -2292,7 +2311,8 @@
         "lib/vault-api.ts"
       ],
       "change": "the server (Vault shoots and files, reactions/saves/follows, Studio plan/credits/reviews/drafts/submissions, Pass period)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W8 (web merge 7742f24, with the Plan patch ce3ee3e), verified 16 Nov"
     },
     {
       "id": "UA-202",
@@ -2303,7 +2323,8 @@
         "lib/vault-api.ts"
       ],
       "change": "the server (Vault shoots and files, reactions/saves/follows, Studio plan/credits/reviews/drafts/submissions, Pass period)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W8 (web merge 7742f24, with the Plan patch ce3ee3e), verified 16 Nov"
     },
     {
       "id": "UA-203",
@@ -2691,7 +2712,8 @@
         "lib/vault-api.ts"
       ],
       "change": "signed uploads straight to storage, confirm step, short-lived signed reads (storage)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W8 (web merge 7742f24, with the Plan patch ce3ee3e), verified 16 Nov"
     },
     {
       "id": "UA-238",
@@ -2702,7 +2724,8 @@
         "components/app/pro/ui.tsx"
       ],
       "change": "signed uploads straight to storage, confirm step, short-lived signed reads (storage)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W8 (web merge 7742f24, with the Plan patch ce3ee3e), verified 16 Nov"
     },
     {
       "id": "UA-239",
@@ -2714,7 +2737,8 @@
         "lib/vault-api.ts"
       ],
       "change": "signed uploads straight to storage, confirm step, short-lived signed reads (storage)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W8 (web merge 7742f24, with the Plan patch ce3ee3e), verified 16 Nov"
     },
     {
       "id": "UA-240",
@@ -2773,7 +2797,8 @@
         "components/app/pro/ui.tsx"
       ],
       "change": "signed uploads straight to storage, confirm step, short-lived signed reads (storage)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W8 (web merge 7742f24, with the Plan patch ce3ee3e), verified 16 Nov"
     },
     {
       "id": "UA-245",
@@ -2784,7 +2809,8 @@
         "components/app/pro/ui.tsx"
       ],
       "change": "signed uploads straight to storage, confirm step, short-lived signed reads (storage)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W8 (web merge 7742f24, with the Plan patch ce3ee3e), verified 16 Nov"
     },
     {
       "id": "UA-246",
@@ -3278,7 +3304,8 @@
         "lib/pro-data.ts"
       ],
       "change": "the web reads GET /v1/prices; the server charges only from the price book",
-      "status": "open"
+      "status": "done",
+      "resolution": "W8 (web merge 7742f24, with the Plan patch ce3ee3e), verified 16 Nov"
     },
     {
       "id": "UA-287",
@@ -3300,7 +3327,8 @@
         "lib/pro-data.ts"
       ],
       "change": "the web reads GET /v1/prices; the server charges only from the price book",
-      "status": "open"
+      "status": "done",
+      "resolution": "W8 (web merge 7742f24, with the Plan patch ce3ee3e), verified 16 Nov"
     },
     {
       "id": "UA-289",
@@ -3311,7 +3339,8 @@
         "lib/pro-data.ts"
       ],
       "change": "the web reads GET /v1/prices; the server charges only from the price book",
-      "status": "open"
+      "status": "done",
+      "resolution": "W8 (web merge 7742f24, with the Plan patch ce3ee3e), verified 16 Nov"
     },
     {
       "id": "UA-290",
@@ -3322,7 +3351,8 @@
         "lib/pro-data.ts"
       ],
       "change": "the web reads GET /v1/prices; the server charges only from the price book",
-      "status": "open"
+      "status": "done",
+      "resolution": "W8 (web merge 7742f24, with the Plan patch ce3ee3e), verified 16 Nov"
     },
     {
       "id": "UA-291",
@@ -3356,7 +3386,8 @@
         "lib/pro-data.ts"
       ],
       "change": "the web reads GET /v1/prices; the server charges only from the price book",
-      "status": "open"
+      "status": "done",
+      "resolution": "W8 (web merge 7742f24, with the Plan patch ce3ee3e), verified 16 Nov"
     },
     {
       "id": "UA-294",
@@ -3368,7 +3399,8 @@
         "lib/pro-data.ts"
       ],
       "change": "the web reads GET /v1/prices; the server charges only from the price book",
-      "status": "open"
+      "status": "done",
+      "resolution": "W8 (web merge 7742f24, with the Plan patch ce3ee3e), verified 16 Nov"
     },
     {
       "id": "UA-295",
@@ -3996,7 +4028,8 @@
         "lib/vault-fixtures.ts"
       ],
       "change": "removed from production; house showcase wishes served by the server (feed, Now Showing)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W8 (web merge 7742f24, with the Plan patch ce3ee3e), verified 16 Nov"
     },
     {
       "id": "UA-351",
@@ -4629,7 +4662,8 @@
         "lib/pro-data.ts"
       ],
       "change": "every epoch-ms `at` becomes createdAt/updatedAt ISO-8601 UTC strings set by the server; calendar dates are YYYY-MM-DD strings (date-only canon)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W8 (web merge 7742f24, with the Plan patch ce3ee3e), verified 16 Nov"
     },
     {
       "id": "UA-407",
@@ -4651,7 +4685,8 @@
         "lib/pro-data.ts"
       ],
       "change": "every epoch-ms `at` becomes createdAt/updatedAt ISO-8601 UTC strings set by the server; calendar dates are YYYY-MM-DD strings (date-only canon)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W8 (web merge 7742f24, with the Plan patch ce3ee3e), verified 16 Nov"
     },
     {
       "id": "UA-409",
@@ -4662,7 +4697,8 @@
         "lib/pro-data.ts"
       ],
       "change": "every epoch-ms `at` becomes createdAt/updatedAt ISO-8601 UTC strings set by the server; calendar dates are YYYY-MM-DD strings (date-only canon)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W8 (web merge 7742f24, with the Plan patch ce3ee3e), verified 16 Nov"
     },
     {
       "id": "UA-410",
@@ -4673,7 +4709,8 @@
         "lib/pro-data.ts"
       ],
       "change": "every epoch-ms `at` becomes createdAt/updatedAt ISO-8601 UTC strings set by the server; calendar dates are YYYY-MM-DD strings (date-only canon)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W8 (web merge 7742f24, with the Plan patch ce3ee3e), verified 16 Nov"
     },
     {
       "id": "UA-411",
@@ -4706,7 +4743,8 @@
         "lib/pro-data.ts"
       ],
       "change": "every epoch-ms `at` becomes createdAt/updatedAt ISO-8601 UTC strings set by the server; calendar dates are YYYY-MM-DD strings (date-only canon)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W8 (web merge 7742f24, with the Plan patch ce3ee3e), verified 16 Nov"
     },
     {
       "id": "UA-414",
@@ -4717,7 +4755,8 @@
         "lib/pro-data.ts"
       ],
       "change": "every epoch-ms `at` becomes createdAt/updatedAt ISO-8601 UTC strings set by the server; calendar dates are YYYY-MM-DD strings (date-only canon)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W8 (web merge 7742f24, with the Plan patch ce3ee3e), verified 16 Nov"
     },
     {
       "id": "UA-415",
@@ -5165,7 +5204,8 @@
         "components/app/Pay.tsx"
       ],
       "change": "the client never sends an amount; Payment.amountKobo is set by the server from the price book",
-      "status": "open"
+      "status": "done",
+      "resolution": "W8 (web merge 7742f24, with the Plan patch ce3ee3e), verified 16 Nov"
     },
     {
       "id": "UA-455",
@@ -5636,7 +5676,8 @@
         "lib/pro-data.ts"
       ],
       "change": "every read or write of localStorage/sessionStorage/IndexedDB is replaced by its endpoint; the session is an httpOnly refresh cookie plus an in-memory access token; mode (light/dark) is a field on the account; choices before sign-in travel in the link; the build fails on the words localStorage, sessionStorage, IndexedDB in app/, components/, lib/",
-      "status": "open"
+      "status": "done",
+      "resolution": "W8 (web merge 7742f24, with the Plan patch ce3ee3e), verified 16 Nov"
     },
     {
       "id": "UA-494",
@@ -5662,7 +5703,8 @@
         "lib/vault-api.ts"
       ],
       "change": "every read or write of localStorage/sessionStorage/IndexedDB is replaced by its endpoint; the session is an httpOnly refresh cookie plus an in-memory access token; mode (light/dark) is a field on the account; choices before sign-in travel in the link; the build fails on the words localStorage, sessionStorage, IndexedDB in app/, components/, lib/",
-      "status": "open"
+      "status": "done",
+      "resolution": "W8 (web merge 7742f24, with the Plan patch ce3ee3e), verified 16 Nov"
     },
     {
       "id": "UA-496",
@@ -5674,7 +5716,8 @@
         "lib/pro-data.ts"
       ],
       "change": "every read or write of localStorage/sessionStorage/IndexedDB is replaced by its endpoint; the session is an httpOnly refresh cookie plus an in-memory access token; mode (light/dark) is a field on the account; choices before sign-in travel in the link; the build fails on the words localStorage, sessionStorage, IndexedDB in app/, components/, lib/",
-      "status": "open"
+      "status": "done",
+      "resolution": "W8 (web merge 7742f24, with the Plan patch ce3ee3e), verified 16 Nov"
     },
     {
       "id": "UA-497",
@@ -5687,7 +5730,8 @@
         "lib/vault-api.ts"
       ],
       "change": "every read or write of localStorage/sessionStorage/IndexedDB is replaced by its endpoint; the session is an httpOnly refresh cookie plus an in-memory access token; mode (light/dark) is a field on the account; choices before sign-in travel in the link; the build fails on the words localStorage, sessionStorage, IndexedDB in app/, components/, lib/",
-      "status": "open"
+      "status": "done",
+      "resolution": "W8 (web merge 7742f24, with the Plan patch ce3ee3e), verified 16 Nov"
     },
     {
       "id": "UA-498",
@@ -5749,7 +5793,8 @@
         "lib/pro-data.ts"
       ],
       "change": "every read or write of localStorage/sessionStorage/IndexedDB is replaced by its endpoint; the session is an httpOnly refresh cookie plus an in-memory access token; mode (light/dark) is a field on the account; choices before sign-in travel in the link; the build fails on the words localStorage, sessionStorage, IndexedDB in app/, components/, lib/",
-      "status": "open"
+      "status": "done",
+      "resolution": "W8 (web merge 7742f24, with the Plan patch ce3ee3e), verified 16 Nov"
     },
     {
       "id": "UA-503",
@@ -5761,7 +5806,8 @@
         "lib/pro-data.ts"
       ],
       "change": "every read or write of localStorage/sessionStorage/IndexedDB is replaced by its endpoint; the session is an httpOnly refresh cookie plus an in-memory access token; mode (light/dark) is a field on the account; choices before sign-in travel in the link; the build fails on the words localStorage, sessionStorage, IndexedDB in app/, components/, lib/",
-      "status": "open"
+      "status": "done",
+      "resolution": "W8 (web merge 7742f24, with the Plan patch ce3ee3e), verified 16 Nov"
     },
     {
       "id": "UA-504",
@@ -7281,7 +7327,8 @@
       ],
       "change": "implement the designed loading state",
       "enterCondition": "a request for this surface is in flight (conventions Runtime contract)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W8 (web merge 7742f24, with the Plan patch ce3ee3e), verified 16 Nov"
     },
     {
       "id": "UA-614",
@@ -7295,7 +7342,8 @@
       ],
       "change": "implement the designed empty state",
       "enterCondition": "the server returns no items",
-      "status": "open"
+      "status": "done",
+      "resolution": "W8 (web merge 7742f24, with the Plan patch ce3ee3e), verified 16 Nov"
     },
     {
       "id": "UA-615",
@@ -7309,7 +7357,8 @@
       ],
       "change": "implement the designed error state",
       "enterCondition": "the request fails; show retry",
-      "status": "open"
+      "status": "done",
+      "resolution": "W8 (web merge 7742f24, with the Plan patch ce3ee3e), verified 16 Nov"
     },
     {
       "id": "UA-616",
@@ -7323,7 +7372,8 @@
       ],
       "change": "implement the designed loaded state",
       "enterCondition": "as designed: loaded",
-      "status": "open"
+      "status": "done",
+      "resolution": "W8 (web merge 7742f24, with the Plan patch ce3ee3e), verified 16 Nov"
     },
     {
       "id": "UA-617",
@@ -7351,7 +7401,8 @@
       ],
       "change": "implement the designed loading state",
       "enterCondition": "a request for this surface is in flight (conventions Runtime contract)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W8 (web merge 7742f24, with the Plan patch ce3ee3e), verified 16 Nov"
     },
     {
       "id": "UA-619",
@@ -7365,7 +7416,8 @@
       ],
       "change": "implement the designed error state",
       "enterCondition": "the request fails; show retry",
-      "status": "open"
+      "status": "done",
+      "resolution": "W8 (web merge 7742f24, with the Plan patch ce3ee3e), verified 16 Nov"
     },
     {
       "id": "UA-620",
@@ -7379,7 +7431,8 @@
       ],
       "change": "implement the designed loaded state",
       "enterCondition": "as designed: loaded",
-      "status": "open"
+      "status": "done",
+      "resolution": "W8 (web merge 7742f24, with the Plan patch ce3ee3e), verified 16 Nov"
     },
     {
       "id": "UA-621",
@@ -7393,7 +7446,8 @@
       ],
       "change": "make the coded state reachable: vault-figure-wait",
       "enterCondition": "storage === null (useVault not loaded) shows an aria-busy placeholder",
-      "status": "open"
+      "status": "done",
+      "resolution": "W8 (web merge 7742f24, with the Plan patch ce3ee3e), verified 16 Nov"
     },
     {
       "id": "UA-622",
@@ -7407,7 +7461,8 @@
       ],
       "change": "implement the designed loading state",
       "enterCondition": "a request for this surface is in flight (conventions Runtime contract)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W8 (web merge 7742f24, with the Plan patch ce3ee3e), verified 16 Nov"
     },
     {
       "id": "UA-623",
@@ -7421,7 +7476,8 @@
       ],
       "change": "implement the designed error state",
       "enterCondition": "the request fails; show retry",
-      "status": "open"
+      "status": "done",
+      "resolution": "W8 (web merge 7742f24, with the Plan patch ce3ee3e), verified 16 Nov"
     },
     {
       "id": "UA-624",
@@ -7435,7 +7491,8 @@
       ],
       "change": "implement the designed loaded state",
       "enterCondition": "as designed: loaded",
-      "status": "open"
+      "status": "done",
+      "resolution": "W8 (web merge 7742f24, with the Plan patch ce3ee3e), verified 16 Nov"
     },
     {
       "id": "UA-625",
@@ -7449,7 +7506,8 @@
       ],
       "change": "implement the designed loading state",
       "enterCondition": "a request for this surface is in flight (conventions Runtime contract)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W8 (web merge 7742f24, with the Plan patch ce3ee3e), verified 16 Nov"
     },
     {
       "id": "UA-626",
@@ -7463,7 +7521,8 @@
       ],
       "change": "implement the designed error state",
       "enterCondition": "the request fails; show retry",
-      "status": "open"
+      "status": "done",
+      "resolution": "W8 (web merge 7742f24, with the Plan patch ce3ee3e), verified 16 Nov"
     },
     {
       "id": "UA-627",
@@ -7477,7 +7536,8 @@
       ],
       "change": "implement the designed loaded state",
       "enterCondition": "as designed: loaded",
-      "status": "open"
+      "status": "done",
+      "resolution": "W8 (web merge 7742f24, with the Plan patch ce3ee3e), verified 16 Nov"
     },
     {
       "id": "UA-628",
@@ -7589,7 +7649,8 @@
       ],
       "change": "implement the designed loading state",
       "enterCondition": "a request for this surface is in flight (conventions Runtime contract)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W8 (web merge 7742f24, with the Plan patch ce3ee3e), verified 16 Nov"
     },
     {
       "id": "UA-636",
@@ -7603,7 +7664,8 @@
       ],
       "change": "implement the designed empty state",
       "enterCondition": "the server returns no items",
-      "status": "open"
+      "status": "done",
+      "resolution": "W8 (web merge 7742f24, with the Plan patch ce3ee3e), verified 16 Nov"
     },
     {
       "id": "UA-637",
@@ -7617,7 +7679,8 @@
       ],
       "change": "implement the designed error state",
       "enterCondition": "the request fails; show retry",
-      "status": "open"
+      "status": "done",
+      "resolution": "W8 (web merge 7742f24, with the Plan patch ce3ee3e), verified 16 Nov"
     },
     {
       "id": "UA-638",
@@ -7631,7 +7694,8 @@
       ],
       "change": "implement the designed loading state",
       "enterCondition": "a request for this surface is in flight (conventions Runtime contract)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W8 (web merge 7742f24, with the Plan patch ce3ee3e), verified 16 Nov"
     },
     {
       "id": "UA-639",
@@ -7645,7 +7709,8 @@
       ],
       "change": "implement the designed error state",
       "enterCondition": "the request fails; show retry",
-      "status": "open"
+      "status": "done",
+      "resolution": "W8 (web merge 7742f24, with the Plan patch ce3ee3e), verified 16 Nov"
     },
     {
       "id": "UA-640",
@@ -7659,7 +7724,8 @@
       ],
       "change": "implement the designed loaded state",
       "enterCondition": "as designed: loaded",
-      "status": "open"
+      "status": "done",
+      "resolution": "W8 (web merge 7742f24, with the Plan patch ce3ee3e), verified 16 Nov"
     },
     {
       "id": "UA-641",
@@ -9943,7 +10009,8 @@
         "lib/pro-api.ts:5-8"
       ],
       "change": "replace: business data server (wishes, people, brand, logins, plan, invoices)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W8 (web merge 7742f24, with the Plan patch ce3ee3e), verified 16 Nov"
     },
     {
       "id": "UA-826",
@@ -9954,7 +10021,8 @@
         "lib/pro-data.ts:197-261 (samplesFor), view() 278-293"
       ],
       "change": "replace: real client rows",
-      "status": "open"
+      "status": "done",
+      "resolution": "W8 (web merge 7742f24, with the Plan patch ce3ee3e), verified 16 Nov"
     },
     {
       "id": "UA-827",
@@ -9965,7 +10033,8 @@
         "lib/pro-api.ts:~85 (inviteLogin) and app/app/pro/brand/page.tsx:56"
       ],
       "change": "replace: sending the invite by SMS/WhatsApp/email, and the invitee accepting (status 'active')",
-      "status": "open"
+      "status": "done",
+      "resolution": "W8 (web merge 7742f24, with the Plan patch ce3ee3e), verified 16 Nov"
     },
     {
       "id": "UA-828",
@@ -9976,7 +10045,8 @@
         "app/app/pro/brand/page.tsx:99-100"
       ],
       "change": "replace: debounced save",
-      "status": "open"
+      "status": "done",
+      "resolution": "W8 (web merge 7742f24, with the Plan patch ce3ee3e), verified 16 Nov"
     },
     {
       "id": "UA-829",
@@ -10042,7 +10112,8 @@
         "lib/pro-data.ts:12-30"
       ],
       "change": "replace: price/plan configuration tables",
-      "status": "open"
+      "status": "done",
+      "resolution": "W8 (web merge 7742f24, with the Plan patch ce3ee3e), verified 16 Nov"
     },
     {
       "id": "UA-835",
@@ -10053,7 +10124,8 @@
         "app/app/pro/page.tsx:17"
       ],
       "change": "replace: loading skeleton",
-      "status": "open"
+      "status": "done",
+      "resolution": "W8 (web merge 7742f24, with the Plan patch ce3ee3e), verified 16 Nov"
     },
     {
       "id": "UA-836",
@@ -10064,7 +10136,8 @@
         "lib/pro-api.ts:104 (online())"
       ],
       "change": "replace: network failure",
-      "status": "open"
+      "status": "done",
+      "resolution": "W8 (web merge 7742f24, with the Plan patch ce3ee3e), verified 16 Nov"
     },
     {
       "id": "UA-837",
@@ -10075,7 +10148,8 @@
         "lib/pro-data.ts:~253 (people samples)"
       ],
       "change": "replace: real team members",
-      "status": "open"
+      "status": "done",
+      "resolution": "W8 (web merge 7742f24, with the Plan patch ce3ee3e), verified 16 Nov"
     },
     {
       "id": "UA-838",
@@ -10086,7 +10160,8 @@
         "components/app/Pay.tsx:~13-14, 267"
       ],
       "change": "replace: Paystack start/verify and webhook",
-      "status": "open"
+      "status": "done",
+      "resolution": "W8 (web merge 7742f24, with the Plan patch ce3ee3e), verified 16 Nov"
     },
     {
       "id": "UA-839",
@@ -10097,7 +10172,8 @@
         "lib/pro-data.ts:~144-146 (nextInvoiceNo)"
       ],
       "change": "replace: server-issued invoice numbers and ledger rows",
-      "status": "open"
+      "status": "done",
+      "resolution": "W8 (web merge 7742f24, with the Plan patch ce3ee3e), verified 16 Nov"
     },
     {
       "id": "UA-840",
@@ -10108,7 +10184,8 @@
         "lib/pro-api.ts:~100-112 (invoiceHtml)"
       ],
       "change": "replace: server-rendered invoice document",
-      "status": "open"
+      "status": "done",
+      "resolution": "W8 (web merge 7742f24, with the Plan patch ce3ee3e), verified 16 Nov"
     },
     {
       "id": "UA-841",
@@ -10119,7 +10196,8 @@
         "app/app/pro/plan/page.tsx:179"
       ],
       "change": "replace: n/a (UX default)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W8 (web merge 7742f24, with the Plan patch ce3ee3e), verified 16 Nov"
     },
     {
       "id": "UA-842",
@@ -10240,7 +10318,8 @@
         "components/app/pro/ui.tsx:286 (wishLink)"
       ],
       "change": "replace: server-issued public link slug",
-      "status": "open"
+      "status": "done",
+      "resolution": "W8 (web merge 7742f24, with the Plan patch ce3ee3e), verified 16 Nov"
     },
     {
       "id": "UA-853",
@@ -10251,7 +10330,8 @@
         "lib/pro-data.ts:~135-140 (addWish, nextNo)"
       ],
       "change": "replace: server-issued wish number, id, allowance accounting and atomic pack decrement",
-      "status": "open"
+      "status": "done",
+      "resolution": "W8 (web merge 7742f24, with the Plan patch ce3ee3e), verified 16 Nov"
     },
     {
       "id": "UA-854",
@@ -11709,8 +11789,9 @@
         "lib/vault-fixtures.ts"
       ],
       "change": "the server populates what this screen reads (usePro() in lib/pro-api.ts -> loadPro() in lib/pro-data.ts: localStorage 'fw-pro' (ProData: month, rolled, pack, busines); triggers: on page load, after sign-in, when the tab becomes visible again, and after any write. A manual button is not a trigger.",
-      "status": "open",
-      "provenance": "repository-local-store"
+      "status": "done",
+      "provenance": "repository-local-store",
+      "resolution": "W8 (web merge 7742f24, with the Plan patch ce3ee3e), verified 16 Nov"
     },
     {
       "id": "UA-971",
@@ -11723,8 +11804,9 @@
         "lib/catalog.ts"
       ],
       "change": "the server populates what this screen reads (usePro() in lib/pro-api.ts -> loadPro() in lib/pro-data.ts: localStorage 'fw-pro' (ProData: month, rolled, pack, busines); triggers: on page load, after sign-in, when the tab becomes visible again, and after any write. A manual button is not a trigger.",
-      "status": "open",
-      "provenance": "repository-local-store"
+      "status": "done",
+      "provenance": "repository-local-store",
+      "resolution": "W8 (web merge 7742f24, with the Plan patch ce3ee3e), verified 16 Nov"
     },
     {
       "id": "UA-972",
@@ -11736,8 +11818,9 @@
         "lib/pro-data.ts"
       ],
       "change": "the server populates what this screen reads (usePro() in lib/pro-api.ts -> loadPro() in lib/pro-data.ts: localStorage 'fw-pro' (ProData: month, rolled, pack, busines); triggers: on page load, after sign-in, when the tab becomes visible again, and after any write. A manual button is not a trigger.",
-      "status": "open",
-      "provenance": "repository-local-store"
+      "status": "done",
+      "provenance": "repository-local-store",
+      "resolution": "W8 (web merge 7742f24, with the Plan patch ce3ee3e), verified 16 Nov"
     },
     {
       "id": "UA-973",
@@ -11749,8 +11832,9 @@
         "lib/pro-data.ts"
       ],
       "change": "the server populates what this screen reads (usePro() in lib/pro-api.ts -> loadPro() in lib/pro-data.ts: localStorage 'fw-pro' (ProData: month, rolled, pack, busines); triggers: on page load, after sign-in, when the tab becomes visible again, and after any write. A manual button is not a trigger.",
-      "status": "open",
-      "provenance": "repository-local-store"
+      "status": "done",
+      "provenance": "repository-local-store",
+      "resolution": "W8 (web merge 7742f24, with the Plan patch ce3ee3e), verified 16 Nov"
     },
     {
       "id": "UA-974",
@@ -11762,8 +11846,9 @@
         "lib/pro-data.ts"
       ],
       "change": "the server populates what this screen reads (usePro() in lib/pro-api.ts -> loadPro() in lib/pro-data.ts: localStorage 'fw-pro' (ProData: month, rolled, pack, busines); triggers: on page load, after sign-in, when the tab becomes visible again, and after any write. A manual button is not a trigger.",
-      "status": "open",
-      "provenance": "repository-local-store"
+      "status": "done",
+      "provenance": "repository-local-store",
+      "resolution": "W8 (web merge 7742f24, with the Plan patch ce3ee3e), verified 16 Nov"
     },
     {
       "id": "UA-975",
@@ -11776,8 +11861,9 @@
         "lib/vault-api.ts"
       ],
       "change": "the server populates what this screen reads (usePro() in lib/pro-api.ts -> loadPro() in lib/pro-data.ts: localStorage 'fw-pro' (ProData: month, rolled, pack, busines); triggers: on page load, after sign-in, when the tab becomes visible again, and after any write. A manual button is not a trigger.",
-      "status": "open",
-      "provenance": "mixed"
+      "status": "done",
+      "provenance": "mixed",
+      "resolution": "W8 (web merge 7742f24, with the Plan patch ce3ee3e), verified 16 Nov"
     },
     {
       "id": "UA-976",

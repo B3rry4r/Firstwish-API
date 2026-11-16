@@ -70,3 +70,7 @@
 - The lead's driver run on the merged web head c3c29e6 against API 4095042 (16 Nov, built web, twice): 559 of 560
   both times; the one FAIL is W7's resting check (the API now answers 200 "resting", HS2): WEB-API-6A redraws the
   resting state and moves the check. What the receiver's page shows for a resting wish today is NOT known.
+- W8 MERGED (16 Nov, web 7742f24 + records 0ab4c23): owed on the Plan screen after API-BASE-8 (WEB-API-6B): when a
+  login's payment is pending the owner sees until when, can read its result, and can drop it ("Start again", HY1).
+  UA-235 and UA-829 (a saved logo seen end to end) stay open for WEB-API-6B's logo case. Light mode was measured for
+  the pending state only.

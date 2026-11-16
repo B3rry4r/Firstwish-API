@@ -754,3 +754,14 @@ HG1 (give race) Two staff giving one Concierge order: the code is right (overlap
   because draws could not be traced to a pack then; since ZZ5/HF2/API-BASE-2 they can. Seen: pack A full (5 drawn), pack B
   with 2 drawn; refunding A left the counter at 0, so B's 3 paid places were lost, and A's drawn read 2. Draws made before
   drawPaymentId existed (none: nothing is live) fall back to TT5. Default (lead), owner may override.
+- HK1 (16 Nov, the lead, on W0b's HALT). The test stack cannot read a sign-in code: the stand-in email keeps its messages
+  in the API's memory and the code is scrubbed from the delivery row. The web driver planted a code in the database by
+  working out the API's own HMAC: a workaround, not a seam. The stand-in email adapter (never the real one) appends every
+  message it "sends" as one JSON line (to, template, subject, the text, the time) to the file named by
+  STANDIN_MAIL_OUTBOX when that is set, and the app REFUSES TO START if that variable is set while the email provider is
+  the real one or NODE_ENV is production. No HTTP route. The web's live stack sets it and the drivers read the code from
+  the file; scripts/live/standin.mjs's planted code goes. Default (lead), owner may override.
+- HK2 (16 Nov, the lead, on W0b's hand-back). After a reload a person who chose light sees dark until the server answers,
+  because nothing is kept in the browser (R10). The session screen holds its neutral loading state until /v1/me answers
+  and only then paints, so no wrong mode flashes on a signed-in screen; the public website keeps the device's own
+  preference (prefers-color-scheme) with no store (W1). Measured by the W0b verifier; a fix is a W3 case if it flashes.

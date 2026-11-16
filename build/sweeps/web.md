@@ -51,3 +51,7 @@
 - THE MERGE CHAIN (lead): WEB-API-4 first (it changes scripts/live: plantCode is gone); then a merge agent takes
   w8-business1, w5-maker2 and w1-site1 in turn: merge the web head in, move each flow to codeFor(), run the checks
   and the whole driver, hand back; the lead merges each.
+- W1 (second check 16 Nov, lows): the Bebas Neue licence text (SIL OFL) is not beside the two woff2 files in
+  public/fonts; first paint follows the device's light or dark (the base was always dark; R10's mode change).
+- W2 and W14 (from API-BASE-6): "Watch it play" and every link to a style's wish use the style read's showcaseSlug
+  (/w/<slug>), never a fixture (components/site/ShowingGallery.tsx:77,140; components/admin/b/Review.tsx:48).

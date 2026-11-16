@@ -114,6 +114,8 @@ export class WishLifecycleService implements OnModuleInit {
       if (to === "erased") {
         await this.forgetLinkNames(tx, [wish.id]);
         await this.releaseFiles(tx, wish.id, now);
+        // ZB3: a client wish's record reads its wish; when the wish is erased the record's words go with it.
+        await tx.clientWish.updateMany({ where: { wishId: wish.id }, data: { wish: null, from: null, client: null } });
       }
       for (const kind of ["open-wish", "rest-wish", "erase-wish", "restore-window-end", "send-notice"]) await this.jobs.cancel(kind, wish.id, tx);
     }

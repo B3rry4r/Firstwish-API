@@ -38,6 +38,7 @@ refused if it also carries `x-forwarded-for`, `forwarded` or `x-real-ip`. Keep i
 | `npm run test:affected -- <paths>` | only those specs (a source file runs the specs that use it) |
 | `bash scripts/gates.sh` | no float money, no deferral notes in `src`, no real provider host in tests, and the contracts gate |
 | `node scripts/check-contracts.mjs` | registry matches its lock, a contract per registry endpoint, schema-map against `schema.prisma`, money as BigInt kobo |
+| `node scripts/check-drift.mjs` | migrations against `schema.prisma`: only the raw-SQL tables in `build/baselines/drift-tables.txt` may differ, and the list only shrinks |
 | `npm run seed` | reference rows only (price book, staff roles, lifecycle terms, the PROVISIONAL payout threshold); safe to run twice |
 | `npm run contracts:export` | writes `contracts/firstwish-contracts.d.ts` (types only) for the web app |
 

@@ -147,6 +147,7 @@ export const ENDPOINTS: readonly EndpointRow[] = [
   { id: "E-123", method: "GET", path: "/v1/admin/prices", resource: "Price", operation: "GetAdminPrices", request: "GetAdminPricesQueryDto", rawBody: false, noContent: false },
   { id: "E-124", method: "PUT", path: "/v1/admin/prices/:key", resource: "Price", operation: "PutAdminPricesByKey", request: "PutAdminPricesByKeyBodyDto", rawBody: false, noContent: false },
   { id: "E-125", method: "GET", path: "/v1/price-book", resource: "Price", operation: "GetPriceBook", request: "GetPriceBookQueryDto", rawBody: false, noContent: false },
+  { id: "E-256", method: "GET", path: "/v1/admin/price-book-versions", resource: "PriceBookVersion", operation: "GetAdminPriceBookVersions", request: "GetAdminPriceBookVersionsQueryDto", rawBody: false, noContent: false },
   { id: "E-126", method: "POST", path: "/v1/admin/price-book-versions", resource: "PriceBookVersion", operation: "PostAdminPriceBookVersions", request: "PostAdminPriceBookVersionsBodyDto", rawBody: false, noContent: false },
   { id: "E-127", method: "POST", path: "/v1/admin/price-book-versions/:id/publish", resource: "PriceBookVersion", operation: "PostAdminPriceBookVersionsByIdPublish", request: "PostAdminPriceBookVersionsByIdPublishBodyDto", rawBody: false, noContent: false },
   { id: "E-128", method: "GET", path: "/v1/business/usage", resource: "ProUsage", operation: "GetBusinessUsage", request: "GetBusinessUsageQueryDto", rawBody: false, noContent: false },

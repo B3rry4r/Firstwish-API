@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "frozenAt": "2026-11-16T13:12:06Z",
+  "frozenAt": "2026-11-16T14:29:14Z",
   "framework": "nestjs",
   "generatedBy": "tools/pipeline/reconcile.py",
   "resources": [
@@ -3446,7 +3446,15 @@
               ]
             }
           ],
-          "body": [],
+          "body": [
+            {
+              "name": "q",
+              "type": "string (optional; part of the business name, the owner's name or email)",
+              "from": [
+                "DEC-233"
+              ]
+            }
+          ],
           "response": {
             "entity": "Business",
             "cardinality": "list"
@@ -3458,6 +3466,7 @@
             }
           ],
           "notes": [
+            "body by DEC-233",
             "route by DEC-112"
           ]
         },
@@ -11306,6 +11315,13 @@
               "from": [
                 "DEC-189"
               ]
+            },
+            {
+              "name": "state",
+              "type": "string (optional; a payment's state, refund-started or refund-waiting)",
+              "from": [
+                "DEC-233"
+              ]
             }
           ],
           "response": {
@@ -11320,6 +11336,7 @@
           ],
           "notes": [
             "body by DEC-189",
+            "body by DEC-233",
             "route by DEC-112"
           ]
         },
@@ -13146,6 +13163,19 @@
           "supersedes": []
         },
         {
+          "name": "payoutDay",
+          "type": "integer",
+          "classes": [
+            "integer"
+          ],
+          "nullable": true,
+          "provenance": [
+            "DEC-233"
+          ],
+          "supersedes": [],
+          "typeBy": "DEC-233"
+        },
+        {
           "name": "per",
           "type": "string",
           "classes": [
@@ -13345,21 +13375,28 @@
             },
             {
               "name": "listKobo",
-              "type": "integer (kobo, optional; at least one of priceKobo, listKobo, promotionEndsAt)",
+              "type": "integer (kobo, optional; at least one of priceKobo, listKobo, promotionEndsAt, payoutDay)",
+              "from": [
+                "DEC-138"
+              ]
+            },
+            {
+              "name": "payoutDay",
+              "type": "integer (optional; a whole day 1 to 28, the payout run's day; at least one of priceKobo, listKobo, promotionEndsAt, payoutDay) (DEC-233)",
               "from": [
                 "DEC-138"
               ]
             },
             {
               "name": "priceKobo",
-              "type": "integer (kobo, optional; at least one of priceKobo, listKobo, promotionEndsAt)",
+              "type": "integer (kobo, optional; at least one of priceKobo, listKobo, promotionEndsAt, payoutDay)",
               "from": [
                 "DEC-138"
               ]
             },
             {
               "name": "promotionEndsAt",
-              "type": "time (ISO-8601, optional; at least one of priceKobo, listKobo, promotionEndsAt)",
+              "type": "time (ISO-8601, optional; at least one of priceKobo, listKobo, promotionEndsAt, payoutDay)",
               "from": [
                 "DEC-138"
               ]
@@ -13739,6 +13776,36 @@
         }
       ],
       "endpoints": [
+        {
+          "id": "E-256",
+          "method": "GET",
+          "path": "/v1/admin/price-book-versions",
+          "auth": [
+            {
+              "kind": "staff role",
+              "roles": [
+                "finance",
+                "ops",
+                "owner"
+              ]
+            }
+          ],
+          "body": [],
+          "response": {
+            "entity": "PriceBookVersion",
+            "cardinality": "list",
+            "note": "the price book's versions, newest first, each with createdBy and createdAt (DEC-233)"
+          },
+          "sources": [
+            {
+              "src": "DEC-233",
+              "via": "ruling:DEC-233"
+            }
+          ],
+          "notes": [
+            "body by DEC-233"
+          ]
+        },
         {
           "id": "E-126",
           "method": "POST",
@@ -25483,6 +25550,7 @@
       ],
       "sourceDeclarations": [
         "api-base-4",
+        "api-base-5",
         "wish-lifecycle",
         "wish-number"
       ],
@@ -25553,6 +25621,20 @@
             "maker-ticket"
           ],
           "supersedes": []
+        },
+        {
+          "name": "allowedStyles",
+          "type": "shape array<string>",
+          "classes": [
+            "array"
+          ],
+          "nullable": true,
+          "provenance": [
+            "DEC-232",
+            "api-base-5"
+          ],
+          "supersedes": [],
+          "typeBy": "DEC-232"
         },
         {
           "name": "amount",
@@ -25677,6 +25759,18 @@
           "supersedes": []
         },
         {
+          "name": "content.blessing.note",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": true,
+          "provenance": [
+            "api-base-5"
+          ],
+          "supersedes": []
+        },
+        {
           "name": "content.cover",
           "type": "object",
           "classes": [
@@ -25695,6 +25789,18 @@
           "supersedes": []
         },
         {
+          "name": "content.cover.born",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": true,
+          "provenance": [
+            "api-base-5"
+          ],
+          "supersedes": []
+        },
+        {
           "name": "content.cover.more",
           "type": "array",
           "classes": [
@@ -25703,6 +25809,30 @@
           "nullable": true,
           "provenance": [
             "maker-more"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "content.cover.school",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": true,
+          "provenance": [
+            "api-base-5"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "content.cover.years",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": true,
+          "provenance": [
+            "api-base-5"
           ],
           "supersedes": []
         },
@@ -25858,6 +25988,18 @@
           "supersedes": []
         },
         {
+          "name": "content.letter.line",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": true,
+          "provenance": [
+            "api-base-5"
+          ],
+          "supersedes": []
+        },
+        {
           "name": "content.links",
           "type": "object",
           "classes": [
@@ -25876,6 +26018,18 @@
           "supersedes": []
         },
         {
+          "name": "content.links.download",
+          "type": "object",
+          "classes": [
+            "object"
+          ],
+          "nullable": true,
+          "provenance": [
+            "api-base-5"
+          ],
+          "supersedes": []
+        },
+        {
           "name": "content.memory",
           "type": "object",
           "classes": [
@@ -25890,6 +26044,18 @@
             "maker-opening",
             "maker-opening-scene",
             "maker-photos"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "content.memory.quote",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": true,
+          "provenance": [
+            "api-base-5"
           ],
           "supersedes": []
         },
@@ -27316,6 +27482,20 @@
             "creator-published"
           ],
           "supersedes": []
+        },
+        {
+          "name": "styleLevel",
+          "type": "shape enum(starter|standard|premium|null)",
+          "classes": [
+            "string"
+          ],
+          "nullable": true,
+          "provenance": [
+            "DEC-232",
+            "api-base-5"
+          ],
+          "supersedes": [],
+          "typeBy": "DEC-232"
         },
         {
           "name": "ticket",
@@ -28823,10 +29003,6 @@
           "path": "/v1/wishes/:id/link",
           "auth": [
             {
-              "kind": "role",
-              "role": "business"
-            },
-            {
               "kind": "user",
               "scope": "own records"
             }
@@ -28848,6 +29024,7 @@
             }
           ],
           "notes": [
+            "auth by DEC-231",
             "body by DEC-221",
             "route by DEC-89"
           ]

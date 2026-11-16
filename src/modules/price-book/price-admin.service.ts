@@ -3,7 +3,9 @@ import { Prisma } from "@prisma/client";
 import { PrismaService } from "../../common/db/prisma.service";
 import { AppError } from "../../common/errors/app-error";
 import { IdGenerator } from "../../common/ports/ids.port";
-import { decodeCursor, DEFAULT_LIMIT, toPage } from "../../common/pagination/cursor";
+import { decodeCursor, DEFAULT_LIMIT, Page, toPage } from "../../common/pagination/cursor";
+import { JobsService } from "../jobs/jobs.service";
+import { DEFAULT_RUN_DAY, dayWords, isRunDay, MONTHLY_RUN_KEY, nextRunDay } from "../payouts/run-day";
 import { parseInstant } from "../../common/time/time";
 import type {
   GetAdminPricesQuery,
@@ -30,6 +32,8 @@ export interface PayoutThreshold {
   valueKobo: number;
   status: string;
   schedule: string;
+  /** R14: the day of the month the payout run starts (1 to 28). */
+  day: number;
 }
 
 interface DraftLine {
@@ -53,6 +57,7 @@ export class PriceAdminService {
     private readonly entitlements: EntitlementsService,
     private readonly audit: AuditService,
     private readonly ids: IdGenerator,
+    private readonly jobs: JobsService,
   ) {}
 
   /* ---------------- the payout threshold (a setting line of the book) ---------------- */
@@ -77,6 +82,7 @@ export class PriceAdminService {
         valueKobo: typeof c.value === "number" ? c.value : 0,
         status: typeof c.status === "string" ? c.status : "PROVISIONAL",
         schedule: typeof c.schedule === "string" ? c.schedule : "",
+        day: isRunDay(c.day) ? c.day : DEFAULT_RUN_DAY,
       },
     };
   }
@@ -97,7 +103,7 @@ export class PriceAdminService {
     const promo = PriceBookService.promotionAt(book, at) ?? book.lines.find((l) => l.promotion)?.promotion ?? null;
     if (promo) items.push(promotionLineOf(promo, book, reasons.get(PROMOTION_KEY) ?? "", reasons.has(PROMOTION_KEY)));
     const t = await this.payoutThreshold();
-    items.push(payoutLineOf(t.valueKobo, t.status, t.schedule, book, reasons.get(PAYOUT_KEY) ?? "", reasons.has(PAYOUT_KEY)));
+    items.push(payoutLineOf(t.valueKobo, t.status, t.schedule, book, reasons.get(PAYOUT_KEY) ?? "", reasons.has(PAYOUT_KEY), t.day));
     items.sort((a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0));
     const limit = q.limit ?? DEFAULT_LIMIT;
     const after = q.cursor ? String(decodeCursor(q.cursor).key) : null;
@@ -238,31 +244,54 @@ export class PriceAdminService {
   }
 
   private async changeThreshold(body: PutAdminPricesByKeyBody, reason: string, actor: AuditActor, ownerCaller: boolean): Promise<Price> {
-    if (body.listKobo !== undefined || body.promotionEndsAt !== undefined || body.priceKobo === undefined) {
-      throw AppError.validation({ priceKobo: "The payout threshold takes priceKobo only." });
+    if (body.listKobo !== undefined || body.promotionEndsAt !== undefined || (body.priceKobo === undefined && body.payoutDay === undefined)) {
+      throw AppError.validation({ priceKobo: "The payout threshold takes priceKobo and payoutDay only." });
     }
-    if (!Number.isSafeInteger(body.priceKobo) || body.priceKobo <= 0) throw AppError.validation({ priceKobo: "Must be a whole number of kobo above 0." });
+    if (body.priceKobo !== undefined && (!Number.isSafeInteger(body.priceKobo) || body.priceKobo <= 0)) throw AppError.validation({ priceKobo: "Must be a whole number of kobo above 0." });
+    if (body.payoutDay !== undefined && !isRunDay(body.payoutDay)) throw AppError.validation({ payoutDay: "Must be a whole day of the month from 1 to 28." });
     return this.db.$transaction(async (tx) => {
       const row = await this.thresholdRow(tx, true);
       // R14, X19: the PROVISIONAL mark stays until the owner confirms the figure; a change by the owner role clears it,
       // a change by finance does not.
       const status = ownerCaller ? CONFIRMED : row.threshold.status;
-      if (body.priceKobo === row.threshold.valueKobo && status === row.threshold.status) {
+      const value = body.priceKobo ?? row.threshold.valueKobo;
+      const day = body.payoutDay ?? row.threshold.day;
+      if (value === row.threshold.valueKobo && day === row.threshold.day && status === row.threshold.status) {
         throw AppError.conflict("not_allowed", "That is the price now.");
       }
-      const choice = { ...row.choice, value: body.priceKobo, status };
+      const schedule = day === row.threshold.day ? row.threshold.schedule : dayWords(day);
+      const choice = { ...row.choice, value, day, schedule, status };
       await tx.settings.update({ where: { id: row.id }, data: { choice } });
+      // the monthly run's job moves to the new day (when the system has put one on the table)
+      if (day !== row.threshold.day) {
+        const job = await tx.job.findUnique({ where: { type_subjectId: { type: "payout_run", subjectId: MONTHLY_RUN_KEY } } });
+        if (job && job.status === "scheduled") await this.jobs.schedule("payout-run", nextRunDay(this.book.now(), day), MONTHLY_RUN_KEY, tx);
+      }
       await this.audit.write(tx, {
         actor,
         section: SECTION,
         action: "price.change",
         target: { type: "price", id: PAYOUT_KEY },
         reason,
-        changedFields: ["priceKobo"],
+        changedFields: [...(body.priceKobo !== undefined ? ["priceKobo"] : []), ...(body.payoutDay !== undefined ? ["payoutDay"] : [])],
       });
       const book = await this.book.versionAt(this.book.now(), tx);
-      return payoutLineOf(body.priceKobo!, status, row.threshold.schedule, book, reason, true);
+      return payoutLineOf(value, status, schedule, book, reason, true, day);
     });
+  }
+
+  /* ---------------- the book's versions (who, when) ---------------- */
+
+  /** The price book's versions, newest first, each with who made it and when; a draft says so in its name. Owner, ops and finance read it. */
+  async versions(q: { cursor?: string; limit?: number }): Promise<Page<PriceBookVersion>> {
+    const limit = q.limit ?? DEFAULT_LIMIT;
+    const after = q.cursor ? Number(decodeCursor(q.cursor).key) : null;
+    const rows = await this.db.priceBookVersion.findMany({ where: after === null || !Number.isFinite(after) ? {} : { version: { lt: after } }, orderBy: { version: "desc" }, take: limit + 1 });
+    const live = new Set((await this.db.price.findMany({ where: { version: { in: rows.map((r) => r.version) } }, select: { version: true }, distinct: ["version"] })).map((p) => p.version));
+    const asked = await this.db.auditEntry.findMany({ where: { section: SECTION, subjectType: "price-book-version", subjectId: { in: rows.map((r) => r.id) } }, orderBy: { id: "asc" }, select: { subjectId: true, reason: true } });
+    const reasonOf = new Map<string, string>();
+    for (const a of asked) if (!reasonOf.has(a.subjectId)) reasonOf.set(a.subjectId, a.reason ?? "");
+    return toPage(rows.map((r) => versionOf(r, live.has(r.version), reasonOf.get(r.id) ?? "")), limit, (v) => ({ key: v.version, id: v.key }));
   }
 
   /* ---------------- E-126 ---------------- */

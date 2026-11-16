@@ -1421,6 +1421,12 @@
         "user"
       ],
       "decision": "DEC-205"
+    },
+    "GET /v1/wishes/:id/link": {
+      "auth": [
+        "user:owner"
+      ],
+      "decision": "DEC-231"
     }
   },
   "extraEndpoints": [
@@ -1690,6 +1696,17 @@
         "staff:owner"
       ],
       "decision": "DEC-226"
+    },
+    {
+      "resource": "PriceBookVersion",
+      "method": "GET",
+      "path": "/v1/admin/price-book-versions",
+      "auth": [
+        "staff:finance",
+        "staff:ops",
+        "staff:owner"
+      ],
+      "decision": "DEC-233"
     }
   ],
   "fulfilment": {
@@ -1867,9 +1884,10 @@
       ],
       "set": {
         "sku": "string (the price-book line, DEC-138)",
-        "priceKobo": "integer (kobo, optional; at least one of priceKobo, listKobo, promotionEndsAt)",
-        "listKobo": "integer (kobo, optional; at least one of priceKobo, listKobo, promotionEndsAt)",
-        "promotionEndsAt": "time (ISO-8601, optional; at least one of priceKobo, listKobo, promotionEndsAt)"
+        "priceKobo": "integer (kobo, optional; at least one of priceKobo, listKobo, promotionEndsAt, payoutDay)",
+        "listKobo": "integer (kobo, optional; at least one of priceKobo, listKobo, promotionEndsAt, payoutDay)",
+        "promotionEndsAt": "time (ISO-8601, optional; at least one of priceKobo, listKobo, promotionEndsAt, payoutDay)",
+        "payoutDay": "integer (optional; a whole day 1 to 28, the payout run's day; at least one of priceKobo, listKobo, promotionEndsAt, payoutDay) (DEC-233)"
       }
     },
     "POST /v1/admin/refunds": {
@@ -2195,13 +2213,21 @@
         "note": "the full view of the open wish (DEC-185)"
       }
     },
-    "GET /v1/admin/payments": {
-      "decision": "DEC-189",
-      "set": {
-        "q": "string (optional; a reference, a wish number or the payer's email)",
-        "flag": "string (optional; such as refund_due)"
+    "GET /v1/admin/payments": [
+      {
+        "decision": "DEC-189",
+        "set": {
+          "q": "string (optional; a reference, a wish number or the payer's email)",
+          "flag": "string (optional; such as refund_due)"
+        }
+      },
+      {
+        "decision": "DEC-233",
+        "set": {
+          "state": "string (optional; a payment's state, refund-started or refund-waiting)"
+        }
       }
-    },
+    ],
     "GET /v1/admin/ledger": {
       "decision": "DEC-189",
       "set": {
@@ -2523,6 +2549,20 @@
       "decision": "DEC-226",
       "set": {
         "q": "string (optional; a name, an email, an account id or a wish number)"
+      }
+    },
+    "GET /v1/admin/businesses": {
+      "decision": "DEC-233",
+      "set": {
+        "q": "string (optional; part of the business name, the owner's name or email)"
+      }
+    },
+    "GET /v1/admin/price-book-versions": {
+      "decision": "DEC-233",
+      "response": {
+        "entity": "PriceBookVersion",
+        "cardinality": "list",
+        "note": "the price book's versions, newest first, each with createdBy and createdAt (DEC-233)"
       }
     }
   },
@@ -2876,6 +2916,27 @@
       "type": "boolean",
       "nullable": false,
       "decision": "DEC-210"
+    },
+    {
+      "resource": "Wish",
+      "name": "styleLevel",
+      "type": "string",
+      "nullable": true,
+      "decision": "DEC-232"
+    },
+    {
+      "resource": "Wish",
+      "name": "allowedStyles",
+      "type": "array",
+      "nullable": true,
+      "decision": "DEC-232"
+    },
+    {
+      "resource": "Price",
+      "name": "payoutDay",
+      "type": "integer",
+      "nullable": true,
+      "decision": "DEC-233"
     }
   ],
   "dropFields": [

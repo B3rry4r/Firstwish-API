@@ -92,14 +92,17 @@ export class ProBusinessService {
   }
 
   /** E-23: every business, newest first. Usage is worked out for each (its month shown rolled, nothing written). */
-  async adminList(cursor: string | undefined, limit: number): Promise<Page<Business>> {
+  async adminList(cursor: string | undefined, limit: number, search?: string): Promise<Page<Business>> {
     let before = "ffffffff-ffff-ffff-ffff-ffffffffffff";
     if (cursor) {
       const c = decodeCursor(cursor);
       if (!isUuidV7(c.id)) throw AppError.validation({ cursor: "Must be a cursor from a previous page." });
       before = c.id;
     }
-    const rows = await this.prisma.business.findMany({ where: { id: { lt: before } }, orderBy: { id: "desc" }, take: limit + 1, select: { id: true } });
+    const t = search?.trim();
+    const like = t ? { contains: t, mode: "insensitive" as const } : null;
+    const match = like ? [{ name: like }, { business: like }, { ownerName: like }, { person: like }, { account: { contact: like } }] : [];
+    const rows = await this.prisma.business.findMany({ where: { id: { lt: before }, ...(like ? { OR: match } : {}) }, orderBy: { id: "desc" }, take: limit + 1, select: { id: true } });
     const page = toPage(rows, limit, (r) => ({ key: r.id, id: r.id }));
     const items: Business[] = [];
     for (const r of page.items) items.push(await this.view(r.id, true, true));

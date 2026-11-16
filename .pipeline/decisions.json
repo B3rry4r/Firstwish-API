@@ -3412,6 +3412,73 @@
       "source": "build/rulings-phase3.md; build/prompts/API-BASE-4.md",
       "decidedAt": "2026-11-25T12:00:00Z",
       "decision": "The registry is re-frozen after HP1 to HP13 (DEC-218 to DEC-227) by tools/pipeline/freeze.py; reconcile.py was run twice with --reopen (identical outputs). Endpoint ids already issued are unchanged."
+    },
+    {
+      "id": "DEC-229",
+      "topic": "The maker's own words join the wish content",
+      "decision": "HQ1: Wish.content gains, each a bounded text saved as sent: cover.school (120 characters), cover.years (60), cover.born (60), letter.line (300), each reasons item's note (500), memory.quote (500), blessing.note (500), and links.download {count (whole, 0 to 10000), size (40), files (up to 100 names of 200)}. Only the cover's three are collected by an input of a designed maker screen today; the others are drawn by the player and are saved when sent. finale.line is not named by HQ1 and is not added. They live in the one content column, so the erase rules (AA2) cover them; the receiver reads them in the open view only (the sealed and counting views carry the opening scene alone). No change to any endpoint.",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md; build/prompts/API-BASE-5.md",
+      "decidedAt": "2026-11-26T12:00:00Z"
+    },
+    {
+      "id": "DEC-230",
+      "topic": "Uploads and AI answers on a test stack",
+      "decision": "HQ3: with PROVIDERS=standin the stand-in storage receives the signed PUT at /v1/standin-storage/<bucket>/<key> (plain middleware after CORS, not a registry route, 404 with real providers): a wrong, expired or borrowed signature, another content type or another length than the upload was asked for is 403 with words and stores nothing. Confirm already checks the stored object (size, kind by its bytes) and screens it. The stand-in AI answers each AI route in the contract's shape (paras, reasons, photo order, a style change) when nothing is queued. No registry shape changes.",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md; build/prompts/API-BASE-5.md",
+      "decidedAt": "2026-11-26T12:00:00Z"
+    },
+    {
+      "id": "DEC-231",
+      "topic": "The gather link is the owner's, not only a business's",
+      "decision": "HQ4: GET /v1/wishes/:id/link (E-229) is read by the wish's own signed-in owner of any side (person, creator or business) and by a business for its own wishes; another person gets 404, a draft with no link yet 404. Its registry auth was written as role business plus own records; it is now user own records (owner). A friend with the link reads the wish's state at /v1/w/:slug and may react, favourite and (with a signed-in account) keep; no route lets a visitor add a voice to a wish (the contribution flow is not built: reported). No change on the wire.",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md; build/prompts/API-BASE-5.md",
+      "decidedAt": "2026-11-26T12:00:00Z"
+    },
+    {
+      "id": "DEC-232",
+      "topic": "Styles by ticket",
+      "decision": "HQ5: the price book's ticket entry names the highest style level it takes (styleLevel: Moment starter, Keepsake standard, Signature and Premiere premium; a bought premium-style extra lifts a Keepsake to premium). The server refuses a style above it, 422 on `style` with words, on the draft's PATCH once a ticket is chosen and at the seal. The wish read (single and list) gives styleLevel (the level the ticket allows, null before a ticket is chosen) and the single read gives allowedStyles (the slugs of the styles that are on within it, every style that is on before a ticket is chosen).",
+      "fieldTypes": {
+        "Wish.styleLevel": "shape enum(starter|standard|premium|null)",
+        "Wish.allowedStyles": "shape array<string>"
+      },
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md; build/prompts/API-BASE-5.md",
+      "decidedAt": "2026-11-26T12:00:00Z"
+    },
+    {
+      "id": "DEC-233",
+      "topic": "Staff and money gaps (R14)",
+      "decision": "R14 and the staff lists: PUT /v1/admin/prices/:key takes payoutDay (a whole day 1 to 28, the day the payout run starts) beside priceKobo for the payout line; the line carries payoutDay; the monthly run reads it and the run's job moves to the new day. GET /v1/admin/price-book-versions lists the book's versions, newest first, with who made each (createdBy) and when (createdAt), for finance, ops and owner. GET /v1/admin/payments takes state (a payment's state, refund-started or refund-waiting, as the rows read). GET /v1/admin/businesses takes q (part of the business name, the owner's name or email). Staff acts that repeat answer 409 with words: erasing an erased person, taking down a removed wish, a second ban of the same scope. Staff wish search takes the number in any case and a piece of an email. Staff erase stays immediate as FC1 rules.",
+      "fieldTypes": {
+        "Price.payoutDay": "integer"
+      },
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md; build/prompts/API-BASE-5.md",
+      "decidedAt": "2026-11-26T12:00:00Z"
+    },
+    {
+      "id": "DEC-234",
+      "topic": "registry re-freeze (thirteenth reopen)",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md; build/prompts/API-BASE-5.md",
+      "decidedAt": "2026-11-26T12:00:00Z",
+      "decision": "The registry is re-frozen after HQ1, HQ3 to HQ5 and the staff and money gaps (DEC-229 to DEC-233) by tools/pipeline/freeze.py; reconcile.py was run twice with --reopen (identical outputs). Endpoint ids already issued are unchanged; E-255 was the last issued before and the one new endpoint takes the next."
     }
   ]
 }

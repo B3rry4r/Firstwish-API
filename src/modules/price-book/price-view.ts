@@ -7,6 +7,7 @@ import { BookLine, BookVersion, PriceBookService, safe } from "./price-book.serv
 
 /** The two setting lines staff change through the same book. */
 export const PROMOTION_KEY = "promotion.endsAt";
+import { DEFAULT_RUN_DAY } from "../payouts/run-day";
 export const PAYOUT_KEY = "payout.thresholdKobo";
 
 export interface LineContext {
@@ -72,7 +73,7 @@ export function promotionLineOf(p: PromotionRow, book: BookVersion, reason = "",
 }
 
 /** The creators' payout threshold (R14): a setting line in kobo, PROVISIONAL until the owner confirms. */
-export function payoutLineOf(valueKobo: number, status: string, schedule: string, book: BookVersion, reason = "", changed = false): Price {
+export function payoutLineOf(valueKobo: number, status: string, schedule: string, book: BookVersion, reason = "", changed = false, payoutDay: number = DEFAULT_RUN_DAY): Price {
   return {
     ...settingBase(PAYOUT_KEY, "Creators' payout threshold", "payout", book.version),
     price: valueKobo,
@@ -80,6 +81,7 @@ export function payoutLineOf(valueKobo: number, status: string, schedule: string
     listKobo: valueKobo,
     was: valueKobo,
     per: schedule,
+    payoutDay,
     lead: status,
     reason,
     changed,

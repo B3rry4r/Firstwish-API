@@ -55,6 +55,8 @@ import { NoticesModule } from "./modules/notices/notices.module";
 // end B11
 
 /** Registration entry: each resource module adds one import line here. */
+import { ModerationModule } from "./modules/moderation/moderation.module";
+import { ShowingModule } from "./modules/showing/showing.module";
 @Module({
   imports: [
     CommonModule,
@@ -115,6 +117,10 @@ import { NoticesModule } from "./modules/notices/notices.module";
     // B11
     NoticesModule,
     // end B11
+    // B13
+    ShowingModule,
+    ModerationModule,
+    // end B13
   ],
 })
 export class AppModule {}

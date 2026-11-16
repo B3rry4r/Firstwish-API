@@ -462,3 +462,12 @@ QQ5 (B13) Accepted: one staff list with a `queue` field; flagged photos are deci
     listed; a decision is in the audit row, not on the sender's timeline; the wish of the day can be set today through the
     next 6 days (PROVISIONAL, owner may change).
 QQ6 (B13) The raw-SQL tables of B13 and B17 become Prisma models with erase rules at the next shared base.
+RR1 (B17 verify, high) Staff answers about a business show each login's email masked, as every other staff answer does. (B17 patch.)
+RR2 (B17 verify, medium) OO1 is built in the B17 patch: the guard takes the header x-business-id when the person is a login of
+    more than one business or owns one and is a login of another; an invite to a person who owns a business is allowed and
+    usable through that header; with no header the person's own business comes first, then the oldest login.
+RR3 (B17 verify, medium) Erasing a business owner's account closes the business. Client wishes already sent keep playing to
+    the end of their term (T-58) and are erased when the term ends (they do not rest a year); the owner's personal data and
+    the business's records of the client (name, contact) go at once; the wish's own words and photos stay until then because
+    the client was given them. (This wave's join: the erase rule and schema-map.) Default (lead), owner may override.
+    Lows (downgrade with seats over the plan gives no notice; a login removed mid-request) -> build/sweeps/api.md.

@@ -12,3 +12,5 @@
 - B07 (Verify P, low): with a month keep and a year keep bought at once the wish's keep label follows apply order, not the longer keep (src/modules/purchases/wish-handlers.ts:100): label = the longest keep that remains.
 - B07 (Verify P, low): a login with status "invited" counts as the business's own for a plan or pack payment (isPayers in business-handlers.ts): only an active login counts.
 - Wave 3 join (note): a staff invite email now uses the sign-in code wording (the invite's own lead line is gone): add an 'invite' message with its wording in INT-4 (MessageTemplate seed).
+- B17 logins.service.ts:70: a downgrade that leaves more logins than the plan allows keeps them and says nothing; tell the owner (a notice) and show which to remove.
+- B17 client-wishes.service.ts:70: a login removed while its requests are in flight still lands them; the next is 403.

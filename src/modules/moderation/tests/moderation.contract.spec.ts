@@ -20,7 +20,7 @@ describe("Moderation: reports, take-down asks, decisions, bans, queues (B13)", (
   const decide = (id: string, body: object, token = mod.token) => t.http().post(`/v1/admin/moderation/${id}/decide`).set(bearer(token)).send(body);
   const publicIds = async () => ((await t.http().get("/v1/showing?limit=50")).body.items as { wish: string }[]).map((i) => i.wish);
   async function listed() {
-    const owner = await account(t);
+    const owner = await account(t, ["creator"]);
     const w = await liveWish(t, owner);
     await t.http().post(`/v1/wishes/${w.id}/publish-requests`).set(bearer(owner.token)).send({ consent: true });
     const req = await db.publishRequest.findFirstOrThrow({ where: { wishId: w.id } });
@@ -30,14 +30,14 @@ describe("Moderation: reports, take-down asks, decisions, bans, queues (B13)", (
   }
 
   it("case 5: anyone reports a wish by its link, signed in or not; the report has its 24-hour clock and shows no account", async () => {
-    const owner = await account(t);
+    const owner = await account(t, ["creator"]);
     const w = await liveWish(t, owner);
     const anon = await report(w.slug, { note: "  rude words  " });
     expect(anon.status).toBe(201);
     expect(anon.body).toMatchObject({ slug: w.slug, reason: "abuse", status: "open", queue: "report" });
     expect(Date.parse(anon.body.dueAt) - Date.parse(anon.body.createdAt)).toBe(24 * 3600 * 1000);
     expect(JSON.stringify(anon.body)).not.toContain(owner.accountId);
-    const signed = await t.http().post("/v1/reports").set(bearer((await account(t)).token)).set("X-Forwarded-For", uniqueAddress()).send({ slug: w.slug, reason: "other" });
+    const signed = await t.http().post("/v1/reports").set(bearer((await account(t, ["creator"])).token)).set("X-Forwarded-For", uniqueAddress()).send({ slug: w.slug, reason: "other" });
     expect(signed.status).toBe(201);
     expect(await db.report.findUniqueOrThrow({ where: { id: anon.body.id } })).toMatchObject({ wishId: w.id, accountId: owner.accountId, note: "rude words", status: "open", reporterContact: null });
     const bad = await report(w.slug, { reason: "this-is-me" });
@@ -49,7 +49,7 @@ describe("Moderation: reports, take-down asks, decisions, bans, queues (B13)", (
   });
 
   it("10 reports a day per address, counted in the database; the 11th is 429; another address is not affected", async () => {
-    const w = await liveWish(t, await account(t));
+    const w = await liveWish(t, await account(t, ["creator"]));
     const ip = uniqueAddress();
     const first = await Promise.all(Array.from({ length: 12 }, () => report(w.slug, {}, ip)));
     expect(first.filter((r) => r.status === 201)).toHaveLength(10);
@@ -60,7 +60,7 @@ describe("Moderation: reports, take-down asks, decisions, bans, queues (B13)", (
   });
 
   it("case 5: 'This is me, take it down' needs an email checked by a code; the report is its own kind in the take-down queue", async () => {
-    const owner = await account(t);
+    const owner = await account(t, ["creator"]);
     const w = await liveWish(t, owner);
     const email = `me-${t.id()}@example.com`;
     const ip = uniqueAddress();
@@ -88,8 +88,8 @@ describe("Moderation: reports, take-down asks, decisions, bans, queues (B13)", (
   });
 
   it("five wrong codes end a code; a code for another wish does not work; an unknown link is 404", async () => {
-    const w = await liveWish(t, await account(t));
-    const other = await liveWish(t, await account(t));
+    const w = await liveWish(t, await account(t, ["creator"]));
+    const other = await liveWish(t, await account(t, ["creator"]));
     const email = `me-${t.id()}@example.com`;
     const ip = uniqueAddress();
     const post = (slug: string, body: object) => t.http().post(`/v1/w/${slug}/take-down`).set("X-Forwarded-For", ip).send(body);
@@ -105,7 +105,7 @@ describe("Moderation: reports, take-down asks, decisions, bans, queues (B13)", (
 
   it("case 6: take down moves the wish through the lifecycle: off every list, its link gone, one audit row, one decision at once", async () => {
     const x = await listed();
-    const saver = await account(t);
+    const saver = await account(t, ["creator"]);
     const feed = (await db.publishedWish.findFirstOrThrow({ where: { wishId: x.w.id } })).id;
     await t.http().put(`/v1/feed/wishes/${feed}/save`).set(bearer(saver.token)).send({ wish: feed });
     const rep = (await report(x.w.slug)).body.id as string;
@@ -139,7 +139,7 @@ describe("Moderation: reports, take-down asks, decisions, bans, queues (B13)", (
     expect((await decide(rep, { decision: "burn", reason: "nothing here" })).status).toBe(422);
     const support = await staffOf(t, "support");
     expect((await decide(rep, { decision: "keep", reason: "nothing here" }, support.token)).status).toBe(403);
-    expect((await decide(rep, { decision: "keep", reason: "nothing here" }, (await account(t)).token)).status).toBe(403);
+    expect((await decide(rep, { decision: "keep", reason: "nothing here" }, (await account(t, ["creator"])).token)).status).toBe(403);
     expect((await t.http().post(`/v1/admin/moderation/${rep}/decide`).send({ decision: "keep", reason: "nothing here" })).status).toBe(401);
   });
 
@@ -166,7 +166,7 @@ describe("Moderation: reports, take-down asks, decisions, bans, queues (B13)", (
   });
 
   it("E-21 ban by staff: moderator and owner only; scope checked; a second ban of the same scope is 409", async () => {
-    const victim = await account(t);
+    const victim = await account(t, ["creator"]);
     const post = (body: object, token = mod.token) => t.http().post("/v1/admin/bans").set(bearer(token)).send(body);
     const ok = await post({ accountId: victim.accountId, scope: "publishing", reason: "Too many reports" });
     expect(ok.status).toBe(201);
@@ -183,7 +183,7 @@ describe("Moderation: reports, take-down asks, decisions, bans, queues (B13)", (
   });
 
   it("three upheld reports against one account remove its right to publish", async () => {
-    const owner = await account(t);
+    const owner = await account(t, ["creator"]);
     const wishes = [await liveWish(t, owner), await liveWish(t, owner), await liveWish(t, owner), await liveWish(t, owner)];
     for (const w of wishes.slice(0, 3)) {
       const rep = (await report(w.slug)).body.id as string;
@@ -197,11 +197,11 @@ describe("Moderation: reports, take-down asks, decisions, bans, queues (B13)", (
   });
 
   it("case 7: the queue is oldest first with time left and late marked; flagged photos from the files queue; counts", async () => {
-    const a = await liveWish(t, await account(t));
+    const a = await liveWish(t, await account(t, ["creator"]));
     const first = (await report(a.slug)).body.id as string;
     t.clock.advance(30 * 60_000);
     const second = (await report(a.slug)).body.id as string;
-    const fileOwner = await account(t);
+    const fileOwner = await account(t, ["creator"]);
     const fileId = t.id();
     await db.storedFile.create({ data: { id: fileId, ownerAccountId: fileOwner.accountId, purpose: "wish_photo", status: "screening", contentType: "image/jpeg", bytes: 10n, objectKey: `k/${fileId}`, variants: [], driver: "r2" } });
     const flagged = t.id();
@@ -226,7 +226,7 @@ describe("Moderation: reports, take-down asks, decisions, bans, queues (B13)", (
     expect(p2.body.items[0].id).not.toBe(p1.body.items[0].id);
     expect((await t.http().get("/v1/admin/moderation?cursor=zzz").set(bearer(mod.token))).status).toBe(422);
     expect((await t.http().get("/v1/admin/moderation").set(bearer((await staffOf(t, "support")).token))).status).toBe(403);
-    expect((await t.http().get("/v1/admin/moderation").set(bearer((await account(t)).token))).status).toBe(403);
+    expect((await t.http().get("/v1/admin/moderation").set(bearer((await account(t, ["creator"])).token))).status).toBe(403);
     expect((await t.http().get("/v1/admin/moderation")).status).toBe(401);
     expect((await decide(flagged, { decision: "keep", reason: "nothing here" })).status).toBe(404);
   });

@@ -1,4 +1,5 @@
 import { PrismaService } from "../../../common/db/prisma.service";
+import { ShowingService } from "../showing.service";
 import { WishLifecycleService } from "../../wishes/wish-lifecycle.service";
 import { account, B12App, b13App, bearer, liveWish, staffOf } from "./b13-kit";
 
@@ -28,7 +29,7 @@ describe("Now showing: requests, the public list, unlist, wish of the day (B13)"
     return out;
   };
   async function listed(over: Parameters<typeof liveWish>[2] = {}) {
-    const owner = await account(t);
+    const owner = await account(t, ["creator"]);
     const w = await liveWish(t, owner, over);
     expect((await ask(owner.token, w.id)).status).toBe(201);
     expect((await decide(await waiting(w.id), { decision: "approve", reason: "Looks lovely" })).status).toBe(200);
@@ -36,7 +37,7 @@ describe("Now showing: requests, the public list, unlist, wish of the day (B13)"
   }
 
   it("case 1: an ask waits for review and nothing is public until a person approves; a second ask is 409", async () => {
-    const owner = await account(t);
+    const owner = await account(t, ["creator"]);
     const w = await liveWish(t, owner);
     const r = await ask(owner.token, w.id, { consent: true, level: "now-showing", publicChapters: ["letter"], everyoneAgrees: true });
     expect(r.status).toBe(201);
@@ -50,7 +51,7 @@ describe("Now showing: requests, the public list, unlist, wish of the day (B13)"
   });
 
   it("the same ask sent at once makes one request", async () => {
-    const owner = await account(t);
+    const owner = await account(t, ["creator"]);
     const w = await liveWish(t, owner);
     const all = await Promise.all(Array.from({ length: 5 }, () => ask(owner.token, w.id)));
     expect(all.map((r) => r.status).sort()).toEqual([201, 409, 409, 409, 409]);
@@ -58,8 +59,8 @@ describe("Now showing: requests, the public list, unlist, wish of the day (B13)"
   });
 
   it("only a live wish of the owner's: another account's wish is 404, a draft or a resting wish 409, no consent 422, no token 401, staff 403", async () => {
-    const owner = await account(t);
-    const other = await account(t);
+    const owner = await account(t, ["creator"]);
+    const other = await account(t, ["creator"]);
     const w = await liveWish(t, owner);
     expect((await ask(other.token, w.id)).status).toBe(404);
     expect((await ask(owner.token, (await liveWish(t, owner, { status: "draft" })).id)).status).toBe(409);
@@ -76,18 +77,18 @@ describe("Now showing: requests, the public list, unlist, wish of the day (B13)"
   });
 
   it("an erased account's wish is refused (401), a banned account's ask is 403", async () => {
-    const gone = await account(t);
+    const gone = await account(t, ["creator"]);
     const gw = await liveWish(t, gone);
     await db.account.update({ where: { id: gone.accountId }, data: { erasedAt: t.clock.now() } });
     expect((await ask(gone.token, gw.id)).status).toBe(401);
-    const banned = await account(t);
+    const banned = await account(t, ["creator"]);
     const bw = await liveWish(t, banned);
     await db.ban.create({ data: { id: t.id(), accountId: banned.accountId, scope: "publishing", reason: "test", by: "system" } });
     expect((await ask(banned.token, bw.id)).status).toBe(403);
   });
 
   it("approve lists the wish: a row with nothing private, one audit row with the reason, public list shows it", async () => {
-    const owner = await account(t);
+    const owner = await account(t, ["creator"]);
     const w = await liveWish(t, owner);
     await ask(owner.token, w.id);
     const reqId = await waiting(w.id);
@@ -108,7 +109,7 @@ describe("Now showing: requests, the public list, unlist, wish of the day (B13)"
   });
 
   it("two staff deciding at once: one decision, one audit row, one listing", async () => {
-    const owner = await account(t);
+    const owner = await account(t, ["creator"]);
     const w = await liveWish(t, owner);
     await ask(owner.token, w.id);
     const reqId = await waiting(w.id);
@@ -120,22 +121,23 @@ describe("Now showing: requests, the public list, unlist, wish of the day (B13)"
   });
 
   it("decline leaves a reason the owner can read; the owner may ask again", async () => {
-    const owner = await account(t);
+    const owner = await account(t, ["creator"]);
     const w = await liveWish(t, owner);
     await ask(owner.token, w.id);
     const d = await decide(await waiting(w.id), { decision: "decline", reason: "Photo is too dark" });
     expect(d.body).toMatchObject({ status: "refused", decision: "decline", reason: "Photo is too dark" });
     expect(await publicIds()).not.toContain(w.id);
+    expect((await db.publishRequest.findFirstOrThrow({ where: { wishId: w.id } })).status).toBe("refused");
     const del = await t.http().delete(`/v1/wishes/${w.id}/publish-requests`).set(bearer(owner.token)).send({ isPublic: false });
     expect(del.status).toBe(200);
-    expect(del.body.publish).toMatchObject({ status: "refused", reason: "Photo is too dark", listed: false });
+    expect(del.body.publish).toBeNull();
     expect((await ask(owner.token, w.id)).status).toBe(201);
   });
 
   it("staff routes: owner, ops and moderator pass; support, a user and no token do not", async () => {
     const support = await staffOf(t, "support");
     const ops = await staffOf(t, "ops");
-    const user = await account(t);
+    const user = await account(t, ["creator"]);
     expect((await t.http().get("/v1/admin/showing").set(bearer(ops.token))).status).toBe(200);
     expect((await t.http().get("/v1/admin/showing").set(bearer(support.token))).status).toBe(403);
     expect((await t.http().get("/v1/admin/showing").set(bearer(user.token))).status).toBe(403);
@@ -179,7 +181,7 @@ describe("Now showing: requests, the public list, unlist, wish of the day (B13)"
   it("case 3: staff unlist and the owner's own unpublish remove it at once and forget its saves", async () => {
     const x = await listed();
     const y = await listed();
-    const saver = await account(t);
+    const saver = await account(t, ["creator"]);
     const feedX = (await db.publishedWish.findFirstOrThrow({ where: { wishId: x.w.id } })).id;
     const feedY = (await db.publishedWish.findFirstOrThrow({ where: { wishId: y.w.id } })).id;
     for (const f of [feedX, feedY]) await t.http().put(`/v1/feed/wishes/${f}/save`).set(bearer(saver.token)).send({ wish: f });
@@ -196,7 +198,7 @@ describe("Now showing: requests, the public list, unlist, wish of the day (B13)"
     expect(own.status).toBe(200);
     expect(await publicIds()).not.toContain(y.w.id);
     expect(await db.savedWish.count({ where: { wish: feedY } })).toBe(0);
-    expect((await t.http().delete(`/v1/wishes/${y.w.id}/publish-requests`).set(bearer((await account(t)).token)).send({})).status).toBe(404);
+    expect((await t.http().delete(`/v1/wishes/${y.w.id}/publish-requests`).set(bearer((await account(t, ["creator"])).token)).send({})).status).toBe(404);
   });
 
   it("case 4: one pick per Lagos date, a date picked twice is replaced, a wish that leaves the list loses its picks", async () => {
@@ -223,5 +225,47 @@ describe("Now showing: requests, the public list, unlist, wish of the day (B13)"
     await t.http().post(`/v1/admin/showing/listed/${y.w.no}/unlist`).set(bearer(mod.token)).send({ reason: "Taken off" });
     expect(await db.dayPick.count({ where: { wish: y.w.no } })).toBe(0);
     expect((await put("2027-01-11", y.w.no)).status).toBe(409);
+  });
+
+  it("SS1: dropForWishes and dropForAccount leave no row for those wishes; listing again needs a new ask and approval", async () => {
+    const owner = await account(t, ["creator"]);
+    const w = await liveWish(t, owner, { name: "Zainab" });
+    const w2 = await liveWish(t, owner, { name: "Tolu" });
+    for (const x of [w, w2]) {
+      await ask(owner.token, x.id);
+      expect((await decide(await waiting(x.id), { decision: "approve", reason: "looks fine" })).status).toBe(200);
+    }
+    const svc = t.app.get(ShowingService);
+    const left = async (ids: string[]) => (await db.publishedWish.count({ where: { wishId: { in: ids } } })) + (await db.publishRequest.count({ where: { wishId: { in: ids } } }));
+    expect(await left([w.id, w2.id])).toBe(4);
+    await db.$transaction((tx) => svc.dropForWishes(tx, [w.id]));
+    expect(await left([w.id])).toBe(0);
+    expect(await publicIds()).not.toContain(w.id);
+    expect(await publicIds()).toContain(w2.id);
+    expect((await ask(owner.token, w.id)).status).toBe(201);
+    expect(await db.publishedWish.count({ where: { wishId: w.id } })).toBe(0);
+    expect((await decide(await waiting(w.id), { decision: "approve", reason: "looks fine" })).status).toBe(200);
+    expect(await publicIds()).toContain(w.id);
+    await db.$transaction((tx) => svc.dropForAccount(tx, owner.accountId));
+    expect(await left([w.id, w2.id])).toBe(0);
+    expect(await db.publishedWish.count({ where: { OR: [{ title: { contains: "Zainab" } }, { title: { contains: "Tolu" } }] } })).toBe(0);
+  });
+
+  it("SS2: E-136 and E-137 need the creator side; a person-only or business-only account gets 403 creator_side_required, a creator is unchanged", async () => {
+    const creator = await account(t, ["creator"]);
+    const w = await liveWish(t, creator);
+    for (const sides of [["person"], ["business"]] as const) {
+      const who = await account(t, [...sides]);
+      const own = await liveWish(t, who);
+      const post = await ask(who.token, own.id);
+      expect(post.status).toBe(403);
+      expect(post.body.error.code).toBe("creator_side_required");
+      const del = await t.http().delete(`/v1/wishes/${own.id}/publish-requests`).set(bearer(who.token)).send({});
+      expect(del.status).toBe(403);
+      expect(del.body.error.code).toBe("creator_side_required");
+      expect(await db.publishRequest.count({ where: { wishId: own.id } })).toBe(0);
+    }
+    expect((await ask(creator.token, w.id)).status).toBe(201);
+    expect((await t.http().delete(`/v1/wishes/${w.id}/publish-requests`).set(bearer(creator.token)).send({})).status).toBe(200);
   });
 });

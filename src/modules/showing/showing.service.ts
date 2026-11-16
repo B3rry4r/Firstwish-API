@@ -171,8 +171,8 @@ export class ShowingService {
   // ---- listing, unlisting, saves ----------------------------------------------------------------------------------------
 
   /**
-   * Takes wishes off Now showing: their saves are forgotten first, then the rows go, then their wish-of-the-day picks from
-   * today on. Runs in the caller's transaction. A ban, an unlist and an owner's withdrawal call it; the take-down and erase
+   * Takes wishes off Now showing: their saves are forgotten first, then the rows go, with their asks (a wish listed again needs
+   * a new ask and a new approval), then their wish-of-the-day picks from today on. Runs in the caller's transaction. A ban, an unlist and an owner's withdrawal call it; the take-down and erase
    * moves need no call, because the list reads the wish's own state (see publicNow).
    */
   async dropForWishes(tx: Tx, wishIds: string[]): Promise<number> {
@@ -182,7 +182,14 @@ export class ShowingService {
     const nos = (await tx.wish.findMany({ where: { id: { in: ids }, no: { not: null } }, select: { no: true } })).map((w) => w.no as string);
     if (nos.length) await tx.dayPick.deleteMany({ where: { wish: { in: nos }, date: { gte: new Date(`${lagosToday(this.clock.now())}T00:00:00.000Z`) } } });
     const del = await tx.publishedWish.deleteMany({ where: { wishId: { in: ids } } });
+    await tx.publishRequest.deleteMany({ where: { wishId: { in: ids } } });
     return del.count;
+  }
+
+  /** The erase of an account: every wish of the account is dropped (rows, asks, saves, picks), so no name or title stays behind. */
+  async dropForAccount(tx: Tx, accountId: string): Promise<number> {
+    const ids = (await tx.wish.findMany({ where: { accountId }, select: { id: true } })).map((w) => w.id);
+    return this.dropForWishes(tx, ids);
   }
 
   /** E-139: staff take a listed wish off Now showing at once. The wish itself stays as it is. Answers the staff list. */

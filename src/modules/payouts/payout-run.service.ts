@@ -12,7 +12,7 @@ import { AuditService, requireReason, type AuditActor } from "../audit/audit.ser
 import { RoyaltiesService } from "../royalties/royalties.service";
 import { isMonth, monthOf } from "../royalties/royalty-math";
 import type { PayoutEventSink } from "./payout-event-sink";
-import { PayoutProviderPort, TransferRefused, type TransferLookup } from "./payout-provider.port";
+import { PayoutProviderPort, TransferRefused, type TransferLookup } from "../../common/ports/payout-provider.port";
 import { payoutWire, type PayoutFacts } from "./payout-wire";
 
 type Tx = Prisma.TransactionClient;

@@ -7,15 +7,11 @@ import { normaliseEmail } from "../../common/normalise/email";
 import { NoticesService } from "../notices/notices.service";
 import { AccountsService } from "../accounts/accounts.service";
 import { ClientMeta, SessionsService, StartedSession } from "../sessions/sessions.service";
+import { maskEmail } from "../../common/normalise/mask-email";
 import { RESEND_AFTER_SECONDS, USER_CODE_LIMITS } from "./limits";
 
 /** What asking for a code answers. The same whether or not the email has an account. */
 export type CodeSent = SignInCode & { sent: true; resendAfter: number; destination: string };
-
-export function maskEmail(email: string): string {
-  const at = email.indexOf("@");
-  return `${email.slice(0, 1)}***${email.slice(at)}`;
-}
 
 const expired = () => new AppError(HttpStatus.BAD_REQUEST, "code_expired", "That code no longer works. Ask for a new one.");
 

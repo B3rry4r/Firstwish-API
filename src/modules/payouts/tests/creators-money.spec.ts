@@ -10,8 +10,8 @@ import { percentOf, splitRoyalty } from "../../royalties/royalty-math";
 import { readStyleOwners } from "../../royalties/style-owners";
 import { NO_NEWS_MS, PayoutRunService, REFERENCE_PREFIX, SEND_LEASE_MS } from "../payout-run.service";
 import { SignedPeriodService } from "../signed-period.service";
-import { PayoutProviderPort } from "../payout-provider.port";
-import { StandinPayoutProvider } from "../standin-payout-provider";
+import { PayoutProviderPort } from "../../../common/ports/payout-provider.port";
+import { StandinPayoutProvider } from "../../../common/ports/adapters/standin-payout-provider";
 import { nextFifth } from "../payouts.module";
 
 /* B16: creators' money, on a real database. The app's clock stands on 6 December 2026, so "last month" is 2026-11. */

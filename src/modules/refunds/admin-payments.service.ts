@@ -5,7 +5,7 @@ import { AppError } from "../../common/errors/app-error";
 import { normaliseEmail } from "../../common/normalise/email";
 import { decodeCursor, Page, toPage } from "../../common/pagination/cursor";
 import { toWireInstant } from "../../common/time/time";
-import { maskEmail } from "../auth-codes/auth-codes.service";
+import { maskEmail } from "../../common/normalise/mask-email";
 import { PaymentsService } from "../payments/payments.service";
 import { readOptions } from "../payments/payment-options";
 import { refundView } from "./refund-wire";

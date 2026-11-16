@@ -8,8 +8,8 @@ import { SettlementService } from "../../payments/settlement.service";
 import { makeStaff, seedRoleTable } from "../../staff-accounts/tests/staff-kit";
 import { DAILY_SETTLEMENT_KEY, RefundsModule } from "../refunds.module";
 import { BusinessHandlers } from "../../purchases/business-handlers";
-import { StandinRefundProvider } from "../standin-refund-provider";
-import { RefundProviderPort } from "../refund-provider.port";
+import { StandinRefundProvider } from "../../../common/ports/adapters/standin-refund-provider";
+import { RefundProviderPort } from "../../../common/ports/refund-provider.port";
 
 const ROOT = join(__dirname, "../../../..");
 const NOW = new Date("2031-03-10T09:00:00.000Z");

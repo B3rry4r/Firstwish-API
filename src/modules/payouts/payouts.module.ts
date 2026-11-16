@@ -1,20 +1,14 @@
 import { Global, Logger, Module, OnApplicationBootstrap, OnModuleInit } from "@nestjs/common";
-import { ENV } from "../../common/env/env.module";
-import type { Env } from "../../common/env/env";
 import { Clock } from "../../common/ports/clock.port";
-import { portTimeouts, withTimeLimit } from "../../common/ports/time-limit";
 import { JobContext, JobResult, JobsService } from "../jobs/jobs.service";
 import { NoticesModule } from "../notices/notices.module";
 import { RoyaltiesModule } from "../royalties/royalties.module";
 import { AdminCreatorsService } from "./admin-creators.service";
 import { BankAccountsService } from "./bank-accounts.service";
 import { PAYOUT_EVENT_SINK } from "./payout-event-sink";
-import { PayoutProviderPort } from "./payout-provider.port";
 import { PayoutRunService } from "./payout-run.service";
 import { PayoutsController } from "./payouts.controller";
-import { PaystackPayoutProvider } from "./paystack-payout-provider";
 import { SignedPeriodService } from "./signed-period.service";
-import { StandinPayoutProvider } from "./standin-payout-provider";
 
 /** The monthly run's job: one row for the whole system, moved on to the next 5th by the handler. */
 export const MONTHLY_RUN_KEY = "monthly";
@@ -42,19 +36,13 @@ export function nextFifth(now: Date): Date {
   imports: [RoyaltiesModule, NoticesModule],
   controllers: [PayoutsController],
   providers: [
-    {
-      provide: PayoutProviderPort,
-      inject: [ENV],
-      useFactory: (env: Env): PayoutProviderPort =>
-        withTimeLimit(env.PROVIDERS === "standin" ? new StandinPayoutProvider() : new PaystackPayoutProvider(env.PAYSTACK_SECRET_KEY as string), "payments", portTimeouts(env.PORT_TIMEOUTS_MS).payments),
-    },
     BankAccountsService,
     PayoutRunService,
     SignedPeriodService,
     AdminCreatorsService,
     { provide: PAYOUT_EVENT_SINK, useExisting: PayoutRunService },
   ],
-  exports: [PayoutRunService, SignedPeriodService, PAYOUT_EVENT_SINK, PayoutProviderPort],
+  exports: [PayoutRunService, SignedPeriodService, PAYOUT_EVENT_SINK],
 })
 export class PayoutsModule implements OnModuleInit, OnApplicationBootstrap {
   private readonly log = new Logger("payouts");

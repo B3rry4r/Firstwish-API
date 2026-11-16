@@ -146,7 +146,7 @@ describe("concierge orders B19", () => {
     expect((await give(ops.auth, id, ids.next())).status).toBe(422);
     await http().post(`/v1/admin/concierge/orders/${id}/maker`).set("Authorization", ops.auth).send({ reason: "no maker named" }).expect(422);
     const g = await give(ops.auth, id, m1.id).expect(200);
-    expect(g.body).toMatchObject({ makerId: m1.id, status: "making" });
+    expect(g.body).toMatchObject({ makerId: m1.id, status: "given" });
     expect((await give(ops.auth, id, m1.id)).status).toBe(409);
     expect((await http().get(`/v1/admin/concierge/orders/${id}`).set("Authorization", m1.auth)).status).toBe(200);
     expect((await http().get(`/v1/admin/concierge/orders/${id}`).set("Authorization", m2.auth)).status).toBe(404);

@@ -7,6 +7,8 @@ import { EmailPort } from "./email.port";
 import { GoogleIdentityPort } from "./google.port";
 import { CodeGenerator, IdGenerator, StandinCodeGenerator, StandinIdGenerator, SystemCodeGenerator, SystemIdGenerator } from "./ids.port";
 import { PaymentsPort } from "./payments.port";
+import { PayoutProviderPort } from "./payout-provider.port";
+import { RefundProviderPort } from "./refund-provider.port";
 import { ImageSizesPort, MissingImageSizes } from "./image-sizes.port";
 import { LimitedPort, portTimeouts, withTimeLimit } from "./time-limit";
 import { UploadScreeningPort } from "./screening.port";
@@ -15,6 +17,10 @@ import { AnthropicWriting } from "./adapters/anthropic.adapter";
 import { GoogleOidc } from "./adapters/google.adapter";
 import { BasicScreening } from "./adapters/basic-screening.adapter";
 import { PaystackPayments } from "./adapters/paystack.adapter";
+import { PaystackPayoutProvider } from "./adapters/paystack-payout-provider";
+import { PaystackRefundProvider } from "./adapters/paystack-refund-provider";
+import { StandinPayoutProvider } from "./adapters/standin-payout-provider";
+import { StandinRefundProvider } from "./adapters/standin-refund-provider";
 import { ResendEmail } from "./adapters/resend.adapter";
 import { S3Storage, s3ConfigFor } from "./adapters/s3-storage.adapter";
 import {
@@ -47,6 +53,17 @@ const providers: Provider[] = [
     useFactory: (env: Env, clock: Clock) =>
       limited(env, "payments", standin(env) ? new StandinPayments(clock, env.PAYSTACK_SECRET_KEY) : new PaystackPayments(need(env.PAYSTACK_SECRET_KEY), env.PAYSTACK_CALLBACK_URL)),
   },
+  // PP1, WW3: the refund and settlement calls and the payout calls are their own ports beside the payments port, on the payments time limit
+  {
+    provide: RefundProviderPort,
+    inject: [ENV],
+    useFactory: (env: Env) => limited(env, "payments", standin(env) ? new StandinRefundProvider() : new PaystackRefundProvider(need(env.PAYSTACK_SECRET_KEY))),
+  },
+  {
+    provide: PayoutProviderPort,
+    inject: [ENV],
+    useFactory: (env: Env) => limited(env, "payments", standin(env) ? new StandinPayoutProvider() : new PaystackPayoutProvider(need(env.PAYSTACK_SECRET_KEY))),
+  },
   {
     provide: EmailPort,
     inject: [ENV],
@@ -76,6 +93,6 @@ const providers: Provider[] = [
 @Global()
 @Module({
   providers,
-  exports: [Clock, IdGenerator, CodeGenerator, PaymentsPort, EmailPort, StoragePort, AiWritingPort, UploadScreeningPort, GoogleIdentityPort, ImageSizesPort],
+  exports: [Clock, IdGenerator, CodeGenerator, PaymentsPort, RefundProviderPort, PayoutProviderPort, EmailPort, StoragePort, AiWritingPort, UploadScreeningPort, GoogleIdentityPort, ImageSizesPort],
 })
 export class ProvidersModule {}

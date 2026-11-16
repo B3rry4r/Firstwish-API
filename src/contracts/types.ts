@@ -193,11 +193,23 @@ export interface WishSaved {
 export interface PeopleImportSkipped {
   row: number;
   reason: string;
+  /** the field that was refused (API-BASE-6) */
+  field?: string;
 }
 /** E-121 (BB8, DEC-169): how many people were added and which rows were skipped. */
 export interface PeopleImportResult {
   added: number;
   skipped: PeopleImportSkipped[];
+  /** HR5: one entry for every row sent, in order: accepted, or refused with the field and the words; a person twice is a duplicate */
+  rows: PeopleImportRow[];
+}
+/** HR5: what became of one row of an import. */
+export interface PeopleImportRow {
+  row: number;
+  state: "accepted" | "refused" | "duplicate";
+  /** the field that was refused: name, birthday, start, phone or row */
+  field?: string;
+  reason?: string;
 }
 /** E-19: the registry names the response SignInCode and gives no fields. */
 export type SignInCode = Record<string, unknown>;
@@ -227,6 +239,8 @@ export interface RoyaltyEarnings extends PaginatedList<RoyaltyAccrual> {
 /** Account: table. written by E-3, E-7, E-9, E-11 and server:sessions; the person's account (sessions declaration Me); erase really removes personal fields, so name, contact (the email, S-27), phone, bio and handle are nullable in storage */
 export interface Account {
   action: "ban" | "lift" | "erase";
+  /** HR3 (E-6, E-7): the business the person owns and every business they are a login of, owner first: id, name, role and the login's state */
+  businesses?: Array<{ id: string; name: string; role: "owner" | "login"; state: "owner" | "invited" | "active" | "removed" }>;
   ban?: Record<string, unknown> | null;
   bio?: string | null;
   business: string;
@@ -396,6 +410,8 @@ export interface ClientWish {
   occasion: string;
   openedAt?: Instant | null;
   reveal?: Record<string, unknown> | null;
+  /** HR4: the day (date only) the wish a removed draft took goes back to the business's pack: the day its restore window ends; absent unless the draft is removed and waiting */
+  returnsToPackOn?: DateOnly | null;
   sample?: boolean | null;
   sentAt: Instant;
   set: "proofs" | "finals";
@@ -532,8 +548,12 @@ export interface EarningsSummary {
 /** EndingPurpose: config. the ending catalogue served by GET /v1/ending-purposes; staff keep it */
 export interface EndingPurpose {
   id: string;
+  /** the line a person reads under the name */
   line: string;
+  /** the name a person reads (API-BASE-6) */
   name: string;
+  /** the purpose's own word: wish, question, reveal, date, credits or close (API-BASE-6) */
+  slug: string;
 }
 
 /** Entitlements: config. price-book declaration: what each ticket, plan and pass includes; changed by staff as part of a price-book version */
@@ -799,6 +819,8 @@ export interface NumbersTarget {
 export interface OpeningDef {
   fields: Record<string, unknown>;
   id: string;
+  /** the id the maker and a wish's opening use: sealed, countdown, passcode, question, presents or open (API-BASE-6) */
+  slug: string;
   line: string;
   lock: string;
   name: string;
@@ -1442,6 +1464,8 @@ export interface Style {
   record: unknown[];
   sample: Record<string, unknown>;
   say?: string | null;
+  /** HS3: the slug of the house wish that plays this style, at /w/<slug> (null when the style has none or is off) */
+  showcaseSlug?: string | null;
   slug: string;
   tier: string;
 }
@@ -2150,8 +2174,41 @@ export type PatchBusinessResponse = Business["brand"];
 export type GetBusinessPlanParams = Record<string, never>;
 export type GetBusinessPlanQuery = Record<string, never>;
 export type GetBusinessPlanHeaders = Record<string, never>;
-/** 204 No Content: the response has no body (Q12). */
-export type GetBusinessPlanResponse = NoContent;
+/** HR1: what a payment for one plan would do now, in the server's terms. */
+export interface PlanOffer {
+  plan: string;
+  name: string;
+  priceKobo: Kobo;
+  wishes: number;
+  logins: number;
+  vaultGb: number;
+  /** starts: none live, a month from now; adds_month: the same plan is live, a month is added to its end; replaces_plan: another plan is live and is replaced from now (the time paid for is kept) */
+  effect: "starts" | "adds_month" | "replaces_plan";
+  startsAt: Instant;
+  runsUntil: Instant;
+  addsTo: Instant | null;
+  replaces: string | null;
+  words: string;
+}
+/** HR1: a plan payment of the business that still waits to be paid. */
+export interface PendingPlan {
+  reference: string;
+  plan: string;
+  startedAt: Instant;
+}
+/** E-27 answers the plan state (the usage fields first), what each plan on offer would do, and the plan payment still waiting (HR1). */
+export interface BusinessPlanAnswer extends ProUsage {
+  plan: string | null;
+  live: boolean;
+  month: string | null;
+  renews: Instant | null;
+  packEnds: Instant | null;
+  logins: { used: number; allowed: number };
+  vault: { usedGb: number; allowedGb: number; billedKobo: Kobo };
+  offers: PlanOffer[];
+  pending: PendingPlan | null;
+}
+export type GetBusinessPlanResponse = BusinessPlanAnswer;
 
 /** E-28 GET /v1/chapter-specs. Auth: signed in. */
 export type GetChapterSpecsParams = Record<string, never>;
@@ -3283,6 +3340,57 @@ export interface PostWBySlugOpensParams {
 export type PostWBySlugOpensBody = Record<string, never>;
 export type PostWBySlugOpensHeaders = Record<string, never>;
 export type PostWBySlugOpensResponse = PublicWishView;
+
+/** E-257 POST /v1/w/:slug/keep. Auth: public, the link's holder (HS2). */
+export interface PostWBySlugKeepParams {
+  slug: string;
+}
+export interface PostWBySlugKeepBody {
+  /** number 30|182|365 */
+  days?: number;
+  /** string (the payer's email: the receipt goes there; no account is made a person) */
+  email: string;
+  /** enum(month|half|year) */
+  keep?: unknown;
+  /** 'month'|'half'|'year' */
+  keepKey?: "month" | "half" | "year";
+  /** 'card'|'transfer'|'ussd' (PaySheet, not passed on) */
+  paymentWay?: "card" | "transfer" | "ussd";
+}
+export interface PostWBySlugKeepHeaders {
+  "idempotency-key": string;
+  "x-unlock-token"?: string;
+  /** the signed proof PublicWishView.keepOffer.proof gave (HS2) */
+  "x-wish-proof": string;
+}
+export type PostWBySlugKeepResponse = PaymentStarted<PublicWishView>;
+
+/** E-259 POST /v1/w/:slug/wake. Auth: public, the link's holder (HS2). */
+export interface PostWBySlugWakeParams {
+  slug: string;
+}
+export type PostWBySlugWakeBody = Record<string, never>;
+export interface PostWBySlugWakeHeaders {
+  "x-unlock-token"?: string;
+  "x-wish-proof": string;
+}
+/** 204 No Content: the response has no body (Q12). */
+export type PostWBySlugWakeResponse = void;
+
+/** E-258 GET /v1/w/:slug/keep/:reference. Auth: public, the link's holder (HS2). */
+export interface GetWBySlugKeepByReferenceParams {
+  slug: string;
+  reference: string;
+}
+export type GetWBySlugKeepByReferenceQuery = Record<string, never>;
+export interface GetWBySlugKeepByReferenceHeaders {
+  "x-unlock-token"?: string;
+  "x-wish-proof": string;
+}
+export interface GetWBySlugKeepByReferenceResponse {
+  payment: GetPaymentsByReferenceResponse;
+  item: PublicWishView;
+}
 
 /** E-132 POST /v1/w/:slug/reaction. Auth: public. */
 export interface PostWBySlugReactionParams {
@@ -4528,6 +4636,102 @@ export type GetWishesByIdLinkQuery = Record<string, never>;
 export type GetWishesByIdLinkHeaders = Record<string, never>;
 export type GetWishesByIdLinkResponse = { link: string; slug: string };
 
+/** HS1: the owner's read of a wish's gather link. */
+export interface GatherOwnerView {
+  slug: string;
+  /** the address friends open: /g/<slug> */
+  link: string;
+  active: boolean;
+  /** a friend may add a voice now (the link is on, the wish is a draft or sealed and not open yet) */
+  open: boolean;
+  count: number;
+  limit: number;
+  voices: Array<{ id: string; from: string; seconds: number; state: "ready" | "checking"; at: Instant; url: string | null; expiresAt: Instant | null }>;
+}
+/** HS1: what a friend sees at a gather link: who is asking, for whom (first names), the room, what a voice may be. Nothing else of the wish. */
+export interface GatherFriendView {
+  from: string;
+  forName: string;
+  kind: string;
+  occasion: string;
+  open: boolean;
+  reason: string | null;
+  count: number;
+  limit: number;
+  full: boolean;
+  maxSeconds: number;
+  maxBytes: number;
+}
+/** HS1: the signed put for one friend's voice, and the voice's id. */
+export interface GatherVoiceAdded {
+  id: string;
+  upload: UploadTicket["upload"];
+}
+
+/** E-263 GET /v1/wishes/:id/gather. Auth: own records. */
+export interface GetWishesByIdGatherParams {
+  id: string;
+}
+export type GetWishesByIdGatherQuery = Record<string, never>;
+export type GetWishesByIdGatherHeaders = Record<string, never>;
+export type GetWishesByIdGatherResponse = GatherOwnerView;
+
+/** E-264 POST /v1/wishes/:id/gather/off. Auth: own records. */
+export interface PostWishesByIdGatherOffParams {
+  id: string;
+}
+export type PostWishesByIdGatherOffBody = Record<string, never>;
+export type PostWishesByIdGatherOffHeaders = Record<string, never>;
+export type PostWishesByIdGatherOffResponse = GatherOwnerView;
+
+/** E-265 DELETE /v1/wishes/:id/gather/voices/:voiceId. Auth: own records. */
+export interface DeleteWishesByIdGatherVoicesByVoiceIdParams {
+  id: string;
+  voiceId: string;
+}
+export type DeleteWishesByIdGatherVoicesByVoiceIdBody = Record<string, never>;
+export type DeleteWishesByIdGatherVoicesByVoiceIdHeaders = Record<string, never>;
+/** 204 No Content: the response has no body (Q12). */
+export type DeleteWishesByIdGatherVoicesByVoiceIdResponse = void;
+
+/** E-260 GET /v1/g/:slug. Auth: public. */
+export interface GetGBySlugParams {
+  slug: string;
+}
+export type GetGBySlugQuery = Record<string, never>;
+export type GetGBySlugHeaders = Record<string, never>;
+export type GetGBySlugResponse = GatherFriendView;
+
+/** E-261 POST /v1/g/:slug/voice. Auth: public. */
+export interface PostGBySlugVoiceParams {
+  slug: string;
+}
+export interface PostGBySlugVoiceBody {
+  /** string (the friend's first name, up to 40 characters) */
+  name: string;
+  /** string (an audio type taken for a voice note) */
+  contentType: string;
+  /** number (the file's size in bytes) */
+  bytes: number;
+  /** number (1 to 180) */
+  seconds?: number;
+}
+export type PostGBySlugVoiceHeaders = Record<string, never>;
+export type PostGBySlugVoiceResponse = GatherVoiceAdded;
+
+/** E-262 POST /v1/g/:slug/voice/:id/confirm. Auth: public. */
+export interface PostGBySlugVoiceByIdConfirmParams {
+  slug: string;
+  id: string;
+}
+export type PostGBySlugVoiceByIdConfirmBody = Record<string, never>;
+export type PostGBySlugVoiceByIdConfirmHeaders = Record<string, never>;
+export interface PostGBySlugVoiceByIdConfirmResponse {
+  id: string;
+  state: "ready" | "checking" | "refused";
+  reason?: string;
+}
+
 /** E-241 POST /v1/wishes/:id/pass-upgrade. Auth: business; signed in. */
 export interface PostWishesByIdPassUpgradeParams {
   id: string;
@@ -4754,6 +4958,9 @@ export interface EndpointContracts {
   "E-129": { params: GetWBySlugParams; query: GetWBySlugQuery; headers: GetWBySlugHeaders; response: GetWBySlugResponse };
   "E-130": { params: PostWBySlugFavouritesParams; body: PostWBySlugFavouritesBody; headers: PostWBySlugFavouritesHeaders; response: PostWBySlugFavouritesResponse };
   "E-131": { params: PostWBySlugOpensParams; body: PostWBySlugOpensBody; headers: PostWBySlugOpensHeaders; response: PostWBySlugOpensResponse };
+  "E-257": { params: PostWBySlugKeepParams; body: PostWBySlugKeepBody; headers: PostWBySlugKeepHeaders; response: PostWBySlugKeepResponse };
+  "E-259": { params: PostWBySlugWakeParams; body: PostWBySlugWakeBody; headers: PostWBySlugWakeHeaders; response: PostWBySlugWakeResponse };
+  "E-258": { params: GetWBySlugKeepByReferenceParams; query: GetWBySlugKeepByReferenceQuery; headers: GetWBySlugKeepByReferenceHeaders; response: GetWBySlugKeepByReferenceResponse };
   "E-132": { params: PostWBySlugReactionParams; body: PostWBySlugReactionBody; headers: PostWBySlugReactionHeaders; response: PostWBySlugReactionResponse };
   "E-133": { params: PostWBySlugTakeDownParams; body: PostWBySlugTakeDownBody; headers: PostWBySlugTakeDownHeaders; response: PostWBySlugTakeDownResponse };
   "E-134": { params: PostWBySlugUnlockParams; body: PostWBySlugUnlockBody; headers: PostWBySlugUnlockHeaders; response: PostWBySlugUnlockResponse };
@@ -4862,6 +5069,12 @@ export interface EndpointContracts {
   "E-227": { params: PostWishesByIdEraseParams; body: PostWishesByIdEraseBody; headers: PostWishesByIdEraseHeaders; response: PostWishesByIdEraseResponse };
   "E-228": { params: PostWishesByIdKeepParams; body: PostWishesByIdKeepBody; headers: PostWishesByIdKeepHeaders; response: PostWishesByIdKeepResponse };
   "E-229": { params: GetWishesByIdLinkParams; query: GetWishesByIdLinkQuery; headers: GetWishesByIdLinkHeaders; response: GetWishesByIdLinkResponse };
+  "E-263": { params: GetWishesByIdGatherParams; query: GetWishesByIdGatherQuery; headers: GetWishesByIdGatherHeaders; response: GetWishesByIdGatherResponse };
+  "E-264": { params: PostWishesByIdGatherOffParams; body: PostWishesByIdGatherOffBody; headers: PostWishesByIdGatherOffHeaders; response: PostWishesByIdGatherOffResponse };
+  "E-265": { params: DeleteWishesByIdGatherVoicesByVoiceIdParams; body: DeleteWishesByIdGatherVoicesByVoiceIdBody; headers: DeleteWishesByIdGatherVoicesByVoiceIdHeaders; response: DeleteWishesByIdGatherVoicesByVoiceIdResponse };
+  "E-260": { params: GetGBySlugParams; query: GetGBySlugQuery; headers: GetGBySlugHeaders; response: GetGBySlugResponse };
+  "E-261": { params: PostGBySlugVoiceParams; body: PostGBySlugVoiceBody; headers: PostGBySlugVoiceHeaders; response: PostGBySlugVoiceResponse };
+  "E-262": { params: PostGBySlugVoiceByIdConfirmParams; body: PostGBySlugVoiceByIdConfirmBody; headers: PostGBySlugVoiceByIdConfirmHeaders; response: PostGBySlugVoiceByIdConfirmResponse };
   "E-241": { params: PostWishesByIdPassUpgradeParams; body: PostWishesByIdPassUpgradeBody; headers: PostWishesByIdPassUpgradeHeaders; response: PostWishesByIdPassUpgradeResponse };
   "E-230": { params: PostWishesByIdRestoreParams; body: PostWishesByIdRestoreBody; headers: PostWishesByIdRestoreHeaders; response: PostWishesByIdRestoreResponse };
   "E-231": { params: PostWishesByIdSealParams; body: PostWishesByIdSealBody; headers: PostWishesByIdSealHeaders; response: PostWishesByIdSealResponse };

@@ -226,7 +226,7 @@ describe("INT-4 joins", () => {
       e.app.get(JobHandlers).registerAll();
       const old = ids.next();
       const fresh = ids.next();
-      await edb.linkHit.create({ data: { id: old, bucket: "int4", key: "k", at: new Date(EARLY.getTime() - 3 * 3600_000) } });
+      await edb.linkHit.create({ data: { id: old, bucket: "int4", key: "k", at: new Date(EARLY.getTime() - 3 * 86_400_000) } }); // older than the 2 days a hit is kept (the gather ask limit counts over a day: HU4)
       await edb.linkHit.create({ data: { id: fresh, bucket: "int4", key: "k", at: new Date(EARLY.getTime() - 30 * 60_000) } });
       const subject = `int4-clean-${process.pid}-${Date.now()}`;
       await jobs.schedule("clean-link-hits", EARLY, subject);

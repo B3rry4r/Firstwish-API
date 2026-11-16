@@ -367,22 +367,17 @@ describe("B22 keep (E-228) and wake (E-232) (contract)", () => {
     expect(await paymentsFor(w)).toHaveLength(0);
   });
 
-  it("14. HA1 one open keep payment per wish across the owner and a receiver: 20 at once make one payment and one provider call", async () => {
+  it("14. HA1, HU3 one open keep payment per payer: the owner and a receiver each have their own (20 at once make two payments and two provider calls); neither blocks the other", async () => {
     const owner = await user();
     const rec = await user();
     const w = await wish(owner.accountId);
     const l = await link(w);
     const calls = t.payments.started.length;
     const rs = await Promise.all(Array.from({ length: 20 }, (_, i) => (i % 2 ? keepVia(rec.token, w, l.slug, { keepKey: "month" }) : keep(owner.token, w, { keepKey: "month" }))));
-    expect(await paymentsFor(w)).toHaveLength(1);
-    expect(t.payments.started.length).toBe(calls + 1);
-    expect(rs.every((r) => r.status === 201 || r.status === 409)).toBe(true);
-    expect(rs.filter((r) => r.status === 201).length).toBeGreaterThanOrEqual(1);
-    const winner = (await paymentsFor(w))[0].accountId;
-    for (const [i, r] of rs.entries()) {
-      const mine = (i % 2 ? rec.accountId : owner.accountId) === winner;
-      expect(r.status).toBe(mine ? 201 : 409);
-    }
+    expect(await paymentsFor(w)).toHaveLength(2);
+    expect(t.payments.started.length).toBe(calls + 2);
+    expect(rs.every((r) => r.status === 201)).toBe(true);
+    expect(new Set(rs.map((r) => String(r.body.payment.reference))).size).toBe(2);
   });
 
   it("15. HA3 wake by a receiver who holds the link (a paid keep covers it); a stranger is refused; no keep is 402", async () => {

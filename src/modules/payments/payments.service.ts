@@ -1,7 +1,9 @@
+import { createHash } from "node:crypto";
 import { Injectable } from "@nestjs/common";
 import type { Payment } from "@prisma/client";
 import { PrismaService } from "../../common/db/prisma.service";
 import { lockAccount } from "../../common/db/account-lock";
+import { PAYMENTS_ABANDON_AFTER_MINUTES as PLAN_PENDING_MINUTES } from "./abandon";
 import { AppError } from "../../common/errors/app-error";
 import { Money } from "../../common/money/money";
 import { Clock } from "../../common/ports/clock.port";
@@ -18,8 +20,16 @@ import { readOptions, writeOptions } from "./payment-options";
 const KEY = /^[A-Za-z0-9._:-]{8,100}$/;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+/** HU1: who pays when the holder of a wish's link pays with no account: the wish and the email the receipt goes to. */
+export interface PayerByLink {
+  wishId: string;
+  email: string;
+}
+
 /** The payer's own view of a payment: no idempotency key, no staff flags, no provider detail. */
 export interface PaymentView {
+  /** API-BASE-6: why the payment failed, in words the payer can read ("" unless it failed) */
+  reason: string;
   id: string;
   reference: string;
   state: PaymentStart["state"];
@@ -50,6 +60,14 @@ export interface PaymentPage {
   nextCursor: string | null;
 }
 
+/** HU3, HU6: why a paid payment gave nothing, in words the payer can read (empty unless it is marked refund due). */
+export function refundDueWords(flags: readonly string[]): string {
+  if (!flags.includes("refund_due")) return "";
+  if (flags.includes("refund_due:keep_already_paid")) return "Someone else paid to keep this wish for the same time first, so this payment gave nothing. It is marked to be refunded.";
+  if (flags.includes("refund_due:paid_after_lapse")) return "This payment came in after it had lapsed, and the same thing was paid for another way meanwhile. It is marked to be refunded.";
+  return "This payment gave nothing. It is marked to be refunded.";
+}
+
 const wireState = (s: Payment["status"]): PaymentStart["state"] => s.replace("_", "-") as PaymentStart["state"];
 
 @Injectable()
@@ -70,26 +88,50 @@ export class PaymentsService {
    * then asks the payments port to initialise (outside the transaction). The same Idempotency-Key and body gives the same payment;
    * the same key with another body is 409. Everything is under the account lock.
    */
-  async start(accountId: string, body: PostPaymentsBody, idempotencyKey: string | undefined): Promise<{ started: PaymentStarted<null>; status: 200 | 201 }> {
+  async start(accountId: string | null, body: PostPaymentsBody, idempotencyKey: string | undefined, holder?: PayerByLink): Promise<{ started: PaymentStarted<null>; status: 200 | 201 }> {
     const req = parseRequest(body);
     if (idempotencyKey !== undefined && !KEY.test(idempotencyKey)) {
       throw AppError.validation({ "Idempotency-Key": "Must be 8 to 100 letters, digits or . _ : -" });
     }
-    const storedKey = `${accountId}:${idempotencyKey ?? this.ids.id()}`;
-    const account = await this.db.account.findUnique({ where: { id: accountId }, select: { contact: true } });
-    if (!account) throw AppError.notFound();
-    const email = account.contact?.includes("@") ? account.contact : null;
-    if (!email) throw AppError.validation({ email: "Add an email to your account before you pay." });
-    const businessId = req.needsBusiness ? await this.businesses.require({ kind: "user", accountId, sides: ["person"] }) : await this.businesses.find(accountId);
+    if (!accountId && (!holder || req.purpose !== "keep")) throw AppError.notFound();
+    // HU1: a link holder is no account. Their payment is for the wish; the email is kept on the payment row only (never in the key: it is hashed).
+    const payer = accountId ?? `hold:${createHash("sha256").update(`${holder?.wishId}:${holder?.email}`).digest("hex").slice(0, 32)}`;
+    const storedKey = `${payer}:${idempotencyKey ?? this.ids.id()}`;
+    let email: string | null;
+    let businessId: string | null;
+    if (accountId) {
+      const account = await this.db.account.findUnique({ where: { id: accountId }, select: { contact: true } });
+      if (!account) throw AppError.notFound();
+      email = account.contact?.includes("@") ? account.contact : null;
+      if (!email) throw AppError.validation({ email: "Add an email to your account before you pay." });
+      businessId = req.needsBusiness ? await this.businesses.require({ kind: "user", accountId, sides: ["person"] }) : await this.businesses.find(accountId);
+    } else {
+      if (!holder) throw AppError.notFound();
+      email = holder.email;
+      businessId = null;
+    }
 
     const created = await this.db.$transaction(async (tx) => {
-      await lockAccount(tx, accountId);
+      // a payer with an account is lined up by the account lock, a link holder by the wish's own row
+      if (accountId) await lockAccount(tx, accountId);
+      else await tx.$queryRaw`SELECT id FROM wish WHERE id = ${holder?.wishId}::uuid FOR UPDATE`;
       const existing = await tx.payment.findUnique({ where: { idempotencyKey: storedKey } });
       if (existing) return { row: existing, fresh: false, sameThing: false };
       const now = this.clock.now();
       const quote = await this.book.quote(req.lines, now, { db: tx });
+      // HR1: one plan payment at a time for a business. The same plan again hands back the payment that waits; another plan is 409 with its reference.
+      if (req.purpose === "pro_plan" && businessId) {
+        await tx.$queryRaw`SELECT id FROM business WHERE id = ${businessId}::uuid FOR UPDATE`;
+        const since = new Date(now.getTime() - PLAN_PENDING_MINUTES * 60_000);
+        const waiting = await tx.payment.findFirst({ where: { businessId, purpose: "pro_plan", status: { in: ["pending", "started"] }, fulfilledAt: null, createdAt: { gt: since } }, orderBy: { id: "desc" } });
+        if (waiting) {
+          const wasSku = (Array.isArray(waiting.lines) ? (waiting.lines[0] as { sku?: string } | undefined) : undefined)?.sku;
+          if (wasSku === quote.lines[0]?.sku) return { row: waiting, fresh: false, sameThing: true };
+          throw new AppError(409, "plan_payment_pending", "A payment for a plan is waiting to be paid. Finish it, or wait for it to lapse, before you start another.", { reference: waiting.providerReference });
+        }
+      }
       // GG3: what the fulfilment bundle knows can never be granted is refused now (422), before the buyer pays
-      const open = await this.registry.checkStart(accountId, req.info, quote.lines.map((l) => l.sku), tx, quote);
+      const open = await this.registry.checkStart(accountId, req.info, quote.lines.map((l) => l.sku), tx, quote, holder?.email);
       // CB1: a payment already open for the same order is answered again: no new row, no new provider call
       if (open) return { row: await tx.payment.findUniqueOrThrow({ where: { id: open } }), fresh: false, sameThing: true };
       const id = this.ids.id();
@@ -138,7 +180,9 @@ export class PaymentsService {
       });
       authorizationUrl = started.authorizationUrl;
     } catch {
-      await this.db.payment.updateMany({ where: { id: created.row.id, status: "pending" }, data: { status: "failed", updatedAt: this.clock.now() } });
+      const o = readOptions(created.row.options);
+      o.server.reason = "We could not reach the payment provider, so nothing was charged. Try again in a moment.";
+      await this.db.payment.updateMany({ where: { id: created.row.id, status: "pending" }, data: { status: "failed", updatedAt: this.clock.now(), options: writeOptions(o) } });
       throw new AppError(502, "payment_provider_unavailable", "We could not reach the payment provider. Try again.");
     }
     const opts = readOptions(created.row.options);
@@ -171,11 +215,25 @@ export class PaymentsService {
    */
   async verifyOwn(accountId: string, reference: string): Promise<PaymentView> {
     const mine = await this.own(accountId, reference);
+    return this.verifyRow(mine, () => this.own(accountId, reference));
+  }
+
+  /** HU1: the result of a link holder's keep payment (no account), read through the link's proof: the payment must be a holder's keep for this wish. */
+  async verifyHeld(wishId: string, reference: string): Promise<PaymentView> {
+    const find = async (): Promise<Payment> => {
+      const row = await this.db.payment.findFirst({ where: { providerReference: reference, subjectId: wishId, purpose: "keep", accountId: null } });
+      if (!row) throw AppError.notFound("No such payment.");
+      return row;
+    };
+    return this.verifyRow(await find(), find);
+  }
+
+  private async verifyRow(mine: Payment, again: () => Promise<Payment>): Promise<PaymentView> {
     if (mine.status === "pending" || mine.status === "started" || mine.status === "abandoned" || mine.status === "failed") {
       const answer = await this.askProvider(mine.providerReference);
       if (answer) await this.settlement.settle(answer);
     }
-    return this.view(await this.own(accountId, reference));
+    return this.view(await again());
   }
 
   /** The provider's answer for a reference, or null when the provider cannot be reached (the page shows the state it has). */
@@ -248,6 +306,7 @@ export class PaymentsService {
       updatedAt: p.updatedAt.toISOString(),
       verifiedAt: p.verifiedAt ? p.verifiedAt.toISOString() : null,
       fulfilled: p.fulfilledAt !== null,
+      reason: p.status === "failed" ? (opts.server.reason ?? "The payment did not go through.") : refundDueWords(p.flags),
     };
   }
 }

@@ -1,6 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "../../common/db/prisma.service";
 import type { Principal } from "../../common/auth/principal";
+import { notInBusiness } from "../../common/auth/login-removed";
 import { AppError } from "../../common/errors/app-error";
 
 /**
@@ -29,7 +30,7 @@ export class BusinessOf {
   async require(p: Principal | undefined): Promise<string> {
     if (!p || p.kind !== "user") throw AppError.forbidden();
     const id = await this.find(p.accountId);
-    if (!id) throw AppError.forbidden("You are not part of a business.");
+    if (!id) throw await notInBusiness(this.prisma, p.accountId, "You are not part of a business.");
     return id;
   }
 }

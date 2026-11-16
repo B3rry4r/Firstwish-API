@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "frozenAt": "2026-11-16T14:29:14Z",
+  "frozenAt": "2026-11-16T17:44:36Z",
   "framework": "nestjs",
   "generatedBy": "tools/pipeline/reconcile.py",
   "resources": [
@@ -100,6 +100,18 @@
           "nullable": false,
           "provenance": [
             "app-home"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "businesses",
+          "type": "array",
+          "classes": [
+            "array"
+          ],
+          "nullable": true,
+          "provenance": [
+            "DEC-237"
           ],
           "supersedes": []
         },
@@ -3628,14 +3640,20 @@
             }
           ],
           "body": [],
-          "response": null,
+          "response": {
+            "entity": "Business",
+            "cardinality": "single",
+            "note": "the plan state with the usage fields first, offers[] (what a payment for each plan would do), pending (the waiting plan payment) (DEC-236)"
+          },
           "sources": [
             {
               "src": "DEC-87",
               "via": "ruling:DEC-87"
             }
           ],
-          "notes": []
+          "notes": [
+            "body by DEC-236"
+          ]
         }
       ]
     },
@@ -3990,6 +4008,18 @@
             "pro-vault-shoot",
             "pro-wish-detail",
             "pro-wishes"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "returnsToPackOn",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": true,
+          "provenance": [
+            "DEC-240"
           ],
           "supersedes": []
         },
@@ -6700,6 +6730,18 @@
           "nullable": false,
           "provenance": [
             "maker-ending"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "slug",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "DEC-240"
           ],
           "supersedes": []
         }
@@ -10376,6 +10418,18 @@
           "nullable": false,
           "provenance": [
             "maker-opening"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "slug",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "DEC-240"
           ],
           "supersedes": []
         }
@@ -14828,6 +14882,129 @@
           ]
         },
         {
+          "id": "E-257",
+          "method": "POST",
+          "path": "/v1/w/:slug/keep",
+          "auth": [
+            {
+              "kind": "public"
+            }
+          ],
+          "body": [
+            {
+              "name": "days",
+              "type": "number 30|182|365",
+              "from": [
+                "DEC-235"
+              ]
+            },
+            {
+              "name": "email",
+              "type": "string (the payer's email: the receipt goes there)",
+              "from": [
+                "DEC-235"
+              ]
+            },
+            {
+              "name": "idempotency-key",
+              "type": "header",
+              "from": [
+                "DEC-235"
+              ]
+            },
+            {
+              "name": "keep",
+              "type": "enum(month|half|year)",
+              "from": [
+                "DEC-235"
+              ]
+            },
+            {
+              "name": "keepKey",
+              "type": "'month'|'half'|'year'",
+              "from": [
+                "DEC-235"
+              ]
+            },
+            {
+              "name": "paymentWay",
+              "type": "'card'|'transfer'|'ussd' (PaySheet, not passed on)",
+              "from": [
+                "DEC-235"
+              ]
+            },
+            {
+              "name": "x-unlock-token",
+              "type": "header (optional: the link's unlock token, where the wish has a passcode)",
+              "from": [
+                "DEC-235"
+              ]
+            },
+            {
+              "name": "x-wish-proof",
+              "type": "header (the signed proof PublicWishView.keepOffer.proof gave)",
+              "from": [
+                "DEC-235"
+              ]
+            }
+          ],
+          "response": {
+            "entity": "PublicWishView",
+            "cardinality": "single",
+            "paymentStart": "optional",
+            "note": "{payment, item}: item is the public view of the wish (no content); DEC-235"
+          },
+          "sources": [
+            {
+              "src": "DEC-235",
+              "via": "ruling:DEC-235"
+            }
+          ],
+          "notes": [
+            "body by DEC-235"
+          ]
+        },
+        {
+          "id": "E-258",
+          "method": "GET",
+          "path": "/v1/w/:slug/keep/:reference",
+          "auth": [
+            {
+              "kind": "public"
+            }
+          ],
+          "body": [
+            {
+              "name": "x-unlock-token",
+              "type": "header (optional: the link's unlock token, where the wish has a passcode)",
+              "from": [
+                "DEC-235"
+              ]
+            },
+            {
+              "name": "x-wish-proof",
+              "type": "header (the signed proof PublicWishView.keepOffer.proof gave)",
+              "from": [
+                "DEC-235"
+              ]
+            }
+          ],
+          "response": {
+            "entity": "PublicWishView",
+            "cardinality": "single",
+            "note": "{payment, item}: the payment as its payer reads it and the public view of the wish (DEC-235)"
+          },
+          "sources": [
+            {
+              "src": "DEC-235",
+              "via": "ruling:DEC-235"
+            }
+          ],
+          "notes": [
+            "body by DEC-235"
+          ]
+        },
+        {
           "id": "E-131",
           "method": "POST",
           "path": "/v1/w/:slug/opens",
@@ -15012,6 +15189,42 @@
           "notes": [
             "body by DEC-182",
             "route by DEC-101"
+          ]
+        },
+        {
+          "id": "E-259",
+          "method": "POST",
+          "path": "/v1/w/:slug/wake",
+          "auth": [
+            {
+              "kind": "public"
+            }
+          ],
+          "body": [
+            {
+              "name": "x-unlock-token",
+              "type": "header (optional: the link's unlock token, where the wish has a passcode)",
+              "from": [
+                "DEC-235"
+              ]
+            },
+            {
+              "name": "x-wish-proof",
+              "type": "header (the signed proof PublicWishView.keepOffer.proof gave)",
+              "from": [
+                "DEC-235"
+              ]
+            }
+          ],
+          "response": null,
+          "sources": [
+            {
+              "src": "DEC-235",
+              "via": "ruling:DEC-235"
+            }
+          ],
+          "notes": [
+            "body by DEC-235"
           ]
         }
       ]
@@ -22250,6 +22463,18 @@
           "supersedes": []
         },
         {
+          "name": "showcaseSlug",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": true,
+          "provenance": [
+            "DEC-239"
+          ],
+          "supersedes": []
+        },
+        {
           "name": "slug",
           "type": "string",
           "classes": [
@@ -27789,6 +28014,110 @@
           ]
         },
         {
+          "id": "E-260",
+          "method": "GET",
+          "path": "/v1/g/:slug",
+          "auth": [
+            {
+              "kind": "public"
+            }
+          ],
+          "body": [],
+          "response": {
+            "entity": "Wish",
+            "cardinality": "single",
+            "note": "{from, forName, kind, occasion, open, reason, count, limit, full, maxSeconds, maxBytes}: first names only, nothing else of the wish (DEC-238)"
+          },
+          "sources": [
+            {
+              "src": "DEC-238",
+              "via": "ruling:DEC-238"
+            }
+          ],
+          "notes": [
+            "body by DEC-238"
+          ]
+        },
+        {
+          "id": "E-261",
+          "method": "POST",
+          "path": "/v1/g/:slug/voice",
+          "auth": [
+            {
+              "kind": "public"
+            }
+          ],
+          "body": [
+            {
+              "name": "bytes",
+              "type": "number (the file's size in bytes)",
+              "from": [
+                "DEC-238"
+              ]
+            },
+            {
+              "name": "contentType",
+              "type": "string (an audio type taken for a voice note)",
+              "from": [
+                "DEC-238"
+              ]
+            },
+            {
+              "name": "name",
+              "type": "string (the friend's first name, up to 40 characters)",
+              "from": [
+                "DEC-238"
+              ]
+            },
+            {
+              "name": "seconds",
+              "type": "number (1 to 180, optional)",
+              "from": [
+                "DEC-238"
+              ]
+            }
+          ],
+          "response": {
+            "entity": "Wish",
+            "cardinality": "single",
+            "note": "{id, upload}: the voice's id and its signed put (DEC-238)"
+          },
+          "sources": [
+            {
+              "src": "DEC-238",
+              "via": "ruling:DEC-238"
+            }
+          ],
+          "notes": [
+            "body by DEC-238"
+          ]
+        },
+        {
+          "id": "E-262",
+          "method": "POST",
+          "path": "/v1/g/:slug/voice/:id/confirm",
+          "auth": [
+            {
+              "kind": "public"
+            }
+          ],
+          "body": [],
+          "response": {
+            "entity": "Wish",
+            "cardinality": "single",
+            "note": "{id, state ready, checking or refused, reason} (DEC-238)"
+          },
+          "sources": [
+            {
+              "src": "DEC-238",
+              "via": "ruling:DEC-238"
+            }
+          ],
+          "notes": [
+            "body by DEC-238"
+          ]
+        },
+        {
           "id": "E-221",
           "method": "GET",
           "path": "/v1/wishes",
@@ -28895,6 +29224,78 @@
           "notes": [
             "route by conventions naming"
           ]
+        },
+        {
+          "id": "E-263",
+          "method": "GET",
+          "path": "/v1/wishes/:id/gather",
+          "auth": [
+            {
+              "kind": "user",
+              "scope": "own records"
+            }
+          ],
+          "body": [],
+          "response": {
+            "entity": "Wish",
+            "cardinality": "single",
+            "note": "{slug, link, active, open, count, limit, voices[{id, from, seconds, state, at, url, expiresAt}]} (DEC-238)"
+          },
+          "sources": [
+            {
+              "src": "DEC-238",
+              "via": "ruling:DEC-238"
+            }
+          ],
+          "notes": [
+            "body by DEC-238"
+          ]
+        },
+        {
+          "id": "E-264",
+          "method": "POST",
+          "path": "/v1/wishes/:id/gather/off",
+          "auth": [
+            {
+              "kind": "user",
+              "scope": "own records"
+            }
+          ],
+          "body": [],
+          "response": {
+            "entity": "Wish",
+            "cardinality": "single",
+            "note": "the gather link as GET /v1/wishes/:id/gather reads it, now off (DEC-238)"
+          },
+          "sources": [
+            {
+              "src": "DEC-238",
+              "via": "ruling:DEC-238"
+            }
+          ],
+          "notes": [
+            "body by DEC-238"
+          ]
+        },
+        {
+          "id": "E-265",
+          "method": "DELETE",
+          "path": "/v1/wishes/:id/gather/voices/:voiceId",
+          "auth": [
+            {
+              "kind": "user",
+              "scope": "own records"
+            }
+          ],
+          "body": [],
+          "response": null,
+          "sources": [
+            {
+              "src": "DEC-238",
+              "via": "ruling:DEC-238"
+            }
+          ],
+          "notes": []
         },
         {
           "id": "E-228",

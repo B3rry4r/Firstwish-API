@@ -1,3 +1,4 @@
+import { HOUSE_WORDS, isHouseWish } from "../wishes/house";
 import { HttpStatus, Inject, Injectable } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
 import { createHmac, timingSafeEqual } from "node:crypto";
@@ -161,6 +162,8 @@ export class ReportsService {
         FROM wish_link l JOIN wish w ON w.id = l."wishId" WHERE l.slug = ${slug}`;
     const w = rows[0];
     if (!w || w.status === "draft" || w.status === "removed" || w.erasedAt) throw none;
+    // HU2: a house wish is the house's own sample: nothing is reported about it
+    if (await isHouseWish(tx, w.id)) throw AppError.conflict("house_wish", HOUSE_WORDS);
     return w;
   }
 

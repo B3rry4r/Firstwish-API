@@ -1707,6 +1707,87 @@
         "staff:owner"
       ],
       "decision": "DEC-233"
+    },
+    {
+      "resource": "PublicWishView",
+      "method": "POST",
+      "path": "/v1/w/:slug/keep",
+      "auth": [
+        "public"
+      ],
+      "decision": "DEC-235"
+    },
+    {
+      "resource": "PublicWishView",
+      "method": "POST",
+      "path": "/v1/w/:slug/wake",
+      "auth": [
+        "public"
+      ],
+      "decision": "DEC-235"
+    },
+    {
+      "resource": "PublicWishView",
+      "method": "GET",
+      "path": "/v1/w/:slug/keep/:reference",
+      "auth": [
+        "public"
+      ],
+      "decision": "DEC-235"
+    },
+    {
+      "resource": "Wish",
+      "method": "GET",
+      "path": "/v1/wishes/:id/gather",
+      "auth": [
+        "user:owner"
+      ],
+      "decision": "DEC-238"
+    },
+    {
+      "resource": "Wish",
+      "method": "POST",
+      "path": "/v1/wishes/:id/gather/off",
+      "auth": [
+        "user:owner"
+      ],
+      "decision": "DEC-238"
+    },
+    {
+      "resource": "Wish",
+      "method": "DELETE",
+      "path": "/v1/wishes/:id/gather/voices/:voiceId",
+      "auth": [
+        "user:owner"
+      ],
+      "decision": "DEC-238"
+    },
+    {
+      "resource": "Wish",
+      "method": "GET",
+      "path": "/v1/g/:slug",
+      "auth": [
+        "public"
+      ],
+      "decision": "DEC-238"
+    },
+    {
+      "resource": "Wish",
+      "method": "POST",
+      "path": "/v1/g/:slug/voice",
+      "auth": [
+        "public"
+      ],
+      "decision": "DEC-238"
+    },
+    {
+      "resource": "Wish",
+      "method": "POST",
+      "path": "/v1/g/:slug/voice/:id/confirm",
+      "auth": [
+        "public"
+      ],
+      "decision": "DEC-238"
     }
   ],
   "fulfilment": {
@@ -2564,6 +2645,98 @@
         "cardinality": "list",
         "note": "the price book's versions, newest first, each with createdBy and createdAt (DEC-233)"
       }
+    },
+    "POST /v1/w/:slug/keep": {
+      "decision": "DEC-235",
+      "set": {
+        "email": "string (the payer's email: the receipt goes there)",
+        "keepKey": "'month'|'half'|'year'",
+        "keep": "enum(month|half|year)",
+        "days": "number 30|182|365",
+        "paymentWay": "'card'|'transfer'|'ussd' (PaySheet, not passed on)",
+        "idempotency-key": "header",
+        "x-unlock-token": "header (optional: the link's unlock token, where the wish has a passcode)",
+        "x-wish-proof": "header (the signed proof PublicWishView.keepOffer.proof gave)"
+      },
+      "response": {
+        "entity": "PublicWishView",
+        "cardinality": "single",
+        "paymentStart": "optional",
+        "note": "{payment, item}: item is the public view of the wish (no content); DEC-235"
+      }
+    },
+    "POST /v1/w/:slug/wake": {
+      "decision": "DEC-235",
+      "set": {
+        "x-unlock-token": "header (optional: the link's unlock token, where the wish has a passcode)",
+        "x-wish-proof": "header (the signed proof PublicWishView.keepOffer.proof gave)"
+      }
+    },
+    "GET /v1/w/:slug/keep/:reference": {
+      "decision": "DEC-235",
+      "set": {
+        "x-unlock-token": "header (optional: the link's unlock token, where the wish has a passcode)",
+        "x-wish-proof": "header (the signed proof PublicWishView.keepOffer.proof gave)"
+      },
+      "response": {
+        "entity": "PublicWishView",
+        "cardinality": "single",
+        "note": "{payment, item}: the payment as its payer reads it and the public view of the wish (DEC-235)"
+      }
+    },
+    "GET /v1/wishes/:id/gather": {
+      "decision": "DEC-238",
+      "response": {
+        "entity": "Wish",
+        "cardinality": "single",
+        "note": "{slug, link, active, open, count, limit, voices[{id, from, seconds, state, at, url, expiresAt}]} (DEC-238)"
+      }
+    },
+    "POST /v1/wishes/:id/gather/off": {
+      "decision": "DEC-238",
+      "response": {
+        "entity": "Wish",
+        "cardinality": "single",
+        "note": "the gather link as GET /v1/wishes/:id/gather reads it, now off (DEC-238)"
+      }
+    },
+    "GET /v1/g/:slug": {
+      "decision": "DEC-238",
+      "response": {
+        "entity": "Wish",
+        "cardinality": "single",
+        "note": "{from, forName, kind, occasion, open, reason, count, limit, full, maxSeconds, maxBytes}: first names only, nothing else of the wish (DEC-238)"
+      }
+    },
+    "POST /v1/g/:slug/voice": {
+      "decision": "DEC-238",
+      "set": {
+        "name": "string (the friend's first name, up to 40 characters)",
+        "contentType": "string (an audio type taken for a voice note)",
+        "bytes": "number (the file's size in bytes)",
+        "seconds": "number (1 to 180, optional)"
+      },
+      "response": {
+        "entity": "Wish",
+        "cardinality": "single",
+        "note": "{id, upload}: the voice's id and its signed put (DEC-238)"
+      }
+    },
+    "POST /v1/g/:slug/voice/:id/confirm": {
+      "decision": "DEC-238",
+      "response": {
+        "entity": "Wish",
+        "cardinality": "single",
+        "note": "{id, state ready, checking or refused, reason} (DEC-238)"
+      }
+    },
+    "GET /v1/business/plan": {
+      "decision": "DEC-236",
+      "response": {
+        "entity": "Business",
+        "cardinality": "single",
+        "note": "the plan state with the usage fields first, offers[] (what a payment for each plan would do), pending (the waiting plan payment) (DEC-236)"
+      }
     }
   },
   "extraFields": [
@@ -2937,6 +3110,41 @@
       "type": "integer",
       "nullable": true,
       "decision": "DEC-233"
+    },
+    {
+      "resource": "Account",
+      "name": "businesses",
+      "type": "array",
+      "nullable": true,
+      "decision": "DEC-237"
+    },
+    {
+      "resource": "Style",
+      "name": "showcaseSlug",
+      "type": "string",
+      "nullable": true,
+      "decision": "DEC-239"
+    },
+    {
+      "resource": "ClientWish",
+      "name": "returnsToPackOn",
+      "type": "string",
+      "nullable": true,
+      "decision": "DEC-240"
+    },
+    {
+      "resource": "EndingPurpose",
+      "name": "slug",
+      "type": "string",
+      "nullable": false,
+      "decision": "DEC-240"
+    },
+    {
+      "resource": "OpeningDef",
+      "name": "slug",
+      "type": "string",
+      "nullable": false,
+      "decision": "DEC-240"
     }
   ],
   "dropFields": [

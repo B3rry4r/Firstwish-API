@@ -33,6 +33,7 @@ import { FollowsModule } from "./modules/follows/follows.module";
 import { StoredFilesModule } from "./modules/stored-files/stored-files.module";
 import { ScreeningResultsModule } from "./modules/screening-results/screening-results.module";
 import { VoiceNotesModule } from "./modules/voice-notes/voice-notes.module";
+import { GatherModule } from "./modules/gather/gather.module";
 import { VaultFilesModule } from "./modules/vault-files/vault-files.module";
 // end B09
 // B12: dates and saved things
@@ -112,6 +113,7 @@ import { LedgerEntriesModule } from "./modules/ledger-entries/ledger-entries.mod
     StoredFilesModule,
     ScreeningResultsModule,
     VoiceNotesModule,
+    GatherModule,
     VaultFilesModule,
     // end B09
     // B12

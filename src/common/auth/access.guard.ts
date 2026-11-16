@@ -4,7 +4,9 @@ import { timingSafeEqual } from "node:crypto";
 import type { Request } from "express";
 import { ENV } from "../env/env.module";
 import type { Env } from "../env/env";
+import { PrismaService } from "../db/prisma.service";
 import { AppError } from "../errors/app-error";
+import { loginRemoved, loginWasRemoved } from "./login-removed";
 import { PaymentsPort } from "../ports/payments.port";
 import { assertCookieOrigin, COOKIE_ORIGIN } from "./cookie-origin";
 import { checkSvix } from "./svix";
@@ -31,6 +33,7 @@ export class AccessGuard implements CanActivate {
     private readonly tokens: AccessTokenVerifier,
     private readonly payments: PaymentsPort,
     private readonly clock: Clock,
+    private readonly db: PrismaService,
     @Inject(ENV) private readonly env: Env,
   ) {}
 
@@ -57,13 +60,15 @@ export class AccessGuard implements CanActivate {
       case "user": {
         const p = await this.principal(req);
         if (p.kind !== "user") throw AppError.forbidden();
-        if (access.sides?.length && !access.sides.some((s) => p.sides.includes(s))) throw AppError.forbidden();
+        if (access.sides?.length && !access.sides.some((s) => p.sides.includes(s))) throw await this.refusedSides(access, p);
+        // HU5: on a route for the business side alone, a person whose only way into a business was a login now removed is refused here, before any body or query is read
+        if (access.sides?.length && access.sides.every((s) => s === "business") && (await this.removedFromBusiness(p.accountId, req))) throw loginRemoved();
         return true;
       }
       case "userOrStaff": {
         const p = await this.principal(req);
         if (p.kind === "user") {
-          if (access.sides?.length && !access.sides.some((s) => p.sides.includes(s))) throw AppError.forbidden();
+          if (access.sides?.length && !access.sides.some((s) => p.sides.includes(s))) throw await this.refusedSides(access, p);
           return true;
         }
         if (!p.roles.includes("owner") && !access.roles.some((r) => p.roles.includes(r))) throw AppError.forbidden();
@@ -76,6 +81,26 @@ export class AccessGuard implements CanActivate {
         return true;
       }
     }
+  }
+
+  /** HU5: the one place a business read is refused for want of the business side: a person whose login was removed is told so, with words. */
+  private async refusedSides(access: { sides?: readonly string[] }, p: Principal): Promise<AppError> {
+    if (p.kind === "user" && access.sides?.includes("business") && (await loginWasRemoved(this.db, p.accountId))) return loginRemoved();
+    return AppError.forbidden();
+  }
+
+  /** True when the business the request works in (the one named by x-business-id, else any) is one the person was removed from and has no other way into. */
+  private async removedFromBusiness(accountId: string, req: Req): Promise<boolean> {
+    const h = req.headers["x-business-id"];
+    if (typeof h === "string" && h) return loginWasRemoved(this.db, accountId, h);
+    if (!(await loginWasRemoved(this.db, accountId))) return false;
+    const rows = await this.db.$queryRaw<{ id: string }[]>`
+      SELECT b.id::text AS id FROM business b WHERE b."accountId" = ${accountId}::uuid
+      UNION ALL
+      SELECT l."businessId"::text FROM login l JOIN account a ON a.id = ${accountId}::uuid
+       WHERE l."businessId" IS NOT NULL AND a.contact IS NOT NULL AND lower(trim(l.contact)) = lower(a.contact) AND coalesce(l.status, '') <> 'removed'
+      LIMIT 1`;
+    return rows.length === 0;
   }
 
   private async principal(req: Req): Promise<Principal> {

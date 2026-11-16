@@ -687,3 +687,10 @@ HA2 (B22; T-14 "keeps every wish its holder made live while the Pass is active")
     nothing yet.)
 HA3 (B22) E-232 follows the registry: the owner, or a signed-in receiver who holds the link; a stranger is refused. Approving
     a date needs the person's matching date: accepted. E-83 and E-64 gain their extra fields in the registry (closing base).
+GD1 (B23 verify, medium) An AI answer holding a control character is refused (502) like any rubbish; whatever goes wrong after
+    the provider answers, the row is marked failed and its place for the day comes back: never a 500, never a stuck row.
+GD2 (B23 verify, medium) Erasing one wish blanks the words of its AI requests (transcript, output), as an account erase does.
+GD3 (B23 verify, medium) The seed export keeps rows that differ only in nested fields: every chapter spec of the web app is
+    served (99, not 97); a test counts each of the four lists against the web app's own files.
+GD4 (B23 verify, medium) Ending purposes are read by any signed-in person (the maker every sender uses reads them); the
+    registry is corrected at the closing base. (All four: B23 patch.) Lows -> sweep.

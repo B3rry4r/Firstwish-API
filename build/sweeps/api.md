@@ -37,3 +37,5 @@
 - B21 admin-wishes.service.ts resend: the day is counted on the database's clock, not the Clock port (a fake clock does not roll the day).
 - B(INT-5) migration 20261120090000: the legacy-wish check tests "off" IS NOT NULL, so a wish with off=false and no words would block it (no live rows today).
 - P-B17b: deleting a draft made by E-30 does not give the drawn wish back (restorable within the window, then lost); give the draw back when the removal is final.
+- B23 ai-writing.service.ts:181,208: a call that finishes after the 5-minute stale cut can make 21 good calls in a day (the port limit is 60 s, so theoretical).
+- B23: a caller can type the block's own closing mark in their words; it only affects their own request.

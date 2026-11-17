@@ -156,8 +156,10 @@ export class ShootsService {
     for (const fid of done.ids) {
       if (kept.has(fid)) continue;
       if (await playingRevealNames(this.db, fid, this.clock.now())) continue; // HC1: a reveal that still plays shows it
+      // a file a login uploaded belongs to that login's account: it goes under its own owner
+      const owner = (await this.db.storedFile.findUnique({ where: { id: fid }, select: { ownerAccountId: true } }))?.ownerAccountId ?? done.accountId;
       try {
-        await this.files.remove({ kind: "user", accountId: done.accountId, sides: ["person", "business"] }, fid, {});
+        await this.files.remove({ kind: "user", accountId: owner, sides: ["person", "business"] }, fid, {});
       } catch (e) {
         if (!(e instanceof AppError)) throw e; // a file already gone (404) or still used (409) is left; the shoot is gone either way
       }

@@ -31,6 +31,8 @@ import {
   variantsOf,
 } from "./file-rules";
 import { readLimits } from "../price-book/book-limits";
+import { notInBusiness } from "../../common/auth/login-removed";
+import { businessAccessOf } from "./vault-access";
 import { ScreeningService } from "./screening.service";
 
 type Tx = Prisma.TransactionClient;
@@ -89,6 +91,21 @@ export class StoredFilesService {
   }
 
   /**
+   * IB6 (HU5): the business a Vault upload goes to: the caller's own, or one where they hold a live login (invited or active, as the business's
+   * other pages count it). With `named` (the x-business-id header) it must be one of those. A removed login is refused with login_removed and
+   * words; a person of no business, or of another business, with the plain 403.
+   */
+  private async vaultBusinessOf(tx: Tx, p: UserPrincipal, named: string | undefined): Promise<Business> {
+    const access = await businessAccessOf(tx, p.accountId);
+    const mine = [...access.owned, ...access.member];
+    const want = named === undefined ? mine[0] : mine.find((id) => id === named.trim().toLowerCase());
+    if (!want) throw await notInBusiness(tx, p.accountId, "Vault files need a business.");
+    const biz = await tx.business.findUnique({ where: { id: want } });
+    if (!biz) throw AppError.forbidden("Vault files need a business.");
+    return biz;
+  }
+
+  /**
    * HU4: a wish holds at most MAX_VOICE_NOTES_PER_WISH voice notes from friends and, counted apart, as many of the owner's own (the owner's own
    * voice is never counted against what friends may send). Only one that has arrived (uploaded, screening or ready) counts, so an ask never
    * uploaded holds no place. The next one is 409 with words.
@@ -123,7 +140,7 @@ export class StoredFilesService {
    * E-182: checks purpose, type, size and entitlement, then issues a signed PUT for one STAGING key (Y1), good for 15 minutes and
    * bound to the type and the exact length (X26). The file's own key is made here too but is never signed for a PUT.
    */
-  async createTicket(p: UserPrincipal, body: PostUploadsBody, opts: { gather?: boolean } = {}): Promise<UploadTicket> {
+  async createTicket(p: UserPrincipal, body: PostUploadsBody, opts: { gather?: boolean; business?: string } = {}): Promise<UploadTicket> {
     const rule = purposeOf(body.purpose);
     if (!rule) throw AppError.validation({ purpose: "Must be one of photo, voice, clip, vault, studio, picture, poster, sound, model, profile or brand." });
     const contentType = normaliseType(body.contentType);
@@ -152,7 +169,7 @@ export class StoredFilesService {
       let businessId: string | null = null;
       let styleId: string | null = null;
       if (rule.purpose === "vault-file" || rule.purpose === "brand-logo") {
-        const biz = await this.businessOf(tx, p);
+        const biz = rule.purpose === "vault-file" ? await this.vaultBusinessOf(tx, p, opts.business) : await this.businessOf(tx, p);
         businessId = biz.id;
         if (rule.purpose === "vault-file") {
           const limit = await vaultLimitBytes(tx, biz, now);

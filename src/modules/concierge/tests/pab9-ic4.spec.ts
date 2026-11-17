@@ -96,4 +96,32 @@ describe("IC4: a wish being made for an order is hidden from the buyer on every 
     expect((await http().post(`/v1/admin/concierge-orders/${o2}/delivery`).set("Authorization", m2.auth).send({ reason: "its own", wishIds: [] })).status).toBe(200);
     expect((await http().get(`/v1/wishes/${other.id}`).set("Authorization", buyer.auth)).status).toBe(200);
   });
+
+  it("F1: a buyer with a wish being made for their order starts a wish of the same name, with and without a key: a new wish of their own, never the hidden one; after delivery the delivered wish is theirs like any", async () => {
+    const m = await k.staff(["maker"]);
+    const buyer = await k.account();
+    const order = await paidOrder(buyer, m.id);
+    const hidden = (await http().post(`/v1/admin/concierge/orders/${order}/wishes`).set("Authorization", m.auth).send({ reason: "making it", kind: "birthday", occasion: "birthday", name: "Ada Obi" })).body.id as string;
+    expect(hidden).toBeTruthy();
+    const start = (key?: string) => {
+      const r = http().post("/v1/wishes").set("Authorization", buyer.auth);
+      return (key ? r.set("Idempotency-Key", key) : r).send({ from: "Ada", name: "Ada Obi", studio: "" });
+    };
+    const bare = await start();
+    expect(bare.status).toBe(201);
+    expect(bare.body.id).not.toBe(hidden);
+    // a key already bound to the hidden wish is not replayed to the buyer
+    const key = `ic4-f1-${run}`;
+    await db.wishStart.create({ data: { id: ids.next(), accountId: buyer.id, key, wishId: hidden } });
+    const keyed = await start(key);
+    expect(keyed.status).toBe(200); // the buyer's own untouched start, found instead of the hidden wish
+    expect(keyed.body.id).toBe(bare.body.id);
+    expect((await start(key)).body.id).toBe(keyed.body.id);
+    expect((await http().get("/v1/wishes").set("Authorization", buyer.auth)).body.items.map((w: { id: string }) => w.id)).not.toContain(hidden);
+    // after delivery the delivered wish is one of theirs: a bare start now answers a bare draft of theirs, and the key no longer replays the hidden-era binding
+    expect((await http().post(`/v1/admin/concierge-orders/${order}/delivery`).set("Authorization", m.auth).send({ reason: "done", wishIds: [] })).status).toBe(200);
+    expect((await http().get(`/v1/wishes/${hidden}`).set("Authorization", buyer.auth)).status).toBe(200);
+    const list = (await http().get("/v1/wishes").set("Authorization", buyer.auth)).body.items.map((w: { id: string }) => w.id);
+    expect(list).toContain(hidden);
+  });
 });

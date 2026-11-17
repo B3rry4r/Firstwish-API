@@ -152,4 +152,22 @@ describe("IC1 and IC2: a copied or re-sent link is never more open than its reve
     const m = await k.db.$queryRaw<{ t: string }[]>`SELECT format_type(atttypid, atttypmod) AS t FROM pg_attribute WHERE attrelid = 'reveal_access'::regclass AND attname = 'hearts'`;
     expect(m[0].t).toBe("uuid[]");
   });
+
+  it("F2: switching a reveal off kills a link already copied; downloads off and on reach a link already copied", async () => {
+    const o = await k.owner();
+    const s = await k.shootWith(o, "finals", 2);
+    const r = await send(o, s.shoot, {}, {}, "finals");
+    expect(r.status).toBe(200);
+    const copied = await copy(o, s.shoot, "finals");
+    expect((await read(copied)).body.downloads).toHaveLength(2);
+    const rid = await idOf(r.body.link);
+    expect((await k.post(`/v1/business/reveal-links/${rid}/downloads`, o.token, { on: false })).status).toBe(200);
+    expect((await read(copied)).body.downloads).toBeUndefined();
+    expect((await k.post(`/v1/business/reveal-links/${rid}/downloads`, o.token, { on: true })).status).toBe(200);
+    expect((await read(copied)).body.downloads).toHaveLength(2);
+    expect((await read(r.body.link)).body.downloads).toHaveLength(2);
+    expect((await k.post(`/v1/business/reveal-links/${rid}/off`, o.token)).status).toBe(200);
+    expect((await read(r.body.link)).status).toBe(410);
+    expect((await read(copied)).status).toBe(410);
+  });
 });

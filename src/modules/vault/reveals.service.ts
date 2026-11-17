@@ -481,6 +481,19 @@ export class RevealsService {
        WHERE "shootId" = ${shootId}::uuid AND "set" = ${set} AND "wishId" IS NULL AND "offAt" IS NULL`;
   }
 
+  /**
+   * IC1: a switch made on a reveal's link (downloads, off) reaches the links already copied for its shoot's set, not only the ones copied
+   * later. A link that is itself a copy (no wish) carries nothing. `restore`: the downloads switch is set to the reveal's, on or off.
+   */
+  private async carryFrom(tx: Tx, linkId: string, restore: boolean): Promise<void> {
+    const r = await tx.$queryRaw<{ shootId: string; set: SetName }[]>`SELECT "shootId"::text AS "shootId", "set" FROM reveal_access WHERE "linkId" = ${linkId}::uuid AND "wishId" IS NOT NULL`;
+    if (!r[0]) return;
+    await this.carryToCopies(tx, r[0].shootId, r[0].set);
+    if (!restore) return;
+    const g = await this.governing(tx, r[0].shootId, r[0].set);
+    if (g) await tx.$executeRaw`UPDATE reveal_access SET downloads = ${g.downloads}::boolean WHERE "shootId" = ${r[0].shootId}::uuid AND "set" = ${r[0].set} AND "wishId" IS NULL AND "offAt" IS NULL`;
+  }
+
   /** E-152. */
   async get(businessId: string, linkId: string): Promise<RevealLink> {
     if (!UUID.test(linkId)) throw AppError.notFound();
@@ -491,16 +504,24 @@ export class RevealsService {
   async setDownloads(businessId: string, linkId: string, on: unknown): Promise<RevealLink> {
     if (!UUID.test(linkId)) throw AppError.notFound();
     if (typeof on !== "boolean") throw AppError.validation({ on: "Must be true or false." });
-    const n = await this.db.$executeRaw`UPDATE reveal_access SET downloads = ${on} WHERE "linkId" = ${linkId}::uuid AND "businessId" = ${businessId}::uuid`;
-    if (n === 0) throw AppError.notFound();
+    await this.db.$transaction(async (tx) => {
+      await lockBusinessOwner(tx, businessId);
+      const n = await tx.$executeRaw`UPDATE reveal_access SET downloads = ${on} WHERE "linkId" = ${linkId}::uuid AND "businessId" = ${businessId}::uuid`;
+      if (n === 0) throw AppError.notFound();
+      await this.carryFrom(tx, linkId, true);
+    });
     return this.view(businessId, { linkId });
   }
 
   /** Switches a link off at once: from the next read it answers gone. Switching off twice changes nothing. */
   async off(businessId: string, linkId: string): Promise<RevealLink> {
     if (!UUID.test(linkId)) throw AppError.notFound();
-    const n = await this.db.$executeRaw`UPDATE reveal_access SET "offAt" = COALESCE("offAt", ${this.clock.now()}) WHERE "linkId" = ${linkId}::uuid AND "businessId" = ${businessId}::uuid`;
-    if (n === 0) throw AppError.notFound();
+    await this.db.$transaction(async (tx) => {
+      await lockBusinessOwner(tx, businessId);
+      const n = await tx.$executeRaw`UPDATE reveal_access SET "offAt" = COALESCE("offAt", ${this.clock.now()}) WHERE "linkId" = ${linkId}::uuid AND "businessId" = ${businessId}::uuid`;
+      if (n === 0) throw AppError.notFound();
+      await this.carryFrom(tx, linkId, false);
+    });
     return this.view(businessId, { linkId });
   }
 

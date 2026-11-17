@@ -352,14 +352,14 @@ export class WishesService {
       };
       if (key !== undefined) {
         const seen = await tx.wishStart.findUnique({ where: { accountId_key: { accountId, key } } });
-        const was = seen ? await tx.wish.findUnique({ where: { id: seen.wishId } }) : null;
+        const was = seen ? await tx.wish.findFirst({ where: { AND: [{ id: seen.wishId }, SHOWN_TO_BUYER] } }) : null;
         if (was) {
           if (was.status === "draft" && !was.erasedAt && !was.removedAt) return { row: was, fresh: false };
           throw AppError.conflict("key_spent", "This start was already used and that wish is gone. Start a new wish.");
         }
       }
       if (!answered) {
-        const mine = await tx.wish.findMany({ where: { accountId, businessId: null, status: "draft", erasedAt: null, removedAt: null }, orderBy: { id: "desc" }, take: 20 });
+        const mine = await tx.wish.findMany({ where: { AND: [{ accountId, businessId: null, status: "draft", erasedAt: null, removedAt: null }, SHOWN_TO_BUYER] }, orderBy: { id: "desc" }, take: 20 });
         const open = mine.find(isBareStart);
         if (open) {
           await remember(open.id);

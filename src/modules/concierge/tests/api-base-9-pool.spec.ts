@@ -1,3 +1,5 @@
+import { spawnSync } from "node:child_process";
+import { join } from "node:path";
 import { PrismaService } from "../../../common/db/prisma.service";
 import { SettlementService } from "../../payments/settlement.service";
 import { boot, ids } from "./kit";
@@ -10,11 +12,23 @@ describe("transactions wait for a connection: sixty contended settles on one acc
   jest.setTimeout(240000);
   let k: Awaited<ReturnType<typeof boot>>;
   let db: PrismaService;
+  // its own database: sixty orders here would crowd the lists other specs read from the shared one
+  const prefix = process.env.TEST_DB_PREFIX || "fw";
+  const dbName = `${prefix}_test_pool_${process.pid}`;
+  const rootDir = join(__dirname, "../../../..");
+  const before = process.env.DATABASE_URL;
   beforeAll(async () => {
+    const made = spawnSync(process.execPath, [join(rootDir, "scripts/db.mjs"), "create", dbName, prefix], { encoding: "utf8" });
+    if (made.status !== 0) throw new Error(`no database: ${made.stderr}`);
+    process.env.DATABASE_URL = made.stdout.trim().split("\n").pop();
     k = await boot("pab9pool", NOW);
     db = k.db;
   });
-  afterAll(() => k.t.close());
+  afterAll(async () => {
+    await k.t.close();
+    process.env.DATABASE_URL = before;
+    spawnSync(process.execPath, [join(rootDir, "scripts/db.mjs"), "drop", dbName], { encoding: "utf8" });
+  });
 
   it("60 settles of one account at once end with none failed", async () => {
     const buyer = await k.account();

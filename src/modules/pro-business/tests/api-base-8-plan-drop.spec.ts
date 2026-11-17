@@ -7,9 +7,7 @@ import { createTestApp, TestApp } from "../../../../test/kit/app";
 import { SettlementService } from "../../payments/settlement.service";
 
 const ROOT = join(__dirname, "../../../..");
-// The same month as the older money specs and a little before them: the invoice numbers of this spec fall in their month and its payment ids sort
-// below theirs, so the 30 pairs below leave the shared database's newest-payment pages and invoice runs as the older specs expect them.
-const NOW = new Date("2026-12-01T00:30:00.000Z");
+const NOW = new Date("2027-05-10T09:00:00.000Z");
 const ids = new UuidV7Maker();
 const run = `${process.pid}${Date.now() % 100000}`;
 let seq = 0;
@@ -67,7 +65,7 @@ describe("HY1 plan payments: lapse time, everyone who may pay reads it, the owne
     const started = await startPlan(o.token, "starter", idem("a"));
     expect(started.status).toBe(201);
     const r = await plan(o.token);
-    expect(r.body.pending).toMatchObject({ reference: started.body.payment.reference, plan: "starter", startedAt: NOW.toISOString(), lapsesAt: "2026-12-01T01:30:00.000Z" });
+    expect(r.body.pending).toMatchObject({ reference: started.body.payment.reference, plan: "starter", startedAt: NOW.toISOString(), lapsesAt: "2027-05-10T10:00:00.000Z" });
   });
 
   it("2. a login's plan payment is read by the owner and by another live login; an outsider and another business get 404", async () => {
@@ -155,7 +153,7 @@ describe("HY1 plan payments: lapse time, everyone who may pay reads it, the owne
     expect(r).toEqual({ outcome: "fulfilled", flagged: true });
     const b = await db.business.findUniqueOrThrow({ where: { id: o.businessId } });
     expect(b.plan).toBe("starter");
-    expect(b.renews?.toISOString()).toBe("2027-01-01T00:35:00.000Z");
+    expect(b.renews?.toISOString()).toBe("2027-06-10T09:05:00.000Z");
     const p = await db.payment.findUniqueOrThrow({ where: { providerReference: ref } });
     expect(p.fulfilledAt).not.toBeNull();
     expect(p.flags).not.toContain("refund_due");
@@ -181,7 +179,7 @@ describe("HY1 plan payments: lapse time, everyone who may pay reads it, the owne
     // the plan is the second one's alone: studio, a month from its own payment
     const b = await db.business.findUniqueOrThrow({ where: { id: o.businessId } });
     expect(b.plan).toBe("studio");
-    expect(b.renews?.toISOString()).toBe("2027-01-01T00:34:00.000Z");
+    expect(b.renews?.toISOString()).toBe("2027-06-10T09:04:00.000Z");
   });
 
   it("8. attack: a drop and a settle at the same moment, 30 pairs: one outcome each, the ledger balanced, one live plan, no lost payment", async () => {
@@ -213,9 +211,121 @@ describe("HY1 plan payments: lapse time, everyone who may pay reads it, the owne
       expect(await db.payment.count({ where: { businessId: b, purpose: "pro_plan", status: "succeeded" } })).toBe(1);
       const biz = await db.business.findUniqueOrThrow({ where: { id: b } });
       expect(biz.plan).toBe("starter");
-      expect(biz.renews?.toISOString()).toBe("2027-01-01T00:30:00.000Z");
+      expect(biz.renews?.toISOString()).toBe("2027-06-10T09:00:00.000Z");
       expect(await db.auditEntry.count({ where: { subjectId: p.id, action: "plan.drop-pending" } })).toBe(d.status === 200 ? 1 : 0);
     }
     expect(dropped + settledFirst).toBe(30);
+  });
+
+  const at = (min: number) => t.clock.set(new Date(NOW.getTime() + min * 60_000));
+  const row = (ref: string) => db.payment.findUniqueOrThrow({ where: { providerReference: ref } });
+  const invoices = (businessId: string) => db.invoice.count({ where: { businessId } });
+
+  it("9. HZ3 drop A, start B, A paid then B paid: A is applied, B is refund due with words; one plan, one invoice", async () => {
+    const o = await owner();
+    const a = (await startPlan(o.token, "starter", idem("z1a"))).body.payment.reference as string;
+    expect((await drop(o.token, a)).status).toBe(200);
+    at(2);
+    const b = (await startPlan(o.token, "starter", idem("z1b"))).body.payment.reference as string;
+    at(4);
+    expect((await pay(a)).outcome).toBe("fulfilled");
+    at(6);
+    expect(await pay(b)).toEqual({ outcome: "recorded_unfulfilled", flagged: true });
+    const pb = await row(b);
+    expect(pb.fulfilledAt).toBeNull();
+    expect(pb.flags).toEqual(expect.arrayContaining(["refund_due", "refund_due:plan_applied_meanwhile"]));
+    expect((await read(o.token, b)).body.reason).toMatch(/plan was paid for another way after this payment was started/);
+    expect((await row(a)).fulfilledAt).not.toBeNull();
+    expect(await invoices(o.businessId)).toBe(1);
+    const biz = await db.business.findUniqueOrThrow({ where: { id: o.businessId } });
+    expect(biz.plan).toBe("starter");
+    expect(biz.renews?.toISOString()).toBe("2027-06-10T09:04:00.000Z");
+    for (const ref of [a, b]) {
+      const led = await balanced((await row(ref)).id);
+      expect(String(led.d)).toBe(String(led.c));
+    }
+  });
+
+  it("10. HZ3 the other order: B paid then A late: A is refund due, B applied, one invoice", async () => {
+    const o = await owner();
+    const a = (await startPlan(o.token, "starter", idem("z2a"))).body.payment.reference as string;
+    expect((await drop(o.token, a)).status).toBe(200);
+    at(2);
+    const b = (await startPlan(o.token, "studio", idem("z2b"))).body.payment.reference as string;
+    at(4);
+    expect((await pay(b)).outcome).toBe("fulfilled");
+    at(6);
+    expect(await pay(a)).toEqual({ outcome: "recorded_unfulfilled", flagged: true });
+    expect((await row(a)).flags).toEqual(expect.arrayContaining(["refund_due", "refund_due:paid_after_drop"]));
+    expect(await invoices(o.businessId)).toBe(1);
+    expect((await db.business.findUniqueOrThrow({ where: { id: o.businessId } })).plan).toBe("studio");
+  });
+
+  it("11. HZ3 after a lapse instead of a drop: the same, whichever of the two is reported paid first", async () => {
+    for (const firstPaid of ["a", "b"] as const) {
+      const o = await owner();
+      const a = (await startPlan(o.token, "starter", idem(`z3a${firstPaid}`))).body.payment.reference as string;
+      await db.payment.update({ where: { providerReference: a }, data: { status: "abandoned" } });
+      at(2);
+      const b = (await startPlan(o.token, "starter", idem(`z3b${firstPaid}`))).body.payment.reference as string;
+      at(4);
+      const [one, two] = firstPaid === "a" ? [a, b] : [b, a];
+      expect((await pay(one)).outcome).toBe("fulfilled");
+      at(6);
+      expect((await pay(two)).outcome).toBe("recorded_unfulfilled");
+      const late = await row(two);
+      expect(late.fulfilledAt).toBeNull();
+      expect(late.flags).toContain("refund_due");
+      expect((await read(o.token, two)).body.reason).toMatch(/refunded/);
+      expect(await invoices(o.businessId)).toBe(1);
+      at(0);
+    }
+  });
+
+  it("12. HZ3 paying again after the first was fulfilled is a new intent and adds a month", async () => {
+    const o = await owner();
+    const a = (await startPlan(o.token, "starter", idem("z4a"))).body.payment.reference as string;
+    at(2);
+    expect((await pay(a)).outcome).toBe("fulfilled");
+    at(4);
+    const c = (await startPlan(o.token, "starter", idem("z4c"))).body.payment.reference as string;
+    at(6);
+    expect((await pay(c)).outcome).toBe("fulfilled");
+    expect(await invoices(o.businessId)).toBe(2);
+    const biz = await db.business.findUniqueOrThrow({ where: { id: o.businessId } });
+    expect(biz.renews?.toISOString()).toBe("2027-07-10T09:02:00.000Z");
+  });
+
+  it("13. HZ4 a plan-payment start naming the pack is 422 with words; a pack bought as a pack still works", async () => {
+    const o = await owner();
+    const r = await startPlan(o.token, "pack", idem("z5"));
+    expect(r.status).toBe(422);
+    expect(JSON.stringify(r.body)).toMatch(/pack/);
+    expect(await db.payment.count({ where: { businessId: o.businessId } })).toBe(0);
+    const ok = await t.http().post("/v1/payments").set(bearer(o.token)).set("Idempotency-Key", idem("z5b")).send({ purpose: "wish-pack" });
+    expect([201, 200]).toContain(ok.status);
+  });
+
+  it("14. HZ3 attack: A dropped, B started, both reported paid at the same moment, 30 pairs: one fulfilled, one refund due, the ledger balanced", async () => {
+    for (let i = 0; i < 30; i++) {
+      const o = await owner();
+      const a = (await startPlan(o.token, "starter", idem(`p${i}a`))).body.payment.reference as string;
+      expect((await drop(o.token, a)).status).toBe(200);
+      at(1);
+      const b = (await startPlan(o.token, "starter", idem(`p${i}b`))).body.payment.reference as string;
+      at(3);
+      const out = await Promise.all([pay(a), pay(b)]);
+      expect(out.map((x) => x.outcome).sort()).toEqual(["fulfilled", "recorded_unfulfilled"]);
+      const rows = [await row(a), await row(b)];
+      expect(rows.filter((r) => r.fulfilledAt !== null)).toHaveLength(1);
+      expect(rows.filter((r) => r.flags.includes("refund_due"))).toHaveLength(1);
+      for (const r of rows) {
+        const led = await balanced(r.id);
+        expect(led.n).toBeGreaterThan(0);
+        expect(String(led.d)).toBe(String(led.c));
+      }
+      expect(await invoices(o.businessId)).toBe(1);
+      at(0);
+    }
   });
 });

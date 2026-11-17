@@ -6,7 +6,7 @@ import { ENV } from "../../common/env/env.module";
 import type { Env } from "../../common/env/env";
 import { AppError } from "../../common/errors/app-error";
 import { normaliseEmail } from "../../common/normalise/email";
-import { fullEmailOf, searchWord, wishNumberOf } from "../../common/normalise/search-word";
+import { fullEmailOf, likeLiteral, searchWord, wishNumberOf } from "../../common/normalise/search-word";
 import { decodeCursor, Page, toPage } from "../../common/pagination/cursor";
 import { Clock } from "../../common/ports/clock.port";
 import { IdGenerator } from "../../common/ports/ids.port";
@@ -184,16 +184,20 @@ export class SupportService {
     const where: Prisma.SupportThreadWhereInput = {};
     const word = searchWord(filter.q);
     if (word) {
-      const like = { contains: word, mode: "insensitive" as const };
+      const like = { contains: likeLiteral(word), mode: "insensitive" as const };
       const email = fullEmailOf(word);
       const no = wishNumberOf(word);
-      where.OR = [
-        { subject: like },
-        { name: like },
-        { account: { name: like } },
-        ...(email ? [{ contact: { equals: email, mode: "insensitive" as const } }] : []),
-        ...(no ? [{ account: { wishByAccount: { some: { no: { equals: no, mode: "insensitive" as const } } } } }] : []),
-      ];
+      const exact = new Set<string>();
+      if (email) {
+        const rows = await this.prisma.$queryRaw<{ id: string }[]>`SELECT id::text AS id FROM support_thread WHERE lower(contact) = lower(${email})`;
+        rows.forEach((r) => exact.add(r.id));
+      }
+      if (no) {
+        const rows = await this.prisma.$queryRaw<{ id: string }[]>`
+          SELECT t.id::text AS id FROM support_thread t JOIN wish w ON w."accountId" = t."accountId" WHERE lower(w.no) = lower(${no})`;
+        rows.forEach((r) => exact.add(r.id));
+      }
+      where.OR = [{ subject: like }, { name: like }, { account: { name: like } }, ...(exact.size ? [{ id: { in: [...exact] } }] : [])];
     }
     if (filter.status) where.status = filter.status as ThreadRow["status"];
     if (filter.assigneeId) {

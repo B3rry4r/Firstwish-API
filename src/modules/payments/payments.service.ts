@@ -64,6 +64,7 @@ export interface PaymentPage {
 export function refundDueWords(flags: readonly string[]): string {
   if (!flags.includes("refund_due")) return "";
   if (flags.includes("refund_due:keep_already_paid")) return "Someone else paid to keep this wish for the same time first, so this payment gave nothing. It is marked to be refunded.";
+  if (flags.includes("refund_due:plan_applied_meanwhile")) return "A plan was paid for another way after this payment was started, so this payment gave nothing. It is marked to be refunded.";
   if (flags.includes("refund_due:paid_after_drop")) return "This payment came in after the business dropped it, and a plan was paid for another way meanwhile. It is marked to be refunded.";
   if (flags.includes("refund_due:paid_after_lapse")) return "This payment came in after it had lapsed, and the same thing was paid for another way meanwhile. It is marked to be refunded.";
   return "This payment gave nothing. It is marked to be refunded.";
@@ -120,6 +121,9 @@ export class PaymentsService {
       if (existing) return { row: existing, fresh: false, sameThing: false };
       const now = this.clock.now();
       const quote = await this.book.quote(req.lines, now, { db: tx });
+      if (req.purpose === "pro_plan" && quote.lines.some((l) => l.sku === "pro.pack")) {
+        throw AppError.validation({ lines: "A wish pack is bought as a pack, not as a plan. Choose Buy a pack." });
+      }
       // HR1: one plan payment at a time for a business. The same plan again hands back the payment that waits; another plan is 409 with its reference.
       if (req.purpose === "pro_plan" && businessId) {
         await tx.$queryRaw`SELECT id FROM business WHERE id = ${businessId}::uuid FOR UPDATE`;

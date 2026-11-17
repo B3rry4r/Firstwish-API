@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "frozenAt": "2026-11-17T00:13:23Z",
+  "frozenAt": "2026-11-17T01:25:22Z",
   "framework": "nestjs",
   "generatedBy": "tools/pipeline/reconcile.py",
   "resources": [
@@ -3655,7 +3655,7 @@
           "response": {
             "entity": "Business",
             "cardinality": "single",
-            "note": "the plan state with the usage fields first, offers[] (what a payment for each plan would do), pending (the waiting plan payment) (DEC-236)"
+            "note": "the plan state with the usage fields first, offers[] (what a payment for each plan would do), pending ({reference, plan, startedAt, lapsesAt}: the waiting plan payment and when it lapses) (DEC-236, DEC-254)"
           },
           "sources": [
             {
@@ -3678,14 +3678,20 @@
             }
           ],
           "body": [],
-          "response": null,
+          "response": {
+            "entity": "Business",
+            "cardinality": "single",
+            "note": "the plan read, as GET /v1/business/plan answers (DEC-254)"
+          },
           "sources": [
             {
               "src": "DEC-254",
               "via": "ruling:DEC-254"
             }
           ],
-          "notes": []
+          "notes": [
+            "body by DEC-260"
+          ]
         }
       ]
     },
@@ -5309,14 +5315,20 @@
             }
           ],
           "body": [],
-          "response": null,
+          "response": {
+            "entity": "ConciergeOrder",
+            "cardinality": "list",
+            "note": "{items: [{id, no, firstName}], nextCursor: null}: the wishes delivered under the order, nothing else (DEC-258)"
+          },
           "sources": [
             {
               "src": "DEC-258",
               "via": "ruling:DEC-258"
             }
           ],
-          "notes": []
+          "notes": [
+            "body by DEC-260"
+          ]
         },
         {
           "id": "E-244",
@@ -20555,14 +20567,20 @@
             }
           ],
           "body": [],
-          "response": null,
+          "response": {
+            "entity": "StaffAccount",
+            "cardinality": "list",
+            "note": "{items: [{id, name, role}], nextCursor: null} (DEC-256)"
+          },
           "sources": [
             {
               "src": "DEC-256",
               "via": "ruling:DEC-256"
             }
           ],
-          "notes": []
+          "notes": [
+            "body by DEC-260"
+          ]
         },
         {
           "id": "E-179",

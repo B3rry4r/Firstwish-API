@@ -3,14 +3,13 @@ import { uniqueAddress } from "../../../../test/kit/app";
 import { SettlementService } from "../../payments/settlement.service";
 import { boot, ids } from "./kit";
 
-// early in the era of the older money specs, so the payments made here sort below theirs in the shared database
-const NOW = new Date("2026-12-01T00:30:00.000Z");
+const NOW = new Date("2027-02-08T09:00:00.000Z");
 const run = `${process.pid}${Date.now() % 100000}`;
 type Kit = Awaited<ReturnType<typeof boot>>;
 type Role = "maker" | "ops" | "owner" | "support" | "finance" | "moderator";
 
 /** API-BASE-8 cases 2 to 5 (HY2 to HY5): what the staff Support and Concierge screens still ask of the server. */
-describe("HY2 to HY5: staff search, the hand-over list, the order's payment, the maker's wishes", () => {
+describe("HY2 to HY4, HZ1, HZ2: staff search, the hand-over list, the order's payment, the maker's wishes", () => {
   let k: Kit;
   let db: PrismaService;
   beforeAll(async () => {
@@ -234,49 +233,108 @@ describe("HY2 to HY5: staff search, the hand-over list, the order's payment, the
     expect(delivered.body).not.toHaveProperty("paymentReference");
   });
 
-  it("HY5: the maker reads the wishes of THAT order: id, number and the receiver's first name; another maker, another order and an unknown order are 404", async () => {
+  it("HZ2: the maker reads only the wishes delivered under THAT order: none of the buyer's other wishes before delivery; another maker, another order and an unknown order are 404", async () => {
     const maker = await staff(["maker"]);
     const otherMaker = await staff(["maker"]);
     const ops = await staff(["ops"]);
     const buyer = await person(word("buyer"));
+    const bizBuyer = await person(word("bizbuyer"));
     const stranger = await person(word("stranger"));
+    const businessId = ids.next();
+    await db.business.create({ data: { id: businessId, accountId: bizBuyer.id, name: word("Biz"), business: "Biz", since: NOW } });
     const a = await paidOrder(buyer.id, buyer.auth, maker.id);
     const b = await paidOrder(buyer.id, buyer.auth, maker.id);
+    const biz = await paidOrder(bizBuyer.id, bizBuyer.auth, maker.id);
     const c = await paidOrder(stranger.id, stranger.auth, otherMaker.id);
     const no = () => word("no").toUpperCase();
     const w1 = await k.wish(buyer.id, { name: "Ada Obi", no: no() });
     const w2 = await k.wish(buyer.id, { name: "  Tunde  ", no: no(), status: "live" });
-    const draft = await k.wish(buyer.id, { name: "Draft Wish", status: "draft", no: no() });
-    const removed = await k.wish(buyer.id, { name: "Removed Wish", removedAt: NOW, no: no() });
+    await k.wish(buyer.id, { name: "Draft Wish", status: "draft", no: no() });
+    await k.wish(buyer.id, { name: "Removed Wish", removedAt: NOW, no: no() });
+    const personal = await k.wish(bizBuyer.id, { name: "Own Wish", no: no() });
+    const client = await k.wish(bizBuyer.id, { name: "Client Wish", no: no(), businessId });
     const theirs = await k.wish(stranger.id, { name: "Not Yours", no: no() });
     const read = (auth: string, id: string) => http().get(`/v1/admin/concierge/orders/${id}/wishes`).set("Authorization", auth);
+    const listed = async (auth: string, id: string) => ((await read(auth, id)).body.items as { id: string }[]).map((i) => i.id).sort();
+    // nothing is delivered yet: the maker sees none of the buyers' wishes, made alone or for a business's clients, in any state
     const first = await read(maker.auth, a.id);
     expect(first.status).toBe(200);
-    expect(first.body.nextCursor).toBeNull();
-    const items = first.body.items as { id: string; no: string; firstName: string }[];
-    expect(items.map((i) => i.id).sort()).toEqual([w1, w2].sort());
-    const row1 = items.find((i) => i.id === w1);
-    expect(row1).toEqual({ id: w1, no: (await db.wish.findUniqueOrThrow({ where: { id: w1 } })).no, firstName: "Ada" });
-    expect(items.find((i) => i.id === w2)?.firstName).toBe("Tunde");
-    for (const gone of [draft, removed, theirs]) expect(items.map((i) => i.id)).not.toContain(gone);
-    // delivered under A: A still lists it, B no longer does (another order's wish is never listed)
+    expect(first.body).toEqual({ items: [], nextCursor: null });
+    expect(await listed(maker.auth, b.id)).toEqual([]);
+    expect(await listed(maker.auth, biz.id)).toEqual([]);
+    expect(await listed(ops.auth, biz.id)).toEqual([]);
+    // delivered under A: A lists it with its number and the receiver's first name; B and the business order still list nothing
     await http().post(`/v1/admin/concierge-orders/${a.id}/delivery`).set("Authorization", maker.auth).send({ reason: "made one", wishIds: [w1] }).expect(200);
-    const afterB = (await read(maker.auth, b.id)).body.items as { id: string }[];
-    expect(afterB.map((i) => i.id)).toEqual([w2]);
-    // A is delivered now: it lists exactly what it delivered
-    expect(((await read(maker.auth, a.id)).body.items as { id: string }[]).map((i) => i.id)).toEqual([w1]);
-    // another maker and a maker with no such order: 404; another order of another buyer lists nothing of this buyer
+    const after = (await read(maker.auth, a.id)).body.items as { id: string; no: string; firstName: string }[];
+    expect(after).toEqual([{ id: w1, no: (await db.wish.findUniqueOrThrow({ where: { id: w1 } })).no, firstName: "Ada" }]);
+    expect(await listed(maker.auth, b.id)).toEqual([]);
+    expect(await listed(maker.auth, biz.id)).toEqual([]);
+    await http().post(`/v1/admin/concierge-orders/${biz.id}/delivery`).set("Authorization", maker.auth).send({ reason: "made one", wishIds: [client] }).expect(200);
+    expect(await listed(maker.auth, biz.id)).toEqual([client]);
+    expect(await listed(maker.auth, a.id)).toEqual([w1]);
+    expect([w2, personal, theirs]).not.toContain(client);
+    // another maker and a maker with no such order: 404
     expect((await read(otherMaker.auth, a.id)).status).toBe(404);
     expect((await read(maker.auth, c.id)).status).toBe(404);
     expect((await read(maker.auth, ids.next())).status).toBe(404);
     expect((await read(maker.auth, "not-an-id")).status).toBe(404);
-    expect(((await read(otherMaker.auth, c.id)).body.items as { id: string }[]).map((i) => i.id)).toEqual([theirs]);
-    // ops reads any order's wishes; no sign-in is 401; a role outside Concierge is 403
-    expect(((await read(ops.auth, b.id)).body.items as { id: string }[]).map((i) => i.id)).toEqual([w2]);
+    expect(await listed(otherMaker.auth, c.id)).toEqual([]);
+    // no sign-in is 401; a role outside Concierge is 403
     expect((await http().get(`/v1/admin/concierge/orders/${a.id}/wishes`)).status).toBe(401);
     expect((await read((await staff(["support"])).auth, a.id)).status).toBe(403);
-    // an order with no maker yet lists nothing to deliver
-    const unassigned = await paidOrder(buyer.id, buyer.auth, null);
-    expect(((await read(ops.auth, unassigned.id)).body.items as unknown[])).toEqual([]);
+  });
+
+  it("HZ1 Support: a masked contact cannot be rebuilt by search: every wildcard form finds nothing, the exact address finds the thread and returns the mask", async () => {
+    const support = await staff(["support"]);
+    const email = `${word("hz")}@example.com`.toLowerCase();
+    const ada = await person(`Ada ${word("nm")}`, email);
+    const wishNo = word("wn").toUpperCase();
+    await k.wish(ada.id, { no: wishNo });
+    const t1 = (await thread(ada.auth, word("subject"))).body.id as string;
+    const [local, host] = email.split("@");
+    const forms = [`%@${host}`, `${local.slice(0, 4)}%`, `%${local.slice(-4)}@${host}`, `${local}@%`, "%", "%%%", "_", `${wishNo.slice(0, 4)}%`, `${wishNo.slice(0, 3)}_`, `%${wishNo.slice(-3)}`, `#${wishNo.slice(0, 5)}%`, `\\`];
+    for (let i = 0; i < local.length; i++) forms.push(`${local.slice(0, i)}_${local.slice(i + 1)}@${host}`);
+    for (let i = 0; i < wishNo.length; i++) forms.push(`${wishNo.slice(0, i)}_${wishNo.slice(i + 1)}`);
+    for (const q of forms) {
+      const r = await threads(support.auth, `q=${encodeURIComponent(q)}`);
+      expect(r.status).toBe(200);
+      expect(ids_(r)).not.toContain(t1);
+    }
+    const exact = await threads(support.auth, `q=${encodeURIComponent(email)}`);
+    expect(ids_(exact)).toEqual([t1]);
+    expect(exact.body.items[0].email).not.toBe(email);
+    expect(JSON.stringify(exact.body)).not.toContain(email);
+    expect(ids_(await threads(support.auth, `q=${encodeURIComponent(wishNo.toLowerCase())}`))).toEqual([t1]);
+    // names and subjects: the three characters are ordinary letters
+    const subj = `50%_off ${word("s")}`;
+    const t2 = (await thread(ada.auth, subj)).body.id as string;
+    expect(ids_(await threads(support.auth, `q=${encodeURIComponent("50%_off")}`))).toContain(t2);
+    expect(ids_(await threads(support.auth, `q=${encodeURIComponent("50__off")}`))).not.toContain(t2);
+    expect(ids_(await threads(support.auth, `q=${encodeURIComponent("5%off")}`))).not.toContain(t2);
+  });
+
+  it("HZ1 Concierge: the same on the order list: wildcard forms of the buyer's address find nothing, the exact address finds the orders and returns no address", async () => {
+    const ops = await staff(["ops"]);
+    const maker = await staff(["maker"]);
+    const email = `${word("hzc")}@example.com`.toLowerCase();
+    const buyer = await person(`Chidi ${word("nm")}`, email);
+    const a = await paidOrder(buyer.id, buyer.auth, maker.id);
+    const [local, host] = email.split("@");
+    const forms = [`%@${host}`, `${local.slice(0, 4)}%`, `${local}@%`, "%", "_", "%%%"];
+    for (let i = 0; i < local.length; i++) forms.push(`${local.slice(0, i)}_${local.slice(i + 1)}@${host}`);
+    for (const q of forms) {
+      const r = await orders(ops.auth, `q=${encodeURIComponent(q)}`);
+      expect(r.status).toBe(200);
+      expect(ids_(r)).not.toContain(a.id);
+      expect(ids_(await orders(maker.auth, `q=${encodeURIComponent(q)}`))).not.toContain(a.id);
+    }
+    const exact = await orders(ops.auth, `q=${encodeURIComponent(email.toUpperCase())}`);
+    expect(ids_(exact)).toEqual([a.id]);
+    expect(JSON.stringify(exact.body)).not.toContain(email);
+    // a name search treats the three characters as ordinary letters
+    const odd = await person(`Zed 100%_${word("n")}`);
+    const o = await paidOrder(odd.id, odd.auth, maker.id);
+    expect(ids_(await orders(ops.auth, `q=${encodeURIComponent("100%_")}`))).toContain(o.id);
+    expect(ids_(await orders(ops.auth, `q=${encodeURIComponent("1%0%_")}`))).not.toContain(o.id);
   });
 });

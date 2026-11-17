@@ -49,7 +49,7 @@ const EVENT_LINE: Record<string, "tickets" | "extras" | "keeps" | "pass" | "pro"
   creator: "creator",
 };
 /** HU6: the purposes that are one per intent (a pack, a vault block or an extra photo may be bought again at once; these may not). */
-const ONE_PER_INTENT = new Set(["ticket", "keep", "pass", "pro_plan", "creator_plan"]);
+const ONE_PER_INTENT = new Set(["ticket", "keep", "pass", "creator_plan"]);
 const SLUG = /^[a-z0-9][a-z0-9-]{0,63}$/;
 
 /**
@@ -149,10 +149,15 @@ export class SettlementService {
       flagged = true;
     }
 
-    // HU6: a payment the sweep closed (or that failed) and the provider later reports paid: if the same thing was paid for since, this one gave nothing and is refund due
-    const superseded = !erased && (p.status === "abandoned" || p.status === "failed") && (await this.paidSince(tx, p));
+    // HU6, HZ3: a plan payment, in whatever state it was, is refund due when another plan payment of the business was fulfilled after this one
+    // started; any other payment the sweep closed (or that failed) and the provider later reports paid is refund due when the same thing was paid since
+    const plan = p.purpose === "pro_plan" && !!p.businessId;
+    if (plan && !erased) await tx.$queryRaw`SELECT id FROM business WHERE id = ${p.businessId}::uuid FOR UPDATE`;
+    const closed = p.status === "abandoned" || p.status === "failed";
+    const superseded = !erased && (plan ? await this.planAppliedSince(tx, p) : closed && (await this.paidSince(tx, p)));
     if (superseded) {
-      flags = withFlag(withFlag(flags, "refund_due"), flags.includes("dropped_by_owner") ? "refund_due:paid_after_drop" : "refund_due:paid_after_lapse");
+      const why = closed ? (flags.includes("dropped_by_owner") ? "paid_after_drop" : "paid_after_lapse") : plan ? "plan_applied_meanwhile" : "paid_after_lapse";
+      flags = withFlag(withFlag(flags, "refund_due"), `refund_due:${why}`);
       flagged = true;
     }
     const lines = paidLines(p);
@@ -182,27 +187,46 @@ export class SettlementService {
   }
 
   /**
+   * HZ3: was a plan of the business applied (a plan payment fulfilled, whoever of its payers paid) after this plan payment started? A pack
+   * is not a plan. One plan is applied once for one intent, whichever plan it was; paying again after that is a new intent.
+   */
+  private async planAppliedSince(tx: Prisma.TransactionClient, p: Payment): Promise<boolean> {
+    if (paidLines(p)[0]?.sku === "pro.pack") return false;
+    const others = await tx.payment.findMany({
+      where: {
+        id: { not: p.id },
+        purpose: "pro_plan",
+        businessId: p.businessId,
+        status: { in: ["succeeded", "refunded", "partly_refunded"] },
+        fulfilledAt: { gt: p.createdAt },
+      },
+      select: { lines: true },
+      take: 20,
+    });
+    return others.some((o) => paidLines(o)[0]?.sku !== "pro.pack");
+  }
+
+  /**
    * HU6: has anything else paid for the same intent since this payment started? The intent is the payer's own (their account, or a link
-   * holder's email), the purpose and the wish; for a plan it is the business, whoever of its payers paid (one plan is applied once for one intent, whichever plan it was).
+   * holder's email), the purpose and the wish; (a plan is HZ3, planAppliedSince).
    */
   private async paidSince(tx: Prisma.TransactionClient, p: Payment): Promise<boolean> {
     if (!ONE_PER_INTENT.has(p.purpose)) return false;
-    const plan = p.purpose === "pro_plan";
-    // a plan is the business's, whichever of its payers paid: the owner's and a login's payments are one intent
-    if (plan ? !p.businessId : !p.accountId && !p.payerContact) return false;
+    if (!p.accountId && !p.payerContact) return false;
     const others = await tx.payment.findMany({
       where: {
         id: { not: p.id },
         purpose: p.purpose,
         status: { in: ["succeeded", "refunded", "partly_refunded"] },
         verifiedAt: { gt: p.createdAt },
-        ...(plan ? { businessId: p.businessId } : { ...(p.accountId ? { accountId: p.accountId } : { accountId: null, payerContact: p.payerContact }), subjectId: p.subjectId }),
+        ...(p.accountId ? { accountId: p.accountId } : { accountId: null, payerContact: p.payerContact }),
+        subjectId: p.subjectId,
       },
       select: { lines: true },
       take: 20,
     });
     const sku = (x: Pick<Payment, "lines">) => paidLines(x)[0]?.sku;
-    return others.some((o) => plan || sku(o) === sku(p));
+    return others.some((o) => sku(o) === sku(p));
   }
 
   /** What the book grants for a line, read on the settle transaction's own connection (never the pool: HH2). */

@@ -18,3 +18,8 @@ export function fullEmailOf(word: string): string | null {
 export function wishNumberOf(word: string): string {
   return word.replace(/^#|^no\.?\s*/i, "").trim();
 }
+
+/** The characters of a search word that a LIKE pattern reads as pattern (% _ and the escape \\) made ordinary letters. */
+export function likeLiteral(word: string): string {
+  return word.replace(/[\\%_]/g, (c) => `\\${c}`);
+}

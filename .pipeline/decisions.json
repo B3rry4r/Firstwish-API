@@ -3716,7 +3716,7 @@
     {
       "id": "DEC-258",
       "topic": "The maker's read of an order's wishes (HY5)",
-      "decision": "HY5: GET /v1/admin/concierge/orders/:id/wishes, for maker, ops and owner, lists {items: [{id, no, firstName}], nextCursor: null}: the wishes already delivered under that order, and, while the order is with a maker (given or making), the buyer's made wishes (sealed or live, not removed or erased, of the same business when the order is a business's) that are delivered under no order. A wish delivered under another order, another buyer's wish and another order's are never listed. A maker reads only an order given to them: another maker's order and an unknown order are 404.",
+      "decision": "HZ2 (replaces HY5): GET /v1/admin/concierge/orders/:id/wishes (E-270), for maker, ops and owner, lists {items: [{id, no, firstName}], nextCursor: null}: only the wishes delivered under that order (a wish is tied to an order when it was delivered under it). Nothing of the buyer's other wishes in any state, made alone or for a business's clients: a buyer with none delivered gets an empty list, and the maker sees no wish before it is delivered. A maker reads only an order given to them: another maker's order and an unknown order are 404.",
       "closes": [],
       "approvedBy": "lead default, owner may override",
       "confidence": "high",
@@ -3731,6 +3731,26 @@
       "approvedBy": "lead default, owner may override",
       "confidence": "high",
       "source": "build/rulings-phase3.md; build/prompts/API-BASE-8.md",
+      "decidedAt": "2026-11-30T12:00:00Z"
+    },
+    {
+      "id": "DEC-260",
+      "topic": "Search never widens what a role learns; one plan for one intent; a pack is bought as a pack (HZ1, HZ3, HZ4)",
+      "decision": "HZ1: on the staff Support (E-206) and Concierge (E-37) lists an email or a wish number matches only as the exact whole value (compared as lower(x) = lower(q)); the characters % _ and \\ in q are ordinary letters for every field, so a masked contact cannot be rebuilt a character at a time (this fixes the wording of DEC-255: only names, subjects and the order number match by part). HZ3: when a plan payment settles and another plan payment of the same business was fulfilled after this one was started, this one is refund due whatever state it was in (pending, dropped, lapsed), flag refund_due:plan_applied_meanwhile (or paid_after_drop, paid_after_lapse for a closed one), said in words on its read; one plan is applied, one invoice is made, and a settle takes the business row so two at the same moment give one fulfilled and one refund due. A payment started after the first was fulfilled is a new intent and adds a month (HR1). A pack is not a plan. HZ4: a plan-payment start (purpose pro_plan) naming the pack is 422 with words. Response shapes: E-269 answers the plan read (E-27, whose pending is {reference, plan, startedAt, lapsesAt}), E-270 answers {items: [{id, no, firstName}], nextCursor: null}, E-271 answers {items: [{id, name, role}], nextCursor: null}.",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md; build/prompts/P-API-BASE-8.md",
+      "decidedAt": "2026-11-30T12:00:00Z"
+    },
+    {
+      "id": "DEC-261",
+      "topic": "The registry is frozen again after HZ1 to HZ4",
+      "decision": "The registry is re-frozen after DEC-260 by tools/pipeline/freeze.py; reconcile.py was run with --reopen. Endpoint ids already issued are unchanged and none is new.",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md; build/prompts/P-API-BASE-8.md",
       "decidedAt": "2026-11-30T12:00:00Z"
     }
   ]

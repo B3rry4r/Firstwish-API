@@ -2793,7 +2793,7 @@
       "response": {
         "entity": "Business",
         "cardinality": "single",
-        "note": "the plan state with the usage fields first, offers[] (what a payment for each plan would do), pending (the waiting plan payment) (DEC-236)"
+        "note": "the plan state with the usage fields first, offers[] (what a payment for each plan would do), pending ({reference, plan, startedAt, lapsesAt}: the waiting plan payment and when it lapses) (DEC-236, DEC-254)"
       }
     },
     "GET /v1/studio/styles/:id/files": {
@@ -2838,6 +2838,30 @@
       "decision": "DEC-255",
       "set": {
         "q": "string (optional; 1 to 100 characters: matches the order number, who ordered, the business name or a receiver's name on the order)"
+      }
+    },
+    "POST /v1/business/plan/pending/:reference/drop": {
+      "decision": "DEC-260",
+      "response": {
+        "entity": "Business",
+        "cardinality": "single",
+        "note": "the plan read, as GET /v1/business/plan answers (DEC-254)"
+      }
+    },
+    "GET /v1/admin/concierge/orders/:id/wishes": {
+      "decision": "DEC-260",
+      "response": {
+        "entity": "ConciergeOrder",
+        "cardinality": "list",
+        "note": "{items: [{id, no, firstName}], nextCursor: null}: the wishes delivered under the order, nothing else (DEC-258)"
+      }
+    },
+    "GET /v1/admin/support/staff": {
+      "decision": "DEC-260",
+      "response": {
+        "entity": "StaffAccount",
+        "cardinality": "list",
+        "note": "{items: [{id, name, role}], nextCursor: null} (DEC-256)"
       }
     }
   },

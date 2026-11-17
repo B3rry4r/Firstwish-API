@@ -7,7 +7,7 @@ import { Clock } from "../../common/ports/clock.port";
 import { IdGenerator } from "../../common/ports/ids.port";
 import { decodeCursor, Page, toPage } from "../../common/pagination/cursor";
 import { toWireInstant } from "../../common/time/time";
-import { fullEmailOf, searchWord } from "../../common/normalise/search-word";
+import { fullEmailOf, likeLiteral, searchWord } from "../../common/normalise/search-word";
 import type { ConciergeOrder, ConciergeOrderWish as OrderWish, Maker } from "../../contracts";
 import { AuditActor, AuditService, requireReason } from "../audit/audit.service";
 import { FulfilmentRegistry, type FulfilmentContext } from "../payments/fulfilment.registry";
@@ -166,8 +166,12 @@ export class ConciergeService implements OnModuleInit {
   }
 
   private async matching(word: string): Promise<Prisma.ConciergeOrderWhereInput> {
-    const like = { contains: word, mode: "insensitive" as const };
+    const like = { contains: likeLiteral(word), mode: "insensitive" as const };
     const email = fullEmailOf(word);
+    const byEmail = email
+      ? (await this.db.$queryRaw<{ id: string }[]>`
+          SELECT o.id::text AS id FROM concierge_order o JOIN account a ON a.id = o."accountId" WHERE lower(a.contact) = lower(${email})`).map((r) => r.id)
+      : [];
     const hex = ORDER_NO.exec(word)?.[1]?.toLowerCase();
     const byNumber = hex
       ? (await this.db.$queryRaw<{ id: string }[]>`SELECT id::text AS id FROM concierge_order WHERE right(replace(id::text, '-', ''), 6) LIKE ${`%${hex}`}`).map((r) => r.id)
@@ -178,30 +182,24 @@ export class ConciergeService implements OnModuleInit {
         { account: { name: like } },
         { business: { name: like } },
         { brief: like },
-        ...(email ? [{ account: { contact: { equals: email, mode: "insensitive" as const } } }] : []),
+        ...(byEmail.length ? [{ id: { in: byEmail } }] : []),
         { conciergeOrderWishByOrder: { some: { wish: { name: like } } } },
       ],
     };
   }
 
   /**
-   * E-270 (HY5): the wishes the maker delivers for this order, as id, wish number and the receiver's first name: the ones already delivered
-   * under it and, while the order is with a maker, the buyer's made wishes that no order has delivered (the same ones delivery accepts). A maker
-   * reads only an order given to them; another maker's or an unknown order is 404.
+   * E-270 (HZ2): the wishes delivered under this order, as id, wish number and the receiver's first name. Nothing of the buyer's other wishes,
+   * in any state: a buyer with none delivered gets an empty list. A maker reads only an order given to them; another maker's or an unknown
+   * order is 404.
    */
   async staffWishes(c: StaffCaller, id: string): Promise<Page<OrderWish>> {
     if (!UUID.test(id)) throw AppError.notFound();
     const o = await this.db.conciergeOrder.findFirst({ where: { id, ...(seesAll(c) ? {} : { makerId: c.staffId }) } });
     if (!o) throw AppError.notFound();
     const delivered = await this.db.conciergeOrderWish.findMany({ where: { orderId: o.id }, select: { wishId: true } });
-    const open = o.status === "given" || o.status === "making";
     const rows = await this.db.wish.findMany({
-      where: {
-        OR: [
-          { id: { in: delivered.map((d) => d.wishId) } },
-          ...(open ? [{ accountId: o.accountId, ...(o.businessId ? { businessId: o.businessId } : {}), erasedAt: null, removedAt: null, status: { in: ["sealed", "live"] as ("sealed" | "live")[] }, conciergeOrderWishByWish: null }] : []),
-        ],
-      },
+      where: { id: { in: delivered.map((d) => d.wishId) } },
       select: { id: true, no: true, name: true },
       orderBy: { id: "asc" },
       take: 1000,

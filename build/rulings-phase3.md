@@ -974,3 +974,12 @@ HG1 (give race) Two staff giving one Concierge order: the code is right (overlap
   it abandoned at once and a new start is allowed. If the provider later reports the dropped one paid, HU6 applies
   (fulfilled only if nothing else has paid for a plan since; otherwise refund due). Needs a server route (the next
   API round) and then the control on the Plan screen; until then the screen offers Continue and says when it lapses.
+- HY2: the staff Support and Concierge lists take a search word, as the designed screens drew: Support by subject,
+  name, email or wish number; Concierge by order number, who ordered, or a name on the order. Matching is the
+  server's; the role's masking of contact details still holds in what comes back.
+- HY3: every staff member who may hand a thread over can read whom to hand it to: a short staff list (id, name,
+  role; no email, no sign-in detail), without the owner-only Team read.
+- HY4: a Concierge order read carries its payment's id and provider reference for the roles that may read payments
+  (others get neither), so the refund link opens that payment and no other.
+- HY5: the maker of a Concierge order reads the buyer's wishes that belong to THAT order (id, wish number, the
+  receiver's first name) to deliver them; never another order's or another buyer's.

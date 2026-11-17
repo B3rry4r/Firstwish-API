@@ -17,6 +17,7 @@ import { REASON_TEXT } from "../purchases/wish-rules";
 import { WishLifecycleService } from "../wishes/wish-lifecycle.service";
 import { stateOf } from "../wishes/wish-state";
 import { WishesService } from "../wishes/wishes.service";
+import { SHOWN_TO_BUYER } from "../wishes/wish-shown";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export const KEEP_LENGTHS = ["month", "half", "year"] as const;
@@ -107,7 +108,7 @@ export class WishKeepsService implements OnModuleInit {
    * link are all the same 404.
    */
   private async who(accountId: string, id: string, link: LinkHold): Promise<{ owner: boolean; summary?: (state: string) => PublicWishView }> {
-    if (await this.db.wish.findFirst({ where: { id, accountId }, select: { id: true } })) return { owner: true };
+    if (await this.db.wish.findFirst({ where: { AND: [{ id, accountId }, SHOWN_TO_BUYER] }, select: { id: true } })) return { owner: true };
     if (!link.slug) throw AppError.notFound("No such wish.");
     const held = await this.links.holdLink(link.slug, { address: link.address, token: link.token });
     if (held.wishId !== id) throw AppError.notFound("No such wish.");

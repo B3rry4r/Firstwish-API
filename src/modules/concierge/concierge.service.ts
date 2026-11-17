@@ -346,11 +346,12 @@ export class ConciergeService implements OnModuleInit {
       if (!wishIds.length) throw AppError.validation({ wishIds: "Name the wishes made, or make them through the order first." });
       if (wishIds.length > o.count) throw AppError.validation({ wishIds: `This order is for ${o.count} wish${o.count === 1 ? "" : "es"}.` });
       const wishes = await tx.wish.findMany({
-        where: { id: { in: wishIds }, accountId: o.accountId, erasedAt: null, removedAt: null, status: { in: ["sealed", "live"] }, ...(o.businessId ? { businessId: o.businessId } : {}) },
+        // IC4: only wishes tied to THIS order, or the buyer's own wishes tied to no order, never a wish being made for another order
+        where: { id: { in: wishIds }, accountId: o.accountId, erasedAt: null, removedAt: null, status: { in: ["sealed", "live"] }, OR: [{ conciergeOrderId: null }, { conciergeOrderId: id }], ...(o.businessId ? { businessId: o.businessId } : {}) },
         select: { id: true },
       });
       if (wishes.length !== wishIds.length) {
-        const drafts = await tx.wish.findMany({ where: { id: { in: wishIds }, accountId: o.accountId, status: "draft" }, select: { id: true } });
+        const drafts = await tx.wish.findMany({ where: { id: { in: wishIds }, accountId: o.accountId, status: "draft", OR: [{ conciergeOrderId: null }, { conciergeOrderId: id }] }, select: { id: true } });
         if (drafts.length) throw AppError.validation({ wishIds: `A draft is not made yet: ${drafts.map((d) => d.id).join(", ")}. Seal it first.` });
         throw AppError.validation({ wishIds: "Every wish must be one made for this order's buyer." });
       }

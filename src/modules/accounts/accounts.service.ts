@@ -10,6 +10,7 @@ import { IdGenerator } from "../../common/ports/ids.port";
 import { Clock } from "../../common/ports/clock.port";
 import { HANDLE_TAKEN, isUniqueViolation, readContact, setHandle, sidesOf } from "./account-rules";
 import { dateOnlyOf, normaliseDateOnly, toWireInstant } from "../../common/time/time";
+import { SHOWN_TO_BUYER } from "../wishes/wish-shown";
 
 /** A date row as /v1/me shows it. */
 export interface MeDate {
@@ -141,7 +142,7 @@ export class AccountsService {
   async view(row: AccountRow): Promise<MeView> {
     const [dates, wishCount] = await Promise.all([
       this.prisma.dateRow.findMany({ where: { accountId: row.id }, orderBy: [{ date: "asc" }, { id: "asc" }] }),
-      this.prisma.wish.count({ where: { accountId: row.id } }),
+      this.prisma.wish.count({ where: { AND: [{ accountId: row.id }, SHOWN_TO_BUYER] } }),
     ]);
     const sides = this.sidesOf(row);
     return {

@@ -24,6 +24,7 @@ import { readLimits } from "../price-book/book-limits";
 import type { Principal } from "../../common/auth/principal";
 import { WishLifecycleService } from "./wish-lifecycle.service";
 import { stateOf } from "./wish-state";
+import { SHOWN_TO_BUYER } from "./wish-shown";
 import { WishPictures } from "./wish-pictures";
 import { kindHasOccasion, LAST_STEP } from "./kind-occasions";
 import { isLevel } from "../styles/style-view";
@@ -35,8 +36,6 @@ type Obj = Record<string, unknown>;
 
 export const DEFAULT_ZONE = "Africa/Lagos";
 /** The id of the one wish_number_sequence row. */
-/** HZ2: a wish tied to a Concierge order shows to the buyer only once the order has delivered it. */
-const SHOWN_TO_BUYER: Prisma.WishWhereInput = { OR: [{ conciergeOrderId: null }, { conciergeOrderWishByWish: { isNot: null } }] };
 const SEQUENCE_ID = "00000000-0000-7000-8000-0000000000b6";
 const TICKETS = ["moment", "keepsake", "signature", "premiere"] as const;
 export type Ticket = (typeof TICKETS)[number];

@@ -63,7 +63,7 @@ export class RenderJobsService implements OnModuleInit {
     if (!UUID.test(wishId)) throw AppError.notFound();
     const jobId = await this.db.$transaction(async (tx) => {
       await lockAccount(tx, accountId);
-      const rows = await tx.$queryRaw<{ id: string }[]>`SELECT id::text AS id FROM wish WHERE id = ${wishId}::uuid AND "accountId" = ${accountId}::uuid AND "erasedAt" IS NULL FOR UPDATE`;
+      const rows = await tx.$queryRaw<{ id: string }[]>`SELECT id::text AS id FROM wish WHERE id = ${wishId}::uuid AND "accountId" = ${accountId}::uuid AND "erasedAt" IS NULL AND ("conciergeOrderId" IS NULL OR EXISTS (SELECT 1 FROM concierge_order_wish d WHERE d."wishId" = wish.id)) FOR UPDATE`;
       if (!rows[0]) throw AppError.notFound();
       const w = await tx.wish.findUniqueOrThrow({ where: { id: wishId } });
       const state = stateOf(w);

@@ -35,6 +35,7 @@ import { notInBusiness } from "../../common/auth/login-removed";
 import { businessAccessOf } from "./vault-access";
 import { ScreeningService } from "./screening.service";
 import { dropFileHearts } from "../vault/vault-shared";
+import { SHOWN_TO_BUYER } from "../wishes/wish-shown";
 
 type Tx = Prisma.TransactionClient;
 
@@ -125,7 +126,7 @@ export class StoredFilesService {
       return;
     }
     if (!isUuid(subjectId)) throw AppError.validation({ subjectId: "Must be a wish id." });
-    const wish = await tx.wish.findFirst({ where: { id: subjectId, accountId: p.accountId }, select: { status: true, ticket: true } });
+    const wish = await tx.wish.findFirst({ where: { AND: [{ id: subjectId, accountId: p.accountId }, SHOWN_TO_BUYER] }, select: { status: true, ticket: true } });
     if (!wish) throw AppError.notFound("No such wish.");
     // HS1: a friend's voice through the gather link may arrive while the wish is a draft or sealed and not yet open
     if (wish.status !== "draft" && !(gather && wish.status === "sealed")) throw AppError.conflict("wish_sealed", "This wish is sealed; its files cannot change.");

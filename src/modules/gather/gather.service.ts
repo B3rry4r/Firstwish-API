@@ -12,6 +12,7 @@ import { BusinessOf } from "../people/business-of";
 import { isUuid, MAX_VOICE_SECONDS, UPLOAD_TTL_SECONDS } from "../stored-files/file-rules";
 import { SignedUrlsService } from "../stored-files/signed-urls.service";
 import { MAX_VOICE_NOTES_PER_WISH, StoredFilesService } from "../stored-files/stored-files.service";
+import { SHOWN_TO_BUYER } from "../wishes/wish-shown";
 
 const SLUG = /^g[A-Za-z0-9_-]{8,30}$/;
 /** What one address may do at a gather link: look 60 times a minute (asks are limited in link-limits: HU4). */
@@ -44,7 +45,7 @@ export class GatherService {
   private async owned(accountId: string, id: string) {
     if (!isUuid(id)) throw AppError.notFound("No such wish.");
     const biz = await this.business.find(accountId);
-    const w = await this.db.wish.findFirst({ where: { id, ...(biz ? { OR: [{ accountId }, { businessId: biz }] } : { accountId }) }, select: { id: true, accountId: true, status: true, openedAt: true, erasedAt: true, removedAt: true } });
+    const w = await this.db.wish.findFirst({ where: { AND: [{ id }, biz ? { OR: [{ accountId }, { businessId: biz }] } : { accountId }, SHOWN_TO_BUYER] }, select: { id: true, accountId: true, status: true, openedAt: true, erasedAt: true, removedAt: true } });
     if (!w || w.erasedAt || w.removedAt || w.status === "removed") throw AppError.notFound("No such wish.");
     return w;
   }

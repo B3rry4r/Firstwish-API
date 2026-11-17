@@ -999,3 +999,15 @@ HG1 (give race) Two staff giving one Concierge order: the code is right (overlap
   state it was in (pending, dropped, lapsed). Paying again after the earlier one was fulfilled is a new intent and
   adds a month as HR1 says.
 - HZ4: a pack is bought as a pack: a plan-payment start naming the pack is refused (422 with words).
+
+## IA (17 Nov 2026, the lead, on the Vault check). Default (lead), owner may override.
+- IA1: sending a reveal takes ONE wish from the pack and makes ONE reveal, or neither, whatever the path: a refused
+  send, a lost answer, a retry, two tabs, a reload, back and send again. A shoot that already went to that client
+  says so (when, the link) and sends again only when the business says "Send again". The web does what it can with
+  the server as it is; the server gets one call that makes the wish and the reveal together (the ninth API round).
+- IA2: the client's page at /r/<code> is not a new design. It is the receiver's page: the receiver's own passcode
+  screen, the client wish's opening in the style and cover the business chose, then the photos, built only from
+  parts the receiver's page and the wish engine already have. No plain grid of its own, no new look.
+- IA3: "Use sample photos" is gone for good (no faked content). Picking files for a reveal and a download of the
+  full set were drawn in the designed screens and come back when the server has them (the ninth API round).
+- IA4: a reveal's passcode holds for every link to those files: copying the link never mints a way round it.

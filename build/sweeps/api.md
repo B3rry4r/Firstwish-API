@@ -100,3 +100,9 @@
 - (API-BASE-9, product gap, HZ2 / T-12) a Concierge maker cannot make a wish in the buyer's name: "make the wish"
   on the order (the wish is the buyer's, tied to the order, hidden from the buyer until delivered), then the web:
   the maker opens the wish maker from the staff Concierge screen. Until then delivery takes wish ids by hand.
+- (API-BASE-9, from the Vault check) IA1: one call that makes the client wish and the reveal together (or neither),
+  idempotent; a shoot already revealed to that client answers "already sent" with the link unless asked again.
+  IA4 (HIGH): copy-link after a passcode reveal returns a second link to the same files with NO passcode. A login
+  of the business cannot get a Vault upload ticket ("Vault files need a business."). OWNER: a lapsed business is
+  billed one whole block (₦3,000) for 210 bytes over (the website says "billed by the blocks you use that month":
+  as written; say if a small overage should be free).

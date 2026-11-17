@@ -4,7 +4,7 @@
 //   WEB_REPO=/path/to/Firstwish-web node scripts/export-seed-data.mjs      (default: ../Firstwish-web beside this repo)
 // The web files are TypeScript: each is transpiled in memory with the API's own `typescript` and run in a sandboxed
 // CommonJS loader. Package imports (react, next, ...) get an inert stand-in; nothing is fetched and nothing is written
-// outside prisma/seed-data. The source of every table is named in .pipeline/schema-map.json ("seedFrom").
+// outside prisma/seed-data. SavedReply, Provider and MessageTemplate are owned by this repo (OWNED below): never read from the web. The source of every table is named in .pipeline/schema-map.json ("seedFrom").
 // Running it twice writes the same bytes (keys sorted, rows in the web app's order).
 import { createHash } from "node:crypto";
 import { createRequire } from "node:module";
@@ -123,36 +123,11 @@ const TABLES = {
       }));
     },
   },
-  SavedReply: {
-    from: "lib/admin/d-fixtures.ts (savedReplies)", key: (r) => r.name,
-    rows: () => web("lib/admin/d-fixtures.ts").savedReplies.map((s) => pick(s, ["name", "text"])),
-  },
-  Provider: {
-    from: "lib/admin/d-fixtures.ts (settings.providers)", key: (r) => r.key,
-    rows: () => web("lib/admin/d-fixtures.ts").settings.providers.map((p) => pick(p, ["key", "name", "who", "state", "line"])),
-  },
-  MessageTemplate: {
-    from: "lib/admin/d-fixtures.ts (templates)", key: (r) => `${r.key}:${r.locale}:${r.version}`,
-    // INT-5: messages that exist only on the server (the staff invite, INT-4, and any a later wave added to the file by hand) are kept:
-    // a row of the file already written whose key the web app's fixtures do not hold stays as it is. The invite is the first of them.
-    rows: () => {
-      const web_ = web("lib/admin/d-fixtures.ts").templates.map((t) => ({ key: t.key, channel: "email", locale: "en-NG", version: 1, subject: t.subject, body: t.body }));
-      const webKeys = new Set(web_.map((r) => r.key));
-      const kept = existsSync(join(OUT, "MessageTemplate.json"))
-        ? JSON.parse(readFileSync(join(OUT, "MessageTemplate.json"), "utf8")).rows.filter((r) => !webKeys.has(r.key)).map(({ seedKey: _seedKey, ...r }) => r)
-        : [];
-      if (!kept.some((r) => r.key === INVITE.key) && !webKeys.has(INVITE.key)) kept.push(INVITE);
-      return web_.concat(kept);
-    },
-  },
 };
 
-/** The staff invite (INT-4): a sign-in code with its own lead line. Wording the owner's rules allow: plain short words, no emoji. */
-const INVITE = {
-  key: "invite", channel: "email", locale: "en-NG", version: 1,
-  subject: "You are invited to the Firstwish team",
-  body: "Hi,\n\nYou are invited to the Firstwish team. Use this code to sign in: {code}. It works for 10 minutes.\n\nIf you did not expect this, you can leave this email.\n\nFirstwish",
-};
+/** Owned here since 17 Nov 2026 (the web's fixtures were removed): recorded in prisma/seed-data, never read from the web, never rewritten. */
+const OWNED = ["MessageTemplate", "Provider", "SavedReply"];
+const OWNED_NOTE = "owned here since 17 Nov 2026 (the web's fixtures were removed)";
 
 const sortKeys = (v) => (Array.isArray(v) ? v.map(sortKeys) : v && typeof v === "object" ? Object.fromEntries(Object.keys(v).sort().map((k) => [k, sortKeys(v[k])])) : v);
 mkdirSync(OUT, { recursive: true });
@@ -169,5 +144,9 @@ for (const [table, t] of Object.entries(TABLES)) {
 // SOURCE.json: each web file read, its path relative to the web repo and the sha256 of its bytes. A test that has the web
 // checkout compares these with the files, so a web change with no new export fails there.
 const files = [...readFiles].map((f) => ({ path: f.slice(WEB.length + 1), sha256: createHash("sha256").update(readFileSync(f)).digest("hex") })).sort((a, b) => (a.path < b.path ? -1 : 1));
-writeFileSync(join(OUT, "SOURCE.json"), JSON.stringify({ files }, null, 1) + "\n");
+const owned = Object.fromEntries(OWNED.map((t) => {
+  if (!existsSync(join(OUT, `${t}.json`))) throw new Error(`${t}: owned here, but prisma/seed-data/${t}.json is missing`);
+  return [t, OWNED_NOTE];
+}));
+writeFileSync(join(OUT, "SOURCE.json"), JSON.stringify({ files, owned }, null, 1) + "\n");
 console.log(`SOURCE.json: ${files.length} web files`);

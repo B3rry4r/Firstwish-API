@@ -5,6 +5,7 @@ import { UuidV7Maker } from "../../../common/ids/uuidv7";
 import { createTestApp, TestApp } from "../../../../test/kit/app";
 import { FileJobs } from "../../stored-files/file-jobs";
 import { SettlementService } from "../../payments/settlement.service";
+import { testWishNo } from "../../../../test/kit/unique";
 
 const ROOT = join(__dirname, "../../../..");
 const NOW = new Date("2034-05-10T09:00:00.000Z");
@@ -120,7 +121,7 @@ describe("HW2 Studio files, HW3 Signed off, HW5 sweep, wish list publish", () =>
     const owner = await creator();
     const mk = async (styleSlug: string, n: number) => {
       const wid = ids.next();
-      await db.wish.create({ data: { id: wid, accountId: owner.id, status: "live", kind: "birthday", occasion: "birthday", styleSlug, timeZone: "Africa/Lagos", ticket: "keepsake", no: `88${run.slice(-6)}${++seq}`.slice(0, 12), opensAt: new Date(NOW.getTime() - DAY), openedAt: new Date(NOW.getTime() - DAY), endsAt: new Date(NOW.getTime() + 5 * DAY) } as never });
+      await db.wish.create({ data: { id: wid, accountId: owner.id, status: "live", kind: "birthday", occasion: "birthday", styleSlug, timeZone: "Africa/Lagos", ticket: "keepsake", no: testWishNo("s7s"), opensAt: new Date(NOW.getTime() - DAY), openedAt: new Date(NOW.getTime() - DAY), endsAt: new Date(NOW.getTime() + 5 * DAY) } as never });
       const l = `ab7-l-${run}-${n}`;
       await db.wishLink.create({ data: { id: ids.next(), slug: l, wishId: wid, active: true } });
       return l;

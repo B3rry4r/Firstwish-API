@@ -5,6 +5,7 @@ import { UuidV7Maker } from "../../../common/ids/uuidv7";
 import { bearer } from "../../people/tests/b12-kit";
 import { createTestApp, TestApp, uniqueAddress } from "../../../../test/kit/app";
 import { SettlementService, isLockConflict } from "../../payments/settlement.service";
+import { testWishNo } from "../../../../test/kit/unique";
 
 const NOW = new Date("2032-06-14T09:00:00.000Z");
 const DAY = 86_400_000;
@@ -52,7 +53,7 @@ describe("settle lock order: two payments for one wish settling at the same mome
     const id = ids.next();
     const o = await owner();
     await db.wish.create({
-      data: { id, status: "live", kind: "birthday", occasion: "birthday", styleSlug: "golden", timeZone: "Africa/Lagos", ticket: "keepsake", no: `88${seq}${id.slice(-4)}`, opensAt: new Date(NOW.getTime() - 9 * DAY), openedAt: new Date(NOW.getTime() - 9 * DAY), endsAt: new Date(NOW.getTime() + 5 * DAY), accountId: o.accountId } as never,
+      data: { id, status: "live", kind: "birthday", occasion: "birthday", styleSlug: "golden", timeZone: "Africa/Lagos", ticket: "keepsake", no: testWishNo("lo"), opensAt: new Date(NOW.getTime() - 9 * DAY), openedAt: new Date(NOW.getTime() - 9 * DAY), endsAt: new Date(NOW.getTime() + 5 * DAY), accountId: o.accountId } as never,
     });
     const slug = `lo-${run}-${++seq}`.slice(0, 30);
     await db.wishLink.create({ data: { id: ids.next(), slug, wishId: id, active: true } });

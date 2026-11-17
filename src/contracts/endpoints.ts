@@ -283,4 +283,7 @@ export const ENDPOINTS: readonly EndpointRow[] = [
   { id: "E-232", method: "POST", path: "/v1/wishes/:id/wake", resource: "Wish", operation: "PostWishesByIdWake", request: "PostWishesByIdWakeBodyDto", rawBody: false, noContent: true },
   { id: "E-233", method: "INTERNAL", path: "port:wishes#issueNumber", resource: "Wish", operation: "InternalWishesIssueNumber", request: "InternalWishesIssueNumberBodyDto", rawBody: false, noContent: false },
   { id: "E-272", method: "POST", path: "/v1/business/reveals", resource: "ClientWish", operation: "PostBusinessReveals", request: "PostBusinessRevealsBodyDto", rawBody: false, noContent: false },
+  { id: "E-273", method: "GET", path: "/v1/r/:code/favourites", resource: "RevealPlay", operation: "GetRByCodeFavourites", request: "GetRByCodeFavouritesQueryDto", rawBody: false, noContent: false },
+  { id: "E-274", method: "POST", path: "/v1/r/:code/favourites", resource: "RevealPlay", operation: "PostRByCodeFavourites", request: "PostRByCodeFavouritesBodyDto", rawBody: false, noContent: false },
+  { id: "E-275", method: "POST", path: "/v1/business/reveal-links/:id/downloads", resource: "RevealLink", operation: "PostBusinessRevealLinksByIdDownloads", request: "PostBusinessRevealLinksByIdDownloadsBodyDto", rawBody: false, noContent: false },
 ];

@@ -9,6 +9,8 @@ import {
   PostBusinessRevealLinksByIdCopyLinkBodyDto,
   PostBusinessRevealsBodyDto,
   PostBusinessRevealLinksByIdCopyLinkParamsDto,
+  PostBusinessRevealLinksByIdDownloadsBodyDto,
+  PostBusinessRevealLinksByIdDownloadsParamsDto,
   PostBusinessShootsBodyDto,
   PostBusinessShootsByIdFilesBodyDto,
   PostBusinessShootsByIdFilesParamsDto,
@@ -117,6 +119,19 @@ export class VaultController {
   @HttpCode(200)
   async off(@Param() params: GetBusinessRevealLinksByIdParamsDto, @CurrentPrincipal() p: Principal | undefined, @BusinessHeader() h: string | undefined): Promise<RevealLink> {
     return this.reveals.off((await this.access.require(p, h)).businessId, params.id);
+  }
+
+  /** E-275 (IB2): the link's download addresses on or off. */
+  @Roles("person", "business")
+  @Post("reveal-links/:id/downloads")
+  @HttpCode(200)
+  async downloads(
+    @Param() params: PostBusinessRevealLinksByIdDownloadsParamsDto,
+    @Body() body: PostBusinessRevealLinksByIdDownloadsBodyDto,
+    @CurrentPrincipal() p: Principal | undefined,
+    @BusinessHeader() h: string | undefined,
+  ): Promise<RevealLink> {
+    return this.reveals.setDownloads((await this.access.require(p, h)).businessId, params.id, body.on);
   }
 
   /** E-33. */

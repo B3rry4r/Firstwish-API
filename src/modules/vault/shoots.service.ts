@@ -61,8 +61,8 @@ export class ShootsService {
       return out;
     };
     const list = async (ids: string[]): Promise<FileItem[]> => (await Promise.all(ids.map(item))).filter((x): x is FileItem => x !== null);
-    const proofsReveal = this.revealOf(row.proofsReveal);
-    const finalsReveal = this.revealOf(row.finalsReveal);
+    const marks = await this.withPlays([this.revealOf(row.proofsReveal), this.revealOf(row.finalsReveal)]);
+    const [proofsReveal, finalsReveal] = marks;
     const hearts = Array.isArray(row.hearts) ? row.hearts : [];
     const wishState = finalsReveal ? "finals" : proofsReveal ? (hearts.length ? "favourites" : "proofs") : "uploaded";
     const out: Record<string, unknown> = {
@@ -82,6 +82,29 @@ export class ShootsService {
     if (proofsReveal) out.proofsReveal = proofsReveal;
     if (finalsReveal) out.finalsReveal = finalsReveal;
     return out as unknown as Shoot;
+  }
+
+  /**
+   * IB5 (UA-832): each reveal mark also says how often the client played it (count, first and last time: a play is one visit, nothing of the
+   * viewer) and when the client wish was first opened (openedAt, left out until it was).
+   */
+  private async withPlays(marks: (Record<string, unknown> | null)[]): Promise<(Record<string, unknown> | null)[]> {
+    const links = marks.map((m) => (typeof m?.link === "string" && UUID.test(m.link) ? m.link : null)).filter((x): x is string => x !== null);
+    const wishes = marks.map((m) => (typeof m?.wish === "string" && UUID.test(m.wish) ? m.wish : null)).filter((x): x is string => x !== null);
+    if (!links.length && !wishes.length) return marks;
+    const plays = await this.db.$queryRaw<{ linkId: string; count: number; first: Date; last: Date }[]>`
+      SELECT "linkId"::text AS "linkId", count(*)::int AS count, min(at) AS first, max(at) AS last FROM reveal_play WHERE "linkId" = ANY(${links}::uuid[]) GROUP BY "linkId"`;
+    const opened = await this.db.$queryRaw<{ id: string; openedAt: Date | null }[]>`SELECT id::text AS id, "openedAt" FROM client_wish WHERE id = ANY(${wishes}::uuid[])`;
+    return marks.map((m) => {
+      if (!m) return m;
+      const p = plays.find((x) => x.linkId === m.link);
+      const o = opened.find((x) => x.id === m.wish)?.openedAt ?? null;
+      return {
+        ...m,
+        plays: { count: p?.count ?? 0, first: p ? toWireInstant(p.first) : null, last: p ? toWireInstant(p.last) : null },
+        ...(o ? { openedAt: toWireInstant(o) } : {}),
+      };
+    });
   }
 
   /** The reveal settings kept on the shoot: which wish, its number, when. Nothing secret is ever kept there. */

@@ -17,7 +17,7 @@ import { ClientWishesService } from "../pro-business/client-wishes.service";
 import { NoticesService } from "../notices/notices.service";
 import { hashPasscode } from "../wishes/wishes.service";
 import { ShootsService } from "./shoots.service";
-import { idsOf, SETS, SetName, Tx, UUID } from "./vault-shared";
+import { idsOf, SETS, SetName, syncHearts, Tx, UUID } from "./vault-shared";
 
 const NOTE_MAX = 600;
 const SHORT_MAX = 80;
@@ -311,6 +311,7 @@ export class RevealsService {
         VALUES (${linkId}::uuid, ${businessId}::uuid, ${shootId}::uuid, ${wishId}::uuid, ${set}, ${code}, ${JSON.stringify(fileIds)}::jsonb, ${passHash}, ${s.endsAt}, ${s.downloads}, ${now})`;
     }
     if (passHash) await this.gateShootLinks(tx, shootId, set, passHash);
+    await syncHearts(tx, linkId);
     const stored: Prisma.InputJsonObject = { ...s.words, link: linkId };
     await tx.clientWish.update({ where: { id: wishId }, data: { reveal: stored, shoot: shootId, set: set as SetName, sentAt: now } });
     const mark: Prisma.InputJsonObject = { wish: wishId, no: wish.no ?? "", sentAt: toWireInstant(now), link: linkId };
@@ -390,10 +391,10 @@ export class RevealsService {
   /** What the business reads of a link: where it points, its settings, and its plays (count, first and last time; nothing of the viewers). */
   private async view(businessId: string, where: { linkId?: string }): Promise<RevealLink & Record<string, unknown>> {
     const rows = await this.db.$queryRaw<
-      { linkId: string; link: string | null; set: SetName; shootId: string | null; wishId: string | null; passcode: boolean; endsAt: Date | null; offAt: Date | null; lockedUntil: Date | null; plays: string; first: Date | null; last: Date | null }[]
+      { linkId: string; link: string | null; set: SetName; shootId: string | null; wishId: string | null; passcode: boolean; endsAt: Date | null; offAt: Date | null; lockedUntil: Date | null; hearts: number[]; downloads: boolean; plays: string; first: Date | null; last: Date | null }[]
     >`
       SELECT a."linkId"::text AS "linkId", l.link, a."set", a."shootId"::text AS "shootId", a."wishId"::text AS "wishId", (a."passcodeHash" IS NOT NULL) AS passcode,
-             a."endsAt", a."offAt", a."lockedUntil",
+             a."endsAt", a."offAt", a."lockedUntil", a.hearts, a.downloads,
              (SELECT count(*) FROM reveal_play p WHERE p."linkId" = a."linkId")::text AS plays,
              (SELECT min(at) FROM reveal_play p WHERE p."linkId" = a."linkId") AS first,
              (SELECT max(at) FROM reveal_play p WHERE p."linkId" = a."linkId") AS last
@@ -413,6 +414,8 @@ export class RevealsService {
       endsAt: t(r.endsAt),
       off: r.offAt !== null,
       locked: r.lockedUntil !== null && r.lockedUntil.getTime() > now.getTime(),
+      hearts: r.hearts,
+      downloads: r.downloads,
       plays: { count: Number(r.plays), first: t(r.first), last: t(r.last) },
     };
   }
@@ -440,6 +443,15 @@ export class RevealsService {
   /** E-152. */
   async get(businessId: string, linkId: string): Promise<RevealLink> {
     if (!UUID.test(linkId)) throw AppError.notFound();
+    return this.view(businessId, { linkId });
+  }
+
+  /** IB2: switches a link's download addresses on or off. Only finals give any; the switch is kept for a proofs link but never shows a download. */
+  async setDownloads(businessId: string, linkId: string, on: unknown): Promise<RevealLink> {
+    if (!UUID.test(linkId)) throw AppError.notFound();
+    if (typeof on !== "boolean") throw AppError.validation({ on: "Must be true or false." });
+    const n = await this.db.$executeRaw`UPDATE reveal_access SET downloads = ${on} WHERE "linkId" = ${linkId}::uuid AND "businessId" = ${businessId}::uuid`;
+    if (n === 0) throw AppError.notFound();
     return this.view(businessId, { linkId });
   }
 

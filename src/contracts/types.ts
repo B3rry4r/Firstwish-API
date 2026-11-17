@@ -1380,6 +1380,10 @@ export interface Report {
 
 /** RevealLink: table. written by E-153 (the proofs or finals link a business copies) */
 export interface RevealLink {
+  /** IB2 (DEC-263): whether the link gives download addresses (finals only); left on unless the business switches it off */
+  downloads?: boolean | null;
+  /** IB1 (DEC-262): the photo positions the client marked at this link */
+  hearts?: number[] | null;
   link: string;
   set: "proofs" | "finals";
 }
@@ -1389,6 +1393,10 @@ export interface RevealPlay {
   business?: string | null;
   content?: unknown;
   date?: Instant | null;
+  /** IB2 (DEC-263): for finals with downloads on, one named download address for each photo, in the order of `photos` */
+  downloads?: { name: string; url: string }[] | null;
+  /** IB1 (DEC-262): the photo positions the client marked (positions in the reveal's file list, as `index` has them) */
+  hearts?: number[] | null;
   index?: unknown[] | null;
   no?: string | null;
   photos?: unknown[] | null;
@@ -5074,6 +5082,38 @@ export interface PostBusinessRevealsBody {
 export type PostBusinessRevealsHeaders = Record<string, never>;
 export type PostBusinessRevealsResponse = { shoot: Shoot; wish: ClientWish; link: string };
 
+/** E-273 GET /v1/r/:code/favourites. Auth: public; past the passcode where the reveal has one (IB1, DEC-262). */
+export interface GetRByCodeFavouritesParams {
+  code: string;
+}
+export type GetRByCodeFavouritesQuery = Record<string, never>;
+export type GetRByCodeFavouritesHeaders = Record<string, never>;
+export type GetRByCodeFavouritesResponse = { hearts: number[] };
+
+/** E-274 POST /v1/r/:code/favourites. Auth: public; past the passcode where the reveal has one (IB1, DEC-262). Marks or unmarks one photo; answers every position marked. */
+export interface PostRByCodeFavouritesParams {
+  code: string;
+}
+export interface PostRByCodeFavouritesBody {
+  /** the photo's position in the reveal's file list (RevealPlay.index) */
+  position: number;
+  /** true marks it, false unmarks it */
+  marked: boolean;
+}
+export type PostRByCodeFavouritesHeaders = Record<string, never>;
+export type PostRByCodeFavouritesResponse = { hearts: number[] };
+
+/** E-275 POST /v1/business/reveal-links/:id/downloads. Auth: business (IB2, DEC-263). Switches the link's download addresses on or off; answers the link. */
+export interface PostBusinessRevealLinksByIdDownloadsParams {
+  id: string;
+}
+export interface PostBusinessRevealLinksByIdDownloadsBody {
+  /** true gives the download addresses (finals only), false takes them away */
+  on: boolean;
+}
+export type PostBusinessRevealLinksByIdDownloadsHeaders = Record<string, never>;
+export type PostBusinessRevealLinksByIdDownloadsResponse = RevealLink;
+
 /** Every endpoint by registry id: its request parts and its response. */
 export interface EndpointContracts {
   "E-1": { params: GetAdminPeopleParams; query: GetAdminPeopleQuery; headers: GetAdminPeopleHeaders; response: GetAdminPeopleResponse };
@@ -5347,5 +5387,8 @@ export interface EndpointContracts {
   "E-232": { params: PostWishesByIdWakeParams; body: PostWishesByIdWakeBody; headers: PostWishesByIdWakeHeaders; response: PostWishesByIdWakeResponse };
   "E-233": { params: InternalWishesIssueNumberParams; body: InternalWishesIssueNumberBody; headers: InternalWishesIssueNumberHeaders; response: InternalWishesIssueNumberResponse };
   "E-272": { params: PostBusinessRevealsParams; body: PostBusinessRevealsBody; headers: PostBusinessRevealsHeaders; response: PostBusinessRevealsResponse };
+  "E-273": { params: GetRByCodeFavouritesParams; query: GetRByCodeFavouritesQuery; headers: GetRByCodeFavouritesHeaders; response: GetRByCodeFavouritesResponse };
+  "E-274": { params: PostRByCodeFavouritesParams; body: PostRByCodeFavouritesBody; headers: PostRByCodeFavouritesHeaders; response: PostRByCodeFavouritesResponse };
+  "E-275": { params: PostBusinessRevealLinksByIdDownloadsParams; body: PostBusinessRevealLinksByIdDownloadsBody; headers: PostBusinessRevealLinksByIdDownloadsHeaders; response: PostBusinessRevealLinksByIdDownloadsResponse };
 }
 export type EndpointId = keyof EndpointContracts;

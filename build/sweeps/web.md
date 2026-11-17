@@ -74,3 +74,11 @@
   login's payment is pending the owner sees until when, can read its result, and can drop it ("Start again", HY1).
   UA-235 and UA-829 (a saved logo seen end to end) stay open for WEB-API-6B's logo case. Light mode was measured for
   the pending state only.
+- W14 MERGED (17 Nov, web ae8fa41 + records 790425d). Owed after API-BASE-8, as one small staff bundle (W14B):
+  "Find a thread" and "Find an order" come back (the designed screens had them); "Hand to someone" for a support
+  member; Concierge's "Payments and refunds" opens THAT order's payment (today a bare link: staff pick by hand).
+  Not owed (the designed screens never drew them): refuse a submission, a Concierge quote, saved-reply add or edit.
+  Lows: Support draws its filter chips above the refusal for a reviewer; the Styles search placeholder is cut at
+  360; .pipeline-ui/scan-map-screens.json:1025-1035 lists deleted lib files; /admin/wishes at 390 scrolls sideways
+  (scrollWidth 399: a screen wired earlier (W13): a small patch).
+  Not run by the checker: an edited receipt template sent by a real settled payment.

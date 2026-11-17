@@ -86,3 +86,6 @@
 - (API-BASE-8, from the Business Plan check) the owner cannot read a plan payment a LOGIN started (GET
   /payments/{ref} is 404 for the owner, 200 for the login): everyone who may pay for the business's plan reads the
   business's plan payments; the plan read's `pending` carries when it lapses (lapsesAt).
+- (API-BASE-8, from the Staff support check) the designed staff screens had "Find a thread" (Support) and "Find an
+  order" (Concierge): the lists take no search word, so the wired screens dropped both: a `q` on each list. The
+  Concierge order carries its payment's provider reference (the refund link can then open that payment).

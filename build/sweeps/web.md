@@ -82,3 +82,7 @@
   360; .pipeline-ui/scan-map-screens.json:1025-1035 lists deleted lib files; /admin/wishes at 390 scrolls sideways
   (scrollWidth 399: a screen wired earlier (W13): a small patch).
   Not run by the checker: an edited receipt template sent by a real settled payment.
+- P-W9 (17 Nov): the web finds a left-behind reveal wish by client, occasion and day (the server takes no key on
+  client-wish create): closed for good when the Vault uses the server's one-call reveal (E-272, the ninth API
+  round): a web bundle WEB-API-9 after it merges (one-call reveal, favourites, downloads, rename, pick files, plays).
+  The driver's w12 flow crashes on a SECOND run on a used database (invoice_link key): second-run state in w12.

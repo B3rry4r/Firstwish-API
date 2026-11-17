@@ -18,6 +18,16 @@ export const fileName = (id: string, contentType: string, shown?: string | null)
 /** A json column read as a list of file ids (anything else in it is dropped). */
 export const idsOf = (v: unknown): string[] => (Array.isArray(v) ? v.filter((x): x is string => typeof x === "string" && UUID.test(x)) : []);
 
+/**
+ * IC6: a name is plain text. Control characters, direction-override and direction-isolate marks and the invisible joiners are removed (the
+ * rest of the text stays), runs of white space become one space, and the ends are trimmed. A name that is dots alone is refused by the caller
+ * with `dotsOnly`.
+ */
+// eslint-disable-next-line no-control-regex
+const HIDDEN = /[\u0000-\u001f\u007f-\u009f\u00ad\u061c\u180e\u200b-\u200f\u2028-\u202e\u2060-\u206f\ufeff\ufff9-\ufffb]/g;
+export const plainName = (v: unknown): string => (typeof v === "string" ? v.replace(/\s+/g, " ").replace(HIDDEN, "").replace(/ {2,}/g, " ").trim() : "");
+export const dotsOnly = (name: string): boolean => /^[. ]+$/.test(name);
+
 export const monthOf = (d: Date): string => d.toISOString().slice(0, 7);
 
 /** Most photo positions one reveal link keeps marked (IB1). */

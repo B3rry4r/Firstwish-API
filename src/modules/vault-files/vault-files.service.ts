@@ -9,6 +9,7 @@ import { isUuid } from "../stored-files/file-rules";
 import { SignedUrlsService } from "../stored-files/signed-urls.service";
 import { notInBusiness } from "../../common/auth/login-removed";
 import { businessAccessOf } from "../stored-files/vault-access";
+import { dotsOnly, plainName } from "../vault/vault-shared";
 
 /** IB3: the longest name a file may be given. */
 const FILE_NAME_MAX = 100;
@@ -62,9 +63,8 @@ export class VaultFilesService {
    */
   async rename(p: UserPrincipal, id: string, nameIn: unknown): Promise<PatchBusinessVaultFilesByIdResponse> {
     if (!isUuid(id)) throw AppError.notFound("No such file.");
-    const name = typeof nameIn === "string" ? nameIn.trim().replace(/\s+/g, " ") : "";
-    // eslint-disable-next-line no-control-regex
-    if (!name || name.length > FILE_NAME_MAX || /[\\/\u0000-\u001f]/.test(name)) throw AppError.validation({ name: `Must be a file name of 1 to ${FILE_NAME_MAX} characters, with no slash.` });
+    const name = plainName(nameIn);
+    if (!name || dotsOnly(name) || name.length > FILE_NAME_MAX || /[\\/]/.test(name)) throw AppError.validation({ name: `Must be a file name of 1 to ${FILE_NAME_MAX} characters, with no slash.` });
     const access = await businessAccessOf(this.db, p.accountId);
     if (!access.owned.length && !access.member.length) throw await notInBusiness(this.db, p.accountId, "Vault files need a business.");
     const n = await this.db.storedFile.updateMany({

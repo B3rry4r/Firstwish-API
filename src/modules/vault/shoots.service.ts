@@ -12,7 +12,7 @@ import { toWireInstant } from "../../common/time/time";
 import { StoredFilesService } from "../stored-files/stored-files.service";
 import { playingRevealNames } from "../stored-files/file-jobs";
 import { SignedUrlsService } from "../stored-files/signed-urls.service";
-import { fileName, idsOf, MAX_FILES_PER_ADD, SetName, UUID } from "./vault-shared";
+import { dotsOnly, fileName, idsOf, MAX_FILES_PER_ADD, plainName, SetName, UUID } from "./vault-shared";
 import { VaultSpaceService } from "./vault-space.service";
 
 const CLIENT_MAX = 60;
@@ -142,13 +142,13 @@ export class ShootsService {
     const fields: ErrorFields = {};
     const data: Prisma.ShootUpdateInput = {};
     if (body.title !== undefined) {
-      const title = typeof body.title === "string" ? body.title.trim().replace(/\s+/g, " ") : "";
-      if (!title || title.length > TITLE_MAX) fields.title = `Must be the shoot's name, 1 to ${TITLE_MAX} characters.`;
+      const title = plainName(body.title);
+      if (!title || dotsOnly(title) || title.length > TITLE_MAX) fields.title = `Must be the shoot's name, 1 to ${TITLE_MAX} characters.`;
       else data.title = title;
     }
     if (body.client !== undefined) {
-      const client = typeof body.client === "string" ? body.client.trim().replace(/\s+/g, " ") : "";
-      if (!client || client.length > CLIENT_MAX) fields.client = `Must be the client's name, 1 to ${CLIENT_MAX} characters.`;
+      const client = plainName(body.client);
+      if (!client || dotsOnly(client) || client.length > CLIENT_MAX) fields.client = `Must be the client's name, 1 to ${CLIENT_MAX} characters.`;
       else data.client = client;
     }
     if (body.title === undefined && body.client === undefined) fields.title = "Say the new title or client.";
@@ -164,10 +164,11 @@ export class ShootsService {
 
   async create(businessId: string, body: PostBusinessShootsBody): Promise<Shoot> {
     const fields: ErrorFields = {};
-    const client = String(body.client ?? "").trim().replace(/\s+/g, " ");
-    if (!client || client.length > CLIENT_MAX) fields.client = `Must be the client's name, 1 to ${CLIENT_MAX} characters.`;
-    const title = String(body.title ?? "").trim().replace(/\s+/g, " ") || "Shoot";
-    if (title.length > TITLE_MAX) fields.title = `Up to ${TITLE_MAX} characters.`;
+    const client = plainName(String(body.client ?? ""));
+    if (!client || dotsOnly(client) || client.length > CLIENT_MAX) fields.client = `Must be the client's name, 1 to ${CLIENT_MAX} characters.`;
+    const title = plainName(String(body.title ?? "")) || "Shoot";
+    if (dotsOnly(title)) fields.title = "Use a name with letters or numbers, not dots alone.";
+    else if (title.length > TITLE_MAX) fields.title = `Up to ${TITLE_MAX} characters.`;
     if (Object.keys(fields).length) throw AppError.validation(fields);
     const id = this.ids.id();
     const row = await this.db.$transaction(async (tx) => {

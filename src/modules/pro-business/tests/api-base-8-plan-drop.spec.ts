@@ -55,6 +55,8 @@ describe("HY1 plan payments: lapse time, everyone who may pay reads it, the owne
     const p = await db.payment.findUniqueOrThrow({ where: { providerReference: reference } });
     return settle.settle({ reference, status: "success", amountKobo: p.amountKobo, currency: "NGN", paidAt: t.clock.now() });
   }
+  /** The pairs below make 90 paid payments: once checked they leave the "succeeded" state, so the shared database's newest-succeeded page reads as the other specs expect. */
+  const retire = (paymentIds: string[]) => db.payment.updateMany({ where: { id: { in: paymentIds } }, data: { status: "refunded" } });
   async function balanced(paymentId: string) {
     const [l] = await db.$queryRaw<{ d: bigint; c: bigint; n: number }[]>`SELECT coalesce(sum("amountKobo") FILTER (WHERE direction = 'debit'),0) AS d, coalesce(sum("amountKobo") FILTER (WHERE direction = 'credit'),0) AS c, count(*)::int AS n FROM ledger_entry WHERE "paymentId" = ${paymentId}::uuid`;
     return l;
@@ -213,6 +215,7 @@ describe("HY1 plan payments: lapse time, everyone who may pay reads it, the owne
       expect(biz.plan).toBe("starter");
       expect(biz.renews?.toISOString()).toBe("2027-06-10T09:00:00.000Z");
       expect(await db.auditEntry.count({ where: { subjectId: p.id, action: "plan.drop-pending" } })).toBe(d.status === 200 ? 1 : 0);
+      await retire([p.id]);
     }
     expect(dropped + settledFirst).toBe(30);
   });
@@ -325,6 +328,7 @@ describe("HY1 plan payments: lapse time, everyone who may pay reads it, the owne
         expect(String(led.d)).toBe(String(led.c));
       }
       expect(await invoices(o.businessId)).toBe(1);
+      await retire(rows.map((r) => r.id));
       at(0);
     }
   });

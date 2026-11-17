@@ -228,6 +228,10 @@ describe("B17 business: plan, usage, client wishes, invoices, logins, staff", ()
     expect((await t.http().post("/v1/business/logins").set(bearer(o.token)).send({ contact: "next@studio.ng" })).status).toBe(201);
   });
 
+  /** How many invoices of the whole database carry a number from lo to hi, whatever month their prefix names (the counter is one for all). */
+  const numbered = async (lo: number, hi: number) =>
+    Number((await db.$queryRaw<{ n: bigint }[]>`SELECT count(*) AS n FROM invoice WHERE no LIKE 'FW-%' AND split_part(no, '-', 3)::int BETWEEN ${lo} AND ${hi}`)[0].n);
+
   it("4. every plan and pack payment leaves one invoice: in order, no gaps, the VAT part, the period; the list and the file are the owner's", async () => {
     const o = await owner();
     const a = await pay(o, "pro.starter");
@@ -235,7 +239,9 @@ describe("B17 business: plan, usage, client wishes, invoices, logins, staff", ()
     const rows = await db.$queryRaw<{ no: string; amount: bigint; vat: bigint }[]>`SELECT no, amount, vat FROM invoice WHERE "businessId" = ${o.businessId}::uuid ORDER BY id`;
     expect(rows).toHaveLength(2);
     const n = (no: string) => Number(no.slice(-4));
-    expect(n(rows[1].no) - n(rows[0].no)).toBe(1);
+    // one counter numbers every invoice of the database, so another spec's invoice may fall between the two; none of the numbers between them may be missing
+    expect(n(rows[1].no) - n(rows[0].no)).toBeGreaterThanOrEqual(1);
+    expect(await numbered(n(rows[0].no), n(rows[1].no))).toBe(n(rows[1].no) - n(rows[0].no) + 1);
     expect(rows[0].no).toMatch(/^FW-2909-\d{4}$/);
     expect(Number(rows[0].amount)).toBe(a.total);
     expect(Number(rows[0].vat)).toBe(Math.round((a.total * 0.075) / 1.075));
@@ -294,8 +300,7 @@ describe("B17 business: plan, usage, client wishes, invoices, logins, staff", ()
     const nums = all.map((i) => Number((i.no ?? "").slice(-4))).sort((x, y) => x - y);
     expect(new Set(nums).size).toBe(10);
     expect(nums[9] - nums[0]).toBeGreaterThanOrEqual(9);
-    const between = await db.invoice.count({ where: { no: { gte: all.map((i) => i.no as string).sort()[0], lte: all.map((i) => i.no as string).sort()[9] } } });
-    expect(between).toBe(nums[9] - nums[0] + 1);
+    expect(await numbered(nums[0], nums[9])).toBe(nums[9] - nums[0] + 1);
   });
 
   it("5. a lapsed plan keeps its client wishes; new ones come only from pack wishes", async () => {

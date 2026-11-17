@@ -97,3 +97,6 @@
 - Rename a shoot and a file (no PATCH; names are the server's vault-<id>.<ext>).
 - A reveal from a chosen subset of a shoot's files (today every ready file in the set).
 - A reveal's play sets the client wish's openedAt (UA-832: plays on the shoot).
+- (API-BASE-9, product gap, HZ2 / T-12) a Concierge maker cannot make a wish in the buyer's name: "make the wish"
+  on the order (the wish is the buyer's, tied to the order, hidden from the buyer until delivered), then the web:
+  the maker opens the wish maker from the staff Concierge screen. Until then delivery takes wish ids by hand.

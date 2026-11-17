@@ -983,3 +983,19 @@ HG1 (give race) Two staff giving one Concierge order: the code is right (overlap
   (others get neither), so the refund link opens that payment and no other.
 - HY5: the maker of a Concierge order reads the buyer's wishes that belong to THAT order (id, wish number, the
   receiver's first name) to deliver them; never another order's or another buyer's.
+
+## HZ (17 Nov 2026, the lead, on the eighth API round's check). Default (lead), owner may override.
+- HZ1 (HY2): a search never widens what a role may learn. An email or a wish number matches only as the exact whole
+  value (the characters % _ \ are ordinary letters, never patterns); a name or subject search treats them as
+  ordinary letters too. Hit or no hit must not let a masked contact be rebuilt a character at a time.
+- HZ2 (replaces HY5): a maker reads only the wishes TIED to their order. A wish is tied when it was delivered under
+  the order (today's only tie). No list of the buyer's other wishes, in any state. OWED, a product gap (T-12 says
+  Firstwish's team makes the wishes): there is no way yet for a maker to make a wish in the buyer's name through
+  the order. Default (lead): a "make the wish" route on the order (the order's maker or the owner; the wish is the
+  buyer's, tied to the order, hidden from the buyer until delivered) and the maker opening the wish maker from the
+  staff Concierge screen. To be built as its own bundle; listed for the owner.
+- HZ3 (HU6, HY1): a plan is never applied twice for one intent. When a plan payment settles and another plan payment
+  of the same business was fulfilled AFTER this one was started, this one is refund due (said on its read), whatever
+  state it was in (pending, dropped, lapsed). Paying again after the earlier one was fulfilled is a new intent and
+  adds a month as HR1 says.
+- HZ4: a pack is bought as a pack: a plan-payment start naming the pack is refused (422 with words).

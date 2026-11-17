@@ -497,28 +497,8 @@
    "sha256": "1d2e6d7e68595235e3e602bcff246ea18ce3eb9c72c743ab914154ffe21c40db"
   },
   {
-   "path": "lib/admin-types.ts",
-   "sha256": "02a86aa30dc852bc457e5381abc1b2f2844845f08615a5e038c9312f776e4639"
-  },
-  {
-   "path": "lib/admin/b-types.ts",
-   "sha256": "767a05c12192683c46b8de7e82bf049d9bc07feb282ad4b411c9c02f124d5dc7"
-  },
-  {
-   "path": "lib/admin/c-types.ts",
-   "sha256": "5b08c911c1ebf4345a225119b71b1a03b7e83c3d2299ba845de08e2d0ed88559"
-  },
-  {
-   "path": "lib/admin/d-fixtures.ts",
-   "sha256": "32b0ae9d14815b3036f362fb99da3574ecd7613bb8927809228cb0e67ba29537"
-  },
-  {
-   "path": "lib/admin/d-types.ts",
-   "sha256": "feb85131a0450675efe09f745ce2ea9e1f5999f3dc6f0883c0defe752105f681"
-  },
-  {
    "path": "lib/catalog.ts",
-   "sha256": "a9e58664cb0bda3906a2fbe1ab4ae95634bb06eae99f1728c624dd5e3ff0f401"
+   "sha256": "b1c520b406351085253985583b009d8e674c48ffd2adc46cdf6e7a12034c9218"
   },
   {
    "path": "lib/engine/moments.ts",
@@ -546,11 +526,16 @@
   },
   {
    "path": "lib/studio.ts",
-   "sha256": "ab4573fec5c0701af8aead90995ff4f01558999b1c1bc79b773fb99a8918a0ac"
+   "sha256": "a051284fb0cfb3cf35f1bb2391b6abe92ec2211200ea46b289de6575020a8ff8"
   },
   {
    "path": "lib/styles.ts",
    "sha256": "8aab11f987ddb482b1498f2ce32ca24c4c6eab4efb032172b9ceaf20a923fb78"
   }
- ]
+ ],
+ "owned": {
+  "MessageTemplate": "owned here since 17 Nov 2026 (the web's fixtures were removed)",
+  "Provider": "owned here since 17 Nov 2026 (the web's fixtures were removed)",
+  "SavedReply": "owned here since 17 Nov 2026 (the web's fixtures were removed)"
+ }
 }

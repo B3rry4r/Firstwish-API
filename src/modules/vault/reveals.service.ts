@@ -233,6 +233,7 @@ export class RevealsService {
         const first = await this.firstSend(tx, businessId, call.key);
         if (first) {
           if (first !== wishId.toLowerCase()) throw AppError.conflict("idempotency_key_reused", "This Idempotency-Key was used for another wish.");
+          await this.sameSend(tx, businessId, first, call.shootId, null);
           return { again: true as const, wishId };
         }
       }
@@ -261,6 +262,15 @@ export class RevealsService {
   private async firstSend(tx: Tx, businessId: string, key: string): Promise<string | null> {
     const first = await tx.$queryRaw<{ wishId: string }[]>`SELECT "wishId"::text AS "wishId" FROM reveal_send WHERE "businessId" = ${businessId}::uuid AND key = ${key}`;
     return first[0]?.wishId ?? null;
+  }
+
+  /** IC5: a key used again names the same shoot and client as the send it first made, or it is refused (409), never replayed for another. */
+  private async sameSend(tx: Tx, businessId: string, wishId: string, shootId: string, client: string | null): Promise<void> {
+    const w = await tx.clientWish.findFirst({ where: { id: wishId, businessId }, select: { shoot: true, client: true } });
+    const name = (client ?? "").trim().replace(/\s+/g, " ").toLowerCase();
+    if (!w || (w.shoot ?? "").toLowerCase() !== shootId || (name && (w.client ?? "").trim().toLowerCase() !== name)) {
+      throw AppError.conflict("idempotency_key_reused", "This Idempotency-Key was used for another shoot or client.");
+    }
   }
 
   /** The email goes out after the commit; a failure here is carried out by the send-message job at its next run. */
@@ -345,7 +355,10 @@ export class RevealsService {
       await lockBusinessOwner(tx, businessId);
       if (call.key) {
         const first = await this.firstSend(tx, businessId, call.key);
-        if (first) return { replay: true as const, wishId: first };
+        if (first) {
+          await this.sameSend(tx, businessId, first, call.shootId, typeof call.reveal.client === "string" ? call.reveal.client : typeof body.client === "string" ? body.client : "");
+          return { replay: true as const, wishId: first };
+        }
       }
       const shoot = await tx.shoot.findFirst({ where: { id: call.shootId, businessId }, select: { id: true } });
       if (!shoot) throw AppError.notFound();

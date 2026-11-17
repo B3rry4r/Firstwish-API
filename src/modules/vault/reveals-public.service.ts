@@ -12,11 +12,10 @@ import { SignedUrlsService } from "../stored-files/signed-urls.service";
 import { fileName } from "./vault-shared";
 import { idsOf, MAX_HEARTS, SetName, syncHearts } from "./vault-shared";
 
-/** Who is asking: the address (from the trusted proxy setting; only a keyed hash of it is ever kept), the unlock token, the visit's own id. */
+/** Who is asking: the address (from the trusted proxy setting; only a keyed hash of it is ever kept) and the unlock token. Nothing the page sends names a visitor (IC5). */
 export interface Viewer {
   address: string | null;
   token?: string;
-  session?: string;
 }
 
 /** An open reveal: the photos (signed addresses), their positions in the link's file list, the positions the client marked, and for finals with downloads on one named download address for each photo. */
@@ -41,7 +40,6 @@ interface Row {
 }
 
 const CODE = /^[A-Za-z0-9_-]{22}$/;
-const SESSION = /^[A-Za-z0-9_-]{8,64}$/;
 /** IB1 (PROVISIONAL, owner may change): marks per link and address an hour. */
 const FAVOURITES_PER_HOUR = 60;
 const gone = (): AppError => new AppError(410, "gone", "This link is not available any more.");
@@ -130,11 +128,14 @@ export class RevealsPublicService {
    * IB5: one row for each visit, and the client wish's first opening: the first play (after the passcode, where there is one) sets its
    * openedAt and a later play leaves it as it was.
    */
-  /** One row for each visit: the visit is the page's own id when it sends one, else the address and the day, both only as a keyed hash. */
+  /**
+   * IC5: one play for each link and address in an hour, whatever the page sends: the visit is the link, the address and the clock's hour, as one
+   * keyed hash. A header the client sets (it is free to make a new one for every request) never names a visit.
+   */
   private async play(r: Row, code: string, v: Viewer): Promise<void> {
     const linkId = r.linkId;
     const now = this.clock.now();
-    const visit = v.session && SESSION.test(v.session) ? this.limits.keyOf("visit", code, v.session) : this.limits.keyOf("day", code, v.address, now.toISOString().slice(0, 10));
+    const visit = this.limits.keyOf("play", code, v.address, String(Math.floor(now.getTime() / 3_600_000)));
     await this.db.$executeRaw`
       INSERT INTO reveal_play (id, "linkId", visit, at) VALUES (${this.ids.id()}::uuid, ${linkId}::uuid, ${visit}, ${now})
       ON CONFLICT ("linkId", visit) DO NOTHING`;
@@ -165,10 +166,12 @@ export class RevealsPublicService {
     if (typeof position !== "number" || !Number.isInteger(position) || position < 0 || position > 9999) fields.position = "Must be a photo position, a whole number from 0.";
     if (typeof marked !== "boolean") fields.marked = "Must be true or false.";
     if (Object.keys(fields).length) throw AppError.validation(fields);
+    // IC5: the hourly limit is counted first, so its refusal names the real wait (the minute's read limit would say 60 seconds for an hour's wait)
+    if (!CODE.test(code)) throw AppError.notFound();
+    await this.limits.take("favourite", this.limits.keyOf(code, v.address), FAVOURITES_PER_HOUR, 3600);
     const r = await this.opened(code, v);
     const ids = idsOf(r.fileIds);
     if ((position as number) >= ids.length) throw AppError.validation({ position: `This reveal has ${ids.length} photos, from 0 to ${Math.max(ids.length - 1, 0)}.` });
-    await this.limits.take("favourite", this.limits.keyOf(r.linkId, v.address), FAVOURITES_PER_HOUR, 3600);
     const at = position as number;
     return this.db.$transaction(async (tx) => {
       const rows = await tx.$queryRaw<{ hearts: number[] }[]>`SELECT hearts FROM reveal_access WHERE "linkId" = ${r.linkId}::uuid AND "offAt" IS NULL FOR UPDATE`;

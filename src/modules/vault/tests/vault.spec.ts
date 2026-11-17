@@ -388,7 +388,8 @@ describe("B18 Vault: shoots, space, reveal links, plays, E-33", () => {
     await read();
     await read();
     const plays = (await get(`/v1/business/reveal-links/${a.linkId}`, o.token)).body.plays;
-    expect(plays).toEqual({ count: 3, first: NOW.toISOString(), last: new Date(NOW.getTime() + 3600 * 1000).toISOString() });
+    // IC5: a play is one for each link and address in an hour, whatever id the page sends: the first hour is one, the next hour one more
+    expect(plays).toEqual({ count: 2, first: NOW.toISOString(), last: new Date(NOW.getTime() + 3600 * 1000).toISOString() });
     const rows = await db.$queryRaw<Record<string, unknown>[]>`SELECT * FROM reveal_play WHERE "linkId" = ${a.linkId}::uuid`;
     expect(Object.keys(rows[0]).sort()).toEqual(["at", "id", "linkId", "visit"]);
     expect(JSON.stringify(rows)).not.toMatch(/visit-one|127\.0\.0\.1|::1|ffff/);

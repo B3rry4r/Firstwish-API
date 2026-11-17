@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { PrismaService } from "../../../common/db/prisma.service";
 import { IdGenerator } from "../../../common/ports/ids.port";
 import { createTestApp, TestApp } from "../../../../test/kit/app";
+import { testWishNo } from "../../../../test/kit/unique";
 
 const ROOT = join(__dirname, "../../../..");
 const NOW = new Date("2027-02-09T09:00:00.000Z");
@@ -102,7 +103,7 @@ describe("API-BASE-5 wishes (through the real routes)", () => {
       const w = await start(u);
       await save(u, w.id, { version: w.version, content: { ...fields, opening: { id: "op-1", scene: "curtain", values: { to: "Chidi" } } } });
       const slug = `ab5-${run}-${seq}`.slice(0, 32);
-      await db.wish.update({ where: { id: w.id }, data: { status: "sealed", ticket: "moment", sealedAt: NOW, opensAt: new Date(NOW.getTime() + 3600000), no: `FW-A5${run}` } as never });
+      await db.wish.update({ where: { id: w.id }, data: { status: "sealed", ticket: "moment", sealedAt: NOW, opensAt: new Date(NOW.getTime() + 3600000), no: testWishNo("FW-A5") } as never });
       await db.wishLink.create({ data: { id: nid(), slug, wishId: w.id, active: true } });
       const sealed = await t.http().get(`/v1/w/${slug}`).set({ "x-forwarded-for": "10.55.1.1" });
       expect(sealed.status).toBe(200);
@@ -121,7 +122,7 @@ describe("API-BASE-5 wishes (through the real routes)", () => {
       const draft = await t.http().get(`/v1/wishes/${w.id}/link`).set(bearer(u.token));
       expect(draft.status).toBe(404);
       const slug = `ab5g-${run}-${seq}`.slice(0, 32);
-      await db.wish.update({ where: { id: w.id }, data: { status: "sealed", ticket: "moment", sealedAt: NOW, opensAt: new Date(NOW.getTime() + 3600000), no: `FW-G5${run}` } as never });
+      await db.wish.update({ where: { id: w.id }, data: { status: "sealed", ticket: "moment", sealedAt: NOW, opensAt: new Date(NOW.getTime() + 3600000), no: testWishNo("FW-G5") } as never });
       await db.wishLink.create({ data: { id: nid(), slug, wishId: w.id, active: true } });
       const mine = await t.http().get(`/v1/wishes/${w.id}/link`).set(bearer(u.token));
       expect(mine.status).toBe(200);

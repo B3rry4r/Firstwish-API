@@ -8,6 +8,7 @@ import { JobsService } from "../../jobs/jobs.service";
 import { endOf, PassCover } from "../../purchases/pass-cover";
 import { PurchasesService } from "../../purchases/purchases.service";
 import { WishKeepsService } from "../wish-keeps.service";
+import { testWishNo } from "../../../../test/kit/unique";
 
 // HB1: a wish's end is always worked out from scratch by endOf and written by applyEnd.
 const ROOT = join(__dirname, "../../../..");
@@ -51,7 +52,7 @@ describe("HB1 the end of a wish is worked out from the rows", () => {
   async function wish(accountId: string, endsAt: Date, over: Record<string, unknown> = {}) {
     const id = ids.next();
     await db.wish.create({
-      data: { id, accountId, status: "live", kind: "birthday", occasion: "birthday", styleSlug: "golden", timeZone: "Africa/Lagos", ticket: "keepsake", no: `hb${seq}${id.slice(-5)}`, openedAt: new Date(endsAt.getTime() - TERM * DAY), endsAt, ...over } as never,
+      data: { id, accountId, status: "live", kind: "birthday", occasion: "birthday", styleSlug: "golden", timeZone: "Africa/Lagos", ticket: "keepsake", no: testWishNo("hb"), openedAt: new Date(endsAt.getTime() - TERM * DAY), endsAt, ...over } as never,
     });
     await jobs.schedule("rest-wish", endsAt, id); // what the first open did
     return id;

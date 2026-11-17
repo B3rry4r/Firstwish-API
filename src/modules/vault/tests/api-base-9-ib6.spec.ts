@@ -5,7 +5,7 @@ describe("API-BASE-9 case 3 (IB6): a live login gets Vault upload tickets", () =
   const ticket = (token: string, headers: Record<string, string> = {}) =>
     k.t.http().post("/v1/uploads").set(auth(token)).set(headers).send({ purpose: "vault", contentType: "image/jpeg", bytes: 1000 });
 
-  it("the owner and a live login (active or invited) get a ticket for the business's Vault; the file belongs to that business", async () => {
+  it("the owner and a live login (active or invited) get a ticket for the business's Vault; the file is that business's", async () => {
     const o = await k.owner();
     expect((await ticket(o.token)).status).toBe(201);
     const active = await k.login(o, "active");

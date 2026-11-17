@@ -19,14 +19,14 @@ export class PostRByCodeUnlockParamsDto implements PostRByCodeUnlockParams {
   code!: string;
 }
 
-/** E-273 GET /v1/r/:code/favourites (query). */
+/** E-275 GET /v1/r/:code/favourites (query). */
 export class GetRByCodeFavouritesQueryDto {}
 export class GetRByCodeFavouritesParamsDto implements GetRByCodeFavouritesParams {
   @IsString()
   code!: string;
 }
 
-/** E-274 POST /v1/r/:code/favourites (body). */
+/** E-276 POST /v1/r/:code/favourites (body). */
 export class PostRByCodeFavouritesBodyDto implements PostRByCodeFavouritesBody {
   @IsInt()
   @Min(0)

@@ -218,6 +218,11 @@
           "endpoint": "E-246",
           "route": "POST /v1/concierge-orders/:id/cancel",
           "matchedBy": "words: concierge"
+        },
+        {
+          "endpoint": "E-273",
+          "route": "POST /v1/admin/concierge/orders/:id/wishes",
+          "matchedBy": "words: concierge"
         }
       ],
       "test": "src/concierge-order/tests/concierge-order.contract.spec.ts > entitlement T-13"
@@ -397,13 +402,13 @@
           "matchedBy": "words: keep"
         },
         {
-          "endpoint": "E-30",
-          "route": "POST /v1/business/client-wishes",
+          "endpoint": "E-272",
+          "route": "POST /v1/business/reveals",
           "matchedBy": "words: client"
         },
         {
-          "endpoint": "E-32",
-          "route": "POST /v1/business/client-wishes/:id/approve-date",
+          "endpoint": "E-30",
+          "route": "POST /v1/business/client-wishes",
           "matchedBy": "words: client"
         }
       ],
@@ -946,6 +951,11 @@
           "matchedBy": "words: concierge"
         },
         {
+          "endpoint": "E-273",
+          "route": "POST /v1/admin/concierge/orders/:id/wishes",
+          "matchedBy": "words: concierge"
+        },
+        {
           "endpoint": "E-34",
           "route": "POST /v1/admin/concierge-orders/:id/delivery",
           "matchedBy": "words: concierge"
@@ -1124,6 +1134,11 @@
           "endpoint": "E-113",
           "route": "INTERNAL port:fulfilment#vault.block-bulk",
           "matchedBy": "words: block"
+        },
+        {
+          "endpoint": "E-278",
+          "route": "PATCH /v1/business/vault-files/:id",
+          "matchedBy": "words: vault"
         },
         {
           "endpoint": "E-33",

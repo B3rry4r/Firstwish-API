@@ -60,7 +60,7 @@ export class VaultController {
     return this.shoots.get((await this.access.require(p, h)).businessId, params.id);
   }
 
-  /** E-276 (IB3): rename a shoot. */
+  /** E-277 (IB3): rename a shoot. */
   @Roles("person", "business")
   @Patch("shoots/:id")
   async rename(@Param() params: PatchBusinessShootsByIdParamsDto, @Body() body: PatchBusinessShootsByIdBodyDto, @CurrentPrincipal() p: Principal | undefined, @BusinessHeader() h: string | undefined): Promise<Shoot> {
@@ -130,7 +130,7 @@ export class VaultController {
     return this.reveals.off((await this.access.require(p, h)).businessId, params.id);
   }
 
-  /** E-275 (IB2): the link's download addresses on or off. */
+  /** E-274 (IB2): the link's download addresses on or off. */
   @Roles("person", "business")
   @Post("reveal-links/:id/downloads")
   @HttpCode(200)

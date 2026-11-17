@@ -16,7 +16,7 @@ export class GetBusinessVaultFilesQueryDto implements GetBusinessVaultFilesQuery
   limit?: number;
 }
 
-/** E-277 PATCH /v1/business/vault-files/:id (body). */
+/** E-278 PATCH /v1/business/vault-files/:id (body). */
 export class PatchBusinessVaultFilesByIdBodyDto implements PatchBusinessVaultFilesByIdBody {
   @IsString()
   @MaxLength(200)

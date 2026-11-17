@@ -313,7 +313,7 @@ export class RevealsService {
     if (passHash) await this.gateShootLinks(tx, shootId, set, passHash);
     await syncHearts(tx, linkId);
     const stored: Prisma.InputJsonObject = { ...s.words, link: linkId };
-    await tx.clientWish.update({ where: { id: wishId }, data: { reveal: stored, shoot: shootId, set: set as SetName, sentAt: now } });
+    await tx.clientWish.update({ where: { id: wishId }, data: { reveal: stored, shoot: shootId, set, sentAt: now } });
     const mark: Prisma.InputJsonObject = { wish: wishId, no: wish.no ?? "", sentAt: toWireInstant(now), link: linkId };
     await tx.shoot.update({ where: { id: shootId }, data: set === "proofs" ? { proofsReveal: mark } : { finalsReveal: mark } });
     let deliveryId: string | null = null;

@@ -87,9 +87,9 @@ export function useKit(now: Date = NOW) {
       if (s.status !== 201) throw new Error(`shoot ${s.status}`);
       const files: string[] = [];
       for (let i = 0; i < n; i++) files.push(await k.vaultFile(o, 1000 + i));
-      const r = await k.t.http().post(`/v1/business/shoots/${s.body.id}/${set === "proofs" ? "files" : "finals"}`).set(auth(o.token)).send({ files, set, shoot: s.body.id });
+      const r = await k.t.http().post(`/v1/business/shoots/${(s.body as { id: string }).id}/${set === "proofs" ? "files" : "finals"}`).set(auth(o.token)).send({ files, set, shoot: (s.body as { id: string }).id });
       if (r.status !== 201) throw new Error(`files ${r.status}`);
-      return { shoot: s.body.id as string, files };
+      return { shoot: (s.body as { id: string }).id, files };
     };
     k.clientWish = async (o, client = "Ada Obi") => {
       const id = ids.next();

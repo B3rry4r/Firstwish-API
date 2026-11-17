@@ -26,7 +26,7 @@ export class PostBusinessRevealLinksByIdOffParamsDto implements PostBusinessReve
   id!: string;
 }
 
-/** E-275 POST /v1/business/reveal-links/:id/downloads (body). */
+/** E-274 POST /v1/business/reveal-links/:id/downloads (body). */
 export class PostBusinessRevealLinksByIdDownloadsBodyDto implements PostBusinessRevealLinksByIdDownloadsBody {
   @IsBoolean()
   on!: boolean;

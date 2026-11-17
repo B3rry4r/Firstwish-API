@@ -99,7 +99,7 @@ export class ConciergeAdminController {
     return this.orders.staffWishes(staffOf(p), params.id);
   }
 
-  /** E-278 (HZ2): make a wish in the buyer's name. */
+  /** E-273 (HZ2): make a wish in the buyer's name. */
   @AdminRoute(SECTION, "maker")
   @Post("concierge/orders/:id/wishes")
   @HttpCode(201)

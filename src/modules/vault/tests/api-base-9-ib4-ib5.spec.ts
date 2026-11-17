@@ -3,7 +3,7 @@ import { useKit } from "./ab9-kit";
 describe("API-BASE-9 cases 7 and 8 (IB4 a reveal of named files, IB5 plays set openedAt)", () => {
   const k = useKit();
   const one = (o: { token: string }, shoot: string, over: Record<string, unknown> = {}) => k.post("/v1/business/reveals", o.token, { shoot, set: "proofs", reveal: k.revealBody(), ...over });
-  const photos = async (link: string) => (await k.t.http().get(`/v1/r/${k.codeOf(link)}`)).body;
+  const photos = async (link: string): Promise<{ photos: string[]; index: number[] }> => (await k.t.http().get(`/v1/r/${k.codeOf(link)}`)).body as { photos: string[]; index: number[] };
 
   it("IB4: a reveal names the files it shows (in the order named); with none named every ready file of the set shows, as before", async () => {
     const o = await k.owner();

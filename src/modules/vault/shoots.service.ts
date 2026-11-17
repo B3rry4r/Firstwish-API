@@ -134,7 +134,7 @@ export class ShootsService {
   }
 
   /**
-   * IB3 (E-276): rename a shoot (its title and the client's name). The business and its live logins; another business's shoot is 404. A field left
+   * IB3 (E-277): rename a shoot (its title and the client's name). The business and its live logins; another business's shoot is 404. A field left
    * out stays as it was; the shoot's files and reveals are not touched.
    */
   async rename(businessId: string, id: string, body: { title?: unknown; client?: unknown }): Promise<Shoot> {
@@ -208,7 +208,7 @@ export class ShootsService {
     for (const fid of done.ids) {
       if (kept.has(fid)) continue;
       if (await playingRevealNames(this.db, fid, this.clock.now())) continue; // HC1: a reveal that still plays shows it
-      // a file a login uploaded belongs to that login's account: it goes under its own owner
+      // a file a login uploaded is held under that login's account: it goes under its own owner
       const owner = (await this.db.storedFile.findUnique({ where: { id: fid }, select: { ownerAccountId: true } }))?.ownerAccountId ?? done.accountId;
       try {
         await this.files.remove({ kind: "user", accountId: owner, sides: ["person", "business"] }, fid, {});

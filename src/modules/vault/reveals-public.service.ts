@@ -95,7 +95,8 @@ export class RevealsPublicService {
     // IB2: a download address for each FINAL file when the business left downloads on; a proof never has one
     const giveDownloads = r.set === "finals" && r.downloads;
     const ids = idsOf(r.fileIds);
-    const meta = giveDownloads ? new Map((await this.db.storedFile.findMany({ where: { id: { in: ids } }, select: { id: true, contentType: true, shownName: true } })).map((f) => [f.id, f])) : new Map();
+    const found = giveDownloads ? await this.db.storedFile.findMany({ where: { id: { in: ids } }, select: { id: true, contentType: true, shownName: true } }) : [];
+    const meta = new Map(found.map((f) => [f.id, f]));
     for (const [pos, id] of ids.entries()) {
       try {
         photos.push((await this.reads.signedRead({ fileId: id }, { type: "allowed" })).url);

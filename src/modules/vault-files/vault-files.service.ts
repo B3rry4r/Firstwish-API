@@ -57,7 +57,7 @@ export class VaultFilesService {
   }
 
   /**
-   * IB3 (E-277): the name a Vault file shows under. The business's owner and its live logins; a file of another business (or one that is not a
+   * IB3 (E-278): the name a Vault file shows under. The business's owner and its live logins; a file of another business (or one that is not a
    * Vault file) is 404, and so is a held file for a login (it sees only files that passed screening). The stored object keeps its own name.
    */
   async rename(p: UserPrincipal, id: string, nameIn: unknown): Promise<PatchBusinessVaultFilesByIdResponse> {

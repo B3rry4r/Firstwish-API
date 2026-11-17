@@ -71,7 +71,7 @@ export class PostBusinessShootsByIdFinalsParamsDto implements PostBusinessShoots
   id!: string;
 }
 
-/** E-276 PATCH /v1/business/shoots/:id (body). */
+/** E-277 PATCH /v1/business/shoots/:id (body). */
 export class PatchBusinessShootsByIdBodyDto implements PatchBusinessShootsByIdBody {
   @IsOptional()
   @IsString()

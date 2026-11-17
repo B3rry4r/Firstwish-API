@@ -176,7 +176,7 @@ describe("HZ2 (Concierge): the maker makes a wish in the buyer's name through th
     expect(cancelled.status).toBe(200);
     expect((await db.wish.findUniqueOrThrow({ where: { id: w } })).erasedAt).not.toBeNull();
     expect((await readWish(m.auth, w)).status).toBe(404);
-    expect((await http().get("/v1/wishes").set("Authorization", buyer.auth)).body.items.map((x: { id: string }) => x.id)).not.toContain(w);
+    expect(((await http().get("/v1/wishes").set("Authorization", buyer.auth)).body.items as { id: string }[]).map((x) => x.id)).not.toContain(w);
     expect((await db.payment.findUniqueOrThrow({ where: { id: o.payId } })).flags).toContain("refund_due");
     expect((await make(m.auth, o.id)).status).toBe(409);
     // a wish the maker already sealed goes the same way

@@ -1380,9 +1380,9 @@ export interface Report {
 
 /** RevealLink: table. written by E-153 (the proofs or finals link a business copies) */
 export interface RevealLink {
-  /** IB2 (DEC-263): whether the link gives download addresses (finals only); left on unless the business switches it off */
+  /** IB2 (DEC-264): whether the link gives download addresses (finals only); left on unless the business switches it off */
   downloads?: boolean | null;
-  /** IB1 (DEC-262): the photo positions the client marked at this link */
+  /** IB1 (DEC-263): the photo positions the client marked at this link */
   hearts?: number[] | null;
   link: string;
   set: "proofs" | "finals";
@@ -1393,9 +1393,9 @@ export interface RevealPlay {
   business?: string | null;
   content?: unknown;
   date?: Instant | null;
-  /** IB2 (DEC-263): for finals with downloads on, one named download address for each photo, in the order of `photos` */
+  /** IB2 (DEC-264): for finals with downloads on, one named download address for each photo, in the order of `photos` */
   downloads?: { name: string; url: string }[] | null;
-  /** IB1 (DEC-262): the photo positions the client marked (positions in the reveal's file list, as `index` has them) */
+  /** IB1 (DEC-263): the photo positions the client marked (positions in the reveal's file list, as `index` has them) */
   hearts?: number[] | null;
   index?: unknown[] | null;
   no?: string | null;
@@ -5057,7 +5057,7 @@ export interface InternalWishesIssueNumberBody {
 export type InternalWishesIssueNumberHeaders = Record<string, never>;
 export type InternalWishesIssueNumberResponse = Wish;
 
-/** E-272 POST /v1/business/reveals. Auth: business (the owner or a live login). IA1 (DEC-260): the client wish and the reveal in one call, or neither; Idempotency-Key makes a repeat answer the first result. */
+/** E-272 POST /v1/business/reveals. Auth: business (the owner or a live login). IA1 (DEC-262): the client wish and the reveal in one call, or neither; Idempotency-Key makes a repeat answer the first result. */
 export type PostBusinessRevealsParams = Record<string, never>;
 export interface PostBusinessRevealsBody {
   /** the words of the reveal as E-33 takes them, with `downloads` (finals only; default true) */
@@ -5082,7 +5082,7 @@ export interface PostBusinessRevealsBody {
 export type PostBusinessRevealsHeaders = Record<string, never>;
 export type PostBusinessRevealsResponse = { shoot: Shoot; wish: ClientWish; link: string };
 
-/** E-273 GET /v1/r/:code/favourites. Auth: public; past the passcode where the reveal has one (IB1, DEC-262). */
+/** E-275 GET /v1/r/:code/favourites. Auth: public; past the passcode where the reveal has one (IB1, DEC-263). */
 export interface GetRByCodeFavouritesParams {
   code: string;
 }
@@ -5090,7 +5090,7 @@ export type GetRByCodeFavouritesQuery = Record<string, never>;
 export type GetRByCodeFavouritesHeaders = Record<string, never>;
 export type GetRByCodeFavouritesResponse = { hearts: number[] };
 
-/** E-274 POST /v1/r/:code/favourites. Auth: public; past the passcode where the reveal has one (IB1, DEC-262). Marks or unmarks one photo; answers every position marked. */
+/** E-276 POST /v1/r/:code/favourites. Auth: public; past the passcode where the reveal has one (IB1, DEC-263). Marks or unmarks one photo; answers every position marked. */
 export interface PostRByCodeFavouritesParams {
   code: string;
 }
@@ -5103,7 +5103,7 @@ export interface PostRByCodeFavouritesBody {
 export type PostRByCodeFavouritesHeaders = Record<string, never>;
 export type PostRByCodeFavouritesResponse = { hearts: number[] };
 
-/** E-275 POST /v1/business/reveal-links/:id/downloads. Auth: business (IB2, DEC-263). Switches the link's download addresses on or off; answers the link. */
+/** E-274 POST /v1/business/reveal-links/:id/downloads. Auth: business (IB2, DEC-264). Switches the link's download addresses on or off; answers the link. */
 export interface PostBusinessRevealLinksByIdDownloadsParams {
   id: string;
 }
@@ -5114,7 +5114,7 @@ export interface PostBusinessRevealLinksByIdDownloadsBody {
 export type PostBusinessRevealLinksByIdDownloadsHeaders = Record<string, never>;
 export type PostBusinessRevealLinksByIdDownloadsResponse = RevealLink;
 
-/** E-276 PATCH /v1/business/shoots/:id. Auth: business (the owner or a live login). IB3 (DEC-264): renames a shoot; a field left out stays. */
+/** E-277 PATCH /v1/business/shoots/:id. Auth: business (the owner or a live login). IB3 (DEC-265): renames a shoot; a field left out stays. */
 export interface PatchBusinessShootsByIdParams {
   id: string;
 }
@@ -5127,7 +5127,7 @@ export interface PatchBusinessShootsByIdBody {
 export type PatchBusinessShootsByIdHeaders = Record<string, never>;
 export type PatchBusinessShootsByIdResponse = Shoot;
 
-/** E-277 PATCH /v1/business/vault-files/:id. Auth: business (the owner or a live login). IB3 (DEC-264): the name a Vault file shows under; the stored object keeps its own name. */
+/** E-278 PATCH /v1/business/vault-files/:id. Auth: business (the owner or a live login). IB3 (DEC-265): the name a Vault file shows under; the stored object keeps its own name. */
 export interface PatchBusinessVaultFilesByIdParams {
   id: string;
 }
@@ -5138,7 +5138,7 @@ export interface PatchBusinessVaultFilesByIdBody {
 export type PatchBusinessVaultFilesByIdHeaders = Record<string, never>;
 export type PatchBusinessVaultFilesByIdResponse = VaultFile;
 
-/** E-278 POST /v1/admin/concierge/orders/:id/wishes. Auth: maker,owner (DEC-265, HZ2). "Make the wish": a wish in the buyer's name, tied to the order and hidden from the buyer until the order is delivered; answers the wish as E-270 lists it. */
+/** E-273 POST /v1/admin/concierge/orders/:id/wishes. Auth: maker,owner (DEC-267, HZ2). "Make the wish": a wish in the buyer's name, tied to the order and hidden from the buyer until the order is delivered; answers the wish as E-270 lists it. */
 export interface PostAdminConciergeOrdersByIdWishesParams {
   id: string;
 }
@@ -5428,11 +5428,11 @@ export interface EndpointContracts {
   "E-232": { params: PostWishesByIdWakeParams; body: PostWishesByIdWakeBody; headers: PostWishesByIdWakeHeaders; response: PostWishesByIdWakeResponse };
   "E-233": { params: InternalWishesIssueNumberParams; body: InternalWishesIssueNumberBody; headers: InternalWishesIssueNumberHeaders; response: InternalWishesIssueNumberResponse };
   "E-272": { params: PostBusinessRevealsParams; body: PostBusinessRevealsBody; headers: PostBusinessRevealsHeaders; response: PostBusinessRevealsResponse };
-  "E-273": { params: GetRByCodeFavouritesParams; query: GetRByCodeFavouritesQuery; headers: GetRByCodeFavouritesHeaders; response: GetRByCodeFavouritesResponse };
-  "E-274": { params: PostRByCodeFavouritesParams; body: PostRByCodeFavouritesBody; headers: PostRByCodeFavouritesHeaders; response: PostRByCodeFavouritesResponse };
-  "E-275": { params: PostBusinessRevealLinksByIdDownloadsParams; body: PostBusinessRevealLinksByIdDownloadsBody; headers: PostBusinessRevealLinksByIdDownloadsHeaders; response: PostBusinessRevealLinksByIdDownloadsResponse };
-  "E-276": { params: PatchBusinessShootsByIdParams; body: PatchBusinessShootsByIdBody; headers: PatchBusinessShootsByIdHeaders; response: PatchBusinessShootsByIdResponse };
-  "E-277": { params: PatchBusinessVaultFilesByIdParams; body: PatchBusinessVaultFilesByIdBody; headers: PatchBusinessVaultFilesByIdHeaders; response: PatchBusinessVaultFilesByIdResponse };
-  "E-278": { params: PostAdminConciergeOrdersByIdWishesParams; body: PostAdminConciergeOrdersByIdWishesBody; headers: PostAdminConciergeOrdersByIdWishesHeaders; response: PostAdminConciergeOrdersByIdWishesResponse };
+  "E-275": { params: GetRByCodeFavouritesParams; query: GetRByCodeFavouritesQuery; headers: GetRByCodeFavouritesHeaders; response: GetRByCodeFavouritesResponse };
+  "E-276": { params: PostRByCodeFavouritesParams; body: PostRByCodeFavouritesBody; headers: PostRByCodeFavouritesHeaders; response: PostRByCodeFavouritesResponse };
+  "E-274": { params: PostBusinessRevealLinksByIdDownloadsParams; body: PostBusinessRevealLinksByIdDownloadsBody; headers: PostBusinessRevealLinksByIdDownloadsHeaders; response: PostBusinessRevealLinksByIdDownloadsResponse };
+  "E-277": { params: PatchBusinessShootsByIdParams; body: PatchBusinessShootsByIdBody; headers: PatchBusinessShootsByIdHeaders; response: PatchBusinessShootsByIdResponse };
+  "E-278": { params: PatchBusinessVaultFilesByIdParams; body: PatchBusinessVaultFilesByIdBody; headers: PatchBusinessVaultFilesByIdHeaders; response: PatchBusinessVaultFilesByIdResponse };
+  "E-273": { params: PostAdminConciergeOrdersByIdWishesParams; body: PostAdminConciergeOrdersByIdWishesBody; headers: PostAdminConciergeOrdersByIdWishesHeaders; response: PostAdminConciergeOrdersByIdWishesResponse };
 }
 export type EndpointId = keyof EndpointContracts;

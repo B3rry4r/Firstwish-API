@@ -34,7 +34,7 @@ export class DeliverBodyDto {
   wishIds?: string[];
 }
 
-/** E-278 (HZ2): "make the wish": the kind, the occasion and who it is for; the maker writes the rest through the wish routes. */
+/** E-273 (HZ2): "make the wish": the kind, the occasion and who it is for; the maker writes the rest through the wish routes. */
 export class MakeWishBodyDto {
   @IsString()
   @MinTrimmed(4)

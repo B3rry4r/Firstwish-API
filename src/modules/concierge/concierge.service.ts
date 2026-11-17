@@ -214,7 +214,7 @@ export class ConciergeService implements OnModuleInit {
   }
 
   /**
-   * E-278 (HZ2): "make the wish": the order's maker (or the owner) starts a wish in the buyer's name. It is the buyer's, tied to this order, and the buyer
+   * E-273 (HZ2): "make the wish": the order's maker (or the owner) starts a wish in the buyer's name. It is the buyer's, tied to this order, and the buyer
    * sees nothing of it (no list, no read) until the order is delivered; the maker writes it through the wish routes while the order is with them. At most
    * the order's count of wishes is made (delivered ones included). Another maker's order, and an order that is not with a maker, cannot take one.
    */

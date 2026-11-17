@@ -37,8 +37,8 @@ describe("API-BASE-9 case 2 (IA1): one call sends a reveal", () => {
     const body = { shoot, set: "proofs", reveal: k.revealBody({ email: addr() }) };
     const all = await Promise.all(Array.from({ length: 30 }, () => k.post("/v1/business/reveals", o.token, body, { "idempotency-key": "same-key-1" })));
     expect(all.map((r) => r.status)).toEqual(Array(30).fill(200));
-    expect(new Set(all.map((r) => r.body.wish.id)).size).toBe(1);
-    expect(new Set(all.map((r) => r.body.link)).size).toBe(1);
+    expect(new Set(all.map((r) => (r.body as { wish: { id: string } }).wish.id)).size).toBe(1);
+    expect(new Set(all.map((r) => (r.body as { link: string }).link)).size).toBe(1);
     expect(await state(o.businessId)).toEqual({ wishes: 1, access: 1, pack: 4, used: 0 });
     expect(await mails((body.reveal as { email: string }).email)).toBe(1);
   });

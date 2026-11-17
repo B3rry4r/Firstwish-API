@@ -16,7 +16,7 @@ export class VaultFilesController {
     return this.vault.list(userOf(p), q);
   }
 
-  /** E-277 (IB3): rename a Vault file. */
+  /** E-278 (IB3): rename a Vault file. */
   @Roles("person", "business")
   @Patch(":id")
   rename(@Param() params: PatchBusinessVaultFilesByIdParamsDto, @Body() body: PatchBusinessVaultFilesByIdBodyDto, @CurrentPrincipal() p: Principal | undefined): Promise<PatchBusinessVaultFilesByIdResponse> {

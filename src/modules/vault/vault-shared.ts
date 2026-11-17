@@ -33,13 +33,23 @@ export const monthOf = (d: Date): string => d.toISOString().slice(0, 7);
 /** Most photo positions one reveal link keeps marked (IB1). */
 export const MAX_HEARTS = 200;
 
+/** IC2: the positions (in the link's file list) of the marked files that are still in the list, in order. A heart is a file id; a place is only how the page names it. */
+export const heartPositions = (fileIds: unknown, hearts: readonly string[] | null | undefined): number[] => {
+  const marked = new Set((hearts ?? []).map((h) => h.toLowerCase()));
+  return idsOf(fileIds).flatMap((id, pos) => (marked.has(id.toLowerCase()) ? [pos] : []));
+};
+
 /**
- * IB1: the marks of a reveal link written to what the business reads. The client wish carries the positions (as the link's files stand);
- * the shoot carries the file ids marked at any of its links, in file-id order, so one shoot read shows every heart.
+ * IB1, IC2: the marks of a reveal link written to what the business reads. The link holds the ids of the marked files. The client wish carries
+ * their positions as the link's files stand now; the shoot carries the file ids marked at any of its links, in file-id order, so one shoot
+ * read shows every heart.
  */
 export async function syncHearts(tx: Tx, linkId: string): Promise<void> {
   await tx.$executeRaw`
-    UPDATE client_wish SET hearts = (SELECT to_jsonb(a.hearts) FROM reveal_access a WHERE a."linkId" = ${linkId}::uuid)
+    UPDATE client_wish SET hearts = COALESCE((
+        SELECT jsonb_agg((e.ord - 1)::int ORDER BY e.ord)
+          FROM reveal_access a, jsonb_array_elements_text(a."fileIds") WITH ORDINALITY AS e(id, ord)
+         WHERE a."linkId" = ${linkId}::uuid AND e.id::uuid = ANY(a.hearts)), '[]'::jsonb)
      WHERE id = (SELECT "wishId" FROM reveal_access WHERE "linkId" = ${linkId}::uuid)`;
   await syncShootHearts(tx, linkId);
 }
@@ -47,8 +57,13 @@ export async function syncHearts(tx: Tx, linkId: string): Promise<void> {
 export async function syncShootHearts(tx: Tx, linkId: string): Promise<void> {
   await tx.$executeRaw`
     UPDATE shoot SET hearts = COALESCE((
-        SELECT jsonb_agg(f.id ORDER BY f.id) FROM (
-          SELECT DISTINCT x.ids ->> x.h AS id FROM (SELECT a."fileIds" AS ids, unnest(a.hearts) AS h FROM reveal_access a WHERE a."shootId" = shoot.id) x
-        ) f WHERE f.id IS NOT NULL), '[]'::jsonb)
+        SELECT jsonb_agg(f.id ORDER BY f.id) FROM (SELECT DISTINCT h::text AS id FROM reveal_access a, unnest(a.hearts) AS h WHERE a."shootId" = shoot.id) f), '[]'::jsonb)
      WHERE id = (SELECT "shootId" FROM reveal_access WHERE "linkId" = ${linkId}::uuid)`;
+}
+
+/** IC2: a file that is removed takes its heart with it, at every link that holds it; what the business reads follows in the same transaction. */
+export async function dropFileHearts(tx: Tx, fileId: string): Promise<void> {
+  const links = await tx.$queryRaw<{ linkId: string }[]>`
+    UPDATE reveal_access SET hearts = array_remove(hearts, ${fileId}::uuid) WHERE ${fileId}::uuid = ANY(hearts) RETURNING "linkId"::text AS "linkId"`;
+  for (const l of links) await syncHearts(tx, l.linkId);
 }

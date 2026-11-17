@@ -34,6 +34,7 @@ import { readLimits } from "../price-book/book-limits";
 import { notInBusiness } from "../../common/auth/login-removed";
 import { businessAccessOf } from "./vault-access";
 import { ScreeningService } from "./screening.service";
+import { dropFileHearts } from "../vault/vault-shared";
 
 type Tx = Prisma.TransactionClient;
 
@@ -399,6 +400,7 @@ export class StoredFilesService {
           FOR UPDATE`;
         if (wishes.some((w) => w.status !== "draft" && !(opts.gather && w.status === "sealed"))) throw AppError.conflict("file_in_use", "A sealed wish still uses this file.");
         await tx.$executeRaw`DELETE FROM wish_file WHERE "fileId" = ${id}::uuid`;
+        if (r.purpose === "vault_file") await dropFileHearts(tx, id); // IC2: a removed file's heart goes with it
         if (r.businessId && r.purpose === "vault_file" && (r.status === "ready" || r.status === "screening")) {
           await tx.$executeRaw`UPDATE business SET vault = GREATEST(COALESCE(vault, 0) - ${r.bytes}, 0), version = version + 1 WHERE id = ${r.businessId}::uuid`;
         }

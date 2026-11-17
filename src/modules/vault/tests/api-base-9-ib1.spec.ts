@@ -90,7 +90,7 @@ describe("API-BASE-9 case 4 (IB1): favourites at the reveal link and the busines
     expect(out.body.error.fields.position).toMatch(/3 photos/);
     // the cap: a link of 201 photos with 200 marked refuses the 201st mark (and still accepts an unmark)
     const many = Array.from({ length: 201 }, () => k.ids.next());
-    await k.db.$executeRaw`UPDATE reveal_access SET "fileIds" = ${JSON.stringify(many)}::jsonb, hearts = ${Array.from({ length: 200 }, (_, i) => i)}::int[] WHERE "linkId" = ${x.id}::uuid`;
+    await k.db.$executeRaw`UPDATE reveal_access SET "fileIds" = ${JSON.stringify(many)}::jsonb, hearts = ${many.slice(0, 200)}::text[]::uuid[] WHERE "linkId" = ${x.id}::uuid`;
     const full = await mark(x.code, 200, true);
     expect(full.status).toBe(422);
     expect(full.body.error.fields.position).toMatch(/At most 200/);

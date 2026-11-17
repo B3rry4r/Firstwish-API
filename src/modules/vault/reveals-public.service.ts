@@ -10,7 +10,7 @@ import { UnlockTokens } from "../public-wishes/unlock-token";
 import { verify } from "../public-wishes/public-wishes.service";
 import { SignedUrlsService } from "../stored-files/signed-urls.service";
 import { fileName } from "./vault-shared";
-import { idsOf, MAX_HEARTS, SetName, syncHearts } from "./vault-shared";
+import { heartPositions, idsOf, MAX_HEARTS, SetName, syncHearts } from "./vault-shared";
 
 /** Who is asking: the address (from the trusted proxy setting; only a keyed hash of it is ever kept) and the unlock token. Nothing the page sends names a visitor (IC5). */
 export interface Viewer {
@@ -24,7 +24,7 @@ export type RevealView = ({ state: "open" } & RevealPlay & { business: string; h
 interface Row {
   linkId: string;
   wishId: string | null;
-  hearts: number[];
+  hearts: string[];
   downloads: boolean;
   set: SetName;
   fileIds: unknown;
@@ -119,7 +119,7 @@ export class RevealsPublicService {
       index,
       content: words,
       business: r.business ?? "",
-      hearts: r.hearts ?? [],
+      hearts: heartPositions(r.fileIds, r.hearts),
       ...(giveDownloads ? { downloads } : {}),
     };
   }
@@ -153,7 +153,7 @@ export class RevealsPublicService {
   /** IB1: the positions the client marked at this link (positions in the link's file list). */
   async favourites(code: string, v: Viewer): Promise<{ hearts: number[] }> {
     const r = await this.opened(code, v);
-    return { hearts: [...(r.hearts ?? [])].sort((a, b) => a - b) };
+    return { hearts: heartPositions(r.fileIds, r.hearts) };
   }
 
   /**
@@ -172,26 +172,23 @@ export class RevealsPublicService {
     const r = await this.opened(code, v);
     const ids = idsOf(r.fileIds);
     if ((position as number) >= ids.length) throw AppError.validation({ position: `This reveal has ${ids.length} photos, from 0 to ${Math.max(ids.length - 1, 0)}.` });
-    const at = position as number;
+    const file = ids[position as number].toLowerCase();
     return this.db.$transaction(async (tx) => {
-      const rows = await tx.$queryRaw<{ hearts: number[] }[]>`SELECT hearts FROM reveal_access WHERE "linkId" = ${r.linkId}::uuid AND "offAt" IS NULL FOR UPDATE`;
+      const rows = await tx.$queryRaw<{ hearts: string[]; fileIds: unknown }[]>`SELECT hearts, "fileIds" FROM reveal_access WHERE "linkId" = ${r.linkId}::uuid AND "offAt" IS NULL FOR UPDATE`;
       const now = rows[0];
       if (!now) throw gone();
-      const has = now.hearts.includes(at);
-      if (marked === true && !has) {
-        if (now.hearts.length >= MAX_HEARTS) throw AppError.validation({ position: `At most ${MAX_HEARTS} photos can be marked. Unmark one first.` });
-        const next = [...now.hearts, at].sort((a, b) => a - b);
-        await tx.$executeRaw`UPDATE reveal_access SET hearts = ${next}::int[] WHERE "linkId" = ${r.linkId}::uuid`;
+      // IC2: the mark is on the FILE at that place in the list as it stands now
+      const at = idsOf(now.fileIds).map((x) => x.toLowerCase()).indexOf(file);
+      if (at < 0) throw AppError.validation({ position: "This photo is not in the reveal any more." });
+      const has = now.hearts.map((h) => h.toLowerCase()).includes(file);
+      if ((marked === true && !has) || (marked === false && has)) {
+        if (marked === true && now.hearts.length >= MAX_HEARTS) throw AppError.validation({ position: `At most ${MAX_HEARTS} photos can be marked. Unmark one first.` });
+        const next = marked === true ? [...now.hearts, file] : now.hearts.filter((h) => h.toLowerCase() !== file);
+        await tx.$executeRaw`UPDATE reveal_access SET hearts = ${next}::text[]::uuid[] WHERE "linkId" = ${r.linkId}::uuid`;
         await syncHearts(tx, r.linkId);
-        return { hearts: next };
+        return { hearts: heartPositions(now.fileIds, next) };
       }
-      if (marked === false && has) {
-        const next = now.hearts.filter((h) => h !== at);
-        await tx.$executeRaw`UPDATE reveal_access SET hearts = ${next}::int[] WHERE "linkId" = ${r.linkId}::uuid`;
-        await syncHearts(tx, r.linkId);
-        return { hearts: next };
-      }
-      return { hearts: [...now.hearts].sort((a, b) => a - b) };
+      return { hearts: heartPositions(now.fileIds, now.hearts) };
     });
   }
 

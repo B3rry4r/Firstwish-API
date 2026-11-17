@@ -1969,7 +1969,7 @@ model RevealAccess {
   endsAt       DateTime?   @db.Timestamptz(3)
   offAt        DateTime?   @db.Timestamptz(3)
   createdAt    DateTime    @default(now()) @db.Timestamptz(3)
-  hearts       Int[]       @default([])
+  hearts       String[]    @default([]) @db.Uuid
   downloads    Boolean     @default(true)
   link         RevealLink  @relation("RevealAccess_linkId", fields: [linkId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   business     Business    @relation("RevealAccess_businessId", fields: [businessId], references: [id], onDelete: Cascade, onUpdate: Cascade)

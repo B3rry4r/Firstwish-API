@@ -17,7 +17,7 @@ import { ClientWishesService } from "../pro-business/client-wishes.service";
 import { NoticesService } from "../notices/notices.service";
 import { hashPasscode } from "../wishes/wishes.service";
 import { ShootsService } from "./shoots.service";
-import { idsOf, SETS, SetName, syncHearts, Tx, UUID } from "./vault-shared";
+import { heartPositions, idsOf, SETS, SetName, syncHearts, Tx, UUID } from "./vault-shared";
 
 const NOTE_MAX = 600;
 const SHORT_MAX = 80;
@@ -40,7 +40,8 @@ interface Words {
   style: string;
 }
 interface Settings {
-  downloads: boolean;
+  /** null when the body did not say: a re-send keeps the link's switch, a new link takes the default (on). */
+  downloads: boolean | null;
   words: Words;
   email: string | null;
   passcode: string | null;
@@ -177,7 +178,7 @@ export class RevealsService {
         if (endsAt.getTime() <= now.getTime()) fields["reveal.endsOn"] = "Must be a day that has not passed.";
       }
     } else if (raw.endsOn !== undefined && raw.endsOn !== null && raw.endsOn !== "") fields["reveal.endsOn"] = "Must be a date like 2027-03-04.";
-    let downloads = true;
+    let downloads: boolean | null = null;
     if (typeof raw.downloads === "boolean") downloads = raw.downloads;
     else if (raw.downloads !== undefined && raw.downloads !== null) fields["reveal.downloads"] = "Must be true or false.";
     if (Object.keys(fields).length) throw AppError.validation(fields);
@@ -306,10 +307,12 @@ export class RevealsService {
     let code: string;
     if (existing[0]) {
       ({ linkId, code } = existing[0]);
-      const same = JSON.stringify(idsOf(existing[0].fileIds)) === JSON.stringify(fileIds);
+      // IC1: a re-send keeps the passcode and the downloads switch unless the body gives new ones; IC2: the hearts stay with the files that stay
       await tx.$executeRaw`
-        UPDATE reveal_access SET "shootId" = ${shootId}::uuid, "set" = ${set}, "fileIds" = ${JSON.stringify(fileIds)}::jsonb, "passcodeHash" = ${passHash},
-          tries = 0, "lockedUntil" = NULL, "endsAt" = ${s.endsAt}, "offAt" = NULL, "downloads" = ${s.downloads}, hearts = CASE WHEN ${same} THEN hearts ELSE '{}'::int[] END
+        UPDATE reveal_access SET "shootId" = ${shootId}::uuid, "set" = ${set}, "fileIds" = ${JSON.stringify(fileIds)}::jsonb,
+          "passcodeHash" = COALESCE(${passHash}::text, "passcodeHash"), tries = 0, "lockedUntil" = NULL,
+          "endsAt" = ${s.endsAt}, "offAt" = NULL, "downloads" = COALESCE(${s.downloads}::boolean, "downloads"),
+          hearts = COALESCE((SELECT array_agg(h) FROM unnest(hearts) AS h WHERE ${JSON.stringify(fileIds)}::jsonb @> to_jsonb(h::text)), '{}'::uuid[])
         WHERE "linkId" = ${linkId}::uuid`;
       await tx.$executeRaw`UPDATE reveal_link SET "set" = ${set}::"RevealLinkSet" WHERE id = ${linkId}::uuid`;
     } else {
@@ -318,9 +321,9 @@ export class RevealsService {
       await tx.$executeRaw`INSERT INTO reveal_link (id, link, "set", "businessId") VALUES (${linkId}::uuid, ${this.linkOf(code)}, ${set}::"RevealLinkSet", ${businessId}::uuid)`;
       await tx.$executeRaw`
         INSERT INTO reveal_access ("linkId", "businessId", "shootId", "wishId", "set", code, "fileIds", "passcodeHash", "endsAt", "downloads", "createdAt")
-        VALUES (${linkId}::uuid, ${businessId}::uuid, ${shootId}::uuid, ${wishId}::uuid, ${set}, ${code}, ${JSON.stringify(fileIds)}::jsonb, ${passHash}, ${s.endsAt}, ${s.downloads}, ${now})`;
+        VALUES (${linkId}::uuid, ${businessId}::uuid, ${shootId}::uuid, ${wishId}::uuid, ${set}, ${code}, ${JSON.stringify(fileIds)}::jsonb, ${passHash}, ${s.endsAt}, ${s.downloads ?? true}, ${now})`;
     }
-    if (passHash) await this.gateShootLinks(tx, shootId, set, passHash);
+    await this.carryToCopies(tx, shootId, set);
     await syncHearts(tx, linkId);
     const stored: Prisma.InputJsonObject = { ...s.words, link: linkId };
     await tx.clientWish.update({ where: { id: wishId }, data: { reveal: stored, shoot: shootId, set, sentAt: now } });
@@ -404,10 +407,10 @@ export class RevealsService {
   /** What the business reads of a link: where it points, its settings, and its plays (count, first and last time; nothing of the viewers). */
   private async view(businessId: string, where: { linkId?: string }): Promise<RevealLink & Record<string, unknown>> {
     const rows = await this.db.$queryRaw<
-      { linkId: string; link: string | null; set: SetName; shootId: string | null; wishId: string | null; passcode: boolean; endsAt: Date | null; offAt: Date | null; lockedUntil: Date | null; hearts: number[]; downloads: boolean; plays: string; first: Date | null; last: Date | null }[]
+      { linkId: string; link: string | null; set: SetName; shootId: string | null; wishId: string | null; passcode: boolean; endsAt: Date | null; offAt: Date | null; lockedUntil: Date | null; hearts: string[]; "fileIds": unknown; downloads: boolean; plays: string; first: Date | null; last: Date | null }[]
     >`
       SELECT a."linkId"::text AS "linkId", l.link, a."set", a."shootId"::text AS "shootId", a."wishId"::text AS "wishId", (a."passcodeHash" IS NOT NULL) AS passcode,
-             a."endsAt", a."offAt", a."lockedUntil", a.hearts, a.downloads,
+             a."endsAt", a."offAt", a."lockedUntil", a.hearts, a."fileIds", a.downloads,
              (SELECT count(*) FROM reveal_play p WHERE p."linkId" = a."linkId")::text AS plays,
              (SELECT min(at) FROM reveal_play p WHERE p."linkId" = a."linkId") AS first,
              (SELECT max(at) FROM reveal_play p WHERE p."linkId" = a."linkId") AS last
@@ -427,30 +430,41 @@ export class RevealsService {
       endsAt: t(r.endsAt),
       off: r.offAt !== null,
       locked: r.lockedUntil !== null && r.lockedUntil.getTime() > now.getTime(),
-      hearts: r.hearts,
+      hearts: heartPositions(r.fileIds, r.hearts),
       downloads: r.downloads,
       plays: { count: Number(r.plays), first: t(r.first), last: t(r.last) },
     };
   }
 
   /**
-   * IA4: a reveal's passcode holds for every link to those files. A link the business copied for the shoot's set (no client wish) takes the
-   * passcode of the reveal sent on that set, so the copied link and the reveal's own link open with the same one. Tries and the lock start over.
+   * IC1 (IA4, IB2): the reveal a link copied for a shoot's set belongs to: the newest reveal sent on that set that has a passcode, else the
+   * newest reveal sent on it, whatever its state (a reveal switched off or ended still holds its passcode and its switches). Another client's
+   * reveal of the set is that client's own and is not this one. Null when no reveal was sent on the set.
    */
-  private async gateShootLinks(tx: Tx, shootId: string, set: SetName, passHash: string): Promise<void> {
-    await tx.$executeRaw`
-      UPDATE reveal_access SET "passcodeHash" = ${passHash}, tries = 0, "lockedUntil" = NULL
-       WHERE "shootId" = ${shootId}::uuid AND "set" = ${set} AND "wishId" IS NULL AND "offAt" IS NULL`;
+  private async governing(tx: Tx, shootId: string, set: SetName): Promise<{ hash: string | null; downloads: boolean; endsAt: Date | null; offAt: Date | null } | null> {
+    const rows = await tx.$queryRaw<{ hash: string | null; downloads: boolean; endsAt: Date | null; offAt: Date | null }[]>`
+      SELECT a."passcodeHash" AS hash, a.downloads, a."endsAt", a."offAt" FROM reveal_access a LEFT JOIN client_wish w ON w.id = a."wishId"
+       WHERE a."shootId" = ${shootId}::uuid AND a."set" = ${set} AND a."wishId" IS NOT NULL
+       ORDER BY (a."passcodeHash" IS NOT NULL) DESC, COALESCE(w."sentAt", a."createdAt") DESC, a."linkId" DESC LIMIT 1`;
+    return rows[0] ?? null;
   }
 
-  /** The passcode of the newest live reveal sent on a shoot's set, or null when none of them has one. */
-  private async setPasscode(tx: Tx, shootId: string, set: SetName, now: Date): Promise<string | null> {
-    const rows = await tx.$queryRaw<{ hash: string }[]>`
-      SELECT "passcodeHash" AS hash FROM reveal_access
-       WHERE "shootId" = ${shootId}::uuid AND "set" = ${set} AND "wishId" IS NOT NULL AND "passcodeHash" IS NOT NULL AND "offAt" IS NULL
-         AND ("endsAt" IS NULL OR "endsAt" > ${now})
-       ORDER BY "createdAt" DESC, "linkId" DESC LIMIT 1`;
-    return rows[0]?.hash ?? null;
+  /**
+   * IC1: a link copied for a shoot's set is never more open than its reveal: it takes the reveal's passcode (tries and the lock start over when
+   * the passcode changes), its downloads switch when the reveal has them off, its end (the earlier of the two) and its switched-off time.
+   */
+  private async carryToCopies(tx: Tx, shootId: string, set: SetName): Promise<void> {
+    const g = await this.governing(tx, shootId, set);
+    if (!g) return;
+    await tx.$executeRaw`
+      UPDATE reveal_access SET
+        tries = CASE WHEN ${g.hash}::text IS NOT NULL AND "passcodeHash" IS DISTINCT FROM ${g.hash}::text THEN 0 ELSE tries END,
+        "lockedUntil" = CASE WHEN ${g.hash}::text IS NOT NULL AND "passcodeHash" IS DISTINCT FROM ${g.hash}::text THEN NULL ELSE "lockedUntil" END,
+        "passcodeHash" = COALESCE(${g.hash}::text, "passcodeHash"),
+        downloads = downloads AND ${g.downloads}::boolean,
+        "endsAt" = CASE WHEN ${g.endsAt}::timestamptz IS NULL THEN "endsAt" ELSE LEAST(COALESCE("endsAt", ${g.endsAt}::timestamptz), ${g.endsAt}::timestamptz) END,
+        "offAt" = COALESCE("offAt", ${g.offAt}::timestamptz)
+       WHERE "shootId" = ${shootId}::uuid AND "set" = ${set} AND "wishId" IS NULL AND "offAt" IS NULL`;
   }
 
   /** E-152. */
@@ -477,9 +491,9 @@ export class RevealsService {
   }
 
   /**
-   * E-153: the link of a shoot's proofs or finals, to copy. The first copy makes it (no wish, no end); a copy again gives the same link with
-   * the set's files as they are now. A link switched off is made again with a new code. Where a reveal with a passcode was sent on the set,
-   * the copied link carries that passcode too (IA4): it never opens without it.
+   * E-153: the link of a shoot's proofs or finals, to copy. The first copy makes it (no wish); a copy again gives the same link with the set's
+   * files as they are now, its hearts kept for the files that stay. A link switched off is made again with a new code. Where a reveal was sent on
+   * the set, the copied link carries that reveal's passcode, downloads switch, end and switched-off time (IC1): it is never more open than it.
    */
   async copyLink(businessId: string, shootId: string, setIn: unknown): Promise<string> {
     if (!UUID.test(shootId)) throw AppError.notFound();
@@ -495,17 +509,25 @@ export class RevealsService {
       const cur = await tx.$queryRaw<{ linkId: string; code: string }[]>`
         SELECT "linkId"::text AS "linkId", code FROM reveal_access
          WHERE "shootId" = ${shootId}::uuid AND "set" = ${set} AND "wishId" IS NULL AND "offAt" IS NULL ORDER BY "createdAt" DESC LIMIT 1 FOR UPDATE`;
-      const gate = await this.setPasscode(tx, shootId, set, now);
+      let code: string;
+      let linkId: string;
       if (cur[0]) {
-        await tx.$executeRaw`UPDATE reveal_access SET "fileIds" = ${JSON.stringify(fileIds)}::jsonb, "passcodeHash" = COALESCE("passcodeHash", ${gate}) WHERE "linkId" = ${cur[0].linkId}::uuid`;
-        return this.linkOf(cur[0].code);
+        ({ linkId, code } = cur[0]);
+        // IC2: the hearts stay with the files that stay (a removed file's heart is gone), however the list moved
+        await tx.$executeRaw`
+          UPDATE reveal_access SET "fileIds" = ${JSON.stringify(fileIds)}::jsonb,
+            hearts = COALESCE((SELECT array_agg(h) FROM unnest(hearts) AS h WHERE ${JSON.stringify(fileIds)}::jsonb @> to_jsonb(h::text)), '{}'::uuid[])
+           WHERE "linkId" = ${linkId}::uuid`;
+      } else {
+        linkId = this.ids.id();
+        code = newCode();
+        await tx.$executeRaw`INSERT INTO reveal_link (id, link, "set", "businessId") VALUES (${linkId}::uuid, ${this.linkOf(code)}, ${set}::"RevealLinkSet", ${businessId}::uuid)`;
+        await tx.$executeRaw`
+          INSERT INTO reveal_access ("linkId", "businessId", "shootId", "set", code, "fileIds", "createdAt")
+          VALUES (${linkId}::uuid, ${businessId}::uuid, ${shootId}::uuid, ${set}, ${code}, ${JSON.stringify(fileIds)}::jsonb, ${now})`;
       }
-      const linkId = this.ids.id();
-      const code = newCode();
-      await tx.$executeRaw`INSERT INTO reveal_link (id, link, "set", "businessId") VALUES (${linkId}::uuid, ${this.linkOf(code)}, ${set}::"RevealLinkSet", ${businessId}::uuid)`;
-      await tx.$executeRaw`
-        INSERT INTO reveal_access ("linkId", "businessId", "shootId", "set", code, "fileIds", "passcodeHash", "createdAt")
-        VALUES (${linkId}::uuid, ${businessId}::uuid, ${shootId}::uuid, ${set}, ${code}, ${JSON.stringify(fileIds)}::jsonb, ${gate}, ${now})`;
+      await this.carryToCopies(tx, shootId, set);
+      await syncHearts(tx, linkId);
       return this.linkOf(code);
     });
   }

@@ -7,6 +7,7 @@ import {
   PostBusinessClientWishesByIdSendRevealBodyDto,
   PostBusinessClientWishesByIdSendRevealParamsDto,
   PostBusinessRevealLinksByIdCopyLinkBodyDto,
+  PostBusinessRevealsBodyDto,
   PostBusinessRevealLinksByIdCopyLinkParamsDto,
   PostBusinessShootsBodyDto,
   PostBusinessShootsByIdFilesBodyDto,
@@ -14,7 +15,7 @@ import {
   PostBusinessShootsByIdFinalsBodyDto,
   PostBusinessShootsByIdFinalsParamsDto,
 } from "../../contracts";
-import type { PostBusinessClientWishesByIdSendRevealResponse, RevealLink, Shoot, ShootFilesAdded, VaultStorage } from "../../contracts";
+import type { PostBusinessClientWishesByIdSendRevealResponse, PostBusinessRevealsResponse, RevealLink, Shoot, ShootFilesAdded, VaultStorage } from "../../contracts";
 import { CurrentPrincipal, Roles } from "../../common/auth/decorators";
 import type { Principal } from "../../common/auth/principal";
 import { DEFAULT_LIMIT, Page } from "../../common/pagination/cursor";
@@ -130,5 +131,19 @@ export class VaultController {
     @BusinessHeader() h: string | undefined,
   ): Promise<PostBusinessClientWishesByIdSendRevealResponse> {
     return this.reveals.send((await this.access.require(p, h)).businessId, params.id, body, key);
+  }
+
+  /** E-272 (IA1): the client wish and the reveal in one call. */
+  @Roles("person", "business")
+  @Post("reveals")
+  @HttpCode(200)
+  async sendOne(
+    @Body() body: PostBusinessRevealsBodyDto,
+    @Headers("idempotency-key") key: string | undefined,
+    @CurrentPrincipal() p: Principal | undefined,
+    @BusinessHeader() h: string | undefined,
+  ): Promise<PostBusinessRevealsResponse> {
+    const c = await this.access.require(p, h);
+    return this.reveals.sendOne({ accountId: c.accountId, businessId: c.businessId }, body, key);
   }
 }

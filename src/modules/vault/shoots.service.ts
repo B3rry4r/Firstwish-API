@@ -49,14 +49,14 @@ export class ShootsService {
     const finals = idsOf(row.finals);
     const all = [...new Set([...idsOf(row.files), ...proofs, ...finals])];
     const found = all.length
-      ? await this.db.storedFile.findMany({ where: { id: { in: all }, businessId: row.businessId, purpose: "vault_file" }, select: { id: true, bytes: true, contentType: true, status: true } })
+      ? await this.db.storedFile.findMany({ where: { id: { in: all }, businessId: row.businessId, purpose: "vault_file" }, select: { id: true, bytes: true, contentType: true, status: true, shownName: true } })
       : [];
     const by = new Map(found.map((f) => [f.id, f]));
     const ownerId = sign && row.businessId ? (await this.db.business.findUnique({ where: { id: row.businessId }, select: { accountId: true } }))?.accountId : null;
     const item = async (id: string): Promise<FileItem | null> => {
       const f = by.get(id);
       if (!f) return null;
-      const out: FileItem = { id, name: fileName(id, f.contentType), size: Number(f.bytes) };
+      const out: FileItem = { id, name: fileName(id, f.contentType, f.shownName), size: Number(f.bytes) };
       if (ownerId && f.status === "ready") out.url = (await this.reads.signedRead({ fileId: id }, { type: "vault", accountId: ownerId })).url;
       return out;
     };

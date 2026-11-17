@@ -1294,6 +1294,7 @@ model StoredFile {
   fileId                     String?           @db.Uuid
   kind                       StoredFileKind?
   styleId                    String?           @db.Uuid
+  shownName                  String?
   business                   Business?         @relation("StoredFile_businessId", fields: [businessId], references: [id])
   style                      StudioStyle?      @relation("StoredFile_styleId", fields: [styleId], references: [id], onDelete: SetNull)
   ownerAccount               Account?          @relation("StoredFile_ownerAccountId", fields: [ownerAccountId], references: [id])
@@ -1964,6 +1965,8 @@ model RevealAccess {
   endsAt       DateTime?   @db.Timestamptz(3)
   offAt        DateTime?   @db.Timestamptz(3)
   createdAt    DateTime    @default(now()) @db.Timestamptz(3)
+  hearts       Int[]       @default([])
+  downloads    Boolean     @default(true)
   link         RevealLink  @relation("RevealAccess_linkId", fields: [linkId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   business     Business    @relation("RevealAccess_businessId", fields: [businessId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   shoot        Shoot?      @relation("RevealAccess_shootId", fields: [shootId], references: [id], onDelete: SetNull, onUpdate: Cascade)

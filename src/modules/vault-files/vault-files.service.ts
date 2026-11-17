@@ -48,7 +48,7 @@ export class VaultFilesService {
     const items = [];
     for (const r of page.items) {
       const read = await this.reads.signedRead({ fileId: r.id }, { type: "vault", accountId: p.accountId });
-      items.push({ id: r.id, name: `vault-${r.id.slice(-12)}.${EXT[r.contentType] ?? "bin"}`, size: Number(r.bytes), url: read.url });
+      items.push({ id: r.id, name: r.shownName || `vault-${r.id.slice(-12)}.${EXT[r.contentType] ?? "bin"}`, size: Number(r.bytes), url: read.url });
     }
     return { items, nextCursor: page.nextCursor };
   }

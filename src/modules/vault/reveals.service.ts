@@ -1,7 +1,7 @@
 import { randomBytes } from "node:crypto";
 import { Inject, Injectable } from "@nestjs/common";
 import type { Prisma } from "@prisma/client";
-import type { ClientWish, PostBusinessClientWishesByIdSendRevealResponse, RevealLink } from "../../contracts";
+import type { ClientWish, PostBusinessClientWishesByIdSendRevealResponse, PostBusinessRevealsResponse, RevealLink } from "../../contracts";
 import { lockBusinessOwner } from "../../common/db/account-lock";
 import { PrismaService } from "../../common/db/prisma.service";
 import type { Env } from "../../common/env/env";
@@ -12,7 +12,8 @@ import { linkProblem, normaliseLink } from "../../common/normalise/link";
 import { Clock } from "../../common/ports/clock.port";
 import { IdGenerator } from "../../common/ports/ids.port";
 import { toWireInstant } from "../../common/time/time";
-import { clientWishWire } from "../pro-business/client-wish-wire";
+import { clientWishWire, WITH_WISH } from "../pro-business/client-wish-wire";
+import { ClientWishesService } from "../pro-business/client-wishes.service";
 import { NoticesService } from "../notices/notices.service";
 import { hashPasscode } from "../wishes/wishes.service";
 import { ShootsService } from "./shoots.service";
@@ -39,6 +40,7 @@ interface Words {
   style: string;
 }
 interface Settings {
+  downloads: boolean;
   words: Words;
   email: string | null;
   passcode: string | null;
@@ -59,6 +61,38 @@ interface AccessRow {
   offAt: Date | null;
 }
 
+/** What a send needs, read from its body. */
+interface Call {
+  set: SetName;
+  shootId: string;
+  key: string | null;
+  reveal: Record<string, unknown>;
+  named: string[] | null;
+}
+
+export interface SendOneBody {
+  reveal: Record<string, unknown>;
+  set: unknown;
+  shoot: unknown;
+  files?: unknown;
+  client?: unknown;
+  kind?: unknown;
+  occasion?: unknown;
+  day?: unknown;
+  again?: unknown;
+}
+
+const NAMED_MAX = 200;
+/** IB4: the files a reveal names: absent or empty means every ready file of the set; else 1 to 200 file ids, a repeat counted once. */
+function namedFiles(v: unknown, fields: ErrorFields): string[] | null {
+  if (v === undefined || v === null) return null;
+  if (!Array.isArray(v) || v.length > NAMED_MAX || !v.every((x) => typeof x === "string" && UUID.test(x))) {
+    fields.files = `Must be a list of up to ${NAMED_MAX} file ids from the set.`;
+    return null;
+  }
+  return [...new Set((v as string[]).map((x) => x.toLowerCase()))];
+}
+
 /** The link's code: 128 random bits, URL-safe. It cannot be guessed and carries nothing about the shoot or the client. */
 const newCode = (): string => randomBytes(16).toString("base64url");
 
@@ -75,6 +109,7 @@ export class RevealsService {
     private readonly clock: Clock,
     private readonly notices: NoticesService,
     private readonly shoots: ShootsService,
+    private readonly wishes: ClientWishesService,
     @Inject(ENV) private readonly env: Env,
   ) {}
 
@@ -142,13 +177,27 @@ export class RevealsService {
         if (endsAt.getTime() <= now.getTime()) fields["reveal.endsOn"] = "Must be a day that has not passed.";
       }
     } else if (raw.endsOn !== undefined && raw.endsOn !== null && raw.endsOn !== "") fields["reveal.endsOn"] = "Must be a date like 2027-03-04.";
+    let downloads = true;
+    if (typeof raw.downloads === "boolean") downloads = raw.downloads;
+    else if (raw.downloads !== undefined && raw.downloads !== null) fields["reveal.downloads"] = "Must be true or false.";
     if (Object.keys(fields).length) throw AppError.validation(fields);
-    return { words: { client, occasion, city, date, note, credits, booking, style }, email, passcode, endsAt };
+    return { words: { client, occasion, city, date, note, credits, booking, style }, email, passcode, endsAt, downloads };
   }
 
-  /** The files of a shoot's set the link will show: the ones still stored and passed, in the set's order. */
-  private async chosen(tx: Tx, businessId: string, shootSet: unknown): Promise<string[]> {
+  /**
+   * The files of a shoot's set the link will show: the ones still stored and passed, in the set's order (IB4: with files named, only those, in the
+   * order named; one that is not a ready file of this set is refused with words, and so is a name that repeats nothing wrong: a repeat is dropped).
+   */
+  private async chosen(tx: Tx, businessId: string, shootSet: unknown, named?: string[] | null): Promise<string[]> {
     const ids = idsOf(shootSet);
+    if (named && named.length) {
+      const inSet = new Set(ids);
+      const rows = await tx.storedFile.findMany({ where: { id: { in: named }, businessId, purpose: "vault_file", status: "ready" }, select: { id: true } });
+      const ok = new Set(rows.map((r) => r.id));
+      const bad = named.filter((i) => !inSet.has(i) || !ok.has(i));
+      if (bad.length) throw AppError.validation({ files: `${bad.length === 1 ? "One file is" : `${bad.length} files are`} not ready photos of this shoot's set. Pick files from the set that have finished uploading.` });
+      return named;
+    }
     if (!ids.length) return [];
     const rows = await tx.storedFile.findMany({ where: { id: { in: ids }, businessId, purpose: "vault_file", status: "ready" }, select: { id: true } });
     const ok = new Set(rows.map((r) => r.id));
@@ -175,87 +224,165 @@ export class RevealsService {
    * E-33. `:id` is the client wish (made by E-30, which counted it); the reveal from `shoot`'s `set` goes on it. With an Idempotency-Key
    * the same key again answers the first result and sends nothing; without one, or with a new key, it sends again on purpose.
    */
-  async send(businessId: string, wishId: string, body: { reveal: Record<string, unknown>; set: unknown; shoot: unknown }, idemKey: string | undefined): Promise<PostBusinessClientWishesByIdSendRevealResponse> {
+  async send(businessId: string, wishId: string, body: { reveal: Record<string, unknown>; set: unknown; shoot: unknown; files?: unknown }, idemKey: string | undefined): Promise<PostBusinessClientWishesByIdSendRevealResponse> {
     if (!UUID.test(wishId)) throw AppError.notFound();
+    const call = this.readCall(body, idemKey);
+    const done = await this.db.$transaction(async (tx) => {
+      await lockBusinessOwner(tx, businessId);
+      if (call.key) {
+        const first = await this.firstSend(tx, businessId, call.key);
+        if (first) {
+          if (first !== wishId.toLowerCase()) throw AppError.conflict("idempotency_key_reused", "This Idempotency-Key was used for another wish.");
+          return { again: true as const, wishId };
+        }
+      }
+      const out = await this.sendIn(tx, businessId, wishId, call);
+      return { again: false as const, wishId, deliveryId: out.deliveryId };
+    });
+    if (!done.again) await this.deliver(done.deliveryId);
+    return this.answer(businessId, wishId);
+  }
+
+  /** The body of a send read into its parts: every fault named, before anything is touched. */
+  private readCall(body: { reveal: Record<string, unknown>; set: unknown; shoot: unknown; files?: unknown }, idemKey: string | undefined): Call {
     const fields: ErrorFields = {};
     const set = SETS.find((s) => s === body.set);
     if (!set) fields.set = "Must be proofs or finals.";
     if (typeof body.shoot !== "string" || !UUID.test(body.shoot)) fields.shoot = "Must be the id of one of your shoots.";
     const key = idemKey === undefined ? null : idemKey.trim();
     if (key !== null && (!key || key.length > IDEM_MAX)) fields["Idempotency-Key"] = `Must be 1 to ${IDEM_MAX} characters.`;
-    const now = this.clock.now();
     const reveal = body.reveal && typeof body.reveal === "object" && !Array.isArray(body.reveal) ? body.reveal : null;
     if (!reveal) fields.reveal = "Must be the words of the reveal.";
+    const named = namedFiles(body.files, fields);
     if (Object.keys(fields).length) throw AppError.validation(fields);
-    const shootId = (body.shoot as string).toLowerCase();
+    return { set: set as SetName, shootId: (body.shoot as string).toLowerCase(), key, reveal: reveal as Record<string, unknown>, named };
+  }
 
+  private async firstSend(tx: Tx, businessId: string, key: string): Promise<string | null> {
+    const first = await tx.$queryRaw<{ wishId: string }[]>`SELECT "wishId"::text AS "wishId" FROM reveal_send WHERE "businessId" = ${businessId}::uuid AND key = ${key}`;
+    return first[0]?.wishId ?? null;
+  }
+
+  /** The email goes out after the commit; a failure here is carried out by the send-message job at its next run. */
+  private async deliver(deliveryId: string | null): Promise<void> {
+    if (!deliveryId) return;
+    try {
+      await this.notices.deliverNow(deliveryId);
+    } catch {
+      // the send-message job carries it out at its next run
+    }
+  }
+
+  /**
+   * The reveal on a client wish, in the caller's transaction (the owner's account is locked): the words on the wish, the shoot's mark, the
+   * link and its settings, the email queued. The same step serves E-33 and the one-call reveal.
+   */
+  private async sendIn(tx: Tx, businessId: string, wishId: string, call: Call, strictEmail = false): Promise<{ deliveryId: string | null; linkId: string; code: string }> {
+    const { set, shootId, key } = call;
+    const now = this.clock.now();
+    const wish = await tx.clientWish.findFirst({ where: { id: wishId, businessId } });
+    if (!wish) throw AppError.notFound();
+    const shoot = await tx.shoot.findFirst({ where: { id: shootId, businessId } });
+    if (!shoot) throw AppError.notFound();
+    const s = this.read(call.reveal, wish.client ?? "", now);
+    const fileIds = await this.chosen(tx, businessId, shoot[set], call.named);
+    if (!fileIds.length) throw AppError.validation({ set: `There are no ${set} in this shoot yet.` });
+    const biz = await tx.business.findUniqueOrThrow({ where: { id: businessId }, select: { business: true, name: true } });
+    const passHash = s.passcode ? await hashPasscode(s.passcode) : null;
+    if (s.email) await this.takeEmailRoom(tx, businessId, s.email);
+
+    const existing = await tx.$queryRaw<{ linkId: string; code: string; fileIds: unknown }[]>`SELECT "linkId"::text AS "linkId", code, "fileIds" FROM reveal_access WHERE "wishId" = ${wishId}::uuid FOR UPDATE`;
+    let linkId: string;
+    let code: string;
+    if (existing[0]) {
+      ({ linkId, code } = existing[0]);
+      const same = JSON.stringify(idsOf(existing[0].fileIds)) === JSON.stringify(fileIds);
+      await tx.$executeRaw`
+        UPDATE reveal_access SET "shootId" = ${shootId}::uuid, "set" = ${set}, "fileIds" = ${JSON.stringify(fileIds)}::jsonb, "passcodeHash" = ${passHash},
+          tries = 0, "lockedUntil" = NULL, "endsAt" = ${s.endsAt}, "offAt" = NULL, "downloads" = ${s.downloads}, hearts = CASE WHEN ${same} THEN hearts ELSE '{}'::int[] END
+        WHERE "linkId" = ${linkId}::uuid`;
+      await tx.$executeRaw`UPDATE reveal_link SET "set" = ${set}::"RevealLinkSet" WHERE id = ${linkId}::uuid`;
+    } else {
+      linkId = this.ids.id();
+      code = newCode();
+      await tx.$executeRaw`INSERT INTO reveal_link (id, link, "set", "businessId") VALUES (${linkId}::uuid, ${this.linkOf(code)}, ${set}::"RevealLinkSet", ${businessId}::uuid)`;
+      await tx.$executeRaw`
+        INSERT INTO reveal_access ("linkId", "businessId", "shootId", "wishId", "set", code, "fileIds", "passcodeHash", "endsAt", "downloads", "createdAt")
+        VALUES (${linkId}::uuid, ${businessId}::uuid, ${shootId}::uuid, ${wishId}::uuid, ${set}, ${code}, ${JSON.stringify(fileIds)}::jsonb, ${passHash}, ${s.endsAt}, ${s.downloads}, ${now})`;
+    }
+    if (passHash) await this.gateShootLinks(tx, shootId, set, passHash);
+    const stored: Prisma.InputJsonObject = { ...s.words, link: linkId };
+    await tx.clientWish.update({ where: { id: wishId }, data: { reveal: stored, shoot: shootId, set: set as SetName, sentAt: now } });
+    const mark: Prisma.InputJsonObject = { wish: wishId, no: wish.no ?? "", sentAt: toWireInstant(now), link: linkId };
+    await tx.shoot.update({ where: { id: shootId }, data: set === "proofs" ? { proofsReveal: mark } : { finalsReveal: mark } });
+    let deliveryId: string | null = null;
+    if (s.email) {
+      const out = await this.notices.send(tx, {
+        template: "reveal", toEmail: s.email, wishId: undefined,
+        data: { name: s.words.client, business: biz.business ?? biz.name ?? "Your photographer", link: this.linkOf(code) },
+        key: `reveal:${wishId}:${key ?? this.ids.id()}`,
+      });
+      if (out.status === "queued") deliveryId = out.deliveryId;
+      else if (strictEmail && out.status !== "existing") throw AppError.validation({ "reveal.email": "This email could not be sent. Check the address and try again." });
+    }
+    if (key) await tx.$executeRaw`INSERT INTO reveal_send (id, "businessId", key, "wishId", "createdAt") VALUES (${this.ids.id()}::uuid, ${businessId}::uuid, ${key}, ${wishId}::uuid, ${now})`;
+    return { deliveryId, linkId, code };
+  }
+
+  /**
+   * IA1: the one call that sends a reveal. It makes the client wish (taking one wish from the business as E-30 does) and the reveal together,
+   * in one transaction under the owner's lock: if anything is refused (no wish left, the email, a file, the limits) nothing is kept. With an
+   * Idempotency-Key the same key again answers the first result. A shoot already revealed to that client on that set answers 409
+   * already_sent with when and the link, unless the body says `again`: that sends the reveal again on the same client wish and takes no second wish.
+   */
+  async sendOne(caller: { accountId: string; businessId: string }, body: SendOneBody, idemKey: string | undefined): Promise<PostBusinessRevealsResponse> {
+    const { businessId } = caller;
+    const call = this.readCall({ reveal: body.reveal, set: body.set, shoot: body.shoot, files: body.files }, idemKey);
+    const again = body.again === true;
+    if (body.again !== undefined && typeof body.again !== "boolean") throw AppError.validation({ again: "Must be true or false." });
     const done = await this.db.$transaction(async (tx) => {
       await lockBusinessOwner(tx, businessId);
-      if (key) {
-        const first = await tx.$queryRaw<{ wishId: string }[]>`SELECT "wishId"::text AS "wishId" FROM reveal_send WHERE "businessId" = ${businessId}::uuid AND key = ${key}`;
-        if (first[0]) {
-          if (first[0].wishId !== wishId.toLowerCase()) throw AppError.conflict("idempotency_key_reused", "This Idempotency-Key was used for another wish.");
-          return { again: true as const, wishId };
-        }
+      if (call.key) {
+        const first = await this.firstSend(tx, businessId, call.key);
+        if (first) return { replay: true as const, wishId: first };
       }
-      const wish = await tx.clientWish.findFirst({ where: { id: wishId, businessId } });
-      if (!wish) throw AppError.notFound();
-      const shoot = await tx.shoot.findFirst({ where: { id: shootId, businessId } });
+      const shoot = await tx.shoot.findFirst({ where: { id: call.shootId, businessId }, select: { id: true } });
       if (!shoot) throw AppError.notFound();
-      const s = this.read(reveal as Record<string, unknown>, wish.client ?? "", now);
-      const fileIds = await this.chosen(tx, businessId, shoot[set as SetName]);
-      if (!fileIds.length) throw AppError.validation({ set: `There are no ${set} in this shoot yet.` });
-      const biz = await tx.business.findUniqueOrThrow({ where: { id: businessId }, select: { business: true, name: true } });
-      const passHash = s.passcode ? await hashPasscode(s.passcode) : null;
-      if (s.email) await this.takeEmailRoom(tx, businessId, s.email);
-
-      const existing = await tx.$queryRaw<{ linkId: string; code: string }[]>`SELECT "linkId"::text AS "linkId", code FROM reveal_access WHERE "wishId" = ${wishId}::uuid FOR UPDATE`;
-      let linkId: string;
-      let code: string;
-      if (existing[0]) {
-        ({ linkId, code } = existing[0]);
-        await tx.$executeRaw`
-          UPDATE reveal_access SET "shootId" = ${shootId}::uuid, "set" = ${set}, "fileIds" = ${JSON.stringify(fileIds)}::jsonb, "passcodeHash" = ${passHash},
-            tries = 0, "lockedUntil" = NULL, "endsAt" = ${s.endsAt}, "offAt" = NULL
-          WHERE "linkId" = ${linkId}::uuid`;
-        await tx.$executeRaw`UPDATE reveal_link SET "set" = ${set}::"RevealLinkSet" WHERE id = ${linkId}::uuid`;
+      const raw = call.reveal;
+      const clientName = (typeof raw.client === "string" ? raw.client : typeof body.client === "string" ? body.client : "").trim().replace(/\s+/g, " ");
+      const prior = clientName
+        ? await tx.$queryRaw<{ id: string; sentAt: Date; code: string }[]>`
+            SELECT c.id::text AS id, c."sentAt", a.code FROM client_wish c JOIN reveal_access a ON a."wishId" = c.id
+             WHERE c."businessId" = ${businessId}::uuid AND c.shoot = ${call.shootId} AND c."set"::text = ${call.set} AND lower(c.client) = lower(${clientName})
+             ORDER BY c."sentAt" DESC, c.id DESC LIMIT 1`
+        : [];
+      let wishId: string;
+      if (prior[0]) {
+        if (!again) {
+          throw new AppError(409, "already_sent", `This shoot's ${call.set} were already sent to ${clientName} on ${toWireInstant(prior[0].sentAt).slice(0, 10)}. Send again to send them once more.`, { sentAt: toWireInstant(prior[0].sentAt), link: this.linkOf(prior[0].code) });
+        }
+        wishId = prior[0].id;
       } else {
-        linkId = this.ids.id();
-        code = newCode();
-        await tx.$executeRaw`INSERT INTO reveal_link (id, link, "set", "businessId") VALUES (${linkId}::uuid, ${this.linkOf(code)}, ${set}::"RevealLinkSet", ${businessId}::uuid)`;
-        await tx.$executeRaw`
-          INSERT INTO reveal_access ("linkId", "businessId", "shootId", "wishId", "set", code, "fileIds", "passcodeHash", "endsAt", "createdAt")
-          VALUES (${linkId}::uuid, ${businessId}::uuid, ${shootId}::uuid, ${wishId}::uuid, ${set}, ${code}, ${JSON.stringify(fileIds)}::jsonb, ${passHash}, ${s.endsAt}, ${now})`;
-      }
-      if (passHash) await this.gateShootLinks(tx, shootId, set, passHash);
-      const stored: Prisma.InputJsonObject = { ...s.words, link: linkId };
-      await tx.clientWish.update({ where: { id: wishId }, data: { reveal: stored, shoot: shootId, set: set as SetName, sentAt: now } });
-      const mark: Prisma.InputJsonObject = { wish: wishId, no: wish.no ?? "", sentAt: toWireInstant(now), link: linkId };
-      await tx.shoot.update({ where: { id: shootId }, data: set === "proofs" ? { proofsReveal: mark } : { finalsReveal: mark } });
-      let deliveryId: string | null = null;
-      if (s.email) {
-        const out = await this.notices.send(tx, {
-          template: "reveal", toEmail: s.email, wishId: undefined,
-          data: { name: s.words.client, business: biz.business ?? biz.name ?? "Your photographer", link: this.linkOf(code) },
-          key: `reveal:${wishId}:${key ?? this.ids.id()}`,
+        const day = typeof body.day === "string" ? body.day : typeof raw.date === "string" && raw.date ? raw.date : this.clock.now().toISOString().slice(0, 10);
+        const made = await this.wishes.makeFor(tx, caller.accountId, businessId, {
+          client: clientName,
+          kind: typeof body.kind === "string" ? body.kind : "photographers",
+          occasion: typeof body.occasion === "string" ? body.occasion : typeof raw.occasion === "string" && raw.occasion.trim() ? raw.occasion : "Reveal",
+          day,
         });
-        if (out.status === "queued") deliveryId = out.deliveryId;
+        wishId = made.id;
       }
-      if (key) await tx.$executeRaw`INSERT INTO reveal_send (id, "businessId", key, "wishId", "createdAt") VALUES (${this.ids.id()}::uuid, ${businessId}::uuid, ${key}, ${wishId}::uuid, ${now})`;
-      return { again: false as const, wishId, deliveryId };
+      const out = await this.sendIn(tx, businessId, wishId, call, true);
+      return { replay: false as const, wishId, deliveryId: out.deliveryId };
     });
-    if (!done.again && done.deliveryId) {
-      try {
-        await this.notices.deliverNow(done.deliveryId);
-      } catch {
-        // the send-message job carries it out at its next run
-      }
-    }
-    return this.answer(businessId, wishId);
+    if (!done.replay) await this.deliver(done.deliveryId);
+    const answer = await this.answer(businessId, done.wishId);
+    const link = await this.db.$queryRaw<{ code: string }[]>`SELECT code FROM reveal_access WHERE "wishId" = ${done.wishId}::uuid`;
+    return { ...answer, link: link[0] ? this.linkOf(link[0].code) : "" };
   }
 
   private async answer(businessId: string, wishId: string): Promise<{ shoot: Awaited<ReturnType<ShootsService["wire"]>>; wish: ClientWish }> {
-    const wish = await this.db.clientWish.findFirstOrThrow({ where: { id: wishId, businessId } });
+    const wish = await this.db.clientWish.findFirstOrThrow({ where: { id: wishId, businessId }, include: WITH_WISH });
     const shoot = await this.db.shoot.findFirstOrThrow({ where: { id: wish.shoot ?? "", businessId } });
     return { shoot: await this.shoots.wire(shoot, true), wish: clientWishWire(wish) };
   }

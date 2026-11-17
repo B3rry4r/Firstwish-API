@@ -130,6 +130,11 @@ export class ClientWishesService implements OnModuleInit {
     return this.prisma.$transaction((tx) => this.make(tx, accountId, businessId, w));
   }
 
+  /** IA1: the wish of E-30 made inside the caller's own transaction (the owner's lock and the draw are taken here), so a reveal sent in the same call stands or falls with it. */
+  async makeFor(tx: Tx, accountId: string, businessId: string, body: PostBusinessClientWishesBody): Promise<ClientWish> {
+    return this.make(tx, accountId, businessId, this.read(body));
+  }
+
   /**
    * HD3: the caller's right to the business, read under the owner's lock (the one every login removal takes): the owner, or an active login (an invited login that
    * has not accepted is not a member yet: the same rule as paying for the business, INT-7). A login removed while the request waited gets 404 and nothing is drawn, so no wish lands on a removed login.

@@ -12,8 +12,8 @@ const EXT: Record<string, string> = {
   "video/mp4": "mp4", "video/quicktime": "mov", "video/webm": "webm",
 };
 
-/** The name a Vault file shows under (the same as the Vault file list, E-214). */
-export const fileName = (id: string, contentType: string): string => `vault-${id.slice(-12)}.${EXT[contentType] ?? "bin"}`;
+/** The name a Vault file shows under (the same as the Vault file list, E-214): the name the business gave it (IB3), else the server's own. */
+export const fileName = (id: string, contentType: string, shown?: string | null): string => shown || `vault-${id.slice(-12)}.${EXT[contentType] ?? "bin"}`;
 
 /** A json column read as a list of file ids (anything else in it is dropped). */
 export const idsOf = (v: unknown): string[] => (Array.isArray(v) ? v.filter((x): x is string => typeof x === "string" && UUID.test(x)) : []);

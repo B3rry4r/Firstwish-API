@@ -2453,6 +2453,8 @@ export interface PostBusinessClientWishesByIdSendRevealBody {
   set: "proofs" | "finals";
   /** string id */
   shoot: string;
+  /** IB4: the files to show (ids from the set, up to 200, in this order); left out, every ready file of the set */
+  files?: string[];
 }
 export type PostBusinessClientWishesByIdSendRevealHeaders = Record<string, never>;
 export type PostBusinessClientWishesByIdSendRevealResponse = { shoot: Shoot; wish: ClientWish };
@@ -5047,6 +5049,31 @@ export interface InternalWishesIssueNumberBody {
 export type InternalWishesIssueNumberHeaders = Record<string, never>;
 export type InternalWishesIssueNumberResponse = Wish;
 
+/** E-272 POST /v1/business/reveals. Auth: business (the owner or a live login). IA1 (DEC-260): the client wish and the reveal in one call, or neither; Idempotency-Key makes a repeat answer the first result. */
+export type PostBusinessRevealsParams = Record<string, never>;
+export interface PostBusinessRevealsBody {
+  /** the words of the reveal as E-33 takes them, with `downloads` (finals only; default true) */
+  reveal: Record<string, unknown>;
+  /** 'proofs'|'finals' */
+  set: "proofs" | "finals";
+  /** string id */
+  shoot: string;
+  /** IB4: the files to show (ids from the set, up to 200, in this order); left out, every ready file of the set */
+  files?: string[];
+  /** the client's name; left out, the reveal's client */
+  client?: string;
+  /** the wish kind; left out, photographers */
+  kind?: string;
+  /** the occasion; left out, the reveal's occasion */
+  occasion?: string;
+  /** the wish day (date only); left out, the reveal's date, else today */
+  day?: DateOnly;
+  /** true sends a shoot's set again to a client it already went to (on the same client wish, taking no second wish) */
+  again?: boolean;
+}
+export type PostBusinessRevealsHeaders = Record<string, never>;
+export type PostBusinessRevealsResponse = { shoot: Shoot; wish: ClientWish; link: string };
+
 /** Every endpoint by registry id: its request parts and its response. */
 export interface EndpointContracts {
   "E-1": { params: GetAdminPeopleParams; query: GetAdminPeopleQuery; headers: GetAdminPeopleHeaders; response: GetAdminPeopleResponse };
@@ -5319,5 +5346,6 @@ export interface EndpointContracts {
   "E-231": { params: PostWishesByIdSealParams; body: PostWishesByIdSealBody; headers: PostWishesByIdSealHeaders; response: PostWishesByIdSealResponse };
   "E-232": { params: PostWishesByIdWakeParams; body: PostWishesByIdWakeBody; headers: PostWishesByIdWakeHeaders; response: PostWishesByIdWakeResponse };
   "E-233": { params: InternalWishesIssueNumberParams; body: InternalWishesIssueNumberBody; headers: InternalWishesIssueNumberHeaders; response: InternalWishesIssueNumberResponse };
+  "E-272": { params: PostBusinessRevealsParams; body: PostBusinessRevealsBody; headers: PostBusinessRevealsHeaders; response: PostBusinessRevealsResponse };
 }
 export type EndpointId = keyof EndpointContracts;

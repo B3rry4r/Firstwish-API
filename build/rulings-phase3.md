@@ -1025,3 +1025,26 @@ HG1 (give race) Two staff giving one Concierge order: the code is right (overlap
 - IB5 (plays): a reveal's first play sets the client wish's openedAt and each play is counted on the reveal; the
   shoot shows the count.
 - IB6 (HU5): a live login of a business gets Vault upload tickets as the owner does; a removed login never.
+
+## IC (17 Nov 2026, the lead, on the ninth API round's check). Default (lead), owner may override.
+- IC1 (IA4, IB2): a link to a reveal's files is never more open than the reveal it belongs to: its passcode, its
+  downloads switch, its on or off and its end all carry to a copied or re-sent link. `again` keeps the passcode
+  unless the business sets a new one. Another client's reveal of the same shoot is that client's own (the business
+  chose its settings): not a way round.
+- IC2 (IB1): a heart belongs to a FILE, never to a place in a list. A removed file's heart goes with it; the same
+  files show the same hearts on a copied or re-sent link.
+- IC3 (IA1): for one shoot and one client there is one reveal: the older send call answers "already sent" (409 with
+  when and the link) like the new one unless asked again. A client wish the business makes by the older create call
+  is an ordinary client wish and takes its wish; the screens send reveals by the one call only.
+- IC4 (HZ2): a wish being made for a Concierge order does not exist for the buyer until it is delivered: not in any
+  count, list or feed, 404 by its id on every route of theirs, and its public link opens for nobody. Delivery takes
+  only wishes tied to THAT order, or the buyer's own wishes tied to no order.
+- IC5 (IB5): plays are counted by the server's own view of who is playing (the link and the address, capped per
+  hour), never by an id the client sends. A refusal names the real wait. An Idempotency-Key used again with a
+  different body is refused (409), never replayed.
+- IC6 (IB3): a name is plain text: control and direction-override characters are removed; a name of dots alone is
+  refused.
+- IC7 (HZ2, T-12, the next API round): a Concierge buyer gives the photos and the voice note WITH the order: files
+  they upload for that order (when ordering and until it is delivered), theirs, tied to the order; the order's
+  maker reads them and puts them in the wish; the maker uploads nothing in the buyer's name. Until this is built a
+  maker can make a words-only wish; the Concierge screens for it wait.

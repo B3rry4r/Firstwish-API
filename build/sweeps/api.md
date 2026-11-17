@@ -106,3 +106,10 @@
   of the business cannot get a Vault upload ticket ("Vault files need a business."). OWNER: a lapsed business is
   billed one whole block (₦3,000) for 210 bytes over (the website says "billed by the blocks you use that month":
   as written; say if a small overage should be free).
+
+## For API-BASE-10 (17 Nov)
+- IC7 (HIGH, the Concierge service is sold: T-12, T-13): the buyer gives photos and a voice note with the order
+  (uploads tied to the order until it is delivered); the order's maker reads them and adds them to the wish; then
+  the web: the buyer's order form takes the files and the maker opens the wish maker from the staff Concierge
+  screen. Until then a maker can make only a words-only wish.
+- OWNER: the ₦3,000 block billed for a 210-byte Vault overage (as the website says today).

@@ -32,3 +32,9 @@ The live flow (wa6b.mjs) makes and removes only its own data and joins `npm run 
 
 ADDED 16 Nov: case 2 (the Plan screen: what paying does, the 409, continue the pending payment) was pulled forward into
 the Business branch's own patch (P-W8c) because the driver needs it; if it is already on your base, check it and move on.
+
+ADDED 17 Nov (the eighth API round is merged; ruling HY1, HZ3): the Plan screen with a payment pending says until
+when it waits (the server's lapsesAt), lets the owner read a login's plan payment result (today the owner got 404),
+and offers the OWNER "Start again" (the server's drop; asks first; a late paid one is refund due and the screen
+says so in the server's words). The "Continue that payment" path is already on the base. Your stack's API commit
+is in your spawn line; the contract file on the base already has these.

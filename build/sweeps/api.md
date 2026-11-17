@@ -89,3 +89,11 @@
 - (API-BASE-8, from the Staff support check) the designed staff screens had "Find a thread" (Support) and "Find an
   order" (Concierge): the lists take no search word, so the wired screens dropped both: a `q` on each list. The
   Concierge order carries its payment's provider reference (the refund link can then open that payment).
+
+## For API-BASE-9 (17 Nov, from the Vault builder; the lead rules each after the Vault check)
+- A client marks favourites at the reveal link (POST at /v1/r/:code) and the business reads them (today the
+  server never writes a shoot's or a client wish's hearts: UA-831, UA-976).
+- A download of the finals at the reveal link (today photos only).
+- Rename a shoot and a file (no PATCH; names are the server's vault-<id>.<ext>).
+- A reveal from a chosen subset of a shoot's files (today every ready file in the set).
+- A reveal's play sets the client wish's openedAt (UA-832: plays on the shoot).

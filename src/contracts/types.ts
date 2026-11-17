@@ -5138,6 +5138,23 @@ export interface PatchBusinessVaultFilesByIdBody {
 export type PatchBusinessVaultFilesByIdHeaders = Record<string, never>;
 export type PatchBusinessVaultFilesByIdResponse = VaultFile;
 
+/** E-278 POST /v1/admin/concierge/orders/:id/wishes. Auth: maker,owner (DEC-265, HZ2). "Make the wish": a wish in the buyer's name, tied to the order and hidden from the buyer until the order is delivered; answers the wish as E-270 lists it. */
+export interface PostAdminConciergeOrdersByIdWishesParams {
+  id: string;
+}
+export interface PostAdminConciergeOrdersByIdWishesBody {
+  /** the wish kind (as the wish routes take it) */
+  kind: string;
+  /** who it is for */
+  name: string;
+  /** the wish occasion */
+  occasion: string;
+  /** why (4 or more characters; the audit row carries it) */
+  reason: string;
+}
+export type PostAdminConciergeOrdersByIdWishesHeaders = Record<string, never>;
+export type PostAdminConciergeOrdersByIdWishesResponse = ConciergeOrderWish;
+
 /** Every endpoint by registry id: its request parts and its response. */
 export interface EndpointContracts {
   "E-1": { params: GetAdminPeopleParams; query: GetAdminPeopleQuery; headers: GetAdminPeopleHeaders; response: GetAdminPeopleResponse };
@@ -5416,5 +5433,6 @@ export interface EndpointContracts {
   "E-275": { params: PostBusinessRevealLinksByIdDownloadsParams; body: PostBusinessRevealLinksByIdDownloadsBody; headers: PostBusinessRevealLinksByIdDownloadsHeaders; response: PostBusinessRevealLinksByIdDownloadsResponse };
   "E-276": { params: PatchBusinessShootsByIdParams; body: PatchBusinessShootsByIdBody; headers: PatchBusinessShootsByIdHeaders; response: PatchBusinessShootsByIdResponse };
   "E-277": { params: PatchBusinessVaultFilesByIdParams; body: PatchBusinessVaultFilesByIdBody; headers: PatchBusinessVaultFilesByIdHeaders; response: PatchBusinessVaultFilesByIdResponse };
+  "E-278": { params: PostAdminConciergeOrdersByIdWishesParams; body: PostAdminConciergeOrdersByIdWishesBody; headers: PostAdminConciergeOrdersByIdWishesHeaders; response: PostAdminConciergeOrdersByIdWishesResponse };
 }
 export type EndpointId = keyof EndpointContracts;

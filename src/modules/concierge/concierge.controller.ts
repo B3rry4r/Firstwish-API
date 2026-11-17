@@ -9,7 +9,7 @@ import type { ConciergeOrder, Maker } from "../../contracts";
 import type { AuditActor } from "../audit/audit.service";
 import { accountOf } from "../people/business-of";
 import { AdminRoute, StaffActor } from "../role-access/staff-section.guard";
-import { CancelBodyDto, DeliverBodyDto, DueQueryDto, IdParamDto, PlaceOrderBodyDto, StaffOrdersQueryDto } from "./dto";
+import { CancelBodyDto, DeliverBodyDto, DueQueryDto, IdParamDto, MakeWishBodyDto, PlaceOrderBodyDto, StaffOrdersQueryDto } from "./dto";
 import { ConciergeService, type StaffCaller } from "./concierge.service";
 
 const SECTION = "/admin/concierge";
@@ -97,6 +97,14 @@ export class ConciergeAdminController {
   @Get("concierge/orders/:id/wishes")
   wishes(@Param() params: IdParamDto, @CurrentPrincipal() p: Principal | undefined): Promise<{ items: ConciergeOrderWish[]; nextCursor: string | null }> {
     return this.orders.staffWishes(staffOf(p), params.id);
+  }
+
+  /** E-278 (HZ2): make a wish in the buyer's name. */
+  @AdminRoute(SECTION, "maker")
+  @Post("concierge/orders/:id/wishes")
+  @HttpCode(201)
+  makeWish(@Param() params: IdParamDto, @Body() body: MakeWishBodyDto, @CurrentPrincipal() p: Principal | undefined, @StaffActor() actor: AuditActor): Promise<ConciergeOrderWish> {
+    return this.orders.makeWish(staffOf(p), params.id, body, actor);
   }
 
   /** E-38 */

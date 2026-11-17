@@ -562,7 +562,8 @@
         "lib/pro-data.ts"
       ],
       "change": "integer kobo, currency NGN, over the wire and in storage; prices only from the price book",
-      "status": "open"
+      "status": "done",
+      "resolution": "W1 (web merge 650ba93), verified 16-17 Nov"
     },
     {
       "id": "UA-48",
@@ -573,7 +574,8 @@
         "lib/catalog.ts"
       ],
       "change": "integer kobo, currency NGN, over the wire and in storage; prices only from the price book",
-      "status": "open"
+      "status": "done",
+      "resolution": "W1 (web merge 650ba93), verified 16-17 Nov"
     },
     {
       "id": "UA-49",
@@ -595,7 +597,8 @@
         "lib/catalog.ts"
       ],
       "change": "integer kobo, currency NGN, over the wire and in storage; prices only from the price book",
-      "status": "open"
+      "status": "done",
+      "resolution": "W1 (web merge 650ba93), verified 16-17 Nov"
     },
     {
       "id": "UA-51",
@@ -606,7 +609,8 @@
         "lib/catalog.ts"
       ],
       "change": "integer kobo, currency NGN, over the wire and in storage; prices only from the price book",
-      "status": "open"
+      "status": "done",
+      "resolution": "W1 (web merge 650ba93), verified 16-17 Nov"
     },
     {
       "id": "UA-52",
@@ -617,7 +621,8 @@
         "lib/catalog.ts"
       ],
       "change": "integer kobo, currency NGN, over the wire and in storage; prices only from the price book",
-      "status": "open"
+      "status": "done",
+      "resolution": "W1 (web merge 650ba93), verified 16-17 Nov"
     },
     {
       "id": "UA-53",
@@ -629,7 +634,8 @@
         "lib/pro-data.ts"
       ],
       "change": "integer kobo, currency NGN, over the wire and in storage; prices only from the price book",
-      "status": "open"
+      "status": "done",
+      "resolution": "W1 (web merge 650ba93), verified 16-17 Nov"
     },
     {
       "id": "UA-54",
@@ -684,7 +690,8 @@
         "lib/catalog.ts"
       ],
       "change": "integer kobo, currency NGN, over the wire and in storage; prices only from the price book",
-      "status": "open"
+      "status": "done",
+      "resolution": "W1 (web merge 650ba93), verified 16-17 Nov"
     },
     {
       "id": "UA-59",
@@ -695,7 +702,8 @@
         "lib/catalog.ts"
       ],
       "change": "integer kobo, currency NGN, over the wire and in storage; prices only from the price book",
-      "status": "open"
+      "status": "done",
+      "resolution": "W1 (web merge 650ba93), verified 16-17 Nov"
     },
     {
       "id": "UA-60",
@@ -706,7 +714,8 @@
         "lib/studio.ts"
       ],
       "change": "integer kobo, currency NGN, over the wire and in storage; prices only from the price book",
-      "status": "open"
+      "status": "done",
+      "resolution": "W10 (web merge b8dfbeb), verified 16-17 Nov"
     },
     {
       "id": "UA-61",
@@ -717,7 +726,8 @@
         "lib/studio.ts"
       ],
       "change": "integer kobo, currency NGN, over the wire and in storage; prices only from the price book",
-      "status": "open"
+      "status": "done",
+      "resolution": "W10 (web merge b8dfbeb), verified 16-17 Nov"
     },
     {
       "id": "UA-62",
@@ -728,7 +738,8 @@
         "lib/studio.ts"
       ],
       "change": "integer kobo, currency NGN, over the wire and in storage; prices only from the price book",
-      "status": "open"
+      "status": "done",
+      "resolution": "W10 (web merge b8dfbeb), verified 16-17 Nov"
     },
     {
       "id": "UA-63",
@@ -870,7 +881,8 @@
         "lib/account.ts"
       ],
       "change": "server-issued UUIDv7 ids",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-75",
@@ -881,7 +893,8 @@
         "lib/account.ts"
       ],
       "change": "server-issued UUIDv7 ids",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-76",
@@ -892,7 +905,8 @@
         "lib/account.ts"
       ],
       "change": "server-issued UUIDv7 ids",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-77",
@@ -903,7 +917,8 @@
         "lib/account.ts"
       ],
       "change": "server-issued UUIDv7 ids",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-78",
@@ -914,7 +929,8 @@
         "lib/account.ts"
       ],
       "change": "server-issued UUIDv7 ids",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-79",
@@ -925,7 +941,8 @@
         "lib/account.ts"
       ],
       "change": "server-issued UUIDv7 ids",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-80",
@@ -936,7 +953,8 @@
         "lib/account.ts"
       ],
       "change": "server-issued UUIDv7 ids",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-81",
@@ -947,7 +965,8 @@
         "lib/account.ts"
       ],
       "change": "server-issued UUIDv7 ids",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-82",
@@ -958,7 +977,8 @@
         "lib/account.ts"
       ],
       "change": "server-issued UUIDv7 ids",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-83",
@@ -969,7 +989,8 @@
         "lib/account.ts"
       ],
       "change": "server-issued UUIDv7 ids",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-84",
@@ -980,7 +1001,8 @@
         "lib/account.ts"
       ],
       "change": "server-issued UUIDv7 ids",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-85",
@@ -991,7 +1013,8 @@
         "lib/account.ts"
       ],
       "change": "server-issued UUIDv7 ids",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-86",
@@ -1002,7 +1025,8 @@
         "lib/account.ts"
       ],
       "change": "server-issued UUIDv7 ids",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-87",
@@ -1013,7 +1037,8 @@
         "lib/account.ts"
       ],
       "change": "server-issued UUIDv7 ids",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-88",
@@ -1024,7 +1049,8 @@
         "lib/account.ts"
       ],
       "change": "server-issued UUIDv7 ids",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-89",
@@ -1046,7 +1072,8 @@
         "lib/account.ts"
       ],
       "change": "server-issued UUIDv7 ids",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-91",
@@ -1058,7 +1085,8 @@
         "lib/pro-data.ts"
       ],
       "change": "server-issued UUIDv7 ids",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-92",
@@ -1092,7 +1120,8 @@
         "lib/account.ts"
       ],
       "change": "server-issued UUIDv7 ids",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-95",
@@ -1750,7 +1779,8 @@
         "lib/maker.ts"
       ],
       "change": "maker notes saved to the server draft on every step once signed in; voice notes uploaded to storage",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-153",
@@ -1761,7 +1791,8 @@
         "lib/maker.ts"
       ],
       "change": "maker notes saved to the server draft on every step once signed in; voice notes uploaded to storage",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-154",
@@ -1772,7 +1803,8 @@
         "lib/maker.ts"
       ],
       "change": "maker notes saved to the server draft on every step once signed in; voice notes uploaded to storage",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-155",
@@ -1783,7 +1815,8 @@
         "lib/maker.ts"
       ],
       "change": "maker notes saved to the server draft on every step once signed in; voice notes uploaded to storage",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-156",
@@ -1794,7 +1827,8 @@
         "lib/maker.ts"
       ],
       "change": "maker notes saved to the server draft on every step once signed in; voice notes uploaded to storage",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-157",
@@ -1805,7 +1839,8 @@
         "lib/maker.ts"
       ],
       "change": "maker notes saved to the server draft on every step once signed in; voice notes uploaded to storage",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-158",
@@ -1816,7 +1851,8 @@
         "lib/maker.ts"
       ],
       "change": "maker notes saved to the server draft on every step once signed in; voice notes uploaded to storage",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-159",
@@ -1827,7 +1863,8 @@
         "lib/maker.ts"
       ],
       "change": "maker notes saved to the server draft on every step once signed in; voice notes uploaded to storage",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-160",
@@ -1838,7 +1875,8 @@
         "lib/maker.ts"
       ],
       "change": "maker notes saved to the server draft on every step once signed in; voice notes uploaded to storage",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-161",
@@ -1849,7 +1887,8 @@
         "lib/maker.ts"
       ],
       "change": "maker notes saved to the server draft on every step once signed in; voice notes uploaded to storage",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-162",
@@ -1860,7 +1899,8 @@
         "lib/maker.ts"
       ],
       "change": "maker notes saved to the server draft on every step once signed in; voice notes uploaded to storage",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-163",
@@ -1871,7 +1911,8 @@
         "lib/maker.ts"
       ],
       "change": "maker notes saved to the server draft on every step once signed in; voice notes uploaded to storage",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-164",
@@ -1882,7 +1923,8 @@
         "lib/maker.ts"
       ],
       "change": "maker notes saved to the server draft on every step once signed in; voice notes uploaded to storage",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-165",
@@ -1893,7 +1935,8 @@
         "lib/maker.ts"
       ],
       "change": "maker notes saved to the server draft on every step once signed in; voice notes uploaded to storage",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-166",
@@ -1904,7 +1947,8 @@
         "lib/maker.ts"
       ],
       "change": "maker notes saved to the server draft on every step once signed in; voice notes uploaded to storage",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-167",
@@ -1926,7 +1970,8 @@
         "lib/maker.ts"
       ],
       "change": "maker notes saved to the server draft on every step once signed in; voice notes uploaded to storage",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-169",
@@ -1937,7 +1982,8 @@
         "lib/maker.ts"
       ],
       "change": "maker notes saved to the server draft on every step once signed in; voice notes uploaded to storage",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-170",
@@ -1970,7 +2016,8 @@
         "lib/maker.ts"
       ],
       "change": "maker notes saved to the server draft on every step once signed in; voice notes uploaded to storage",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-173",
@@ -2392,7 +2439,8 @@
         "lib/studio-api.ts"
       ],
       "change": "the server (Vault shoots and files, reactions/saves/follows, Studio plan/credits/reviews/drafts/submissions, Pass period)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W10 (web merge b8dfbeb), verified 16-17 Nov"
     },
     {
       "id": "UA-209",
@@ -2403,7 +2451,8 @@
         "lib/studio-api.ts"
       ],
       "change": "the server (Vault shoots and files, reactions/saves/follows, Studio plan/credits/reviews/drafts/submissions, Pass period)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W10 (web merge b8dfbeb), verified 16-17 Nov"
     },
     {
       "id": "UA-210",
@@ -2414,7 +2463,8 @@
         "lib/studio-api.ts"
       ],
       "change": "the server (Vault shoots and files, reactions/saves/follows, Studio plan/credits/reviews/drafts/submissions, Pass period)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W10 (web merge b8dfbeb), verified 16-17 Nov"
     },
     {
       "id": "UA-211",
@@ -2448,7 +2498,8 @@
         "lib/maker.ts"
       ],
       "change": "signed uploads straight to storage, confirm step, short-lived signed reads (storage)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-214",
@@ -2459,7 +2510,8 @@
         "lib/maker.ts"
       ],
       "change": "signed uploads straight to storage, confirm step, short-lived signed reads (storage)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-215",
@@ -2470,7 +2522,8 @@
         "lib/maker.ts"
       ],
       "change": "signed uploads straight to storage, confirm step, short-lived signed reads (storage)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-216",
@@ -2481,7 +2534,8 @@
         "lib/maker.ts"
       ],
       "change": "signed uploads straight to storage, confirm step, short-lived signed reads (storage)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-217",
@@ -2492,7 +2546,8 @@
         "lib/maker.ts"
       ],
       "change": "signed uploads straight to storage, confirm step, short-lived signed reads (storage)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-218",
@@ -2503,7 +2558,8 @@
         "lib/maker.ts"
       ],
       "change": "signed uploads straight to storage, confirm step, short-lived signed reads (storage)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-219",
@@ -2514,7 +2570,8 @@
         "lib/maker.ts"
       ],
       "change": "signed uploads straight to storage, confirm step, short-lived signed reads (storage)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-220",
@@ -2525,7 +2582,8 @@
         "lib/maker.ts"
       ],
       "change": "signed uploads straight to storage, confirm step, short-lived signed reads (storage)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-221",
@@ -2536,7 +2594,8 @@
         "lib/maker.ts"
       ],
       "change": "signed uploads straight to storage, confirm step, short-lived signed reads (storage)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-222",
@@ -2547,7 +2606,8 @@
         "lib/maker.ts"
       ],
       "change": "signed uploads straight to storage, confirm step, short-lived signed reads (storage)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-223",
@@ -2558,7 +2618,8 @@
         "lib/maker.ts"
       ],
       "change": "signed uploads straight to storage, confirm step, short-lived signed reads (storage)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-224",
@@ -2569,7 +2630,8 @@
         "lib/maker.ts"
       ],
       "change": "signed uploads straight to storage, confirm step, short-lived signed reads (storage)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-225",
@@ -2580,7 +2642,8 @@
         "lib/maker.ts"
       ],
       "change": "signed uploads straight to storage, confirm step, short-lived signed reads (storage)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-226",
@@ -2591,7 +2654,8 @@
         "lib/maker.ts"
       ],
       "change": "signed uploads straight to storage, confirm step, short-lived signed reads (storage)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-227",
@@ -2602,7 +2666,8 @@
         "lib/maker.ts"
       ],
       "change": "signed uploads straight to storage, confirm step, short-lived signed reads (storage)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-228",
@@ -2624,7 +2689,8 @@
         "lib/maker.ts"
       ],
       "change": "signed uploads straight to storage, confirm step, short-lived signed reads (storage)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-230",
@@ -2635,7 +2701,8 @@
         "lib/maker.ts"
       ],
       "change": "signed uploads straight to storage, confirm step, short-lived signed reads (storage)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-231",
@@ -2668,7 +2735,8 @@
         "lib/maker.ts"
       ],
       "change": "signed uploads straight to storage, confirm step, short-lived signed reads (storage)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-234",
@@ -2846,7 +2914,8 @@
         "lib/studio-api.ts"
       ],
       "change": "signed uploads straight to storage, confirm step, short-lived signed reads (storage)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W10 (web merge b8dfbeb), verified 16-17 Nov"
     },
     {
       "id": "UA-249",
@@ -2857,7 +2926,8 @@
         "lib/studio-api.ts"
       ],
       "change": "signed uploads straight to storage, confirm step, short-lived signed reads (storage)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W10 (web merge b8dfbeb), verified 16-17 Nov"
     },
     {
       "id": "UA-250",
@@ -3462,7 +3532,8 @@
         "lib/pro-data.ts"
       ],
       "change": "the web reads GET /v1/prices; the server charges only from the price book",
-      "status": "open"
+      "status": "done",
+      "resolution": "W1 (web merge 650ba93), verified 16-17 Nov"
     },
     {
       "id": "UA-300",
@@ -3473,7 +3544,8 @@
         "lib/catalog.ts"
       ],
       "change": "the web reads GET /v1/prices; the server charges only from the price book",
-      "status": "open"
+      "status": "done",
+      "resolution": "W1 (web merge 650ba93), verified 16-17 Nov"
     },
     {
       "id": "UA-301",
@@ -3495,7 +3567,8 @@
         "lib/catalog.ts"
       ],
       "change": "the web reads GET /v1/prices; the server charges only from the price book",
-      "status": "open"
+      "status": "done",
+      "resolution": "W1 (web merge 650ba93), verified 16-17 Nov"
     },
     {
       "id": "UA-303",
@@ -3506,7 +3579,8 @@
         "lib/catalog.ts"
       ],
       "change": "the web reads GET /v1/prices; the server charges only from the price book",
-      "status": "open"
+      "status": "done",
+      "resolution": "W1 (web merge 650ba93), verified 16-17 Nov"
     },
     {
       "id": "UA-304",
@@ -3517,7 +3591,8 @@
         "lib/catalog.ts"
       ],
       "change": "the web reads GET /v1/prices; the server charges only from the price book",
-      "status": "open"
+      "status": "done",
+      "resolution": "W1 (web merge 650ba93), verified 16-17 Nov"
     },
     {
       "id": "UA-305",
@@ -3529,7 +3604,8 @@
         "lib/pro-data.ts"
       ],
       "change": "the web reads GET /v1/prices; the server charges only from the price book",
-      "status": "open"
+      "status": "done",
+      "resolution": "W1 (web merge 650ba93), verified 16-17 Nov"
     },
     {
       "id": "UA-306",
@@ -3585,7 +3661,8 @@
         "lib/catalog.ts"
       ],
       "change": "the web reads GET /v1/prices; the server charges only from the price book",
-      "status": "open"
+      "status": "done",
+      "resolution": "W1 (web merge 650ba93), verified 16-17 Nov"
     },
     {
       "id": "UA-311",
@@ -3596,7 +3673,8 @@
         "lib/catalog.ts"
       ],
       "change": "the web reads GET /v1/prices; the server charges only from the price book",
-      "status": "open"
+      "status": "done",
+      "resolution": "W1 (web merge 650ba93), verified 16-17 Nov"
     },
     {
       "id": "UA-312",
@@ -3607,7 +3685,8 @@
         "lib/studio.ts"
       ],
       "change": "the web reads GET /v1/prices; the server charges only from the price book",
-      "status": "open"
+      "status": "done",
+      "resolution": "W10 (web merge b8dfbeb), verified 16-17 Nov"
     },
     {
       "id": "UA-313",
@@ -3619,7 +3698,8 @@
         "lib/studio.ts"
       ],
       "change": "the web reads GET /v1/prices; the server charges only from the price book",
-      "status": "open"
+      "status": "done",
+      "resolution": "W10 (web merge b8dfbeb), verified 16-17 Nov"
     },
     {
       "id": "UA-314",
@@ -3630,7 +3710,8 @@
         "lib/studio.ts"
       ],
       "change": "the web reads GET /v1/prices; the server charges only from the price book",
-      "status": "open"
+      "status": "done",
+      "resolution": "W10 (web merge b8dfbeb), verified 16-17 Nov"
     },
     {
       "id": "UA-315",
@@ -4088,7 +4169,8 @@
         "lib/studio-fixtures.ts"
       ],
       "change": "removed from production; house showcase wishes served by the server (feed, Now Showing)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W10 (web merge b8dfbeb), verified 16-17 Nov"
     },
     {
       "id": "UA-356",
@@ -4099,7 +4181,8 @@
         "lib/studio-fixtures.ts"
       ],
       "change": "removed from production; house showcase wishes served by the server (feed, Now Showing)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W10 (web merge b8dfbeb), verified 16-17 Nov"
     },
     {
       "id": "UA-357",
@@ -4110,7 +4193,8 @@
         "lib/studio-fixtures.ts"
       ],
       "change": "removed from production; house showcase wishes served by the server (feed, Now Showing)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W10 (web merge b8dfbeb), verified 16-17 Nov"
     },
     {
       "id": "UA-358",
@@ -4133,7 +4217,8 @@
         "lib/studio-api.ts"
       ],
       "change": "AI port (ai-writing), credits spent only on a real answer",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-360",
@@ -4144,7 +4229,8 @@
         "lib/studio-api.ts"
       ],
       "change": "AI port (ai-writing), credits spent only on a real answer",
-      "status": "open"
+      "status": "done",
+      "resolution": "W10 (web merge b8dfbeb), verified 16-17 Nov"
     },
     {
       "id": "UA-361",
@@ -4155,7 +4241,8 @@
         "lib/studio-api.ts"
       ],
       "change": "AI port (ai-writing), credits spent only on a real answer",
-      "status": "open"
+      "status": "done",
+      "resolution": "W10 (web merge b8dfbeb), verified 16-17 Nov"
     },
     {
       "id": "UA-362",
@@ -4166,7 +4253,8 @@
         "lib/studio-api.ts"
       ],
       "change": "AI port (ai-writing), credits spent only on a real answer",
-      "status": "open"
+      "status": "done",
+      "resolution": "W10 (web merge b8dfbeb), verified 16-17 Nov"
     },
     {
       "id": "UA-363",
@@ -4424,7 +4512,8 @@
         "lib/account.ts"
       ],
       "change": "every epoch-ms `at` becomes createdAt/updatedAt ISO-8601 UTC strings set by the server; calendar dates are YYYY-MM-DD strings (date-only canon)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-385",
@@ -4435,7 +4524,8 @@
         "lib/account.ts"
       ],
       "change": "every epoch-ms `at` becomes createdAt/updatedAt ISO-8601 UTC strings set by the server; calendar dates are YYYY-MM-DD strings (date-only canon)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-386",
@@ -4446,7 +4536,8 @@
         "lib/account.ts"
       ],
       "change": "every epoch-ms `at` becomes createdAt/updatedAt ISO-8601 UTC strings set by the server; calendar dates are YYYY-MM-DD strings (date-only canon)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-387",
@@ -4457,7 +4548,8 @@
         "lib/account.ts"
       ],
       "change": "every epoch-ms `at` becomes createdAt/updatedAt ISO-8601 UTC strings set by the server; calendar dates are YYYY-MM-DD strings (date-only canon)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-388",
@@ -4468,7 +4560,8 @@
         "lib/account.ts"
       ],
       "change": "every epoch-ms `at` becomes createdAt/updatedAt ISO-8601 UTC strings set by the server; calendar dates are YYYY-MM-DD strings (date-only canon)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-389",
@@ -4479,7 +4572,8 @@
         "lib/account.ts"
       ],
       "change": "every epoch-ms `at` becomes createdAt/updatedAt ISO-8601 UTC strings set by the server; calendar dates are YYYY-MM-DD strings (date-only canon)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-390",
@@ -4490,7 +4584,8 @@
         "lib/account.ts"
       ],
       "change": "every epoch-ms `at` becomes createdAt/updatedAt ISO-8601 UTC strings set by the server; calendar dates are YYYY-MM-DD strings (date-only canon)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-391",
@@ -4501,7 +4596,8 @@
         "lib/account.ts"
       ],
       "change": "every epoch-ms `at` becomes createdAt/updatedAt ISO-8601 UTC strings set by the server; calendar dates are YYYY-MM-DD strings (date-only canon)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-392",
@@ -4512,7 +4608,8 @@
         "lib/account.ts"
       ],
       "change": "every epoch-ms `at` becomes createdAt/updatedAt ISO-8601 UTC strings set by the server; calendar dates are YYYY-MM-DD strings (date-only canon)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-393",
@@ -4523,7 +4620,8 @@
         "lib/account.ts"
       ],
       "change": "every epoch-ms `at` becomes createdAt/updatedAt ISO-8601 UTC strings set by the server; calendar dates are YYYY-MM-DD strings (date-only canon)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-394",
@@ -4534,7 +4632,8 @@
         "lib/account.ts"
       ],
       "change": "every epoch-ms `at` becomes createdAt/updatedAt ISO-8601 UTC strings set by the server; calendar dates are YYYY-MM-DD strings (date-only canon)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-395",
@@ -4545,7 +4644,8 @@
         "lib/account.ts"
       ],
       "change": "every epoch-ms `at` becomes createdAt/updatedAt ISO-8601 UTC strings set by the server; calendar dates are YYYY-MM-DD strings (date-only canon)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-396",
@@ -4556,7 +4656,8 @@
         "lib/account.ts"
       ],
       "change": "every epoch-ms `at` becomes createdAt/updatedAt ISO-8601 UTC strings set by the server; calendar dates are YYYY-MM-DD strings (date-only canon)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-397",
@@ -4567,7 +4668,8 @@
         "lib/account.ts"
       ],
       "change": "every epoch-ms `at` becomes createdAt/updatedAt ISO-8601 UTC strings set by the server; calendar dates are YYYY-MM-DD strings (date-only canon)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-398",
@@ -4578,7 +4680,8 @@
         "lib/account.ts"
       ],
       "change": "every epoch-ms `at` becomes createdAt/updatedAt ISO-8601 UTC strings set by the server; calendar dates are YYYY-MM-DD strings (date-only canon)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-399",
@@ -4600,7 +4703,8 @@
         "lib/account.ts"
       ],
       "change": "every epoch-ms `at` becomes createdAt/updatedAt ISO-8601 UTC strings set by the server; calendar dates are YYYY-MM-DD strings (date-only canon)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-401",
@@ -4612,7 +4716,8 @@
         "lib/pro-data.ts"
       ],
       "change": "every epoch-ms `at` becomes createdAt/updatedAt ISO-8601 UTC strings set by the server; calendar dates are YYYY-MM-DD strings (date-only canon)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-402",
@@ -4646,7 +4751,8 @@
         "lib/account.ts"
       ],
       "change": "every epoch-ms `at` becomes createdAt/updatedAt ISO-8601 UTC strings set by the server; calendar dates are YYYY-MM-DD strings (date-only canon)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-405",
@@ -4853,7 +4959,8 @@
         "lib/studio-api.ts"
       ],
       "change": "every epoch-ms `at` becomes createdAt/updatedAt ISO-8601 UTC strings set by the server; calendar dates are YYYY-MM-DD strings (date-only canon)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W10 (web merge b8dfbeb), verified 16-17 Nov"
     },
     {
       "id": "UA-423",
@@ -4865,7 +4972,8 @@
         "lib/studio-api.ts"
       ],
       "change": "every epoch-ms `at` becomes createdAt/updatedAt ISO-8601 UTC strings set by the server; calendar dates are YYYY-MM-DD strings (date-only canon)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W10 (web merge b8dfbeb), verified 16-17 Nov"
     },
     {
       "id": "UA-424",
@@ -4876,7 +4984,8 @@
         "lib/studio-api.ts"
       ],
       "change": "every epoch-ms `at` becomes createdAt/updatedAt ISO-8601 UTC strings set by the server; calendar dates are YYYY-MM-DD strings (date-only canon)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W10 (web merge b8dfbeb), verified 16-17 Nov"
     },
     {
       "id": "UA-425",
@@ -5234,7 +5343,8 @@
         "components/site/CreatorHero.tsx"
       ],
       "change": "the page works the figure out from the served price book (100 wishes x the premium-style royalty at list, T-65) and never types it",
-      "status": "open"
+      "status": "done",
+      "resolution": "W1 (web merge 650ba93), verified 16-17 Nov"
     },
     {
       "id": "UA-457",
@@ -5415,7 +5525,8 @@
         "lib/maker.ts"
       ],
       "change": "every read or write of localStorage/sessionStorage/IndexedDB is replaced by its endpoint; the session is an httpOnly refresh cookie plus an in-memory access token; mode (light/dark) is a field on the account; choices before sign-in travel in the link; the build fails on the words localStorage, sessionStorage, IndexedDB in app/, components/, lib/",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-472",
@@ -5427,7 +5538,8 @@
         "lib/maker.ts"
       ],
       "change": "every read or write of localStorage/sessionStorage/IndexedDB is replaced by its endpoint; the session is an httpOnly refresh cookie plus an in-memory access token; mode (light/dark) is a field on the account; choices before sign-in travel in the link; the build fails on the words localStorage, sessionStorage, IndexedDB in app/, components/, lib/",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-473",
@@ -5439,7 +5551,8 @@
         "lib/maker.ts"
       ],
       "change": "every read or write of localStorage/sessionStorage/IndexedDB is replaced by its endpoint; the session is an httpOnly refresh cookie plus an in-memory access token; mode (light/dark) is a field on the account; choices before sign-in travel in the link; the build fails on the words localStorage, sessionStorage, IndexedDB in app/, components/, lib/",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-474",
@@ -5451,7 +5564,8 @@
         "lib/maker.ts"
       ],
       "change": "every read or write of localStorage/sessionStorage/IndexedDB is replaced by its endpoint; the session is an httpOnly refresh cookie plus an in-memory access token; mode (light/dark) is a field on the account; choices before sign-in travel in the link; the build fails on the words localStorage, sessionStorage, IndexedDB in app/, components/, lib/",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-475",
@@ -5463,7 +5577,8 @@
         "lib/maker.ts"
       ],
       "change": "every read or write of localStorage/sessionStorage/IndexedDB is replaced by its endpoint; the session is an httpOnly refresh cookie plus an in-memory access token; mode (light/dark) is a field on the account; choices before sign-in travel in the link; the build fails on the words localStorage, sessionStorage, IndexedDB in app/, components/, lib/",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-476",
@@ -5475,7 +5590,8 @@
         "lib/maker.ts"
       ],
       "change": "every read or write of localStorage/sessionStorage/IndexedDB is replaced by its endpoint; the session is an httpOnly refresh cookie plus an in-memory access token; mode (light/dark) is a field on the account; choices before sign-in travel in the link; the build fails on the words localStorage, sessionStorage, IndexedDB in app/, components/, lib/",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-477",
@@ -5487,7 +5603,8 @@
         "lib/maker.ts"
       ],
       "change": "every read or write of localStorage/sessionStorage/IndexedDB is replaced by its endpoint; the session is an httpOnly refresh cookie plus an in-memory access token; mode (light/dark) is a field on the account; choices before sign-in travel in the link; the build fails on the words localStorage, sessionStorage, IndexedDB in app/, components/, lib/",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-478",
@@ -5499,7 +5616,8 @@
         "lib/maker.ts"
       ],
       "change": "every read or write of localStorage/sessionStorage/IndexedDB is replaced by its endpoint; the session is an httpOnly refresh cookie plus an in-memory access token; mode (light/dark) is a field on the account; choices before sign-in travel in the link; the build fails on the words localStorage, sessionStorage, IndexedDB in app/, components/, lib/",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-479",
@@ -5511,7 +5629,8 @@
         "lib/maker.ts"
       ],
       "change": "every read or write of localStorage/sessionStorage/IndexedDB is replaced by its endpoint; the session is an httpOnly refresh cookie plus an in-memory access token; mode (light/dark) is a field on the account; choices before sign-in travel in the link; the build fails on the words localStorage, sessionStorage, IndexedDB in app/, components/, lib/",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-480",
@@ -5523,7 +5642,8 @@
         "lib/maker.ts"
       ],
       "change": "every read or write of localStorage/sessionStorage/IndexedDB is replaced by its endpoint; the session is an httpOnly refresh cookie plus an in-memory access token; mode (light/dark) is a field on the account; choices before sign-in travel in the link; the build fails on the words localStorage, sessionStorage, IndexedDB in app/, components/, lib/",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-481",
@@ -5535,7 +5655,8 @@
         "lib/maker.ts"
       ],
       "change": "every read or write of localStorage/sessionStorage/IndexedDB is replaced by its endpoint; the session is an httpOnly refresh cookie plus an in-memory access token; mode (light/dark) is a field on the account; choices before sign-in travel in the link; the build fails on the words localStorage, sessionStorage, IndexedDB in app/, components/, lib/",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-482",
@@ -5547,7 +5668,8 @@
         "lib/maker.ts"
       ],
       "change": "every read or write of localStorage/sessionStorage/IndexedDB is replaced by its endpoint; the session is an httpOnly refresh cookie plus an in-memory access token; mode (light/dark) is a field on the account; choices before sign-in travel in the link; the build fails on the words localStorage, sessionStorage, IndexedDB in app/, components/, lib/",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-483",
@@ -5559,7 +5681,8 @@
         "lib/maker.ts"
       ],
       "change": "every read or write of localStorage/sessionStorage/IndexedDB is replaced by its endpoint; the session is an httpOnly refresh cookie plus an in-memory access token; mode (light/dark) is a field on the account; choices before sign-in travel in the link; the build fails on the words localStorage, sessionStorage, IndexedDB in app/, components/, lib/",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-484",
@@ -5571,7 +5694,8 @@
         "lib/maker.ts"
       ],
       "change": "every read or write of localStorage/sessionStorage/IndexedDB is replaced by its endpoint; the session is an httpOnly refresh cookie plus an in-memory access token; mode (light/dark) is a field on the account; choices before sign-in travel in the link; the build fails on the words localStorage, sessionStorage, IndexedDB in app/, components/, lib/",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-485",
@@ -5583,7 +5707,8 @@
         "lib/maker.ts"
       ],
       "change": "every read or write of localStorage/sessionStorage/IndexedDB is replaced by its endpoint; the session is an httpOnly refresh cookie plus an in-memory access token; mode (light/dark) is a field on the account; choices before sign-in travel in the link; the build fails on the words localStorage, sessionStorage, IndexedDB in app/, components/, lib/",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-486",
@@ -5607,7 +5732,8 @@
         "lib/maker.ts"
       ],
       "change": "every read or write of localStorage/sessionStorage/IndexedDB is replaced by its endpoint; the session is an httpOnly refresh cookie plus an in-memory access token; mode (light/dark) is a field on the account; choices before sign-in travel in the link; the build fails on the words localStorage, sessionStorage, IndexedDB in app/, components/, lib/",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-488",
@@ -5620,7 +5746,8 @@
         "lib/pro-data.ts"
       ],
       "change": "every read or write of localStorage/sessionStorage/IndexedDB is replaced by its endpoint; the session is an httpOnly refresh cookie plus an in-memory access token; mode (light/dark) is a field on the account; choices before sign-in travel in the link; the build fails on the words localStorage, sessionStorage, IndexedDB in app/, components/, lib/",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-489",
@@ -5658,7 +5785,8 @@
         "lib/maker.ts"
       ],
       "change": "every read or write of localStorage/sessionStorage/IndexedDB is replaced by its endpoint; the session is an httpOnly refresh cookie plus an in-memory access token; mode (light/dark) is a field on the account; choices before sign-in travel in the link; the build fails on the words localStorage, sessionStorage, IndexedDB in app/, components/, lib/",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-492",
@@ -5885,7 +6013,8 @@
         "lib/cinema.js"
       ],
       "change": "every read or write of localStorage/sessionStorage/IndexedDB is replaced by its endpoint; the session is an httpOnly refresh cookie plus an in-memory access token; mode (light/dark) is a field on the account; choices before sign-in travel in the link; the build fails on the words localStorage, sessionStorage, IndexedDB in app/, components/, lib/",
-      "status": "open"
+      "status": "done",
+      "resolution": "W1 (web merge 650ba93), verified 16-17 Nov"
     },
     {
       "id": "UA-510",
@@ -5918,7 +6047,8 @@
         "lib/studio-api.ts"
       ],
       "change": "every read or write of localStorage/sessionStorage/IndexedDB is replaced by its endpoint; the session is an httpOnly refresh cookie plus an in-memory access token; mode (light/dark) is a field on the account; choices before sign-in travel in the link; the build fails on the words localStorage, sessionStorage, IndexedDB in app/, components/, lib/",
-      "status": "open"
+      "status": "done",
+      "resolution": "W10 (web merge b8dfbeb), verified 16-17 Nov"
     },
     {
       "id": "UA-513",
@@ -5930,7 +6060,8 @@
         "lib/studio-api.ts"
       ],
       "change": "every read or write of localStorage/sessionStorage/IndexedDB is replaced by its endpoint; the session is an httpOnly refresh cookie plus an in-memory access token; mode (light/dark) is a field on the account; choices before sign-in travel in the link; the build fails on the words localStorage, sessionStorage, IndexedDB in app/, components/, lib/",
-      "status": "open"
+      "status": "done",
+      "resolution": "W10 (web merge b8dfbeb), verified 16-17 Nov"
     },
     {
       "id": "UA-514",
@@ -5941,7 +6072,8 @@
         "lib/studio-api.ts"
       ],
       "change": "every read or write of localStorage/sessionStorage/IndexedDB is replaced by its endpoint; the session is an httpOnly refresh cookie plus an in-memory access token; mode (light/dark) is a field on the account; choices before sign-in travel in the link; the build fails on the words localStorage, sessionStorage, IndexedDB in app/, components/, lib/",
-      "status": "open"
+      "status": "done",
+      "resolution": "W10 (web merge b8dfbeb), verified 16-17 Nov"
     },
     {
       "id": "UA-515",
@@ -6401,7 +6533,8 @@
       ],
       "change": "implement the designed loading state",
       "enterCondition": "a request for this surface is in flight (conventions Runtime contract)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W10 (web merge b8dfbeb), verified 16-17 Nov"
     },
     {
       "id": "UA-547",
@@ -6415,7 +6548,8 @@
       ],
       "change": "implement the designed error state",
       "enterCondition": "the request fails; show retry",
-      "status": "open"
+      "status": "done",
+      "resolution": "W10 (web merge b8dfbeb), verified 16-17 Nov"
     },
     {
       "id": "UA-548",
@@ -6427,7 +6561,8 @@
       ],
       "change": "implement the designed loading state",
       "enterCondition": "a request for this surface is in flight (conventions Runtime contract)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W10 (web merge b8dfbeb), verified 16-17 Nov"
     },
     {
       "id": "UA-549",
@@ -6439,7 +6574,8 @@
       ],
       "change": "implement the designed error state",
       "enterCondition": "the request fails; show retry",
-      "status": "open"
+      "status": "done",
+      "resolution": "W10 (web merge b8dfbeb), verified 16-17 Nov"
     },
     {
       "id": "UA-550",
@@ -6453,7 +6589,8 @@
       ],
       "change": "implement the designed loading state",
       "enterCondition": "a request for this surface is in flight (conventions Runtime contract)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-551",
@@ -6481,7 +6618,8 @@
       ],
       "change": "implement the designed error state",
       "enterCondition": "the request fails; show retry",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-553",
@@ -6495,7 +6633,8 @@
       ],
       "change": "implement the designed loading state",
       "enterCondition": "a request for this surface is in flight (conventions Runtime contract)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-554",
@@ -6523,7 +6662,8 @@
       ],
       "change": "implement the designed loading state",
       "enterCondition": "a request for this surface is in flight (conventions Runtime contract)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-556",
@@ -6537,7 +6677,8 @@
       ],
       "change": "implement the designed loaded state",
       "enterCondition": "as designed: loaded",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-557",
@@ -6551,7 +6692,8 @@
       ],
       "change": "implement the designed loading state",
       "enterCondition": "a request for this surface is in flight (conventions Runtime contract)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-558",
@@ -6579,7 +6721,8 @@
       ],
       "change": "implement the designed error state",
       "enterCondition": "the request fails; show retry",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-560",
@@ -6593,7 +6736,8 @@
       ],
       "change": "implement the designed loading state",
       "enterCondition": "a request for this surface is in flight (conventions Runtime contract)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-561",
@@ -6621,7 +6765,8 @@
       ],
       "change": "implement the designed error state",
       "enterCondition": "the request fails; show retry",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-563",
@@ -6635,7 +6780,8 @@
       ],
       "change": "implement the designed loading state",
       "enterCondition": "a request for this surface is in flight (conventions Runtime contract)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-564",
@@ -6677,7 +6823,8 @@
       ],
       "change": "implement the designed loading state",
       "enterCondition": "a request for this surface is in flight (conventions Runtime contract)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-567",
@@ -6719,7 +6866,8 @@
       ],
       "change": "implement the designed loading state",
       "enterCondition": "a request for this surface is in flight (conventions Runtime contract)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-570",
@@ -6747,7 +6895,8 @@
       ],
       "change": "implement the designed loaded state",
       "enterCondition": "as designed: loaded",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-572",
@@ -6761,7 +6910,8 @@
       ],
       "change": "implement the designed loading state",
       "enterCondition": "a request for this surface is in flight (conventions Runtime contract)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-573",
@@ -6789,7 +6939,8 @@
       ],
       "change": "implement the designed loaded state",
       "enterCondition": "as designed: loaded",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-575",
@@ -6803,7 +6954,8 @@
       ],
       "change": "implement the designed loading state",
       "enterCondition": "a request for this surface is in flight (conventions Runtime contract)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-576",
@@ -6831,7 +6983,8 @@
       ],
       "change": "implement the designed loaded state",
       "enterCondition": "as designed: loaded",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-578",
@@ -6845,7 +6998,8 @@
       ],
       "change": "implement the designed loading state",
       "enterCondition": "a request for this surface is in flight (conventions Runtime contract)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-579",
@@ -6873,7 +7027,8 @@
       ],
       "change": "implement the designed loaded state",
       "enterCondition": "as designed: loaded",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-581",
@@ -6901,7 +7056,8 @@
       ],
       "change": "implement the designed error state",
       "enterCondition": "the request fails; show retry",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-583",
@@ -6929,7 +7085,8 @@
       ],
       "change": "implement the designed loading state",
       "enterCondition": "a request for this surface is in flight (conventions Runtime contract)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-585",
@@ -6957,7 +7114,8 @@
       ],
       "change": "implement the designed error state",
       "enterCondition": "the request fails; show retry",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-587",
@@ -6971,7 +7129,8 @@
       ],
       "change": "implement the designed loading state",
       "enterCondition": "a request for this surface is in flight (conventions Runtime contract)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-588",
@@ -6999,7 +7158,8 @@
       ],
       "change": "implement the designed loaded state",
       "enterCondition": "as designed: loaded",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-590",
@@ -7013,7 +7173,8 @@
       ],
       "change": "implement the designed loading state",
       "enterCondition": "a request for this surface is in flight (conventions Runtime contract)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-591",
@@ -7069,7 +7230,8 @@
       ],
       "change": "implement the designed loading state",
       "enterCondition": "a request for this surface is in flight (conventions Runtime contract)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-595",
@@ -7097,7 +7259,8 @@
       ],
       "change": "implement the designed loaded state",
       "enterCondition": "as designed: loaded",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-597",
@@ -7111,7 +7274,8 @@
       ],
       "change": "implement the designed loading state",
       "enterCondition": "a request for this surface is in flight (conventions Runtime contract)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-598",
@@ -7251,7 +7415,8 @@
       ],
       "change": "implement the designed loading state",
       "enterCondition": "a request for this surface is in flight (conventions Runtime contract)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-608",
@@ -7279,7 +7444,8 @@
       ],
       "change": "implement the designed loaded state",
       "enterCondition": "as designed: loaded",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-610",
@@ -7953,7 +8119,8 @@
       ],
       "change": "make the coded state reachable: empty",
       "enterCondition": "not coded for any list; arrays are non-empty constants",
-      "status": "open"
+      "status": "done",
+      "resolution": "W1 (web merge 650ba93), verified 16-17 Nov"
     },
     {
       "id": "UA-656",
@@ -7966,7 +8133,8 @@
       ],
       "change": "make the coded state reachable: error",
       "enterCondition": "not coded; no request is made",
-      "status": "open"
+      "status": "done",
+      "resolution": "W1 (web merge 650ba93), verified 16-17 Nov"
     },
     {
       "id": "UA-657",
@@ -7979,7 +8147,8 @@
       ],
       "change": "make the coded state reachable: not-found",
       "enterCondition": "notFound() when slug not in forBusiness",
-      "status": "open"
+      "status": "done",
+      "resolution": "W1 (web merge 650ba93), verified 16-17 Nov"
     },
     {
       "id": "UA-658",
@@ -8007,7 +8176,8 @@
       ],
       "change": "make the coded state reachable: empty",
       "enterCondition": "not coded for any list; arrays are non-empty constants",
-      "status": "open"
+      "status": "done",
+      "resolution": "W1 (web merge 650ba93), verified 16-17 Nov"
     },
     {
       "id": "UA-660",
@@ -8021,7 +8191,8 @@
       ],
       "change": "make the coded state reachable: error",
       "enterCondition": "not coded; no request is made",
-      "status": "open"
+      "status": "done",
+      "resolution": "W1 (web merge 650ba93), verified 16-17 Nov"
     },
     {
       "id": "UA-661",
@@ -8085,7 +8256,8 @@
       ],
       "change": "implement the designed empty state",
       "enterCondition": "the server returns no items",
-      "status": "open"
+      "status": "done",
+      "resolution": "W1 (web merge 650ba93), verified 16-17 Nov"
     },
     {
       "id": "UA-666",
@@ -8099,7 +8271,8 @@
       ],
       "change": "implement the designed error state",
       "enterCondition": "the request fails; show retry",
-      "status": "open"
+      "status": "done",
+      "resolution": "W1 (web merge 650ba93), verified 16-17 Nov"
     },
     {
       "id": "UA-667",
@@ -8127,7 +8300,8 @@
       ],
       "change": "make the coded state reachable: empty",
       "enterCondition": "not coded for any list; arrays are non-empty constants",
-      "status": "open"
+      "status": "done",
+      "resolution": "W1 (web merge 650ba93), verified 16-17 Nov"
     },
     {
       "id": "UA-669",
@@ -8141,7 +8315,8 @@
       ],
       "change": "make the coded state reachable: error",
       "enterCondition": "not coded; no request is made",
-      "status": "open"
+      "status": "done",
+      "resolution": "W1 (web merge 650ba93), verified 16-17 Nov"
     },
     {
       "id": "UA-670",
@@ -8180,7 +8355,8 @@
       ],
       "change": "make the coded state reachable: error",
       "enterCondition": "not coded; no request is made",
-      "status": "open"
+      "status": "done",
+      "resolution": "W1 (web merge 650ba93), verified 16-17 Nov"
     },
     {
       "id": "UA-673",
@@ -8206,7 +8382,8 @@
       ],
       "change": "make the coded state reachable: empty",
       "enterCondition": "not coded for any list; arrays are non-empty constants",
-      "status": "open"
+      "status": "done",
+      "resolution": "W1 (web merge 650ba93), verified 16-17 Nov"
     },
     {
       "id": "UA-675",
@@ -8219,7 +8396,8 @@
       ],
       "change": "make the coded state reachable: error",
       "enterCondition": "not coded; no request is made",
-      "status": "open"
+      "status": "done",
+      "resolution": "W1 (web merge 650ba93), verified 16-17 Nov"
     },
     {
       "id": "UA-676",
@@ -8247,7 +8425,8 @@
       ],
       "change": "make the coded state reachable: empty",
       "enterCondition": "not coded for any list; arrays are non-empty constants",
-      "status": "open"
+      "status": "done",
+      "resolution": "W1 (web merge 650ba93), verified 16-17 Nov"
     },
     {
       "id": "UA-678",
@@ -8261,7 +8440,8 @@
       ],
       "change": "make the coded state reachable: error",
       "enterCondition": "not coded; no request is made",
-      "status": "open"
+      "status": "done",
+      "resolution": "W1 (web merge 650ba93), verified 16-17 Nov"
     },
     {
       "id": "UA-679",
@@ -8425,7 +8605,8 @@
       ],
       "change": "make the coded state reachable: empty",
       "enterCondition": "not coded for any list; arrays are non-empty constants",
-      "status": "open"
+      "status": "done",
+      "resolution": "W1 (web merge 650ba93), verified 16-17 Nov"
     },
     {
       "id": "UA-691",
@@ -8439,7 +8620,8 @@
       ],
       "change": "make the coded state reachable: error",
       "enterCondition": "not coded; no request is made",
-      "status": "open"
+      "status": "done",
+      "resolution": "W1 (web merge 650ba93), verified 16-17 Nov"
     },
     {
       "id": "UA-692",
@@ -8453,7 +8635,8 @@
       ],
       "change": "make the coded state reachable: not-found",
       "enterCondition": "notFound() when slug not in forYou",
-      "status": "open"
+      "status": "done",
+      "resolution": "W1 (web merge 650ba93), verified 16-17 Nov"
     },
     {
       "id": "UA-693",
@@ -8479,7 +8662,8 @@
       ],
       "change": "make the coded state reachable: empty",
       "enterCondition": "not coded for any list; arrays are non-empty constants",
-      "status": "open"
+      "status": "done",
+      "resolution": "W1 (web merge 650ba93), verified 16-17 Nov"
     },
     {
       "id": "UA-695",
@@ -8492,7 +8676,8 @@
       ],
       "change": "make the coded state reachable: error",
       "enterCondition": "not coded; no request is made",
-      "status": "open"
+      "status": "done",
+      "resolution": "W1 (web merge 650ba93), verified 16-17 Nov"
     },
     {
       "id": "UA-696",
@@ -8506,7 +8691,8 @@
       ],
       "change": "implement the designed loading state",
       "enterCondition": "a request for this surface is in flight (conventions Runtime contract)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W10 (web merge b8dfbeb), verified 16-17 Nov"
     },
     {
       "id": "UA-697",
@@ -8520,7 +8706,8 @@
       ],
       "change": "implement the designed empty state",
       "enterCondition": "the server returns no items",
-      "status": "open"
+      "status": "done",
+      "resolution": "W10 (web merge b8dfbeb), verified 16-17 Nov"
     },
     {
       "id": "UA-698",
@@ -8534,7 +8721,8 @@
       ],
       "change": "implement the designed loaded state",
       "enterCondition": "as designed: loaded",
-      "status": "open"
+      "status": "done",
+      "resolution": "W10 (web merge b8dfbeb), verified 16-17 Nov"
     },
     {
       "id": "UA-699",
@@ -8548,7 +8736,8 @@
       ],
       "change": "make the coded state reachable: loading (blank wait)",
       "enterCondition": "!st || !wish (Editor.tsx:366): getDraft promise unresolved, or wish not yet built",
-      "status": "open"
+      "status": "done",
+      "resolution": "W10 (web merge b8dfbeb), verified 16-17 Nov"
     },
     {
       "id": "UA-700",
@@ -8562,7 +8751,8 @@
       ],
       "change": "make the coded state reachable: AI busy",
       "enterCondition": "busy true while changeStyle pending",
-      "status": "open"
+      "status": "done",
+      "resolution": "W10 (web merge b8dfbeb), verified 16-17 Nov"
     },
     {
       "id": "UA-701",
@@ -8576,7 +8766,8 @@
       ],
       "change": "make the coded state reachable: no-credits",
       "enterCondition": "changeStyle reason 'no-credits' -> opens credits sheet",
-      "status": "open"
+      "status": "done",
+      "resolution": "W10 (web merge b8dfbeb), verified 16-17 Nov"
     },
     {
       "id": "UA-702",
@@ -8590,7 +8781,8 @@
       ],
       "change": "make the coded state reachable: credits count unknown",
       "enterCondition": "me undefined, shown as 0",
-      "status": "open"
+      "status": "done",
+      "resolution": "W10 (web merge b8dfbeb), verified 16-17 Nov"
     },
     {
       "id": "UA-703",
@@ -8604,7 +8796,8 @@
       ],
       "change": "make the coded state reachable: error with retry",
       "enterCondition": "not coded: getDraft failure is mapped to 'gone', getCreator/getPrefs failures are ignored silently (useLoad keeps undefined)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W10 (web merge b8dfbeb), verified 16-17 Nov"
     },
     {
       "id": "UA-704",
@@ -8618,7 +8811,8 @@
       ],
       "change": "implement the designed loading state",
       "enterCondition": "a request for this surface is in flight (conventions Runtime contract)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W10 (web merge b8dfbeb), verified 16-17 Nov"
     },
     {
       "id": "UA-705",
@@ -8632,7 +8826,8 @@
       ],
       "change": "make the coded state reachable: ai-draft-success",
       "enterCondition": "draftStyle ok",
-      "status": "open"
+      "status": "done",
+      "resolution": "W10 (web merge b8dfbeb), verified 16-17 Nov"
     },
     {
       "id": "UA-706",
@@ -8646,7 +8841,8 @@
       ],
       "change": "make the coded state reachable: live-styles",
       "enterCondition": "mine has status live",
-      "status": "open"
+      "status": "done",
+      "resolution": "W10 (web merge b8dfbeb), verified 16-17 Nov"
     },
     {
       "id": "UA-707",
@@ -8660,7 +8856,8 @@
       ],
       "change": "implement the designed loading state",
       "enterCondition": "a request for this surface is in flight (conventions Runtime contract)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W10 (web merge b8dfbeb), verified 16-17 Nov"
     },
     {
       "id": "UA-708",
@@ -8674,7 +8871,8 @@
       ],
       "change": "make the coded state reachable: ai-draft-success",
       "enterCondition": "draftStyle ok with r.data.base",
-      "status": "open"
+      "status": "done",
+      "resolution": "W10 (web merge b8dfbeb), verified 16-17 Nov"
     },
     {
       "id": "UA-709",
@@ -8786,7 +8984,8 @@
         "lib/account.ts:6"
       ],
       "change": "replace: the account, wishes and dates held by the server",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-718",
@@ -9544,7 +9743,8 @@
         "lib/account.ts:1-3,60-67"
       ],
       "change": "replace: the signed-in account (handle, bio, creator flag, wishes) from a server",
-      "status": "open"
+      "status": "done",
+      "resolution": "W10 (web merge b8dfbeb), verified 16-17 Nov"
     },
     {
       "id": "UA-783",
@@ -9555,7 +9755,8 @@
         "components/app/feed/spaces.ts:86,94"
       ],
       "change": "replace: server-side handle uniqueness and reserved-word check",
-      "status": "open"
+      "status": "done",
+      "resolution": "W10 (web merge b8dfbeb), verified 16-17 Nov"
     },
     {
       "id": "UA-784",
@@ -9566,7 +9767,8 @@
         "components/app/feed/spaces.ts:85,97"
       ],
       "change": "replace: handle rule",
-      "status": "open"
+      "status": "done",
+      "resolution": "W10 (web merge b8dfbeb), verified 16-17 Nov"
     },
     {
       "id": "UA-785",
@@ -9577,7 +9779,8 @@
         "app/app/creator/page.tsx:12-14"
       ],
       "change": "replace: loading and not-a-creator states",
-      "status": "open"
+      "status": "done",
+      "resolution": "W10 (web merge b8dfbeb), verified 16-17 Nov"
     },
     {
       "id": "UA-786",
@@ -9588,7 +9791,8 @@
         "app/app/creator/published/page.tsx:14"
       ],
       "change": "replace: loading and not-a-creator states",
-      "status": "open"
+      "status": "done",
+      "resolution": "W10 (web merge b8dfbeb), verified 16-17 Nov"
     },
     {
       "id": "UA-787",
@@ -9599,7 +9803,8 @@
         "lib/maker.ts:40-46 saveWish and Maker.tsx:79-118"
       ],
       "change": "replace: a server-held draft Wish saved on every step",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-788",
@@ -9610,7 +9815,8 @@
         "lib/maker.ts:28-32 MakerNote in localStorage 'fw-maker'"
       ],
       "change": "replace: server-held draft state (given/chosen flags, wedding day, opens-now, voice seconds)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-789",
@@ -9621,7 +9827,8 @@
         "lib/account.ts:140 and lib/maker.ts uid()"
       ],
       "change": "replace: server-issued id (UUIDv7) and wish number issued in order",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-790",
@@ -9643,7 +9850,8 @@
         "components/app/maker/Voice.tsx and lib/maker.ts:34-37"
       ],
       "change": "replace: voice upload to storage and a server-side transcript/AI letter (conventions: AI writing port)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-792",
@@ -9654,7 +9862,8 @@
         "lib/maker.ts:332-343 answered()"
       ],
       "change": "replace: server validation of required answers",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-793",
@@ -9665,7 +9874,8 @@
         "lib/maker.ts:40-46"
       ],
       "change": "replace: PATCH of the draft wish",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-794",
@@ -9676,7 +9886,8 @@
         "lib/maker.ts:28-32"
       ],
       "change": "replace: per-draft metadata (given/chosen flags, wedding date, now, voice seconds) that the Wish type has no field for",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-795",
@@ -9687,7 +9898,8 @@
         "lib/account.ts:81-82"
       ],
       "change": "replace: a data cache / session",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-796",
@@ -9698,7 +9910,8 @@
         "lib/account.ts:75 (uid)"
       ],
       "change": "replace: server-issued wish id (conventions: UUIDv7)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-797",
@@ -9720,7 +9933,8 @@
         "lib/maker.ts:15-46"
       ],
       "change": "replace: server draft persistence (create/update draft wish)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-799",
@@ -9731,7 +9945,8 @@
         "lib/maker.ts:28-32"
       ],
       "change": "replace: server storage of wedding day / opens-now / voice seconds",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-800",
@@ -9764,7 +9979,8 @@
         "components/app/maker/Maker.tsx:217"
       ],
       "change": "replace: waiting for the write to settle",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-803",
@@ -9775,7 +9991,8 @@
         "lib/catalog.ts (kinds)"
       ],
       "change": "replace: the kind/occasion catalog",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-804",
@@ -9797,7 +10014,8 @@
         "components/app/maker/Maker.tsx:219"
       ],
       "change": "replace: waiting for the write",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-806",
@@ -9808,7 +10026,8 @@
         "lib/maker.ts:90-93"
       ],
       "change": "replace: occasion identity",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-807",
@@ -9819,7 +10038,8 @@
         "lib/maker.ts:201 and Ways.tsx:248"
       ],
       "change": "replace: server-held style and moment catalogue and prices",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-808",
@@ -9852,7 +10072,8 @@
         "lib/maker.ts:391-407 shrink + Photos.tsx:21"
       ],
       "change": "replace: direct upload to private storage with a signed URL then confirm (conventions: Files)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-811",
@@ -9984,7 +10205,8 @@
         "lib/maker.ts:24"
       ],
       "change": "replace: a wedding date on the wish",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-823",
@@ -9995,7 +10217,8 @@
         "components/app/maker/Maker.tsx:243"
       ],
       "change": "replace: a structured date",
-      "status": "open"
+      "status": "done",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-824",
@@ -10606,7 +10829,8 @@
         "app/business/page.tsx:48-50"
       ],
       "change": "replace: price / promotion read from configuration tables (conventions: prices never hardcoded)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W1 (web merge 650ba93), verified 16-17 Nov"
     },
     {
       "id": "UA-877",
@@ -10617,7 +10841,8 @@
         "components/site/ProPlans.tsx:14"
       ],
       "change": "replace: price / promotion read from configuration tables (conventions: prices never hardcoded)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W1 (web merge 650ba93), verified 16-17 Nov"
     },
     {
       "id": "UA-878",
@@ -10650,7 +10875,8 @@
         "app/creators/page.tsx:66-70"
       ],
       "change": "replace: the royalty rate and the example amounts, which come from the creator payout rule",
-      "status": "open"
+      "status": "done",
+      "resolution": "W1 (web merge 650ba93), verified 16-17 Nov"
     },
     {
       "id": "UA-881",
@@ -10661,7 +10887,8 @@
         "app/creators/page.tsx:84-90"
       ],
       "change": "replace: creator plan prices and allowances (configuration tables)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W1 (web merge 650ba93), verified 16-17 Nov"
     },
     {
       "id": "UA-882",
@@ -10672,7 +10899,8 @@
         "app/creators/page.tsx:91"
       ],
       "change": "replace: add-on prices",
-      "status": "open"
+      "status": "done",
+      "resolution": "W1 (web merge 650ba93), verified 16-17 Nov"
     },
     {
       "id": "UA-883",
@@ -10705,7 +10933,8 @@
         "components/cinema/Pricing.tsx:12-39"
       ],
       "change": "replace: price / promotion read from configuration tables (conventions: prices never hardcoded)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W1 (web merge 650ba93), verified 16-17 Nov"
     },
     {
       "id": "UA-886",
@@ -10716,7 +10945,8 @@
         "components/cinema/Proof.tsx:20-26"
       ],
       "change": "replace: real testimonials / user-submitted reviews",
-      "status": "open"
+      "status": "done",
+      "resolution": "W1 (web merge 650ba93), verified 16-17 Nov"
     },
     {
       "id": "UA-887",
@@ -10727,7 +10957,8 @@
         "components/cinema/Proof.tsx:25-26"
       ],
       "change": "replace: product claims",
-      "status": "open"
+      "status": "done",
+      "resolution": "W1 (web merge 650ba93), verified 16-17 Nov"
     },
     {
       "id": "UA-888",
@@ -10738,7 +10969,8 @@
         "app/how/page.tsx:36"
       ],
       "change": "replace: the live style count (allStyles().length, used on home)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W1 (web merge 650ba93), verified 16-17 Nov"
     },
     {
       "id": "UA-889",
@@ -10749,7 +10981,8 @@
         "app/make/page.tsx:32"
       ],
       "change": "replace: price / promotion read from configuration tables (conventions: prices never hardcoded)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W1 (web merge 650ba93), verified 16-17 Nov"
     },
     {
       "id": "UA-890",
@@ -10771,7 +11004,8 @@
         "app/pricing/page.tsx:14,21,91,100,101"
       ],
       "change": "replace: price / promotion read from configuration tables (conventions: prices never hardcoded)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W1 (web merge 650ba93), verified 16-17 Nov"
     },
     {
       "id": "UA-892",
@@ -10782,7 +11016,8 @@
         "app/pricing/page.tsx:81-102"
       ],
       "change": "replace: rules enforced by the server",
-      "status": "open"
+      "status": "done",
+      "resolution": "W1 (web merge 650ba93), verified 16-17 Nov"
     },
     {
       "id": "UA-893",
@@ -10980,7 +11215,8 @@
         "lib/studio-api.ts:142"
       ],
       "change": "replace: AI full style draft (Anthropic) costing COST.draft credits",
-      "status": "open"
+      "status": "done",
+      "resolution": "W10 (web merge b8dfbeb), verified 16-17 Nov"
     },
     {
       "id": "UA-911",
@@ -10991,7 +11227,8 @@
         "lib/studio-api.ts:145"
       ],
       "change": "replace: AI change of the style / selected element",
-      "status": "open"
+      "status": "done",
+      "resolution": "W10 (web merge b8dfbeb), verified 16-17 Nov"
     },
     {
       "id": "UA-912",
@@ -11002,7 +11239,8 @@
         "lib/studio-api.ts:173-183"
       ],
       "change": "replace: submission to Firstwish review queue, reviewer decision (accepted/returned/notes), level assignment, going live",
-      "status": "open"
+      "status": "done",
+      "resolution": "W10 (web merge b8dfbeb), verified 16-17 Nov"
     },
     {
       "id": "UA-913",
@@ -11035,7 +11273,8 @@
         "lib/studio-api.ts:117-133"
       ],
       "change": "replace: Paystack charge and the ledger; recurring plan billing (Creator 7500 a month, Signed 5000 a month)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W10 (web merge b8dfbeb), verified 16-17 Nov"
     },
     {
       "id": "UA-916",
@@ -11046,7 +11285,8 @@
         "lib/studio-api.ts:107-108, app/app/creator/studio/[id]/page.tsx:13"
       ],
       "change": "replace: real data; a demo switch",
-      "status": "open"
+      "status": "done",
+      "resolution": "W10 (web merge b8dfbeb), verified 16-17 Nov"
     },
     {
       "id": "UA-917",
@@ -11057,7 +11297,8 @@
         "lib/studio-api.ts:160-165"
       ],
       "change": "replace: object storage upload with a signed URL",
-      "status": "open"
+      "status": "done",
+      "resolution": "W10 (web merge b8dfbeb), verified 16-17 Nov"
     },
     {
       "id": "UA-918",
@@ -11068,7 +11309,8 @@
         "lib/studio.ts:480"
       ],
       "change": "replace: server-issued UUIDv7 ids",
-      "status": "open"
+      "status": "done",
+      "resolution": "W10 (web merge b8dfbeb), verified 16-17 Nov"
     },
     {
       "id": "UA-919",
@@ -11079,7 +11321,8 @@
         "lib/studio.ts:15-34"
       ],
       "change": "replace: configuration tables (prices, allowances, revenue shares)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W10 (web merge b8dfbeb), verified 16-17 Nov"
     },
     {
       "id": "UA-920",
@@ -11090,7 +11333,8 @@
         "components/app/studio/Editor.tsx:80"
       ],
       "change": "replace: an autosave request per edit",
-      "status": "open"
+      "status": "done",
+      "resolution": "W10 (web merge b8dfbeb), verified 16-17 Nov"
     },
     {
       "id": "UA-921",
@@ -11101,7 +11345,8 @@
         "lib/studio-api.ts:212,217,220"
       ],
       "change": "replace: other creators' templates, earnings and payouts",
-      "status": "open"
+      "status": "done",
+      "resolution": "W10 (web merge b8dfbeb), verified 16-17 Nov"
     },
     {
       "id": "UA-922",
@@ -11123,7 +11368,8 @@
         "lib/studio-api.ts:1-9,64-84"
       ],
       "change": "replace: all studio server state: creator plan/credits/reviews, drafts, sent styles, prefs",
-      "status": "open"
+      "status": "done",
+      "resolution": "W10 (web merge b8dfbeb), verified 16-17 Nov"
     },
     {
       "id": "UA-924",
@@ -11134,7 +11380,8 @@
         "lib/studio-api.ts:142"
       ],
       "change": "replace: AI style drafting (POST /studio/ai/draft in the comment), charged COST.draft credits",
-      "status": "open"
+      "status": "done",
+      "resolution": "W10 (web merge b8dfbeb), verified 16-17 Nov"
     },
     {
       "id": "UA-925",
@@ -11145,7 +11392,8 @@
         "lib/studio-api.ts:145"
       ],
       "change": "replace: AI change to a style",
-      "status": "open"
+      "status": "done",
+      "resolution": "W10 (web merge b8dfbeb), verified 16-17 Nov"
     },
     {
       "id": "UA-926",
@@ -11156,7 +11404,8 @@
         "components/app/studio/ctx.tsx:115"
       ],
       "change": "replace: the offline AI message",
-      "status": "open"
+      "status": "done",
+      "resolution": "W10 (web merge b8dfbeb), verified 16-17 Nov"
     },
     {
       "id": "UA-927",
@@ -11167,7 +11416,8 @@
         "lib/studio-api.ts:121-126,194-195,214-215"
       ],
       "change": "replace: Paystack charge and verification, ledger, payouts",
-      "status": "open"
+      "status": "done",
+      "resolution": "W10 (web merge b8dfbeb), verified 16-17 Nov"
     },
     {
       "id": "UA-928",
@@ -11178,7 +11428,8 @@
         "lib/studio-fixtures.ts:1-3,10"
       ],
       "change": "replace: live styles, earnings and templates from other creators",
-      "status": "open"
+      "status": "done",
+      "resolution": "W10 (web merge b8dfbeb), verified 16-17 Nov"
     },
     {
       "id": "UA-929",
@@ -11189,7 +11440,8 @@
         "lib/studio-api.ts:181-184,200-203"
       ],
       "change": "replace: other creators' templates; per-month earnings",
-      "status": "open"
+      "status": "done",
+      "resolution": "W10 (web merge b8dfbeb), verified 16-17 Nov"
     },
     {
       "id": "UA-930",
@@ -11200,7 +11452,8 @@
         "lib/studio-api.ts:166-167"
       ],
       "change": "replace: review decision (accepted/returned, level Standard/Premium set by Firstwish)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W10 (web merge b8dfbeb), verified 16-17 Nov"
     },
     {
       "id": "UA-931",
@@ -11211,7 +11464,8 @@
         "components/app/studio/Home.tsx:111-113"
       ],
       "change": "replace: price, creator share, royalty and promo end read from configuration",
-      "status": "open"
+      "status": "done",
+      "resolution": "W10 (web merge b8dfbeb), verified 16-17 Nov"
     },
     {
       "id": "UA-932",
@@ -11222,7 +11476,8 @@
         "app/app/creator/studio/page.tsx:12 and new/page.tsx:12"
       ],
       "change": "replace: loading/not-creator handling; sets module-level state in studio-api",
-      "status": "open"
+      "status": "done",
+      "resolution": "W10 (web merge b8dfbeb), verified 16-17 Nov"
     },
     {
       "id": "UA-933",
@@ -11233,7 +11488,8 @@
         "components/app/studio/Start.tsx:35,49"
       ],
       "change": "replace: which base an opening or ending piece is started on",
-      "status": "open"
+      "status": "done",
+      "resolution": "W10 (web merge b8dfbeb), verified 16-17 Nov"
     },
     {
       "id": "UA-934",
@@ -11434,8 +11690,9 @@
         "lib/wish-model.ts"
       ],
       "change": "the server populates what this screen reads (the draft Wish inside 'fw-account' (saveWish/readAccount in lib/maker.ts) plus the maker note in localStorage 'fw-maker'); triggers: on page load, after sign-in, when the tab becomes visible again, and after any write. A manual button is not a trigger.",
-      "status": "open",
-      "provenance": "repository-local-store"
+      "status": "done",
+      "provenance": "repository-local-store",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-949",
@@ -11451,8 +11708,9 @@
         "lib/catalog.ts"
       ],
       "change": "the server populates what this screen reads (the draft Wish inside 'fw-account' (saveWish/readAccount in lib/maker.ts) plus the maker note in localStorage 'fw-maker'); triggers: on page load, after sign-in, when the tab becomes visible again, and after any write. A manual button is not a trigger.",
-      "status": "open",
-      "provenance": "mixed"
+      "status": "done",
+      "provenance": "mixed",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-950",
@@ -11467,8 +11725,9 @@
         "lib/wish-model.ts"
       ],
       "change": "the server populates what this screen reads (the draft Wish inside 'fw-account' (saveWish/readAccount in lib/maker.ts) plus the maker note in localStorage 'fw-maker'); triggers: on page load, after sign-in, when the tab becomes visible again, and after any write. A manual button is not a trigger.",
-      "status": "open",
-      "provenance": "mixed"
+      "status": "done",
+      "provenance": "mixed",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-951",
@@ -11483,8 +11742,9 @@
         "lib/wish-model.ts"
       ],
       "change": "the server populates what this screen reads (the draft Wish inside 'fw-account' (saveWish/readAccount in lib/maker.ts) plus the maker note in localStorage 'fw-maker'); triggers: on page load, after sign-in, when the tab becomes visible again, and after any write. A manual button is not a trigger.",
-      "status": "open",
-      "provenance": "repository-local-store"
+      "status": "done",
+      "provenance": "repository-local-store",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-952",
@@ -11499,8 +11759,9 @@
         "lib/wish-model.ts"
       ],
       "change": "the server populates what this screen reads (the draft Wish inside 'fw-account' (saveWish/readAccount in lib/maker.ts) plus the maker note in localStorage 'fw-maker'); triggers: on page load, after sign-in, when the tab becomes visible again, and after any write. A manual button is not a trigger.",
-      "status": "open",
-      "provenance": "repository-local-store"
+      "status": "done",
+      "provenance": "repository-local-store",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-953",
@@ -11515,8 +11776,9 @@
         "lib/wish-model.ts"
       ],
       "change": "the server populates what this screen reads (the draft Wish inside 'fw-account' (saveWish/readAccount in lib/maker.ts) plus the maker note in localStorage 'fw-maker'); triggers: on page load, after sign-in, when the tab becomes visible again, and after any write. A manual button is not a trigger.",
-      "status": "open",
-      "provenance": "repository-local-store"
+      "status": "done",
+      "provenance": "repository-local-store",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-954",
@@ -11531,8 +11793,9 @@
         "lib/wish-model.ts"
       ],
       "change": "the server populates what this screen reads (the draft Wish inside 'fw-account' (saveWish/readAccount in lib/maker.ts) plus the maker note in localStorage 'fw-maker'); triggers: on page load, after sign-in, when the tab becomes visible again, and after any write. A manual button is not a trigger.",
-      "status": "open",
-      "provenance": "repository-local-store"
+      "status": "done",
+      "provenance": "repository-local-store",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-955",
@@ -11547,8 +11810,9 @@
         "lib/wish-model.ts"
       ],
       "change": "the server populates what this screen reads (the draft Wish inside 'fw-account' (saveWish/readAccount in lib/maker.ts) plus the maker note in localStorage 'fw-maker'); triggers: on page load, after sign-in, when the tab becomes visible again, and after any write. A manual button is not a trigger.",
-      "status": "open",
-      "provenance": "repository-local-store"
+      "status": "done",
+      "provenance": "repository-local-store",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-956",
@@ -11563,8 +11827,9 @@
         "lib/wish-model.ts"
       ],
       "change": "the server populates what this screen reads (the draft Wish inside 'fw-account' (saveWish/readAccount in lib/maker.ts) plus the maker note in localStorage 'fw-maker'); triggers: on page load, after sign-in, when the tab becomes visible again, and after any write. A manual button is not a trigger.",
-      "status": "open",
-      "provenance": "repository-local-store"
+      "status": "done",
+      "provenance": "repository-local-store",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-957",
@@ -11579,8 +11844,9 @@
         "lib/wish-model.ts"
       ],
       "change": "the server populates what this screen reads (the draft Wish inside 'fw-account' (saveWish/readAccount in lib/maker.ts) plus the maker note in localStorage 'fw-maker'); triggers: on page load, after sign-in, when the tab becomes visible again, and after any write. A manual button is not a trigger.",
-      "status": "open",
-      "provenance": "repository-local-store"
+      "status": "done",
+      "provenance": "repository-local-store",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-958",
@@ -11595,8 +11861,9 @@
         "lib/wish-model.ts"
       ],
       "change": "the server populates what this screen reads (the draft Wish inside 'fw-account' (saveWish/readAccount in lib/maker.ts) plus the maker note in localStorage 'fw-maker'); triggers: on page load, after sign-in, when the tab becomes visible again, and after any write. A manual button is not a trigger.",
-      "status": "open",
-      "provenance": "mixed"
+      "status": "done",
+      "provenance": "mixed",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-959",
@@ -11612,8 +11879,9 @@
         "lib/engine/adapt.ts"
       ],
       "change": "the server populates what this screen reads (the draft Wish inside 'fw-account' (saveWish/readAccount in lib/maker.ts) plus the maker note in localStorage 'fw-maker'); triggers: on page load, after sign-in, when the tab becomes visible again, and after any write. A manual button is not a trigger.",
-      "status": "open",
-      "provenance": "mixed"
+      "status": "done",
+      "provenance": "mixed",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-960",
@@ -11628,8 +11896,9 @@
         "lib/wish-model.ts"
       ],
       "change": "the server populates what this screen reads (the draft Wish inside 'fw-account' (saveWish/readAccount in lib/maker.ts) plus the maker note in localStorage 'fw-maker'); triggers: on page load, after sign-in, when the tab becomes visible again, and after any write. A manual button is not a trigger.",
-      "status": "open",
-      "provenance": "repository-local-store"
+      "status": "done",
+      "provenance": "repository-local-store",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-961",
@@ -11645,8 +11914,9 @@
         "lib/engine/registry.ts"
       ],
       "change": "the server populates what this screen reads (the draft Wish inside 'fw-account' (saveWish/readAccount in lib/maker.ts) plus the maker note in localStorage 'fw-maker'); triggers: on page load, after sign-in, when the tab becomes visible again, and after any write. A manual button is not a trigger.",
-      "status": "open",
-      "provenance": "mixed"
+      "status": "done",
+      "provenance": "mixed",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-962",
@@ -11662,8 +11932,9 @@
         "lib/engine/moments.ts"
       ],
       "change": "the server populates what this screen reads (the draft Wish inside 'fw-account' (saveWish/readAccount in lib/maker.ts) plus the maker note in localStorage 'fw-maker'); triggers: on page load, after sign-in, when the tab becomes visible again, and after any write. A manual button is not a trigger.",
-      "status": "open",
-      "provenance": "mixed"
+      "status": "done",
+      "provenance": "mixed",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-963",
@@ -11679,8 +11950,9 @@
         "lib/engine/registry.ts"
       ],
       "change": "the server populates what this screen reads (the draft Wish inside 'fw-account' (saveWish/readAccount in lib/maker.ts) plus the maker note in localStorage 'fw-maker'); triggers: on page load, after sign-in, when the tab becomes visible again, and after any write. A manual button is not a trigger.",
-      "status": "open",
-      "provenance": "mixed"
+      "status": "done",
+      "provenance": "mixed",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-964",
@@ -11696,8 +11968,9 @@
         "lib/engine/moments.ts"
       ],
       "change": "the server populates what this screen reads (the draft Wish inside 'fw-account' (saveWish/readAccount in lib/maker.ts) plus the maker note in localStorage 'fw-maker'); triggers: on page load, after sign-in, when the tab becomes visible again, and after any write. A manual button is not a trigger.",
-      "status": "open",
-      "provenance": "mixed"
+      "status": "done",
+      "provenance": "mixed",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-965",
@@ -11715,8 +11988,9 @@
         "lib/pro-data.ts"
       ],
       "change": "the server populates what this screen reads (the draft Wish inside 'fw-account' (saveWish/readAccount in lib/maker.ts) plus the maker note in localStorage 'fw-maker'); triggers: on page load, after sign-in, when the tab becomes visible again, and after any write. A manual button is not a trigger.",
-      "status": "open",
-      "provenance": "mixed"
+      "status": "done",
+      "provenance": "mixed",
+      "resolution": "W4+W5 (web merge 44dfba5), verified 16-17 Nov"
     },
     {
       "id": "UA-966",
@@ -11957,8 +12231,9 @@
         "lib/styles.ts"
       ],
       "change": "the server populates what this screen reads (Account.handle/bio/wishes(isPublic) in 'fw-account'); triggers: on page load, after sign-in, when the tab becomes visible again, and after any write. A manual button is not a trigger.",
-      "status": "open",
-      "provenance": "repository-local-store"
+      "status": "done",
+      "provenance": "repository-local-store",
+      "resolution": "W10 (web merge b8dfbeb), verified 16-17 Nov"
     },
     {
       "id": "UA-982",
@@ -11971,8 +12246,9 @@
         "lib/styles.ts"
       ],
       "change": "the server populates what this screen reads (Account.wishes filtered isPublic in 'fw-account'); triggers: on page load, after sign-in, when the tab becomes visible again, and after any write. A manual button is not a trigger.",
-      "status": "open",
-      "provenance": "repository-local-store"
+      "status": "done",
+      "provenance": "repository-local-store",
+      "resolution": "W10 (web merge b8dfbeb), verified 16-17 Nov"
     },
     {
       "id": "UA-983",
@@ -11986,8 +12262,9 @@
         "lib/account.ts"
       ],
       "change": "the server populates what this screen reads (lib/studio-api.ts: localStorage 'fw-studio' (Store v3: month, me{plan, signed, credits, reviewsLeft, extraReviews, renew); triggers: on page load, after sign-in, when the tab becomes visible again, and after any write. A manual button is not a trigger.",
-      "status": "open",
-      "provenance": "repository-local-store"
+      "status": "done",
+      "provenance": "repository-local-store",
+      "resolution": "W10 (web merge b8dfbeb), verified 16-17 Nov"
     },
     {
       "id": "UA-984",
@@ -12001,8 +12278,9 @@
         "lib/engine/moments.ts"
       ],
       "change": "the server populates what this screen reads (lib/studio-api.ts: localStorage 'fw-studio' (Store v3: month, me{plan, signed, credits, reviewsLeft, extraReviews, renew); triggers: on page load, after sign-in, when the tab becomes visible again, and after any write. A manual button is not a trigger.",
-      "status": "open",
-      "provenance": "mixed"
+      "status": "done",
+      "provenance": "mixed",
+      "resolution": "W10 (web merge b8dfbeb), verified 16-17 Nov"
     },
     {
       "id": "UA-985",
@@ -12017,8 +12295,9 @@
         "lib/engine/packages.ts"
       ],
       "change": "the server populates what this screen reads (lib/studio-api.ts: localStorage 'fw-studio' (Store v3: month, me{plan, signed, credits, reviewsLeft, extraReviews, renew); triggers: on page load, after sign-in, when the tab becomes visible again, and after any write. A manual button is not a trigger.",
-      "status": "open",
-      "provenance": "mixed"
+      "status": "done",
+      "provenance": "mixed",
+      "resolution": "W10 (web merge b8dfbeb), verified 16-17 Nov"
     },
     {
       "id": "UA-986",

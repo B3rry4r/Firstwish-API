@@ -103,6 +103,7 @@ describe("IC4: a wish being made for an order is hidden from the buyer on every 
     const order = await paidOrder(buyer, m.id);
     const hidden = (await http().post(`/v1/admin/concierge/orders/${order}/wishes`).set("Authorization", m.auth).send({ reason: "making it", kind: "birthday", occasion: "birthday", name: "Ada Obi" })).body.id as string;
     expect(hidden).toBeTruthy();
+    const ids_ = (r: { body: { items: { id: string }[] } }): string[] => r.body.items.map((w) => w.id);
     const start = (key?: string) => {
       const r = http().post("/v1/wishes").set("Authorization", buyer.auth);
       return (key ? r.set("Idempotency-Key", key) : r).send({ from: "Ada", name: "Ada Obi", studio: "" });
@@ -117,11 +118,14 @@ describe("IC4: a wish being made for an order is hidden from the buyer on every 
     expect(keyed.status).toBe(200); // the buyer's own untouched start, found instead of the hidden wish
     expect(keyed.body.id).toBe(bare.body.id);
     expect((await start(key)).body.id).toBe(keyed.body.id);
-    expect((await http().get("/v1/wishes").set("Authorization", buyer.auth)).body.items.map((w: { id: string }) => w.id)).not.toContain(hidden);
-    // after delivery the delivered wish is one of theirs: a bare start now answers a bare draft of theirs, and the key no longer replays the hidden-era binding
+    expect(ids_(await http().get("/v1/wishes").set("Authorization", buyer.auth))).not.toContain(hidden);
+    // the maker seals it and delivers: the delivered wish is one of theirs like any
+    const v = (await http().get(`/v1/wishes/${hidden}`).set("Authorization", m.auth)).body;
+    const sv = await http().patch(`/v1/wishes/${hidden}`).set("Authorization", m.auth).send({ version: v.version, content: { letter: { paras: ["Happy birthday."] } }, style: "golden" });
+    expect((await http().post(`/v1/wishes/${hidden}/seal`).set("Authorization", m.auth).send({ version: sv.body.version, openNow: true })).status).toBe(200);
     expect((await http().post(`/v1/admin/concierge-orders/${order}/delivery`).set("Authorization", m.auth).send({ reason: "done", wishIds: [] })).status).toBe(200);
     expect((await http().get(`/v1/wishes/${hidden}`).set("Authorization", buyer.auth)).status).toBe(200);
-    const list = (await http().get("/v1/wishes").set("Authorization", buyer.auth)).body.items.map((w: { id: string }) => w.id);
+    const list = ids_(await http().get("/v1/wishes").set("Authorization", buyer.auth));
     expect(list).toContain(hidden);
   });
 });

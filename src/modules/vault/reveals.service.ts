@@ -223,11 +223,13 @@ export class RevealsService {
 
   /**
    * E-33. `:id` is the client wish (made by E-30, which counted it); the reveal from `shoot`'s `set` goes on it. With an Idempotency-Key
-   * the same key again answers the first result and sends nothing; without one, or with a new key, it sends again on purpose.
+   * the same key again answers the first result and sends nothing. A shoot's set that already went to that client answers 409 already_sent
+   * (IC3) unless the body says `again`, which sends it once more on this wish.
    */
-  async send(businessId: string, wishId: string, body: { reveal: Record<string, unknown>; set: unknown; shoot: unknown; files?: unknown }, idemKey: string | undefined): Promise<PostBusinessClientWishesByIdSendRevealResponse> {
+  async send(businessId: string, wishId: string, body: { reveal: Record<string, unknown>; set: unknown; shoot: unknown; files?: unknown; again?: unknown }, idemKey: string | undefined): Promise<PostBusinessClientWishesByIdSendRevealResponse> {
     if (!UUID.test(wishId)) throw AppError.notFound();
     const call = this.readCall(body, idemKey);
+    if (body.again !== undefined && typeof body.again !== "boolean") throw AppError.validation({ again: "Must be true or false." });
     const done = await this.db.$transaction(async (tx) => {
       await lockBusinessOwner(tx, businessId);
       if (call.key) {
@@ -238,6 +240,10 @@ export class RevealsService {
           return { again: true as const, wishId };
         }
       }
+      // IC3: for one shoot and one client there is one reveal: this older call answers "already sent" like the one-call send does; asking again is the one call's `again`
+      const asked = await tx.clientWish.findFirst({ where: { id: wishId, businessId }, select: { client: true } });
+      const prior = asked?.client && body.again !== true ? await this.priorReveal(tx, businessId, call.shootId, call.set, asked.client) : null;
+      if (prior) throw this.alreadySent(prior, call.set, asked?.client ?? "");
       const out = await this.sendIn(tx, businessId, wishId, call);
       return { again: false as const, wishId, deliveryId: out.deliveryId };
     });
@@ -272,6 +278,21 @@ export class RevealsService {
     if (!w || (w.shoot ?? "").toLowerCase() !== shootId || (name && (w.client ?? "").trim().toLowerCase() !== name)) {
       throw AppError.conflict("idempotency_key_reused", "This Idempotency-Key was used for another shoot or client.");
     }
+  }
+
+  /** The newest reveal already sent on a shoot's set to a client of that name (compared without case or extra spaces), or null. */
+  private async priorReveal(tx: Tx, businessId: string, shootId: string, set: SetName, client: string): Promise<{ id: string; sentAt: Date; code: string } | null> {
+    const name = client.trim().replace(/\s+/g, " ");
+    if (!name) return null;
+    const rows = await tx.$queryRaw<{ id: string; sentAt: Date; code: string }[]>`
+      SELECT c.id::text AS id, c."sentAt", a.code FROM client_wish c JOIN reveal_access a ON a."wishId" = c.id
+       WHERE c."businessId" = ${businessId}::uuid AND c.shoot = ${shootId} AND c."set"::text = ${set} AND lower(regexp_replace(btrim(c.client), '\s+', ' ', 'g')) = lower(${name})
+       ORDER BY c."sentAt" DESC, c.id DESC LIMIT 1`;
+    return rows[0] ?? null;
+  }
+
+  private alreadySent(prior: { sentAt: Date; code: string }, set: SetName, client: string): AppError {
+    return new AppError(409, "already_sent", `This shoot's ${set} were already sent to ${client} on ${toWireInstant(prior.sentAt).slice(0, 10)}. Send again to send them once more.`, { sentAt: toWireInstant(prior.sentAt), link: this.linkOf(prior.code) });
   }
 
   /** The email goes out after the commit; a failure here is carried out by the send-message job at its next run. */
@@ -367,18 +388,11 @@ export class RevealsService {
       if (!shoot) throw AppError.notFound();
       const raw = call.reveal;
       const clientName = (typeof raw.client === "string" ? raw.client : typeof body.client === "string" ? body.client : "").trim().replace(/\s+/g, " ");
-      const prior = clientName
-        ? await tx.$queryRaw<{ id: string; sentAt: Date; code: string }[]>`
-            SELECT c.id::text AS id, c."sentAt", a.code FROM client_wish c JOIN reveal_access a ON a."wishId" = c.id
-             WHERE c."businessId" = ${businessId}::uuid AND c.shoot = ${call.shootId} AND c."set"::text = ${call.set} AND lower(c.client) = lower(${clientName})
-             ORDER BY c."sentAt" DESC, c.id DESC LIMIT 1`
-        : [];
+      const prior = clientName ? await this.priorReveal(tx, businessId, call.shootId, call.set, clientName) : null;
       let wishId: string;
-      if (prior[0]) {
-        if (!again) {
-          throw new AppError(409, "already_sent", `This shoot's ${call.set} were already sent to ${clientName} on ${toWireInstant(prior[0].sentAt).slice(0, 10)}. Send again to send them once more.`, { sentAt: toWireInstant(prior[0].sentAt), link: this.linkOf(prior[0].code) });
-        }
-        wishId = prior[0].id;
+      if (prior) {
+        if (!again) throw this.alreadySent(prior, call.set, clientName);
+        wishId = prior.id;
       } else {
         const day = typeof body.day === "string" ? body.day : typeof raw.date === "string" && raw.date ? raw.date : this.clock.now().toISOString().slice(0, 10);
         const made = await this.wishes.makeFor(tx, caller.accountId, businessId, {

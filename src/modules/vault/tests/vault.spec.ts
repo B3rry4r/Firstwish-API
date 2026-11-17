@@ -363,14 +363,16 @@ describe("B18 Vault: shoots, space, reveal links, plays, E-33", () => {
     const w2 = await clientWish(o);
     expect((await post(`/v1/business/client-wishes/${w2}/send-reveal`, o.token, body, { "idempotency-key": `k-${run}-1` })).status).toBe(409);
     // on purpose: a new key, or none, sends again; the link stays the same
-    expect((await post(url, o.token, body, { "idempotency-key": `k-${run}-2` })).status).toBe(200);
-    expect((await post(url, o.token, body)).status).toBe(200);
+    // IC3: the shoot already went to this client, so sending it once more is asked for with `again`
+    expect((await post(url, o.token, body)).status).toBe(409);
+    expect((await post(url, o.token, { ...body, again: true }, { "idempotency-key": `k-${run}-2` })).status).toBe(200);
+    expect((await post(url, o.token, { ...body, again: true })).status).toBe(200);
     await jobs.runDue(50, await mine());
     expect(sentTo()).toHaveLength(3);
     expect(await db.$queryRaw`SELECT 1 FROM reveal_access WHERE "wishId" = ${wish}::uuid`).toHaveLength(1);
     // no email in the reveal: no email sent
     const w3 = await clientWish(o);
-    expect((await post(`/v1/business/client-wishes/${w3}/send-reveal`, o.token, { ...body, reveal: { ...reveal, email: undefined } })).status).toBe(200);
+    expect((await post(`/v1/business/client-wishes/${w3}/send-reveal`, o.token, { ...body, again: true, reveal: { ...reveal, email: undefined } })).status).toBe(200);
     expect(await db.messageDelivery.count({ where: { templateKey: "reveal", idempotencyKey: { startsWith: `reveal:${w3}:` } } })).toBe(0);
   });
 

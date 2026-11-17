@@ -24,7 +24,7 @@ describe("API-BASE-9 cases 7 and 8 (IB4 a reveal of named files, IB5 plays set o
     const dup = await one(o, s.shoot, { reveal: k.revealBody({ client: "Dayo" }), files: [s.files[0], s.files[0]] });
     expect((await photos(dup.body.link)).photos).toHaveLength(1);
     // the older call takes the list too, and a reveal sent again can change it
-    const wish = await k.clientWish(o);
+    const wish = await k.clientWish(o, "Gbenga Ade");
     const older = await k.post(`/v1/business/client-wishes/${wish}/send-reveal`, o.token, { shoot: s.shoot, set: "proofs", reveal: k.revealBody(), files: [s.files[2]] });
     expect(older.status).toBe(200);
     const link = (await k.db.$queryRaw<{ code: string }[]>`SELECT code FROM reveal_access WHERE "wishId" = ${wish}::uuid`)[0].code;

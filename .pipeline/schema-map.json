@@ -3456,6 +3456,10 @@
      "rule": "keep",
      "why": "ids of stored files, which the erase of a business's files removes"
     },
+    "hearts": {
+     "rule": "keep",
+     "why": "ids of the stored files a client marked, no person; a removed file's heart goes with it"
+    },
     "passcodeHash": {
      "rule": "keep",
      "why": "a hash of the passcode the business chose; the link is switched off by an erase"

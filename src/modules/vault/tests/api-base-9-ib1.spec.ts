@@ -62,8 +62,8 @@ describe("API-BASE-9 case 4 (IB1): favourites at the reveal link and the busines
     const copy = JSON.parse((await k.post(`/v1/business/reveal-links/${x.shoot}/copy-link`, x.o.token, { set: "proofs" })).text) as string;
     expect((await mark(k.codeOf(copy), 1, true)).body).toEqual({ hearts: [1] });
     expect((await k.get(`/v1/business/shoots/${x.shoot}`, x.o.token)).body.hearts).toHaveLength(2);
-    // sending the reveal again with other files starts the marks over
-    expect((await send(x.o, x.wish, x.shoot, k.revealBody(), { files: [x.files[1], x.files[0]] })).status).toBe(200);
+    // IC2: sending the reveal again with other files keeps the hearts of the files that stay; the one marked file (the third) left the list, so its heart went
+    expect((await send(x.o, x.wish, x.shoot, k.revealBody(), { files: [x.files[1], x.files[0]], again: true })).status).toBe(200);
     expect((await hearts(x.code)).body).toEqual({ hearts: [] });
     expect((await k.get(`/v1/business/client-wishes/${x.wish}`, x.o.token)).body.hearts).toEqual([]);
   });

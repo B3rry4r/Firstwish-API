@@ -2947,12 +2947,20 @@
         "note": "{shoot, wish, link}: the client wish and the reveal made together, or neither (DEC-262); 409 already_sent carries sentAt and link in fields"
       }
     },
-    "POST /v1/business/client-wishes/:id/send-reveal": {
-      "decision": "DEC-266",
-      "set": {
-        "files": "string[] (optional; IB4: the files to show, ids from the set, up to 200, in this order; left out, every ready file of the set; one that is not a ready file of the set is 422 with words)"
+    "POST /v1/business/client-wishes/:id/send-reveal": [
+      {
+        "decision": "DEC-266",
+        "set": {
+          "files": "string[] (optional; IB4: the files to show, ids from the set, up to 200, in this order; left out, every ready file of the set; one that is not a ready file of the set is 422 with words)"
+        }
+      },
+      {
+        "decision": "DEC-269",
+        "set": {
+          "again": "boolean (optional; IC3: a shoot's set already sent to this client answers 409 already_sent with sentAt and link; true sends it again on this client wish and takes no second wish)"
+        }
       }
-    },
+    ],
     "GET /v1/r/:code/favourites": {
       "decision": "DEC-263",
       "response": {

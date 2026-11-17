@@ -44,7 +44,7 @@ describe("API-BASE-5 case 7: the reveal email count follows the Clock port, not 
   };
   const send = (b: { token: string; shoot: string }, wish: string, email: string | null) =>
     t.http().post(`/v1/business/client-wishes/${wish}/send-reveal`).set(auth(b.token)).send({
-      shoot: b.shoot, set: "proofs", reveal: { client: "Ada Obi", occasion: "Wedding", city: "Lagos", date: "2027-08-20", note: "Thank you.", credits: [], style: "golden", ...(email ? { email } : {}) },
+      shoot: b.shoot, set: "proofs", again: true, reveal: { client: "Ada Obi", occasion: "Wedding", city: "Lagos", date: "2027-08-20", note: "Thank you.", credits: [], style: "golden", ...(email ? { email } : {}) },
     });
   const todays = (businessId: string) =>
     db.$queryRaw<{ n: number }[]>`SELECT count(*)::int AS n FROM message_delivery d JOIN client_wish c ON c.id = substr(d."idempotencyKey", 8, 36)::uuid WHERE d."idempotencyKey" LIKE 'reveal:%' AND c."businessId" = ${businessId}::uuid`;

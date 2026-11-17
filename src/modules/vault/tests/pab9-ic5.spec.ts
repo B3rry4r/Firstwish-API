@@ -64,7 +64,7 @@ describe("IC5: plays by link and address, the real wait, and an Idempotency-Key 
     expect(otherClient.body.error.code).toBe("idempotency_key_reused");
     expect(await k.db.clientWish.count({ where: { businessId: o.businessId } })).toBe(1);
     // the older send call: the key for one wish and shoot, used for another shoot
-    const w = await k.clientWish(o, "Ife Bello");
+    const w = await k.clientWish(o, "Zane Ola");
     const key2 = `pab9-key2-${process.pid}-${Date.now() % 100000}`;
     expect((await k.post(`/v1/business/client-wishes/${w}/send-reveal`, o.token, { shoot: a.shoot, set: "proofs", reveal: k.revealBody() }, { "Idempotency-Key": key2 })).status).toBe(200);
     expect((await k.post(`/v1/business/client-wishes/${w}/send-reveal`, o.token, { shoot: b.shoot, set: "proofs", reveal: k.revealBody() }, { "Idempotency-Key": key2 })).status).toBe(409);

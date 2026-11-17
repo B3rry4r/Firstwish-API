@@ -2463,6 +2463,8 @@ export interface PostBusinessClientWishesByIdSendRevealBody {
   shoot: string;
   /** IB4: the files to show (ids from the set, up to 200, in this order); left out, every ready file of the set */
   files?: string[];
+  /** IC3: a shoot's set already sent to this client answers 409 already_sent with sentAt and link; true sends it again on this client wish and takes no second wish */
+  again?: boolean;
 }
 export type PostBusinessClientWishesByIdSendRevealHeaders = Record<string, never>;
 export type PostBusinessClientWishesByIdSendRevealResponse = { shoot: Shoot; wish: ClientWish };

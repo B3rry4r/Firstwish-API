@@ -68,6 +68,9 @@ export class PostBusinessClientWishesByIdSendRevealBodyDto implements PostBusine
   @IsOptional()
   @IsArray()
   files?: string[];
+  @IsOptional()
+  @IsBoolean()
+  again?: boolean;
 }
 export class PostBusinessClientWishesByIdSendRevealParamsDto implements PostBusinessClientWishesByIdSendRevealParams {
   @IsString()

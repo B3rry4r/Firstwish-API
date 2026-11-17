@@ -3822,6 +3822,16 @@
       "confidence": "high",
       "source": "build/rulings-phase3.md; build/prompts/API-BASE-9.md",
       "decidedAt": "2026-12-01T12:00:00Z"
+    },
+    {
+      "id": "DEC-269",
+      "topic": "The ninth round's check: one reveal for a shoot and a client, links never more open than their reveal, hearts by file (IC1, IC2, IC3, IC5)",
+      "decision": "IC3: for one shoot and one client there is one reveal. POST /v1/business/client-wishes/:id/send-reveal (E-33) answers 409 already_sent (fields sentAt and link) when that shoot's set already went to a client of that name, like POST /v1/business/reveals (E-272); its body takes `again` (boolean, optional) to send it once more on the same client wish, taking no second wish. A client wish made by E-30 is an ordinary client wish and takes its wish. IC1: a link copied for a shoot's set (E-153) carries the passcode, the downloads switch, the end and the switched-off time of the reveal it belongs to (the newest reveal sent on the set with a passcode, else the newest), whatever that reveal's state; sending again keeps the passcode and the downloads switch unless the body gives new ones. IC2: a heart belongs to a file: the link keeps the ids of the marked files, the wire still names positions in the link's file list (RevealPlay.index); a removed file's heart goes with it; sending again or copying again keeps the hearts of the files that stay. IC5: a play is counted for a link and an address in an hour, never from an id the page sends (the x-reveal-session header is not read); the 61st mark's 429 names the real wait; an Idempotency-Key used again for another shoot or client is 409 idempotency_key_reused.",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (IC1 to IC7); build/prompts/P-API-BASE-9.md",
+      "decidedAt": "2026-12-02T12:00:00Z"
     }
   ]
 }

@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "frozenAt": "2026-11-17T03:10:42Z",
+  "frozenAt": "2026-11-17T04:23:17Z",
   "framework": "nestjs",
   "generatedBy": "tools/pipeline/reconcile.py",
   "resources": [
@@ -4499,6 +4499,13 @@
           ],
           "body": [
             {
+              "name": "again",
+              "type": "boolean (optional; IC3: a shoot's set already sent to this client answers 409 already_sent with sentAt and link; true sends it again on this client wish and takes no second wish)",
+              "from": [
+                "DEC-269"
+              ]
+            },
+            {
               "name": "files",
               "type": "string[] (optional; IB4: the files to show, ids from the set, up to 200, in this order; left out, every ready file of the set; one that is not a ready file of the set is 422 with words)",
               "from": [
@@ -4545,7 +4552,8 @@
             }
           ],
           "notes": [
-            "body by DEC-266"
+            "body by DEC-266",
+            "body by DEC-269"
           ]
         },
         {

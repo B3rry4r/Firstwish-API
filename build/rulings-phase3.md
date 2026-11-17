@@ -1011,3 +1011,17 @@ HG1 (give race) Two staff giving one Concierge order: the code is right (overlap
 - IA3: "Use sample photos" is gone for good (no faked content). Picking files for a reveal and a download of the
   full set were drawn in the designed screens and come back when the server has them (the ninth API round).
 - IA4: a reveal's passcode holds for every link to those files: copying the link never mints a way round it.
+
+## IB (17 Nov 2026, the lead: the ninth API round, from the Vault check). Default (lead), owner may override.
+- IB1 (favourites): a client at the reveal link, past the passcode where there is one, marks and unmarks photos with
+  no account; marks belong to the reveal; the business reads them and cannot change them; marking is limited per
+  link and address like any public write.
+- IB2 (download): the reveal link gives a download address for each FINAL file (never a proof), signed and short
+  lived, when the business left downloads on for that reveal (on by default for finals); "all" is the list of
+  those addresses (the server makes no archive).
+- IB3 (rename): a shoot's name and a file's shown name can be changed by the business; the stored object keeps its
+  own name.
+- IB4 (subset): a reveal names the files it shows; with none named it shows every ready file of the set, as now.
+- IB5 (plays): a reveal's first play sets the client wish's openedAt and each play is counted on the reveal; the
+  shoot shows the count.
+- IB6 (HU5): a live login of a business gets Vault upload tickets as the owner does; a removed login never.

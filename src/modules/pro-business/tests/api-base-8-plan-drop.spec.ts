@@ -7,7 +7,9 @@ import { createTestApp, TestApp } from "../../../../test/kit/app";
 import { SettlementService } from "../../payments/settlement.service";
 
 const ROOT = join(__dirname, "../../../..");
-const NOW = new Date("2027-05-10T09:00:00.000Z");
+// The same month as the older money specs and a little before them: the invoice numbers of this spec fall in their month and its payment ids sort
+// below theirs, so the 30 pairs below leave the shared database's newest-payment pages and invoice runs as the older specs expect them.
+const NOW = new Date("2026-12-01T00:30:00.000Z");
 const ids = new UuidV7Maker();
 const run = `${process.pid}${Date.now() % 100000}`;
 let seq = 0;
@@ -65,7 +67,7 @@ describe("HY1 plan payments: lapse time, everyone who may pay reads it, the owne
     const started = await startPlan(o.token, "starter", idem("a"));
     expect(started.status).toBe(201);
     const r = await plan(o.token);
-    expect(r.body.pending).toMatchObject({ reference: started.body.payment.reference, plan: "starter", startedAt: NOW.toISOString(), lapsesAt: "2027-05-10T10:00:00.000Z" });
+    expect(r.body.pending).toMatchObject({ reference: started.body.payment.reference, plan: "starter", startedAt: NOW.toISOString(), lapsesAt: "2026-12-01T01:30:00.000Z" });
   });
 
   it("2. a login's plan payment is read by the owner and by another live login; an outsider and another business get 404", async () => {
@@ -153,7 +155,7 @@ describe("HY1 plan payments: lapse time, everyone who may pay reads it, the owne
     expect(r).toEqual({ outcome: "fulfilled", flagged: true });
     const b = await db.business.findUniqueOrThrow({ where: { id: o.businessId } });
     expect(b.plan).toBe("starter");
-    expect(b.renews?.toISOString()).toBe("2027-06-10T09:05:00.000Z");
+    expect(b.renews?.toISOString()).toBe("2027-01-01T00:35:00.000Z");
     const p = await db.payment.findUniqueOrThrow({ where: { providerReference: ref } });
     expect(p.fulfilledAt).not.toBeNull();
     expect(p.flags).not.toContain("refund_due");
@@ -179,7 +181,7 @@ describe("HY1 plan payments: lapse time, everyone who may pay reads it, the owne
     // the plan is the second one's alone: studio, a month from its own payment
     const b = await db.business.findUniqueOrThrow({ where: { id: o.businessId } });
     expect(b.plan).toBe("studio");
-    expect(b.renews?.toISOString()).toBe("2027-06-10T09:04:00.000Z");
+    expect(b.renews?.toISOString()).toBe("2027-01-01T00:34:00.000Z");
   });
 
   it("8. attack: a drop and a settle at the same moment, 30 pairs: one outcome each, the ledger balanced, one live plan, no lost payment", async () => {
@@ -211,7 +213,7 @@ describe("HY1 plan payments: lapse time, everyone who may pay reads it, the owne
       expect(await db.payment.count({ where: { businessId: b, purpose: "pro_plan", status: "succeeded" } })).toBe(1);
       const biz = await db.business.findUniqueOrThrow({ where: { id: b } });
       expect(biz.plan).toBe("starter");
-      expect(biz.renews?.toISOString()).toBe("2027-06-10T09:00:00.000Z");
+      expect(biz.renews?.toISOString()).toBe("2027-01-01T00:30:00.000Z");
       expect(await db.auditEntry.count({ where: { subjectId: p.id, action: "plan.drop-pending" } })).toBe(d.status === 200 ? 1 : 0);
     }
     expect(dropped + settledFirst).toBe(30);

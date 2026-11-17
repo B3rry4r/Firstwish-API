@@ -3,7 +3,8 @@ import { uniqueAddress } from "../../../../test/kit/app";
 import { SettlementService } from "../../payments/settlement.service";
 import { boot, ids } from "./kit";
 
-const NOW = new Date("2027-02-08T09:00:00.000Z");
+// early in the era of the older money specs, so the payments made here sort below theirs in the shared database
+const NOW = new Date("2026-12-01T00:30:00.000Z");
 const run = `${process.pid}${Date.now() % 100000}`;
 type Kit = Awaited<ReturnType<typeof boot>>;
 type Role = "maker" | "ops" | "owner" | "support" | "finance" | "moderator";

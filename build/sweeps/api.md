@@ -113,3 +113,4 @@
   the web: the buyer's order form takes the files and the maker opens the wish maker from the staff Concierge
   screen. Until then a maker can make only a words-only wish.
 - OWNER: the ₦3,000 block billed for a 210-byte Vault overage (as the website says today).
+- (API, suite health, 17 Nov) five specs that use test/b13-kit (api-base-4*, join4-showing, showing.contract) fail when run ALONE on this machine (503 on GET wish) and pass inside the full suite in CI: an order or environment dependence to find (Phase 7's smoke must run every spec alone once). support/tests/support.spec.ts failed once in a full run under load (text not captured).

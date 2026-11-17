@@ -96,3 +96,6 @@ export class PostAdminTeamInviteBodyDto implements PostAdminTeamInviteBody {
   @IsString({ each: true })
   roles?: string[];
 }
+
+/** E-271 GET /v1/admin/support/staff (query). */
+export class GetAdminSupportStaffQueryDto {}

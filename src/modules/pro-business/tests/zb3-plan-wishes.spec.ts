@@ -17,6 +17,8 @@ const DAY = 24 * 3600 * 1000;
 const ids = new UuidV7Maker();
 const run = `${process.pid}${Date.now() % 100000}`;
 let seq = 0;
+// A style of this spec's own: the house style "noir" is switched off for a while by the house-style spec, which runs beside this one, and a draft naming it is then 422.
+const STYLE = `zb3-${run}`;
 
 describe("ZB3: a business's client wishes are wishes (no reveal) and the maker seals on the plan", () => {
   let t: TestApp;
@@ -44,6 +46,7 @@ describe("ZB3: a business's client wishes are wishes (no reveal) and the maker s
     wishes = t.app.get(WishesService);
     const r = spawnSync(process.execPath, [join(ROOT, "scripts/seed.mjs")], { cwd: ROOT, env: process.env, encoding: "utf8" });
     if (r.status !== 0) throw new Error(`seed failed: ${r.stderr}`);
+    await db.style.create({ data: { id: ids.next(), slug: STYLE, name: STYLE, level: "starter", tier: "starter", house: false, on: true } });
   });
   afterAll(() => t.close());
   beforeEach(() => t.clock.set(NOW));
@@ -76,7 +79,7 @@ describe("ZB3: a business's client wishes are wishes (no reveal) and the maker s
   const letter = { letter: { paras: ["Happy birthday."] } };
   /** A draft the person fills in at the maker, ready to seal. */
   async function draft(token: string) {
-    const r = await t.http().post("/v1/wishes").set(bearer(token)).send({ from: "Ada", kind: "love", name: "Chidi", occasion: "birthday", studio: "", style: "noir" });
+    const r = await t.http().post("/v1/wishes").set(bearer(token)).send({ from: "Ada", kind: "love", name: "Chidi", occasion: "birthday", studio: "", style: STYLE });
     expect(r.status).toBe(201);
     const s = await t.http().patch(`/v1/wishes/${r.body.id}`).set(bearer(token)).send({ version: r.body.version, content: letter });
     expect(s.status).toBe(200);
@@ -192,7 +195,7 @@ describe("ZB3: a business's client wishes are wishes (no reveal) and the maker s
     expect(none.status).toBe(402);
     expect(none.body.error.code).toBe("no_wishes");
     // the body cannot set the business
-    const bad = await t.http().post("/v1/wishes").set(bearer(o.token)).send({ from: "Ada", kind: "love", name: "Chidi", occasion: "birthday", studio: "", style: "noir", businessId: o.businessId });
+    const bad = await t.http().post("/v1/wishes").set(bearer(o.token)).send({ from: "Ada", kind: "love", name: "Chidi", occasion: "birthday", studio: "", style: STYLE, businessId: o.businessId });
     expect(bad.status).toBe(422);
   });
 

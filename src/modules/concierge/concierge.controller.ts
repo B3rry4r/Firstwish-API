@@ -4,11 +4,12 @@ import type { Principal } from "../../common/auth/principal";
 import { AppError } from "../../common/errors/app-error";
 import { CursorQueryDto } from "../../common/pagination/cursor";
 import { PostAdminConciergeOrdersByIdMakerBodyDto, PostAdminConciergeOrdersByIdQuoteBodyDto } from "../../contracts";
+import type { ConciergeOrderWish } from "../../contracts";
 import type { ConciergeOrder, Maker } from "../../contracts";
 import type { AuditActor } from "../audit/audit.service";
 import { accountOf } from "../people/business-of";
 import { AdminRoute, StaffActor } from "../role-access/staff-section.guard";
-import { CancelBodyDto, DeliverBodyDto, DueQueryDto, IdParamDto, PlaceOrderBodyDto } from "./dto";
+import { CancelBodyDto, DeliverBodyDto, DueQueryDto, IdParamDto, PlaceOrderBodyDto, StaffOrdersQueryDto } from "./dto";
 import { ConciergeService, type StaffCaller } from "./concierge.service";
 
 const SECTION = "/admin/concierge";
@@ -87,8 +88,15 @@ export class ConciergeAdminController {
   /** E-37 */
   @AdminRoute(SECTION, "maker", "ops")
   @Get("concierge/orders")
-  list(@Query() q: CursorQueryDto, @CurrentPrincipal() p: Principal | undefined) {
+  list(@Query() q: StaffOrdersQueryDto, @CurrentPrincipal() p: Principal | undefined) {
     return this.orders.staffList(staffOf(p), q);
+  }
+
+  /** E-270 (HY5): the wishes of this order a maker delivers. */
+  @AdminRoute(SECTION, "maker", "ops")
+  @Get("concierge/orders/:id/wishes")
+  wishes(@Param() params: IdParamDto, @CurrentPrincipal() p: Principal | undefined): Promise<{ items: ConciergeOrderWish[]; nextCursor: string | null }> {
+    return this.orders.staffWishes(staffOf(p), params.id);
   }
 
   /** E-38 */

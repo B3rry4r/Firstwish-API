@@ -58,6 +58,8 @@ export interface PendingPlan {
   reference: string;
   plan: string;
   startedAt: string;
+  /** HY1: when the payment lapses (the sweep closes it then); the owner may drop it sooner */
+  lapsesAt: string;
 }
 
 const PLANS_ON_OFFER = ["starter", "studio"];
@@ -164,7 +166,7 @@ export class PlanView {
     });
     if (!p) return null;
     const sku = (Array.isArray(p.lines) ? (p.lines[0] as { sku?: string } | undefined) : undefined)?.sku ?? "";
-    return { reference: p.providerReference, plan: sku.slice("pro.".length), startedAt: p.createdAt.toISOString() };
+    return { reference: p.providerReference, plan: sku.slice("pro.".length), startedAt: p.createdAt.toISOString(), lapsesAt: new Date(p.createdAt.getTime() + PLAN_PENDING_MINUTES * 60_000).toISOString() };
   }
 
   /**

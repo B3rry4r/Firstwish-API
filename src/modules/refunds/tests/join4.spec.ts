@@ -9,7 +9,6 @@ import { makeStaff, seedRoleTable } from "../../staff-accounts/tests/staff-kit";
 import { StandinRefundProvider } from "../../../common/ports/adapters/standin-refund-provider";
 import { RefundProviderPort } from "../../../common/ports/refund-provider.port";
 import { FulfilmentRegistry } from "../../payments/fulfilment.registry";
-import { testSlug, testWishNo } from "../../../../test/kit/unique";
 
 const ROOT = join(__dirname, "../../../..");
 const NOW = new Date("2032-03-10T09:00:00.000Z");
@@ -190,12 +189,12 @@ describe("Wave 4 join: invoices with payments and refunds (J1), a refund of a li
     const w = await wish(a);
     const p = await pay(a, sku, { subjectId: w });
     expect(p.outcome).toBe("fulfilled");
-    const no = testWishNo("J4");
+    const no = `J4${String(++seq).padStart(4, "0")}${String(process.pid).slice(-4)}`;
     await db.wish.update({
       where: { id: w },
       data: { status: "live", no, name: "Ada", opensAt: new Date(NOW.getTime() - 86_400_000), openedAt: new Date(NOW.getTime() - 3_600_000), endsAt: new Date(NOW.getTime() + 7 * 86_400_000) },
     });
-    await db.wishLink.create({ data: { id: ids.next(), slug: testSlug("ada-j4"), wishId: w, active: true } });
+    await db.wishLink.create({ data: { id: ids.next(), slug: `ada-j4${seq}${String(process.pid).slice(-4)}x`, wishId: w, active: true } });
     expect((await t.http().post(`/v1/wishes/${w}/publish-requests`).set(auth(token)).send({ consent: true })).status).toBe(201);
     const req = await db.publishRequest.findFirstOrThrow({ where: { wishId: w, status: "waiting" } });
     expect((await t.http().post(`/v1/admin/showing/requests/${req.id}/decide`).set(auth(staff.mod.token)).send({ decision: "approve", reason: "Looks lovely" })).status).toBe(200);

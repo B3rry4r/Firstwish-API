@@ -7,7 +7,6 @@ import { createTestApp, TestApp } from "../../../../test/kit/app";
 import { AccountErasureService } from "../../accounts/account-erasure.service";
 import { FileJobs } from "../../stored-files/file-jobs";
 import { makeStaff, seedRoleTable } from "../../staff-accounts/tests/staff-kit";
-import { testWishNo } from "../../../../test/kit/unique";
 
 const ROOT = join(__dirname, "../../../..");
 const NOW = new Date("2036-06-10T09:00:00.000Z");
@@ -110,7 +109,7 @@ describe("API-BASE-7 patch: Studio files and Signed", () => {
 
     const viewer = await person();
     const wid = ids.next();
-    await db.wish.create({ data: { id: wid, accountId: viewer.id, status: "live", kind: "birthday", occasion: "birthday", styleSlug: slug, timeZone: "Africa/Lagos", ticket: "keepsake", no: testWishNo("s7p"), opensAt: new Date(NOW.getTime() - DAY), openedAt: new Date(NOW.getTime() - DAY), endsAt: new Date(NOW.getTime() + 300 * DAY) } as never });
+    await db.wish.create({ data: { id: wid, accountId: viewer.id, status: "live", kind: "birthday", occasion: "birthday", styleSlug: slug, timeZone: "Africa/Lagos", ticket: "keepsake", no: `8${run.slice(-6)}${++seq}`.slice(0, 12), opensAt: new Date(NOW.getTime() - DAY), openedAt: new Date(NOW.getTime() - DAY), endsAt: new Date(NOW.getTime() + 300 * DAY) } as never });
     const link = `ab7pl-${run}-${++seq}`;
     await db.wishLink.create({ data: { id: ids.next(), slug: link, wishId: wid, active: true } });
     const play = async () => t.http().get(`/v1/w/${link}/style-files`);

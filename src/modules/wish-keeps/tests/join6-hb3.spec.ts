@@ -7,7 +7,6 @@ import { SettlementService } from "../../payments/settlement.service";
 import { JobsService } from "../../jobs/jobs.service";
 import { endOf } from "../../purchases/pass-cover";
 import { WishLifecycleService } from "../../wishes/wish-lifecycle.service";
-import { testWishNo } from "../../../../test/kit/unique";
 
 // J9 (HB3) and J10 (a job's cancel never throws; an ended Pass is not live).
 const ROOT = join(__dirname, "../../../..");
@@ -46,7 +45,7 @@ describe("join 6: the end function at first open and rest; cancelling a job; an 
   async function live(accountId: string, endsAt: Date) {
     const id = ids.next();
     await db.wish.create({
-      data: { id, accountId, status: "live", kind: "birthday", occasion: "birthday", styleSlug: "golden", timeZone: "Africa/Lagos", ticket: "keepsake", no: testWishNo("j6"), openedAt: new Date(endsAt.getTime() - 14 * DAY), endsAt } as never,
+      data: { id, accountId, status: "live", kind: "birthday", occasion: "birthday", styleSlug: "golden", timeZone: "Africa/Lagos", ticket: "keepsake", no: `j6${seq}${id.slice(-5)}`, openedAt: new Date(endsAt.getTime() - 14 * DAY), endsAt } as never,
     });
     await jobs.schedule("rest-wish", endsAt, id);
     return id;
@@ -56,7 +55,7 @@ describe("join 6: the end function at first open and rest; cancelling a job; an 
     const id = ids.next();
     const slug = `j6hb3-${String(++seq).padStart(3, "0")}abcdefghi`.slice(0, 24);
     await db.wish.create({
-      data: { id, accountId, status: "sealed", kind: "birthday", occasion: "birthday", styleSlug: "golden", timeZone: "Africa/Lagos", ticket: "keepsake", no: testWishNo("j7"), name: "Chidi", opensAt: new Date(NOW.getTime() - 60_000), sealedAt: NOW, content: { letter: { paras: ["Hi"] } } } as never,
+      data: { id, accountId, status: "sealed", kind: "birthday", occasion: "birthday", styleSlug: "golden", timeZone: "Africa/Lagos", ticket: "keepsake", no: `j7${seq}${id.slice(-5)}`, name: "Chidi", opensAt: new Date(NOW.getTime() - 60_000), sealedAt: NOW, content: { letter: { paras: ["Hi"] } } } as never,
     });
     await db.wishLink.create({ data: { id: ids.next(), slug, wishId: id, active: true } });
     return { id, slug };

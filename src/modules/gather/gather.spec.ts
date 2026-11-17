@@ -4,7 +4,6 @@ import { filesApp, makeAccount, WEBM } from "../stored-files/tests/files-kit";
 import { MAX_VOICE_NOTES_PER_WISH } from "../stored-files/stored-files.service";
 import { GATHER_ASKS_PER_ADDRESS_PER_HOUR, GATHER_ASKS_PER_LINK_PER_DAY } from "../public-wishes/link-limits";
 import { uniqueAddress } from "../../../test/kit/app";
-import { testWishNo } from "../../../test/kit/unique";
 
 /** API-BASE-6 case 4 (HS1): the gather link, the friend's side with no account and the owner's side. */
 describe("HS1 the gather link", () => {
@@ -20,7 +19,7 @@ describe("HS1 the gather link", () => {
     const me = await makeAccount(db, t);
     await db.account.update({ where: { id: me.id }, data: { name: "Ada Obi" } });
     const id = (await import("../stored-files/tests/files-kit")).ids.next();
-    await db.wish.create({ data: { id, accountId: me.id, status, ticket: "keepsake", kind: "birthday", occasion: "birthday", styleSlug: "classic", timeZone: "Africa/Lagos", name: "Chidi Eze", content: { letter: { paras: ["private words"] } }, ...(status !== "draft" ? { no: testWishNo("FW-G"), sealedAt: new Date("2026-01-01T00:00:00.000Z"), opensAt: new Date("2099-01-01T00:00:00.000Z") } : {}), ...over } as never });
+    await db.wish.create({ data: { id, accountId: me.id, status, ticket: "keepsake", kind: "birthday", occasion: "birthday", styleSlug: "classic", timeZone: "Africa/Lagos", name: "Chidi Eze", content: { letter: { paras: ["private words"] } }, ...(status !== "draft" ? { no: `FW-G${id.slice(-6)}`, sealedAt: new Date("2026-01-01T00:00:00.000Z"), opensAt: new Date("2099-01-01T00:00:00.000Z") } : {}), ...over } as never });
     const auth = { authorization: `Bearer ${me.token}` };
     const link = await t.http().get(`/v1/wishes/${id}/gather`).set(auth);
     expect(link.status).toBe(200);

@@ -9,7 +9,6 @@ import { JobsService } from "../../jobs/jobs.service";
 import { PurchasesService } from "../../purchases/purchases.service";
 import { UnlockTokens } from "../../public-wishes/unlock-token";
 import { WishLifecycleService } from "../../wishes/wish-lifecycle.service";
-import { testWishNo } from "../../../../test/kit/unique";
 
 const ROOT = join(__dirname, "../../../..");
 // a start no other spec uses
@@ -56,7 +55,7 @@ describe("B22 keep (E-228) and wake (E-232) (contract)", () => {
   async function wish(accountId: string, over: Record<string, unknown> = {}) {
     const id = ids.next();
     await db.wish.create({
-      data: { id, accountId, status: "live", kind: "birthday", occasion: "birthday", styleSlug: "golden", timeZone: "Africa/Lagos", ticket: "keepsake", no: testWishNo("b22"), openedAt: NOW, endsAt: new Date(NOW.getTime() + 5 * DAY), ...over, ...(openedFor({ ticket: "keepsake", endsAt: new Date(NOW.getTime() + 5 * DAY), ...over }) ? { openedAt: openedFor({ ticket: "keepsake", endsAt: new Date(NOW.getTime() + 5 * DAY), ...over }) } : {}) } as never,
+      data: { id, accountId, status: "live", kind: "birthday", occasion: "birthday", styleSlug: "golden", timeZone: "Africa/Lagos", ticket: "keepsake", no: `22${seq}${id.slice(-4)}`, openedAt: NOW, endsAt: new Date(NOW.getTime() + 5 * DAY), ...over, ...(openedFor({ ticket: "keepsake", endsAt: new Date(NOW.getTime() + 5 * DAY), ...over }) ? { openedAt: openedFor({ ticket: "keepsake", endsAt: new Date(NOW.getTime() + 5 * DAY), ...over }) } : {}) } as never,
     });
 
     return id;

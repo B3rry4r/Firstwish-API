@@ -2,7 +2,6 @@ import type { StaffAccountRoles } from "@prisma/client";
 import { uniqueAddress } from "../../../../test/kit/app";
 import { account, B12App, b12App, bearer, NOW, Who } from "../../people/tests/b12-kit";
 import { seedRoleTable } from "../../staff-accounts/tests/staff-kit";
-import { testSlug, testWishNo } from "../../../../test/kit/unique";
 
 export { account, bearer, NOW, uniqueAddress };
 export type { B12App, Who };
@@ -28,8 +27,8 @@ export async function staffOf(t: B12App, role: StaffAccountRoles = "moderator"):
 /** A wish that is live now: opened, in its term, with an active link. */
 export async function liveWish(t: B12App, owner: Who, over: { name?: string; status?: "live" | "resting" | "sealed" | "draft"; passcodeHash?: string } = {}): Promise<{ id: string; no: string; slug: string }> {
   const id = t.id();
-  const no = testWishNo("b13");
-  const slug = testSlug("ada");
+  const no = `13${String(++seq).padStart(3, "0")}${run.slice(-4)}`;
+  const slug = `ada-${run.slice(-4)}${seq}x${seq}`.slice(0, 30);
   await t.db.wish.create({
     data: {
       id, accountId: owner.accountId, status: over.status ?? "live", kind: "birthday", occasion: "birthday", styleSlug: "classic", timeZone: "Africa/Lagos", no,

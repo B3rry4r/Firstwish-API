@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Header, Headers, HttpCode, Param, Post, Query } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Patch, Header, Headers, HttpCode, Param, Post, Query } from "@nestjs/common";
 import {
   DeleteBusinessShootsByIdParamsDto,
   GetBusinessRevealLinksByIdParamsDto,
@@ -11,6 +11,8 @@ import {
   PostBusinessRevealLinksByIdCopyLinkParamsDto,
   PostBusinessRevealLinksByIdDownloadsBodyDto,
   PostBusinessRevealLinksByIdDownloadsParamsDto,
+  PatchBusinessShootsByIdBodyDto,
+  PatchBusinessShootsByIdParamsDto,
   PostBusinessShootsBodyDto,
   PostBusinessShootsByIdFilesBodyDto,
   PostBusinessShootsByIdFilesParamsDto,
@@ -56,6 +58,13 @@ export class VaultController {
   @Get("shoots/:id")
   async one(@Param() params: GetBusinessShootsByIdParamsDto, @CurrentPrincipal() p: Principal | undefined, @BusinessHeader() h: string | undefined): Promise<Shoot> {
     return this.shoots.get((await this.access.require(p, h)).businessId, params.id);
+  }
+
+  /** E-276 (IB3): rename a shoot. */
+  @Roles("person", "business")
+  @Patch("shoots/:id")
+  async rename(@Param() params: PatchBusinessShootsByIdParamsDto, @Body() body: PatchBusinessShootsByIdBodyDto, @CurrentPrincipal() p: Principal | undefined, @BusinessHeader() h: string | undefined): Promise<Shoot> {
+    return this.shoots.rename((await this.access.require(p, h)).businessId, params.id, body);
   }
 
   @Roles("person", "business")

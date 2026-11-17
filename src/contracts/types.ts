@@ -5114,6 +5114,30 @@ export interface PostBusinessRevealLinksByIdDownloadsBody {
 export type PostBusinessRevealLinksByIdDownloadsHeaders = Record<string, never>;
 export type PostBusinessRevealLinksByIdDownloadsResponse = RevealLink;
 
+/** E-276 PATCH /v1/business/shoots/:id. Auth: business (the owner or a live login). IB3 (DEC-264): renames a shoot; a field left out stays. */
+export interface PatchBusinessShootsByIdParams {
+  id: string;
+}
+export interface PatchBusinessShootsByIdBody {
+  /** the shoot's client, 1 to 60 characters */
+  client?: string;
+  /** the shoot's title, 1 to 40 characters */
+  title?: string;
+}
+export type PatchBusinessShootsByIdHeaders = Record<string, never>;
+export type PatchBusinessShootsByIdResponse = Shoot;
+
+/** E-277 PATCH /v1/business/vault-files/:id. Auth: business (the owner or a live login). IB3 (DEC-264): the name a Vault file shows under; the stored object keeps its own name. */
+export interface PatchBusinessVaultFilesByIdParams {
+  id: string;
+}
+export interface PatchBusinessVaultFilesByIdBody {
+  /** the new name, 1 to 100 characters, no slash */
+  name: string;
+}
+export type PatchBusinessVaultFilesByIdHeaders = Record<string, never>;
+export type PatchBusinessVaultFilesByIdResponse = VaultFile;
+
 /** Every endpoint by registry id: its request parts and its response. */
 export interface EndpointContracts {
   "E-1": { params: GetAdminPeopleParams; query: GetAdminPeopleQuery; headers: GetAdminPeopleHeaders; response: GetAdminPeopleResponse };
@@ -5390,5 +5414,7 @@ export interface EndpointContracts {
   "E-273": { params: GetRByCodeFavouritesParams; query: GetRByCodeFavouritesQuery; headers: GetRByCodeFavouritesHeaders; response: GetRByCodeFavouritesResponse };
   "E-274": { params: PostRByCodeFavouritesParams; body: PostRByCodeFavouritesBody; headers: PostRByCodeFavouritesHeaders; response: PostRByCodeFavouritesResponse };
   "E-275": { params: PostBusinessRevealLinksByIdDownloadsParams; body: PostBusinessRevealLinksByIdDownloadsBody; headers: PostBusinessRevealLinksByIdDownloadsHeaders; response: PostBusinessRevealLinksByIdDownloadsResponse };
+  "E-276": { params: PatchBusinessShootsByIdParams; body: PatchBusinessShootsByIdBody; headers: PatchBusinessShootsByIdHeaders; response: PatchBusinessShootsByIdResponse };
+  "E-277": { params: PatchBusinessVaultFilesByIdParams; body: PatchBusinessVaultFilesByIdBody; headers: PatchBusinessVaultFilesByIdHeaders; response: PatchBusinessVaultFilesByIdResponse };
 }
 export type EndpointId = keyof EndpointContracts;

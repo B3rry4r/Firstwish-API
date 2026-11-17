@@ -133,6 +133,35 @@ export class ShootsService {
     return this.wire(row, true);
   }
 
+  /**
+   * IB3 (E-276): rename a shoot (its title and the client's name). The business and its live logins; another business's shoot is 404. A field left
+   * out stays as it was; the shoot's files and reveals are not touched.
+   */
+  async rename(businessId: string, id: string, body: { title?: unknown; client?: unknown }): Promise<Shoot> {
+    if (!UUID.test(id)) throw AppError.notFound();
+    const fields: ErrorFields = {};
+    const data: Prisma.ShootUpdateInput = {};
+    if (body.title !== undefined) {
+      const title = typeof body.title === "string" ? body.title.trim().replace(/\s+/g, " ") : "";
+      if (!title || title.length > TITLE_MAX) fields.title = `Must be the shoot's name, 1 to ${TITLE_MAX} characters.`;
+      else data.title = title;
+    }
+    if (body.client !== undefined) {
+      const client = typeof body.client === "string" ? body.client.trim().replace(/\s+/g, " ") : "";
+      if (!client || client.length > CLIENT_MAX) fields.client = `Must be the client's name, 1 to ${CLIENT_MAX} characters.`;
+      else data.client = client;
+    }
+    if (body.title === undefined && body.client === undefined) fields.title = "Say the new title or client.";
+    if (Object.keys(fields).length) throw AppError.validation(fields);
+    const row = await this.db.$transaction(async (tx) => {
+      await lockBusinessOwner(tx, businessId);
+      const found = await tx.shoot.findFirst({ where: { id, businessId }, select: { id: true } });
+      if (!found) throw AppError.notFound();
+      return tx.shoot.update({ where: { id }, data });
+    });
+    return this.wire(row, true);
+  }
+
   async create(businessId: string, body: PostBusinessShootsBody): Promise<Shoot> {
     const fields: ErrorFields = {};
     const client = String(body.client ?? "").trim().replace(/\s+/g, " ");

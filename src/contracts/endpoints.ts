@@ -286,4 +286,6 @@ export const ENDPOINTS: readonly EndpointRow[] = [
   { id: "E-273", method: "GET", path: "/v1/r/:code/favourites", resource: "RevealPlay", operation: "GetRByCodeFavourites", request: "GetRByCodeFavouritesQueryDto", rawBody: false, noContent: false },
   { id: "E-274", method: "POST", path: "/v1/r/:code/favourites", resource: "RevealPlay", operation: "PostRByCodeFavourites", request: "PostRByCodeFavouritesBodyDto", rawBody: false, noContent: false },
   { id: "E-275", method: "POST", path: "/v1/business/reveal-links/:id/downloads", resource: "RevealLink", operation: "PostBusinessRevealLinksByIdDownloads", request: "PostBusinessRevealLinksByIdDownloadsBodyDto", rawBody: false, noContent: false },
+  { id: "E-276", method: "PATCH", path: "/v1/business/shoots/:id", resource: "Shoot", operation: "PatchBusinessShootsById", request: "PatchBusinessShootsByIdBodyDto", rawBody: false, noContent: false },
+  { id: "E-277", method: "PATCH", path: "/v1/business/vault-files/:id", resource: "VaultFile", operation: "PatchBusinessVaultFilesById", request: "PatchBusinessVaultFilesByIdBodyDto", rawBody: false, noContent: false },
 ];

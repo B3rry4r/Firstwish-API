@@ -1052,3 +1052,16 @@ HG1 (give race) Two staff giving one Concierge order: the code is right (overlap
   browsers, the next day, and a wish the business made on purpose all defeat it). The reveal form sends by the
   server's one call only (E-272); the web's own search for a left-behind wish and its cross-tab lock go. The Vault
   part merges after that.
+
+## ID (17 Nov 2026, the lead, on the Maker pay check). Default (lead), owner may override.
+- ID1 (money): a wish is paid for once. While a ticket payment for a wish is waiting, a start for any ticket of that
+  wish answers 409 with words and the waiting payment's reference (the screen offers to continue it, or to drop it
+  and choose again); the wish's owner can drop a waiting ticket payment at once (as HY1 does for plans; a late
+  "paid" follows the next line). A ticket payment that settles when the wish already holds a paid ticket is refund
+  due, said on its read and by email when refunded: never two tickets charged with nothing said.
+- ID2 (HR2): after any payment for a ticket, however the person comes back (the provider's return, "Read the
+  result", another browser), they land in the maker at the step that comes next: Sealed when the wish is sealed, the
+  ticket step with the paid ticket shown and "Seal it" when it is not. A draft that holds a paid ticket says so
+  wherever it is listed or opened ("Your ticket is paid. Seal it to send."), never "You pay only when it looks
+  right."
+- ID3: opening the maker on a wish that is already sealed shows Sealed, at any step address.

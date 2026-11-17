@@ -1048,3 +1048,7 @@ HG1 (give race) Two staff giving one Concierge order: the code is right (overlap
   they upload for that order (when ordering and until it is delivered), theirs, tied to the order; the order's
   maker reads them and puts them in the wish; the maker uploads nothing in the buyer's name. Until this is built a
   maker can make a words-only wish; the Concierge screens for it wait.
+- IC8 (IA1, on the Vault patch's second check): the web cannot make "one wish, one reveal" true by itself (two
+  browsers, the next day, and a wish the business made on purpose all defeat it). The reveal form sends by the
+  server's one call only (E-272); the web's own search for a left-behind wish and its cross-tab lock go. The Vault
+  part merges after that.

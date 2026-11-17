@@ -227,6 +227,7 @@ export class RevealsService {
           INSERT INTO reveal_access ("linkId", "businessId", "shootId", "wishId", "set", code, "fileIds", "passcodeHash", "endsAt", "createdAt")
           VALUES (${linkId}::uuid, ${businessId}::uuid, ${shootId}::uuid, ${wishId}::uuid, ${set}, ${code}, ${JSON.stringify(fileIds)}::jsonb, ${passHash}, ${s.endsAt}, ${now})`;
       }
+      if (passHash) await this.gateShootLinks(tx, shootId, set, passHash);
       const stored: Prisma.InputJsonObject = { ...s.words, link: linkId };
       await tx.clientWish.update({ where: { id: wishId }, data: { reveal: stored, shoot: shootId, set: set as SetName, sentAt: now } });
       const mark: Prisma.InputJsonObject = { wish: wishId, no: wish.no ?? "", sentAt: toWireInstant(now), link: linkId };
@@ -289,6 +290,26 @@ export class RevealsService {
     };
   }
 
+  /**
+   * IA4: a reveal's passcode holds for every link to those files. A link the business copied for the shoot's set (no client wish) takes the
+   * passcode of the reveal sent on that set, so the copied link and the reveal's own link open with the same one. Tries and the lock start over.
+   */
+  private async gateShootLinks(tx: Tx, shootId: string, set: SetName, passHash: string): Promise<void> {
+    await tx.$executeRaw`
+      UPDATE reveal_access SET "passcodeHash" = ${passHash}, tries = 0, "lockedUntil" = NULL
+       WHERE "shootId" = ${shootId}::uuid AND "set" = ${set} AND "wishId" IS NULL AND "offAt" IS NULL`;
+  }
+
+  /** The passcode of the newest live reveal sent on a shoot's set, or null when none of them has one. */
+  private async setPasscode(tx: Tx, shootId: string, set: SetName, now: Date): Promise<string | null> {
+    const rows = await tx.$queryRaw<{ hash: string }[]>`
+      SELECT "passcodeHash" AS hash FROM reveal_access
+       WHERE "shootId" = ${shootId}::uuid AND "set" = ${set} AND "wishId" IS NOT NULL AND "passcodeHash" IS NOT NULL AND "offAt" IS NULL
+         AND ("endsAt" IS NULL OR "endsAt" > ${now})
+       ORDER BY "createdAt" DESC, "linkId" DESC LIMIT 1`;
+    return rows[0]?.hash ?? null;
+  }
+
   /** E-152. */
   async get(businessId: string, linkId: string): Promise<RevealLink> {
     if (!UUID.test(linkId)) throw AppError.notFound();
@@ -304,8 +325,9 @@ export class RevealsService {
   }
 
   /**
-   * E-153: the link of a shoot's proofs or finals, to copy. The first copy makes it (no wish, no end, no passcode); a copy again gives the
-   * same link with the set's files as they are now. A link switched off is made again with a new code.
+   * E-153: the link of a shoot's proofs or finals, to copy. The first copy makes it (no wish, no end); a copy again gives the same link with
+   * the set's files as they are now. A link switched off is made again with a new code. Where a reveal with a passcode was sent on the set,
+   * the copied link carries that passcode too (IA4): it never opens without it.
    */
   async copyLink(businessId: string, shootId: string, setIn: unknown): Promise<string> {
     if (!UUID.test(shootId)) throw AppError.notFound();
@@ -321,16 +343,17 @@ export class RevealsService {
       const cur = await tx.$queryRaw<{ linkId: string; code: string }[]>`
         SELECT "linkId"::text AS "linkId", code FROM reveal_access
          WHERE "shootId" = ${shootId}::uuid AND "set" = ${set} AND "wishId" IS NULL AND "offAt" IS NULL ORDER BY "createdAt" DESC LIMIT 1 FOR UPDATE`;
+      const gate = await this.setPasscode(tx, shootId, set, now);
       if (cur[0]) {
-        await tx.$executeRaw`UPDATE reveal_access SET "fileIds" = ${JSON.stringify(fileIds)}::jsonb WHERE "linkId" = ${cur[0].linkId}::uuid`;
+        await tx.$executeRaw`UPDATE reveal_access SET "fileIds" = ${JSON.stringify(fileIds)}::jsonb, "passcodeHash" = COALESCE("passcodeHash", ${gate}) WHERE "linkId" = ${cur[0].linkId}::uuid`;
         return this.linkOf(cur[0].code);
       }
       const linkId = this.ids.id();
       const code = newCode();
       await tx.$executeRaw`INSERT INTO reveal_link (id, link, "set", "businessId") VALUES (${linkId}::uuid, ${this.linkOf(code)}, ${set}::"RevealLinkSet", ${businessId}::uuid)`;
       await tx.$executeRaw`
-        INSERT INTO reveal_access ("linkId", "businessId", "shootId", "set", code, "fileIds", "createdAt")
-        VALUES (${linkId}::uuid, ${businessId}::uuid, ${shootId}::uuid, ${set}, ${code}, ${JSON.stringify(fileIds)}::jsonb, ${now})`;
+        INSERT INTO reveal_access ("linkId", "businessId", "shootId", "set", code, "fileIds", "passcodeHash", "createdAt")
+        VALUES (${linkId}::uuid, ${businessId}::uuid, ${shootId}::uuid, ${set}, ${code}, ${JSON.stringify(fileIds)}::jsonb, ${gate}, ${now})`;
       return this.linkOf(code);
     });
   }

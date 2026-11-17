@@ -15,7 +15,7 @@ describe("IC5: plays by link and address, the real wait, and an Idempotency-Key 
     const code = k.codeOf(r.body.link);
     const id = await linkOf(r.body.wish.id);
     for (let i = 0; i < 20; i++) expect((await k.t.http().get(`/v1/r/${code}`).set("x-reveal-session", `made-up-${process.pid}-${i}-abcdef`)).body.state).toBe("open");
-    const plays = async () => (await k.get(`/v1/business/reveal-links/${id}`, o.token)).body.plays.count;
+    const plays = async (): Promise<number> => ((await k.get(`/v1/business/reveal-links/${id}`, o.token)).body as { plays: { count: number } }).plays.count;
     expect(await plays()).toBe(1);
     await k.t.http().get(`/v1/r/${code}`).set("x-forwarded-for", `198.51.100.${(process.pid % 200) + 1}`);
     expect(await plays()).toBe(2);

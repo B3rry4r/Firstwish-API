@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { useKit } from "./ab9-kit";
 
-describe("IC1 and IC2: a copied or re-sent link is never more open than its reveal; a heart belongs to a file", () => {
+describe("IC1 and IC2: a copied or re-sent link is never more open than its reveal; a heart is kept by file", () => {
   const k = useKit();
   let n = 0;
   const addr = () => `pab9-ic12-${process.pid}-${++n}-${Date.now() % 100000}@example.com`;

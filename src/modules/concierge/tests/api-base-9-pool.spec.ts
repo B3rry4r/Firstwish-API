@@ -33,7 +33,7 @@ describe("transactions wait for a connection: sixty contended settles on one acc
     }
     const settle = k.t.app.get(SettlementService);
     const results = await Promise.allSettled(refs.map((r) => settle.settle({ reference: r.reference, status: "success", amountKobo: r.amountKobo, currency: "NGN", paidAt: NOW })));
-    const failed = results.filter((r) => r.status === "rejected").map((r) => String((r as PromiseRejectedResult).reason?.message ?? r).slice(0, 80));
+    const failed = results.flatMap((r) => (r.status === "rejected" ? [String((r.reason as Error | undefined)?.message ?? r.reason).slice(0, 80)] : []));
     expect(failed).toEqual([]);
     const done = await db.payment.count({ where: { accountId: buyer.id, status: "succeeded" } });
     expect(done).toBe(60);

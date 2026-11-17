@@ -451,7 +451,7 @@ export class RevealsService {
   }
 
   /**
-   * IC1 (IA4, IB2): the reveal a link copied for a shoot's set belongs to: the newest reveal sent on that set that has a passcode, else the
+   * IC1 (IA4, IB2): the reveal that governs a link copied for a shoot's set: the newest reveal sent on that set that has a passcode, else the
    * newest reveal sent on it, whatever its state (a reveal switched off or ended still holds its passcode and its switches). Another client's
    * reveal of the set is that client's own and is not this one. Null when no reveal was sent on the set.
    */

@@ -7,7 +7,7 @@ import {
   PostSupportMessagesBodyDto, PostSupportThreadsBodyDto, DeleteAdminSupportSavedRepliesByIdBodyDto, DeleteAdminSupportSavedRepliesByIdParamsDto,
   PatchAdminSupportSavedRepliesByIdBodyDto, PatchAdminSupportSavedRepliesByIdParamsDto, PostAdminSupportSavedRepliesBodyDto,
 } from "../../contracts";
-import type { SavedReply, SupportMessage, SupportThread, ThreadCounts } from "../../contracts";
+import type { SavedReply, StaffHandOver, SupportMessage, SupportThread, ThreadCounts } from "../../contracts";
 import { CurrentPrincipal, Public, Roles, WebhookSignature } from "../../common/auth/decorators";
 import type { Principal } from "../../common/auth/principal";
 import { withRetryAfter } from "../../common/errors/rate-limited";
@@ -76,7 +76,14 @@ export class SupportController {
   @AdminRoute(SECTION, "ops", "owner", "support")
   @Get("admin/support/threads")
   list(@Query() q: SupportThreadsQueryDto): Promise<Page<SupportThread>> {
-    return this.support.list(q.limit ?? DEFAULT_LIMIT, q.cursor, { status: q.status, assigneeId: q.assigneeId });
+    return this.support.list(q.limit ?? DEFAULT_LIMIT, q.cursor, { status: q.status, assigneeId: q.assigneeId, q: q.q });
+  }
+
+  /** E-271 (HY3): whom a thread can be handed to, for the roles that hand one over (E-204). */
+  @AdminRoute(SECTION, "owner", "support")
+  @Get("admin/support/staff")
+  staff(): Promise<Page<StaffHandOver>> {
+    return this.support.staffToHandOver();
   }
 
   /** E-250 (YY3): the saved replies. */

@@ -8,6 +8,7 @@ import { WishesModule } from "../wishes/wishes.module";
 import { ClientWishesService } from "./client-wishes.service";
 import { InvoicesModule } from "./invoices.module";
 import { LoginsService } from "./logins.service";
+import { PlanPaymentDrop } from "./plan-drop";
 import { PlanView } from "./plan-view";
 import { ProAccess } from "./pro-access";
 import { AdminBusinessesController, ProBusinessController } from "./pro-business.controller";
@@ -20,7 +21,7 @@ import { ProBusinessService } from "./pro-business.service";
 @Module({
   imports: [StoredFilesModule, PurchasesModule, WishesModule, NoticesModule, PriceBookModule, InvoicesModule, RoyaltiesModule],
   controllers: [ProBusinessController, AdminBusinessesController],
-  providers: [ProAccess, PlanView, ProBusinessService, ClientWishesService, LoginsService],
+  providers: [ProAccess, PlanView, PlanPaymentDrop, ProBusinessService, ClientWishesService, LoginsService],
   exports: [InvoicesModule, ProAccess, PlanView],
 })
 export class ProBusinessModule {}

@@ -6,11 +6,12 @@ import { ENV } from "../../common/env/env.module";
 import type { Env } from "../../common/env/env";
 import { AppError } from "../../common/errors/app-error";
 import { normaliseEmail } from "../../common/normalise/email";
+import { fullEmailOf, searchWord, wishNumberOf } from "../../common/normalise/search-word";
 import { decodeCursor, Page, toPage } from "../../common/pagination/cursor";
 import { Clock } from "../../common/ports/clock.port";
 import { IdGenerator } from "../../common/ports/ids.port";
 import { toWireInstant } from "../../common/time/time";
-import type { SavedReply, SupportMessage, SupportThread, ThreadCounts } from "../../contracts";
+import type { SavedReply, StaffHandOver, SupportMessage, SupportThread, ThreadCounts } from "../../contracts";
 import { AuditActor, AuditService, requireReason } from "../audit/audit.service";
 import { NoticesService } from "../notices/notices.service";
 import { EmailSuppression } from "../notices/suppression";
@@ -174,9 +175,26 @@ export class SupportService {
     return { all: open + waiting + closed, open, waiting, closed };
   }
 
-  /** E-206: newest first; ?status= and ?assignee= narrow it. */
-  async list(limit: number, cursor: string | undefined, filter: { status?: string; assigneeId?: string }): Promise<Page<SupportThread>> {
+  /**
+   * E-206: newest first; ?status= and ?assignee= narrow it, and ?q= (HY2) matches a thread's subject, the person's name, the thread's whole
+   * email address (a part of an address matches nothing, so the list cannot be used to read the masked address) or a wish number of the
+   * person's account. What comes back is masked as ever.
+   */
+  async list(limit: number, cursor: string | undefined, filter: { status?: string; assigneeId?: string; q?: string }): Promise<Page<SupportThread>> {
     const where: Prisma.SupportThreadWhereInput = {};
+    const word = searchWord(filter.q);
+    if (word) {
+      const like = { contains: word, mode: "insensitive" as const };
+      const email = fullEmailOf(word);
+      const no = wishNumberOf(word);
+      where.OR = [
+        { subject: like },
+        { name: like },
+        { account: { name: like } },
+        ...(email ? [{ contact: { equals: email, mode: "insensitive" as const } }] : []),
+        ...(no ? [{ account: { wishByAccount: { some: { no: { equals: no, mode: "insensitive" as const } } } } }] : []),
+      ];
+    }
     if (filter.status) where.status = filter.status as ThreadRow["status"];
     if (filter.assigneeId) {
       if (!UUID.test(filter.assigneeId)) return { items: [], nextCursor: null };
@@ -191,6 +209,16 @@ export class SupportService {
     const page = toPage(rows, limit, (r) => ({ key: r.id, id: r.id }));
     const x = await this.extras(page.items);
     return { items: page.items.map((r) => this.wireThread(r, x.get(r.id) ?? { name: "", last: "" }, false)), nextCursor: page.nextCursor };
+  }
+
+  /**
+   * E-271 (HY3): the active staff a thread can be handed to (the assign check takes active staff only): id, name and role, never an email or
+   * a sign-in detail. The owner's role comes first when a member holds several.
+   */
+  async staffToHandOver(): Promise<Page<StaffHandOver>> {
+    const rows = await this.prisma.staffAccount.findMany({ where: { status: "active" }, select: { id: true, name: true, roles: true }, orderBy: [{ name: "asc" }, { id: "asc" }] });
+    const items = rows.map((r): StaffHandOver => ({ id: r.id, name: r.name, role: r.roles.includes("owner") ? "owner" : (r.roles[0] ?? "") }));
+    return { items, nextCursor: null };
   }
 
   /** E-207 */

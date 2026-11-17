@@ -152,7 +152,7 @@ export class SettlementService {
     // HU6: a payment the sweep closed (or that failed) and the provider later reports paid: if the same thing was paid for since, this one gave nothing and is refund due
     const superseded = !erased && (p.status === "abandoned" || p.status === "failed") && (await this.paidSince(tx, p));
     if (superseded) {
-      flags = withFlag(withFlag(flags, "refund_due"), "refund_due:paid_after_lapse");
+      flags = withFlag(withFlag(flags, "refund_due"), flags.includes("dropped_by_owner") ? "refund_due:paid_after_drop" : "refund_due:paid_after_lapse");
       flagged = true;
     }
     const lines = paidLines(p);
@@ -183,20 +183,20 @@ export class SettlementService {
 
   /**
    * HU6: has anything else paid for the same intent since this payment started? The intent is the payer's own (their account, or a link
-   * holder's email), the purpose and the wish (or, for a plan, the business: one plan is applied once for one intent, whichever plan it was).
+   * holder's email), the purpose and the wish; for a plan it is the business, whoever of its payers paid (one plan is applied once for one intent, whichever plan it was).
    */
   private async paidSince(tx: Prisma.TransactionClient, p: Payment): Promise<boolean> {
     if (!ONE_PER_INTENT.has(p.purpose)) return false;
-    if (!p.accountId && !p.payerContact) return false;
     const plan = p.purpose === "pro_plan";
+    // a plan is the business's, whichever of its payers paid: the owner's and a login's payments are one intent
+    if (plan ? !p.businessId : !p.accountId && !p.payerContact) return false;
     const others = await tx.payment.findMany({
       where: {
         id: { not: p.id },
         purpose: p.purpose,
         status: { in: ["succeeded", "refunded", "partly_refunded"] },
         verifiedAt: { gt: p.createdAt },
-        ...(p.accountId ? { accountId: p.accountId } : { accountId: null, payerContact: p.payerContact }),
-        ...(plan ? { businessId: p.businessId } : { subjectId: p.subjectId }),
+        ...(plan ? { businessId: p.businessId } : { ...(p.accountId ? { accountId: p.accountId } : { accountId: null, payerContact: p.payerContact }), subjectId: p.subjectId }),
       },
       select: { lines: true },
       take: 20,

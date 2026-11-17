@@ -3672,6 +3672,66 @@
       "source": "build/rulings-phase3.md; build/prompts/P-API-BASE-7.md",
       "decidedAt": "2026-11-29T12:00:00Z",
       "decision": "The registry is re-frozen after DEC-252 by tools/pipeline/freeze.py; reconcile.py was run with --reopen. Endpoint ids already issued are unchanged; no endpoint is new (E-124 takes one more body field)."
+    },
+    {
+      "id": "DEC-254",
+      "topic": "A pending plan payment never traps the business (HY1, HR1, HU6)",
+      "decision": "HY1: GET /v1/business/plan (E-27) gives `pending` as {reference, plan, startedAt, lapsesAt}: lapsesAt is when the waiting plan payment lapses (60 minutes after it started). GET /v1/payments/:reference (E-88) also answers a plan payment of the caller's business for everyone who may pay for the plan (the owner and a live login of the business, as HH6 has it), whoever started it; another business's plan payment is 404. POST /v1/business/plan/pending/:reference/drop drops the business's waiting plan payment at once: the owner only (a login is 403 with words), the payment becomes abandoned, one audit row is written as the business's own act (actor account, section /business/plan), and the answer is the plan read, so a new start is allowed. The same payment dropped again answers the plan read and writes nothing more; a payment that was paid, failed or refunded is 409 plan_payment_not_waiting with words; a reference of another business is 404. A late `paid` for a dropped payment follows HU6: it is fulfilled only if nothing else has paid for a plan of that business since (any payer of the business), otherwise it is marked refund due (refund_due:paid_after_drop, with words on the payment read). The drop is one conditional statement on the payment row and the settle holds that row, so a drop and a settle at the same moment give one outcome.",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md; build/prompts/API-BASE-8.md",
+      "decidedAt": "2026-11-30T12:00:00Z"
+    },
+    {
+      "id": "DEC-255",
+      "topic": "Staff Support and Concierge lists take a search word (HY2)",
+      "decision": "HY2: GET /v1/admin/support/threads (E-206) and GET /v1/admin/concierge/orders (E-37) take `q` (trimmed, 1 to 100 characters, a plain word: % and _ match themselves) beside cursor and limit, and Support keeps its status and assigneeId filters. Support matches a thread's subject, the name of the person, the thread's email address and a wish number of the person's account (case blind, part of a word); Concierge matches the order's id (the order number is the start of the id), the name and the email of who ordered, the business name and the names of the receivers on the wishes delivered for it. The match is made on the stored values and the role's masking is applied to what comes back, so a search by a full address finds the thread and returns the masked address; a word that matches nothing is an empty page, never an error. Paging by cursor holds with q.",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md; build/prompts/API-BASE-8.md",
+      "decidedAt": "2026-11-30T12:00:00Z"
+    },
+    {
+      "id": "DEC-256",
+      "topic": "A short staff list for a hand-over (HY3)",
+      "decision": "HY3: GET /v1/admin/support/staff, for owner and support (the roles that hand a thread over, E-204), lists the active staff a thread can be handed to as {items: [{id, name, role}], nextCursor: null}: no email, no sign-in detail; removed, suspended and invited staff are not on it. GET /v1/admin/team stays owner only.",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md; build/prompts/API-BASE-8.md",
+      "decidedAt": "2026-11-30T12:00:00Z"
+    },
+    {
+      "id": "DEC-257",
+      "topic": "The Concierge order carries its payment (HY4)",
+      "decision": "HY4: ConciergeOrder (E-37, E-38 and the order answers of the staff routes) carries paymentId and paymentReference (the provider reference) once the order is paid, for ops and owner (the roles that read payments, E-84); for a maker the two fields are not in the answer at all, and the customer's own reads never carry them.",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md; build/prompts/API-BASE-8.md",
+      "decidedAt": "2026-11-30T12:00:00Z"
+    },
+    {
+      "id": "DEC-258",
+      "topic": "The maker's read of an order's wishes (HY5)",
+      "decision": "HY5: GET /v1/admin/concierge/orders/:id/wishes, for maker, ops and owner, lists {items: [{id, no, firstName}], nextCursor: null}: the wishes already delivered under that order, and, while the order is with a maker (given or making), the buyer's made wishes (sealed or live, not removed or erased, of the same business when the order is a business's) that are delivered under no order. A wish delivered under another order, another buyer's wish and another order's are never listed. A maker reads only an order given to them: another maker's order and an unknown order are 404.",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md; build/prompts/API-BASE-8.md",
+      "decidedAt": "2026-11-30T12:00:00Z"
+    },
+    {
+      "id": "DEC-259",
+      "topic": "The registry is frozen again after HY1 to HY5",
+      "decision": "The registry is re-frozen after DEC-254 to DEC-258 by tools/pipeline/freeze.py; reconcile.py was run twice with --reopen (identical outputs; .pipeline/ui-align-tasks.json restored byte for byte). Endpoint ids already issued are unchanged; E-268 was the last issued before, and the three new endpoints take E-269 (POST /v1/business/plan/pending/:reference/drop), E-270 (GET /v1/admin/concierge/orders/:id/wishes) and E-271 (GET /v1/admin/support/staff).",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md; build/prompts/API-BASE-8.md",
+      "decidedAt": "2026-11-30T12:00:00Z"
     }
   ]
 }

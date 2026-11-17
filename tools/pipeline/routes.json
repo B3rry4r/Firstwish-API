@@ -1815,6 +1815,36 @@
         "public"
       ],
       "decision": "DEC-245"
+    },
+    {
+      "resource": "Business",
+      "method": "POST",
+      "path": "/v1/business/plan/pending/:reference/drop",
+      "auth": [
+        "role:business"
+      ],
+      "decision": "DEC-254"
+    },
+    {
+      "resource": "StaffAccount",
+      "method": "GET",
+      "path": "/v1/admin/support/staff",
+      "auth": [
+        "staff:owner",
+        "staff:support"
+      ],
+      "decision": "DEC-256"
+    },
+    {
+      "resource": "ConciergeOrder",
+      "method": "GET",
+      "path": "/v1/admin/concierge/orders/:id/wishes",
+      "auth": [
+        "staff:maker",
+        "staff:ops",
+        "staff:owner"
+      ],
+      "decision": "DEC-258"
     }
   ],
   "fulfilment": {
@@ -2797,6 +2827,18 @@
         "signed": "boolean (optional: false turns Signed off, true turns it back on before its paid day)",
         "plan": "string (optional: open moves from Creator to Open and runs to the paid day, creator moves back before that day)"
       }
+    },
+    "GET /v1/admin/support/threads": {
+      "decision": "DEC-255",
+      "set": {
+        "q": "string (optional; 1 to 100 characters: matches a thread's subject, the person's name, the thread's email address or a wish number of the person's account; the email in the answer stays masked)"
+      }
+    },
+    "GET /v1/admin/concierge/orders": {
+      "decision": "DEC-255",
+      "set": {
+        "q": "string (optional; 1 to 100 characters: matches the order number, who ordered, the business name or a receiver's name on the order)"
+      }
     }
   },
   "extraFields": [
@@ -3289,6 +3331,20 @@
       "type": "object",
       "nullable": true,
       "decision": "DEC-245"
+    },
+    {
+      "resource": "ConciergeOrder",
+      "name": "paymentId",
+      "type": "string (the order's payment; ops and owner only, left out for a maker)",
+      "nullable": true,
+      "decision": "DEC-257"
+    },
+    {
+      "resource": "ConciergeOrder",
+      "name": "paymentReference",
+      "type": "string (the provider reference of that payment; ops and owner only, left out for a maker)",
+      "nullable": true,
+      "decision": "DEC-257"
     }
   ],
   "dropFields": [

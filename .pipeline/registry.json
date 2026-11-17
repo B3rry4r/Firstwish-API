@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "frozenAt": "2026-11-16T20:10:26Z",
+  "frozenAt": "2026-11-17T00:13:23Z",
   "framework": "nestjs",
   "generatedBy": "tools/pipeline/reconcile.py",
   "resources": [
@@ -3666,6 +3666,26 @@
           "notes": [
             "body by DEC-236"
           ]
+        },
+        {
+          "id": "E-269",
+          "method": "POST",
+          "path": "/v1/business/plan/pending/:reference/drop",
+          "auth": [
+            {
+              "kind": "role",
+              "role": "business"
+            }
+          ],
+          "body": [],
+          "response": null,
+          "sources": [
+            {
+              "src": "DEC-254",
+              "via": "ruling:DEC-254"
+            }
+          ],
+          "notes": []
         }
       ]
     },
@@ -4785,7 +4805,20 @@
           ],
           "nullable": true,
           "provenance": [
-            "DEC-199"
+            "DEC-199",
+            "DEC-257"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "paymentReference",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": true,
+          "provenance": [
+            "DEC-257"
           ],
           "supersedes": []
         },
@@ -5098,7 +5131,15 @@
               ]
             }
           ],
-          "body": [],
+          "body": [
+            {
+              "name": "q",
+              "type": "string (optional; 1 to 100 characters: matches the order number, who ordered, the business name or a receiver's name on the order)",
+              "from": [
+                "DEC-255"
+              ]
+            }
+          ],
           "response": {
             "entity": "ConciergeOrder",
             "cardinality": "list"
@@ -5110,6 +5151,7 @@
             }
           ],
           "notes": [
+            "body by DEC-255",
             "route by DEC-112"
           ]
         },
@@ -5251,6 +5293,30 @@
             "body by DEC-212",
             "route by DEC-112"
           ]
+        },
+        {
+          "id": "E-270",
+          "method": "GET",
+          "path": "/v1/admin/concierge/orders/:id/wishes",
+          "auth": [
+            {
+              "kind": "staff role",
+              "roles": [
+                "maker",
+                "ops",
+                "owner"
+              ]
+            }
+          ],
+          "body": [],
+          "response": null,
+          "sources": [
+            {
+              "src": "DEC-258",
+              "via": "ruling:DEC-258"
+            }
+          ],
+          "notes": []
         },
         {
           "id": "E-244",
@@ -20476,6 +20542,29 @@
           ]
         },
         {
+          "id": "E-271",
+          "method": "GET",
+          "path": "/v1/admin/support/staff",
+          "auth": [
+            {
+              "kind": "staff role",
+              "roles": [
+                "owner",
+                "support"
+              ]
+            }
+          ],
+          "body": [],
+          "response": null,
+          "sources": [
+            {
+              "src": "DEC-256",
+              "via": "ruling:DEC-256"
+            }
+          ],
+          "notes": []
+        },
+        {
           "id": "E-179",
           "method": "GET",
           "path": "/v1/admin/team",
@@ -24351,7 +24440,15 @@
               ]
             }
           ],
-          "body": [],
+          "body": [
+            {
+              "name": "q",
+              "type": "string (optional; 1 to 100 characters: matches a thread's subject, the person's name, the thread's email address or a wish number of the person's account; the email in the answer stays masked)",
+              "from": [
+                "DEC-255"
+              ]
+            }
+          ],
           "response": {
             "entity": "SupportThread",
             "cardinality": "list"
@@ -24363,6 +24460,7 @@
             }
           ],
           "notes": [
+            "body by DEC-255",
             "route by DEC-112"
           ]
         },

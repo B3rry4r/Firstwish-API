@@ -1,4 +1,5 @@
-import { Body, Controller, Delete, Get, HttpCode, Param, Post, Query } from "@nestjs/common";
+import { Body, Controller, Delete, Get, HttpCode, Param, Post, Query, Req } from "@nestjs/common";
+import type { Request } from "express";
 import {
   DeleteBusinessLoginsByIdParamsDto,
   GetAdminBusinessesByIdParamsDto,
@@ -12,14 +13,17 @@ import {
   PostBusinessClientWishesByIdApproveDateBodyDto,
   PostBusinessClientWishesByIdApproveDateParamsDto,
   PostBusinessLoginsBodyDto,
+  PostBusinessPlanPendingByReferenceDropParamsDto,
 } from "../../contracts";
 import type { Business, ClientWish, Invoice, InvoiceFile, Login } from "../../contracts";
 import { CurrentPrincipal, Roles, StaffRoles } from "../../common/auth/decorators";
 import type { Principal } from "../../common/auth/principal";
+import { requestIdOf } from "../../common/http/request-id";
 import { DEFAULT_LIMIT, Page } from "../../common/pagination/cursor";
 import { ClientWishesService } from "./client-wishes.service";
 import { InvoicesService } from "./invoices.service";
 import { LoginsService } from "./logins.service";
+import { PlanPaymentDrop } from "./plan-drop";
 import { PendingPlan, PlanOffer, PlanState } from "./plan-view";
 import { BusinessHeader, ProAccess } from "./pro-access";
 import { AdminBusiness, ProBusinessService, UsageAnswer } from "./pro-business.service";
@@ -33,6 +37,7 @@ export class ProBusinessController {
     private readonly wishes: ClientWishesService,
     private readonly invoices: InvoicesService,
     private readonly logins: LoginsService,
+    private readonly drops: PlanPaymentDrop,
   ) {}
 
   @Roles("person", "business")
@@ -46,6 +51,21 @@ export class ProBusinessController {
   @Get("plan")
   async plan(@CurrentPrincipal() p: Principal | undefined, @BusinessHeader() h: string | undefined): Promise<UsageAnswer & { offers: PlanOffer[]; pending: PendingPlan | null }> {
     return this.business.planOf((await this.access.require(p, h)).businessId);
+  }
+
+  /** E-269 (HY1): the owner drops the plan payment that is waiting; the answer is the plan read, so a new start is allowed at once. */
+  @Roles("person", "business")
+  @Post("plan/pending/:reference/drop")
+  @HttpCode(200)
+  async dropPending(
+    @Param() params: PostBusinessPlanPendingByReferenceDropParamsDto,
+    @CurrentPrincipal() p: Principal | undefined,
+    @BusinessHeader() h: string | undefined,
+    @Req() req: Request,
+  ): Promise<UsageAnswer & { offers: PlanOffer[]; pending: PendingPlan | null }> {
+    const c = await this.access.requireOwner(p, h);
+    await this.drops.drop(c.businessId, params.reference, { type: "account", id: c.accountId, ip: req.ip ?? null, requestId: requestIdOf(req) });
+    return this.business.planOf(c.businessId);
   }
 
   @Roles("person", "business")

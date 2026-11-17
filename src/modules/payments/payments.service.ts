@@ -64,6 +64,7 @@ export interface PaymentPage {
 export function refundDueWords(flags: readonly string[]): string {
   if (!flags.includes("refund_due")) return "";
   if (flags.includes("refund_due:keep_already_paid")) return "Someone else paid to keep this wish for the same time first, so this payment gave nothing. It is marked to be refunded.";
+  if (flags.includes("refund_due:paid_after_drop")) return "This payment came in after the business dropped it, and a plan was paid for another way meanwhile. It is marked to be refunded.";
   if (flags.includes("refund_due:paid_after_lapse")) return "This payment came in after it had lapsed, and the same thing was paid for another way meanwhile. It is marked to be refunded.";
   return "This payment gave nothing. It is marked to be refunded.";
 }
@@ -254,11 +255,29 @@ export class PaymentsService {
     return answer ? this.settlement.settle(answer) : null;
   }
 
+  /**
+   * The payer's own payment; HY1: a plan payment of a business is also read by everyone who may pay for that business's plan (its owner and a
+   * live login, the same people HH6 lets pay), whoever of them started it. A reference of any other payment or business is a 404.
+   */
   private async own(accountId: string, reference: string): Promise<Payment> {
     if (!UUID.test(accountId)) throw AppError.notFound();
     const row = await this.db.payment.findFirst({ where: { providerReference: reference, accountId } });
-    if (!row) throw AppError.notFound("No such payment.");
-    return row;
+    if (row) return row;
+    const plan = await this.db.payment.findFirst({ where: { providerReference: reference, purpose: "pro_plan", businessId: { not: null } } });
+    if (plan?.businessId && (await this.mayPayForPlan(accountId, plan.businessId))) return plan;
+    throw AppError.notFound("No such payment.");
+  }
+
+  /** The business's owner, or an account whose sign-in email is on a live (invited or active) login of it. */
+  private async mayPayForPlan(accountId: string, businessId: string): Promise<boolean> {
+    const rows = await this.db.$queryRaw<{ n: number }[]>`
+      SELECT 1 AS n FROM business b WHERE b.id = ${businessId}::uuid AND b."accountId" = ${accountId}::uuid
+      UNION ALL
+      SELECT 1 AS n FROM login l JOIN account a ON a.id = ${accountId}::uuid
+       WHERE l."businessId" = ${businessId}::uuid AND a.contact IS NOT NULL AND a."erasedAt" IS NULL AND lower(trim(l.contact)) = lower(a.contact)
+         AND l.status IN ('invited', 'active')
+      LIMIT 1`;
+    return rows.length > 0;
   }
 
   /** The payer's own payments, newest first, by cursor. The owner is a condition of the query. */

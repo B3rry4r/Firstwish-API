@@ -7,7 +7,8 @@ import { Clock } from "../../common/ports/clock.port";
 import { IdGenerator } from "../../common/ports/ids.port";
 import { decodeCursor, Page, toPage } from "../../common/pagination/cursor";
 import { toWireInstant } from "../../common/time/time";
-import type { ConciergeOrder, Maker } from "../../contracts";
+import { fullEmailOf, likeLiteral, searchWord } from "../../common/normalise/search-word";
+import type { ConciergeOrder, ConciergeOrderWish as OrderWish, Maker } from "../../contracts";
 import { AuditActor, AuditService, requireReason } from "../audit/audit.service";
 import { FulfilmentRegistry, type FulfilmentContext } from "../payments/fulfilment.registry";
 import { flagRefundDue } from "../refunds/refund-due";
@@ -31,6 +32,10 @@ export interface StaffCaller {
   roles: string[];
 }
 const seesAll = (c: StaffCaller): boolean => c.roles.includes("owner") || c.roles.includes("ops");
+/** HY4: the roles that may read payments (E-84) are the ones that see an order's payment id and provider reference. */
+const readsPayments = (c: StaffCaller): boolean => c.roles.some((r) => r === "owner" || r === "ops" || r === "finance");
+/** The order number staff see is "C-" and the last six characters of the id; a search by it (or by a part of it) is a match on those characters. */
+const ORDER_NO = /^(?:c-?)?([0-9a-f]{1,6})$/i;
 
 interface Ext {
   orderId: string;
@@ -146,11 +151,60 @@ export class ConciergeService implements OnModuleInit {
   // ---------------------------------------------------------------- staff
 
   async staffRead(c: StaffCaller, id: string): Promise<ConciergeOrder> {
-    return this.one(seesAll(c) ? {} : { makerId: c.staffId }, id);
+    return this.one(seesAll(c) ? {} : { makerId: c.staffId }, id, readsPayments(c));
   }
 
-  async staffList(c: StaffCaller, q: { cursor?: string; limit?: number }): Promise<Page<ConciergeOrder>> {
-    return this.page(seesAll(c) ? {} : { makerId: c.staffId }, q);
+  /**
+   * E-37 (HY2): `q` matches the order number (or a part of it), who ordered (the name of the person, the business name, or the person's whole
+   * email address: a part of an address matches nothing), a name on the order (the receivers of the wishes delivered for it) and the brief.
+   * A maker's list is still only their own orders, searched or not.
+   */
+  async staffList(c: StaffCaller, q: { cursor?: string; limit?: number; q?: string }): Promise<Page<ConciergeOrder>> {
+    const word = searchWord(q.q);
+    const match = word ? await this.matching(word) : null;
+    return this.page({ ...(seesAll(c) ? {} : { makerId: c.staffId }), ...(match ? { match } : {}) }, q, readsPayments(c));
+  }
+
+  private async matching(word: string): Promise<Prisma.ConciergeOrderWhereInput> {
+    const like = { contains: likeLiteral(word), mode: "insensitive" as const };
+    const email = fullEmailOf(word);
+    const byEmail = email
+      ? (await this.db.$queryRaw<{ id: string }[]>`
+          SELECT o.id::text AS id FROM concierge_order o JOIN account a ON a.id = o."accountId" WHERE lower(a.contact) = lower(${email})`).map((r) => r.id)
+      : [];
+    const hex = ORDER_NO.exec(word)?.[1]?.toLowerCase();
+    const byNumber = hex
+      ? (await this.db.$queryRaw<{ id: string }[]>`SELECT id::text AS id FROM concierge_order WHERE right(replace(id::text, '-', ''), 6) LIKE ${`%${hex}`}`).map((r) => r.id)
+      : [];
+    return {
+      OR: [
+        ...(byNumber.length ? [{ id: { in: byNumber } }] : []),
+        { account: { name: like } },
+        { business: { name: like } },
+        { brief: like },
+        ...(byEmail.length ? [{ id: { in: byEmail } }] : []),
+        { conciergeOrderWishByOrder: { some: { wish: { name: like } } } },
+      ],
+    };
+  }
+
+  /**
+   * E-270 (HZ2): the wishes delivered under this order, as id, wish number and the receiver's first name. Nothing of the buyer's other wishes,
+   * in any state: a buyer with none delivered gets an empty list. A maker reads only an order given to them; another maker's or an unknown
+   * order is 404.
+   */
+  async staffWishes(c: StaffCaller, id: string): Promise<Page<OrderWish>> {
+    if (!UUID.test(id)) throw AppError.notFound();
+    const o = await this.db.conciergeOrder.findFirst({ where: { id, ...(seesAll(c) ? {} : { makerId: c.staffId }) } });
+    if (!o) throw AppError.notFound();
+    const delivered = await this.db.conciergeOrderWish.findMany({ where: { orderId: o.id }, select: { wishId: true } });
+    const rows = await this.db.wish.findMany({
+      where: { id: { in: delivered.map((d) => d.wishId) } },
+      select: { id: true, no: true, name: true },
+      orderBy: { id: "asc" },
+      take: 1000,
+    });
+    return { items: rows.map((w) => ({ id: w.id, no: w.no ?? "", firstName: (w.name ?? "").trim().split(/\s+/)[0] ?? "" })), nextCursor: null };
   }
 
   /** E-36: open orders due by the end of the window (the week by default), late ones first. */
@@ -173,7 +227,7 @@ export class ConciergeService implements OnModuleInit {
     const page = toPage(rows, limit, (r) => ({ key: r.dueAt.toISOString(), id: r.id }));
     const orders = await this.db.conciergeOrder.findMany({ where: { id: { in: page.items.map((r) => r.id) } } });
     const byId = new Map(orders.map((o) => [o.id, o]));
-    const items = await this.wire(page.items.map((r) => byId.get(r.id)).filter((o): o is OrderRow => !!o));
+    const items = await this.wire(page.items.map((r) => byId.get(r.id)).filter((o): o is OrderRow => !!o), readsPayments(c));
     return { items, nextCursor: page.nextCursor };
   }
 
@@ -213,7 +267,7 @@ export class ConciergeService implements OnModuleInit {
       await tx.$executeRaw`UPDATE concierge_order_ext SET "amountKobo" = ${BigInt(body.quoteKobo)} WHERE "orderId" = ${id}::uuid`;
       await this.audit.write(tx, { actor, section: SECTION, action: "concierge.quote", target: { type: "ConciergeOrder", id }, reason, changedFields: ["quoteKobo", "status"] });
     });
-    return this.one({}, id);
+    return this.one({}, id, true);
   }
 
   /**
@@ -245,7 +299,7 @@ export class ConciergeService implements OnModuleInit {
         changedFields: ["makerId", "status"],
       });
     });
-    return this.one({}, id);
+    return this.one({}, id, true);
   }
 
   /** E-34: the order's own maker (or the owner) marks it delivered with the wishes made. They must be real wishes of the buyer. */
@@ -288,7 +342,7 @@ export class ConciergeService implements OnModuleInit {
       });
       await this.audit.write(tx, { actor, section: SECTION, action: "concierge.deliver", target: { type: "ConciergeOrder", id }, reason, changedFields: ["status", "wishes"] });
     });
-    return this.one({}, id);
+    return this.one({}, id, readsPayments(c));
   }
 
   /** Staff (ops, owner) cancel an order from any state that is not an end, with a reason and an audit row. */
@@ -298,7 +352,7 @@ export class ConciergeService implements OnModuleInit {
       const o = await this.lock(tx, id, {});
       await this.cancelLocked(tx, o, actor, reason);
     });
-    return this.one({}, id);
+    return this.one({}, id, true);
   }
 
   // ---------------------------------------------------------------- inside
@@ -360,23 +414,27 @@ export class ConciergeService implements OnModuleInit {
     return rows.length > 0;
   }
 
-  private async one(where: { accountId?: string; makerId?: string }, id: string): Promise<ConciergeOrder> {
+  private async one(where: { accountId?: string; makerId?: string }, id: string, withPayment = false): Promise<ConciergeOrder> {
     if (!UUID.test(id)) throw AppError.notFound();
     const row = await this.db.conciergeOrder.findFirst({ where: { id, ...where } });
     if (!row) throw AppError.notFound();
-    return (await this.wire([row]))[0];
+    return (await this.wire([row], withPayment))[0];
   }
 
-  private async page(where: { accountId?: string; makerId?: string }, q: { cursor?: string; limit?: number }): Promise<Page<ConciergeOrder>> {
+  private async page(where: { accountId?: string; makerId?: string; match?: Prisma.ConciergeOrderWhereInput }, q: { cursor?: string; limit?: number }, withPayment = false): Promise<Page<ConciergeOrder>> {
     const limit = Math.min(Math.max(q.limit ?? 20, 1), 50);
     const pos = q.cursor ? decodeCursor(q.cursor) : null;
-    const rows = await this.db.conciergeOrder.findMany({ where: { ...where, ...(pos ? { id: { lt: pos.id } } : {}) }, orderBy: { id: "desc" }, take: limit + 1 });
+    const { match, ...scope } = where;
+    const rows = await this.db.conciergeOrder.findMany({ where: { ...scope, ...(match ? { AND: [match] } : {}), ...(pos ? { id: { lt: pos.id } } : {}) }, orderBy: { id: "desc" }, take: limit + 1 });
     const page = toPage(rows, limit, (r) => ({ key: 0, id: r.id }));
-    return { items: await this.wire(page.items), nextCursor: page.nextCursor };
+    return { items: await this.wire(page.items, withPayment), nextCursor: page.nextCursor };
   }
 
-  /** The orders on the wire. `record` is the report: for each delivered wish whether it was opened (counted from the receiver's opens). */
-  private async wire(rows: OrderRow[]): Promise<ConciergeOrder[]> {
+  /**
+   * The orders on the wire. `record` is the report: for each delivered wish whether it was opened (counted from the receiver's opens).
+   * `withPayment` (HY4) adds the payment's id and provider reference: only the staff roles that may read payments ask for it.
+   */
+  private async wire(rows: OrderRow[], withPayment = false): Promise<ConciergeOrder[]> {
     if (!rows.length) return [];
     const ids = rows.map((r) => r.id);
     const now = this.clock.now();
@@ -393,6 +451,8 @@ export class ConciergeService implements OnModuleInit {
       this.db.staffAccount.findMany({ where: { id: { in: rows.map((r) => r.makerId).filter((m): m is string => !!m) } }, select: { id: true, name: true } }),
       this.db.business.findMany({ where: { id: { in: rows.map((r) => r.businessId).filter((b): b is string => !!b) } }, select: { id: true, name: true } }),
     ]);
+    const payIds = withPayment ? exts.flatMap((e) => (e.paymentId ? [e.paymentId] : [])) : [];
+    const refs = new Map((payIds.length ? await this.db.payment.findMany({ where: { id: { in: payIds } }, select: { id: true, providerReference: true } }) : []).map((p) => [p.id, p.providerReference]));
     const firstOpen = new Map(opened.map((w) => [w.id, w.openedAt]));
     const makerName = new Map(makers.map((m) => [m.id, m.name]));
     const bizName = new Map(businesses.map((b) => [b.id, b.name]));
@@ -440,6 +500,10 @@ export class ConciergeService implements OnModuleInit {
         late: open && dueAt !== null && dueAt.getTime() < now.getTime(),
         wishIds: mine.map((m) => m.wishId),
       };
+      if (withPayment) {
+        wire.paymentId = e?.paymentId ?? null;
+        wire.paymentReference = e?.paymentId ? (refs.get(e.paymentId) ?? null) : null;
+      }
       return wire;
     });
   }

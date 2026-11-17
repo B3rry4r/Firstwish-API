@@ -48,6 +48,14 @@ export class CancelBodyDto {
 }
 
 
+/** E-37 (HY2): the staff list takes a search word beside the cursor and limit. */
+export class StaffOrdersQueryDto extends CursorQueryDto {
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  q?: string;
+}
+
 /** E-36: the window is two calendar dates (A17). */
 export class DueQueryDto extends CursorQueryDto {
   @IsOptional()

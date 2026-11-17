@@ -10,7 +10,8 @@ import { NoticesService } from "../../notices/notices.service";
 import { JobsService } from "../../jobs/jobs.service";
 
 const ROOT = join(__dirname, "../../../..");
-const NOW = new Date("2026-12-01T09:00:00.000Z");
+// a month no other spec invoices in: the invoice numbers asserted gap-free below belong to this spec alone
+const NOW = new Date("2029-09-03T09:00:00.000Z");
 const ids = new UuidV7Maker();
 const run = `${process.pid}${Date.now() % 100000}`;
 let seq = 0;
@@ -47,14 +48,14 @@ describe("B17 business: plan, usage, client wishes, invoices, logins, staff", ()
     return { ...w, businessId };
   };
   const live = (over: Record<string, unknown> = {}) =>
-    owner({ plan: "studio", allowance: 35, used: 0, rolled: 0, month: "2026-12", renews: new Date("2027-01-01T09:00:00.000Z"), ...over });
+    owner({ plan: "studio", allowance: 35, used: 0, rolled: 0, month: "2029-09", renews: new Date("2029-10-01T09:00:00.000Z"), ...over });
   const staffToken = (roles: ("owner" | "ops" | "finance" | "moderator")[]) => {
     const token = `b17-staff-${++seq}-${run}`;
     t.tokens.set(token, { kind: "staff", staffId: ids.next(), roles });
     return token;
   };
   const get = (path: string, token?: string) => (token ? t.http().get(path).set(bearer(token)) : t.http().get(path));
-  const wishBody = { client: "Ada Obi", kind: "birthday", occasion: "birthday", day: "2027-03-04" };
+  const wishBody = { client: "Ada Obi", kind: "birthday", occasion: "birthday", day: "2029-12-04" };
 
   async function pay(o: { accountId: string; businessId: string }, sku: string) {
     const book = await db.price.findFirstOrThrow({ where: { sku }, orderBy: { version: "desc" } });
@@ -75,16 +76,16 @@ describe("B17 business: plan, usage, client wishes, invoices, logins, staff", ()
   }
 
   it("1. usage: the plan, wishes left, what rolled over, pack, logins, Vault, renews; the month is rolled first", async () => {
-    const o = await owner({ plan: "starter", allowance: 10, used: 4, rolled: 0, month: "2026-11", renews: new Date("2026-12-20T09:00:00.000Z"), pack: 2 });
+    const o = await owner({ plan: "starter", allowance: 10, used: 4, rolled: 0, month: "2029-08", renews: new Date("2029-09-20T09:00:00.000Z"), pack: 2 });
     await db.login.create({ data: { id: ids.next(), businessId: o.businessId, contact: "x@example.com", status: "invited" } });
     const res = await get("/v1/business/usage", o.token);
     expect(res.status).toBe(200);
-    expect(res.body).toMatchObject({ allowance: 10, rolled: 6, used: 0, total: 16, left: 16, pack: 2, canMake: true, plan: "starter", live: true, month: "2026-12" });
-    expect(res.body.renews).toBe("2026-12-20T09:00:00.000Z");
-    expect(res.body.resets).toBe("2027-01-01T00:00:00.000Z");
+    expect(res.body).toMatchObject({ allowance: 10, rolled: 6, used: 0, total: 16, left: 16, pack: 2, canMake: true, plan: "starter", live: true, month: "2029-09" });
+    expect(res.body.renews).toBe("2029-09-20T09:00:00.000Z");
+    expect(res.body.resets).toBe("2029-10-01T00:00:00.000Z");
     expect(res.body.logins).toEqual({ used: 2, allowed: 1 });
     expect(res.body.vault).toMatchObject({ usedGb: 0, allowedGb: 100 });
-    expect((await db.business.findUniqueOrThrow({ where: { id: o.businessId } })).month).toBe("2026-11"); // OO6: a read writes no roll
+    expect((await db.business.findUniqueOrThrow({ where: { id: o.businessId } })).month).toBe("2029-08"); // OO6: a read writes no roll
     const plan = await get("/v1/business/plan", o.token);
     expect(plan.status).toBe(200);
     expect(plan.body.plan).toBe("starter");
@@ -106,11 +107,11 @@ describe("B17 business: plan, usage, client wishes, invoices, logins, staff", ()
   });
 
   it("2. a client wish draws one wish in the same transaction: allowance first, then pack; none left is 402", async () => {
-    const o = await owner({ plan: "starter", allowance: 10, used: 9, rolled: 0, month: "2026-12", renews: new Date("2027-01-01T09:00:00.000Z"), pack: 1 });
+    const o = await owner({ plan: "starter", allowance: 10, used: 9, rolled: 0, month: "2029-09", renews: new Date("2029-10-01T09:00:00.000Z"), pack: 1 });
     const post = () => t.http().post("/v1/business/client-wishes").set(bearer(o.token)).send({ ...wishBody, client: "  Ada   Obi ", kind: "Birthday" });
     const a = await post();
     expect(a.status).toBe(201);
-    expect(a.body).toMatchObject({ client: "Ada Obi", kind: "birthday", occasion: "birthday", day: "2027-03-04", from: "month", no: "0901" });
+    expect(a.body).toMatchObject({ client: "Ada Obi", kind: "birthday", occasion: "birthday", day: "2029-12-04", from: "month", no: "0901" });
     const b = await post();
     expect(b.body).toMatchObject({ from: "pack", no: "0902" });
     const c = await post();
@@ -126,7 +127,7 @@ describe("B17 business: plan, usage, client wishes, invoices, logins, staff", ()
   });
 
   it("2. 20 at once with 3 left: three are made, the rest are 402, and the counts match", async () => {
-    const o = await owner({ plan: "starter", allowance: 10, used: 7, rolled: 0, month: "2026-12", renews: new Date("2027-01-01T09:00:00.000Z") });
+    const o = await owner({ plan: "starter", allowance: 10, used: 7, rolled: 0, month: "2029-09", renews: new Date("2029-10-01T09:00:00.000Z") });
     const res = await Promise.all(Array.from({ length: 20 }, () => t.http().post("/v1/business/client-wishes").set(bearer(o.token)).send(wishBody)));
     expect(res.filter((r) => r.status === 201)).toHaveLength(3);
     expect(res.filter((r) => r.status === 402)).toHaveLength(17);
@@ -138,10 +139,10 @@ describe("B17 business: plan, usage, client wishes, invoices, logins, staff", ()
 
   it("2. a bad body is 422 with fields; a reveal is not made here; another business never sees the wish", async () => {
     const o = await live();
-    const bad = await t.http().post("/v1/business/client-wishes").set(bearer(o.token)).send({ client: " ", kind: "Bad kind!", occasion: "", day: "2027-03-04" });
+    const bad = await t.http().post("/v1/business/client-wishes").set(bearer(o.token)).send({ client: " ", kind: "Bad kind!", occasion: "", day: "2029-12-04" });
     expect(bad.status).toBe(422);
     expect(Object.keys(bad.body.error.fields).sort()).toEqual(["client", "kind", "occasion"]);
-    const badDay = await t.http().post("/v1/business/client-wishes").set(bearer(o.token)).send({ ...wishBody, day: "2027-02-31" });
+    const badDay = await t.http().post("/v1/business/client-wishes").set(bearer(o.token)).send({ ...wishBody, day: "2029-11-31" });
     expect(badDay.status).toBe(422);
     expect(Object.keys(badDay.body.error.fields)).toEqual(["day"]);
     const rev = await t.http().post("/v1/business/client-wishes").set(bearer(o.token)).send({ ...wishBody, reveal: [{}] });
@@ -158,7 +159,7 @@ describe("B17 business: plan, usage, client wishes, invoices, logins, staff", ()
     const o = await live();
     const personId = ids.next();
     await db.person.create({ data: { id: personId, businessId: o.businessId, name: "Kemi" } });
-    const body = { client: "Kemi", day: "2027-03-04", key: `${personId}:b:2027`, kind: "teams", occasion: "Staff birthday" };
+    const body = { client: "Kemi", day: "2029-12-04", key: `${personId}:b:2027`, kind: "teams", occasion: "Staff birthday" };
     const a = await t.http().post(`/v1/business/client-wishes/${personId}/approve-date`).set(bearer(o.token)).send(body);
     expect(a.status).toBe(201);
     const b = await t.http().post(`/v1/business/client-wishes/${personId}/approve-date`).set(bearer(o.token)).send(body);
@@ -170,7 +171,7 @@ describe("B17 business: plan, usage, client wishes, invoices, logins, staff", ()
   });
 
   it("3. logins: the plan's number (Starter 1, Studio 3) is the owner's seat plus extras; over it is 409; a repeat answers the same login", async () => {
-    const s = await owner({ plan: "starter", allowance: 10, month: "2026-12", renews: new Date("2027-01-01T09:00:00.000Z") });
+    const s = await owner({ plan: "starter", allowance: 10, month: "2029-09", renews: new Date("2029-10-01T09:00:00.000Z") });
     const full = await t.http().post("/v1/business/logins").set(bearer(s.token)).send({ contact: "one@example.com" });
     expect(full.status).toBe(409);
     expect(full.body.error.code).toBe("logins_full");
@@ -227,6 +228,10 @@ describe("B17 business: plan, usage, client wishes, invoices, logins, staff", ()
     expect((await t.http().post("/v1/business/logins").set(bearer(o.token)).send({ contact: "next@studio.ng" })).status).toBe(201);
   });
 
+  /** How many invoices of the whole database carry a number from lo to hi, whatever month their prefix names (the counter is one for all). */
+  const numbered = async (lo: number, hi: number) =>
+    Number((await db.$queryRaw<{ n: bigint }[]>`SELECT count(*) AS n FROM invoice WHERE no LIKE 'FW-%' AND split_part(no, '-', 3)::int BETWEEN ${lo} AND ${hi}`)[0].n);
+
   it("4. every plan and pack payment leaves one invoice: in order, no gaps, the VAT part, the period; the list and the file are the owner's", async () => {
     const o = await owner();
     const a = await pay(o, "pro.starter");
@@ -234,8 +239,10 @@ describe("B17 business: plan, usage, client wishes, invoices, logins, staff", ()
     const rows = await db.$queryRaw<{ no: string; amount: bigint; vat: bigint }[]>`SELECT no, amount, vat FROM invoice WHERE "businessId" = ${o.businessId}::uuid ORDER BY id`;
     expect(rows).toHaveLength(2);
     const n = (no: string) => Number(no.slice(-4));
-    expect(n(rows[1].no) - n(rows[0].no)).toBe(1);
-    expect(rows[0].no).toMatch(/^FW-2612-\d{4}$/);
+    // one counter numbers every invoice of the database, so another spec's invoice may fall between the two; none of the numbers between them may be missing
+    expect(n(rows[1].no) - n(rows[0].no)).toBeGreaterThanOrEqual(1);
+    expect(await numbered(n(rows[0].no), n(rows[1].no))).toBe(n(rows[1].no) - n(rows[0].no) + 1);
+    expect(rows[0].no).toMatch(/^FW-2909-\d{4}$/);
     expect(Number(rows[0].amount)).toBe(a.total);
     expect(Number(rows[0].vat)).toBe(Math.round((a.total * 0.075) / 1.075));
     expect(Number(rows[1].vat)).toBe(Math.round((b.total * 0.075) / 1.075));
@@ -293,15 +300,14 @@ describe("B17 business: plan, usage, client wishes, invoices, logins, staff", ()
     const nums = all.map((i) => Number((i.no ?? "").slice(-4))).sort((x, y) => x - y);
     expect(new Set(nums).size).toBe(10);
     expect(nums[9] - nums[0]).toBeGreaterThanOrEqual(9);
-    const between = await db.invoice.count({ where: { no: { gte: all.map((i) => i.no as string).sort()[0], lte: all.map((i) => i.no as string).sort()[9] } } });
-    expect(between).toBe(nums[9] - nums[0] + 1);
+    expect(await numbered(nums[0], nums[9])).toBe(nums[9] - nums[0] + 1);
   });
 
   it("5. a lapsed plan keeps its client wishes; new ones come only from pack wishes", async () => {
     const o = await live();
     const made = await t.http().post("/v1/business/client-wishes").set(bearer(o.token)).send(wishBody);
     expect(made.status).toBe(201);
-    t.clock.set(new Date("2027-02-10T09:00:00.000Z"));
+    t.clock.set(new Date("2029-11-10T09:00:00.000Z"));
     expect((await get(`/v1/business/client-wishes/${made.body.id}`, o.token)).status).toBe(200);
     expect((await get("/v1/business/client-wishes", o.token)).body.items).toHaveLength(1);
     const usage = await get("/v1/business/usage", o.token);
@@ -437,23 +443,23 @@ describe("B17 business: plan, usage, client wishes, invoices, logins, staff", ()
   });
 
   it("OO6 two reads in a new month leave the row unchanged; a draw writes the roll", async () => {
-    const o = await live({ used: 10, rolled: 0, renews: new Date("2027-02-01T09:00:00.000Z") });
-    t.clock.set(new Date("2027-01-05T09:00:00.000Z"));
+    const o = await live({ used: 10, rolled: 0, renews: new Date("2029-11-01T09:00:00.000Z") });
+    t.clock.set(new Date("2029-10-05T09:00:00.000Z"));
     const snap = () => db.business.findUniqueOrThrow({ where: { id: o.businessId } });
     const before = await snap();
     const r1 = await get("/v1/business", o.token);
     const r2 = await get("/v1/business/usage", o.token);
     const staff = await get(`/v1/admin/businesses/${o.businessId}`, staffToken(["ops"]));
-    expect(r1.body).toMatchObject({ month: "2027-01", used: 0, rolled: 25 });
-    expect(r2.body).toMatchObject({ month: "2027-01", used: 0, rolled: 25 });
-    expect(staff.body.state).toMatchObject({ month: "2027-01", used: 0, rolled: 25 });
+    expect(r1.body).toMatchObject({ month: "2029-10", used: 0, rolled: 25 });
+    expect(r2.body).toMatchObject({ month: "2029-10", used: 0, rolled: 25 });
+    expect(staff.body.state).toMatchObject({ month: "2029-10", used: 0, rolled: 25 });
     const after = await snap();
     expect(after).toEqual(before);
-    expect(after.month).toBe("2026-12");
+    expect(after.month).toBe("2029-09");
     const made = await t.http().post("/v1/business/client-wishes").set(bearer(o.token)).send(wishBody);
     expect(made.status).toBe(201);
     const drawn = await snap();
-    expect(drawn.month).toBe("2027-01");
+    expect(drawn.month).toBe("2029-10");
     expect(drawn.used).toBe(1);
     expect(drawn.rolled).toBe(25);
   });

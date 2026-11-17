@@ -572,6 +572,8 @@ export interface ConciergeOrder {
   occasion: string;
   paidAt?: Instant | null;
   paymentId?: string | null;
+  /** HY4 (DEC-257): the provider reference of the order's payment; in the answer for ops and owner only */
+  paymentReference?: string | null;
   person?: string | null;
   placed: Instant;
   quoteKobo?: Kobo | null;
@@ -2353,6 +2355,8 @@ export interface PendingPlan {
   reference: string;
   plan: string;
   startedAt: Instant;
+  /** HY1 (DEC-254): when the waiting payment lapses */
+  lapsesAt: Instant;
 }
 /** E-27 answers the plan state (the usage fields first), what each plan on offer would do, and the plan payment still waiting (HR1). */
 export interface BusinessPlanAnswer extends ProUsage {
@@ -2367,6 +2371,14 @@ export interface BusinessPlanAnswer extends ProUsage {
   pending: PendingPlan | null;
 }
 export type GetBusinessPlanResponse = BusinessPlanAnswer;
+
+/** E-269 POST /v1/business/plan/pending/:reference/drop. Auth: business; the owner only (DEC-254). */
+export interface PostBusinessPlanPendingByReferenceDropParams {
+  reference: string;
+}
+export type PostBusinessPlanPendingByReferenceDropBody = Record<string, never>;
+export type PostBusinessPlanPendingByReferenceDropHeaders = Record<string, never>;
+export type PostBusinessPlanPendingByReferenceDropResponse = BusinessPlanAnswer;
 
 /** E-28 GET /v1/chapter-specs. Auth: signed in. */
 export type GetChapterSpecsParams = Record<string, never>;
@@ -2485,6 +2497,8 @@ export type GetAdminConciergeOrdersParams = Record<string, never>;
 export interface GetAdminConciergeOrdersQuery {
   cursor?: string;
   limit?: number;
+  /** string (optional; 1 to 100 characters: matches the order number, who ordered, the business name or a receiver's name on the order) (DEC-255) */
+  q?: string;
 }
 export type GetAdminConciergeOrdersHeaders = Record<string, never>;
 export type GetAdminConciergeOrdersResponse = PaginatedList<ConciergeOrder>;
@@ -2496,6 +2510,22 @@ export interface GetAdminConciergeOrdersByIdParams {
 export type GetAdminConciergeOrdersByIdQuery = Record<string, never>;
 export type GetAdminConciergeOrdersByIdHeaders = Record<string, never>;
 export type GetAdminConciergeOrdersByIdResponse = ConciergeOrder;
+
+/** HY5: a wish the buyer of an order has made, as the maker reads it to deliver it */
+export interface ConciergeOrderWish {
+  id: string;
+  /** the wish number */
+  no: string;
+  /** the receiver's first name ("" when the wish has none) */
+  firstName: string;
+}
+/** E-270 GET /v1/admin/concierge/orders/:id/wishes. Auth: maker,ops,owner; a maker reads only an order given to them (DEC-258). */
+export interface GetAdminConciergeOrdersByIdWishesParams {
+  id: string;
+}
+export type GetAdminConciergeOrdersByIdWishesQuery = Record<string, never>;
+export type GetAdminConciergeOrdersByIdWishesHeaders = Record<string, never>;
+export type GetAdminConciergeOrdersByIdWishesResponse = PaginatedList<ConciergeOrderWish>;
 
 /** E-243 POST /v1/admin/concierge/orders/:id/cancel. Auth: ops,owner. */
 export interface PostAdminConciergeOrdersByIdCancelParams {
@@ -4528,9 +4558,23 @@ export type GetAdminSupportThreadsParams = Record<string, never>;
 export interface GetAdminSupportThreadsQuery {
   cursor?: string;
   limit?: number;
+  /** string (optional; 1 to 100 characters: matches a thread's subject, the person's name, the thread's email address or a wish number of the person's account; the email in the answer stays masked) (DEC-255) */
+  q?: string;
 }
 export type GetAdminSupportThreadsHeaders = Record<string, never>;
 export type GetAdminSupportThreadsResponse = PaginatedList<SupportThread>;
+
+/** HY3: a staff member a thread can be handed to: no email, no sign-in detail */
+export interface StaffHandOver {
+  id: string;
+  name: string;
+  role: string;
+}
+/** E-271 GET /v1/admin/support/staff. Auth: owner,support (DEC-256). */
+export type GetAdminSupportStaffParams = Record<string, never>;
+export type GetAdminSupportStaffQuery = Record<string, never>;
+export type GetAdminSupportStaffHeaders = Record<string, never>;
+export type GetAdminSupportStaffResponse = PaginatedList<StaffHandOver>;
 
 /** E-207 GET /v1/admin/support/threads/:id. Auth: ops,owner,support. */
 export interface GetAdminSupportThreadsByIdParams {
@@ -5036,6 +5080,7 @@ export interface EndpointContracts {
   "E-25": { params: GetBusinessParams; query: GetBusinessQuery; headers: GetBusinessHeaders; response: GetBusinessResponse };
   "E-26": { params: PatchBusinessParams; body: PatchBusinessBody; headers: PatchBusinessHeaders; response: PatchBusinessResponse };
   "E-27": { params: GetBusinessPlanParams; query: GetBusinessPlanQuery; headers: GetBusinessPlanHeaders; response: GetBusinessPlanResponse };
+  "E-269": { params: PostBusinessPlanPendingByReferenceDropParams; body: PostBusinessPlanPendingByReferenceDropBody; headers: PostBusinessPlanPendingByReferenceDropHeaders; response: PostBusinessPlanPendingByReferenceDropResponse };
   "E-28": { params: GetChapterSpecsParams; query: GetChapterSpecsQuery; headers: GetChapterSpecsHeaders; response: GetChapterSpecsResponse };
   "E-29": { params: GetBusinessClientWishesParams; query: GetBusinessClientWishesQuery; headers: GetBusinessClientWishesHeaders; response: GetBusinessClientWishesResponse };
   "E-30": { params: PostBusinessClientWishesParams; body: PostBusinessClientWishesBody; headers: PostBusinessClientWishesHeaders; response: PostBusinessClientWishesResponse };
@@ -5046,6 +5091,7 @@ export interface EndpointContracts {
   "E-35": { params: PostAdminConciergeOrdersByIdQuoteParams; body: PostAdminConciergeOrdersByIdQuoteBody; headers: PostAdminConciergeOrdersByIdQuoteHeaders; response: PostAdminConciergeOrdersByIdQuoteResponse };
   "E-36": { params: GetAdminConciergeDueParams; query: GetAdminConciergeDueQuery; headers: GetAdminConciergeDueHeaders; response: GetAdminConciergeDueResponse };
   "E-37": { params: GetAdminConciergeOrdersParams; query: GetAdminConciergeOrdersQuery; headers: GetAdminConciergeOrdersHeaders; response: GetAdminConciergeOrdersResponse };
+  "E-270": { params: GetAdminConciergeOrdersByIdWishesParams; query: GetAdminConciergeOrdersByIdWishesQuery; headers: GetAdminConciergeOrdersByIdWishesHeaders; response: GetAdminConciergeOrdersByIdWishesResponse };
   "E-38": { params: GetAdminConciergeOrdersByIdParams; query: GetAdminConciergeOrdersByIdQuery; headers: GetAdminConciergeOrdersByIdHeaders; response: GetAdminConciergeOrdersByIdResponse };
   "E-243": { params: PostAdminConciergeOrdersByIdCancelParams; body: PostAdminConciergeOrdersByIdCancelBody; headers: PostAdminConciergeOrdersByIdCancelHeaders; response: PostAdminConciergeOrdersByIdCancelResponse };
   "E-39": { params: PostAdminConciergeOrdersByIdMakerParams; body: PostAdminConciergeOrdersByIdMakerBody; headers: PostAdminConciergeOrdersByIdMakerHeaders; response: PostAdminConciergeOrdersByIdMakerResponse };
@@ -5236,6 +5282,7 @@ export interface EndpointContracts {
   "E-203": { params: PostSupportMessagesParams; body: PostSupportMessagesBody; headers: PostSupportMessagesHeaders; response: PostSupportMessagesResponse };
   "E-204": { params: PostAdminSupportThreadsByIdAssigneeParams; body: PostAdminSupportThreadsByIdAssigneeBody; headers: PostAdminSupportThreadsByIdAssigneeHeaders; response: PostAdminSupportThreadsByIdAssigneeResponse };
   "E-205": { params: GetAdminSupportCountsParams; query: GetAdminSupportCountsQuery; headers: GetAdminSupportCountsHeaders; response: GetAdminSupportCountsResponse };
+  "E-271": { params: GetAdminSupportStaffParams; query: GetAdminSupportStaffQuery; headers: GetAdminSupportStaffHeaders; response: GetAdminSupportStaffResponse };
   "E-206": { params: GetAdminSupportThreadsParams; query: GetAdminSupportThreadsQuery; headers: GetAdminSupportThreadsHeaders; response: GetAdminSupportThreadsResponse };
   "E-207": { params: GetAdminSupportThreadsByIdParams; query: GetAdminSupportThreadsByIdQuery; headers: GetAdminSupportThreadsByIdHeaders; response: GetAdminSupportThreadsByIdResponse };
   "E-208": { params: PostAdminSupportThreadsByIdReplyParams; body: PostAdminSupportThreadsByIdReplyBody; headers: PostAdminSupportThreadsByIdReplyHeaders; response: PostAdminSupportThreadsByIdReplyResponse };

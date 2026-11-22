@@ -176,6 +176,8 @@ export class RevealsPublicService {
     if ((position as number) >= ids.length) throw AppError.validation({ position: `This reveal has ${ids.length} photos, from 0 to ${Math.max(ids.length - 1, 0)}.` });
     const file = ids[position as number].toLowerCase();
     return this.db.$transaction(async (tx) => {
+      // II2: a mark and the removal of the same file cannot both win. The file's row is share-locked first (the removal locks it for update, then clears hearts), so either the removal has finished and the check below refuses the mark, or it waits until the mark is stored and then clears it. Same lock order as the removal, so no deadlock.
+      if (marked === true) await tx.$queryRaw`SELECT 1 FROM stored_file WHERE id = ${file}::uuid FOR SHARE`;
       const rows = await tx.$queryRaw<{ hearts: string[]; fileIds: unknown }[]>`SELECT hearts, "fileIds" FROM reveal_access WHERE "linkId" = ${r.linkId}::uuid AND "offAt" IS NULL FOR UPDATE`;
       const now = rows[0];
       if (!now) throw gone();

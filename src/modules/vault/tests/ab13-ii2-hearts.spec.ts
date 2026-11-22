@@ -69,4 +69,32 @@ describe("API-BASE-13 case 2 (II2): hearts and files that are gone or not this s
     // unmarking it again changes nothing and is not an error
     expect((await mark(x.code, 1, false)).body).toEqual({ hearts: [2] });
   });
+
+  it("30 marks in parallel with the removal of the files, 10 rounds: no heart on a gone file, and the reads show none", async () => {
+    for (let round = 0; round < 10; round++) {
+      const x = await setup();
+      const n = 12;
+      const extra = await k.shootWith(x.o, "proofs", n);
+      const wish = await k.clientWish(x.o);
+      const sent = await k.post(`/v1/business/client-wishes/${wish}/send-reveal`, x.o.token, { shoot: extra.shoot, set: "proofs", reveal: k.revealBody() });
+      expect(sent.status).toBe(200);
+      const [link] = await k.db.$queryRaw<{ id: string; code: string }[]>`SELECT "linkId"::text AS id, code FROM reveal_access WHERE "wishId" = ${wish}::uuid`;
+      const jobs: Promise<{ status: number }>[] = [];
+      for (let i = 0; i < 10; i++) {
+        jobs.push(mark(link.code, i, true));
+        jobs.push(k.t.http().delete(`/v1/uploads/${extra.files[i]}`).set("authorization", `Bearer ${x.o.token}`).send({}));
+        jobs.push(mark(link.code, i, true));
+        jobs.push(mark(link.code, i, true));
+      }
+      const res = await Promise.all(jobs);
+      for (const r of res) expect([200, 204, 422]).toContain(r.status);
+      const hearts = await stored(link.id);
+      const live = new Set((await k.db.$queryRaw<{ id: string }[]>`SELECT id::text AS id FROM stored_file WHERE id = ANY(${extra.files}::uuid[]) AND status <> 'deleted'`).map((r) => r.id));
+      expect(hearts.filter((h) => !live.has(h))).toEqual([]);
+      const wishRead = (await k.get(`/v1/business/client-wishes/${wish}`, x.o.token)).body.hearts as number[];
+      const shootRead = (await k.get(`/v1/business/shoots/${extra.shoot}`, x.o.token)).body.hearts as string[];
+      expect(wishRead.length).toBe(hearts.length);
+      expect(shootRead.filter((h) => !live.has(h))).toEqual([]);
+    }
+  }, 180000);
 });

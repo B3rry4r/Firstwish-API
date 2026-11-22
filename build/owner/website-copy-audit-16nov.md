@@ -72,3 +72,7 @@ shared colours. They sit on the accepted list with that reason. Three ways to fi
   "Featured styles" shelf.
 - The canvas draws no public page for a creator, so none was built; the server can already serve one (a creator's
   listed wishes and approved styles). Say if you want that page.
+
+## Asked on 22 Nov (late), still open
+- The portrait video as an extra: the server sells an extra only until the wish opens, so a Keepsake that is already showing cannot buy the video (the page no longer offers it there; a ticket that includes the video, and a resting wish, still get it). Should a showing wish be able to buy it? (Today: no.)
+- Defaults made by the lead on 22 Nov that the owner may override: II1 (an approved creator style's document is public where it is played; a draft never), II3 (a wish keeps the style version it was made in), II4 (a file an approved version uses is kept for its wishes after the creator deletes it), II5 and II5a (a style may use only its own files that passed checking; the shelf may hold one still being checked).

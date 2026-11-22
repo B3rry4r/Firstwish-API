@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { PrismaService } from "../../../common/db/prisma.service";
 import { UuidV7Maker } from "../../../common/ids/uuidv7";
 import { createTestApp, TestApp } from "../../../../test/kit/app";
+import { ownDatabase } from "../../../../test/kit/own-db";
 import { JobsService } from "../../../modules/jobs/jobs.service";
 import { SettlementService } from "../../../modules/payments/settlement.service";
 import { giveBackDraws } from "../draw-giveback";
@@ -26,7 +27,10 @@ describe("HJ1 pack refund", () => {
   let settle: SettlementService;
   const staff: Record<string, { id: string; token: string }> = {};
 
+  // Provider event ids and the newest price-book version are rows and counters of the whole database: the spec has its own.
+  const own = ownDatabase("hj1");
   beforeAll(async () => {
+    own.use();
     t = await createTestApp({ now: NOW });
     db = t.app.get(PrismaService);
     jobs = t.app.get(JobsService);
@@ -41,7 +45,10 @@ describe("HJ1 pack refund", () => {
       staff[name] = { id: s.id, token };
     }
   });
-  afterAll(() => t.close());
+  afterAll(async () => {
+    await t.close();
+    own.drop();
+  });
   beforeEach(() => t.clock.set(NOW));
 
   const owner = async (over: Record<string, unknown> = {}) => {

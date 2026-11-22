@@ -60,21 +60,21 @@ export class CreatorsService {
   }
 
   /** The row of a creator whose page is public (a handle that is missing, or whose side is off, or that is banned or erased, is one 404: DEC-157). */
-  private async visible(raw: string): Promise<{ handle: string }> {
+  private async visible(raw: string): Promise<{ creatorId: string; accountId: string }> {
     const handle = lookupHandle(raw);
     const row = handle === null ? null : await findPublicCreator(this.prisma, handle, this.clock.now());
     if (!row) throw AppError.notFound("No creator has that handle.");
-    return { handle: row.handle.toLowerCase() };
+    return { creatorId: row.creatorId, accountId: row.accountId };
   }
 
   /** E-285 (IF6): the styles of a creator with a public page that are on, paged. */
   async styles(raw: string, q: { cursor?: string; limit?: number }): Promise<Page<StyleOut>> {
-    return this.styleBook.publicListByCreator((await this.visible(raw)).handle, q);
+    return this.styleBook.publicListByCreator((await this.visible(raw)).creatorId, q);
   }
 
   /** E-283 (IF6): the wishes of a creator with a public page that are on Now showing now, paged, as the public list gives them (no viewer's marks). */
   async wishes(raw: string, q: { cursor?: string; limit?: number }): Promise<Page<PublishedWish>> {
-    return this.showing.publicList(q, null, { creator: (await this.visible(raw)).handle });
+    return this.showing.publicList(q, null, { accountId: (await this.visible(raw)).accountId });
   }
 
   /** HW2: a profile picture is a file id on the creator row; anyone reads it as a signed address once it passed screening (any other text stays as it was). */

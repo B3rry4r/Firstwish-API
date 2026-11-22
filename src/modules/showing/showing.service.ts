@@ -218,10 +218,10 @@ export class ShowingService implements OnModuleInit {
 
   /**
    * E-140 (public): approved wishes that are live, opened, with an owner who is neither banned nor erased. Newest first. IF6: `style` keeps the wishes
-   * listed in that style (the style they were listed in, as it stood when they were listed); `creator` (a handle, lower case) keeps one creator's.
+   * listed in that style (the style they were listed in, as it stood when they were listed); `accountId` keeps one creator's (their account, never a handle kept as text).
    * Every filter reads through the same live test, so a wish that is hidden, resting, ended, removed, passcoded or not listed is never in any of them.
    */
-  async publicList(q: { cursor?: string; limit?: number; style?: string }, viewer: string | null = null, only: { creator?: string } = {}): Promise<Page<PublishedWish>> {
+  async publicList(q: { cursor?: string; limit?: number; style?: string }, viewer: string | null = null, only: { accountId?: string } = {}): Promise<Page<PublishedWish>> {
     const limit = q.limit ?? DEFAULT_LIMIT;
     const now = this.clock.now();
     let narrow = Prisma.empty;
@@ -230,7 +230,7 @@ export class ShowingService implements OnModuleInit {
       if (!STYLE_SLUG.test(style)) throw AppError.validation({ style: "Use a style's own name: letters, numbers and dashes." });
       narrow = Prisma.sql`${narrow} AND pw.style = ${style}`;
     }
-    if (only.creator !== undefined) narrow = Prisma.sql`${narrow} AND lower(a.handle) = ${only.creator}`;
+    if (only.accountId !== undefined) narrow = Prisma.sql`${narrow} AND a.id = ${only.accountId}::uuid`;
     const at = Prisma.sql`COALESCE(pw."listedAt", to_timestamp(0))`;
     let after = Prisma.empty;
     if (q.cursor) {

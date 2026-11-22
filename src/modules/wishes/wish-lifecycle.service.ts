@@ -218,6 +218,21 @@ export class WishLifecycleService implements OnModuleInit {
     return row.restorableUntil ?? new Date(removedAt.getTime() + (await this.restoreDays(tx)) * DAY);
   }
 
+  /**
+   * IF4a: a report on a removed wish was dismissed: when the wish is one its owner removed, its day has passed and no other report on it is open,
+   * it is erased now (as the job would have). Answers whether it was.
+   */
+  async eraseRemovedIfDue(tx: Tx, wishId: string, cause: string): Promise<boolean> {
+    const w = await this.lock(tx, wishId);
+    if (stateOf(w) !== "taken_down") return false;
+    const last = await tx.wishTransition.findFirst({ where: { wishId, to: "taken_down" }, orderBy: { id: "desc" } });
+    if (last?.cause !== "owner.remove") return false;
+    if ((await tx.report.count({ where: { wishId, status: "open" } })) > 0) return false;
+    if ((await this.restoreEnd(tx, wishId, last.createdAt)).getTime() > this.clock.now().getTime()) return false;
+    await this.move(tx, w, "erased", { cause });
+    return true;
+  }
+
   async holdDays(tx: Tx): Promise<number> {
     const cfg = await tx.lifecycleConfig.findFirst({ orderBy: { id: "desc" } });
     return cfg?.HOLD_DAYS ?? 365;
@@ -343,6 +358,8 @@ export class WishLifecycleService implements OnModuleInit {
       if (stateOf(w) !== "taken_down") return { skipped: true };
       const last = await tx.wishTransition.findFirst({ where: { wishId: w.id, to: "taken_down" }, orderBy: { id: "desc" } });
       if (last?.cause !== "owner.remove") return { skipped: true };
+      // IF4a: a removed wish with a report still open waits for the decision (a dismissed report erases it at once if its day has passed)
+      if ((await tx.report.count({ where: { wishId: w.id, status: "open" } })) > 0) return { skipped: true };
       const ends = await this.restoreEnd(tx, w.id, last.createdAt);
       if (ends.getTime() > c.now.getTime()) return { skipped: true, again: ends };
       await this.move(tx, w, "erased", { cause: "job.restore-window-end", jobRunId: c.jobRunId });

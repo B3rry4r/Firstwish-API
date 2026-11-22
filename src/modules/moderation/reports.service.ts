@@ -16,6 +16,7 @@ import type { Report } from "../../contracts";
 import { AuditActor, AuditService, requireReason } from "../audit/audit.service";
 import { NoticesService } from "../notices/notices.service";
 import { SignedUrlsService } from "../stored-files/signed-urls.service";
+import { JobsService } from "../jobs/jobs.service";
 import { ShowingService } from "../showing/showing.service";
 import { WishLifecycleService } from "../wishes/wish-lifecycle.service";
 import { outOfSight, stateOf } from "../wishes/wish-state";
@@ -52,6 +53,7 @@ export class ReportsService {
     private readonly bans: BansService,
     private readonly showing: ShowingService,
     private readonly lifecycle: WishLifecycleService,
+    private readonly jobs: JobsService,
     private readonly notices: NoticesService,
     private readonly signed: SignedUrlsService,
     @Inject(ENV) private readonly env: Env,
@@ -198,6 +200,15 @@ export class ReportsService {
         if (r.wishId) {
           const w = await this.lifecycle.lock(tx, r.wishId);
           if (!outOfSight(stateOf(w)) && stateOf(w) !== "erased") await this.lifecycle.move(tx, w, "taken_down", { cause: `report:${r.id}` });
+          else if (stateOf(w) === "taken_down") {
+            // IF4a: an upheld report on a wish its owner removed makes the removal the staff's take-down: it is not erased at the owner's day and the owner cannot bring it back
+            const last = await tx.wishTransition.findFirst({ where: { wishId: r.wishId, to: "taken_down" }, orderBy: { id: "desc" } });
+            if (last?.cause === "owner.remove") {
+              await tx.wishTransition.create({ data: { id: this.ids.id(), wishId: r.wishId, from: last.from, to: "taken_down", cause: `report:${r.id}`, createdAt: now } });
+              await tx.wish.update({ where: { id: r.wishId }, data: { restorableUntil: null } });
+              await this.jobs.cancel("restore-window-end", r.wishId, tx);
+            }
+          }
           await this.showing.dropForWishes(tx, [r.wishId]);
         }
         if (body.decision === "ban" && r.accountId && !erased) {
@@ -207,6 +218,8 @@ export class ReportsService {
       await tx.report.update({
         where: { id }, data: { status: body.decision === "keep" ? "dismissed" : "upheld", decision: body.decision, decidedBy: actor.id, decidedAt: now },
       });
+      // IF4a: a dismissed report on a removed wish whose day has passed: the wish is erased now
+      if (body.decision === "keep" && r.wishId) await this.lifecycle.eraseRemovedIfDue(tx, r.wishId, "report.dismissed");
       await tx.$executeRaw`INSERT INTO moderation_decision (subject, "subjectId", reason, "decidedAt") VALUES ('report', ${id}::uuid, ${reason}, ${now})`;
       await this.audit.write(tx, {
         actor, section: "/admin/moderation", action: `report.${body.decision}`, target: { type: "Report", id }, reason, changedFields: ["status", "decision", "decidedBy", "decidedAt"],

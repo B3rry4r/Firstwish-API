@@ -35,8 +35,8 @@ describe("IF6 the public reads the designed pages draw", () => {
     const who = await account(t, ["creator"]);
     const handle = uniqueHandle("c");
     await db.account.update({ where: { id: who.accountId }, data: { handle, name } });
-    await db.creator.create({ data: { id: t.id(), accountId: who.accountId, name } });
-    return { ...who, handle };
+    const row = await db.creator.create({ data: { id: t.id(), accountId: who.accountId, name } });
+    return { ...who, handle, creatorId: row.id };
   }
   async function publish(owner: Who, styleSlug: string, name = "Ada") {
     const w = await liveWish(t, owner, { name });
@@ -139,10 +139,10 @@ describe("IF6 the public reads the designed pages draw", () => {
     const s1 = await style("Mine one");
     const owner = await creator("Ada Maker");
     const other = await creator("Bola Maker");
-    await db.style.update({ where: { id: s1.id }, data: { creator: { handle: owner.handle, name: "Ada Maker" } } });
-    const s2 = await style("Mine two", { creator: { handle: owner.handle.toUpperCase(), name: "Ada Maker" } });
-    await style("Off one", { on: false, creator: { handle: owner.handle, name: "Ada Maker" } });
-    await style("Theirs", { creator: { handle: other.handle, name: "Bola Maker" } });
+    await db.style.update({ where: { id: s1.id }, data: { creator: { creatorId: owner.creatorId } } });
+    const s2 = await style("Mine two", { creator: { creatorId: owner.creatorId } });
+    await style("Off one", { on: false, creator: { creatorId: owner.creatorId } });
+    await style("Theirs", { creator: { creatorId: other.creatorId } });
     await style("House", { house: true });
     const w1 = await publish(owner, s1.slug);
     const w2 = await publish(owner, s2.slug);

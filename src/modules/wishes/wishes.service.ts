@@ -15,6 +15,7 @@ import { EntitlementsService, grantOf } from "../price-book/entitlements.service
 import type { Entitlements as EntitlementsRow } from "@prisma/client";
 import { JobsService } from "../jobs/jobs.service";
 import { BusinessOf } from "../people/business-of";
+import { waitingTicketPayment, waitingView } from "../payments/ticket-waiting";
 import { PassDrawService } from "../purchases/pass-draws";
 import { ProAccess } from "../pro-business/pro-access";
 import { ShowingLink } from "../showing/showing-link";
@@ -236,7 +237,9 @@ export class WishesService {
     const book = await this.entitlements.row();
     const styleLevel = allowedLevel(book, row.ticket, row.adds);
     const allowedStyles = await this.allowedStyles(styleLevel);
-    return { ...this.wire(row, (await this.linksFor([id])).get(id)), activity, publish, pictures, video, styleLevel, allowedStyles };
+    // ID1: the ticket payment of this wish that waits to be paid (which ticket, its reference, when it lapses), null when none waits
+    const waiting = !viaOrder ? await waitingTicketPayment(this.prisma, accountId, row.id, this.clock.now()) : null;
+    return { ...this.wire(row, (await this.linksFor([id])).get(id)), activity, publish, pictures, video, styleLevel, allowedStyles, ticketPayment: waiting ? waitingView(waiting) : null };
   }
 
   /** HQ5: the slugs of the styles that are on and that a ticket taking up to `level` may use (every style that is on when no ticket is chosen yet). */

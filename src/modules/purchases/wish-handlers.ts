@@ -52,6 +52,10 @@ export class WishHandlers {
     const grantId = await this.store.claim(tx, ctx, "ticket", { wishId: ctx.request.subjectId });
     if (!grantId) return;
     const ticket = line.sku.slice("ticket.".length) as TicketName;
+    // ID1: a wish is paid for once. A ticket payment that settles when the wish already holds a ticket that was paid for gave nothing: refund due.
+    if (w && (await tx.purchaseGrant.findFirst({ where: { wishId: w.id, kind: "ticket", revokedAt: null, refusedReason: null, id: { not: grantId } }, select: { id: true } }))) {
+      return this.store.refuse(tx, ctx, grantId, "ticket_already_paid");
+    }
     const why = assessTicket(w, ctx.payment.accountId, ticket);
     if (why || !w) return this.store.refuse(tx, ctx, grantId, why ?? "wish_not_payers");
     const grant = await ctx.grant();

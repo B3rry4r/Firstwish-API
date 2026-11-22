@@ -16,6 +16,8 @@ import { FulfilmentRegistry } from "./fulfilment.registry";
 import { paidLines, SettlementService, type SettleResult } from "./settlement.service";
 import { parseRequest } from "./payment-request";
 import { readOptions, writeOptions } from "./payment-options";
+import { TicketPaymentDrop } from "./ticket-drop";
+import { ticketOf, waitingTicketPayment } from "./ticket-waiting";
 
 const KEY = /^[A-Za-z0-9._:-]{8,100}$/;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -67,6 +69,8 @@ export function refundDueWords(flags: readonly string[]): string {
   if (flags.includes("refund_due:plan_applied_meanwhile")) return "A plan was paid for another way after this payment was started, so this payment gave nothing. It is marked to be refunded.";
   if (flags.includes("refund_due:paid_after_drop")) return "This payment came in after the business dropped it, and a plan was paid for another way meanwhile. It is marked to be refunded.";
   if (flags.includes("refund_due:paid_after_lapse")) return "This payment came in after it had lapsed, and the same thing was paid for another way meanwhile. It is marked to be refunded.";
+  if (flags.includes("refund_due:ticket_already_paid")) return "A ticket for this wish was already paid for, so this payment gave nothing. It is marked to be refunded.";
+  if (flags.includes("refund_due:extra_already_held")) return "This wish already had that extra, so this payment gave nothing. It is marked to be refunded.";
   return "This payment gave nothing. It is marked to be refunded.";
 }
 
@@ -83,6 +87,7 @@ export class PaymentsService {
     private readonly settlement: SettlementService,
     private readonly businesses: BusinessOf,
     private readonly registry: FulfilmentRegistry,
+    private readonly ticketDrop: TicketPaymentDrop,
   ) {}
 
   /**
@@ -133,6 +138,14 @@ export class PaymentsService {
           const wasSku = (Array.isArray(waiting.lines) ? (waiting.lines[0] as { sku?: string } | undefined) : undefined)?.sku;
           if (wasSku === quote.lines[0]?.sku) return { row: waiting, fresh: false, sameThing: true };
           throw new AppError(409, "plan_payment_pending", "A payment for a plan is waiting to be paid. Finish it, or wait for it to lapse, before you start another.", { reference: waiting.providerReference });
+        }
+      }
+      // ID1: a wish is paid for once. While a ticket payment of the wish waits, a start for any ticket of it is 409 with the waiting payment's reference
+      // (the account lock above lines two starts up, so of two at the same moment one is made and the other finds it).
+      if (req.purpose === "ticket" && accountId && req.info.subjectId) {
+        const waiting = await waitingTicketPayment(tx, accountId, req.info.subjectId, now);
+        if (waiting) {
+          throw new AppError(409, "ticket_payment_pending", "A payment for a ticket of this wish is waiting to be paid. Continue it, or drop it and choose again.", { reference: waiting.providerReference, ticket: ticketOf(waiting) });
         }
       }
       // GG3: what the fulfilment bundle knows can never be granted is refused now (422), before the buyer pays
@@ -194,6 +207,12 @@ export class PaymentsService {
     opts.server.authorizationUrl = authorizationUrl;
     const row = await this.db.payment.update({ where: { id: created.row.id }, data: { options: writeOptions(opts), updatedAt: this.clock.now() } });
     return { started: this.started(row), status: 201 };
+  }
+
+  /** ID1: the wish's owner drops a waiting ticket payment at once; answers the payment as it stands. */
+  async dropTicket(accountId: string, reference: string): Promise<PaymentView> {
+    await this.ticketDrop.drop(accountId, reference);
+    return this.view(await this.own(accountId, reference));
   }
 
   /** A repeat that arrives while the first is still asking the provider waits for the checkout address (a few seconds at most). */

@@ -137,9 +137,10 @@ describe("purchases B07: what a payment buys", () => {
     expect(await flagged(up)).toEqual([]);
     const down = await pay(a, "ticket.keepsake", { subjectId: w });
     expect((await wishRow(w)).ticket).toBe("signature");
-    expect(await flagged(down)).toContain("refund_due:ticket_not_an_upgrade");
+    // ID1: the wish already holds a ticket that was paid for (the signature above), so any later ticket payment is refund due for that reason
+    expect(await flagged(down)).toContain("refund_due:ticket_already_paid");
     const same = await pay(a, "ticket.signature", { subjectId: w });
-    expect(await flagged(same)).toContain("refund_due:ticket_already_held");
+    expect(await flagged(same)).toContain("refund_due:ticket_already_paid");
     const strangers = await wish(other);
     const s = await pay(a, "ticket.moment", { subjectId: strangers });
     expect((await wishRow(strangers)).ticket).toBeNull();

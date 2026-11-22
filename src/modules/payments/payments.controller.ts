@@ -35,6 +35,14 @@ export class PaymentsController {
     return this.payments.listOwn(accountOf(p), { cursor: q.cursor, limit: q.limit });
   }
 
+  /** ID1: the owner drops a waiting ticket payment of theirs at once; answers the payment as it stands. */
+  @Roles("person", "creator", "business")
+  @Post(":reference/drop")
+  @HttpCode(200)
+  drop(@Param() params: GetPaymentsByReferenceParamsDto, @CurrentPrincipal() p: Principal | undefined): Promise<PaymentView> {
+    return this.payments.dropTicket(accountOf(p), params.reference);
+  }
+
   @Roles("person", "creator", "business")
   @Get(":reference")
   detail(@Param() params: GetPaymentsByReferenceParamsDto, @Query() _query: GetPaymentsByReferenceQueryDto, @CurrentPrincipal() p: Principal | undefined): Promise<PaymentView> {

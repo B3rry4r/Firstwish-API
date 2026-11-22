@@ -25,6 +25,8 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const LEVELS = ["public-link", "now-showing"] as const;
 /** Staff list order: waiting requests first (oldest first), then what is listed (newest first). One ascending number per row. */
 const BIG = 10_000_000_000_000;
+/** A style's slug as the server keys it (styles.service). */
+const STYLE_SLUG = /^[a-z0-9][a-z0-9-]{0,63}$/;
 
 interface ListRow {
   src: "request" | "listed";
@@ -148,8 +150,8 @@ export class ShowingService implements OnModuleInit {
 
   /** Writes the public row for a wish (only what a stranger may see: no address, no account id). */
   private async list(tx: Tx, wishId: string, req: { id: string; screening: string }, now: Date): Promise<void> {
-    const rows = await tx.$queryRaw<{ id: string; no: string | null; kind: string; occasion: string; styleSlug: string; name: string | null; status: string; erasedAt: Date | null; passcodeHash: string | null; accountName: string | null; accountErased: Date | null; slug: string | null }[]>`
-      SELECT w.id::text AS id, w.no, w.kind, w.occasion, w."styleSlug", w.name, w.status::text AS status, w."erasedAt", w."passcodeHash",
+    const rows = await tx.$queryRaw<{ id: string; no: string | null; kind: string; occasion: string; styleSlug: string; styleName: string | null; name: string | null; status: string; erasedAt: Date | null; passcodeHash: string | null; accountName: string | null; accountErased: Date | null; slug: string | null }[]>`
+      SELECT w.id::text AS id, w.no, w.kind, w.occasion, w."styleSlug", (SELECT s.name FROM style s WHERE s.slug = w."styleSlug") AS "styleName", w.name, w.status::text AS status, w."erasedAt", w."passcodeHash",
              a.name AS "accountName", a."erasedAt" AS "accountErased",
              (SELECT slug FROM wish_link WHERE "wishId" = w.id AND active ORDER BY "createdAt" DESC LIMIT 1) AS slug
         FROM wish w JOIN account a ON a.id = w."accountId" WHERE w.id = ${wishId}::uuid FOR UPDATE OF w`;
@@ -166,7 +168,7 @@ export class ShowingService implements OnModuleInit {
         data: {
           id: this.ids.id(), wishId, wish: wishId, no: w.no, at: now, date: now, listedAt: now, publishedAt: now, counts: { reactions: 0, saves: 0 },
           creator: { name: from }, forName, from, href: `/w/${w.slug}`, img: "", kind: w.kind, occasion: w.occasion, occasionName: w.occasion,
-          pos: "", scope: "public", screen: { result: req.screening }, mine: {}, style: w.styleSlug, styleName: w.styleSlug,
+          pos: "", scope: "public", screen: { result: req.screening }, mine: {}, style: w.styleSlug, styleName: w.styleName || w.styleSlug,
           title: forName ? `A ${w.kind} wish for ${forName}` : `A ${w.kind} wish`, featured: false, own: false, name: from, decided: { at: toWireInstant(now) },
         },
       });
@@ -214,10 +216,21 @@ export class ShowingService implements OnModuleInit {
     return this.adminList({});
   }
 
-  /** E-140 (public): approved wishes that are live, opened, with an owner who is neither banned nor erased. Newest first. */
-  async publicList(q: { cursor?: string; limit?: number }, viewer: string | null = null): Promise<Page<PublishedWish>> {
+  /**
+   * E-140 (public): approved wishes that are live, opened, with an owner who is neither banned nor erased. Newest first. IF6: `style` keeps the wishes
+   * listed in that style (the style they were listed in, as it stood when they were listed); `accountId` keeps one creator's (their account, never a handle kept as text).
+   * Every filter reads through the same live test, so a wish that is hidden, resting, ended, removed, passcoded or not listed is never in any of them.
+   */
+  async publicList(q: { cursor?: string; limit?: number; style?: string }, viewer: string | null = null, only: { accountId?: string } = {}): Promise<Page<PublishedWish>> {
     const limit = q.limit ?? DEFAULT_LIMIT;
     const now = this.clock.now();
+    let narrow = Prisma.empty;
+    if (q.style !== undefined) {
+      const style = q.style.trim().toLowerCase();
+      if (!STYLE_SLUG.test(style)) throw AppError.validation({ style: "Use a style's own name: letters, numbers and dashes." });
+      narrow = Prisma.sql`${narrow} AND pw.style = ${style}`;
+    }
+    if (only.accountId !== undefined) narrow = Prisma.sql`${narrow} AND a.id = ${only.accountId}::uuid`;
     const at = Prisma.sql`COALESCE(pw."listedAt", to_timestamp(0))`;
     let after = Prisma.empty;
     if (q.cursor) {
@@ -227,11 +240,20 @@ export class ShowingService implements OnModuleInit {
     }
     const rows = await this.db.$queryRaw<{ id: string }[]>`
       SELECT pw.id::text AS id, ${at} AS at FROM published_wish pw ${publicJoins()}
-       WHERE ${publicNow(now)} ${after} ORDER BY ${at} DESC, pw.id DESC LIMIT ${limit + 1}`;
+       WHERE ${publicNow(now)} ${narrow} ${after} ORDER BY ${at} DESC, pw.id DESC LIMIT ${limit + 1}`;
     const pageRows = rows.slice(0, limit);
     const items = await this.wireRows(pageRows.map((r) => r.id), "public", viewer);
     const last = pageRows[limit - 1] as ({ id: string; at: Date } | undefined);
     return { items, nextCursor: rows.length > limit && last ? encodeCursor({ key: last.at.getTime(), id: last.id }) : null };
+  }
+
+  /** E-284 (IF6): the wishes shown now in one style; a style that is off or unknown is 404 (as GET /v1/styles/:id answers). The style is named by its slug or id. */
+  async publicInStyle(idOrSlug: string, q: { cursor?: string; limit?: number }): Promise<Page<PublishedWish>> {
+    const key = idOrSlug.trim().toLowerCase();
+    const where = UUID.test(key) ? { id: key } : STYLE_SLUG.test(key) ? { slug: key } : null;
+    const style = where ? await this.db.style.findFirst({ where: { ...where, on: true }, select: { slug: true } }) : null;
+    if (!style?.slug) throw AppError.notFound("No style has this name.");
+    return this.publicList({ ...q, style: style.slug });
   }
 
   /** E-138 (staff): the requests waiting (oldest first), then every wish listed. */

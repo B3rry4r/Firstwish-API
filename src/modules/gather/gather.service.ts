@@ -113,6 +113,18 @@ export class GatherService {
     return this.ownerView(accountId, id);
   }
 
+  /**
+   * E-286 (IF5): the owner turns the same gather link back on: its slug is the one it always had, the voices already given stay, the wish's 12 and the
+   * limits of asking count as before. Turning on a link that is on changes nothing and answers the same view (200). Like turning off, it is allowed
+   * whatever the wish's state: for a wish that is open the view says `open: false` (a wish takes voices only before its first opening).
+   */
+  async turnOn(accountId: string, id: string): Promise<GatherOwnerView> {
+    const w = await this.owned(accountId, id);
+    const link = await this.linkOf(w.id, true);
+    if (link && !link.active) await this.db.wishGather.updateMany({ where: { id: link.id, active: false }, data: { active: true } });
+    return this.ownerView(accountId, id);
+  }
+
   /** E-265: the owner removes one voice that came through the link; the file goes with it and the room comes back. */
   async removeVoice(accountId: string, id: string, voiceId: string): Promise<void> {
     const w = await this.owned(accountId, id);

@@ -3,7 +3,7 @@ import type { Request, Response } from "express";
 import { withRetryAfter } from "../../common/errors/rate-limited";
 import {
   DeleteWishesByIdGatherVoicesByVoiceIdParamsDto, GetGBySlugParamsDto, GetWishesByIdGatherParamsDto, PostGBySlugVoiceBodyDto, PostGBySlugVoiceByIdConfirmParamsDto,
-  PostGBySlugVoiceParamsDto, PostWishesByIdGatherOffParamsDto,
+  PostGBySlugVoiceParamsDto, PostWishesByIdGatherOffParamsDto, PostWishesByIdGatherOnParamsDto,
 } from "../../contracts";
 import type { GatherFriendView, GatherOwnerView, GatherVoiceAdded } from "../../contracts";
 import { CurrentPrincipal, Public, Roles } from "../../common/auth/decorators";
@@ -11,7 +11,7 @@ import type { Principal } from "../../common/auth/principal";
 import { userOf } from "../stored-files/principal";
 import { GatherService } from "./gather.service";
 
-/** HS1 the owner's side: E-263 read (and make) the gather link with its voices, E-264 turn it off, E-265 remove one voice. */
+/** HS1 the owner's side: E-263 read (and make) the gather link with its voices, E-264 turn it off, E-286 turn it back on, E-265 remove one voice. */
 @Controller("wishes")
 export class GatherOwnerController {
   constructor(private readonly gather: GatherService) {}
@@ -27,6 +27,14 @@ export class GatherOwnerController {
   @HttpCode(200)
   off(@Param() p: PostWishesByIdGatherOffParamsDto, @CurrentPrincipal() who: Principal | undefined): Promise<GatherOwnerView> {
     return this.gather.turnOff(userOf(who).accountId, p.id);
+  }
+
+  /** E-286 (IF5). */
+  @Roles("person", "creator", "business")
+  @Post(":id/gather/on")
+  @HttpCode(200)
+  on(@Param() p: PostWishesByIdGatherOnParamsDto, @CurrentPrincipal() who: Principal | undefined): Promise<GatherOwnerView> {
+    return this.gather.turnOn(userOf(who).accountId, p.id);
   }
 
   @Roles("person", "creator", "business")

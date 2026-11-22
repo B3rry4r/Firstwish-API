@@ -8,7 +8,7 @@ import type { GetWBySlugKeepByReferenceResponse, PostWBySlugKeepBody, PostWBySlu
 import { PriceBookService } from "../price-book/price-book.service";
 import { FulfilmentRegistry } from "../payments/fulfilment.registry";
 import { PaymentsService } from "../payments/payments.service";
-import { PublicWishesService } from "../public-wishes/public-wishes.service";
+import { type KeepOffer, PublicWishesService } from "../public-wishes/public-wishes.service";
 import { holderKey, KeepProofs } from "../purchases/keep-proof";
 import { HOUSE_WORDS, isHouseWish } from "../wishes/house";
 import { endOf, PassCover } from "../purchases/pass-cover";
@@ -202,7 +202,7 @@ export class WishKeepsService implements OnModuleInit {
    * HS2: what the public view of a held link gives a keep or wake start: the wish's id, the proof the link's holder signs with (it names this
    * link and this wish), and the keeps on offer with their price book prices. A wish whose ticket cannot be kept offers nothing.
    */
-  private async offerFor(h: { wishId: string; linkId: string; resting: boolean }): Promise<Record<string, unknown> | null> {
+  private async offerFor(h: { wishId: string; linkId: string; resting: boolean }): Promise<KeepOffer | null> {
     if (await isHouseWish(this.db, h.wishId)) return null;
     const w = await this.db.wish.findUnique({ where: { id: h.wishId }, select: { ticket: true } });
     const book = await this.entitlements.row();
@@ -217,7 +217,7 @@ export class WishKeepsService implements OnModuleInit {
       proofExpiresAt: toWireInstant(given.expiresAt),
       resting: h.resting,
       wake: h.resting,
-      keeps: quote.lines.map((l) => ({ key: l.sku.slice("keep.".length), name: l.name, days: grantOf(book, l.sku)?.termDays ?? null, priceKobo: l.unitKobo })),
+      keeps: quote.lines.map((l) => ({ key: l.sku.slice("keep.".length) as KeepLength, name: l.name, days: typeof grantOf(book, l.sku)?.termDays === "number" ? (grantOf(book, l.sku)?.termDays as number) : null, priceKobo: l.unitKobo })),
     };
   }
 

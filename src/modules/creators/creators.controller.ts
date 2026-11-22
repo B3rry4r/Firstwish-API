@@ -1,5 +1,7 @@
-import { Controller, Get, Headers, Param, Query } from "@nestjs/common";
-import { GetCreatorsByHandleParamsDto, GetCreatorsByHandleQueryDto, GetCreatorsQueryDto } from "../../contracts";
+import { Controller, Get, Headers, Param, Query, Res } from "@nestjs/common";
+import type { Response } from "express";
+import { publicRead } from "../../common/http/public-cache";
+import { GetCreatorsByHandleParamsDto, GetCreatorsByHandleQueryDto, GetCreatorsByHandleStylesParamsDto, GetCreatorsByHandleStylesQueryDto, GetCreatorsByHandleWishesParamsDto, GetCreatorsByHandleWishesQueryDto, GetCreatorsQueryDto } from "../../contracts";
 import { Public } from "../../common/auth/decorators";
 import { AccessTokenVerifier } from "../../common/auth/principal";
 import type { Page } from "../../common/pagination/cursor";
@@ -32,6 +34,20 @@ export class CreatorsController {
     @Headers("authorization") auth: string | undefined,
   ): Promise<PublicCreator> {
     return this.creators.one(await this.viewer(auth), params.handle);
+  }
+
+  /** E-285 (IF6): the creator's styles that are on. The same for everyone, so a shared cache may keep it. */
+  @Public()
+  @Get(":handle/styles")
+  async styles(@Param() params: GetCreatorsByHandleStylesParamsDto, @Query() q: GetCreatorsByHandleStylesQueryDto, @Res({ passthrough: true }) res: Response) {
+    return publicRead(res, await this.creators.styles(params.handle, q));
+  }
+
+  /** E-283 (IF6): the creator's wishes on Now showing now. The same for everyone, so a shared cache may keep it. */
+  @Public()
+  @Get(":handle/wishes")
+  async wishes(@Param() params: GetCreatorsByHandleWishesParamsDto, @Query() q: GetCreatorsByHandleWishesQueryDto, @Res({ passthrough: true }) res: Response) {
+    return publicRead(res, await this.creators.wishes(params.handle, q));
   }
 
   private async viewer(auth: string | undefined): Promise<string | null> {

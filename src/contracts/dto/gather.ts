@@ -1,6 +1,6 @@
 // Request validation for the gather link endpoints (HS1, API-BASE-6).
 import { IsInt, IsNumber, IsOptional, IsString, Max, MaxLength, Min } from "class-validator";
-import type { DeleteWishesByIdGatherVoicesByVoiceIdParams, GetGBySlugParams, GetWishesByIdGatherParams, PostGBySlugVoiceBody, PostGBySlugVoiceByIdConfirmParams, PostGBySlugVoiceParams, PostWishesByIdGatherOffParams } from "../types";
+import type { DeleteWishesByIdGatherVoicesByVoiceIdParams, GetGBySlugParams, GetWishesByIdGatherParams, PostGBySlugVoiceBody, PostGBySlugVoiceByIdConfirmParams, PostGBySlugVoiceParams, PostWishesByIdGatherOffParams, PostWishesByIdGatherOnParams } from "../types";
 
 /** E-263 GET /v1/wishes/:id/gather (query). */
 export class GetWishesByIdGatherQueryDto {}
@@ -58,6 +58,13 @@ export class PostGBySlugVoiceByIdConfirmBodyDto {}
 export class PostGBySlugVoiceByIdConfirmParamsDto implements PostGBySlugVoiceByIdConfirmParams {
   @IsString()
   slug!: string;
+  @IsString()
+  id!: string;
+}
+
+/** E-286 POST /v1/wishes/:id/gather/on (body). */
+export class PostWishesByIdGatherOnBodyDto {}
+export class PostWishesByIdGatherOnParamsDto implements PostWishesByIdGatherOnParams {
   @IsString()
   id!: string;
 }

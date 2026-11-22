@@ -1212,7 +1212,9 @@ export interface PublicWishView {
   content?: Record<string, unknown> | null;
   endsAt?: Instant | null;
   files: unknown[];
-  keepOffer?: Record<string, unknown> | null;
+  house: boolean;
+  /** HU2 (DEC-287): what a held link offers: the wish's id, the signed proof, and the keeps on offer with their price book prices; null for a house wish, a wish whose ticket cannot be kept, a head read or no price book */
+  keepOffer?: { wishId: string; proof: string; proofExpiresAt: Instant; resting: boolean; wake: boolean; keeps: Array<{ key: "month" | "half" | "year"; name: string; days: number | null; priceKobo: Kobo }> } | null;
   kind: string;
   occasion: string;
   openable: boolean;
@@ -1900,6 +1902,8 @@ export interface Wish {
   reason: string;
   removedAt?: Instant | null;
   restingSince?: Instant | null;
+  /** IF4 (DEC-285): the instant until which a wish its owner removed can be brought back; null when the wish is not removed by its owner */
+  restorableUntil?: Instant | null;
   result: unknown;
   sealedAt?: Instant | null;
   sound: string;
@@ -2658,6 +2662,28 @@ export interface GetCreatorsByHandleParams {
 export type GetCreatorsByHandleQuery = Record<string, never>;
 export type GetCreatorsByHandleHeaders = Record<string, never>;
 export type GetCreatorsByHandleResponse = Creator;
+
+/** E-285 GET /v1/creators/:handle/styles. Auth: public. */
+export interface GetCreatorsByHandleStylesParams {
+  handle: string;
+}
+export interface GetCreatorsByHandleStylesQuery {
+  cursor?: string;
+  limit?: number;
+}
+export type GetCreatorsByHandleStylesHeaders = Record<string, never>;
+export type GetCreatorsByHandleStylesResponse = PaginatedList<Style>;
+
+/** E-283 GET /v1/creators/:handle/wishes. Auth: public. */
+export interface GetCreatorsByHandleWishesParams {
+  handle: string;
+}
+export interface GetCreatorsByHandleWishesQuery {
+  cursor?: string;
+  limit?: number;
+}
+export type GetCreatorsByHandleWishesHeaders = Record<string, never>;
+export type GetCreatorsByHandleWishesResponse = PaginatedList<PublishedWish>;
 
 /** E-43 GET /v1/studio/me. Auth: creator. */
 export type GetStudioMeParams = Record<string, never>;
@@ -3739,6 +3765,8 @@ export type PostAdminShowingListedByNoUnlistResponse = PaginatedList<PublishedWi
 /** E-140 GET /v1/showing. Auth: public. */
 export type GetShowingParams = Record<string, never>;
 export interface GetShowingQuery {
+  /** string (optional: only wishes shown in this style; a slug) */
+  style?: string;
   cursor?: string;
   limit?: number;
 }
@@ -4492,6 +4520,17 @@ export type GetStylesByIdQuery = Record<string, never>;
 export type GetStylesByIdHeaders = Record<string, never>;
 export type GetStylesByIdResponse = Style;
 
+/** E-284 GET /v1/styles/:id/wishes. Auth: public. */
+export interface GetStylesByIdWishesParams {
+  id: string;
+}
+export interface GetStylesByIdWishesQuery {
+  cursor?: string;
+  limit?: number;
+}
+export type GetStylesByIdWishesHeaders = Record<string, never>;
+export type GetStylesByIdWishesResponse = PaginatedList<PublishedWish>;
+
 /** E-197 PUT /v1/admin/styles/:slug/level. Auth: ops,owner,reviewer. */
 export interface PutAdminStylesBySlugLevelParams {
   slug: string;
@@ -4962,6 +5001,14 @@ export interface PostWishesByIdGatherOffParams {
 export type PostWishesByIdGatherOffBody = Record<string, never>;
 export type PostWishesByIdGatherOffHeaders = Record<string, never>;
 export type PostWishesByIdGatherOffResponse = GatherOwnerView;
+
+/** E-286 POST /v1/wishes/:id/gather/on. Auth: own records. */
+export interface PostWishesByIdGatherOnParams {
+  id: string;
+}
+export type PostWishesByIdGatherOnBody = Record<string, never>;
+export type PostWishesByIdGatherOnHeaders = Record<string, never>;
+export type PostWishesByIdGatherOnResponse = GatherOwnerView;
 
 /** E-265 DELETE /v1/wishes/:id/gather/voices/:voiceId. Auth: own records. */
 export interface DeleteWishesByIdGatherVoicesByVoiceIdParams {
@@ -5507,6 +5554,10 @@ export interface EndpointContracts {
   "E-274": { params: PostBusinessRevealLinksByIdDownloadsParams; body: PostBusinessRevealLinksByIdDownloadsBody; headers: PostBusinessRevealLinksByIdDownloadsHeaders; response: PostBusinessRevealLinksByIdDownloadsResponse };
   "E-277": { params: PatchBusinessShootsByIdParams; body: PatchBusinessShootsByIdBody; headers: PatchBusinessShootsByIdHeaders; response: PatchBusinessShootsByIdResponse };
   "E-278": { params: PatchBusinessVaultFilesByIdParams; body: PatchBusinessVaultFilesByIdBody; headers: PatchBusinessVaultFilesByIdHeaders; response: PatchBusinessVaultFilesByIdResponse };
+  "E-283": { params: GetCreatorsByHandleWishesParams; query: GetCreatorsByHandleWishesQuery; headers: GetCreatorsByHandleWishesHeaders; response: GetCreatorsByHandleWishesResponse };
+  "E-284": { params: GetStylesByIdWishesParams; query: GetStylesByIdWishesQuery; headers: GetStylesByIdWishesHeaders; response: GetStylesByIdWishesResponse };
+  "E-285": { params: GetCreatorsByHandleStylesParams; query: GetCreatorsByHandleStylesQuery; headers: GetCreatorsByHandleStylesHeaders; response: GetCreatorsByHandleStylesResponse };
+  "E-286": { params: PostWishesByIdGatherOnParams; body: PostWishesByIdGatherOnBody; headers: PostWishesByIdGatherOnHeaders; response: PostWishesByIdGatherOnResponse };
   "E-273": { params: PostAdminConciergeOrdersByIdWishesParams; body: PostAdminConciergeOrdersByIdWishesBody; headers: PostAdminConciergeOrdersByIdWishesHeaders; response: PostAdminConciergeOrdersByIdWishesResponse };
   "E-279": { params: GetAdminConciergeOrdersByIdFilesParams; query: GetAdminConciergeOrdersByIdFilesQuery; headers: GetAdminConciergeOrdersByIdFilesHeaders; response: GetAdminConciergeOrdersByIdFilesResponse };
   "E-280": { params: PostAdminConciergeOrdersByIdWishesByWishIdFilesParams; body: PostAdminConciergeOrdersByIdWishesByWishIdFilesBody; headers: PostAdminConciergeOrdersByIdWishesByWishIdFilesHeaders; response: PostAdminConciergeOrdersByIdWishesByWishIdFilesResponse };

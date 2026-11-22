@@ -8,6 +8,7 @@ import { IdGenerator } from "../../common/ports/ids.port";
 import { toWireInstant } from "../../common/time/time";
 import type { PublicWishView, ReactionResult, UnlockResult } from "../../contracts";
 import { SignedUrlsService } from "../stored-files/signed-urls.service";
+import { HOUSE_HANDLE } from "../wishes/house";
 import { WishLifecycleService } from "../wishes/wish-lifecycle.service";
 import { LinkLimits, READS_PER_MINUTE, UNLOCKS_PER_HOUR } from "./link-limits";
 import { UnlockTokens } from "./unlock-token";
@@ -45,13 +46,16 @@ interface Row {
   no: string | null;
   content: unknown;
   passcodeHash: string | null;
+  /** HU2: the wish is the house's own (owned by the house account). */
+  house: boolean;
 }
 
 /** What the server decided for a link at this moment. */
 export type Standing = "countdown" | "locked" | "open" | "resting";
 
 /** HS2: made by the keep service; the public view carries what it answers as `keepOffer` (the wish's id, the signed proof, the keeps on offer). */
-export type OfferMaker = (hold: { wishId: string; linkId: string; resting: boolean }) => Promise<Record<string, unknown> | null>;
+export type KeepOffer = NonNullable<PublicWishView["keepOffer"]>;
+export type OfferMaker = (hold: { wishId: string; linkId: string; resting: boolean }) => Promise<KeepOffer | null>;
 
 export interface Resolved {
   row: Row;
@@ -120,7 +124,7 @@ export class PublicWishesService {
   useOffers(maker: OfferMaker): void {
     this.offerMaker = maker;
   }
-  private offer(row: Row, resting: boolean): Promise<Record<string, unknown> | null> {
+  private offer(row: Row, resting: boolean): Promise<KeepOffer | null> {
     return this.offerMaker ? this.offerMaker({ wishId: row.id, linkId: row.linkId, resting }) : Promise.resolve(null);
   }
 
@@ -235,7 +239,7 @@ export class PublicWishesService {
     const rows = await this.db.$queryRaw<Row[]>`
       SELECT l.id AS "linkId", l.slug, l.active, l.tries, l."lockedUntil", w.id, w.status::text AS status, w."erasedAt", w."removedAt",
              a."erasedAt" AS "ownerErasedAt", w."businessId"::text AS "businessId", w.kind, w.occasion, w."styleSlug", w."opensAt", w."openedAt", w."endsAt",
-             w."timeZone", w.name, w.no, w.content, w."passcodeHash"
+             w."timeZone", w.name, w.no, w.content, w."passcodeHash", COALESCE(a.handle = ${HOUSE_HANDLE}, false) AS house
         FROM wish_link l JOIN wish w ON w.id = l."wishId" JOIN account a ON a.id = w."accountId"
        WHERE l.slug = ${key}
          AND (w."conciergeOrderId" IS NULL OR EXISTS (SELECT 1 FROM concierge_order_wish d WHERE d."wishId" = w.id))`;
@@ -316,7 +320,7 @@ export class PublicWishesService {
     return {
       slug, kind: row.kind, occasion: row.occasion, styleSlug: row.styleSlug, state: "countdown", openable: false,
       serverTime: toWireInstant(this.clock.now()), opensAt: row.opensAt ? toWireInstant(row.opensAt) : null, timeZone: row.timeZone,
-      receiverName: row.name, wishNo: row.no, files: [],
+      receiverName: row.name, wishNo: row.no, files: [], house: row.house,
     };
   }
 

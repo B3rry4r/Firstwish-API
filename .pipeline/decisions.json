@@ -3986,6 +3986,89 @@
       "confidence": "high",
       "source": "build/prompts/API-BASE-11A.md",
       "decidedAt": "2026-12-06T12:00:00Z"
+    },
+    {
+      "id": "DEC-285",
+      "topic": "A wish its owner removes can be brought back until a day, then it is erased (IF4)",
+      "decision": "IF4: a wish its owner removes (DELETE /v1/wishes/:id, E-223) carries Wish.restorableUntil: the removal and the price book's restore days (30 today), kept on the wish. Bringing it back (POST /v1/wishes/:id/restore, E-230) before that instant works as before and clears the field; at or after it is 409 not_allowed (\"The time to bring this wish back is over.\"), for every kind of wish (before this only a business's removed draft had a window). The erase job (the restore-window-end job, scheduled at the removal, cancelled by a restore) erases the wish when the day comes, whatever state it left: its content, name, passcode and maker's note are blanked, its link stays off and its slug loses the receiver's name, its file rows go and each stored object (with its sizes) is removed by one upload-cleanup job per file, and a business's draft gives its draw back. What a removed wish leaves: a paid ticket and a paid keep stay as payment records and the wish keeps its number and ticket kind (nothing is refunded by an erase; a link holder's email on a keep payment with no account is cleared); the voices friends gave through the gather link go with the wish (their names at once, their voice notes and files by the cleanup jobs; a voice the owner already put in the wish's content is a wish file and goes the same way); a reveal belongs to a business's client-wish record, not to the wish, so the erase only blanks the record's words (ZB3) and the reveal link keeps its own passcode and end. A wish staff took down (not the owner) has no window and is left alone by the job. Wishes removed BEFORE this change: their window starts at the migration 20261203090000_removed_wish_window_ab11b, which gives each owner-removed, not erased wish restorableUntil = the migration's moment plus the price book's days and schedules its erase job for then. One column (wish.restorableUntil) and that migration; no down script (none of the migrations has one).",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (IF4); build/prompts/API-BASE-11B.md",
+      "decidedAt": "2026-12-05T12:00:00Z"
+    },
+    {
+      "id": "DEC-286",
+      "topic": "The owner turns a friends' link back on (IF5, HU4)",
+      "decision": "IF5 (HU4): POST /v1/wishes/:id/gather/on (E-286, owner only: the wish's owner, or the business for its own wishes; any signed-in side) turns the wish's friends' link back on and answers the owner's gather read (GET /v1/wishes/:id/gather, E-263) with active true. It is the same link: the slug and the link path are the ones the link always had and no second link is made; the voices already given stay; the 12 a wish takes, the limits of asking per address and per link and the screening are as before. On twice, or on for a link that was never off, changes nothing and answers 200 with the same view (turning off twice stays 409 gather_off). Like /gather/off it has no rule about the wish's state, so it is allowed for a wish already opened: the view then says open false (a link takes voices only before the wish's first opening) and a friend's ask is still 409 gather_closed. Another person's wish, an id that is not a wish and a removed or erased wish are 404; no token is 401.",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (IF5); build/prompts/API-BASE-11B.md",
+      "decidedAt": "2026-12-05T12:00:00Z"
+    },
+    {
+      "id": "DEC-287",
+      "topic": "The public view says whether it is a house wish and types its keep offer (HU2)",
+      "decision": "HU2: PublicWishView (the link's public read, E-129 and the answers that carry it) always carries `house`: true when the wish is owned by the house account, else false. Its `keepOffer` is typed as it is served: null (a house wish, a wish whose ticket cannot be kept, a head read, a view with nothing to offer, no price book in force) or {wishId: string, proof: string, proofExpiresAt: ISO-8601 instant, resting: boolean, wake: boolean, keeps: [{key: month|half|year, name: string, days: whole number of days or null, priceKobo: whole number of kobo}]}. No field is removed or renamed.",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (HU2); build/prompts/API-BASE-11B.md",
+      "decidedAt": "2026-12-05T12:00:00Z",
+      "fieldTypes": {
+        "PublicWishView.keepOffer": "shape {wishId: string, proof: string, proofExpiresAt: time, resting: boolean, wake: boolean, keeps: array<{key: enum(month|half|year), name: string, days: integer | null, priceKobo: integer}>} | null"
+      }
+    },
+    {
+      "id": "DEC-288",
+      "topic": "Now showing by style, public wishes in a style, a creator's styles and wishes (IF6)",
+      "decision": "IF6: (1) GET /v1/showing (E-140) takes an optional `style` (a style's slug, any case): only the wishes listed in that style (the style they were listed in); a style nobody used is an empty page, a value that is not a slug is 422 in fields.style. Its rows carry the style (slug), its name (styleName) and the title as at the time of listing, kept on the row (before this the row's styleName held the slug again; the migration 20261203090000_removed_wish_window_ab11b writes the style's name into rows listed before). (2) GET /v1/styles/:id/wishes (E-284, public): the wishes shown now in one style, by its slug or id; a style that is off or unknown is 404 as GET /v1/styles/:id answers. (3) GET /v1/creators/:handle/wishes (E-283, public): the wishes of a creator with a public page that are shown now. (4) GET /v1/creators/:handle/styles (E-285, public): the styles credited to that creator that are on, by slug, as the catalogue gives a style. A creator's profile itself (name, picture, line) stays GET /v1/creators/:handle (E-236, DEC-157), unchanged; E-283 and E-285 give it the wishes and styles the creator page draws. For E-283 and E-285 a creator whose account is suspended (an account ban in force), has no creator side (signed off) or is erased, and a handle that is not one, answer one 404, as E-236 does. Each read is paged as every list is (cursor and limit 1 to 50, default 20, nextCursor), reads through the live test of Now showing (a wish that is hidden by staff, resting, ended, removed, passcoded or not listed, or whose owner is banned or erased, is never in it), carries no viewer's mark (mine is empty) and no staff field, and is cached as the styles levels read is: ETag and Cache-Control public, max-age=0, must-revalidate (a 304 on a matching If-None-Match). GET /v1/showing is cached the same way for a visitor and as private with Vary: Authorization for a signed-in viewer, whose answer carries their marks.",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (IF6); build/prompts/API-BASE-11B.md",
+      "decidedAt": "2026-12-05T12:00:00Z"
+    },
+    {
+      "id": "DEC-289",
+      "topic": "Featured styles are not built (IF6)",
+      "decision": "IF6: \"Featured styles\" is not built. No staff screen, price-book field or product truth says how a style becomes featured, so no field, route or flag for it is added; Style.featured is not invented. Listed for the owner in the hand-back of API-BASE-11B.",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (IF6); build/prompts/API-BASE-11B.md",
+      "decidedAt": "2026-12-05T12:00:00Z"
+    },
+    {
+      "id": "DEC-290",
+      "topic": "The registry is frozen again after IF4 to IF6",
+      "decision": "The registry is frozen again after DEC-285 to DEC-289 by tools/pipeline/freeze.py; reconcile.py was run twice with --reopen (identical outputs; .pipeline/ui-align-tasks.json restored byte for byte). Endpoint ids issued: E-283 (GET /v1/creators/:handle/wishes), E-284 (GET /v1/styles/:id/wishes), E-285 (GET /v1/creators/:handle/styles), E-286 (POST /v1/wishes/:id/gather/on); E-282 was the last issued before and no id already issued changed. New fields: Wish.restorableUntil, PublicWishView.house; PublicWishView.keepOffer is typed; GET /v1/showing gains the optional query field style.",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (IF4 to IF6); build/prompts/API-BASE-11B.md",
+      "decidedAt": "2026-12-05T12:00:00Z"
+    },
+    {
+      "id": "DEC-291",
+      "topic": "A removed wish under a report, an account's erase and friends' voices, creator reads by account, Concierge wishes (IF4a)",
+      "decision": "IF4a: (1) a wish its owner removed that has a report still open is not erased at its day (the window job leaves it); when the report is dismissed (POST /v1/admin/moderation/:id/decide, keep) and the day has passed, and no other report on it is open, it is erased at once; when the report is upheld (take_down or ban) the removal becomes the staff's take-down: restorableUntil is cleared, the window job is cancelled and the owner's restore is 403. (2) An account's erase removes every friend's voice given to the account's wishes (the first-name rows at once, the voice notes and their files by one cleanup job each), as the erase of one wish does. (3) GET /v1/creators/:handle/wishes (E-283) and GET /v1/creators/:handle/styles (E-285) follow the creator's account: the styles listed are those whose creator is that creator row (style.creator.creatorId, or a live submission of that creator), never a handle kept as text, so a handle that changes hands never shows another person's styles; a creator who renames the handle is listed under the new one, and the old handle is 404 or the new holder's own. (4) The live test of Now showing (publicNow) also refuses a wish tied to a Concierge order that has not been delivered, so none of E-140, E-283, E-284, E-285's wish reads lists it even if a published row exists. No endpoint or field changes.",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (IF4a); build/prompts/API-BASE-11B.md",
+      "decidedAt": "2026-12-05T12:00:00Z"
+    },
+    {
+      "id": "DEC-292",
+      "topic": "The registry is frozen again after IF4a",
+      "decision": "The registry is re-frozen after DEC-291 by tools/pipeline/freeze.py; reconcile.py was run twice with --reopen (identical outputs; .pipeline/ui-align-tasks.json restored byte for byte). No endpoint id issued or changed; E-286 is still the last.",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (IF4a); build/prompts/API-BASE-11B.md",
+      "decidedAt": "2026-12-05T12:00:00Z"
     }
   ]
 }

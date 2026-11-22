@@ -1,6 +1,8 @@
-import { Body, Controller, Delete, Get, Headers, HttpCode, Param, Post, Put, Query } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Headers, HttpCode, Param, Post, Put, Query, Res } from "@nestjs/common";
+import type { Response } from "express";
+import { publicRead } from "../../common/http/public-cache";
 import {
-  DeleteWishesByIdPublishRequestsBodyDto, DeleteWishesByIdPublishRequestsParamsDto, GetAdminShowingQueryDto, GetShowingQueryDto,
+  DeleteWishesByIdPublishRequestsBodyDto, DeleteWishesByIdPublishRequestsParamsDto, GetAdminShowingQueryDto, GetShowingQueryDto, GetStylesByIdWishesParamsDto, GetStylesByIdWishesQueryDto,
   PostAdminShowingListedByNoUnlistBodyDto, PostAdminShowingListedByNoUnlistParamsDto, PostAdminShowingRequestsByIdDecideBodyDto,
   PostAdminShowingRequestsByIdDecideParamsDto, PostWishesByIdPublishRequestsBodyDto, PostWishesByIdPublishRequestsParamsDto,
   PutAdminShowingDayByDateBodyDto, PutAdminShowingDayByDateParamsDto,
@@ -49,8 +51,16 @@ export class ShowingController {
   /** E-140 (public). */
   @Public()
   @Get("showing")
-  async list(@Query() q: GetShowingQueryDto, @Headers("authorization") auth: string | undefined) {
-    return this.showing.publicList(q, await this.viewer(auth));
+  async list(@Query() q: GetShowingQueryDto, @Headers("authorization") auth: string | undefined, @Res({ passthrough: true }) res: Response) {
+    const viewer = await this.viewer(auth);
+    return publicRead(res, await this.showing.publicList(q, viewer), viewer === null);
+  }
+
+  /** E-284 (IF6): the wishes shown now in one style. The same for everyone, so a shared cache may keep it. */
+  @Public()
+  @Get("styles/:id/wishes")
+  async inStyle(@Param() p: GetStylesByIdWishesParamsDto, @Query() q: GetStylesByIdWishesQueryDto, @Res({ passthrough: true }) res: Response) {
+    return publicRead(res, await this.showing.publicInStyle(p.id, q));
   }
 
   /** HP9: a good bearer token marks the viewer's own reaction and save on each row; no token, or one that is not good, reads as a visitor. */

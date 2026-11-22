@@ -277,7 +277,7 @@ export class WishesService {
       kind: r.kind, occasion: r.occasion, style: r.styleSlug, name: r.name, no: r.no, content: r.content ?? {}, keep: r.keep,
       step: r.step, opensAt: t(r.opensAt), timeZone: r.timeZone, sealedAt: t(r.sealedAt), openedAt: t(r.openedAt), endsAt: t(r.endsAt),
       restingSince: t(r.restingSince), keptUntil: t(r.keptUntil), eraseAfter: t(r.eraseAfter), erasedAt: t(r.erasedAt),
-      removedAt: t(r.removedAt), createdAt: toWireInstant(r.createdAt), updatedAt: toWireInstant(r.updatedAt), version: r.version,
+      removedAt: t(r.removedAt), restorableUntil: t(r.restorableUntil), createdAt: toWireInstant(r.createdAt), updatedAt: toWireInstant(r.updatedAt), version: r.version,
       link: slug ? `/w/${slug}` : null, hasPasscode: r.passcodeHash !== null, weddingDate: t(r.weddingDate),
       openable: this.openable(r),
       // HM1: the maker's own note, as the contract types it (null until one is saved); only the owner's routes build this wire
@@ -821,13 +821,12 @@ export class WishesService {
       await lockAccount(tx, accountId);
       await this.owned(tx, accountId, id, biz);
       const locked = await this.lifecycle.lock(tx, id);
-      const wasDraft = stateOf(locked) === "draft";
-      await this.lifecycle.move(tx, locked, "taken_down", { cause: "owner.remove" });
-      const gone = await tx.wish.findUniqueOrThrow({ where: { id } });
-      // INT-7: a business's draft that is removed can be brought back within the restore window; when the window ends the draft is erased
-      // and the wish its draw took goes back to the business (the move to erased does that).
-      if (wasDraft && gone.businessId) await this.jobs.schedule("restore-window-end", new Date(this.clock.now().getTime() + (await this.lifecycle.restoreDays(tx)) * DAY), id, tx);
-      return gone;
+      // IF4: a wish its owner removes carries the day it can be brought back until (the price book's days); when that day passes the erase job
+      // erases it with its files (and a business's draft gives its draw back: the move to erased does that).
+      const until = new Date(this.clock.now().getTime() + (await this.lifecycle.restoreDays(tx)) * DAY);
+      await this.lifecycle.move(tx, locked, "taken_down", { cause: "owner.remove", data: { restorableUntil: until } });
+      await this.jobs.schedule("restore-window-end", until, id, tx);
+      return tx.wish.findUniqueOrThrow({ where: { id } });
     });
     return this.wire(row);
   }
@@ -857,9 +856,9 @@ export class WishesService {
         const last = await tx.wishTransition.findFirst({ where: { wishId: id, to: "taken_down" }, orderBy: { id: "desc" } });
         if (last?.cause !== "owner.remove") throw AppError.forbidden("Only the team can bring this wish back.");
         const to = await this.lifecycle.stateBeforeTakeDown(tx, id);
-        // INT-7: a business's removed draft comes back only inside the restore window (after it the draft is erased and its draw is given back).
-        if (to === "draft" && (await tx.wish.findUniqueOrThrow({ where: { id }, select: { businessId: true } })).businessId && last.createdAt.getTime() + (await this.lifecycle.restoreDays(tx)) * DAY <= this.clock.now().getTime()) {
-          throw AppError.conflict("not_allowed", "This wish cannot be brought back.");
+        // IF4: a removed wish comes back only inside its window (after it the wish is erased; a business's draft gives its draw back).
+        if ((await this.lifecycle.restoreEnd(tx, id, last.createdAt)).getTime() <= this.clock.now().getTime()) {
+          throw AppError.conflict("not_allowed", "The time to bring this wish back is over.");
         }
         await this.lifecycle.move(tx, w, to, { cause: "owner.restore" });
         await this.jobs.cancel("restore-window-end", id, tx);

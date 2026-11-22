@@ -7,11 +7,15 @@ import { WishLifecycleService, ERASE_WISH_FILE_PREFIX } from "../../wishes/wish-
 import { JPEG, WEBM } from "../../stored-files/tests/files-kit";
 import { boot, ids } from "./kit";
 import { RUN } from "../../../../test/kit/unique";
+import { holdSettingLockForFile } from "../../../../test/kit/setting-lock";
 
 const NOW = new Date("2027-04-12T09:00:00.000Z");
 const run = RUN;
 type Kit = Awaited<ReturnType<typeof boot>>;
 type Who = { id: string; auth: string };
+
+// the book's limits are shared by every spec in the run's database: hold the setting lock for the file
+holdSettingLockForFile();
 
 /** API-BASE-10 case 2 (IC7): the buyer's photos and voice note for a Concierge order. */
 describe("IC7: the buyer's files for a Concierge order", () => {

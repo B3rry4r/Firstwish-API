@@ -14,11 +14,19 @@ type Who = { id: string; auth: string };
 describe("IC7: the buyer's files for a Concierge order", () => {
   let k: Kit;
   let db: PrismaService;
+  /** Two makers for the whole spec (the makers list is one page of the suite's shared database: a spec must not add many). Both are suspended at the end. */
+  let makerA: Who;
+  let makerB: Who;
   beforeAll(async () => {
     k = await boot("ab10c", NOW);
     db = k.db;
+    makerA = await k.staff(["maker"]);
+    makerB = await k.staff(["maker"]);
   });
-  afterAll(() => k.t.close());
+  afterAll(async () => {
+    await db.staffAccount.updateMany({ where: { id: { in: [makerA.id, makerB.id] } }, data: { status: "suspended" } });
+    await k.t.close();
+  });
   beforeEach(() => k.t.clock.set(NOW));
   const http = () => k.t.http();
   let n = 0;
@@ -140,8 +148,8 @@ describe("IC7: the buyer's files for a Concierge order", () => {
   });
 
   it("the order's maker lists them by signed reads and adds them to the wish being made; they stay the buyer's; only the right people read them", async () => {
-    const m = await k.staff(["maker"]);
-    const other = await k.staff(["maker"]);
+    const m = makerA;
+    const other = makerB;
     const owner = await k.staff(["owner"]);
     const buyer = await k.account();
     const stranger = await k.account();
@@ -226,7 +234,7 @@ describe("IC7: the buyer's files for a Concierge order", () => {
   });
 
   it("delivery keeps the files the wish uses with the wish and removes the unused ones; the maker no longer reads them", async () => {
-    const m = await k.staff(["maker"]);
+    const m = makerA;
     const buyer = await k.account();
     const o = await paidOrder(buyer, m.id);
     const used = await give(buyer, o.id, "photo");
@@ -261,7 +269,7 @@ describe("IC7: the buyer's files for a Concierge order", () => {
   });
 
   it("cancel (the buyer's before it is with a maker, and staff's with a wish half made) takes every file; a refund of the order's payment takes them too", async () => {
-    const m = await k.staff(["maker"]);
+    const m = makerA;
     // the buyer cancels a placed order
     const b1 = await k.account();
     const placedOrder = await placed(b1);
@@ -302,7 +310,7 @@ describe("IC7: the buyer's files for a Concierge order", () => {
   });
 
   it("the buyer's erase removes the files with the rest of the buyer's files, and nobody reads them after", async () => {
-    const m = await k.staff(["maker"]);
+    const m = makerA;
     const owner = await k.staff(["owner"]);
     const buyer = await k.account();
     const o = await paidOrder(buyer, m.id);

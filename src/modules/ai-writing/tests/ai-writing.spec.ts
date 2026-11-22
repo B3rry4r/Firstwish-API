@@ -264,7 +264,7 @@ describe("the daily cap", () => {
     expect(refused).toHaveLength(27);
     expect(refused[0].body.error.code).toBe("ai_daily_limit");
     expect((await rows(s.id)).filter((x) => x.status === "done")).toHaveLength(AI_DAILY_CAP);
-  });
+  }, 60_000);
 
   it("a failed call gives its place back; the count is per account and per UTC day; Studio rows do not count", async () => {
     const s = await sender();

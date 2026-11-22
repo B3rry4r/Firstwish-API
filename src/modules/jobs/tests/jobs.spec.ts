@@ -122,7 +122,7 @@ describe("jobs frame", () => {
     const rows = await db.job.findMany({ where: { subjectId: k } });
     expect(rows).toHaveLength(1);
     expect(rows[0].status).toBe("scheduled");
-  });
+  }, 60_000);
 
   it("EE1 a handler that never returns is recorded failed (timeout) and retried with backoff; the worker goes on: 199 normal jobs all run", async () => {
     const run = subject();

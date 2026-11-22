@@ -5,6 +5,7 @@ import { UuidV7Maker } from "../../../common/ids/uuidv7";
 import { createTestApp, TestApp } from "../../../../test/kit/app";
 import { makeStaff, seedRoleTable } from "../../staff-accounts/tests/staff-kit";
 import { SettlementService } from "../settlement.service";
+import { testWishNo } from "../../../../test/kit/unique";
 
 const ROOT = join(__dirname, "../../../..");
 const NOW = new Date("2033-03-10T09:00:00.000Z");
@@ -101,8 +102,8 @@ describe("HW1 receipts", () => {
   it("every kind of line sends its receipt: extra, keep, wake, plan, pack, Vault space, Concierge, credits and the creator plan", async () => {
     const a = await account();
     const draft = await wish(a.id);
-    const live = await wish(a.id, { status: "live", ticket: "keepsake", no: `77${run}`.slice(0, 12), opensAt: new Date(NOW.getTime() - 86_400_000), openedAt: new Date(NOW.getTime() - 86_400_000), endsAt: new Date(NOW.getTime() + 5 * 86_400_000) });
-    const resting = await wish(a.id, { status: "resting", ticket: "keepsake", no: `78${run}`.slice(0, 12), opensAt: new Date(NOW.getTime() - 9 * 86_400_000), openedAt: new Date(NOW.getTime() - 9 * 86_400_000), endsAt: new Date(NOW.getTime() - 86_400_000), restingSince: new Date(NOW.getTime() - 86_400_000), eraseAfter: new Date(NOW.getTime() + 300 * 86_400_000) });
+    const live = await wish(a.id, { status: "live", ticket: "keepsake", no: testWishNo(), opensAt: new Date(NOW.getTime() - 86_400_000), openedAt: new Date(NOW.getTime() - 86_400_000), endsAt: new Date(NOW.getTime() + 5 * 86_400_000) });
+    const resting = await wish(a.id, { status: "resting", ticket: "keepsake", no: testWishNo(), opensAt: new Date(NOW.getTime() - 9 * 86_400_000), openedAt: new Date(NOW.getTime() - 9 * 86_400_000), endsAt: new Date(NOW.getTime() - 86_400_000), restingSince: new Date(NOW.getTime() - 86_400_000), eraseAfter: new Date(NOW.getTime() + 300 * 86_400_000) });
     const bid = ids.next();
     await db.business.create({ data: { id: bid, accountId: a.id, name: "Studio", business: "Studio", since: NOW } });
     const cases: { sku: string; purpose: string; request: Record<string, unknown>; business?: boolean }[] = [
@@ -130,7 +131,7 @@ describe("HW1 receipts", () => {
 
   it("a link holder's payment sends the receipt to the payer's email kept on the payment, with no account made", async () => {
     const owner = await account();
-    const w = await wish(owner.id, { status: "live", ticket: "keepsake", no: `79${run}`.slice(0, 12), opensAt: new Date(NOW.getTime() - 86_400_000), openedAt: new Date(NOW.getTime() - 86_400_000), endsAt: new Date(NOW.getTime() + 5 * 86_400_000) });
+    const w = await wish(owner.id, { status: "live", ticket: "keepsake", no: testWishNo(), opensAt: new Date(NOW.getTime() - 86_400_000), openedAt: new Date(NOW.getTime() - 86_400_000), endsAt: new Date(NOW.getTime() + 5 * 86_400_000) });
     const payer = `ab7r-payer-${run}@example.com`;
     const p = await pending({ payerContact: payer }, [{ sku: "keep.month" }], { subjectId: w, keepKey: "month" }, "keep");
     expect((await settle.settle(answer(p))).outcome).toBe("fulfilled");
@@ -177,7 +178,7 @@ describe("HW1 receipts", () => {
     expect(mail[0].text).toContain(p.reference);
     // the link payer's refund goes to the payment's own email
     const owner = await account();
-    const live = await wish(owner.id, { status: "live", ticket: "keepsake", no: `80${run}`.slice(0, 12), opensAt: new Date(NOW.getTime() - 86_400_000), openedAt: new Date(NOW.getTime() - 86_400_000), endsAt: new Date(NOW.getTime() + 5 * 86_400_000) });
+    const live = await wish(owner.id, { status: "live", ticket: "keepsake", no: testWishNo(), opensAt: new Date(NOW.getTime() - 86_400_000), openedAt: new Date(NOW.getTime() - 86_400_000), endsAt: new Date(NOW.getTime() + 5 * 86_400_000) });
     const payer = `ab7r-refund-${run}@example.com`;
     const q = await pending({ payerContact: payer }, [{ sku: "keep.month" }], { subjectId: live, keepKey: "month" }, "keep");
     await settle.settle(answer(q));

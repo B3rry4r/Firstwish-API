@@ -4,6 +4,7 @@ import { UuidV7Maker } from "../../../common/ids/uuidv7";
 import { createTestApp, TestApp } from "../../../../test/kit/app";
 import { LinkLimits } from "../link-limits";
 import { ensureEntitlements } from "../../stored-files/tests/files-kit";
+import { testWishNo } from "../../../../test/kit/unique";
 
 const NOW = new Date("2027-03-10T09:00:00.000Z");
 const DAY = 24 * 3600 * 1000;
@@ -45,7 +46,7 @@ describe("B10 rulings NN1 NN2 NN3 NN4 NN5 and the proofs that stay (real databas
     await db.wish.create({
       data: {
         id, accountId: owner, status: "sealed", ticket: "moment", kind: "love", occasion: "birthday", styleSlug: "noir", timeZone: "Africa/Lagos",
-        opensAt: new Date(NOW.getTime() + 3600000), sealedAt: NOW, name: "Chidi", no: `FW-R${run}-${n}`,
+        opensAt: new Date(NOW.getTime() + 3600000), sealedAt: NOW, name: "Chidi", no: testWishNo(),
         content: { opening: { id: "op-1", scene: "curtain", values: { to: "Chidi" } }, letter: { paras: ["Happy birthday."] } },
         ...over,
       } as never,

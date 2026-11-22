@@ -8,6 +8,7 @@ import { KeepProofs } from "../../purchases/keep-proof";
 import { LinkLimits } from "../../public-wishes/link-limits";
 import { NumbersService } from "../../staff-reads/numbers.service";
 import { WishLifecycleService } from "../../wishes/wish-lifecycle.service";
+import { testWishNo } from "../../../../test/kit/unique";
 
 const ROOT = join(__dirname, "../../../..");
 const NOW = new Date("2032-06-14T09:00:00.000Z");
@@ -61,7 +62,7 @@ describe("P-API-BASE-6 HU1 to HU3", () => {
     const id = ids.next();
     const accountId = (over.accountId as string | undefined) ?? (await owner());
     await db.wish.create({
-      data: { id, status: "live", kind: "birthday", occasion: "birthday", styleSlug: "golden", timeZone: "Africa/Lagos", ticket: "keepsake", no: `66${seq}${id.slice(-4)}`, opensAt: new Date(NOW.getTime() - 9 * DAY), openedAt: new Date(NOW.getTime() - 9 * DAY), endsAt: new Date(NOW.getTime() + 5 * DAY), ...over, accountId } as never,
+      data: { id, status: "live", kind: "birthday", occasion: "birthday", styleSlug: "golden", timeZone: "Africa/Lagos", ticket: "keepsake", no: testWishNo(), opensAt: new Date(NOW.getTime() - 9 * DAY), openedAt: new Date(NOW.getTime() - 9 * DAY), endsAt: new Date(NOW.getTime() + 5 * DAY), ...over, accountId } as never,
     });
     const slug = `ab6p-${run}-${++seq}`.slice(0, 30);
     const linkId = ids.next();
@@ -154,7 +155,7 @@ describe("P-API-BASE-6 HU1 to HU3", () => {
     const before = await nums.read("month");
     const hid = ids.next();
     const houseAccount = await db.account.findFirstOrThrow({ where: { handle: "firstwish" } });
-    await db.wish.create({ data: { id: hid, accountId: houseAccount.id, status: "live", kind: "birthday", occasion: "birthday", styleSlug: "golden", timeZone: "Africa/Lagos", ticket: "premiere", no: `H${run}`.slice(0, 20), sealedAt: NOW, openedAt: NOW, createdAt: NOW, endsAt: new Date(NOW.getTime() + 5 * DAY) } as never });
+    await db.wish.create({ data: { id: hid, accountId: houseAccount.id, status: "live", kind: "birthday", occasion: "birthday", styleSlug: "golden", timeZone: "Africa/Lagos", ticket: "premiere", no: testWishNo(), sealedAt: NOW, openedAt: NOW, createdAt: NOW, endsAt: new Date(NOW.getTime() + 5 * DAY) } as never });
     const after = await nums.read("month");
     expect([after.previews, after.paid]).toEqual([before.previews, before.paid]);
     const own = await wish({ createdAt: NOW });

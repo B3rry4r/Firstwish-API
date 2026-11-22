@@ -9,6 +9,7 @@ import { SettlementService } from "../../payments/settlement.service";
 import { UnlockTokens } from "../../public-wishes/unlock-token";
 import { LinkLimits } from "../../public-wishes/link-limits";
 import { WishLifecycleService } from "../../wishes/wish-lifecycle.service";
+import { testWishNo } from "../../../../test/kit/unique";
 
 const ROOT = join(__dirname, "../../../..");
 const NOW = new Date("2032-06-14T09:00:00.000Z");
@@ -64,7 +65,7 @@ describe("HS2 keep and wake by link, no account", () => {
     const id = ids.next();
     const accountId = (over.accountId as string | undefined) ?? (await owner());
     await db.wish.create({
-      data: { id, status: "live", kind: "birthday", occasion: "birthday", styleSlug: "golden", timeZone: "Africa/Lagos", ticket: "keepsake", no: `66${seq}${id.slice(-4)}`, opensAt: new Date(NOW.getTime() - 9 * DAY), openedAt: new Date(NOW.getTime() - 9 * DAY), endsAt: new Date(NOW.getTime() + 5 * DAY), ...over, accountId } as never,
+      data: { id, status: "live", kind: "birthday", occasion: "birthday", styleSlug: "golden", timeZone: "Africa/Lagos", ticket: "keepsake", no: testWishNo(), opensAt: new Date(NOW.getTime() - 9 * DAY), openedAt: new Date(NOW.getTime() - 9 * DAY), endsAt: new Date(NOW.getTime() + 5 * DAY), ...over, accountId } as never,
     });
     const slug = `ab6h-${run}-${++seq}`.slice(0, 30);
     const linkId = ids.next();

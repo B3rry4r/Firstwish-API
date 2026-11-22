@@ -6,7 +6,7 @@ import { createTestApp, TestApp } from "../../../../test/kit/app";
 import { FileJobs } from "../../stored-files/file-jobs";
 import { SettlementService } from "../../payments/settlement.service";
 import { testWishNo, RUN, testHex } from "../../../../test/kit/unique";
-import { holdSettingLockForFile } from "../../../../test/kit/setting-lock";
+import { ownDatabase } from "../../../../test/kit/own-db";
 
 const ROOT = join(__dirname, "../../../..");
 const NOW = new Date("2034-05-10T09:00:00.000Z");
@@ -18,8 +18,8 @@ const PNG = Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a
 const MP3 = Buffer.concat([Buffer.from("ID3"), Buffer.alloc(40)]);
 const GLB = Buffer.concat([Buffer.from("glTF"), Buffer.alloc(40)]);
 
-// the book's limits are shared by every spec in the run's database: hold the setting lock for the file
-holdSettingLockForFile();
+// F4: this spec moves the clock years ahead and runs the global file sweeps, which take any old unattached file in the database: it has a database of its own
+const own = ownDatabase("ab7s");
 
 /** API-BASE-7 cases 2, 3, 7 and 8 (HW2 Studio files, HW3 Signed off, HW5 the sweep, the wish list's publish). */
 describe("HW2 Studio files, HW3 Signed off, HW5 sweep, wish list publish", () => {
@@ -27,12 +27,16 @@ describe("HW2 Studio files, HW3 Signed off, HW5 sweep, wish list publish", () =>
   let db: PrismaService;
 
   beforeAll(async () => {
+    own.use();
     t = await createTestApp({ now: NOW });
     db = t.app.get(PrismaService);
     const r = spawnSync(process.execPath, [join(ROOT, "scripts/seed.mjs")], { cwd: ROOT, env: process.env, encoding: "utf8" });
     if (r.status !== 0) throw new Error(`seed failed: ${r.stderr}`);
   });
-  afterAll(() => t.close());
+  afterAll(async () => {
+    await t.close();
+    own.drop();
+  });
   beforeEach(() => t.clock.set(NOW));
 
   async function creator() {

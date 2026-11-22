@@ -2,10 +2,14 @@ import { PrismaService } from "../../../common/db/prisma.service";
 import { SettlementService } from "../../payments/settlement.service";
 import { boot, ids } from "./kit";
 import { RUN } from "../../../../test/kit/unique";
+import { holdSettingLockForFile } from "../../../../test/kit/setting-lock";
 
 const NOW = new Date("2027-03-08T09:00:00.000Z");
 const run = RUN;
 type Kit = Awaited<ReturnType<typeof boot>>;
+
+// the book's limits are shared by every spec in the run's database: hold the setting lock for the file
+holdSettingLockForFile();
 
 /** IC4: a wish being made for a Concierge order does not exist for the buyer until it is delivered. */
 describe("IC4: a wish being made for an order is hidden from the buyer on every route until delivery; delivery takes only this order's wishes", () => {

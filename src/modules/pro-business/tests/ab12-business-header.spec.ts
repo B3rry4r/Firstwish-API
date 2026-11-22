@@ -8,12 +8,16 @@ import { StandinStorage } from "../../../common/ports/adapters/standins";
 import { StoragePort } from "../../../common/ports/storage.port";
 import { PNG } from "../../stored-files/tests/files-kit";
 import { SettlementService } from "../../payments/settlement.service";
+import { holdSettingLockForFile } from "../../../../test/kit/setting-lock";
 
 const ROOT = join(__dirname, "../../../..");
 const NOW = new Date("2027-06-10T09:00:00.000Z");
 const ids = new UuidV7Maker();
 const run = `${process.pid}${Date.now() % 100000}`;
 let seq = 0;
+
+// the book's limits are shared by every spec in the run's database: hold the setting lock for the file
+holdSettingLockForFile();
 
 /** API-BASE-12 case 1 (HR3, IF2a): one person in two businesses works in the one the header names, in their role there. */
 describe("HR3: the people, payment and brand routes follow x-business-id", () => {

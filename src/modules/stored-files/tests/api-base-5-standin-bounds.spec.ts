@@ -6,6 +6,10 @@ import { StandinStorage } from "../../../common/ports/adapters/standins";
 import { StoragePort } from "../../../common/ports/storage.port";
 import type { TestApp } from "../../../../test/kit/app";
 import { filesApp, JPEG, makeAccount } from "./files-kit";
+import { holdSettingLockForFile } from "../../../../test/kit/setting-lock";
+
+// the book's limits are shared by every spec in the run's database: hold the setting lock for the file
+holdSettingLockForFile();
 
 /** API-BASE-5 patch (M2, L1): the stand-in storage (test stacks only) is bounded, cuts a too-big put off early, and keeps the first put. */
 describe("API-BASE-5 patch: the stand-in storage is bounded", () => {

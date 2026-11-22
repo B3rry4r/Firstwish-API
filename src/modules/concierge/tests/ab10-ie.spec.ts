@@ -8,12 +8,16 @@ import { JobsService } from "../../jobs/jobs.service";
 import { JPEG, WEBM } from "../../stored-files/tests/files-kit";
 import { boot, ids } from "./kit";
 import { RUN } from "../../../../test/kit/unique";
+import { holdSettingLockForFile } from "../../../../test/kit/setting-lock";
 
 const NOW = new Date("2027-04-12T09:00:00.000Z");
 const DAY = 86_400_000;
 const run = RUN;
 type Kit = Awaited<ReturnType<typeof boot>>;
 type Who = { id: string; auth: string };
+
+// the book's limits are shared by every spec in the run's database: hold the setting lock for the file
+holdSettingLockForFile();
 
 /** API-BASE-10 patch (IE1, IE3, F4): a Concierge wish is a Signature wish; the files of an order never paid; the erase. */
 describe("IE: Concierge wishes, order files and the erase", () => {

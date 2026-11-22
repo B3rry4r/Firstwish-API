@@ -9,6 +9,10 @@ import { SignedUrlsService } from "../signed-urls.service";
 import { verdictOf } from "../screening.service";
 import { stagingKeyOf } from "../file-rules";
 import { filesApp, GB, ids, JPEG, makeAccount, makeBusiness, makeWish, MB, PNG, ScoredScreening, stage, SVG, WEBM } from "./files-kit";
+import { holdSettingLockForFile } from "../../../../test/kit/setting-lock";
+
+// the book's limits are shared by every spec in the run's database: hold the setting lock for the file
+holdSettingLockForFile();
 
 describe("storage adapters (case 1: one port, two adapters)", () => {
   it("switching STORAGE_DRIVER between r2 and spaces changes only the signed host", async () => {

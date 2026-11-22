@@ -6,6 +6,7 @@ import { createTestApp, TestApp } from "../../../../test/kit/app";
 import { FileJobs } from "../../stored-files/file-jobs";
 import { SettlementService } from "../../payments/settlement.service";
 import { testWishNo, RUN, testHex } from "../../../../test/kit/unique";
+import { holdSettingLockForFile } from "../../../../test/kit/setting-lock";
 
 const ROOT = join(__dirname, "../../../..");
 const NOW = new Date("2034-05-10T09:00:00.000Z");
@@ -16,6 +17,9 @@ const run = RUN;
 const PNG = Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), Buffer.alloc(40)]);
 const MP3 = Buffer.concat([Buffer.from("ID3"), Buffer.alloc(40)]);
 const GLB = Buffer.concat([Buffer.from("glTF"), Buffer.alloc(40)]);
+
+// the book's limits are shared by every spec in the run's database: hold the setting lock for the file
+holdSettingLockForFile();
 
 /** API-BASE-7 cases 2, 3, 7 and 8 (HW2 Studio files, HW3 Signed off, HW5 the sweep, the wish list's publish). */
 describe("HW2 Studio files, HW3 Signed off, HW5 sweep, wish list publish", () => {

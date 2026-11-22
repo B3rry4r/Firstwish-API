@@ -1142,3 +1142,7 @@ HG1 (give race) Two staff giving one Concierge order: the code is right (overlap
   server's plain words, from a fixed list by the screening result's own kind (no new kinds invented; where the
   result gives no kind: "This file was not accepted."); a mark on a file that has been removed is refused (422 in
   words), never stored.
+- II3 (22 Nov, the lead, on the check of the thirteenth round; Default (lead), owner may override): a wish made in
+  a Studio style plays the version of that style that was approved when the wish was made; a later approved
+  version changes new wishes and the public style read only, never a wish already made (the customer chose and
+  paid for that look). The wish keeps a pointer to the approved submission it was made under.

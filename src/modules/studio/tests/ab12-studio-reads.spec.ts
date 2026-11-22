@@ -4,6 +4,7 @@ import { PrismaService } from "../../../common/db/prisma.service";
 import { UuidV7Maker } from "../../../common/ids/uuidv7";
 import { createTestApp, TestApp } from "../../../../test/kit/app";
 import { testWishNo } from "../../../../test/kit/unique";
+import { holdSettingLockForFile } from "../../../../test/kit/setting-lock";
 
 const ROOT = join(__dirname, "../../../..");
 const NOW = new Date("2034-07-10T09:00:00.000Z");
@@ -14,6 +15,9 @@ let seq = 0;
 const PNG = Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), Buffer.alloc(40)]);
 const MP3 = Buffer.concat([Buffer.from("ID3"), Buffer.alloc(40)]);
 const GLB = Buffer.concat([Buffer.from("glTF"), Buffer.alloc(40)]);
+
+// the book's limits are shared by every spec in the run's database: hold the setting lock for the file
+holdSettingLockForFile();
 
 /** API-BASE-12 case 2 (HW2): the signed reads of a creator's Studio files and profile picture exist; this proves them for the creator and the public. */
 describe("HW2 reads: Studio files and the profile picture, for the creator and for the public", () => {

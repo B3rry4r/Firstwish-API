@@ -10,6 +10,7 @@ import { stagingKeyOf } from "../../stored-files/file-rules";
 import { ensureEntitlements, ids, makeAccount, makeBusiness, makeWish, PNG, ScoredScreening, stage } from "../../stored-files/tests/files-kit";
 import { ABANDON_EVERY_MS, JobHandlers, SWEEP_KEY, UPLOAD_CLEANUP_EVERY_MS } from "../job-handlers.service";
 import { RUN } from "../../../../test/kit/unique";
+import { holdSettingLockForFile } from "../../../../test/kit/setting-lock";
 
 /* INT-3: the joins only the merged base can make. Every handler a bundle exported is registered with the jobs frame and the tick
    (JobsService.runDue, the body of the BullMQ tick) really runs it; erasing an account and the signed PUT are re-proved with B06's wishes.
@@ -32,6 +33,9 @@ async function dropJobs(db: PrismaService, where: object): Promise<void> {
 
 let k = 0;
 const subject = () => `int3-${RUN}-${Date.now()}-${++k}`;
+
+// the book's limits are shared by every spec in the run's database: hold the setting lock for the file
+holdSettingLockForFile();
 
 describe("INT-3: the global sweeps run by the jobs frame (a clock before every other spec's)", () => {
   let t: TestApp;

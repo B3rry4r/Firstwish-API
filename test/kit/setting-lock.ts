@@ -17,3 +17,18 @@ export async function holdSettingLock(): Promise<() => Promise<void>> {
     await client.$disconnect();
   };
 }
+
+/**
+ * For a spec file that uploads a picture, poster, cover or profile picture (or reads a limit line) while another spec may change the
+ * book's limits: call once at the top of the file. Registers a root beforeAll/afterAll, so it holds for every describe in the file.
+ * The wait for the lock can be long (another file holds it for its whole run), so the hook's own time is long.
+ */
+export function holdSettingLockForFile(): void {
+  let release: (() => Promise<void>) | undefined;
+  beforeAll(async () => {
+    release = await holdSettingLock();
+  }, 300_000);
+  afterAll(async () => {
+    await release?.();
+  });
+}

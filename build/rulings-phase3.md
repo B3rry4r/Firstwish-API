@@ -1124,3 +1124,9 @@ HG1 (give race) Two staff giving one Concierge order: the code is right (overlap
   the two that ask for privacy's and terms' "could not be loaded" words (reachable only when the site is built with
   the server down), are closed as not a state. Client-read screens keep their designed loading, empty and error
   states (rendered and checked).
+- IH5 (22 Nov, the lead, on the check of the public reads bundle): which styles the site's menus and the Home
+  styles row show, and in what order, is designed content (the owner's picks: Studio Noir, Love Letter, Golden
+  Hour, Cinema, Owambe, Constellation, Boarding Pass in the menus), not sample data: it stays as designed, kept as
+  ONE list of slugs in one place, and the server decides only whether each is on (a pick that is off is skipped and
+  the next style in catalogue order takes its place; names and levels are the server's). A menu is never empty.
+  When the owner rules how a style becomes featured, that rule replaces the list.

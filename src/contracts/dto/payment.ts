@@ -82,6 +82,9 @@ export class PostPaymentsBodyDto implements PostPaymentsBody {
   purpose?: string;
   @IsOptional()
   @IsString()
+  returnPath?: string;
+  @IsOptional()
+  @IsString()
   subjectId?: string;
   @IsOptional()
   @IsIn(["moment", "keepsake", "signature", "premiere"])

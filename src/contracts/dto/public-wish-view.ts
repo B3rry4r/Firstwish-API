@@ -88,6 +88,9 @@ export class PostWBySlugKeepBodyDto implements PostWBySlugKeepBody {
   @IsOptional()
   @IsIn(["card", "transfer", "ussd"])
   paymentWay?: "card" | "transfer" | "ussd";
+  @IsOptional()
+  @IsString()
+  returnPath?: string;
 }
 export class PostWBySlugKeepParamsDto implements PostWBySlugKeepParams {
   @IsString()

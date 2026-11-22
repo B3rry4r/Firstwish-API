@@ -81,9 +81,9 @@ export async function orderFileRows(tx: Pick<Tx, "$queryRaw">, orderId: string, 
  * The order's files go, in the caller's transaction: the link rows are removed and each file is marked deleted (nobody reads it from then on, no confirm can
  * finish it), then one upload-cleanup job per file removes its objects and rows (the job that clears an erased wish's files; storage is never called inside a
  * transaction). With `keepUsed` the files the wish made for the order uses stay with that wish (delivery); without it every file goes (cancel, refund).
- * Answers how many files it released. Safe to repeat.
+ * Answers how many files it released; `released` collects their ids, for a caller that removes the objects once its transaction has committed. Safe to repeat.
  */
-export async function releaseOrderFiles(tx: Tx, ids: IdGenerator, orderId: string, now: Date, opts: { keepUsed: boolean }): Promise<number> {
+export async function releaseOrderFiles(tx: Tx, ids: IdGenerator, orderId: string, now: Date, opts: { keepUsed: boolean; released?: string[] }): Promise<number> {
   const rows = await orderFileRows(tx, orderId);
   const keep = opts.keepUsed ? rows.filter((r) => r.inWish) : [];
   const gone = rows.filter((r) => !keep.includes(r));
@@ -92,6 +92,7 @@ export async function releaseOrderFiles(tx: Tx, ids: IdGenerator, orderId: strin
   const stray = await tx.$queryRaw<{ id: string }[]>`
     SELECT f.id::text AS id FROM stored_file f WHERE f.id = ANY(${gone.map((g) => g.id)}::uuid[])`;
   for (const { id } of stray) {
+    opts.released?.push(id);
     await tx.$executeRaw`UPDATE stored_file SET status = 'deleted', "updatedAt" = ${now} WHERE id = ${id}::uuid`;
     // the wish being made names it no more (a delivered wish keeps only what it used; a cancelled one is erased)
     await tx.wishFile.deleteMany({ where: { fileId: id } });

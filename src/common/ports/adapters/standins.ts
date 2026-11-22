@@ -46,7 +46,7 @@ export class StandinPayments extends PaymentsPort {
     this.payments.set(input.reference, { amount: input.amount, status: "pending", paidAt: null });
     return Promise.resolve({
       reference: input.reference,
-      authorizationUrl: `https://checkout.${STANDIN_HOST}/${encodeURIComponent(input.reference)}`,
+      authorizationUrl: `https://checkout.${STANDIN_HOST}/${encodeURIComponent(input.reference)}${input.callbackUrl ? `?return=${encodeURIComponent(input.callbackUrl)}` : ""}`,
       accessCode: `standin_${input.reference}`,
     });
   }

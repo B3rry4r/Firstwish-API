@@ -8535,6 +8535,16 @@
       "noWriter": true
     },
     {
+      "field": "Price.confirmation",
+      "writers": [],
+      "store": "Price",
+      "readers": [],
+      "writerActors": [],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
       "field": "Price.discountable",
       "writers": [
         "server:price-book"
@@ -20681,5 +20691,5 @@
     }
   ],
   "crossActor": 32,
-  "noWriter": 666
+  "noWriter": 667
 }

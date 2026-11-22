@@ -24,6 +24,22 @@ export async function waitingTicketPayment(db: Db, accountId: string, wishId: st
   });
 }
 
+/** IF3: the payment of this extra for this wish, started by this account, that still waits (same rule as a ticket's), or null. */
+export async function waitingExtraPayment(db: Db, accountId: string, wishId: string, sku: string, now: Date): Promise<Payment | null> {
+  const since = new Date(now.getTime() - PAYMENTS_ABANDON_AFTER_MINUTES * 60_000);
+  const rows = await db.payment.findMany({
+    where: { accountId, purpose: "extra", subjectId: normaliseId(wishId), status: { in: ["pending", "started"] }, fulfilledAt: null, createdAt: { gt: since } },
+    orderBy: { id: "desc" },
+  });
+  return rows.find((p) => skuOf(p) === sku) ?? null;
+}
+
+/** The sku of a payment's first line. */
+export function skuOf(p: Pick<Payment, "lines">): string {
+  const first = (Array.isArray(p.lines) ? p.lines[0] : undefined) as { sku?: unknown } | undefined;
+  return typeof first?.sku === "string" ? first.sku : "";
+}
+
 /** The ticket a payment's own line names ("moment", "keepsake", ...). */
 export function ticketOf(p: Pick<Payment, "lines">): string {
   const first = (Array.isArray(p.lines) ? p.lines[0] : undefined) as { sku?: unknown } | undefined;

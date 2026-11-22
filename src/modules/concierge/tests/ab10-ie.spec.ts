@@ -236,7 +236,8 @@ describe("IE: Concierge wishes, order files and the erase", () => {
     const read = await http().get(`/v1/concierge-orders/${o.id}`).set("Authorization", buyer.auth);
     expect(read.body).toMatchObject({ status: "refunded", state: "refunded" });
     expect((await staffList(m.auth, o.id)).status).toBe(404);
-    expect((await fileRow(f.id))?.status).toBe("deleted");
+    // API-BASE-11A case 5: the refund removes the stored objects and rows at once, so there is no "deleted" row left to read (ab11a-refund-files.spec.ts)
+    expect(await fileRow(f.id)).toBeNull();
     expect((await db.wish.findUniqueOrThrow({ where: { id: w } })).erasedAt).not.toBeNull();
     const ownerRead = await http().get(`/v1/admin/concierge/orders/${o.id}`).set("Authorization", owner.auth);
     expect([200, 404]).toContain(ownerRead.status);

@@ -99,7 +99,8 @@ describe("ID1: one ticket payment per wish", () => {
     const late = await http().post(`/v1/payments/${next.body.payment.reference}/drop`).set("Authorization", a.auth);
     expect(late.status).toBe(409);
     expect(late.body.error.code).toBe("ticket_payment_not_waiting");
-    const keep = await row(a.id, w, "extra.qr-card");
+    // IF3 made an extra's payment droppable (ab11a-if3.spec.ts), so the payment that is neither a ticket's nor an extra's is a keep's
+    const keep = await row(a.id, w, "extra.qr-card", { purpose: "keep" });
     expect((await http().post(`/v1/payments/${keep.reference}/drop`).set("Authorization", a.auth)).status).toBe(404);
     // a lapsed waiting payment no longer holds the wish
     const w3 = await draft(a.id);

@@ -1429,6 +1429,17 @@ model StyleSubmission {
   @@map("style_submission")
 }
 
+/// table: API-BASE-11A (DEC-278): the Idempotency-Key a contact-page start carried, as a hash, with a hash of what was sent and the thread it made
+model SupportContactKey {
+  keyHash     String         @id
+  fingerprint String
+  threadId    String?        @db.Uuid
+  createdAt   DateTime       @default(now()) @db.Timestamptz(3)
+  thread      SupportThread? @relation("SupportContactKey_threadId", fields: [threadId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@map("support_contact_key")
+}
+
 /// table: written by E-203 and server:support-threads
 model SupportMessage {
   id        String             @id @db.Uuid
@@ -1460,6 +1471,7 @@ model SupportThread {
   account                Account?              @relation("SupportThread_accountId", fields: [accountId], references: [id])
   assignee               StaffAccount?         @relation("SupportThread_assigneeId", fields: [assigneeId], references: [id])
   supportMessageByThread SupportMessage[]      @relation("SupportMessage_threadId")
+  contactKeys            SupportContactKey[]   @relation("SupportContactKey_threadId")
 
   @@index([accountId, id])
   @@index([assigneeId, id])

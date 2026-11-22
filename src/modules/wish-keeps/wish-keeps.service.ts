@@ -136,7 +136,7 @@ export class WishKeepsService implements OnModuleInit {
     }
     if (!length) throw AppError.validation({ keepKey: "Choose month, half or year." });
     const options = who.owner ? undefined : { receiverProof: this.proofs.issue(accountId, id) };
-    const r = await this.payments.start(accountId, { purpose: "keep", id: length, subjectId: id, way: body.paymentWay, options }, idempotencyKey);
+    const r = await this.payments.start(accountId, { purpose: "keep", id: length, subjectId: id, way: body.paymentWay, options, returnPath: body.returnPath }, idempotencyKey);
     let item: Wish | null = null;
     if (r.started.payment.state === "succeeded") {
       const fresh = await this.db.wish.findUniqueOrThrow({ where: { id }, select: { status: true, erasedAt: true } });
@@ -247,7 +247,7 @@ export class WishKeepsService implements OnModuleInit {
     await this.assertKeepable(id);
     const email = this.emailOf(body.email);
     const options = { receiverProof: this.proofs.issue(holderKey(email), id) };
-    const r = await this.payments.start(null, { purpose: "keep", id: length as KeepLength, subjectId: id, way: body.paymentWay, options }, idempotencyKey, { wishId: id, email });
+    const r = await this.payments.start(null, { purpose: "keep", id: length as KeepLength, subjectId: id, way: body.paymentWay, options, returnPath: body.returnPath }, idempotencyKey, { wishId: id, email, slug });
     return { answer: { payment: r.started.payment, item: held.summary(this.viewState(stateOf(await this.db.wish.findUniqueOrThrow({ where: { id }, select: { status: true, erasedAt: true } })))) }, status: r.status };
   }
 

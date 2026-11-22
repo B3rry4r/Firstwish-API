@@ -23,7 +23,7 @@ describe("HU2 PublicWishView.house and PublicWishView.keepOffer", () => {
   afterAll(() => t.close());
   beforeEach(() => t.clock.set(NOW));
 
-  async function wish(owner: string | "house", over: Record<string, unknown> = {}) {
+  async function wish(owner: string, over: Record<string, unknown> = {}) {
     const accountId = owner === "house" ? (await db.account.findFirstOrThrow({ where: { handle: "firstwish" } })).id : owner;
     const id = ids.next();
     await db.wish.create({

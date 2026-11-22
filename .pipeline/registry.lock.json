@@ -1,6 +1,6 @@
 {
- "frozenAt": "2026-11-22T09:33:09Z",
- "registrySha256": "ff3725d15df86dd5eff56c189eed195a186d6fd051c3971b990bc1b51b50906b",
+ "frozenAt": "2026-11-22T09:43:21Z",
+ "registrySha256": "52fc26ae6370c83e9d723520dd70d039f7289b45b747d763b61f882ae748687d",
  "resources": 107,
  "endpoints": 285,
  "decision": "DEC-290",

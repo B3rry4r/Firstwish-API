@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "frozenAt": "2026-11-22T09:33:09Z",
+  "frozenAt": "2026-11-22T09:43:21Z",
   "framework": "nestjs",
   "generatedBy": "tools/pipeline/reconcile.py",
   "resources": [

@@ -53,7 +53,7 @@ describe("IF5 POST /v1/wishes/:id/gather/on", () => {
     const back = await on(w);
     expect(back.status).toBe(200);
     expect(back.body).toMatchObject({ slug: w.slug, link: `/g/${w.slug}`, active: true, open: true, count: 1, limit: MAX_VOICE_NOTES_PER_WISH });
-    expect(back.body.voices.map((v: { id: string }) => v.id)).toEqual([first]);
+    expect((back.body.voices as { id: string }[]).map((v) => v.id)).toEqual([first]);
     expect((await friend(w.slug)).body).toMatchObject({ open: true, reason: null, count: 1 });
     await add(w.slug, { name: "Tobi" });
     expect(((await t.http().get(`/v1/wishes/${w.id}/gather`).set(w.auth)).body as { count: number }).count).toBe(2);

@@ -64,9 +64,11 @@ shared colours. They sit on the accepted list with that reason. Three ways to fi
  (c) leave them accepted as they are: the accepted list never reaches zero.
 
 ## For the owner (22 Nov, from the public reads bundle; not merged yet)
-- The site's menus (top and footer) showed a hand-picked list of styles kept in a file. That file is sample data, so
-  it is gone: the menus now show the server's first seven styles that are on, in catalogue order. When the owner
-  says how a style becomes "featured" (a staff switch, a list in Prices, or the most used), the menus and the
-  "Featured styles" shelf follow that instead.
+- The site's menus (top and footer) and the Home styles row: the builder had replaced the designed picks with the
+  server's first seven styles in catalogue order (the flagship styles left the menus). CORRECTED before any merge
+  (ruling IH5): the menus keep the designed picks and order (Studio Noir, Love Letter, Golden Hour, Cinema, Owambe,
+  Constellation, Boarding Pass); the server only says which are on. When the owner says how a style becomes
+  "featured" (a staff switch, a list in Prices, or the most used), that rule replaces the list and fills the
+  "Featured styles" shelf.
 - The canvas draws no public page for a creator, so none was built; the server can already serve one (a creator's
   listed wishes and approved styles). Say if you want that page.

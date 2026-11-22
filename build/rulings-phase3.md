@@ -1130,3 +1130,15 @@ HG1 (give race) Two staff giving one Concierge order: the code is right (overlap
   ONE list of slugs in one place, and the server decides only whether each is on (a pick that is off is skipped and
   the next style in catalogue order takes its place; names and levels are the server's). A menu is never empty.
   When the owner rules how a style becomes featured, that rule replaces the list.
+- II1 (22 Nov, the lead, on WEB-API-7's halt; Default (lead), owner may override): a style made in Studio plays on
+  a receiver's phone only if the phone can read the style's document, so the document of a style that is APPROVED
+  and live is public: at the wish's link (with the style's files, E-266) and at the public style read (E-196, for
+  the maker's preview and the style's page). A draft, a submitted, a refused or a withdrawn style's document is
+  never public (only its creator and staff read it). A wish already made in a style keeps playing at its link when
+  the style is later switched off or its creator's account is erased (HX4: the customer's wish is theirs); the
+  public style read stops giving the document once the style is off. The document given is the approved version,
+  never a newer unsaved or unapproved edit.
+- II2 (22 Nov, the lead; Default (lead), owner may override): a file the screening refuses carries a reason in the
+  server's plain words, from a fixed list by the screening result's own kind (no new kinds invented; where the
+  result gives no kind: "This file was not accepted."); a mark on a file that has been removed is refused (422 in
+  words), never stored.

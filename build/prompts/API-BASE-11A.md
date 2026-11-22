@@ -31,3 +31,8 @@ Checks (quiet logs, EXIT lines): typecheck, eslint on changed files, scripts/gat
 check-routes, the affected specs, then `WEB_LIB=/nonexistent/lib npm test` twice in a row with 0 failed. Commit on
 api-base-11a; do not push; remove your worktree and databases; leave no background jobs. Hand back ONCE in 10 lines:
 head; each case closed or not with the test's name; new endpoint and decision ids; totals; what you could not do.
+
+ADDED 22 Nov (sent to the builder mid-run): Case 6 (staff Prices, R14, IE3): limits.conciergeFilesDays carries
+"PROVISIONAL, owner" inside its NAME (the web's W12 flow then fails: the word stays on the page). A setting's name is
+plain words; every provisional setting serves ONE common field saying it is provisional and who confirmed it (the
+payout threshold's own field keeps working); finance's change keeps it, the owner's confirms it; spec for both.

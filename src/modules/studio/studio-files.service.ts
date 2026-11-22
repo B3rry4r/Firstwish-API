@@ -5,6 +5,9 @@ import { AppError } from "../../common/errors/app-error";
 import { decodeCursor, DEFAULT_LIMIT, type Page, toPage } from "../../common/pagination/cursor";
 import { toWireInstant } from "../../common/time/time";
 import type { StyleFile, StyleFiles } from "../../contracts";
+import { Clock } from "../../common/ports/clock.port";
+import { UnlockTokens } from "../public-wishes/unlock-token";
+import { ApprovedStyleDocuments } from "../styles/approved-document";
 import { isUuid, mediaKindOf, purposeOnWire } from "../stored-files/file-rules";
 import { type Reader, SignedUrlsService } from "../stored-files/signed-urls.service";
 import { hiddenFromBuyer } from "../wishes/wish-shown";
@@ -23,6 +26,9 @@ export class StudioFilesService {
   constructor(
     private readonly db: PrismaService,
     private readonly signed: SignedUrlsService,
+    private readonly approved: ApprovedStyleDocuments,
+    private readonly tokens: UnlockTokens,
+    private readonly clock: Clock,
   ) {}
 
   private async view(f: FileRow, reader: Reader): Promise<StyleFile> {
@@ -67,18 +73,31 @@ export class StudioFilesService {
     return this.view(f, { type: "owner", accountId });
   }
 
-  /** A player's read, through the wish's link: the files of the wish's style, once that style is approved (live). Anything else reads as not there. */
-  async forPlayer(slug: string): Promise<StyleFiles> {
+  /**
+   * A player's read, through the wish's link (HW2, II1): the files of the wish's style and the style's APPROVED document, once the style
+   * was approved. A wish already made keeps playing when its style is later switched off, taken back by its creator or its creator's
+   * account is erased (HX4); a style that was never approved (a draft, one in review, one sent back) gives nothing. The wish must be
+   * showing as E-129 decides: live and opened, not resting, not removed, its link on, and behind its passcode (the page's unlock token)
+   * where it has one. Anything else reads as not there.
+   */
+  async forPlayer(slug: string, token?: string): Promise<StyleFiles> {
     const none = () => AppError.notFound("No such wish.");
-    const link = await this.db.wishLink.findFirst({ where: { slug, active: true }, select: { wishId: true } });
+    const link = await this.db.wishLink.findFirst({ where: { slug, active: true }, select: { id: true, wishId: true } });
     if (link && (await hiddenFromBuyer(this.db, link.wishId))) throw none();
-    const wish = link ? await this.db.wish.findUnique({ where: { id: link.wishId }, select: { status: true, styleSlug: true, erasedAt: true } }) : null;
-    if (!wish || wish.erasedAt || wish.status !== "live" || !wish.styleSlug) throw none();
-    const style = await this.db.style.findFirst({ where: { slug: wish.styleSlug }, select: { id: true, on: true } });
-    if (!style || style.on === false) return { style: wish.styleSlug, items: [] };
-    const approved = await this.db.studioStyle.findFirst({ where: { id: style.id, status: "live" }, select: { id: true } });
-    if (!approved) return { style: wish.styleSlug, items: [] };
+    const wish = link
+      ? await this.db.wish.findUnique({
+          where: { id: link.wishId },
+          select: { status: true, styleSlug: true, erasedAt: true, removedAt: true, openedAt: true, endsAt: true, passcodeHash: true, businessId: true, account: { select: { erasedAt: true } } },
+        })
+      : null;
+    if (!link || !wish || wish.erasedAt || wish.removedAt || wish.status !== "live" || !wish.styleSlug) throw none();
+    if (wish.account.erasedAt && !wish.businessId) throw none();
+    if (!wish.openedAt || !wish.endsAt || wish.endsAt.getTime() <= this.clock.now().getTime()) throw none();
+    if (wish.passcodeHash && !this.tokens.valid(token, link.id, wish.passcodeHash)) throw none();
+    const style = await this.db.style.findFirst({ where: { slug: wish.styleSlug }, select: { id: true } });
+    const document = style ? await this.approved.of(style.id) : null;
+    if (!style || !document) return { style: wish.styleSlug, items: [], document: null };
     const rows = await this.db.storedFile.findMany({ where: { styleId: style.id, status: "ready" }, orderBy: { id: "asc" }, take: PLAYER_FILES });
-    return { style: wish.styleSlug, items: await Promise.all(rows.map((r) => this.view(r, { type: "allowed" }))) };
+    return { style: wish.styleSlug, items: await Promise.all(rows.map((r) => this.view(r, { type: "allowed" }))), document };
   }
 }

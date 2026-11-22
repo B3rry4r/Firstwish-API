@@ -451,6 +451,8 @@ export interface StyleFile {
 export interface StyleFiles {
   style: string;
   items: StyleFile[];
+  /** II1 (DEC-302): the approved document of the wish's Studio style, as the creator's own read types it; null for a house style or one never approved */
+  document: StudioStyle | null;
 }
 /** HW7: a wish as the staff lists and details read it: number, state and term, never its words or photos. */
 export interface StaffWish {
@@ -1636,6 +1638,8 @@ export interface Style {
   record: unknown[];
   sample: Record<string, unknown>;
   say?: string | null;
+  /** II1 (DEC-302): the style's approved document, as the creator's own read types it; present on the single read E-196 (null for a house style), left out of lists */
+  document?: StudioStyle | null;
   /** HS3: the slug of the house wish that plays this style, at /w/<slug> (null when the style has none or is off) */
   showcaseSlug?: string | null;
   slug: string;

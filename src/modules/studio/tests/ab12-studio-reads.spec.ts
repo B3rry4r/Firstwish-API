@@ -114,9 +114,9 @@ describe("HW2 reads: Studio files and the profile picture, for the creator and f
       expect(i.url).toMatch(/^https:\/\//);
       expect(Date.parse(i.expiresAt) - NOW.getTime()).toBeLessThanOrEqual(10 * 60 * 1000);
     }
-    // the style taken off the catalogue, or sent back to a draft, gives the public nothing
+    // II1: a wish already made keeps playing when its style is taken off the catalogue; a style that is not approved (a draft, never live) gives nothing
     await db.style.update({ where: { id: approved }, data: { on: false } });
-    expect((await t.http().get(`/v1/w/${link}/style-files`)).body.items).toEqual([]);
+    expect((await t.http().get(`/v1/w/${link}/style-files`)).body.items).toHaveLength(3);
     await db.style.update({ where: { id: approved }, data: { on: true } });
     await db.studioStyle.update({ where: { id: approved }, data: { status: "draft" } });
     expect((await t.http().get(`/v1/w/${link}/style-files`)).body.items).toEqual([]);

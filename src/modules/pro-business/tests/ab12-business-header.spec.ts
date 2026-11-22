@@ -114,7 +114,8 @@ describe("HR3: the people, payment and brand routes follow x-business-id", () =>
     const c = await cast();
     const older = async (token: string, header: string) => {
       const r = await t.http().get("/v1/business/plan").set(bearer(token)).set("x-business-id", header);
-      return [r.status, r.body.error?.code, r.body.error?.message];
+      const body = r.body as { error?: { code?: string; message?: string } };
+      return [r.status, body.error?.code, body.error?.message];
     };
     const same = async (token: string, header: string, res: { status: number; body: { error?: { code?: string; message?: string } } }) =>
       expect([res.status, res.body.error?.code, res.body.error?.message]).toEqual(await older(token, header));

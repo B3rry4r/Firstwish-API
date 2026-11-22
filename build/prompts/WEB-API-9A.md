@@ -40,3 +40,10 @@ typecheck, lint on changed files, check:css, gates, test:client, contracts:check
 hearts and the Favourites page at 360, 390 and 1440. Commit; do not push; do not edit .pipeline-ui/wired.json or
 scripts/gates/baseline.json; remove YOUR worktrees, stack and databases; leave no background jobs. Hand back ONCE in
 10 lines: head; the claims one per line; the ui-align ids you close; the driver's totals; stale baseline ids.
+
+ADDED 22 Nov (from the business re-check): Case 6. As a LOGIN of a business the Vault's "New shoot" sheet
+(app/app/pro/vault/page.tsx:139) and the new-reveal page (app/app/pro/reveal/new/page.tsx:106) call readPeople and
+get 403 GET /business/people. A login sends no request the server refuses: read what the server lets a login do in
+the Vault (the roles in the contract) and draw exactly that: where a login may make a shoot or a reveal, the client
+is chosen without the People read (the server's own way for a login, or typed), and where a login may not, the
+control is not drawn. Then tap EVERY control on the Vault, reveal and favourites pages as a login: zero 401 or 403.

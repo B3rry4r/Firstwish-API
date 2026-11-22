@@ -77,6 +77,12 @@ export const MANIFEST_VARS: readonly VarSpec[] = [
     purpose: "HP6: whole seconds (a minus sign allowed) added to the stand-in clock, read once at boot, so a test stack can reach resting, ended and the end of the restore window through the real jobs; refused with PROVIDERS=live or NODE_ENV=production",
   },
   {
+    name: "STANDIN_SCREENING",
+    need: "optional",
+    kind: "string",
+    purpose: "IF9: rules for the stand-in screening by file name, as a comma list of hold:<part of a name> (the file waits in screening) or reject:<part of a name> (the file is refused); tests and verifier stacks only, refused with PROVIDERS=live or NODE_ENV=production",
+  },
+  {
     name: "INTERNAL_TOKEN",
     need: "always",
     kind: "secret",

@@ -2,6 +2,7 @@ import { HttpStatus, Inject, Injectable } from "@nestjs/common";
 import { Prisma, type Business, type StoredFile as FileRow } from "@prisma/client";
 import { PrismaService } from "../../common/db/prisma.service";
 import { ENV } from "../../common/env/env.module";
+import { fileNameTag } from "../../common/env/env";
 import type { Env } from "../../common/env/env";
 import { AppError } from "../../common/errors/app-error";
 import type { UserPrincipal } from "../../common/auth/principal";
@@ -158,6 +159,7 @@ export class StoredFilesService {
     }
     // X25: kind is the media kind (image, sound, model, video) and must agree with the type.
     if (body.kind !== undefined && body.kind !== mediaKindOf(contentType)) throw AppError.validation({ kind: "Does not match the type." });
+    if (body.fileName !== undefined && body.fileName.length > 200) throw AppError.validation({ fileName: "At most 200 characters." });
     const bytes = body.bytes;
     if (typeof bytes !== "number" || !Number.isInteger(bytes) || bytes <= 0) throw AppError.validation({ bytes: "Must be the file's size in bytes." });
     // HW6: the largest size is the price book's own (one source for this check and for what the book serves)
@@ -170,7 +172,9 @@ export class StoredFilesService {
     if (studioFile && body.styleId !== undefined && !isUuid(body.styleId)) throw AppError.validation({ styleId: "Must be a style id." });
 
     const id = this.ids.id();
-    const objectKey = `${rule.purpose}/${id}/${this.codes.token(16)}`;
+    // IF9: with the stand-in screening's rules on, the file's name rides in its key so the stand-in can hold or refuse it by name
+    const nameTag = this.env.STANDIN_SCREENING !== undefined && typeof body.fileName === "string" && body.fileName.trim() ? `~${fileNameTag(body.fileName)}` : "";
+    const objectKey = `${rule.purpose}/${id}/${this.codes.token(16)}${nameTag}`;
     const now = this.clock.now();
     const wishFile = rule.purpose === "wish-photo" || rule.purpose === "voice-note" || rule.purpose === "video-clip";
     const orderFile = rule.purpose === "order-photo" || rule.purpose === "order-voice";

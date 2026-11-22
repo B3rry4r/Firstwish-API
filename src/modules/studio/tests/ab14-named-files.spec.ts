@@ -139,6 +139,7 @@ const PLACES: { place: RegExp; name: (f: string) => Body }[] = [
   { place: /background picture/i, name: (f) => ({ scenes: { letter: { layers: {}, backdrop: f } } }) },
   { place: /added thing 1 \(artwork\)/i, name: (f) => ({ scenes: { letter: { layers: {}, added: [{ id: "a", kind: "artwork", what: f }] } } }) },
   { place: /added thing 1 \(3D model\)/i, name: (f) => ({ scenes: { letter: { layers: {}, added: [{ id: "a", kind: "model", what: f }] } } }) },
+  { place: /added thing 1 \(3D thing\)/i, name: (f) => ({ scenes: { letter: { layers: {}, added: [{ id: "a", kind: "three", what: f, three: { shape: "model" } }] } } }) },
   { place: /added thing 2 \(picture fill\)/i, name: (f) => ({ scenes: { "*": { layers: {}, added: [{ id: "b", kind: "shape", what: "box" }, { id: "a", kind: "shape", what: "box", fill: { kind: "picture", art: f } }] } } }) },
 ];
 
@@ -186,7 +187,6 @@ describe("case 1 (II5): a document names only this style's own, ready files", ()
       [refused, "poster", /was refused/],
       [removed, "poster", /not one of this style's files|was removed/],
       [none, "poster", /not one of this style's files/],
-      ["not-an-id", "poster", /not one of this style's files/],
     ];
     for (const [f, , words] of cases) {
       const r = await save(c, d, { sound: f });
@@ -197,9 +197,12 @@ describe("case 1 (II5): a document names only this style's own, ready files", ()
       expect(made.status).toBe(422);
       expect(made.body.error.fields["style.poster.src"]).toMatch(/^The poster names a file that /);
     }
+    // an explicit file field that is no id is refused; a use that is no id names no file (II5a)
+    expect((await save(c, d, { poster: { frame: "cover", fileId: "not-an-id" } })).status).toBe(422);
     expect(((await get(c, `/studio/styles/${d.id}`)).body as Body).sound).toBeNull();
     // a number is no id either
     expect((await save(c, d, { sound: 7 })).status).toBe(422);
+    expect((await save(c, d, { sound: "not-an-id" })).status).toBe(200);
   });
 
   it("II5: a scene that names a file still in screening is not saved; once the file is ready it is", async () => {
@@ -337,5 +340,104 @@ describe("case 3 (E-196): a style whose creator's account is erased", () => {
     expect(after.body.by).toBe("");
     expect(after.body.document.byline).toBe("");
     expect(JSON.stringify(after.body)).not.toContain(before.body.creator.creatorId);
+  });
+});
+
+describe("fix round 1 (II5a): the art list is a shelf; only a use needs a ready file", () => {
+  const web = (id: string, kind = "image") => ({ id, kind, name: "one.png", size: 40 });
+
+  it("G1: a shelf-only file still being checked (the web adds {id} at screening) saves; a USED held file does not; the send-in is refused in words while the shelf holds one", async () => {
+    const c = await creator();
+    const d = await draft(c);
+    const held = await row(c.id, d.id, "screening");
+    const refused = await row(c.id, d.id, "rejected");
+    const ready = await upload(c, d.id);
+    expect((await save(c, d, { art: [web(ready), web(held), web(refused)] })).status).toBe(200);
+    expect((await save(c, d, { art: [web(ready), { fileId: held }] })).status).toBe(200);
+    const used = await save(c, d, { art: [web(ready), web(held)], sound: held });
+    expect(used.status).toBe(422);
+    expect(used.body.error.fields["style.sound"]).toMatch(/The sound names a file that is still being checked/);
+    expect((await save(c, d, { art: [web(ready), web(held), web(refused)] })).status).toBe(200);
+    const sent = await post(c, `/studio/styles/${d.id}/submissions`);
+    expect(sent.status).toBe(422);
+    expect(sent.body.error.fields["style.art.1.id"]).toMatch(/^The art list, item 2 names a file that is still being checked/);
+    expect(sent.body.error.fields["style.art.2.id"]).toMatch(/was refused/);
+    expect(await db.styleSubmission.count({ where: { styleId: d.id } })).toBe(0);
+    // another creator's file, another style's file and a gone file stay refused on the shelf
+    const other = await creator();
+    const od = await draft(other);
+    expect((await save(c, d, { art: [web(await upload(other, od.id))] })).status).toBe(422);
+    expect((await save(c, d, { art: [web(ids.next())] })).status).toBe(422);
+    // the held file becomes ready: it goes
+    await db.storedFile.updateMany({ where: { id: { in: [held] } }, data: { status: "ready" } });
+    expect((await save(c, d, { art: [web(ready), web(held)] })).status).toBe(200);
+    expect((await post(c, `/studio/styles/${d.id}/submissions`)).status).toBe(201);
+  });
+
+  it("G2 and G4: an older art item with a non-uuid id (no fileId, or fileId null) named by the sound, a backdrop, an artwork or a fill, and a house bank slug, name no file and save as before", async () => {
+    const c = await creator();
+    const d = await draft(c);
+    for (const item of [{ id: "x1y2z3", kind: "image", name: "old.png" }, { id: "x1y2z3", fileId: null, kind: "image" }]) {
+      const r = await save(c, d, {
+        art: [item],
+        sound: "x1y2z3",
+        scenes: { letter: { layers: {}, backdrop: "x1y2z3", added: [{ id: "a", kind: "artwork", what: "x1y2z3" }, { id: "b", kind: "shape", what: "box", fill: { kind: "picture", art: "x1y2z3" } }, { id: "c", kind: "artwork", what: "heart" }, { id: "d", kind: "three", what: "sphere", three: { shape: "sphere" } }] } },
+        poster: { frame: "cover", src: "https://example.com/p.png" },
+      });
+      expect(r.status).toBe(200);
+    }
+    expect((await post(c, `/studio/styles/${d.id}/submissions`)).status).toBe(201);
+  });
+
+  it("G3: a 3D model placed as kind three (shape model, what = the file id) is checked like every place, is kept by II4, and leaves the draft when removed", async () => {
+    const c = await creator();
+    const d = await draft(c);
+    const model = await upload(c, d.id, "model");
+    const thing = (what: string) => ({ scenes: { letter: { layers: {}, added: [{ id: "m", kind: "three", what, three: { shape: "model" }, x: 50, y: 50, w: 40 }] } } });
+    const other = await creator();
+    const od = await draft(other);
+    for (const bad of [await upload(other, od.id, "model"), await row(c.id, d.id, "screening"), ids.next()]) {
+      const r = await save(c, d, thing(bad));
+      expect(r.status).toBe(422);
+      expect(r.body.error.fields["style.scenes.letter.added.0.what"]).toMatch(/^Scene letter, added thing 1 \(3D thing\) names a file/);
+    }
+    expect((await save(c, d, thing(model))).status).toBe(200);
+    await approve(c, d);
+    const wish = await madeIn(slugOf(d));
+    expect(fileIdsAt(await player(wish.link))).toContain(model);
+    expect((await post(c, `/studio/styles/${d.id}/withdraw`)).status).toBe(200);
+    expect((await del(c, model)).status).toBeLessThan(300);
+    expect((await db.storedFile.findUniqueOrThrow({ where: { id: model } })).keptAt).not.toBeNull();
+    expect(fileIdsAt(await player(wish.link))).toContain(model);
+    expect(JSON.stringify((await db.studioStyle.findUniqueOrThrow({ where: { id: d.id } })).document)).not.toContain(model);
+    // a model not kept (a draft only) is stripped from the draft too
+    const d2 = await draft(c);
+    const m2 = await upload(c, d2.id, "model");
+    expect((await save(c, d2, thing(m2))).status).toBe(200);
+    expect((await del(c, m2)).status).toBeLessThan(300);
+    expect(JSON.stringify((await db.studioStyle.findUniqueOrThrow({ where: { id: d2.id } })).document)).not.toContain(m2);
+  }, 120_000);
+
+  it("G5: the public lists carry no creatorId for an erased creator", async () => {
+    const c = await creator();
+    const d = await draft(c);
+    await approve(c, d);
+    const at = async () => {
+      let cursor: string | undefined;
+      for (let page = 0; page < 200; page++) {
+        const r = await t.http().get("/v1/styles").query({ limit: 50, ...(cursor ? { cursor } : {}) });
+        expect(r.status).toBe(200);
+        const hit = (r.body.items as Body[]).find((x) => x.slug === slugOf(d));
+        if (hit) return hit;
+        cursor = r.body.nextCursor as string | undefined;
+        if (!cursor) break;
+      }
+      throw new Error("the style is not in the public list");
+    };
+    const live = await at();
+    expect(live.creator).toMatchObject({ creatorId: expect.any(String) });
+    await t.app.get(AccountErasureService).erase(c.id, { actor: { type: "system", id: null, requestId: `ab14g5-${RUN}` }, reason: "test" });
+    const gone = await at();
+    expect(JSON.stringify(gone.creator ?? null)).not.toContain("creatorId");
   });
 });

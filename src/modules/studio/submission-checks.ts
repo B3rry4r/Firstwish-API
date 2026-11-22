@@ -30,6 +30,8 @@ export interface FileRef {
   place: string;
   path: string;
   value: string;
+  /** a USE of the file (needs one that has passed checking) as against the art list, the creator's shelf (II5a) */
+  use: boolean;
 }
 
 const FILE_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -37,37 +39,40 @@ const FILE_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 const written = (v: unknown): string => (v === undefined || v === null ? "" : typeof v === "string" ? v.trim() : "\u0000");
 
 /**
- * II5: every place a style document names a file, found in one function so the save, the send-in, the checks and the kept-file rule
- * (II4) can never disagree. The places: an item of the art list (`fileId`, or `id` when it is an id), the poster (`fileId`, `id`, `src`),
- * the sound, a scene's background picture (`backdrop`), and a thing a scene adds: its artwork or 3D model (`what`) and a picture fill
- * (`fill.art`). A name that is the `id` of an art item with its own file is that item (checked there), not a second place.
+ * II5/II5a: every place a style document names a file, found in one function so the save, the send-in, the checks and the kept-file rule
+ * (II4) can never disagree. The shelf is the art list (`fileId`, or `id` when it is an id). The uses: the poster (`fileId`, `id`, `src`), the sound,
+ * a scene's background picture (`backdrop`), a thing a scene adds that is made of a file (`what` of an artwork, a model, or a 3D thing, which the
+ * editor writes as kind "three" with the file id as `what` for its model shape) and a picture fill (`fill.art`). A use whose value is not shaped
+ * like a file id names no file (a house bank piece such as "heart", the id of an older art item): it is left alone (II5a). An explicit `fileId`
+ * field is always a file name.
  */
 export function fileRefsOf(doc: Obj): FileRef[] {
   const out: FileRef[] = [];
-  const art = arr(doc.art).map(obj);
-  const artIds = new Set(art.flatMap((a) => (typeof a.id === "string" && a.fileId !== undefined && a.fileId !== null ? [a.id] : [])));
-  const add = (place: string, path: string, v: unknown, viaArt = false): void => {
+  const add = (place: string, path: string, v: unknown, use: boolean, strict: boolean): void => {
     const value = written(v);
-    if (!value || (viaArt && artIds.has(value))) return;
-    out.push({ place, path, value });
+    if (!value || (!strict && !FILE_ID.test(value))) return;
+    out.push({ place, path, value, use });
   };
-  art.forEach((a, i) => {
-    add(`The art list, item ${i + 1}`, `style.art.${i}.fileId`, a.fileId);
-    if (typeof a.id === "string" && FILE_ID.test(a.id.trim())) add(`The art list, item ${i + 1}`, `style.art.${i}.id`, a.id);
+  arr(doc.art).map(obj).forEach((a, i) => {
+    add(`The art list, item ${i + 1}`, `style.art.${i}.fileId`, a.fileId, false, true);
+    add(`The art list, item ${i + 1}`, `style.art.${i}.id`, a.id, false, false);
   });
   const poster = obj(doc.poster);
-  for (const k of ["fileId", "id", "src"]) add("The poster", `style.poster.${k}`, poster[k]);
-  add("The sound", "style.sound", doc.sound, true);
+  add("The poster", "style.poster.fileId", poster.fileId, true, true);
+  add("The poster", "style.poster.id", poster.id, true, false);
+  add("The poster", "style.poster.src", poster.src, true, false);
+  add("The sound", "style.sound", doc.sound, true, false);
   for (const [sk, sv] of Object.entries(obj(doc.scenes))) {
     const scene = obj(sv);
     const name = sk === "*" ? "Every scene" : `Scene ${sk}`;
-    add(`${name}, its background picture`, `style.scenes.${sk}.backdrop`, scene.backdrop, true);
+    add(`${name}, its background picture`, `style.scenes.${sk}.backdrop`, scene.backdrop, true, false);
     arr(scene.added).forEach((x, j) => {
       const a = obj(x);
       const here = `${name}, added thing ${j + 1}`;
-      if (a.kind === "artwork") add(`${here} (artwork)`, `style.scenes.${sk}.added.${j}.what`, a.what, true);
-      else if (a.kind === "model") add(`${here} (3D model)`, `style.scenes.${sk}.added.${j}.what`, a.what, true);
-      add(`${here} (picture fill)`, `style.scenes.${sk}.added.${j}.fill.art`, obj(a.fill).art, true);
+      if (a.kind === "artwork") add(`${here} (artwork)`, `style.scenes.${sk}.added.${j}.what`, a.what, true, false);
+      else if (a.kind === "model") add(`${here} (3D model)`, `style.scenes.${sk}.added.${j}.what`, a.what, true, false);
+      else if (a.kind === "three") add(`${here} (3D thing)`, `style.scenes.${sk}.added.${j}.what`, a.what, true, false);
+      add(`${here} (picture fill)`, `style.scenes.${sk}.added.${j}.fill.art`, obj(a.fill).art, true, false);
     });
   }
   return out;
@@ -82,6 +87,7 @@ export function withoutFile(doc: Obj, fileId: string): Obj | null {
   const is = (v: unknown): boolean => typeof v === "string" && v.trim().toLowerCase() === id;
   const artIds = new Set(arr(doc.art).map(obj).filter((a) => is(a.fileId) || is(a.id)).map((a) => a.id).filter((x): x is string => typeof x === "string"));
   const names = (v: unknown): boolean => is(v) || (typeof v === "string" && artIds.has(v));
+  const madeOfFile = (k: unknown): boolean => k === "artwork" || k === "model" || k === "three";
   let changed = false;
   const out: Obj = { ...doc };
   if (Array.isArray(doc.art)) {
@@ -111,7 +117,7 @@ export function withoutFile(doc: Obj, fileId: string): Obj | null {
       }
       if (Array.isArray(scene.added)) {
         const added = (scene.added as unknown[])
-          .filter((x) => !((obj(x).kind === "artwork" || obj(x).kind === "model") && names(obj(x).what)))
+          .filter((x) => !(madeOfFile(obj(x).kind) && names(obj(x).what)))
           .map((x): unknown => {
             if (!names(obj(obj(x).fill).art)) return x;
             const { fill: _fill, ...rest } = obj(x);

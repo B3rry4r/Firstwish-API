@@ -153,8 +153,8 @@ export class StudioStylesService {
   }
 
   /** II5: a document names only this style's own files that are ready (422 in words naming each place, nothing saved). */
-  async assertFilesNamed(tx: Tx, accountId: string, styleId: string, doc: Obj): Promise<void> {
-    const fields = await namedFileProblems(tx, accountId, styleId, doc);
+  async assertFilesNamed(tx: Tx, accountId: string, styleId: string, doc: Obj, sendIn = false): Promise<void> {
+    const fields = await namedFileProblems(tx, accountId, styleId, doc, sendIn);
     if (Object.keys(fields).length) throw AppError.validation(fields);
   }
 

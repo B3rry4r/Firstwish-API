@@ -103,7 +103,7 @@ export class StylesService {
     const page = toPage(rows, limit, (r) => ({ key: r.slug ?? "", id: r.id }));
     const counts = await this.countsFor(page.items.map((r) => r.slug ?? ""));
     const shows = await this.showcases(page.items.map((r) => r.slug ?? ""));
-    return { items: page.items.map((r) => styleToWire(r, counts.get(r.slug ?? "") ?? zero(), false, shows.get(r.slug ?? "") ?? null)), nextCursor: page.nextCursor };
+    return { items: await Promise.all(page.items.map(async (r) => { const w = styleToWire(r, counts.get(r.slug ?? "") ?? zero(), false, shows.get(r.slug ?? "") ?? null); return { ...w, creator: await this.creatorUnlessErased(w.creator) }; })), nextCursor: page.nextCursor };
   }
 
   /**
@@ -121,7 +121,7 @@ export class StylesService {
     const page = toPage(rows, limit, (r) => ({ key: r.slug ?? "", id: r.id }));
     const counts = await this.countsFor(page.items.map((r) => r.slug ?? ""));
     const shows = await this.showcases(page.items.map((r) => r.slug ?? ""));
-    return { items: page.items.map((r) => styleToWire(r, counts.get(r.slug ?? "") ?? zero(), false, shows.get(r.slug ?? "") ?? null)), nextCursor: page.nextCursor };
+    return { items: await Promise.all(page.items.map(async (r) => { const w = styleToWire(r, counts.get(r.slug ?? "") ?? zero(), false, shows.get(r.slug ?? "") ?? null); return { ...w, creator: await this.creatorUnlessErased(w.creator) }; })), nextCursor: page.nextCursor };
   }
 
   /** E-196 (HX4): a style whose creator's account is erased names no one: its `creator` carries no creatorId (the byline is already empty). */

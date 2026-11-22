@@ -103,7 +103,7 @@ export class StylesService {
     const page = toPage(rows, limit, (r) => ({ key: r.slug ?? "", id: r.id }));
     const counts = await this.countsFor(page.items.map((r) => r.slug ?? ""));
     const shows = await this.showcases(page.items.map((r) => r.slug ?? ""));
-    return { items: page.items.map((r) => styleToWire(r, counts.get(r.slug ?? "") ?? zero(), false, shows.get(r.slug ?? "") ?? null)), nextCursor: page.nextCursor };
+    return { items: await Promise.all(page.items.map(async (r) => { const w = styleToWire(r, counts.get(r.slug ?? "") ?? zero(), false, shows.get(r.slug ?? "") ?? null); return { ...w, creator: await this.creatorUnlessErased(w.creator) }; })), nextCursor: page.nextCursor };
   }
 
   /**
@@ -121,7 +121,17 @@ export class StylesService {
     const page = toPage(rows, limit, (r) => ({ key: r.slug ?? "", id: r.id }));
     const counts = await this.countsFor(page.items.map((r) => r.slug ?? ""));
     const shows = await this.showcases(page.items.map((r) => r.slug ?? ""));
-    return { items: page.items.map((r) => styleToWire(r, counts.get(r.slug ?? "") ?? zero(), false, shows.get(r.slug ?? "") ?? null)), nextCursor: page.nextCursor };
+    return { items: await Promise.all(page.items.map(async (r) => { const w = styleToWire(r, counts.get(r.slug ?? "") ?? zero(), false, shows.get(r.slug ?? "") ?? null); return { ...w, creator: await this.creatorUnlessErased(w.creator) }; })), nextCursor: page.nextCursor };
+  }
+
+  /** E-196 (HX4): a style whose creator's account is erased names no one: its `creator` carries no creatorId (the byline is already empty). */
+  private async creatorUnlessErased(c: StyleOut["creator"]): Promise<StyleOut["creator"]> {
+    const ref = c as { creatorId?: string } | null;
+    if (!ref?.creatorId || !UUID.test(ref.creatorId)) return c;
+    const who = await this.db.creator.findUnique({ where: { id: ref.creatorId }, select: { account: { select: { erasedAt: true } } } });
+    if (who?.account && !who.account.erasedAt) return c;
+    const { creatorId: _gone, ...rest } = ref;
+    return (Object.keys(rest).length ? rest : null) as StyleOut["creator"];
   }
 
   /** E-196: one style that is on, by slug (or its id), with its approved Studio document where it has one (II1). A style that is off or unknown is 404. */
@@ -133,7 +143,8 @@ export class StylesService {
     const counts = await this.countsFor([row.slug ?? ""]);
     // II1: a style that is on and was approved gives its approved document (the maker's preview and the style's page play it); a house style gives null
     const document = await this.approved.of(row.id);
-    return { ...styleToWire(row, counts.get(row.slug ?? "") ?? zero(), false, (await this.showcases([row.slug ?? ""])).get(row.slug ?? "") ?? null), document };
+    const wire = styleToWire(row, counts.get(row.slug ?? "") ?? zero(), false, (await this.showcases([row.slug ?? ""])).get(row.slug ?? "") ?? null);
+    return { ...wire, creator: await this.creatorUnlessErased(wire.creator), document };
   }
 
   // ------------------------------------------------------------------ the Studio's entry (B15: a creator's style joins the catalogue here)

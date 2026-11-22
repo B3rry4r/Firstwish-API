@@ -25,14 +25,120 @@ export interface UsedFile {
   bytes: number;
 }
 
-/** The file ids a document names (its `art` list: `fileId`, or `id` when it is a uuid). */
-export function fileIdsOf(doc: Obj): string[] {
-  const out = new Set<string>();
-  for (const a of arr(doc.art)) {
-    const o = obj(a);
-    for (const k of ["fileId", "id"]) if (typeof o[k] === "string" && /^[0-9a-f-]{36}$/i.test(o[k])) out.add(o[k]);
+/** One place where a document names a file: the words that name the place, the field path for an error, and what was written there. */
+export interface FileRef {
+  place: string;
+  path: string;
+  value: string;
+  /** a USE of the file (needs one that has passed checking) as against the art list, the creator's shelf (II5a) */
+  use: boolean;
+}
+
+const FILE_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+/** What is written in a place: the text, "" for nothing, and a mark no id can match for anything that is not text. */
+const written = (v: unknown): string => (v === undefined || v === null ? "" : typeof v === "string" ? v.trim() : "\u0000");
+
+/**
+ * II5/II5a: every place a style document names a file, found in one function so the save, the send-in, the checks and the kept-file rule
+ * (II4) can never disagree. The shelf is the art list (`fileId`, or `id` when it is an id). The uses: the poster (`fileId`, `id`, `src`), the sound,
+ * a scene's background picture (`backdrop`), a thing a scene adds that is made of a file (`what` of an artwork, a model, or a 3D thing, which the
+ * editor writes as kind "three" with the file id as `what` for its model shape) and a picture fill (`fill.art`). A use whose value is not shaped
+ * like a file id names no file (a house bank piece such as "heart", the id of an older art item): it is left alone (II5a). An explicit `fileId`
+ * field is always a file name.
+ */
+export function fileRefsOf(doc: Obj): FileRef[] {
+  const out: FileRef[] = [];
+  const add = (place: string, path: string, v: unknown, use: boolean, strict: boolean): void => {
+    const value = written(v);
+    if (!value || (!strict && !FILE_ID.test(value))) return;
+    out.push({ place, path, value, use });
+  };
+  arr(doc.art).map(obj).forEach((a, i) => {
+    add(`The art list, item ${i + 1}`, `style.art.${i}.fileId`, a.fileId, false, true);
+    add(`The art list, item ${i + 1}`, `style.art.${i}.id`, a.id, false, false);
+  });
+  const poster = obj(doc.poster);
+  add("The poster", "style.poster.fileId", poster.fileId, true, true);
+  add("The poster", "style.poster.id", poster.id, true, false);
+  add("The poster", "style.poster.src", poster.src, true, false);
+  add("The sound", "style.sound", doc.sound, true, false);
+  for (const [sk, sv] of Object.entries(obj(doc.scenes))) {
+    const scene = obj(sv);
+    const name = sk === "*" ? "Every scene" : `Scene ${sk}`;
+    add(`${name}, its background picture`, `style.scenes.${sk}.backdrop`, scene.backdrop, true, false);
+    arr(scene.added).forEach((x, j) => {
+      const a = obj(x);
+      const here = `${name}, added thing ${j + 1}`;
+      if (a.kind === "artwork") add(`${here} (artwork)`, `style.scenes.${sk}.added.${j}.what`, a.what, true, false);
+      else if (a.kind === "model") add(`${here} (3D model)`, `style.scenes.${sk}.added.${j}.what`, a.what, true, false);
+      else if (a.kind === "three") add(`${here} (3D thing)`, `style.scenes.${sk}.added.${j}.what`, a.what, true, false);
+      add(`${here} (picture fill)`, `style.scenes.${sk}.added.${j}.fill.art`, obj(a.fill).art, true, false);
+    });
   }
-  return [...out];
+  return out;
+}
+
+/**
+ * II4/II5: the document without any name of this file, or null when it names none. A removed file leaves the creator's draft: its art item,
+ * the poster's and the sound's name, a scene's background picture, and a thing that is made of it (artwork or model) or filled with it go.
+ */
+export function withoutFile(doc: Obj, fileId: string): Obj | null {
+  const id = fileId.toLowerCase();
+  const is = (v: unknown): boolean => typeof v === "string" && v.trim().toLowerCase() === id;
+  const artIds = new Set(arr(doc.art).map(obj).filter((a) => is(a.fileId) || is(a.id)).map((a) => a.id).filter((x): x is string => typeof x === "string"));
+  const names = (v: unknown): boolean => is(v) || (typeof v === "string" && artIds.has(v));
+  const madeOfFile = (k: unknown): boolean => k === "artwork" || k === "model" || k === "three";
+  let changed = false;
+  const out: Obj = { ...doc };
+  if (Array.isArray(doc.art)) {
+    const art = doc.art.filter((a) => !(is(obj(a).fileId) || is(obj(a).id)));
+    if (art.length !== doc.art.length) {
+      out.art = art;
+      changed = true;
+    }
+  }
+  if (isObjLike(doc.poster) && ["fileId", "id", "src"].some((k) => is(obj(doc.poster)[k]))) {
+    const poster = { ...obj(doc.poster) };
+    for (const k of ["fileId", "id", "src"]) if (is(poster[k])) delete poster[k];
+    out.poster = poster;
+    changed = true;
+  }
+  if (names(doc.sound)) {
+    delete out.sound;
+    changed = true;
+  }
+  if (isObjLike(doc.scenes)) {
+    const scenes: Obj = {};
+    for (const [k, v] of Object.entries(obj(doc.scenes))) {
+      const scene = { ...obj(v) };
+      if (names(scene.backdrop)) {
+        delete scene.backdrop;
+        changed = true;
+      }
+      if (Array.isArray(scene.added)) {
+        const added = (scene.added as unknown[])
+          .filter((x) => !(madeOfFile(obj(x).kind) && names(obj(x).what)))
+          .map((x): unknown => {
+            if (!names(obj(obj(x).fill).art)) return x;
+            const { fill: _fill, ...rest } = obj(x);
+            return rest;
+          });
+        if (added.length !== scene.added.length || added.some((x, i) => x !== (scene.added as unknown[])[i])) {
+          scene.added = added;
+          changed = true;
+        }
+      }
+      scenes[k] = scene;
+    }
+    out.scenes = scenes;
+  }
+  return changed ? out : null;
+}
+const isObjLike = (v: unknown): boolean => typeof v === "object" && v !== null && !Array.isArray(v);
+
+/** The file ids a document names, in any of those places (what is not an id is left out; see fileRefsOf). */
+export function fileIdsOf(doc: Obj): string[] {
+  return [...new Set(fileRefsOf(doc).filter((r) => FILE_ID.test(r.value)).map((r) => r.value))];
 }
 
 /** Colour arithmetic as the web app does it (lib/studio.ts rgb, lum, contrast): any CSS colour, rgb() too; what it cannot read is black. */

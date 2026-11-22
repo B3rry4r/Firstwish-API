@@ -32,6 +32,7 @@ import {
   variantsOf,
 } from "./file-rules";
 import { playableFileIds } from "../styles/approved-document";
+import { withoutFile } from "../studio/submission-checks";
 import { refusalsOf, refusalWords } from "./refusal-words";
 import { readLimits } from "../price-book/book-limits";
 import { notInBusiness } from "../../common/auth/login-removed";
@@ -268,6 +269,18 @@ export class StoredFilesService {
     return tx.storedFile.findUniqueOrThrow({ where: { id } });
   }
 
+  /** The draft (a style being edited) loses every name of the file; a style with Firstwish or live keeps its frozen document. */
+  private async dropFromDraft(tx: Tx, styleId: string, fileId: string): Promise<void> {
+    const rows = await tx.$queryRaw<{ id: string }[]>`SELECT id::text AS id FROM studio_style WHERE id = ${styleId}::uuid AND status IN ('draft', 'returned') FOR UPDATE`;
+    if (!rows.length) return;
+    const style = await tx.studioStyle.findUnique({ where: { id: styleId } });
+    const doc = style && typeof style.document === "object" && style.document !== null && !Array.isArray(style.document) ? (style.document as Record<string, unknown>) : null;
+    const next = doc ? withoutFile(doc, fileId) : null;
+    if (!doc || !next) return;
+    const version = typeof doc.version === "number" ? doc.version : 0;
+    await tx.studioStyle.update({ where: { id: styleId }, data: { document: { ...next, version: version + 1, at: toWireInstant(this.clock.now()) } } });
+  }
+
   /** A confirm in flight on another request: wait for it to finish, then answer what it made (Y4). */
   private async awaitOtherConfirm(p: UserPrincipal, id: string): Promise<StoredFile> {
     for (let polls = 0; ; polls++) {
@@ -414,6 +427,8 @@ export class StoredFilesService {
         await lockAccount(tx, p.accountId);
         const r = await this.lockOwn(tx, id, p.accountId);
         if (r.keptAt) throw AppError.notFound("No such file.");
+        // II5: a removed Studio file leaves the creator's draft too (under the same account lock a save takes), so a saved document never names a gone file
+        if (r.styleId) await this.dropFromDraft(tx, r.styleId, id);
         // II4: a Studio file that an approved version can still play is kept: it leaves the creator's draft and lists, the stored file stays for that version
         if (r.styleId && (await playableFileIds(tx, r.styleId)).has(id.toLowerCase())) {
           await tx.storedFile.update({ where: { id }, data: { keptAt: this.clock.now() } });

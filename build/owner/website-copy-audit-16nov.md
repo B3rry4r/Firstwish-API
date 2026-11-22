@@ -50,3 +50,15 @@ Rows for the OWNER (each stays as written until answered):
 | Privacy "comes down the moment ... asks"; Terms "we take it down at once and review it after" | A take-down ask opens a report; staff decide within 24 hours; the wish stays up meanwhile | OWNER: hide at once on every ask (anyone could hide anyone's wish for a day), or change the sentence to "within 24 hours"? |
 | Privacy: "never use your photos or voice to train anything" | Letter words go to the AI provider; no code states a no-training rule | OWNER: this is a promise about the provider's terms; confirm when the Anthropic key is set up |
 | Terms, Pro: "prepaid three months by transfer" | No such plan in the price book (the Wish pack is 90 days) | OWNER: drop the sentence or add the plan |
+
+## For the owner: the 319 colours inside the style players (22 Nov)
+The rule checker lists 319 "raw colour" findings, all inside the designed looks: the style players
+(components/styles: stage, film, swipe, stories), the opening and ending moments, the motion kit, Studio's named
+looks and the styles' posters. They are each style's own palette, by design; the site and app chrome already use the
+shared colours. They sit on the accepted list with that reason. Three ways to finish, the owner picks:
+ (a) say in the checker's settings that a style package is its own colour layer: the 319 leave the list, no code
+     changes, the chrome stays checked. The lead tried to make this change itself and the session's safety check
+     refused it (a change to the checker needs the owner's word): NOT done.
+ (b) move every colour into one palette file per style and name those files as colour layers: a real change across
+     43 styles with a picture-for-picture comparison; about three builder bundles; no visible change if done right.
+ (c) leave them accepted as they are: the accepted list never reaches zero.

@@ -443,7 +443,8 @@
         "lib/pro-data.ts"
       ],
       "change": "integer kobo, currency NGN, over the wire and in storage; prices only from the price book",
-      "status": "open"
+      "status": "done",
+      "resolution": "W9 (web w9-business2c, merged 6e84d5c), verified 22 Nov"
     },
     {
       "id": "UA-38",
@@ -491,7 +492,8 @@
         "lib/pro-data.ts"
       ],
       "change": "integer kobo, currency NGN, over the wire and in storage; prices only from the price book",
-      "status": "open"
+      "status": "done",
+      "resolution": "W9 (web w9-business2c, merged 6e84d5c), verified 22 Nov"
     },
     {
       "id": "UA-42",
@@ -502,7 +504,8 @@
         "lib/pro-data.ts"
       ],
       "change": "integer kobo, currency NGN, over the wire and in storage; prices only from the price book",
-      "status": "open"
+      "status": "done",
+      "resolution": "W9 (web w9-business2c, merged 6e84d5c), verified 22 Nov"
     },
     {
       "id": "UA-43",
@@ -1160,7 +1163,8 @@
         "lib/pro-data.ts"
       ],
       "change": "server-issued UUIDv7 ids",
-      "status": "open"
+      "status": "done",
+      "resolution": "W9 (web w9-business2c, merged 6e84d5c), verified 22 Nov"
     },
     {
       "id": "UA-98",
@@ -1207,7 +1211,8 @@
         "lib/pro-data.ts"
       ],
       "change": "server-issued UUIDv7 ids",
-      "status": "open"
+      "status": "done",
+      "resolution": "W9 (web w9-business2c, merged 6e84d5c), verified 22 Nov"
     },
     {
       "id": "UA-102",
@@ -1218,7 +1223,8 @@
         "lib/pro-data.ts"
       ],
       "change": "server-issued UUIDv7 ids",
-      "status": "open"
+      "status": "done",
+      "resolution": "W9 (web w9-business2c, merged 6e84d5c), verified 22 Nov"
     },
     {
       "id": "UA-103",
@@ -2140,7 +2146,8 @@
         "lib/pro-data.ts"
       ],
       "change": "the server (business, members, client wishes, people, invoices)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W9 (web w9-business2c, merged 6e84d5c), verified 22 Nov"
     },
     {
       "id": "UA-183",
@@ -2191,7 +2198,8 @@
         "lib/pro-data.ts"
       ],
       "change": "the server (business, members, client wishes, people, invoices)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W9 (web w9-business2c, merged 6e84d5c), verified 22 Nov"
     },
     {
       "id": "UA-187",
@@ -2203,7 +2211,8 @@
         "lib/pro-data.ts"
       ],
       "change": "the server (business, members, client wishes, people, invoices)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W9 (web w9-business2c, merged 6e84d5c), verified 22 Nov"
     },
     {
       "id": "UA-188",
@@ -2214,7 +2223,8 @@
         "lib/pro-api.ts"
       ],
       "change": "the server (business, members, client wishes, people, invoices)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W9 (web w9-business2c, merged 6e84d5c), verified 22 Nov"
     },
     {
       "id": "UA-189",
@@ -2225,7 +2235,8 @@
         "lib/pro-api.ts"
       ],
       "change": "the server (business, members, client wishes, people, invoices)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W9 (web w9-business2c, merged 6e84d5c), verified 22 Nov"
     },
     {
       "id": "UA-190",
@@ -2354,7 +2365,8 @@
         "lib/vault-api.ts"
       ],
       "change": "the server (Vault shoots and files, reactions/saves/follows, Studio plan/credits/reviews/drafts/submissions, Pass period)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W9 (web w9-business2c, merged 6e84d5c), verified 22 Nov"
     },
     {
       "id": "UA-201",
@@ -2389,7 +2401,8 @@
         "lib/vault-api.ts"
       ],
       "change": "the server (Vault shoots and files, reactions/saves/follows, Studio plan/credits/reviews/drafts/submissions, Pass period)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W9 (web w9-business2c, merged 6e84d5c), verified 22 Nov"
     },
     {
       "id": "UA-204",
@@ -2400,7 +2413,8 @@
         "lib/vault-api.ts"
       ],
       "change": "the server (Vault shoots and files, reactions/saves/follows, Studio plan/credits/reviews/drafts/submissions, Pass period)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W9 (web w9-business2c, merged 6e84d5c), verified 22 Nov"
     },
     {
       "id": "UA-205",
@@ -2411,7 +2425,8 @@
         "lib/vault-api.ts"
       ],
       "change": "the server (Vault shoots and files, reactions/saves/follows, Studio plan/credits/reviews/drafts/submissions, Pass period)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W9 (web w9-business2c, merged 6e84d5c), verified 22 Nov"
     },
     {
       "id": "UA-206",
@@ -2422,7 +2437,8 @@
         "lib/vault-api.ts"
       ],
       "change": "the server (Vault shoots and files, reactions/saves/follows, Studio plan/credits/reviews/drafts/submissions, Pass period)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W9 (web w9-business2c, merged 6e84d5c), verified 22 Nov"
     },
     {
       "id": "UA-207",
@@ -2775,7 +2791,8 @@
         "lib/vault-api.ts"
       ],
       "change": "signed uploads straight to storage, confirm step, short-lived signed reads (storage)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W9 (web w9-business2c, merged 6e84d5c), verified 22 Nov"
     },
     {
       "id": "UA-237",
@@ -2825,7 +2842,8 @@
         "lib/vault-api.ts"
       ],
       "change": "signed uploads straight to storage, confirm step, short-lived signed reads (storage)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W9 (web w9-business2c, merged 6e84d5c), verified 22 Nov"
     },
     {
       "id": "UA-241",
@@ -2837,7 +2855,8 @@
         "lib/vault-api.ts"
       ],
       "change": "signed uploads straight to storage, confirm step, short-lived signed reads (storage)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W9 (web w9-business2c, merged 6e84d5c), verified 22 Nov"
     },
     {
       "id": "UA-242",
@@ -2849,7 +2868,8 @@
         "lib/vault-api.ts"
       ],
       "change": "signed uploads straight to storage, confirm step, short-lived signed reads (storage)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W9 (web w9-business2c, merged 6e84d5c), verified 22 Nov"
     },
     {
       "id": "UA-243",
@@ -2861,7 +2881,8 @@
         "lib/vault-api.ts"
       ],
       "change": "signed uploads straight to storage, confirm step, short-lived signed reads (storage)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W9 (web w9-business2c, merged 6e84d5c), verified 22 Nov"
     },
     {
       "id": "UA-244",
@@ -3395,7 +3416,8 @@
         "lib/pro-data.ts"
       ],
       "change": "the web reads GET /v1/prices; the server charges only from the price book",
-      "status": "open"
+      "status": "done",
+      "resolution": "W9 (web w9-business2c, merged 6e84d5c), verified 22 Nov"
     },
     {
       "id": "UA-288",
@@ -3443,7 +3465,8 @@
         "lib/pro-data.ts"
       ],
       "change": "the web reads GET /v1/prices; the server charges only from the price book",
-      "status": "open"
+      "status": "done",
+      "resolution": "W9 (web w9-business2c, merged 6e84d5c), verified 22 Nov"
     },
     {
       "id": "UA-292",
@@ -3454,7 +3477,8 @@
         "lib/pro-data.ts"
       ],
       "change": "the web reads GET /v1/prices; the server charges only from the price book",
-      "status": "open"
+      "status": "done",
+      "resolution": "W9 (web w9-business2c, merged 6e84d5c), verified 22 Nov"
     },
     {
       "id": "UA-293",
@@ -4112,7 +4136,8 @@
         "lib/vault-fixtures.ts"
       ],
       "change": "removed from production; house showcase wishes served by the server (feed, Now Showing)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W9 (web w9-business2c, merged 6e84d5c), verified 22 Nov"
     },
     {
       "id": "UA-350",
@@ -4135,7 +4160,8 @@
         "lib/vault-fixtures.ts"
       ],
       "change": "removed from production; house showcase wishes served by the server (feed, Now Showing)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W9 (web w9-business2c, merged 6e84d5c), verified 22 Nov"
     },
     {
       "id": "UA-352",
@@ -4146,7 +4172,8 @@
         "lib/vault-fixtures.ts"
       ],
       "change": "removed from production; house showcase wishes served by the server (feed, Now Showing)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W9 (web w9-business2c, merged 6e84d5c), verified 22 Nov"
     },
     {
       "id": "UA-353",
@@ -4157,7 +4184,8 @@
         "lib/vault-fixtures.ts"
       ],
       "change": "removed from production; house showcase wishes served by the server (feed, Now Showing)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W9 (web w9-business2c, merged 6e84d5c), verified 22 Nov"
     },
     {
       "id": "UA-354",
@@ -4168,7 +4196,8 @@
         "lib/vault-fixtures.ts"
       ],
       "change": "removed from production; house showcase wishes served by the server (feed, Now Showing)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W9 (web w9-business2c, merged 6e84d5c), verified 22 Nov"
     },
     {
       "id": "UA-355",
@@ -4799,7 +4828,8 @@
         "lib/pro-data.ts"
       ],
       "change": "every epoch-ms `at` becomes createdAt/updatedAt ISO-8601 UTC strings set by the server; calendar dates are YYYY-MM-DD strings (date-only canon)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W9 (web w9-business2c, merged 6e84d5c), verified 22 Nov"
     },
     {
       "id": "UA-408",
@@ -4846,7 +4876,8 @@
         "lib/pro-data.ts"
       ],
       "change": "every epoch-ms `at` becomes createdAt/updatedAt ISO-8601 UTC strings set by the server; calendar dates are YYYY-MM-DD strings (date-only canon)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W9 (web w9-business2c, merged 6e84d5c), verified 22 Nov"
     },
     {
       "id": "UA-412",
@@ -4857,7 +4888,8 @@
         "lib/pro-data.ts"
       ],
       "change": "every epoch-ms `at` becomes createdAt/updatedAt ISO-8601 UTC strings set by the server; calendar dates are YYYY-MM-DD strings (date-only canon)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W9 (web w9-business2c, merged 6e84d5c), verified 22 Nov"
     },
     {
       "id": "UA-413",
@@ -5837,7 +5869,8 @@
         "lib/vault-api.ts"
       ],
       "change": "every read or write of localStorage/sessionStorage/IndexedDB is replaced by its endpoint; the session is an httpOnly refresh cookie plus an in-memory access token; mode (light/dark) is a field on the account; choices before sign-in travel in the link; the build fails on the words localStorage, sessionStorage, IndexedDB in app/, components/, lib/",
-      "status": "open"
+      "status": "done",
+      "resolution": "W9 (web w9-business2c, merged 6e84d5c), verified 22 Nov"
     },
     {
       "id": "UA-495",
@@ -5891,7 +5924,8 @@
         "lib/vault-api.ts"
       ],
       "change": "every read or write of localStorage/sessionStorage/IndexedDB is replaced by its endpoint; the session is an httpOnly refresh cookie plus an in-memory access token; mode (light/dark) is a field on the account; choices before sign-in travel in the link; the build fails on the words localStorage, sessionStorage, IndexedDB in app/, components/, lib/",
-      "status": "open"
+      "status": "done",
+      "resolution": "W9 (web w9-business2c, merged 6e84d5c), verified 22 Nov"
     },
     {
       "id": "UA-499",
@@ -5904,7 +5938,8 @@
         "lib/vault-api.ts"
       ],
       "change": "every read or write of localStorage/sessionStorage/IndexedDB is replaced by its endpoint; the session is an httpOnly refresh cookie plus an in-memory access token; mode (light/dark) is a field on the account; choices before sign-in travel in the link; the build fails on the words localStorage, sessionStorage, IndexedDB in app/, components/, lib/",
-      "status": "open"
+      "status": "done",
+      "resolution": "W9 (web w9-business2c, merged 6e84d5c), verified 22 Nov"
     },
     {
       "id": "UA-500",
@@ -5916,7 +5951,8 @@
         "lib/vault-api.ts"
       ],
       "change": "every read or write of localStorage/sessionStorage/IndexedDB is replaced by its endpoint; the session is an httpOnly refresh cookie plus an in-memory access token; mode (light/dark) is a field on the account; choices before sign-in travel in the link; the build fails on the words localStorage, sessionStorage, IndexedDB in app/, components/, lib/",
-      "status": "open"
+      "status": "done",
+      "resolution": "W9 (web w9-business2c, merged 6e84d5c), verified 22 Nov"
     },
     {
       "id": "UA-501",
@@ -5928,7 +5964,8 @@
         "lib/vault-api.ts"
       ],
       "change": "every read or write of localStorage/sessionStorage/IndexedDB is replaced by its endpoint; the session is an httpOnly refresh cookie plus an in-memory access token; mode (light/dark) is a field on the account; choices before sign-in travel in the link; the build fails on the words localStorage, sessionStorage, IndexedDB in app/, components/, lib/",
-      "status": "open"
+      "status": "done",
+      "resolution": "W9 (web w9-business2c, merged 6e84d5c), verified 22 Nov"
     },
     {
       "id": "UA-502",
@@ -7575,7 +7612,8 @@
       ],
       "change": "implement the designed error state",
       "enterCondition": "the request fails; show retry",
-      "status": "open"
+      "status": "done",
+      "resolution": "W9 (web w9-business2c, merged 6e84d5c), verified 22 Nov"
     },
     {
       "id": "UA-618",
@@ -7739,7 +7777,8 @@
       ],
       "change": "implement the designed loaded state",
       "enterCondition": "as designed: loaded",
-      "status": "open"
+      "status": "done",
+      "resolution": "W9 (web w9-business2c, merged 6e84d5c), verified 22 Nov"
     },
     {
       "id": "UA-629",
@@ -7753,7 +7792,8 @@
       ],
       "change": "make the coded state reachable: error",
       "enterCondition": "none for the initial read (no load error branch)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W9 (web w9-business2c, merged 6e84d5c), verified 22 Nov"
     },
     {
       "id": "UA-630",
@@ -7767,7 +7807,8 @@
       ],
       "change": "implement the designed loaded state",
       "enterCondition": "as designed: loaded",
-      "status": "open"
+      "status": "done",
+      "resolution": "W9 (web w9-business2c, merged 6e84d5c), verified 22 Nov"
     },
     {
       "id": "UA-631",
@@ -7781,7 +7822,8 @@
       ],
       "change": "make the coded state reachable: error",
       "enterCondition": "none for the initial read (no load error branch)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W9 (web w9-business2c, merged 6e84d5c), verified 22 Nov"
     },
     {
       "id": "UA-632",
@@ -7795,7 +7837,8 @@
       ],
       "change": "implement the designed empty state",
       "enterCondition": "the server returns no items",
-      "status": "open"
+      "status": "done",
+      "resolution": "W9 (web w9-business2c, merged 6e84d5c), verified 22 Nov"
     },
     {
       "id": "UA-633",
@@ -7809,7 +7852,8 @@
       ],
       "change": "make the coded state reachable: error",
       "enterCondition": "!shoots && error",
-      "status": "open"
+      "status": "done",
+      "resolution": "W9 (web w9-business2c, merged 6e84d5c), verified 22 Nov"
     },
     {
       "id": "UA-634",
@@ -7823,7 +7867,8 @@
       ],
       "change": "make the coded state reachable: error",
       "enterCondition": "error && !shoots (message + Try again)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W9 (web w9-business2c, merged 6e84d5c), verified 22 Nov"
     },
     {
       "id": "UA-635",
@@ -10323,7 +10368,8 @@
         "lib/vault-fixtures.ts:11-70"
       ],
       "change": "replace: server data",
-      "status": "open"
+      "status": "done",
+      "resolution": "W9 (web w9-business2c, merged 6e84d5c), verified 22 Nov"
     },
     {
       "id": "UA-831",
@@ -10345,7 +10391,8 @@
         "lib/vault-api.ts:287-292"
       ],
       "change": "replace: server-recorded first-open of a reveal",
-      "status": "open"
+      "status": "done",
+      "resolution": "W9 (web w9-business2c, merged 6e84d5c), verified 22 Nov"
     },
     {
       "id": "UA-833",
@@ -10356,7 +10403,8 @@
         "lib/pro-api.ts:1-8"
       ],
       "change": "replace: GET /pro (server read with refresh on load, visibility and write)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W9 (web w9-business2c, merged 6e84d5c), verified 22 Nov"
     },
     {
       "id": "UA-834",
@@ -10463,7 +10511,8 @@
         "lib/vault-api.ts:131-152"
       ],
       "change": "replace: server wish creation, numbering, allowance accounting and link slug",
-      "status": "open"
+      "status": "done",
+      "resolution": "W9 (web w9-business2c, merged 6e84d5c), verified 22 Nov"
     },
     {
       "id": "UA-843",
@@ -10474,7 +10523,8 @@
         "components/app/pro/vault.tsx:18-21"
       ],
       "change": "replace: a server-issued public link for the reveal",
-      "status": "open"
+      "status": "done",
+      "resolution": "W9 (web w9-business2c, merged 6e84d5c), verified 22 Nov"
     },
     {
       "id": "UA-844",
@@ -10485,7 +10535,8 @@
         "lib/vault-api.ts:308"
       ],
       "change": "replace: real request failure",
-      "status": "open"
+      "status": "done",
+      "resolution": "W9 (web w9-business2c, merged 6e84d5c), verified 22 Nov"
     },
     {
       "id": "UA-845",
@@ -10496,7 +10547,8 @@
         "app/app/pro/reveal/new/page.tsx:97,153"
       ],
       "change": "replace: real photos",
-      "status": "open"
+      "status": "done",
+      "resolution": "W9 (web w9-business2c, merged 6e84d5c), verified 22 Nov"
     },
     {
       "id": "UA-846",
@@ -10507,7 +10559,8 @@
         "app/app/pro/reveal/new/page.tsx:81-92"
       ],
       "change": "replace: upload of the frames to storage",
-      "status": "open"
+      "status": "done",
+      "resolution": "W9 (web w9-business2c, merged 6e84d5c), verified 22 Nov"
     },
     {
       "id": "UA-847",
@@ -10518,7 +10571,8 @@
         "app/app/pro/reveal/new/page.tsx:11"
       ],
       "change": "replace: a product rule that should be server-validated",
-      "status": "open"
+      "status": "done",
+      "resolution": "W9 (web w9-business2c, merged 6e84d5c), verified 22 Nov"
     },
     {
       "id": "UA-848",
@@ -10529,7 +10583,8 @@
         "lib/vault-api.ts:109-123"
       ],
       "change": "replace: upload of the original file to storage, and a served file url",
-      "status": "open"
+      "status": "done",
+      "resolution": "W9 (web w9-business2c, merged 6e84d5c), verified 22 Nov"
     },
     {
       "id": "UA-849",
@@ -10540,7 +10595,8 @@
         "app/app/pro/vault/[id]/page.tsx:66"
       ],
       "change": "replace: an actual send (email/WhatsApp) to the client",
-      "status": "open"
+      "status": "done",
+      "resolution": "W9 (web w9-business2c, merged 6e84d5c), verified 22 Nov"
     },
     {
       "id": "UA-850",
@@ -10551,7 +10607,8 @@
         "lib/vault-api.ts:231-306"
       ],
       "change": "replace: server-side storage metering and billing (peak of the month, blocks, price)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W9 (web w9-business2c, merged 6e84d5c), verified 22 Nov"
     },
     {
       "id": "UA-851",
@@ -10562,7 +10619,8 @@
         "app/app/pro/vault/page.tsx:134-138"
       ],
       "change": "replace: server price/overage rules",
-      "status": "open"
+      "status": "done",
+      "resolution": "W9 (web w9-business2c, merged 6e84d5c), verified 22 Nov"
     },
     {
       "id": "UA-852",
@@ -12211,8 +12269,9 @@
         "lib/pro-data.ts"
       ],
       "change": "the server populates what this screen reads (lib/vault-api.ts: localStorage 'fw-vault' ({shoots, hidden, peak}) plus an in-memory preview map, merged with sampleShoo); triggers: on page load, after sign-in, when the tab becomes visible again, and after any write. A manual button is not a trigger.",
-      "status": "open",
-      "provenance": "repository-local-store"
+      "status": "done",
+      "provenance": "repository-local-store",
+      "resolution": "W9 (web w9-business2c, merged 6e84d5c), verified 22 Nov"
     },
     {
       "id": "UA-978",
@@ -12225,8 +12284,9 @@
         "lib/pro-api.ts"
       ],
       "change": "the server populates what this screen reads (lib/vault-api.ts: localStorage 'fw-vault' ({shoots, hidden, peak}) plus an in-memory preview map, merged with sampleShoo); triggers: on page load, after sign-in, when the tab becomes visible again, and after any write. A manual button is not a trigger.",
-      "status": "open",
-      "provenance": "repository-local-store"
+      "status": "done",
+      "provenance": "repository-local-store",
+      "resolution": "W9 (web w9-business2c, merged 6e84d5c), verified 22 Nov"
     },
     {
       "id": "UA-979",
@@ -12242,8 +12302,9 @@
         "lib/catalog.ts"
       ],
       "change": "the server populates what this screen reads ('fw-pro' via usePro(); a shoot from 'fw-vault' via getShoot(); 'Use sample photos' fills SAMPLE_FRAMES from lib/pro-data); triggers: on page load, after sign-in, when the tab becomes visible again, and after any write. A manual button is not a trigger.",
-      "status": "open",
-      "provenance": "mixed"
+      "status": "done",
+      "provenance": "mixed",
+      "resolution": "W9 (web w9-business2c, merged 6e84d5c), verified 22 Nov"
     },
     {
       "id": "UA-980",
@@ -12255,8 +12316,9 @@
         "lib/vault-api.ts"
       ],
       "change": "the server populates what this screen reads (same as pro-reveal-new (re-exports that page)); triggers: on page load, after sign-in, when the tab becomes visible again, and after any write. A manual button is not a trigger.",
-      "status": "open",
-      "provenance": "mixed"
+      "status": "done",
+      "provenance": "mixed",
+      "resolution": "W9 (web w9-business2c, merged 6e84d5c), verified 22 Nov"
     },
     {
       "id": "UA-981",

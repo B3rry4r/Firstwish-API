@@ -130,7 +130,7 @@ export class StylesService {
     if (!ref?.creatorId || !UUID.test(ref.creatorId)) return c;
     const who = await this.db.creator.findUnique({ where: { id: ref.creatorId }, select: { account: { select: { erasedAt: true } } } });
     if (who?.account && !who.account.erasedAt) return c;
-    const { creatorId: _gone, ...rest } = ref; // eslint-disable-line @typescript-eslint/no-unused-vars
+    const { creatorId: _gone, ...rest } = ref;
     return (Object.keys(rest).length ? rest : null) as StyleOut["creator"];
   }
 

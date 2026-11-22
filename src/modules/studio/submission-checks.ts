@@ -73,6 +73,63 @@ export function fileRefsOf(doc: Obj): FileRef[] {
   return out;
 }
 
+/**
+ * II4/II5: the document without any name of this file, or null when it names none. A removed file leaves the creator's draft: its art item,
+ * the poster's and the sound's name, a scene's background picture, and a thing that is made of it (artwork or model) or filled with it go.
+ */
+export function withoutFile(doc: Obj, fileId: string): Obj | null {
+  const id = fileId.toLowerCase();
+  const is = (v: unknown): boolean => typeof v === "string" && v.trim().toLowerCase() === id;
+  const artIds = new Set(arr(doc.art).map(obj).filter((a) => is(a.fileId) || is(a.id)).map((a) => a.id).filter((x): x is string => typeof x === "string"));
+  const names = (v: unknown): boolean => is(v) || (typeof v === "string" && artIds.has(v));
+  let changed = false;
+  const out: Obj = { ...doc };
+  if (Array.isArray(doc.art)) {
+    const art = doc.art.filter((a) => !(is(obj(a).fileId) || is(obj(a).id)));
+    if (art.length !== doc.art.length) {
+      out.art = art;
+      changed = true;
+    }
+  }
+  if (isObjLike(doc.poster) && ["fileId", "id", "src"].some((k) => is(obj(doc.poster)[k]))) {
+    const poster = { ...obj(doc.poster) };
+    for (const k of ["fileId", "id", "src"]) if (is(poster[k])) delete poster[k];
+    out.poster = poster;
+    changed = true;
+  }
+  if (names(doc.sound)) {
+    delete out.sound;
+    changed = true;
+  }
+  if (isObjLike(doc.scenes)) {
+    const scenes: Obj = {};
+    for (const [k, v] of Object.entries(obj(doc.scenes))) {
+      const scene = { ...obj(v) };
+      if (names(scene.backdrop)) {
+        delete scene.backdrop;
+        changed = true;
+      }
+      if (Array.isArray(scene.added)) {
+        const added = (scene.added as unknown[])
+          .filter((x) => !((obj(x).kind === "artwork" || obj(x).kind === "model") && names(obj(x).what)))
+          .map((x): unknown => {
+            if (!names(obj(obj(x).fill).art)) return x;
+            const { fill: _fill, ...rest } = obj(x);
+            return rest;
+          });
+        if (added.length !== scene.added.length || added.some((x, i) => x !== (scene.added as unknown[])[i])) {
+          scene.added = added;
+          changed = true;
+        }
+      }
+      scenes[k] = scene;
+    }
+    out.scenes = scenes;
+  }
+  return changed ? out : null;
+}
+const isObjLike = (v: unknown): boolean => typeof v === "object" && v !== null && !Array.isArray(v);
+
 /** The file ids a document names, in any of those places (what is not an id is left out; see fileRefsOf). */
 export function fileIdsOf(doc: Obj): string[] {
   return [...new Set(fileRefsOf(doc).filter((r) => FILE_ID.test(r.value)).map((r) => r.value))];

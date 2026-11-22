@@ -1095,3 +1095,8 @@ HG1 (give race) Two staff giving one Concierge order: the code is right (overlap
   public profile (handle, name, picture, their approved styles and their listed wishes). "Featured styles" is NOT
   invented: if no staff screen or truth says how a style becomes featured, it is listed for the owner and not
   built.
+- IF2a (22 Nov, the lead CORRECTS IF2, which was worded too widely): an id in the PATH that is not an id, or a
+  payment reference in the path that is not shaped as one, answers 404 as it always has ("no such thing": the wired
+  screens' not-found states, the live flows and 45 older tests read it so). An id in a BODY or QUERY field that is
+  not an id is 422 in words. No spelling anywhere answers 500. Any case of a real id is the same thing on every
+  route. IF2's "422 at every route that takes an id" is withdrawn for paths.

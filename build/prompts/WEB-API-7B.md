@@ -30,3 +30,8 @@ build. Commit; do not push; do not edit .pipeline-ui/wired.json, scripts/gates/*
 tsconfig.json was changed by the first builder (and undo it if nothing needs it); stack down, databases removed,
 both worktrees removed LAST (after your commits are on the branch). Hand back ONCE in 10 lines: head; items 1-4
 with file:line and the proof; the flow's two totals and the driver's; every edit outside the file map.
+ADDED 17:50 (the first builder's whole driver ended: 1792 of 1794): besides the known w5-maker2, `W10 the editor
+has no picture upload control and no Your artwork shelf` FAILS: that older check (scripts/live/flows/w10*.mjs)
+said the control is absent because uploads were not built; this bundle builds them. Item 5: change THAT check to
+what is true now (the control is there and works, proved by wa7) and nothing else in that flow; name the line.
+The stack is down and the worktree's tsconfig.json was restored by the stack script: check `git status` first.

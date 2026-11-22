@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "frozenAt": "2026-11-17T01:25:22Z",
+  "frozenAt": "2026-11-17T04:23:17Z",
   "framework": "nestjs",
   "generatedBy": "tools/pipeline/reconcile.py",
   "resources": [
@@ -4499,6 +4499,20 @@
           ],
           "body": [
             {
+              "name": "again",
+              "type": "boolean (optional; IC3: a shoot's set already sent to this client answers 409 already_sent with sentAt and link; true sends it again on this client wish and takes no second wish)",
+              "from": [
+                "DEC-269"
+              ]
+            },
+            {
+              "name": "files",
+              "type": "string[] (optional; IB4: the files to show, ids from the set, up to 200, in this order; left out, every ready file of the set; one that is not a ready file of the set is 422 with words)",
+              "from": [
+                "DEC-266"
+              ]
+            },
+            {
               "name": "reveal",
               "type": "{client,occasion,city,date,note,credits (blank names dropped),booking,style}",
               "from": [
@@ -4537,7 +4551,100 @@
               "via": "action:sendReveal (from a Vault shoot) -> ClientWish.sendReveal"
             }
           ],
-          "notes": []
+          "notes": [
+            "body by DEC-266",
+            "body by DEC-269"
+          ]
+        },
+        {
+          "id": "E-272",
+          "method": "POST",
+          "path": "/v1/business/reveals",
+          "auth": [
+            {
+              "kind": "role",
+              "role": "business"
+            }
+          ],
+          "body": [
+            {
+              "name": "again",
+              "type": "boolean (optional; true sends a shoot's set again to a client it already went to, on the same client wish and taking no second wish)",
+              "from": [
+                "DEC-262"
+              ]
+            },
+            {
+              "name": "client",
+              "type": "string (optional; left out, the reveal's client)",
+              "from": [
+                "DEC-262"
+              ]
+            },
+            {
+              "name": "day",
+              "type": "DateOnly (optional; left out, the reveal's date, else today)",
+              "from": [
+                "DEC-262"
+              ]
+            },
+            {
+              "name": "files",
+              "type": "string[] (optional; IB4: the files to show, ids from the set, up to 200, in this order; left out, every ready file of the set)",
+              "from": [
+                "DEC-262"
+              ]
+            },
+            {
+              "name": "kind",
+              "type": "string (optional; left out, photographers)",
+              "from": [
+                "DEC-262"
+              ]
+            },
+            {
+              "name": "occasion",
+              "type": "string (optional; left out, the reveal's occasion)",
+              "from": [
+                "DEC-262"
+              ]
+            },
+            {
+              "name": "reveal",
+              "type": "object (the words of the reveal as E-33 takes them, with downloads: boolean, finals only, on by default)",
+              "from": [
+                "DEC-262"
+              ]
+            },
+            {
+              "name": "set",
+              "type": "enum(proofs|finals)",
+              "from": [
+                "DEC-262"
+              ]
+            },
+            {
+              "name": "shoot",
+              "type": "string Shoot.id",
+              "from": [
+                "DEC-262"
+              ]
+            }
+          ],
+          "response": {
+            "entity": "ClientWish",
+            "cardinality": "single",
+            "note": "{shoot, wish, link}: the client wish and the reveal made together, or neither (DEC-262); 409 already_sent carries sentAt and link in fields"
+          },
+          "sources": [
+            {
+              "src": "DEC-262",
+              "via": "ruling:DEC-262"
+            }
+          ],
+          "notes": [
+            "body by DEC-262"
+          ]
         }
       ]
     },
@@ -5328,6 +5435,65 @@
           ],
           "notes": [
             "body by DEC-260"
+          ]
+        },
+        {
+          "id": "E-273",
+          "method": "POST",
+          "path": "/v1/admin/concierge/orders/:id/wishes",
+          "auth": [
+            {
+              "kind": "staff role",
+              "roles": [
+                "maker",
+                "owner"
+              ]
+            }
+          ],
+          "body": [
+            {
+              "name": "kind",
+              "type": "string (the wish kind)",
+              "from": [
+                "DEC-267"
+              ]
+            },
+            {
+              "name": "name",
+              "type": "string (who it is for)",
+              "from": [
+                "DEC-267"
+              ]
+            },
+            {
+              "name": "occasion",
+              "type": "string (the wish occasion)",
+              "from": [
+                "DEC-267"
+              ]
+            },
+            {
+              "name": "reason",
+              "type": "string (4 or more characters; written to the audit row)",
+              "from": [
+                "DEC-125"
+              ]
+            }
+          ],
+          "response": {
+            "entity": "ConciergeOrder",
+            "cardinality": "single",
+            "note": "{id, no, firstName}: the wish made in the buyer's name, tied to the order and hidden from the buyer until the order is delivered (DEC-267)"
+          },
+          "sources": [
+            {
+              "src": "DEC-267",
+              "via": "ruling:DEC-267"
+            }
+          ],
+          "notes": [
+            "body by DEC-267",
+            "reason by DEC-125"
           ]
         },
         {
@@ -17948,6 +18114,30 @@
       "embedded": [],
       "fields": [
         {
+          "name": "downloads",
+          "type": "boolean",
+          "classes": [
+            "boolean"
+          ],
+          "nullable": true,
+          "provenance": [
+            "DEC-264"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "hearts",
+          "type": "array",
+          "classes": [
+            "array"
+          ],
+          "nullable": true,
+          "provenance": [
+            "DEC-263"
+          ],
+          "supersedes": []
+        },
+        {
           "name": "link",
           "type": "string",
           "classes": [
@@ -18028,6 +18218,40 @@
           "notes": []
         },
         {
+          "id": "E-274",
+          "method": "POST",
+          "path": "/v1/business/reveal-links/:id/downloads",
+          "auth": [
+            {
+              "kind": "role",
+              "role": "business"
+            }
+          ],
+          "body": [
+            {
+              "name": "on",
+              "type": "boolean (true gives the link's download addresses, finals only; false takes them away)",
+              "from": [
+                "DEC-264"
+              ]
+            }
+          ],
+          "response": {
+            "entity": "RevealLink",
+            "cardinality": "single",
+            "note": "the link with its switch (DEC-264)"
+          },
+          "sources": [
+            {
+              "src": "DEC-264",
+              "via": "ruling:DEC-264"
+            }
+          ],
+          "notes": [
+            "body by DEC-264"
+          ]
+        },
+        {
           "id": "E-247",
           "method": "POST",
           "path": "/v1/business/reveal-links/:id/off",
@@ -18096,6 +18320,30 @@
           "nullable": true,
           "provenance": [
             "receiver-wish-mine"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "downloads",
+          "type": "array",
+          "classes": [
+            "array"
+          ],
+          "nullable": true,
+          "provenance": [
+            "DEC-264"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "hearts",
+          "type": "array",
+          "classes": [
+            "array"
+          ],
+          "nullable": true,
+          "provenance": [
+            "DEC-263"
           ],
           "supersedes": []
         },
@@ -18184,6 +18432,71 @@
           ],
           "notes": [
             "body by DEC-198"
+          ]
+        },
+        {
+          "id": "E-275",
+          "method": "GET",
+          "path": "/v1/r/:code/favourites",
+          "auth": [
+            {
+              "kind": "public"
+            }
+          ],
+          "body": [],
+          "response": {
+            "entity": "RevealPlay",
+            "cardinality": "single",
+            "note": "{hearts: number[]}: the photo positions marked at this link (DEC-263)"
+          },
+          "sources": [
+            {
+              "src": "DEC-263",
+              "via": "ruling:DEC-263"
+            }
+          ],
+          "notes": [
+            "body by DEC-263"
+          ]
+        },
+        {
+          "id": "E-276",
+          "method": "POST",
+          "path": "/v1/r/:code/favourites",
+          "auth": [
+            {
+              "kind": "public"
+            }
+          ],
+          "body": [
+            {
+              "name": "marked",
+              "type": "boolean (true marks it, false unmarks it)",
+              "from": [
+                "DEC-263"
+              ]
+            },
+            {
+              "name": "position",
+              "type": "integer (the photo's position in the reveal's file list, 0 to 9999)",
+              "from": [
+                "DEC-263"
+              ]
+            }
+          ],
+          "response": {
+            "entity": "RevealPlay",
+            "cardinality": "single",
+            "note": "{hearts: number[]}: every position marked after this call (DEC-263)"
+          },
+          "sources": [
+            {
+              "src": "DEC-263",
+              "via": "ruling:DEC-263"
+            }
+          ],
+          "notes": [
+            "body by DEC-263"
           ]
         },
         {
@@ -19917,6 +20230,47 @@
             }
           ],
           "notes": []
+        },
+        {
+          "id": "E-277",
+          "method": "PATCH",
+          "path": "/v1/business/shoots/:id",
+          "auth": [
+            {
+              "kind": "role",
+              "role": "business"
+            }
+          ],
+          "body": [
+            {
+              "name": "client",
+              "type": "string (optional; 1 to 60 characters)",
+              "from": [
+                "DEC-265"
+              ]
+            },
+            {
+              "name": "title",
+              "type": "string (optional; 1 to 40 characters)",
+              "from": [
+                "DEC-265"
+              ]
+            }
+          ],
+          "response": {
+            "entity": "Shoot",
+            "cardinality": "single",
+            "note": "the renamed shoot (DEC-265)"
+          },
+          "sources": [
+            {
+              "src": "DEC-265",
+              "via": "ruling:DEC-265"
+            }
+          ],
+          "notes": [
+            "body by DEC-265"
+          ]
         },
         {
           "id": "E-171",
@@ -25518,6 +25872,40 @@
             }
           ],
           "notes": []
+        },
+        {
+          "id": "E-278",
+          "method": "PATCH",
+          "path": "/v1/business/vault-files/:id",
+          "auth": [
+            {
+              "kind": "role",
+              "role": "business"
+            }
+          ],
+          "body": [
+            {
+              "name": "name",
+              "type": "string (1 to 100 characters, no slash: the name the file shows under; the stored object keeps its own name)",
+              "from": [
+                "DEC-265"
+              ]
+            }
+          ],
+          "response": {
+            "entity": "VaultFile",
+            "cardinality": "single",
+            "note": "the renamed file (DEC-265)"
+          },
+          "sources": [
+            {
+              "src": "DEC-265",
+              "via": "ruling:DEC-265"
+            }
+          ],
+          "notes": [
+            "body by DEC-265"
+          ]
         }
       ]
     },

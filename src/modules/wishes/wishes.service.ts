@@ -21,8 +21,10 @@ import { ShowingLink } from "../showing/showing-link";
 import { localToUtc, parseOpening, utcToLocal } from "./local-time";
 import { CHAPTER_KEYS, DEFAULT_CONTENT_MAX_BYTES, FileRef, hasBody, readContent } from "./wish-content";
 import { readLimits } from "../price-book/book-limits";
+import type { Principal } from "../../common/auth/principal";
 import { WishLifecycleService } from "./wish-lifecycle.service";
 import { stateOf } from "./wish-state";
+import { SHOWN_TO_BUYER } from "./wish-shown";
 import { WishPictures } from "./wish-pictures";
 import { kindHasOccasion, LAST_STEP } from "./kind-occasions";
 import { isLevel } from "../styles/style-view";
@@ -160,11 +162,49 @@ export class WishesService {
     return id;
   }
 
+  /**
+   * HZ2: a draft the order's maker makes in the buyer's name. It is the buyer's (their account, and their business for a business's order) and tied
+   * to the order; the buyer sees nothing of it until the order is delivered. Runs in the caller's transaction.
+   */
+  async createForOrderIn(tx: Tx, a: { orderId: string; accountId: string; businessId: string | null; kind: string; occasion: string; name: string }): Promise<string> {
+    const kind = this.slugOf(a.kind, "kind");
+    const occasion = this.slugOf(a.occasion, "occasion");
+    if (!kindHasOccasion(kind, occasion)) throw AppError.validation({ occasion: `The ${kind} kind has no occasion called ${occasion}.` });
+    const style = await tx.style.findFirst({ where: { on: true }, orderBy: [{ house: { sort: "desc", nulls: "last" } }, { id: "asc" }], select: { slug: true } });
+    if (!style?.slug) throw AppError.conflict("no_style", "No style is on, so a wish cannot be started.");
+    const id = this.ids.id();
+    await tx.wish.create({
+      data: {
+        id, accountId: a.accountId, businessId: a.businessId, conciergeOrderId: a.orderId, status: "draft", kind, occasion, styleSlug: style.slug, timeZone: DEFAULT_ZONE,
+        name: this.text(a.name, "name", 120), content: {}, version: 0,
+      },
+    });
+    return id;
+  }
+
+  /**
+   * HZ2: whose wish this is for a signed-in caller. A user is themselves. A maker (or the owner) is the buyer of the order the wish is tied to,
+   * only while that order is with this maker and the wish has not been delivered; in any other case the wish is 404 for them.
+   */
+  async actingAccount(p: Principal | undefined, id: string): Promise<{ accountId: string; viaOrder: boolean }> {
+    if (p?.kind === "user") return { accountId: p.accountId, viaOrder: false };
+    if (p?.kind !== "staff") throw AppError.unauthorized();
+    if (!isUuidV7(id)) throw AppError.notFound("No such wish.");
+    const rows = await this.prisma.$queryRaw<{ accountId: string; makerId: string | null }[]>`
+      SELECT w."accountId"::text AS "accountId", o."makerId"::text AS "makerId"
+        FROM wish w JOIN concierge_order o ON o.id = w."conciergeOrderId"
+       WHERE w.id = ${id}::uuid AND o.status IN ('given', 'making') AND w."erasedAt" IS NULL AND w."removedAt" IS NULL
+         AND NOT EXISTS (SELECT 1 FROM concierge_order_wish d WHERE d."wishId" = w.id)`;
+    const r = rows[0];
+    if (!r || (!p.roles.includes("owner") && r.makerId !== p.staffId)) throw AppError.notFound("No such wish.");
+    return { accountId: r.accountId, viaOrder: true };
+  }
+
   // ---- reads ----
 
   private async ownerWhere(accountId: string): Promise<Prisma.WishWhereInput> {
     const biz = await this.business.find(accountId);
-    return biz ? { OR: [{ accountId }, { businessId: biz }] } : { accountId };
+    return { AND: [biz ? { OR: [{ accountId }, { businessId: biz }] } : { accountId }, SHOWN_TO_BUYER] };
   }
 
   async list(accountId: string, q: { cursor?: string; limit?: number }): Promise<Page<Obj>> {
@@ -185,8 +225,8 @@ export class WishesService {
     return toPage(rows.map(one), limit, (r) => ({ key: String(r.id), id: String(r.id) }));
   }
 
-  async get(accountId: string, id: string): Promise<Obj> {
-    const row = await this.owned(this.prisma, accountId, id, await this.business.find(accountId));
+  async get(accountId: string, id: string, viaOrder = false): Promise<Obj> {
+    const row = await this.owned(this.prisma, accountId, id, await this.business.find(accountId), viaOrder);
     // LL5: what the receivers did (opens, plays, reactions, favourites, shares), counted from rows; only for a wish the caller owns.
     const activity = (await this.activity.summary([row.id])).get(row.id);
     // QQ3: where the owner's asks to be shown stand (the last one, its decline reason, whether it is listed).
@@ -213,9 +253,9 @@ export class WishesService {
   }
 
   /** The wish when it is the caller's own or the caller's business's. `biz` is read before any transaction (a pool connection is never held while waiting for another). */
-  private async owned(db: PrismaService | Tx, accountId: string, id: string, biz: string | null): Promise<Wish> {
+  private async owned(db: PrismaService | Tx, accountId: string, id: string, biz: string | null, viaOrder = false): Promise<Wish> {
     if (!isUuidV7(id)) throw AppError.notFound("No such wish.");
-    const row = await db.wish.findFirst({ where: { AND: [{ id }, biz ? { OR: [{ accountId }, { businessId: biz }] } : { accountId }] } });
+    const row = await db.wish.findFirst({ where: { AND: [{ id }, biz ? { OR: [{ accountId }, { businessId: biz }] } : { accountId }, ...(viaOrder ? [] : [SHOWN_TO_BUYER])] } });
     if (!row) throw AppError.notFound("No such wish.");
     return row;
   }
@@ -312,14 +352,14 @@ export class WishesService {
       };
       if (key !== undefined) {
         const seen = await tx.wishStart.findUnique({ where: { accountId_key: { accountId, key } } });
-        const was = seen ? await tx.wish.findUnique({ where: { id: seen.wishId } }) : null;
+        const was = seen ? await tx.wish.findFirst({ where: { AND: [{ id: seen.wishId }, SHOWN_TO_BUYER] } }) : null;
         if (was) {
           if (was.status === "draft" && !was.erasedAt && !was.removedAt) return { row: was, fresh: false };
           throw AppError.conflict("key_spent", "This start was already used and that wish is gone. Start a new wish.");
         }
       }
       if (!answered) {
-        const mine = await tx.wish.findMany({ where: { accountId, businessId: null, status: "draft", erasedAt: null, removedAt: null }, orderBy: { id: "desc" }, take: 20 });
+        const mine = await tx.wish.findMany({ where: { AND: [{ accountId, businessId: null, status: "draft", erasedAt: null, removedAt: null }, SHOWN_TO_BUYER] }, orderBy: { id: "desc" }, take: 20 });
         const open = mine.find(isBareStart);
         if (open) {
           await remember(open.id);
@@ -432,7 +472,7 @@ export class WishesService {
     return localToUtc(utcToLocal(at, from), to) ?? at;
   }
 
-  async patch(accountId: string, id: string, input: PatchInput): Promise<{ version: number; updatedAt: string }> {
+  async patch(accountId: string, id: string, input: PatchInput, viaOrder = false): Promise<{ version: number; updatedAt: string }> {
     if (!isUuidV7(id)) throw AppError.notFound("No such wish.");
     const kind = input.kind === undefined ? undefined : this.slugOf(input.kind, "kind");
     const occasion = input.occasion === undefined ? undefined : this.slugOf(input.occasion, "occasion");
@@ -449,7 +489,7 @@ export class WishesService {
     const book = await this.entitlements.row();
     return this.prisma.$transaction(async (tx) => {
       await lockAccount(tx, accountId);
-      await this.owned(tx, accountId, id, biz);
+      await this.owned(tx, accountId, id, biz, viaOrder);
       await this.lifecycle.lock(tx, id);
       const cur = await tx.wish.findUniqueOrThrow({ where: { id } });
       if (stateOf(cur) !== "draft") throw AppError.conflict("wish_locked", "This wish is sealed, so its words can no longer be changed.");
@@ -525,7 +565,7 @@ export class WishesService {
    * E-226 add photos to a draft: `files` are the caller's own confirmed photo files (ids from the upload route); they are appended to
    * content.story.photos under the ticket's photo limit. A sealed wish is refused (409), like every other change to its words.
    */
-  async addPhotos(accountId: string, id: string, files: unknown[]): Promise<Obj> {
+  async addPhotos(accountId: string, id: string, files: unknown[], viaOrder = false): Promise<Obj> {
     if (!isUuidV7(id)) throw AppError.notFound("No such wish.");
     const ids = files.map((f) => (typeof f === "string" ? f : (f as { fileId?: unknown } | null)?.fileId));
     if (!ids.length || ids.length > 50 || !ids.every(isUuidV7)) throw AppError.validation({ files: "Send 1 to 50 file ids from your own uploads." });
@@ -533,7 +573,7 @@ export class WishesService {
     const book = await this.entitlements.row();
     const row = await this.prisma.$transaction(async (tx) => {
       await lockAccount(tx, accountId);
-      await this.owned(tx, accountId, id, biz);
+      await this.owned(tx, accountId, id, biz, viaOrder);
       await this.lifecycle.lock(tx, id);
       const cur = await tx.wish.findUniqueOrThrow({ where: { id } });
       if (stateOf(cur) !== "draft") throw AppError.conflict("wish_locked", "This wish is sealed, so its photos can no longer be changed.");
@@ -650,7 +690,7 @@ export class WishesService {
     throw new Error("could not issue a wish link");
   }
 
-  async seal(accountId: string, id: string, input: SealInput): Promise<Obj> {
+  async seal(accountId: string, id: string, input: SealInput, viaOrder = false): Promise<Obj> {
     if (!isUuidV7(id)) throw AppError.notFound("No such wish.");
     if (input.timeZone !== undefined && !isTimeZone(input.timeZone)) throw AppError.validation({ timeZone: "Not a time zone, for example Africa/Lagos." });
     if (input.usePlan && input.usePass) throw AppError.validation({ usePlan: "Use the plan or the Pass, not both.", usePass: "Use the plan or the Pass, not both." });
@@ -666,7 +706,7 @@ export class WishesService {
       const carried = plan ? plan.businessId : (await tx.$queryRaw<{ businessId: string | null }[]>`SELECT "businessId"::text AS "businessId" FROM wish WHERE id = ${id}::uuid`)[0]?.businessId;
       if (carried) await lockBusinessOwner(tx, carried);
       await lockAccount(tx, accountId);
-      await this.owned(tx, accountId, id, biz);
+      await this.owned(tx, accountId, id, biz, viaOrder);
       const locked = await this.lifecycle.lock(tx, id);
       const w = await tx.wish.findUniqueOrThrow({ where: { id } });
       if (stateOf(locked) !== "draft") throw AppError.conflict("not_allowed", "Only a draft can be sealed.");
@@ -674,7 +714,7 @@ export class WishesService {
         throw new AppError(409, "stale_version", "This wish changed somewhere else. Load it again.", { version: String(w.version) });
       }
       if (plan && w.ticket) throw AppError.conflict("already_ticketed", "This wish already has a ticket, so nothing is drawn from the plan for it.");
-      if (!w.ticket && !input.usePass && !plan) throw new AppError(402, "payment_required", "Pay for this wish first.");
+      if (!w.ticket && !input.usePass && !plan && !viaOrder) throw new AppError(402, "payment_required", "Pay for this wish first.");
       const missing: Record<string, string> = {};
       if (!w.name?.trim()) missing.name = "Who is it for?";
       if (!hasBody(w.content as Obj | null)) missing.content = "Write at least one part of the wish.";
@@ -685,6 +725,9 @@ export class WishesService {
       if (plan) {
         if (!this.planSeal) throw new Error("the plan seal is not registered");
         await this.planSeal(tx, { wish: w, businessId: plan.businessId, opensAt, zone });
+      } else if (viaOrder) {
+        // HZ2: the order was paid for; a wish its maker makes in the buyer's name needs no ticket of its own and is given a Signature one
+        if (!w.ticket) await this.fulfilTicketIn(tx, w.id, "signature");
       } else {
         await this.payForSeal(tx, accountId, w, input.usePass);
         // GB1: a wish that carries a business earns its creator at this seal too (it was drawn from the plan when it was made).

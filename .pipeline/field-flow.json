@@ -2301,7 +2301,8 @@
       "field": "ClientWish.client",
       "writers": [
         "E-30",
-        "E-32"
+        "E-32",
+        "E-272"
       ],
       "store": "ClientWish",
       "readers": [
@@ -2343,7 +2344,8 @@
       "field": "ClientWish.day",
       "writers": [
         "E-30",
-        "E-32"
+        "E-32",
+        "E-272"
       ],
       "store": "ClientWish",
       "readers": [
@@ -2452,7 +2454,8 @@
       "field": "ClientWish.kind",
       "writers": [
         "E-30",
-        "E-32"
+        "E-32",
+        "E-272"
       ],
       "store": "ClientWish",
       "readers": [
@@ -2514,7 +2517,8 @@
       "field": "ClientWish.occasion",
       "writers": [
         "E-30",
-        "E-32"
+        "E-32",
+        "E-272"
       ],
       "store": "ClientWish",
       "readers": [
@@ -2567,7 +2571,8 @@
       "field": "ClientWish.reveal",
       "writers": [
         "E-30",
-        "E-33"
+        "E-33",
+        "E-272"
       ],
       "store": "ClientWish",
       "readers": [
@@ -2753,7 +2758,8 @@
     {
       "field": "ClientWish.set",
       "writers": [
-        "E-33"
+        "E-33",
+        "E-272"
       ],
       "store": "ClientWish",
       "readers": [
@@ -2772,7 +2778,8 @@
     {
       "field": "ClientWish.shoot",
       "writers": [
-        "E-33"
+        "E-33",
+        "E-272"
       ],
       "store": "ClientWish",
       "readers": [
@@ -2987,6 +2994,7 @@
     {
       "field": "ConciergeOrder.kind",
       "writers": [
+        "E-273",
         "E-40"
       ],
       "store": "ConciergeOrder",
@@ -2995,12 +3003,13 @@
       ],
       "writerActors": [
         "business",
-        "person"
+        "person",
+        "staff"
       ],
       "readerActors": [
         "staff"
       ],
-      "crossActor": true,
+      "crossActor": false,
       "noWriter": false
     },
     {
@@ -3079,17 +3088,21 @@
     },
     {
       "field": "ConciergeOrder.occasion",
-      "writers": [],
+      "writers": [
+        "E-273"
+      ],
       "store": "ConciergeOrder",
       "readers": [
         "admin-concierge"
       ],
-      "writerActors": [],
+      "writerActors": [
+        "staff"
+      ],
       "readerActors": [
         "staff"
       ],
       "crossActor": false,
-      "noWriter": true
+      "noWriter": false
     },
     {
       "field": "ConciergeOrder.paidAt",
@@ -3169,7 +3182,8 @@
         "E-34",
         "E-35",
         "E-243",
-        "E-39"
+        "E-39",
+        "E-273"
       ],
       "store": "ConciergeOrder",
       "readers": [
@@ -11641,6 +11655,26 @@
       "noWriter": true
     },
     {
+      "field": "RevealLink.downloads",
+      "writers": [],
+      "store": "RevealLink",
+      "readers": [],
+      "writerActors": [],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "RevealLink.hearts",
+      "writers": [],
+      "store": "RevealLink",
+      "readers": [],
+      "writerActors": [],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
       "field": "RevealLink.link",
       "writers": [],
       "store": "RevealLink",
@@ -11711,6 +11745,26 @@
         "person",
         "public"
       ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "RevealPlay.downloads",
+      "writers": [],
+      "store": "RevealPlay",
+      "readers": [],
+      "writerActors": [],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "RevealPlay.hearts",
+      "writers": [],
+      "store": "RevealPlay",
+      "readers": [],
+      "writerActors": [],
+      "readerActors": [],
       "crossActor": false,
       "noWriter": true
     },
@@ -12507,7 +12561,8 @@
     {
       "field": "Shoot.client",
       "writers": [
-        "E-168"
+        "E-168",
+        "E-277"
       ],
       "store": "Shoot",
       "readers": [
@@ -12748,7 +12803,8 @@
     {
       "field": "Shoot.title",
       "writers": [
-        "E-168"
+        "E-168",
+        "E-277"
       ],
       "store": "Shoot",
       "readers": [
@@ -16533,17 +16589,21 @@
     },
     {
       "field": "VaultFile.name",
-      "writers": [],
+      "writers": [
+        "E-278"
+      ],
       "store": "VaultFile",
       "readers": [
         "pro-vault-shoot"
       ],
-      "writerActors": [],
+      "writerActors": [
+        "business"
+      ],
       "readerActors": [
         "business"
       ],
       "crossActor": false,
-      "noWriter": true
+      "noWriter": false
     },
     {
       "field": "VaultFile.size",
@@ -20599,6 +20659,6 @@
       "noWriter": false
     }
   ],
-  "crossActor": 33,
-  "noWriter": 662
+  "crossActor": 32,
+  "noWriter": 664
 }

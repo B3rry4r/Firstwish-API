@@ -7,6 +7,7 @@ import { toWireInstant } from "../../common/time/time";
 import type { StyleFile, StyleFiles } from "../../contracts";
 import { isUuid, mediaKindOf, purposeOnWire } from "../stored-files/file-rules";
 import { type Reader, SignedUrlsService } from "../stored-files/signed-urls.service";
+import { hiddenFromBuyer } from "../wishes/wish-shown";
 
 const notFound = () => AppError.notFound("No style has this id.");
 /** A player reads at most this many files of one style at once. */
@@ -70,6 +71,7 @@ export class StudioFilesService {
   async forPlayer(slug: string): Promise<StyleFiles> {
     const none = () => AppError.notFound("No such wish.");
     const link = await this.db.wishLink.findFirst({ where: { slug, active: true }, select: { wishId: true } });
+    if (link && (await hiddenFromBuyer(this.db, link.wishId))) throw none();
     const wish = link ? await this.db.wish.findUnique({ where: { id: link.wishId }, select: { status: true, styleSlug: true, erasedAt: true } }) : null;
     if (!wish || wish.erasedAt || wish.status !== "live" || !wish.styleSlug) throw none();
     const style = await this.db.style.findFirst({ where: { slug: wish.styleSlug }, select: { id: true, on: true } });

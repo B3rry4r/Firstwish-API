@@ -13,6 +13,7 @@ import { holderKey, KeepProofs } from "./keep-proof";
 import { PassService } from "./pass.service";
 import { WishHandlers } from "./wish-handlers";
 import { assessExtra, assessKeep, assessTicket, readWish, REASON_TEXT } from "./wish-rules";
+import { hiddenFromBuyer } from "../wishes/wish-shown";
 
 /**
  * Every line the price book sells, by its sku. A new line in the book needs its sku here (a test walks the seeded book and fails
@@ -133,7 +134,8 @@ export class PurchasesService implements OnModuleInit {
     const wishId = request.subjectId;
     if (!wishId) throw AppError.validation({ subjectId: "Name the wish this is for." });
     if (!accountId) throw AppError.validation({ subjectId: "Name one of your own wishes." });
-    const w = await readWish(db, wishId);
+    // IC4: a wish being made for a Concierge order is not the buyer's to pay for until it is delivered
+    const w = (await hiddenFromBuyer(db, wishId)) ? null : await readWish(db, wishId);
     const book = await this.entitlements.row(db);
     let why: string | null;
     if (group === "ticket") why = assessTicket(w, accountId, sku.slice("ticket.".length));

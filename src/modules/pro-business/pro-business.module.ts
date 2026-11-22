@@ -22,6 +22,6 @@ import { ProBusinessService } from "./pro-business.service";
   imports: [StoredFilesModule, PurchasesModule, WishesModule, NoticesModule, PriceBookModule, InvoicesModule, RoyaltiesModule],
   controllers: [ProBusinessController, AdminBusinessesController],
   providers: [ProAccess, PlanView, PlanPaymentDrop, ProBusinessService, ClientWishesService, LoginsService],
-  exports: [InvoicesModule, ProAccess, PlanView],
+  exports: [InvoicesModule, ProAccess, PlanView, ClientWishesService],
 })
 export class ProBusinessModule {}

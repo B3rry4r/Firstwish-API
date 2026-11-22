@@ -4,11 +4,15 @@ import { PrismaService } from "../../common/db/prisma.service";
 import { AppError } from "../../common/errors/app-error";
 import type { UserPrincipal } from "../../common/auth/principal";
 import { decodeCursor, DEFAULT_LIMIT, toPage } from "../../common/pagination/cursor";
-import type { GetBusinessVaultFilesQuery, GetBusinessVaultFilesResponse } from "../../contracts";
+import type { GetBusinessVaultFilesQuery, GetBusinessVaultFilesResponse, PatchBusinessVaultFilesByIdResponse } from "../../contracts";
 import { isUuid } from "../stored-files/file-rules";
 import { SignedUrlsService } from "../stored-files/signed-urls.service";
 import { notInBusiness } from "../../common/auth/login-removed";
 import { businessAccessOf } from "../stored-files/vault-access";
+import { dotsOnly, plainName } from "../vault/vault-shared";
+
+/** IB3: the longest name a file may be given. */
+const FILE_NAME_MAX = 100;
 
 const EXT: Record<string, string> = {
   "image/jpeg": "jpg",
@@ -48,8 +52,35 @@ export class VaultFilesService {
     const items = [];
     for (const r of page.items) {
       const read = await this.reads.signedRead({ fileId: r.id }, { type: "vault", accountId: p.accountId });
-      items.push({ id: r.id, name: `vault-${r.id.slice(-12)}.${EXT[r.contentType] ?? "bin"}`, size: Number(r.bytes), url: read.url });
+      items.push({ id: r.id, name: r.shownName || `vault-${r.id.slice(-12)}.${EXT[r.contentType] ?? "bin"}`, size: Number(r.bytes), url: read.url });
     }
     return { items, nextCursor: page.nextCursor };
+  }
+
+  /**
+   * IB3 (E-278): the name a Vault file shows under. The business's owner and its live logins; a file of another business (or one that is not a
+   * Vault file) is 404, and so is a held file for a login (it sees only files that passed screening). The stored object keeps its own name.
+   */
+  async rename(p: UserPrincipal, id: string, nameIn: unknown): Promise<PatchBusinessVaultFilesByIdResponse> {
+    if (!isUuid(id)) throw AppError.notFound("No such file.");
+    const name = plainName(nameIn);
+    if (!name || dotsOnly(name) || name.length > FILE_NAME_MAX || /[\\/]/.test(name)) throw AppError.validation({ name: `Must be a file name of 1 to ${FILE_NAME_MAX} characters, with no slash.` });
+    const access = await businessAccessOf(this.db, p.accountId);
+    if (!access.owned.length && !access.member.length) throw await notInBusiness(this.db, p.accountId, "Vault files need a business.");
+    const n = await this.db.storedFile.updateMany({
+      where: {
+        id,
+        purpose: "vault_file",
+        OR: [
+          { businessId: { in: access.owned }, status: { in: ["ready", "screening"] } },
+          { businessId: { in: access.member }, status: "ready" },
+        ],
+      },
+      data: { shownName: name },
+    });
+    if (n.count === 0) throw AppError.notFound("No such file.");
+    const row = await this.db.storedFile.findUniqueOrThrow({ where: { id } });
+    const read = await this.reads.signedRead({ fileId: id }, { type: "vault", accountId: p.accountId });
+    return { id, name: row.shownName || `vault-${id.slice(-12)}.${EXT[row.contentType] ?? "bin"}`, size: Number(row.bytes), url: read.url };
   }
 }

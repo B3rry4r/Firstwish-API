@@ -2,7 +2,7 @@
 import { Allow, IsIn, IsInt, IsOptional, IsString, Max, MaxLength, Min } from "class-validator";
 import { Type } from "class-transformer";
 import { IsDateOnly } from "../../common/validation/decorators";
-import type { DeleteBusinessShootsByIdParams, GetBusinessShootsByIdParams, GetBusinessShootsQuery, PostBusinessShootsBody, PostBusinessShootsByIdFilesBody, PostBusinessShootsByIdFilesParams, PostBusinessShootsByIdFinalsBody, PostBusinessShootsByIdFinalsParams, DateOnly } from "../types";
+import type { DeleteBusinessShootsByIdParams, GetBusinessShootsByIdParams, PatchBusinessShootsByIdBody, PatchBusinessShootsByIdParams, GetBusinessShootsQuery, PostBusinessShootsBody, PostBusinessShootsByIdFilesBody, PostBusinessShootsByIdFilesParams, PostBusinessShootsByIdFinalsBody, PostBusinessShootsByIdFinalsParams, DateOnly } from "../types";
 
 /** E-167 GET /v1/business/shoots (query). */
 export class GetBusinessShootsQueryDto implements GetBusinessShootsQuery {
@@ -67,6 +67,22 @@ export class PostBusinessShootsByIdFinalsBodyDto implements PostBusinessShootsBy
   shoot!: string;
 }
 export class PostBusinessShootsByIdFinalsParamsDto implements PostBusinessShootsByIdFinalsParams {
+  @IsString()
+  id!: string;
+}
+
+/** E-277 PATCH /v1/business/shoots/:id (body). */
+export class PatchBusinessShootsByIdBodyDto implements PatchBusinessShootsByIdBody {
+  @IsOptional()
+  @IsString()
+  @MaxLength(60)
+  client?: string;
+  @IsOptional()
+  @IsString()
+  @MaxLength(40)
+  title?: string;
+}
+export class PatchBusinessShootsByIdParamsDto implements PatchBusinessShootsByIdParams {
   @IsString()
   id!: string;
 }

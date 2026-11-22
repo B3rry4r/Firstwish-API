@@ -282,4 +282,11 @@ export const ENDPOINTS: readonly EndpointRow[] = [
   { id: "E-231", method: "POST", path: "/v1/wishes/:id/seal", resource: "Wish", operation: "PostWishesByIdSeal", request: "PostWishesByIdSealBodyDto", rawBody: false, noContent: false },
   { id: "E-232", method: "POST", path: "/v1/wishes/:id/wake", resource: "Wish", operation: "PostWishesByIdWake", request: "PostWishesByIdWakeBodyDto", rawBody: false, noContent: true },
   { id: "E-233", method: "INTERNAL", path: "port:wishes#issueNumber", resource: "Wish", operation: "InternalWishesIssueNumber", request: "InternalWishesIssueNumberBodyDto", rawBody: false, noContent: false },
+  { id: "E-272", method: "POST", path: "/v1/business/reveals", resource: "ClientWish", operation: "PostBusinessReveals", request: "PostBusinessRevealsBodyDto", rawBody: false, noContent: false },
+  { id: "E-275", method: "GET", path: "/v1/r/:code/favourites", resource: "RevealPlay", operation: "GetRByCodeFavourites", request: "GetRByCodeFavouritesQueryDto", rawBody: false, noContent: false },
+  { id: "E-276", method: "POST", path: "/v1/r/:code/favourites", resource: "RevealPlay", operation: "PostRByCodeFavourites", request: "PostRByCodeFavouritesBodyDto", rawBody: false, noContent: false },
+  { id: "E-274", method: "POST", path: "/v1/business/reveal-links/:id/downloads", resource: "RevealLink", operation: "PostBusinessRevealLinksByIdDownloads", request: "PostBusinessRevealLinksByIdDownloadsBodyDto", rawBody: false, noContent: false },
+  { id: "E-277", method: "PATCH", path: "/v1/business/shoots/:id", resource: "Shoot", operation: "PatchBusinessShootsById", request: "PatchBusinessShootsByIdBodyDto", rawBody: false, noContent: false },
+  { id: "E-278", method: "PATCH", path: "/v1/business/vault-files/:id", resource: "VaultFile", operation: "PatchBusinessVaultFilesById", request: "PatchBusinessVaultFilesByIdBodyDto", rawBody: false, noContent: false },
+  { id: "E-273", method: "POST", path: "/v1/admin/concierge/orders/:id/wishes", resource: "ConciergeOrder", operation: "PostAdminConciergeOrdersByIdWishes", request: "PostAdminConciergeOrdersByIdWishesBodyDto", rawBody: false, noContent: false },
 ];

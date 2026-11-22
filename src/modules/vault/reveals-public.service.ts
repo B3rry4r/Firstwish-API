@@ -9,19 +9,23 @@ import { LinkLimits, READS_PER_MINUTE, UNLOCKS_PER_HOUR } from "../public-wishes
 import { UnlockTokens } from "../public-wishes/unlock-token";
 import { verify } from "../public-wishes/public-wishes.service";
 import { SignedUrlsService } from "../stored-files/signed-urls.service";
-import { idsOf, SetName } from "./vault-shared";
+import { fileName } from "./vault-shared";
+import { heartPositions, idsOf, MAX_HEARTS, SetName, syncHearts } from "./vault-shared";
 
-/** Who is asking: the address (from the trusted proxy setting; only a keyed hash of it is ever kept), the unlock token, the visit's own id. */
+/** Who is asking: the address (from the trusted proxy setting; only a keyed hash of it is ever kept) and the unlock token. Nothing the page sends names a visitor (IC5). */
 export interface Viewer {
   address: string | null;
   token?: string;
-  session?: string;
 }
 
-export type RevealView = ({ state: "open" } & RevealPlay & { business: string }) | { state: "passcode" };
+/** An open reveal: the photos (signed addresses), their positions in the link's file list, the positions the client marked, and for finals with downloads on one named download address for each photo. */
+export type RevealView = ({ state: "open" } & RevealPlay & { business: string; hearts: number[]; downloads?: { name: string; url: string }[] }) | { state: "passcode" };
 
 interface Row {
   linkId: string;
+  wishId: string | null;
+  hearts: string[];
+  downloads: boolean;
   set: SetName;
   fileIds: unknown;
   passcodeHash: string | null;
@@ -36,7 +40,8 @@ interface Row {
 }
 
 const CODE = /^[A-Za-z0-9_-]{22}$/;
-const SESSION = /^[A-Za-z0-9_-]{8,64}$/;
+/** IB1 (PROVISIONAL, owner may change): marks per link and address an hour. */
+const FAVOURITES_PER_HOUR = 60;
 const gone = (): AppError => new AppError(410, "gone", "This link is not available any more.");
 
 /**
@@ -59,7 +64,7 @@ export class RevealsPublicService {
   private async resolve(code: string): Promise<Row> {
     if (!CODE.test(code)) throw AppError.notFound();
     const rows = await this.db.$queryRaw<Row[]>`
-      SELECT a."linkId"::text AS "linkId", a."set", a."fileIds", a."passcodeHash", a."endsAt", a."offAt",
+      SELECT a."linkId"::text AS "linkId", a."wishId"::text AS "wishId", a.hearts, a.downloads, a."set", a."fileIds", a."passcodeHash", a."endsAt", a."offAt",
              w.no AS "wishNo", COALESCE(w."endsAt", ww."endsAt", a."endsAt") AS "wishEndsAt", w."sentAt", w.reveal,
              (o."erasedAt" IS NOT NULL) AS "ownerErased", b.business
         FROM reveal_access a
@@ -83,14 +88,26 @@ export class RevealsPublicService {
     const r = await this.resolve(code);
     if (r.passcodeHash && !this.tokens.valid(v.token, r.linkId, r.passcodeHash)) return { state: "passcode" };
     const photos: string[] = [];
-    for (const id of idsOf(r.fileIds)) {
+    const index: number[] = [];
+    const downloads: { name: string; url: string }[] = [];
+    // IB2: a download address for each FINAL file when the business left downloads on; a proof never has one
+    const giveDownloads = r.set === "finals" && r.downloads;
+    const ids = idsOf(r.fileIds);
+    const found = giveDownloads ? await this.db.storedFile.findMany({ where: { id: { in: ids } }, select: { id: true, contentType: true, shownName: true } }) : [];
+    const meta = new Map(found.map((f) => [f.id, f]));
+    for (const [pos, id] of ids.entries()) {
       try {
         photos.push((await this.reads.signedRead({ fileId: id }, { type: "allowed" })).url);
+        index.push(pos);
+        if (giveDownloads) {
+          const f = meta.get(id);
+          downloads.push({ name: fileName(id, f?.contentType ?? "", f?.shownName), url: (await this.reads.signedRead({ fileId: id }, { type: "allowed" })).url });
+        }
       } catch (e) {
         if (!(e instanceof AppError)) throw e; // a file that was removed is left out
       }
     }
-    await this.play(r.linkId, code, v);
+    await this.play(r, code, v);
     const words = r.reveal && typeof r.reveal === "object" && !Array.isArray(r.reveal) ? { ...(r.reveal as Record<string, unknown>) } : {};
     delete words.link;
     return {
@@ -99,19 +116,80 @@ export class RevealsPublicService {
       style: typeof words.style === "string" ? words.style : "",
       date: toWireInstant(r.sentAt ?? this.clock.now()),
       photos,
-      index: photos.map((_, i) => i),
+      index,
       content: words,
       business: r.business ?? "",
+      hearts: heartPositions(r.fileIds, r.hearts),
+      ...(giveDownloads ? { downloads } : {}),
     };
   }
 
-  /** One row for each visit: the visit is the page's own id when it sends one, else the address and the day, both only as a keyed hash. */
-  private async play(linkId: string, code: string, v: Viewer): Promise<void> {
+  /**
+   * IB5: one row for each visit, and the client wish's first opening: the first play (after the passcode, where there is one) sets its
+   * openedAt and a later play leaves it as it was.
+   */
+  /**
+   * IC5: one play for each link and address in an hour, whatever the page sends: the visit is the link, the address and the clock's hour, as one
+   * keyed hash. A header the client sets (it is free to make a new one for every request) never names a visit.
+   */
+  private async play(r: Row, code: string, v: Viewer): Promise<void> {
+    const linkId = r.linkId;
     const now = this.clock.now();
-    const visit = v.session && SESSION.test(v.session) ? this.limits.keyOf("visit", code, v.session) : this.limits.keyOf("day", code, v.address, now.toISOString().slice(0, 10));
+    const visit = this.limits.keyOf("play", code, v.address, String(Math.floor(now.getTime() / 3_600_000)));
     await this.db.$executeRaw`
       INSERT INTO reveal_play (id, "linkId", visit, at) VALUES (${this.ids.id()}::uuid, ${linkId}::uuid, ${visit}, ${now})
       ON CONFLICT ("linkId", visit) DO NOTHING`;
+    if (r.wishId) await this.db.$executeRaw`UPDATE client_wish SET "openedAt" = ${now} WHERE id = ${r.wishId}::uuid AND "openedAt" IS NULL`;
+  }
+
+  /** The link's row for a client past the passcode: the same refusals as a read (404, 410), and 403 with words while the passcode has not been given. */
+  private async opened(code: string, v: Viewer): Promise<Row> {
+    await this.limits.take("read", this.limits.keyOf(v.address), READS_PER_MINUTE, 60);
+    const r = await this.resolve(code);
+    if (r.passcodeHash && !this.tokens.valid(v.token, r.linkId, r.passcodeHash)) throw new AppError(403, "passcode_required", "Enter the passcode first.");
+    return r;
+  }
+
+  /** IB1: the positions the client marked at this link (positions in the link's file list). */
+  async favourites(code: string, v: Viewer): Promise<{ hearts: number[] }> {
+    const r = await this.opened(code, v);
+    return { hearts: heartPositions(r.fileIds, r.hearts) };
+  }
+
+  /**
+   * IB1: marks (or unmarks) one photo position at this link, with no account. Marks belong to the link, not to a visit: a mark made in one
+   * visit shows in the next. The client wish and the shoot the business reads are written in the same transaction. A mark is counted per
+   * link and address (60 an hour); the same mark twice changes nothing; at most 200 positions are marked.
+   */
+  async mark(code: string, position: unknown, marked: unknown, v: Viewer): Promise<{ hearts: number[] }> {
+    const fields: Record<string, string> = {};
+    if (typeof position !== "number" || !Number.isInteger(position) || position < 0 || position > 9999) fields.position = "Must be a photo position, a whole number from 0.";
+    if (typeof marked !== "boolean") fields.marked = "Must be true or false.";
+    if (Object.keys(fields).length) throw AppError.validation(fields);
+    // IC5: the hourly limit is counted first, so its refusal names the real wait (the minute's read limit would say 60 seconds for an hour's wait)
+    if (!CODE.test(code)) throw AppError.notFound();
+    await this.limits.take("favourite", this.limits.keyOf(code, v.address), FAVOURITES_PER_HOUR, 3600);
+    const r = await this.opened(code, v);
+    const ids = idsOf(r.fileIds);
+    if ((position as number) >= ids.length) throw AppError.validation({ position: `This reveal has ${ids.length} photos, from 0 to ${Math.max(ids.length - 1, 0)}.` });
+    const file = ids[position as number].toLowerCase();
+    return this.db.$transaction(async (tx) => {
+      const rows = await tx.$queryRaw<{ hearts: string[]; fileIds: unknown }[]>`SELECT hearts, "fileIds" FROM reveal_access WHERE "linkId" = ${r.linkId}::uuid AND "offAt" IS NULL FOR UPDATE`;
+      const now = rows[0];
+      if (!now) throw gone();
+      // IC2: the mark is on the FILE at that place in the list as it stands now
+      const at = idsOf(now.fileIds).map((x) => x.toLowerCase()).indexOf(file);
+      if (at < 0) throw AppError.validation({ position: "This photo is not in the reveal any more." });
+      const has = now.hearts.map((h) => h.toLowerCase()).includes(file);
+      if ((marked === true && !has) || (marked === false && has)) {
+        if (marked === true && now.hearts.length >= MAX_HEARTS) throw AppError.validation({ position: `At most ${MAX_HEARTS} photos can be marked. Unmark one first.` });
+        const next = marked === true ? [...now.hearts, file] : now.hearts.filter((h) => h.toLowerCase() !== file);
+        await tx.$executeRaw`UPDATE reveal_access SET hearts = ${next}::text[]::uuid[] WHERE "linkId" = ${r.linkId}::uuid`;
+        await syncHearts(tx, r.linkId);
+        return { hearts: heartPositions(now.fileIds, next) };
+      }
+      return { hearts: heartPositions(now.fileIds, now.hearts) };
+    });
   }
 
   /** The passcode: counted before it is compared, by the receiver link's own lock (LinkLimits.countTry); a locked link says when to come back. */

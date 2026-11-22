@@ -28,7 +28,7 @@ export function clientWishWire(r: ClientWishRead): ClientWish {
   };
   if (r.set) out.set = r.set;
   const endsAt = linked ? w?.endsAt ?? null : r.endsAt;
-  const openedAt = linked ? w?.openedAt ?? null : r.openedAt;
+  const openedAt = (linked ? w?.openedAt ?? null : null) ?? r.openedAt;
   if (r.wishId) out.wishId = r.wishId;
   if (endsAt) out.endsAt = endsAt.toISOString();
   if (openedAt) out.openedAt = openedAt.toISOString();

@@ -1845,6 +1845,70 @@
         "staff:owner"
       ],
       "decision": "DEC-258"
+    },
+    {
+      "resource": "ClientWish",
+      "method": "POST",
+      "path": "/v1/business/reveals",
+      "auth": [
+        "role:business"
+      ],
+      "decision": "DEC-262"
+    },
+    {
+      "resource": "RevealPlay",
+      "method": "GET",
+      "path": "/v1/r/:code/favourites",
+      "auth": [
+        "public"
+      ],
+      "decision": "DEC-263"
+    },
+    {
+      "resource": "RevealPlay",
+      "method": "POST",
+      "path": "/v1/r/:code/favourites",
+      "auth": [
+        "public"
+      ],
+      "decision": "DEC-263"
+    },
+    {
+      "resource": "RevealLink",
+      "method": "POST",
+      "path": "/v1/business/reveal-links/:id/downloads",
+      "auth": [
+        "role:business"
+      ],
+      "decision": "DEC-264"
+    },
+    {
+      "resource": "Shoot",
+      "method": "PATCH",
+      "path": "/v1/business/shoots/:id",
+      "auth": [
+        "role:business"
+      ],
+      "decision": "DEC-265"
+    },
+    {
+      "resource": "VaultFile",
+      "method": "PATCH",
+      "path": "/v1/business/vault-files/:id",
+      "auth": [
+        "role:business"
+      ],
+      "decision": "DEC-265"
+    },
+    {
+      "resource": "ConciergeOrder",
+      "method": "POST",
+      "path": "/v1/admin/concierge/orders/:id/wishes",
+      "auth": [
+        "staff:maker",
+        "staff:owner"
+      ],
+      "decision": "DEC-267"
     }
   ],
   "fulfilment": {
@@ -2863,6 +2927,106 @@
         "cardinality": "list",
         "note": "{items: [{id, name, role}], nextCursor: null} (DEC-256)"
       }
+    },
+    "POST /v1/business/reveals": {
+      "decision": "DEC-262",
+      "set": {
+        "reveal": "object (the words of the reveal as E-33 takes them, with downloads: boolean, finals only, on by default)",
+        "set": "enum(proofs|finals)",
+        "shoot": "string Shoot.id",
+        "files": "string[] (optional; IB4: the files to show, ids from the set, up to 200, in this order; left out, every ready file of the set)",
+        "client": "string (optional; left out, the reveal's client)",
+        "kind": "string (optional; left out, photographers)",
+        "occasion": "string (optional; left out, the reveal's occasion)",
+        "day": "DateOnly (optional; left out, the reveal's date, else today)",
+        "again": "boolean (optional; true sends a shoot's set again to a client it already went to, on the same client wish and taking no second wish)"
+      },
+      "response": {
+        "entity": "ClientWish",
+        "cardinality": "single",
+        "note": "{shoot, wish, link}: the client wish and the reveal made together, or neither (DEC-262); 409 already_sent carries sentAt and link in fields"
+      }
+    },
+    "POST /v1/business/client-wishes/:id/send-reveal": [
+      {
+        "decision": "DEC-266",
+        "set": {
+          "files": "string[] (optional; IB4: the files to show, ids from the set, up to 200, in this order; left out, every ready file of the set; one that is not a ready file of the set is 422 with words)"
+        }
+      },
+      {
+        "decision": "DEC-269",
+        "set": {
+          "again": "boolean (optional; IC3: a shoot's set already sent to this client answers 409 already_sent with sentAt and link; true sends it again on this client wish and takes no second wish)"
+        }
+      }
+    ],
+    "GET /v1/r/:code/favourites": {
+      "decision": "DEC-263",
+      "response": {
+        "entity": "RevealPlay",
+        "cardinality": "single",
+        "note": "{hearts: number[]}: the photo positions marked at this link (DEC-263)"
+      }
+    },
+    "POST /v1/r/:code/favourites": {
+      "decision": "DEC-263",
+      "set": {
+        "position": "integer (the photo's position in the reveal's file list, 0 to 9999)",
+        "marked": "boolean (true marks it, false unmarks it)"
+      },
+      "response": {
+        "entity": "RevealPlay",
+        "cardinality": "single",
+        "note": "{hearts: number[]}: every position marked after this call (DEC-263)"
+      }
+    },
+    "POST /v1/business/reveal-links/:id/downloads": {
+      "decision": "DEC-264",
+      "set": {
+        "on": "boolean (true gives the link's download addresses, finals only; false takes them away)"
+      },
+      "response": {
+        "entity": "RevealLink",
+        "cardinality": "single",
+        "note": "the link with its switch (DEC-264)"
+      }
+    },
+    "PATCH /v1/business/shoots/:id": {
+      "decision": "DEC-265",
+      "set": {
+        "client": "string (optional; 1 to 60 characters)",
+        "title": "string (optional; 1 to 40 characters)"
+      },
+      "response": {
+        "entity": "Shoot",
+        "cardinality": "single",
+        "note": "the renamed shoot (DEC-265)"
+      }
+    },
+    "PATCH /v1/business/vault-files/:id": {
+      "decision": "DEC-265",
+      "set": {
+        "name": "string (1 to 100 characters, no slash: the name the file shows under; the stored object keeps its own name)"
+      },
+      "response": {
+        "entity": "VaultFile",
+        "cardinality": "single",
+        "note": "the renamed file (DEC-265)"
+      }
+    },
+    "POST /v1/admin/concierge/orders/:id/wishes": {
+      "decision": "DEC-267",
+      "set": {
+        "kind": "string (the wish kind)",
+        "occasion": "string (the wish occasion)",
+        "name": "string (who it is for)"
+      },
+      "response": {
+        "entity": "ConciergeOrder",
+        "cardinality": "single",
+        "note": "{id, no, firstName}: the wish made in the buyer's name, tied to the order and hidden from the buyer until the order is delivered (DEC-267)"
+      }
     }
   },
   "extraFields": [
@@ -3369,6 +3533,34 @@
       "type": "string (the provider reference of that payment; ops and owner only, left out for a maker)",
       "nullable": true,
       "decision": "DEC-257"
+    },
+    {
+      "resource": "RevealLink",
+      "name": "hearts",
+      "type": "array (the photo positions the client marked at this link)",
+      "nullable": true,
+      "decision": "DEC-263"
+    },
+    {
+      "resource": "RevealLink",
+      "name": "downloads",
+      "type": "boolean (whether the link gives download addresses; finals only)",
+      "nullable": true,
+      "decision": "DEC-264"
+    },
+    {
+      "resource": "RevealPlay",
+      "name": "hearts",
+      "type": "array (the photo positions the client marked, as `index` has them)",
+      "nullable": true,
+      "decision": "DEC-263"
+    },
+    {
+      "resource": "RevealPlay",
+      "name": "downloads",
+      "type": "array (for finals with downloads on: {name, url} for each photo, in the order of photos)",
+      "nullable": true,
+      "decision": "DEC-264"
     }
   ],
   "dropFields": [

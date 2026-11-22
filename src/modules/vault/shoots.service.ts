@@ -12,7 +12,7 @@ import { toWireInstant } from "../../common/time/time";
 import { StoredFilesService } from "../stored-files/stored-files.service";
 import { playingRevealNames } from "../stored-files/file-jobs";
 import { SignedUrlsService } from "../stored-files/signed-urls.service";
-import { fileName, idsOf, MAX_FILES_PER_ADD, SetName, UUID } from "./vault-shared";
+import { dotsOnly, fileName, idsOf, MAX_FILES_PER_ADD, plainName, SetName, UUID } from "./vault-shared";
 import { VaultSpaceService } from "./vault-space.service";
 
 const CLIENT_MAX = 60;
@@ -49,20 +49,20 @@ export class ShootsService {
     const finals = idsOf(row.finals);
     const all = [...new Set([...idsOf(row.files), ...proofs, ...finals])];
     const found = all.length
-      ? await this.db.storedFile.findMany({ where: { id: { in: all }, businessId: row.businessId, purpose: "vault_file" }, select: { id: true, bytes: true, contentType: true, status: true } })
+      ? await this.db.storedFile.findMany({ where: { id: { in: all }, businessId: row.businessId, purpose: "vault_file" }, select: { id: true, bytes: true, contentType: true, status: true, shownName: true } })
       : [];
     const by = new Map(found.map((f) => [f.id, f]));
     const ownerId = sign && row.businessId ? (await this.db.business.findUnique({ where: { id: row.businessId }, select: { accountId: true } }))?.accountId : null;
     const item = async (id: string): Promise<FileItem | null> => {
       const f = by.get(id);
       if (!f) return null;
-      const out: FileItem = { id, name: fileName(id, f.contentType), size: Number(f.bytes) };
+      const out: FileItem = { id, name: fileName(id, f.contentType, f.shownName), size: Number(f.bytes) };
       if (ownerId && f.status === "ready") out.url = (await this.reads.signedRead({ fileId: id }, { type: "vault", accountId: ownerId })).url;
       return out;
     };
     const list = async (ids: string[]): Promise<FileItem[]> => (await Promise.all(ids.map(item))).filter((x): x is FileItem => x !== null);
-    const proofsReveal = this.revealOf(row.proofsReveal);
-    const finalsReveal = this.revealOf(row.finalsReveal);
+    const marks = await this.withPlays([this.revealOf(row.proofsReveal), this.revealOf(row.finalsReveal)]);
+    const [proofsReveal, finalsReveal] = marks;
     const hearts = Array.isArray(row.hearts) ? row.hearts : [];
     const wishState = finalsReveal ? "finals" : proofsReveal ? (hearts.length ? "favourites" : "proofs") : "uploaded";
     const out: Record<string, unknown> = {
@@ -82,6 +82,29 @@ export class ShootsService {
     if (proofsReveal) out.proofsReveal = proofsReveal;
     if (finalsReveal) out.finalsReveal = finalsReveal;
     return out as unknown as Shoot;
+  }
+
+  /**
+   * IB5 (UA-832): each reveal mark also says how often the client played it (count, first and last time: a play is one visit, nothing of the
+   * viewer) and when the client wish was first opened (openedAt, left out until it was).
+   */
+  private async withPlays(marks: (Record<string, unknown> | null)[]): Promise<(Record<string, unknown> | null)[]> {
+    const links = marks.map((m) => (typeof m?.link === "string" && UUID.test(m.link) ? m.link : null)).filter((x): x is string => x !== null);
+    const wishes = marks.map((m) => (typeof m?.wish === "string" && UUID.test(m.wish) ? m.wish : null)).filter((x): x is string => x !== null);
+    if (!links.length && !wishes.length) return marks;
+    const plays = await this.db.$queryRaw<{ linkId: string; count: number; first: Date; last: Date }[]>`
+      SELECT "linkId"::text AS "linkId", count(*)::int AS count, min(at) AS first, max(at) AS last FROM reveal_play WHERE "linkId" = ANY(${links}::uuid[]) GROUP BY "linkId"`;
+    const opened = await this.db.$queryRaw<{ id: string; openedAt: Date | null }[]>`SELECT id::text AS id, "openedAt" FROM client_wish WHERE id = ANY(${wishes}::uuid[])`;
+    return marks.map((m) => {
+      if (!m) return m;
+      const p = plays.find((x) => x.linkId === m.link);
+      const o = opened.find((x) => x.id === m.wish)?.openedAt ?? null;
+      return {
+        ...m,
+        plays: { count: p?.count ?? 0, first: p ? toWireInstant(p.first) : null, last: p ? toWireInstant(p.last) : null },
+        ...(o ? { openedAt: toWireInstant(o) } : {}),
+      };
+    });
   }
 
   /** The reveal settings kept on the shoot: which wish, its number, when. Nothing secret is ever kept there. */
@@ -110,12 +133,42 @@ export class ShootsService {
     return this.wire(row, true);
   }
 
+  /**
+   * IB3 (E-277): rename a shoot (its title and the client's name). The business and its live logins; another business's shoot is 404. A field left
+   * out stays as it was; the shoot's files and reveals are not touched.
+   */
+  async rename(businessId: string, id: string, body: { title?: unknown; client?: unknown }): Promise<Shoot> {
+    if (!UUID.test(id)) throw AppError.notFound();
+    const fields: ErrorFields = {};
+    const data: Prisma.ShootUpdateInput = {};
+    if (body.title !== undefined) {
+      const title = plainName(body.title);
+      if (!title || dotsOnly(title) || title.length > TITLE_MAX) fields.title = `Must be the shoot's name, 1 to ${TITLE_MAX} characters.`;
+      else data.title = title;
+    }
+    if (body.client !== undefined) {
+      const client = plainName(body.client);
+      if (!client || dotsOnly(client) || client.length > CLIENT_MAX) fields.client = `Must be the client's name, 1 to ${CLIENT_MAX} characters.`;
+      else data.client = client;
+    }
+    if (body.title === undefined && body.client === undefined) fields.title = "Say the new title or client.";
+    if (Object.keys(fields).length) throw AppError.validation(fields);
+    const row = await this.db.$transaction(async (tx) => {
+      await lockBusinessOwner(tx, businessId);
+      const found = await tx.shoot.findFirst({ where: { id, businessId }, select: { id: true } });
+      if (!found) throw AppError.notFound();
+      return tx.shoot.update({ where: { id }, data });
+    });
+    return this.wire(row, true);
+  }
+
   async create(businessId: string, body: PostBusinessShootsBody): Promise<Shoot> {
     const fields: ErrorFields = {};
-    const client = String(body.client ?? "").trim().replace(/\s+/g, " ");
-    if (!client || client.length > CLIENT_MAX) fields.client = `Must be the client's name, 1 to ${CLIENT_MAX} characters.`;
-    const title = String(body.title ?? "").trim().replace(/\s+/g, " ") || "Shoot";
-    if (title.length > TITLE_MAX) fields.title = `Up to ${TITLE_MAX} characters.`;
+    const client = plainName(String(body.client ?? ""));
+    if (!client || dotsOnly(client) || client.length > CLIENT_MAX) fields.client = `Must be the client's name, 1 to ${CLIENT_MAX} characters.`;
+    const title = plainName(String(body.title ?? "")) || "Shoot";
+    if (dotsOnly(title)) fields.title = "Use a name with letters or numbers, not dots alone.";
+    else if (title.length > TITLE_MAX) fields.title = `Up to ${TITLE_MAX} characters.`;
     if (Object.keys(fields).length) throw AppError.validation(fields);
     const id = this.ids.id();
     const row = await this.db.$transaction(async (tx) => {
@@ -156,8 +209,10 @@ export class ShootsService {
     for (const fid of done.ids) {
       if (kept.has(fid)) continue;
       if (await playingRevealNames(this.db, fid, this.clock.now())) continue; // HC1: a reveal that still plays shows it
+      // a file a login uploaded is held under that login's account: it goes under its own owner
+      const owner = (await this.db.storedFile.findUnique({ where: { id: fid }, select: { ownerAccountId: true } }))?.ownerAccountId ?? done.accountId;
       try {
-        await this.files.remove({ kind: "user", accountId: done.accountId, sides: ["person", "business"] }, fid, {});
+        await this.files.remove({ kind: "user", accountId: owner, sides: ["person", "business"] }, fid, {});
       } catch (e) {
         if (!(e instanceof AppError)) throw e; // a file already gone (404) or still used (409) is left; the shoot is gone either way
       }

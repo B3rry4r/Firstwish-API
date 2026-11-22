@@ -1,7 +1,7 @@
 import { randomBytes } from "node:crypto";
 import { Inject, Injectable } from "@nestjs/common";
 import type { Prisma } from "@prisma/client";
-import type { ClientWish, PostBusinessClientWishesByIdSendRevealResponse, RevealLink } from "../../contracts";
+import type { ClientWish, PostBusinessClientWishesByIdSendRevealResponse, PostBusinessRevealsResponse, RevealLink } from "../../contracts";
 import { lockBusinessOwner } from "../../common/db/account-lock";
 import { PrismaService } from "../../common/db/prisma.service";
 import type { Env } from "../../common/env/env";
@@ -12,11 +12,12 @@ import { linkProblem, normaliseLink } from "../../common/normalise/link";
 import { Clock } from "../../common/ports/clock.port";
 import { IdGenerator } from "../../common/ports/ids.port";
 import { toWireInstant } from "../../common/time/time";
-import { clientWishWire } from "../pro-business/client-wish-wire";
+import { clientWishWire, WITH_WISH } from "../pro-business/client-wish-wire";
+import { ClientWishesService } from "../pro-business/client-wishes.service";
 import { NoticesService } from "../notices/notices.service";
 import { hashPasscode } from "../wishes/wishes.service";
 import { ShootsService } from "./shoots.service";
-import { idsOf, SETS, SetName, Tx, UUID } from "./vault-shared";
+import { heartPositions, idsOf, SETS, SetName, syncHearts, Tx, UUID } from "./vault-shared";
 
 const NOTE_MAX = 600;
 const SHORT_MAX = 80;
@@ -39,6 +40,8 @@ interface Words {
   style: string;
 }
 interface Settings {
+  /** null when the body did not say: a re-send keeps the link's switch, a new link takes the default (on). */
+  downloads: boolean | null;
   words: Words;
   email: string | null;
   passcode: string | null;
@@ -59,6 +62,38 @@ interface AccessRow {
   offAt: Date | null;
 }
 
+/** What a send needs, read from its body. */
+interface Call {
+  set: SetName;
+  shootId: string;
+  key: string | null;
+  reveal: Record<string, unknown>;
+  named: string[] | null;
+}
+
+export interface SendOneBody {
+  reveal: Record<string, unknown>;
+  set: unknown;
+  shoot: unknown;
+  files?: unknown;
+  client?: unknown;
+  kind?: unknown;
+  occasion?: unknown;
+  day?: unknown;
+  again?: unknown;
+}
+
+const NAMED_MAX = 200;
+/** IB4: the files a reveal names: absent or empty means every ready file of the set; else 1 to 200 file ids, a repeat counted once. */
+function namedFiles(v: unknown, fields: ErrorFields): string[] | null {
+  if (v === undefined || v === null) return null;
+  if (!Array.isArray(v) || v.length > NAMED_MAX || !v.every((x) => typeof x === "string" && UUID.test(x))) {
+    fields.files = `Must be a list of up to ${NAMED_MAX} file ids from the set.`;
+    return null;
+  }
+  return [...new Set((v as string[]).map((x) => x.toLowerCase()))];
+}
+
 /** The link's code: 128 random bits, URL-safe. It cannot be guessed and carries nothing about the shoot or the client. */
 const newCode = (): string => randomBytes(16).toString("base64url");
 
@@ -75,6 +110,7 @@ export class RevealsService {
     private readonly clock: Clock,
     private readonly notices: NoticesService,
     private readonly shoots: ShootsService,
+    private readonly wishes: ClientWishesService,
     @Inject(ENV) private readonly env: Env,
   ) {}
 
@@ -142,13 +178,27 @@ export class RevealsService {
         if (endsAt.getTime() <= now.getTime()) fields["reveal.endsOn"] = "Must be a day that has not passed.";
       }
     } else if (raw.endsOn !== undefined && raw.endsOn !== null && raw.endsOn !== "") fields["reveal.endsOn"] = "Must be a date like 2027-03-04.";
+    let downloads: boolean | null = null;
+    if (typeof raw.downloads === "boolean") downloads = raw.downloads;
+    else if (raw.downloads !== undefined && raw.downloads !== null) fields["reveal.downloads"] = "Must be true or false.";
     if (Object.keys(fields).length) throw AppError.validation(fields);
-    return { words: { client, occasion, city, date, note, credits, booking, style }, email, passcode, endsAt };
+    return { words: { client, occasion, city, date, note, credits, booking, style }, email, passcode, endsAt, downloads };
   }
 
-  /** The files of a shoot's set the link will show: the ones still stored and passed, in the set's order. */
-  private async chosen(tx: Tx, businessId: string, shootSet: unknown): Promise<string[]> {
+  /**
+   * The files of a shoot's set the link will show: the ones still stored and passed, in the set's order (IB4: with files named, only those, in the
+   * order named; one that is not a ready file of this set is refused with words, and so is a name that repeats nothing wrong: a repeat is dropped).
+   */
+  private async chosen(tx: Tx, businessId: string, shootSet: unknown, named?: string[] | null): Promise<string[]> {
     const ids = idsOf(shootSet);
+    if (named && named.length) {
+      const inSet = new Set(ids);
+      const rows = await tx.storedFile.findMany({ where: { id: { in: named }, businessId, purpose: "vault_file", status: "ready" }, select: { id: true } });
+      const ok = new Set(rows.map((r) => r.id));
+      const bad = named.filter((i) => !inSet.has(i) || !ok.has(i));
+      if (bad.length) throw AppError.validation({ files: `${bad.length === 1 ? "One file is" : `${bad.length} files are`} not ready photos of this shoot's set. Pick files from the set that have finished uploading.` });
+      return named;
+    }
     if (!ids.length) return [];
     const rows = await tx.storedFile.findMany({ where: { id: { in: ids }, businessId, purpose: "vault_file", status: "ready" }, select: { id: true } });
     const ok = new Set(rows.map((r) => r.id));
@@ -173,88 +223,197 @@ export class RevealsService {
 
   /**
    * E-33. `:id` is the client wish (made by E-30, which counted it); the reveal from `shoot`'s `set` goes on it. With an Idempotency-Key
-   * the same key again answers the first result and sends nothing; without one, or with a new key, it sends again on purpose.
+   * the same key again answers the first result and sends nothing. A shoot's set that already went to that client answers 409 already_sent
+   * (IC3) unless the body says `again`, which sends it once more on this wish.
    */
-  async send(businessId: string, wishId: string, body: { reveal: Record<string, unknown>; set: unknown; shoot: unknown }, idemKey: string | undefined): Promise<PostBusinessClientWishesByIdSendRevealResponse> {
+  async send(businessId: string, wishId: string, body: { reveal: Record<string, unknown>; set: unknown; shoot: unknown; files?: unknown; again?: unknown }, idemKey: string | undefined): Promise<PostBusinessClientWishesByIdSendRevealResponse> {
     if (!UUID.test(wishId)) throw AppError.notFound();
+    const call = this.readCall(body, idemKey);
+    if (body.again !== undefined && typeof body.again !== "boolean") throw AppError.validation({ again: "Must be true or false." });
+    const done = await this.db.$transaction(async (tx) => {
+      await lockBusinessOwner(tx, businessId);
+      if (call.key) {
+        const first = await this.firstSend(tx, businessId, call.key);
+        if (first) {
+          if (first !== wishId.toLowerCase()) throw AppError.conflict("idempotency_key_reused", "This Idempotency-Key was used for another wish.");
+          await this.sameSend(tx, businessId, first, call.shootId, null);
+          return { again: true as const, wishId };
+        }
+      }
+      // IC3: for one shoot and one client there is one reveal: this older call answers "already sent" like the one-call send does; asking again is the one call's `again`
+      const asked = await tx.clientWish.findFirst({ where: { id: wishId, businessId }, select: { client: true } });
+      const prior = asked?.client && body.again !== true ? await this.priorReveal(tx, businessId, call.shootId, call.set, asked.client) : null;
+      if (prior) throw this.alreadySent(prior, call.set, asked?.client ?? "");
+      const out = await this.sendIn(tx, businessId, wishId, call);
+      return { again: false as const, wishId, deliveryId: out.deliveryId };
+    });
+    if (!done.again) await this.deliver(done.deliveryId);
+    return this.answer(businessId, wishId);
+  }
+
+  /** The body of a send read into its parts: every fault named, before anything is touched. */
+  private readCall(body: { reveal: Record<string, unknown>; set: unknown; shoot: unknown; files?: unknown }, idemKey: string | undefined): Call {
     const fields: ErrorFields = {};
     const set = SETS.find((s) => s === body.set);
     if (!set) fields.set = "Must be proofs or finals.";
     if (typeof body.shoot !== "string" || !UUID.test(body.shoot)) fields.shoot = "Must be the id of one of your shoots.";
     const key = idemKey === undefined ? null : idemKey.trim();
     if (key !== null && (!key || key.length > IDEM_MAX)) fields["Idempotency-Key"] = `Must be 1 to ${IDEM_MAX} characters.`;
-    const now = this.clock.now();
     const reveal = body.reveal && typeof body.reveal === "object" && !Array.isArray(body.reveal) ? body.reveal : null;
     if (!reveal) fields.reveal = "Must be the words of the reveal.";
+    const named = namedFiles(body.files, fields);
     if (Object.keys(fields).length) throw AppError.validation(fields);
-    const shootId = (body.shoot as string).toLowerCase();
+    return { set: set as SetName, shootId: (body.shoot as string).toLowerCase(), key, reveal: reveal as Record<string, unknown>, named };
+  }
 
+  private async firstSend(tx: Tx, businessId: string, key: string): Promise<string | null> {
+    const first = await tx.$queryRaw<{ wishId: string }[]>`SELECT "wishId"::text AS "wishId" FROM reveal_send WHERE "businessId" = ${businessId}::uuid AND key = ${key}`;
+    return first[0]?.wishId ?? null;
+  }
+
+  /** IC5: a key used again names the same shoot and client as the send it first made, or it is refused (409), never replayed for another. */
+  private async sameSend(tx: Tx, businessId: string, wishId: string, shootId: string, client: string | null): Promise<void> {
+    const w = await tx.clientWish.findFirst({ where: { id: wishId, businessId }, select: { shoot: true, client: true } });
+    const name = (client ?? "").trim().replace(/\s+/g, " ").toLowerCase();
+    if (!w || (w.shoot ?? "").toLowerCase() !== shootId || (name && (w.client ?? "").trim().toLowerCase() !== name)) {
+      throw AppError.conflict("idempotency_key_reused", "This Idempotency-Key was used for another shoot or client.");
+    }
+  }
+
+  /** The newest reveal already sent on a shoot's set to a client of that name (compared without case or extra spaces), or null. */
+  private async priorReveal(tx: Tx, businessId: string, shootId: string, set: SetName, client: string): Promise<{ id: string; sentAt: Date; code: string } | null> {
+    const name = client.trim().replace(/\s+/g, " ");
+    if (!name) return null;
+    const rows = await tx.$queryRaw<{ id: string; sentAt: Date; code: string }[]>`
+      SELECT c.id::text AS id, c."sentAt", a.code FROM client_wish c JOIN reveal_access a ON a."wishId" = c.id
+       WHERE c."businessId" = ${businessId}::uuid AND c.shoot = ${shootId} AND c."set"::text = ${set} AND lower(regexp_replace(btrim(c.client), '\s+', ' ', 'g')) = lower(${name})
+       ORDER BY c."sentAt" DESC, c.id DESC LIMIT 1`;
+    return rows[0] ?? null;
+  }
+
+  private alreadySent(prior: { sentAt: Date; code: string }, set: SetName, client: string): AppError {
+    return new AppError(409, "already_sent", `This shoot's ${set} were already sent to ${client} on ${toWireInstant(prior.sentAt).slice(0, 10)}. Send again to send them once more.`, { sentAt: toWireInstant(prior.sentAt), link: this.linkOf(prior.code) });
+  }
+
+  /** The email goes out after the commit; a failure here is carried out by the send-message job at its next run. */
+  private async deliver(deliveryId: string | null): Promise<void> {
+    if (!deliveryId) return;
+    try {
+      await this.notices.deliverNow(deliveryId);
+    } catch {
+      // the send-message job carries it out at its next run
+    }
+  }
+
+  /**
+   * The reveal on a client wish, in the caller's transaction (the owner's account is locked): the words on the wish, the shoot's mark, the
+   * link and its settings, the email queued. The same step serves E-33 and the one-call reveal.
+   */
+  private async sendIn(tx: Tx, businessId: string, wishId: string, call: Call, strictEmail = false): Promise<{ deliveryId: string | null; linkId: string; code: string }> {
+    const { set, shootId, key } = call;
+    const now = this.clock.now();
+    const wish = await tx.clientWish.findFirst({ where: { id: wishId, businessId } });
+    if (!wish) throw AppError.notFound();
+    const shoot = await tx.shoot.findFirst({ where: { id: shootId, businessId } });
+    if (!shoot) throw AppError.notFound();
+    const s = this.read(call.reveal, wish.client ?? "", now);
+    const fileIds = await this.chosen(tx, businessId, shoot[set], call.named);
+    if (!fileIds.length) throw AppError.validation({ set: `There are no ${set} in this shoot yet.` });
+    const biz = await tx.business.findUniqueOrThrow({ where: { id: businessId }, select: { business: true, name: true } });
+    const passHash = s.passcode ? await hashPasscode(s.passcode) : null;
+    if (s.email) await this.takeEmailRoom(tx, businessId, s.email);
+
+    const existing = await tx.$queryRaw<{ linkId: string; code: string; fileIds: unknown }[]>`SELECT "linkId"::text AS "linkId", code, "fileIds" FROM reveal_access WHERE "wishId" = ${wishId}::uuid FOR UPDATE`;
+    let linkId: string;
+    let code: string;
+    if (existing[0]) {
+      ({ linkId, code } = existing[0]);
+      // IC1: a re-send keeps the passcode and the downloads switch unless the body gives new ones; IC2: the hearts stay with the files that stay
+      await tx.$executeRaw`
+        UPDATE reveal_access SET "shootId" = ${shootId}::uuid, "set" = ${set}, "fileIds" = ${JSON.stringify(fileIds)}::jsonb,
+          "passcodeHash" = COALESCE(${passHash}::text, "passcodeHash"), tries = 0, "lockedUntil" = NULL,
+          "endsAt" = ${s.endsAt}, "offAt" = NULL, "downloads" = COALESCE(${s.downloads}::boolean, "downloads"),
+          hearts = COALESCE((SELECT array_agg(h) FROM unnest(hearts) AS h WHERE ${JSON.stringify(fileIds)}::jsonb @> to_jsonb(h::text)), '{}'::uuid[])
+        WHERE "linkId" = ${linkId}::uuid`;
+      await tx.$executeRaw`UPDATE reveal_link SET "set" = ${set}::"RevealLinkSet" WHERE id = ${linkId}::uuid`;
+    } else {
+      linkId = this.ids.id();
+      code = newCode();
+      await tx.$executeRaw`INSERT INTO reveal_link (id, link, "set", "businessId") VALUES (${linkId}::uuid, ${this.linkOf(code)}, ${set}::"RevealLinkSet", ${businessId}::uuid)`;
+      await tx.$executeRaw`
+        INSERT INTO reveal_access ("linkId", "businessId", "shootId", "wishId", "set", code, "fileIds", "passcodeHash", "endsAt", "downloads", "createdAt")
+        VALUES (${linkId}::uuid, ${businessId}::uuid, ${shootId}::uuid, ${wishId}::uuid, ${set}, ${code}, ${JSON.stringify(fileIds)}::jsonb, ${passHash}, ${s.endsAt}, ${s.downloads ?? true}, ${now})`;
+    }
+    await this.carryToCopies(tx, shootId, set);
+    await syncHearts(tx, linkId);
+    const stored: Prisma.InputJsonObject = { ...s.words, link: linkId };
+    await tx.clientWish.update({ where: { id: wishId }, data: { reveal: stored, shoot: shootId, set, sentAt: now } });
+    const mark: Prisma.InputJsonObject = { wish: wishId, no: wish.no ?? "", sentAt: toWireInstant(now), link: linkId };
+    await tx.shoot.update({ where: { id: shootId }, data: set === "proofs" ? { proofsReveal: mark } : { finalsReveal: mark } });
+    let deliveryId: string | null = null;
+    if (s.email) {
+      const out = await this.notices.send(tx, {
+        template: "reveal", toEmail: s.email, wishId: undefined,
+        data: { name: s.words.client, business: biz.business ?? biz.name ?? "Your photographer", link: this.linkOf(code) },
+        key: `reveal:${wishId}:${key ?? this.ids.id()}`,
+      });
+      if (out.status === "queued") deliveryId = out.deliveryId;
+      else if (strictEmail && out.status !== "existing") throw AppError.validation({ "reveal.email": "This email could not be sent. Check the address and try again." });
+    }
+    if (key) await tx.$executeRaw`INSERT INTO reveal_send (id, "businessId", key, "wishId", "createdAt") VALUES (${this.ids.id()}::uuid, ${businessId}::uuid, ${key}, ${wishId}::uuid, ${now})`;
+    return { deliveryId, linkId, code };
+  }
+
+  /**
+   * IA1: the one call that sends a reveal. It makes the client wish (taking one wish from the business as E-30 does) and the reveal together,
+   * in one transaction under the owner's lock: if anything is refused (no wish left, the email, a file, the limits) nothing is kept. With an
+   * Idempotency-Key the same key again answers the first result. A shoot already revealed to that client on that set answers 409
+   * already_sent with when and the link, unless the body says `again`: that sends the reveal again on the same client wish and takes no second wish.
+   */
+  async sendOne(caller: { accountId: string; businessId: string }, body: SendOneBody, idemKey: string | undefined): Promise<PostBusinessRevealsResponse> {
+    const { businessId } = caller;
+    const call = this.readCall({ reveal: body.reveal, set: body.set, shoot: body.shoot, files: body.files }, idemKey);
+    const again = body.again === true;
+    if (body.again !== undefined && typeof body.again !== "boolean") throw AppError.validation({ again: "Must be true or false." });
     const done = await this.db.$transaction(async (tx) => {
       await lockBusinessOwner(tx, businessId);
-      if (key) {
-        const first = await tx.$queryRaw<{ wishId: string }[]>`SELECT "wishId"::text AS "wishId" FROM reveal_send WHERE "businessId" = ${businessId}::uuid AND key = ${key}`;
-        if (first[0]) {
-          if (first[0].wishId !== wishId.toLowerCase()) throw AppError.conflict("idempotency_key_reused", "This Idempotency-Key was used for another wish.");
-          return { again: true as const, wishId };
+      if (call.key) {
+        const first = await this.firstSend(tx, businessId, call.key);
+        if (first) {
+          await this.sameSend(tx, businessId, first, call.shootId, typeof call.reveal.client === "string" ? call.reveal.client : typeof body.client === "string" ? body.client : "");
+          return { replay: true as const, wishId: first };
         }
       }
-      const wish = await tx.clientWish.findFirst({ where: { id: wishId, businessId } });
-      if (!wish) throw AppError.notFound();
-      const shoot = await tx.shoot.findFirst({ where: { id: shootId, businessId } });
+      const shoot = await tx.shoot.findFirst({ where: { id: call.shootId, businessId }, select: { id: true } });
       if (!shoot) throw AppError.notFound();
-      const s = this.read(reveal as Record<string, unknown>, wish.client ?? "", now);
-      const fileIds = await this.chosen(tx, businessId, shoot[set as SetName]);
-      if (!fileIds.length) throw AppError.validation({ set: `There are no ${set} in this shoot yet.` });
-      const biz = await tx.business.findUniqueOrThrow({ where: { id: businessId }, select: { business: true, name: true } });
-      const passHash = s.passcode ? await hashPasscode(s.passcode) : null;
-      if (s.email) await this.takeEmailRoom(tx, businessId, s.email);
-
-      const existing = await tx.$queryRaw<{ linkId: string; code: string }[]>`SELECT "linkId"::text AS "linkId", code FROM reveal_access WHERE "wishId" = ${wishId}::uuid FOR UPDATE`;
-      let linkId: string;
-      let code: string;
-      if (existing[0]) {
-        ({ linkId, code } = existing[0]);
-        await tx.$executeRaw`
-          UPDATE reveal_access SET "shootId" = ${shootId}::uuid, "set" = ${set}, "fileIds" = ${JSON.stringify(fileIds)}::jsonb, "passcodeHash" = ${passHash},
-            tries = 0, "lockedUntil" = NULL, "endsAt" = ${s.endsAt}, "offAt" = NULL
-          WHERE "linkId" = ${linkId}::uuid`;
-        await tx.$executeRaw`UPDATE reveal_link SET "set" = ${set}::"RevealLinkSet" WHERE id = ${linkId}::uuid`;
+      const raw = call.reveal;
+      const clientName = (typeof raw.client === "string" ? raw.client : typeof body.client === "string" ? body.client : "").trim().replace(/\s+/g, " ");
+      const prior = clientName ? await this.priorReveal(tx, businessId, call.shootId, call.set, clientName) : null;
+      let wishId: string;
+      if (prior) {
+        if (!again) throw this.alreadySent(prior, call.set, clientName);
+        wishId = prior.id;
       } else {
-        linkId = this.ids.id();
-        code = newCode();
-        await tx.$executeRaw`INSERT INTO reveal_link (id, link, "set", "businessId") VALUES (${linkId}::uuid, ${this.linkOf(code)}, ${set}::"RevealLinkSet", ${businessId}::uuid)`;
-        await tx.$executeRaw`
-          INSERT INTO reveal_access ("linkId", "businessId", "shootId", "wishId", "set", code, "fileIds", "passcodeHash", "endsAt", "createdAt")
-          VALUES (${linkId}::uuid, ${businessId}::uuid, ${shootId}::uuid, ${wishId}::uuid, ${set}, ${code}, ${JSON.stringify(fileIds)}::jsonb, ${passHash}, ${s.endsAt}, ${now})`;
-      }
-      const stored: Prisma.InputJsonObject = { ...s.words, link: linkId };
-      await tx.clientWish.update({ where: { id: wishId }, data: { reveal: stored, shoot: shootId, set: set as SetName, sentAt: now } });
-      const mark: Prisma.InputJsonObject = { wish: wishId, no: wish.no ?? "", sentAt: toWireInstant(now), link: linkId };
-      await tx.shoot.update({ where: { id: shootId }, data: set === "proofs" ? { proofsReveal: mark } : { finalsReveal: mark } });
-      let deliveryId: string | null = null;
-      if (s.email) {
-        const out = await this.notices.send(tx, {
-          template: "reveal", toEmail: s.email, wishId: undefined,
-          data: { name: s.words.client, business: biz.business ?? biz.name ?? "Your photographer", link: this.linkOf(code) },
-          key: `reveal:${wishId}:${key ?? this.ids.id()}`,
+        const day = typeof body.day === "string" ? body.day : typeof raw.date === "string" && raw.date ? raw.date : this.clock.now().toISOString().slice(0, 10);
+        const made = await this.wishes.makeFor(tx, caller.accountId, businessId, {
+          client: clientName,
+          kind: typeof body.kind === "string" ? body.kind : "photographers",
+          occasion: typeof body.occasion === "string" ? body.occasion : typeof raw.occasion === "string" && raw.occasion.trim() ? raw.occasion : "Reveal",
+          day,
         });
-        if (out.status === "queued") deliveryId = out.deliveryId;
+        wishId = made.id;
       }
-      if (key) await tx.$executeRaw`INSERT INTO reveal_send (id, "businessId", key, "wishId", "createdAt") VALUES (${this.ids.id()}::uuid, ${businessId}::uuid, ${key}, ${wishId}::uuid, ${now})`;
-      return { again: false as const, wishId, deliveryId };
+      const out = await this.sendIn(tx, businessId, wishId, call, true);
+      return { replay: false as const, wishId, deliveryId: out.deliveryId };
     });
-    if (!done.again && done.deliveryId) {
-      try {
-        await this.notices.deliverNow(done.deliveryId);
-      } catch {
-        // the send-message job carries it out at its next run
-      }
-    }
-    return this.answer(businessId, wishId);
+    if (!done.replay) await this.deliver(done.deliveryId);
+    const answer = await this.answer(businessId, done.wishId);
+    const link = await this.db.$queryRaw<{ code: string }[]>`SELECT code FROM reveal_access WHERE "wishId" = ${done.wishId}::uuid`;
+    return { ...answer, link: link[0] ? this.linkOf(link[0].code) : "" };
   }
 
   private async answer(businessId: string, wishId: string): Promise<{ shoot: Awaited<ReturnType<ShootsService["wire"]>>; wish: ClientWish }> {
-    const wish = await this.db.clientWish.findFirstOrThrow({ where: { id: wishId, businessId } });
+    const wish = await this.db.clientWish.findFirstOrThrow({ where: { id: wishId, businessId }, include: WITH_WISH });
     const shoot = await this.db.shoot.findFirstOrThrow({ where: { id: wish.shoot ?? "", businessId } });
     return { shoot: await this.shoots.wire(shoot, true), wish: clientWishWire(wish) };
   }
@@ -262,10 +421,10 @@ export class RevealsService {
   /** What the business reads of a link: where it points, its settings, and its plays (count, first and last time; nothing of the viewers). */
   private async view(businessId: string, where: { linkId?: string }): Promise<RevealLink & Record<string, unknown>> {
     const rows = await this.db.$queryRaw<
-      { linkId: string; link: string | null; set: SetName; shootId: string | null; wishId: string | null; passcode: boolean; endsAt: Date | null; offAt: Date | null; lockedUntil: Date | null; plays: string; first: Date | null; last: Date | null }[]
+      { linkId: string; link: string | null; set: SetName; shootId: string | null; wishId: string | null; passcode: boolean; endsAt: Date | null; offAt: Date | null; lockedUntil: Date | null; hearts: string[]; "fileIds": unknown; downloads: boolean; plays: string; first: Date | null; last: Date | null }[]
     >`
       SELECT a."linkId"::text AS "linkId", l.link, a."set", a."shootId"::text AS "shootId", a."wishId"::text AS "wishId", (a."passcodeHash" IS NOT NULL) AS passcode,
-             a."endsAt", a."offAt", a."lockedUntil",
+             a."endsAt", a."offAt", a."lockedUntil", a.hearts, a."fileIds", a.downloads,
              (SELECT count(*) FROM reveal_play p WHERE p."linkId" = a."linkId")::text AS plays,
              (SELECT min(at) FROM reveal_play p WHERE p."linkId" = a."linkId") AS first,
              (SELECT max(at) FROM reveal_play p WHERE p."linkId" = a."linkId") AS last
@@ -285,8 +444,54 @@ export class RevealsService {
       endsAt: t(r.endsAt),
       off: r.offAt !== null,
       locked: r.lockedUntil !== null && r.lockedUntil.getTime() > now.getTime(),
+      hearts: heartPositions(r.fileIds, r.hearts),
+      downloads: r.downloads,
       plays: { count: Number(r.plays), first: t(r.first), last: t(r.last) },
     };
+  }
+
+  /**
+   * IC1 (IA4, IB2): the reveal that governs a link copied for a shoot's set: the newest reveal sent on that set that has a passcode, else the
+   * newest reveal sent on it, whatever its state (a reveal switched off or ended still holds its passcode and its switches). Another client's
+   * reveal of the set is that client's own and is not this one. Null when no reveal was sent on the set.
+   */
+  private async governing(tx: Tx, shootId: string, set: SetName): Promise<{ hash: string | null; downloads: boolean; endsAt: Date | null; offAt: Date | null } | null> {
+    const rows = await tx.$queryRaw<{ hash: string | null; downloads: boolean; endsAt: Date | null; offAt: Date | null }[]>`
+      SELECT a."passcodeHash" AS hash, a.downloads, a."endsAt", a."offAt" FROM reveal_access a LEFT JOIN client_wish w ON w.id = a."wishId"
+       WHERE a."shootId" = ${shootId}::uuid AND a."set" = ${set} AND a."wishId" IS NOT NULL
+       ORDER BY (a."passcodeHash" IS NOT NULL) DESC, COALESCE(w."sentAt", a."createdAt") DESC, a."linkId" DESC LIMIT 1`;
+    return rows[0] ?? null;
+  }
+
+  /**
+   * IC1: a link copied for a shoot's set is never more open than its reveal: it takes the reveal's passcode (tries and the lock start over when
+   * the passcode changes), its downloads switch when the reveal has them off, its end (the earlier of the two) and its switched-off time.
+   */
+  private async carryToCopies(tx: Tx, shootId: string, set: SetName): Promise<void> {
+    const g = await this.governing(tx, shootId, set);
+    if (!g) return;
+    await tx.$executeRaw`
+      UPDATE reveal_access SET
+        tries = CASE WHEN ${g.hash}::text IS NOT NULL AND "passcodeHash" IS DISTINCT FROM ${g.hash}::text THEN 0 ELSE tries END,
+        "lockedUntil" = CASE WHEN ${g.hash}::text IS NOT NULL AND "passcodeHash" IS DISTINCT FROM ${g.hash}::text THEN NULL ELSE "lockedUntil" END,
+        "passcodeHash" = COALESCE(${g.hash}::text, "passcodeHash"),
+        downloads = downloads AND ${g.downloads}::boolean,
+        "endsAt" = CASE WHEN ${g.endsAt}::timestamptz IS NULL THEN "endsAt" ELSE LEAST(COALESCE("endsAt", ${g.endsAt}::timestamptz), ${g.endsAt}::timestamptz) END,
+        "offAt" = COALESCE("offAt", ${g.offAt}::timestamptz)
+       WHERE "shootId" = ${shootId}::uuid AND "set" = ${set} AND "wishId" IS NULL AND "offAt" IS NULL`;
+  }
+
+  /**
+   * IC1: a switch made on a reveal's link (downloads, off) reaches the links already copied for its shoot's set, not only the ones copied
+   * later. A link that is itself a copy (no wish) carries nothing. `restore`: the downloads switch is set to the reveal's, on or off.
+   */
+  private async carryFrom(tx: Tx, linkId: string, restore: boolean): Promise<void> {
+    const r = await tx.$queryRaw<{ shootId: string; set: SetName }[]>`SELECT "shootId"::text AS "shootId", "set" FROM reveal_access WHERE "linkId" = ${linkId}::uuid AND "wishId" IS NOT NULL`;
+    if (!r[0]) return;
+    await this.carryToCopies(tx, r[0].shootId, r[0].set);
+    if (!restore) return;
+    const g = await this.governing(tx, r[0].shootId, r[0].set);
+    if (g) await tx.$executeRaw`UPDATE reveal_access SET downloads = ${g.downloads}::boolean WHERE "shootId" = ${r[0].shootId}::uuid AND "set" = ${r[0].set} AND "wishId" IS NULL AND "offAt" IS NULL`;
   }
 
   /** E-152. */
@@ -295,17 +500,35 @@ export class RevealsService {
     return this.view(businessId, { linkId });
   }
 
+  /** IB2: switches a link's download addresses on or off. Only finals give any; the switch is kept for a proofs link but never shows a download. */
+  async setDownloads(businessId: string, linkId: string, on: unknown): Promise<RevealLink> {
+    if (!UUID.test(linkId)) throw AppError.notFound();
+    if (typeof on !== "boolean") throw AppError.validation({ on: "Must be true or false." });
+    await this.db.$transaction(async (tx) => {
+      await lockBusinessOwner(tx, businessId);
+      const n = await tx.$executeRaw`UPDATE reveal_access SET downloads = ${on} WHERE "linkId" = ${linkId}::uuid AND "businessId" = ${businessId}::uuid`;
+      if (n === 0) throw AppError.notFound();
+      await this.carryFrom(tx, linkId, true);
+    });
+    return this.view(businessId, { linkId });
+  }
+
   /** Switches a link off at once: from the next read it answers gone. Switching off twice changes nothing. */
   async off(businessId: string, linkId: string): Promise<RevealLink> {
     if (!UUID.test(linkId)) throw AppError.notFound();
-    const n = await this.db.$executeRaw`UPDATE reveal_access SET "offAt" = COALESCE("offAt", ${this.clock.now()}) WHERE "linkId" = ${linkId}::uuid AND "businessId" = ${businessId}::uuid`;
-    if (n === 0) throw AppError.notFound();
+    await this.db.$transaction(async (tx) => {
+      await lockBusinessOwner(tx, businessId);
+      const n = await tx.$executeRaw`UPDATE reveal_access SET "offAt" = COALESCE("offAt", ${this.clock.now()}) WHERE "linkId" = ${linkId}::uuid AND "businessId" = ${businessId}::uuid`;
+      if (n === 0) throw AppError.notFound();
+      await this.carryFrom(tx, linkId, false);
+    });
     return this.view(businessId, { linkId });
   }
 
   /**
-   * E-153: the link of a shoot's proofs or finals, to copy. The first copy makes it (no wish, no end, no passcode); a copy again gives the
-   * same link with the set's files as they are now. A link switched off is made again with a new code.
+   * E-153: the link of a shoot's proofs or finals, to copy. The first copy makes it (no wish); a copy again gives the same link with the set's
+   * files as they are now, its hearts kept for the files that stay. A link switched off is made again with a new code. Where a reveal was sent on
+   * the set, the copied link carries that reveal's passcode, downloads switch, end and switched-off time (IC1): it is never more open than it.
    */
   async copyLink(businessId: string, shootId: string, setIn: unknown): Promise<string> {
     if (!UUID.test(shootId)) throw AppError.notFound();
@@ -321,16 +544,25 @@ export class RevealsService {
       const cur = await tx.$queryRaw<{ linkId: string; code: string }[]>`
         SELECT "linkId"::text AS "linkId", code FROM reveal_access
          WHERE "shootId" = ${shootId}::uuid AND "set" = ${set} AND "wishId" IS NULL AND "offAt" IS NULL ORDER BY "createdAt" DESC LIMIT 1 FOR UPDATE`;
+      let code: string;
+      let linkId: string;
       if (cur[0]) {
-        await tx.$executeRaw`UPDATE reveal_access SET "fileIds" = ${JSON.stringify(fileIds)}::jsonb WHERE "linkId" = ${cur[0].linkId}::uuid`;
-        return this.linkOf(cur[0].code);
+        ({ linkId, code } = cur[0]);
+        // IC2: the hearts stay with the files that stay (a removed file's heart is gone), however the list moved
+        await tx.$executeRaw`
+          UPDATE reveal_access SET "fileIds" = ${JSON.stringify(fileIds)}::jsonb,
+            hearts = COALESCE((SELECT array_agg(h) FROM unnest(hearts) AS h WHERE ${JSON.stringify(fileIds)}::jsonb @> to_jsonb(h::text)), '{}'::uuid[])
+           WHERE "linkId" = ${linkId}::uuid`;
+      } else {
+        linkId = this.ids.id();
+        code = newCode();
+        await tx.$executeRaw`INSERT INTO reveal_link (id, link, "set", "businessId") VALUES (${linkId}::uuid, ${this.linkOf(code)}, ${set}::"RevealLinkSet", ${businessId}::uuid)`;
+        await tx.$executeRaw`
+          INSERT INTO reveal_access ("linkId", "businessId", "shootId", "set", code, "fileIds", "createdAt")
+          VALUES (${linkId}::uuid, ${businessId}::uuid, ${shootId}::uuid, ${set}, ${code}, ${JSON.stringify(fileIds)}::jsonb, ${now})`;
       }
-      const linkId = this.ids.id();
-      const code = newCode();
-      await tx.$executeRaw`INSERT INTO reveal_link (id, link, "set", "businessId") VALUES (${linkId}::uuid, ${this.linkOf(code)}, ${set}::"RevealLinkSet", ${businessId}::uuid)`;
-      await tx.$executeRaw`
-        INSERT INTO reveal_access ("linkId", "businessId", "shootId", "set", code, "fileIds", "createdAt")
-        VALUES (${linkId}::uuid, ${businessId}::uuid, ${shootId}::uuid, ${set}, ${code}, ${JSON.stringify(fileIds)}::jsonb, ${now})`;
+      await this.carryToCopies(tx, shootId, set);
+      await syncHearts(tx, linkId);
       return this.linkOf(code);
     });
   }

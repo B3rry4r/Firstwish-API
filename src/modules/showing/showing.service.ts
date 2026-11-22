@@ -409,7 +409,8 @@ export class ShowingService implements OnModuleInit {
   /** The owner's wish, locked; the owner is a query condition, so another account's wish is a 404. */
   private async ownedWish(tx: Tx, accountId: string, wishId: string): Promise<{ status: string; erasedAt: Date | null; passcodeHash: string | null }> {
     const rows = await tx.$queryRaw<{ status: string; erasedAt: Date | null; passcodeHash: string | null }[]>`
-      SELECT status::text AS status, "erasedAt", "passcodeHash" FROM wish WHERE id = ${wishId}::uuid AND "accountId" = ${accountId}::uuid FOR UPDATE`;
+      SELECT status::text AS status, "erasedAt", "passcodeHash" FROM wish WHERE id = ${wishId}::uuid AND "accountId" = ${accountId}::uuid
+         AND ("conciergeOrderId" IS NULL OR EXISTS (SELECT 1 FROM concierge_order_wish d WHERE d."wishId" = wish.id)) FOR UPDATE`;
     if (!rows[0]) throw AppError.notFound("No such wish.");
     return rows[0];
   }

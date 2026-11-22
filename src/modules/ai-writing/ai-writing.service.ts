@@ -13,6 +13,7 @@ import { AI_AVAILABILITY, AI_WAIT_MS, AiAvailability } from "../studio/studio-ai
 import type { AiPickPhotosBodyDto, AiWordsBodyDto } from "./ai-writing-bodies";
 
 import type { AiRequest } from "../../contracts";
+import { SHOWN_TO_BUYER } from "../wishes/wish-shown";
 /** Requests a sender may make in one UTC day (DEC-53, PROVISIONAL: no config or price-book line carries it yet; the owner may override). */
 export const AI_DAILY_CAP = 20;
 const MAX_WORDS_CHARS = 6000;
@@ -156,7 +157,7 @@ export class AiWritingService {
 
   /** The sender's own wish (an owner check in the query, and not erased), else 404. */
   private async ownWish(accountId: string, wishId: string): Promise<{ content: unknown }> {
-    const wish = await this.db.wish.findFirst({ where: { id: wishId, accountId, erasedAt: null, removedAt: null }, select: { content: true } });
+    const wish = await this.db.wish.findFirst({ where: { id: wishId, accountId, erasedAt: null, removedAt: null, ...SHOWN_TO_BUYER }, select: { content: true } });
     if (!wish) throw AppError.notFound("No wish of yours has this id.");
     return wish;
   }

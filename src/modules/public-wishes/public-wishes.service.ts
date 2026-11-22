@@ -229,7 +229,7 @@ export class PublicWishesService {
 
   // ---- the shared steps
 
-  /** The row a slug names (404 for an unknown slug, a malformed one or a draft): the one query every link read starts from. */
+  /** The row a slug names (404 for an unknown slug, a malformed one, a draft, or a wish a Concierge order has not delivered yet: IC4): the one query every link read starts from. */
   private async rowOf(slug: string): Promise<Row> {
     const key = SLUG_LOOKS.test(slug) ? slug : "-";
     const rows = await this.db.$queryRaw<Row[]>`
@@ -237,7 +237,8 @@ export class PublicWishesService {
              a."erasedAt" AS "ownerErasedAt", w."businessId"::text AS "businessId", w.kind, w.occasion, w."styleSlug", w."opensAt", w."openedAt", w."endsAt",
              w."timeZone", w.name, w.no, w.content, w."passcodeHash"
         FROM wish_link l JOIN wish w ON w.id = l."wishId" JOIN account a ON a.id = w."accountId"
-       WHERE l.slug = ${key}`;
+       WHERE l.slug = ${key}
+         AND (w."conciergeOrderId" IS NULL OR EXISTS (SELECT 1 FROM concierge_order_wish d WHERE d."wishId" = w.id))`;
     const row = rows[0];
     if (!row || key !== slug || row.status === "draft") throw AppError.notFound("No wish is at this link.");
     return row;

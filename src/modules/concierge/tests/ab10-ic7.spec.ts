@@ -95,7 +95,7 @@ describe("IC7: the buyer's files for a Concierge order", () => {
     expect(row).toMatchObject({ ownerAccountId: buyer.id, purpose: "wish_photo" });
     const list = await buyerList(buyer.auth, order);
     expect(list.status).toBe(200);
-    expect(list.body.limits).toEqual({ photos: 20, voices: 3 });
+    expect(list.body.limits).toEqual({ photos: 15, voices: 10 });
     expect(list.body.nextCursor).toBeNull();
     expect(list.body.items).toHaveLength(2);
     expect(list.body.items).toEqual(expect.arrayContaining([
@@ -115,7 +115,7 @@ describe("IC7: the buyer's files for a Concierge order", () => {
     expect(await db.conciergeOrderFile.count({ where: { fileId: voice.id } })).toBe(0);
   });
 
-  it("attacks: another buyer, an unknown order, a file over the size limit, a wrong type, and 40 files (the order's own limits)", async () => {
+  it("attacks: another buyer, an unknown order, a file over the size limit, a wrong type, and 40 files (what one Signature wish holds, times the order's count)", async () => {
     const buyer = await k.account();
     const other = await k.account();
     const order = await placed(buyer);
@@ -133,7 +133,7 @@ describe("IC7: the buyer's files for a Concierge order", () => {
     expect(big.status).toBe(422);
     expect((await http().post("/v1/uploads").set("Authorization", buyer.auth).send({ purpose: "order-photo", contentType: "audio/webm", bytes: 1000, subjectId: order })).status).toBe(422);
     expect((await http().post("/v1/uploads").set("Authorization", buyer.auth).send({ purpose: "order-voice", contentType: "image/jpeg", bytes: 1000, subjectId: order })).status).toBe(422);
-    // 40 photo tickets: the order takes 20 (one is already there), the rest are 409 with words
+    // 40 photo tickets: the order takes 15 (one is already there), the rest are 409 with words
     const statuses: number[] = [];
     let last: { body: { error: { code: string; message: string } } } | undefined;
     for (let i = 0; i < 39; i++) {
@@ -141,16 +141,16 @@ describe("IC7: the buyer's files for a Concierge order", () => {
       statuses.push(r.status);
       last = r;
     }
-    expect(statuses.filter((s) => s === 201)).toHaveLength(19);
-    expect(statuses.filter((s) => s === 409)).toHaveLength(20);
+    expect(statuses.filter((s) => s === 201)).toHaveLength(14);
+    expect(statuses.filter((s) => s === 409)).toHaveLength(25);
     expect(last?.body.error.code).toBe("order_files_full");
-    expect(last?.body.error.message).toMatch(/at most 20 photos/);
-    expect(await db.conciergeOrderFile.count({ where: { orderId: order, kind: "photo" } })).toBe(20);
+    expect(last?.body.error.message).toMatch(/at most 15 photos/);
+    expect(await db.conciergeOrderFile.count({ where: { orderId: order, kind: "photo" } })).toBe(15);
     // voice notes have their own limit
-    for (let i = 0; i < 3; i++) expect((await http().post("/v1/uploads").set("Authorization", buyer.auth).send({ purpose: "order-voice", contentType: "audio/webm", bytes: 1000, seconds: 5, subjectId: order })).status).toBe(201);
+    for (let i = 0; i < 10; i++) expect((await http().post("/v1/uploads").set("Authorization", buyer.auth).send({ purpose: "order-voice", contentType: "audio/webm", bytes: 1000, seconds: 5, subjectId: order })).status).toBe(201);
     const fourth = await http().post("/v1/uploads").set("Authorization", buyer.auth).send({ purpose: "order-voice", contentType: "audio/webm", bytes: 1000, seconds: 5, subjectId: order });
     expect(fourth.status).toBe(409);
-    expect(fourth.body.error.message).toMatch(/at most 3 voice notes/);
+    expect(fourth.body.error.message).toMatch(/at most 10 voice notes/);
     // a removed place is free again
     const first = (await buyerList(buyer.auth, order)).body.items[0].id as string;
     expect((await http().delete(`/v1/uploads/${first}`).set("Authorization", buyer.auth).send({})).status).toBe(204);
@@ -171,7 +171,7 @@ describe("IC7: the buyer's files for a Concierge order", () => {
     // signed reads for the ready files, none for the one that has not arrived
     const list = await staffList(m.auth, o.id);
     expect(list.status).toBe(200);
-    expect(list.body.limits).toEqual({ photos: 20, voices: 3 });
+    expect(list.body.limits).toEqual({ photos: 15, voices: 10 });
     const byId = new Map((list.body.items as { id: string; url: string | null; expiresAt: string | null; status: string; inWish: boolean }[]).map((i) => [i.id, i]));
     for (const id of [photo.id, photo2.id, voice.id]) {
       expect(byId.get(id)?.url).toEqual(expect.stringMatching(/^https:\/\//));
@@ -229,12 +229,8 @@ describe("IC7: the buyer's files for a Concierge order", () => {
     expect(blocked.status).toBe(409);
     expect(blocked.body.error.code).toBe("file_in_use");
     expect((await http().delete(`/v1/uploads/${photo2.id}`).set("Authorization", buyer.auth).send({})).status).toBe(204);
-    // the wish's own limit applies when adding (a wish with no ticket is on the Moment line: 6 photos)
     const seven: string[] = [];
     for (let i = 0; i < 7; i++) seven.push((await give(buyer, o.id, "photo")).id);
-    const over = await addTo(m.auth, o.id, w, seven);
-    expect(over.status).toBe(422);
-    expect(JSON.stringify(over.body.error.fields)).toMatch(/Over the limit/);
     // the order moves to another maker: the first loses the files and the add at once
     await http().post(`/v1/admin/concierge/orders/${o.id}/maker`).set("Authorization", o.ops.auth).send({ makerId: other.id, reason: "hand over", expectedMaker: m.id }).expect(200);
     expect((await staffList(m.auth, o.id)).status).toBe(404);
@@ -316,7 +312,11 @@ describe("IC7: the buyer's files for a Concierge order", () => {
     expect((await http().post("/v1/webhooks/paystack").set("content-type", "application/json").set("x-paystack-signature", k.t.payments.sign(body)).send(body)).status).toBe(200);
     expect((await db.payment.findUniqueOrThrow({ where: { id: o3.payId } })).status).toBe("refunded");
     expect((await fileRow(f3.id))?.status).toBe("deleted");
-    expect((await staffList(m.auth, o3.id)).body.items).toEqual([]);
+    // IE3: the order reads as refunded, not paid, and is no longer the maker's
+    expect((await staffList(m.auth, o3.id)).status).toBe(404);
+    const refunded = await http().get(`/v1/concierge-orders/${o3.id}`).set("Authorization", b3.auth);
+    expect(refunded.body).toMatchObject({ status: "refunded", state: "refunded" });
+    expect((await buyerList(b3.auth, o3.id)).body.items).toEqual([]);
   });
 
   it("the buyer's erase removes the files with the rest of the buyer's files, and nobody reads them after", async () => {

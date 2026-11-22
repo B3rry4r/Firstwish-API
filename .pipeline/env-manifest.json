@@ -4,265 +4,324 @@
       "name": "DATABASE_URL",
       "introducedBy": "schema",
       "purpose": "PostgreSQL connection",
-      "secret": true
+      "secret": true,
+      "refusesStartInProduction": "yes"
     },
     {
       "name": "REDIS_URL",
       "introducedBy": "jobs",
       "purpose": "Redis for the BullMQ queue",
-      "secret": true
+      "secret": true,
+      "refusesStartInProduction": "yes"
     },
     {
       "name": "JWT_ACCESS_SECRET",
       "introducedBy": "sessions",
       "purpose": "signs 15-minute access tokens",
-      "secret": true
+      "secret": true,
+      "refusesStartInProduction": "yes"
     },
     {
       "name": "REFRESH_TOKEN_PEPPER",
       "introducedBy": "sessions",
       "purpose": "peppers stored refresh-token hashes",
-      "secret": true
+      "secret": true,
+      "refusesStartInProduction": "yes"
     },
     {
       "name": "COOKIE_DOMAIN",
       "introducedBy": "sessions",
       "purpose": "API host for the refresh cookie",
-      "secret": false
+      "secret": false,
+      "refusesStartInProduction": "yes"
     },
     {
       "name": "WEB_ORIGINS",
       "introducedBy": "sessions",
       "purpose": "allowed CORS origins (the site on Vercel)",
-      "secret": false
+      "secret": false,
+      "refusesStartInProduction": "yes"
     },
     {
       "name": "PUBLIC_SITE_URL",
       "introducedBy": "wish-link",
       "purpose": "base of public wish links /w/<slug>",
-      "secret": false
+      "secret": false,
+      "refusesStartInProduction": "yes"
     },
     {
       "name": "API_PUBLIC_URL",
       "introducedBy": "payments",
       "purpose": "public API base for callbacks and webhooks",
-      "secret": false
+      "secret": false,
+      "refusesStartInProduction": "yes"
     },
     {
       "name": "AUTH_CODE_PEPPER",
       "introducedBy": "auth-codes",
       "purpose": "peppers one-time code hashes",
-      "secret": true
+      "secret": true,
+      "refusesStartInProduction": "yes"
     },
     {
       "name": "GOOGLE_CLIENT_ID",
       "introducedBy": "google-identity",
       "purpose": "Google OAuth client",
-      "secret": false
+      "secret": false,
+      "refusesStartInProduction": "yes"
     },
     {
       "name": "GOOGLE_CLIENT_SECRET",
       "introducedBy": "google-identity",
       "purpose": "Google OAuth secret",
-      "secret": true
+      "secret": true,
+      "refusesStartInProduction": "yes"
     },
     {
       "name": "GOOGLE_REDIRECT_URI",
       "introducedBy": "google-identity",
       "purpose": "OAuth callback",
-      "secret": false
+      "secret": false,
+      "refusesStartInProduction": "yes"
     },
     {
       "name": "STAFF_BOOTSTRAP_OWNER_EMAIL",
       "introducedBy": "staff-accounts",
       "purpose": "first owner staff account",
-      "secret": false
+      "secret": false,
+      "refusesStartInProduction": "no"
     },
     {
       "name": "PAYSTACK_SECRET_KEY",
       "introducedBy": "payments",
       "purpose": "Paystack API auth and webhook signature (HMAC-SHA512)",
-      "secret": true
+      "secret": true,
+      "refusesStartInProduction": "yes"
     },
     {
       "name": "PAYSTACK_PUBLIC_KEY",
       "introducedBy": "payments",
       "purpose": "Paystack inline/checkout public key",
-      "secret": false
+      "secret": false,
+      "refusesStartInProduction": "yes",
+      "readBySource": false
     },
     {
       "name": "PAYSTACK_CALLBACK_URL",
       "introducedBy": "payments",
       "purpose": "where Paystack returns the payer",
-      "secret": false
+      "secret": false,
+      "refusesStartInProduction": "yes"
     },
     {
       "name": "STORAGE_DRIVER",
       "introducedBy": "storage",
       "purpose": "r2 | spaces",
-      "secret": false
+      "secret": false,
+      "refusesStartInProduction": "yes"
     },
     {
       "name": "R2_ACCOUNT_ID",
       "introducedBy": "storage",
       "purpose": "Cloudflare account for R2 endpoint",
-      "secret": false
+      "secret": false,
+      "refusesStartInProduction": "yes, when STORAGE_DRIVER=r2"
     },
     {
       "name": "R2_ACCESS_KEY_ID",
       "introducedBy": "storage",
       "purpose": "R2 S3 key",
-      "secret": true
+      "secret": true,
+      "refusesStartInProduction": "yes, when STORAGE_DRIVER=r2"
     },
     {
       "name": "R2_SECRET_ACCESS_KEY",
       "introducedBy": "storage",
       "purpose": "R2 S3 secret",
-      "secret": true
+      "secret": true,
+      "refusesStartInProduction": "yes, when STORAGE_DRIVER=r2"
     },
     {
       "name": "R2_BUCKET",
       "introducedBy": "storage",
       "purpose": "private bucket",
-      "secret": false
+      "secret": false,
+      "refusesStartInProduction": "yes, when STORAGE_DRIVER=r2"
     },
     {
       "name": "SPACES_ENDPOINT",
       "introducedBy": "storage",
       "purpose": "DigitalOcean Spaces endpoint",
-      "secret": false
+      "secret": false,
+      "refusesStartInProduction": "yes, when STORAGE_DRIVER=spaces"
     },
     {
       "name": "SPACES_REGION",
       "introducedBy": "storage",
       "purpose": "Spaces region",
-      "secret": false
+      "secret": false,
+      "refusesStartInProduction": "yes, when STORAGE_DRIVER=spaces"
     },
     {
       "name": "SPACES_ACCESS_KEY_ID",
       "introducedBy": "storage",
       "purpose": "Spaces key",
-      "secret": true
+      "secret": true,
+      "refusesStartInProduction": "yes, when STORAGE_DRIVER=spaces"
     },
     {
       "name": "SPACES_SECRET_ACCESS_KEY",
       "introducedBy": "storage",
       "purpose": "Spaces secret",
-      "secret": true
+      "secret": true,
+      "refusesStartInProduction": "yes, when STORAGE_DRIVER=spaces"
     },
     {
       "name": "SPACES_BUCKET",
       "introducedBy": "storage",
       "purpose": "private bucket",
-      "secret": false
+      "secret": false,
+      "refusesStartInProduction": "yes, when STORAGE_DRIVER=spaces"
     },
     {
       "name": "SCREENING_PROVIDER",
       "introducedBy": "upload-screening",
       "purpose": "which screening adapter (stand-in in tests)",
-      "secret": false
+      "secret": false,
+      "refusesStartInProduction": "yes"
     },
     {
       "name": "SCREENING_API_KEY",
       "introducedBy": "upload-screening",
       "purpose": "screening provider auth",
-      "secret": true
+      "secret": true,
+      "refusesStartInProduction": "no",
+      "readBySource": false
     },
     {
       "name": "ANTHROPIC_API_KEY",
       "introducedBy": "ai-writing",
       "purpose": "Anthropic API (owner key)",
-      "secret": true
+      "secret": true,
+      "refusesStartInProduction": "yes"
     },
     {
       "name": "ANTHROPIC_MODEL",
       "introducedBy": "ai-writing",
       "purpose": "model id used for writing",
-      "secret": false
+      "secret": false,
+      "refusesStartInProduction": "yes"
     },
     {
       "name": "RENDER_CONCURRENCY",
       "introducedBy": "video-render",
       "purpose": "parallel render workers",
-      "secret": false
+      "secret": false,
+      "refusesStartInProduction": "no",
+      "readBySource": false
     },
     {
       "name": "RESEND_API_KEY",
       "introducedBy": "messages-email",
       "purpose": "Resend API auth (R12)",
-      "secret": true
+      "secret": true,
+      "refusesStartInProduction": "yes"
     },
     {
       "name": "RESEND_WEBHOOK_SECRET",
       "introducedBy": "messages-email",
       "purpose": "signing secret of Resend's webhook stream: delivery news and received mail (YY3)",
-      "secret": true
+      "secret": true,
+      "refusesStartInProduction": "no"
     },
     {
       "name": "MAIL_FROM",
       "introducedBy": "messages-email",
       "purpose": "sender address for every email (R12)",
-      "secret": false
+      "secret": false,
+      "refusesStartInProduction": "yes"
     },
     {
       "name": "NODE_ENV",
       "introducedBy": "api-0",
       "purpose": "process mode: development, test or production",
-      "secret": false
+      "secret": false,
+      "refusesStartInProduction": "no"
     },
     {
       "name": "PORT",
       "introducedBy": "api-0",
       "purpose": "HTTP port",
-      "secret": false
+      "secret": false,
+      "refusesStartInProduction": "no"
     },
     {
       "name": "PROVIDERS",
       "introducedBy": "api-0",
       "purpose": "live uses real providers; standin uses in-process stand-ins (refused when NODE_ENV=production)",
-      "secret": false
+      "secret": false,
+      "refusesStartInProduction": "no"
     },
     {
       "name": "STANDIN_MAIL_OUTBOX",
       "introducedBy": "p-pack-refund",
       "purpose": "HK1: a file the stand-in email appends each message to, one JSON line (to, template, subject, text, at); tests only, refused with PROVIDERS=live or NODE_ENV=production",
-      "secret": false
+      "secret": false,
+      "refusesStartInProduction": "no"
     },
     {
       "name": "STANDIN_CLOCK_OFFSET",
       "introducedBy": "api-base-4",
       "purpose": "HP6: whole seconds added to the stand-in clock, read once at boot; tests and verifier stacks only, refused with PROVIDERS=live or NODE_ENV=production",
-      "secret": false
+      "secret": false,
+      "refusesStartInProduction": "no"
     },
     {
       "name": "STANDIN_SCREENING",
       "introducedBy": "api-base-12",
       "purpose": "API-BASE-12 case 4: rules for the stand-in screening by file name, as a comma list of hold:<part of a name> (the file waits in screening) or reject:<part of a name> (the file is refused); tests and verifier stacks only, refused with PROVIDERS=live or NODE_ENV=production",
-      "secret": false
+      "secret": false,
+      "refusesStartInProduction": "no"
     },
     {
       "name": "INTERNAL_TOKEN",
       "introducedBy": "api-0",
       "purpose": "shared secret an internal route needs in the x-internal-token header (32 or more characters)",
-      "secret": true
+      "secret": true,
+      "refusesStartInProduction": "yes"
     },
     {
       "name": "TRUST_PROXY_HOPS",
       "introducedBy": "int-1",
       "purpose": "how many proxies in front of the API are trusted for the client address (V4); 0 reads the socket address",
-      "secret": false
+      "secret": false,
+      "refusesStartInProduction": "no"
     },
     {
       "name": "PORT_TIMEOUTS_MS",
       "introducedBy": "int-3",
       "purpose": "time limit of one call to a provider port, as port=milliseconds pairs (FF1); payments 10000 unless changed",
-      "secret": false
+      "secret": false,
+      "refusesStartInProduction": "no"
     },
     {
       "name": "JSON_BODY_LIMIT_BYTES",
       "introducedBy": "int-4",
       "purpose": "the largest JSON body the API reads, in bytes (JJ1); 512 KB, above the 256 KB wish content limit so an oversize wish gets the service's 422",
-      "secret": false
+      "secret": false,
+      "refusesStartInProduction": "no"
     }
-  ]
+  ],
+  "toolingOnly": [
+    "TEST_DB_PREFIX",
+    "PG_ADMIN_URL",
+    "SMOKE_LOG_DIR",
+    "STACKS_DIR",
+    "REDIS_PORT",
+    "STACK_SKIP_BUILD",
+    "STACK_WEB_ORIGINS",
+    "WEB_LIB",
+    "WEB_REPO"
+  ],
+  "checkedBy": "node scripts/smoke-env.mjs (after npm run build)"
 }

@@ -11491,7 +11491,8 @@
         "lib/catalog.ts:380"
       ],
       "change": "replace: public wishes by style",
-      "status": "open"
+      "status": "done",
+      "resolution": "WEB-API-9B (web web-api-9b, merged d99117c), verified 22 Nov"
     },
     {
       "id": "UA-902",

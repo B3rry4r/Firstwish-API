@@ -37,7 +37,7 @@ export class BusinessOf {
   }
 
   /**
-   * HR3 (HR3): the business a request works in. Without the x-business-id header it is the caller's own business, else their oldest login, as
+   * HR3: the business a request works in. Without the x-business-id header it is the caller's own business, else their oldest login, as
    * before. With it, the one named (see `namedBusiness`).
    */
   async named(p: Principal | undefined, header: string | undefined, opts: NamedOpts = {}): Promise<{ businessId: string; owner: boolean | null }> {
@@ -58,13 +58,14 @@ export interface NamedOpts {
 }
 
 /**
- * HR3: the business the x-business-id header names, in the caller's role there: `owner` when the account holds the business, a login when its
- * sign-in email is on a live login of it. A header that is not an id is 422 in words (any case of an id is the same id); a business the caller is
- * not part of is 404 (a removed login gets the words every business read gives); with `ownerOnly`, a login of that business is refused in words (403).
+ * HR3 (IH3): the business the x-business-id header names, in the caller's role there: `owner` when the account holds the business, a login when its
+ * sign-in email is on a live login of it. The header only says WHICH business: a header that is not an id, and a business the caller is not part of,
+ * answer what the older business routes answer (403 "You are not part of that business.", and login_removed for a removed login). With `ownerOnly`
+ * a login of that business gets the plain 403 the route gives a login without the header (IH2).
  */
 export async function namedBusiness(db: Pick<PrismaService, "$queryRaw">, accountId: string, header: string, opts: NamedOpts = {}): Promise<{ businessId: string; owner: boolean }> {
   const want = header.trim().toLowerCase();
-  if (!UUID.test(want)) throw AppError.validation({ "x-business-id": "Must be a business id." });
+  if (!UUID.test(want)) throw AppError.forbidden("You are not part of that business.");
   const rows = await db.$queryRaw<{ owner: boolean }[]>`
     SELECT true AS owner FROM business b WHERE b.id = ${want}::uuid AND b."accountId" = ${accountId}::uuid
     UNION ALL
@@ -73,7 +74,7 @@ export async function namedBusiness(db: Pick<PrismaService, "$queryRaw">, accoun
        AND l.status IN ('invited', 'active')
     ORDER BY owner DESC LIMIT 1`;
   const r = rows[0];
-  if (!r) throw (await loginWasRemoved(db, accountId, want)) ? loginRemoved() : AppError.notFound("No such business.");
-  if (opts.ownerOnly && !r.owner) throw AppError.forbidden(opts.words ?? "Only the owner of the business can do this.");
+  if (!r) throw (await loginWasRemoved(db, accountId, want)) ? loginRemoved() : AppError.forbidden("You are not part of that business.");
+  if (opts.ownerOnly && !r.owner) throw AppError.forbidden(opts.words);
   return { businessId: want, owner: r.owner };
 }

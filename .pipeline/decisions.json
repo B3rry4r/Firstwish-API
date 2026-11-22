@@ -4129,6 +4129,36 @@
       "confidence": "high",
       "source": "build/prompts/API-BASE-12.md",
       "decidedAt": "2026-12-07T12:00:00Z"
+    },
+    {
+      "id": "DEC-299",
+      "topic": "The business header changes which business, never what a route answers; People and brand are the owner's; a login may pay (IH2, IH3)",
+      "decision": "IH2 and IH3 correct DEC-293: the header x-business-id only says WHICH business a request acts on. A business the caller is not part of, and a header that is not an id, answer what the older business routes answer (403 forbidden, \"You are not part of that business.\"; login_removed for a removed login), on the people routes (E-117 to E-121), the approved dates (E-17, E-238, E-239), the business payment starts (E-87), the brand (E-26) and the brand upload (E-182); DEC-293's 404 and 422 for the header are withdrawn. People, approved dates, the brand and the brand upload are the owner's of the named business: a login of it gets the plain 403 a login gets without the header (the people routes are for the business side again). A login may start the business's plan or pack payment (and Vault space), and the answer is the same with the header and without it. No endpoint or field changes.",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (IH1 to IH3); build/prompts/API-BASE-12.md",
+      "decidedAt": "2026-12-08T12:00:00Z"
+    },
+    {
+      "id": "DEC-300",
+      "topic": "A style is tied to a creator only on proof (IH1)",
+      "decision": "IH1 corrects DEC-295: the migration 20261204090000_style_creator_ab12 ties a style (gives creator.creatorId) only when a style_submission of that style by exactly one creator, whose account is not erased, exists. A handle proves nothing, so a style with a handle and no such proof stays untied: no royalty is routed for it. The migration's notices name every untied style (id, slug, handle), and staff see the same list in the admin styles read (E-193), where an untied style's `creator` carries the handle and no creatorId, to tie by hand. No endpoint or field changes.",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (IH1 to IH3); build/prompts/API-BASE-12.md",
+      "decidedAt": "2026-12-08T12:00:00Z"
+    },
+    {
+      "id": "DEC-301",
+      "topic": "The registry is frozen again after the check of the twelfth round",
+      "decision": "The registry is re-frozen after DEC-299 and DEC-300 by tools/pipeline/freeze.py; reconcile.py was run twice with --reopen (identical outputs; .pipeline/ui-align-tasks.json restored byte for byte). No endpoint id is issued and no field changes.",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/prompts/API-BASE-12.md",
+      "decidedAt": "2026-12-08T12:00:00Z"
     }
   ]
 }

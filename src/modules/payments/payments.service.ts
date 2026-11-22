@@ -129,8 +129,8 @@ export class PaymentsService {
       email = account.contact?.includes("@") ? account.contact : null;
       if (!email) throw AppError.validation({ email: "Add an email to your account before you pay." });
       if (req.needsBusiness && named !== undefined) {
-        // HR3 (HR3): the business the header names, paid for by its owner alone: a login of it is refused in words, a stranger's is 404
-        businessId = (await namedBusiness(this.db, accountId, named, { ownerOnly: true, words: "Only the owner of a business can pay for it. You are a login of this one, so ask its owner." })).businessId;
+        // HR3 (IH2): the business the header names; its owner or a live login may pay, as without the header
+        businessId = (await namedBusiness(this.db, accountId, named)).businessId;
       } else {
         businessId = req.needsBusiness ? await this.businesses.require({ kind: "user", accountId, sides: ["person"] }) : await this.businesses.find(accountId);
       }

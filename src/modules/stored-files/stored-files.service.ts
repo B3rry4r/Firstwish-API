@@ -90,8 +90,8 @@ export class StoredFilesService {
   /** The caller's business (owner), or 403. */
   private async businessOf(tx: Tx, p: UserPrincipal, named?: string): Promise<Business> {
     if (named !== undefined) {
-      // HR3: the business the header names, and only its owner uploads its brand (a login of it is refused in words, a stranger gets 404)
-      const { businessId } = await namedBusiness(tx, p.accountId, named, { ownerOnly: true, words: "Only the owner of the business can change its brand." });
+      // HR3: the business the header names, and only its owner uploads its brand (a login of it is refused as it is without the header)
+      const { businessId } = await namedBusiness(tx, p.accountId, named, { ownerOnly: true });
       return tx.business.findUniqueOrThrow({ where: { id: businessId } });
     }
     if (!p.sides.includes("business")) throw AppError.forbidden("Vault files need a business.");

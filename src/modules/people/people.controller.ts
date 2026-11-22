@@ -28,36 +28,36 @@ export class PeopleController {
     private readonly business: BusinessOf,
   ) {}
 
-  @Roles("person", "business")
+  @Roles("business")
   @Get("people")
   async list(@Query() q: GetBusinessPeopleQueryDto, @CurrentPrincipal() p: Principal | undefined, @BusinessHeader() h: string | undefined): Promise<Page<Person>> {
-    return this.people.list((await this.business.named(p, h)).businessId, q.cursor, q.limit ?? DEFAULT_LIMIT);
+    return this.people.list((await this.business.named(p, h, { ownerOnly: true })).businessId, q.cursor, q.limit ?? DEFAULT_LIMIT);
   }
 
-  @Roles("person", "business")
+  @Roles("business")
   @Post("people")
   async create(@Body() body: PostBusinessPeopleBodyDto, @CurrentPrincipal() p: Principal | undefined, @BusinessHeader() h: string | undefined): Promise<Person> {
-    return this.people.create((await this.business.named(p, h)).businessId, body);
+    return this.people.create((await this.business.named(p, h, { ownerOnly: true })).businessId, body);
   }
 
-  @Roles("person", "business")
+  @Roles("business")
   @Post("people/import")
   @HttpCode(200)
   async import(@Body() body: PostBusinessPeopleImportBodyDto, @CurrentPrincipal() p: Principal | undefined, @BusinessHeader() h: string | undefined): Promise<ImportAnswer> {
-    return this.people.import((await this.business.named(p, h)).businessId, body.rows);
+    return this.people.import((await this.business.named(p, h, { ownerOnly: true })).businessId, body.rows);
   }
 
-  @Roles("person", "business")
+  @Roles("business")
   @Patch("people/:id")
   async update(
     @Param() params: PatchBusinessPeopleByIdParamsDto,
     @Body() body: PatchBusinessPeopleByIdBodyDto,
     @CurrentPrincipal() p: Principal | undefined, @BusinessHeader() h: string | undefined,
   ): Promise<Person> {
-    return this.people.update((await this.business.named(p, h)).businessId, params.id, body);
+    return this.people.update((await this.business.named(p, h, { ownerOnly: true })).businessId, params.id, body);
   }
 
-  @Roles("person", "business")
+  @Roles("business")
   @Delete("people/:id")
   @HttpCode(204)
   async remove(
@@ -65,29 +65,29 @@ export class PeopleController {
     @Body() _body: DeleteBusinessPeopleByIdBodyDto,
     @CurrentPrincipal() p: Principal | undefined, @BusinessHeader() h: string | undefined,
   ): Promise<void> {
-    await this.people.remove((await this.business.named(p, h)).businessId, params.id);
+    await this.people.remove((await this.business.named(p, h, { ownerOnly: true })).businessId, params.id);
   }
 
-  @Roles("person", "business")
+  @Roles("business")
   @Get("approved-dates")
   async approved(@Query() q: GetBusinessApprovedDatesQueryDto, @CurrentPrincipal() p: Principal | undefined, @BusinessHeader() h: string | undefined): Promise<Page<ApprovedDate>> {
-    return this.people.approved((await this.business.named(p, h)).businessId, q.cursor, q.limit ?? DEFAULT_LIMIT);
+    return this.people.approved((await this.business.named(p, h, { ownerOnly: true })).businessId, q.cursor, q.limit ?? DEFAULT_LIMIT);
   }
 
   /** E-239 (DEC-168): 201 for a new approval, 200 for the same body again. */
-  @Roles("person", "business")
+  @Roles("business")
   @Post("approved-dates")
   async approve(@Body() body: PostBusinessApprovedDatesBodyDto, @CurrentPrincipal() p: Principal | undefined, @BusinessHeader() h: string | undefined, @Res({ passthrough: true }) res: Response): Promise<ApprovedDate> {
-    const r = await this.people.approve((await this.business.named(p, h)).businessId, body);
+    const r = await this.people.approve((await this.business.named(p, h, { ownerOnly: true })).businessId, body);
     res.status(r.created ? 201 : 200);
     return r.row;
   }
 
   /** E-238 (DEC-168): 204, also for a date that was not approved. */
-  @Roles("person", "business")
+  @Roles("business")
   @Delete("approved-dates")
   @HttpCode(204)
   async takeBack(@Body() body: DeleteBusinessApprovedDatesBodyDto, @CurrentPrincipal() p: Principal | undefined, @BusinessHeader() h: string | undefined): Promise<void> {
-    await this.people.takeBack((await this.business.named(p, h)).businessId, body);
+    await this.people.takeBack((await this.business.named(p, h, { ownerOnly: true })).businessId, body);
   }
 }

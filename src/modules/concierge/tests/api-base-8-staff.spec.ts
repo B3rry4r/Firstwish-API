@@ -2,9 +2,10 @@ import { PrismaService } from "../../../common/db/prisma.service";
 import { uniqueAddress } from "../../../../test/kit/app";
 import { SettlementService } from "../../payments/settlement.service";
 import { boot, ids } from "./kit";
+import { RUN } from "../../../../test/kit/unique";
 
 const NOW = new Date("2027-02-08T09:00:00.000Z");
-const run = `${process.pid}${Date.now() % 100000}`;
+const run = RUN;
 type Kit = Awaited<ReturnType<typeof boot>>;
 type Role = "maker" | "ops" | "owner" | "support" | "finance" | "moderator";
 

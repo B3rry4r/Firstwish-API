@@ -7,6 +7,7 @@ import { SettlementService } from "../../payments/settlement.service";
 import { makeStaff, seedRoleTable } from "../../staff-accounts/tests/staff-kit";
 import { InvoicesService } from "../../pro-business/invoices.service";
 import { RoyaltiesService } from "../royalties.service";
+import { RUN } from "../../../../test/kit/unique";
 
 /*
  * ZZ5: a client wish drawn from a Pro plan month or a pack earns the creator of its Premium style 20% of that wish's share of what
@@ -19,7 +20,7 @@ import { RoyaltiesService } from "../royalties.service";
 const ROOT = join(__dirname, "../../../..");
 const NOW = new Date("2036-04-02T09:00:00.000Z");
 const ids = new UuidV7Maker();
-const run = `${process.pid}${Date.now() % 100000}`;
+const run = RUN;
 let seq = 0;
 const bearer = (token: string) => ({ authorization: `Bearer ${token}` });
 const REASON = "Customer asked, checked";

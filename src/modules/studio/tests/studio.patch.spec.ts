@@ -11,6 +11,7 @@ import { CreatorHandlers } from "../../purchases/creator-handlers";
 import { AI_SWEEP_KIND, StudioAiService } from "../studio-ai.service";
 import { type Bases, runChecks, type UsedFile } from "../submission-checks";
 import { SubmissionsService } from "../submissions.service";
+import { RUN } from "../../../../test/kit/unique";
 
 /** P-B15: SA1 to SA5, XX1 to XX3. Every row here is this spec's own. */
 const ROOT = join(__dirname, "../../../..");
@@ -36,7 +37,7 @@ async function creator(opts: { credits?: number; reviewsLeft?: number } = {}) {
   const id = ids.next();
   const n = ++seq;
   const handle = `pb15${tag()}`;
-  await db.account.create({ data: { id, contact: `pb15-${process.pid}-${n}@example.com`, handle, name: `Zuzu Quillfeather ${n}`, sides: ["person", "creator"] as never, lastSide: "creator" } });
+  await db.account.create({ data: { id, contact: `pb15-${RUN}-${n}@example.com`, handle, name: `Zuzu Quillfeather ${n}`, sides: ["person", "creator"] as never, lastSide: "creator" } });
   await db.creator.create({ data: { id: ids.next(), accountId: id, name: `Zuzu Quillfeather ${n}` } });
   const token = `c-${tag()}`;
   t.tokens.set(token, { kind: "user", accountId: id, sides: ["person", "creator"] as never });
@@ -46,7 +47,7 @@ async function creator(opts: { credits?: number; reviewsLeft?: number } = {}) {
       renews: new Date(NOW.getTime() + 20 * 86_400_000), periodEndsAt: new Date(NOW.getTime() + 20 * 86_400_000), on: true, signed: false,
     },
   });
-  return { id, handle, contact: `pb15-${process.pid}-${n}@example.com`, name: `Zuzu Quillfeather ${n}`, h: { Authorization: `Bearer ${token}` } };
+  return { id, handle, contact: `pb15-${RUN}-${n}@example.com`, name: `Zuzu Quillfeather ${n}`, h: { Authorization: `Bearer ${token}` } };
 }
 type Creator = Awaited<ReturnType<typeof creator>>;
 const post = (c: Creator, path: string, body: Body = {}) => t.http().post(`/v1${path}`).set(c.h).send(body);
@@ -410,7 +411,7 @@ describe("XX3: Open's 3 credits are given once whichever code makes the creator'
     });
   const person = async () => {
     const id = ids.next();
-    await db.account.create({ data: { id, contact: `pb15x-${process.pid}-${++seq}@example.com`, sides: ["person", "creator"] as never, lastSide: "creator" } });
+    await db.account.create({ data: { id, contact: `pb15x-${RUN}-${++seq}@example.com`, sides: ["person", "creator"] as never, lastSide: "creator" } });
     const token = `x-${tag()}`;
     t.tokens.set(token, { kind: "user", accountId: id, sides: ["person", "creator"] as never });
     return { id, h: { Authorization: `Bearer ${token}` } };

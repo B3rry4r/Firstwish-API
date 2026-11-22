@@ -9,7 +9,7 @@ import { makeStaff, seedRoleTable } from "../../staff-accounts/tests/staff-kit";
 import { StandinRefundProvider } from "../../../common/ports/adapters/standin-refund-provider";
 import { RefundProviderPort } from "../../../common/ports/refund-provider.port";
 import { FulfilmentRegistry } from "../../payments/fulfilment.registry";
-import { testSlug, testWishNo } from "../../../../test/kit/unique";
+import { testSlug, testWishNo, RUN } from "../../../../test/kit/unique";
 
 const ROOT = join(__dirname, "../../../..");
 const NOW = new Date("2032-03-10T09:00:00.000Z");
@@ -56,7 +56,7 @@ describe("Wave 4 join: invoices with payments and refunds (J1), a refund of a li
     provider.hanging(false);
   });
 
-  const account = async (contact: string | null = `j4r-${process.pid}-${++seq}@example.com`) => {
+  const account = async (contact: string | null = `j4r-${RUN}-${++seq}@example.com`) => {
     const id = ids.next();
     await db.account.create({ data: { id, contact, name: "Ada", sides: ["person"], lastSide: "person" } });
     return id;

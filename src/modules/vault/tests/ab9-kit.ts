@@ -3,11 +3,12 @@ import { join } from "node:path";
 import { PrismaService } from "../../../common/db/prisma.service";
 import { UuidV7Maker } from "../../../common/ids/uuidv7";
 import { createTestApp, TestApp, uniqueAddress } from "../../../../test/kit/app";
+import { RUN, testWishNo } from "../../../../test/kit/unique";
 
 const ROOT = join(__dirname, "../../../..");
 export const NOW = new Date("2027-03-01T09:00:00.000Z");
 const ids = new UuidV7Maker();
-const run = `${process.pid}${Date.now() % 100000}`;
+const run = RUN;
 let seq = 0;
 export const auth = (token: string) => ({ authorization: `Bearer ${token}` });
 
@@ -93,7 +94,7 @@ export function useKit(now: Date = NOW) {
     };
     k.clientWish = async (o, client = "Ada Obi") => {
       const id = ids.next();
-      await k.db.clientWish.create({ data: { id, businessId: o.businessId, client, kind: "photographers", occasion: "wedding", day: new Date("2027-03-01T00:00:00Z"), no: `09${++seq}`, key: `k-${id}`, wish: "", shoot: "", hearts: [], sentAt: now } });
+      await k.db.clientWish.create({ data: { id, businessId: o.businessId, client, kind: "photographers", occasion: "wedding", day: new Date("2027-03-01T00:00:00Z"), no: testWishNo(), key: `k-${id}`, wish: "", shoot: "", hearts: [], sentAt: now } });
       return id;
     };
     k.post = (path, token, body = {}, headers = {}) => k.t.http().post(path).set(auth(token)).set(headers).send(body);

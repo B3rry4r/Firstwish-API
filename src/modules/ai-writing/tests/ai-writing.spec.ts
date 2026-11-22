@@ -9,6 +9,7 @@ import { tag } from "../../staff-accounts/tests/staff-kit";
 import { AI_AVAILABILITY, AiAvailability } from "../../studio/studio-ai.service";
 import { WishLifecycleService } from "../../wishes/wish-lifecycle.service";
 import { AI_DAILY_CAP } from "../ai-writing.service";
+import { RUN } from "../../../../test/kit/unique";
 
 const ROOT = join(__dirname, "../../../..");
 const NOW = new Date("2026-12-05T09:00:00.000Z");
@@ -21,7 +22,7 @@ let seq = 0;
 
 async function sender() {
   const id = ids.next();
-  await db.account.create({ data: { id, contact: `b23-${process.pid}-${++seq}@example.com`, handle: `b23${tag()}`, sides: ["person"] as never, lastSide: "person" } });
+  await db.account.create({ data: { id, contact: `b23-${RUN}-${++seq}@example.com`, handle: `b23${tag()}`, sides: ["person"] as never, lastSide: "person" } });
   const token = `s-${tag()}`;
   t.tokens.set(token, { kind: "user", accountId: id, sides: ["person"] });
   const wishId = ids.next();
@@ -202,7 +203,7 @@ describe("E-12 and E-14: letter and reasons", () => {
     try {
       const odb = off.app.get(PrismaService);
       const id = ids.next();
-      await odb.account.create({ data: { id, contact: `b23-off-${process.pid}@example.com`, handle: `b23o${tag()}`, sides: ["person"] as never, lastSide: "person" } });
+      await odb.account.create({ data: { id, contact: `b23-off-${RUN}@example.com`, handle: `b23o${tag()}`, sides: ["person"] as never, lastSide: "person" } });
       off.tokens.set("off", { kind: "user", accountId: id, sides: ["person"] });
       for (const [p, body] of [["letter", { wishId: ids.next(), transcript: "w" }], ["reasons", { wishId: ids.next(), transcript: "w" }], ["pick-photos", { wishId: ids.next(), fileIds: [ids.next()] }]] as const) {
         const r = await off.http().post(`/v1/ai/${p}`).set({ Authorization: "Bearer off" }).send(body);

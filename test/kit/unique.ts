@@ -24,3 +24,11 @@ export function testWishNo(): string {
 export function testSlug(tag = "t"): string {
   return `${tag}-${fresh()}`.slice(0, 30);
 }
+
+/** Random hex of at least 15 characters (60 bits): for any text value on a unique column that a test builds, in place of a short hex, Math.random or a counter. */
+export function testHex(chars = 15): string {
+  return fresh().slice(0, Math.max(15, Math.min(chars, 32)));
+}
+
+/** One value per spec file (each file loads its own copy of this module): 15 hex characters (60 bits), the stand-in for the pid and the clock in a value a spec builds from "run". */
+export const RUN = testHex(15);

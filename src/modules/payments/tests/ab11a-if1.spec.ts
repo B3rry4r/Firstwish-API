@@ -1,12 +1,12 @@
 import { ENV } from "../../../common/env/env.module";
 import type { Env } from "../../../common/env/env";
-import { testSlug, testWishNo } from "../../../../test/kit/unique";
+import { testSlug, testWishNo, RUN } from "../../../../test/kit/unique";
 import { uniqueAddress } from "../../../../test/kit/app";
 import { boot, ids } from "../../concierge/tests/kit";
 
 const NOW = new Date("2027-06-07T09:00:00.000Z");
 const DAY = 86_400_000;
-const run = `${process.pid}${Date.now() % 100000}`;
+const run = RUN;
 type Kit = Awaited<ReturnType<typeof boot>>;
 
 /** API-BASE-11A case 1 (IF1): a payment start may name where the payer comes back to. */

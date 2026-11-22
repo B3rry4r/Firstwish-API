@@ -4,12 +4,13 @@ import { PrismaService } from "../../../common/db/prisma.service";
 import { UuidV7Maker } from "../../../common/ids/uuidv7";
 import { createTestApp, TestApp } from "../../../../test/kit/app";
 import { AccountErasureService } from "../../accounts/account-erasure.service";
+import { RUN } from "../../../../test/kit/unique";
 
 const ROOT = join(__dirname, "../../../..");
 // A start no other spec uses.
 const NOW = new Date("2027-06-07T09:00:00.000Z");
 const ids = new UuidV7Maker();
-const run = `${process.pid}${Date.now() % 100000}`;
+const run = RUN;
 let seq = 0;
 
 describe("ZB4 and ZB5 (wave 6 join): a business's wishes are reached only through the business", () => {

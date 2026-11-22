@@ -6,6 +6,7 @@ import { createTestApp, TestApp } from "../kit/app";
 import { SettlementService } from "../../src/modules/payments/settlement.service";
 import { InvoicesService } from "../../src/modules/pro-business/invoices.service";
 import { RoyaltiesService } from "../../src/modules/royalties/royalties.service";
+import { RUN } from "../kit/unique";
 
 /*
  * HD2: a client wish earns from the payment it was DRAWN against. The draw writes its source on the client-wish record (month or pack,
@@ -20,7 +21,7 @@ const ROOT = join(__dirname, "../..");
 const APRIL = new Date("2038-04-02T09:00:00.000Z");
 const MAY = new Date("2038-05-03T09:00:00.000Z");
 const ids = new UuidV7Maker();
-const run = `${process.pid}${Date.now() % 100000}`;
+const run = RUN;
 let seq = 0;
 const bearer = (token: string) => ({ authorization: `Bearer ${token}` });
 const letter = { letter: { paras: ["Happy birthday."] } };

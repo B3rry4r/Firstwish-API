@@ -1,6 +1,6 @@
 import { Controller, Get } from "@nestjs/common";
 import type { StaffAccountRoles, StaffAccountStatus } from "@prisma/client";
-import { createHash, randomBytes } from "node:crypto";
+import { createHash } from "node:crypto";
 import { CurrentPrincipal } from "../../../common/auth/decorators";
 import { AccessTokenVerifier, Principal } from "../../../common/auth/principal";
 import { PrismaService } from "../../../common/db/prisma.service";
@@ -8,6 +8,7 @@ import { UuidV7Maker } from "../../../common/ids/uuidv7";
 import { createTestApp, TestApp, TestTokens, uniqueAddress } from "../../../../test/kit/app";
 import { SessionTokenVerifier } from "../../../common/auth/session-token.verifier";
 import { StaffAuthService } from "../staff-auth.service";
+import { testHex } from "../../../../test/kit/unique";
 
 /** The role table as scripts/seed.mjs seeds it (same ids, so a seeded database is left as it is). */
 const ALL = ["/admin", "/admin/wishes", "/admin/people", "/admin/moderation", "/admin/showing", "/admin/styles", "/admin/styles/review",
@@ -83,7 +84,7 @@ export async function createStaffApp(): Promise<StaffApp> {
 }
 
 const ids = new UuidV7Maker();
-export const tag = () => randomBytes(4).toString("hex");
+export const tag = () => testHex();
 
 export async function makeStaff(db: PrismaService, roles: StaffAccountRoles[], status: StaffAccountStatus = "active") {
   const t = tag();

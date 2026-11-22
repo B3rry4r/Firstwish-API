@@ -3,11 +3,12 @@ import { join } from "node:path";
 import { PrismaService } from "../../../common/db/prisma.service";
 import { UuidV7Maker } from "../../../common/ids/uuidv7";
 import { createTestApp, TestApp } from "../../../../test/kit/app";
+import { RUN, testWishNo } from "../../../../test/kit/unique";
 
 const ROOT = join(__dirname, "../../../..");
 const NOW = new Date("2027-09-02T09:00:00.000Z");
 const ids = new UuidV7Maker();
-const run = `${process.pid}${Date.now() % 100000}`;
+const run = RUN;
 let seq = 0;
 const auth = (token: string) => ({ authorization: `Bearer ${token}` });
 
@@ -39,7 +40,7 @@ describe("API-BASE-5 case 7: the reveal email count follows the Clock port, not 
   }
   const wishFor = async (businessId: string) => {
     const id = ids.next();
-    await db.clientWish.create({ data: { id, businessId, client: "Ada Obi", kind: "photographers", occasion: "wedding", day: new Date("2027-09-02T00:00:00Z"), no: `09${++seq}`, key: `k-${id}`, wish: "", shoot: "", hearts: [], sentAt: NOW } });
+    await db.clientWish.create({ data: { id, businessId, client: "Ada Obi", kind: "photographers", occasion: "wedding", day: new Date("2027-09-02T00:00:00Z"), no: testWishNo(), key: `k-${id}`, wish: "", shoot: "", hearts: [], sentAt: NOW } });
     return id;
   };
   const send = (b: { token: string; shoot: string }, wish: string, email: string | null) =>

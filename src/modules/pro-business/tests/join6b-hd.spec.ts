@@ -5,11 +5,12 @@ import { PrismaService } from "../../../common/db/prisma.service";
 import { UuidV7Maker } from "../../../common/ids/uuidv7";
 import { createTestApp, TestApp } from "../../../../test/kit/app";
 import { AccountErasureService } from "../../accounts/account-erasure.service";
+import { RUN } from "../../../../test/kit/unique";
 
 const ROOT = join(__dirname, "../../../..");
 const NOW = new Date("2208-02-03T09:00:00.000Z");
 const ids = new UuidV7Maker();
-const run = `${process.pid}${Date.now() % 100000}`;
+const run = RUN;
 let seq = 0;
 const bearer = (token: string) => ({ authorization: `Bearer ${token}` });
 const ALLOWED = [201, 402, 403, 409, 429];

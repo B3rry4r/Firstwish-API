@@ -1,9 +1,10 @@
 import { PrismaService } from "../../../common/db/prisma.service";
 import { SettlementService } from "../settlement.service";
 import { boot, ids } from "../../concierge/tests/kit";
+import { RUN } from "../../../../test/kit/unique";
 
 const NOW = new Date("2027-04-05T09:00:00.000Z");
-const run = `${process.pid}${Date.now() % 100000}`;
+const run = RUN;
 type Kit = Awaited<ReturnType<typeof boot>>;
 
 /** API-BASE-10 case 1 (ID1): a wish is paid for once. */

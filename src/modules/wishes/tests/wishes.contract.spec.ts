@@ -9,6 +9,7 @@ import { StoragePort } from "../../../common/ports/storage.port";
 import { SavedWishesService } from "../../saved-wishes/saved-wishes.service";
 import { WishLifecycleService } from "../wish-lifecycle.service";
 import { WishesService } from "../wishes.service";
+import { RUN } from "../../../../test/kit/unique";
 
 const ROOT = join(__dirname, "../../../..");
 // A start no other spec uses (the dates below need 2027); every runDue names the keys it means.
@@ -24,7 +25,7 @@ describe("wishes E-221 E-222 E-224 E-225 E-229 E-231 (contract)", () => {
   let jobs: JobsService;
   let nid: () => string;
   let seq = 0;
-  const run = `${process.pid}${Date.now() % 100000}`;
+  const run = RUN;
 
   beforeAll(async () => {
     t = await createTestApp({ now: NOW });

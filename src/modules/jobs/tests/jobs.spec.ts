@@ -4,6 +4,7 @@ import { IdGenerator } from "../../../common/ports/ids.port";
 import { QueueService } from "../../../common/queue/queue.service";
 import { createTestApp, TestApp } from "../../../../test/kit/app";
 import { JobsService, MAX_TRIES } from "../jobs.service";
+import { RUN } from "../../../../test/kit/unique";
 
 // A clock no other spec reaches, and every runDue names the keys it means (the join closes HH9's cause).
 const NOW = new Date("2061-02-03T09:00:00.000Z");
@@ -14,7 +15,7 @@ describe("jobs frame", () => {
   let jobs: JobsService;
   let nid: () => string;
   let key = 0;
-  const subject = () => `b06-job-${process.pid}-${Date.now()}-${++key}`;
+  const subject = () => `b06-job-${RUN}-${Date.now()}-${++key}`;
 
   beforeAll(async () => {
     t = await createTestApp({ now: NOW });

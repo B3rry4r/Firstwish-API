@@ -7,13 +7,13 @@ import { createTestApp, TestApp } from "../../../../test/kit/app";
 import { AccountErasureService } from "../../accounts/account-erasure.service";
 import { FileJobs } from "../../stored-files/file-jobs";
 import { makeStaff, seedRoleTable } from "../../staff-accounts/tests/staff-kit";
-import { testWishNo } from "../../../../test/kit/unique";
+import { testWishNo, RUN } from "../../../../test/kit/unique";
 
 const ROOT = join(__dirname, "../../../..");
 const NOW = new Date("2036-06-10T09:00:00.000Z");
 const DAY = 86_400_000;
 const ids = new UuidV7Maker();
-const run = `${process.pid}${Date.now() % 100000}`;
+const run = RUN;
 let seq = 0;
 const PNG = Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), Buffer.alloc(40)]);
 const MP3 = Buffer.concat([Buffer.from("ID3"), Buffer.alloc(40)]);

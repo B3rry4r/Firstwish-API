@@ -14,6 +14,7 @@ import { SignedPeriodService } from "../signed-period.service";
 import { PayoutProviderPort } from "../../../common/ports/payout-provider.port";
 import { StandinPayoutProvider } from "../../../common/ports/adapters/standin-payout-provider";
 import { nextFifth } from "../payouts.module";
+import { RUN, testHex } from "../../../../test/kit/unique";
 
 /* B16: creators' money, on a real database. The app's clock stands on 6 December 2026, so "last month" is 2026-11. */
 const ROOT = join(__dirname, "../../../..");
@@ -29,7 +30,7 @@ describe("creators' money (B16)", () => {
   let royalties: RoyaltiesService;
   let runs: PayoutRunService;
   let provider: StandinPayoutProvider;
-  const tag = `b16${process.pid}`;
+  const tag = `b16${RUN}`;
 
   let releaseSetting: () => Promise<void>;
   beforeAll(async () => {
@@ -61,7 +62,7 @@ describe("creators' money (B16)", () => {
     const accountId = ids.next();
     const creatorId = ids.next();
     const n = ++seq;
-    await db.account.create({ data: { id: accountId, contact: `${tag}-${n}@example.com`, handle: `${tag}${n}`.slice(0, 20), name: handle, sides: ["person", "creator"], lastSide: "creator" } });
+    await db.account.create({ data: { id: accountId, contact: `${tag}-${n}@example.com`, handle: `h${testHex()}`, name: handle, sides: ["person", "creator"], lastSide: "creator" } });
     await db.creator.create({ data: { id: creatorId, accountId, name: handle, house: opts.house ?? false } });
     const token = `c-${accountId}`;
     t.tokens.set(token, { kind: "user", accountId, sides: ["person", "creator"] });

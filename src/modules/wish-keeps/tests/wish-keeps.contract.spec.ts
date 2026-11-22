@@ -9,7 +9,7 @@ import { JobsService } from "../../jobs/jobs.service";
 import { PurchasesService } from "../../purchases/purchases.service";
 import { UnlockTokens } from "../../public-wishes/unlock-token";
 import { WishLifecycleService } from "../../wishes/wish-lifecycle.service";
-import { testWishNo } from "../../../../test/kit/unique";
+import { testWishNo, RUN } from "../../../../test/kit/unique";
 
 const ROOT = join(__dirname, "../../../..");
 // a start no other spec uses
@@ -20,7 +20,7 @@ const TERM_DAYS: Record<string, number> = { moment: 7, keepsake: 14, signature: 
 const openedFor = (d: Record<string, unknown>): Date | undefined => (d.endsAt instanceof Date && typeof d.ticket === "string" && TERM_DAYS[d.ticket] ? new Date(d.endsAt.getTime() - TERM_DAYS[d.ticket] * 86_400_000) : undefined);
 const ids = new UuidV7Maker();
 const bearer = (token: string) => ({ authorization: `Bearer ${token}` });
-const run = `${process.pid}${Date.now() % 100000}`;
+const run = RUN;
 let seq = 0;
 
 describe("B22 keep (E-228) and wake (E-232) (contract)", () => {

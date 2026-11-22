@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { NOT_AN_ID_ROUTES } from "../id-params.interceptor";
 import { StandinPayments } from "../../ports/adapters/standins";
 import { Money } from "../../money/money";
-import { testSlug, testWishNo } from "../../../../test/kit/unique";
+import { testSlug, testWishNo, RUN } from "../../../../test/kit/unique";
 import { boot, ids } from "../../../modules/concierge/tests/kit";
 
 const NOW = new Date("2027-07-01T09:00:00.000Z");
@@ -28,7 +28,7 @@ describe("IF2a: ids in every spelling", () => {
     k = await boot("ab11a2", NOW);
     staffAuth = (await k.staff(["owner", "ops", "maker"])).auth;
     const id = ids.next();
-    await k.db.account.create({ data: { id, contact: `ab11a2-${process.pid}@example.com`, sides: ["person", "creator", "business"], lastSide: "person" } });
+    await k.db.account.create({ data: { id, contact: `ab11a2-${RUN}@example.com`, sides: ["person", "creator", "business"], lastSide: "person" } });
     k.t.tokens.set(`user-${id}`, { kind: "user", accountId: id, sides: ["person", "creator", "business"] });
     userAuth = `Bearer user-${id}`;
     std = k.t.payments;
@@ -98,7 +98,7 @@ describe("IF2a: ids in every spelling", () => {
     expect(linkLower.status).toBe(200);
     expect([linkUpper.status, linkUpper.body]).toEqual([200, linkLower.body]);
     // the payment read by reference in any case; a waiting payment is dropped by an upper-case reference; a paid one is read as paid
-    const start = (ticket: string, wishId: string) => k.t.http().post("/v1/payments").set("Authorization", a.auth).set("Idempotency-Key", `ab11a2-${process.pid}-${ticket}-${wishId}`).send({ purpose: "ticket", ticket, subjectId: wishId.toUpperCase() });
+    const start = (ticket: string, wishId: string) => k.t.http().post("/v1/payments").set("Authorization", a.auth).set("Idempotency-Key", `ab11a2-${RUN}-${ticket}-${wishId}`).send({ purpose: "ticket", ticket, subjectId: wishId.toUpperCase() });
     const first = await start("moment", w);
     expect(first.status).toBe(201);
     const ref = first.body.payment.reference as string;
@@ -119,11 +119,11 @@ describe("IF2a: ids in every spelling", () => {
     expect(settled.body.state).toBe("succeeded");
     expect((await k.db.wish.findUniqueOrThrow({ where: { id: w2 } })).ticket).toBe("keepsake");
     // a subject that is not an id at a payment start is 422 in words
-    const bad = await k.t.http().post("/v1/payments").set("Authorization", a.auth).set("Idempotency-Key", `ab11a2-${process.pid}-bad-key`).send({ purpose: "ticket", ticket: "moment", subjectId: "not-an-id" });
+    const bad = await k.t.http().post("/v1/payments").set("Authorization", a.auth).set("Idempotency-Key", `ab11a2-${RUN}-bad-key`).send({ purpose: "ticket", ticket: "moment", subjectId: "not-an-id" });
     expect(bad.status).toBe(422);
     expect(bad.body.error.fields.subjectId).toMatch(/^Not an id/);
     // IF2a: an id in a body field that is not an id is 422 in words (the keep body's wishId); in the path the same word is 404
-    const keep = await k.t.http().post(`/v1/wishes/${w}/keep`).set("Authorization", a.auth).set("Idempotency-Key", `ab11a2-${process.pid}-keep-key`).send({ keepKey: "month", wishId: "not-an-id" });
+    const keep = await k.t.http().post(`/v1/wishes/${w}/keep`).set("Authorization", a.auth).set("Idempotency-Key", `ab11a2-${RUN}-keep-key`).send({ keepKey: "month", wishId: "not-an-id" });
     expect(keep.status).toBe(422);
     expect((await k.t.http().get("/v1/wishes/not-an-id").set("Authorization", a.auth)).status).toBe(404);
     expect((await k.t.http().get("/v1/payments/fw-not-a-payment").set("Authorization", a.auth)).status).toBe(404);

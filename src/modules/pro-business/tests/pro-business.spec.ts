@@ -8,12 +8,13 @@ import { SettlementService } from "../../payments/settlement.service";
 import { InvoicesService } from "../invoices.service";
 import { NoticesService } from "../../notices/notices.service";
 import { JobsService } from "../../jobs/jobs.service";
+import { RUN } from "../../../../test/kit/unique";
 
 const ROOT = join(__dirname, "../../../..");
 // a month no other spec invoices in: the invoice numbers asserted gap-free below belong to this spec alone
 const NOW = new Date("2029-09-03T09:00:00.000Z");
 const ids = new UuidV7Maker();
-const run = `${process.pid}${Date.now() % 100000}`;
+const run = RUN;
 let seq = 0;
 
 describe("B17 business: plan, usage, client wishes, invoices, logins, staff", () => {

@@ -7,6 +7,7 @@ import { StandinClock } from "../../../common/ports/clock.port";
 import { loadEnv } from "../../../common/env/env";
 import { STANDIN_STORAGE } from "../../../common/ports/standin-storage";
 import type { StandinStorage } from "../../../common/ports/adapters/standins";
+import { RUN } from "../../../../test/kit/unique";
 
 const ROOT = join(__dirname, "../../../..");
 const NOW = new Date("2027-01-09T09:00:00.000Z");
@@ -18,7 +19,7 @@ describe("API-BASE-4 wishes (through the real routes)", () => {
   let db: PrismaService;
   let nid: () => string;
   let seq = 0;
-  const run = `${process.pid}${Date.now() % 100000}`;
+  const run = RUN;
 
   beforeAll(async () => {
     t = await createTestApp({ now: NOW });

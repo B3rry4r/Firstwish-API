@@ -11,6 +11,7 @@ import { FulfilmentRegistry } from "../../payments/fulfilment.registry";
 import { SettlementService } from "../../payments/settlement.service";
 import { vaultLimitBytes } from "../../stored-files/stored-files.service";
 import { WishesService } from "../../wishes/wishes.service";
+import { RUN } from "../../../../test/kit/unique";
 
 /* INT-4: the joins the shared changes force, each case named by its ruling id. Specs share one database: every row here is this
    spec's own, and the one global job (clean-link-hits) is run on a clock before every other spec's. */
@@ -40,7 +41,7 @@ describe("INT-4 joins", () => {
 
   const account = async (zone?: string) => {
     const id = ids.next();
-    await db.account.create({ data: { id, contact: `int4-${process.pid}-${++seq}@example.com`, sides: ["person"], lastSide: "person", timeZone: zone ?? null } });
+    await db.account.create({ data: { id, contact: `int4-${RUN}-${++seq}@example.com`, sides: ["person"], lastSide: "person", timeZone: zone ?? null } });
     const token = `int4-${id}`;
     t.tokens.set(token, { kind: "user", accountId: id, sides: ["person"] });
     return { id, token };
@@ -176,7 +177,7 @@ describe("INT-4 joins", () => {
 
   it("II3 and MM1: one key is one email, by the unique index; the status has sending and dropped", async () => {
     const notices = t.app.get(NoticesService);
-    const key = `int4-key-${process.pid}-${Date.now()}`;
+    const key = `int4-key-${RUN}-${Date.now()}`;
     const out = await Promise.all(Array.from({ length: 20 }, () => notices.send(undefined, { template: "code", toEmail: `k-${seq}@example.test`, data: { code: "123456" }, key })));
     expect(new Set(out.map((o) => o.deliveryId)).size).toBe(1);
     expect(out.filter((o) => o.status === "queued")).toHaveLength(1);
@@ -228,7 +229,7 @@ describe("INT-4 joins", () => {
       const fresh = ids.next();
       await edb.linkHit.create({ data: { id: old, bucket: "int4", key: "k", at: new Date(EARLY.getTime() - 3 * 86_400_000) } }); // older than the 2 days a hit is kept (the gather ask limit counts over a day: HU4)
       await edb.linkHit.create({ data: { id: fresh, bucket: "int4", key: "k", at: new Date(EARLY.getTime() - 30 * 60_000) } });
-      const subject = `int4-clean-${process.pid}-${Date.now()}`;
+      const subject = `int4-clean-${RUN}-${Date.now()}`;
       await jobs.schedule("clean-link-hits", EARLY, subject);
       expect(await jobs.runDue(5, [subject])).toBe(1);
       expect(await edb.linkHit.findUnique({ where: { id: old } })).toBeNull();

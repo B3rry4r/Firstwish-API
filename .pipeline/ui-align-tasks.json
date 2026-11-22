@@ -346,7 +346,8 @@
         "lib/maker.ts"
       ],
       "change": "integer kobo, currency NGN, over the wire and in storage; prices only from the price book",
-      "status": "open"
+      "status": "done",
+      "resolution": "W6 (web w6-maker3, merged 77ce0f9), verified 22 Nov"
     },
     {
       "id": "UA-30",
@@ -384,7 +385,8 @@
         "lib/pro-data.ts"
       ],
       "change": "integer kobo, currency NGN, over the wire and in storage; prices only from the price book",
-      "status": "open"
+      "status": "done",
+      "resolution": "W6 (web w6-maker3, merged 77ce0f9), verified 22 Nov"
     },
     {
       "id": "UA-33",
@@ -396,7 +398,8 @@
         "lib/maker.ts"
       ],
       "change": "integer kobo, currency NGN, over the wire and in storage; prices only from the price book",
-      "status": "open"
+      "status": "done",
+      "resolution": "W6 (web w6-maker3, merged 77ce0f9), verified 22 Nov"
     },
     {
       "id": "UA-34",
@@ -420,7 +423,8 @@
         "lib/maker.ts"
       ],
       "change": "integer kobo, currency NGN, over the wire and in storage; prices only from the price book",
-      "status": "open"
+      "status": "done",
+      "resolution": "W6 (web w6-maker3, merged 77ce0f9), verified 22 Nov"
     },
     {
       "id": "UA-36",
@@ -1069,7 +1073,8 @@
         "lib/account.ts"
       ],
       "change": "server-issued UUIDv7 ids",
-      "status": "open"
+      "status": "done",
+      "resolution": "W6 (web w6-maker3, merged 77ce0f9), verified 22 Nov"
     },
     {
       "id": "UA-90",
@@ -1106,7 +1111,8 @@
         "lib/pro-data.ts"
       ],
       "change": "server-issued UUIDv7 ids",
-      "status": "open"
+      "status": "done",
+      "resolution": "W6 (web w6-maker3, merged 77ce0f9), verified 22 Nov"
     },
     {
       "id": "UA-93",
@@ -1117,7 +1123,8 @@
         "lib/account.ts"
       ],
       "change": "server-issued UUIDv7 ids",
-      "status": "open"
+      "status": "done",
+      "resolution": "W6 (web w6-maker3, merged 77ce0f9), verified 22 Nov"
     },
     {
       "id": "UA-94",
@@ -1140,7 +1147,8 @@
         "lib/account.ts"
       ],
       "change": "server-issued UUIDv7 ids",
-      "status": "open"
+      "status": "done",
+      "resolution": "W6 (web w6-maker3, merged 77ce0f9), verified 22 Nov"
     },
     {
       "id": "UA-96",
@@ -1549,7 +1557,8 @@
         "lib/maker.ts"
       ],
       "change": "wish number issued in payment order by the server (wish-number)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W6 (web w6-maker3, merged 77ce0f9), verified 22 Nov"
     },
     {
       "id": "UA-132",
@@ -1582,7 +1591,8 @@
         "lib/maker.ts"
       ],
       "change": "wish number issued in payment order by the server (wish-number)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W6 (web w6-maker3, merged 77ce0f9), verified 22 Nov"
     },
     {
       "id": "UA-135",
@@ -1593,7 +1603,8 @@
         "lib/maker.ts"
       ],
       "change": "wish number issued in payment order by the server (wish-number)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W6 (web w6-maker3, merged 77ce0f9), verified 22 Nov"
     },
     {
       "id": "UA-136",
@@ -1615,7 +1626,8 @@
         "lib/maker.ts"
       ],
       "change": "wish number issued in payment order by the server (wish-number)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W6 (web w6-maker3, merged 77ce0f9), verified 22 Nov"
     },
     {
       "id": "UA-138",
@@ -1734,7 +1746,8 @@
         "components/app/Pay.tsx"
       ],
       "change": "Paystack start, verify and signed webhook (payments)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W6 (web w6-maker3, merged 77ce0f9), verified 22 Nov"
     },
     {
       "id": "UA-148",
@@ -1970,7 +1983,8 @@
         "lib/maker.ts"
       ],
       "change": "maker notes saved to the server draft on every step once signed in; voice notes uploaded to storage",
-      "status": "open"
+      "status": "done",
+      "resolution": "W6 (web w6-maker3, merged 77ce0f9), verified 22 Nov"
     },
     {
       "id": "UA-168",
@@ -2005,7 +2019,8 @@
         "lib/maker.ts"
       ],
       "change": "maker notes saved to the server draft on every step once signed in; voice notes uploaded to storage",
-      "status": "open"
+      "status": "done",
+      "resolution": "W6 (web w6-maker3, merged 77ce0f9), verified 22 Nov"
     },
     {
       "id": "UA-171",
@@ -2016,7 +2031,8 @@
         "lib/maker.ts"
       ],
       "change": "maker notes saved to the server draft on every step once signed in; voice notes uploaded to storage",
-      "status": "open"
+      "status": "done",
+      "resolution": "W6 (web w6-maker3, merged 77ce0f9), verified 22 Nov"
     },
     {
       "id": "UA-172",
@@ -2039,7 +2055,8 @@
         "lib/maker.ts"
       ],
       "change": "maker notes saved to the server draft on every step once signed in; voice notes uploaded to storage",
-      "status": "open"
+      "status": "done",
+      "resolution": "W6 (web w6-maker3, merged 77ce0f9), verified 22 Nov"
     },
     {
       "id": "UA-174",
@@ -2121,7 +2138,8 @@
         "lib/pro-data.ts"
       ],
       "change": "the server (business, members, client wishes, people, invoices)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W6 (web w6-maker3, merged 77ce0f9), verified 22 Nov"
     },
     {
       "id": "UA-181",
@@ -2699,7 +2717,8 @@
         "lib/maker.ts"
       ],
       "change": "signed uploads straight to storage, confirm step, short-lived signed reads (storage)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W6 (web w6-maker3, merged 77ce0f9), verified 22 Nov"
     },
     {
       "id": "UA-229",
@@ -2734,7 +2753,8 @@
         "lib/maker.ts"
       ],
       "change": "signed uploads straight to storage, confirm step, short-lived signed reads (storage)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W6 (web w6-maker3, merged 77ce0f9), verified 22 Nov"
     },
     {
       "id": "UA-232",
@@ -2745,7 +2765,8 @@
         "lib/maker.ts"
       ],
       "change": "signed uploads straight to storage, confirm step, short-lived signed reads (storage)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W6 (web w6-maker3, merged 77ce0f9), verified 22 Nov"
     },
     {
       "id": "UA-233",
@@ -2768,7 +2789,8 @@
         "lib/maker.ts"
       ],
       "change": "signed uploads straight to storage, confirm step, short-lived signed reads (storage)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W6 (web w6-maker3, merged 77ce0f9), verified 22 Nov"
     },
     {
       "id": "UA-235",
@@ -3319,7 +3341,8 @@
         "lib/catalog.ts"
       ],
       "change": "the web reads GET /v1/prices; the server charges only from the price book",
-      "status": "open"
+      "status": "done",
+      "resolution": "W6 (web w6-maker3, merged 77ce0f9), verified 22 Nov"
     },
     {
       "id": "UA-280",
@@ -3357,7 +3380,8 @@
         "lib/pro-data.ts"
       ],
       "change": "the web reads GET /v1/prices; the server charges only from the price book",
-      "status": "open"
+      "status": "done",
+      "resolution": "W6 (web w6-maker3, merged 77ce0f9), verified 22 Nov"
     },
     {
       "id": "UA-283",
@@ -3369,7 +3393,8 @@
         "lib/catalog.ts"
       ],
       "change": "the web reads GET /v1/prices; the server charges only from the price book",
-      "status": "open"
+      "status": "done",
+      "resolution": "W6 (web w6-maker3, merged 77ce0f9), verified 22 Nov"
     },
     {
       "id": "UA-284",
@@ -3393,7 +3418,8 @@
         "lib/catalog.ts"
       ],
       "change": "the web reads GET /v1/prices; the server charges only from the price book",
-      "status": "open"
+      "status": "done",
+      "resolution": "W6 (web w6-maker3, merged 77ce0f9), verified 22 Nov"
     },
     {
       "id": "UA-286",
@@ -4003,7 +4029,8 @@
         "lib/maker.ts"
       ],
       "change": "the price book's promotion with endsAt 2027-02-01 00:00 Africa/Lagos, checked by the server on every quote",
-      "status": "open"
+      "status": "done",
+      "resolution": "W6 (web w6-maker3, merged 77ce0f9), verified 22 Nov"
     },
     {
       "id": "UA-338",
@@ -4036,7 +4063,8 @@
         "lib/maker.ts"
       ],
       "change": "the price book's promotion with endsAt 2027-02-01 00:00 Africa/Lagos, checked by the server on every quote",
-      "status": "open"
+      "status": "done",
+      "resolution": "W6 (web w6-maker3, merged 77ce0f9), verified 22 Nov"
     },
     {
       "id": "UA-341",
@@ -4047,7 +4075,8 @@
         "lib/maker.ts"
       ],
       "change": "the price book's promotion with endsAt 2027-02-01 00:00 Africa/Lagos, checked by the server on every quote",
-      "status": "open"
+      "status": "done",
+      "resolution": "W6 (web w6-maker3, merged 77ce0f9), verified 22 Nov"
     },
     {
       "id": "UA-342",
@@ -4069,7 +4098,8 @@
         "lib/maker.ts"
       ],
       "change": "the price book's promotion with endsAt 2027-02-01 00:00 Africa/Lagos, checked by the server on every quote",
-      "status": "open"
+      "status": "done",
+      "resolution": "W6 (web w6-maker3, merged 77ce0f9), verified 22 Nov"
     },
     {
       "id": "UA-344",
@@ -4734,7 +4764,8 @@
         "lib/account.ts"
       ],
       "change": "every epoch-ms `at` becomes createdAt/updatedAt ISO-8601 UTC strings set by the server; calendar dates are YYYY-MM-DD strings (date-only canon)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W6 (web w6-maker3, merged 77ce0f9), verified 22 Nov"
     },
     {
       "id": "UA-400",
@@ -4771,7 +4802,8 @@
         "lib/pro-data.ts"
       ],
       "change": "every epoch-ms `at` becomes createdAt/updatedAt ISO-8601 UTC strings set by the server; calendar dates are YYYY-MM-DD strings (date-only canon)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W6 (web w6-maker3, merged 77ce0f9), verified 22 Nov"
     },
     {
       "id": "UA-403",
@@ -4782,7 +4814,8 @@
         "lib/account.ts"
       ],
       "change": "every epoch-ms `at` becomes createdAt/updatedAt ISO-8601 UTC strings set by the server; calendar dates are YYYY-MM-DD strings (date-only canon)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W6 (web w6-maker3, merged 77ce0f9), verified 22 Nov"
     },
     {
       "id": "UA-404",
@@ -4805,7 +4838,8 @@
         "lib/account.ts"
       ],
       "change": "every epoch-ms `at` becomes createdAt/updatedAt ISO-8601 UTC strings set by the server; calendar dates are YYYY-MM-DD strings (date-only canon)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W6 (web w6-maker3, merged 77ce0f9), verified 22 Nov"
     },
     {
       "id": "UA-406",
@@ -5240,7 +5274,8 @@
         "lib/maker.ts"
       ],
       "change": "Wish.keep is null | \"month\" | \"half\" | \"year\" (the keep bought); the maker's boolean is stale and goes",
-      "status": "open"
+      "status": "done",
+      "resolution": "W6 (web w6-maker3, merged 77ce0f9), verified 22 Nov"
     },
     {
       "id": "UA-444",
@@ -5273,7 +5308,8 @@
         "lib/maker.ts"
       ],
       "change": "Wish.keep is null | \"month\" | \"half\" | \"year\" (the keep bought); the maker's boolean is stale and goes",
-      "status": "open"
+      "status": "done",
+      "resolution": "W6 (web w6-maker3, merged 77ce0f9), verified 22 Nov"
     },
     {
       "id": "UA-447",
@@ -5284,7 +5320,8 @@
         "lib/maker.ts"
       ],
       "change": "Wish.keep is null | \"month\" | \"half\" | \"year\" (the keep bought); the maker's boolean is stale and goes",
-      "status": "open"
+      "status": "done",
+      "resolution": "W6 (web w6-maker3, merged 77ce0f9), verified 22 Nov"
     },
     {
       "id": "UA-448",
@@ -5306,7 +5343,8 @@
         "lib/maker.ts"
       ],
       "change": "Wish.keep is null | \"month\" | \"half\" | \"year\" (the keep bought); the maker's boolean is stale and goes",
-      "status": "open"
+      "status": "done",
+      "resolution": "W6 (web w6-maker3, merged 77ce0f9), verified 22 Nov"
     },
     {
       "id": "UA-450",
@@ -5353,7 +5391,8 @@
         "components/app/Pay.tsx"
       ],
       "change": "the client never sends an amount; Payment.amountKobo is set by the server from the price book",
-      "status": "open"
+      "status": "done",
+      "resolution": "W6 (web w6-maker3, merged 77ce0f9), verified 22 Nov"
     },
     {
       "id": "UA-454",
@@ -5765,7 +5804,8 @@
         "lib/maker.ts"
       ],
       "change": "every read or write of localStorage/sessionStorage/IndexedDB is replaced by its endpoint; the session is an httpOnly refresh cookie plus an in-memory access token; mode (light/dark) is a field on the account; choices before sign-in travel in the link; the build fails on the words localStorage, sessionStorage, IndexedDB in app/, components/, lib/",
-      "status": "open"
+      "status": "done",
+      "resolution": "W6 (web w6-maker3, merged 77ce0f9), verified 22 Nov"
     },
     {
       "id": "UA-487",
@@ -5806,7 +5846,8 @@
         "lib/pro-data.ts"
       ],
       "change": "every read or write of localStorage/sessionStorage/IndexedDB is replaced by its endpoint; the session is an httpOnly refresh cookie plus an in-memory access token; mode (light/dark) is a field on the account; choices before sign-in travel in the link; the build fails on the words localStorage, sessionStorage, IndexedDB in app/, components/, lib/",
-      "status": "open"
+      "status": "done",
+      "resolution": "W6 (web w6-maker3, merged 77ce0f9), verified 22 Nov"
     },
     {
       "id": "UA-490",
@@ -5818,7 +5859,8 @@
         "lib/maker.ts"
       ],
       "change": "every read or write of localStorage/sessionStorage/IndexedDB is replaced by its endpoint; the session is an httpOnly refresh cookie plus an in-memory access token; mode (light/dark) is a field on the account; choices before sign-in travel in the link; the build fails on the words localStorage, sessionStorage, IndexedDB in app/, components/, lib/",
-      "status": "open"
+      "status": "done",
+      "resolution": "W6 (web w6-maker3, merged 77ce0f9), verified 22 Nov"
     },
     {
       "id": "UA-491",
@@ -5843,7 +5885,8 @@
         "lib/maker.ts"
       ],
       "change": "every read or write of localStorage/sessionStorage/IndexedDB is replaced by its endpoint; the session is an httpOnly refresh cookie plus an in-memory access token; mode (light/dark) is a field on the account; choices before sign-in travel in the link; the build fails on the words localStorage, sessionStorage, IndexedDB in app/, components/, lib/",
-      "status": "open"
+      "status": "done",
+      "resolution": "W6 (web w6-maker3, merged 77ce0f9), verified 22 Nov"
     },
     {
       "id": "UA-493",
@@ -7239,7 +7282,8 @@
       ],
       "change": "implement the designed loading state",
       "enterCondition": "a request for this surface is in flight (conventions Runtime contract)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W6 (web w6-maker3, merged 77ce0f9), verified 22 Nov"
     },
     {
       "id": "UA-592",
@@ -7253,7 +7297,8 @@
       ],
       "change": "implement the designed empty state",
       "enterCondition": "the server returns no items",
-      "status": "open"
+      "status": "done",
+      "resolution": "W6 (web w6-maker3, merged 77ce0f9), verified 22 Nov"
     },
     {
       "id": "UA-593",
@@ -7267,7 +7312,8 @@
       ],
       "change": "make the coded state reachable: error:server",
       "enterCondition": "none coded (no network calls on this screen)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W6 (web w6-maker3, merged 77ce0f9), verified 22 Nov"
     },
     {
       "id": "UA-594",
@@ -7368,7 +7414,8 @@
       ],
       "change": "implement the designed loading state",
       "enterCondition": "a request for this surface is in flight (conventions Runtime contract)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W6 (web w6-maker3, merged 77ce0f9), verified 22 Nov"
     },
     {
       "id": "UA-601",
@@ -7382,7 +7429,8 @@
       ],
       "change": "implement the designed empty state",
       "enterCondition": "the server returns no items",
-      "status": "open"
+      "status": "done",
+      "resolution": "W6 (web w6-maker3, merged 77ce0f9), verified 22 Nov"
     },
     {
       "id": "UA-602",
@@ -7396,7 +7444,8 @@
       ],
       "change": "make the coded state reachable: error:server",
       "enterCondition": "none coded (no network calls on this screen)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W6 (web w6-maker3, merged 77ce0f9), verified 22 Nov"
     },
     {
       "id": "UA-603",
@@ -7410,7 +7459,8 @@
       ],
       "change": "make the coded state reachable: pay-error",
       "enterCondition": "none coded: PaySheet has no failure branch, onPaid always called after 700ms",
-      "status": "open"
+      "status": "done",
+      "resolution": "W6 (web w6-maker3, merged 77ce0f9), verified 22 Nov"
     },
     {
       "id": "UA-604",
@@ -7424,7 +7474,8 @@
       ],
       "change": "implement the designed loading state",
       "enterCondition": "a request for this surface is in flight (conventions Runtime contract)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W6 (web w6-maker3, merged 77ce0f9), verified 22 Nov"
     },
     {
       "id": "UA-605",
@@ -7438,7 +7489,8 @@
       ],
       "change": "implement the designed empty state",
       "enterCondition": "the server returns no items",
-      "status": "open"
+      "status": "done",
+      "resolution": "W6 (web w6-maker3, merged 77ce0f9), verified 22 Nov"
     },
     {
       "id": "UA-606",
@@ -7452,7 +7504,8 @@
       ],
       "change": "make the coded state reachable: error:server",
       "enterCondition": "none coded (no network calls on this screen)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W6 (web w6-maker3, merged 77ce0f9), verified 22 Nov"
     },
     {
       "id": "UA-607",
@@ -7510,7 +7563,8 @@
       ],
       "change": "implement the designed loading state",
       "enterCondition": "a request for this surface is in flight (conventions Runtime contract)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W6 (web w6-maker3, merged 77ce0f9), verified 22 Nov"
     },
     {
       "id": "UA-611",
@@ -7524,7 +7578,8 @@
       ],
       "change": "implement the designed empty state",
       "enterCondition": "the server returns no items",
-      "status": "open"
+      "status": "done",
+      "resolution": "W6 (web w6-maker3, merged 77ce0f9), verified 22 Nov"
     },
     {
       "id": "UA-612",
@@ -7538,7 +7593,8 @@
       ],
       "change": "make the coded state reachable: error:server",
       "enterCondition": "none coded (no network calls on this screen)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W6 (web w6-maker3, merged 77ce0f9), verified 22 Nov"
     },
     {
       "id": "UA-613",
@@ -9085,7 +9141,8 @@
         "lib/maker.ts:449"
       ],
       "change": "replace: server-issued sequential wish number",
-      "status": "open"
+      "status": "done",
+      "resolution": "W6 (web w6-maker3, merged 77ce0f9), verified 22 Nov"
     },
     {
       "id": "UA-721",
@@ -10164,7 +10221,8 @@
         "components/app/maker/Seal.tsx (Sealed)"
       ],
       "change": "replace: the wish's public link slug (readable part + 4 random chars)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W6 (web w6-maker3, merged 77ce0f9), verified 22 Nov"
     },
     {
       "id": "UA-813",
@@ -10175,7 +10233,8 @@
         "lib/maker.ts:63"
       ],
       "change": "replace: server time for 'open now'",
-      "status": "open"
+      "status": "done",
+      "resolution": "W6 (web w6-maker3, merged 77ce0f9), verified 22 Nov"
     },
     {
       "id": "UA-814",
@@ -10219,7 +10278,8 @@
         "lib/maker.ts:410, Maker.tsx:348"
       ],
       "change": "replace: a configured promotion with an end date",
-      "status": "open"
+      "status": "done",
+      "resolution": "W6 (web w6-maker3, merged 77ce0f9), verified 22 Nov"
     },
     {
       "id": "UA-818",
@@ -10230,7 +10290,8 @@
         "lib/maker.ts:422-439"
       ],
       "change": "replace: server-priced checkout",
-      "status": "open"
+      "status": "done",
+      "resolution": "W6 (web w6-maker3, merged 77ce0f9), verified 22 Nov"
     },
     {
       "id": "UA-819",
@@ -10241,7 +10302,8 @@
         "lib/pro-data.ts:123 (via Maker.tsx:377-384)"
       ],
       "change": "replace: server-side plan allowance accounting",
-      "status": "open"
+      "status": "done",
+      "resolution": "W6 (web w6-maker3, merged 77ce0f9), verified 22 Nov"
     },
     {
       "id": "UA-820",
@@ -10252,7 +10314,8 @@
         "lib/maker.ts:372-379"
       ],
       "change": "replace: the wish's missing content",
-      "status": "open"
+      "status": "done",
+      "resolution": "W6 (web w6-maker3, merged 77ce0f9), verified 22 Nov"
     },
     {
       "id": "UA-821",
@@ -10263,7 +10326,8 @@
         "lib/maker.ts:36"
       ],
       "change": "replace: uploaded voice note file",
-      "status": "open"
+      "status": "done",
+      "resolution": "W6 (web w6-maker3, merged 77ce0f9), verified 22 Nov"
     },
     {
       "id": "UA-822",
@@ -10298,7 +10362,8 @@
         "components/app/maker/Seal.tsx:90 / lib/maker.ts:63"
       ],
       "change": "replace: server clock for 'is this time in the future'",
-      "status": "open"
+      "status": "done",
+      "resolution": "W6 (web w6-maker3, merged 77ce0f9), verified 22 Nov"
     },
     {
       "id": "UA-825",
@@ -12102,8 +12167,9 @@
         "lib/engine/adapt.ts"
       ],
       "change": "the server populates what this screen reads (the draft Wish inside 'fw-account' (saveWish/readAccount in lib/maker.ts) plus the maker note in localStorage 'fw-maker'); triggers: on page load, after sign-in, when the tab becomes visible again, and after any write. A manual button is not a trigger.",
-      "status": "open",
-      "provenance": "repository-local-store"
+      "status": "done",
+      "provenance": "repository-local-store",
+      "resolution": "W6 (web w6-maker3, merged 77ce0f9), verified 22 Nov"
     },
     {
       "id": "UA-967",
@@ -12118,8 +12184,9 @@
         "lib/wish-model.ts"
       ],
       "change": "the server populates what this screen reads (the draft Wish inside 'fw-account' (saveWish/readAccount in lib/maker.ts) plus the maker note in localStorage 'fw-maker'); triggers: on page load, after sign-in, when the tab becomes visible again, and after any write. A manual button is not a trigger.",
-      "status": "open",
-      "provenance": "repository-local-store"
+      "status": "done",
+      "provenance": "repository-local-store",
+      "resolution": "W6 (web w6-maker3, merged 77ce0f9), verified 22 Nov"
     },
     {
       "id": "UA-968",
@@ -12136,8 +12203,9 @@
         "lib/pro-api.ts"
       ],
       "change": "the server populates what this screen reads (the draft Wish inside 'fw-account' (saveWish/readAccount in lib/maker.ts) plus the maker note in localStorage 'fw-maker'); triggers: on page load, after sign-in, when the tab becomes visible again, and after any write. A manual button is not a trigger.",
-      "status": "open",
-      "provenance": "mixed"
+      "status": "done",
+      "provenance": "mixed",
+      "resolution": "W6 (web w6-maker3, merged 77ce0f9), verified 22 Nov"
     },
     {
       "id": "UA-969",
@@ -12152,8 +12220,9 @@
         "lib/wish-model.ts"
       ],
       "change": "the server populates what this screen reads (the draft Wish inside 'fw-account' (saveWish/readAccount in lib/maker.ts) plus the maker note in localStorage 'fw-maker'); triggers: on page load, after sign-in, when the tab becomes visible again, and after any write. A manual button is not a trigger.",
-      "status": "open",
-      "provenance": "repository-local-store"
+      "status": "done",
+      "provenance": "repository-local-store",
+      "resolution": "W6 (web w6-maker3, merged 77ce0f9), verified 22 Nov"
     },
     {
       "id": "UA-970",

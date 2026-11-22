@@ -30,3 +30,11 @@ Checks (quiet logs, EXIT lines): typecheck, lint on changed files, check:css, ga
 build. Commit; do not push; do not edit .pipeline-ui/wired.json, scripts/gates/** or a baseline; remove YOUR
 worktrees, stack and databases. Hand back ONCE in 10 lines: head; items 1-4 with file:line and the proof (item 1:
 the cause you proved); the flows' totals and the driver's; `git diff --stat`.
+ADDED 20:30 (item 5; app/app/wishes/[id]/page.tsx is yours for this item only): the wish page offers the
+portrait-video extra on a wish that has already opened (page.tsx:112: resting and live wishes) while the server
+sells an extra only until the wish opens (422 "Extras can be added until the wish opens"). The page offers it only
+while the server would sell it (from the wish's own state as the server gives it; no second rule invented in the
+web: if the wish read carries no field that says so, the offer follows the wish's opened state and the server's
+refusal words still show if it races). Check in pf1.mjs: an opened wish shows no offer; an unopened one does and
+its start works. Also (the same check file): on a personal wish at /w/<slug> no heart control is drawn (hearts are
+a client reveal's); draw it in a browser in two styles.

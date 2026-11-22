@@ -1152,3 +1152,8 @@ HG1 (give race) Two staff giving one Concierge order: the code is right (overlap
   editing, it leaves the creator's draft and file list and no longer counts against the draft's limits, but the
   stored file is kept and still given at the links of the wishes made under that version. It goes for good only
   when no approved version that can still be played names it.
+- II5 (22 Nov, the lead, on the check of the Studio files bundle; Default (lead), owner may override): a Studio
+  style's document may name only files of that same style that belong to its creator and have passed screening.
+  A save or a send-in that names another creator's file, another style's file, a file still being checked, a
+  refused file or a file that is gone is refused in words that name the place; nothing is saved. A style already
+  saved with such a name still opens, and cannot be sent in until the name is removed.

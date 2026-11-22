@@ -26,3 +26,9 @@ must show them; if the revert removed them, re-apply with `git checkout p-ci-294
 Commit on p-ci-294b; do not push; remove your worktree and databases; leave no background jobs. Hand back ONCE in 7
 lines: head; the helper's number shape (file:line); the cause of the 503s; both full-run totals; `git diff --stat`
 against claude/sleepy-mayer-f0hkb8.
+
+ADDED 22 Nov: the tenth API round's builder saw ONE unrelated failure in four of nine full runs in the shared test
+database: concierge.spec "makers" (the makers list is one page: other specs' makers push it over), gather.spec 5b,
+a price-book version race in purchases.spec test 3, and a pack-refund test. Each passes alone. Find each one's
+shared row or counter and give the spec its own (the pool and IC7 specs run in their own database: that is one
+way). test/kit/unique.ts may already exist on your base (the tenth round adds one): extend it, do not fork it.

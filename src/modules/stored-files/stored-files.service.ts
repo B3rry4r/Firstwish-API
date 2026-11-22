@@ -90,7 +90,7 @@ export class StoredFilesService {
   /** The caller's business (owner), or 403. */
   private async businessOf(tx: Tx, p: UserPrincipal, named?: string): Promise<Business> {
     if (named !== undefined) {
-      // IF7: the business the header names, and only its owner uploads its brand (a login of it is refused in words, a stranger gets 404)
+      // HR3: the business the header names, and only its owner uploads its brand (a login of it is refused in words, a stranger gets 404)
       const { businessId } = await namedBusiness(tx, p.accountId, named, { ownerOnly: true, words: "Only the owner of the business can change its brand." });
       return tx.business.findUniqueOrThrow({ where: { id: businessId } });
     }
@@ -172,7 +172,7 @@ export class StoredFilesService {
     if (studioFile && body.styleId !== undefined && !isUuid(body.styleId)) throw AppError.validation({ styleId: "Must be a style id." });
 
     const id = this.ids.id();
-    // IF9: with the stand-in screening's rules on, the file's name rides in its key so the stand-in can hold or refuse it by name
+    // API-BASE-12 case 4: with the stand-in screening's rules on, the file's name rides in its key so the stand-in can hold or refuse it by name
     const nameTag = this.env.STANDIN_SCREENING !== undefined && typeof body.fileName === "string" && body.fileName.trim() ? `~${fileNameTag(body.fileName)}` : "";
     const objectKey = `${rule.purpose}/${id}/${this.codes.token(16)}${nameTag}`;
     const now = this.clock.now();

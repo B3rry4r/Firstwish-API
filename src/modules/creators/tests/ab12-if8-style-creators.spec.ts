@@ -8,8 +8,8 @@ import { account, B12App, b13App } from "../../showing/tests/b13-kit";
 
 const DAY = 86_400_000;
 
-/** API-BASE-12 case 3 (IF8): the migration that gives creatorId to the older styles, and E-285 after it. */
-describe("IF8 a creator's styles follow the account", () => {
+/** API-BASE-12 case 3 (IF4a): the migration that gives creatorId to the older styles, and E-285 after it. */
+describe("IF4a a creator's styles follow the account", () => {
   let t: B12App;
   let db: PrismaService;
   const own = ownDatabase("if8");

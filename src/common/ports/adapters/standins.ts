@@ -364,7 +364,7 @@ export class StandinScreening extends UploadScreeningPort {
 
   readonly screened: ScreenInput[] = [];
 
-  /** IF9: rules by file name (the name is kept in the storage key only while the setting is on). */
+  /** API-BASE-12 case 4: rules by file name (the name is kept in the storage key only while the setting is on). */
   constructor(private readonly rules: readonly ScreeningRule[] = []) {
     super();
   }

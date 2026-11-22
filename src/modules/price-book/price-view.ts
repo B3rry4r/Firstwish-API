@@ -53,6 +53,8 @@ export function priceOf(line: BookLine, ctx: LineContext): Price {
     per: "",
     from: `price-book v${line.version}`,
     lead: "",
+    // API-BASE-12 case 5: a staff line always carries `confirmation` (null on a line that is not a provisional setting); the public book's lines are as they were
+    ...(ctx.public === true ? {} : { confirmation: null }),
     sla: "",
     reason: ctx.reason ?? "",
     items: ctx.grant ? [ctx.grant] : [],

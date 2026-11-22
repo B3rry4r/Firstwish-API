@@ -9,8 +9,8 @@ const ids = new UuidV7Maker();
 const run = `${process.pid}${Date.now() % 100000}`;
 let seq = 0;
 
-/** API-BASE-12 case 4 (IF9): the stand-in screening can hold a file in "screening" or refuse it, by file name, on a stack that turns the setting on. */
-describe("IF9 STANDIN_SCREENING", () => {
+/** API-BASE-12 case 4 (API-BASE-12 case 4): the stand-in screening can hold a file in "screening" or refuse it, by file name, on a stack that turns the setting on. */
+describe("API-BASE-12 case 4 STANDIN_SCREENING", () => {
   const saved = process.env.STANDIN_SCREENING;
   afterAll(() => {
     if (saved === undefined) delete process.env.STANDIN_SCREENING;

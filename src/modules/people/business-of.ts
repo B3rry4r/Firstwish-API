@@ -37,7 +37,7 @@ export class BusinessOf {
   }
 
   /**
-   * IF7 (HR3): the business a request works in. Without the x-business-id header it is the caller's own business, else their oldest login, as
+   * HR3 (HR3): the business a request works in. Without the x-business-id header it is the caller's own business, else their oldest login, as
    * before. With it, the one named (see `namedBusiness`).
    */
   async named(p: Principal | undefined, header: string | undefined, opts: NamedOpts = {}): Promise<{ businessId: string; owner: boolean | null }> {
@@ -58,7 +58,7 @@ export interface NamedOpts {
 }
 
 /**
- * IF7: the business the x-business-id header names, in the caller's role there: `owner` when the account holds the business, a login when its
+ * HR3: the business the x-business-id header names, in the caller's role there: `owner` when the account holds the business, a login when its
  * sign-in email is on a live login of it. A header that is not an id is 422 in words (any case of an id is the same id); a business the caller is
  * not part of is 404 (a removed login gets the words every business read gives); with `ownerOnly`, a login of that business is refused in words (403).
  */

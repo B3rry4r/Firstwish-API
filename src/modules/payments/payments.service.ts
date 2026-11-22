@@ -129,7 +129,7 @@ export class PaymentsService {
       email = account.contact?.includes("@") ? account.contact : null;
       if (!email) throw AppError.validation({ email: "Add an email to your account before you pay." });
       if (req.needsBusiness && named !== undefined) {
-        // IF7 (HR3): the business the header names, paid for by its owner alone: a login of it is refused in words, a stranger's is 404
+        // HR3 (HR3): the business the header names, paid for by its owner alone: a login of it is refused in words, a stranger's is 404
         businessId = (await namedBusiness(this.db, accountId, named, { ownerOnly: true, words: "Only the owner of a business can pay for it. You are a login of this one, so ask its owner." })).businessId;
       } else {
         businessId = req.needsBusiness ? await this.businesses.require({ kind: "user", accountId, sides: ["person"] }) : await this.businesses.find(accountId);
@@ -210,7 +210,7 @@ export class PaymentsService {
 
     if (!created.fresh) {
       const opts = readOptions(created.row.options);
-      // IF7: the same key naming another business is another payment, not the first one again
+      // HR3: the same key naming another business is another payment, not the first one again
       const otherBusiness = req.needsBusiness && created.row.businessId !== businessId;
       if ((!created.sameThing && opts.server.fingerprint !== req.fingerprint) || otherBusiness) {
         throw AppError.conflict("idempotency_key_reused", "This Idempotency-Key was already used for a different payment.");

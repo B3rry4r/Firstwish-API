@@ -19,7 +19,7 @@ export class BusinessController {
   @Patch()
   async patch(@Body() body: PatchBusinessBodyDto, @CurrentPrincipal() p: Principal | undefined, @BusinessHeader() h: string | undefined): Promise<Business["brand"]> {
     if (!p || p.kind !== "user") throw AppError.forbidden();
-    // IF7: the brand belongs to the business the header names, and only its owner sets it
+    // HR3: the brand belongs to the business the header names, and only its owner sets it
     const named = h === undefined ? undefined : (await this.access.named(p, h, { ownerOnly: true, words: "Only the owner of the business can change its brand." })).businessId;
     return this.business.patchBrand(p.accountId, body, named);
   }

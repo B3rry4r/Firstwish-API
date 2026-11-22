@@ -1,4 +1,4 @@
--- API-BASE-12 (IF8). Data only, additive: no column or table changes.
+-- API-BASE-12 (IF4a). Data only, additive: no column or table changes.
 -- A style whose creator document names a handle and holds no creatorId gets the creatorId of the creator that handle belongs to. The match is the
 -- account that holds the handle now, when that account (with a creator row) already existed when the style was added and no review of the style
 -- belongs to another creator. A handle that matches nobody (no such account, an account made after the style, a review of another creator) is left

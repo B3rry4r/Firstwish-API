@@ -17,6 +17,7 @@ import { NoticesService } from "../notices/notices.service";
 import { InvoicesService } from "../pro-business/invoices.service";
 import { PriceBookService } from "../price-book/price-book.service";
 import { discounted } from "../price-book/price-math";
+import { ShowingLink } from "../showing/showing-link";
 import { BusinessOf } from "../people/business-of";
 import { ReceiverActivityService } from "../public-wishes/receiver-activity.service";
 import { readLimits } from "../price-book/book-limits";
@@ -74,6 +75,7 @@ export class ConciergeService implements OnModuleInit {
     private readonly wishes: WishesService,
     private readonly lifecycle: WishLifecycleService,
     private readonly signed: SignedUrlsService,
+    private readonly showing: ShowingLink,
   ) {}
 
   onModuleInit(): void {
@@ -437,6 +439,8 @@ export class ConciergeService implements OnModuleInit {
         }
         throw e;
       }
+      // IE1: a wish delivered is the buyer's to publish themselves: no Now showing row of it (or ask for one) goes public at delivery
+      await this.showing.showing.dropForWishes(tx, wishIds);
       await tx.conciergeOrder.update({ where: { id }, data: { status: "delivered" } });
       await tx.$executeRaw`UPDATE concierge_order_ext SET "deliveredAt" = ${now} WHERE "orderId" = ${id}::uuid`;
       // CA3: one email to the customer, once per order (the key), counting the wishes and naming no receiver

@@ -9,7 +9,7 @@ export interface Env {
   STANDIN_MAIL_OUTBOX?: string;
   /** HP6: seconds added to the stand-in clock (read at boot); tests and verifier stacks only. */
   STANDIN_CLOCK_OFFSET?: string;
-  /** IF9: rules for the stand-in screening by file name (hold:<text>, reject:<text>); tests and verifier stacks only. */
+  /** API-BASE-12 case 4: rules for the stand-in screening by file name (hold:<text>, reject:<text>); tests and verifier stacks only. */
   STANDIN_SCREENING?: string;
   INTERNAL_TOKEN: string;
   DATABASE_URL: string;
@@ -163,7 +163,7 @@ export function loadEnv(raw: Record<string, string | undefined> = process.env): 
       problems.push({ name: "STANDIN_CLOCK_OFFSET", problem: "must be a whole number of seconds, for example 86400" });
     }
   }
-  // IF9: the stand-in screening's rules by file name decide what is held or refused, so they are never allowed where real files arrive: not with live providers, not in production.
+  // API-BASE-12 case 4: the stand-in screening's rules by file name decide what is held or refused, so they are never allowed where real files arrive: not with live providers, not in production.
   const screening = get("STANDIN_SCREENING");
   if (screening !== undefined) {
     if (providers !== "standin" || out.NODE_ENV === "production") {
@@ -182,7 +182,7 @@ export interface ScreeningRule {
   text: string;
 }
 
-/** IF9: "hold:held,reject:refused" as rules; null when a rule is not of that shape (an action, a colon, 1 to 40 of a-z 0-9 . _ -). */
+/** API-BASE-12 case 4: "hold:held,reject:refused" as rules; null when a rule is not of that shape (an action, a colon, 1 to 40 of a-z 0-9 . _ -). */
 export function parseScreeningRules(raw: string): ScreeningRule[] | null {
   const rules: ScreeningRule[] = [];
   for (const part of raw.split(",")) {
@@ -193,7 +193,7 @@ export function parseScreeningRules(raw: string): ScreeningRule[] | null {
   return rules;
 }
 
-/** IF9: the file name as the stand-in keeps it in a storage key: lower case, a-z 0-9 . _ - only, at most 60 characters. */
+/** API-BASE-12 case 4: the file name as the stand-in keeps it in a storage key: lower case, a-z 0-9 . _ - only, at most 60 characters. */
 export function fileNameTag(name: string): string {
   return name.toLowerCase().replace(/[^a-z0-9._-]+/g, "-").slice(0, 60);
 }

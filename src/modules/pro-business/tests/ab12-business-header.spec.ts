@@ -16,7 +16,7 @@ const run = `${process.pid}${Date.now() % 100000}`;
 let seq = 0;
 
 /** API-BASE-12 case 1 (HR3, IF2a): one person in two businesses works in the one the header names, in their role there. */
-describe("IF7: the people, payment and brand routes follow x-business-id", () => {
+describe("HR3: the people, payment and brand routes follow x-business-id", () => {
   let t: TestApp;
   let db: PrismaService;
   let settle: SettlementService;

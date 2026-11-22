@@ -31,6 +31,7 @@ import {
   UPLOAD_TTL_SECONDS,
   variantsOf,
 } from "./file-rules";
+import { playableFileIds } from "../styles/approved-document";
 import { refusalsOf, refusalWords } from "./refusal-words";
 import { readLimits } from "../price-book/book-limits";
 import { notInBusiness } from "../../common/auth/login-removed";
@@ -412,6 +413,12 @@ export class StoredFilesService {
       async (tx) => {
         await lockAccount(tx, p.accountId);
         const r = await this.lockOwn(tx, id, p.accountId);
+        if (r.keptAt) throw AppError.notFound("No such file.");
+        // II4: a Studio file that an approved version can still play is kept: it leaves the creator's draft and lists, the stored file stays for that version
+        if (r.styleId && (await playableFileIds(tx, r.styleId)).has(id.toLowerCase())) {
+          await tx.storedFile.update({ where: { id }, data: { keptAt: this.clock.now() } });
+          return null;
+        }
         // IC7: a file of an order that the maker already added to the wish being made stays until the order ends
         const [used] = await tx.$queryRaw<{ n: number }[]>`
           SELECT count(*)::int AS n FROM concierge_order_file l
@@ -441,6 +448,7 @@ export class StoredFilesService {
       },
       { maxWait: 15_000, timeout: 20_000 },
     );
+    if (!row) return;
     for (const k of [row.objectKey, stagingKeyOf(row.objectKey), ...variantsOf(row).map((v) => v.key)]) await this.storage.delete(k);
   }
 }

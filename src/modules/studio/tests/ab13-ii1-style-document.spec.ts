@@ -207,8 +207,12 @@ describe("II1: the approved document plays at a receiver's link and at the publi
 
   it("taken back by its creator, edited and saved: E-196 stops giving it; the wish already made still plays the approved version, files included", async () => {
     const c = await creator();
-    const d = await approved(c, { name: "First look" });
+    // II3/II4 (round 2): the picture is one the approved version names (a style being edited gives a wish only what its version names)
+    const d = await draft(c, { name: "First look" });
     const file = await upload(c, d.id);
+    const first = (await get(c, `/studio/styles/${d.id}`)).body as Body;
+    expect((await t.http().patch(`/v1/studio/styles/${d.id}`).set(c.h).send({ style: { ...first, art: [{ fileId: file }] } })).status).toBe(200);
+    expect((await decide(await checked(c, d), { decision: "approve", reason: "Looks good" })).status).toBe(200);
     const { link } = await wishIn(slugOf(d));
     expect((await post(c, `/studio/styles/${d.id}/withdraw`)).status).toBe(200);
     const back = (await get(c, `/studio/styles/${d.id}`)).body as Body;

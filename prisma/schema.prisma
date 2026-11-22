@@ -1293,6 +1293,8 @@ model StoredFile {
   variants                   Json
   driver                     StoredFileDriver
   createdAt                  DateTime            @default(now()) @db.Timestamptz(3)
+  /// II4: set when a creator deleted a Studio file that an approved version still names; the file stays for that version, out of the creator's lists
+  keptAt                     DateTime?           @db.Timestamptz(3)
   updatedAt                  DateTime            @updatedAt @db.Timestamptz(3)
   fileId                     String?             @db.Uuid
   kind                       StoredFileKind?
@@ -1418,6 +1420,8 @@ model StyleSubmission {
   reviewedBy                          String?
   note                                String?
   createdAt                           DateTime                 @default(now()) @db.Timestamptz(3)
+  /// the moment staff approved it (II3/II4); null before approval and for rows approved before this was kept (then createdAt stands in)
+  approvedAt                          DateTime?                @db.Timestamptz(3)
   decision                            StyleSubmissionDecision?
   creator                             Creator                  @relation("StyleSubmission_creatorId", fields: [creatorId], references: [id])
   style                               Style                    @relation("StyleSubmission_styleId", fields: [styleId], references: [id])

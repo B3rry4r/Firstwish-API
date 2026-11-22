@@ -7,7 +7,8 @@ import { toWireInstant } from "../../common/time/time";
 import type { StyleFile, StyleFiles } from "../../contracts";
 import { Clock } from "../../common/ports/clock.port";
 import { UnlockTokens } from "../public-wishes/unlock-token";
-import { ApprovedStyleDocuments } from "../styles/approved-document";
+import { ApprovedStyleDocuments, NEWEST_APPROVED } from "../styles/approved-document";
+import { fileIdsOf } from "./submission-checks";
 import { NOT_ACCEPTED, refusalsOf } from "../stored-files/refusal-words";
 import { isUuid, mediaKindOf, purposeOnWire } from "../stored-files/file-rules";
 import { type Reader, SignedUrlsService } from "../stored-files/signed-urls.service";
@@ -58,7 +59,7 @@ export class StudioFilesService {
       after = c.id;
     }
     const rows = await this.db.storedFile.findMany({
-      where: { styleId, ownerAccountId: accountId, status: { in: ["ready", "screening", "rejected"] }, ...(after ? { id: { gt: after } } : {}) },
+      where: { styleId, ownerAccountId: accountId, keptAt: null, status: { in: ["ready", "screening", "rejected"] }, ...(after ? { id: { gt: after } } : {}) },
       orderBy: { id: "asc" },
       take: limit + 1,
     });
@@ -70,7 +71,7 @@ export class StudioFilesService {
   /** The owner's read of one file of a style. */
   async one(accountId: string, styleId: string, fileId: string): Promise<StyleFile> {
     await this.ownStyle(accountId, styleId);
-    const f = isUuid(fileId) ? await this.db.storedFile.findFirst({ where: { id: fileId, styleId, ownerAccountId: accountId, status: { in: ["ready", "screening", "rejected"] } } }) : null;
+    const f = isUuid(fileId) ? await this.db.storedFile.findFirst({ where: { id: fileId, styleId, ownerAccountId: accountId, keptAt: null, status: { in: ["ready", "screening", "rejected"] } } }) : null;
     if (!f) throw AppError.notFound("No such file.");
     return this.view(f, { type: "owner", accountId });
   }
@@ -99,10 +100,24 @@ export class StudioFilesService {
     const style = await this.db.style.findFirst({ where: { slug: wish.styleSlug }, select: { id: true } });
     const document = style ? await this.approved.of(style.id, wish.styleSubmissionId) : null;
     if (!style || !document) return { style: wish.styleSlug, items: [], document: null };
-    // II3: a wish made under an older approved version gets the files that style had until the next version was sent in; later uploads belong to the newer version
-    const pin = wish.styleSubmissionId ? await this.db.styleSubmission.findFirst({ where: { id: wish.styleSubmissionId, styleId: style.id, status: "live" }, select: { createdAt: true } }) : null;
-    const next = pin ? await this.db.styleSubmission.findFirst({ where: { styleId: style.id, status: "live", createdAt: { gt: pin.createdAt } }, orderBy: [{ createdAt: "asc" }, { id: "asc" }], select: { createdAt: true } }) : null;
-    const rows = await this.db.storedFile.findMany({ where: { styleId: style.id, status: "ready", ...(next ? { createdAt: { lt: next.createdAt } } : {}) }, orderBy: { id: "asc" }, take: PLAYER_FILES });
+    // II3/II4: a wish made under an older approved version gets the files that version names (a kept file included), not what a newer draft uploaded;
+    // the newest version gets the style's files, and a kept file only where the newest version names it.
+    const pin = wish.styleSubmissionId ? await this.db.styleSubmission.findFirst({ where: { id: wish.styleSubmissionId, styleId: style.id, status: "live" }, include: { styleSubmissionSnapshotBySubmission: { select: { document: true } } } }) : null;
+    const newest = await this.db.styleSubmission.findFirst({ where: { styleId: style.id, status: "live" }, orderBy: NEWEST_APPROVED, include: { styleSubmissionSnapshotBySubmission: { select: { document: true } } } });
+    const named = (sub: typeof pin): string[] => {
+      const d = sub?.styleSubmissionSnapshotBySubmission?.document;
+      return d && typeof d === "object" && !Array.isArray(d) ? fileIdsOf(d as Record<string, unknown>).map((x) => x.toLowerCase()) : [];
+    };
+    // a style being edited (taken back, sent in, returned) has uploads that belong to the next version: only what the version names is given then
+    const studio = await this.db.studioStyle.findUnique({ where: { id: style.id }, select: { status: true } });
+    const older = (pin && newest && pin.id !== newest.id) || studio?.status !== "live";
+    const rows = await this.db.storedFile.findMany({
+      where: older
+        ? { styleId: style.id, status: "ready", id: { in: named(pin ?? newest) } }
+        : { styleId: style.id, status: "ready", OR: [{ keptAt: null }, { id: { in: named(newest) } }] },
+      orderBy: { id: "asc" },
+      take: PLAYER_FILES,
+    });
     return { style: wish.styleSlug, items: await Promise.all(rows.map((r) => this.view(r, { type: "allowed" }))), document };
   }
 }

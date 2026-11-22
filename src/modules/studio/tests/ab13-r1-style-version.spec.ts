@@ -9,6 +9,8 @@ import { AccountErasureService } from "../../accounts/account-erasure.service";
 import { JobsService } from "../../jobs/jobs.service";
 import { makeStaff, seedRoleTable, tag } from "../../staff-accounts/tests/staff-kit";
 import { readFileSync } from "node:fs";
+import { approvedSubmissionOf } from "../../styles/approved-document";
+import { FileJobs } from "../../stored-files/file-jobs";
 import { SubmissionsService } from "../submissions.service";
 
 /* API-BASE-13 round 1 F3 (II3): a wish keeps the approved version of its Studio style that it was made under. */
@@ -136,33 +138,55 @@ async function stamp(styleId: string, files: string[][]): Promise<void> {
   const subs = await db.styleSubmission.findMany({ where: { styleId, status: "live" }, orderBy: { createdAt: "asc" } });
   const base = new Date("2030-01-01T00:00:00.000Z").getTime();
   for (let i = 0; i < subs.length; i++) {
-    await db.styleSubmission.update({ where: { id: subs[i].id }, data: { createdAt: new Date(base + i * 10 * 60_000) } });
+    await db.styleSubmission.update({ where: { id: subs[i].id }, data: { createdAt: new Date(base + i * 10 * 60_000), approvedAt: new Date(base + i * 10 * 60_000 + 5 * 60_000) } });
     for (const f of files[i] ?? []) await db.storedFile.update({ where: { id: f }, data: { createdAt: new Date(base + i * 10 * 60_000 + 60_000) } });
   }
 }
-/** Takes the style back, edits it and has version 2 approved. */
-async function second(c: Creator, d: Body, name: string): Promise<void> {
+/** Takes the style back and edits it (the art list names `art` where given). */
+async function reopen(c: Creator, d: Body, name: string, art?: string[]): Promise<void> {
   expect((await post(c, `/studio/styles/${d.id}/withdraw`)).status).toBe(200);
   const back = (await get(c, `/studio/styles/${d.id}`)).body as Body;
-  expect((await t.http().patch(`/v1/studio/styles/${d.id}`).set(c.h).send({ style: { ...back, name, brief: `${name} words.` } })).status).toBe(200);
+  expect((await t.http().patch(`/v1/studio/styles/${d.id}`).set(c.h).send({ style: { ...back, name, brief: `${name} words.`, ...(art ? { art: art.map((fileId) => ({ fileId })) } : {}) } })).status).toBe(200);
+}
+/** Takes the style back, edits it and has version 2 approved. */
+async function second(c: Creator, d: Body, name: string, art?: string[]): Promise<void> {
+  await reopen(c, d, name, art);
   expect((await decide(await checked(c, d), { decision: "approve", reason: "Version two" })).status).toBe(200);
 }
+/** A style whose draft names n uploaded pictures, approved as version 1. */
+async function approvedNaming(c: Creator, name: string, n: number): Promise<{ d: Body; files: string[] }> {
+  const d = await draft(c, { name });
+  const files: string[] = [];
+  for (let i = 0; i < n; i++) files.push(await upload(c, d.id));
+  const back = (await get(c, `/studio/styles/${d.id}`)).body as Body;
+  expect((await t.http().patch(`/v1/studio/styles/${d.id}`).set(c.h).send({ style: { ...back, art: files.map((fileId) => ({ fileId })) } })).status).toBe(200);
+  expect((await decide(await checked(c, d), { decision: "approve", reason: "Looks good" })).status).toBe(200);
+  return { d, files };
+}
+const rowOf = (id: string) => db.storedFile.findUnique({ where: { id } });
 
 describe("II3: a wish plays the version of its style that was approved when it was made", () => {
   it("a wish made under version 1 still plays version 1 (document and files) after version 2 is approved; a new wish and E-196 play version 2", async () => {
     const c = await creator();
-    const d = await approved(c, { name: "Version one", brief: "One words." });
-    const file1 = await upload(c, d.id);
+    const { d, files: [file1] } = await approvedNaming(c, "Version one", 1);
     const old = await madeIn(slugOf(d));
     const v1 = await pointerOf(old.wishId);
     expect(v1).not.toBeNull();
-    await second(c, d, "Version two");
+    await reopen(c, d, "Version two");
     const file2 = await upload(c, d.id);
+    const back = (await get(c, `/studio/styles/${d.id}`)).body as Body;
+    expect((await t.http().patch(`/v1/studio/styles/${d.id}`).set(c.h).send({ style: { ...back, art: [file1, file2].map((fileId) => ({ fileId })) } })).status).toBe(200);
+    // G2: version 2 is sent in and checked but not approved: the version a wish takes now is still version 1, and its link gives no draft upload of version 2
+    const sid = await checked(c, d);
+    expect(await approvedSubmissionOf(db, slugOf(d))).toBe(v1);
+    expect((await player(old.link)).body.items.map((i: Body) => i.fileId)).toEqual([file1]);
+    expect((await decide(sid, { decision: "approve", reason: "Version two" })).status).toBe(200);
+    expect(await approvedSubmissionOf(db, slugOf(d))).toBe(sid);
     await stamp(d.id, [[file1], [file2]]);
 
     const at = await player(old.link);
     expect(at.status).toBe(200);
-    expect(at.body.document).toMatchObject({ id: d.id, name: "Version one", brief: "One words." });
+    expect(at.body.document).toMatchObject({ id: d.id, name: "Version one", brief: "Warm light." });
     expect((at.body.items as Body[]).map((i) => i.fileId as string)).toEqual([file1]);
 
     const fresh = await madeIn(slugOf(d));
@@ -205,10 +229,9 @@ describe("II3: a wish plays the version of its style that was approved when it w
     expect((await player(h.link)).body).toEqual({ style: house.slug, items: [], document: null });
 
     const c = await creator();
-    const d = await approved(c, { name: "Kept look" });
-    const file = await upload(c, d.id);
+    const { d, files: [file] } = await approvedNaming(c, "Kept look", 1);
     const w = await madeIn(slugOf(d));
-    await second(c, d, "Newer look");
+    await second(c, d, "Newer look", [file]);
     await stamp(d.id, [[file]]);
     expect((await t.http().post(`/v1/admin/styles/${slugOf(d)}/switch`).set(sh("reviewer")).send({ on: false, reason: "Off to test" })).status).toBe(200);
     expect((await t.http().get(`/v1/styles/${slugOf(d)}`)).status).toBe(404);
@@ -230,6 +253,11 @@ describe("II3: a wish plays the version of its style that was approved when it w
     const subs = await db.styleSubmission.findMany({ where: { styleId: d.id, status: "live" }, orderBy: { createdAt: "asc" } });
     expect(subs).toHaveLength(2);
     const [s1, s2] = subs;
+    // the approval's own time (the test clock and the database's default differ): approved a minute after each was sent in
+    const T0 = new Date("2031-01-01T00:00:00.000Z").getTime();
+    for (const [i, x] of subs.entries()) await db.styleSubmission.update({ where: { id: x.id }, data: { createdAt: new Date(T0 + i * 600_000), approvedAt: new Date(T0 + i * 600_000 + 60_000) } });
+    s1.createdAt = new Date(T0);
+    s2.createdAt = new Date(T0 + 600_000);
     expect(subs1.map((s) => s.id)).toEqual([s1.id]);
     const owner = await creator();
     const mk = async (createdAt: Date) => {
@@ -237,9 +265,9 @@ describe("II3: a wish plays the version of its style that was approved when it w
       await db.wish.create({ data: { id, accountId: owner.id, status: "draft", kind: "birthday", occasion: "birthday", styleSlug: slugOf(d), timeZone: "Africa/Lagos", createdAt } as never });
       return id;
     };
-    const between = await mk(new Date(s1.createdAt.getTime() + (s2.createdAt.getTime() - s1.createdAt.getTime()) / 2));
-    const after = await mk(new Date(s2.createdAt.getTime() + 1000));
-    const before = await mk(new Date(s1.createdAt.getTime() - 1000));
+    const between = await mk(new Date(T0 + 61_000));
+    const after = await mk(new Date(T0 + 600_000 + 61_000));
+    const before = await mk(new Date(T0 - 1000));
     const house = await db.style.findFirstOrThrow({ where: { house: true, slug: { not: null } } });
     const houseWish = ids.next();
     await db.wish.create({ data: { id: houseWish, accountId: owner.id, status: "draft", kind: "birthday", occasion: "birthday", styleSlug: house.slug as string, timeZone: "Africa/Lagos" } as never });
@@ -251,5 +279,89 @@ describe("II3: a wish plays the version of its style that was approved when it w
     const snapshot = JSON.stringify(await db.wish.findMany({ where: { id: { in: [between, after, before, houseWish] } }, select: { id: true, styleSubmissionId: true }, orderBy: { id: "asc" } }));
     await migrate();
     expect(JSON.stringify(await db.wish.findMany({ where: { id: { in: [between, after, before, houseWish] } }, select: { id: true, styleSubmissionId: true }, orderBy: { id: "asc" } }))).toBe(snapshot);
+  });
+});
+
+describe("II4: a file an approved version names is kept when its creator deletes it", () => {
+  const del = (c: Creator, id: string) => t.http().delete(`/v1/uploads/${id}`).set(c.h).send({});
+
+  it("a paid version 1 wish plays 2 of 2 pictures after one is deleted and version 2 is approved; the creator no longer sees it; version 2 does not play it", async () => {
+    const c = await creator();
+    const { d, files: [a, b] } = await approvedNaming(c, "Two pictures", 2);
+    const old = await madeIn(slugOf(d));
+    await reopen(c, d, "Pictures changed", [a]);
+    expect((await del(c, b)).status).toBeLessThan(300);
+    // gone from the creator's draft and list, and from every read of theirs
+    expect(((await get(c, `/studio/styles/${d.id}/files`)).body.items as Body[]).map((i) => i.fileId)).toEqual([a]);
+    expect((await get(c, `/studio/styles/${d.id}/files/${b}`)).status).toBe(404);
+    expect((await del(c, b)).status).toBe(404);
+    expect((await rowOf(b))?.keptAt).not.toBeNull();
+    // the other creator cannot reach it
+    const other = await creator();
+    expect((await del(other, b)).status).toBe(404);
+    expect((await get(other, `/studio/styles/${d.id}/files/${b}`)).status).toBe(404);
+    expect((await decide(await checked(c, d), { decision: "approve", reason: "Version two" })).status).toBe(200);
+    await stamp(d.id, [[a, b]]);
+
+    const at = await player(old.link);
+    expect(at.status).toBe(200);
+    expect(at.body.document.art).toHaveLength(2);
+    const items = at.body.items as Body[];
+    expect(items.map((i) => i.fileId).sort()).toEqual([a, b].sort());
+    for (const i of items) expect(i.url).toEqual(expect.any(String));
+    // a new wish and the public read play version 2: one picture, the kept one is not given
+    const fresh = await madeIn(slugOf(d));
+    expect(((await player(fresh.link)).body.items as Body[]).map((i) => i.fileId)).toEqual([a]);
+    expect((await t.http().get(`/v1/styles/${slugOf(d)}`)).body.document.art).toHaveLength(1);
+  });
+
+  it("a file no approved version names is deleted at once; a kept file goes for good only when no playable version names it, and the unattached sweep never takes it", async () => {
+    const c = await creator();
+    const { d, files: [a, b] } = await approvedNaming(c, "Kept for a while", 2);
+    const old = await madeIn(slugOf(d));
+    const loose = await upload(c, d.id);
+    expect((await del(c, loose)).status).toBeLessThan(300);
+    expect(await rowOf(loose)).toBeNull();
+    await reopen(c, d, "Next", [a]);
+    expect((await del(c, b)).status).toBeLessThan(300);
+    expect((await decide(await checked(c, d), { decision: "approve", reason: "Version two" })).status).toBe(200);
+    const jobsOf = t.app.get(FileJobs);
+    // the old wish still plays version 1: the sweeps leave the kept file alone, even a year on
+    t.clock.set(new Date(NOW.getTime() + 400 * DAY));
+    await jobsOf.sweepUnattached(500);
+    expect(await jobsOf.sweepKeptStyleFiles(500)).toBe(0);
+    expect(await rowOf(b)).not.toBeNull();
+    t.clock.set(NOW);
+    // the wish is erased: no playable version names it any more, so it goes
+    await db.wish.update({ where: { id: old.wishId }, data: { erasedAt: NOW } });
+    expect(await jobsOf.sweepKeptStyleFiles(500)).toBeGreaterThanOrEqual(1);
+    expect(await rowOf(b)).toBeNull();
+    expect(await rowOf(a)).not.toBeNull();
+  });
+
+  it("G2: the migration goes by the moment of approval: a wish made after version 2 was sent in and before it was approved is tied to version 1", async () => {
+    const c = await creator();
+    const { d } = await approvedNaming(c, "Moments", 1);
+    await second(c, d, "Moments two");
+    const [s1, s2] = await db.styleSubmission.findMany({ where: { styleId: d.id, status: "live" }, orderBy: { createdAt: "asc" } });
+    const T = new Date("2031-03-01T00:00:00.000Z").getTime();
+    await db.styleSubmission.update({ where: { id: s1.id }, data: { createdAt: new Date(T), approvedAt: new Date(T + 1000) } });
+    await db.styleSubmission.update({ where: { id: s2.id }, data: { createdAt: new Date(T + 10_000), approvedAt: new Date(T + 100_000) } });
+    const owner = await creator();
+    const mk = async (at: number) => {
+      const id = ids.next();
+      await db.wish.create({ data: { id, accountId: owner.id, status: "draft", kind: "birthday", occasion: "birthday", styleSlug: slugOf(d), timeZone: "Africa/Lagos", createdAt: new Date(at) } as never });
+      return id;
+    };
+    const inReview = await mk(T + 50_000); // sent in, not yet approved
+    const approvedBy = await mk(T + 100_000); // the very moment of approval and after
+    const later = await mk(T + 200_000);
+    await migrate();
+    expect(await pointerOf(inReview)).toBe(s1.id);
+    expect(await pointerOf(approvedBy)).toBe(s2.id);
+    expect(await pointerOf(later)).toBe(s2.id);
+    const once = JSON.stringify(await db.wish.findMany({ where: { id: { in: [inReview, approvedBy, later] } }, select: { id: true, styleSubmissionId: true }, orderBy: { id: "asc" } }));
+    await migrate();
+    expect(JSON.stringify(await db.wish.findMany({ where: { id: { in: [inReview, approvedBy, later] } }, select: { id: true, styleSubmissionId: true }, orderBy: { id: "asc" } }))).toBe(once);
   });
 });

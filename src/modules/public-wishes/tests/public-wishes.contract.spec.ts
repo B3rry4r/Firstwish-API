@@ -10,7 +10,7 @@ import { testWishNo } from "../../../../test/kit/unique";
 const NOW = new Date("2027-03-10T09:00:00.000Z");
 const DAY = 24 * 3600 * 1000;
 const ids = new UuidV7Maker();
-const VIEW_KEYS = ["content", "endsAt", "files", "keepOffer", "kind", "occasion", "openable", "opening", "openedAt", "opensAt", "prompt", "receiverName", "serverTime", "slug", "state", "styleSlug", "timeZone", "wishNo"];
+const VIEW_KEYS = ["content", "endsAt", "files", "house", "keepOffer", "kind", "occasion", "openable", "opening", "openedAt", "opensAt", "prompt", "receiverName", "serverTime", "slug", "state", "styleSlug", "timeZone", "wishNo"];
 
 describe("public wishes E-129 E-130 E-131 E-132 E-134 and the feed's E-122 E-142 E-143 E-166 (contract)", () => {
   let t: TestApp;

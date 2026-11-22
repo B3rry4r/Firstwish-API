@@ -245,7 +245,10 @@ export class AccountErasureService {
     if (wishIds.length) {
       await tx.job.deleteMany({ where: { subjectId: { in: wishIds }, type: { in: [...WISH_JOB_KINDS] }, status: "scheduled" } });
       // A login's wish in the business is not covered by the owner's file job: each file no other wish names gets its own cleanup (safe to repeat).
-      const files = [...new Set((await tx.wishFile.findMany({ where: { wishId: { in: wishIds } }, select: { fileId: true } })).map((r) => r.fileId))];
+      // IF4a: the voices friends gave through a gather link go with the account's wishes (the friend's first name at once, the voice note and its file by a cleanup each)
+      const voices = (await tx.voiceNote.findMany({ where: { wishId: { in: wishIds } }, select: { id: true } })).map((r) => r.id);
+      await tx.wishGatherVoice.deleteMany({ where: { wishId: { in: wishIds } } });
+      const files = [...new Set([...(await tx.wishFile.findMany({ where: { wishId: { in: wishIds } }, select: { fileId: true } })).map((r) => r.fileId), ...voices])];
       await tx.wishFile.deleteMany({ where: { wishId: { in: wishIds } } });
       for (const fileId of files) await this.jobs.schedule("upload-cleanup", now, `${ERASE_WISH_FILE_PREFIX}${fileId}`, tx);
     }

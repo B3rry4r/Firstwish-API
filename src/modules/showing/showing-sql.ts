@@ -24,6 +24,7 @@ export function publicNow(now: Date): Prisma.Sql {
     AND w."erasedAt" IS NULL AND w."removedAt" IS NULL AND w."passcodeHash" IS NULL
     AND w."endsAt" IS NOT NULL AND w."endsAt" > ${now}
     AND l.active AND a."erasedAt" IS NULL
+    AND (w."conciergeOrderId" IS NULL OR EXISTS (SELECT 1 FROM concierge_order_wish d WHERE d."wishId" = w.id))
     AND NOT EXISTS (SELECT 1 FROM ban b WHERE b."accountId" = a.id AND (b.until IS NULL OR b.until > ${now}))`;
 }
 

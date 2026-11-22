@@ -1949,6 +1949,42 @@
         "staff:owner"
       ],
       "decision": "DEC-271"
+    },
+    {
+      "resource": "Wish",
+      "method": "POST",
+      "path": "/v1/wishes/:id/gather/on",
+      "auth": [
+        "user:owner"
+      ],
+      "decision": "DEC-286"
+    },
+    {
+      "resource": "PublishedWish",
+      "method": "GET",
+      "path": "/v1/styles/:id/wishes",
+      "auth": [
+        "public"
+      ],
+      "decision": "DEC-288"
+    },
+    {
+      "resource": "Style",
+      "method": "GET",
+      "path": "/v1/creators/:handle/styles",
+      "auth": [
+        "public"
+      ],
+      "decision": "DEC-288"
+    },
+    {
+      "resource": "PublishedWish",
+      "method": "GET",
+      "path": "/v1/creators/:handle/wishes",
+      "auth": [
+        "public"
+      ],
+      "decision": "DEC-288"
     }
   ],
   "fulfilment": {
@@ -3131,6 +3167,53 @@
         "cardinality": "list",
         "note": "{items: [...], nextCursor: null, limits}: the order's files as GET /v1/admin/concierge/orders/:id/files lists them, after the add (DEC-271)"
       }
+    },
+    "POST /v1/wishes/:id/gather/on": {
+      "decision": "DEC-286",
+      "response": {
+        "entity": "Wish",
+        "cardinality": "single",
+        "note": "the gather link as GET /v1/wishes/:id/gather reads it, now on; on twice answers the same (DEC-286)"
+      }
+    },
+    "GET /v1/styles/:id/wishes": {
+      "decision": "DEC-288",
+      "set": {
+        "id": "string (path: the style's slug or id)"
+      },
+      "response": {
+        "entity": "PublishedWish",
+        "cardinality": "list",
+        "note": "the wishes shown now in this style, newest first; the style is on, or 404 (DEC-288)"
+      }
+    },
+    "GET /v1/creators/:handle/styles": {
+      "decision": "DEC-288",
+      "set": {
+        "handle": "string (path)"
+      },
+      "response": {
+        "entity": "Style",
+        "cardinality": "list",
+        "note": "the styles this creator has had approved that are on, by name; 404 as GET /v1/creators/:handle (DEC-288)"
+      }
+    },
+    "GET /v1/creators/:handle/wishes": {
+      "decision": "DEC-288",
+      "set": {
+        "handle": "string (path)"
+      },
+      "response": {
+        "entity": "PublishedWish",
+        "cardinality": "list",
+        "note": "the wishes this creator has on Now showing now, newest first; 404 as GET /v1/creators/:handle (DEC-288)"
+      }
+    },
+    "GET /v1/showing": {
+      "decision": "DEC-288",
+      "set": {
+        "style": "string (optional: only wishes shown in this style; a slug)"
+      }
     }
   },
   "extraFields": [
@@ -3686,6 +3769,20 @@
       "type": "object (R14, IE3: {provisional, confirmedBy, confirmedAt}: whether a setting is still provisional and who confirmed it, in one shape for every provisional setting; null on a line that is not provisional)",
       "nullable": true,
       "decision": "DEC-281"
+    },
+    {
+      "resource": "Wish",
+      "name": "restorableUntil",
+      "type": "time (ISO-8601; IF4: the instant until which a wish its owner removed can be brought back; null when the wish is not removed by its owner)",
+      "nullable": true,
+      "decision": "DEC-285"
+    },
+    {
+      "resource": "PublicWishView",
+      "name": "house",
+      "type": "boolean",
+      "nullable": false,
+      "decision": "DEC-287"
     }
   ],
   "dropFields": [

@@ -2,7 +2,7 @@
 import { IsInt, IsOptional, IsString, Max, Min } from "class-validator";
 import { Type } from "class-transformer";
 import { MinTrimmed } from "../../common/validation/decorators";
-import type { GetAdminShowingQuery, GetShowingQuery, PostAdminShowingListedByNoUnlistBody, PostAdminShowingListedByNoUnlistParams } from "../types";
+import type { GetAdminShowingQuery, GetCreatorsByHandleWishesParams, GetCreatorsByHandleWishesQuery, GetShowingQuery, GetStylesByIdWishesParams, GetStylesByIdWishesQuery, PostAdminShowingListedByNoUnlistBody, PostAdminShowingListedByNoUnlistParams } from "../types";
 
 /** E-138 GET /v1/admin/showing (query). */
 export class GetAdminShowingQueryDto implements GetAdminShowingQuery {
@@ -32,6 +32,9 @@ export class PostAdminShowingListedByNoUnlistParamsDto implements PostAdminShowi
 export class GetShowingQueryDto implements GetShowingQuery {
   @IsOptional()
   @IsString()
+  style?: string;
+  @IsOptional()
+  @IsString()
   cursor?: string;
   @IsOptional()
   @Type(() => Number)
@@ -39,4 +42,38 @@ export class GetShowingQueryDto implements GetShowingQuery {
   @Min(1)
   @Max(50)
   limit?: number;
+}
+
+/** E-283 GET /v1/creators/:handle/wishes (query). */
+export class GetCreatorsByHandleWishesQueryDto implements GetCreatorsByHandleWishesQuery {
+  @IsOptional()
+  @IsString()
+  cursor?: string;
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(50)
+  limit?: number;
+}
+export class GetCreatorsByHandleWishesParamsDto implements GetCreatorsByHandleWishesParams {
+  @IsString()
+  handle!: string;
+}
+
+/** E-284 GET /v1/styles/:id/wishes (query). */
+export class GetStylesByIdWishesQueryDto implements GetStylesByIdWishesQuery {
+  @IsOptional()
+  @IsString()
+  cursor?: string;
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(50)
+  limit?: number;
+}
+export class GetStylesByIdWishesParamsDto implements GetStylesByIdWishesParams {
+  @IsString()
+  id!: string;
 }

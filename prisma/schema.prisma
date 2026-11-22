@@ -1562,6 +1562,7 @@ model Wish {
   keptUntil                DateTime?           @db.Timestamptz(3)
   removedAt                DateTime?           @db.Timestamptz(3)
   eraseAfter               DateTime?           @db.Timestamptz(3)
+  restorableUntil          DateTime?           @db.Timestamptz(3)
   erasedAt                 DateTime?           @db.Timestamptz(3)
   keptBy                   WishKeptBy?
   createdAt                DateTime            @default(now()) @db.Timestamptz(3)

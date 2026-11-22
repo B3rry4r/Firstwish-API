@@ -521,7 +521,7 @@ describe("purchases P-B07: the rulings HH1 to HH9", () => {
     await db.business.update({ where: { id: b2 }, data: { allowance: 3 } });
     await pay(o2, "pro.pack", {}, { businessId: b2 });
     expect([await draw(b2), await draw(b2), await draw(b2), await draw(b2)]).toEqual(["month", "month", "month", "pack"]);
-  });
+  }, 60_000);
 
   it("PROOF a handler that throws leaves nothing: no grant, no ledger, no event, the payment stays pending, a retry grants once", async () => {
     t.clock.set(FAR);

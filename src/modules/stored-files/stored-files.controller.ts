@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, HttpCode, Param, Post } from "@nestjs/common";
+import { Body, Controller, Delete, Headers, HttpCode, Param, Post } from "@nestjs/common";
 import { CurrentPrincipal, Roles } from "../../common/auth/decorators";
 import type { Principal } from "../../common/auth/principal";
 import {
@@ -22,8 +22,8 @@ export class StoredFilesController {
   @Roles("person", "creator", "business")
   @Post()
   @HttpCode(201)
-  ticket(@Body() body: PostUploadsBodyDto, @CurrentPrincipal() p: Principal | undefined): Promise<UploadTicket> {
-    return this.files.createTicket(userOf(p), body);
+  ticket(@Body() body: PostUploadsBodyDto, @CurrentPrincipal() p: Principal | undefined, @Headers("x-business-id") business?: string): Promise<UploadTicket> {
+    return this.files.createTicket(userOf(p), body, business === undefined ? {} : { business });
   }
 
   /** E-184 */

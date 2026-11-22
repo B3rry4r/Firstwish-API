@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Header, Headers, HttpCode, Param, Post, Query } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Patch, Header, Headers, HttpCode, Param, Post, Query } from "@nestjs/common";
 import {
   DeleteBusinessShootsByIdParamsDto,
   GetBusinessRevealLinksByIdParamsDto,
@@ -7,14 +7,19 @@ import {
   PostBusinessClientWishesByIdSendRevealBodyDto,
   PostBusinessClientWishesByIdSendRevealParamsDto,
   PostBusinessRevealLinksByIdCopyLinkBodyDto,
+  PostBusinessRevealsBodyDto,
   PostBusinessRevealLinksByIdCopyLinkParamsDto,
+  PostBusinessRevealLinksByIdDownloadsBodyDto,
+  PostBusinessRevealLinksByIdDownloadsParamsDto,
+  PatchBusinessShootsByIdBodyDto,
+  PatchBusinessShootsByIdParamsDto,
   PostBusinessShootsBodyDto,
   PostBusinessShootsByIdFilesBodyDto,
   PostBusinessShootsByIdFilesParamsDto,
   PostBusinessShootsByIdFinalsBodyDto,
   PostBusinessShootsByIdFinalsParamsDto,
 } from "../../contracts";
-import type { PostBusinessClientWishesByIdSendRevealResponse, RevealLink, Shoot, ShootFilesAdded, VaultStorage } from "../../contracts";
+import type { PostBusinessClientWishesByIdSendRevealResponse, PostBusinessRevealsResponse, RevealLink, Shoot, ShootFilesAdded, VaultStorage } from "../../contracts";
 import { CurrentPrincipal, Roles } from "../../common/auth/decorators";
 import type { Principal } from "../../common/auth/principal";
 import { DEFAULT_LIMIT, Page } from "../../common/pagination/cursor";
@@ -53,6 +58,13 @@ export class VaultController {
   @Get("shoots/:id")
   async one(@Param() params: GetBusinessShootsByIdParamsDto, @CurrentPrincipal() p: Principal | undefined, @BusinessHeader() h: string | undefined): Promise<Shoot> {
     return this.shoots.get((await this.access.require(p, h)).businessId, params.id);
+  }
+
+  /** E-277 (IB3): rename a shoot. */
+  @Roles("person", "business")
+  @Patch("shoots/:id")
+  async rename(@Param() params: PatchBusinessShootsByIdParamsDto, @Body() body: PatchBusinessShootsByIdBodyDto, @CurrentPrincipal() p: Principal | undefined, @BusinessHeader() h: string | undefined): Promise<Shoot> {
+    return this.shoots.rename((await this.access.require(p, h)).businessId, params.id, body);
   }
 
   @Roles("person", "business")
@@ -118,6 +130,19 @@ export class VaultController {
     return this.reveals.off((await this.access.require(p, h)).businessId, params.id);
   }
 
+  /** E-274 (IB2): the link's download addresses on or off. */
+  @Roles("person", "business")
+  @Post("reveal-links/:id/downloads")
+  @HttpCode(200)
+  async downloads(
+    @Param() params: PostBusinessRevealLinksByIdDownloadsParamsDto,
+    @Body() body: PostBusinessRevealLinksByIdDownloadsBodyDto,
+    @CurrentPrincipal() p: Principal | undefined,
+    @BusinessHeader() h: string | undefined,
+  ): Promise<RevealLink> {
+    return this.reveals.setDownloads((await this.access.require(p, h)).businessId, params.id, body.on);
+  }
+
   /** E-33. */
   @Roles("person", "business")
   @Post("client-wishes/:id/send-reveal")
@@ -130,5 +155,19 @@ export class VaultController {
     @BusinessHeader() h: string | undefined,
   ): Promise<PostBusinessClientWishesByIdSendRevealResponse> {
     return this.reveals.send((await this.access.require(p, h)).businessId, params.id, body, key);
+  }
+
+  /** E-272 (IA1): the client wish and the reveal in one call. */
+  @Roles("person", "business")
+  @Post("reveals")
+  @HttpCode(200)
+  async sendOne(
+    @Body() body: PostBusinessRevealsBodyDto,
+    @Headers("idempotency-key") key: string | undefined,
+    @CurrentPrincipal() p: Principal | undefined,
+    @BusinessHeader() h: string | undefined,
+  ): Promise<PostBusinessRevealsResponse> {
+    const c = await this.access.require(p, h);
+    return this.reveals.sendOne({ accountId: c.accountId, businessId: c.businessId }, body, key);
   }
 }

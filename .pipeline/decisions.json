@@ -3752,6 +3752,86 @@
       "confidence": "high",
       "source": "build/rulings-phase3.md; build/prompts/P-API-BASE-8.md",
       "decidedAt": "2026-11-30T12:00:00Z"
+    },
+    {
+      "id": "DEC-262",
+      "topic": "One call sends a reveal; a reveal's passcode holds for every link (IA1, IA4)",
+      "decision": "IA1: POST /v1/business/reveals (E-272) takes the E-33 reveal body plus the client wish's own fields (client, kind, occasion, day: each defaulting from the reveal) and an Idempotency-Key, and in ONE transaction under the owner's lock makes the client wish (taking one wish from the month's allowance or the pack, as E-30 does), the reveal link, the shoot's mark and the one email, or none of them: a refused email (429 over the day's limit, 422 for a bad address), an empty pack (402 no_wishes), a file the set does not hold (422) or another business's shoot (404) leaves no wish, no link and no draw. The same Idempotency-Key answers the first result and sends nothing (30 identical calls make one wish). A shoot already revealed on that set to a client of the same name (compared without case or extra spaces) answers 409 already_sent whose fields carry sentAt and link, unless the body says `again`: then the reveal is sent again on the same client wish, taking no second wish. The answer is {shoot, wish, link}. E-30 and E-33 keep working as before. IA4: a link the business copies for a shoot's set (E-153) carries the passcode of the newest live reveal sent on that set; sending a reveal with a passcode gives the passcode to the links already copied for that set; so copying a link never gives a way in without the passcode.",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md; build/prompts/API-BASE-9.md",
+      "decidedAt": "2026-12-01T12:00:00Z"
+    },
+    {
+      "id": "DEC-263",
+      "topic": "Favourites at the reveal link (IB1)",
+      "decision": "IB1: GET /v1/r/:code/favourites (E-275) and POST /v1/r/:code/favourites (E-276, body {position, marked}) with no account, past the passcode where the reveal has one (403 passcode_required with words before it; 410 for a link switched off or ended). Marks belong to the link: positions in the link's file list (RevealPlay.index), up to 200, the same mark twice changes nothing, 60 marks an hour for a link and address (429, PROVISIONAL), one transaction with the writes below. The business reads them: RevealLink.hearts (E-152), the client wish's `hearts` (the positions) and the shoot's `hearts` (the file ids marked at any of its links); it cannot change them. Sending the reveal again with other files starts the marks over. RevealPlay carries `hearts` so the player starts with them.",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md; build/prompts/API-BASE-9.md",
+      "decidedAt": "2026-12-01T12:00:00Z"
+    },
+    {
+      "id": "DEC-264",
+      "topic": "Download addresses for finals (IB2)",
+      "decision": "IB2: RevealPlay (E-248) carries `downloads`, one {name, url} (a signed address, ten minutes) for each photo in the order of `photos`, only when the link is a FINALS link and its downloads switch is on (on by default; the reveal's `downloads` sets it at the send); a proofs link never has any. POST /v1/business/reveal-links/:id/downloads (E-274, body {on}) switches it and answers the link, whose `downloads` says which. Nothing before the passcode. The server makes no archive: the list is the download.",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md; build/prompts/API-BASE-9.md",
+      "decidedAt": "2026-12-01T12:00:00Z"
+    },
+    {
+      "id": "DEC-265",
+      "topic": "Rename a shoot and a file (IB3)",
+      "decision": "IB3: PATCH /v1/business/shoots/:id (E-277, {title?, client?}) and PATCH /v1/business/vault-files/:id (E-278, {name}) for the business's owner and its live logins; another business's shoot or file is 404, a removed login 403 login_removed. The new name shows in the shoot read, the Vault file list (E-214) and the download names; the stored object keeps its own key.",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md; build/prompts/API-BASE-9.md",
+      "decidedAt": "2026-12-01T12:00:00Z"
+    },
+    {
+      "id": "DEC-266",
+      "topic": "Named files, plays and Vault tickets for logins (IB4, IB5, IB6)",
+      "decision": "IB4: `files` (ids from the set, up to 200, in this order) on E-33 and E-272: left out, every ready file of the set; a file that is not a ready file of that set is 422 with words and nothing is taken. IB5: the first play of a reveal (after its passcode) sets the client wish's openedAt, a later play leaves it; each visit is one counted play; the shoot's reveal marks carry plays {count, first, last} and openedAt. IB6 (HU5): POST /v1/uploads (E-182) for the Vault purpose answers a live login (invited or active) of a business as it answers the owner, for that business (x-business-id names one when they hold several); a removed login is 403 login_removed, another business's login and a person of no business 403; a login's file goes with its shoot, under its own owner.",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md; build/prompts/API-BASE-9.md",
+      "decidedAt": "2026-12-01T12:00:00Z"
+    },
+    {
+      "id": "DEC-267",
+      "topic": "Make the wish on a Concierge order (HZ2)",
+      "decision": "HZ2: POST /v1/admin/concierge/orders/:id/wishes (E-273, {reason, kind, occasion, name}) for the order's own maker or the owner while the order is given or being made, up to the order's count: the wish is the buyer's (their account, and their business for a business's order), a draft tied to the order (wish.conciergeOrderId) and hidden from the buyer, from every list and read of theirs, until the order is delivered. The maker reads, saves, adds photos and seals it through the wish routes (E-224, E-225, E-226, E-231) while the order is with them, and loses it the moment it is delivered or the order moves to another maker; a seal on an order is paid by the order (a Signature ticket, no Pass or plan). E-34 delivers the wishes made through the order and the wishes named in wishIds (older orders); a delivery with none is 422. E-270 lists the order's tied wishes too. Cancelling the order erases a wish half made; erasing the buyer erases it with the rest.",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md; build/prompts/API-BASE-9.md",
+      "decidedAt": "2026-12-01T12:00:00Z"
+    },
+    {
+      "id": "DEC-268",
+      "topic": "The registry is frozen again after IA1 to IB6 and HZ2",
+      "decision": "The registry is re-frozen after DEC-262 to DEC-267 by tools/pipeline/freeze.py; reconcile.py was run twice with --reopen (identical outputs; .pipeline/ui-align-tasks.json restored byte for byte). Endpoint ids already issued are unchanged; E-271 was the last issued before, and the seven new endpoints take E-272 (POST /v1/business/reveals), E-273 (POST /v1/admin/concierge/orders/:id/wishes), E-274 (POST /v1/business/reveal-links/:id/downloads), E-275 and E-276 (GET and POST /v1/r/:code/favourites), E-277 (PATCH /v1/business/shoots/:id) and E-278 (PATCH /v1/business/vault-files/:id).",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md; build/prompts/API-BASE-9.md",
+      "decidedAt": "2026-12-01T12:00:00Z"
+    },
+    {
+      "id": "DEC-269",
+      "topic": "The ninth round's check: one reveal for a shoot and a client, links never more open than their reveal, hearts by file (IC1, IC2, IC3, IC5)",
+      "decision": "IC3: for one shoot and one client there is one reveal. POST /v1/business/client-wishes/:id/send-reveal (E-33) answers 409 already_sent (fields sentAt and link) when that shoot's set already went to a client of that name, like POST /v1/business/reveals (E-272); its body takes `again` (boolean, optional) to send it once more on the same client wish, taking no second wish. A client wish made by E-30 is an ordinary client wish and takes its wish. IC1: a link copied for a shoot's set (E-153) carries the passcode, the downloads switch, the end and the switched-off time of the reveal it belongs to (the newest reveal sent on the set with a passcode, else the newest), whatever that reveal's state; sending again keeps the passcode and the downloads switch unless the body gives new ones. IC2: a heart belongs to a file: the link keeps the ids of the marked files, the wire still names positions in the link's file list (RevealPlay.index); a removed file's heart goes with it; sending again or copying again keeps the hearts of the files that stay. IC5: a play is counted for a link and an address in an hour, never from an id the page sends (the x-reveal-session header is not read); the 61st mark's 429 names the real wait; an Idempotency-Key used again for another shoot or client is 409 idempotency_key_reused.",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (IC1 to IC7); build/prompts/P-API-BASE-9.md",
+      "decidedAt": "2026-12-02T12:00:00Z"
     }
   ]
 }

@@ -1,6 +1,6 @@
 import { CursorQueryDto } from "../../common/pagination/cursor";
 import { Transform } from "class-transformer";
-import { ArrayMaxSize, ArrayMinSize, ArrayUnique, IsArray, IsBoolean, IsIn, IsInt, IsOptional, IsString, Max, MaxLength, Min } from "class-validator";
+import { ArrayMaxSize, ArrayUnique, IsArray, IsBoolean, IsIn, IsInt, IsOptional, IsString, Max, MaxLength, Min } from "class-validator";
 import { IsDateOnly, MinTrimmed } from "../../common/validation/decorators";
 
 /** E-40. `rush` is accepted only as false: Concierge rush is not sold (Z2). */
@@ -26,12 +26,29 @@ export class DeliverBodyDto {
   @IsString()
   @MinTrimmed(4)
   reason!: string;
+  @IsOptional()
   @IsArray()
-  @ArrayMinSize(1)
   @ArrayMaxSize(1000)
   @ArrayUnique()
   @IsString({ each: true })
-  wishIds!: string[];
+  wishIds?: string[];
+}
+
+/** E-273 (HZ2): "make the wish": the kind, the occasion and who it is for; the maker writes the rest through the wish routes. */
+export class MakeWishBodyDto {
+  @IsString()
+  @MinTrimmed(4)
+  reason!: string;
+  @IsString()
+  @MaxLength(40)
+  kind!: string;
+  @IsString()
+  @MaxLength(60)
+  occasion!: string;
+  @IsString()
+  @MinTrimmed(1)
+  @MaxLength(120)
+  name!: string;
 }
 
 export class IdParamDto {

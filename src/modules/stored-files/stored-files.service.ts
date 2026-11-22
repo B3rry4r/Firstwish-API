@@ -31,7 +31,11 @@ import {
   variantsOf,
 } from "./file-rules";
 import { readLimits } from "../price-book/book-limits";
+import { notInBusiness } from "../../common/auth/login-removed";
+import { businessAccessOf } from "./vault-access";
 import { ScreeningService } from "./screening.service";
+import { dropFileHearts } from "../vault/vault-shared";
+import { SHOWN_TO_BUYER } from "../wishes/wish-shown";
 
 type Tx = Prisma.TransactionClient;
 
@@ -89,6 +93,21 @@ export class StoredFilesService {
   }
 
   /**
+   * IB6 (HU5): the business a Vault upload goes to: the caller's own, or one where they hold a live login (invited or active, as the business's
+   * other pages count it). With `named` (the x-business-id header) it must be one of those. A removed login is refused with login_removed and
+   * words; a person of no business, or of another business, with the plain 403.
+   */
+  private async vaultBusinessOf(tx: Tx, p: UserPrincipal, named: string | undefined): Promise<Business> {
+    const access = await businessAccessOf(tx, p.accountId);
+    const mine = [...access.owned, ...access.member];
+    const want = named === undefined ? mine[0] : mine.find((id) => id === named.trim().toLowerCase());
+    if (!want) throw await notInBusiness(tx, p.accountId, "Vault files need a business.");
+    const biz = await tx.business.findUnique({ where: { id: want } });
+    if (!biz) throw AppError.forbidden("Vault files need a business.");
+    return biz;
+  }
+
+  /**
    * HU4: a wish holds at most MAX_VOICE_NOTES_PER_WISH voice notes from friends and, counted apart, as many of the owner's own (the owner's own
    * voice is never counted against what friends may send). Only one that has arrived (uploaded, screening or ready) counts, so an ask never
    * uploaded holds no place. The next one is 409 with words.
@@ -107,7 +126,7 @@ export class StoredFilesService {
       return;
     }
     if (!isUuid(subjectId)) throw AppError.validation({ subjectId: "Must be a wish id." });
-    const wish = await tx.wish.findFirst({ where: { id: subjectId, accountId: p.accountId }, select: { status: true, ticket: true } });
+    const wish = await tx.wish.findFirst({ where: { AND: [{ id: subjectId, accountId: p.accountId }, SHOWN_TO_BUYER] }, select: { status: true, ticket: true } });
     if (!wish) throw AppError.notFound("No such wish.");
     // HS1: a friend's voice through the gather link may arrive while the wish is a draft or sealed and not yet open
     if (wish.status !== "draft" && !(gather && wish.status === "sealed")) throw AppError.conflict("wish_sealed", "This wish is sealed; its files cannot change.");
@@ -123,7 +142,7 @@ export class StoredFilesService {
    * E-182: checks purpose, type, size and entitlement, then issues a signed PUT for one STAGING key (Y1), good for 15 minutes and
    * bound to the type and the exact length (X26). The file's own key is made here too but is never signed for a PUT.
    */
-  async createTicket(p: UserPrincipal, body: PostUploadsBody, opts: { gather?: boolean } = {}): Promise<UploadTicket> {
+  async createTicket(p: UserPrincipal, body: PostUploadsBody, opts: { gather?: boolean; business?: string } = {}): Promise<UploadTicket> {
     const rule = purposeOf(body.purpose);
     if (!rule) throw AppError.validation({ purpose: "Must be one of photo, voice, clip, vault, studio, picture, poster, sound, model, profile or brand." });
     const contentType = normaliseType(body.contentType);
@@ -152,7 +171,7 @@ export class StoredFilesService {
       let businessId: string | null = null;
       let styleId: string | null = null;
       if (rule.purpose === "vault-file" || rule.purpose === "brand-logo") {
-        const biz = await this.businessOf(tx, p);
+        const biz = rule.purpose === "vault-file" ? await this.vaultBusinessOf(tx, p, opts.business) : await this.businessOf(tx, p);
         businessId = biz.id;
         if (rule.purpose === "vault-file") {
           const limit = await vaultLimitBytes(tx, biz, now);
@@ -382,6 +401,7 @@ export class StoredFilesService {
           FOR UPDATE`;
         if (wishes.some((w) => w.status !== "draft" && !(opts.gather && w.status === "sealed"))) throw AppError.conflict("file_in_use", "A sealed wish still uses this file.");
         await tx.$executeRaw`DELETE FROM wish_file WHERE "fileId" = ${id}::uuid`;
+        if (r.purpose === "vault_file") await dropFileHearts(tx, id); // IC2: a removed file's heart goes with it
         if (r.businessId && r.purpose === "vault_file" && (r.status === "ready" || r.status === "screening")) {
           await tx.$executeRaw`UPDATE business SET vault = GREATEST(COALESCE(vault, 0) - ${r.bytes}, 0), version = version + 1 WHERE id = ${r.businessId}::uuid`;
         }

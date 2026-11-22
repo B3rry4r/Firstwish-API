@@ -1839,6 +1839,10 @@
     "variants": {
      "rule": "keep",
      "why": "storage keys"
+    },
+    "shownName": {
+     "rule": "keep",
+     "why": "the name a Vault file shows under; the file and its name go together with the erase files job (X10)"
     }
    }
   },
@@ -3451,6 +3455,10 @@
     "fileIds": {
      "rule": "keep",
      "why": "ids of stored files, which the erase of a business's files removes"
+    },
+    "hearts": {
+     "rule": "keep",
+     "why": "ids of the stored files a client marked, no person; a removed file's heart goes with it"
     },
     "passcodeHash": {
      "rule": "keep",

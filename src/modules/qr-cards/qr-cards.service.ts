@@ -14,6 +14,7 @@ import { ServerFileWriter } from "../server-files/server-files";
 import { wishHas } from "../wish-extras/wish-extras";
 import { cardSvg } from "./card-svg";
 import { Inject } from "@nestjs/common";
+import { SHOWN_TO_BUYER } from "../wishes/wish-shown";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export const MAX_CARD_WISHES = 24;
@@ -52,7 +53,7 @@ export class QrCardsService {
       await lockAccount(tx, accountId);
       // the owner check is the query: a wish that is not the caller's reads as missing
       const wishes = await tx.wish.findMany({
-        where: { id: { in: wishIds }, accountId, erasedAt: null, removedAt: null },
+        where: { id: { in: wishIds }, accountId, erasedAt: null, removedAt: null, ...(forOrder ? {} : SHOWN_TO_BUYER) },
         select: { id: true, ticket: true, adds: true },
       });
       if (wishes.length !== wishIds.length) throw AppError.notFound();

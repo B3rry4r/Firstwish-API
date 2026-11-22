@@ -20,6 +20,8 @@ import { discounted } from "../price-book/price-math";
 import { BusinessOf } from "../people/business-of";
 import { ReceiverActivityService } from "../public-wishes/receiver-activity.service";
 import { readLimits } from "../price-book/book-limits";
+import { WishesService } from "../wishes/wishes.service";
+import { WishLifecycleService } from "../wishes/wish-lifecycle.service";
 import { canMove, dueAtFor, OPEN, stateOf, UUID } from "./order-state";
 
 const SECTION = "/admin/concierge";
@@ -67,6 +69,8 @@ export class ConciergeService implements OnModuleInit {
     private readonly registry: FulfilmentRegistry,
     private readonly notices: NoticesService,
     private readonly invoices: InvoicesService,
+    private readonly wishes: WishesService,
+    private readonly lifecycle: WishLifecycleService,
   ) {}
 
   onModuleInit(): void {
@@ -198,13 +202,37 @@ export class ConciergeService implements OnModuleInit {
     const o = await this.db.conciergeOrder.findFirst({ where: { id, ...(seesAll(c) ? {} : { makerId: c.staffId }) } });
     if (!o) throw AppError.notFound();
     const delivered = await this.db.conciergeOrderWish.findMany({ where: { orderId: o.id }, select: { wishId: true } });
+    // HZ2: the wishes made through the order that are not delivered yet are the order's too (the maker's list shows them)
+    const tied = await this.db.wish.findMany({ where: { conciergeOrderId: o.id, erasedAt: null, removedAt: null }, select: { id: true } });
     const rows = await this.db.wish.findMany({
-      where: { id: { in: delivered.map((d) => d.wishId) } },
+      where: { id: { in: [...new Set([...delivered.map((d) => d.wishId), ...tied.map((t) => t.id)])] } },
       select: { id: true, no: true, name: true },
       orderBy: { id: "asc" },
       take: 1000,
     });
     return { items: rows.map((w) => ({ id: w.id, no: w.no ?? "", firstName: (w.name ?? "").trim().split(/\s+/)[0] ?? "" })), nextCursor: null };
+  }
+
+  /**
+   * E-273 (HZ2): "make the wish": the order's maker (or the owner) starts a wish in the buyer's name. It is the buyer's, tied to this order, and the buyer
+   * sees nothing of it (no list, no read) until the order is delivered; the maker writes it through the wish routes while the order is with them. At most
+   * the order's count of wishes is made (delivered ones included). Another maker's order, and an order that is not with a maker, cannot take one.
+   */
+  async makeWish(c: StaffCaller, id: string, body: { reason: string; kind: string; occasion: string; name: string }, actor: AuditActor): Promise<OrderWish> {
+    const reason = requireReason(body.reason);
+    if (!UUID.test(id)) throw AppError.notFound();
+    const mine = c.roles.includes("owner") ? {} : { makerId: c.staffId };
+    const wishId = await this.db.$transaction(async (tx) => {
+      const o = await this.lock(tx, id, mine);
+      if (o.status !== "given" && o.status !== "making") throw AppError.conflict("order_not_being_made", "Wishes are made while the order is with a maker.");
+      const [n] = await tx.$queryRaw<{ n: number }[]>`SELECT count(*)::int AS n FROM wish WHERE "conciergeOrderId" = ${id}::uuid AND "erasedAt" IS NULL AND "removedAt" IS NULL`;
+      if ((n?.n ?? 0) >= o.count) throw AppError.conflict("order_wishes_made", `This order is for ${o.count} wish${o.count === 1 ? "" : "es"}, and they are all made.`);
+      const made = await this.wishes.createForOrderIn(tx, { orderId: id, accountId: o.accountId, businessId: o.businessId, kind: body.kind, occasion: body.occasion, name: body.name });
+      await this.audit.write(tx, { actor, section: SECTION, action: "concierge.make-wish", target: { type: "ConciergeOrder", id }, reason, changedFields: ["wishes"] });
+      return made;
+    });
+    const w = await this.db.wish.findUniqueOrThrow({ where: { id: wishId }, select: { id: true, no: true, name: true } });
+    return { id: w.id, no: w.no ?? "", firstName: (w.name ?? "").trim().split(/\s+/)[0] ?? "" };
   }
 
   /** E-36: open orders due by the end of the window (the week by default), late ones first. */
@@ -303,22 +331,27 @@ export class ConciergeService implements OnModuleInit {
   }
 
   /** E-34: the order's own maker (or the owner) marks it delivered with the wishes made. They must be real wishes of the buyer. */
-  async deliver(c: StaffCaller, id: string, body: { reason: string; wishIds: string[] }, actor: AuditActor): Promise<ConciergeOrder> {
+  async deliver(c: StaffCaller, id: string, body: { reason: string; wishIds?: string[] }, actor: AuditActor): Promise<ConciergeOrder> {
     const reason = requireReason(body.reason);
     if (!UUID.test(id)) throw AppError.notFound();
     const mine = seesAll(c) ? {} : { makerId: c.staffId };
-    const wishIds = [...new Set(body.wishIds.map((w) => w.trim().toLowerCase()))];
-    if (wishIds.some((w) => !UUID.test(w))) throw AppError.validation({ wishIds: "Name wishes by their ids." });
+    const typed = [...new Set((body.wishIds ?? []).map((w) => w.trim().toLowerCase()))];
+    if (typed.some((w) => !UUID.test(w))) throw AppError.validation({ wishIds: "Name wishes by their ids." });
     await this.db.$transaction(async (tx) => {
       const o = await this.lock(tx, id, mine);
       if (!canMove(o.status, "delivered")) throw AppError.conflict("order_not_being_made", "Only an order that is with a maker can be delivered.");
+      // HZ2: delivery takes the wishes made through the order, and the wishes named by id (older orders) as before
+      const tied = await tx.wish.findMany({ where: { conciergeOrderId: id, erasedAt: null, removedAt: null, conciergeOrderWishByWish: null }, select: { id: true } });
+      const wishIds = [...new Set([...typed, ...tied.map((t) => t.id)])];
+      if (!wishIds.length) throw AppError.validation({ wishIds: "Name the wishes made, or make them through the order first." });
       if (wishIds.length > o.count) throw AppError.validation({ wishIds: `This order is for ${o.count} wish${o.count === 1 ? "" : "es"}.` });
       const wishes = await tx.wish.findMany({
-        where: { id: { in: wishIds }, accountId: o.accountId, erasedAt: null, removedAt: null, status: { in: ["sealed", "live"] }, ...(o.businessId ? { businessId: o.businessId } : {}) },
+        // IC4: only wishes tied to THIS order, or the buyer's own wishes tied to no order, never a wish being made for another order
+        where: { id: { in: wishIds }, accountId: o.accountId, erasedAt: null, removedAt: null, status: { in: ["sealed", "live"] }, OR: [{ conciergeOrderId: null }, { conciergeOrderId: id }], ...(o.businessId ? { businessId: o.businessId } : {}) },
         select: { id: true },
       });
       if (wishes.length !== wishIds.length) {
-        const drafts = await tx.wish.findMany({ where: { id: { in: wishIds }, accountId: o.accountId, status: "draft" }, select: { id: true } });
+        const drafts = await tx.wish.findMany({ where: { id: { in: wishIds }, accountId: o.accountId, status: "draft", OR: [{ conciergeOrderId: null }, { conciergeOrderId: id }] }, select: { id: true } });
         if (drafts.length) throw AppError.validation({ wishIds: `A draft is not made yet: ${drafts.map((d) => d.id).join(", ")}. Seal it first.` });
         throw AppError.validation({ wishIds: "Every wish must be one made for this order's buyer." });
       }
@@ -362,6 +395,14 @@ export class ConciergeService implements OnModuleInit {
     const now = this.clock.now();
     await tx.conciergeOrder.update({ where: { id: o.id }, data: { status: "cancelled" } });
     const ext = (await tx.$queryRaw<Ext[]>`UPDATE concierge_order_ext SET "cancelledAt" = ${now} WHERE "orderId" = ${o.id}::uuid RETURNING "paymentId"::text AS "paymentId"`)[0];
+    // HZ2: a wish half made through the order was never delivered: it goes with the order (the buyer never saw it)
+    const half = await tx.wish.findMany({ where: { conciergeOrderId: o.id, erasedAt: null, conciergeOrderWishByWish: null }, select: { id: true } });
+    for (const w of half) {
+      const locked = await this.lifecycle.lock(tx, w.id);
+      // a draft is taken down first (the lifecycle erases a wish that was made or removed), then erased
+      if (locked.status === "draft") await this.lifecycle.move(tx, locked, "taken_down", { cause: "order.cancel" });
+      await this.lifecycle.move(tx, await this.lifecycle.lock(tx, w.id), "erased", { cause: "order.cancel" });
+    }
     // paid: a person sends the refund, so the payment says so (the refund itself is not made here)
     if (ext?.paymentId) {
       await flagRefundDue(tx, ext.paymentId, "concierge_cancelled");

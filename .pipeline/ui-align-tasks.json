@@ -2835,7 +2835,8 @@
         "components/app/pro/ui.tsx"
       ],
       "change": "signed uploads straight to storage, confirm step, short-lived signed reads (storage)",
-      "status": "open"
+      "status": "done",
+      "resolution": "WEB-API-6B (web web-api-6b, merged d807f72), verified twice 22 Nov"
     },
     {
       "id": "UA-236",
@@ -10535,7 +10536,8 @@
         "app/app/pro/brand/page.tsx:64"
       ],
       "change": "replace: preview of the wish closing screen",
-      "status": "open"
+      "status": "done",
+      "resolution": "WEB-API-6B (web web-api-6b, merged d807f72), verified twice 22 Nov"
     },
     {
       "id": "UA-830",

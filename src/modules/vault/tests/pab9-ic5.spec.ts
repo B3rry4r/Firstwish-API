@@ -1,3 +1,4 @@
+import { uniqueAddress } from "../../../../test/kit/app";
 import { useKit } from "./ab9-kit";
 
 /** IC5: plays are counted by the server's own view (the link and the address); a refusal names the real wait; a key used again for another shoot or client is refused. */
@@ -17,7 +18,7 @@ describe("IC5: plays by link and address, the real wait, and an Idempotency-Key 
     for (let i = 0; i < 20; i++) expect((await k.t.http().get(`/v1/r/${code}`).set("x-reveal-session", `made-up-${process.pid}-${i}-abcdef`)).body.state).toBe("open");
     const plays = async (): Promise<number> => ((await k.get(`/v1/business/reveal-links/${id}`, o.token)).body as { plays: { count: number } }).plays.count;
     expect(await plays()).toBe(1);
-    await k.t.http().get(`/v1/r/${code}`).set("x-forwarded-for", `198.51.100.${(process.pid % 200) + 1}`);
+    await k.t.http().get(`/v1/r/${code}`).set("x-forwarded-for", uniqueAddress());
     expect(await plays()).toBe(2);
     k.t.clock.advance(3600 * 1000);
     await k.t.http().get(`/v1/r/${code}`);
@@ -30,7 +31,7 @@ describe("IC5: plays by link and address, the real wait, and an Idempotency-Key 
     const s = await k.shootWith(o, "proofs", 2);
     const r = await one(o, s.shoot);
     const code = k.codeOf(r.body.link);
-    const addr = `203.0.113.${(process.pid % 200) + 20}`; // its own address: the minute's read count of the other tests is not this one's
+    const addr = uniqueAddress(); // its own network (limits count per /24 or /48): no other spec or test shares this hour's count
     const mark = (pos: number, on: boolean) => k.t.http().post(`/v1/r/${code}/favourites`).set("x-forwarded-for", addr).send({ position: pos, marked: on });
     for (let i = 0; i < 60; i++) expect((await mark(i % 2, i % 4 < 2)).status).toBe(200);
     let refused = await mark(0, true);

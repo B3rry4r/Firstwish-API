@@ -1909,6 +1909,46 @@
         "staff:owner"
       ],
       "decision": "DEC-267"
+    },
+    {
+      "resource": "Payment",
+      "method": "POST",
+      "path": "/v1/payments/:reference/drop",
+      "auth": [
+        "role:business",
+        "role:creator",
+        "user:signed-in"
+      ],
+      "decision": "DEC-270"
+    },
+    {
+      "resource": "ConciergeOrder",
+      "method": "GET",
+      "path": "/v1/concierge-orders/:id/files",
+      "auth": [
+        "user:owner"
+      ],
+      "decision": "DEC-271"
+    },
+    {
+      "resource": "ConciergeOrder",
+      "method": "GET",
+      "path": "/v1/admin/concierge/orders/:id/files",
+      "auth": [
+        "staff:maker",
+        "staff:owner"
+      ],
+      "decision": "DEC-271"
+    },
+    {
+      "resource": "ConciergeOrder",
+      "method": "POST",
+      "path": "/v1/admin/concierge/orders/:id/wishes/:wishId/files",
+      "auth": [
+        "staff:maker",
+        "staff:owner"
+      ],
+      "decision": "DEC-271"
     }
   ],
   "fulfilment": {
@@ -2241,7 +2281,7 @@
     "POST /v1/uploads": {
       "decision": "DEC-165",
       "set": {
-        "purpose": "string (photo|voice|clip|vault|studio|brand; what the file is for, DEC-165)",
+        "purpose": "string (photo|voice|clip|vault|studio|brand|order-photo|order-voice; what the file is for, DEC-165; order-photo and order-voice are the buyer's files for a Concierge order, subjectId is the order's id, DEC-271)",
         "kind": "image|sound|model|video (optional; the media kind, DEC-165)"
       },
       "response": {
@@ -3027,6 +3067,42 @@
         "cardinality": "single",
         "note": "{id, no, firstName}: the wish made in the buyer's name, tied to the order and hidden from the buyer until the order is delivered (DEC-267)"
       }
+    },
+    "POST /v1/payments/:reference/drop": {
+      "decision": "DEC-270",
+      "response": {
+        "entity": "Payment",
+        "cardinality": "single",
+        "note": "the payment as it stands (state abandoned once dropped); a paid, failed or refunded payment is 409 ticket_payment_not_waiting (DEC-270)"
+      }
+    },
+    "GET /v1/concierge-orders/:id/files": {
+      "decision": "DEC-271",
+      "response": {
+        "entity": "ConciergeOrder",
+        "cardinality": "list",
+        "note": "{items: [{id, kind, contentType, bytes, seconds, status, inWish, createdAt}], nextCursor: null, limits: {photos, voices}}: the files the buyer gave with this order (DEC-271)"
+      }
+    },
+    "GET /v1/admin/concierge/orders/:id/files": {
+      "decision": "DEC-271",
+      "response": {
+        "entity": "ConciergeOrder",
+        "cardinality": "list",
+        "note": "{items: [{id, kind, contentType, bytes, seconds, status, inWish, createdAt, url, expiresAt}], nextCursor: null, limits: {photos, voices}}: the buyer's files for this order, a signed read for each file that is ready (url and expiresAt are null for one that is not) (DEC-271)"
+      }
+    },
+    "POST /v1/admin/concierge/orders/:id/wishes/:wishId/files": {
+      "decision": "DEC-271",
+      "set": {
+        "fileIds": "string[] (1 to 50 ids of the files the buyer gave with this order; each must be ready)",
+        "reason": "string (4 or more characters; the audit row carries it)"
+      },
+      "response": {
+        "entity": "ConciergeOrder",
+        "cardinality": "list",
+        "note": "{items: [...], nextCursor: null, limits}: the order's files as GET /v1/admin/concierge/orders/:id/files lists them, after the add (DEC-271)"
+      }
     }
   },
   "extraFields": [
@@ -3561,6 +3637,13 @@
       "type": "array (for finals with downloads on: {name, url} for each photo, in the order of photos)",
       "nullable": true,
       "decision": "DEC-264"
+    },
+    {
+      "resource": "Wish",
+      "name": "ticketPayment",
+      "type": "object (ID1: the ticket payment of this wish that waits to be paid: {ticket, reference, startedAt, lapsesAt}; null when none waits)",
+      "nullable": true,
+      "decision": "DEC-270"
     }
   ],
   "dropFields": [

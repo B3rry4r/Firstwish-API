@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "frozenAt": "2026-11-17T04:23:17Z",
+  "frozenAt": "2026-11-22T03:47:40Z",
   "framework": "nestjs",
   "generatedBy": "tools/pipeline/reconcile.py",
   "resources": [
@@ -5336,6 +5336,35 @@
           ]
         },
         {
+          "id": "E-279",
+          "method": "GET",
+          "path": "/v1/admin/concierge/orders/:id/files",
+          "auth": [
+            {
+              "kind": "staff role",
+              "roles": [
+                "maker",
+                "owner"
+              ]
+            }
+          ],
+          "body": [],
+          "response": {
+            "entity": "ConciergeOrder",
+            "cardinality": "list",
+            "note": "{items: [{id, kind, contentType, bytes, seconds, status, inWish, createdAt, url, expiresAt}], nextCursor: null, limits: {photos, voices}}: the buyer's files for this order, a signed read for each file that is ready (url and expiresAt are null for one that is not) (DEC-271)"
+          },
+          "sources": [
+            {
+              "src": "DEC-271",
+              "via": "ruling:DEC-271"
+            }
+          ],
+          "notes": [
+            "body by DEC-271"
+          ]
+        },
+        {
           "id": "E-39",
           "method": "POST",
           "path": "/v1/admin/concierge/orders/:id/maker",
@@ -5497,6 +5526,50 @@
           ]
         },
         {
+          "id": "E-280",
+          "method": "POST",
+          "path": "/v1/admin/concierge/orders/:id/wishes/:wishId/files",
+          "auth": [
+            {
+              "kind": "staff role",
+              "roles": [
+                "maker",
+                "owner"
+              ]
+            }
+          ],
+          "body": [
+            {
+              "name": "fileIds",
+              "type": "string[] (1 to 50 ids of the files the buyer gave with this order; each must be ready)",
+              "from": [
+                "DEC-271"
+              ]
+            },
+            {
+              "name": "reason",
+              "type": "string (4 or more characters; the audit row carries it)",
+              "from": [
+                "DEC-271"
+              ]
+            }
+          ],
+          "response": {
+            "entity": "ConciergeOrder",
+            "cardinality": "list",
+            "note": "{items: [...], nextCursor: null, limits}: the order's files as GET /v1/admin/concierge/orders/:id/files lists them, after the add (DEC-271)"
+          },
+          "sources": [
+            {
+              "src": "DEC-271",
+              "via": "ruling:DEC-271"
+            }
+          ],
+          "notes": [
+            "body by DEC-271"
+          ]
+        },
+        {
           "id": "E-244",
           "method": "GET",
           "path": "/v1/concierge-orders",
@@ -5628,6 +5701,32 @@
           ],
           "notes": [
             "body by DEC-199"
+          ]
+        },
+        {
+          "id": "E-281",
+          "method": "GET",
+          "path": "/v1/concierge-orders/:id/files",
+          "auth": [
+            {
+              "kind": "user",
+              "scope": "own records"
+            }
+          ],
+          "body": [],
+          "response": {
+            "entity": "ConciergeOrder",
+            "cardinality": "list",
+            "note": "{items: [{id, kind, contentType, bytes, seconds, status, inWish, createdAt}], nextCursor: null, limits: {photos, voices}}: the files the buyer gave with this order (DEC-271)"
+          },
+          "sources": [
+            {
+              "src": "DEC-271",
+              "via": "ruling:DEC-271"
+            }
+          ],
+          "notes": [
+            "body by DEC-271"
           ]
         }
       ]
@@ -12097,6 +12196,36 @@
           ],
           "notes": [
             "auth by DEC-116"
+          ]
+        },
+        {
+          "id": "E-282",
+          "method": "POST",
+          "path": "/v1/payments/:reference/drop",
+          "auth": [
+            {
+              "kind": "role",
+              "role": "business"
+            },
+            {
+              "kind": "role",
+              "role": "creator"
+            }
+          ],
+          "body": [],
+          "response": {
+            "entity": "Payment",
+            "cardinality": "single",
+            "note": "the payment as it stands (state abandoned once dropped); a paid, failed or refunded payment is 409 ticket_payment_not_waiting (DEC-270)"
+          },
+          "sources": [
+            {
+              "src": "DEC-270",
+              "via": "ruling:DEC-270"
+            }
+          ],
+          "notes": [
+            "body by DEC-270"
           ]
         },
         {
@@ -21396,7 +21525,7 @@
             },
             {
               "name": "purpose",
-              "type": "string (photo|voice|clip|vault|studio|brand; what the file is for, DEC-165)",
+              "type": "string (photo|voice|clip|vault|studio|brand|order-photo|order-voice; what the file is for, DEC-165; order-photo and order-voice are the buyer's files for a Concierge order, subjectId is the order's id, DEC-271)",
               "from": [
                 "DEC-165",
                 "storage"
@@ -28502,6 +28631,18 @@
             "maker-when",
             "receiver-wish-mine",
             "wish-lifecycle"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "ticketPayment",
+          "type": "object",
+          "classes": [
+            "object"
+          ],
+          "nullable": true,
+          "provenance": [
+            "DEC-270"
           ],
           "supersedes": []
         },

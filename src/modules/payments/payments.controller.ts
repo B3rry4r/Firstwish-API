@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Headers, HttpCode, Param, Post, Query, Req, Res } from "@nestjs/common";
 import type { Request, Response } from "express";
-import { GetPaymentsByReferenceParamsDto, GetPaymentsByReferenceQueryDto, GetPaymentsQueryDto, PostPaymentsBodyDto } from "../../contracts";
+import { GetPaymentsByReferenceParamsDto, GetPaymentsByReferenceQueryDto, GetPaymentsQueryDto, PostPaymentsBodyDto, PostPaymentsByReferenceDropParamsDto } from "../../contracts";
 import type { PaymentStarted } from "../../contracts";
 import { CurrentPrincipal, Roles, WebhookSignature } from "../../common/auth/decorators";
 import type { Principal } from "../../common/auth/principal";
@@ -39,7 +39,7 @@ export class PaymentsController {
   @Roles("person", "creator", "business")
   @Post(":reference/drop")
   @HttpCode(200)
-  drop(@Param() params: GetPaymentsByReferenceParamsDto, @CurrentPrincipal() p: Principal | undefined): Promise<PaymentView> {
+  drop(@Param() params: PostPaymentsByReferenceDropParamsDto, @CurrentPrincipal() p: Principal | undefined): Promise<PaymentView> {
     return this.payments.dropTicket(accountOf(p), params.reference);
   }
 

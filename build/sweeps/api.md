@@ -118,3 +118,9 @@
   being made (a staff-only view); a real account erase with a wish half made was read in code, not run; the
   migration of hearts was not run on a live-sized table; the clock and eb1 specs no longer cover the first-send
   409; a stalled-transaction comparison of the longer connection wait was not run.
+
+## For API-BASE-11 (from W2, 22 Nov)
+- A removed personal wish: restore window 30 days, then the erase job (privacy page promises it; wishes.service.remove schedules nothing). Default (lead).
+- GET /v1/showing: item fields style and title at publish time; a styles filter; a public read of featured styles; public wishes by style; a public creator profile read (the web draws none of these today).
+- POST /v1/support-threads/contact takes no Idempotency-Key (double-tap protection is client-side only).
+- Take-down ask (E-133): hide at once or within 24 hours: WAITS for the owner.

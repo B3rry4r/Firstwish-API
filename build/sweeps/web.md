@@ -86,3 +86,4 @@
   client-wish create): closed for good when the Vault uses the server's one-call reveal (E-272, the ninth API
   round): a web bundle WEB-API-9 after it merges (one-call reveal, favourites, downloads, rename, pick files, plays).
   The driver's w12 flow crashes on a SECOND run on a used database (invoice_link key): second-run state in w12.
+- W2 (22 Nov): export readPages from lib/site-book.ts (lib/site-styles.ts holds a copy); cover images are 10-minute signed urls (a kept stale page loses covers); catalogue loading/error/retry states not measured; not done UA-661 679 683 684 688 896 901 908 (reasons in the bundle's ui-align file).

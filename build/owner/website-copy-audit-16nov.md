@@ -42,3 +42,11 @@ Rows for the OWNER (each stays as written until answered):
 - "Any wish, Shoot Reveal included", "A client dashboard", "For a business that wants to try it first": the product
   does these (reveals, the business pages, the pack); kept.
 - The words "VAT included" the builder had added (Concierge line, the trust line) went back to your "VAT invoices".
+
+## Privacy and terms against what the server does (22 Nov, from the catalogue build; no sentence was changed)
+| Sentence on the page | What the server does today | Lead's default, owner may override |
+|---|---|---|
+| Privacy: a removed wish can be brought back "for 30 days, then it is erased" | A removed wish is never erased and can be brought back with no end date | Make the server do what the page says (erase at 30 days): on the API list |
+| Privacy "comes down the moment ... asks"; Terms "we take it down at once and review it after" | A take-down ask opens a report; staff decide within 24 hours; the wish stays up meanwhile | OWNER: hide at once on every ask (anyone could hide anyone's wish for a day), or change the sentence to "within 24 hours"? |
+| Privacy: "never use your photos or voice to train anything" | Letter words go to the AI provider; no code states a no-training rule | OWNER: this is a promise about the provider's terms; confirm when the Anthropic key is set up |
+| Terms, Pro: "prepaid three months by transfer" | No such plan in the price book (the Wish pack is 90 days) | OWNER: drop the sentence or add the plan |

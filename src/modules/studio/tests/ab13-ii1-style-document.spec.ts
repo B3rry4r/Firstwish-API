@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { PrismaService } from "../../../common/db/prisma.service";
 import { UuidV7Maker } from "../../../common/ids/uuidv7";
 import { createTestApp, TestApp, uniqueAddress } from "../../../../test/kit/app";
+import { holdSettingLock } from "../../../../test/kit/setting-lock";
 import { RUN, testHex, testSlug, testWishNo } from "../../../../test/kit/unique";
 import { AccountErasureService } from "../../accounts/account-erasure.service";
 import { JobsService } from "../../jobs/jobs.service";
@@ -24,6 +25,8 @@ let db: PrismaService;
 let jobs: JobsService;
 const staff: Record<string, string> = {};
 let seq = 0;
+// the upload checks read the price book's file limits, which the Prices specs change: this spec holds the same lock they do
+let releaseSetting: () => Promise<void>;
 
 const goodDoc = (over: Body = {}): Body => ({
   name: "Gold hour", base: "noir", brief: "Warm light.", theme: {}, scenes: { letter: { layers: {} } }, art: [],
@@ -32,6 +35,7 @@ const goodDoc = (over: Body = {}): Body => ({
 });
 
 beforeAll(async () => {
+  releaseSetting = await holdSettingLock();
   t = await createTestApp({ now: NOW });
   db = t.app.get(PrismaService);
   jobs = t.app.get(JobsService);
@@ -45,7 +49,10 @@ beforeAll(async () => {
     t.tokens.set(staff[role], { kind: "staff", staffId: s.id, roles: [role] });
   }
 });
-afterAll(() => t.close());
+afterAll(async () => {
+  await t.close();
+  await releaseSetting();
+});
 beforeEach(() => t.clock.set(NOW));
 
 const sh = (role: string) => ({ Authorization: `Bearer ${staff[role]}` });

@@ -4,6 +4,7 @@ import { createTestApp } from "../../../../test/kit/app";
 import { PrismaService as Prisma } from "../../../common/db/prisma.service";
 import { parseScreeningRules } from "../../../common/env/env";
 import { UuidV7Maker } from "../../../common/ids/uuidv7";
+import { holdSettingLock } from "../../../../test/kit/setting-lock";
 import { NOT_ACCEPTED, REFUSAL_WORDS, refusalWords } from "../refusal-words";
 import { filesApp, makeAccount, makeBusiness, PNG, JPEG, ScoredScreening, stage } from "./files-kit";
 
@@ -15,10 +16,16 @@ describe("API-BASE-13 case 3 (II2): the words of a refused file", () => {
   let t: TestApp;
   let db: PrismaService;
   let scored: ScoredScreening;
+  // the upload checks read the price book's file limits, which the Prices specs change: this spec holds the same lock they do
+  let releaseSetting: () => Promise<void>;
   beforeAll(async () => {
+    releaseSetting = await holdSettingLock();
     ({ t, db, scored } = await filesApp());
   });
-  afterAll(() => t.close());
+  afterAll(async () => {
+    await t.close();
+    await releaseSetting();
+  });
 
   async function creatorWithStyle() {
     const a = await makeAccount(db, t, ["person", "creator"]);

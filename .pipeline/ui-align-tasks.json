@@ -586,7 +586,8 @@
         "catalog.ts"
       ],
       "change": "integer kobo, currency NGN, over the wire and in storage; prices only from the price book",
-      "status": "open"
+      "status": "done",
+      "resolution": "W2 (web w2-site2, merged 15e828e), verified 22 Nov"
     },
     {
       "id": "UA-50",
@@ -646,7 +647,8 @@
         "lib/catalog.ts"
       ],
       "change": "integer kobo, currency NGN, over the wire and in storage; prices only from the price book",
-      "status": "open"
+      "status": "done",
+      "resolution": "W2 (web w2-site2, merged 15e828e), verified 22 Nov"
     },
     {
       "id": "UA-55",
@@ -657,7 +659,8 @@
         "lib/catalog.ts"
       ],
       "change": "integer kobo, currency NGN, over the wire and in storage; prices only from the price book",
-      "status": "open"
+      "status": "done",
+      "resolution": "W2 (web w2-site2, merged 15e828e), verified 22 Nov"
     },
     {
       "id": "UA-56",
@@ -668,7 +671,8 @@
         "lib/catalog.ts"
       ],
       "change": "integer kobo, currency NGN, over the wire and in storage; prices only from the price book",
-      "status": "open"
+      "status": "done",
+      "resolution": "W2 (web w2-site2, merged 15e828e), verified 22 Nov"
     },
     {
       "id": "UA-57",
@@ -679,7 +683,8 @@
         "catalog.ts"
       ],
       "change": "integer kobo, currency NGN, over the wire and in storage; prices only from the price book",
-      "status": "open"
+      "status": "done",
+      "resolution": "W2 (web w2-site2, merged 15e828e), verified 22 Nov"
     },
     {
       "id": "UA-58",
@@ -3556,7 +3561,8 @@
         "lib/catalog.ts"
       ],
       "change": "the web reads GET /v1/prices; the server charges only from the price book",
-      "status": "open"
+      "status": "done",
+      "resolution": "W2 (web w2-site2, merged 15e828e), verified 22 Nov"
     },
     {
       "id": "UA-302",
@@ -3616,7 +3622,8 @@
         "lib/catalog.ts"
       ],
       "change": "the web reads GET /v1/prices; the server charges only from the price book",
-      "status": "open"
+      "status": "done",
+      "resolution": "W2 (web w2-site2, merged 15e828e), verified 22 Nov"
     },
     {
       "id": "UA-307",
@@ -3627,7 +3634,8 @@
         "lib/catalog.ts"
       ],
       "change": "the web reads GET /v1/prices; the server charges only from the price book",
-      "status": "open"
+      "status": "done",
+      "resolution": "W2 (web w2-site2, merged 15e828e), verified 22 Nov"
     },
     {
       "id": "UA-308",
@@ -3638,7 +3646,8 @@
         "lib/catalog.ts"
       ],
       "change": "the web reads GET /v1/prices; the server charges only from the price book",
-      "status": "open"
+      "status": "done",
+      "resolution": "W2 (web w2-site2, merged 15e828e), verified 22 Nov"
     },
     {
       "id": "UA-309",
@@ -3650,7 +3659,8 @@
         "lib/catalog.ts"
       ],
       "change": "the web reads GET /v1/prices; the server charges only from the price book",
-      "status": "open"
+      "status": "done",
+      "resolution": "W2 (web w2-site2, merged 15e828e), verified 22 Nov"
     },
     {
       "id": "UA-310",
@@ -4348,7 +4358,8 @@
         "lib/levels.ts"
       ],
       "change": "GET /v1/styles/levels served by the server, moved by staff (style-levels)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W2 (web w2-site2, merged 15e828e), verified 22 Nov"
     },
     {
       "id": "UA-371",
@@ -4359,7 +4370,8 @@
         "lib/levels.ts"
       ],
       "change": "GET /v1/styles/levels served by the server, moved by staff (style-levels)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W2 (web w2-site2, merged 15e828e), verified 22 Nov"
     },
     {
       "id": "UA-372",
@@ -4370,7 +4382,8 @@
         "lib/levels.ts"
       ],
       "change": "GET /v1/styles/levels served by the server, moved by staff (style-levels)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W2 (web w2-site2, merged 15e828e), verified 22 Nov"
     },
     {
       "id": "UA-373",
@@ -8216,7 +8229,8 @@
       ],
       "change": "make the coded state reachable: loading",
       "enterCondition": "none coded",
-      "status": "open"
+      "status": "done",
+      "resolution": "W2 (web w2-site2, merged 15e828e), verified 22 Nov"
     },
     {
       "id": "UA-663",
@@ -8228,7 +8242,8 @@
       ],
       "change": "make the coded state reachable: error",
       "enterCondition": "none coded",
-      "status": "open"
+      "status": "done",
+      "resolution": "W2 (web w2-site2, merged 15e828e), verified 22 Nov"
     },
     {
       "id": "UA-664",
@@ -8467,7 +8482,8 @@
       ],
       "change": "implement the designed loading state",
       "enterCondition": "a request for this surface is in flight (conventions Runtime contract)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W2 (web w2-site2, merged 15e828e), verified 22 Nov"
     },
     {
       "id": "UA-681",
@@ -8481,7 +8497,8 @@
       ],
       "change": "implement the designed empty state",
       "enterCondition": "the server returns no items",
-      "status": "open"
+      "status": "done",
+      "resolution": "W2 (web w2-site2, merged 15e828e), verified 22 Nov"
     },
     {
       "id": "UA-682",
@@ -8495,7 +8512,8 @@
       ],
       "change": "implement the designed error state",
       "enterCondition": "the request fails; show retry",
-      "status": "open"
+      "status": "done",
+      "resolution": "W2 (web w2-site2, merged 15e828e), verified 22 Nov"
     },
     {
       "id": "UA-683",
@@ -8537,7 +8555,8 @@
       ],
       "change": "make the coded state reachable: not-found",
       "enterCondition": "styleOf(slug) is undefined (notFound())",
-      "status": "open"
+      "status": "done",
+      "resolution": "W2 (web w2-site2, merged 15e828e), verified 22 Nov"
     },
     {
       "id": "UA-686",
@@ -8551,7 +8570,8 @@
       ],
       "change": "implement the designed loading state",
       "enterCondition": "a request for this surface is in flight (conventions Runtime contract)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W2 (web w2-site2, merged 15e828e), verified 22 Nov"
     },
     {
       "id": "UA-687",
@@ -8565,7 +8585,8 @@
       ],
       "change": "implement the designed error state",
       "enterCondition": "the request fails; show retry",
-      "status": "open"
+      "status": "done",
+      "resolution": "W2 (web w2-site2, merged 15e828e), verified 22 Nov"
     },
     {
       "id": "UA-688",
@@ -9095,7 +9116,8 @@
         "lib/levels.ts:58"
       ],
       "change": "replace: GET /v1/styles/levels (admin-set style levels)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W2 (web w2-site2, merged 15e828e), verified 22 Nov"
     },
     {
       "id": "UA-728",
@@ -10864,7 +10886,8 @@
         "app/contact/page.tsx:27"
       ],
       "change": "replace: Concierge price (configuration table)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W2 (web w2-site2, merged 15e828e), verified 22 Nov"
     },
     {
       "id": "UA-880",
@@ -11028,7 +11051,8 @@
         "app/privacy/page.tsx:15,19"
       ],
       "change": "replace: retention and restore rules (conventions Timed work)",
-      "status": "open"
+      "status": "done",
+      "resolution": "W2 (web w2-site2, merged 15e828e), verified 22 Nov"
     },
     {
       "id": "UA-894",
@@ -11039,7 +11063,8 @@
         "app/privacy/page.tsx"
       ],
       "change": "replace: a data-erasure request path",
-      "status": "open"
+      "status": "done",
+      "resolution": "W2 (web w2-site2, merged 15e828e), verified 22 Nov"
     },
     {
       "id": "UA-895",
@@ -11050,7 +11075,8 @@
         "lib/catalog.ts:365-373"
       ],
       "change": "replace: published wishes shown on Now Showing",
-      "status": "open"
+      "status": "done",
+      "resolution": "W2 (web w2-site2, merged 15e828e), verified 22 Nov"
     },
     {
       "id": "UA-896",
@@ -11072,7 +11098,8 @@
         "components/site/ShowingGallery.tsx:131"
       ],
       "change": "replace: per-creator counts",
-      "status": "open"
+      "status": "done",
+      "resolution": "W2 (web w2-site2, merged 15e828e), verified 22 Nov"
     },
     {
       "id": "UA-898",
@@ -11083,7 +11110,8 @@
         "lib/catalog.ts:378"
       ],
       "change": "replace: featured creators list",
-      "status": "open"
+      "status": "done",
+      "resolution": "W2 (web w2-site2, merged 15e828e), verified 22 Nov"
     },
     {
       "id": "UA-899",
@@ -11094,7 +11122,8 @@
         "components/site/ShowingGallery.tsx:114"
       ],
       "change": "replace: creator onboarding",
-      "status": "open"
+      "status": "done",
+      "resolution": "W2 (web w2-site2, merged 15e828e), verified 22 Nov"
     },
     {
       "id": "UA-900",
@@ -11127,7 +11156,8 @@
         "app/styles/[slug]/page.tsx:46"
       ],
       "change": "replace: a demo wish per style",
-      "status": "open"
+      "status": "done",
+      "resolution": "W2 (web w2-site2, merged 15e828e), verified 22 Nov"
     },
     {
       "id": "UA-903",
@@ -11138,7 +11168,8 @@
         "app/styles/[slug]/page.tsx:25"
       ],
       "change": "replace: server-driven style list",
-      "status": "open"
+      "status": "done",
+      "resolution": "W2 (web w2-site2, merged 15e828e), verified 22 Nov"
     },
     {
       "id": "UA-904",
@@ -11149,7 +11180,8 @@
         "lib/levels.ts:59-64"
       ],
       "change": "replace: GET /v1/styles/levels",
-      "status": "open"
+      "status": "done",
+      "resolution": "W2 (web w2-site2, merged 15e828e), verified 22 Nov"
     },
     {
       "id": "UA-905",
@@ -11160,7 +11192,8 @@
         "app/styles/[slug]/page.tsx:27"
       ],
       "change": "replace: start a wish in this style",
-      "status": "open"
+      "status": "done",
+      "resolution": "W2 (web w2-site2, merged 15e828e), verified 22 Nov"
     },
     {
       "id": "UA-906",
@@ -11171,7 +11204,8 @@
         "lib/levels.ts:25-27"
       ],
       "change": "replace: the levels service",
-      "status": "open"
+      "status": "done",
+      "resolution": "W2 (web w2-site2, merged 15e828e), verified 22 Nov"
     },
     {
       "id": "UA-907",
@@ -11182,7 +11216,8 @@
         "components/site/StyleCatalog.tsx:8-9"
       ],
       "change": "replace: pagination and level names",
-      "status": "open"
+      "status": "done",
+      "resolution": "W2 (web w2-site2, merged 15e828e), verified 22 Nov"
     },
     {
       "id": "UA-908",
@@ -11204,7 +11239,8 @@
         "app/terms/page.tsx:15,20"
       ],
       "change": "replace: ticket term lengths and Pro plan billing rules",
-      "status": "open"
+      "status": "done",
+      "resolution": "W2 (web w2-site2, merged 15e828e), verified 22 Nov"
     },
     {
       "id": "UA-910",

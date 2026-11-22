@@ -90,7 +90,10 @@ describe("API-BASE-9 case 4 (IB1): favourites at the reveal link and the busines
     expect(out.status).toBe(422);
     expect(out.body.error.fields.position).toMatch(/3 photos/);
     // the cap: a link of 201 photos with 200 marked refuses the 201st mark (and still accepts an unmark)
+    // API-BASE-13 (II2): a mark is only for a ready file of the shoot, so the 201 photos are real Vault files of this shoot (they were invented ids)
     const many = Array.from({ length: 201 }, () => k.ids.next());
+    await k.db.storedFile.createMany({ data: many.map((id) => ({ id, ownerAccountId: x.o.accountId, businessId: x.o.businessId, purpose: "vault_file" as const, objectKey: `vault-file/${id}/k`, contentType: "image/jpeg", bytes: BigInt(10), status: "ready" as const, variants: [], driver: "r2" as const })) });
+    await k.db.$executeRaw`UPDATE shoot SET files = ${JSON.stringify(many)}::jsonb WHERE id = ${x.shoot}::uuid`;
     await k.db.$executeRaw`UPDATE reveal_access SET "fileIds" = ${JSON.stringify(many)}::jsonb, hearts = ${many.slice(0, 200)}::text[]::uuid[] WHERE "linkId" = ${x.id}::uuid`;
     const full = await mark(x.code, 200, true);
     expect(full.status).toBe(422);

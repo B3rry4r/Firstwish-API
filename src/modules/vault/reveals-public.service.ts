@@ -23,6 +23,8 @@ export type RevealView = ({ state: "open" } & RevealPlay & { business: string; h
 
 interface Row {
   linkId: string;
+  businessId: string;
+  shootId: string | null;
   wishId: string | null;
   hearts: string[];
   downloads: boolean;
@@ -64,7 +66,7 @@ export class RevealsPublicService {
   private async resolve(code: string): Promise<Row> {
     if (!CODE.test(code)) throw AppError.notFound();
     const rows = await this.db.$queryRaw<Row[]>`
-      SELECT a."linkId"::text AS "linkId", a."wishId"::text AS "wishId", a.hearts, a.downloads, a."set", a."fileIds", a."passcodeHash", a."endsAt", a."offAt",
+      SELECT a."linkId"::text AS "linkId", a."businessId"::text AS "businessId", a."shootId"::text AS "shootId", a."wishId"::text AS "wishId", a.hearts, a.downloads, a."set", a."fileIds", a."passcodeHash", a."endsAt", a."offAt",
              w.no AS "wishNo", COALESCE(w."endsAt", ww."endsAt", a."endsAt") AS "wishEndsAt", w."sentAt", w.reveal,
              (o."erasedAt" IS NOT NULL) AS "ownerErased", b.business
         FROM reveal_access a
@@ -181,8 +183,12 @@ export class RevealsPublicService {
       const at = idsOf(now.fileIds).map((x) => x.toLowerCase()).indexOf(file);
       if (at < 0) throw AppError.validation({ position: "This photo is not in the reveal any more." });
       const has = now.hearts.map((h) => h.toLowerCase()).includes(file);
+      // II2: only a photo that is still one of this shoot's ready files can be marked: a file removed from the shoot, or one that is another shoot's, is refused and nothing is stored (unmarking is always allowed, so an old heart can be cleared)
+      if (marked === true && !has) {
+        if (now.hearts.length >= MAX_HEARTS) throw AppError.validation({ position: `At most ${MAX_HEARTS} photos can be marked. Unmark one first.` });
+        if (!(await this.inShoot(tx, r, file))) throw AppError.validation({ position: "This photo is not in this shoot any more, so it cannot be marked." });
+      }
       if ((marked === true && !has) || (marked === false && has)) {
-        if (marked === true && now.hearts.length >= MAX_HEARTS) throw AppError.validation({ position: `At most ${MAX_HEARTS} photos can be marked. Unmark one first.` });
         const next = marked === true ? [...now.hearts, file] : now.hearts.filter((h) => h.toLowerCase() !== file);
         await tx.$executeRaw`UPDATE reveal_access SET hearts = ${next}::text[]::uuid[] WHERE "linkId" = ${r.linkId}::uuid`;
         await syncHearts(tx, r.linkId);
@@ -190,6 +196,17 @@ export class RevealsPublicService {
       }
       return { hearts: heartPositions(now.fileIds, now.hearts) };
     });
+  }
+
+  /** True when the file is a ready Vault file of the link's business and one of the link's shoot's files (its proofs, its finals or its list). */
+  private async inShoot(tx: Pick<PrismaService, "$queryRaw">, r: Row, file: string): Promise<boolean> {
+    const rows = await tx.$queryRaw<{ n: number }[]>`
+      SELECT 1 AS n FROM stored_file f
+       WHERE f.id = ${file}::uuid AND f.purpose = 'vault-file'::"StoredFilePurpose" AND f.status = 'ready'::"StoredFileStatus" AND f."businessId" = ${r.businessId}::uuid
+         AND ${r.shootId}::uuid IS NOT NULL
+         AND EXISTS (SELECT 1 FROM shoot s WHERE s.id = ${r.shootId}::uuid AND s."businessId" = ${r.businessId}::uuid
+                       AND (COALESCE(s.proofs, '[]'::jsonb) @> to_jsonb(${file}::text) OR COALESCE(s.finals, '[]'::jsonb) @> to_jsonb(${file}::text) OR COALESCE(s.files, '[]'::jsonb) @> to_jsonb(${file}::text)))`;
+    return rows.length > 0;
   }
 
   /** The passcode: counted before it is compared, by the receiver link's own lock (LinkLimits.countTry); a locked link says when to come back. */

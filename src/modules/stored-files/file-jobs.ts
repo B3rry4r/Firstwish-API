@@ -5,6 +5,7 @@ import { Clock } from "../../common/ports/clock.port";
 import { StoragePort } from "../../common/ports/storage.port";
 import { IMAGE_WIDTHS, isImage, STAGING_PREFIX, stagingKeyOf, UNCONFIRMED_MAX_AGE_MS, Variant, variantsOf } from "./file-rules";
 import { IdGenerator } from "../../common/ports/ids.port";
+import { readLimits } from "../price-book/book-limits";
 import { ImageSizesPort } from "../../common/ports/image-sizes.port";
 
 /** HW5: a confirmed upload that nothing names is removed once it is this old. */
@@ -129,6 +130,39 @@ export class FileJobs {
   }
 
   /**
+   * IE3 (IC7): the files given with a Concierge order that was never paid (placed or quoted) are removed, rows and stored objects, once the order has not
+   * changed for the price book's conciergeFilesDays (30, PROVISIONAL, the owner may change it). The order itself stays. Each order is locked and its
+   * conditions read again, so an order paid at that moment is left alone; the objects go after the commit. Answers how many files it removed.
+   */
+  async sweepUnpaidOrderFiles(batch = 100): Promise<number> {
+    const now = this.clock.now();
+    const before = new Date(now.getTime() - (await readLimits(this.db)).conciergeFilesDays * 86_400_000);
+    const orders = await this.db.$queryRaw<{ id: string }[]>`
+      SELECT o.id::text AS id FROM concierge_order o
+       WHERE o.status IN ('brief', 'quoted') AND o."updatedAt" < ${before}
+         AND EXISTS (SELECT 1 FROM concierge_order_file x WHERE x."orderId" = o.id)
+       ORDER BY o.id LIMIT ${batch}`;
+    let removed = 0;
+    for (const { id } of orders) {
+      const files = await this.db.$transaction(async (tx) => {
+        const locked = await tx.$queryRaw<{ id: string }[]>`
+          SELECT id::text AS id FROM concierge_order WHERE id = ${id}::uuid AND status IN ('brief', 'quoted') AND "updatedAt" < ${before} FOR UPDATE SKIP LOCKED`;
+        if (!locked.length) return [];
+        const rows = await tx.$queryRaw<{ id: string; objectKey: string; variants: Prisma.JsonValue }[]>`
+          SELECT f.id::text AS id, f."objectKey", f.variants FROM concierge_order_file x JOIN stored_file f ON f.id = x."fileId" WHERE x."orderId" = ${id}::uuid`;
+        await tx.$executeRaw`DELETE FROM concierge_order_file WHERE "orderId" = ${id}::uuid`;
+        for (const r of rows) await tx.$executeRaw`UPDATE stored_file SET status = 'deleted', "updatedAt" = ${now} WHERE id = ${r.id}::uuid`;
+        return rows;
+      });
+      for (const f of files) {
+        await this.dropFile(f);
+        removed++;
+      }
+    }
+    return removed;
+  }
+
+  /**
    * HX3: a Studio draft is being deleted. In the caller's transaction every file the style holds (one still waiting for its upload or its
    * confirm too) is marked deleted, so nobody reads it and no confirm can finish it; the objects and rows go after the commit
    * (dropRetired), and a row a failed removal leaves behind is taken by the unconfirmed sweep. Answers the ids it marked.
@@ -166,6 +200,7 @@ export class FileJobs {
     const now = this.clock.now();
     let removed = await this.sweepUnconfirmed(batch);
     removed += await this.sweepUnattached(batch);
+    removed += await this.sweepUnpaidOrderFiles(batch);
     let swept = 0;
     const due = await this.db.job.findMany({
       where: { type: "upload_cleanup", status: "scheduled", runAt: { lte: now }, subjectId: { startsWith: STAGING_PREFIX } },

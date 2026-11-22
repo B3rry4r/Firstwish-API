@@ -11,7 +11,7 @@ import { Clock } from "../../common/ports/clock.port";
 import { IdGenerator } from "../../common/ports/ids.port";
 import { SLUG_ALPHABET } from "../../common/ports/ids.port";
 import { isTimeZone, toWireInstant } from "../../common/time/time";
-import { EntitlementsService, grantOf } from "../price-book/entitlements.service";
+import { EntitlementsService, grantOf, ticketFileLimits } from "../price-book/entitlements.service";
 import type { Entitlements as EntitlementsRow } from "@prisma/client";
 import { JobsService } from "../jobs/jobs.service";
 import { BusinessOf } from "../people/business-of";
@@ -178,6 +178,8 @@ export class WishesService {
       data: {
         id, accountId: a.accountId, businessId: a.businessId, conciergeOrderId: a.orderId, status: "draft", kind, occasion, styleSlug: style.slug, timeZone: DEFAULT_ZONE,
         name: this.text(a.name, "name", 120), content: {}, version: 0,
+        // IE1: a wish made for an order is a Signature wish from its start; the order paid for it (no ticket payment, no ledger line of its own)
+        ticket: "signature",
       },
     });
     return id;
@@ -400,23 +402,24 @@ export class WishesService {
     if (words) throw AppError.validation({ style: words }, words);
   }
 
-  /** What the ticket allows. A wish with no paid ticket is on Starter (the moment line). */
-  private limitsOf(book: EntitlementsRow, ticket: string | null, adds: unknown): { photos: number; voices: number; chapters: number | null; ticket: string } {
-    const slug = ticket && (TICKETS as readonly string[]).includes(ticket) ? ticket : "moment";
+  /** What the ticket allows. A wish with no paid ticket is on Starter (the moment line). A wish made for a Concierge order is a Signature wish (IE1). */
+  private limitsOf(book: EntitlementsRow, ticket: string | null, adds: unknown, forOrder = false): { photos: number; voices: number; chapters: number | null; ticket: string } {
+    const slug = forOrder ? "signature" : ticket && (TICKETS as readonly string[]).includes(ticket) ? ticket : "moment";
     const g = grantOf(book, `ticket.${slug}`);
     if (!g) throw new Error(`price book: no entitlement for ticket.${slug}`);
     const more = (Array.isArray(adds) ? adds : []).filter((a) => typeof a === "string" && /five[\s-]+(more[\s-]+)?photos|extra\.five-photos/i.test(a)).length;
     const num = (v: unknown): number | null => (typeof v === "number" && Number.isFinite(v) ? v : null);
+    const own = ticketFileLimits(book, slug);
     return {
-      photos: (num(g.photos) ?? 0) + 5 * more,
-      voices: num(g.voices) ?? num(g.friendMessagesMax) ?? 12,
+      photos: own.photos + 5 * more,
+      voices: own.voices,
       chapters: num(g.chapters),
       ticket: slug,
     };
   }
 
   private checkLimits(book: EntitlementsRow, content: Obj, refs: { role: string }[], w: Wish): void {
-    const lim = this.limitsOf(book, w.ticket, w.adds);
+    const lim = this.limitsOf(book, w.ticket, w.adds, w.conciergeOrderId !== null);
     const fields: Record<string, string> = {};
     const photos = refs.filter((r) => r.role === "photo").length;
     if (photos > lim.photos) fields.photos = `Over the limit: ${lim.photos} photos on the ${lim.ticket} ticket.`;

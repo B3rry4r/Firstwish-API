@@ -1,4 +1,5 @@
 import type { Payment, Prisma } from "@prisma/client";
+import { normaliseId } from "../../common/normalise/id";
 import { PAYMENTS_ABANDON_AFTER_MINUTES } from "./abandon";
 
 /** ID1: the ticket payment of a wish that still waits to be paid, as the wish read gives it. */
@@ -18,7 +19,7 @@ type Db = Pick<Prisma.TransactionClient, "payment">;
 export async function waitingTicketPayment(db: Db, accountId: string, wishId: string, now: Date): Promise<Payment | null> {
   const since = new Date(now.getTime() - PAYMENTS_ABANDON_AFTER_MINUTES * 60_000);
   return db.payment.findFirst({
-    where: { accountId, purpose: "ticket", subjectId: wishId, status: { in: ["pending", "started"] }, fulfilledAt: null, createdAt: { gt: since } },
+    where: { accountId, purpose: "ticket", subjectId: normaliseId(wishId), status: { in: ["pending", "started"] }, fulfilledAt: null, createdAt: { gt: since } },
     orderBy: { id: "desc" },
   });
 }

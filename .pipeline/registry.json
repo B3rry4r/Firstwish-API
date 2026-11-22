@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "frozenAt": "2026-11-22T03:47:40Z",
+  "frozenAt": "2026-11-22T05:33:08Z",
   "framework": "nestjs",
   "generatedBy": "tools/pipeline/reconcile.py",
   "resources": [
@@ -5033,7 +5033,7 @@
         },
         {
           "name": "state",
-          "type": "enum(placed|quoted|paid|given|making|delivered|cancelled)",
+          "type": "enum(placed|quoted|paid|given|making|delivered|cancelled|refunded)",
           "classes": [
             "enum"
           ],
@@ -5042,11 +5042,11 @@
             "admin-concierge"
           ],
           "supersedes": [],
-          "typeBy": "DEC-199"
+          "typeBy": "DEC-273"
         },
         {
           "name": "status",
-          "type": "enum(brief|quoted|paid|given|making|delivered|cancelled)",
+          "type": "enum(brief|quoted|paid|given|making|delivered|cancelled|refunded)",
           "classes": [
             "enum"
           ],
@@ -5055,7 +5055,7 @@
             "concierge-orders"
           ],
           "supersedes": [],
-          "typeBy": "DEC-199"
+          "typeBy": "DEC-273"
         },
         {
           "name": "to",
@@ -8889,6 +8889,18 @@
           "nullable": false,
           "provenance": [
             "DEC-248"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "conciergeFilesDays",
+          "type": "number",
+          "classes": [
+            "integer"
+          ],
+          "nullable": false,
+          "provenance": [
+            "DEC-273"
           ],
           "supersedes": []
         },
@@ -14004,7 +14016,7 @@
             },
             {
               "name": "value",
-              "type": "integer (optional; the new value of a limit line limits.photoMaxBytes, limits.soundMaxBytes, limits.modelMaxBytes, limits.conciergeDeliveryHours or limits.unopenedDays, in the line's kind: bytes, hours or days; a limit line takes it alone) (DEC-252)",
+              "type": "integer (optional; the new value of a limit line limits.photoMaxBytes, limits.soundMaxBytes, limits.modelMaxBytes, limits.conciergeDeliveryHours, limits.unopenedDays or limits.conciergeFilesDays, in the line's kind: bytes, hours or days; a limit line takes it alone) (DEC-252)",
               "from": [
                 "DEC-138"
               ]

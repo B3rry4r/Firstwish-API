@@ -1,15 +1,23 @@
-import type { Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import { AppError } from "../../common/errors/app-error";
 import type { IdGenerator } from "../../common/ports/ids.port";
+import { ticketFileLimits } from "../price-book/entitlements.service";
 import { ERASE_WISH_FILE_PREFIX } from "../wishes/wish-lifecycle.service";
 
 type Tx = Prisma.TransactionClient;
 
 /**
- * IC7: the buyer's files for a Concierge order. The limit that applies is the order's own: at most this many photos and this many voice notes per
- * order. They count against nothing else: not the buyer's Vault, not the photo and voice limits of the buyer's own wishes.
+ * IC7, IE1: the buyer's files for a Concierge order. The limit is what one Signature wish holds (the price book's photos and voices for Signature) times the
+ * order's count of wishes: never a number of its own, so nothing a buyer may give is impossible to use. They count against nothing else: not the buyer's
+ * Vault, not the photo and voice limits of the buyer's own wishes.
  */
-export const ORDER_FILE_LIMITS = { photos: 20, voices: 3 } as const;
+export async function orderFileLimits(db: Pick<Tx, "entitlements" | "conciergeOrder">, orderId: string): Promise<{ photos: number; voices: number }> {
+  const [book, order] = await Promise.all([db.entitlements.findFirst({ orderBy: { id: "desc" } }), db.conciergeOrder.findUnique({ where: { id: orderId }, select: { count: true } })]);
+  if (!book) throw new AppError(503, "price_book_missing", "The price book is not set up yet.");
+  const one = ticketFileLimits(book, "signature");
+  const n = Math.max(1, order?.count ?? 1);
+  return { photos: one.photos * n, voices: one.voices * n };
+}
 
 export type OrderFileKind = "photo" | "voice";
 
@@ -34,7 +42,8 @@ export async function checkOrderRoom(tx: Tx, orderId: string, kind: OrderFileKin
   const [n] = await tx.$queryRaw<{ n: number }[]>`
     SELECT count(*)::int AS n FROM concierge_order_file o JOIN stored_file f ON f.id = o."fileId"
      WHERE o."orderId" = ${orderId}::uuid AND o.kind = ${kind} AND f.status NOT IN ('rejected', 'deleted')`;
-  const max = kind === "photo" ? ORDER_FILE_LIMITS.photos : ORDER_FILE_LIMITS.voices;
+  const lim = await orderFileLimits(tx, orderId);
+  const max = kind === "photo" ? lim.photos : lim.voices;
   if ((n?.n ?? 0) >= max) {
     throw AppError.conflict("order_files_full", kind === "photo" ? `An order takes at most ${max} photos. Remove one to add another.` : `An order takes at most ${max} voice notes. Remove one to add another.`);
   }
@@ -53,7 +62,9 @@ export interface OrderFileRow {
   wishId: string | null;
 }
 
-export async function orderFileRows(tx: Pick<Tx, "$queryRaw">, orderId: string): Promise<OrderFileRow[]> {
+export async function orderFileRows(tx: Pick<Tx, "$queryRaw">, orderId: string, opts: { forStaff?: boolean } = {}): Promise<OrderFileRow[]> {
+  // IE3/F4: from the moment the buyer's account is erased, the order's files are no one's to read (the erase job removes them after): the maker's list is empty
+  const live = opts.forStaff ? Prisma.sql`AND NOT EXISTS (SELECT 1 FROM concierge_order c JOIN account a ON a.id = c."accountId" WHERE c.id = o."orderId" AND a."erasedAt" IS NOT NULL)` : Prisma.empty;
   const rows = await tx.$queryRaw<{ id: string; kind: string; contentType: string; bytes: bigint; seconds: number | null; status: string; createdAt: Date; wishId: string | null }[]>`
     SELECT o."fileId"::text AS id, o.kind, f."contentType", f.bytes, v.seconds, f.status::text AS status, o."createdAt",
            COALESCE((SELECT w."wishId"::text FROM wish_file w JOIN wish x ON x.id = w."wishId" WHERE w."fileId" = o."fileId" AND x."conciergeOrderId" = o."orderId" LIMIT 1),
@@ -61,7 +72,7 @@ export async function orderFileRows(tx: Pick<Tx, "$queryRaw">, orderId: string):
       FROM concierge_order_file o
       JOIN stored_file f ON f.id = o."fileId"
       LEFT JOIN voice_note v ON v.id = o."fileId"
-     WHERE o."orderId" = ${orderId}::uuid AND f.status <> 'deleted'
+     WHERE o."orderId" = ${orderId}::uuid AND f.status <> 'deleted' ${live}
      ORDER BY o."createdAt", o."fileId"`;
   return rows.map((r) => ({ id: r.id, kind: r.kind === "voice" ? "voice" : "photo", contentType: r.contentType, bytes: Number(r.bytes), seconds: r.seconds, status: r.status, inWish: r.wishId !== null, createdAt: r.createdAt, wishId: r.wishId }));
 }

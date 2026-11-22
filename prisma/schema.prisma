@@ -590,6 +590,7 @@ model LifecycleConfig {
   modelMaxBytes          Int     @default(15728640)
   conciergeDeliveryHours Int     @default(3)
   unopenedDays           Int     @default(365)
+  conciergeFilesDays     Int     @default(30)
 
   @@map("lifecycle_config")
 }
@@ -2134,6 +2135,7 @@ enum ConciergeOrderStatus {
   making
   delivered
   cancelled
+  refunded
 }
 
 enum EventName {

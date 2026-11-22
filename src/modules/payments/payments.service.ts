@@ -14,6 +14,7 @@ import { BusinessOf } from "../people/business-of";
 import { PriceBookService } from "../price-book/price-book.service";
 import { FulfilmentRegistry } from "./fulfilment.registry";
 import { paidLines, SettlementService, type SettleResult } from "./settlement.service";
+import { normaliseId } from "../../common/normalise/id";
 import { parseRequest } from "./payment-request";
 import { readOptions, writeOptions } from "./payment-options";
 import { TicketPaymentDrop } from "./ticket-drop";
@@ -245,7 +246,7 @@ export class PaymentsService {
   /** HU1: the result of a link holder's keep payment (no account), read through the link's proof: the payment must be a holder's keep for this wish. */
   async verifyHeld(wishId: string, reference: string): Promise<PaymentView> {
     const find = async (): Promise<Payment> => {
-      const row = await this.db.payment.findFirst({ where: { providerReference: reference, subjectId: wishId, purpose: "keep", accountId: null } });
+      const row = await this.db.payment.findFirst({ where: { providerReference: reference, subjectId: normaliseId(wishId), purpose: "keep", accountId: null } });
       if (!row) throw AppError.notFound("No such payment.");
       return row;
     };

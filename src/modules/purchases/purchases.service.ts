@@ -13,9 +13,11 @@ import { holderKey, KeepProofs } from "./keep-proof";
 import { PassService } from "./pass.service";
 import { WishHandlers } from "./wish-handlers";
 import { assessExtra, assessKeep, assessTicket, readWish, REASON_TEXT } from "./wish-rules";
+import { canMove } from "../concierge/order-state";
 import { hiddenFromBuyer } from "../wishes/wish-shown";
 import { IdGenerator } from "../../common/ports/ids.port";
 import { releaseOrderFiles } from "../stored-files/order-files";
+import { WishLifecycleService } from "../wishes/wish-lifecycle.service";
 
 /**
  * Every line the price book sells, by its sku. A new line in the book needs its sku here (a test walks the seeded book and fails
@@ -60,6 +62,7 @@ export class PurchasesService implements OnModuleInit {
     private readonly book: PriceBookService,
     private readonly proofs: KeepProofs,
     private readonly ids: IdGenerator,
+    private readonly lifecycle: WishLifecycleService,
   ) {}
 
   onModuleInit(): void {
@@ -128,10 +131,25 @@ export class PurchasesService implements OnModuleInit {
     }
   }
 
-  /** IC7: a refunded Concierge payment: the order will not go ahead, so the files the buyer gave with it go (the order and its wishes are the staff's to cancel). */
+  /**
+   * IC7, IE3: a refunded Concierge payment: the order will not go ahead. It reads as refunded (not paid), the wish half made for it goes with it (the buyer never
+   * saw it), and the files the buyer gave with it go. An order already delivered stays delivered; one staff cancelled stays cancelled.
+   */
   private async releaseOrderFiles(tx: Tx, g: GrantRow): Promise<string> {
     const orderId = g.detail.orderId;
-    if (typeof orderId === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(orderId)) await releaseOrderFiles(tx, this.ids, orderId, this.clock.now(), { keepUsed: false });
+    if (typeof orderId !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(orderId)) return "revoked";
+    const now = this.clock.now();
+    const rows = await tx.$queryRaw<{ status: string }[]>`SELECT status::text AS status FROM concierge_order WHERE id = ${orderId}::uuid FOR UPDATE`;
+    if (rows[0] && canMove(rows[0].status as never, "refunded")) {
+      await tx.$executeRaw`UPDATE concierge_order SET status = 'refunded', "updatedAt" = ${now} WHERE id = ${orderId}::uuid`;
+      const half = await tx.wish.findMany({ where: { conciergeOrderId: orderId, erasedAt: null, conciergeOrderWishByWish: null }, select: { id: true } });
+      for (const w of half) {
+        const locked = await this.lifecycle.lock(tx, w.id);
+        if (locked.status === "draft") await this.lifecycle.move(tx, locked, "taken_down", { cause: "order.refund" });
+        await this.lifecycle.move(tx, await this.lifecycle.lock(tx, w.id), "erased", { cause: "order.refund" });
+      }
+    }
+    await releaseOrderFiles(tx, this.ids, orderId, now, { keepUsed: false });
     return "revoked";
   }
 

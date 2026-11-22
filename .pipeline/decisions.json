@@ -3862,6 +3862,30 @@
       "confidence": "high",
       "source": "build/rulings-phase3.md; build/prompts/API-BASE-10.md",
       "decidedAt": "2026-12-03T12:00:00Z"
+    },
+    {
+      "id": "DEC-273",
+      "topic": "The tenth round's check: a Concierge wish is a Signature wish, one spelling of an id, the files of an order never paid (IE1, IE2, IE3)",
+      "decision": "IE1: a wish made for a Concierge order (POST /v1/admin/concierge/orders/:id/wishes, E-273) is a Signature wish from the moment the maker starts it (ticket signature), paid for by the order (no ticket payment row, no second ledger line), and holds what the price book gives Signature (photos and voices). The files a buyer may give with an order (POST /v1/uploads order-photo and order-voice, E-182; GET /v1/concierge-orders/:id/files, E-281, limits {photos, voices}) are what one Signature wish holds times the order's count of wishes (the 20 photos and 3 voice notes of DEC-271 no longer apply); the 409 order_files_full words name the new numbers. The maker adds the files with E-280 under the Signature limits of each wish. IE2: an id in a request body is trimmed and, when it is a UUID, put in lower case before it is compared, stored or used as a key: POST /v1/payments (E-87) subjectId, so a start for the same wish in any spelling is one start (the others 409 ticket_payment_pending with the reference). IE3: the files given with an order that is never paid (placed or quoted) are removed, rows and stored objects, by the recurring upload-cleanup sweep once the order has not changed for LifecycleConfig.conciergeFilesDays (integer, 30, PROVISIONAL: the owner may change it; a price-book limit line limits.conciergeFilesDays set by PUT /v1/admin/prices/:key, DEC-252); the order stays. ConciergeOrder.status and .state gain refunded: an order whose payment is refunded (not yet delivered) reads as refunded, not paid, its half-made wish is erased and its files are removed. F4: from the moment the buyer's account is erased, GET /v1/admin/concierge/orders/:id/files and the add-files route see none of the order's files (the erase job removes them after).",
+      "fieldTypes": {
+        "ConciergeOrder.status": "enum(brief|quoted|paid|given|making|delivered|cancelled|refunded)",
+        "ConciergeOrder.state": "enum(placed|quoted|paid|given|making|delivered|cancelled|refunded)"
+      },
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (IE1 to IE3); build/prompts/P-API-BASE-10.md",
+      "decidedAt": "2026-12-04T12:00:00Z"
+    },
+    {
+      "id": "DEC-274",
+      "topic": "The registry is frozen again after IE1 to IE3",
+      "decision": "The registry is re-frozen after DEC-273 by tools/pipeline/freeze.py; reconcile.py was run twice with --reopen (identical outputs; .pipeline/ui-align-tasks.json restored byte for byte). No endpoint id is issued or changed. ConciergeOrder.status and .state gain refunded and LifecycleConfig gains conciergeFilesDays.",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (IE1 to IE3); build/prompts/P-API-BASE-10.md",
+      "decidedAt": "2026-12-04T12:00:00Z"
     }
   ]
 }

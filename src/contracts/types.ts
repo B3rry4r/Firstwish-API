@@ -582,8 +582,8 @@ export interface ConciergeOrder {
   reportFileId?: string | null;
   rush: boolean;
   shape: string;
-  state: "placed" | "quoted" | "paid" | "given" | "making" | "delivered" | "cancelled";
-  status: "brief" | "quoted" | "paid" | "given" | "making" | "delivered" | "cancelled";
+  state: "placed" | "quoted" | "paid" | "given" | "making" | "delivered" | "cancelled" | "refunded";
+  status: "brief" | "quoted" | "paid" | "given" | "making" | "delivered" | "cancelled" | "refunded";
   to: Instant;
   updatedAt: Instant;
   wishIds: unknown[];
@@ -836,6 +836,8 @@ export interface LifecycleConfig {
   conciergeDeliveryHours: number;
   /** HW6: days after its open time that a sealed wish nobody opens is put to rest (it is erased after the resting hold, HOLD_DAYS); an erase itself happens at once and has no period (HX2); the lifecycle reads the same number */
   unopenedDays: number;
+  /** IE3: days after an order that was never paid last changed that the files given with it are removed (PROVISIONAL: the owner may change it); the sweep reads the same number */
+  conciergeFilesDays: number;
   noticeBeforeTermEnds: string;
   restingHoldMonths: number;
   restoreWindow: string;
@@ -3482,7 +3484,7 @@ export interface PutAdminPricesByKeyBody {
   reason: string;
   /** string (the price-book line, DEC-138) */
   sku: string;
-  /** integer (optional; the new value of a limit line limits.photoMaxBytes, limits.soundMaxBytes, limits.modelMaxBytes, limits.conciergeDeliveryHours or limits.unopenedDays, in the line's kind: bytes, hours or days; a limit line takes it alone) (DEC-252) */
+  /** integer (optional; the new value of a limit line limits.photoMaxBytes, limits.soundMaxBytes, limits.modelMaxBytes, limits.conciergeDeliveryHours, limits.unopenedDays or limits.conciergeFilesDays, in the line's kind: bytes, hours or days; a limit line takes it alone) (DEC-252) */
   value?: number;
 }
 export type PutAdminPricesByKeyHeaders = Record<string, never>;

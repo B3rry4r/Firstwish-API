@@ -23,7 +23,7 @@ import { readLimits } from "../price-book/book-limits";
 import { WishesService } from "../wishes/wishes.service";
 import { WishLifecycleService } from "../wishes/wish-lifecycle.service";
 import { canMove, dueAtFor, OPEN, stateOf, UUID } from "./order-state";
-import { ORDER_FILE_LIMITS, orderFileRows, releaseOrderFiles, type OrderFileRow } from "../stored-files/order-files";
+import { orderFileLimits, orderFileRows, releaseOrderFiles, type OrderFileRow } from "../stored-files/order-files";
 import { SignedUrlsService } from "../stored-files/signed-urls.service";
 
 const SECTION = "/admin/concierge";
@@ -159,7 +159,7 @@ export class ConciergeService implements OnModuleInit {
   async filesOwn(accountId: string, id: string): Promise<ConciergeOrderFiles> {
     if (!UUID.test(id)) throw AppError.notFound();
     if (!(await this.db.conciergeOrder.findFirst({ where: { id, accountId }, select: { id: true } }))) throw AppError.notFound();
-    return this.filesWire(await orderFileRows(this.db, id), false);
+    return this.filesWire(id, await orderFileRows(this.db, id), false);
   }
 
   // ---------------------------------------------------------------- staff
@@ -171,7 +171,7 @@ export class ConciergeService implements OnModuleInit {
    */
   async filesStaff(c: StaffCaller, id: string): Promise<ConciergeOrderFiles> {
     await this.makersOrder(this.db, c, id);
-    return this.filesWire(await orderFileRows(this.db, id), true);
+    return this.filesWire(id, await orderFileRows(this.db, id, { forStaff: true }), true);
   }
 
   private async makersOrder(db: PrismaService | Tx, c: StaffCaller, id: string): Promise<OrderRow> {
@@ -182,7 +182,7 @@ export class ConciergeService implements OnModuleInit {
     return o;
   }
 
-  private async filesWire(rows: OrderFileRow[], signedReads: boolean): Promise<ConciergeOrderFiles> {
+  private async filesWire(orderId: string, rows: OrderFileRow[], signedReads: boolean): Promise<ConciergeOrderFiles> {
     const items: ConciergeOrderFile[] = [];
     for (const r of rows) {
       const item: ConciergeOrderFile = { id: r.id, kind: r.kind, contentType: r.contentType, bytes: r.bytes, seconds: r.seconds, status: r.status as ConciergeOrderFile["status"], inWish: r.inWish, createdAt: toWireInstant(r.createdAt) };
@@ -193,7 +193,7 @@ export class ConciergeService implements OnModuleInit {
       }
       items.push(item);
     }
-    return { items, nextCursor: null, limits: { ...ORDER_FILE_LIMITS } };
+    return { items, nextCursor: null, limits: await orderFileLimits(this.db, orderId) };
   }
 
   /**
@@ -212,7 +212,7 @@ export class ConciergeService implements OnModuleInit {
       if (o.status !== "given" && o.status !== "making") throw AppError.notFound();
       const tied = await tx.wish.findFirst({ where: { id: wishId, conciergeOrderId: id, erasedAt: null, removedAt: null, conciergeOrderWishByWish: null }, select: { id: true } });
       if (!tied) throw AppError.notFound();
-      const rows = new Map((await orderFileRows(tx, id)).map((r) => [r.id, r]));
+      const rows = new Map((await orderFileRows(tx, id, { forStaff: true })).map((r) => [r.id, r]));
       const bad = fileIds.filter((f) => !rows.has(f));
       if (bad.length) throw AppError.validation({ fileIds: `Not a file of this order: ${bad.slice(0, 3).join(", ")}.` });
       const waiting = fileIds.filter((f) => rows.get(f)?.status !== "ready");
@@ -222,7 +222,7 @@ export class ConciergeService implements OnModuleInit {
       await this.wishes.addOrderFilesIn(tx, o.accountId, wishId, photos, voices);
       await this.audit.write(tx, { actor, section: SECTION, action: "concierge.add-files", target: { type: "ConciergeOrder", id }, reason, changedFields: ["wishes"] });
     });
-    return this.filesWire(await orderFileRows(this.db, id), true);
+    return this.filesWire(id, await orderFileRows(this.db, id, { forStaff: true }), true);
   }
 
   async staffRead(c: StaffCaller, id: string): Promise<ConciergeOrder> {

@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "frozenAt": "2026-11-22T08:29:14Z",
+  "frozenAt": "2026-11-22T09:33:09Z",
   "framework": "nestjs",
   "generatedBy": "tools/pipeline/reconcile.py",
   "resources": [
@@ -15172,8 +15172,20 @@
           "supersedes": []
         },
         {
+          "name": "house",
+          "type": "boolean",
+          "classes": [
+            "boolean"
+          ],
+          "nullable": false,
+          "provenance": [
+            "DEC-287"
+          ],
+          "supersedes": []
+        },
+        {
           "name": "keepOffer",
-          "type": "object",
+          "type": "shape {wishId: string, proof: string, proofExpiresAt: time, resting: boolean, wake: boolean, keeps: array<{key: enum(month|half|year), name: string, days: integer | null, priceKobo: integer}>} | null",
           "classes": [
             "object"
           ],
@@ -15181,7 +15193,8 @@
           "provenance": [
             "wish-link"
           ],
-          "supersedes": []
+          "supersedes": [],
+          "typeBy": "DEC-287"
         },
         {
           "name": "kind",
@@ -16730,6 +16743,39 @@
           ]
         },
         {
+          "id": "E-283",
+          "method": "GET",
+          "path": "/v1/creators/:handle/wishes",
+          "auth": [
+            {
+              "kind": "public"
+            }
+          ],
+          "body": [
+            {
+              "name": "handle",
+              "type": "string (path)",
+              "from": [
+                "DEC-288"
+              ]
+            }
+          ],
+          "response": {
+            "entity": "PublishedWish",
+            "cardinality": "list",
+            "note": "the wishes this creator has on Now showing now, newest first; 404 as GET /v1/creators/:handle (DEC-288)"
+          },
+          "sources": [
+            {
+              "src": "DEC-288",
+              "via": "ruling:DEC-288"
+            }
+          ],
+          "notes": [
+            "body by DEC-288"
+          ]
+        },
+        {
           "id": "E-140",
           "method": "GET",
           "path": "/v1/showing",
@@ -16738,7 +16784,15 @@
               "kind": "public"
             }
           ],
-          "body": [],
+          "body": [
+            {
+              "name": "style",
+              "type": "string (optional: only wishes shown in this style; a slug)",
+              "from": [
+                "DEC-288"
+              ]
+            }
+          ],
           "response": {
             "entity": "PublishedWish",
             "cardinality": "list"
@@ -16767,7 +16821,41 @@
           ],
           "notes": [
             "auth by DEC-97",
+            "body by DEC-288",
             "route by DEC-97"
+          ]
+        },
+        {
+          "id": "E-284",
+          "method": "GET",
+          "path": "/v1/styles/:id/wishes",
+          "auth": [
+            {
+              "kind": "public"
+            }
+          ],
+          "body": [
+            {
+              "name": "id",
+              "type": "string (path: the style's slug or id)",
+              "from": [
+                "DEC-288"
+              ]
+            }
+          ],
+          "response": {
+            "entity": "PublishedWish",
+            "cardinality": "list",
+            "note": "the wishes shown now in this style, newest first; the style is on, or 404 (DEC-288)"
+          },
+          "sources": [
+            {
+              "src": "DEC-288",
+              "via": "ruling:DEC-288"
+            }
+          ],
+          "notes": [
+            "body by DEC-288"
           ]
         }
       ]
@@ -23486,6 +23574,39 @@
           ]
         },
         {
+          "id": "E-285",
+          "method": "GET",
+          "path": "/v1/creators/:handle/styles",
+          "auth": [
+            {
+              "kind": "public"
+            }
+          ],
+          "body": [
+            {
+              "name": "handle",
+              "type": "string (path)",
+              "from": [
+                "DEC-288"
+              ]
+            }
+          ],
+          "response": {
+            "entity": "Style",
+            "cardinality": "list",
+            "note": "the styles this creator has had approved that are on, by name; 404 as GET /v1/creators/:handle (DEC-288)"
+          },
+          "sources": [
+            {
+              "src": "DEC-288",
+              "via": "ruling:DEC-288"
+            }
+          ],
+          "notes": [
+            "body by DEC-288"
+          ]
+        },
+        {
           "id": "E-195",
           "method": "GET",
           "path": "/v1/styles",
@@ -28429,6 +28550,18 @@
           "supersedes": []
         },
         {
+          "name": "restorableUntil",
+          "type": "time",
+          "classes": [
+            "time-iso"
+          ],
+          "nullable": true,
+          "provenance": [
+            "DEC-285"
+          ],
+          "supersedes": []
+        },
+        {
           "name": "result",
           "type": "unknown",
           "classes": [
@@ -30212,6 +30345,32 @@
           ],
           "notes": [
             "body by DEC-238"
+          ]
+        },
+        {
+          "id": "E-286",
+          "method": "POST",
+          "path": "/v1/wishes/:id/gather/on",
+          "auth": [
+            {
+              "kind": "user",
+              "scope": "own records"
+            }
+          ],
+          "body": [],
+          "response": {
+            "entity": "Wish",
+            "cardinality": "single",
+            "note": "the gather link as GET /v1/wishes/:id/gather reads it, now on; on twice answers the same (DEC-286)"
+          },
+          "sources": [
+            {
+              "src": "DEC-286",
+              "via": "ruling:DEC-286"
+            }
+          ],
+          "notes": [
+            "body by DEC-286"
           ]
         },
         {

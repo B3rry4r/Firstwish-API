@@ -1,8 +1,8 @@
 {
- "frozenAt": "2026-11-22T08:29:14Z",
- "registrySha256": "ba33d029c82f8988aa3d0d8676bed173d12c8728106d0eb0e05069df84fac661",
+ "frozenAt": "2026-11-22T09:33:09Z",
+ "registrySha256": "ff3725d15df86dd5eff56c189eed195a186d6fd051c3971b990bc1b51b50906b",
  "resources": 107,
- "endpoints": 281,
- "decision": "DEC-284",
+ "endpoints": 285,
+ "decision": "DEC-290",
  "note": "Written by tools/pipeline/freeze.py. reconcile.py refuses to run while this file exists unless called with --reopen \"<ruling ids>\"; after a reopen, freeze again with a new decision."
 }

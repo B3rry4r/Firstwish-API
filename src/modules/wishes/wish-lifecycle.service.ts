@@ -141,10 +141,13 @@ export class WishLifecycleService implements OnModuleInit {
       data.status = "removed";
       data.removedAt = now;
     } else if (to === "erased") {
-      Object.assign(data, PERSONAL_BLANK, { status: "removed", erasedAt: now, removedAt: now });
+      Object.assign(data, PERSONAL_BLANK, { status: "removed", erasedAt: now, removedAt: now, restorableUntil: null });
     } else {
       data.status = to;
-      if (from === "taken_down") data.removedAt = null;
+      if (from === "taken_down") {
+        data.removedAt = null;
+        data.restorableUntil = null;
+      }
     }
     await tx.wish.update({ where: { id: wish.id }, data });
     await tx.wishTransition.create({
@@ -207,6 +210,12 @@ export class WishLifecycleService implements OnModuleInit {
   async restoreDays(db: Tx | PrismaService = this.prisma): Promise<number> {
     const cfg = await db.lifecycleConfig.findFirst({ orderBy: { id: "desc" } });
     return cfg?.RESTORE_DAYS ?? cfg?.restoreWindowDays ?? 30;
+  }
+
+  /** IF4: the instant a removed wish's window ends: the day it carries, or (a row that carries none) its removal and the price book's days. */
+  async restoreEnd(tx: Tx, wishId: string, removedAt: Date): Promise<Date> {
+    const row = await tx.wish.findUniqueOrThrow({ where: { id: wishId }, select: { restorableUntil: true } });
+    return row.restorableUntil ?? new Date(removedAt.getTime() + (await this.restoreDays(tx)) * DAY);
   }
 
   async holdDays(tx: Tx): Promise<number> {
@@ -319,22 +328,22 @@ export class WishLifecycleService implements OnModuleInit {
   /** The restore window closes: nothing moves, the run says it closed (a restore after it is refused). */
   async windowEndJob(c: JobContext): Promise<JobResult> {
     const w = await this.prisma.wish.findUnique({ where: { id: c.subjectId }, select: { status: true, erasedAt: true, businessId: true } });
-    if (w && stateOf(w) === "taken_down" && w.businessId) return this.draftWindowEnd(c);
+    if (w && stateOf(w) === "taken_down") return this.removedWindowEnd(c);
     if (!w || stateOf(w) !== "resting") return { skipped: true };
     return { changed: { restoreWindow: "closed" } };
   }
 
   /**
-   * INT-7: a business's draft that its maker removed and did not bring back is erased when its window ends, and its draw goes back to
-   * the business (the erase does that). Only a draft the owner removed: a wish taken down by staff, or one that was ever sealed, is left alone.
+   * IF4 (INT-7 for a business's draft): a wish its owner removed and did not bring back is erased when its window ends (the day it carried in
+   * restorableUntil), with its files; a business's draft also gives its draw back (the erase does that). A wish taken down by staff is left alone.
    */
-  private async draftWindowEnd(c: JobContext): Promise<JobResult> {
+  private async removedWindowEnd(c: JobContext): Promise<JobResult> {
     return this.prisma.$transaction(async (tx) => {
       const w = await this.lock(tx, c.subjectId);
       if (stateOf(w) !== "taken_down") return { skipped: true };
       const last = await tx.wishTransition.findFirst({ where: { wishId: w.id, to: "taken_down" }, orderBy: { id: "desc" } });
-      if (last?.cause !== "owner.remove" || last.from !== "draft") return { skipped: true };
-      const ends = new Date(last.createdAt.getTime() + (await this.restoreDays(tx)) * DAY);
+      if (last?.cause !== "owner.remove") return { skipped: true };
+      const ends = await this.restoreEnd(tx, w.id, last.createdAt);
       if (ends.getTime() > c.now.getTime()) return { skipped: true, again: ends };
       await this.move(tx, w, "erased", { cause: "job.restore-window-end", jobRunId: c.jobRunId });
       return { changed: { from: "taken_down", to: "erased", restoreWindow: "closed" } };
@@ -346,7 +355,10 @@ export class WishLifecycleService implements OnModuleInit {
    * job checks again when it runs). The jobs are written in the erase's own transaction; storage is called by the job (Y4).
    */
   private async releaseFiles(tx: Tx, wishId: string, now: Date): Promise<void> {
-    const mine = [...new Set((await tx.wishFile.findMany({ where: { wishId }, select: { fileId: true } })).map((r) => r.fileId))];
+    // IF4: the voices friends gave through the gather link go with the wish: their names (one row each) at once, their files with the others
+    const voices = (await tx.voiceNote.findMany({ where: { wishId }, select: { id: true } })).map((r) => r.id);
+    await tx.wishGatherVoice.deleteMany({ where: { wishId } });
+    const mine = [...new Set([...(await tx.wishFile.findMany({ where: { wishId }, select: { fileId: true } })).map((r) => r.fileId), ...voices])];
     await tx.wishFile.deleteMany({ where: { wishId } });
     if (!mine.length) return;
     const shared = new Set((await tx.wishFile.findMany({ where: { fileId: { in: mine }, wishId: { not: wishId } }, select: { fileId: true } })).map((r) => r.fileId));

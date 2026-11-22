@@ -4,7 +4,11 @@ import { decodeCursor, DEFAULT_LIMIT, encodeCursor, Page } from "../../common/pa
 import { Clock } from "../../common/ports/clock.port";
 import { isUuidV7 } from "../../common/ids/uuidv7";
 import { AppError } from "../../common/errors/app-error";
+import type { PublishedWish } from "../../contracts";
+import { ShowingService } from "../showing/showing.service";
 import { SignedUrlsService } from "../stored-files/signed-urls.service";
+import type { StyleOut } from "../styles/style-view";
+import { StylesService } from "../styles/styles.service";
 import { findPublicCreator, listPublicCreators, lookupHandle, PublicCreator, toPublicCreator } from "../accounts/public-creators";
 
 /** E-42: creators to follow: every public creator page, in join order. Public fields only. */
@@ -14,6 +18,8 @@ export class CreatorsService {
     private readonly prisma: PrismaService,
     private readonly clock: Clock,
     private readonly signed: SignedUrlsService,
+    private readonly styleBook: StylesService,
+    private readonly showing: ShowingService,
   ) {}
 
   async list(viewerId: string | null, cursor: string | undefined, limit = DEFAULT_LIMIT): Promise<Page<PublicCreator>> {
@@ -51,6 +57,24 @@ export class CreatorsService {
       if (mine) follows.add(row.handle);
     }
     return { ...toPublicCreator(row, { accountId: viewerId, follows }), img: await this.pictureOf(row.img) };
+  }
+
+  /** The row of a creator whose page is public (a handle that is missing, or whose side is off, or that is banned or erased, is one 404: DEC-157). */
+  private async visible(raw: string): Promise<{ handle: string }> {
+    const handle = lookupHandle(raw);
+    const row = handle === null ? null : await findPublicCreator(this.prisma, handle, this.clock.now());
+    if (!row) throw AppError.notFound("No creator has that handle.");
+    return { handle: row.handle.toLowerCase() };
+  }
+
+  /** E-285 (IF6): the styles of a creator with a public page that are on, paged. */
+  async styles(raw: string, q: { cursor?: string; limit?: number }): Promise<Page<StyleOut>> {
+    return this.styleBook.publicListByCreator((await this.visible(raw)).handle, q);
+  }
+
+  /** E-283 (IF6): the wishes of a creator with a public page that are on Now showing now, paged, as the public list gives them (no viewer's marks). */
+  async wishes(raw: string, q: { cursor?: string; limit?: number }): Promise<Page<PublishedWish>> {
+    return this.showing.publicList(q, null, { creator: (await this.visible(raw)).handle });
   }
 
   /** HW2: a profile picture is a file id on the creator row; anyone reads it as a signed address once it passed screening (any other text stays as it was). */

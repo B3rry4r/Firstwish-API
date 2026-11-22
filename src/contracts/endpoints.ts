@@ -293,4 +293,8 @@ export const ENDPOINTS: readonly EndpointRow[] = [
   { id: "E-280", method: "POST", path: "/v1/admin/concierge/orders/:id/wishes/:wishId/files", resource: "ConciergeOrder", operation: "PostAdminConciergeOrdersByIdWishesByWishIdFiles", request: "PostAdminConciergeOrdersByIdWishesByWishIdFilesBodyDto", rawBody: false, noContent: false },
   { id: "E-281", method: "GET", path: "/v1/concierge-orders/:id/files", resource: "ConciergeOrder", operation: "GetConciergeOrdersByIdFiles", request: "GetConciergeOrdersByIdFilesQueryDto", rawBody: false, noContent: false },
   { id: "E-282", method: "POST", path: "/v1/payments/:reference/drop", resource: "Payment", operation: "PostPaymentsByReferenceDrop", request: "PostPaymentsByReferenceDropBodyDto", rawBody: false, noContent: false },
+  { id: "E-283", method: "GET", path: "/v1/creators/:handle/wishes", resource: "PublishedWish", operation: "GetCreatorsByHandleWishes", request: "GetCreatorsByHandleWishesQueryDto", rawBody: false, noContent: false },
+  { id: "E-284", method: "GET", path: "/v1/styles/:id/wishes", resource: "PublishedWish", operation: "GetStylesByIdWishes", request: "GetStylesByIdWishesQueryDto", rawBody: false, noContent: false },
+  { id: "E-285", method: "GET", path: "/v1/creators/:handle/styles", resource: "Style", operation: "GetCreatorsByHandleStyles", request: "GetCreatorsByHandleStylesQueryDto", rawBody: false, noContent: false },
+  { id: "E-286", method: "POST", path: "/v1/wishes/:id/gather/on", resource: "Wish", operation: "PostWishesByIdGatherOn", request: "PostWishesByIdGatherOnBodyDto", rawBody: false, noContent: false },
 ];

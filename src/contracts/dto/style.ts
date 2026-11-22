@@ -2,7 +2,7 @@
 import { IsBoolean, IsIn, IsInt, IsOptional, IsString, Max, Min } from "class-validator";
 import { Type } from "class-transformer";
 import { MinTrimmed } from "../../common/validation/decorators";
-import type { GetAdminStylesQuery, GetStylesByIdParams, GetStylesQuery, PostAdminStylesBySlugSwitchBody, PostAdminStylesBySlugSwitchParams } from "../types";
+import type { GetAdminStylesQuery, GetCreatorsByHandleStylesParams, GetCreatorsByHandleStylesQuery, GetStylesByIdParams, GetStylesQuery, PostAdminStylesBySlugSwitchBody, PostAdminStylesBySlugSwitchParams } from "../types";
 
 /** E-193 GET /v1/admin/styles (query). */
 export class GetAdminStylesQueryDto implements GetAdminStylesQuery {
@@ -51,4 +51,21 @@ export class GetStylesByIdQueryDto {}
 export class GetStylesByIdParamsDto implements GetStylesByIdParams {
   @IsString()
   id!: string;
+}
+
+/** E-285 GET /v1/creators/:handle/styles (query). */
+export class GetCreatorsByHandleStylesQueryDto implements GetCreatorsByHandleStylesQuery {
+  @IsOptional()
+  @IsString()
+  cursor?: string;
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(50)
+  limit?: number;
+}
+export class GetCreatorsByHandleStylesParamsDto implements GetCreatorsByHandleStylesParams {
+  @IsString()
+  handle!: string;
 }

@@ -9667,6 +9667,16 @@
       "noWriter": true
     },
     {
+      "field": "PublicWishView.house",
+      "writers": [],
+      "store": "PublicWishView",
+      "readers": [],
+      "writerActors": [],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
       "field": "PublicWishView.keepOffer",
       "writers": [
         "server:wish-link"
@@ -10242,21 +10252,25 @@
     },
     {
       "field": "PublishedWish.id",
-      "writers": [],
+      "writers": [
+        "E-284"
+      ],
       "store": "PublishedWish",
       "readers": [
         "admin-showing",
         "app-home"
       ],
-      "writerActors": [],
+      "writerActors": [
+        "public"
+      ],
       "readerActors": [
         "business",
         "creator",
         "person",
         "staff"
       ],
-      "crossActor": false,
-      "noWriter": true
+      "crossActor": true,
+      "noWriter": false
     },
     {
       "field": "PublishedWish.img",
@@ -10526,7 +10540,9 @@
     },
     {
       "field": "PublishedWish.style",
-      "writers": [],
+      "writers": [
+        "E-140"
+      ],
       "store": "PublishedWish",
       "readers": [
         "admin-showing",
@@ -10537,7 +10553,9 @@
         "site-showing",
         "site-style-detail"
       ],
-      "writerActors": [],
+      "writerActors": [
+        "public"
+      ],
       "readerActors": [
         "business",
         "creator",
@@ -10545,8 +10563,8 @@
         "public",
         "staff"
       ],
-      "crossActor": false,
-      "noWriter": true
+      "crossActor": true,
+      "noWriter": false
     },
     {
       "field": "PublishedWish.styleName",
@@ -19570,6 +19588,16 @@
       "noWriter": false
     },
     {
+      "field": "Wish.restorableUntil",
+      "writers": [],
+      "store": "Wish",
+      "readers": [],
+      "writerActors": [],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
       "field": "Wish.result",
       "writers": [
         "E-226"
@@ -20690,6 +20718,6 @@
       "noWriter": false
     }
   ],
-  "crossActor": 32,
+  "crossActor": 34,
   "noWriter": 667
 }

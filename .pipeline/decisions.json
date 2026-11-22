@@ -3986,6 +3986,69 @@
       "confidence": "high",
       "source": "build/prompts/API-BASE-11A.md",
       "decidedAt": "2026-12-06T12:00:00Z"
+    },
+    {
+      "id": "DEC-285",
+      "topic": "A wish its owner removes can be brought back until a day, then it is erased (IF4)",
+      "decision": "placeholder",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (IF4); build/prompts/API-BASE-11B.md",
+      "decidedAt": "2026-12-05T12:00:00Z"
+    },
+    {
+      "id": "DEC-286",
+      "topic": "The owner turns a friends' link back on (IF5, HU4)",
+      "decision": "placeholder",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (IF5); build/prompts/API-BASE-11B.md",
+      "decidedAt": "2026-12-05T12:00:00Z"
+    },
+    {
+      "id": "DEC-287",
+      "topic": "The public view says whether it is a house wish and types its keep offer (HU2)",
+      "decision": "placeholder",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (HU2); build/prompts/API-BASE-11B.md",
+      "decidedAt": "2026-12-05T12:00:00Z",
+      "fieldTypes": {
+        "PublicWishView.keepOffer": "shape {wishId: string, proof: string, proofExpiresAt: time, resting: boolean, wake: boolean, keeps: array<{key: enum(month|half|year), name: string, days: integer | null, priceKobo: integer}>} | null"
+      }
+    },
+    {
+      "id": "DEC-288",
+      "topic": "Now showing by style, public wishes in a style, a creator's styles and wishes (IF6)",
+      "decision": "placeholder",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (IF6); build/prompts/API-BASE-11B.md",
+      "decidedAt": "2026-12-05T12:00:00Z"
+    },
+    {
+      "id": "DEC-289",
+      "topic": "Featured styles are not built (IF6)",
+      "decision": "placeholder",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (IF6); build/prompts/API-BASE-11B.md",
+      "decidedAt": "2026-12-05T12:00:00Z"
+    },
+    {
+      "id": "DEC-290",
+      "topic": "The registry is frozen again after IF4 to IF6",
+      "decision": "placeholder",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (IF4 to IF6); build/prompts/API-BASE-11B.md",
+      "decidedAt": "2026-12-05T12:00:00Z"
     }
   ]
 }

@@ -104,6 +104,24 @@ export class StylesService {
     return { items: page.items.map((r) => styleToWire(r, counts.get(r.slug ?? "") ?? zero(), false, shows.get(r.slug ?? "") ?? null)), nextCursor: page.nextCursor };
   }
 
+  /**
+   * E-285 (IF6): the styles that are on and are credited to one creator (the handle, lower case), by slug, paged as the catalogue is. A creator's style
+   * is in the catalogue (and so in this list) from the day staff accept it; a style staff switch off leaves it.
+   */
+  async publicListByCreator(handle: string, q: { cursor?: string; limit?: number }): Promise<Page<StyleOut>> {
+    const limit = q.limit ?? DEFAULT_LIMIT;
+    const after = this.slugCursor(q.cursor);
+    const found = await this.db.$queryRaw<{ id: string }[]>`
+      SELECT id::text AS id FROM style
+       WHERE "on" AND slug IS NOT NULL AND lower(creator->>'handle') = ${handle} AND (${after}::text IS NULL OR slug > ${after}::text)
+       ORDER BY slug ASC LIMIT ${limit + 1}`;
+    const rows = await this.db.style.findMany({ where: { id: { in: found.map((f) => f.id) } }, orderBy: { slug: "asc" } });
+    const page = toPage(rows, limit, (r) => ({ key: r.slug ?? "", id: r.id }));
+    const counts = await this.countsFor(page.items.map((r) => r.slug ?? ""));
+    const shows = await this.showcases(page.items.map((r) => r.slug ?? ""));
+    return { items: page.items.map((r) => styleToWire(r, counts.get(r.slug ?? "") ?? zero(), false, shows.get(r.slug ?? "") ?? null)), nextCursor: page.nextCursor };
+  }
+
   /** E-196: one style that is on, by slug (or its id). A style that is off or unknown is 404. */
   async publicOne(idOrSlug: string): Promise<StyleOut> {
     const key = canonSlug(idOrSlug);

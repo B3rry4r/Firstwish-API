@@ -225,7 +225,7 @@ export class StoredFilesService {
     const signed = await this.storage.signUpload({ key: stagingKeyOf(objectKey), contentType, contentLength: bytes, expiresInSeconds: UPLOAD_TTL_SECONDS });
     return {
       id,
-      purpose: orderFile ? (rule.purpose as UploadTicket["purpose"]) : purposeOnWire(rule.db),
+      purpose: orderFile ? rule.purpose : purposeOnWire(rule.db),
       upload: { url: signed.url, method: signed.method, headers: signed.headers, expiresAt: toWireInstant(signed.expiresAt) },
     };
   }

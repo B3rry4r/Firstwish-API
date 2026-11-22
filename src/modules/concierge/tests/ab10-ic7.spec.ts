@@ -92,7 +92,7 @@ describe("IC7: the buyer's files for a Concierge order", () => {
     // remove one through the upload route
     expect((await http().delete(`/v1/uploads/${voice.id}`).set("Authorization", buyer.auth).send({})).status).toBe(204);
     const after = await buyerList(buyer.auth, order);
-    expect(after.body.items.map((i: { id: string }) => i.id)).toEqual([photo.id]);
+    expect((after.body.items as { id: string }[]).map((i) => i.id)).toEqual([photo.id]);
     expect(await fileRow(voice.id)).toBeNull();
     expect(await db.conciergeOrderFile.count({ where: { fileId: voice.id } })).toBe(0);
   });
@@ -206,7 +206,7 @@ describe("IC7: the buyer's files for a Concierge order", () => {
     expect((await addTo(m.auth, o.id, w, [photo.id])).status).toBe(200);
     expect((await db.wishFile.count({ where: { wishId: w, fileId: photo.id } }))).toBe(1);
     const mine = await buyerList(buyer.auth, o.id);
-    expect(mine.body.items.find((i: { id: string }) => i.id === photo.id).inWish).toBe(true);
+    expect((mine.body.items as { id: string; inWish: boolean }[]).find((i) => i.id === photo.id)?.inWish).toBe(true);
     const blocked = await http().delete(`/v1/uploads/${photo.id}`).set("Authorization", buyer.auth).send({});
     expect(blocked.status).toBe(409);
     expect(blocked.body.error.code).toBe("file_in_use");

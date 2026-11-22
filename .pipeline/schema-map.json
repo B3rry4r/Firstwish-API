@@ -3728,6 +3728,43 @@
     }
    }
   },
+  "SupportContactKey": {
+   "reason": "API-BASE-11A, DEC-278: the Idempotency-Key a contact-page start carried, kept as a hash with a hash of what was sent and the thread it made, so the same key and body is one thread; holds no text of the person",
+   "columns": {
+    "keyHash": {
+     "type": "String",
+     "attrs": "@id",
+     "opt": false
+    },
+    "fingerprint": {
+     "type": "String",
+     "attrs": "",
+     "opt": false
+    },
+    "threadId": {
+     "type": "String",
+     "attrs": "@db.Uuid",
+     "opt": true
+    },
+    "createdAt": {
+     "type": "DateTime",
+     "attrs": "@default(now()) @db.Timestamptz(3)",
+     "opt": false
+    }
+   },
+   "pk": [
+    "keyHash"
+   ],
+   "refs": {
+    "threadId": "SupportThread"
+   },
+   "refOnDelete": {
+    "threadId": "Cascade"
+   },
+   "refOnUpdate": {
+    "threadId": "Cascade"
+   }
+  },
   "ConciergeOrderFile": {
    "reason": "IC7 (T-12): a file the buyer gave with a Concierge order (a photo or a voice note), tied to the order until it is delivered or cancelled",
    "columns": {

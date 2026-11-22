@@ -15,7 +15,7 @@ export const PROVISIONAL = "PROVISIONAL";
 
 /** What a setting row's `choice` says: provisional unless its status is CONFIRMED (only the owner's change writes that). */
 export function confirmationOf(choice: Prisma.JsonValue | null | undefined): Confirmation {
-  const c = (choice && typeof choice === "object" && !Array.isArray(choice) ? choice : {}) as Prisma.JsonObject;
+  const c = (choice && typeof choice === "object" && !Array.isArray(choice) ? choice : {});
   const provisional = c.status !== CONFIRMED;
   return {
     provisional,
@@ -27,6 +27,6 @@ export function confirmationOf(choice: Prisma.JsonValue | null | undefined): Con
 /** The settings row that holds a limit's confirmation (a limit with no row is provisional). */
 export async function readLimitConfirmation(db: PrismaService | Prisma.TransactionClient, key: string): Promise<{ id: string | null; choice: Prisma.JsonObject; confirmation: Confirmation }> {
   const rows = await db.$queryRaw<{ id: string; choice: Prisma.JsonValue }[]>`SELECT id, choice FROM settings WHERE key = to_jsonb(${key}::text) ORDER BY id LIMIT 1`;
-  const choice = (rows[0]?.choice && typeof rows[0].choice === "object" && !Array.isArray(rows[0].choice) ? rows[0].choice : {}) as Prisma.JsonObject;
+  const choice = (rows[0]?.choice && typeof rows[0].choice === "object" && !Array.isArray(rows[0].choice) ? rows[0].choice : {});
   return { id: rows[0]?.id ?? null, choice, confirmation: confirmationOf(choice) };
 }

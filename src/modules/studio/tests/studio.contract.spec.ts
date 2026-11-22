@@ -194,7 +194,7 @@ describe("case 1: drafts and settings on the server", () => {
       await post(b, "/ai/studio-change", { instruction: "warmer", styleId: d.id }),
     ]) expect(r.status).toBe(404);
     expect((await get(a, "/studio/styles/not-a-uuid")).status).toBe(422);  // IF2: a name that is not an id is 422 in words
-    expect((await t.http().delete("/v1/studio/styles/123").set(a.h)).status).toBe(404);
+    expect((await t.http().delete("/v1/studio/styles/123").set(a.h)).status).toBe(422);  // IF2: a name that is not an id is 422 in words
     const list = await get(b, "/studio/styles");
     expect((list.body.items as Body[]).some((x) => x.id === d.id)).toBe(false);
     expect(((await get(a, "/studio/styles")).body.items as Body[]).map((x) => x.id as string)).toContain(d.id);
@@ -541,7 +541,7 @@ describe("case 5: staff review", () => {
     const off = await post(c, `/studio/styles/${w.d.id}/withdraw`);
     expect(off.body.status).toBe("draft");
     expect((await db.style.findUniqueOrThrow({ where: { slug } })).on).toBe(false);
-    expect((await t.http().get(`/v1/styles/${slug}`)).status).toBe(422);  // IF2: a name that is not an id is 422 in words
+    expect((await t.http().get(`/v1/styles/${slug}`)).status).toBe(404);
   });
 });
 

@@ -144,7 +144,7 @@ describe("B22 keep (E-228) and wake (E-232) (contract)", () => {
     expect((await keep(o.token, w, { keepKey: "month" })).status).toBe(404);
     expect((await wake(o.token, w)).status).toBe(404);
     expect((await keep(u.token, "not-a-uuid", { keepKey: "month" })).status).toBe(422);  // IF2: a name that is not an id is 422 in words
-    expect((await wake(u.token, "not-a-uuid")).status).toBe(404);
+    expect((await wake(u.token, "not-a-uuid")).status).toBe(422);  // IF2: a name that is not an id is 422 in words
     expect(await paymentsFor(w)).toHaveLength(0);
   });
 

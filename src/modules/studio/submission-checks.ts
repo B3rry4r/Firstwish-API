@@ -25,14 +25,57 @@ export interface UsedFile {
   bytes: number;
 }
 
-/** The file ids a document names (its `art` list: `fileId`, or `id` when it is a uuid). */
-export function fileIdsOf(doc: Obj): string[] {
-  const out = new Set<string>();
-  for (const a of arr(doc.art)) {
-    const o = obj(a);
-    for (const k of ["fileId", "id"]) if (typeof o[k] === "string" && /^[0-9a-f-]{36}$/i.test(o[k])) out.add(o[k]);
+/** One place where a document names a file: the words that name the place, the field path for an error, and what was written there. */
+export interface FileRef {
+  place: string;
+  path: string;
+  value: string;
+}
+
+const FILE_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+/** What is written in a place: the text, "" for nothing, and a mark no id can match for anything that is not text. */
+const written = (v: unknown): string => (v === undefined || v === null ? "" : typeof v === "string" ? v.trim() : "\u0000");
+
+/**
+ * II5: every place a style document names a file, found in one function so the save, the send-in, the checks and the kept-file rule
+ * (II4) can never disagree. The places: an item of the art list (`fileId`, or `id` when it is an id), the poster (`fileId`, `id`, `src`),
+ * the sound, a scene's background picture (`backdrop`), and a thing a scene adds: its artwork or 3D model (`what`) and a picture fill
+ * (`fill.art`). A name that is the `id` of an art item with its own file is that item (checked there), not a second place.
+ */
+export function fileRefsOf(doc: Obj): FileRef[] {
+  const out: FileRef[] = [];
+  const art = arr(doc.art).map(obj);
+  const artIds = new Set(art.flatMap((a) => (typeof a.id === "string" && a.fileId !== undefined && a.fileId !== null ? [a.id] : [])));
+  const add = (place: string, path: string, v: unknown, viaArt = false): void => {
+    const value = written(v);
+    if (!value || (viaArt && artIds.has(value))) return;
+    out.push({ place, path, value });
+  };
+  art.forEach((a, i) => {
+    add(`The art list, item ${i + 1}`, `style.art.${i}.fileId`, a.fileId);
+    if (typeof a.id === "string" && FILE_ID.test(a.id.trim())) add(`The art list, item ${i + 1}`, `style.art.${i}.id`, a.id);
+  });
+  const poster = obj(doc.poster);
+  for (const k of ["fileId", "id", "src"]) add("The poster", `style.poster.${k}`, poster[k]);
+  add("The sound", "style.sound", doc.sound, true);
+  for (const [sk, sv] of Object.entries(obj(doc.scenes))) {
+    const scene = obj(sv);
+    const name = sk === "*" ? "Every scene" : `Scene ${sk}`;
+    add(`${name}, its background picture`, `style.scenes.${sk}.backdrop`, scene.backdrop, true);
+    arr(scene.added).forEach((x, j) => {
+      const a = obj(x);
+      const here = `${name}, added thing ${j + 1}`;
+      if (a.kind === "artwork") add(`${here} (artwork)`, `style.scenes.${sk}.added.${j}.what`, a.what, true);
+      else if (a.kind === "model") add(`${here} (3D model)`, `style.scenes.${sk}.added.${j}.what`, a.what, true);
+      add(`${here} (picture fill)`, `style.scenes.${sk}.added.${j}.fill.art`, obj(a.fill).art, true);
+    });
   }
-  return [...out];
+  return out;
+}
+
+/** The file ids a document names, in any of those places (what is not an id is left out; see fileRefsOf). */
+export function fileIdsOf(doc: Obj): string[] {
+  return [...new Set(fileRefsOf(doc).filter((r) => FILE_ID.test(r.value)).map((r) => r.value))];
 }
 
 /** Colour arithmetic as the web app does it (lib/studio.ts rgb, lum, contrast): any CSS colour, rgb() too; what it cannot read is black. */

@@ -11,6 +11,7 @@ import type { StudioStyle } from "../../contracts";
 import { FileJobs } from "../stored-files/file-jobs";
 import { StylesService } from "../styles/styles.service";
 import { CreatorStateService, type Plan } from "./creator-state.service";
+import { namedFileProblems } from "./named-files";
 import { cleanDoc, EDITABLE, isObj, json, metaOf, obj, type Obj, type ReviewView, toWire, UUID } from "./studio-doc";
 
 type Tx = Prisma.TransactionClient;
@@ -151,9 +152,16 @@ export class StudioStylesService {
     return { id: style.id, name: style.name ?? "", handle: style.by ?? "", house: style.house ?? false };
   }
 
+  /** II5: a document names only this style's own files that are ready (422 in words naming each place, nothing saved). */
+  async assertFilesNamed(tx: Tx, accountId: string, styleId: string, doc: Obj): Promise<void> {
+    const fields = await namedFileProblems(tx, accountId, styleId, doc);
+    if (Object.keys(fields).length) throw AppError.validation(fields);
+  }
+
   private async insert(tx: Tx, accountId: string, id: string, plan: Plan, body: unknown): Promise<StudioStyleRow> {
     await this.assertRoomForDraft(tx, accountId, plan);
     const doc = cleanDoc(body);
+    await this.assertFilesNamed(tx, accountId, id, doc);
     const from = await this.resolveFrom(tx, accountId, plan, isObj(body) ? body.from : undefined);
     const now = toWireInstant(this.clock.now());
     const document = { ...doc, version: 1, at: now, byline: await this.bylineOf(tx, accountId), on: false, template: false, useExtra: false, from };
@@ -212,6 +220,7 @@ export class StudioStylesService {
         if (typeof sent !== "number" || !Number.isInteger(sent)) throw AppError.validation({ "style.version": "Send the version you read." });
         if (sent !== meta.version) throw AppError.conflict("stale_version", "This style was saved somewhere else since you opened it. Open it again.");
         const next = cleanDoc(body.style);
+        await this.assertFilesNamed(tx, accountId, id, next);
         const document = { ...next, version: meta.version + 1, at: toWireInstant(this.clock.now()), byline: meta.byline || (await this.bylineOf(tx, accountId)), on: body.on ?? meta.on, template: meta.template, useExtra: meta.useExtra, from: meta.from };
         const saved = await tx.studioStyle.update({ where: { id }, data: { document: json(document) } });
         return (await this.wire(tx, [saved]))[0];

@@ -430,10 +430,12 @@ describe("case 4: submit", () => {
   it("a file over its size fails the safe check", async () => {
     const c = await creator({ plan: "creator" });
     const fileId = ids.next();
+    // II5: a draft names only a ready file of its own style, so the file is made for the draft and then named
+    const d = await draft(c);
     await db.storedFile.create({
-      data: { id: fileId, ownerAccountId: c.id, purpose: "studio_asset", objectKey: `k/${fileId}`, contentType: "image/png", bytes: 500 * 1024, status: "ready", variants: {}, driver: "r2", kind: "image" } as never,
+      data: { id: fileId, ownerAccountId: c.id, styleId: d.id, purpose: "studio_asset", objectKey: `k/${fileId}`, contentType: "image/png", bytes: 500 * 1024, status: "ready", variants: {}, driver: "r2", kind: "image" } as never,
     });
-    const d = await draft(c, { art: [{ fileId }] });
+    expect((await patch(c, `/studio/styles/${d.id}`, { style: { ...d, ...goodDoc({ art: [{ fileId }] }) } })).status).toBe(200);
     const r = await post(c, `/studio/styles/${d.id}/submissions`);
     await runChecks(r.body.submission.id as string);
     const sub = await db.styleSubmission.findUniqueOrThrow({ where: { id: r.body.submission.id as string } });

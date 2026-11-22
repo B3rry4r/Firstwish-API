@@ -289,4 +289,8 @@ export const ENDPOINTS: readonly EndpointRow[] = [
   { id: "E-277", method: "PATCH", path: "/v1/business/shoots/:id", resource: "Shoot", operation: "PatchBusinessShootsById", request: "PatchBusinessShootsByIdBodyDto", rawBody: false, noContent: false },
   { id: "E-278", method: "PATCH", path: "/v1/business/vault-files/:id", resource: "VaultFile", operation: "PatchBusinessVaultFilesById", request: "PatchBusinessVaultFilesByIdBodyDto", rawBody: false, noContent: false },
   { id: "E-273", method: "POST", path: "/v1/admin/concierge/orders/:id/wishes", resource: "ConciergeOrder", operation: "PostAdminConciergeOrdersByIdWishes", request: "PostAdminConciergeOrdersByIdWishesBodyDto", rawBody: false, noContent: false },
+  { id: "E-279", method: "GET", path: "/v1/admin/concierge/orders/:id/files", resource: "ConciergeOrder", operation: "GetAdminConciergeOrdersByIdFiles", request: "GetAdminConciergeOrdersByIdFilesQueryDto", rawBody: false, noContent: false },
+  { id: "E-280", method: "POST", path: "/v1/admin/concierge/orders/:id/wishes/:wishId/files", resource: "ConciergeOrder", operation: "PostAdminConciergeOrdersByIdWishesByWishIdFiles", request: "PostAdminConciergeOrdersByIdWishesByWishIdFilesBodyDto", rawBody: false, noContent: false },
+  { id: "E-281", method: "GET", path: "/v1/concierge-orders/:id/files", resource: "ConciergeOrder", operation: "GetConciergeOrdersByIdFiles", request: "GetConciergeOrdersByIdFilesQueryDto", rawBody: false, noContent: false },
+  { id: "E-282", method: "POST", path: "/v1/payments/:reference/drop", resource: "Payment", operation: "PostPaymentsByReferenceDrop", request: "PostPaymentsByReferenceDropBodyDto", rawBody: false, noContent: false },
 ];

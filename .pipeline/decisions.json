@@ -3832,6 +3832,60 @@
       "confidence": "high",
       "source": "build/rulings-phase3.md (IC1 to IC7); build/prompts/P-API-BASE-9.md",
       "decidedAt": "2026-12-02T12:00:00Z"
+    },
+    {
+      "id": "DEC-270",
+      "topic": "A wish is paid for once: one ticket payment waits per wish (ID1, HY1, HZ3, HU6)",
+      "decision": "ID1: POST /v1/payments (E-87) for a ticket answers 409 ticket_payment_pending, with words and the fields `reference` (the waiting payment's) and `ticket`, while a ticket payment of that wish started by the same account still waits (pending or started, unfulfilled, and younger than the 60 minutes a waiting payment lasts); this holds for any ticket, the same one again with another Idempotency-Key included, and the same ticket with the same key still returns the same payment. Two starts at the same moment are lined up by the account lock: one payment waits, the other is 409. GET /v1/wishes/:id (E-224) carries `ticketPayment` {ticket, reference, startedAt, lapsesAt} for the owner (null when none waits; a maker reading a wish through an order gets null). POST /v1/payments/:reference/drop drops the caller's own waiting ticket payment at once, as HY1 does for plans: one conditional UPDATE marks it abandoned and flagged dropped_by_owner, so a new start is allowed; it answers the payment as it stands (E-88's shape); dropped again it changes nothing; a paid, failed or refunded payment is 409 ticket_payment_not_waiting; another account's payment or a payment that is not a ticket's is 404. A ticket payment that settles when the wish already holds a ticket that was PAID for (a purchase grant of kind ticket, not revoked, not refused) is refund due (refund_due:ticket_already_paid), whatever its state when it came in (waiting, dropped or lapsed: HU6, HZ3), whatever the wish's state; the payment's read says so in words, and the refund notice goes when it is refunded as for any refund. An extra bought twice (not the repeatable five-photos) is refund due the same way (refund_due:extra_already_held, with words). Both settles take the account lock then the wish lock, so two that settle at once give one ticket and one refund due, each with its ledger balanced.",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md; build/prompts/API-BASE-10.md",
+      "decidedAt": "2026-12-03T12:00:00Z"
+    },
+    {
+      "id": "DEC-271",
+      "topic": "The buyer's files for a Concierge order (IC7, HZ2, IC4)",
+      "decision": "IC7: POST /v1/uploads (E-182) takes the purposes order-photo and order-voice with subjectId the id of the caller's own Concierge order: the same signed put, confirm (E-184), screening, types and sizes as a wish's photos and voice; the files are the buyer's (ownerAccountId), tied to the order by a row of its own (concierge_order_file), from the moment the order is placed until it is delivered or cancelled (a ticket for an order that has ended is 409 order_ended; another buyer's order is 404). The limit that applies is the order's own: at most 20 photos and 3 voice notes per order (a file that has not been refused counts; the next ticket is 409 order_files_full with words); order files never count against the buyer's Vault, nor against the photo and voice limits of the buyer's own wishes. GET /v1/concierge-orders/:id/files lists the buyer's files for the order ({items: [{id, kind photo or voice, contentType, bytes, seconds, status, inWish, createdAt}], nextCursor: null, limits: {photos, voices}}); the buyer removes one with DELETE /v1/uploads/:id (E-183) while the order is open, and a file the maker already added to the wish being made cannot be removed (409 file_in_use). GET /v1/admin/concierge/orders/:id/files lists the same for the order's maker (the owner reads any order; a maker only the orders given to them; another maker's order, an order not given or not paid, and any other role are refused) and adds a signed read (url, expiresAt) for each file that is ready, null for one that is screening or refused. POST /v1/admin/concierge/orders/:id/wishes/:wishId/files {fileIds, reason} (the order's maker or the owner, while the order is given or being made) adds ready files of that order to the wish being made for it: photos join the wish's story photos and voice notes join its voices, under that wish's own limits (its ticket's, the Moment line when it has none); a file that is not the order's, not ready or not a file of this order is 422 with words; the files stay the buyer's and stay listed for the order; one audit row (concierge.add-files). Delivery keeps the files the wish uses with the wish and removes the rest (storage objects too); cancel (the buyer's or staff's) removes every file of the order and the half-made wish; the buyer's erase removes the files with the rest of the buyer's files; a refund leaves the order's files as the order stands (a refunded payment's order is cancelled by staff, which removes them). No one else reads them: a buyer reads only their own orders' files, a maker only orders given to them, and the order's files appear in no wish list of the buyer's.",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md; build/prompts/API-BASE-10.md",
+      "decidedAt": "2026-12-03T12:00:00Z"
+    },
+    {
+      "id": "DEC-272",
+      "topic": "The registry is frozen again after ID1 and IC7",
+      "decision": "The registry is re-frozen after DEC-270 and DEC-271 by tools/pipeline/freeze.py; reconcile.py was run twice with --reopen (identical outputs; .pipeline/ui-align-tasks.json restored byte for byte). Endpoint ids already issued are unchanged; E-278 was the last issued before, and the four new endpoints take E-279 (GET /v1/admin/concierge/orders/:id/files), E-280 (POST /v1/admin/concierge/orders/:id/wishes/:wishId/files), E-281 (GET /v1/concierge-orders/:id/files) and E-282 (POST /v1/payments/:reference/drop). GET /v1/wishes/:id (E-224) takes one more response field (ticketPayment) and POST /v1/uploads (E-182) two more purposes (order-photo, order-voice).",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md; build/prompts/API-BASE-10.md",
+      "decidedAt": "2026-12-03T12:00:00Z"
+    },
+    {
+      "id": "DEC-273",
+      "topic": "The tenth round's check: a Concierge wish is a Signature wish, one spelling of an id, the files of an order never paid (IE1, IE2, IE3)",
+      "decision": "IE1: a wish made for a Concierge order (POST /v1/admin/concierge/orders/:id/wishes, E-273) is a Signature wish from the moment the maker starts it (ticket signature), paid for by the order (no ticket payment row, no second ledger line), and holds what the price book gives Signature (photos and voices). The files a buyer may give with an order (POST /v1/uploads order-photo and order-voice, E-182; GET /v1/concierge-orders/:id/files, E-281, limits {photos, voices}) are what one Signature wish holds times the order's count of wishes (the 20 photos and 3 voice notes of DEC-271 no longer apply); the 409 order_files_full words name the new numbers. The maker adds the files with E-280 under the Signature limits of each wish. IE2: an id in a request body is trimmed and, when it is a UUID, put in lower case before it is compared, stored or used as a key: POST /v1/payments (E-87) subjectId, so a start for the same wish in any spelling is one start (the others 409 ticket_payment_pending with the reference). IE3: the files given with an order that is never paid (placed or quoted) are removed, rows and stored objects, by the recurring upload-cleanup sweep once the order has not changed for LifecycleConfig.conciergeFilesDays (integer, 30, PROVISIONAL: the owner may change it; a price-book limit line limits.conciergeFilesDays set by PUT /v1/admin/prices/:key, DEC-252); the order stays. ConciergeOrder.status and .state gain refunded: an order whose payment is refunded (not yet delivered) reads as refunded, not paid, its half-made wish is erased and its files are removed. F4: from the moment the buyer's account is erased, GET /v1/admin/concierge/orders/:id/files and the add-files route see none of the order's files (the erase job removes them after).",
+      "fieldTypes": {
+        "ConciergeOrder.status": "enum(brief|quoted|paid|given|making|delivered|cancelled|refunded)",
+        "ConciergeOrder.state": "enum(placed|quoted|paid|given|making|delivered|cancelled|refunded)"
+      },
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (IE1 to IE3); build/prompts/P-API-BASE-10.md",
+      "decidedAt": "2026-12-04T12:00:00Z"
+    },
+    {
+      "id": "DEC-274",
+      "topic": "The registry is frozen again after IE1 to IE3",
+      "decision": "The registry is re-frozen after DEC-273 by tools/pipeline/freeze.py; reconcile.py was run twice with --reopen (identical outputs; .pipeline/ui-align-tasks.json restored byte for byte). No endpoint id is issued or changed. ConciergeOrder.status and .state gain refunded and LifecycleConfig gains conciergeFilesDays.",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (IE1 to IE3); build/prompts/P-API-BASE-10.md",
+      "decidedAt": "2026-12-04T12:00:00Z"
     }
   ]
 }

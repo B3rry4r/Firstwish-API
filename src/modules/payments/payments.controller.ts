@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Headers, HttpCode, Param, Post, Query, Req, Res } from "@nestjs/common";
 import type { Request, Response } from "express";
-import { GetPaymentsByReferenceParamsDto, GetPaymentsByReferenceQueryDto, GetPaymentsQueryDto, PostPaymentsBodyDto } from "../../contracts";
+import { GetPaymentsByReferenceParamsDto, GetPaymentsByReferenceQueryDto, GetPaymentsQueryDto, PostPaymentsBodyDto, PostPaymentsByReferenceDropParamsDto } from "../../contracts";
 import type { PaymentStarted } from "../../contracts";
 import { CurrentPrincipal, Roles, WebhookSignature } from "../../common/auth/decorators";
 import type { Principal } from "../../common/auth/principal";
@@ -33,6 +33,14 @@ export class PaymentsController {
   @Get()
   list(@Query() q: GetPaymentsQueryDto, @CurrentPrincipal() p: Principal | undefined): Promise<PaymentPage> {
     return this.payments.listOwn(accountOf(p), { cursor: q.cursor, limit: q.limit });
+  }
+
+  /** ID1: the owner drops a waiting ticket payment of theirs at once; answers the payment as it stands. */
+  @Roles("person", "creator", "business")
+  @Post(":reference/drop")
+  @HttpCode(200)
+  drop(@Param() params: PostPaymentsByReferenceDropParamsDto, @CurrentPrincipal() p: Principal | undefined): Promise<PaymentView> {
+    return this.payments.dropTicket(accountOf(p), params.reference);
   }
 
   @Roles("person", "creator", "business")

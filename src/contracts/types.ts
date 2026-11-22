@@ -582,8 +582,8 @@ export interface ConciergeOrder {
   reportFileId?: string | null;
   rush: boolean;
   shape: string;
-  state: "placed" | "quoted" | "paid" | "given" | "making" | "delivered" | "cancelled";
-  status: "brief" | "quoted" | "paid" | "given" | "making" | "delivered" | "cancelled";
+  state: "placed" | "quoted" | "paid" | "given" | "making" | "delivered" | "cancelled" | "refunded";
+  status: "brief" | "quoted" | "paid" | "given" | "making" | "delivered" | "cancelled" | "refunded";
   to: Instant;
   updatedAt: Instant;
   wishIds: unknown[];
@@ -836,6 +836,8 @@ export interface LifecycleConfig {
   conciergeDeliveryHours: number;
   /** HW6: days after its open time that a sealed wish nobody opens is put to rest (it is erased after the resting hold, HOLD_DAYS); an erase itself happens at once and has no period (HX2); the lifecycle reads the same number */
   unopenedDays: number;
+  /** IE3: days after an order that was never paid last changed that the files given with it are removed (PROVISIONAL: the owner may change it); the sweep reads the same number */
+  conciergeFilesDays: number;
   noticeBeforeTermEnds: string;
   restingHoldMonths: number;
   restoreWindow: string;
@@ -1906,6 +1908,8 @@ export interface Wish {
   style: string;
   styleLevel?: "starter" | "standard" | "premium" | null;
   ticket?: "moment" | "keepsake" | "signature" | "premiere" | null;
+  /** ID1 (DEC-270): the ticket payment of this wish that waits to be paid: {ticket, reference, startedAt, lapsesAt}; null when none waits */
+  ticketPayment?: { ticket: string; reference: string; startedAt: Instant; lapsesAt: Instant } | null;
   timeZone: string;
   updatedAt: Instant;
   version: number;
@@ -2530,6 +2534,27 @@ export interface ConciergeOrderWish {
   no: string;
   /** the receiver's first name ("" when the wish has none) */
   firstName: string;
+}
+/** IC7 (DEC-271): a file the buyer gave with a Concierge order; the maker's read adds a signed read (url and expiresAt, null while the file is not ready) */
+export interface ConciergeOrderFile {
+  id: string;
+  kind: "photo" | "voice";
+  contentType: string;
+  bytes: number;
+  /** a voice note's length in seconds (null for a photo or when not given) */
+  seconds: number | null;
+  status: "pending" | "uploaded" | "screening" | "ready" | "rejected";
+  /** true once the maker added it to the wish being made */
+  inWish: boolean;
+  createdAt: Instant;
+  url?: string | null;
+  expiresAt?: Instant | null;
+}
+/** IC7 (DEC-271): the order's own limits: at most this many photos and voice notes per order (not the buyer's Vault, not their wishes' limits) */
+export interface ConciergeOrderFiles {
+  items: ConciergeOrderFile[];
+  nextCursor: null;
+  limits: { photos: number; voices: number };
 }
 /** E-270 GET /v1/admin/concierge/orders/:id/wishes. Auth: maker,ops,owner; a maker reads only an order given to them (DEC-258). */
 export interface GetAdminConciergeOrdersByIdWishesParams {
@@ -3459,7 +3484,7 @@ export interface PutAdminPricesByKeyBody {
   reason: string;
   /** string (the price-book line, DEC-138) */
   sku: string;
-  /** integer (optional; the new value of a limit line limits.photoMaxBytes, limits.soundMaxBytes, limits.modelMaxBytes, limits.conciergeDeliveryHours or limits.unopenedDays, in the line's kind: bytes, hours or days; a limit line takes it alone) (DEC-252) */
+  /** integer (optional; the new value of a limit line limits.photoMaxBytes, limits.soundMaxBytes, limits.modelMaxBytes, limits.conciergeDeliveryHours, limits.unopenedDays or limits.conciergeFilesDays, in the line's kind: bytes, hours or days; a limit line takes it alone) (DEC-252) */
   value?: number;
 }
 export type PutAdminPricesByKeyHeaders = Record<string, never>;
@@ -4272,7 +4297,7 @@ export interface PostUploadsBody {
   file?: unknown;
   /** image|sound|model|video (optional; the media kind, DEC-165) */
   kind?: "image" | "sound" | "model" | "video";
-  /** string (photo|voice|clip|vault|studio|brand; what the file is for, DEC-165) */
+  /** string (photo|voice|clip|vault|studio|brand|order-photo|order-voice; what the file is for, DEC-165; order-photo and order-voice are the buyer's files for a Concierge order, subjectId is the order's id, DEC-271) */
   purpose?: string;
   /** number */
   seconds?: number;
@@ -5157,6 +5182,44 @@ export interface PostAdminConciergeOrdersByIdWishesBody {
 export type PostAdminConciergeOrdersByIdWishesHeaders = Record<string, never>;
 export type PostAdminConciergeOrdersByIdWishesResponse = ConciergeOrderWish;
 
+/** E-279 GET /v1/admin/concierge/orders/:id/files. Auth: maker,owner (DEC-271, IC7). The buyer's files for this order with a signed read for each one that is ready. */
+export interface GetAdminConciergeOrdersByIdFilesParams {
+  id: string;
+}
+export type GetAdminConciergeOrdersByIdFilesQuery = Record<string, never>;
+export type GetAdminConciergeOrdersByIdFilesHeaders = Record<string, never>;
+export type GetAdminConciergeOrdersByIdFilesResponse = ConciergeOrderFiles;
+
+/** E-280 POST /v1/admin/concierge/orders/:id/wishes/:wishId/files. Auth: maker,owner (DEC-271, IC7). Adds ready files of the order to the wish being made for it. */
+export interface PostAdminConciergeOrdersByIdWishesByWishIdFilesParams {
+  id: string;
+  wishId: string;
+}
+export interface PostAdminConciergeOrdersByIdWishesByWishIdFilesBody {
+  /** 1 to 50 ids of the files the buyer gave with this order; each must be ready */
+  fileIds: string[];
+  /** 4 or more characters; the audit row carries it */
+  reason: string;
+}
+export type PostAdminConciergeOrdersByIdWishesByWishIdFilesHeaders = Record<string, never>;
+export type PostAdminConciergeOrdersByIdWishesByWishIdFilesResponse = ConciergeOrderFiles;
+
+/** E-281 GET /v1/concierge-orders/:id/files. Auth: own records (DEC-271, IC7). The files the buyer gave with this order. */
+export interface GetConciergeOrdersByIdFilesParams {
+  id: string;
+}
+export type GetConciergeOrdersByIdFilesQuery = Record<string, never>;
+export type GetConciergeOrdersByIdFilesHeaders = Record<string, never>;
+export type GetConciergeOrdersByIdFilesResponse = ConciergeOrderFiles;
+
+/** E-282 POST /v1/payments/:reference/drop. Auth: signed in (DEC-270, ID1). Drops the caller's own waiting ticket payment at once; answers the payment as it stands. */
+export interface PostPaymentsByReferenceDropParams {
+  reference: string;
+}
+export type PostPaymentsByReferenceDropBody = Record<string, never>;
+export type PostPaymentsByReferenceDropHeaders = Record<string, never>;
+export type PostPaymentsByReferenceDropResponse = Payment;
+
 /** Every endpoint by registry id: its request parts and its response. */
 export interface EndpointContracts {
   "E-1": { params: GetAdminPeopleParams; query: GetAdminPeopleQuery; headers: GetAdminPeopleHeaders; response: GetAdminPeopleResponse };
@@ -5436,5 +5499,9 @@ export interface EndpointContracts {
   "E-277": { params: PatchBusinessShootsByIdParams; body: PatchBusinessShootsByIdBody; headers: PatchBusinessShootsByIdHeaders; response: PatchBusinessShootsByIdResponse };
   "E-278": { params: PatchBusinessVaultFilesByIdParams; body: PatchBusinessVaultFilesByIdBody; headers: PatchBusinessVaultFilesByIdHeaders; response: PatchBusinessVaultFilesByIdResponse };
   "E-273": { params: PostAdminConciergeOrdersByIdWishesParams; body: PostAdminConciergeOrdersByIdWishesBody; headers: PostAdminConciergeOrdersByIdWishesHeaders; response: PostAdminConciergeOrdersByIdWishesResponse };
+  "E-279": { params: GetAdminConciergeOrdersByIdFilesParams; query: GetAdminConciergeOrdersByIdFilesQuery; headers: GetAdminConciergeOrdersByIdFilesHeaders; response: GetAdminConciergeOrdersByIdFilesResponse };
+  "E-280": { params: PostAdminConciergeOrdersByIdWishesByWishIdFilesParams; body: PostAdminConciergeOrdersByIdWishesByWishIdFilesBody; headers: PostAdminConciergeOrdersByIdWishesByWishIdFilesHeaders; response: PostAdminConciergeOrdersByIdWishesByWishIdFilesResponse };
+  "E-281": { params: GetConciergeOrdersByIdFilesParams; query: GetConciergeOrdersByIdFilesQuery; headers: GetConciergeOrdersByIdFilesHeaders; response: GetConciergeOrdersByIdFilesResponse };
+  "E-282": { params: PostPaymentsByReferenceDropParams; body: PostPaymentsByReferenceDropBody; headers: PostPaymentsByReferenceDropHeaders; response: PostPaymentsByReferenceDropResponse };
 }
 export type EndpointId = keyof EndpointContracts;

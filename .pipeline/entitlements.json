@@ -6,7 +6,8 @@
       "statement": "A ticket is exactly three meters: a term (how long it lives), what it carries (photos, and video on Premiere only) and one style picked by the sender.",
       "purchase": [
         "POST /v1/admin/payments/:reference/refund",
-        "POST /v1/payments"
+        "POST /v1/payments",
+        "POST /v1/payments/:reference/drop"
       ],
       "endpoints": [
         {
@@ -23,7 +24,8 @@
       "statement": "Moment: 7 days, cannot be kept, 6 photos, no video, one starter style, no extras; its only option is to become a Keepsake for the difference.",
       "purchase": [
         "POST /v1/admin/payments/:reference/refund",
-        "POST /v1/payments"
+        "POST /v1/payments",
+        "POST /v1/payments/:reference/drop"
       ],
       "endpoints": [
         {
@@ -80,7 +82,8 @@
       "statement": "Premiere: 2 months, can be kept, 20 photos, three video clips of 15 seconds, one premium style made for video; it is the only ticket with video.",
       "purchase": [
         "POST /v1/admin/payments/:reference/refund",
-        "POST /v1/payments"
+        "POST /v1/payments",
+        "POST /v1/payments/:reference/drop"
       ],
       "endpoints": [
         {
@@ -103,7 +106,8 @@
       "purchase": [
         "POST /v1/admin/messages/:id/resend",
         "POST /v1/admin/payments/:reference/refund",
-        "POST /v1/payments"
+        "POST /v1/payments",
+        "POST /v1/payments/:reference/drop"
       ],
       "endpoints": [
         {
@@ -126,7 +130,8 @@
       "purchase": [
         "POST /v1/admin/messages/:id/resend",
         "POST /v1/admin/payments/:reference/refund",
-        "POST /v1/payments"
+        "POST /v1/payments",
+        "POST /v1/payments/:reference/drop"
       ],
       "endpoints": [
         {
@@ -144,7 +149,8 @@
       "purchase": [
         "POST /v1/admin/messages/:id/resend",
         "POST /v1/admin/payments/:reference/refund",
-        "POST /v1/payments"
+        "POST /v1/payments",
+        "POST /v1/payments/:reference/drop"
       ],
       "endpoints": [
         {
@@ -181,7 +187,8 @@
       "statement": "One wish made for one customer by Concierge is a Signature wish delivered within 3 hours; a rush within 1 hour adds a surcharge.",
       "purchase": [
         "POST /v1/admin/payments/:reference/refund",
-        "POST /v1/payments"
+        "POST /v1/payments",
+        "POST /v1/payments/:reference/drop"
       ],
       "endpoints": [
         {
@@ -234,7 +241,8 @@
       "purchase": [
         "POST /v1/admin/messages/:id/resend",
         "POST /v1/admin/payments/:reference/refund",
-        "POST /v1/payments"
+        "POST /v1/payments",
+        "POST /v1/payments/:reference/drop"
       ],
       "endpoints": [
         {
@@ -257,7 +265,8 @@
       "purchase": [
         "POST /v1/admin/messages/:id/resend",
         "POST /v1/admin/payments/:reference/refund",
-        "POST /v1/payments"
+        "POST /v1/payments",
+        "POST /v1/payments/:reference/drop"
       ],
       "endpoints": [
         {
@@ -275,7 +284,8 @@
       "purchase": [
         "POST /v1/admin/messages/:id/resend",
         "POST /v1/admin/payments/:reference/refund",
-        "POST /v1/payments"
+        "POST /v1/payments",
+        "POST /v1/payments/:reference/drop"
       ],
       "endpoints": [
         {
@@ -308,7 +318,8 @@
       "purchase": [
         "POST /v1/admin/messages/:id/resend",
         "POST /v1/admin/payments/:reference/refund",
-        "POST /v1/payments"
+        "POST /v1/payments",
+        "POST /v1/payments/:reference/drop"
       ],
       "endpoints": [
         {
@@ -346,7 +357,8 @@
       "purchase": [
         "POST /v1/admin/messages/:id/resend",
         "POST /v1/admin/payments/:reference/refund",
-        "POST /v1/payments"
+        "POST /v1/payments",
+        "POST /v1/payments/:reference/drop"
       ],
       "endpoints": [
         {
@@ -368,7 +380,8 @@
       "statement": "A Pro wish lives its Signature term of a month, its resting screen still shows 'Photos by' or 'Arranged by' and the booking button, and the client is offered the keep, paid to Firstwish.",
       "purchase": [
         "POST /v1/admin/payments/:reference/refund",
-        "POST /v1/payments"
+        "POST /v1/payments",
+        "POST /v1/payments/:reference/drop"
       ],
       "endpoints": [
         {
@@ -421,7 +434,8 @@
       "purchase": [
         "POST /v1/admin/messages/:id/resend",
         "POST /v1/admin/payments/:reference/refund",
-        "POST /v1/payments"
+        "POST /v1/payments",
+        "POST /v1/payments/:reference/drop"
       ],
       "endpoints": [
         {
@@ -468,7 +482,8 @@
       "statement": "Credit pack is ₦3,000 for 5 AI credits; an extra review is ₦2,500 for one more submission in a month; a full AI style draft costs 4 credits and an AI change costs 1 credit; 1 credit equals about ₦200 of AI.",
       "purchase": [
         "POST /v1/admin/payments/:reference/refund",
-        "POST /v1/payments"
+        "POST /v1/payments",
+        "POST /v1/payments/:reference/drop"
       ],
       "endpoints": [
         {
@@ -521,7 +536,8 @@
       "purchase": [
         "POST /v1/admin/messages/:id/resend",
         "POST /v1/admin/payments/:reference/refund",
-        "POST /v1/payments"
+        "POST /v1/payments",
+        "POST /v1/payments/:reference/drop"
       ],
       "endpoints": [
         {
@@ -543,7 +559,8 @@
       "statement": "Every account is one kind of account with up to three sides: Personal (always), Business (added with a name; set up on its own, not requiring a creator profile) and Creator (a handle and one line); nothing moves between sides and the app opens on the side used last.",
       "purchase": [
         "POST /v1/admin/payments/:reference/refund",
-        "POST /v1/payments"
+        "POST /v1/payments",
+        "POST /v1/payments/:reference/drop"
       ],
       "endpoints": [
         {
@@ -561,7 +578,8 @@
       "purchase": [
         "POST /v1/admin/messages/:id/resend",
         "POST /v1/admin/payments/:reference/refund",
-        "POST /v1/payments"
+        "POST /v1/payments",
+        "POST /v1/payments/:reference/drop"
       ],
       "endpoints": [
         {
@@ -593,7 +611,8 @@
       "statement": "Moment ticket moment",
       "purchase": [
         "POST /v1/admin/payments/:reference/refund",
-        "POST /v1/payments"
+        "POST /v1/payments",
+        "POST /v1/payments/:reference/drop"
       ],
       "endpoints": [
         {
@@ -620,7 +639,8 @@
       "statement": "Keepsake ticket keepsake",
       "purchase": [
         "POST /v1/admin/payments/:reference/refund",
-        "POST /v1/payments"
+        "POST /v1/payments",
+        "POST /v1/payments/:reference/drop"
       ],
       "endpoints": [
         {
@@ -647,7 +667,8 @@
       "statement": "Signature ticket signature",
       "purchase": [
         "POST /v1/admin/payments/:reference/refund",
-        "POST /v1/payments"
+        "POST /v1/payments",
+        "POST /v1/payments/:reference/drop"
       ],
       "endpoints": [
         {
@@ -674,7 +695,8 @@
       "statement": "Premiere ticket premiere",
       "purchase": [
         "POST /v1/admin/payments/:reference/refund",
-        "POST /v1/payments"
+        "POST /v1/payments",
+        "POST /v1/payments/:reference/drop"
       ],
       "endpoints": [
         {
@@ -701,7 +723,8 @@
       "statement": "Five more photos extra five-photos",
       "purchase": [
         "POST /v1/admin/payments/:reference/refund",
-        "POST /v1/payments"
+        "POST /v1/payments",
+        "POST /v1/payments/:reference/drop"
       ],
       "endpoints": [
         {
@@ -723,7 +746,8 @@
       "statement": "A premium style extra premium-style",
       "purchase": [
         "POST /v1/admin/payments/:reference/refund",
-        "POST /v1/payments"
+        "POST /v1/payments",
+        "POST /v1/payments/:reference/drop"
       ],
       "endpoints": [
         {
@@ -745,7 +769,8 @@
       "statement": "Portrait video for WhatsApp status extra portrait-video",
       "purchase": [
         "POST /v1/admin/payments/:reference/refund",
-        "POST /v1/payments"
+        "POST /v1/payments",
+        "POST /v1/payments/:reference/drop"
       ],
       "endpoints": [
         {
@@ -772,7 +797,8 @@
       "statement": "Print-ready QR card extra qr-card",
       "purchase": [
         "POST /v1/admin/payments/:reference/refund",
-        "POST /v1/payments"
+        "POST /v1/payments",
+        "POST /v1/payments/:reference/drop"
       ],
       "endpoints": [
         {
@@ -794,7 +820,8 @@
       "statement": "One more video clip, 15 seconds extra clip-15s",
       "purchase": [
         "POST /v1/admin/payments/:reference/refund",
-        "POST /v1/payments"
+        "POST /v1/payments",
+        "POST /v1/payments/:reference/drop"
       ],
       "endpoints": [
         {
@@ -816,7 +843,8 @@
       "statement": "A long clip, up to 60 seconds extra clip-60s",
       "purchase": [
         "POST /v1/admin/payments/:reference/refund",
-        "POST /v1/payments"
+        "POST /v1/payments",
+        "POST /v1/payments/:reference/drop"
       ],
       "endpoints": [
         {
@@ -838,7 +866,8 @@
       "statement": "Keep it one more month (30 days) keep month",
       "purchase": [
         "POST /v1/admin/payments/:reference/refund",
-        "POST /v1/payments"
+        "POST /v1/payments",
+        "POST /v1/payments/:reference/drop"
       ],
       "endpoints": [
         {
@@ -860,7 +889,8 @@
       "statement": "Keep it six months (182 days) keep half",
       "purchase": [
         "POST /v1/admin/payments/:reference/refund",
-        "POST /v1/payments"
+        "POST /v1/payments",
+        "POST /v1/payments/:reference/drop"
       ],
       "endpoints": [
         {
@@ -887,7 +917,8 @@
       "statement": "Keep it a year (365 days) keep year",
       "purchase": [
         "POST /v1/admin/payments/:reference/refund",
-        "POST /v1/payments"
+        "POST /v1/payments",
+        "POST /v1/payments/:reference/drop"
       ],
       "endpoints": [
         {
@@ -910,7 +941,8 @@
       "purchase": [
         "POST /v1/admin/messages/:id/resend",
         "POST /v1/admin/payments/:reference/refund",
-        "POST /v1/payments"
+        "POST /v1/payments",
+        "POST /v1/payments/:reference/drop"
       ],
       "endpoints": [
         {
@@ -932,7 +964,8 @@
       "statement": "Concierge, one wish concierge single",
       "purchase": [
         "POST /v1/admin/payments/:reference/refund",
-        "POST /v1/payments"
+        "POST /v1/payments",
+        "POST /v1/payments/:reference/drop"
       ],
       "endpoints": [
         {
@@ -956,6 +989,11 @@
           "matchedBy": "words: concierge"
         },
         {
+          "endpoint": "E-280",
+          "route": "POST /v1/admin/concierge/orders/:id/wishes/:wishId/files",
+          "matchedBy": "words: concierge"
+        },
+        {
           "endpoint": "E-34",
           "route": "POST /v1/admin/concierge-orders/:id/delivery",
           "matchedBy": "words: concierge"
@@ -974,11 +1012,6 @@
           "endpoint": "E-40",
           "route": "POST /v1/concierge-orders",
           "matchedBy": "words: concierge"
-        },
-        {
-          "endpoint": "E-90",
-          "route": "INTERNAL port:fulfilment#concierge.single",
-          "matchedBy": "words: single"
         }
       ],
       "test": "src/payment/tests/payment.contract.spec.ts > entitlement concierge.single"
@@ -989,7 +1022,8 @@
       "statement": "Pro Starter, a month (VAT included) pro starter",
       "purchase": [
         "POST /v1/admin/payments/:reference/refund",
-        "POST /v1/payments"
+        "POST /v1/payments",
+        "POST /v1/payments/:reference/drop"
       ],
       "endpoints": [
         {
@@ -1017,7 +1051,8 @@
       "statement": "Pro Studio, a month (VAT included) pro studio",
       "purchase": [
         "POST /v1/admin/payments/:reference/refund",
-        "POST /v1/payments"
+        "POST /v1/payments",
+        "POST /v1/payments/:reference/drop"
       ],
       "endpoints": [
         {
@@ -1079,7 +1114,8 @@
       "statement": "Wish pack, 5 Signature wishes (VAT included) pro pack",
       "purchase": [
         "POST /v1/admin/payments/:reference/refund",
-        "POST /v1/payments"
+        "POST /v1/payments",
+        "POST /v1/payments/:reference/drop"
       ],
       "endpoints": [
         {
@@ -1117,7 +1153,8 @@
       "statement": "Vault space, 100 GB a month vault block",
       "purchase": [
         "POST /v1/admin/payments/:reference/refund",
-        "POST /v1/payments"
+        "POST /v1/payments",
+        "POST /v1/payments/:reference/drop"
       ],
       "endpoints": [
         {
@@ -1154,7 +1191,8 @@
       "statement": "Vault space past 1 TB, 100 GB a month vault block-bulk",
       "purchase": [
         "POST /v1/admin/payments/:reference/refund",
-        "POST /v1/payments"
+        "POST /v1/payments",
+        "POST /v1/payments/:reference/drop"
       ],
       "endpoints": [
         {
@@ -1177,7 +1215,8 @@
       "purchase": [
         "POST /v1/admin/messages/:id/resend",
         "POST /v1/admin/payments/:reference/refund",
-        "POST /v1/payments"
+        "POST /v1/payments",
+        "POST /v1/payments/:reference/drop"
       ],
       "endpoints": [
         {
@@ -1219,7 +1258,8 @@
       "statement": "Signed, a month creator signed",
       "purchase": [
         "POST /v1/admin/payments/:reference/refund",
-        "POST /v1/payments"
+        "POST /v1/payments",
+        "POST /v1/payments/:reference/drop"
       ],
       "endpoints": [
         {
@@ -1241,7 +1281,8 @@
       "statement": "Credit pack, 5 AI credits creator credit-pack",
       "purchase": [
         "POST /v1/admin/payments/:reference/refund",
-        "POST /v1/payments"
+        "POST /v1/payments",
+        "POST /v1/payments/:reference/drop"
       ],
       "endpoints": [
         {
@@ -1263,7 +1304,8 @@
       "statement": "One more review this month creator extra-review",
       "purchase": [
         "POST /v1/admin/payments/:reference/refund",
-        "POST /v1/payments"
+        "POST /v1/payments",
+        "POST /v1/payments/:reference/drop"
       ],
       "endpoints": [
         {

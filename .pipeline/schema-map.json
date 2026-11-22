@@ -3727,6 +3727,53 @@
      "why": "a friend's first name"
     }
    }
+  },
+  "ConciergeOrderFile": {
+   "reason": "IC7 (T-12): a file the buyer gave with a Concierge order (a photo or a voice note), tied to the order until it is delivered or cancelled",
+   "columns": {
+    "fileId": {
+     "type": "String",
+     "attrs": "@id @db.Uuid",
+     "opt": false
+    },
+    "orderId": {
+     "type": "String",
+     "attrs": "@db.Uuid",
+     "opt": false
+    },
+    "kind": {
+     "type": "String",
+     "attrs": "",
+     "opt": false
+    },
+    "createdAt": {
+     "type": "DateTime",
+     "attrs": "@default(now()) @db.Timestamptz(3)",
+     "opt": false
+    }
+   },
+   "explicitIndexes": true,
+   "pk": [
+    "fileId"
+   ],
+   "refs": {
+    "fileId": "StoredFile",
+    "orderId": "ConciergeOrder"
+   },
+   "refOnDelete": {
+    "fileId": "Cascade",
+    "orderId": "Cascade"
+   },
+   "refOnUpdate": {
+    "fileId": "Cascade",
+    "orderId": "Cascade"
+   },
+   "indexes": [
+    [
+     "orderId",
+     "fileId"
+    ]
+   ]
   }
  }
 }

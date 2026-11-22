@@ -1,6 +1,6 @@
 import { Global, Module, Provider } from "@nestjs/common";
 import { ENV } from "../env/env.module";
-import type { Env } from "../env/env";
+import { parseScreeningRules, type Env } from "../env/env";
 import { AiWritingPort } from "./ai.port";
 import { Clock, StandinClock, SystemClock } from "./clock.port";
 import { EmailPort } from "./email.port";
@@ -93,7 +93,7 @@ const providers: Provider[] = [
     useFactory: (env: Env, clock: Clock) =>
       limited(env, "google", standin(env) ? new StandinGoogle() : new GoogleOidc(need(env.GOOGLE_CLIENT_ID), need(env.GOOGLE_CLIENT_SECRET), clock)),
   },
-  { provide: UploadScreeningPort, inject: [ENV], useFactory: (env: Env) => limited(env, "screening", standin(env) ? new StandinScreening() : new BasicScreening()) },
+  { provide: UploadScreeningPort, inject: [ENV], useFactory: (env: Env) => limited(env, "screening", standin(env) ? new StandinScreening(parseScreeningRules(env.STANDIN_SCREENING ?? "") ?? []) : new BasicScreening()) },
   // X22: the image-sizes port; its real adapter comes with the jobs frame (B06)
   { provide: ImageSizesPort, inject: [ENV], useFactory: (env: Env) => limited(env, "imageSizes", standin(env) ? new StandinImageSizes() : new MissingImageSizes()) },
 ];

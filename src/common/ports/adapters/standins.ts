@@ -6,6 +6,7 @@ import { Money } from "../../money/money";
 import { AiWritingPort, WriteRequest, WriteResult } from "../ai.port";
 import { EmailPort, OutgoingEmail, ReceivedEmail, SentEmail } from "../email.port";
 import { PaymentsPort, PaymentStatus, StartPayment, StartedPayment, VerifiedPayment } from "../payments.port";
+import type { ScreeningRule } from "../../env/env";
 import { ScreenInput, ScreenResult, UploadScreeningPort } from "../screening.port";
 import { hmacSha512Hex, signatureMatches } from "../signature";
 import { SignUpload, SignedUpload, StoragePort, StoredObject } from "../storage.port";
@@ -363,14 +364,23 @@ export class StandinScreening extends UploadScreeningPort {
 
   readonly screened: ScreenInput[] = [];
 
-  /** Clean (score 0) unless the key contains "reject" (score 1, label "stand-in"). */
+  /** API-BASE-12 case 4: rules by file name (the name is kept in the storage key only while the setting is on). */
+  constructor(private readonly rules: readonly ScreeningRule[] = []) {
+    super();
+  }
+
+  /**
+   * Clean (score 0) unless the key contains "reject" (score 1, label "stand-in"). A rule of the STANDIN_SCREENING setting whose text is in the
+   * file's name holds the file in screening (score 0.6, a staff decision) or refuses it (score 1).
+   */
   screen(input: ScreenInput): Promise<ScreenResult> {
     this.screened.push(input);
-    return Promise.resolve(
-      input.key.includes("reject")
-        ? { verdict: "rejected", score: 1, labels: ["stand-in"], reason: "Rejected by the stand-in." }
-        : { verdict: "clean", score: 0, labels: [] },
-    );
+    const at = input.key.indexOf("~");
+    const name = at < 0 ? "" : input.key.slice(at + 1).toLowerCase();
+    const hit = name ? this.rules.find((r) => name.includes(r.text)) : undefined;
+    if (input.key.includes("reject") || hit?.action === "reject") return Promise.resolve({ verdict: "rejected", score: 1, labels: ["stand-in"], reason: "Rejected by the stand-in." });
+    if (hit?.action === "hold") return Promise.resolve({ verdict: "rejected", score: 0.6, labels: ["stand-in"], reason: "Held for a look by the stand-in." });
+    return Promise.resolve({ verdict: "clean", score: 0, labels: [] });
   }
 }
 

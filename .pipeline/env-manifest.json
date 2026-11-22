@@ -235,6 +235,12 @@
       "secret": false
     },
     {
+      "name": "STANDIN_SCREENING",
+      "introducedBy": "api-base-12",
+      "purpose": "API-BASE-12 case 4: rules for the stand-in screening by file name, as a comma list of hold:<part of a name> (the file waits in screening) or reject:<part of a name> (the file is refused); tests and verifier stacks only, refused with PROVIDERS=live or NODE_ENV=production",
+      "secret": false
+    },
+    {
       "name": "INTERNAL_TOKEN",
       "introducedBy": "api-0",
       "purpose": "shared secret an internal route needs in the x-internal-token header (32 or more characters)",

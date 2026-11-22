@@ -1,3 +1,4 @@
+import { normaliseReference } from "../../common/normalise/reference";
 import { Injectable } from "@nestjs/common";
 import type { Payment, Prisma } from "@prisma/client";
 import { PrismaService } from "../../common/db/prisma.service";
@@ -74,7 +75,8 @@ export class SettlementService {
    * Settles one provider answer. `webhookEventId`: the stored webhook event to mark processed in the same transaction (with the
    * outcome), so a rollback leaves it unprocessed and the next delivery retries.
    */
-  async settle(answer: ProviderAnswer, webhookEventId?: string): Promise<SettleResult> {
+  async settle(given: ProviderAnswer, webhookEventId?: string): Promise<SettleResult> {
+    const answer = { ...given, reference: normaliseReference(given.reference) };
     let result: SettleResult;
     try {
       result = await this.settleOnce(answer, webhookEventId);

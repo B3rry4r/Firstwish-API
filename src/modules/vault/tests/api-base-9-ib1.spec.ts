@@ -1,3 +1,4 @@
+import { uniqueAddress } from "../../../../test/kit/app";
 import { useKit } from "./ab9-kit";
 
 describe("API-BASE-9 case 4 (IB1): favourites at the reveal link and the business's read", () => {
@@ -27,9 +28,9 @@ describe("API-BASE-9 case 4 (IB1): favourites at the reveal link and the busines
     expect((await mark(x.code, 1, false)).body).toEqual({ hearts: [0] });
     expect((await mark(x.code, 2, false)).body).toEqual({ hearts: [0] });
     expect((await hearts(x.code)).body).toEqual({ hearts: [0] });
-    const view = await k.t.http().get(`/v1/r/${x.code}`).set("x-forwarded-for", "203.0.113.77");
+    const view = await k.t.http().get(`/v1/r/${x.code}`).set("x-forwarded-for", uniqueAddress());
     expect(view.body).toMatchObject({ state: "open", hearts: [0], index: [0, 1, 2] });
-    expect((await k.t.http().get(`/v1/r/${x.code}/favourites`).set("x-forwarded-for", "203.0.113.78")).body).toEqual({ hearts: [0] });
+    expect((await k.t.http().get(`/v1/r/${x.code}/favourites`).set("x-forwarded-for", uniqueAddress())).body).toEqual({ hearts: [0] });
   });
 
   it("the business reads the marks per reveal, on the client wish and on the shoot (as file ids); it cannot change them; another business sees nothing", async () => {
@@ -98,7 +99,7 @@ describe("API-BASE-9 case 4 (IB1): favourites at the reveal link and the busines
     expect((await mark(x.code, 200, true)).body.hearts).toHaveLength(200);
     // the rate
     const y = await setup();
-    const addr = "203.0.113.90";
+    const addr = uniqueAddress();
     let last = 0;
     for (let i = 0; i < 61; i++) last = (await mark(y.code, 0, i % 2 === 0, undefined, addr)).status;
     expect(last).toBe(429);

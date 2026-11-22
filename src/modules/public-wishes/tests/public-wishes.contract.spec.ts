@@ -5,6 +5,7 @@ import { createTestApp, TestApp, uniqueAddress } from "../../../../test/kit/app"
 import { ensureEntitlements } from "../../stored-files/tests/files-kit";
 import { LinkLimits } from "../link-limits";
 import { ReceiverActivityService } from "../receiver-activity.service";
+import { testWishNo } from "../../../../test/kit/unique";
 
 const NOW = new Date("2027-03-10T09:00:00.000Z");
 const DAY = 24 * 3600 * 1000;
@@ -64,7 +65,7 @@ describe("public wishes E-129 E-130 E-131 E-132 E-134 and the feed's E-122 E-142
     await db.wish.create({
       data: {
         id, accountId: owner, status: "sealed", ticket: "moment", kind: "love", occasion: "birthday", styleSlug: "noir", timeZone: "Africa/Lagos",
-        opensAt: new Date(NOW.getTime() - 60000), sealedAt: NOW, name: "Chidi", no: `FW-${run}-${n}`,
+        opensAt: new Date(NOW.getTime() - 60000), sealedAt: NOW, name: "Chidi", no: testWishNo(),
         content: { opening: { id: "op-1", scene: "curtain", values: { to: "Chidi" } }, letter: { paras: ["Happy birthday."] } },
         ...over,
       } as never,

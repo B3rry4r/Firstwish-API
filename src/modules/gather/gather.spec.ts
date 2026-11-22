@@ -4,28 +4,38 @@ import { filesApp, makeAccount, WEBM } from "../stored-files/tests/files-kit";
 import { MAX_VOICE_NOTES_PER_WISH } from "../stored-files/stored-files.service";
 import { GATHER_ASKS_PER_ADDRESS_PER_HOUR, GATHER_ASKS_PER_LINK_PER_DAY } from "../public-wishes/link-limits";
 import { uniqueAddress } from "../../../test/kit/app";
+import { testWishNo } from "../../../test/kit/unique";
+import { ownDatabase } from "../../../test/kit/own-db";
 
 /** API-BASE-6 case 4 (HS1): the gather link, the friend's side with no account and the owner's side. */
 describe("HS1 the gather link", () => {
   let t: TestApp;
   let db: PrismaService;
   let scored: Awaited<ReturnType<typeof filesApp>>["scored"];
+  // The per-address look and ask counts (link_hit) are rows of the whole database, read at each spec's own clock: the spec has its own database.
+  const own = ownDatabase("hs1");
   beforeAll(async () => {
+    own.use();
     ({ t, db, scored } = await filesApp());
   });
-  afterAll(() => t.close());
+  afterAll(async () => {
+    await t.close();
+    own.drop();
+  });
 
   async function setup(status: "draft" | "sealed" | "live" = "draft", over: Record<string, unknown> = {}) {
     const me = await makeAccount(db, t);
     await db.account.update({ where: { id: me.id }, data: { name: "Ada Obi" } });
     const id = (await import("../stored-files/tests/files-kit")).ids.next();
-    await db.wish.create({ data: { id, accountId: me.id, status, ticket: "keepsake", kind: "birthday", occasion: "birthday", styleSlug: "classic", timeZone: "Africa/Lagos", name: "Chidi Eze", content: { letter: { paras: ["private words"] } }, ...(status !== "draft" ? { no: `FW-G${id.slice(-6)}`, sealedAt: new Date("2026-01-01T00:00:00.000Z"), opensAt: new Date("2099-01-01T00:00:00.000Z") } : {}), ...over } as never });
+    await db.wish.create({ data: { id, accountId: me.id, status, ticket: "keepsake", kind: "birthday", occasion: "birthday", styleSlug: "classic", timeZone: "Africa/Lagos", name: "Chidi Eze", content: { letter: { paras: ["private words"] } }, ...(status !== "draft" ? { no: testWishNo(), sealedAt: new Date("2026-01-01T00:00:00.000Z"), opensAt: new Date("2099-01-01T00:00:00.000Z") } : {}), ...over } as never });
     const auth = { authorization: `Bearer ${me.token}` };
     const link = await t.http().get(`/v1/wishes/${id}/gather`).set(auth);
     expect(link.status).toBe(200);
     return { me, id, auth, slug: link.body.slug as string, link };
   }
-  const friend = (slug: string) => t.http().get(`/v1/g/${slug}`);
+  // Looks and confirms are counted per address too (link_hit, shared by every spec's database rows and read at each spec's own clock), so each call comes from an address of its own.
+  const friend = (slug: string) => t.http().get(`/v1/g/${slug}`).set("x-forwarded-for", uniqueAddress());
+  const confirm = (slug: string, id: string) => t.http().post(`/v1/g/${slug}/voice/${id}/confirm`).set("x-forwarded-for", uniqueAddress()).send({});
   // HU4: asks are limited per address, so each call is a friend at an address of their own unless a test says otherwise
   const ask = (slug: string, body: Record<string, unknown> = {}, from: string = uniqueAddress()) => t.http().post(`/v1/g/${slug}/voice`).set("x-forwarded-for", from).send({ name: "Kemi", contentType: "audio/webm", bytes: 4000, seconds: 12, ...body });
   async function add(slug: string, body: Record<string, unknown> = {}) {
@@ -33,7 +43,7 @@ describe("HS1 the gather link", () => {
     expect(a.status).toBe(201);
     const u = new URL(a.body.upload.url as string);
     expect((await t.http().put(`/v1/standin-storage${u.pathname}${u.search}`).set("content-type", "audio/webm").send(WEBM(4000))).status).toBe(200);
-    const c = await t.http().post(`/v1/g/${slug}/voice/${a.body.id}/confirm`).send({});
+    const c = await confirm(slug, a.body.id as string);
     return { id: a.body.id as string, confirm: c };
   }
 
@@ -173,7 +183,7 @@ describe("HS1 the gather link", () => {
     const r = await ask(w.slug);
     expect(r.status).toBe(409);
     expect(r.body.error.code).toBe("gather_off");
-    expect((await t.http().post(`/v1/g/${w.slug}/voice/${first.id}/confirm`).send({})).status).toBe(409);
+    expect((await confirm(w.slug, first.id)).status).toBe(409);
     expect((await t.http().post(`/v1/wishes/${w.id}/gather/off`).set(w.auth).send({})).status).toBe(409);
     expect((await t.http().get(`/v1/wishes/${w.id}/gather`).set(w.auth)).body.voices).toHaveLength(1);
   });
@@ -182,7 +192,7 @@ describe("HS1 the gather link", () => {
     const a = await setup("draft");
     const b = await setup("draft");
     const v = await ask(a.slug);
-    expect((await t.http().post(`/v1/g/${b.slug}/voice/${v.body.id}/confirm`).send({})).status).toBe(404);
+    expect((await confirm(b.slug, v.body.id as string)).status).toBe(404);
     expect((await t.http().delete(`/v1/wishes/${b.id}/gather/voices/${v.body.id}`).set(b.auth)).status).toBe(404);
     expect((await t.http().delete(`/v1/wishes/${a.id}/gather/voices/${v.body.id}`).set(b.auth)).status).toBe(404);
   });

@@ -3,6 +3,7 @@ import { SettlementService } from "../../payments/settlement.service";
 import { PrismaService } from "../../../common/db/prisma.service";
 import { NEXT, ENDS, canMove } from "../order-state";
 import { boot, ids } from "./kit";
+import { ownDatabase } from "../../../../test/kit/own-db";
 
 const NOW = new Date("2026-12-07T09:00:00.000Z"); // a Monday
 const H = 3_600_000;
@@ -14,12 +15,18 @@ describe("concierge orders B19", () => {
   let k: Kit;
   let db: PrismaService;
   let settle: SettlementService;
+  // The makers list is one page of every maker in the database: other specs' makers push this spec's off it, so the spec has its own database.
+  const own = ownDatabase("b19c");
   beforeAll(async () => {
+    own.use();
     k = await boot("b19c", NOW);
     db = k.db;
     settle = k.t.app.get(SettlementService);
   });
-  afterAll(() => k.t.close());
+  afterAll(async () => {
+    await k.t.close();
+    own.drop();
+  });
   beforeEach(() => k.t.clock.set(NOW));
 
   const http = () => k.t.http();

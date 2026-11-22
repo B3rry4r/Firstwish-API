@@ -1,9 +1,10 @@
 import { createHash, createHmac, randomBytes, scryptSync } from "node:crypto";
 import { PrismaService } from "../../../common/db/prisma.service";
 import { UuidV7Maker } from "../../../common/ids/uuidv7";
-import { createTestApp, TestApp } from "../../../../test/kit/app";
+import { createTestApp, TestApp, uniqueAddress } from "../../../../test/kit/app";
 import { LinkLimits } from "../link-limits";
 import { ensureEntitlements } from "../../stored-files/tests/files-kit";
+import { testWishNo } from "../../../../test/kit/unique";
 
 const NOW = new Date("2027-03-10T09:00:00.000Z");
 const DAY = 24 * 3600 * 1000;
@@ -26,9 +27,8 @@ describe("B10 rulings NN1 NN2 NN3 NN4 NN5 and the proofs that stay (real databas
   });
   afterAll(() => t.close());
   // the contract spec runs in parallel on the same database: every case here asks from its own address and never clears link_hit
-  let ipn = 0;
   let ip = "10.0.0.1";
-  const nextIp = (): string => `10.${Math.floor(++ipn / 250) + 1}.${(process.pid % 200) + 1}.${(ipn % 250) + 1}`;
+  const nextIp = (): string => uniqueAddress();
   beforeEach(() => {
     ip = nextIp();
     t.clock.set(NOW);
@@ -45,7 +45,7 @@ describe("B10 rulings NN1 NN2 NN3 NN4 NN5 and the proofs that stay (real databas
     await db.wish.create({
       data: {
         id, accountId: owner, status: "sealed", ticket: "moment", kind: "love", occasion: "birthday", styleSlug: "noir", timeZone: "Africa/Lagos",
-        opensAt: new Date(NOW.getTime() + 3600000), sealedAt: NOW, name: "Chidi", no: `FW-R${run}-${n}`,
+        opensAt: new Date(NOW.getTime() + 3600000), sealedAt: NOW, name: "Chidi", no: testWishNo(),
         content: { opening: { id: "op-1", scene: "curtain", values: { to: "Chidi" } }, letter: { paras: ["Happy birthday."] } },
         ...over,
       } as never,
@@ -184,7 +184,7 @@ describe("B10 rulings NN1 NN2 NN3 NN4 NN5 and the proofs that stay (real databas
   describe("NN4 limit keys and the fallback session are HMACs with a server secret", () => {
     it("NN4: no stored key is a bare hash of the address, and each is the HMAC of it", async () => {
       const w = await wish({ opensAt: new Date(NOW.getTime() - 1000) });
-      const addr = "203.0.113.77";
+      const addr = uniqueAddress();
       const xff = { "x-forwarded-for": addr, "user-agent": "nn4-agent" };
       expect((await open(w.slug, xff)).status).toBe(200);
       expect((await http().post(`/v1/w/${w.slug}/reaction`).set(xff).send({ reaction: "Yes.", wishId: w.id })).status).toBe(200);
@@ -240,7 +240,7 @@ describe("B10 rulings NN1 NN2 NN3 NN4 NN5 and the proofs that stay (real databas
       expect(tok.status).toBe(409);
       const forged = "9999999999.AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
       const rs = [
-        await http().get(`/v1/w/${w.slug}`).set({ "x-unlock-token": forged, "x-forwarded-for": "198.51.100.9", "x-wish-session": "session-aaaaaaaa", date: "2099-01-01", "x-now": "2099-01-01" }),
+        await http().get(`/v1/w/${w.slug}`).set({ "x-unlock-token": forged, "x-forwarded-for": uniqueAddress(), "x-wish-session": "session-aaaaaaaa", date: "2099-01-01", "x-now": "2099-01-01" }),
         await http().get(`/v1/w/${w.slug}?now=2099-01-01T00:00:00Z&openedAt=1&token=${forged}&opensAt=2000-01-01`),
         await open(w.slug, { "x-unlock-token": forged }),
         await http().post(`/v1/w/${w.slug}/reaction`).send({ reaction: "Yes.", wishId: w.id }),
@@ -273,7 +273,7 @@ describe("B10 rulings NN1 NN2 NN3 NN4 NN5 and the proofs that stay (real databas
     it("the passcode lock: 40 addresses at once with the right code inside: at most 30 checked, the rest locked", async () => {
       const w = await wish({ opensAt: new Date(NOW.getTime() - 1000), passcodeHash: hash("right-code") });
       const rs = await Promise.all(
-        Array.from({ length: 40 }, (_, i) => http().post(`/v1/w/${w.slug}/unlock`).set({ "x-forwarded-for": `192.0.2.${i + 1}` }).send({ passcode: i === 20 ? "right-code" : `wrong-${i}` })),
+        Array.from({ length: 40 }, (_, i) => http().post(`/v1/w/${w.slug}/unlock`).set({ "x-forwarded-for": uniqueAddress() }).send({ passcode: i === 20 ? "right-code" : `wrong-${i}` })),
       );
       const checked = rs.filter((r) => r.status === 200).length;
       const locked = rs.filter((r) => r.status === 429);

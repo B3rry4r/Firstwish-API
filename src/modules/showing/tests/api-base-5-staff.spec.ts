@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { PrismaService } from "../../../common/db/prisma.service";
 import { holdSettingLock } from "../../../../test/kit/setting-lock";
 import { account, B12App, b13App, bearer, liveWish, staffOf } from "./b13-kit";
+import { testWishNo } from "../../../../test/kit/unique";
 
 /** API-BASE-5 case 5 (R14 and the staff gaps), through the real routes. */
 describe("API-BASE-5 staff and money (through the real routes)", () => {
@@ -149,7 +150,7 @@ describe("API-BASE-5 staff and money (through the real routes)", () => {
       const support = await staffOf(t, "support");
       const owner = await account(t, ["person"]);
       const w = await liveWish(t, owner);
-      const no = `FW-ab5${String(process.pid).slice(-4)}${Date.now() % 1000}X`;
+      const no = testWishNo();
       await db.wish.update({ where: { id: w.id }, data: { no } });
       const find = async (q: string) => ((await t.http().get(`/v1/admin/wishes?limit=50&q=${encodeURIComponent(q)}`).set(bearer(support.token))).body.items as { no: string }[]).map((i) => i.no);
       for (const q of [no, no.toLowerCase(), no.toUpperCase(), `#${no.toLowerCase()}`]) expect([q, await find(q)]).toEqual([q, [no]]);

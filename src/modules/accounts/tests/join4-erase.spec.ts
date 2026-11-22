@@ -5,6 +5,7 @@ import { JobsService } from "../../jobs/jobs.service";
 import { ensureEntitlements } from "../../stored-files/tests/files-kit";
 import { WishLifecycleService } from "../../wishes/wish-lifecycle.service";
 import { AccountErasureService } from "../account-erasure.service";
+import { testWishNo } from "../../../../test/kit/unique";
 
 const NOW = new Date("2028-03-10T09:00:00.000Z");
 const DAY = 24 * 3600 * 1000;
@@ -45,7 +46,7 @@ describe("Wave 4 join: erasing a business owner (J5) and no name left in a link 
     await db.wish.create({
       data: {
         id, accountId: o.accountId, businessId: o.businessId, status: "sealed", ticket: "moment", kind: "love", occasion: "birthday", styleSlug: "noir", timeZone: "Africa/Lagos",
-        opensAt: new Date(NOW.getTime() - 60_000), sealedAt: NOW, name: NAME, no: `J4-${run}-${seq}`, content: { letter: { paras: [`Dear ${NAME}`] } }, ...over,
+        opensAt: new Date(NOW.getTime() - 60_000), sealedAt: NOW, name: NAME, no: testWishNo(), content: { letter: { paras: [`Dear ${NAME}`] } }, ...over,
       } as never,
     });
     await db.wishLink.create({ data: { id: ids.next(), slug, wishId: id, active: true } });

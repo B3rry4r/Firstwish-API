@@ -1157,3 +1157,12 @@ HG1 (give race) Two staff giving one Concierge order: the code is right (overlap
   A save or a send-in that names another creator's file, another style's file, a file still being checked, a
   refused file or a file that is gone is refused in words that name the place; nothing is saved. A style already
   saved with such a name still opens, and cannot be sent in until the name is removed.
+- II5a (22 Nov, the lead, on the check of the fourteenth round; it narrows II5; Default (lead), owner may
+  override): II5 is about a file being USED. A style's art list is the creator's shelf: it may hold the style's own
+  files in any state (still being checked, refused), and a save is never refused only because the shelf holds one;
+  it may not hold another creator's file, another style's file or a file that is gone. A USE of a file (the poster,
+  the sound, a scene's background, an artwork, a 3D model in any shape the editor writes it, a picture fill) needs
+  a file that has passed checking. A send-in is refused in words while anything on the shelf has not passed
+  checking (the creator waits or removes it), so an approved document never carries an unchecked file. A value
+  that is neither an art item's id nor shaped like a file id names no file (a house bank piece, an older item):
+  it is left alone.

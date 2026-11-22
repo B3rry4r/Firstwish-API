@@ -21,7 +21,7 @@ import { parseRequest } from "./payment-request";
 import { checkReturnPath, returnAddress } from "./return-path";
 import { readOptions, writeOptions } from "./payment-options";
 import { TicketPaymentDrop } from "./ticket-drop";
-import { ticketOf, waitingTicketPayment } from "./ticket-waiting";
+import { skuOf, ticketOf, waitingExtraPayment, waitingTicketPayment } from "./ticket-waiting";
 
 const KEY = /^[A-Za-z0-9._:-]{8,100}$/;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -163,6 +163,14 @@ export class PaymentsService {
         const waiting = await waitingTicketPayment(tx, accountId, req.info.subjectId, now);
         if (waiting) {
           throw new AppError(409, "ticket_payment_pending", "A payment for a ticket of this wish is waiting to be paid. Continue it, or drop it and choose again.", { reference: waiting.providerReference, ticket: ticketOf(waiting) });
+        }
+      }
+      // IF3: an extra is paid for once per wish as a ticket is: while a payment of the same extra for this wish waits, a start for it is 409 with the
+      // waiting payment's reference (the account lock lines two starts up); a different extra is not held up by it.
+      if (req.purpose === "extra" && accountId && req.info.subjectId) {
+        const waiting = await waitingExtraPayment(tx, accountId, req.info.subjectId, quote.lines[0]?.sku ?? "", now);
+        if (waiting) {
+          throw new AppError(409, "extra_payment_pending", "A payment for this extra of this wish is waiting to be paid. Continue it, or drop it and start again.", { reference: waiting.providerReference, extra: skuOf(waiting).slice("extra.".length) });
         }
       }
       // GG3: what the fulfilment bundle knows can never be granted is refused now (422), before the buyer pays

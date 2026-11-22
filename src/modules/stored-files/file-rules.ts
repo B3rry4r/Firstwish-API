@@ -21,7 +21,7 @@ export const IMAGE_WIDTHS = [320, 768, 1600] as const;
 /** The contract's longest voice note (E-182: up to 180 s). */
 export const MAX_VOICE_SECONDS = 180;
 
-export type UploadPurpose = "wish-photo" | "voice-note" | "video-clip" | "vault-file" | "studio-asset" | "studio-sound" | "studio-model" | "brand-logo" | "profile-picture";
+export type UploadPurpose = "wish-photo" | "voice-note" | "order-photo" | "order-voice" | "video-clip" | "vault-file" | "studio-asset" | "studio-sound" | "studio-model" | "brand-logo" | "profile-picture";
 
 /** Y1: a signed PUT points at this staging key only; the file's own key (objectKey) is never signed for a PUT. */
 export const STAGING_PREFIX = "incoming/";
@@ -46,6 +46,9 @@ export const RULES: Record<UploadPurpose, PurposeRule> = {
   "wish-photo": { purpose: "wish-photo", db: "wish_photo", maxBytes: 15 * MB, types: IMAGE_TYPES },
   "voice-note": { purpose: "voice-note", db: "voice_note", maxBytes: 10 * MB, types: AUDIO_TYPES },
   "video-clip": { purpose: "video-clip", db: "video_clip", maxBytes: 200 * MB, types: VIDEO_TYPES },
+  /** IC7: the buyer's files for a Concierge order take the wish photo and voice rules (types, sizes, screening); they are kept as a photo and a voice note and tied to the order. */
+  "order-photo": { purpose: "order-photo", db: "wish_photo", maxBytes: 15 * MB, types: IMAGE_TYPES },
+  "order-voice": { purpose: "order-voice", db: "voice_note", maxBytes: 10 * MB, types: AUDIO_TYPES },
   "vault-file": { purpose: "vault-file", db: "vault_file", maxBytes: 100 * MB, types: [...IMAGE_TYPES, ...VIDEO_TYPES] },
   /** Studio assets and (AA5) a brand logo take the photo rules: the same image types, no SVG, the same size. */
   "studio-asset": { purpose: "studio-asset", db: "studio_asset", maxBytes: 15 * MB, types: IMAGE_TYPES },
@@ -61,6 +64,7 @@ export const RULES: Record<UploadPurpose, PurposeRule> = {
 export function maxBytesFor(rule: PurposeRule, limits: { photoMaxBytes: number; soundMaxBytes: number; modelMaxBytes: number }): number {
   switch (rule.purpose) {
     case "wish-photo":
+    case "order-photo":
     case "studio-asset":
     case "brand-logo":
     case "profile-picture":
@@ -81,6 +85,8 @@ const PURPOSE_ALIASES: Record<string, UploadPurpose> = {
   "voice-note": "voice-note",
   clip: "video-clip",
   "video-clip": "video-clip",
+  "order-photo": "order-photo",
+  "order-voice": "order-voice",
   vault: "vault-file",
   "vault-file": "vault-file",
   studio: "studio-asset",

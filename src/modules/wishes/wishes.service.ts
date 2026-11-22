@@ -597,6 +597,36 @@ export class WishesService {
     return this.wire(row, (await this.linksFor([id])).get(id));
   }
 
+  /**
+   * IC7: the maker adds files the buyer gave with the order to the wish being made for it, inside the caller's transaction (the caller has locked the order
+   * and checked that each file is a ready file of it). Photos join the story's photos, voice notes join the voices, under this wish's own limits (its
+   * ticket's, the Moment line when it has none). The files stay the buyer's own. A sealed wish takes none.
+   */
+  async addOrderFilesIn(tx: Tx, accountId: string, wishId: string, photoIds: string[], voiceIds: string[]): Promise<void> {
+    await lockAccount(tx, accountId);
+    await this.lifecycle.lock(tx, wishId);
+    const cur = await tx.wish.findUniqueOrThrow({ where: { id: wishId } });
+    if (stateOf(cur) !== "draft") throw AppError.conflict("wish_locked", "This wish is sealed, so its photos can no longer be changed.");
+    const content = { ...((cur.content ?? {}) as Obj) };
+    if (photoIds.length) {
+      const story = { ...((content.story ?? {}) as Obj) };
+      const photos = Array.isArray(story.photos) ? [...(story.photos as Obj[])] : [];
+      const have = new Set(photos.map((p) => p.photoId));
+      for (const fileId of photoIds) if (!have.has(fileId)) photos.push({ photoId: fileId });
+      content.story = { ...story, photos };
+    }
+    if (voiceIds.length) {
+      const voices = { ...((content.voices ?? {}) as Obj) };
+      const items = Array.isArray(voices.items) ? [...(voices.items as Obj[])] : [];
+      const have = new Set(items.map((i) => i.voiceId));
+      for (const fileId of voiceIds) if (!have.has(fileId)) items.push({ voiceId: fileId, name: "Voice note" });
+      content.voices = { ...voices, items };
+    }
+    const stored = await this.applyContent(tx, accountId, null, await this.entitlements.row(tx), cur, content);
+    if (voiceIds.length) await tx.voiceNote.updateMany({ where: { id: { in: voiceIds } }, data: { wishId } });
+    await tx.wish.update({ where: { id: wishId }, data: { content: stored, version: { increment: 1 } } });
+  }
+
   private passcode(p: string): string {
     if (p.length < 4 || p.length > 64) throw AppError.validation({ passcode: "Use 4 to 64 characters." });
     return p;

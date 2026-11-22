@@ -8,7 +8,7 @@ import { IdGenerator } from "../../common/ports/ids.port";
 import { decodeCursor, Page, toPage } from "../../common/pagination/cursor";
 import { toWireInstant } from "../../common/time/time";
 import { fullEmailOf, likeLiteral, searchWord } from "../../common/normalise/search-word";
-import type { ConciergeOrder, ConciergeOrderWish as OrderWish, Maker } from "../../contracts";
+import type { ConciergeOrder, ConciergeOrderFile, ConciergeOrderFiles, ConciergeOrderWish as OrderWish, Maker } from "../../contracts";
 import { AuditActor, AuditService, requireReason } from "../audit/audit.service";
 import { FulfilmentRegistry, type FulfilmentContext } from "../payments/fulfilment.registry";
 import { flagRefundDue } from "../refunds/refund-due";
@@ -23,6 +23,8 @@ import { readLimits } from "../price-book/book-limits";
 import { WishesService } from "../wishes/wishes.service";
 import { WishLifecycleService } from "../wishes/wish-lifecycle.service";
 import { canMove, dueAtFor, OPEN, stateOf, UUID } from "./order-state";
+import { ORDER_FILE_LIMITS, orderFileRows, releaseOrderFiles, type OrderFileRow } from "../stored-files/order-files";
+import { SignedUrlsService } from "../stored-files/signed-urls.service";
 
 const SECTION = "/admin/concierge";
 const SKU = "concierge.single";
@@ -71,6 +73,7 @@ export class ConciergeService implements OnModuleInit {
     private readonly invoices: InvoicesService,
     private readonly wishes: WishesService,
     private readonly lifecycle: WishLifecycleService,
+    private readonly signed: SignedUrlsService,
   ) {}
 
   onModuleInit(): void {
@@ -152,7 +155,75 @@ export class ConciergeService implements OnModuleInit {
     return this.one({ accountId }, id);
   }
 
+  /** IC7 (E-281): the files the buyer gave with this order, theirs only; another buyer's order is 404. */
+  async filesOwn(accountId: string, id: string): Promise<ConciergeOrderFiles> {
+    if (!UUID.test(id)) throw AppError.notFound();
+    if (!(await this.db.conciergeOrder.findFirst({ where: { id, accountId }, select: { id: true } }))) throw AppError.notFound();
+    return this.filesWire(await orderFileRows(this.db, id), false);
+  }
+
   // ---------------------------------------------------------------- staff
+
+  /**
+   * IC7 (E-279): the buyer's files for this order, for the order's maker (the owner reads any order). A maker reads only an order given to them and only
+   * while it is with them (given or being made): another maker's order, one that has moved on, and any other order is 404. A signed read comes with
+   * each file that is ready; a file still screening or refused has none.
+   */
+  async filesStaff(c: StaffCaller, id: string): Promise<ConciergeOrderFiles> {
+    await this.makersOrder(this.db, c, id);
+    return this.filesWire(await orderFileRows(this.db, id), true);
+  }
+
+  private async makersOrder(db: PrismaService | Tx, c: StaffCaller, id: string): Promise<OrderRow> {
+    if (!UUID.test(id)) throw AppError.notFound();
+    const owner = c.roles.includes("owner");
+    const o = await db.conciergeOrder.findFirst({ where: { id, ...(owner ? {} : { makerId: c.staffId }) } });
+    if (!o || (!owner && o.status !== "given" && o.status !== "making")) throw AppError.notFound();
+    return o;
+  }
+
+  private async filesWire(rows: OrderFileRow[], signedReads: boolean): Promise<ConciergeOrderFiles> {
+    const items: ConciergeOrderFile[] = [];
+    for (const r of rows) {
+      const item: ConciergeOrderFile = { id: r.id, kind: r.kind, contentType: r.contentType, bytes: r.bytes, seconds: r.seconds, status: r.status as ConciergeOrderFile["status"], inWish: r.inWish, createdAt: toWireInstant(r.createdAt) };
+      if (signedReads) {
+        const read = r.status === "ready" ? await this.signed.signedRead({ fileId: r.id }, { type: "allowed" }) : null;
+        item.url = read?.url ?? null;
+        item.expiresAt = read?.expiresAt ?? null;
+      }
+      items.push(item);
+    }
+    return { items, nextCursor: null, limits: { ...ORDER_FILE_LIMITS } };
+  }
+
+  /**
+   * IC7 (E-280): the order's maker (or the owner) adds ready files of this order to the wish being made for it, while the order is with them. A file that is
+   * not this order's, not ready, or named twice is 422 with words; a wish of another order, the buyer's own, or one already delivered is 404. The files stay
+   * the buyer's, under the buyer's name, and stay listed for the order.
+   */
+  async addFiles(c: StaffCaller, id: string, wishId: string, body: { reason: string; fileIds: string[] }, actor: AuditActor): Promise<ConciergeOrderFiles> {
+    const reason = requireReason(body.reason);
+    const first = await this.makersOrder(this.db, c, id);
+    if (!UUID.test(wishId)) throw AppError.notFound();
+    const fileIds = [...new Set(body.fileIds.map((f) => f.trim().toLowerCase()))];
+    await this.db.$transaction(async (tx) => {
+      await lockAccount(tx, first.accountId);
+      const o = await this.lock(tx, id, c.roles.includes("owner") ? {} : { makerId: c.staffId });
+      if (o.status !== "given" && o.status !== "making") throw AppError.notFound();
+      const tied = await tx.wish.findFirst({ where: { id: wishId, conciergeOrderId: id, erasedAt: null, removedAt: null, conciergeOrderWishByWish: null }, select: { id: true } });
+      if (!tied) throw AppError.notFound();
+      const rows = new Map((await orderFileRows(tx, id)).map((r) => [r.id, r]));
+      const bad = fileIds.filter((f) => !rows.has(f));
+      if (bad.length) throw AppError.validation({ fileIds: `Not a file of this order: ${bad.slice(0, 3).join(", ")}.` });
+      const waiting = fileIds.filter((f) => rows.get(f)?.status !== "ready");
+      if (waiting.length) throw AppError.validation({ fileIds: `Not ready yet: ${waiting.slice(0, 3).join(", ")}. A file is ready once it has been checked.` });
+      const photos = fileIds.filter((f) => rows.get(f)?.kind === "photo");
+      const voices = fileIds.filter((f) => rows.get(f)?.kind === "voice");
+      await this.wishes.addOrderFilesIn(tx, o.accountId, wishId, photos, voices);
+      await this.audit.write(tx, { actor, section: SECTION, action: "concierge.add-files", target: { type: "ConciergeOrder", id }, reason, changedFields: ["wishes"] });
+    });
+    return this.filesWire(await orderFileRows(this.db, id), true);
+  }
 
   async staffRead(c: StaffCaller, id: string): Promise<ConciergeOrder> {
     return this.one(seesAll(c) ? {} : { makerId: c.staffId }, id, readsPayments(c));
@@ -369,6 +440,8 @@ export class ConciergeService implements OnModuleInit {
       await tx.conciergeOrder.update({ where: { id }, data: { status: "delivered" } });
       await tx.$executeRaw`UPDATE concierge_order_ext SET "deliveredAt" = ${now} WHERE "orderId" = ${id}::uuid`;
       // CA3: one email to the customer, once per order (the key), counting the wishes and naming no receiver
+      // IC7: the files the wish uses stay with the wish; the buyer's other files for the order go
+      await releaseOrderFiles(tx, this.ids, id, now, { keepUsed: true });
       await this.notices.send(tx, {
         template: "concierge-delivered", toAccountId: o.accountId, key: `concierge-delivered:${id}`,
         data: { count: `${wishIds.length} wish${wishIds.length === 1 ? "" : "es"}` },
@@ -403,6 +476,8 @@ export class ConciergeService implements OnModuleInit {
       if (locked.status === "draft") await this.lifecycle.move(tx, locked, "taken_down", { cause: "order.cancel" });
       await this.lifecycle.move(tx, await this.lifecycle.lock(tx, w.id), "erased", { cause: "order.cancel" });
     }
+    // IC7: every file the buyer gave with the order goes (the wish half made is erased above)
+    await releaseOrderFiles(tx, this.ids, o.id, now, { keepUsed: false });
     // paid: a person sends the refund, so the payment says so (the refund itself is not made here)
     if (ext?.paymentId) {
       await flagRefundDue(tx, ext.paymentId, "concierge_cancelled");

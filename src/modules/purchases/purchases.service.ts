@@ -14,6 +14,8 @@ import { PassService } from "./pass.service";
 import { WishHandlers } from "./wish-handlers";
 import { assessExtra, assessKeep, assessTicket, readWish, REASON_TEXT } from "./wish-rules";
 import { hiddenFromBuyer } from "../wishes/wish-shown";
+import { IdGenerator } from "../../common/ports/ids.port";
+import { releaseOrderFiles } from "../stored-files/order-files";
 
 /**
  * Every line the price book sells, by its sku. A new line in the book needs its sku here (a test walks the seeded book and fails
@@ -57,6 +59,7 @@ export class PurchasesService implements OnModuleInit {
     private readonly entitlements: EntitlementsService,
     private readonly book: PriceBookService,
     private readonly proofs: KeepProofs,
+    private readonly ids: IdGenerator,
   ) {}
 
   onModuleInit(): void {
@@ -110,6 +113,8 @@ export class PurchasesService implements OnModuleInit {
       case "extra":
       case "keep":
         return this.wish.revoke(tx, g);
+      case "concierge":
+        return this.releaseOrderFiles(tx, g);
       case "pass":
         return this.pass.revoke(tx, g);
       case "pro-plan":
@@ -121,6 +126,13 @@ export class PurchasesService implements OnModuleInit {
       default:
         return Promise.resolve("revoked");
     }
+  }
+
+  /** IC7: a refunded Concierge payment: the order will not go ahead, so the files the buyer gave with it go (the order and its wishes are the staff's to cancel). */
+  private async releaseOrderFiles(tx: Tx, g: GrantRow): Promise<string> {
+    const orderId = g.detail.orderId;
+    if (typeof orderId === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(orderId)) await releaseOrderFiles(tx, this.ids, orderId, this.clock.now(), { keepUsed: false });
+    return "revoked";
   }
 
   /**

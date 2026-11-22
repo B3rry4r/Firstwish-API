@@ -313,6 +313,7 @@ model ConciergeOrder {
   reportFile                StoredFile?          @relation("ConciergeOrder_reportFileId", fields: [reportFileId], references: [id], onDelete: Restrict, onUpdate: Restrict)
   conciergeOrderExtByOrder  ConciergeOrderExt?   @relation("ConciergeOrderExt_orderId")
   conciergeOrderWishByOrder ConciergeOrderWish[] @relation("ConciergeOrderWish_orderId")
+  conciergeOrderFileByOrder ConciergeOrderFile[]
   wishByConciergeOrder      Wish[]               @relation("Wish_conciergeOrderId")
 
   @@index([accountId, id])
@@ -1279,9 +1280,9 @@ model StaffAccount {
 
 /// table: written by E-182..E-184 and server:storage
 model StoredFile {
-  id                         String            @id @db.Uuid
-  ownerAccountId             String?           @db.Uuid
-  businessId                 String?           @db.Uuid
+  id                         String              @id @db.Uuid
+  ownerAccountId             String?             @db.Uuid
+  businessId                 String?             @db.Uuid
   purpose                    StoredFilePurpose
   objectKey                  String
   contentType                String
@@ -1290,26 +1291,27 @@ model StoredFile {
   status                     StoredFileStatus
   variants                   Json
   driver                     StoredFileDriver
-  createdAt                  DateTime          @default(now()) @db.Timestamptz(3)
-  updatedAt                  DateTime          @updatedAt @db.Timestamptz(3)
-  fileId                     String?           @db.Uuid
+  createdAt                  DateTime            @default(now()) @db.Timestamptz(3)
+  updatedAt                  DateTime            @updatedAt @db.Timestamptz(3)
+  fileId                     String?             @db.Uuid
   kind                       StoredFileKind?
-  styleId                    String?           @db.Uuid
+  styleId                    String?             @db.Uuid
   shownName                  String?
-  business                   Business?         @relation("StoredFile_businessId", fields: [businessId], references: [id])
-  style                      StudioStyle?      @relation("StoredFile_styleId", fields: [styleId], references: [id], onDelete: SetNull)
-  ownerAccount               Account?          @relation("StoredFile_ownerAccountId", fields: [ownerAccountId], references: [id])
-  file                       StoredFile?       @relation("StoredFile_fileId", fields: [fileId], references: [id], onDelete: SetNull, onUpdate: SetNull)
-  aiRequestByInputFile       AiRequest[]       @relation("AiRequest_inputFileId")
-  aiRequestByVoiceFile       AiRequest[]       @relation("AiRequest_voiceFileId")
-  conciergeOrderByNamesFile  ConciergeOrder[]  @relation("ConciergeOrder_namesFileId")
-  conciergeOrderByReportFile ConciergeOrder[]  @relation("ConciergeOrder_reportFileId")
-  qrCardByFile               QrCard[]          @relation("QrCard_fileId")
-  renderJobByOutputFile      RenderJob[]       @relation("RenderJob_outputFileId")
-  screeningResultByFile      ScreeningResult[] @relation("ScreeningResult_fileId")
-  signedUrlByFile            SignedUrl[]       @relation("SignedUrl_fileId")
-  storedFileByFile           StoredFile[]      @relation("StoredFile_fileId")
-  wishFileByFile             WishFile[]        @relation("WishFile_fileId")
+  business                   Business?           @relation("StoredFile_businessId", fields: [businessId], references: [id])
+  style                      StudioStyle?        @relation("StoredFile_styleId", fields: [styleId], references: [id], onDelete: SetNull)
+  ownerAccount               Account?            @relation("StoredFile_ownerAccountId", fields: [ownerAccountId], references: [id])
+  file                       StoredFile?         @relation("StoredFile_fileId", fields: [fileId], references: [id], onDelete: SetNull, onUpdate: SetNull)
+  aiRequestByInputFile       AiRequest[]         @relation("AiRequest_inputFileId")
+  aiRequestByVoiceFile       AiRequest[]         @relation("AiRequest_voiceFileId")
+  conciergeOrderByNamesFile  ConciergeOrder[]    @relation("ConciergeOrder_namesFileId")
+  conciergeOrderByReportFile ConciergeOrder[]    @relation("ConciergeOrder_reportFileId")
+  conciergeOrderFileByFile   ConciergeOrderFile?
+  qrCardByFile               QrCard[]            @relation("QrCard_fileId")
+  renderJobByOutputFile      RenderJob[]         @relation("RenderJob_outputFileId")
+  screeningResultByFile      ScreeningResult[]   @relation("ScreeningResult_fileId")
+  signedUrlByFile            SignedUrl[]         @relation("SignedUrl_fileId")
+  storedFileByFile           StoredFile[]        @relation("StoredFile_fileId")
+  wishFileByFile             WishFile[]          @relation("WishFile_fileId")
 
   @@index([businessId, id])
   @@index([styleId, id])
@@ -1883,6 +1885,19 @@ model ConciergeOrderWish {
   @@unique([wishId])
   @@index([wishId])
   @@map("concierge_order_wish")
+}
+
+/// table: IC7 (T-12): a file the buyer gave with a Concierge order (a photo or a voice note), tied to the order from the order's placing until it is delivered or cancelled
+model ConciergeOrderFile {
+  fileId    String         @id @db.Uuid
+  orderId   String         @db.Uuid
+  kind      String
+  createdAt DateTime       @default(now()) @db.Timestamptz(3)
+  file      StoredFile     @relation(fields: [fileId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  order     ConciergeOrder @relation(fields: [orderId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@index([orderId, fileId])
+  @@map("concierge_order_file")
 }
 
 /// table: YY3 (B20): an address that complained: no more email goes to it; keyed by the address's keyed hash

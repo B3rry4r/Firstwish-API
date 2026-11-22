@@ -231,6 +231,7 @@ export class SubmissionsService implements OnModuleInit {
         where: { id },
         data: {
           status: body.decision === "approve" ? "live" : "returned", decision: body.decision, level, reviewedBy: actor.id,
+          ...(body.decision === "approve" ? { approvedAt: now } : {}),
           note: body.decision === "return" ? (note ?? reason) : note,
         },
       });

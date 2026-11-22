@@ -5,6 +5,7 @@ import { Clock } from "../../common/ports/clock.port";
 import { StoragePort } from "../../common/ports/storage.port";
 import { IMAGE_WIDTHS, isImage, STAGING_PREFIX, stagingKeyOf, UNCONFIRMED_MAX_AGE_MS, Variant, variantsOf } from "./file-rules";
 import { IdGenerator } from "../../common/ports/ids.port";
+import { playableFileIds } from "../styles/approved-document";
 import { readLimits } from "../price-book/book-limits";
 import { ImageSizesPort } from "../../common/ports/image-sizes.port";
 
@@ -124,6 +125,24 @@ export class FileJobs {
       });
       if (!gone) continue;
       await this.dropFile(gone);
+      removed++;
+    }
+    return removed;
+  }
+
+  /**
+   * II4: a Studio file kept for an approved version (keptAt) is removed for good once no approved version that can still be played names it
+   * (the newest approved version, or one a live wish was made under). A file one of those names is never touched. Answers how many it removed.
+   */
+  async sweepKeptStyleFiles(batch = 100): Promise<number> {
+    const kept = await this.db.storedFile.findMany({ where: { keptAt: { not: null }, styleId: { not: null }, status: "ready" }, orderBy: { id: "asc" }, take: batch });
+    const playable = new Map<string, Set<string>>();
+    let removed = 0;
+    for (const f of kept) {
+      const sid = f.styleId as string;
+      if (!playable.has(sid)) playable.set(sid, await playableFileIds(this.db, sid));
+      if (playable.get(sid)?.has(f.id.toLowerCase())) continue;
+      await this.dropFile(f);
       removed++;
     }
     return removed;

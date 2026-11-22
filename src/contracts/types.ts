@@ -443,6 +443,8 @@ export interface StyleFile {
   contentType: string;
   bytes: number;
   status: StoredFile["status"];
+  /** II2 (DEC-303): the plain words of a refusal when status is rejected, else null */
+  reason: string | null;
   url: string | null;
   expiresAt: Instant | null;
   createdAt: Instant;
@@ -451,6 +453,8 @@ export interface StyleFile {
 export interface StyleFiles {
   style: string;
   items: StyleFile[];
+  /** II1 (DEC-302): the approved document of the wish's Studio style, as the creator's own read types it; null for a house style or one never approved */
+  document: StudioStyle | null;
 }
 /** HW7: a wish as the staff lists and details read it: number, state and term, never its words or photos. */
 export interface StaffWish {
@@ -1550,6 +1554,8 @@ export interface StoredFile {
   objectKey: string;
   ownerAccountId?: string | null;
   purpose: "wish-photo" | "voice-note" | "video-clip" | "vault-file" | "studio-asset" | "brand-logo" | "profile-picture" | "render" | "qr-card" | "export";
+  /** II2 (DEC-303): when the screening refused the file (status rejected), the reason in the server's plain words, from a fixed list by the screening result's own kind; null in every other state */
+  reason: string | null;
   sha256?: string | null;
   status: "pending" | "uploaded" | "screening" | "ready" | "rejected" | "deleted";
   styleId: string;
@@ -1636,6 +1642,8 @@ export interface Style {
   record: unknown[];
   sample: Record<string, unknown>;
   say?: string | null;
+  /** II1 (DEC-302): the style's approved document, as the creator's own read types it; present on the single read E-196 (null for a house style), left out of lists */
+  document?: StudioStyle | null;
   /** HS3: the slug of the house wish that plays this style, at /w/<slug> (null when the style has none or is off) */
   showcaseSlug?: string | null;
   slug: string;

@@ -2,6 +2,7 @@ import type { StoredFile as FileRow, StoredFilePurpose } from "@prisma/client";
 import { SIGNATURES } from "../../common/ports/adapters/basic-screening.adapter";
 import { toWireInstant } from "../../common/time/time";
 import type { StoredFile } from "../../contracts";
+import { NOT_ACCEPTED } from "./refusal-words";
 
 export const MB = 1024 * 1024;
 /** Default (lead), owner may override: a Vault GB is 1024^3 bytes. */
@@ -171,8 +172,8 @@ export function variantsOf(row: Pick<FileRow, "variants">): Variant[] {
   return v.filter((x): x is Variant => !!x && typeof x === "object" && typeof (x as Variant).width === "number" && typeof (x as Variant).key === "string");
 }
 
-/** The wire shape of a stored file. objectKey is the server's own key (never built from user text). */
-export function fileView(row: FileRow): StoredFile {
+/** The wire shape of a stored file; `reason` is the plain words of a refusal (II2) where the file is refused, else null. objectKey is the server's own key (never built from user text). */
+export function fileView(row: FileRow, reason: string | null = null): StoredFile {
   return {
     id: row.id,
     fileId: row.id,
@@ -185,6 +186,7 @@ export function fileView(row: FileRow): StoredFile {
     bytes: Number(row.bytes),
     sha256: row.sha256,
     status: row.status,
+    reason: row.status === "rejected" ? (reason ?? NOT_ACCEPTED) : null,
     variants: variantsOf(row).map((v) => ({ width: v.width, variant: `w${v.width}` })),
     driver: row.driver,
     styleId: row.styleId as string,

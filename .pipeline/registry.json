@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "frozenAt": "2026-11-22T12:34:18Z",
+  "frozenAt": "2026-11-22T17:13:51Z",
   "framework": "nestjs",
   "generatedBy": "tools/pipeline/reconcile.py",
   "resources": [
@@ -15685,7 +15685,7 @@
           "response": {
             "entity": "PublicWishView",
             "cardinality": "single",
-            "note": "{style, items: StyleFile[]}: the files of the wish's style once that style is approved, files that passed screening only (DEC-245)"
+            "note": "{style, items: StyleFile[], document}: the files of the wish's style and the style's approved document (StudioStyle; null for a house style or one never approved), once that style was approved: a wish already made keeps playing when its style is switched off, taken back or its creator erased; the wish must be showing (live, opened, not resting, not removed, its link on, behind its passcode's unlock token) (DEC-245, DEC-302)"
           },
           "sources": [
             {
@@ -21533,6 +21533,18 @@
           "supersedes": []
         },
         {
+          "name": "reason",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": true,
+          "provenance": [
+            "DEC-303"
+          ],
+          "supersedes": []
+        },
+        {
           "name": "sha256",
           "type": "string",
           "classes": [
@@ -22827,7 +22839,7 @@
           "response": {
             "entity": "StudioStyle",
             "cardinality": "page",
-            "note": "StyleFile[]: {fileId, purpose, kind image, sound or model, contentType, bytes, status, url, expiresAt, createdAt}: the owner's signed reads of the style's files, a draft's too (DEC-245)"
+            "note": "StyleFile[]: {fileId, purpose, kind image, sound or model, contentType, bytes, status, reason, url, expiresAt, createdAt}: the owner's signed reads of the style's files, a draft's too (DEC-245)"
           },
           "sources": [
             {
@@ -22853,7 +22865,7 @@
           "response": {
             "entity": "StudioStyle",
             "cardinality": "single",
-            "note": "one StyleFile as the list gives it (DEC-245)"
+            "note": "one StyleFile as the list gives it (DEC-245) (DEC-303: reason)"
           },
           "sources": [
             {
@@ -22985,6 +22997,18 @@
             "app-home",
             "app-style-detail",
             "app-styles"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "document",
+          "type": "object",
+          "classes": [
+            "object"
+          ],
+          "nullable": true,
+          "provenance": [
+            "DEC-302"
           ],
           "supersedes": []
         },

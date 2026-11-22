@@ -1,4 +1,5 @@
-import { Body, Controller, Delete, Get, Header, HttpCode, Param, Patch, Post, Query } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Header, Headers, HttpCode, Param, Patch, Post, Query, Res } from "@nestjs/common";
+import type { Response } from "express";
 import { CurrentPrincipal, Roles } from "../../common/auth/decorators";
 import type { Principal } from "../../common/auth/principal";
 import type { Page } from "../../common/pagination/cursor";
@@ -153,7 +154,8 @@ export class StyleFilesPlayerController {
 
   @Public()
   @Get()
-  read(@Param() p: GetWBySlugStyleFilesParamsDto): Promise<StyleFiles> {
-    return this.files.forPlayer(p.slug);
+  read(@Param() p: GetWBySlugStyleFilesParamsDto, @Res({ passthrough: true }) res: Response, @Headers("x-unlock-token") token?: string): Promise<StyleFiles> {
+    res.setHeader("Cache-Control", "no-store");
+    return this.files.forPlayer(p.slug, token);
   }
 }

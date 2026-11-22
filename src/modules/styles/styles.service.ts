@@ -22,6 +22,7 @@ import {
   StyleOut,
   styleToWire,
 } from "./style-view";
+import { ApprovedStyleDocuments } from "./approved-document";
 
 const SECTION = "/admin/styles";
 const SLUG = /^[a-z0-9][a-z0-9-]{0,63}$/;
@@ -66,6 +67,7 @@ export class StylesService {
     private readonly ids: IdGenerator,
     private readonly clock: Clock,
     private readonly audit: AuditService,
+    private readonly approved: ApprovedStyleDocuments,
   ) {}
 
   // ------------------------------------------------------------------ public reads
@@ -122,14 +124,16 @@ export class StylesService {
     return { items: page.items.map((r) => styleToWire(r, counts.get(r.slug ?? "") ?? zero(), false, shows.get(r.slug ?? "") ?? null)), nextCursor: page.nextCursor };
   }
 
-  /** E-196: one style that is on, by slug (or its id). A style that is off or unknown is 404. */
+  /** E-196: one style that is on, by slug (or its id), with its approved Studio document where it has one (II1). A style that is off or unknown is 404. */
   async publicOne(idOrSlug: string): Promise<StyleOut> {
     const key = canonSlug(idOrSlug);
     const where: Prisma.StyleWhereInput = UUID.test(key) ? { id: key } : SLUG.test(key) ? { slug: key } : { id: "00000000-0000-0000-0000-000000000000" };
     const row = await this.db.style.findFirst({ where: { ...where, on: true } });
     if (!row) throw AppError.notFound("No style has this name.");
     const counts = await this.countsFor([row.slug ?? ""]);
-    return styleToWire(row, counts.get(row.slug ?? "") ?? zero(), false, (await this.showcases([row.slug ?? ""])).get(row.slug ?? "") ?? null);
+    // II1: a style that is on and was approved gives its approved document (the maker's preview and the style's page play it); a house style gives null
+    const document = await this.approved.of(row.id);
+    return { ...styleToWire(row, counts.get(row.slug ?? "") ?? zero(), false, (await this.showcases([row.slug ?? ""])).get(row.slug ?? "") ?? null), document };
   }
 
   // ------------------------------------------------------------------ the Studio's entry (B15: a creator's style joins the catalogue here)

@@ -1,5 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "../../common/db/prisma.service";
+import { refusalWords } from "../stored-files/refusal-words";
 import { SignedUrlsService } from "../stored-files/signed-urls.service";
 
 /** HP3: one picture of a wish as its owner reads it. `url` and `expiresAt` are null unless the file passed screening (ready). */
@@ -43,9 +44,8 @@ export class WishPictures {
       const list = out.get(r.wishId) as WishPicture[];
       const status = r.file.status === "ready" ? "ready" : r.file.status === "rejected" ? "refused" : "screening";
       if (status !== "ready") {
-        const labels = Array.isArray(r.file.screeningResultByFile[0]?.labels) ? (r.file.screeningResultByFile[0].labels as unknown[]).filter((l): l is string => typeof l === "string") : [];
-        const why = labels.at(-1)?.trim().replace(/[.\s]+$/, "");
-        list.push({ fileId: r.fileId, role: r.role as "photo" | "cover", status, reason: status === "refused" ? (why ? `This photo was not accepted: ${why}. Choose another.` : "This photo was not accepted. Choose another.") : null, url: null, expiresAt: null });
+        // II2: the words come from the one fixed list by the screening result's kind (refusal-words.ts); a provider's own sentence never reaches a customer
+        list.push({ fileId: r.fileId, role: r.role as "photo" | "cover", status, reason: status === "refused" ? refusalWords(r.file.screeningResultByFile[0]?.labels) : null, url: null, expiresAt: null });
         continue;
       }
       const s = await this.signed.signedRead({ fileId: r.fileId }, { type: "allowed" });

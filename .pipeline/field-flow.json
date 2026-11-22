@@ -13367,6 +13367,16 @@
       "noWriter": false
     },
     {
+      "field": "StoredFile.reason",
+      "writers": [],
+      "store": "StoredFile",
+      "readers": [],
+      "writerActors": [],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
       "field": "StoredFile.sha256",
       "writers": [
         "server:storage"
@@ -14336,6 +14346,16 @@
         "creator",
         "person"
       ],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "Style.document",
+      "writers": [],
+      "store": "Style",
+      "readers": [],
+      "writerActors": [],
+      "readerActors": [],
       "crossActor": false,
       "noWriter": true
     },
@@ -20719,5 +20739,5 @@
     }
   ],
   "crossActor": 34,
-  "noWriter": 667
+  "noWriter": 669
 }

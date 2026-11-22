@@ -53,3 +53,5 @@ ADDED 22 Nov (the eleventh and twelfth API rounds are merged; read rulings IE3, 
      every closed case; if the branch or worktree already exists an earlier agent was lost: read git log, carry on.
  (d) Hand back at 85% of your budget with what is proven and what is not; a whole-driver run you could not finish
      is said plainly (another bundle today handed back with its last fix unproven).
+ADDED 22 Nov 16:35 (case 9, sent to the running builder): the Studio and Concierge payment starts send `returnPath`
+(IF1; components/app/studio/Sheets.tsx:31, lib/studio-api.ts:104); both returns proved in wa7.mjs.

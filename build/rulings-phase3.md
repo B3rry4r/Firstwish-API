@@ -1077,3 +1077,21 @@ HG1 (give race) Two staff giving one Concierge order: the code is right (overlap
 - IE3 (IC7): files given with an order that is never paid are removed, rows and stored objects, 30 days after the
   order last changed (PROVISIONAL figure, in the price book's settings with the other file limits; the order
   itself stays). A refunded order reads as refunded, not paid.
+## IF (22 Nov 2026, the lead, for the eleventh API round). Default (lead), owner may override.
+- IF1 (the link, HU1): a payment start may name where the payer comes back to, as a PATH on our own site (it starts
+  with one "/", is a path the web serves for that payment's subject, and is never an outside address); the server
+  builds the provider's return from the site's own address, that path and the payment's reference. With no path the
+  start behaves as today. A stranger paying at a link comes back to that link with a real provider too.
+- IF2 (IE2): every route that takes an id answers a spelling that is not an id with 422 in words (never 500), and
+  reads an id in any case as the same thing, on read routes too.
+- IF3 (ID1): an extra is paid for once per wish as a ticket is: a start while the same extra's payment waits is 409
+  with words and the reference; the owner can drop it.
+- IF4 (the privacy page): a wish its owner removes can be brought back for the days the price book gives (30 today),
+  then it is erased with its files by the erase job. The page's promise and the server agree.
+- IF5 (HU4): the owner can turn a friends' link back on: the same link works again and the voices already given
+  stay.
+- IF6 (Now Showing and the catalogue): the public reads give what the designed pages draw and no more: a listed
+  wish's style and title as they were at publish time; Now Showing by style; public wishes in a style; a creator's
+  public profile (handle, name, picture, their approved styles and their listed wishes). "Featured styles" is NOT
+  invented: if no staff screen or truth says how a style becomes featured, it is listed for the owner and not
+  built.

@@ -124,7 +124,7 @@ describe("II1: the approved document plays at a receiver's link and at the publi
     const at = await player(link);
     expect(at.status).toBe(200);
     expect(at.body.style).toBe(slugOf(d));
-    expect((at.body.items as Body[]).map((i) => i.fileId)).toEqual([file]);
+    expect((at.body.items as Body[]).map((i) => i.fileId as string)).toEqual([file]);
     expect(at.body.document).toMatchObject({ id: d.id, name: "Gold hour", base: "noir", brief: "Warm light.", status: "live", level: "standard", on: false });
     expect(at.body.document.scenes).toEqual({ letter: { layers: {} } });
     expect(Object.keys(at.body.document).sort()).toEqual(Object.keys(mine).sort());
@@ -212,7 +212,7 @@ describe("II1: the approved document plays at a receiver's link and at the publi
     const at = await player(link);
     expect(at.status).toBe(200);
     expect(at.body.document).toMatchObject({ id: d.id, name: "First look", brief: "Warm light." });
-    expect((at.body.items as Body[]).map((i) => i.fileId)).toEqual([file]);
+    expect((at.body.items as Body[]).map((i) => i.fileId as string)).toEqual([file]);
     // sent in again: the old approved version still plays until the new one is approved
     await checked(c, d);
     expect((await player(link)).body.document).toMatchObject({ name: "First look" });
@@ -229,7 +229,7 @@ describe("II1: the approved document plays at a receiver's link and at the publi
     const at = await player(link);
     expect(at.status).toBe(200);
     expect(at.body.document).toMatchObject({ id: d.id, name: "Gold hour" });
-    expect((at.body.items as Body[]).map((i) => i.fileId)).toEqual([file]);
+    expect((at.body.items as Body[]).map((i) => i.fileId as string)).toEqual([file]);
   });
 
   it("the creator's account erased (HX4): the link still gives the document and the files, with no person on it; E-196 still gives the document", async () => {
@@ -244,7 +244,7 @@ describe("II1: the approved document plays at a receiver's link and at the publi
     expect(at.status).toBe(200);
     expect(at.body.document).toMatchObject({ id: d.id, name: "Gold hour", base: "noir", brief: null, byline: "" });
     expect(at.body.document.scenes).toEqual(before.scenes);
-    expect((at.body.items as Body[]).map((i) => i.fileId)).toEqual([file]);
+    expect((at.body.items as Body[]).map((i) => i.fileId as string)).toEqual([file]);
     const pub = await t.http().get(`/v1/styles/${slugOf(d)}`);
     expect(pub.status).toBe(200);
     expect(pub.body.document).toMatchObject({ name: "Gold hour", brief: null, byline: "" });

@@ -4159,6 +4159,46 @@
       "confidence": "high",
       "source": "build/prompts/API-BASE-12.md",
       "decidedAt": "2026-12-08T12:00:00Z"
+    },
+    {
+      "id": "DEC-302",
+      "topic": "A Studio style's approved document plays at the wish's link and at the public style read (II1, HX4, HW2)",
+      "decision": "II1: the document of a Studio style that was approved is given, typed as the creator's own read of the style types it (StudioStyle, `review` null), by the wish's link read of its style (GET /v1/w/:slug/style-files, E-266, which gains the field `document` beside `style` and `items`) and by the public style read (GET /v1/styles/:id, E-196, whose Style gains the optional field `document`; lists leave it out). Style.document is null for a house style. It is the APPROVED version: the draft the reviewer saw (the frozen snapshot of the style's latest submission that went live), never a later edit; a live style with no kept submission reads from its live row. E-196 gives it only while the style is on (off, unknown or never approved is 404 as before). E-266 gives the document and the style's ready files for a wish already made in the style whenever the style was approved, also after staff switch it off, its creator takes it back, or the creator's account is erased (HX4: the snapshot loses byline, brief and rights words as the erase already ruled); a style never approved (draft, in review, sent back) gives `document` null and no files. The wish must be showing as E-129 decides: status live, opened, its term not ended, not removed, owner not erased without a business, its link on, not a Concierge wish before delivery, and behind its passcode: where the wish has one the read needs the page's unlock token (x-unlock-token), else it is 404; a sealed wish, a removed wish, a resting wish and a link that is off are 404. The older rule that switched-off styles gave a playing wish no files is replaced by this. E-266 is no longer cacheable (Cache-Control no-store).",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "decidedAt": "2026-12-09T12:00:00Z",
+      "source": "build/rulings-phase3.md (II1, HX4, HW2); build/prompts/API-BASE-13.md"
+    },
+    {
+      "id": "DEC-303",
+      "topic": "A refused file carries its reason in the server's plain words (II2)",
+      "decision": "II2: StoredFile (POST /v1/uploads/:id/confirm, E-184, also on a repeat of it) and StyleFile (the creator's reads of a style's files, E-267 and E-268) gain the field `reason`: when the file's status is rejected (the screening refused it) the reason in plain words, else null. The words come from a fixed list by the screening result's own kind (the first label the result names): type not taken: \"This kind of file is not accepted here.\"; empty: \"This file is empty.\"; too large: \"This file is too large.\"; type mismatch: \"This file is not the kind of file it says it is.\"; any other result or none: \"This file was not accepted.\" No new kind is invented, and no customer text (a file name, a word in a photo) and no provider wording is passed through. The creator's list (E-267) and one-file read (E-268) now include a refused file, with status rejected, reason and no address. The stand-in screening's setting STANDIN_SCREENING takes an optional kind on a reject rule (reject:<part of a name>:<type-not-taken|empty|too-large|type-mismatch>; a hold rule takes none; any other kind is refused at boot); the screening result then carries that kind, so the verifier stack can drive every line. The wish photo reads keep their own wording.",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "decidedAt": "2026-12-09T12:00:00Z",
+      "source": "build/rulings-phase3.md (II2); build/prompts/API-BASE-13.md"
+    },
+    {
+      "id": "DEC-304",
+      "topic": "A heart is only for a photo that is still the shoot's (II2, IB1, IC2)",
+      "decision": "II2: POST /v1/r/:code/favourites (E-276), marking a photo, is 422 in words (fields.position: \"This photo is not in this shoot any more, so it cannot be marked.\") and stores nothing, on the link, the client wish or the shoot, when the photo at that position is no longer a ready Vault file of the link's business that is among the link's shoot's files (removed from the shoot, deleted, refused by screening, or another shoot's or another business's file). The 200-marks cap is told first, as before. Unmarking is always allowed, so the old heart of a removed file is cleared (on the link, the client wish and the shoot) by unmarking its place, and unmarking what is not marked changes nothing. No endpoint or field changes.",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "decidedAt": "2026-12-09T12:00:00Z",
+      "source": "build/rulings-phase3.md (II2, IB1, IC2); build/prompts/API-BASE-13.md"
+    },
+    {
+      "id": "DEC-305",
+      "topic": "The registry is frozen again after the thirteenth round",
+      "decision": "The registry is re-frozen after DEC-302 to DEC-304 by tools/pipeline/freeze.py; reconcile.py was run twice with --reopen (identical outputs; .pipeline/ui-align-tasks.json restored byte for byte). No endpoint id is issued. GET /v1/styles/:id (E-196) gains the optional Style.document, GET /v1/w/:slug/style-files (E-266) gains document, StoredFile and StyleFile (E-184, E-267, E-268) gain reason, and STANDIN_SCREENING takes an optional kind on a reject rule.",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/prompts/API-BASE-13.md",
+      "decidedAt": "2026-12-09T12:00:00Z"
     }
   ]
 }

@@ -1106,3 +1106,15 @@ HG1 (give race) Two staff giving one Concierge order: the code is right (overlap
   to that account's wishes (the rows, the friend's first name and the stored files), as a single wish's erase does.
   A creator's public reads follow the creator's ACCOUNT, never a handle kept as text: a handle that changes hands
   never shows another person's styles.
+## IH (22 Nov 2026, the lead, on the check of the twelfth API round). Default (lead), owner may override.
+- IH1 (money): a style is tied to a creator's account only on proof that this account made it (a submission of that
+  style by that creator). A handle proves nothing: handles change hands. A style with no proof stays untied: no
+  royalty is routed for it, and staff get the list (style, the handle it carries) to tie by hand. Never a guess that
+  could pay a stranger.
+- IH2 (identity): a business's People and approved dates are the owner's, as before the twelfth round: a login
+  reads and changes none of them, with the business header or without. A login may start the business's plan or
+  pack payment (HZ3) and the answer is the same with the header and without it.
+- IH3: the business header changes WHICH business a request acts on, never what a route answers: a business the
+  caller is not in, and a header that is not an id, answer on every business route what the older business routes
+  already answer for them (the lead's brief asked for 404 on the new ones: withdrawn, so the web meets one
+  behaviour).

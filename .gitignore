@@ -9,3 +9,4 @@ coverage/
 # process id files a test stack writes (never part of the repo)
 *.pid
 dump.rdb
+*.out

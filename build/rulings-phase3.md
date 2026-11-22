@@ -1146,3 +1146,9 @@ HG1 (give race) Two staff giving one Concierge order: the code is right (overlap
   a Studio style plays the version of that style that was approved when the wish was made; a later approved
   version changes new wishes and the public style read only, never a wish already made (the customer chose and
   paid for that look). The wish keeps a pointer to the approved submission it was made under.
+- II4 (22 Nov, the lead, on the re-check of the thirteenth round; Default (lead), owner may override): a file that
+  an approved version of a Studio style names stays playable for as long as that version can be played (the public
+  style read while it is the newest approved, and every wish made under it). When its creator deletes it while
+  editing, it leaves the creator's draft and file list and no longer counts against the draft's limits, but the
+  stored file is kept and still given at the links of the wishes made under that version. It goes for good only
+  when no approved version that can still be played names it.

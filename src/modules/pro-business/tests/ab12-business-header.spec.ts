@@ -88,7 +88,8 @@ describe("HR3: the people, payment and brand routes follow x-business-id", () =>
     const rows = await db.person.findMany({ where: { name: "OnlyBeta" } });
     expect(rows.map((r) => r.businessId)).toEqual([c.b]);
     // the person of the other business is reached through the header only; removal is of the named business's rows
-    const mine = (await people(c.p.token, c.b)).body.items.find((x: { name: string }) => x.name === "OnlyBeta") as { id: string };
+    const items = (await people(c.p.token, c.b)).body.items as { id: string; name: string }[];
+    const mine = items.find((x) => x.name === "OnlyBeta") as { id: string };
     expect((await t.http().delete(`/v1/business/people/${mine.id}`).set(bearer(c.p.token)).send({})).status).toBe(404); // not A's
     expect((await t.http().delete(`/v1/business/people/${mine.id}`).set(bearer(c.p.token)).set("x-business-id", c.b).send({})).status).toBe(204);
     expect(names(await people(c.p.token, c.b))).toEqual(["BetaOwner"]);

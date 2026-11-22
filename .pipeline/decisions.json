@@ -4069,6 +4069,66 @@
       "confidence": "high",
       "source": "build/rulings-phase3.md (IF4a); build/prompts/API-BASE-11B.md",
       "decidedAt": "2026-12-05T12:00:00Z"
+    },
+    {
+      "id": "DEC-293",
+      "topic": "One person in two businesses: people, plan and pack payments and brand follow x-business-id (HR3, HU5, IF2a)",
+      "decision": "HR3 (HU5, IF2a): the people routes (E-117 to E-121) and the approved dates (E-17, E-238, E-239), the business payment starts (POST /v1/payments, E-87, for pro-plan, wish-pack and vault-space), the brand (PATCH /v1/business, E-26) and the brand upload (POST /v1/uploads, E-182, purpose brand) act on the business named by the x-business-id header, in the caller's role there, as the other business routes already do; no header is as before. The header is read in any case. A header that is not an id is 422 in words (fields.x-business-id); a business the caller is not part of is 404 (\"No such business.\"); a login removed from it gets login_removed as on every business read (HU5). The people and approved-dates routes are open to the owner and to a live login of the named business; the payment starts and the brand are the owner's alone: a login of the named business is 403 in words. The same Idempotency-Key naming another business is 409 idempotency_key_reused. A plan or pack started for a business is stored with that business: its payment row, ledger, plan and grants never land on another. No endpoint or field is added. Routes older than this round keep their 403 for a business the caller is not in.",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md; build/prompts/API-BASE-12.md",
+      "decidedAt": "2026-12-07T12:00:00Z"
+    },
+    {
+      "id": "DEC-294",
+      "topic": "Studio file and profile picture reads already exist and are proved (HW2)",
+      "decision": "HW2: the signed, short-lived (10 minutes) reads of a creator's Studio files (E-267 list, E-268 one; a picture, a poster, a sound, a 3D model; a held file too) and of the profile picture (/v1/me picture for the creator, a held one too; the public creator read E-236 once it passed screening), and the public's read of an approved style's files through a wish (E-266) all exist. API-BASE-12 adds a spec that proves them and changes nothing.",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md; build/prompts/API-BASE-12.md",
+      "decidedAt": "2026-12-07T12:00:00Z"
+    },
+    {
+      "id": "DEC-295",
+      "topic": "A creator's styles follow the account: creatorId backfilled by migration (IF4a)",
+      "decision": "IF4a: the migration 20261204090000_style_creator_ab12 gives creator.creatorId to every style whose creator document has a handle and no creatorId, where the account that holds that handle (with a creator row) already existed when the style was added and no review of the style belongs to another creator. A handle that matches nobody is left as it was and named in the migration's notices. The seed's house styles carry no creator document, so the seed is unchanged. After it GET /v1/creators/:handle/styles (E-285) lists the older styles under the right creator; royalties read the same creatorId.",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md; build/prompts/API-BASE-12.md",
+      "decidedAt": "2026-12-07T12:00:00Z"
+    },
+    {
+      "id": "DEC-296",
+      "topic": "The stand-in screening can hold or refuse a file by name (test-only)",
+      "decision": "API-BASE-12 case 4: STANDIN_SCREENING (hold:<part of a name>, reject:<part of a name>, comma list) makes the stand-in screening hold a matching file in screening or refuse it. The name comes in the new optional body field fileName of POST /v1/uploads (E-182, at most 200 characters), kept only in the storage key while the setting is on and read by nothing else. The setting is refused at boot unless PROVIDERS=standin and NODE_ENV is not production. No new endpoint.",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md; build/prompts/API-BASE-12.md",
+      "decidedAt": "2026-12-07T12:00:00Z"
+    },
+    {
+      "id": "DEC-297",
+      "topic": "Lows: Concierge delivery drops a Now showing row, confirmation null on Prices lines, contact keys swept, webhook reference in any case (IE1)",
+      "decision": "IE1 and API-BASE-12 case 5: delivering a Concierge order drops any Now showing row (and its ask) of the wishes delivered, so none goes public at delivery; every staff Prices line carries `confirmation` (null where the line is not a provisional setting; the public price book is unchanged); support_contact_key rows older than 30 days are removed by the existing upload-cleanup recurring job; a payment reference that a provider reports in any case (fw-<id>) settles the same payment as in lower case, for the webhook and the verify.",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md; build/prompts/API-BASE-12.md",
+      "decidedAt": "2026-12-07T12:00:00Z"
+    },
+    {
+      "id": "DEC-298",
+      "topic": "The registry is frozen again after the twelfth round",
+      "decision": "The registry is re-frozen after DEC-293 to DEC-297 by tools/pipeline/freeze.py; reconcile.py was run twice with --reopen (identical outputs; .pipeline/ui-align-tasks.json restored byte for byte). No endpoint id is issued; E-182 gains the optional body field fileName.",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/prompts/API-BASE-12.md",
+      "decidedAt": "2026-12-07T12:00:00Z"
     }
   ]
 }

@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "frozenAt": "2026-11-22T10:33:17Z",
+  "frozenAt": "2026-11-22T11:41:07Z",
   "framework": "nestjs",
   "generatedBy": "tools/pipeline/reconcile.py",
   "resources": [
@@ -21641,6 +21641,13 @@
               "type": "File (image png/jpeg/webp/svg, sound mp3/mp4/aac/ogg/wav, model .glb/.riv)",
               "from": [
                 "studio-editor"
+              ]
+            },
+            {
+              "name": "fileName",
+              "type": "string (optional; the file's name, at most 200 characters; read only by the stand-in screening when STANDIN_SCREENING is set, kept nowhere else)",
+              "from": [
+                "DEC-165"
               ]
             },
             {

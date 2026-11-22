@@ -71,7 +71,7 @@ describe("HW2 reads: Studio files and the profile picture, for the creator and f
     };
     const list = await t.http().get(`/v1/studio/styles/${s}/files`).set(c.auth);
     expect(list.status).toBe(200);
-    expect(list.body.items.map((i: { kind: string }) => i.kind).sort()).toEqual(["image", "image", "model", "sound"]);
+    expect((list.body.items as { kind: string }[]).map((i) => i.kind).sort()).toEqual(["image", "image", "model", "sound"]);
     for (const i of list.body.items as { url: string; expiresAt: string }[]) {
       expect(i.url).toMatch(/^https:\/\//);
       const left = Date.parse(i.expiresAt) - NOW.getTime();
@@ -108,7 +108,7 @@ describe("HW2 reads: Studio files and the profile picture, for the creator and f
     const read = await t.http().get(`/v1/w/${link}/style-files`);
     expect(read.status).toBe(200);
     expect(read.body.style).toBe(slug);
-    expect(read.body.items.map((i: { fileId: string }) => i.fileId).sort()).toEqual([ok, snd, mdl].sort());
+    expect((read.body.items as { fileId: string }[]).map((i) => i.fileId).sort()).toEqual([ok, snd, mdl].sort());
     for (const i of read.body.items as { url: string; expiresAt: string; status: string }[]) {
       expect(i.status).toBe("ready");
       expect(i.url).toMatch(/^https:\/\//);

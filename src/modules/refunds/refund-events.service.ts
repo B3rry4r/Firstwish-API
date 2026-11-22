@@ -49,14 +49,17 @@ export class RefundEvents implements RefundEventSink {
       await this.finish(this.db, eventRowId, pre ? "ignored" : "unknown_refund");
       return;
     }
+    const released: string[] = [];
     await this.db.$transaction(async (tx) => {
+      released.length = 0;
       if (pre.accountId) await lockAccount(tx, pre.accountId, { allowErased: true });
       await tx.$queryRaw`SELECT id FROM payment WHERE id = ${pre.id}::uuid FOR UPDATE`;
       const event = await tx.webhookEvent.findUniqueOrThrow({ where: { id: eventRowId }, select: { processedAt: true } });
       if (event.processedAt) return;
-      const outcome = await this.applyLocked(tx, eventRowId, type, data, pre.id);
+      const outcome = await this.applyLocked(tx, eventRowId, type, data, pre.id, released);
       await this.finish(tx, eventRowId, outcome.outcome, outcome.detail);
     });
+    await this.purchases.removeReleasedObjects(released);
     await this.sendNoticeNow(pre.id);
   }
 
@@ -97,7 +100,7 @@ export class RefundEvents implements RefundEventSink {
     }
   }
 
-  private async applyLocked(tx: Prisma.TransactionClient, eventRowId: string, type: string, data: Record<string, unknown>, paymentId: string): Promise<{ outcome: RefundEventOutcome; detail?: Prisma.InputJsonObject }> {
+  private async applyLocked(tx: Prisma.TransactionClient, eventRowId: string, type: string, data: Record<string, unknown>, paymentId: string, released: string[]): Promise<{ outcome: RefundEventOutcome; detail?: Prisma.InputJsonObject }> {
     const now = this.clock.now();
     const payment = await tx.payment.findUniqueOrThrow({ where: { id: paymentId } });
     const refund = await tx.refund.findFirst({ where: { paymentId, status: { in: OPEN_REFUND.filter((s) => s !== "requested") } }, orderBy: { id: "desc" } });
@@ -128,7 +131,7 @@ export class RefundEvents implements RefundEventSink {
     await tx.ledgerEntry.createMany({
       data: drafts.map((d) => ({ id: this.ids.id(), journalId: d.journalId, account: d.account, direction: d.direction, amountKobo: d.amountKobo, currency: "NGN" as const, paymentId, refundId: refund.id, memo: d.memo, createdAt: now })),
     });
-    const revoked = await this.purchases.revoke(tx, payment);
+    const revoked = await this.purchases.revoke(tx, payment, released);
     await this.invoices.voidFor(tx, paymentId);
     // WW2: the royalties this payment earned are taken back in the same transaction (one reversal per accrual; a second call changes nothing).
     await this.royalties.reverse(tx, paymentId);

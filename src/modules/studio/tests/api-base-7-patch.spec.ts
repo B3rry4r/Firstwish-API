@@ -8,7 +8,7 @@ import { AccountErasureService } from "../../accounts/account-erasure.service";
 import { FileJobs } from "../../stored-files/file-jobs";
 import { makeStaff, seedRoleTable } from "../../staff-accounts/tests/staff-kit";
 import { testWishNo, RUN, testHex } from "../../../../test/kit/unique";
-import { holdSettingLockForFile } from "../../../../test/kit/setting-lock";
+import { ownDatabase } from "../../../../test/kit/own-db";
 
 const ROOT = join(__dirname, "../../../..");
 const NOW = new Date("2036-06-10T09:00:00.000Z");
@@ -19,8 +19,8 @@ let seq = 0;
 const PNG = Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), Buffer.alloc(40)]);
 const MP3 = Buffer.concat([Buffer.from("ID3"), Buffer.alloc(40)]);
 
-// the book's limits are shared by every spec in the run's database: hold the setting lock for the file
-holdSettingLockForFile();
+// F4: this spec moves the clock years ahead and runs the global file sweeps, which take any old unattached file in the database: it has a database of its own
+const own = ownDatabase("ab7p");
 
 /** API-BASE-7 patch: HX3 (a deleted draft's files), HX4 (an erased creator's live style keeps its files), F6 (Signed backfill). */
 describe("API-BASE-7 patch: Studio files and Signed", () => {
@@ -28,6 +28,7 @@ describe("API-BASE-7 patch: Studio files and Signed", () => {
   let db: PrismaService;
   let ownerStaff = "";
   beforeAll(async () => {
+    own.use();
     t = await createTestApp({ now: NOW });
     db = t.app.get(PrismaService);
     const r = spawnSync(process.execPath, [join(ROOT, "scripts/seed.mjs")], { cwd: ROOT, env: process.env, encoding: "utf8" });
@@ -35,7 +36,10 @@ describe("API-BASE-7 patch: Studio files and Signed", () => {
     await seedRoleTable(db);
     ownerStaff = (await makeStaff(db, ["owner"])).id;
   });
-  afterAll(() => t.close());
+  afterAll(async () => {
+    await t.close();
+    own.drop();
+  });
   beforeEach(() => t.clock.set(NOW));
 
   async function person() {

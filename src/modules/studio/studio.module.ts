@@ -1,6 +1,7 @@
 import { Module } from "@nestjs/common";
 import { ENV } from "../../common/env/env.module";
 import type { Env } from "../../common/env/env";
+import { PublicWishesModule } from "../public-wishes/public-wishes.module";
 import { StoredFilesModule } from "../stored-files/stored-files.module";
 import { StylesModule } from "../styles/styles.module";
 import { CreatorStateService } from "./creator-state.service";
@@ -19,7 +20,7 @@ import { SubmissionsService } from "./submissions.service";
  * account erase.
  */
 @Module({
-  imports: [StylesModule, StoredFilesModule],
+  imports: [StylesModule, StoredFilesModule, PublicWishesModule],
   controllers: [StudioController, StudioAiController, StyleReviewController, StyleFilesPlayerController],
   providers: [
     CreatorStateService,

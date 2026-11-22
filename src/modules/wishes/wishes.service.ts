@@ -27,6 +27,7 @@ import { WishLifecycleService } from "./wish-lifecycle.service";
 import { stateOf } from "./wish-state";
 import { SHOWN_TO_BUYER } from "./wish-shown";
 import { WishPictures } from "./wish-pictures";
+import { approvedSubmissionOf } from "../styles/approved-document";
 import { kindHasOccasion, LAST_STEP } from "./kind-occasions";
 import { isLevel } from "../styles/style-view";
 import { allowedLevel, levelRank, styleRefusal } from "./style-rule";
@@ -155,7 +156,7 @@ export class WishesService {
     const id = this.ids.id();
     await tx.wish.create({
       data: {
-        id, accountId: a.accountId, businessId: a.businessId, status: "draft", kind, occasion, styleSlug: style.slug, timeZone: DEFAULT_ZONE,
+        id, accountId: a.accountId, businessId: a.businessId, status: "draft", kind, occasion, styleSlug: style.slug, styleSubmissionId: await approvedSubmissionOf(tx, style.slug), timeZone: DEFAULT_ZONE,
         name: this.text(a.name, "name", 120), content: { cover: { from } }, version: 0,
       },
     });
@@ -176,7 +177,7 @@ export class WishesService {
     const id = this.ids.id();
     await tx.wish.create({
       data: {
-        id, accountId: a.accountId, businessId: a.businessId, conciergeOrderId: a.orderId, status: "draft", kind, occasion, styleSlug: style.slug, timeZone: DEFAULT_ZONE,
+        id, accountId: a.accountId, businessId: a.businessId, conciergeOrderId: a.orderId, status: "draft", kind, occasion, styleSlug: style.slug, styleSubmissionId: await approvedSubmissionOf(tx, style.slug), timeZone: DEFAULT_ZONE,
         name: this.text(a.name, "name", 120), content: {}, version: 0,
         // IE1: a wish made for an order is a Signature wish from its start; the order paid for it (no ticket payment, no ledger line of its own)
         ticket: "signature",
@@ -376,7 +377,7 @@ export class WishesService {
       if (studio) content.studio = studio;
       const row = await tx.wish.create({
         data: {
-          id, accountId, status: "draft", kind, occasion, styleSlug, timeZone: DEFAULT_ZONE, name, content: content as Prisma.InputJsonValue, version: 0,
+          id, accountId, status: "draft", kind, occasion, styleSlug, styleSubmissionId: await approvedSubmissionOf(tx, styleSlug), timeZone: DEFAULT_ZONE, name, content: content as Prisma.InputJsonValue, version: 0,
           ...(answered ? { makerNote: { chosen } as Prisma.InputJsonValue } : {}),
         },
       });
@@ -517,7 +518,10 @@ export class WishesService {
       if (input.style !== undefined) {
         data.styleSlug = await this.styleSlug(tx, input.style, cur.styleSlug);
         // HQ5: once a ticket is chosen, a style above what it allows is refused with words
-        if (data.styleSlug !== cur.styleSlug) await this.checkStyleLevel(tx, book, cur.ticket, cur.adds, data.styleSlug);
+        if (data.styleSlug !== cur.styleSlug) {
+          await this.checkStyleLevel(tx, book, cur.ticket, cur.adds, data.styleSlug);
+          data.styleSubmissionId = await approvedSubmissionOf(tx, data.styleSlug); // II3: a new style is taken at its current approved version
+        }
       }
       if (input.keep !== undefined) data.keep = input.keep;
       if (input.step !== undefined) data.step = input.step;

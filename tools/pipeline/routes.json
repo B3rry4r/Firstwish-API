@@ -2970,7 +2970,7 @@
       "response": {
         "entity": "StudioStyle",
         "cardinality": "page",
-        "note": "StyleFile[]: {fileId, purpose, kind image, sound or model, contentType, bytes, status, url, expiresAt, createdAt}: the owner's signed reads of the style's files, a draft's too (DEC-245)"
+        "note": "StyleFile[]: {fileId, purpose, kind image, sound or model, contentType, bytes, status, reason, url, expiresAt, createdAt}: the owner's signed reads of the style's files, a draft's too (DEC-245)"
       }
     },
     "GET /v1/studio/styles/:id/files/:fileId": {
@@ -2978,7 +2978,7 @@
       "response": {
         "entity": "StudioStyle",
         "cardinality": "single",
-        "note": "one StyleFile as the list gives it (DEC-245)"
+        "note": "one StyleFile as the list gives it (DEC-245) (DEC-303: reason)"
       }
     },
     "GET /v1/w/:slug/style-files": {
@@ -2986,7 +2986,7 @@
       "response": {
         "entity": "PublicWishView",
         "cardinality": "single",
-        "note": "{style, items: StyleFile[]}: the files of the wish's style once that style is approved, files that passed screening only (DEC-245)"
+        "note": "{style, items: StyleFile[], document}: the files of the wish's style and the style's approved document (StudioStyle; null for a house style or one never approved), once that style was approved: a wish already made keeps playing when its style is switched off, taken back or its creator erased; the wish must be showing (live, opened, not resting, not removed, its link on, behind its passcode's unlock token) (DEC-245, DEC-302)"
       }
     },
     "PATCH /v1/studio/me": {
@@ -3784,6 +3784,20 @@
       "type": "boolean",
       "nullable": false,
       "decision": "DEC-287"
+    },
+    {
+      "resource": "Style",
+      "name": "document",
+      "type": "object (II1: the style's APPROVED Studio document as the creator's own read of a style gives it (StudioStyle); on GET /v1/styles/:id only, left out of lists; null for a house style)",
+      "nullable": true,
+      "decision": "DEC-302"
+    },
+    {
+      "resource": "StoredFile",
+      "name": "reason",
+      "type": "string (II2: the plain words of a refusal from a fixed list by the screening result's kind, when status is rejected; null in every other state)",
+      "nullable": true,
+      "decision": "DEC-303"
     }
   ],
   "dropFields": [

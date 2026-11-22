@@ -1293,6 +1293,8 @@ model StoredFile {
   variants                   Json
   driver                     StoredFileDriver
   createdAt                  DateTime            @default(now()) @db.Timestamptz(3)
+  /// II4: set when a creator deleted a Studio file that an approved version still names; the file stays for that version, out of the creator's lists
+  keptAt                     DateTime?           @db.Timestamptz(3)
   updatedAt                  DateTime            @updatedAt @db.Timestamptz(3)
   fileId                     String?             @db.Uuid
   kind                       StoredFileKind?
@@ -1418,10 +1420,13 @@ model StyleSubmission {
   reviewedBy                          String?
   note                                String?
   createdAt                           DateTime                 @default(now()) @db.Timestamptz(3)
+  /// the moment staff approved it (II3/II4); null before approval and for rows approved before this was kept (then createdAt stands in)
+  approvedAt                          DateTime?                @db.Timestamptz(3)
   decision                            StyleSubmissionDecision?
   creator                             Creator                  @relation("StyleSubmission_creatorId", fields: [creatorId], references: [id])
   style                               Style                    @relation("StyleSubmission_styleId", fields: [styleId], references: [id])
   styleSubmissionSnapshotBySubmission StyleSubmissionSnapshot? @relation("StyleSubmissionSnapshot_submissionId")
+  wishByStyleSubmission               Wish[]                   @relation("Wish_styleSubmissionId")
 
   @@index([creatorId, id])
   @@index([styleId, id])
@@ -1552,6 +1557,8 @@ model Wish {
   kind                     String
   occasion                 String
   styleSlug                String
+  /// the approved Studio submission whose version this wish plays (II3); null for a house style
+  styleSubmissionId        String?             @db.Uuid
   opensAt                  DateTime?           @db.Timestamptz(3)
   timeZone                 String
   weddingDate              DateTime?           @db.Date
@@ -1602,6 +1609,7 @@ model Wish {
   takeDownCodeByWish       TakeDownCode[]      @relation("TakeDownCode_wishId")
   conciergeOrderWishByWish ConciergeOrderWish? @relation("ConciergeOrderWish_wishId")
   conciergeOrder           ConciergeOrder?     @relation("Wish_conciergeOrderId", fields: [conciergeOrderId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  styleSubmission          StyleSubmission?    @relation("Wish_styleSubmissionId", fields: [styleSubmissionId], references: [id], onDelete: SetNull, onUpdate: Cascade)
   wishStartByWish          WishStart[]         @relation("WishStart_wishId")
 
   @@unique([no])
@@ -1609,6 +1617,7 @@ model Wish {
   @@index([businessId, id])
   @@index([status, id])
   @@index([conciergeOrderId])
+  @@index([styleSubmissionId])
   @@map("wish")
 }
 

@@ -4,14 +4,14 @@ import type { StaffAccountRoles } from "@prisma/client";
 import { uniqueAddress } from "../../../../test/kit/app";
 import { account, B12App, b12App, bearer, NOW, Who } from "../../people/tests/b12-kit";
 import { seedRoleTable } from "../../staff-accounts/tests/staff-kit";
-import { testSlug, testWishNo } from "../../../../test/kit/unique";
+import { testSlug, testWishNo, RUN } from "../../../../test/kit/unique";
 
 export { account, bearer, NOW, uniqueAddress };
 export type { B12App, Who };
 
 const ROOT = join(__dirname, "../../../..");
 let seq = 0;
-const run = `${process.pid}${Date.now() % 100000}`;
+const run = RUN;
 
 export async function b13App(): Promise<B12App> {
   const t = await b12App();

@@ -1,13 +1,15 @@
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "../../common/db/prisma.service";
 import type { Principal } from "../../common/auth/principal";
-import { notInBusiness } from "../../common/auth/login-removed";
+import { loginRemoved, loginWasRemoved, notInBusiness } from "../../common/auth/login-removed";
 import { AppError } from "../../common/errors/app-error";
 
 /**
  * The business a signed-in account works in: the one it owns (business.accountId), else the one that holds a login for its
  * sign-in email (a member, ruling X27). A login marked removed does not count.
  */
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+
 @Injectable()
 export class BusinessOf {
   constructor(private readonly prisma: PrismaService) {}
@@ -33,9 +35,46 @@ export class BusinessOf {
     if (!id) throw await notInBusiness(this.prisma, p.accountId, "You are not part of a business.");
     return id;
   }
+
+  /**
+   * HR3: the business a request works in. Without the x-business-id header it is the caller's own business, else their oldest login, as
+   * before. With it, the one named (see `namedBusiness`).
+   */
+  async named(p: Principal | undefined, header: string | undefined, opts: NamedOpts = {}): Promise<{ businessId: string; owner: boolean | null }> {
+    if (!p || p.kind !== "user") throw AppError.forbidden();
+    if (header === undefined) return { businessId: await this.require(p), owner: null };
+    return namedBusiness(this.prisma, p.accountId, header, opts);
+  }
 }
 
 export function accountOf(p: Principal | undefined): string {
   if (!p || p.kind !== "user") throw AppError.forbidden();
   return p.accountId;
+}
+
+export interface NamedOpts {
+  ownerOnly?: boolean;
+  words?: string;
+}
+
+/**
+ * HR3 (IH3): the business the x-business-id header names, in the caller's role there: `owner` when the account holds the business, a login when its
+ * sign-in email is on a live login of it. The header only says WHICH business: a header that is not an id, and a business the caller is not part of,
+ * answer what the older business routes answer (403 "You are not part of that business.", and login_removed for a removed login). With `ownerOnly`
+ * a login of that business gets the plain 403 the route gives a login without the header (IH2).
+ */
+export async function namedBusiness(db: Pick<PrismaService, "$queryRaw">, accountId: string, header: string, opts: NamedOpts = {}): Promise<{ businessId: string; owner: boolean }> {
+  const want = header.trim().toLowerCase();
+  if (!UUID.test(want)) throw AppError.forbidden("You are not part of that business.");
+  const rows = await db.$queryRaw<{ owner: boolean }[]>`
+    SELECT true AS owner FROM business b WHERE b.id = ${want}::uuid AND b."accountId" = ${accountId}::uuid
+    UNION ALL
+    SELECT false AS owner FROM login l JOIN account a ON a.id = ${accountId}::uuid
+     WHERE l."businessId" = ${want}::uuid AND a.contact IS NOT NULL AND a."erasedAt" IS NULL AND lower(trim(l.contact)) = lower(a.contact)
+       AND l.status IN ('invited', 'active')
+    ORDER BY owner DESC LIMIT 1`;
+  const r = rows[0];
+  if (!r) throw (await loginWasRemoved(db, accountId, want)) ? loginRemoved() : AppError.forbidden("You are not part of that business.");
+  if (opts.ownerOnly && !r.owner) throw AppError.forbidden(opts.words);
+  return { businessId: want, owner: r.owner };
 }

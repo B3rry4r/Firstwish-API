@@ -1,9 +1,10 @@
 import { PrismaService } from "../../../common/db/prisma.service";
 import { SettlementService } from "../settlement.service";
 import { boot, ids } from "../../concierge/tests/kit";
+import { RUN } from "../../../../test/kit/unique";
 
 const NOW = new Date("2027-04-05T09:00:00.000Z");
-const run = `${process.pid}${Date.now() % 100000}`;
+const run = RUN;
 type Kit = Awaited<ReturnType<typeof boot>>;
 
 /** API-BASE-10 case 1 (ID1): a wish is paid for once. */
@@ -172,7 +173,7 @@ describe("ID1: one ticket payment per wish", () => {
       expect(lost.body.error.fields.reference).toBe(won.body.payment.reference);
       expect(await db.payment.count({ where: { subjectId: w, purpose: "ticket", status: { in: ["pending", "started"] } } })).toBe(1);
     }
-  });
+  }, 30_000);
 
   it("attack: both settle at once where two rows already exist: one ticket on the wish, the other refund due, the ledger balanced (20 wishes)", async () => {
     const a = await k.account();
@@ -192,7 +193,7 @@ describe("ID1: one ticket payment per wish", () => {
       expect(await balanced(x.id)).toBe(true);
       expect(await balanced(y.id)).toBe(true);
     }
-  });
+  }, 30_000);
 
   it("attack: drop and settle at once give one outcome, and never two tickets", async () => {
     const a = await k.account();

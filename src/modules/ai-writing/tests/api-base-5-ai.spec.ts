@@ -4,6 +4,7 @@ import { StandinAiWriting } from "../../../common/ports/adapters/standins";
 import { createTestApp, TestApp } from "../../../../test/kit/app";
 import { tag } from "../../staff-accounts/tests/staff-kit";
 import { parseChange } from "../../studio/studio-ai.service";
+import { RUN } from "../../../../test/kit/unique";
 
 const ids = new UuidV7Maker();
 let t: TestApp;
@@ -11,7 +12,7 @@ let db: PrismaService;
 
 async function sender() {
   const id = ids.next();
-  await db.account.create({ data: { id, contact: `ab5-${process.pid}-${tag()}@example.com`, handle: `ab5${tag()}`, sides: ["person"] as never, lastSide: "person" } });
+  await db.account.create({ data: { id, contact: `ab5-${RUN}-${tag()}@example.com`, handle: `ab5${tag()}`, sides: ["person"] as never, lastSide: "person" } });
   const token = `s-${tag()}`;
   t.tokens.set(token, { kind: "user", accountId: id, sides: ["person"] });
   const wishId = ids.next();

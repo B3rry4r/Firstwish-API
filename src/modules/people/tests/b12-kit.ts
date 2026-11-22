@@ -2,6 +2,7 @@ import { PrismaService } from "../../../common/db/prisma.service";
 import type { Side } from "../../../common/auth/principal";
 import { IdGenerator } from "../../../common/ports/ids.port";
 import { createTestApp, TestApp } from "../../../../test/kit/app";
+import { RUN } from "../../../../test/kit/unique";
 
 /* Test helpers for B12: accounts and businesses made straight in the database, tokens from the kit's token map. */
 
@@ -20,7 +21,7 @@ export async function b12App(now: Date = NOW): Promise<B12App> {
 }
 
 let seq = 0;
-const run = `${process.pid}${Date.now() % 100000}`;
+const run = RUN;
 
 export interface Who {
   accountId: string;

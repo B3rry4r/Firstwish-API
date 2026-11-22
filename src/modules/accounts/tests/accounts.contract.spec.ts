@@ -1,4 +1,5 @@
 import { bearer, signIn, SignInApp, signInApp, staffToken, uniqueEmail } from "../../sessions/tests/sign-in.kit";
+import { testWishNo } from "../../../../test/kit/unique";
 
 describe("accounts E-6, E-7 /v1/me (contract)", () => {
   let t: SignInApp;
@@ -84,7 +85,7 @@ describe("accounts E-6, E-7 /v1/me (contract)", () => {
       space: "me",
       here: "someone",
       dates: [{ name: "Mum", who: "mother", what: "Birthday", date: "2027-03-14" }],
-      handle: `@Ada.${Date.now() % 100000}`,
+      handle: `@Ada.${testWishNo().slice(0, 15)}`,
     });
     expect(res.status).toBe(200);
     expect(res.body).toMatchObject({ bio: null, space: "me", lastSide: "person" });

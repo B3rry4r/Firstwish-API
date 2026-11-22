@@ -92,6 +92,27 @@ function chapterSpecs() {
   return [...seen.values()];
 }
 
+// A style's "get" (what its level gets you) is owned here since the web dropped its typed copy (lib/catalog.ts LEVEL_GET): it is
+// taken from the committed Style.json row of the same slug, never from the web. A slug new to the web gets the "get" of its level's
+// other house styles (the rule styles.service.ts getLineFor uses: the first house style of that level by slug with a "get") and is listed.
+const committedGets = (() => {
+  const f = join(OUT, "Style.json");
+  return existsSync(f) ? new Map(JSON.parse(readFileSync(f, "utf8")).rows.map((r) => [r.slug, r.get])) : new Map();
+})();
+function withOwnedGet(rows) {
+  const byLevel = new Map();
+  for (const r of [...rows].sort((a, b) => (a.slug < b.slug ? -1 : 1))) {
+    const g = committedGets.get(r.slug);
+    if (r.house && g != null && !byLevel.has(r.level)) byLevel.set(r.level, g);
+  }
+  return rows.map((r) => {
+    if (committedGets.has(r.slug) && committedGets.get(r.slug) != null) return { ...r, get: committedGets.get(r.slug) };
+    const g = byLevel.get(r.level);
+    console.log(`Style ${r.slug}: new to the committed seed; "get" taken from the other ${r.level} house styles${g == null ? " (none: left out)" : ""}`);
+    return g == null ? r : { ...r, get: g };
+  });
+}
+
 const TABLES = {
   EndingPurpose: { from: "lib/engine/types.ts (EndingPurpose)", key: (r) => r.name, rows: endingPurposes },
   OpeningDef: {
@@ -116,11 +137,12 @@ const TABLES = {
     from: "lib/styles.ts (allStyles(), levels from lib/levels.ts)", key: (r) => r.slug,
     rows: () => {
       const { allStyles } = web("lib/styles.ts");
-      return allStyles().map((s) => ({
-        ...pick(s, ["slug", "name", "line", "feel", "say", "motion", "light", "look", "level", "tier", "get", "pace", "orientation", "moves", "mood"]),
+      const built = allStyles().map((s) => ({
+        ...pick(s, ["slug", "name", "line", "feel", "say", "motion", "light", "look", "level", "tier", "pace", "orientation", "moves", "mood"]),
         dimension: s.manifest.dimension, kinds: plain(s.manifest.kinds), occasions: plain(s.manifest.occasions ?? null),
         by: s.manifest.creator, house: s.manifest.creator === "firstwish", packaged: true,
       }));
+      return withOwnedGet(built);
     },
   },
 };

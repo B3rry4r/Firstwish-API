@@ -1,9 +1,10 @@
 import { PrismaService } from "../../../common/db/prisma.service";
 import { SettlementService } from "../../payments/settlement.service";
 import { boot, ids } from "./kit";
+import { RUN } from "../../../../test/kit/unique";
 
 const NOW = new Date("2027-03-08T09:00:00.000Z");
-const run = `${process.pid}${Date.now() % 100000}`;
+const run = RUN;
 type Kit = Awaited<ReturnType<typeof boot>>;
 
 /** IC4: a wish being made for a Concierge order does not exist for the buyer until it is delivered. */

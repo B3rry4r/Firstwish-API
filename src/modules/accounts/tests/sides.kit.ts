@@ -1,11 +1,10 @@
 import { bearer, signIn, SignInApp, Signed, uniqueEmail } from "../../sessions/tests/sign-in.kit";
+import { testHex } from "../../../../test/kit/unique";
 
 /* Helpers for the account-sides bundle (B02). Handles are unique per call, so specs never share rows. */
 
-let seq = 0;
-const run = Math.floor(Math.random() * 36 ** 5).toString(36);
 export function uniqueHandle(tag = "h"): string {
-  return `${tag}${run}${(++seq).toString(36)}`.slice(0, 20);
+  return `${tag.slice(0, 4)}${testHex(15)}`.slice(0, 20);
 }
 
 export interface Creator extends Signed {

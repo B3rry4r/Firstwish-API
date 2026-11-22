@@ -17,6 +17,9 @@ export class PostUploadsBodyDto implements PostUploadsBody {
   @Allow()
   file?: unknown;
   @IsOptional()
+  @IsString()
+  fileName?: string;
+  @IsOptional()
   @IsIn(["image", "sound", "model", "video"])
   kind?: "image" | "sound" | "model" | "video";
   @IsOptional()

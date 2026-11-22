@@ -5,11 +5,12 @@ import { UuidV7Maker } from "../../../common/ids/uuidv7";
 import { bearer } from "../../people/tests/b12-kit";
 import { createTestApp, TestApp } from "../../../../test/kit/app";
 import { SettlementService } from "../../payments/settlement.service";
+import { RUN } from "../../../../test/kit/unique";
 
 const ROOT = join(__dirname, "../../../..");
 const NOW = new Date("2027-04-10T09:00:00.000Z");
 const ids = new UuidV7Maker();
-const run = `${process.pid}${Date.now() % 100000}`;
+const run = RUN;
 let seq = 0;
 
 /** API-BASE-6 case 2 (HR1): what a plan payment would do, one plan payment at a time, packs more than once. */

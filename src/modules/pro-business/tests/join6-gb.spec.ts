@@ -6,6 +6,7 @@ import { createTestApp, TestApp } from "../../../../test/kit/app";
 import { SettlementService } from "../../payments/settlement.service";
 import { RoyaltiesService } from "../../royalties/royalties.service";
 import { InvoicesService } from "../invoices.service";
+import { RUN } from "../../../../test/kit/unique";
 
 /*
  * GB1 (wave 6 join): the ordinary seal of a wish made from the sheet (E-30) or a date (E-32) earns its creator like the maker's seal.
@@ -15,7 +16,7 @@ import { InvoicesService } from "../invoices.service";
 const ROOT = join(__dirname, "../../../..");
 const NOW = new Date("2037-05-04T09:00:00.000Z");
 const ids = new UuidV7Maker();
-const run = `${process.pid}${Date.now() % 100000}`;
+const run = RUN;
 let seq = 0;
 const bearer = (token: string) => ({ authorization: `Bearer ${token}` });
 const letter = { letter: { paras: ["Happy birthday."] } };

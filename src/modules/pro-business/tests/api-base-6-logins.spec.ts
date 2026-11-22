@@ -4,10 +4,11 @@ import { PrismaService } from "../../../common/db/prisma.service";
 import { UuidV7Maker } from "../../../common/ids/uuidv7";
 import { bearer } from "../../people/tests/b12-kit";
 import { createTestApp, TestApp } from "../../../../test/kit/app";
+import { RUN } from "../../../../test/kit/unique";
 
 const NOW = new Date("2027-05-10T09:00:00.000Z");
 const ids = new UuidV7Maker();
-const run = `${process.pid}${Date.now() % 100000}`;
+const run = RUN;
 let seq = 0;
 
 /** API-BASE-6 case 3 (HR3): /me carries the businesses the person is a login of; a removed login's reads say so. */

@@ -1,10 +1,11 @@
 import { useKit } from "./ab9-kit";
+import { RUN } from "../../../../test/kit/unique";
 
 /** IC3: for one shoot and one client there is one reveal; the older send call answers already_sent like the one call, unless asked again. */
 describe("IC3: one reveal for a shoot and a client, whichever call order", () => {
   const k = useKit();
   let n = 0;
-  const addr = () => `pab9-ic3-${process.pid}-${++n}-${Date.now() % 100000}@example.com`;
+  const addr = () => `pab9-ic3-${RUN}-${++n}-${Date.now() % 100000}@example.com`;
   const pack = async (businessId: string) => (await k.db.business.findUniqueOrThrow({ where: { id: businessId }, select: { pack: true } })).pack;
   const reveals = (businessId: string) => k.db.$queryRaw<{ n: number }[]>`SELECT count(*)::int AS n FROM reveal_access WHERE "businessId" = ${businessId}::uuid`.then((r) => r[0].n);
   const one = (o: { token: string }, shoot: string, over: Record<string, unknown> = {}) => k.post("/v1/business/reveals", o.token, { shoot, set: "proofs", reveal: k.revealBody({ email: addr() }), ...over });

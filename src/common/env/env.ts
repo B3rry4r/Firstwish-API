@@ -9,6 +9,8 @@ export interface Env {
   STANDIN_MAIL_OUTBOX?: string;
   /** HP6: seconds added to the stand-in clock (read at boot); tests and verifier stacks only. */
   STANDIN_CLOCK_OFFSET?: string;
+  /** API-BASE-12 case 4: rules for the stand-in screening by file name (hold:<text>, reject:<text>); tests and verifier stacks only. */
+  STANDIN_SCREENING?: string;
   INTERNAL_TOKEN: string;
   DATABASE_URL: string;
   REDIS_URL: string;
@@ -161,6 +163,37 @@ export function loadEnv(raw: Record<string, string | undefined> = process.env): 
       problems.push({ name: "STANDIN_CLOCK_OFFSET", problem: "must be a whole number of seconds, for example 86400" });
     }
   }
+  // API-BASE-12 case 4: the stand-in screening's rules by file name decide what is held or refused, so they are never allowed where real files arrive: not with live providers, not in production.
+  const screening = get("STANDIN_SCREENING");
+  if (screening !== undefined) {
+    if (providers !== "standin" || out.NODE_ENV === "production") {
+      problems.push({ name: "STANDIN_SCREENING", problem: "refused: it drives the stand-in screening only (needs PROVIDERS=standin and a NODE_ENV other than production)" });
+    } else if (!parseScreeningRules(screening)) {
+      problems.push({ name: "STANDIN_SCREENING", problem: "must be a comma list of hold:<part of a file name> or reject:<part of a file name>, for example hold:held,reject:refused" });
+    }
+  }
   if (problems.length) throw new EnvError(problems);
   return out as unknown as Env;
+}
+
+export interface ScreeningRule {
+  action: "hold" | "reject";
+  /** lower case, a part of a file name */
+  text: string;
+}
+
+/** API-BASE-12 case 4: "hold:held,reject:refused" as rules; null when a rule is not of that shape (an action, a colon, 1 to 40 of a-z 0-9 . _ -). */
+export function parseScreeningRules(raw: string): ScreeningRule[] | null {
+  const rules: ScreeningRule[] = [];
+  for (const part of raw.split(",")) {
+    const m = /^\s*(hold|reject):([A-Za-z0-9._-]{1,40})\s*$/.exec(part);
+    if (!m) return null;
+    rules.push({ action: m[1] as ScreeningRule["action"], text: m[2].toLowerCase() });
+  }
+  return rules;
+}
+
+/** API-BASE-12 case 4: the file name as the stand-in keeps it in a storage key: lower case, a-z 0-9 . _ - only, at most 60 characters. */
+export function fileNameTag(name: string): string {
+  return name.toLowerCase().replace(/[^a-z0-9._-]+/g, "-").slice(0, 60);
 }

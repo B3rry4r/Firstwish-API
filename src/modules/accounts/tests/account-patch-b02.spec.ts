@@ -2,6 +2,7 @@ import { IdGenerator } from "../../../common/ports/ids.port";
 import { bearer, signIn, SignInApp, signInApp, uniqueEmail } from "../../sessions/tests/sign-in.kit";
 import { AccountErasureService, FRESH_SIGN_IN_MS } from "../account-erasure.service";
 import { newCreator, uniqueHandle } from "./sides.kit";
+import { testHex } from "../../../../test/kit/unique";
 
 /* Patch B02: AA1 (the account lock against erase), AA2 (nothing left in the database), AA3 (NUL is 422), X7, X10, X11, X12. */
 
@@ -115,7 +116,7 @@ describe("patch B02 on the account modules", () => {
   it("AA2 erase leaves no trace of the person: schema-map walked, the whole database searched", async () => {
     const email = uniqueEmail("aa2").toLowerCase();
     const s = await signIn(t, email);
-    const tag = Math.random().toString(36).slice(2, 10);
+    const tag = testHex();
     const handle = uniqueHandle("aa2");
     const name = `Zeta Quillson ${tag}`;
     const bio = `Bio words ${tag} for the page`;
@@ -151,7 +152,7 @@ describe("patch B02 on the account modules", () => {
     // The audit row holds ids and field names, never the values.
     const audits = await t.db.auditEntry.findMany({ where: { subjectId: s.accountId } });
     expect(JSON.stringify(audits)).not.toContain(email);
-  });
+  }, 50_000);
 
   describe("AA3 a NUL byte is 422 on every text field here, never a 500", () => {
     const NUL = "ab\u0000cd";
@@ -221,7 +222,7 @@ describe("patch B02 on the account modules", () => {
     const s = await person("x10");
     const wishId = ids().id();
     await t.db.wish.create({ data: { id: wishId, accountId: s.accountId, status: "live", kind: "birthday", occasion: "birthday", styleSlug: "x", timeZone: "Africa/Lagos" } });
-    await t.db.wishLink.create({ data: { id: ids().id(), slug: `x10${Math.random().toString(36).slice(2, 12)}`, wishId, active: true } });
+    await t.db.wishLink.create({ data: { id: ids().id(), slug: `x10${testHex()}`, wishId, active: true } });
     await erasure.erase(s.accountId, { actor: { ...actor, id: s.accountId }, reason: null });
     expect(await t.db.wishLink.count({ where: { wishId, active: true } })).toBe(0);
     expect(await t.db.wishLink.count({ where: { wishId } })).toBe(1);

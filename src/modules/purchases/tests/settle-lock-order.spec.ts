@@ -5,12 +5,12 @@ import { UuidV7Maker } from "../../../common/ids/uuidv7";
 import { bearer } from "../../people/tests/b12-kit";
 import { createTestApp, TestApp, uniqueAddress } from "../../../../test/kit/app";
 import { SettlementService, isLockConflict } from "../../payments/settlement.service";
-import { testWishNo } from "../../../../test/kit/unique";
+import { testWishNo, RUN } from "../../../../test/kit/unique";
 
 const NOW = new Date("2032-06-14T09:00:00.000Z");
 const DAY = 86_400_000;
 const ids = new UuidV7Maker();
-const run = `${process.pid}${Date.now() % 100000}`;
+const run = RUN;
 let seq = 0;
 
 /** API-BASE-6b F2: every settle takes its locks in one order (account, payment, wish, grant), so payments for one wish settling at once never deadlock. */

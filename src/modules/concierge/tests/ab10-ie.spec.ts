@@ -7,10 +7,11 @@ import { JobHandlers } from "../../job-handlers/job-handlers.service";
 import { JobsService } from "../../jobs/jobs.service";
 import { JPEG, WEBM } from "../../stored-files/tests/files-kit";
 import { boot, ids } from "./kit";
+import { RUN } from "../../../../test/kit/unique";
 
 const NOW = new Date("2027-04-12T09:00:00.000Z");
 const DAY = 86_400_000;
-const run = `${process.pid}${Date.now() % 100000}`;
+const run = RUN;
 type Kit = Awaited<ReturnType<typeof boot>>;
 type Who = { id: string; auth: string };
 

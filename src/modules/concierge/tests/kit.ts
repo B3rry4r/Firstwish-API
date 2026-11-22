@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { PrismaService } from "../../../common/db/prisma.service";
 import { UuidV7Maker } from "../../../common/ids/uuidv7";
 import { createTestApp, TestApp, TestAppOptions } from "../../../../test/kit/app";
+import { RUN } from "../../../../test/kit/unique";
 
 const ROOT = join(__dirname, "../../../..");
 export const ids = new UuidV7Maker();
@@ -16,13 +17,13 @@ export async function boot(prefix: string, now: Date, opts: TestAppOptions = {})
   if (r.status !== 0) throw new Error(`seed failed: ${r.stderr}`);
   const account = async (sides: ("person" | "business")[] = ["person"]) => {
     const id = ids.next();
-    await db.account.create({ data: { id, contact: `${prefix}-${process.pid}-${++seq}@example.com`, sides, lastSide: sides[0] } });
+    await db.account.create({ data: { id, contact: `${prefix}-${RUN}-${++seq}@example.com`, sides, lastSide: sides[0] } });
     t.tokens.set(`user-${id}`, { kind: "user", accountId: id, sides });
     return { id, auth: `Bearer user-${id}` };
   };
   const staff = async (roles: ("maker" | "ops" | "owner" | "finance")[]) => {
     const id = ids.next();
-    await db.staffAccount.create({ data: { id, email: `${prefix}-staff-${process.pid}-${++seq}@example.com`, name: `Staff ${seq}`, roles, status: "active" } });
+    await db.staffAccount.create({ data: { id, email: `${prefix}-staff-${RUN}-${++seq}@example.com`, name: `Staff ${seq}`, roles, status: "active" } });
     t.tokens.set(`staff-${id}`, { kind: "staff", staffId: id, roles });
     return { id, auth: `Bearer staff-${id}` };
   };

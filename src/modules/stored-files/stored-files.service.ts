@@ -2,6 +2,7 @@ import { HttpStatus, Inject, Injectable } from "@nestjs/common";
 import { Prisma, type Business, type StoredFile as FileRow } from "@prisma/client";
 import { PrismaService } from "../../common/db/prisma.service";
 import { ENV } from "../../common/env/env.module";
+import { fileNameTag } from "../../common/env/env";
 import type { Env } from "../../common/env/env";
 import { AppError } from "../../common/errors/app-error";
 import type { UserPrincipal } from "../../common/auth/principal";
@@ -33,6 +34,7 @@ import {
 import { readLimits } from "../price-book/book-limits";
 import { notInBusiness } from "../../common/auth/login-removed";
 import { businessAccessOf } from "./vault-access";
+import { namedBusiness } from "../people/business-of";
 import { ScreeningService } from "./screening.service";
 import { dropFileHearts } from "../vault/vault-shared";
 import { SHOWN_TO_BUYER } from "../wishes/wish-shown";
@@ -86,7 +88,12 @@ export class StoredFilesService {
 
 
   /** The caller's business (owner), or 403. */
-  private async businessOf(tx: Tx, p: UserPrincipal): Promise<Business> {
+  private async businessOf(tx: Tx, p: UserPrincipal, named?: string): Promise<Business> {
+    if (named !== undefined) {
+      // HR3: the business the header names, and only its owner uploads its brand (a login of it is refused as it is without the header)
+      const { businessId } = await namedBusiness(tx, p.accountId, named, { ownerOnly: true });
+      return tx.business.findUniqueOrThrow({ where: { id: businessId } });
+    }
     if (!p.sides.includes("business")) throw AppError.forbidden("Vault files need a business.");
     const biz = await tx.business.findFirst({ where: { accountId: p.accountId } });
     if (!biz) throw AppError.forbidden("Vault files need a business.");
@@ -152,6 +159,7 @@ export class StoredFilesService {
     }
     // X25: kind is the media kind (image, sound, model, video) and must agree with the type.
     if (body.kind !== undefined && body.kind !== mediaKindOf(contentType)) throw AppError.validation({ kind: "Does not match the type." });
+    if (body.fileName !== undefined && body.fileName.length > 200) throw AppError.validation({ fileName: "At most 200 characters." });
     const bytes = body.bytes;
     if (typeof bytes !== "number" || !Number.isInteger(bytes) || bytes <= 0) throw AppError.validation({ bytes: "Must be the file's size in bytes." });
     // HW6: the largest size is the price book's own (one source for this check and for what the book serves)
@@ -164,7 +172,9 @@ export class StoredFilesService {
     if (studioFile && body.styleId !== undefined && !isUuid(body.styleId)) throw AppError.validation({ styleId: "Must be a style id." });
 
     const id = this.ids.id();
-    const objectKey = `${rule.purpose}/${id}/${this.codes.token(16)}`;
+    // API-BASE-12 case 4: with the stand-in screening's rules on, the file's name rides in its key so the stand-in can hold or refuse it by name
+    const nameTag = this.env.STANDIN_SCREENING !== undefined && typeof body.fileName === "string" && body.fileName.trim() ? `~${fileNameTag(body.fileName)}` : "";
+    const objectKey = `${rule.purpose}/${id}/${this.codes.token(16)}${nameTag}`;
     const now = this.clock.now();
     const wishFile = rule.purpose === "wish-photo" || rule.purpose === "voice-note" || rule.purpose === "video-clip";
     const orderFile = rule.purpose === "order-photo" || rule.purpose === "order-voice";
@@ -174,7 +184,7 @@ export class StoredFilesService {
       let businessId: string | null = null;
       let styleId: string | null = null;
       if (rule.purpose === "vault-file" || rule.purpose === "brand-logo") {
-        const biz = rule.purpose === "vault-file" ? await this.vaultBusinessOf(tx, p, opts.business) : await this.businessOf(tx, p);
+        const biz = rule.purpose === "vault-file" ? await this.vaultBusinessOf(tx, p, opts.business) : await this.businessOf(tx, p, opts.business);
         businessId = biz.id;
         if (rule.purpose === "vault-file") {
           const limit = await vaultLimitBytes(tx, biz, now);

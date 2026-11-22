@@ -10,11 +10,12 @@ import { makeStaff, seedRoleTable } from "../../staff-accounts/tests/staff-kit";
 import { StandinRefundProvider } from "../../../common/ports/adapters/standin-refund-provider";
 import { RefundProviderPort } from "../../../common/ports/refund-provider.port";
 import { Money } from "../../../common/money/money";
+import { RUN } from "../../../../test/kit/unique";
 
 const ROOT = join(__dirname, "../../../..");
 const NOW = new Date("2210-03-01T09:00:00.000Z");
 const ids = new UuidV7Maker();
-const run = `${process.pid}${Date.now() % 100000}`;
+const run = RUN;
 let seq = 0;
 const bearer = (token: string) => ({ authorization: `Bearer ${token}` });
 const REASON = "Customer asked, checked";

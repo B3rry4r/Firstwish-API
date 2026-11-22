@@ -10,6 +10,7 @@ import { DAILY_SETTLEMENT_KEY, RefundsModule } from "../refunds.module";
 import { BusinessHandlers } from "../../purchases/business-handlers";
 import { StandinRefundProvider } from "../../../common/ports/adapters/standin-refund-provider";
 import { RefundProviderPort } from "../../../common/ports/refund-provider.port";
+import { RUN } from "../../../../test/kit/unique";
 
 const ROOT = join(__dirname, "../../../..");
 const NOW = new Date("2031-03-10T09:00:00.000Z");
@@ -53,7 +54,7 @@ describe("B08 refunds, the settlement check and staff payments (contract)", () =
     provider.hanging(false);
   });
 
-  const account = async (contact: string | null = `b08-${process.pid}-${++seq}@example.com`) => {
+  const account = async (contact: string | null = `b08-${RUN}-${++seq}@example.com`) => {
     const id = ids.next();
     await db.account.create({ data: { id, contact, name: "Ada", sides: ["person"], lastSide: "person" } });
     return id;
@@ -327,9 +328,9 @@ describe("B08 refunds, the settlement check and staff payments (contract)", () =
   });
 
   it("staff list: what each was for, the reference, state, flags; find by reference, wish number or the payer's email (masked); cursor pages", async () => {
-    const email = `find-${process.pid}-${++seq}@example.com`;
+    const email = `find-${RUN}-${++seq}@example.com`;
     const a = await account(email);
-    const w = await wish(a, { no: `FW-B08-${process.pid}-${seq}` });
+    const w = await wish(a, { no: `FW-B08-${RUN}-${seq}` });
     const p1 = await pay(a, "ticket.keepsake", { subjectId: w });
     const p2 = await pay(a, "extra.five-photos", { subjectId: w }).catch(() => null);
     const get = (qs: string, token = staff.financeA.token) => t.http().get(`/v1/admin/payments${qs}`).set(auth(token));
@@ -337,10 +338,10 @@ describe("B08 refunds, the settlement check and staff payments (contract)", () =
     expect(byRef.status).toBe(200);
     expect(byRef.body.items).toHaveLength(1);
     const item = byRef.body.items[0];
-    expect(item).toMatchObject({ reference: p1.reference, ref: p1.reference, line: "ticket.keepsake", status: "succeeded", state: "succeeded", amountKobo: Number(p1.total), accountId: a, wish: `FW-B08-${process.pid}-${seq}`, flags: [] });
+    expect(item).toMatchObject({ reference: p1.reference, ref: p1.reference, line: "ticket.keepsake", status: "succeeded", state: "succeeded", amountKobo: Number(p1.total), accountId: a, wish: `FW-B08-${RUN}-${seq}`, flags: [] });
     expect(item.person).toBe(`${email.slice(0, 1)}***${email.slice(email.indexOf("@"))}`);
     expect(JSON.stringify(item)).not.toContain(email);
-    const byWish = await get(`?q=${encodeURIComponent(`FW-B08-${process.pid}-${seq}`)}`);
+    const byWish = await get(`?q=${encodeURIComponent(`FW-B08-${RUN}-${seq}`)}`);
     expect(itemsOf(byWish).map((i) => i.reference)).toContain(p1.reference);
     const byMail = await get(`?q=${encodeURIComponent(email.toUpperCase())}&limit=1`);
     expect(byMail.body.items).toHaveLength(1);

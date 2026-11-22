@@ -1,10 +1,11 @@
 import { useKit } from "./ab9-kit";
+import { RUN } from "../../../../test/kit/unique";
 
 describe("API-BASE-9 case 2 (IA1): one call sends a reveal", () => {
   const k = useKit();
   let n = 0;
   const packOwner = (pack: number) => k.owner({ allowance: 0, used: 0, rolled: 0, pack });
-  const addr = () => `ia1-${process.pid}-${++n}-${Date.now() % 100000}@example.com`;
+  const addr = () => `ia1-${RUN}-${++n}-${Date.now() % 100000}@example.com`;
   const one = (o: { token: string }, shoot: string, over: Record<string, unknown> = {}, headers: Record<string, string> = {}) =>
     k.post("/v1/business/reveals", o.token, { shoot, set: "proofs", reveal: k.revealBody({ email: addr() }), ...over }, headers);
   const state = async (businessId: string) => {

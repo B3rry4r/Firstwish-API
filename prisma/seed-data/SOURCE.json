@@ -497,8 +497,12 @@
    "sha256": "1d2e6d7e68595235e3e602bcff246ea18ce3eb9c72c743ab914154ffe21c40db"
   },
   {
+   "path": "lib/api.ts",
+   "sha256": "02dfd72ff6a32d21eb11363b2af66ed68ddf8270f570a781b955369f042b5bfc"
+  },
+  {
    "path": "lib/catalog.ts",
-   "sha256": "b1c520b406351085253985583b009d8e674c48ffd2adc46cdf6e7a12034c9218"
+   "sha256": "13e5bf23ab3fd4347c43163b1e7250dd65e5466c5733d20de6b4e2ab0a590809"
   },
   {
    "path": "lib/engine/moments.ts",
@@ -518,7 +522,7 @@
   },
   {
    "path": "lib/levels.ts",
-   "sha256": "00b43b2b233a126830c880c2c94720b3b2f703eb1497b9fddc1bce37ade6a453"
+   "sha256": "823f97c3f45d9f93b8b3368e938c7cfaf9838dbbd8acecde1bf410e8ec82a3c1"
   },
   {
    "path": "lib/occasions.ts",
@@ -526,11 +530,11 @@
   },
   {
    "path": "lib/studio.ts",
-   "sha256": "a051284fb0cfb3cf35f1bb2391b6abe92ec2211200ea46b289de6575020a8ff8"
+   "sha256": "0c0bebae45d77238444dfcd410eca358408811401695f0634f81209d86585d82"
   },
   {
    "path": "lib/styles.ts",
-   "sha256": "8aab11f987ddb482b1498f2ce32ca24c4c6eab4efb032172b9ceaf20a923fb78"
+   "sha256": "6b80ec391215a8b2e3f2c7ae3a4c944be1521db1372d7752540ebd72567ffa6c"
   }
  ],
  "owned": {

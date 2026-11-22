@@ -8,13 +8,13 @@ import { KeepProofs } from "../../purchases/keep-proof";
 import { LinkLimits } from "../../public-wishes/link-limits";
 import { NumbersService } from "../../staff-reads/numbers.service";
 import { WishLifecycleService } from "../../wishes/wish-lifecycle.service";
-import { testWishNo } from "../../../../test/kit/unique";
+import { testWishNo, RUN } from "../../../../test/kit/unique";
 
 const ROOT = join(__dirname, "../../../..");
 const NOW = new Date("2032-06-14T09:00:00.000Z");
 const DAY = 86_400_000;
 const ids = new UuidV7Maker();
-const run = `${process.pid}${Date.now() % 100000}`;
+const run = RUN;
 let seq = 0;
 
 /** P-API-BASE-6 patch: HU1 no guest account, HU2 house wishes, HU3 payers do not block each other. */

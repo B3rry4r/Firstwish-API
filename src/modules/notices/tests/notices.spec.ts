@@ -12,13 +12,14 @@ import { JobsService } from "../../jobs/jobs.service";
 import { BANNED_WORDS, placeholdersOf, TEMPLATES, TEMPLATE_KEYS, wordingProblem } from "../catalog";
 import { classify, NoticesService } from "../notices.service";
 import { atLocalHour } from "../zoned";
+import { RUN, testSlug } from "../../../../test/kit/unique";
 
 const ROOT = join(__dirname, "../../../..");
 const ids = new UuidV7Maker();
 const NOW = new Date("2030-03-10T08:00:00.000Z");
 const bearer = (t: string) => ({ authorization: `Bearer ${t}` });
 let n = 0;
-const address = () => `b11-${process.pid}-${Date.now()}-${++n}@example.test`;
+const address = () => `b11-${RUN}-${Date.now()}-${++n}@example.test`;
 
 describe("notice wording (seed)", () => {
   const seed = JSON.parse(readFileSync(join(ROOT, "prisma/seed-data/MessageTemplate.json"), "utf8")) as { rows: { key: string; subject: string; body: string; channel: string }[] };
@@ -244,7 +245,7 @@ describe("notices (contract)", () => {
       await db.wish.create({
         data: { id, accountId, status: "live", kind: "birthday", occasion: "birthday", styleSlug: "classic", timeZone: "Africa/Lagos", name: "Tunde", endsAt, version: 0, ...over },
       });
-      await db.wishLink.create({ data: { id: ids.next(), slug: `b11-${id.slice(-12)}`, wishId: id, active: true } });
+      await db.wishLink.create({ data: { id: ids.next(), slug: testSlug("b11"), wishId: id, active: true } });
       await jobs.schedule("send-notice", new Date(endsAt.getTime() - 3 * 86_400_000), id);
       return id;
     }

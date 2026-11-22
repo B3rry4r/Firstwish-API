@@ -4328,6 +4328,8 @@ export interface PostUploadsBody {
   contentType?: string;
   /** File (image png/jpeg/webp/svg, sound mp3/mp4/aac/ogg/wav, model .glb/.riv) */
   file?: unknown;
+  /** string (optional; the file's name, at most 200 characters; read only by the stand-in screening when STANDIN_SCREENING is set, kept nowhere else) */
+  fileName?: string;
   /** image|sound|model|video (optional; the media kind, DEC-165) */
   kind?: "image" | "sound" | "model" | "video";
   /** string (photo|voice|clip|vault|studio|brand|order-photo|order-voice; what the file is for, DEC-165; order-photo and order-voice are the buyer's files for a Concierge order, subjectId is the order's id, DEC-271) */

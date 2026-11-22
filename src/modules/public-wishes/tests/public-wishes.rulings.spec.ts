@@ -4,7 +4,7 @@ import { UuidV7Maker } from "../../../common/ids/uuidv7";
 import { createTestApp, TestApp, uniqueAddress } from "../../../../test/kit/app";
 import { LinkLimits } from "../link-limits";
 import { ensureEntitlements } from "../../stored-files/tests/files-kit";
-import { testWishNo } from "../../../../test/kit/unique";
+import { testWishNo, RUN } from "../../../../test/kit/unique";
 
 const NOW = new Date("2027-03-10T09:00:00.000Z");
 const DAY = 24 * 3600 * 1000;
@@ -16,7 +16,7 @@ describe("B10 rulings NN1 NN2 NN3 NN4 NN5 and the proofs that stay (real databas
   let db: PrismaService;
   let owner: string;
   let seq = 0;
-  const run = `${process.pid}${Date.now() % 100000}`;
+  const run = RUN;
 
   beforeAll(async () => {
     t = await createTestApp({ now: NOW });

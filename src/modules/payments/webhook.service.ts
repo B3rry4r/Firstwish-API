@@ -1,3 +1,4 @@
+import { normaliseReference } from "../../common/normalise/reference";
 import { Inject, Injectable, Optional } from "@nestjs/common";
 import type { Prisma } from "@prisma/client";
 import { PrismaService } from "../../common/db/prisma.service";
@@ -76,7 +77,7 @@ function parse(raw: Buffer): Parsed {
   // Paystack events carry no event id of their own: the type, the provider's transaction (or refund) id and the reference name
   // one delivery's subject. Two events with one provider id for different references are two events (FF3).
   const providerId = typeof data.id === "number" || typeof data.id === "string" ? String(data.id) : "";
-  const reference = typeof data.reference === "string" ? data.reference : "";
+  const reference = typeof data.reference === "string" ? normaliseReference(data.reference) : "";
   if (!providerId && !reference) throw new AppError(400, "bad_event", "The event names no transaction.");
   // FF2: a control character in what names the event (or a NUL anywhere in the document, which the database refuses) is a 400.
   if ([type, providerId, reference].some(hasControl) || hasNul(payload)) throw new AppError(400, "bad_event", "The event holds a control character.");
@@ -91,7 +92,7 @@ function answerOf(ev: Parsed): ProviderAnswer {
   const fee = typeof d.fees === "number" && Number.isSafeInteger(d.fees) && d.fees >= 0 ? BigInt(d.fees) : null;
   const paid = typeof d.paid_at === "string" ? new Date(d.paid_at) : null;
   return {
-    reference: typeof d.reference === "string" ? d.reference : "",
+    reference: typeof d.reference === "string" ? normaliseReference(d.reference) : "",
     status: ev.type === "charge.success" ? "success" : "failed",
     amountKobo: amount,
     currency: typeof d.currency === "string" ? d.currency : "",

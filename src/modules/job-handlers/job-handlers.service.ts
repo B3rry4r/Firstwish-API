@@ -1,4 +1,5 @@
 import { Injectable, Logger, OnApplicationBootstrap, OnModuleInit } from "@nestjs/common";
+import { PrismaService } from "../../common/db/prisma.service";
 import { Clock } from "../../common/ports/clock.port";
 import { JobContext, JobResult, JobsService } from "../jobs/jobs.service";
 import { AbandonPayments } from "../payments/abandon";
@@ -10,6 +11,8 @@ import { LinkLimits } from "../public-wishes/link-limits";
 export const SWEEP_KEY = "sweep";
 /** How often the recurring jobs run again (the handler answers `again`). */
 export const ABANDON_EVERY_MS = 5 * 60_000;
+/** How long a contact page key is kept. */
+export const CONTACT_KEY_DAYS = 30;
 export const UPLOAD_CLEANUP_EVERY_MS = 60 * 60_000;
 export const LINK_HITS_EVERY_MS = 10 * 60_000;
 
@@ -33,6 +36,7 @@ export class JobHandlers implements OnModuleInit, OnApplicationBootstrap {
     private readonly abandon: AbandonPayments,
     private readonly files: FileJobs,
     private readonly links: LinkLimits,
+    private readonly db: PrismaService,
   ) {}
 
   /**
@@ -78,8 +82,13 @@ export class JobHandlers implements OnModuleInit, OnApplicationBootstrap {
       const removed = await this.files.eraseFilesOf(c.subjectId.slice(ERASE_FILES_PREFIX.length));
       return { changed: { removed } };
     }
-    const removed = (await this.files.sweepUnconfirmed()) + (await this.files.sweepUnattached()) + (await this.files.sweepUnpaidOrderFiles());
+    const removed = (await this.files.sweepUnconfirmed()) + (await this.files.sweepUnattached()) + (await this.files.sweepUnpaidOrderFiles()) + (await this.sweepContactKeys(c.now));
     return { changed: { removed }, again: new Date(c.now.getTime() + UPLOAD_CLEANUP_EVERY_MS) };
+  }
+
+  /** API-BASE-12 case 5: the contact page's Idempotency-Key rows older than 30 days go (a key is for a double tap, not for a month). */
+  private async sweepContactKeys(now: Date): Promise<number> {
+    return this.db.$executeRaw`DELETE FROM support_contact_key WHERE "createdAt" < ${new Date(now.getTime() - CONTACT_KEY_DAYS * 86_400_000)}`;
   }
 
   /** LL4: the public link's old hits are removed every 10 minutes. */

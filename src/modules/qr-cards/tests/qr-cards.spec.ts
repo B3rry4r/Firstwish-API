@@ -1,5 +1,6 @@
 import { AccountErasureService } from "../../accounts/account-erasure.service";
 import { ids, boot, routeStorage } from "../../concierge/tests/kit";
+import { testSlug } from "../../../../test/kit/unique";
 
 const NOW = new Date("2026-12-07T09:00:00.000Z");
 type Kit = Awaited<ReturnType<typeof boot>>;
@@ -26,7 +27,7 @@ describe("QR card B19", () => {
   /** A wish with a ticket, and a link unless asked not to. */
   async function owned(accountId: string, over: Record<string, unknown> = {}, link = true) {
     const w = await k.wish(accountId, over);
-    const slug = `b19q-${ids.next().slice(-8)}`;
+    const slug = testSlug("b19q");
     if (link) await k.db.wishLink.create({ data: { id: ids.next(), slug, wishId: w, active: true } });
     return { id: w, slug };
   }

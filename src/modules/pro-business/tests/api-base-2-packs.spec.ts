@@ -7,12 +7,13 @@ import { JobsService } from "../../jobs/jobs.service";
 import { SettlementService } from "../../payments/settlement.service";
 import { giveBackDraws } from "../../purchases/draw-giveback";
 import { sourceOfRecord } from "../../royalties/draw-source";
+import { RUN } from "../../../../test/kit/unique";
 
 const ROOT = join(__dirname, "../../../..");
 const NOW = new Date("2210-03-01T09:00:00.000Z");
 const WINDOW_END = new Date("2210-03-31T10:00:00Z");
 const ids = new UuidV7Maker();
-const run = `${process.pid}${Date.now() % 100000}`;
+const run = RUN;
 let seq = 0;
 const bearer = (token: string) => ({ authorization: `Bearer ${token}` });
 

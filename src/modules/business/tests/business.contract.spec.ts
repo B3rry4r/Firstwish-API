@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { StandinStorage } from "../../../common/ports/adapters/standins";
 import { StoragePort } from "../../../common/ports/storage.port";
 import { PNG } from "../../stored-files/tests/files-kit";
@@ -19,7 +20,7 @@ describe("business E-26 PATCH /v1/business (contract)", () => {
   }
   /** A ready brand file of this account (AA5: the logo is a stored file id). */
   const logoFor = async (accountId: string) => {
-    const id = `00000000-0000-7000-8000-${Math.floor(Math.random() * 1e12).toString().padStart(12, "0")}`;
+    const id = randomUUID();
     t.app.get<StandinStorage>(StoragePort).put(`files/${id}`, PNG(10), "image/png");
     await t.db.storedFile.create({ data: { id, ownerAccountId: accountId, purpose: "brand_logo", objectKey: `files/${id}`, contentType: "image/png", bytes: BigInt(10), status: "ready", variants: [], driver: "r2" } as never });
     return id;

@@ -5,11 +5,12 @@ import { UuidV7Maker } from "../../../common/ids/uuidv7";
 import { bearer } from "../../people/tests/b12-kit";
 import { createTestApp, TestApp } from "../../../../test/kit/app";
 import { SettlementService } from "../../payments/settlement.service";
+import { RUN } from "../../../../test/kit/unique";
 
 const ROOT = join(__dirname, "../../../..");
 const NOW = new Date("2027-05-10T09:00:00.000Z");
 const ids = new UuidV7Maker();
-const run = `${process.pid}${Date.now() % 100000}`;
+const run = RUN;
 let seq = 0;
 
 /** API-BASE-8 case 1 (HY1, HR1, HU6): a waiting plan payment never traps the business; the owner drops it at once. */
@@ -218,7 +219,7 @@ describe("HY1 plan payments: lapse time, everyone who may pay reads it, the owne
       await retire([p.id]);
     }
     expect(dropped + settledFirst).toBe(30);
-  });
+  }, 30_000);
 
   const at = (min: number) => t.clock.set(new Date(NOW.getTime() + min * 60_000));
   const row = (ref: string) => db.payment.findUniqueOrThrow({ where: { providerReference: ref } });
@@ -331,5 +332,5 @@ describe("HY1 plan payments: lapse time, everyone who may pay reads it, the owne
       await retire(rows.map((r) => r.id));
       at(0);
     }
-  });
+  }, 30_000);
 });

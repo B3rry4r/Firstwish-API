@@ -8,13 +8,14 @@ import { createTestApp, TestApp } from "../../../../test/kit/app";
 import { JobsService } from "../../jobs/jobs.service";
 import { wordingProblems } from "../catalog";
 import { NoticesService } from "../notices.service";
+import { RUN } from "../../../../test/kit/unique";
 
 const ROOT = join(__dirname, "../../../..");
 const ids = new UuidV7Maker();
 const NOW = new Date("2030-03-10T08:00:00.000Z");
 const bearer = (t: string) => ({ authorization: `Bearer ${t}` });
 let n = 0;
-const address = () => `pb11-${process.pid}-${Date.now()}-${++n}@example.test`;
+const address = () => `pb11-${RUN}-${Date.now()}-${++n}@example.test`;
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 describe("P-B11 notices patch", () => {

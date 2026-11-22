@@ -9,13 +9,13 @@ import { SettlementService } from "../../payments/settlement.service";
 import { UnlockTokens } from "../../public-wishes/unlock-token";
 import { LinkLimits } from "../../public-wishes/link-limits";
 import { WishLifecycleService } from "../../wishes/wish-lifecycle.service";
-import { testWishNo } from "../../../../test/kit/unique";
+import { testWishNo, RUN } from "../../../../test/kit/unique";
 
 const ROOT = join(__dirname, "../../../..");
 const NOW = new Date("2032-06-14T09:00:00.000Z");
 const DAY = 86_400_000;
 const ids = new UuidV7Maker();
-const run = `${process.pid}${Date.now() % 100000}`;
+const run = RUN;
 let seq = 0;
 
 /** API-BASE-6 case 1 (HS1/HS2, HA1, HA2): keep and wake by the link with no account. */

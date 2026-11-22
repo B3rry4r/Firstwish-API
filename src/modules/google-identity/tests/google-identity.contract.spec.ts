@@ -2,6 +2,7 @@ import { bearer, refreshCookieOf, signIn, SignInApp, signInApp, staffToken, subO
 import { StandinGoogle } from "../../../common/ports/adapters/standins";
 import { GOOGLE_ISSUERS, GoogleIdentityPort } from "../../../common/ports/google.port";
 import { STANDIN_GOOGLE_CLIENT_ID } from "../google-identity.service";
+import { RUN } from "../../../../test/kit/unique";
 
 describe("Google sign-in E-53..E-56 (contract)", () => {
   let t: SignInApp;
@@ -16,7 +17,7 @@ describe("Google sign-in E-53..E-56 (contract)", () => {
   const claims = (email: string, over: Record<string, unknown> = {}) => ({
     iss: GOOGLE_ISSUERS[0],
     aud: STANDIN_GOOGLE_CLIENT_ID,
-    sub: `g-${process.pid}-${++sub}`,
+    sub: `g-${RUN}-${++sub}`,
     email,
     email_verified: true,
     exp: Math.floor(t.clock.now().getTime() / 1000) + 600,

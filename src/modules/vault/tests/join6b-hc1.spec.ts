@@ -6,12 +6,13 @@ import { createTestApp, TestApp } from "../../../../test/kit/app";
 import { AccountErasureService } from "../../accounts/account-erasure.service";
 import { FileJobs } from "../../stored-files/file-jobs";
 import { JobsService } from "../../jobs/jobs.service";
+import { RUN, testWishNo } from "../../../../test/kit/unique";
 
 const ROOT = join(__dirname, "../../../..");
 const NOW = new Date("2209-08-02T09:00:00.000Z");
 const DAY = 24 * 3600 * 1000;
 const ids = new UuidV7Maker();
-const run = `${process.pid}${Date.now() % 100000}`;
+const run = RUN;
 let seq = 0;
 const auth = (token: string) => ({ authorization: `Bearer ${token}` });
 
@@ -51,7 +52,7 @@ describe("HC1 (join 6 patch): after an owner's erase, the Vault files a playing 
   }
   async function reveal(b: { token: string; businessId: string }, shootId: string, endsOn: string): Promise<{ cw: string; code: string }> {
     const cw = ids.next();
-    await db.clientWish.create({ data: { id: cw, businessId: b.businessId, client: "Ada Obi", kind: "photographers", occasion: "wedding", day: new Date("2209-08-02T00:00:00Z"), no: `09${++seq}`, key: `k-${cw}`, wish: "", shoot: "", hearts: [], sentAt: NOW } });
+    await db.clientWish.create({ data: { id: cw, businessId: b.businessId, client: "Ada Obi", kind: "photographers", occasion: "wedding", day: new Date("2209-08-02T00:00:00Z"), no: testWishNo(), key: `k-${cw}`, wish: "", shoot: "", hearts: [], sentAt: NOW } });
     const sent = await t.http().post(`/v1/business/client-wishes/${cw}/send-reveal`).set(auth(b.token)).send({ shoot: shootId, set: "proofs", reveal: { client: "Ada Obi", occasion: "Wedding", city: "Lagos", date: "2209-07-20", note: "Thank you.", credits: [], style: "golden", endsOn } });
     expect(sent.status).toBe(200);
     const code = (await db.$queryRaw<{ code: string }[]>`SELECT code FROM reveal_access WHERE "wishId" = ${cw}::uuid`)[0].code;

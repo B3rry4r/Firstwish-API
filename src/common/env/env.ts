@@ -1,5 +1,6 @@
 import { ENV_SCHEMA, Kind, VarSpec } from "./env.schema";
 import { parsePortTimeouts } from "../ports/time-limit";
+import { REFUSAL_LABELS } from "../ports/screening.port";
 
 /** The validated environment. Values are strings unless noted; absent optional values are undefined. */
 export interface Env {
@@ -169,7 +170,7 @@ export function loadEnv(raw: Record<string, string | undefined> = process.env): 
     if (providers !== "standin" || out.NODE_ENV === "production") {
       problems.push({ name: "STANDIN_SCREENING", problem: "refused: it drives the stand-in screening only (needs PROVIDERS=standin and a NODE_ENV other than production)" });
     } else if (!parseScreeningRules(screening)) {
-      problems.push({ name: "STANDIN_SCREENING", problem: "must be a comma list of hold:<part of a file name> or reject:<part of a file name>, for example hold:held,reject:refused" });
+      problems.push({ name: "STANDIN_SCREENING", problem: "must be a comma list of hold:<part of a file name> or reject:<part of a file name>[:<kind: type-not-taken, empty, too-large or type-mismatch>], for example hold:held,reject:refused:too-large" });
     }
   }
   if (problems.length) throw new EnvError(problems);
@@ -180,15 +181,21 @@ export interface ScreeningRule {
   action: "hold" | "reject";
   /** lower case, a part of a file name */
   text: string;
+  /** II2: for a reject rule, the kind of refusal the screening result names (as the refusal list writes it, with dashes); none names no kind */
+  kind?: string;
 }
 
-/** API-BASE-12 case 4: "hold:held,reject:refused" as rules; null when a rule is not of that shape (an action, a colon, 1 to 40 of a-z 0-9 . _ -). */
+/**
+ * API-BASE-12 case 4: "hold:held,reject:refused" as rules; null when a rule is not of that shape (an action, a colon, 1 to 40 of a-z 0-9 . _ -).
+ * API-BASE-13 (II2): a reject rule may name the kind of refusal after a second colon (reject:refused:too-large): one of the refusal kinds, written with dashes.
+ */
 export function parseScreeningRules(raw: string): ScreeningRule[] | null {
   const rules: ScreeningRule[] = [];
   for (const part of raw.split(",")) {
-    const m = /^\s*(hold|reject):([A-Za-z0-9._-]{1,40})\s*$/.exec(part);
+    const m = /^\s*(hold|reject):([A-Za-z0-9._-]{1,40})(?::([a-z-]{1,20}))?\s*$/.exec(part);
     if (!m) return null;
-    rules.push({ action: m[1] as ScreeningRule["action"], text: m[2].toLowerCase() });
+    if (m[3] !== undefined && (m[1] !== "reject" || !REFUSAL_LABELS.some((l) => l.replace(/ /g, "-") === m[3]))) return null;
+    rules.push({ action: m[1] as ScreeningRule["action"], text: m[2].toLowerCase(), ...(m[3] ? { kind: m[3] } : {}) });
   }
   return rules;
 }

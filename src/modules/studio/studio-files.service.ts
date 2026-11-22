@@ -8,6 +8,7 @@ import type { StyleFile, StyleFiles } from "../../contracts";
 import { Clock } from "../../common/ports/clock.port";
 import { UnlockTokens } from "../public-wishes/unlock-token";
 import { ApprovedStyleDocuments } from "../styles/approved-document";
+import { NOT_ACCEPTED, refusalsOf } from "../stored-files/refusal-words";
 import { isUuid, mediaKindOf, purposeOnWire } from "../stored-files/file-rules";
 import { type Reader, SignedUrlsService } from "../stored-files/signed-urls.service";
 import { hiddenFromBuyer } from "../wishes/wish-shown";
@@ -31,7 +32,7 @@ export class StudioFilesService {
     private readonly clock: Clock,
   ) {}
 
-  private async view(f: FileRow, reader: Reader): Promise<StyleFile> {
+  private async view(f: FileRow, reader: Reader, reasons?: Map<string, string>): Promise<StyleFile> {
     let url: string | null = null;
     let expiresAt: string | null = null;
     if (f.status === "ready" || (f.status === "screening" && reader.type === "owner")) {
@@ -39,14 +40,14 @@ export class StudioFilesService {
       url = s.url;
       expiresAt = s.expiresAt;
     }
-    return { fileId: f.id, purpose: purposeOnWire(f.purpose), kind: f.kind ?? mediaKindOf(f.contentType), contentType: f.contentType, bytes: Number(f.bytes), status: f.status, url, expiresAt, createdAt: toWireInstant(f.createdAt) };
+    return { fileId: f.id, purpose: purposeOnWire(f.purpose), kind: f.kind ?? mediaKindOf(f.contentType), contentType: f.contentType, bytes: Number(f.bytes), status: f.status, reason: f.status === "rejected" ? (reasons ?? (await refusalsOf(this.db, [f]))).get(f.id) ?? NOT_ACCEPTED : null, url, expiresAt, createdAt: toWireInstant(f.createdAt) };
   }
 
   private async ownStyle(accountId: string, styleId: string): Promise<void> {
     if (!isUuid(styleId) || !(await this.db.studioStyle.findFirst({ where: { id: styleId, accountId }, select: { id: true } }))) throw notFound();
   }
 
-  /** The owner's list of a style's files (ready and in screening), oldest first. */
+  /** The owner's list of a style's files (ready, in screening and refused, with the refusal's words), oldest first. */
   async list(accountId: string, styleId: string, q: { cursor?: string; limit?: number }): Promise<Page<StyleFile>> {
     await this.ownStyle(accountId, styleId);
     const limit = q.limit ?? DEFAULT_LIMIT;
@@ -57,18 +58,19 @@ export class StudioFilesService {
       after = c.id;
     }
     const rows = await this.db.storedFile.findMany({
-      where: { styleId, ownerAccountId: accountId, status: { in: ["ready", "screening"] }, ...(after ? { id: { gt: after } } : {}) },
+      where: { styleId, ownerAccountId: accountId, status: { in: ["ready", "screening", "rejected"] }, ...(after ? { id: { gt: after } } : {}) },
       orderBy: { id: "asc" },
       take: limit + 1,
     });
     const page = toPage(rows, limit, (r) => ({ key: "", id: r.id }));
-    return { items: await Promise.all(page.items.map((r) => this.view(r, { type: "owner", accountId }))), nextCursor: page.nextCursor };
+    const reasons = await refusalsOf(this.db, page.items);
+    return { items: await Promise.all(page.items.map((r) => this.view(r, { type: "owner", accountId }, reasons))), nextCursor: page.nextCursor };
   }
 
   /** The owner's read of one file of a style. */
   async one(accountId: string, styleId: string, fileId: string): Promise<StyleFile> {
     await this.ownStyle(accountId, styleId);
-    const f = isUuid(fileId) ? await this.db.storedFile.findFirst({ where: { id: fileId, styleId, ownerAccountId: accountId, status: { in: ["ready", "screening"] } } }) : null;
+    const f = isUuid(fileId) ? await this.db.storedFile.findFirst({ where: { id: fileId, styleId, ownerAccountId: accountId, status: { in: ["ready", "screening", "rejected"] } } }) : null;
     if (!f) throw AppError.notFound("No such file.");
     return this.view(f, { type: "owner", accountId });
   }

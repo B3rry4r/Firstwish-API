@@ -31,6 +31,7 @@ import {
   UPLOAD_TTL_SECONDS,
   variantsOf,
 } from "./file-rules";
+import { refusalsOf, refusalWords } from "./refusal-words";
 import { readLimits } from "../price-book/book-limits";
 import { notInBusiness } from "../../common/auth/login-removed";
 import { businessAccessOf } from "./vault-access";
@@ -271,7 +272,7 @@ export class StoredFilesService {
     for (let polls = 0; ; polls++) {
       const row = await this.db.storedFile.findFirst({ where: { id, ownerAccountId: p.accountId } });
       if (!row) throw refused("The file was refused.");
-      if (row.status === "ready" || row.status === "screening" || row.status === "rejected") return fileView(row);
+      if (row.status === "ready" || row.status === "screening" || row.status === "rejected") return fileView(row, (await refusalsOf(this.db, [row])).get(row.id) ?? null);
       if (row.status === "pending") return this.confirm(p, id, id);
       if (row.status !== "uploaded") throw AppError.notFound("No such file.");
       if (polls * WAIT_POLL_MS > WAIT_FOR_OTHER_CONFIRM_MS) throw AppError.conflict("confirm_in_progress", "This file is still being checked. Try again in a moment.");
@@ -307,7 +308,7 @@ export class StoredFilesService {
     if (!row || row.status === "deleted") throw AppError.notFound("No such file.");
     if (claimed.count === 0) {
       if (row.status === "uploaded") return this.awaitOtherConfirm(p, id);
-      return fileView(row);
+      return fileView(row, (await refusalsOf(this.db, [row])).get(row.id) ?? null);
     }
     try {
       return await this.finishConfirm(p, row);
@@ -400,7 +401,7 @@ export class StoredFilesService {
     );
     for (const k of done.removeKeys) await this.storage.delete(k);
     if (done.error) throw done.error;
-    return fileView(done.row);
+    return fileView(done.row, done.row.status === "rejected" ? refusalWords(screened.labels) : null);
   }
 
   /** E-183 (Y5, X23): removes the row, then the objects (and sizes). A file a wish or a card names (a real foreign key) is 409. */

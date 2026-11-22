@@ -371,14 +371,17 @@ export class StandinScreening extends UploadScreeningPort {
 
   /**
    * Clean (score 0) unless the key contains "reject" (score 1, label "stand-in"). A rule of the STANDIN_SCREENING setting whose text is in the
-   * file's name holds the file in screening (score 0.6, a staff decision) or refuses it (score 1).
+   * file's name holds the file in screening (score 0.6, a staff decision) or refuses it (score 1, with the kind the rule names as its label).
    */
   screen(input: ScreenInput): Promise<ScreenResult> {
     this.screened.push(input);
     const at = input.key.indexOf("~");
     const name = at < 0 ? "" : input.key.slice(at + 1).toLowerCase();
     const hit = name ? this.rules.find((r) => name.includes(r.text)) : undefined;
-    if (input.key.includes("reject") || hit?.action === "reject") return Promise.resolve({ verdict: "rejected", score: 1, labels: ["stand-in"], reason: "Rejected by the stand-in." });
+    if (input.key.includes("reject") || hit?.action === "reject") {
+      // II2: a reject rule may name the kind of refusal; the label is then that kind, as the basic screening writes it
+      return Promise.resolve({ verdict: "rejected", score: 1, labels: [hit?.kind ? hit.kind.replace(/-/g, " ") : "stand-in"], reason: "Rejected by the stand-in." });
+    }
     if (hit?.action === "hold") return Promise.resolve({ verdict: "rejected", score: 0.6, labels: ["stand-in"], reason: "Held for a look by the stand-in." });
     return Promise.resolve({ verdict: "clean", score: 0, labels: [] });
   }

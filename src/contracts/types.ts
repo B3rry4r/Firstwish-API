@@ -443,6 +443,8 @@ export interface StyleFile {
   contentType: string;
   bytes: number;
   status: StoredFile["status"];
+  /** II2 (DEC-303): the plain words of a refusal when status is rejected, else null */
+  reason: string | null;
   url: string | null;
   expiresAt: Instant | null;
   createdAt: Instant;
@@ -1552,6 +1554,8 @@ export interface StoredFile {
   objectKey: string;
   ownerAccountId?: string | null;
   purpose: "wish-photo" | "voice-note" | "video-clip" | "vault-file" | "studio-asset" | "brand-logo" | "profile-picture" | "render" | "qr-card" | "export";
+  /** II2 (DEC-303): when the screening refused the file (status rejected), the reason in the server's plain words, from a fixed list by the screening result's own kind; null in every other state */
+  reason: string | null;
   sha256?: string | null;
   status: "pending" | "uploaded" | "screening" | "ready" | "rejected" | "deleted";
   styleId: string;

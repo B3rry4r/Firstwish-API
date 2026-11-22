@@ -3,6 +3,10 @@ import type { TestApp } from "../../../../test/kit/app";
 import { seedRoleTable } from "../../staff-accounts/tests/staff-kit";
 import { filesApp, ids, JPEG, makeAccount, makeBusiness, ScoredScreening, stage } from "../../stored-files/tests/files-kit";
 import { ScreeningResultsService } from "../screening-results.service";
+import { holdSettingLockForFile } from "../../../../test/kit/setting-lock";
+
+// the book's limits are shared by every spec in the run's database: hold the setting lock for the file
+holdSettingLockForFile();
 
 describe("E-157 screening decision (contract)", () => {
   let t: TestApp;

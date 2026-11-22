@@ -4,10 +4,14 @@ import { UuidV7Maker } from "../../ids/uuidv7";
 import { createTestApp, TestApp } from "../../../../test/kit/app";
 import { standinEnv } from "../../../../test/kit/env";
 import { PNG } from "../../../modules/stored-files/tests/files-kit";
+import { holdSettingLockForFile } from "../../../../test/kit/setting-lock";
 
 const ids = new UuidV7Maker();
 const run = `${process.pid}${Date.now() % 100000}`;
 let seq = 0;
+
+// the book's limits are shared by every spec in the run's database: hold the setting lock for the file
+holdSettingLockForFile();
 
 /** API-BASE-12 case 4 (API-BASE-12 case 4): the stand-in screening can hold a file in "screening" or refuse it, by file name, on a stack that turns the setting on. */
 describe("API-BASE-12 case 4 STANDIN_SCREENING", () => {

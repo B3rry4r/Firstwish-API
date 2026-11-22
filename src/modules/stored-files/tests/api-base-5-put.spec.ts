@@ -2,6 +2,10 @@ import { PrismaService } from "../../../common/db/prisma.service";
 import { StoragePort } from "../../../common/ports/storage.port";
 import type { TestApp } from "../../../../test/kit/app";
 import { filesApp, ids, JPEG, makeAccount, PNG, ScoredScreening } from "./files-kit";
+import { holdSettingLockForFile } from "../../../../test/kit/setting-lock";
+
+// the book's limits are shared by every spec in the run's database: hold the setting lock for the file
+holdSettingLockForFile();
 
 /** HQ3: the stand-in storage takes the signed put (only with PROVIDERS=standin) and the upload runs end to end through the real routes. */
 describe("API-BASE-5 case 1: the stand-in storage receives the signed put", () => {

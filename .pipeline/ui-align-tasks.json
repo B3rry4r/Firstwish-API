@@ -6617,7 +6617,8 @@
       ],
       "change": "implement the designed empty state",
       "enterCondition": "the server returns no items",
-      "status": "open"
+      "status": "done",
+      "resolution": "WEB-API-6A (web web-api-6a, merged a2fee31), verified 22 Nov"
     },
     {
       "id": "UA-552",
@@ -9861,7 +9862,8 @@
         "lib/maker.ts:158-159 GATHER"
       ],
       "change": "replace: a contribution link each friend opens to submit their own answer to the voices question",
-      "status": "open"
+      "status": "done",
+      "resolution": "WEB-API-6A (web web-api-6a, merged a2fee31), verified 22 Nov"
     },
     {
       "id": "UA-791",

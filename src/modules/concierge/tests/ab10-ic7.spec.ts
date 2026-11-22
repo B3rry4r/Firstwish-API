@@ -1,3 +1,5 @@
+import { spawnSync } from "node:child_process";
+import { join } from "node:path";
 import { PrismaService } from "../../../common/db/prisma.service";
 import { SettlementService } from "../../payments/settlement.service";
 import { FileJobs } from "../../stored-files/file-jobs";
@@ -14,18 +16,26 @@ type Who = { id: string; auth: string };
 describe("IC7: the buyer's files for a Concierge order", () => {
   let k: Kit;
   let db: PrismaService;
-  /** Two makers for the whole spec (the makers list is one page of the suite's shared database: a spec must not add many). Both are suspended at the end. */
+  /** Two makers for the whole spec. The spec runs in its own database: the makers list is one page of the shared one, and a spec must not crowd it. */
   let makerA: Who;
   let makerB: Who;
+  const prefix = process.env.TEST_DB_PREFIX || "fw";
+  const dbName = `${prefix}_test_ab10c_${process.pid}`;
+  const rootDir = join(__dirname, "../../../..");
+  const before = process.env.DATABASE_URL;
   beforeAll(async () => {
+    const made = spawnSync(process.execPath, [join(rootDir, "scripts/db.mjs"), "create", dbName, prefix], { encoding: "utf8" });
+    if (made.status !== 0) throw new Error(`no database: ${made.stderr}`);
+    process.env.DATABASE_URL = made.stdout.trim().split("\n").pop();
     k = await boot("ab10c", NOW);
     db = k.db;
     makerA = await k.staff(["maker"]);
     makerB = await k.staff(["maker"]);
   });
   afterAll(async () => {
-    await db.staffAccount.updateMany({ where: { id: { in: [makerA.id, makerB.id] } }, data: { status: "suspended" } });
     await k.t.close();
+    process.env.DATABASE_URL = before;
+    spawnSync(process.execPath, [join(rootDir, "scripts/db.mjs"), "drop", dbName], { encoding: "utf8" });
   });
   beforeEach(() => k.t.clock.set(NOW));
   const http = () => k.t.http();

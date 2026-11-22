@@ -461,7 +461,7 @@ describe("notices (contract)", () => {
       expect((await resend("finance", f.id)).status).toBe(403);
       expect((await resend("ops", f.id, "no")).status).toBe(422);
       expect((await resend("ops", ids.next())).status).toBe(404);
-      expect((await resend("ops", "not-a-uuid")).status).toBe(422);  // IF2: a name that is not an id is 422 in words
+      expect((await resend("ops", "not-a-uuid")).status).toBe(404);
       const fine = await account();
       const ok = await notices.send(undefined, { template: "opened", toAccountId: fine.id, data: { name: "Ada", for: "T" }, key: `k-${ids.next()}` });
       if (ok.status !== "queued") throw new Error("not queued");

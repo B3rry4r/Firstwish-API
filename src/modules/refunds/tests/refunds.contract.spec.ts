@@ -171,7 +171,7 @@ describe("B08 refunds, the settlement check and staff payments (contract)", () =
     expect((await send(staff.mod.token, s.body.id)).status).toBe(403);
     expect((await send(staff.financeB.token, s.body.id, "no")).status).toBe(422);
     expect((await t.http().post(`/v1/admin/refunds/${s.body.id}/approve-refund`).send({ reason: REASON })).status).toBe(401);
-    expect((await send(staff.financeB.token, "nope")).status).toBe(422);  // IF2: a name that is not an id is 422 in words
+    expect((await send(staff.financeB.token, "nope")).status).toBe(404);
     const r = await send(staff.financeB.token, s.body.id);
     expect(r.status).toBe(200);
     expect(r.body).toMatchObject({ id: s.body.id, status: "sent", approvedBy: staff.financeB.id, providerReference: `standin-refund-${s.body.id}` });
@@ -322,7 +322,7 @@ describe("B08 refunds, the settlement check and staff payments (contract)", () =
     expect((await t.http().post(`/v1/admin/payments/${p.reference}/refund`).send({ reason: REASON })).status).toBe(401);
     expect((await t.http().post(`/v1/admin/payments/${p.reference}/refund`).set(auth(staff.support.token)).send({ reason: REASON })).status).toBe(403);
     expect((await t.http().post(`/v1/admin/payments/${p.reference}/refund`).set(auth(staff.financeA.token)).send({ reason: REASON })).status).toBe(409);
-    expect((await t.http().post(`/v1/admin/payments/fw-nope/refund`).set(auth(staff.financeA.token)).send({ reason: REASON })).status).toBe(422);  // IF2: a name that is not an id is 422 in words
+    expect((await t.http().post(`/v1/admin/payments/fw-nope/refund`).set(auth(staff.financeA.token)).send({ reason: REASON })).status).toBe(404);
     expect((await t.http().post(`/v1/admin/payments/${p.reference}/refund`).set(auth(staff.financeA.token)).send({ reason: "x" })).status).toBe(422);
   });
 
@@ -371,7 +371,7 @@ describe("B08 refunds, the settlement check and staff payments (contract)", () =
     expect(Object.keys(d.body.ledger[0]).sort()).toEqual(["account", "amountKobo", "createdAt", "direction", "id", "journalId", "memo", "refundId"]);
     expect((await t.http().get(`/v1/admin/payments/${p.reference}`)).status).toBe(401);
     expect((await t.http().get(`/v1/admin/payments/${p.reference}`).set(auth(staff.mod.token))).status).toBe(403);
-    expect((await t.http().get("/v1/admin/payments/fw-nope").set(auth(staff.ops.token))).status).toBe(422);  // IF2: a name that is not an id is 422 in words
+    expect((await t.http().get("/v1/admin/payments/fw-nope").set(auth(staff.ops.token))).status).toBe(404);
   });
 
   const e86 = (token: string, reference: string) => t.http().post(`/v1/admin/payments/${reference}/refund`).set(auth(token)).send({ reason: REASON });

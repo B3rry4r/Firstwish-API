@@ -50,7 +50,7 @@ describe("API-BASE-9 case 5 (IB2): download addresses for finals at the reveal l
     const other = await k.owner();
     expect((await k.post(`/v1/business/reveal-links/${off.id}/downloads`, other.token, { on: true })).status).toBe(404);
     expect((await k.post(`/v1/business/reveal-links/${off.id}/downloads`, off.o.token, { on: "yes" })).status).toBe(422);
-    expect((await k.post("/v1/business/reveal-links/nope/downloads", off.o.token, { on: true })).status).toBe(422);  // IF2: a name that is not an id is 422 in words
+    expect((await k.post("/v1/business/reveal-links/nope/downloads", off.o.token, { on: true })).status).toBe(404);
     const bad = await k.post("/v1/business/reveals", off.o.token, { shoot: off.shoot, set: "finals", again: true, reveal: k.revealBody({ downloads: "yes" }) });
     expect(bad.status).toBe(422);
     expect(Object.keys(bad.body.error.fields)).toEqual(["reveal.downloads"]);

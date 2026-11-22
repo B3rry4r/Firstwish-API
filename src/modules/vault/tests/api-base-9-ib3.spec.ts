@@ -27,7 +27,7 @@ describe("API-BASE-9 case 6 (IB3): rename a shoot and a file", () => {
     expect((await k.get(`/v1/business/shoots/${s.shoot}`, o.token)).body.title).toBe("Wedding");
     const gone = await k.login(o, "removed");
     expect((await k.patch(`/v1/business/shoots/${s.shoot}`, gone.token, { title: "x" })).status).toBe(403);
-    expect((await k.patch("/v1/business/shoots/not-a-uuid", o.token, { title: "x" })).status).toBe(422);  // IF2: a name that is not an id is 422 in words
+    expect((await k.patch("/v1/business/shoots/not-a-uuid", o.token, { title: "x" })).status).toBe(404);
     expect((await k.t.http().patch(`/v1/business/shoots/${s.shoot}`).send({ title: "x" })).status).toBe(401);
     for (const [body, field] of [[{ title: "" }, "title"], [{ title: "x".repeat(41) }, "title"], [{ client: "   " }, "client"], [{ client: "c".repeat(61) }, "client"], [{}, "title"], [{ title: 5 }, "title"]] as [object, string][]) {
       const bad = await k.patch(`/v1/business/shoots/${s.shoot}`, o.token, body);
@@ -75,7 +75,7 @@ describe("API-BASE-9 case 6 (IB3): rename a shoot and a file", () => {
     expect(refused.body.error.code).toBe("login_removed");
     const nobody = await k.who();
     expect((await k.patch(`/v1/business/vault-files/${s.files[0]}`, nobody.token, { name: "x.jpg" })).status).toBe(403);
-    expect((await k.patch("/v1/business/vault-files/nope", o.token, { name: "x.jpg" })).status).toBe(422);  // IF2: a name that is not an id is 422 in words
+    expect((await k.patch("/v1/business/vault-files/nope", o.token, { name: "x.jpg" })).status).toBe(404);
     const wishFile = k.ids.next();
     await k.db.storedFile.create({ data: { id: wishFile, ownerAccountId: o.accountId, businessId: o.businessId, purpose: "brand_logo", objectKey: `b/${wishFile}`, contentType: "image/png", bytes: 10n, status: "ready", variants: [], driver: "r2" } });
     expect((await k.patch(`/v1/business/vault-files/${wishFile}`, o.token, { name: "Logo.png" })).status).toBe(404);

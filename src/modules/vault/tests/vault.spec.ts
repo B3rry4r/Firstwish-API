@@ -109,7 +109,7 @@ describe("B18 Vault: shoots, space, reveal links, plays, E-33", () => {
     expect((await get("/v1/business/shoots", other.token)).body.items).toEqual([]);
     expect((await t.http().delete(`/v1/business/shoots/${s.id}`).set(auth(other.token))).status).toBe(404);
     expect((await post(`/v1/business/shoots/${s.id}/files`, other.token, { files: [ids.next()], set: "proofs", shoot: s.id })).status).toBe(404);
-    expect((await get("/v1/business/shoots/not-a-uuid", o.token)).status).toBe(422);  // IF2: a name that is not an id is 422 in words
+    expect((await get("/v1/business/shoots/not-a-uuid", o.token)).status).toBe(404);
     // a removed login loses it at once
     await db.login.updateMany({ where: { businessId: o.businessId }, data: { status: "removed" } });
     expect((await get(`/v1/business/shoots/${s.id}`, login.token)).status).toBe(403);

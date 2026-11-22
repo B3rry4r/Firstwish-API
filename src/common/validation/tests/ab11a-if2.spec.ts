@@ -18,8 +18,8 @@ const routes = registry.resources.flatMap((r) => r.endpoints).filter((e) => e.me
 const UUID7 = "0192f5a0-1c2b-7000-8000-0123456789ab";
 const JUNK = ["not-an-id", "12345", "0192f5a0-1c2b-7000-8000-0123456789a", "0192f5a0-1c2b-7000-8000-0123456789abc", "%27%20OR%201=1", "null"];
 
-/** API-BASE-11A case 2 (IF2): an id that is not an id is 422 in words at every route that takes one; an id in any case is the same id. */
-describe("IF2: ids in every spelling", () => {
+/** API-BASE-11A case 2 (IF2a): a non-id in the path is 404, in a body or query field 422, never 500; an id in any case is the same id. */
+describe("IF2a: ids in every spelling", () => {
   let k: Kit;
   let staffAuth: string;
   let userAuth: string;
@@ -48,27 +48,27 @@ describe("IF2: ids in every spelling", () => {
   const names = (e: Endpoint) => [...e.path.matchAll(/:(\w+)/g)].map((m) => m[1]).filter((n) => ID_NAMES.includes(n));
   const good = (name: string) => (name === "reference" ? `fw-${UUID7}` : UUID7);
 
-  it(`a non-id at every route that takes an id answers 422 in words, never 500 (${routes.length} routes)`, async () => {
+  it(`IF2a: a non-id in the path answers as it always has, never 500 and never 200 (${routes.length} routes); the path is not answered with 422 for its id`, async () => {
     expect(routes.length).toBeGreaterThanOrEqual(90);
     const wrong: string[] = [];
-    let tried = 0;
+    let notFound = 0;
     for (const e of routes) {
       for (const name of names(e)) {
         for (const junk of JUNK) {
           const values: Record<string, string> = Object.fromEntries(names(e).map((n) => [n, good(n)]));
           values[name] = junk;
           const r = await call(e, values);
-          tried++;
           const fields = (r.body as { error?: { fields?: Record<string, string> } }).error?.fields ?? {};
-          if (r.status !== 422 || !fields[name] || !/^Not an? /.test(fields[name])) wrong.push(`${e.method} ${e.path} ${name}=${junk} -> ${r.status} ${JSON.stringify(r.body).slice(0, 100)}`);
+          if (r.status === 404) notFound++;
+          if (r.status >= 500 || r.status === 200 || r.status === 201 || fields[name]) wrong.push(`${e.method} ${e.path} ${name}=${junk} -> ${r.status} ${JSON.stringify(r.body).slice(0, 100)}`);
         }
       }
     }
     expect(wrong).toEqual([]);
-    expect(tried).toBeGreaterThan(routes.length * 5);
+    expect(notFound).toBeGreaterThan(routes.length);
   });
 
-  it("an id in upper or mixed case is not refused anywhere: it reaches the route and is looked up as lower case", async () => {
+  it("an id in upper or mixed case is not refused anywhere and reads as the lower case id: it reaches the route and is looked up as lower case", async () => {
     const wrong: string[] = [];
     for (const e of routes) {
       const values: Record<string, string> = Object.fromEntries(names(e).map((n) => [n, good(n).toUpperCase()]));
@@ -122,5 +122,10 @@ describe("IF2: ids in every spelling", () => {
     const bad = await k.t.http().post("/v1/payments").set("Authorization", a.auth).set("Idempotency-Key", `ab11a2-${process.pid}-bad-key`).send({ purpose: "ticket", ticket: "moment", subjectId: "not-an-id" });
     expect(bad.status).toBe(422);
     expect(bad.body.error.fields.subjectId).toMatch(/^Not an id/);
+    // IF2a: an id in a body field that is not an id is 422 in words (the keep body's wishId); in the path the same word is 404
+    const keep = await k.t.http().post(`/v1/wishes/${w}/keep`).set("Authorization", a.auth).set("Idempotency-Key", `ab11a2-${process.pid}-keep-key`).send({ keepKey: "month", wishId: "not-an-id" });
+    expect(keep.status).toBe(422);
+    expect((await k.t.http().get("/v1/wishes/not-an-id").set("Authorization", a.auth)).status).toBe(404);
+    expect((await k.t.http().get("/v1/payments/fw-not-a-payment").set("Authorization", a.auth)).status).toBe(404);
   });
 });

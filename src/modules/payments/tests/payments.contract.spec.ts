@@ -311,7 +311,7 @@ describe("payments core E-87, E-88, E-217 (contract)", () => {
     expect(calls).toHaveLength(1);
     expect(await t.http().get(`/v1/payments/${p.reference}`).set(bearer(a.token))).toMatchObject({ status: 200 });
     expect(calls).toHaveLength(1);
-    expect((await t.http().get(`/v1/payments/fw-nothing`).set(bearer(a.token))).status).toBe(422);  // IF2: a name that is not an id is 422 in words
+    expect((await t.http().get(`/v1/payments/fw-nothing`).set(bearer(a.token))).status).toBe(404);
   });
 
   it("abandoned: past the declared time a pending payment is marked; a late success still fulfils once and is flagged", async () => {

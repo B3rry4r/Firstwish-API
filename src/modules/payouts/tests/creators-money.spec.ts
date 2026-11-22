@@ -575,7 +575,7 @@ describe("creators' money (B16)", () => {
       for (const role of ["ops", "reviewer", "support"]) expect((await t.http().post(url).set(bearer(`staff-${role}`)).send(markBody("2026-05"))).status).toBe(403);
       expect((await t.http().post(url).set(bearer("staff-finance")).send({ month: "2026-05", reason: "ab" })).status).toBe(422);
       expect((await t.http().post(url).set(bearer("staff-finance")).send({ month: "2026-05" })).status).toBe(422);
-      expect((await t.http().post(`/v1/admin/creators/payouts/not-an-id/paid`).set(bearer("staff-finance")).send(markBody("2026-05"))).status).toBe(422);  // IF2: a name that is not an id is 422 in words
+      expect((await t.http().post(`/v1/admin/creators/payouts/not-an-id/paid`).set(bearer("staff-finance")).send(markBody("2026-05"))).status).toBe(404);
       expect((await t.http().post(url).set(bearer("staff-finance")).send(markBody("2026-04"))).status).toBe(404);
       const asked = provider.asked.length;
       const ok = await t.http().post(url).set(bearer("staff-finance")).send(markBody("2026-05"));

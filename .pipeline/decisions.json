@@ -3966,6 +3966,26 @@
       "confidence": "high",
       "source": "build/prompts/API-BASE-11A.md",
       "decidedAt": "2026-12-05T12:00:00Z"
+    },
+    {
+      "id": "DEC-283",
+      "topic": "IF2a corrects DEC-276: an id in the path that is not an id is 404; 422 is for body and query ids",
+      "decision": "IF2a (the lead corrects IF2): DEC-276 said a non-id in a path is 422 at every route that takes an id; that is withdrawn for paths. An id in the PATH that is not an id, and a payment reference in the path that is not shaped fw-<id>, answer 404 as they always have (\"no such thing\"), on all 95 routes that take an id in the path and for references; the routes whose :id is a slug or a month (GET /v1/styles/:id, POST /v1/admin/payout-runs/:id/approve) are as before. An id or reference in the path in upper or mixed case is put in lower case before the route reads it (a global interceptor), so every route reads, drops and settles the same thing for any case. An id in a BODY or QUERY field that is not an id is 422 in words: a payment start's subjectId (E-87, it answered 500) and the keep body's wishId; DEC-276's other words (any case of an id, never 500) stand. No endpoint or field changes. Older specs that expected 404 for a non-id in a path are as they were before IF2.",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (IF2a); build/prompts/API-BASE-11A.md",
+      "decidedAt": "2026-12-06T12:00:00Z"
+    },
+    {
+      "id": "DEC-284",
+      "topic": "The registry is frozen again after IF2a",
+      "decision": "The registry is re-frozen after DEC-283 by tools/pipeline/freeze.py; reconcile.py was run twice with --reopen (identical outputs; .pipeline/ui-align-tasks.json restored byte for byte). No endpoint id is issued or changed and no field changes.",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/prompts/API-BASE-11A.md",
+      "decidedAt": "2026-12-06T12:00:00Z"
     }
   ]
 }

@@ -205,7 +205,7 @@ describe("P-B05 rulings (payments)", () => {
     const p = await started(a.token);
     expect((await verify(b.token, p.reference)).status).toBe(404);
     expect((await verify(a.token, p.reference)).status).toBe(200);
-    expect((await verify(b.token, "fw-no-such")).status).toBe(422);  // IF2: a name that is not an id is 422 in words
+    expect((await verify(b.token, "fw-no-such")).status).toBe(404);
     const up = await start(a.token, { purpose: "upgrade", id: "x" });
     expect(up.status).toBe(422);
     expect(up.body.error.fields).toHaveProperty("purpose");

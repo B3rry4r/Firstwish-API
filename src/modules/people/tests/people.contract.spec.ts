@@ -102,7 +102,7 @@ describe("people E-117..E-121 and approved dates E-17 /v1/business (contract)", 
     expect((await t.http().get("/v1/business/approved-dates").set(bearer(noBusiness.token))).status).toBe(403);
     expect((await t.http().get("/v1/business/people").set(bearer(staff(t)))).status).toBe(403);
     const o = await businessOwner(t);
-    expect((await t.http().patch("/v1/business/people/nope").set(bearer(o.token)).send(ada)).status).toBe(422);  // IF2: a name that is not an id is 422 in words
+    expect((await t.http().patch("/v1/business/people/nope").set(bearer(o.token)).send(ada)).status).toBe(404);
   });
 
   it("422 with fields for a bad body", async () => {

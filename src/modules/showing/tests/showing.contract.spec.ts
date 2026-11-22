@@ -70,7 +70,7 @@ describe("Now showing: requests, the public list, unlist, wish of the day (B13)"
     expect(bad.status).toBe(422);
     expect(bad.body.error.fields).toHaveProperty("consent");
     expect((await ask(owner.token, w.id, { consent: true, publicChapters: ["nonsense"] })).body.error.fields).toHaveProperty("publicChapters");
-    expect((await ask(owner.token, "nope")).status).toBe(422);  // IF2: a name that is not an id is 422 in words
+    expect((await ask(owner.token, "nope")).status).toBe(404);
     expect((await t.http().post(`/v1/wishes/${w.id}/publish-requests`).send({ consent: true })).status).toBe(401);
     expect((await ask(mod.token, w.id)).status).toBe(403);
     expect(await db.publishRequest.count({ where: { wishId: w.id } })).toBe(0);
@@ -144,7 +144,7 @@ describe("Now showing: requests, the public list, unlist, wish of the day (B13)"
     expect((await t.http().get("/v1/admin/showing")).status).toBe(401);
     expect((await t.http().post(`/v1/admin/showing/requests/${t.id()}/decide`).set(bearer(user.token)).send({ decision: "approve", reason: "fine fine" })).status).toBe(403);
     expect((await decide(t.id(), { decision: "approve", reason: "fine fine" })).status).toBe(404);
-    expect((await decide("nope", { decision: "approve", reason: "fine fine" })).status).toBe(422);  // IF2: a name that is not an id is 422 in words
+    expect((await decide("nope", { decision: "approve", reason: "fine fine" })).status).toBe(404);
     expect((await decide(t.id(), { decision: "maybe", reason: "fine fine" })).status).toBe(422);
   });
 

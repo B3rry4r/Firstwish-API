@@ -196,7 +196,7 @@ describe("E-182, E-184, E-183 uploads (contract)", () => {
     expect((await t.http().post(`/v1/uploads/${id}/confirm`).send({ fileId: id })).status).toBe(401);
     expect((await t.http().post(`/v1/uploads/${id}/confirm`).set(auth(me.token)).send({ fileId: ids.next() })).status).toBe(422);
     expect((await t.http().post(`/v1/uploads/${id}/confirm`).set(auth(me.token)).send({})).status).toBe(422);
-    expect((await t.http().post(`/v1/uploads/not-a-uuid/confirm`).set(auth(me.token)).send({ fileId: "not-a-uuid" })).status).toBe(422);  // IF2: a name that is not an id is 422 in words
+    expect((await t.http().post(`/v1/uploads/not-a-uuid/confirm`).set(auth(me.token)).send({ fileId: "not-a-uuid" })).status).toBe(404);
   });
 
   it("screening: at or above 0.9 the file is rejected, removed and never served; from 0.5 it is held and served to its owner only", async () => {

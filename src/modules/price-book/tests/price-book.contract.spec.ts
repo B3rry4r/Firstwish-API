@@ -395,7 +395,7 @@ describe("price book (contract)", () => {
         t.http().post(`/v1/admin/price-book-versions/${id}/publish`).set(bearer(who)).send({ version, reason: "Approved by owner" });
       expect((await pub("finance", draftId, draftVersion)).status).toBe(403);
       expect((await pub("owner", draftId, draftVersion + 9)).status).toBe(409);
-      expect((await pub("owner", "not-a-uuid", draftVersion)).status).toBe(422);  // IF2: a name that is not an id is 422 in words
+      expect((await pub("owner", "not-a-uuid", draftVersion)).status).toBe(404);
       const r = await pub("owner", draftId, draftVersion);
       expect(r.status).toBe(200);
       expect(r.body.version).toBe(draftVersion);

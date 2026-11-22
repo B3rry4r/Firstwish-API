@@ -193,8 +193,8 @@ describe("case 1: drafts and settings on the server", () => {
       await post(b, `/studio/styles/${d.id}/withdraw`),
       await post(b, "/ai/studio-change", { instruction: "warmer", styleId: d.id }),
     ]) expect(r.status).toBe(404);
-    expect((await get(a, "/studio/styles/not-a-uuid")).status).toBe(422);  // IF2: a name that is not an id is 422 in words
-    expect((await t.http().delete("/v1/studio/styles/123").set(a.h)).status).toBe(422);  // IF2: a name that is not an id is 422 in words
+    expect((await get(a, "/studio/styles/not-a-uuid")).status).toBe(404);
+    expect((await t.http().delete("/v1/studio/styles/123").set(a.h)).status).toBe(404);
     const list = await get(b, "/studio/styles");
     expect((list.body.items as Body[]).some((x) => x.id === d.id)).toBe(false);
     expect(((await get(a, "/studio/styles")).body.items as Body[]).map((x) => x.id as string)).toContain(d.id);
@@ -513,7 +513,7 @@ describe("case 5: staff review", () => {
     expect((await decide("reviewer", sid, { decision: "maybe", reason: "Because" })).status).toBe(422);
     expect((await decide("support", sid, { decision: "approve", reason: "Because" })).status).toBe(403);
     expect((await decide("reviewer", ids.next(), { decision: "approve", reason: "Because" })).status).toBe(404);
-    expect((await decide("reviewer", "nope", { decision: "approve", reason: "Because" })).status).toBe(422);  // IF2: a name that is not an id is 422 in words
+    expect((await decide("reviewer", "nope", { decision: "approve", reason: "Because" })).status).toBe(404);
     expect(await db.auditEntry.count({ where: { subjectId: sid } })).toBe(0);
     const c = await creator({ plan: "creator" });
     const d = await draft(c);

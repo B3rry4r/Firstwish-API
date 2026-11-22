@@ -76,7 +76,7 @@ describe("HZ2 (Concierge): the maker makes a wish in the buyer's name through th
     expect((await make(buyer.auth, o.id)).status).toBe(403);
     expect((await make(m.auth, unpaid)).status).toBe(404);
     expect((await make(m.auth, paidNotGiven.id)).status).toBe(404);
-    expect((await make(m.auth, "nope")).status).toBe(422);  // IF2: a name that is not an id is 422 in words
+    expect((await make(m.auth, "nope")).status).toBe(404);
     expect((await make(m.auth, o.id, { kind: "NOT A KIND!" })).status).toBe(422);
     expect((await make(m.auth, o.id, { reason: "x" })).status).toBe(422);
     expect((await make(m.auth, o.id, { name: "  " })).status).toBe(422);

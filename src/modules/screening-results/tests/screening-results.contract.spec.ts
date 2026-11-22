@@ -76,7 +76,7 @@ describe("E-157 screening decision (contract)", () => {
     expect(short.body.error.fields).toHaveProperty("reason");
     expect(await db.auditEntry.count({ where: { subjectId: h.resultId } })).toBe(0);
     expect((await decide(ids.next(), { finalVerdict: "pass", reason: "fine fine" })).status).toBe(404);
-    expect((await decide("nope", { finalVerdict: "pass", reason: "fine fine" })).status).toBe(422);  // IF2: a name that is not an id is 422 in words
+    expect((await decide("nope", { finalVerdict: "pass", reason: "fine fine" })).status).toBe(404);
   });
 
   it("two decisions at once: one wins, the other is 409, one audit row", async () => {

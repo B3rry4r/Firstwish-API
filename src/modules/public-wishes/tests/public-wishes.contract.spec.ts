@@ -312,7 +312,7 @@ describe("public wishes E-129 E-130 E-131 E-132 E-134 and the feed's E-122 E-142
         expect((await t.http().get(`/v1/play-wishes/${p.feedId}`).set(me.h)).status).toBe(404);
         expect((await t.http().post(`/v1/feed/wishes/${p.feedId}/shares`).set(me.h).send({ style: "x", wish: p.feedId })).status).toBe(404);
       }
-      expect((await t.http().get(`/v1/play-wishes/not-an-id`).set(me.h)).status).toBe(422);  // IF2: a name that is not an id is 422 in words
+      expect((await t.http().get(`/v1/play-wishes/not-an-id`).set(me.h)).status).toBe(404);
     });
   });
 });

@@ -179,7 +179,7 @@ describe("II3: a wish plays the version of its style that was approved when it w
     // G2: version 2 is sent in and checked but not approved: the version a wish takes now is still version 1, and its link gives no draft upload of version 2
     const sid = await checked(c, d);
     expect(await approvedSubmissionOf(db, slugOf(d))).toBe(v1);
-    expect((await player(old.link)).body.items.map((i: Body) => i.fileId)).toEqual([file1]);
+    expect(((await player(old.link)).body.items as Body[]).map((i) => i.fileId as string)).toEqual([file1]);
     expect((await decide(sid, { decision: "approve", reason: "Version two" })).status).toBe(200);
     expect(await approvedSubmissionOf(db, slugOf(d))).toBe(sid);
     await stamp(d.id, [[file1], [file2]]);
@@ -292,7 +292,7 @@ describe("II4: a file an approved version names is kept when its creator deletes
     await reopen(c, d, "Pictures changed", [a]);
     expect((await del(c, b)).status).toBeLessThan(300);
     // gone from the creator's draft and list, and from every read of theirs
-    expect(((await get(c, `/studio/styles/${d.id}/files`)).body.items as Body[]).map((i) => i.fileId)).toEqual([a]);
+    expect(((await get(c, `/studio/styles/${d.id}/files`)).body.items as Body[]).map((i) => i.fileId as string)).toEqual([a]);
     expect((await get(c, `/studio/styles/${d.id}/files/${b}`)).status).toBe(404);
     expect((await del(c, b)).status).toBe(404);
     expect((await rowOf(b))?.keptAt).not.toBeNull();
@@ -307,11 +307,11 @@ describe("II4: a file an approved version names is kept when its creator deletes
     expect(at.status).toBe(200);
     expect(at.body.document.art).toHaveLength(2);
     const items = at.body.items as Body[];
-    expect(items.map((i) => i.fileId).sort()).toEqual([a, b].sort());
+    expect(items.map((i) => i.fileId as string).sort()).toEqual([a, b].sort());
     for (const i of items) expect(i.url).toEqual(expect.any(String));
     // a new wish and the public read play version 2: one picture, the kept one is not given
     const fresh = await madeIn(slugOf(d));
-    expect(((await player(fresh.link)).body.items as Body[]).map((i) => i.fileId)).toEqual([a]);
+    expect(((await player(fresh.link)).body.items as Body[]).map((i) => i.fileId as string)).toEqual([a]);
     expect((await t.http().get(`/v1/styles/${slugOf(d)}`)).body.document.art).toHaveLength(1);
   });
 

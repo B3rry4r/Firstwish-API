@@ -26,7 +26,7 @@ export async function playableFileIds(db: Pick<PrismaService, "styleSubmission" 
   subs.forEach((sub, i) => {
     if (i !== 0 && !used.has(sub.id)) return;
     const doc = sub.styleSubmissionSnapshotBySubmission?.document;
-    if (doc && typeof doc === "object" && !Array.isArray(doc)) for (const id of fileIdsOf(doc as Record<string, unknown>)) out.add(id.toLowerCase());
+    if (doc && typeof doc === "object" && !Array.isArray(doc)) for (const id of fileIdsOf(doc)) out.add(id.toLowerCase());
   });
   return out;
 }

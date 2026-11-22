@@ -124,3 +124,4 @@
 - GET /v1/showing: item fields style and title at publish time; a styles filter; a public read of featured styles; public wishes by style; a public creator profile read (the web draws none of these today).
 - POST /v1/support-threads/contact takes no Idempotency-Key (double-tap protection is client-side only).
 - Take-down ask (E-133): hide at once or within 24 hours: WAITS for the owner.
+- From WEB-API-6A (22 Nov), for API-BASE-11: (1) the keep and wake start take a per-payment return address (the link + ?reference=): today the provider's callback is one env value, so a REAL provider's return cannot land on /w/<slug> (needed before the live gate); (2) PublicWishView: a `house` flag (Report is still drawn on a house wish) and keepOffer typed; (3) a route to turn a gather link back on (only /gather/off exists).

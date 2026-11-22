@@ -239,7 +239,7 @@ export class PublicWishesService {
     const rows = await this.db.$queryRaw<Row[]>`
       SELECT l.id AS "linkId", l.slug, l.active, l.tries, l."lockedUntil", w.id, w.status::text AS status, w."erasedAt", w."removedAt",
              a."erasedAt" AS "ownerErasedAt", w."businessId"::text AS "businessId", w.kind, w.occasion, w."styleSlug", w."opensAt", w."openedAt", w."endsAt",
-             w."timeZone", w.name, w.no, w.content, w."passcodeHash", (a.handle = ${HOUSE_HANDLE}) AS house
+             w."timeZone", w.name, w.no, w.content, w."passcodeHash", COALESCE(a.handle = ${HOUSE_HANDLE}, false) AS house
         FROM wish_link l JOIN wish w ON w.id = l."wishId" JOIN account a ON a.id = w."accountId"
        WHERE l.slug = ${key}
          AND (w."conciergeOrderId" IS NULL OR EXISTS (SELECT 1 FROM concierge_order_wish d WHERE d."wishId" = w.id))`;

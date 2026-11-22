@@ -11,10 +11,11 @@ import { Clock } from "../../common/ports/clock.port";
 import { IdGenerator } from "../../common/ports/ids.port";
 import { SLUG_ALPHABET } from "../../common/ports/ids.port";
 import { isTimeZone, toWireInstant } from "../../common/time/time";
-import { EntitlementsService, grantOf } from "../price-book/entitlements.service";
+import { EntitlementsService, grantOf, ticketFileLimits } from "../price-book/entitlements.service";
 import type { Entitlements as EntitlementsRow } from "@prisma/client";
 import { JobsService } from "../jobs/jobs.service";
 import { BusinessOf } from "../people/business-of";
+import { waitingTicketPayment, waitingView } from "../payments/ticket-waiting";
 import { PassDrawService } from "../purchases/pass-draws";
 import { ProAccess } from "../pro-business/pro-access";
 import { ShowingLink } from "../showing/showing-link";
@@ -177,6 +178,8 @@ export class WishesService {
       data: {
         id, accountId: a.accountId, businessId: a.businessId, conciergeOrderId: a.orderId, status: "draft", kind, occasion, styleSlug: style.slug, timeZone: DEFAULT_ZONE,
         name: this.text(a.name, "name", 120), content: {}, version: 0,
+        // IE1: a wish made for an order is a Signature wish from its start; the order paid for it (no ticket payment, no ledger line of its own)
+        ticket: "signature",
       },
     });
     return id;
@@ -236,7 +239,9 @@ export class WishesService {
     const book = await this.entitlements.row();
     const styleLevel = allowedLevel(book, row.ticket, row.adds);
     const allowedStyles = await this.allowedStyles(styleLevel);
-    return { ...this.wire(row, (await this.linksFor([id])).get(id)), activity, publish, pictures, video, styleLevel, allowedStyles };
+    // ID1: the ticket payment of this wish that waits to be paid (which ticket, its reference, when it lapses), null when none waits
+    const waiting = !viaOrder ? await waitingTicketPayment(this.prisma, accountId, row.id, this.clock.now()) : null;
+    return { ...this.wire(row, (await this.linksFor([id])).get(id)), activity, publish, pictures, video, styleLevel, allowedStyles, ticketPayment: waiting ? waitingView(waiting) : null };
   }
 
   /** HQ5: the slugs of the styles that are on and that a ticket taking up to `level` may use (every style that is on when no ticket is chosen yet). */
@@ -397,23 +402,24 @@ export class WishesService {
     if (words) throw AppError.validation({ style: words }, words);
   }
 
-  /** What the ticket allows. A wish with no paid ticket is on Starter (the moment line). */
-  private limitsOf(book: EntitlementsRow, ticket: string | null, adds: unknown): { photos: number; voices: number; chapters: number | null; ticket: string } {
-    const slug = ticket && (TICKETS as readonly string[]).includes(ticket) ? ticket : "moment";
+  /** What the ticket allows. A wish with no paid ticket is on Starter (the moment line). A wish made for a Concierge order is a Signature wish (IE1). */
+  private limitsOf(book: EntitlementsRow, ticket: string | null, adds: unknown, forOrder = false): { photos: number; voices: number; chapters: number | null; ticket: string } {
+    const slug = forOrder ? "signature" : ticket && (TICKETS as readonly string[]).includes(ticket) ? ticket : "moment";
     const g = grantOf(book, `ticket.${slug}`);
     if (!g) throw new Error(`price book: no entitlement for ticket.${slug}`);
     const more = (Array.isArray(adds) ? adds : []).filter((a) => typeof a === "string" && /five[\s-]+(more[\s-]+)?photos|extra\.five-photos/i.test(a)).length;
     const num = (v: unknown): number | null => (typeof v === "number" && Number.isFinite(v) ? v : null);
+    const own = ticketFileLimits(book, slug);
     return {
-      photos: (num(g.photos) ?? 0) + 5 * more,
-      voices: num(g.voices) ?? num(g.friendMessagesMax) ?? 12,
+      photos: own.photos + 5 * more,
+      voices: own.voices,
       chapters: num(g.chapters),
       ticket: slug,
     };
   }
 
   private checkLimits(book: EntitlementsRow, content: Obj, refs: { role: string }[], w: Wish): void {
-    const lim = this.limitsOf(book, w.ticket, w.adds);
+    const lim = this.limitsOf(book, w.ticket, w.adds, w.conciergeOrderId !== null);
     const fields: Record<string, string> = {};
     const photos = refs.filter((r) => r.role === "photo").length;
     if (photos > lim.photos) fields.photos = `Over the limit: ${lim.photos} photos on the ${lim.ticket} ticket.`;
@@ -592,6 +598,36 @@ export class WishesService {
       return tx.wish.findUniqueOrThrow({ where: { id } });
     });
     return this.wire(row, (await this.linksFor([id])).get(id));
+  }
+
+  /**
+   * IC7: the maker adds files the buyer gave with the order to the wish being made for it, inside the caller's transaction (the caller has locked the order
+   * and checked that each file is a ready file of it). Photos join the story's photos, voice notes join the voices, under this wish's own limits (its
+   * ticket's, the Moment line when it has none). The files stay the buyer's own. A sealed wish takes none.
+   */
+  async addOrderFilesIn(tx: Tx, accountId: string, wishId: string, photoIds: string[], voiceIds: string[]): Promise<void> {
+    await lockAccount(tx, accountId);
+    await this.lifecycle.lock(tx, wishId);
+    const cur = await tx.wish.findUniqueOrThrow({ where: { id: wishId } });
+    if (stateOf(cur) !== "draft") throw AppError.conflict("wish_locked", "This wish is sealed, so its photos can no longer be changed.");
+    const content = { ...((cur.content ?? {}) as Obj) };
+    if (photoIds.length) {
+      const story = { ...((content.story ?? {}) as Obj) };
+      const photos = Array.isArray(story.photos) ? [...(story.photos as Obj[])] : [];
+      const have = new Set(photos.map((p) => p.photoId));
+      for (const fileId of photoIds) if (!have.has(fileId)) photos.push({ photoId: fileId });
+      content.story = { ...story, photos };
+    }
+    if (voiceIds.length) {
+      const voices = { ...((content.voices ?? {}) as Obj) };
+      const items = Array.isArray(voices.items) ? [...(voices.items as Obj[])] : [];
+      const have = new Set(items.map((i) => i.voiceId));
+      for (const fileId of voiceIds) if (!have.has(fileId)) items.push({ voiceId: fileId, name: "Voice note" });
+      content.voices = { ...voices, items };
+    }
+    const stored = await this.applyContent(tx, accountId, null, await this.entitlements.row(tx), cur, content);
+    if (voiceIds.length) await tx.voiceNote.updateMany({ where: { id: { in: voiceIds } }, data: { wishId } });
+    await tx.wish.update({ where: { id: wishId }, data: { content: stored, version: { increment: 1 } } });
   }
 
   private passcode(p: string): string {

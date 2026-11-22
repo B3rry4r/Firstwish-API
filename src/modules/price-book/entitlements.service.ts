@@ -48,6 +48,14 @@ export class EntitlementsService {
   }
 }
 
+/** IE1: the photos and voices one wish of a ticket holds, from the price book (the one place the number is read). */
+export function ticketFileLimits(r: EntitlementsRow, slug: string): { photos: number; voices: number } {
+  const g = grantOf(r, `ticket.${slug}`);
+  if (!g) throw new Error(`price book: no entitlement for ticket.${slug}`);
+  const num = (v: unknown): number | null => (typeof v === "number" && Number.isFinite(v) ? v : null);
+  return { photos: num(g.photos) ?? 0, voices: num(g.voices) ?? num(g.friendMessagesMax) ?? 12 };
+}
+
 /** The grant for one sku from an entitlements row, or null when the row holds none. */
 export function grantOf(r: EntitlementsRow, sku: string): Grant | null {
   const [group, name] = [sku.slice(0, sku.indexOf(".")), sku.slice(sku.indexOf(".") + 1)];

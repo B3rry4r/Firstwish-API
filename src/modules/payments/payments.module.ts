@@ -7,6 +7,7 @@ import { FulfilmentRegistry } from "./fulfilment.registry";
 import { PaymentsController, PaystackWebhookController } from "./payments.controller";
 import { PaymentsService } from "./payments.service";
 import { SettlementService } from "./settlement.service";
+import { TicketPaymentDrop } from "./ticket-drop";
 import { WebhookService } from "./webhook.service";
 
 /**
@@ -16,7 +17,7 @@ import { WebhookService } from "./webhook.service";
 @Module({
   imports: [EventsModule, PeopleModule, NoticesModule],
   controllers: [PaymentsController, PaystackWebhookController],
-  providers: [PaymentsService, SettlementService, WebhookService, FulfilmentRegistry, AbandonPayments],
+  providers: [PaymentsService, TicketPaymentDrop, SettlementService, WebhookService, FulfilmentRegistry, AbandonPayments],
   exports: [PaymentsService, SettlementService, FulfilmentRegistry, AbandonPayments],
 })
 export class PaymentsModule {}

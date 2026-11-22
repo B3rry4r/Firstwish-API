@@ -36,6 +36,7 @@ import { businessAccessOf } from "./vault-access";
 import { ScreeningService } from "./screening.service";
 import { dropFileHearts } from "../vault/vault-shared";
 import { SHOWN_TO_BUYER } from "../wishes/wish-shown";
+import { checkOrderRoom, lockOwnOpenOrder } from "./order-files";
 
 type Tx = Prisma.TransactionClient;
 
@@ -156,7 +157,7 @@ export class StoredFilesService {
     // HW6: the largest size is the price book's own (one source for this check and for what the book serves)
     const maxBytes = maxBytesFor(rule, await readLimits(this.db));
     if (bytes > maxBytes) throw AppError.validation({ bytes: `Too large: at most ${Math.floor((maxBytes * 10) / (1024 * 1024)) / 10} MB.` });
-    if (body.seconds !== undefined && (rule.purpose !== "voice-note" || !(body.seconds > 0 && body.seconds <= MAX_VOICE_SECONDS))) {
+    if (body.seconds !== undefined && ((rule.purpose !== "voice-note" && rule.purpose !== "order-voice") || !(body.seconds > 0 && body.seconds <= MAX_VOICE_SECONDS))) {
       throw AppError.validation({ seconds: `A voice note is 1 to ${MAX_VOICE_SECONDS} seconds.` });
     }
     const studioFile = rule.purpose === "studio-asset" || rule.purpose === "studio-sound" || rule.purpose === "studio-model";
@@ -166,6 +167,8 @@ export class StoredFilesService {
     const objectKey = `${rule.purpose}/${id}/${this.codes.token(16)}`;
     const now = this.clock.now();
     const wishFile = rule.purpose === "wish-photo" || rule.purpose === "voice-note" || rule.purpose === "video-clip";
+    const orderFile = rule.purpose === "order-photo" || rule.purpose === "order-voice";
+    if (orderFile && (typeof body.subjectId !== "string" || !isUuid(body.subjectId))) throw AppError.validation({ subjectId: "Say which order the file is for." });
     await this.db.$transaction(async (tx) => {
       await lockAccount(tx, p.accountId);
       let businessId: string | null = null;
@@ -178,6 +181,10 @@ export class StoredFilesService {
           if (limit <= 0) throw AppError.forbidden("Your business has no Vault space.");
           if (Number(biz.vault ?? 0n) + bytes > limit) throw AppError.conflict("vault_full", "This file would go over your Vault space.");
         }
+      } else if (orderFile) {
+        // IC7: the buyer's own order, still open, under its own limits (the order's row is locked, so two tickets cannot both take the last place)
+        await lockOwnOpenOrder(tx, p.accountId, body.subjectId as string);
+        await checkOrderRoom(tx, body.subjectId as string, rule.purpose === "order-photo" ? "photo" : "voice");
       } else if (wishFile) {
         await this.checkWish(tx, p, rule, body.subjectId, opts.gather === true);
         if (rule.purpose === "voice-note" && body.subjectId !== undefined) await this.checkVoiceRoom(tx, body.subjectId, opts.gather === true);
@@ -207,17 +214,18 @@ export class StoredFilesService {
           createdAt: now,
         },
       });
-      await tx.uploadTicket.create({ data: { id, bytes: BigInt(bytes), contentType, purpose: rule.purpose, subjectId: wishFile ? (body.subjectId ?? null) : null } });
-      if (rule.purpose === "voice-note") {
+      await tx.uploadTicket.create({ data: { id, bytes: BigInt(bytes), contentType, purpose: rule.purpose, subjectId: wishFile || orderFile ? (body.subjectId ?? null) : null } });
+      if (orderFile) await tx.$executeRaw`INSERT INTO concierge_order_file ("fileId", "orderId", kind, "createdAt") VALUES (${id}::uuid, ${body.subjectId}::uuid, ${rule.purpose === "order-photo" ? "photo" : "voice"}, ${now})`;
+      if (rule.purpose === "voice-note" || rule.purpose === "order-voice") {
         await tx.voiceNote.create({
-          data: { id, wishId: body.subjectId ?? null, seconds: body.seconds === undefined ? null : Math.round(body.seconds), audio: { fileId: id }, sound: "voice" },
+          data: { id, wishId: orderFile ? null : (body.subjectId ?? null), seconds: body.seconds === undefined ? null : Math.round(body.seconds), audio: { fileId: id }, sound: "voice" },
         });
       }
     });
     const signed = await this.storage.signUpload({ key: stagingKeyOf(objectKey), contentType, contentLength: bytes, expiresInSeconds: UPLOAD_TTL_SECONDS });
     return {
       id,
-      purpose: purposeOnWire(rule.db),
+      purpose: orderFile ? rule.purpose : purposeOnWire(rule.db),
       upload: { url: signed.url, method: signed.method, headers: signed.headers, expiresAt: toWireInstant(signed.expiresAt) },
     };
   }
@@ -393,6 +401,12 @@ export class StoredFilesService {
       async (tx) => {
         await lockAccount(tx, p.accountId);
         const r = await this.lockOwn(tx, id, p.accountId);
+        // IC7: a file of an order that the maker already added to the wish being made stays until the order ends
+        const [used] = await tx.$queryRaw<{ n: number }[]>`
+          SELECT count(*)::int AS n FROM concierge_order_file l
+           WHERE l."fileId" = ${id}::uuid
+             AND (EXISTS (SELECT 1 FROM wish_file w WHERE w."fileId" = l."fileId") OR EXISTS (SELECT 1 FROM voice_note v WHERE v.id = l."fileId" AND v."wishId" IS NOT NULL))`;
+        if ((used?.n ?? 0) > 0) throw AppError.conflict("file_in_use", "The maker already added this file to your wish. It stays until the order is finished.");
         // Lock the wishes that name the file, so a seal cannot land between this check and the delete.
         const wishes = await tx.$queryRaw<{ id: string; status: string }[]>`
           SELECT w.id, w.status::text AS status FROM wish w

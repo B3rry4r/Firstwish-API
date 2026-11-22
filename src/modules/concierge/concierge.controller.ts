@@ -3,8 +3,8 @@ import { CurrentPrincipal, Roles } from "../../common/auth/decorators";
 import type { Principal } from "../../common/auth/principal";
 import { AppError } from "../../common/errors/app-error";
 import { CursorQueryDto } from "../../common/pagination/cursor";
-import { PostAdminConciergeOrdersByIdMakerBodyDto, PostAdminConciergeOrdersByIdQuoteBodyDto } from "../../contracts";
-import type { ConciergeOrderWish } from "../../contracts";
+import { GetAdminConciergeOrdersByIdFilesParamsDto, GetConciergeOrdersByIdFilesParamsDto, PostAdminConciergeOrdersByIdMakerBodyDto, PostAdminConciergeOrdersByIdQuoteBodyDto, PostAdminConciergeOrdersByIdWishesByWishIdFilesBodyDto, PostAdminConciergeOrdersByIdWishesByWishIdFilesParamsDto } from "../../contracts";
+import type { ConciergeOrderFiles, ConciergeOrderWish } from "../../contracts";
 import type { ConciergeOrder, Maker } from "../../contracts";
 import type { AuditActor } from "../audit/audit.service";
 import { accountOf } from "../people/business-of";
@@ -34,6 +34,13 @@ export class ConciergeOrdersController {
   @Get()
   list(@Query() q: CursorQueryDto, @CurrentPrincipal() p: Principal | undefined) {
     return this.orders.listOwn(accountOf(p), q);
+  }
+
+  /** E-281 (IC7): the files the buyer gave with this order. Declared before the id route. */
+  @Roles("person", "creator", "business")
+  @Get(":id/files")
+  files(@Param() params: GetConciergeOrdersByIdFilesParamsDto, @CurrentPrincipal() p: Principal | undefined): Promise<ConciergeOrderFiles> {
+    return this.orders.filesOwn(accountOf(p), params.id);
   }
 
   @Roles("person", "creator", "business")
@@ -105,6 +112,26 @@ export class ConciergeAdminController {
   @HttpCode(201)
   makeWish(@Param() params: IdParamDto, @Body() body: MakeWishBodyDto, @CurrentPrincipal() p: Principal | undefined, @StaffActor() actor: AuditActor): Promise<ConciergeOrderWish> {
     return this.orders.makeWish(staffOf(p), params.id, body, actor);
+  }
+
+  /** E-279 (IC7): the buyer's files for this order, with a signed read for each one that is ready. */
+  @AdminRoute(SECTION, "maker")
+  @Get("concierge/orders/:id/files")
+  orderFiles(@Param() params: GetAdminConciergeOrdersByIdFilesParamsDto, @CurrentPrincipal() p: Principal | undefined): Promise<ConciergeOrderFiles> {
+    return this.orders.filesStaff(staffOf(p), params.id);
+  }
+
+  /** E-280 (IC7): add ready files of the order to the wish being made for it. */
+  @AdminRoute(SECTION, "maker")
+  @Post("concierge/orders/:id/wishes/:wishId/files")
+  @HttpCode(200)
+  addFiles(
+    @Param() params: PostAdminConciergeOrdersByIdWishesByWishIdFilesParamsDto,
+    @Body() body: PostAdminConciergeOrdersByIdWishesByWishIdFilesBodyDto,
+    @CurrentPrincipal() p: Principal | undefined,
+    @StaffActor() actor: AuditActor,
+  ): Promise<ConciergeOrderFiles> {
+    return this.orders.addFiles(staffOf(p), params.id, params.wishId, body, actor);
   }
 
   /** E-38 */

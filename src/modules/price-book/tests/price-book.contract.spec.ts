@@ -252,7 +252,7 @@ describe("price book (contract)", () => {
       for (const who of ["owner", "finance", "ops"]) {
         const r = await t.http().get("/v1/admin/prices").set(bearer(who)).query({ limit: 50 });
         expect(r.status).toBe(200);
-        expect(r.body.items).toHaveLength(31); // 26 lines and the five limit lines (HX1)
+        expect(r.body.items).toHaveLength(32); // 26 lines and the six limit lines (HX1)
         const payout = (r.body.items as Line[]).find((l) => l.sku === "payout.thresholdKobo");
         expect(payout).toMatchObject({ kind: "naira", value: 500000, lead: "PROVISIONAL", group: "payout" });
         const end = (r.body.items as Line[]).find((l) => l.sku === "promotion.endsAt");

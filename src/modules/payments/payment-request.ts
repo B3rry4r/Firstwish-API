@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import type { $Enums } from "@prisma/client";
 import { AppError } from "../../common/errors/app-error";
+import { normaliseId } from "../../common/normalise/id";
 import type { PostPaymentsBody } from "../../contracts";
 import type { QuoteInput } from "../price-book/price-book.service";
 import type { PaymentRequestInfo } from "./fulfilment.registry";
@@ -98,7 +99,7 @@ export function parseRequest(body: PostPaymentsBody): ParsedRequest {
   const keep = <K extends keyof PaymentRequestInfo>(k: K, v: PaymentRequestInfo[K] | undefined) => {
     if (v !== undefined) info[k] = v;
   };
-  keep("subjectId", body.subjectId?.trim());
+  keep("subjectId", body.subjectId === undefined ? undefined : normaliseId(body.subjectId)); // IE2: one spelling of an id
   keep("id", body.id?.trim());
   keep("key", body.key);
   keep("plan", body.plan);

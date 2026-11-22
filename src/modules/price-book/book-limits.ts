@@ -16,6 +16,8 @@ export interface BookLimits {
   conciergeDeliveryHours: number;
   /** days after its open time that a sealed wish nobody opens is put to rest (it is erased after the resting hold, HOLD_DAYS); an erase itself happens at once and has no period (HX2) */
   unopenedDays: number;
+  /** days after an order that was never paid last changed that the files given with it are removed (IE3, PROVISIONAL: the owner may change it) */
+  conciergeFilesDays: number;
 }
 
 export const DEFAULT_LIMITS: Readonly<BookLimits> = {
@@ -24,6 +26,7 @@ export const DEFAULT_LIMITS: Readonly<BookLimits> = {
   modelMaxBytes: 15 * 1024 * 1024,
   conciergeDeliveryHours: 3,
   unopenedDays: 365,
+  conciergeFilesDays: 30,
 };
 
 type Db = PrismaService | Prisma.TransactionClient;
@@ -37,6 +40,7 @@ export async function readLimits(db: Db): Promise<BookLimits> {
     modelMaxBytes: r.modelMaxBytes,
     conciergeDeliveryHours: r.conciergeDeliveryHours,
     unopenedDays: r.unopenedDays,
+    conciergeFilesDays: r.conciergeFilesDays,
   };
 }
 
@@ -58,6 +62,7 @@ export const LIMIT_LINES: readonly LimitLine[] = [
   { key: "limits.modelMaxBytes", field: "modelMaxBytes", name: "Largest Studio 3D model", unit: "bytes", min: MB, max: 200 * MB },
   { key: "limits.conciergeDeliveryHours", field: "conciergeDeliveryHours", name: "Concierge delivery, in hours", unit: "hours", min: 1, max: 720 },
   { key: "limits.unopenedDays", field: "unopenedDays", name: "Days a sealed wish nobody opens waits before it rests", unit: "days", min: 1, max: 3650 },
+  { key: "limits.conciergeFilesDays", field: "conciergeFilesDays", name: "Days the files of an order never paid are kept (PROVISIONAL, owner)", unit: "days", min: 1, max: 3650 },
 ];
 
 export const limitLineOf = (key: string): LimitLine | undefined => LIMIT_LINES.find((l) => l.key === key);

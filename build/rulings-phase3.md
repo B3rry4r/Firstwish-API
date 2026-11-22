@@ -1118,3 +1118,9 @@ HG1 (give race) Two staff giving one Concierge order: the code is right (overlap
   caller is not in, and a header that is not an id, answer on every business route what the older business routes
   already answer for them (the lead's brief asked for 404 on the new ones: withdrawn, so the web meets one
   behaviour).
+- IH4 (22 Nov, the lead, on the audit's loading rows): a public website page is built on the server and arrives
+  whole (or as its kept copy): "loading" is not a state a person can meet on it, and its failure is the route's
+  error page (rendered and checked on 22 Nov). The rows that ask for a reachable loading state on those pages, and
+  the two that ask for privacy's and terms' "could not be loaded" words (reachable only when the site is built with
+  the server down), are closed as not a state. Client-read screens keep their designed loading, empty and error
+  states (rendered and checked).

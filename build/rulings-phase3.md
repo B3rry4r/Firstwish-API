@@ -1065,3 +1065,15 @@ HG1 (give race) Two staff giving one Concierge order: the code is right (overlap
   wherever it is listed or opened ("Your ticket is paid. Seal it to send."), never "You pay only when it looks
   right."
 - ID3: opening the maker on a wish that is already sealed shows Sealed, at any step address.
+## IE (22 Nov 2026, the lead, on the tenth API round's check). Default (lead), owner may override.
+- IE1 (T-13, IC7): a wish made for a Concierge order IS a Signature wish (the product truth says so): it is on the
+  Signature line from the moment the maker starts it, paid for by the order (no ticket payment, no second ledger
+  line), and holds what the price book gives Signature. What a buyer may give with an order is what one Signature
+  wish can hold (the price book's photos and voices for Signature, times the order's count of wishes), never a
+  number of its own: nothing a buyer is allowed to give can be impossible to use.
+- IE2 (ID1): an id in a request is normalised on the way in (a UUID in lower case) before it is compared, stored or
+  used as a key, in every payment start and wherever a subject id is taken; a spelling of the same id is the same
+  wish.
+- IE3 (IC7): files given with an order that is never paid are removed, rows and stored objects, 30 days after the
+  order last changed (PROVISIONAL figure, in the price book's settings with the other file limits; the order
+  itself stays). A refunded order reads as refunded, not paid.

@@ -8,6 +8,7 @@ import { BookLine, BookVersion, PriceBookService, safe } from "./price-book.serv
 /** The two setting lines staff change through the same book. */
 export const PROMOTION_KEY = "promotion.endsAt";
 import { DEFAULT_RUN_DAY } from "../payouts/run-day";
+import { CONFIRMED, PROVISIONAL, confirmationOf, type Confirmation } from "./confirmation";
 import type { LimitLine } from "./book-limits";
 export const PAYOUT_KEY = "payout.thresholdKobo";
 
@@ -76,7 +77,7 @@ export function promotionLineOf(p: PromotionRow, book: BookVersion, reason = "",
 }
 
 /** The creators' payout threshold (R14): a setting line in kobo, PROVISIONAL until the owner confirms. */
-export function payoutLineOf(valueKobo: number, status: string, schedule: string, book: BookVersion, reason = "", changed = false, payoutDay: number = DEFAULT_RUN_DAY): Price {
+export function payoutLineOf(valueKobo: number, status: string, schedule: string, book: BookVersion, reason = "", changed = false, payoutDay: number = DEFAULT_RUN_DAY, confirmation: Confirmation = confirmationOf({ status })): Price {
   return {
     ...settingBase(PAYOUT_KEY, "Creators' payout threshold", "payout", book.version),
     price: valueKobo,
@@ -86,13 +87,14 @@ export function payoutLineOf(valueKobo: number, status: string, schedule: string
     per: schedule,
     payoutDay,
     lead: status,
+    confirmation,
     reason,
     changed,
   };
 }
 
 /** One of the book's limits (HX1) as a setting line: value is the number in its unit (bytes, hours or days); the code that acts on it reads the same row. */
-export function limitLineView(def: LimitLine, value: number, book: BookVersion, reason = "", changed = false): Price {
+export function limitLineView(def: LimitLine, value: number, book: BookVersion, reason = "", changed = false, confirmation: Confirmation | null = def.provisional ? confirmationOf(null) : null): Price {
   return {
     ...settingBase(def.key, def.name, "limits", book.version),
     kind: def.unit,
@@ -100,7 +102,9 @@ export function limitLineView(def: LimitLine, value: number, book: BookVersion, 
     value,
     was: value,
     per: def.unit,
-    lead: "PROVISIONAL",
+    // only a limit that is provisional says so (in `lead` as the payout threshold does, and in `confirmation` for every provisional setting)
+    lead: confirmation ? (confirmation.provisional ? PROVISIONAL : CONFIRMED) : "",
+    confirmation,
     reason,
     changed,
   };
@@ -125,6 +129,7 @@ function settingBase(key: string, name: string, group: string, version: number):
     per: "",
     from: "settings",
     lead: "",
+    confirmation: null,
     sla: "",
     reason: "",
     items: [],

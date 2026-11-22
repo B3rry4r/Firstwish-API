@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { Inject, Injectable } from "@nestjs/common";
 import { Prisma, type SupportMessage as MessageRow, type SupportThread as ThreadRow } from "@prisma/client";
 import { lockAccount } from "../../common/db/account-lock";
@@ -18,6 +19,7 @@ import { EmailSuppression } from "../notices/suppression";
 import { IntakeLimits } from "./intake-limits";
 import { isOwnAddress, maskContact, MESSAGE_MAX, replyDomain, REPLY_LOCAL, replyToken, SUBJECT_MAX, textProblem } from "./rules";
 
+const IDEM_KEY = /^[A-Za-z0-9._:-]{8,100}$/;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export const SECTION = "/admin/support";
 type Tx = Prisma.TransactionClient;
@@ -117,16 +119,35 @@ export class SupportService {
     });
   }
 
-  /** The contact page: no sign-in, an email. A thread from an address that is an account's own joins that account's threads. */
-  async openFromContact(emailIn: string, subjectIn: string, bodyIn: string, ip: string | null | undefined): Promise<ThreadDetail> {
+  /**
+   * The contact page: no sign-in, an email. A thread from an address that is an account's own joins that account's threads.
+   * With an Idempotency-Key the same key and the same words is one thread (the repeat answers it again and is not counted against the limits);
+   * the same key with other words is 409. The key is kept as a hash with a hash of what was sent, never as text.
+   */
+  async openFromContact(emailIn: string, subjectIn: string, bodyIn: string, ip: string | null | undefined, idempotencyKey?: string): Promise<{ thread: ThreadDetail; fresh: boolean }> {
+    if (idempotencyKey !== undefined && !IDEM_KEY.test(idempotencyKey)) throw AppError.validation({ "Idempotency-Key": "Must be 8 to 100 letters, digits or . _ : -" });
     const email = normaliseEmail(emailIn);
     if (!email) throw AppError.validation({ email: "Give an email address we can write back to." });
     const { subject, body } = this.checkNew(subjectIn, bodyIn);
+    const keyHash = idempotencyKey === undefined ? null : createHash("sha256").update(`contact:${idempotencyKey}`).digest("hex");
+    const fingerprint = createHash("sha256").update(JSON.stringify([email, subject, body])).digest("hex");
     return this.prisma.$transaction(async (tx) => {
+      if (keyHash) {
+        // the first to insert the key owns it; a second at the same moment waits for the first to finish, then finds it
+        const made = await tx.$executeRaw`INSERT INTO support_contact_key ("keyHash", fingerprint, "createdAt") VALUES (${keyHash}, ${fingerprint}, ${this.clock.now()}) ON CONFLICT ("keyHash") DO NOTHING`;
+        if (made === 0) {
+          const seen = await tx.supportContactKey.findUniqueOrThrow({ where: { keyHash } });
+          if (seen.fingerprint !== fingerprint) throw AppError.conflict("idempotency_key_reused", "This Idempotency-Key was already used for a different message.");
+          const first = seen.threadId ? await tx.supportThread.findUnique({ where: { id: seen.threadId } }) : null;
+          if (!first) throw AppError.conflict("idempotency_key_reused", "This Idempotency-Key was used for a message that is no longer here. Use a new key.");
+          return { thread: await this.detail(first, true, tx), fresh: false };
+        }
+      }
       const accountId = await this.accountOfAddress(tx, email);
       await this.limits.take(tx, ip, email);
       const t = await this.insertThread(tx, { accountId, contact: email, subject, body });
-      return this.detail(t, true, tx);
+      if (keyHash) await tx.supportContactKey.update({ where: { keyHash }, data: { threadId: t.id } });
+      return { thread: await this.detail(t, true, tx), fresh: true };
     });
   }
 

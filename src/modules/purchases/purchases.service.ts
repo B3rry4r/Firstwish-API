@@ -17,7 +17,8 @@ import { canMove } from "../concierge/order-state";
 import { hiddenFromBuyer } from "../wishes/wish-shown";
 import { IdGenerator } from "../../common/ports/ids.port";
 import { releaseOrderFiles } from "../stored-files/order-files";
-import { WishLifecycleService } from "../wishes/wish-lifecycle.service";
+import { ERASE_WISH_FILE_PREFIX, WishLifecycleService } from "../wishes/wish-lifecycle.service";
+import type { JobContext } from "../jobs/jobs.service";
 
 /**
  * Every line the price book sells, by its sku. A new line in the book needs its sku here (a test walks the seeded book and fails
@@ -92,7 +93,7 @@ export class PurchasesService implements OnModuleInit {
    * Takes back what a payment granted (the refund path, B08), inside the refund's transaction. A line already taken back, or one that
    * was refused at the start, changes nothing. What cannot be undone (a ticket on a wish that is sealed) is kept and says so.
    */
-  async revoke(tx: Tx, payment: Pick<Payment, "id">): Promise<RevokeResult[]> {
+  async revoke(tx: Tx, payment: Pick<Payment, "id">, released?: string[]): Promise<RevokeResult[]> {
     const out: RevokeResult[] = [];
     for (const g of await this.store.list(tx, payment.id)) {
       if (g.revokedAt) {
@@ -103,21 +104,21 @@ export class PurchasesService implements OnModuleInit {
         out.push({ sku: g.sku, kind: g.kind, result: "refused_line" });
         continue;
       }
-      const result = await this.revokeOne(tx, g);
+      const result = await this.revokeOne(tx, g, released);
       if (result === "revoked") await this.store.markRevoked(tx, g.id);
       out.push({ sku: g.sku, kind: g.kind, result });
     }
     return out;
   }
 
-  private revokeOne(tx: Tx, g: GrantRow): Promise<string> {
+  private revokeOne(tx: Tx, g: GrantRow, released?: string[]): Promise<string> {
     switch (g.kind) {
       case "ticket":
       case "extra":
       case "keep":
         return this.wish.revoke(tx, g);
       case "concierge":
-        return this.releaseOrderFiles(tx, g);
+        return this.releaseOrderFiles(tx, g, released);
       case "pass":
         return this.pass.revoke(tx, g);
       case "pro-plan":
@@ -132,10 +133,25 @@ export class PurchasesService implements OnModuleInit {
   }
 
   /**
+   * A refund of a Concierge order released its files inside the refund's transaction (their rows are marked deleted and one cleanup job each is queued).
+   * Once that transaction has committed the stored objects go at once, by the same step the job runs (so the next sweep finds nothing left to do).
+   * A storage failure leaves the queued job to do it; the refund is already recorded.
+   */
+  async removeReleasedObjects(fileIds: readonly string[]): Promise<void> {
+    for (const id of fileIds) {
+      try {
+        await this.lifecycle.eraseWishFileJob({ subjectId: `${ERASE_WISH_FILE_PREFIX}${id}` } as JobContext);
+      } catch {
+        // the queued upload-cleanup job removes it
+      }
+    }
+  }
+
+  /**
    * IC7, IE3: a refunded Concierge payment: the order will not go ahead. It reads as refunded (not paid), the wish half made for it goes with it (the buyer never
    * saw it), and the files the buyer gave with it go. An order already delivered stays delivered; one staff cancelled stays cancelled.
    */
-  private async releaseOrderFiles(tx: Tx, g: GrantRow): Promise<string> {
+  private async releaseOrderFiles(tx: Tx, g: GrantRow, released?: string[]): Promise<string> {
     const orderId = g.detail.orderId;
     if (typeof orderId !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(orderId)) return "revoked";
     const now = this.clock.now();
@@ -149,7 +165,7 @@ export class PurchasesService implements OnModuleInit {
         await this.lifecycle.move(tx, await this.lifecycle.lock(tx, w.id), "erased", { cause: "order.refund" });
       }
     }
-    await releaseOrderFiles(tx, this.ids, orderId, now, { keepUsed: false });
+    await releaseOrderFiles(tx, this.ids, orderId, now, { keepUsed: false, released });
     return "revoked";
   }
 

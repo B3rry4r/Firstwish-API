@@ -180,6 +180,9 @@ export class PostWishesByIdKeepBodyDto implements PostWishesByIdKeepBody {
   paymentWay?: "card" | "transfer" | "ussd";
   @IsOptional()
   @IsString()
+  returnPath?: string;
+  @IsOptional()
+  @IsString()
   wishId?: string;
 }
 export class PostWishesByIdKeepParamsDto implements PostWishesByIdKeepParams {

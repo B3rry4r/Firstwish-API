@@ -3886,6 +3886,106 @@
       "confidence": "high",
       "source": "build/rulings-phase3.md (IE1 to IE3); build/prompts/P-API-BASE-10.md",
       "decidedAt": "2026-12-04T12:00:00Z"
+    },
+    {
+      "id": "DEC-275",
+      "topic": "A payment start names where the payer comes back to (IF1, HU1)",
+      "decision": "IF1: POST /v1/payments (E-87), POST /v1/wishes/:id/keep (E-228, a keep, and a wake of a resting wish) and POST /v1/w/:slug/keep (E-257, the link holder's keep or wake) take an optional `returnPath`: a path on our own site. The server gives the provider the site's own address (PUBLIC_SITE_URL), that path and `?reference=<the payment's reference>` as the callback address (the stand-in provider's checkout address carries it as `?return=`); with no path the start is as before (the provider's own default callback). It is refused with 422 and the words in fields.returnPath, before anything is stored or asked of the provider, when it is: not text, 1000 characters or more, holding a control character, holding a backslash, not starting with one /, an address with a scheme, starting with // (another host), holding ? or # (the server adds the reference), holding an encoded slash, %00 or dot-dot, or a path the web does not serve for what is being paid for. Served paths: /app/wishes/return for any payment (the web's callback page reads any payment by its reference); a ticket, extra or keep: /app/wishes, /app/wishes/<the wish id> and, for a keep, /w/<a slug of that wish's link>; Concierge: /app/wishes; a plan or a pack: /app/pro/plan and /app/pro; vault space: /app/pro/vault and /app/pro; the Pass: /app/pass; the Studio's plan, signed, credit pack and extra review: /app/creator, /app/creator/studio and /app/creator/studio/<the subject id>; a link holder with no account (HU1): only /w/<the slug of the link they used>. The path is part of the request's fingerprint: the same Idempotency-Key with the same path returns the same payment, and the same key with a different path (or with a path where there was none) is 409 idempotency_key_reused: the first start's path wins and nothing is started again. A payment already open for the same order or plan that a start hands back keeps the path it was started with. The path is stored in the payment's request detail.",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (IF1); build/prompts/API-BASE-11A.md",
+      "decidedAt": "2026-12-05T12:00:00Z"
+    },
+    {
+      "id": "DEC-276",
+      "topic": "Every route that takes an id answers a non-id in words and reads an id in any case (IF2, IE2)",
+      "decision": "IF2: for every route whose path takes an id (the path parameters id, wishId, fileId, voiceId, creator and a payment `reference`: 97 routes of the registry), a spelling that is not an id is 422 with the parameter's name in fields and words (\"Not an id: ...\", \"Not a payment reference: ...\"), never 500 and never a bare 404; an id or reference in upper or mixed case is put in lower case before the route reads it, so the wish read, the payment read and drop by reference, the link routes and every other route read, drop and settle the same thing as for lower case. The check runs before the route's other validation (a global interceptor), after sign-in and role checks. A payment start whose subjectId is not an id is 422 {subjectId: \"Not an id...\"} (it answered 500). No endpoint or field changes.",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (IF2, IE2); build/prompts/API-BASE-11A.md",
+      "decidedAt": "2026-12-05T12:00:00Z"
+    },
+    {
+      "id": "DEC-277",
+      "topic": "An extra is paid for once per wish as a ticket is (IF3, ID1)",
+      "decision": "IF3: POST /v1/payments (E-87) for an extra answers 409 extra_payment_pending, with words and the fields `reference` (the waiting payment's) and `extra`, while a payment of the same extra for that wish started by the same account still waits (pending or started, unfulfilled, younger than the 60 minutes a waiting payment lasts); a different extra of the same wish, and the same extra of another wish, are not held up by it; the same key and body still returns the same payment; two starts at the same moment are lined up by the account lock (one payment waits, the other is 409). POST /v1/payments/:reference/drop (E-282) now takes a waiting extra's payment as it takes a ticket's: abandoned at once and flagged dropped_by_owner; a paid, failed or refunded extra payment is 409 extra_payment_not_waiting; the payment of any other purpose is 404. A paid-twice extra is still refund due (refund_due:extra_already_held, DEC-270).",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (IF3, ID1); build/prompts/API-BASE-11A.md",
+      "decidedAt": "2026-12-05T12:00:00Z"
+    },
+    {
+      "id": "DEC-278",
+      "topic": "The contact route takes an Idempotency-Key",
+      "decision": "POST /v1/support-threads/contact (E-254) takes an optional Idempotency-Key header (8 to 100 letters, digits or . _ : -; anything else is 422 in words). The same key and the same words (the address normalised, the subject and the message) is one thread: the first answers 201, a repeat answers 200 with the same thread and is not counted against the daily limits; the same key with another address, subject or message is 409 idempotency_key_reused and makes nothing; a different key is a different thread; no key behaves as before. Two starts at the same moment with one key make one thread. The key is kept only as a hash, with a hash of what was sent and the thread it made, in the new table support_contact_key (migration 20261202090000_contact_key_ab11a; removed with its thread).",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/sweeps/api.md (For API-BASE-11); build/prompts/API-BASE-11A.md",
+      "decidedAt": "2026-12-05T12:00:00Z"
+    },
+    {
+      "id": "DEC-279",
+      "topic": "A refund of a Concierge order removes its stored objects at once; the migration down script",
+      "decision": "A refund of a Concierge order (the provider's refund.processed event, DEC-271) removes the order's files as before (rows marked deleted, the link rows gone, the half-made wish erased) and now also removes the stored objects and the file rows themselves as soon as the refund's own transaction has committed, by the same step the queued upload-cleanup job runs (so the next sweep finds nothing left); a storage failure leaves the queued job to finish it. Another order's files are not touched. No migration in prisma/migrations has a down script (none of the 31 before it has one), so the concierge_order_file migration is left as it is and no down script is added.",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/sweeps/api.md (For API-BASE-11); build/prompts/API-BASE-11A.md",
+      "decidedAt": "2026-12-05T12:00:00Z"
+    },
+    {
+      "id": "DEC-280",
+      "topic": "The registry is frozen again after IF1 to IF3, the contact key and the refund lows",
+      "decision": "The registry is re-frozen after DEC-275 to DEC-279 by tools/pipeline/freeze.py; reconcile.py was run twice with --reopen (identical outputs; .pipeline/ui-align-tasks.json restored byte for byte). No endpoint id is issued or changed: E-282 was the last issued before and is still the last. POST /v1/payments (E-87), POST /v1/wishes/:id/keep (E-228) and POST /v1/w/:slug/keep (E-257) gain the optional body field returnPath; POST /v1/support-threads/contact (E-254) gains the optional header idempotency-key.",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (IF1 to IF3); build/prompts/API-BASE-11A.md",
+      "decidedAt": "2026-12-05T12:00:00Z"
+    },
+    {
+      "id": "DEC-281",
+      "topic": "Staff Prices: a setting's name is plain words and provisional settings say so in one shape (R14, IE3)",
+      "decision": "R14, IE3: the name of a setting line is plain words, never a status: limits.conciergeFilesDays is named \"Days the files of an order that is never paid are kept\". Every line of the staff Prices read (GET /v1/admin/prices, E-123, and the line a change answers) carries `confirmation`: null for a line that is not provisional, and for a provisional setting {provisional: boolean, confirmedBy: \"owner\" or null, confirmedAt: ISO-8601 or null}. The provisional settings are payout.thresholdKobo and limits.conciergeFilesDays; no other line is provisional (the other limit lines' `lead` is empty, it was PROVISIONAL on every limit line). The payout threshold keeps its own fields working: `lead` (its status text, PROVISIONAL or CONFIRMED) and the PayoutSetting read's status and provisional. The rule is the same for both: a change by finance leaves the setting provisional; a change by the owner (a new figure, or the same figure sent again) confirms it, with who and when kept; confirmedAt is null for a figure confirmed before the time was kept. The confirmation of limits.conciergeFilesDays is kept in a settings row of that key (none: provisional).",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (R14, IE3); build/prompts/API-BASE-11A.md (case 6)",
+      "decidedAt": "2026-12-05T12:00:00Z"
+    },
+    {
+      "id": "DEC-282",
+      "topic": "The registry is frozen again after case 6 of API-BASE-11A",
+      "decision": "The registry is re-frozen after DEC-275 to DEC-279 and DEC-281 by tools/pipeline/freeze.py (DEC-280 recorded the freeze before DEC-281); reconcile.py was run twice with --reopen (identical outputs; .pipeline/ui-align-tasks.json restored byte for byte). No endpoint id is issued or changed. Price gains the optional field confirmation.",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/prompts/API-BASE-11A.md",
+      "decidedAt": "2026-12-05T12:00:00Z"
+    },
+    {
+      "id": "DEC-283",
+      "topic": "IF2a corrects DEC-276: an id in the path that is not an id is 404; 422 is for body and query ids",
+      "decision": "IF2a (the lead corrects IF2): DEC-276 said a non-id in a path is 422 at every route that takes an id; that is withdrawn for paths. An id in the PATH that is not an id, and a payment reference in the path that is not shaped fw-<id>, answer 404 as they always have (\"no such thing\"), on all 95 routes that take an id in the path and for references; the routes whose :id is a slug or a month (GET /v1/styles/:id, POST /v1/admin/payout-runs/:id/approve) are as before. An id or reference in the path in upper or mixed case is put in lower case before the route reads it (a global interceptor), so every route reads, drops and settles the same thing for any case. An id in a BODY or QUERY field that is not an id is 422 in words: a payment start's subjectId (E-87, it answered 500) and the keep body's wishId; DEC-276's other words (any case of an id, never 500) stand. No endpoint or field changes. Older specs that expected 404 for a non-id in a path are as they were before IF2.",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (IF2a); build/prompts/API-BASE-11A.md",
+      "decidedAt": "2026-12-06T12:00:00Z"
+    },
+    {
+      "id": "DEC-284",
+      "topic": "The registry is frozen again after IF2a",
+      "decision": "The registry is re-frozen after DEC-283 by tools/pipeline/freeze.py; reconcile.py was run twice with --reopen (identical outputs; .pipeline/ui-align-tasks.json restored byte for byte). No endpoint id is issued or changed and no field changes.",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/prompts/API-BASE-11A.md",
+      "decidedAt": "2026-12-06T12:00:00Z"
     }
   ]
 }

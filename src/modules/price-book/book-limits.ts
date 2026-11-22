@@ -54,6 +54,8 @@ export interface LimitLine {
   unit: "bytes" | "hours" | "days";
   min: number;
   max: number;
+  /** R14, IE3: the figure is provisional until the owner makes or confirms the change (a change by finance keeps it provisional) */
+  provisional?: boolean;
 }
 
 export const LIMIT_LINES: readonly LimitLine[] = [
@@ -62,7 +64,7 @@ export const LIMIT_LINES: readonly LimitLine[] = [
   { key: "limits.modelMaxBytes", field: "modelMaxBytes", name: "Largest Studio 3D model", unit: "bytes", min: MB, max: 200 * MB },
   { key: "limits.conciergeDeliveryHours", field: "conciergeDeliveryHours", name: "Concierge delivery, in hours", unit: "hours", min: 1, max: 720 },
   { key: "limits.unopenedDays", field: "unopenedDays", name: "Days a sealed wish nobody opens waits before it rests", unit: "days", min: 1, max: 3650 },
-  { key: "limits.conciergeFilesDays", field: "conciergeFilesDays", name: "Days the files of an order never paid are kept (PROVISIONAL, owner)", unit: "days", min: 1, max: 3650 },
+  { key: "limits.conciergeFilesDays", field: "conciergeFilesDays", name: "Days the files of an order that is never paid are kept", unit: "days", min: 1, max: 3650, provisional: true },
 ];
 
 export const limitLineOf = (key: string): LimitLine | undefined => LIMIT_LINES.find((l) => l.key === key);

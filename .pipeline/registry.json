@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "frozenAt": "2026-11-22T05:33:08Z",
+  "frozenAt": "2026-11-22T08:29:14Z",
   "framework": "nestjs",
   "generatedBy": "tools/pipeline/reconcile.py",
   "resources": [
@@ -12089,6 +12089,13 @@
               ]
             },
             {
+              "name": "returnPath",
+              "type": "string (optional: where the payer comes back to, a path on our own site that starts with one '/', no query or #; the server adds ?reference=; DEC-275)",
+              "from": [
+                "DEC-275"
+              ]
+            },
+            {
               "name": "subjectId",
               "type": "string",
               "from": [
@@ -12174,6 +12181,7 @@
           "notes": [
             "body by DEC-134",
             "body by DEC-179",
+            "body by DEC-275",
             "route by DEC-94"
           ]
         },
@@ -13637,6 +13645,18 @@
           "supersedes": [
             "S-1: integer kobo, currency NGN, over the wire and in storage; prices only from the price book"
           ]
+        },
+        {
+          "name": "confirmation",
+          "type": "object",
+          "classes": [
+            "object"
+          ],
+          "nullable": true,
+          "provenance": [
+            "DEC-281"
+          ],
+          "supersedes": []
         },
         {
           "name": "discountable",
@@ -15486,6 +15506,13 @@
               ]
             },
             {
+              "name": "returnPath",
+              "type": "string (optional: where the payer comes back to, a path on our own site that starts with one '/', no query or #; the server adds ?reference=; DEC-275)",
+              "from": [
+                "DEC-275"
+              ]
+            },
+            {
               "name": "x-unlock-token",
               "type": "header (optional: the link's unlock token, where the wish has a passcode)",
               "from": [
@@ -15513,7 +15540,8 @@
             }
           ],
           "notes": [
-            "body by DEC-235"
+            "body by DEC-235",
+            "body by DEC-275"
           ]
         },
         {
@@ -25183,6 +25211,13 @@
               ]
             },
             {
+              "name": "idempotency-key",
+              "type": "header (optional: 8 to 100 letters, digits or . _ : -; the same key and body is one thread, the same key with another body is 409)",
+              "from": [
+                "DEC-278"
+              ]
+            },
+            {
               "name": "subject",
               "type": "string",
               "from": [
@@ -25202,7 +25237,8 @@
             }
           ],
           "notes": [
-            "body by DEC-197"
+            "body by DEC-197",
+            "body by DEC-278"
           ]
         },
         {
@@ -30252,6 +30288,13 @@
               ]
             },
             {
+              "name": "returnPath",
+              "type": "string (optional: where the payer comes back to, a path on our own site that starts with one '/', no query or #; the server adds ?reference=; DEC-275)",
+              "from": [
+                "DEC-275"
+              ]
+            },
+            {
               "name": "wishId",
               "type": "string",
               "from": [
@@ -30296,7 +30339,8 @@
           "notes": [
             "auth by DEC-205",
             "body by DEC-134",
-            "body by DEC-205"
+            "body by DEC-205",
+            "body by DEC-275"
           ]
         },
         {

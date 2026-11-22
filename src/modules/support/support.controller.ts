@@ -54,8 +54,16 @@ export class SupportController {
   /** The contact page (not in the registry: HALT 3). Public; counted per network and per email, 5 a day each. */
   @Public()
   @Post("support-threads/contact")
-  async contact(@Body() b: PostSupportContactBodyDto, @Ip() ip: string, @Res({ passthrough: true }) res: Response): Promise<ThreadDetail> {
-    return this.support.openFromContact(b.email, b.subject, b.body, ip).catch((e: unknown) => withRetryAfter(res, e));
+  async contact(
+    @Body() b: PostSupportContactBodyDto,
+    @Headers("idempotency-key") key: string | undefined,
+    @Ip() ip: string,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<ThreadDetail> {
+    const r = await this.support.openFromContact(b.email, b.subject, b.body, ip, key?.trim() || undefined).catch((e: unknown) => withRetryAfter(res, e));
+    // a repeat of a start that already made its thread answers it again with 200
+    if (!r.fresh) res.status(200);
+    return r.thread;
   }
 
   /** E-203. */

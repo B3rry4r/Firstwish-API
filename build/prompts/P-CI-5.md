@@ -23,3 +23,9 @@ person who OWNS business Alpha and is a LOGIN of Beta, answered 422 in CI where 
 Commit on p-ci-5; do not push; leave the worktree (the lead merges and removes it); drop your databases. Hand back
 in 8 lines: head; THE CAUSE with file:line and the 422's body; what changed; the EXIT lines and the 20-run total;
 `git diff --stat`. If you cannot reproduce it, say exactly what you ran and what CI's log shows.
+ADDED 17:40 (a lead from another builder, to test, not to trust): its own new upload spec failed once in a full run
+"because the upload limit read the price book while a Prices spec had changed it", and it fixed its specs by holding
+"the setting lock". Check first whether this test's 422 is the same race (find that lock in test/kit and which specs
+change the book's limit lines); if so, hold the lock here and in EVERY other spec that uploads or reads a limit while
+another spec may change the book (list them), and prove it by running this spec beside the Prices spec that changes
+limits, 10 times.

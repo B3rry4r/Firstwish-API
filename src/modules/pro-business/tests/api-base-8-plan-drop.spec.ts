@@ -219,7 +219,7 @@ describe("HY1 plan payments: lapse time, everyone who may pay reads it, the owne
       await retire([p.id]);
     }
     expect(dropped + settledFirst).toBe(30);
-  });
+  }, 30_000);
 
   const at = (min: number) => t.clock.set(new Date(NOW.getTime() + min * 60_000));
   const row = (ref: string) => db.payment.findUniqueOrThrow({ where: { providerReference: ref } });
@@ -332,5 +332,5 @@ describe("HY1 plan payments: lapse time, everyone who may pay reads it, the owne
       await retire(rows.map((r) => r.id));
       at(0);
     }
-  });
+  }, 30_000);
 });

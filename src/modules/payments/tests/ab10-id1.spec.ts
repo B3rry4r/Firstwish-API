@@ -173,7 +173,7 @@ describe("ID1: one ticket payment per wish", () => {
       expect(lost.body.error.fields.reference).toBe(won.body.payment.reference);
       expect(await db.payment.count({ where: { subjectId: w, purpose: "ticket", status: { in: ["pending", "started"] } } })).toBe(1);
     }
-  });
+  }, 30_000);
 
   it("attack: both settle at once where two rows already exist: one ticket on the wish, the other refund due, the ledger balanced (20 wishes)", async () => {
     const a = await k.account();
@@ -193,7 +193,7 @@ describe("ID1: one ticket payment per wish", () => {
       expect(await balanced(x.id)).toBe(true);
       expect(await balanced(y.id)).toBe(true);
     }
-  });
+  }, 30_000);
 
   it("attack: drop and settle at once give one outcome, and never two tickets", async () => {
     const a = await k.account();

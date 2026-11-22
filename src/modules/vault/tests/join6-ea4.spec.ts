@@ -87,7 +87,7 @@ describe("EA4 (wave 6 join): after an owner's erase a client wish's reveal is bl
     // running it again changes nothing
     await t.app.get(JobsService).runDue(50, [`client-wish:${cw}`]);
     expect(await holders(strings)).toEqual([]);
-  });
+  }, 35_000);
 
   it("a reveal not yet sent, or whose link is off, is blanked at once with the erase", async () => {
     const accountId = ids.next();

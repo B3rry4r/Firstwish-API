@@ -6,7 +6,7 @@ import { AiWritingPort } from "../../../common/ports/ai.port";
 import { createTestApp, TestApp } from "../../../../test/kit/app";
 import { cleanDoc, shapeParts } from "../studio-doc";
 import { parseChange } from "../studio-ai.service";
-import { RUN } from "../../../../test/kit/unique";
+import { RUN, testHex } from "../../../../test/kit/unique";
 
 /* Wave 5 join J8: the AI answer's `art` is checked as a save checks it; a draft wish saved again with its own current style is accepted after that style went off. */
 const ROOT = join(__dirname, "../../../..");
@@ -29,7 +29,7 @@ describe("wave 5 join: Studio re-check (J8)", () => {
 
   const person = async (sides: ("person" | "creator")[] = ["person"]) => {
     const id = ids.next();
-    await db.account.create({ data: { id, contact: `${tag}-${++seq}@example.com`, handle: `${tag}${seq}`.slice(0, 20), sides, lastSide: sides[sides.length - 1] } });
+    await db.account.create({ data: { id, contact: `${tag}-${++seq}@example.com`, handle: `h${testHex()}`, sides, lastSide: sides[sides.length - 1] } });
     const token = `j5s-${id}`;
     t.tokens.set(token, { kind: "user", accountId: id, sides });
     return { id, h: { Authorization: `Bearer ${token}` } };

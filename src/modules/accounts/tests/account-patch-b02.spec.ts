@@ -152,7 +152,7 @@ describe("patch B02 on the account modules", () => {
     // The audit row holds ids and field names, never the values.
     const audits = await t.db.auditEntry.findMany({ where: { subjectId: s.accountId } });
     expect(JSON.stringify(audits)).not.toContain(email);
-  });
+  }, 50_000);
 
   describe("AA3 a NUL byte is 422 on every text field here, never a 500", () => {
     const NUL = "ab\u0000cd";

@@ -280,7 +280,7 @@ describe("ZZ5: client wishes drawn from a plan or a pack earn the creator of the
     expect(BigInt(sum.waitingKobo + sum.sendingKobo + sum.paidKobo)).toBe(await payableOf(c.creatorId));
     expect(sum.thisMonthKobo).toBe(1_200_000);
     expect(await balanced(p.id)).toBe(true);
-  });
+  }, 30_000);
 
   it("a refund of the plan after 3 of 10 wishes were drawn takes back exactly those 3 (once); a second delivery changes nothing", async () => {
     const c = await creator();

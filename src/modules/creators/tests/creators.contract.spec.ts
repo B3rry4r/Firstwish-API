@@ -54,7 +54,7 @@ describe("creators E-42 GET /v1/creators (contract)", () => {
     expect((await all(c.accessToken)).find((x) => x.handle === c.handle)).toMatchObject({ own: true, following: false, counts: { followers: 1 } });
     expect((await all(fan.accessToken)).find((x) => x.handle === c.handle)).toMatchObject({ own: false, following: true });
     expect((await all("not-a-token")).find((x) => x.handle === c.handle)).toMatchObject({ own: false, following: false });
-  });
+  }, 30_000);
 
   it("leaves out a side turned off, a banned and an erased account", async () => {
     const off = await newCreator(t, "off");

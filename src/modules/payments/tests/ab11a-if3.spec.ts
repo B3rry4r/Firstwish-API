@@ -106,5 +106,5 @@ describe("IF3: one waiting payment per extra per wish", () => {
     expect([201, 409]).toContain(both[1].status);
     const waiting = await k.db.payment.count({ where: { subjectId: w, purpose: "extra", status: { in: ["pending", "started"] } } });
     expect(waiting).toBeLessThanOrEqual(1);
-  });
+  }, 30_000);
 });

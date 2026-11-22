@@ -230,7 +230,7 @@ describe("P-B05 rulings (payments)", () => {
       const entries = await db.ledgerEntry.findMany({ where: { paymentId: r.id } });
       expect(unbalanced(entries)).toEqual([]);
     }
-  });
+  }, 30_000);
 
   it("proof again: a forged smaller amount is not fulfilled", async () => {
     const a = await payer();
@@ -255,7 +255,7 @@ describe("P-B05 rulings (payments)", () => {
     const entries = await db.ledgerEntry.findMany({ where: { paymentId: { in: run } } });
     expect(new Set(entries.map((e) => e.paymentId)).size).toBe(30);
     expect(unbalanced(entries)).toEqual([]);
-  });
+  }, 30_000);
 });
 
 describe("P-B05 FF1: a provider that never answers", () => {

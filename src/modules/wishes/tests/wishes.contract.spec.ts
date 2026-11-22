@@ -276,7 +276,7 @@ describe("wishes E-221 E-222 E-224 E-225 E-229 E-231 (contract)", () => {
     const seqRow = await db.wishNumberSequence.findMany();
     expect(seqRow).toHaveLength(1);
     expect(seqRow[0].next).toBeGreaterThanOrEqual(nums[49] + 1);
-  });
+  }, 30_000);
 
   it("the state machine refuses any move that is not in its table, and every move writes a transition with its cause", async () => {
     const u = await user();

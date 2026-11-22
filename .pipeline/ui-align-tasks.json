@@ -9374,7 +9374,8 @@
         "lib/vault-api.ts:178"
       ],
       "change": "replace: client favourites sent to the business",
-      "status": "open"
+      "status": "done",
+      "resolution": "WEB-API-9A (web 48abd17): the client marks and unmarks a photo on /r/<code>; the hearts are the server's, drawn after a reload and on another device; checked twice by a separate agent (wa9a.mjs)."
     },
     {
       "id": "UA-725",
@@ -10655,7 +10656,8 @@
         "lib/vault-api.ts:176-198"
       ],
       "change": "replace: the client's hearts arriving from the receiver's device",
-      "status": "open"
+      "status": "done",
+      "resolution": "WEB-API-9A (web 48abd17): the business's Favourites page and the shoot read the client's hearts from the server as they arrive (read again on focus); \"waiting\" only when none; checked by a separate agent (wa9a.mjs)."
     },
     {
       "id": "UA-832",
@@ -10990,7 +10992,8 @@
         "lib/vault-api.ts:178-200"
       ],
       "change": "replace: POST /r/:no/favourites",
-      "status": "open"
+      "status": "done",
+      "resolution": "WEB-API-9A (web 48abd17): a mark and an unmark on /r/<code> are sent to the server (POST /r/:code/favourites) and the drawn set is the server's answer; a tap on a held heart unmarks; checked twice by a separate agent."
     },
     {
       "id": "UA-860",

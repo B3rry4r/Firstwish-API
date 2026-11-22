@@ -1100,3 +1100,9 @@ HG1 (give race) Two staff giving one Concierge order: the code is right (overlap
   screens' not-found states, the live flows and 45 older tests read it so). An id in a BODY or QUERY field that is
   not an id is 422 in words. No spelling anywhere answers 500. Any case of a real id is the same thing on every
   route. IF2's "422 at every route that takes an id" is withdrawn for paths.
+- IF4a (22 Nov, on the check of the eleventh round's second half): a removed wish that has a report still open is
+  not erased at its day: it waits until the report is decided (an upheld one is the staff's take-down and stays; a
+  dismissed one is then erased at once if its day has passed). An account's erase removes every friend's voice given
+  to that account's wishes (the rows, the friend's first name and the stored files), as a single wish's erase does.
+  A creator's public reads follow the creator's ACCOUNT, never a handle kept as text: a handle that changes hands
+  never shows another person's styles.

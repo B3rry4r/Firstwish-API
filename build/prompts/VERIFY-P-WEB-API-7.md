@@ -30,3 +30,8 @@ refused, gone or not the creator's is 422 naming the place; the shelf may hold a
  "styles on screen"; `W11 a role change is saved` failed once before: if it fails, run w11 alone twice).
 Write VERDICT2.md beside the notes (30 lines or fewer): MERGE or FIX FIRST; each finding with severity and
 file:line. Remove your worktrees, stack and databases. Hand back ONCE in 15 lines or fewer.
+ADDED (from the builder's hand-back, head cb73f69): it did NOT measure the new states at 360 and 390 (the held
+file's tile, the Studio home's loading and error): you do, light and dark. It proved the 422 on a save only with
+an interception: you prove it against the REAL server (step 0 and F1). `W11 staff flow ran to its end` failed for
+it alone twice at the last-owner demotion (.fo-confirm .fo-err) while it passed in the whole driver: run w11
+alone on a fresh stack once on this branch and once on the web head, and say whether it is this branch.

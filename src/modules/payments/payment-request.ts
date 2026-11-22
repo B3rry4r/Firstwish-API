@@ -21,6 +21,7 @@ const PURPOSES: Record<string, $Enums.PaymentPurpose> = {
   "credit-pack": "credit_pack",
   "extra-review": "extra_review",
 };
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const NAME = /^[a-z0-9][a-z0-9-]{0,39}$/;
 const NEEDS_BUSINESS = new Set(["pro-plan", "wish-pack", "vault-space"]);
 
@@ -95,6 +96,8 @@ export function parseRequest(body: PostPaymentsBody): ParsedRequest {
   if (body.subjectId !== undefined && (typeof body.subjectId !== "string" || !body.subjectId.trim() || body.subjectId.length > 100)) {
     throw AppError.validation({ subjectId: "Must be an id." });
   }
+  // IF2: a subject that is not an id is refused here in words (it was read as an id further down and answered 500)
+  if (body.subjectId !== undefined && !UUID.test(body.subjectId.trim())) throw AppError.validation({ subjectId: "Not an id: it is made of letters and digits in groups, like 0192f5a0-1c2b-7000-8000-0123456789ab." });
   const info: PaymentRequestInfo = { purpose: wire };
   const keep = <K extends keyof PaymentRequestInfo>(k: K, v: PaymentRequestInfo[K] | undefined) => {
     if (v !== undefined) info[k] = v;

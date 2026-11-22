@@ -1,3 +1,4 @@
+import { IdParamsInterceptor } from "./common/validation/id-params.interceptor";
 import { INestApplication } from "@nestjs/common";
 import type { NestExpressApplication } from "@nestjs/platform-express";
 import { ENV } from "./common/env/env.module";
@@ -32,7 +33,7 @@ export function setupApp(app: INestApplication): INestApplication {
   app.setGlobalPrefix(API_PREFIX);
   // AA3: control characters are refused (422) before validation, for every body, query and path value.
   app.useGlobalPipes(new ControlCharsPipe(), makeValidationPipe());
-  app.useGlobalInterceptors(new WireJsonInterceptor());
+  app.useGlobalInterceptors(new IdParamsInterceptor(), new WireJsonInterceptor());
   app.useGlobalFilters(new ErrorEnvelopeFilter());
   app.enableCors({
     origin: env.WEB_ORIGINS,

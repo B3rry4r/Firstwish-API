@@ -89,7 +89,7 @@ export class StudioFilesService {
     const wish = link
       ? await this.db.wish.findUnique({
           where: { id: link.wishId },
-          select: { status: true, styleSlug: true, erasedAt: true, removedAt: true, openedAt: true, endsAt: true, passcodeHash: true, businessId: true, account: { select: { erasedAt: true } } },
+          select: { status: true, styleSlug: true, styleSubmissionId: true, erasedAt: true, removedAt: true, openedAt: true, endsAt: true, passcodeHash: true, businessId: true, account: { select: { erasedAt: true } } },
         })
       : null;
     if (!link || !wish || wish.erasedAt || wish.removedAt || wish.status !== "live" || !wish.styleSlug) throw none();
@@ -97,9 +97,12 @@ export class StudioFilesService {
     if (!wish.openedAt || !wish.endsAt || wish.endsAt.getTime() <= this.clock.now().getTime()) throw none();
     if (wish.passcodeHash && !this.tokens.valid(token, link.id, wish.passcodeHash)) throw none();
     const style = await this.db.style.findFirst({ where: { slug: wish.styleSlug }, select: { id: true } });
-    const document = style ? await this.approved.of(style.id) : null;
+    const document = style ? await this.approved.of(style.id, wish.styleSubmissionId) : null;
     if (!style || !document) return { style: wish.styleSlug, items: [], document: null };
-    const rows = await this.db.storedFile.findMany({ where: { styleId: style.id, status: "ready" }, orderBy: { id: "asc" }, take: PLAYER_FILES });
+    // II3: a wish made under an older approved version gets the files that style had until the next version was sent in; later uploads belong to the newer version
+    const pin = wish.styleSubmissionId ? await this.db.styleSubmission.findFirst({ where: { id: wish.styleSubmissionId, styleId: style.id, status: "live" }, select: { createdAt: true } }) : null;
+    const next = pin ? await this.db.styleSubmission.findFirst({ where: { styleId: style.id, status: "live", createdAt: { gt: pin.createdAt } }, orderBy: [{ createdAt: "asc" }, { id: "asc" }], select: { createdAt: true } }) : null;
+    const rows = await this.db.storedFile.findMany({ where: { styleId: style.id, status: "ready", ...(next ? { createdAt: { lt: next.createdAt } } : {}) }, orderBy: { id: "asc" }, take: PLAYER_FILES });
     return { style: wish.styleSlug, items: await Promise.all(rows.map((r) => this.view(r, { type: "allowed" }))), document };
   }
 }

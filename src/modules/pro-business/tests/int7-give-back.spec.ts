@@ -9,11 +9,12 @@ import { WishLifecycleService } from "../../wishes/wish-lifecycle.service";
 import { AccountErasureService } from "../../accounts/account-erasure.service";
 import { SettlementService } from "../../payments/settlement.service";
 import { giveBackDraws } from "../../purchases/draw-giveback";
+import { RUN } from "../../../../test/kit/unique";
 
 const ROOT = join(__dirname, "../../../..");
 const NOW = new Date("2026-12-01T09:00:00.000Z");
 const ids = new UuidV7Maker();
-const run = `${process.pid}${Date.now() % 100000}`;
+const run = RUN;
 let seq = 0;
 
 /** INT-7: the open line of the sweep. Every case goes through the real routes (make the client wish, remove the draft) and the real jobs. */

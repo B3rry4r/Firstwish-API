@@ -5,6 +5,7 @@ import { UuidV7Maker } from "../../../common/ids/uuidv7";
 import { createTestApp, TestApp } from "../../../../test/kit/app";
 import { SettlementService } from "../../payments/settlement.service";
 import { InvoicesService } from "../invoices.service";
+import { RUN } from "../../../../test/kit/unique";
 
 /*
  * FA1 (wave 6 join): an invoice's VAT part equals the ledger's vat_payable for the payment. By hand, VAT 7.5% inside the total:
@@ -15,7 +16,7 @@ import { InvoicesService } from "../invoices.service";
 const ROOT = join(__dirname, "../../../..");
 const NOW = new Date("2037-07-04T09:00:00.000Z");
 const ids = new UuidV7Maker();
-const run = `${process.pid}${Date.now() % 100000}`;
+const run = RUN;
 
 describe("FA1: the invoice and the ledger agree on VAT", () => {
   let t: TestApp;

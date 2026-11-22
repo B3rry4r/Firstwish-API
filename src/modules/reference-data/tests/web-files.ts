@@ -43,3 +43,19 @@ function loadFile(file: string): Record<string, any> { // eslint-disable-line @t
   (vm.runInThisContext(`(function (exports, require, module) {${js}\n})`, { filename: file }) as (e: unknown, r: unknown, m: unknown) => void)(mod.exports, req, mod);
   return mod.exports;
 }
+
+/**
+ * The style rows the web still owns, built as scripts/export-seed-data.mjs builds them, WITHOUT `get`: a style's `get` (what its level gets you)
+ * is owned by the API repo since the web dropped its typed copy (lib/catalog.ts LEVEL_GET), so it is checked against the rule, not the web.
+ */
+export function webStyleRows(): Record<string, unknown>[] {
+  const keys = ["slug", "name", "line", "feel", "say", "motion", "light", "look", "level", "tier", "pace", "orientation", "moves", "mood"];
+  const plain = (v: unknown): unknown => JSON.parse(JSON.stringify(v, (_k, x: unknown) => (typeof x === "function" ? undefined : x)));
+  type Manifest = { dimension: unknown; kinds: unknown; occasions?: unknown; creator: unknown };
+  const all = (loadWeb("styles.ts").allStyles as () => unknown)() as (Record<string, unknown> & { manifest: Manifest })[];
+  return all.map((s) => ({
+    ...Object.fromEntries(keys.filter((k) => s[k] !== undefined).map((k) => [k, plain(s[k])])),
+    dimension: s.manifest.dimension, kinds: plain(s.manifest.kinds), occasions: plain(s.manifest.occasions ?? null),
+    by: s.manifest.creator, house: s.manifest.creator === "firstwish", packaged: true,
+  }));
+}

@@ -1,8 +1,9 @@
 import { createTestApp, TestApp, uniqueAddress } from "../../../../test/kit/app";
 import { PrismaService } from "../../../common/db/prisma.service";
+import { RUN } from "../../../../test/kit/unique";
 
 const NOW = new Date("2027-09-01T09:00:00.000Z");
-const run = `${process.pid}${Date.now() % 100000}`;
+const run = RUN;
 let n = 0;
 const mail = () => `ab11a4-${run}-${++n}@example.test`;
 

@@ -10,6 +10,7 @@ import { AccountErasureService } from "../../accounts/account-erasure.service";
 import { JobsService } from "../../jobs/jobs.service";
 import { AI_AVAILABILITY, AiAvailability, parseChange } from "../studio-ai.service";
 import { SubmissionsService } from "../submissions.service";
+import { RUN } from "../../../../test/kit/unique";
 
 const ROOT = join(__dirname, "../../../..");
 const NOW = new Date("2026-12-02T09:00:00.000Z");
@@ -32,7 +33,7 @@ const goodDoc = (over: Body = {}): Body => ({
 
 async function creator(opts: { plan?: "open" | "creator"; credits?: number; reviewsLeft?: number; extra?: number; sides?: string[] } = {}) {
   const id = ids.next();
-  await db.account.create({ data: { id, contact: `b15-${process.pid}-${++seq}@example.com`, handle: `b15${tag()}`, sides: (opts.sides ?? ["person", "creator"]) as never, lastSide: "creator" } });
+  await db.account.create({ data: { id, contact: `b15-${RUN}-${++seq}@example.com`, handle: `b15${tag()}`, sides: (opts.sides ?? ["person", "creator"]) as never, lastSide: "creator" } });
   await db.creator.create({ data: { id: ids.next(), accountId: id, name: `Maker ${seq}` } });
   const token = `c-${tag()}`;
   t.tokens.set(token, { kind: "user", accountId: id, sides: (opts.sides ?? ["person", "creator"]) as never });

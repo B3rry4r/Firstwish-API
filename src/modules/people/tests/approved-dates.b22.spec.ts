@@ -3,12 +3,13 @@ import { join } from "node:path";
 import { PrismaService } from "../../../common/db/prisma.service";
 import { UuidV7Maker } from "../../../common/ids/uuidv7";
 import { createTestApp, TestApp } from "../../../../test/kit/app";
+import { RUN } from "../../../../test/kit/unique";
 
 const ROOT = join(__dirname, "../../../..");
 const NOW = new Date("2032-06-10T09:00:00.000Z");
 const ids = new UuidV7Maker();
 const bearer = (token: string) => ({ authorization: `Bearer ${token}` });
-const run = `${process.pid}${Date.now() % 100000}`;
+const run = RUN;
 let seq = 0;
 
 describe("B22 approved dates (E-239, E-238, DEC-168)", () => {

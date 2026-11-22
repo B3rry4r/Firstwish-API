@@ -6,11 +6,12 @@ import { bearer } from "../../people/tests/b12-kit";
 import { createTestApp, TestApp } from "../../../../test/kit/app";
 import { ClientWishesService } from "../client-wishes.service";
 import { SettlementService } from "../../payments/settlement.service";
+import { RUN } from "../../../../test/kit/unique";
 
 const ROOT = join(__dirname, "../../../..");
 const NOW = new Date("2026-12-01T09:00:00.000Z");
 const ids = new UuidV7Maker();
-const run = `${process.pid}${Date.now() % 100000}`;
+const run = RUN;
 let seq = 0;
 
 describe("INT-7 B17: a downgrade keeps the logins, tells the owner once, and the list says which are over the plan", () => {

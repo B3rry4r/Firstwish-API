@@ -3,6 +3,7 @@ import { validate } from "class-validator";
 import { plainToInstance } from "class-transformer";
 import { UuidV7Maker } from "../../src/common/ids/uuidv7";
 import { PostAdminPaymentsByReferenceRefundBodyDto } from "../../src/contracts";
+import { RUN } from "../kit/unique";
 
 /*
  * The database refuses what the money rules forbid, whatever a service does: the ledger is append-only (a trigger), and a
@@ -69,7 +70,7 @@ describe("ledger is append-only", () => {
 describe("INT-7: an account row is never deleted", () => {
   it("refuses a hard delete at the database, and the row is still there", async () => {
     const id = ids.next();
-    await db.account.create({ data: { id, lastSide: "person", contact: `int7-del-${process.pid}-${Date.now()}@example.com` } });
+    await db.account.create({ data: { id, lastSide: "person", contact: `int7-del-${RUN}-${Date.now()}@example.com` } });
     await expect(db.account.delete({ where: { id } })).rejects.toThrow(/never deleted/);
     await expect(db.$executeRawUnsafe(`DELETE FROM "account" WHERE id = '${id}'::uuid`)).rejects.toThrow(/never deleted/);
     expect(await db.account.count({ where: { id } })).toBe(1);

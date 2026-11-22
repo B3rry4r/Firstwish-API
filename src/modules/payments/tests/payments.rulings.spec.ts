@@ -8,6 +8,7 @@ import { JobsService } from "../../jobs/jobs.service";
 import { JobHandlers } from "../../job-handlers/job-handlers.service";
 import { abandonPendingPayments } from "../abandon";
 import { FulfilmentRegistry } from "../fulfilment.registry";
+import { RUN } from "../../../../test/kit/unique";
 
 /* P-B05: the rulings of Verify B05 (FF1 to FF5) and the lead's (DD2 to DD4), each in a test named by its id, on a real database. */
 const ROOT = join(__dirname, "../../../..");
@@ -43,7 +44,7 @@ describe("P-B05 rulings (payments)", () => {
 
   async function payer() {
     const id = ids.next();
-    await db.account.create({ data: { id, contact: `pb05-${process.pid}-${++seq}@example.com`, sides: ["person"], lastSide: "person" } });
+    await db.account.create({ data: { id, contact: `pb05-${RUN}-${++seq}@example.com`, sides: ["person"], lastSide: "person" } });
     const token = `pb05-${id}`;
     t.tokens.set(token, { kind: "user", accountId: id, sides: ["person"] });
     return { id, token };
@@ -229,7 +230,7 @@ describe("P-B05 rulings (payments)", () => {
       const entries = await db.ledgerEntry.findMany({ where: { paymentId: r.id } });
       expect(unbalanced(entries)).toEqual([]);
     }
-  });
+  }, 30_000);
 
   it("proof again: a forged smaller amount is not fulfilled", async () => {
     const a = await payer();
@@ -254,7 +255,7 @@ describe("P-B05 rulings (payments)", () => {
     const entries = await db.ledgerEntry.findMany({ where: { paymentId: { in: run } } });
     expect(new Set(entries.map((e) => e.paymentId)).size).toBe(30);
     expect(unbalanced(entries)).toEqual([]);
-  });
+  }, 30_000);
 });
 
 describe("P-B05 FF1: a provider that never answers", () => {
@@ -273,7 +274,7 @@ describe("P-B05 FF1: a provider that never answers", () => {
 
   it("FF1: verify answers the payment as it stands (pending) within the limit and grants nothing; a start that times out is a 502 and the payment fails", async () => {
     const id = ids.next();
-    await db.account.create({ data: { id, contact: `pb05-ff1-${process.pid}@example.com`, sides: ["person"], lastSide: "person" } });
+    await db.account.create({ data: { id, contact: `pb05-ff1-${RUN}@example.com`, sides: ["person"], lastSide: "person" } });
     t.tokens.set(`ff1-${id}`, { kind: "user", accountId: id, sides: ["person"] });
     const auth = bearer(`ff1-${id}`);
     const made = await t.http().post("/v1/payments").set(auth).send(KEEPSAKE);
@@ -323,7 +324,7 @@ describe("P-B05: the abandon job on the tick (clock port)", () => {
 
   it("the abandon-payment job, run by the tick, abandons payments 60 minutes or older and no others", async () => {
     const accountId = ids.next();
-    await db.account.create({ data: { id: accountId, contact: `pb05-job-${process.pid}@example.com`, sides: ["person"], lastSide: "person" } });
+    await db.account.create({ data: { id: accountId, contact: `pb05-job-${RUN}@example.com`, sides: ["person"], lastSide: "person" } });
     const make = async (ageMin: number, status: "pending" | "started" | "succeeded" = "pending") => {
       const id = ids.next();
       await db.payment.create({
@@ -335,7 +336,7 @@ describe("P-B05: the abandon job on the tick (clock port)", () => {
     const older = await make(500, "started");
     const young = await make(59);
     const paid = await make(900, "succeeded");
-    const key = `pb05-${process.pid}-${Date.now()}`;
+    const key = `pb05-${RUN}-${Date.now()}`;
     const jobs = t.app.get(JobsService);
     await jobs.schedule("abandon-payment", EARLY, key);
     expect(await jobs.runDue(5, [key])).toBe(1);

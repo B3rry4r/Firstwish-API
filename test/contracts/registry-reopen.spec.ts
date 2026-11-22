@@ -10,6 +10,7 @@ import {
   PostWishesByIdKeepBodyDto,
   PutAdminNumbersTargetsBodyDto,
 } from "../../src/contracts";
+import { RUN } from "../kit/unique";
 
 const pipe = makeValidationPipe();
 
@@ -75,7 +76,7 @@ describe("P1 (DEC-132): NumbersTarget stores one target per line and month", () 
   });
   it("keeps targetKobo as a whole kobo BigInt and refuses a second row for the same line and period", async () => {
     const staff = ids.next();
-    await db.staffAccount.create({ data: { id: staff, email: `int7-target-${process.pid}-${Date.now()}@example.com`, name: "Staff", roles: ["finance"], status: "active" } });
+    await db.staffAccount.create({ data: { id: staff, email: `int7-target-${RUN}-${Date.now()}@example.com`, name: "Staff", roles: ["finance"], status: "active" } });
     const row = { line: "extras" as const, period: "month" as const, targetKobo: 12_000_000n, setBy: staff, setAt: new Date() };
     const made = await db.numbersTarget.create({ data: { id: ids.next(), ...row } });
     expect(made.targetKobo).toBe(12_000_000n);

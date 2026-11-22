@@ -1,5 +1,6 @@
 import { PrismaService } from "../../../common/db/prisma.service";
 import { account, B12App, b13App, bearer, liveWish, staffOf } from "./b13-kit";
+import { RUN } from "../../../../test/kit/unique";
 
 /** API-BASE-4: HP9 (the viewer's own mark on each row) and HP13 (a published row carries the creator's handle and the cover). */
 describe("API-BASE-4 Now showing (HP9, HP13) through the real routes", () => {
@@ -13,7 +14,7 @@ describe("API-BASE-4 Now showing (HP9, HP13) through the real routes", () => {
   });
   afterAll(() => t.close());
 
-  const run = String(process.pid);
+  const run = RUN;
   type Row = { id: string; wish: string; creator: { handle?: string; name: string } | null; img: string; pos: string; mine: { reaction?: string | null; saved?: boolean } };
   async function publish(sides: ("person" | "creator")[], handle: string | null, withCover: boolean) {
     const owner = await account(t, sides);

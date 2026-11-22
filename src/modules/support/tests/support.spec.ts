@@ -11,13 +11,14 @@ import { makeStaff, seedRoleTable } from "../../staff-accounts/tests/staff-kit";
 import { replyToken } from "../rules";
 import { signSvix } from "../../../common/auth/svix";
 import { SupportService } from "../support.service";
+import { RUN } from "../../../../test/kit/unique";
 
 const NOW = new Date("2030-05-10T09:00:00.000Z");
 const SECRET = `whsec_${Buffer.from("b20-test-signing-secret-0123456789").toString("base64")}`;
 const PEPPER = "test-code-pepper-0123456789abcdef0123456";
 const ids = new UuidV7Maker();
 let n = 0;
-const address = () => `b20-${process.pid}-${Date.now()}-${++n}@example.test`;
+const address = () => `b20-${RUN}-${Date.now()}-${++n}@example.test`;
 type Row = { id: string; status: string; name: string; from: string; contact: string; email: string; last: string };
 const items = (r: { body: unknown }) => (r.body as { items: Row[] }).items;
 const msgs = (r: { body: unknown }) => (r.body as { messages: Row[] }).messages;
@@ -55,7 +56,7 @@ describe("support (contract)", () => {
   /** A signed event as Resend would send it (the stand-in for the provider). */
   function event(type: string, data: Record<string, unknown>, o: { id?: string; at?: number; secret?: string; raw?: string } = {}) {
     const raw = o.raw ?? JSON.stringify({ type, data });
-    const id = o.id ?? `msg_b20_${process.pid}_${++mailSeq}_${Date.now()}`;
+    const id = o.id ?? `msg_b20_${RUN}_${++mailSeq}_${Date.now()}`;
     const ts = o.at ?? Math.floor(t.clock.now().getTime() / 1000);
     return t.http().post("/v1/webhooks/email").set("content-type", "application/json").set("svix-id", id).set("svix-timestamp", String(ts))
       .set("svix-signature", signSvix(o.secret ?? SECRET, raw, id, ts)).send(raw);
@@ -205,11 +206,11 @@ describe("support (contract)", () => {
     it("a replay changes nothing: stored once by event id, also two at once", async () => {
       const a = address();
       const data = { from: a, to: ["support@example.test"], subject: "s", text: "once only" };
-      const id = `msg_replay_${process.pid}_${Date.now()}`;
+      const id = `msg_replay_${RUN}_${Date.now()}`;
       expect((await inbound(data, { id })).status).toBe(200);
       expect((await inbound(data, { id })).status).toBe(200);
       const b = address();
-      const id2 = `msg_replay2_${process.pid}_${Date.now()}`;
+      const id2 = `msg_replay2_${RUN}_${Date.now()}`;
       const both = await Promise.all([1, 2, 3, 4].map(() => inbound({ ...data, from: b }, { id: id2 })));
       expect(both.map((r) => r.status)).toEqual([200, 200, 200, 200]);
       expect(await db.supportThread.count({ where: { contact: a } })).toBe(1);
@@ -272,7 +273,7 @@ describe("support (contract)", () => {
     it("a wish's delivery email that bounces for good fails and puts refund_due on its payment; nothing refunds by itself; a replay adds nothing", async () => {
       const { wishId, paymentId } = await paidWish();
       const d = await delivery({ wishId });
-      const id = `msg_bounce_${process.pid}_${Date.now()}`;
+      const id = `msg_bounce_${RUN}_${Date.now()}`;
       const r = await event("email.bounced", { email_id: d.providerMessageId, bounce: { type: "Permanent", message: `The address ${d.to} does not exist` } }, { id });
       expect(r.status).toBe(200);
       await event("email.bounced", { email_id: d.providerMessageId, bounce: { type: "Permanent" } }, { id });
@@ -296,7 +297,7 @@ describe("support (contract)", () => {
       expect((await db.payment.findUniqueOrThrow({ where: { id: paymentId } })).flags).toEqual(["note"]);
     });
     it("a mail id no delivery has yet is refused so the provider tries again, and keeps nothing", async () => {
-      const id = `msg_unknown_${process.pid}_${Date.now()}`;
+      const id = `msg_unknown_${RUN}_${Date.now()}`;
       expect((await event("email.delivered", { email_id: "prov_nobody" }, { id })).status).toBe(409);
       expect(await db.webhookEvent.count({ where: { provider: "resend", eventId: id } })).toBe(0);
     });

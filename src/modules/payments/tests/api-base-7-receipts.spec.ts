@@ -5,12 +5,12 @@ import { UuidV7Maker } from "../../../common/ids/uuidv7";
 import { createTestApp, TestApp } from "../../../../test/kit/app";
 import { makeStaff, seedRoleTable } from "../../staff-accounts/tests/staff-kit";
 import { SettlementService } from "../settlement.service";
-import { testWishNo } from "../../../../test/kit/unique";
+import { testWishNo, RUN } from "../../../../test/kit/unique";
 
 const ROOT = join(__dirname, "../../../..");
 const NOW = new Date("2033-03-10T09:00:00.000Z");
 const ids = new UuidV7Maker();
-const run = `${process.pid}${Date.now() % 100000}`;
+const run = RUN;
 let seq = 0;
 const auth = (token: string) => ({ authorization: `Bearer ${token}` });
 

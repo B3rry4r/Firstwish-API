@@ -3,9 +3,10 @@ import { join } from "node:path";
 import { PrismaService } from "../../../common/db/prisma.service";
 import { SettlementService } from "../../payments/settlement.service";
 import { boot, ids } from "./kit";
+import { RUN } from "../../../../test/kit/unique";
 
 const NOW = new Date("2027-03-08T09:00:00.000Z");
-const run = `${process.pid}${Date.now() % 100000}`;
+const run = RUN;
 
 /** IC-pool (F7): every transaction waits for a connection as long as production needs, so a crowd of settles on one account all end. */
 describe("transactions wait for a connection: sixty contended settles on one account", () => {

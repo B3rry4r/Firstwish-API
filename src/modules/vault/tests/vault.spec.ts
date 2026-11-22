@@ -9,11 +9,12 @@ import { NoticesService } from "../../notices/notices.service";
 import { JobsService } from "../../jobs/jobs.service";
 import { GB, MB } from "../../stored-files/file-rules";
 import { JPEG, stage } from "../../stored-files/tests/files-kit";
+import { RUN, testWishNo } from "../../../../test/kit/unique";
 
 const ROOT = join(__dirname, "../../../..");
 const NOW = new Date("2026-12-01T09:00:00.000Z");
 const ids = new UuidV7Maker();
-const run = `${process.pid}${Date.now() % 100000}`;
+const run = RUN;
 let seq = 0;
 const auth = (token: string) => ({ authorization: `Bearer ${token}` });
 
@@ -89,7 +90,7 @@ describe("B18 Vault: shoots, space, reveal links, plays, E-33", () => {
   };
   const clientWish = async (o: { businessId: string }, client = "Ada Obi") => {
     const id = ids.next();
-    await db.clientWish.create({ data: { id, businessId: o.businessId, client, kind: "photographers", occasion: "wedding", day: new Date("2026-12-01T00:00:00Z"), no: `09${++seq}`, key: `k-${id}`, wish: "", shoot: "", hearts: [], sentAt: NOW } });
+    await db.clientWish.create({ data: { id, businessId: o.businessId, client, kind: "photographers", occasion: "wedding", day: new Date("2026-12-01T00:00:00Z"), no: testWishNo(), key: `k-${id}`, wish: "", shoot: "", hearts: [], sentAt: NOW } });
     return id;
   };
   const reveal = { client: "Ada Obi", occasion: "Wedding", city: "Lagos", date: "2026-11-20", note: "Thank you.", credits: [{ role: "Made by", name: "Lens House", handle: "" }, { role: "x", name: " ", handle: "" }], booking: "https://example.com/book", style: "golden", email: "ada@example.com" };

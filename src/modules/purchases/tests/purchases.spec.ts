@@ -11,6 +11,7 @@ import { SettlementService } from "../../payments/settlement.service";
 import { PassService } from "../pass.service";
 import { BusinessHandlers } from "../business-handlers";
 import { PurchasesService } from "../purchases.service";
+import { RUN } from "../../../../test/kit/unique";
 
 const ROOT = join(__dirname, "../../../..");
 const NOW = new Date("2026-12-01T09:00:00.000Z");
@@ -52,7 +53,7 @@ describe("purchases B07: what a payment buys", () => {
 
   const account = async () => {
     const id = ids.next();
-    await db.account.create({ data: { id, contact: `b07-${process.pid}-${++seq}@example.com`, sides: ["person"], lastSide: "person" } });
+    await db.account.create({ data: { id, contact: `b07-${RUN}-${++seq}@example.com`, sides: ["person"], lastSide: "person" } });
     return id;
   };
   const business = async (accountId: string, over: Record<string, unknown> = {}) => {

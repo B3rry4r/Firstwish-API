@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { PrismaService } from "../../../common/db/prisma.service";
 import { IdGenerator } from "../../../common/ports/ids.port";
 import { createTestApp, TestApp } from "../../../../test/kit/app";
+import { RUN } from "../../../../test/kit/unique";
 
 const ROOT = join(__dirname, "../../../..");
 const NOW = new Date("2027-01-09T09:00:00.000Z");
@@ -15,7 +16,7 @@ describe("API-BASE-3 HM1 HM3 HM4 (through the real routes)", () => {
   let db: PrismaService;
   let nid: () => string;
   let seq = 0;
-  const run = `${process.pid}${Date.now() % 100000}`;
+  const run = RUN;
 
   beforeAll(async () => {
     t = await createTestApp({ now: NOW });

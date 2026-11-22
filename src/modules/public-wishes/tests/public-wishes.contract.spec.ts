@@ -5,7 +5,7 @@ import { createTestApp, TestApp, uniqueAddress } from "../../../../test/kit/app"
 import { ensureEntitlements } from "../../stored-files/tests/files-kit";
 import { LinkLimits } from "../link-limits";
 import { ReceiverActivityService } from "../receiver-activity.service";
-import { testWishNo } from "../../../../test/kit/unique";
+import { testWishNo, RUN } from "../../../../test/kit/unique";
 
 const NOW = new Date("2027-03-10T09:00:00.000Z");
 const DAY = 24 * 3600 * 1000;
@@ -26,7 +26,7 @@ describe("public wishes E-129 E-130 E-131 E-132 E-134 and the feed's E-122 E-142
     if (bucket) await db.$executeRaw`DELETE FROM link_hit WHERE bucket = ${bucket} AND key = ANY(${keys})`;
     else await db.$executeRaw`DELETE FROM link_hit WHERE key = ANY(${keys})`;
   };
-  const run = `${process.pid}${Date.now() % 100000}`;
+  const run = RUN;
 
   beforeAll(async () => {
     t = await createTestApp({ now: NOW });

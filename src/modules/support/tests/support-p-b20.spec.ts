@@ -8,13 +8,14 @@ import { EmailSuppression } from "../../notices/suppression";
 import { makeStaff, seedRoleTable } from "../../staff-accounts/tests/staff-kit";
 import { isOwnAddress, replyToken } from "../rules";
 import { signSvix } from "../../../common/auth/svix";
+import { RUN } from "../../../../test/kit/unique";
 
 const NOW = new Date("2031-03-12T09:00:00.000Z");
 const SECRET = `whsec_${Buffer.from("pb20-test-signing-secret-0123456789").toString("base64")}`;
 const PEPPER = "test-code-pepper-0123456789abcdef0123456";
 const ids = new UuidV7Maker();
 let n = 0;
-const address = () => `pb20-${process.pid}-${Date.now()}-${++n}@example.test`;
+const address = () => `pb20-${RUN}-${Date.now()}-${++n}@example.test`;
 const bearer = (t: string) => ({ authorization: `Bearer ${t}` });
 
 describe("P-B20 patch (DA1 DA2 DA3)", () => {
@@ -24,7 +25,7 @@ describe("P-B20 patch (DA1 DA2 DA3)", () => {
 
   function event(type: string, data: Record<string, unknown>, secret = SECRET) {
     const raw = JSON.stringify({ type, data });
-    const id = `msg_pb20_${process.pid}_${++n}_${Date.now()}`;
+    const id = `msg_pb20_${RUN}_${++n}_${Date.now()}`;
     const ts = Math.floor(t.clock.now().getTime() / 1000);
     return t.http().post("/v1/webhooks/email").set("content-type", "application/json").set("svix-id", id).set("svix-timestamp", String(ts))
       .set("svix-signature", signSvix(secret, raw, id, ts)).send(raw);
@@ -63,13 +64,13 @@ describe("P-B20 patch (DA1 DA2 DA3)", () => {
     // count is of the threads that hold them, never of the whole table.
     const threadsWith = (words: string) => db.supportThread.count({ where: { body: { contains: words } } });
     it.each(own)("mail from %s starts no thread, with or without Auto-Submitted", async (from) => {
-      const words = `own-${process.pid}-${++n}-${Date.now()}`;
+      const words = `own-${RUN}-${++n}-${Date.now()}`;
       expect((await inbound({ from, to: ["support@example.test"], subject: "x", text: words })).status).toBe(200);
       expect((await inbound({ from, to: ["support@example.test"], subject: "x", text: words, headers: { "Auto-Submitted": "no" } })).status).toBe(200);
       expect(await threadsWith(words)).toBe(0);
     });
     it("an empty sender starts no thread", async () => {
-      const words = `empty-${process.pid}-${++n}-${Date.now()}`;
+      const words = `empty-${RUN}-${++n}-${Date.now()}`;
       await inbound({ from: "", to: ["support@example.test"], subject: "x", text: words });
       await inbound({ from: "<>", to: ["support@example.test"], subject: "x", text: words });
       expect(await threadsWith(words)).toBe(0);
@@ -103,7 +104,7 @@ describe("P-B20 patch (DA1 DA2 DA3)", () => {
     it("a +tag or another case of a complained address gets no email; another address is untouched", async () => {
       const sup = t.app.get(EmailSuppression);
       const notices = t.app.get(NoticesService);
-      const local = `pb20c${process.pid}${Date.now()}`;
+      const local = `pb20c${RUN}${Date.now()}`;
       await sup.add(`${local}@example.test`, "complained");
       expect(await sup.has(`${local}+news@example.test`)).toBe(true);
       expect(await sup.has(`${local.toUpperCase()}@Example.Test`)).toBe(true);

@@ -1,5 +1,6 @@
 import { PrismaService } from "../../../common/db/prisma.service";
 import { account, B12App, b13App, bearer, liveWish, staffOf } from "./b13-kit";
+import { RUN } from "../../../../test/kit/unique";
 
 /** API-BASE-4 HP12: people search by wish number, the held photo read, the day picks read, the creators' payout months. */
 describe("API-BASE-4 HP12 staff reads (through the real routes)", () => {
@@ -10,7 +11,7 @@ describe("API-BASE-4 HP12 staff reads (through the real routes)", () => {
     db = t.db;
   });
   afterAll(() => t.close());
-  const run = String(process.pid);
+  const run = RUN;
 
   it("GET /v1/admin/people finds the person by a wish number (also as 'Wish № 0412'); another number finds nobody", async () => {
     const s = await staffOf(t, "support");

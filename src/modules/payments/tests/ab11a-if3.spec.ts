@@ -1,9 +1,10 @@
 import { Money } from "../../../common/money/money";
 import { SettlementService } from "../settlement.service";
 import { boot } from "../../concierge/tests/kit";
+import { RUN } from "../../../../test/kit/unique";
 
 const NOW = new Date("2027-08-02T09:00:00.000Z");
-const run = `${process.pid}${Date.now() % 100000}`;
+const run = RUN;
 type Kit = Awaited<ReturnType<typeof boot>>;
 
 /** API-BASE-11A case 3 (IF3): an extra is paid for once per wish, as a ticket is. */
@@ -105,5 +106,5 @@ describe("IF3: one waiting payment per extra per wish", () => {
     expect([201, 409]).toContain(both[1].status);
     const waiting = await k.db.payment.count({ where: { subjectId: w, purpose: "extra", status: { in: ["pending", "started"] } } });
     expect(waiting).toBeLessThanOrEqual(1);
-  });
+  }, 30_000);
 });

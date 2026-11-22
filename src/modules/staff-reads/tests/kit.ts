@@ -1,11 +1,12 @@
-import { randomBytes } from "node:crypto";
 import { PrismaService } from "../../../common/db/prisma.service";
 import { UuidV7Maker } from "../../../common/ids/uuidv7";
 import { createTestApp, TestApp } from "../../../../test/kit/app";
+import { testHex } from "../../../../test/kit/unique";
 import { seedRoleTable } from "../../staff-accounts/tests/staff-kit";
 
 export const ids = new UuidV7Maker();
-export const hex = (n = 4) => randomBytes(n).toString("hex");
+/** Random text for a unique column: always 60 bits or more (test/kit/unique.ts), whatever count a caller passes. */
+export const hex = (_n = 4) => testHex();
 
 export interface Kit extends TestApp {
   db: PrismaService;

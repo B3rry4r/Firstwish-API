@@ -9,13 +9,14 @@ import { SettlementService } from "../../payments/settlement.service";
 import { PurchasesService } from "../../purchases/purchases.service";
 import { WishLifecycleService } from "../../wishes/wish-lifecycle.service";
 import { WishesService } from "../../wishes/wishes.service";
+import { RUN } from "../../../../test/kit/unique";
 
 const ROOT = join(__dirname, "../../../..");
 // A start no other spec uses.
 const NOW = new Date("2027-02-05T09:00:00.000Z");
 const DAY = 24 * 3600 * 1000;
 const ids = new UuidV7Maker();
-const run = `${process.pid}${Date.now() % 100000}`;
+const run = RUN;
 let seq = 0;
 // A style of this spec's own: the house style "noir" is switched off for a while by the house-style spec, which runs beside this one, and a draft naming it is then 422.
 const STYLE = `zb3-${run}`;

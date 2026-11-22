@@ -1,6 +1,7 @@
 import { PrismaService } from "../../../common/db/prisma.service";
 import { SettlementService } from "../../payments/settlement.service";
 import { boot, ids, routeStorage } from "./kit";
+import { testSlug } from "../../../../test/kit/unique";
 
 const NOW = new Date("2026-12-07T09:00:00.000Z");
 const H = 3_600_000;
@@ -126,7 +127,7 @@ describe("P-B19: the concierge start, delivery, card and email", () => {
     const ws: string[] = [];
     for (let i = 0; i < 2; i++) {
       const w = await k.wish(a.id);
-      await db.wishLink.create({ data: { id: ids.next(), slug: `pb19-${ids.next().slice(-8)}`, wishId: w, active: true } });
+      await db.wishLink.create({ data: { id: ids.next(), slug: testSlug("pb19"), wishId: w, active: true } });
       ws.push(w);
     }
     const card = (auth: string, wishIds: string[]) => http().post("/v1/qr-cards").set("Authorization", auth).send({ wishIds });

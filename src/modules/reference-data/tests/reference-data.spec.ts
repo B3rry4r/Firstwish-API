@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { UuidV7Maker } from "../../../common/ids/uuidv7";
 import { PrismaService } from "../../../common/db/prisma.service";
-import { loadWeb, staleSources, WEB_LIB, WEB_PRESENT } from "./web-files";
+import { loadWeb, staleSources, WEB_LIB, WEB_PRESENT, webStyleRows } from "./web-files";
 import { createTestApp, TestApp } from "../../../../test/kit/app";
 
 const ROOT = join(__dirname, "../../../..");
@@ -126,6 +126,19 @@ describe("reference reads (E-28, E-51, E-74, E-81)", () => {
     const mkeys = ["slug", "name", "line", "kind", "serves", "fields", "kinds", "occasions", "dimension", "quiet", "from"];
     const moments = manifests.map((m) => ({ ...Object.fromEntries(mkeys.filter((k) => m[k] !== undefined).map((k) => [k, m[k]])), ...(m.level === undefined ? {} : { level: String(m.level as string | number) }), ...(m.tags == null ? {} : { tags: m.tags }) }));
     expect(got(all)).toEqual(want(moments as Row[]));
+
+    // Styles: every field the web still owns equals the committed row; `get` is the API repo's own, checked by the rule below.
+    const seedStyles = (JSON.parse(readFileSync(join(ROOT, "prisma/seed-data/Style.json"), "utf8")).rows as Row[]).map(({ seedKey: _k, get: _g, ...r }) => r);
+    expect(served(seedStyles as Row[])).toEqual(served(webStyleRows()));
+  });
+
+  it("every seeded style has a get line, and house styles of one level share it (the rule styles.service getLineFor uses; runs in CI)", () => {
+    const rows = JSON.parse(readFileSync(join(ROOT, "prisma/seed-data/Style.json"), "utf8")).rows as { slug: string; level: string; house: boolean; get?: string | null }[];
+    expect(rows.filter((r) => typeof r.get !== "string" || !r.get.trim()).map((r) => r.slug)).toEqual([]);
+    for (const level of new Set(rows.map((r) => r.level))) {
+      const lines = new Set(rows.filter((r) => r.house && r.level === level).map((r) => r.get));
+      expect([level, lines.size]).toEqual([level, Math.min(lines.size, 1)]);
+    }
   });
 
   it("moments equal the web app's, page by page; a bad cursor or limit is 422", async () => {

@@ -2,11 +2,12 @@ import { PrismaService } from "../../../common/db/prisma.service";
 import { UuidV7Maker } from "../../../common/ids/uuidv7";
 import { createTestApp, TestApp } from "../../../../test/kit/app";
 import { makeStaff, seedRoleTable } from "../../staff-accounts/tests/staff-kit";
+import { RUN } from "../../../../test/kit/unique";
 
 const NOW = new Date("2032-08-10T09:00:00.000Z");
 const ids = new UuidV7Maker();
 const auth = (token: string) => ({ authorization: `Bearer ${token}` });
-const run = `${process.pid}${Date.now() % 100000}`;
+const run = RUN;
 
 describe("B22 staff ledger rows (E-64)", () => {
   let t: TestApp;

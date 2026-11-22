@@ -5,12 +5,12 @@ import { JobsService } from "../../jobs/jobs.service";
 import { ensureEntitlements } from "../../stored-files/tests/files-kit";
 import { WishLifecycleService } from "../../wishes/wish-lifecycle.service";
 import { AccountErasureService } from "../account-erasure.service";
-import { testWishNo } from "../../../../test/kit/unique";
+import { testWishNo, testSlug, RUN } from "../../../../test/kit/unique";
 
 const NOW = new Date("2028-03-10T09:00:00.000Z");
 const DAY = 24 * 3600 * 1000;
 const ids = new UuidV7Maker();
-const run = `${process.pid}${Date.now() % 100000}`;
+const run = RUN;
 const NAME = `zq${run}`;
 let seq = 0;
 
@@ -42,7 +42,7 @@ describe("Wave 4 join: erasing a business owner (J5) and no name left in a link 
   /** A wish with a link named after the receiver (the issued shape: name, a dash, 10 random characters). */
   async function wish(o: { accountId: string; businessId: string | null }, over: Record<string, unknown> = {}) {
     const id = ids.next();
-    const slug = `${NAME}-${String(++seq).padStart(3, "0")}abcdefg`.slice(0, 32);
+    const slug = testSlug("zq");
     await db.wish.create({
       data: {
         id, accountId: o.accountId, businessId: o.businessId, status: "sealed", ticket: "moment", kind: "love", occasion: "birthday", styleSlug: "noir", timeZone: "Africa/Lagos",

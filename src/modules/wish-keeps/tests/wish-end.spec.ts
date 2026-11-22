@@ -8,7 +8,7 @@ import { JobsService } from "../../jobs/jobs.service";
 import { endOf, PassCover } from "../../purchases/pass-cover";
 import { PurchasesService } from "../../purchases/purchases.service";
 import { WishKeepsService } from "../wish-keeps.service";
-import { testWishNo } from "../../../../test/kit/unique";
+import { testWishNo, RUN } from "../../../../test/kit/unique";
 
 // HB1: a wish's end is always worked out from scratch by endOf and written by applyEnd.
 const ROOT = join(__dirname, "../../../..");
@@ -17,7 +17,7 @@ const DAY = 86_400_000;
 const TERM = 14; // keepsake
 const KEEP_DAYS: Record<string, number> = { "keep.month": 30, "keep.half": 182, "keep.year": 365 };
 const ids = new UuidV7Maker();
-const run = `${process.pid}${Date.now() % 100000}`;
+const run = RUN;
 let seq = 0;
 
 describe("HB1 the end of a wish is worked out from the rows", () => {

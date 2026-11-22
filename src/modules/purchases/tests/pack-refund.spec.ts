@@ -8,11 +8,12 @@ import { JobsService } from "../../../modules/jobs/jobs.service";
 import { SettlementService } from "../../../modules/payments/settlement.service";
 import { giveBackDraws } from "../draw-giveback";
 import { makeStaff, seedRoleTable } from "../../staff-accounts/tests/staff-kit";
+import { RUN } from "../../../../test/kit/unique";
 
 const ROOT = join(__dirname, "../../../..");
 const NOW = new Date("2210-03-01T09:00:00.000Z");
 const ids = new UuidV7Maker();
-const run = `${process.pid}${Date.now() % 100000}`;
+const run = RUN;
 let seq = 0;
 // The provider event ids this file sends sit in a block of their own: another spec's ids in the shared database would make the webhook a repeat that does nothing.
 const EVENT_BASE = 100_000_000 + (process.pid % 50000) * 10_000;

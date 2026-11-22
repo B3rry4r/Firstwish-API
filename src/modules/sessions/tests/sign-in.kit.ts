@@ -3,6 +3,7 @@ import { PrismaService } from "../../../common/db/prisma.service";
 import { SessionFamilies } from "../../../common/auth/session-families";
 import { IdGenerator } from "../../../common/ports/ids.port";
 import { createTestApp, TestApp, uniqueAddress } from "../../../../test/kit/app";
+import { RUN } from "../../../../test/kit/unique";
 
 /*
  * Test helpers for the sign-in bundle. The app runs with the kernel's real verifier (not the kit's token map), so tokens the
@@ -20,7 +21,7 @@ export async function signInApp(now?: Date): Promise<SignInApp> {
 }
 
 let seq = 0;
-const run = `${process.pid}${Date.now() % 100000}`;
+const run = RUN;
 export function uniqueEmail(tag: string): string {
   return `${tag}-${run}-${++seq}@example.com`;
 }

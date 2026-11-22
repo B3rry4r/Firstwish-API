@@ -7,6 +7,7 @@ import { PriceBookService } from "../../price-book/price-book.service";
 import { abandonPendingPayments, PAYMENTS_ABANDON_AFTER_MINUTES } from "../abandon";
 import { FulfilmentRegistry, type FulfilmentContext } from "../fulfilment.registry";
 import { paymentEntries, vatInside } from "../ledger";
+import { RUN } from "../../../../test/kit/unique";
 
 const ROOT = join(__dirname, "../../../..");
 const NOW = new Date("2026-12-01T09:00:00.000Z");
@@ -41,7 +42,7 @@ describe("payments core E-87, E-88, E-217 (contract)", () => {
     calls.length = 0;
   });
 
-  async function payer(email: string | null = `b05-${process.pid}-${++seq}@example.com`) {
+  async function payer(email: string | null = `b05-${RUN}-${++seq}@example.com`) {
     const id = ids.next();
     await db.account.create({ data: { id, contact: email, sides: ["person"], lastSide: "person" } });
     const token = `b05-${id}`;

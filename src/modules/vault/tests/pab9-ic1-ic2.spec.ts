@@ -1,11 +1,12 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { useKit } from "./ab9-kit";
+import { RUN } from "../../../../test/kit/unique";
 
 describe("IC1 and IC2: a copied or re-sent link is never more open than its reveal; a heart is kept by file", () => {
   const k = useKit();
   let n = 0;
-  const addr = () => `pab9-ic12-${process.pid}-${++n}-${Date.now() % 100000}@example.com`;
+  const addr = () => `pab9-ic12-${RUN}-${++n}-${Date.now() % 100000}@example.com`;
   const copy = async (o: { token: string }, shoot: string, set = "proofs"): Promise<string> => {
     const r = await k.post(`/v1/business/reveal-links/${shoot}/copy-link`, o.token, { set });
     expect(r.status).toBe(200);

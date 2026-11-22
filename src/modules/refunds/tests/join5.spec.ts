@@ -11,6 +11,7 @@ import { makeStaff, seedRoleTable } from "../../staff-accounts/tests/staff-kit";
 import { flagRefundDue } from "../refund-due";
 import { RefundProviderPort } from "../../../common/ports/refund-provider.port";
 import { StandinRefundProvider } from "../../../common/ports/adapters/standin-refund-provider";
+import { RUN } from "../../../../test/kit/unique";
 
 /* Wave 5 join: J1 (WW1) transfer events through the webhook, J2 (WW2) royalties in the settle and the refund, J3 (YY4) the one flag,
    J4 the Signed grant's end and a payout paid by hand (ZZ8), J5 (CA3) a business's creator plan invoice. */
@@ -20,7 +21,7 @@ const ids = new UuidV7Maker();
 let seq = 0;
 const auth = (token: string) => ({ authorization: `Bearer ${token}` });
 const REASON = "Customer asked, checked";
-const tag = `j5r${process.pid}`;
+const tag = `j5r${RUN}`;
 
 describe("wave 5 join: money (J1 to J5)", () => {
   let t: TestApp;

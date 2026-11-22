@@ -7,14 +7,14 @@ import { SettlementService } from "../../payments/settlement.service";
 import { JobsService } from "../../jobs/jobs.service";
 import { endOf } from "../../purchases/pass-cover";
 import { WishLifecycleService } from "../../wishes/wish-lifecycle.service";
-import { testWishNo } from "../../../../test/kit/unique";
+import { testWishNo, testSlug, RUN } from "../../../../test/kit/unique";
 
 // J9 (HB3) and J10 (a job's cancel never throws; an ended Pass is not live).
 const ROOT = join(__dirname, "../../../..");
 const NOW = new Date("2035-03-01T09:00:00.000Z"); // a start no other spec uses
 const DAY = 86_400_000;
 const ids = new UuidV7Maker();
-const run = `${process.pid}${Date.now() % 100000}`;
+const run = RUN;
 let seq = 0;
 
 describe("join 6: the end function at first open and rest; cancelling a job; an ended Pass", () => {
@@ -54,7 +54,7 @@ describe("join 6: the end function at first open and rest; cancelling a job; an 
   /** A sealed wish, open time passed, with its link: opened through the real public route. */
   async function sealed(accountId: string) {
     const id = ids.next();
-    const slug = `j6hb3-${String(++seq).padStart(3, "0")}abcdefghi`.slice(0, 24);
+    const slug = testSlug("j6hb3");
     await db.wish.create({
       data: { id, accountId, status: "sealed", kind: "birthday", occasion: "birthday", styleSlug: "golden", timeZone: "Africa/Lagos", ticket: "keepsake", no: testWishNo(), name: "Chidi", opensAt: new Date(NOW.getTime() - 60_000), sealedAt: NOW, content: { letter: { paras: ["Hi"] } } } as never,
     });

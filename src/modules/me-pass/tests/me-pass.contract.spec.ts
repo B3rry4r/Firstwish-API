@@ -4,13 +4,14 @@ import { PrismaService } from "../../../common/db/prisma.service";
 import { UuidV7Maker } from "../../../common/ids/uuidv7";
 import { createTestApp, TestApp } from "../../../../test/kit/app";
 import { SettlementService } from "../../payments/settlement.service";
+import { RUN } from "../../../../test/kit/unique";
 
 const ROOT = join(__dirname, "../../../..");
 const NOW = new Date("2032-07-10T09:00:00.000Z");
 const DAY = 86_400_000;
 const ids = new UuidV7Maker();
 const bearer = (token: string) => ({ authorization: `Bearer ${token}` });
-const run = `${process.pid}${Date.now() % 100000}`;
+const run = RUN;
 let seq = 0;
 
 describe("B22 the Pass read (E-83)", () => {

@@ -9,6 +9,7 @@ import { SettlementService } from "../../payments/settlement.service";
 import { BusinessHandlers } from "../business-handlers";
 import { PassService } from "../pass.service";
 import { PurchasesService } from "../purchases.service";
+import { RUN } from "../../../../test/kit/unique";
 
 /**
  * P-B07: the rulings from the check of B07 (HH1 to HH9) and the proofs run again after them. A real database, the clock port,
@@ -52,7 +53,7 @@ describe("purchases P-B07: the rulings HH1 to HH9", () => {
 
   const account = async (contact?: string) => {
     const id = ids.next();
-    await db.account.create({ data: { id, contact: contact ?? `pb07-${process.pid}-${++seq}@example.com`, sides: ["person"], lastSide: "person" } });
+    await db.account.create({ data: { id, contact: contact ?? `pb07-${RUN}-${++seq}@example.com`, sides: ["person"], lastSide: "person" } });
     return id;
   };
   const business = async (accountId: string, over: Record<string, unknown> = {}) => {

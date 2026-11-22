@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { PrismaService } from "../../../common/db/prisma.service";
 import { holdSettingLock } from "../../../../test/kit/setting-lock";
 import { account, B12App, b13App, bearer, liveWish, staffOf } from "./b13-kit";
-import { testWishNo } from "../../../../test/kit/unique";
+import { testWishNo, RUN } from "../../../../test/kit/unique";
 
 /** API-BASE-5 case 5 (R14 and the staff gaps), through the real routes. */
 describe("API-BASE-5 staff and money (through the real routes)", () => {
@@ -73,7 +73,7 @@ describe("API-BASE-5 staff and money (through the real routes)", () => {
         });
         return id;
       };
-      const run = `${process.pid}${Date.now() % 100000}`;
+      const run = RUN;
       const failed = await mk("failed", `ab5-f-${run}`);
       const paid = await mk("succeeded", `ab5-s-${run}`);
       const sent = await mk("succeeded", `ab5-r-${run}`);
@@ -93,7 +93,7 @@ describe("API-BASE-5 staff and money (through the real routes)", () => {
 
     it("GET /v1/admin/businesses?q= finds by part of the name or the owner's email, in any case", async () => {
       const ops = await staffOf(t, "ops");
-      const run = `${process.pid}${Date.now() % 100000}`;
+      const run = RUN;
       const owner = await account(t, ["person", "business"]);
       await db.business.create({ data: { id: t.id(), accountId: owner.accountId, name: `Zanzibar Frames ${run}` } });
       const other = await account(t, ["person", "business"]);

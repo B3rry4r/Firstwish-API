@@ -152,7 +152,7 @@ describe("B17 business: plan, usage, client wishes, invoices, logins, staff", ()
     const other = await live();
     expect((await get(`/v1/business/client-wishes/${made.body.id}`, other.token)).status).toBe(404);
     expect((await get("/v1/business/client-wishes", other.token)).body.items).toEqual([]);
-    expect((await get("/v1/business/client-wishes/not-a-uuid", o.token)).status).toBe(404);
+    expect((await get("/v1/business/client-wishes/not-a-uuid", o.token)).status).toBe(422);  // IF2: a name that is not an id is 422 in words
   });
 
   it("2. approve-date makes one wish for a person's date, once", async () => {
@@ -223,7 +223,7 @@ describe("B17 business: plan, usage, client wishes, invoices, logins, staff", ()
     expect((await get(`/v1/business/client-wishes/${made.body.id}`, m.token)).status).toBe(403);
     expect((await get("/v1/business/logins", o.token)).body.items).toEqual([]);
     expect((await t.http().delete(`/v1/business/logins/${inv.body.id}`).set(bearer(o.token))).status).toBe(404);
-    expect((await t.http().delete("/v1/business/logins/nope").set(bearer(o.token))).status).toBe(404);
+    expect((await t.http().delete("/v1/business/logins/nope").set(bearer(o.token))).status).toBe(422);  // IF2: a name that is not an id is 422 in words
     // the seat is free again
     expect((await t.http().post("/v1/business/logins").set(bearer(o.token)).send({ contact: "next@studio.ng" })).status).toBe(201);
   });
@@ -261,7 +261,7 @@ describe("B17 business: plan, usage, client wishes, invoices, logins, staff", ()
     const other = await owner();
     expect((await get(`/v1/business/invoices/${list.body.items[0].id}/file`, other.token)).status).toBe(404);
     expect((await get("/v1/business/invoices", other.token)).body.items).toEqual([]);
-    expect((await get("/v1/business/invoices/nope/file", o.token)).status).toBe(404);
+    expect((await get("/v1/business/invoices/nope/file", o.token)).status).toBe(422);  // IF2: a name that is not an id is 422 in words
   });
 
   it("4. the same payment's handler run twice keeps one invoice; a rolled-back payment gives its number back; a refund voids and never deletes", async () => {
@@ -346,7 +346,7 @@ describe("B17 business: plan, usage, client wishes, invoices, logins, staff", ()
     expect((await get("/v1/admin/businesses", staffToken(["moderator"]))).status).toBe(403);
     expect((await get("/v1/admin/businesses", o.token)).status).toBe(403);
     expect((await get("/v1/admin/businesses")).status).toBe(401);
-    expect((await get("/v1/admin/businesses/not-a-uuid", staffToken(["ops"]))).status).toBe(404);
+    expect((await get("/v1/admin/businesses/not-a-uuid", staffToken(["ops"]))).status).toBe(422);  // IF2: a name that is not an id is 422 in words
     expect((await t.http().post(`/v1/admin/businesses/${o.businessId}`).set(bearer(staffToken(["owner"]))).send({})).status).toBe(404);
   });
 

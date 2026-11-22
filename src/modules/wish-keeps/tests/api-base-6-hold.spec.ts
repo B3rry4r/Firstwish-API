@@ -15,6 +15,8 @@ const ROOT = join(__dirname, "../../../..");
 const NOW = new Date("2032-06-14T09:00:00.000Z");
 const DAY = 86_400_000;
 const ids = new UuidV7Maker();
+/** a well-formed reference that names no payment (IF2: a reference that is not shaped like one is 422 before the proof is looked at) */
+const UUID_NONE = "0192f5a0-1c2b-7000-8000-0123456789ab";
 const run = `${process.pid}${Date.now() % 100000}`;
 let seq = 0;
 
@@ -190,7 +192,7 @@ describe("HS2 keep and wake by link, no account", () => {
     expect((await start(a.slug, body, { "x-wish-proof": await proofOf(b.slug) }, `ab6h-${run}-d2`)).status).toBe(403);
     expect((await start(a.slug, body, { "x-wish-proof": `${Math.floor(NOW.getTime() / 1000) + 3600}.${"A".repeat(43)}` }, `ab6h-${run}-d3`)).status).toBe(403);
     expect((await wake(a.slug, {})).status).toBe(403);
-    expect((await result(a.slug, "fw-nothing", {})).status).toBe(403);
+    expect((await result(a.slug, `fw-${UUID_NONE}`, {})).status).toBe(403);
     const salt = randomBytes(16);
     const hash = `scrypt$${salt.toString("hex")}$${scryptSync("pass1234", salt, 32).toString("hex")}`;
     const p = await wish({ passcodeHash: hash });

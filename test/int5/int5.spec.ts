@@ -32,7 +32,7 @@ describe("INT-5 shared base", () => {
     expect((await lift(ban.body.id, { reason: "Appeal accepted" }, mod.token)).status).toBe(403);
     expect((await t.http().delete(`/v1/admin/bans/${ban.body.id}`).send({ reason: "Appeal accepted" })).status).toBe(401);
     expect((await lift(ban.body.id, {})).status).toBe(422);
-    expect((await lift("not-an-id", { reason: "Appeal accepted" })).status).toBe(404);
+    expect((await lift("not-an-id", { reason: "Appeal accepted" })).status).toBe(422); // IF2: a name that is not an id is 422 in words
     const ok = await lift(ban.body.id, { reason: "Appeal accepted" });
     expect(ok.status).toBe(200);
     expect(ok.body).toMatchObject({ id: ban.body.id, accountId: victim.accountId });

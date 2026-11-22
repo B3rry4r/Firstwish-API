@@ -10,6 +10,9 @@ const REFERENCE = /^fw-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{
 const ID_PARAMS = new Set(["id", "wishId", "fileId", "voiceId", "creator"]);
 const REFERENCE_PARAMS = new Set(["reference"]);
 
+/** The routes whose `:id` is not an id: a style is named by its slug, a payout run by its month. */
+export const NOT_AN_ID_ROUTES: readonly string[] = ["GET /v1/styles/:id", "POST /v1/admin/payout-runs/:id/approve"];
+
 /**
  * IF2 (IE2): every route that takes an id in its path answers a spelling that is not an id with 422 in words (never a 500, never a
  * bare 404), and reads an id in any case as the same thing: the id is put in lower case here, before a handler or a service reads it.
@@ -19,8 +22,10 @@ const REFERENCE_PARAMS = new Set(["reference"]);
 export class IdParamsInterceptor implements NestInterceptor {
   intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
     if (context.getType() !== "http") return next.handle();
-    const params = context.switchToHttp().getRequest<Request>().params as Record<string, string> | undefined;
-    if (params) {
+    const req = context.switchToHttp().getRequest<Request>();
+    const params = req.params as Record<string, string> | undefined;
+    const route = `${req.method} ${(req.route as { path?: string } | undefined)?.path ?? ""}`;
+    if (params && !NOT_AN_ID_ROUTES.includes(route)) {
       for (const [name, value] of Object.entries(params)) {
         if (typeof value !== "string") continue;
         if (ID_PARAMS.has(name)) {

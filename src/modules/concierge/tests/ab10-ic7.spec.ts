@@ -311,7 +311,7 @@ describe("IC7: the buyer's files for a Concierge order", () => {
     const body = JSON.stringify({ event: "refund.processed", data: { id: 990000 + n, transaction_reference: `fw-${o3.payId}`, amount: Number((await db.payment.findUniqueOrThrow({ where: { id: o3.payId } })).amountKobo), status: "processed" } });
     expect((await http().post("/v1/webhooks/paystack").set("content-type", "application/json").set("x-paystack-signature", k.t.payments.sign(body)).send(body)).status).toBe(200);
     expect((await db.payment.findUniqueOrThrow({ where: { id: o3.payId } })).status).toBe("refunded");
-    expect((await fileRow(f3.id))?.status).toBe("deleted");
+    expect(await fileRow(f3.id)).toBeNull(); // API-BASE-11A case 5: a refund removes the file's row and stored objects at once (it was marked deleted until the cleanup job ran)
     // IE3: the order reads as refunded, not paid, and is no longer the maker's
     expect((await staffList(m.auth, o3.id)).status).toBe(404);
     const refunded = await http().get(`/v1/concierge-orders/${o3.id}`).set("Authorization", b3.auth);

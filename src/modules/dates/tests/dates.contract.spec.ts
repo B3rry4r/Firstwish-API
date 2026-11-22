@@ -107,7 +107,7 @@ describe("dates E-45..E-48 /v1/me/dates (contract)", () => {
     expect((await t.http().delete(`/v1/me/dates/${t.id()}`)).status).toBe(401);
     expect((await t.http().get("/v1/me/dates").set(bearer(staff(t)))).status).toBe(403);
     const w = await account(t);
-    expect((await t.http().get("/v1/me/dates/not-a-uuid").set(bearer(w.token))).status).toBe(404);
+    expect((await t.http().get("/v1/me/dates/not-a-uuid").set(bearer(w.token))).status).toBe(422);  // IF2: a name that is not an id is 422 in words
     expect((await t.http().delete("/v1/me/dates/123").set(bearer(w.token))).status).toBe(404);
   });
 

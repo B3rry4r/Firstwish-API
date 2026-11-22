@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "frozenAt": "2026-11-22T07:53:43Z",
+  "frozenAt": "2026-11-22T08:05:41Z",
   "framework": "nestjs",
   "generatedBy": "tools/pipeline/reconcile.py",
   "resources": [
@@ -13645,6 +13645,18 @@
           "supersedes": [
             "S-1: integer kobo, currency NGN, over the wire and in storage; prices only from the price book"
           ]
+        },
+        {
+          "name": "confirmation",
+          "type": "object",
+          "classes": [
+            "object"
+          ],
+          "nullable": true,
+          "provenance": [
+            "DEC-281"
+          ],
+          "supersedes": []
         },
         {
           "name": "discountable",

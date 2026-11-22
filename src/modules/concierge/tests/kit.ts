@@ -20,7 +20,7 @@ export async function boot(prefix: string, now: Date, opts: TestAppOptions = {})
     t.tokens.set(`user-${id}`, { kind: "user", accountId: id, sides });
     return { id, auth: `Bearer user-${id}` };
   };
-  const staff = async (roles: ("maker" | "ops" | "owner")[]) => {
+  const staff = async (roles: ("maker" | "ops" | "owner" | "finance")[]) => {
     const id = ids.next();
     await db.staffAccount.create({ data: { id, email: `${prefix}-staff-${process.pid}-${++seq}@example.com`, name: `Staff ${seq}`, roles, status: "active" } });
     t.tokens.set(`staff-${id}`, { kind: "staff", staffId: id, roles });

@@ -162,7 +162,7 @@ describe("Moderation: reports, take-down asks, decisions, bans, queues (B13)", (
     expect(await publicIds()).toContain(x.w.id);
     expect((await decide(rep, { decision: "take_down", reason: "changed my mind" })).status).toBe(409);
     expect((await decide(t.id(), { decision: "keep", reason: "nothing here" })).status).toBe(404);
-    expect((await decide("nope", { decision: "keep", reason: "nothing here" })).status).toBe(404);
+    expect((await decide("nope", { decision: "keep", reason: "nothing here" })).status).toBe(422);  // IF2: a name that is not an id is 422 in words
     expect((await decide(rep, { decision: "burn", reason: "nothing here" })).status).toBe(422);
     const support = await staffOf(t, "support");
     expect((await decide(rep, { decision: "keep", reason: "nothing here" }, support.token)).status).toBe(403);

@@ -1112,6 +1112,7 @@ export interface Price {
   changed?: boolean | null;
   conciergeDeliveryHours?: number | null;
   conciergeSingleWish?: Kobo | null;
+  confirmation?: { provisional: boolean; confirmedBy: "owner" | null; confirmedAt: Instant | null } | null;
   discountable: boolean;
   from?: string | null;
   group?: string | null;

@@ -65,7 +65,7 @@ describe("video job B19", () => {
     await ask(a.auth, bought).expect(200);
     const sig = await k.wish(a.id, { ticket: "signature" });
     await ask(other.auth, sig).expect(404);
-    await ask(a.auth, "nope").expect(404);
+    await ask(a.auth, "nope").expect(422);  // IF2: a name that is not an id is 422 in words
     await ask(a.auth, ids.next()).expect(404);
     await k.t.http().get(`/v1/wishes/${sig}/video`).set("Authorization", a.auth).expect(404);
     await k.t.http().get(`/v1/wishes/${sig}/video`).set("Authorization", other.auth).expect(404);

@@ -396,7 +396,7 @@ describe("support (contract)", () => {
       const one = await t.http().get(`/v1/admin/support/threads/${th}`).set(bearer(supportStaff.token));
       expect(one.body.messages).toHaveLength(2);
       expect(JSON.stringify(one.body)).not.toContain(a.email);
-      expect((await t.http().get("/v1/admin/support/threads/not-a-uuid").set(bearer(supportStaff.token))).status).toBe(404);
+      expect((await t.http().get("/v1/admin/support/threads/not-a-uuid").set(bearer(supportStaff.token))).status).toBe(422);  // IF2: a name that is not an id is 422 in words
       expect((await t.http().get(`/v1/admin/support/threads/${ids.next()}`).set(bearer(supportStaff.token))).status).toBe(404);
       expect((await t.http().get("/v1/admin/support/threads?status=bogus").set(bearer(supportStaff.token))).status).toBe(422);
       expect((await t.http().get("/v1/admin/support/threads?cursor=bogus").set(bearer(supportStaff.token))).status).toBe(422);

@@ -157,7 +157,7 @@ describe("wishes E-221 E-222 E-224 E-225 E-229 E-231 (contract)", () => {
     expect((await save(u, w.id, { version: 0, timeZone: "Mars/Base" })).status).toBe(422);
     const other = await user();
     expect((await save(other, w.id, { version: 0, name: "x" })).status).toBe(404);
-    expect((await save(u, "not-a-uuid", { version: 0 })).status).toBe(404);
+    expect((await save(u, "not-a-uuid", { version: 0 })).status).toBe(422);  // IF2: a name that is not an id is 422 in words
     expect((await t.http().patch(`/v1/wishes/${w.id}`).send({ version: 0 })).status).toBe(401);
     expect((await db.wish.findUniqueOrThrow({ where: { id: w.id } })).version).toBe(0);
   });
@@ -414,7 +414,7 @@ describe("wishes E-221 E-222 E-224 E-225 E-229 E-231 (contract)", () => {
     expect((p2.body as { items: { id: string }[] }).items.map((x) => x.id)).toEqual([ids3[0].id]);
     expect(p2.body.nextCursor).toBeNull();
     expect((await t.http().get(`/v1/wishes/${ids3[0].id}`).set(bearer(b.token))).status).toBe(404);
-    expect((await t.http().get("/v1/wishes/not-a-uuid").set(bearer(a.token))).status).toBe(404);
+    expect((await t.http().get("/v1/wishes/not-a-uuid").set(bearer(a.token))).status).toBe(422);  // IF2: a name that is not an id is 422 in words
     expect((await t.http().get("/v1/wishes")).status).toBe(401);
     expect((await t.http().get("/v1/wishes?limit=99").set(bearer(a.token))).status).toBe(422);
     const owner = await user(["business"]);

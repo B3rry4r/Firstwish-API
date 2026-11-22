@@ -3946,6 +3946,26 @@
       "confidence": "high",
       "source": "build/rulings-phase3.md (IF1 to IF3); build/prompts/API-BASE-11A.md",
       "decidedAt": "2026-12-05T12:00:00Z"
+    },
+    {
+      "id": "DEC-281",
+      "topic": "Staff Prices: a setting's name is plain words and provisional settings say so in one shape (R14, IE3)",
+      "decision": "R14, IE3: the name of a setting line is plain words, never a status: limits.conciergeFilesDays is named \"Days the files of an order that is never paid are kept\". Every line of the staff Prices read (GET /v1/admin/prices, E-123, and the line a change answers) carries `confirmation`: null for a line that is not provisional, and for a provisional setting {provisional: boolean, confirmedBy: \"owner\" or null, confirmedAt: ISO-8601 or null}. The provisional settings are payout.thresholdKobo and limits.conciergeFilesDays; no other line is provisional (the other limit lines' `lead` is empty, it was PROVISIONAL on every limit line). The payout threshold keeps its own fields working: `lead` (its status text, PROVISIONAL or CONFIRMED) and the PayoutSetting read's status and provisional. The rule is the same for both: a change by finance leaves the setting provisional; a change by the owner (a new figure, or the same figure sent again) confirms it, with who and when kept; confirmedAt is null for a figure confirmed before the time was kept. The confirmation of limits.conciergeFilesDays is kept in a settings row of that key (none: provisional).",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (R14, IE3); build/prompts/API-BASE-11A.md (case 6)",
+      "decidedAt": "2026-12-05T12:00:00Z"
+    },
+    {
+      "id": "DEC-282",
+      "topic": "The registry is frozen again after case 6 of API-BASE-11A",
+      "decision": "The registry is re-frozen after DEC-275 to DEC-279 and DEC-281 by tools/pipeline/freeze.py (DEC-280 recorded the freeze before DEC-281); reconcile.py was run twice with --reopen (identical outputs; .pipeline/ui-align-tasks.json restored byte for byte). No endpoint id is issued or changed. Price gains the optional field confirmation.",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/prompts/API-BASE-11A.md",
+      "decidedAt": "2026-12-05T12:00:00Z"
     }
   ]
 }

@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { NOT_AN_ID_ROUTES } from "../id-params.interceptor";
 import { StandinPayments } from "../../ports/adapters/standins";
 import { Money } from "../../money/money";
 import { testSlug, testWishNo } from "../../../../test/kit/unique";
@@ -12,7 +13,7 @@ type Endpoint = { id: string; method: string; path: string; auth: { kind: string
 const registry = JSON.parse(readFileSync(join(__dirname, "../../../../.pipeline/registry.json"), "utf8")) as { resources: { endpoints: Endpoint[] }[] };
 const ID_NAMES = ["id", "wishId", "fileId", "voiceId", "creator", "reference"];
 /** every route of the registry (the route table) that takes an id in its path */
-const routes = registry.resources.flatMap((r) => r.endpoints).filter((e) => e.method !== "INTERNAL" && [...e.path.matchAll(/:(\w+)/g)].some((m) => ID_NAMES.includes(m[1])));
+const routes = registry.resources.flatMap((r) => r.endpoints).filter((e) => e.method !== "INTERNAL" && !NOT_AN_ID_ROUTES.includes(`${e.method} ${e.path}`) && [...e.path.matchAll(/:(\w+)/g)].some((m) => ID_NAMES.includes(m[1])));
 
 const UUID7 = "0192f5a0-1c2b-7000-8000-0123456789ab";
 const JUNK = ["not-an-id", "12345", "0192f5a0-1c2b-7000-8000-0123456789a", "0192f5a0-1c2b-7000-8000-0123456789abc", "%27%20OR%201=1", "null"];

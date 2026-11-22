@@ -72,7 +72,7 @@ describe("saved wishes E-155, E-156 /v1/feed/wishes/:id/save (contract)", () => 
     expect((await t.http().delete(`/v1/feed/wishes/${id}/save`).send({ wish: id })).status).toBe(401);
     expect((await t.http().put(`/v1/feed/wishes/${id}/save`).set(bearer(staff(t))).send({ wish: id })).status).toBe(403);
     const a = await account(t);
-    expect((await put(a, "not-a-uuid")).status).toBe(404);
+    expect((await put(a, "not-a-uuid")).status).toBe(422);  // IF2: a name that is not an id is 422 in words
     const other = await put(a, id, t.id());
     expect(other.status).toBe(422);
     expect(other.body.error.fields.wish).toBeDefined();

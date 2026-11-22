@@ -3679,6 +3679,13 @@
       "type": "object (ID1: the ticket payment of this wish that waits to be paid: {ticket, reference, startedAt, lapsesAt}; null when none waits)",
       "nullable": true,
       "decision": "DEC-270"
+    },
+    {
+      "resource": "Price",
+      "name": "confirmation",
+      "type": "object (R14, IE3: {provisional, confirmedBy, confirmedAt}: whether a setting is still provisional and who confirmed it, in one shape for every provisional setting; null on a line that is not provisional)",
+      "nullable": true,
+      "decision": "DEC-281"
     }
   ],
   "dropFields": [

@@ -21,11 +21,10 @@ import { EntitlementsService, grantOf } from "./entitlements.service";
 import { promotionLabel } from "./price-math";
 import { BookLine, BookVersion, PriceBookService, safe } from "./price-book.service";
 import { DEFAULT_LIMITS, LIMIT_LINES, type LimitLine, limitLineOf, readLimits } from "./book-limits";
+import { CONFIRMED, confirmationOf, readLimitConfirmation, type Confirmation } from "./confirmation";
 import { limitLineView, PAYOUT_KEY, payoutLineOf, priceOf, PROMOTION_KEY, promotionLineOf, versionOf } from "./price-view";
 
 const SECTION = "/admin/prices";
-/** The payout threshold's status once the owner has set or confirmed it. */
-const CONFIRMED = "CONFIRMED";
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /** The payout threshold setting as the book holds it (R14). */
@@ -35,6 +34,8 @@ export interface PayoutThreshold {
   schedule: string;
   /** R14: the day of the month the payout run starts (1 to 28). */
   day: number;
+  /** R14, IE3: provisional or confirmed, and by whom */
+  confirmation: Confirmation;
 }
 
 interface DraftLine {
@@ -84,6 +85,7 @@ export class PriceAdminService {
         status: typeof c.status === "string" ? c.status : "PROVISIONAL",
         schedule: typeof c.schedule === "string" ? c.schedule : "",
         day: isRunDay(c.day) ? c.day : DEFAULT_RUN_DAY,
+        confirmation: confirmationOf(c),
       },
     };
   }
@@ -105,9 +107,12 @@ export class PriceAdminService {
     const promo = PriceBookService.promotionAt(book, at) ?? book.lines.find((l) => l.promotion)?.promotion ?? null;
     if (promo) items.push(promotionLineOf(promo, book, reasons.get(PROMOTION_KEY) ?? "", reasons.has(PROMOTION_KEY)));
     const t = await this.payoutThreshold();
-    items.push(payoutLineOf(t.valueKobo, t.status, t.schedule, book, reasons.get(PAYOUT_KEY) ?? "", reasons.has(PAYOUT_KEY), t.day));
+    items.push(payoutLineOf(t.valueKobo, t.status, t.schedule, book, reasons.get(PAYOUT_KEY) ?? "", reasons.has(PAYOUT_KEY), t.day, t.confirmation));
     const limits = await readLimits(this.db);
-    for (const def of LIMIT_LINES) items.push(limitLineView(def, limits[def.field], book, reasons.get(def.key) ?? "", reasons.has(def.key)));
+    for (const def of LIMIT_LINES) {
+      const confirmation = def.provisional ? (await readLimitConfirmation(this.db, def.key)).confirmation : null;
+      items.push(limitLineView(def, limits[def.field], book, reasons.get(def.key) ?? "", reasons.has(def.key), confirmation));
+    }
     items.sort((a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0));
     const limit = q.limit ?? DEFAULT_LIMIT;
     const after = q.cursor ? String(decodeCursor(q.cursor).key) : null;
@@ -135,7 +140,7 @@ export class PriceAdminService {
     if (body.sku !== key) throw AppError.validation({ sku: "Must be the line named in the path." });
     if (key === PAYOUT_KEY) return this.changeThreshold(body, reason, actor, ownerCaller);
     const limit = limitLineOf(key);
-    if (limit) return this.changeLimit(limit, body, reason, actor);
+    if (limit) return this.changeLimit(limit, body, reason, actor, ownerCaller);
     if (body.value !== undefined) throw AppError.validation({ value: "Only a limit line takes value." });
     const endsAt = body.promotionEndsAt === undefined ? undefined : parseInstant(body.promotionEndsAt);
     if (endsAt === null) throw AppError.validation({ promotionEndsAt: "Must be an ISO-8601 time." });
@@ -267,7 +272,7 @@ export class PriceAdminService {
         throw AppError.conflict("not_allowed", "That is the price now.");
       }
       const schedule = day === row.threshold.day ? row.threshold.schedule : dayWords(day);
-      const choice = { ...row.choice, value, day, schedule, status };
+      const choice = { ...row.choice, value, day, schedule, status, ...(ownerCaller ? { confirmedBy: "owner", confirmedAt: this.book.now().toISOString() } : {}) };
       await tx.settings.update({ where: { id: row.id }, data: { choice } });
       // the monthly run's job moves to the new day (when the system has put one on the table)
       if (day !== row.threshold.day) {
@@ -283,7 +288,7 @@ export class PriceAdminService {
         changedFields: [...(body.priceKobo !== undefined ? ["priceKobo"] : []), ...(body.payoutDay !== undefined ? ["payoutDay"] : [])],
       });
       const book = await this.book.versionAt(this.book.now(), tx);
-      return payoutLineOf(value, status, schedule, book, reason, true, day);
+      return payoutLineOf(value, status, schedule, book, reason, true, day, confirmationOf(choice));
     });
   }
 
@@ -291,7 +296,7 @@ export class PriceAdminService {
    * HX1: a limit the book serves (a file size, the Concierge delivery hours, the unopened days) is changed here by the roles that change
    * prices. It writes the lifecycle row the read serves and the code acts on, a new book version and one audit row, in one transaction.
    */
-  private async changeLimit(def: LimitLine, body: PutAdminPricesByKeyBody, reason: string, actor: AuditActor): Promise<Price> {
+  private async changeLimit(def: LimitLine, body: PutAdminPricesByKeyBody, reason: string, actor: AuditActor, ownerCaller: boolean): Promise<Price> {
     const v = body.value;
     if (body.listKobo !== undefined || body.priceKobo !== undefined || body.promotionEndsAt !== undefined || body.payoutDay !== undefined || v === undefined) {
       throw AppError.validation({ value: `${def.key} takes value only.` });
@@ -302,14 +307,24 @@ export class PriceAdminService {
         await this.book.lock(tx);
         const rows = await tx.$queryRaw<{ id: string }[]>`SELECT id FROM lifecycle_config ORDER BY id DESC LIMIT 1 FOR UPDATE`;
         const before = (await readLimits(tx))[def.field];
-        if (before === v) throw AppError.conflict("not_allowed", "That is the value now.");
+        // R14, IE3: a provisional limit stays provisional when finance changes it and is confirmed when the owner changes it (or confirms the figure it has)
+        const held = def.provisional ? await readLimitConfirmation(tx, def.key) : null;
+        const confirms = held !== null && ownerCaller && held.confirmation.provisional;
+        if (before === v && !confirms) throw AppError.conflict("not_allowed", "That is the value now.");
         if (rows.length) await tx.lifecycleConfig.update({ where: { id: rows[0].id }, data: { [def.field]: v } });
         else await tx.lifecycleConfig.create({ data: { id: this.ids.id(), ...DEFAULT_LIMITS, [def.field]: v } });
         const now = this.book.now();
+        let confirmation = held?.confirmation ?? null;
+        if (held && confirms) {
+          const choice = { ...held.choice, status: CONFIRMED, confirmedBy: "owner", confirmedAt: now.toISOString() };
+          if (held.id) await tx.settings.update({ where: { id: held.id }, data: { choice } });
+          else await tx.settings.create({ data: { id: this.ids.id(), key: def.key, choice } });
+          confirmation = confirmationOf(choice);
+        }
         const base = await this.book.latestPublished(tx);
         const published = await this.publishLines(tx, base.lines.map((l) => ({ ...l })), now, actor, `Limit change: ${def.key}`, now);
         await this.audit.write(tx, { actor, section: SECTION, action: "price.change", target: { type: "price", id: def.key }, reason, changedFields: ["value"], values: { key: def.key, old: before, new: v } });
-        return limitLineView(def, v, published, reason, true);
+        return limitLineView(def, v, published, reason, true, confirmation);
       });
     } catch (e) {
       if (isUniqueViolation(e)) throw AppError.conflict("price_book_busy", "Another price change landed first. Load the prices again.");

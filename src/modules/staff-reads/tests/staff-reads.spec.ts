@@ -391,7 +391,7 @@ describe("staff reads (B21)", () => {
       expect(JSON.stringify(detail.body)).not.toContain("8031472093");
       expect((await get(`/v1/admin/people?q=${a.id}`, "ops")).body.items).toHaveLength(1);
       expect((await get(`/v1/admin/people?q=${encodeURIComponent(a.contact!)}`, "ops")).body.items).toHaveLength(1);
-      expect((await get("/v1/admin/people/not-a-uuid", "ops")).status).toBe(404);
+      expect((await get("/v1/admin/people/not-a-uuid", "ops")).status).toBe(422);  // IF2: a name that is not an id is 422 in words
       expect((await get(`/v1/admin/people/${a.id}`, "finance")).status).toBe(403);
     });
 
@@ -469,7 +469,7 @@ describe("staff reads (B21)", () => {
       expect(same.body).toMatchObject({ status: "succeeded", attempts: 1 });
       expect(await auditRows(k.db, "job.retry", done.id)).toHaveLength(0);
       expect((await post(`/v1/admin/jobs/${ids.next()}/retry`, { reason: "provider is back" }, "ops")).status).toBe(404);
-      expect((await post(`/v1/admin/jobs/zzz/retry`, { reason: "provider is back" }, "ops")).status).toBe(404);
+      expect((await post(`/v1/admin/jobs/zzz/retry`, { reason: "provider is back" }, "ops")).status).toBe(422);  // IF2: a name that is not an id is 422 in words
       void AdminJobsService;
     });
   });

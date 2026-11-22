@@ -277,7 +277,7 @@ describe("HY2 to HY4, HZ1, HZ2: staff search, the hand-over list, the order's pa
     expect((await read(otherMaker.auth, a.id)).status).toBe(404);
     expect((await read(maker.auth, c.id)).status).toBe(404);
     expect((await read(maker.auth, ids.next())).status).toBe(404);
-    expect((await read(maker.auth, "not-an-id")).status).toBe(404);
+    expect((await read(maker.auth, "not-an-id")).status).toBe(422);  // IF2: a name that is not an id is 422 in words
     expect(await listed(otherMaker.auth, c.id)).toEqual([]);
     // no sign-in is 401; a role outside Concierge is 403
     expect((await http().get(`/v1/admin/concierge/orders/${a.id}/wishes`)).status).toBe(401);

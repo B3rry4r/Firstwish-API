@@ -43,7 +43,7 @@ describe("E-216 voice note (contract)", () => {
     const pending = await voice(false);
     expect((await t.http().get(`/v1/voice-notes/${pending.id}`).set(auth(me.token))).status).toBe(404);
     expect((await t.http().get(`/v1/voice-notes/${ids.next()}`).set(auth(me.token))).status).toBe(404);
-    expect((await t.http().get(`/v1/voice-notes/nope`).set(auth(me.token))).status).toBe(404);
+    expect((await t.http().get(`/v1/voice-notes/nope`).set(auth(me.token))).status).toBe(422);  // IF2: a name that is not an id is 422 in words
     expect((await t.http().get(`/v1/voice-notes/${v.id}`)).status).toBe(401);
     expect((await t.http().get(`/v1/voice-notes/${v.id}`).set(auth("staff"))).status).toBe(403);
   });

@@ -36,3 +36,20 @@ Cases:
     API frozen mid-upload; another creator's style id typed in the address; an erased creator's approved style
     still plays (HX4).
 The live flow (wa7.mjs) makes and removes only its own data and joins `npm run live:drive`, which passes whole.
+
+ADDED 22 Nov (the eleventh and twelfth API rounds are merged; read rulings IE3, IH1 and the IF section too):
+ (a) Case 8 is now HIGH and exact: components/admin/c/Prices.tsx draws the limit lines (kind days, bytes, hours) with
+     formatKobo ("31 days" reads "₦0.31") and its Change sends priceKobo, which the server's changeLimit refuses (it
+     takes `value`). Each line is drawn by its kind (naira from kobo; days; hours; bytes as MB or GB), its Change
+     sends what the server's route for that kind takes, and the PROVISIONAL mark stays drawn from
+     `confirmation.provisional` (already merged: do not undo it). Prove by changing one line of each kind as owner
+     and as finance on the stack and reading the server after.
+ (b) Uploads send the picked file's name (`fileName`, optional on POST /v1/uploads). The live stack can hold or
+     reject a file by name: start your stack with STANDIN_SCREENING=hold:<text>,reject:<text> (read
+     src/common/ports in your API worktree for the exact form) and DRIVE the "being checked" and "refused" states
+     of a Studio picture and of the profile picture; before this they could not be entered.
+ (c) The audit row UA-247 (lib/studio-api.ts has no upload call at all) is this bundle's first case; UA-149 needs
+     the owner's key and is not yours. THE MACHINE RESTARTS WHEN OVERLOADED: ONE heavy job at a time; commit at
+     every closed case; if the branch or worktree already exists an earlier agent was lost: read git log, carry on.
+ (d) Hand back at 85% of your budget with what is proven and what is not; a whole-driver run you could not finish
+     is said plainly (another bundle today handed back with its last fix unproven).

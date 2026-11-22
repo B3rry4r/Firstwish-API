@@ -12,7 +12,7 @@ import { Clock } from "../../common/ports/clock.port";
 import { IdGenerator } from "../../common/ports/ids.port";
 import { PaymentsPort } from "../../common/ports/payments.port";
 import type { PostPaymentsBody, PaymentStart, PaymentStarted } from "../../contracts";
-import { BusinessOf } from "../people/business-of";
+import { BusinessOf, namedBusiness } from "../people/business-of";
 import { PriceBookService } from "../price-book/price-book.service";
 import { FulfilmentRegistry } from "./fulfilment.registry";
 import { paidLines, SettlementService, type SettleResult } from "./settlement.service";
@@ -102,7 +102,7 @@ export class PaymentsService {
    * then asks the payments port to initialise (outside the transaction). The same Idempotency-Key and body gives the same payment;
    * the same key with another body is 409. Everything is under the account lock.
    */
-  async start(accountId: string | null, body: PostPaymentsBody, idempotencyKey: string | undefined, holder?: PayerByLink): Promise<{ started: PaymentStarted<null>; status: 200 | 201 }> {
+  async start(accountId: string | null, body: PostPaymentsBody, idempotencyKey: string | undefined, holder?: PayerByLink, named?: string): Promise<{ started: PaymentStarted<null>; status: 200 | 201 }> {
     const req = parseRequest(body);
     if (idempotencyKey !== undefined && !KEY.test(idempotencyKey)) {
       throw AppError.validation({ "Idempotency-Key": "Must be 8 to 100 letters, digits or . _ : -" });
@@ -128,7 +128,12 @@ export class PaymentsService {
       if (!account) throw AppError.notFound();
       email = account.contact?.includes("@") ? account.contact : null;
       if (!email) throw AppError.validation({ email: "Add an email to your account before you pay." });
-      businessId = req.needsBusiness ? await this.businesses.require({ kind: "user", accountId, sides: ["person"] }) : await this.businesses.find(accountId);
+      if (req.needsBusiness && named !== undefined) {
+        // IF7 (HR3): the business the header names, paid for by its owner alone: a login of it is refused in words, a stranger's is 404
+        businessId = (await namedBusiness(this.db, accountId, named, { ownerOnly: true, words: "Only the owner of a business can pay for it. You are a login of this one, so ask its owner." })).businessId;
+      } else {
+        businessId = req.needsBusiness ? await this.businesses.require({ kind: "user", accountId, sides: ["person"] }) : await this.businesses.find(accountId);
+      }
     } else {
       if (!holder) throw AppError.notFound();
       email = holder.email;
@@ -205,7 +210,9 @@ export class PaymentsService {
 
     if (!created.fresh) {
       const opts = readOptions(created.row.options);
-      if (!created.sameThing && opts.server.fingerprint !== req.fingerprint) {
+      // IF7: the same key naming another business is another payment, not the first one again
+      const otherBusiness = req.needsBusiness && created.row.businessId !== businessId;
+      if ((!created.sameThing && opts.server.fingerprint !== req.fingerprint) || otherBusiness) {
         throw AppError.conflict("idempotency_key_reused", "This Idempotency-Key was already used for a different payment.");
       }
       // FF4: a repeat of a payment that is no longer waiting answers 200 with it as it stands and no checkout address.

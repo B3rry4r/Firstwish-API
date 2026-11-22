@@ -33,6 +33,7 @@ import {
 import { readLimits } from "../price-book/book-limits";
 import { notInBusiness } from "../../common/auth/login-removed";
 import { businessAccessOf } from "./vault-access";
+import { namedBusiness } from "../people/business-of";
 import { ScreeningService } from "./screening.service";
 import { dropFileHearts } from "../vault/vault-shared";
 import { SHOWN_TO_BUYER } from "../wishes/wish-shown";
@@ -86,7 +87,12 @@ export class StoredFilesService {
 
 
   /** The caller's business (owner), or 403. */
-  private async businessOf(tx: Tx, p: UserPrincipal): Promise<Business> {
+  private async businessOf(tx: Tx, p: UserPrincipal, named?: string): Promise<Business> {
+    if (named !== undefined) {
+      // IF7: the business the header names, and only its owner uploads its brand (a login of it is refused in words, a stranger gets 404)
+      const { businessId } = await namedBusiness(tx, p.accountId, named, { ownerOnly: true, words: "Only the owner of the business can change its brand." });
+      return tx.business.findUniqueOrThrow({ where: { id: businessId } });
+    }
     if (!p.sides.includes("business")) throw AppError.forbidden("Vault files need a business.");
     const biz = await tx.business.findFirst({ where: { accountId: p.accountId } });
     if (!biz) throw AppError.forbidden("Vault files need a business.");
@@ -174,7 +180,7 @@ export class StoredFilesService {
       let businessId: string | null = null;
       let styleId: string | null = null;
       if (rule.purpose === "vault-file" || rule.purpose === "brand-logo") {
-        const biz = rule.purpose === "vault-file" ? await this.vaultBusinessOf(tx, p, opts.business) : await this.businessOf(tx, p);
+        const biz = rule.purpose === "vault-file" ? await this.vaultBusinessOf(tx, p, opts.business) : await this.businessOf(tx, p, opts.business);
         businessId = biz.id;
         if (rule.purpose === "vault-file") {
           const limit = await vaultLimitBytes(tx, biz, now);

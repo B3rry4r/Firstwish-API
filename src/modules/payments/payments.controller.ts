@@ -5,6 +5,7 @@ import type { PaymentStarted } from "../../contracts";
 import { CurrentPrincipal, Roles, WebhookSignature } from "../../common/auth/decorators";
 import type { Principal } from "../../common/auth/principal";
 import { AppError } from "../../common/errors/app-error";
+import { BusinessHeader } from "../pro-business/pro-access";
 import { accountOf } from "../people/business-of";
 import { PaymentsService, type PaymentPage, type PaymentView } from "./payments.service";
 import { WebhookService } from "./webhook.service";
@@ -22,8 +23,9 @@ export class PaymentsController {
     @Headers("idempotency-key") key: string | undefined,
     @CurrentPrincipal() p: Principal | undefined,
     @Res({ passthrough: true }) res: Response,
+    @BusinessHeader() business: string | undefined,
   ): Promise<PaymentStarted<null>> {
-    const r = await this.payments.start(accountOf(p), body, key?.trim() || undefined);
+    const r = await this.payments.start(accountOf(p), body, key?.trim() || undefined, undefined, business);
     res.status(r.status);
     return r.started;
   }

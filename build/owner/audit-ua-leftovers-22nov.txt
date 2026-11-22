@@ -1,0 +1,16 @@
+LEFTOVERS seen on the way (head 6760e67), no UA row covers them
+- lib/catalog.ts:360-375 fixture wishes (Aisha), featuredStyles, menuStyles, creators, showcase, publicIn still bundled. Live readers: app/creators/page.tsx:9,44 draws the fixture showcase wish on a public page; components/site/Nav.tsx:6, Footer.tsx:2, components/cinema/Styles.tsx:5 use menuStyles.
+- lib/catalog.ts:350 LEVEL_GET is a second typed copy of how a level is had; read by lib/styles.ts:35 (the in-app lists) while the website reads it from the server.
+- lib/config.ts:4 SAMPLE_REVEAL_URL is a claude.ai/artifact link, drawn at components/site/CategoryPage.tsx:39 and :93.
+- lib/account.ts:101,112 uid()/newWish (Math.random ids) have no live caller; lib/account.ts:122 TERM_DAYS (7/14/30/60) has no reader; lib/account.ts:56 fromMe keeps `me.creator || base.creator` (web.md W10: use me.creator).
+- lib/studio.ts:15 CREATOR_CREDITS = 10 has no reader (comment says admin fixtures that no longer exist); lib/studio.ts:467 and components/engine/made/doc.ts:105 uid() use Math.random (local scene ids, not wish ids).
+- lib/pro-data.ts:15-24 SPACE/PACK_DAYS/VAULT typed sizes and prices, :27-31 VAT_RATE, naira, vatIn, VAULT_MORE: no live reader of the price parts; PLANS (:18) item strings carry typed counts ("10 Signature wishes a month"); live code reads only PLANS[k].name and .monthly (app/app/pro/plan/page.tsx:55,86,145).
+- lib/vault-fixtures.ts:1-4 (samplesOn, no importer) and lib/engine/adapt.ts:~290 comment naming lib/feed-api.ts, a file that no longer exists.
+- lib/levels.ts:17-21 and :55-60 say "today there is no server"; GET /v1/styles/levels exists (contract line 4309).
+- components/app/maker/Ways.tsx:186 TICKET_LEVEL typed map (see UA-800).
+- components/app/pro/RevealPlay.tsx:46 removes the favourites chapter for the client; POST /v1/r/:code/favourites (contract line 4897) is unused by the web.
+- app/app/pro/wishes/page.tsx:124 default reveal day is today + 7 days typed (low).
+- lib/admin/w13-api.ts re-declares staff view types by hand; lib/admin/c-types.ts / c-live.ts cast with `as unknown as` (web.md already lists these).
+- scripts/gates/baseline.json:500,1980,2852 baseline the three R10 hits in lib/pro-data.ts, so the browser-storage gate passes while the words remain.
+- components/app/maker/Maker.tsx:310,314,318 sample placeholders from sample(kind) (see UA-797, UA-804, UA-809).
+- No loading.tsx or global-error file exists under app/ (only error.tsx on 8 routes): loading state of server-built pages cannot be entered.

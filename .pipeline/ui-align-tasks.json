@@ -33,7 +33,8 @@
         "lib/studio.ts"
       ],
       "change": "integer kobo, currency NGN, over the wire and in storage; prices only from the price book",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): one place: lib/person.ts:76 readBook (GET /v1/price-book; the route is not /v1/prices, contract E-125), lib/seal.ts:49 lineOf takes price from the book line, lib/api.ts:199 refuses non-integer kobo; lib/studio.ts holds no price literal (gre"
     },
     {
       "id": "UA-4",
@@ -59,7 +60,8 @@
         "maker.ts"
       ],
       "change": "integer kobo, currency NGN, over the wire and in storage; prices only from the price book",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): one place: lib/person.ts:76 readBook (GET /v1/price-book; the route is not /v1/prices, contract E-125), lib/seal.ts:49 lineOf takes price from the book line, lib/api.ts:199 refuses non-integer kobo; maker.ts holds no price literal (grep: no"
     },
     {
       "id": "UA-6",
@@ -545,7 +547,8 @@
         "lib/maker.ts"
       ],
       "change": "integer kobo, currency NGN, over the wire and in storage; prices only from the price book",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): one place: lib/person.ts:76 readBook (GET /v1/price-book; the route is not /v1/prices, contract E-125), lib/seal.ts:49 lineOf takes price from the book line, lib/api.ts:199 refuses non-integer kobo; lib/maker.ts holds no price literal (grep"
     },
     {
       "id": "UA-46",
@@ -1370,7 +1373,8 @@
         "maker.ts"
       ],
       "change": "wish number issued in payment order by the server (wish-number)",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): Wish.no is the server's (lib/draft.ts:62 no: s.no ?? \"\"; lib/account.ts:17 'empty until paid'); lib/maker.ts has no number issuing. The only local numbering is lib/pro-data.ts:118 nextNo (dead, see UA-507)"
     },
     {
       "id": "UA-115",
@@ -1381,7 +1385,8 @@
         "maker.ts"
       ],
       "change": "wish number issued in payment order by the server (wish-number)",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): Wish.no is the server's (lib/draft.ts:62 no: s.no ?? \"\"; lib/account.ts:17 'empty until paid'); lib/maker.ts has no number issuing. The only local numbering is lib/pro-data.ts:118 nextNo (dead, see UA-507)"
     },
     {
       "id": "UA-116",
@@ -1392,7 +1397,8 @@
         "lib/maker.ts"
       ],
       "change": "wish number issued in payment order by the server (wish-number)",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): Wish.no is the server's (lib/draft.ts:62 no: s.no ?? \"\"; lib/account.ts:17 'empty until paid'); lib/maker.ts has no number issuing. The only local numbering is lib/pro-data.ts:118 nextNo (dead, see UA-507)"
     },
     {
       "id": "UA-117",
@@ -1403,7 +1409,8 @@
         "lib/maker.ts"
       ],
       "change": "wish number issued in payment order by the server (wish-number)",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): Wish.no is the server's (lib/draft.ts:62 no: s.no ?? \"\"; lib/account.ts:17 'empty until paid'); lib/maker.ts has no number issuing. The only local numbering is lib/pro-data.ts:118 nextNo (dead, see UA-507)"
     },
     {
       "id": "UA-118",
@@ -1414,7 +1421,8 @@
         "lib/maker.ts"
       ],
       "change": "wish number issued in payment order by the server (wish-number)",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): Wish.no is the server's (lib/draft.ts:62 no: s.no ?? \"\"; lib/account.ts:17 'empty until paid'); lib/maker.ts has no number issuing. The only local numbering is lib/pro-data.ts:118 nextNo (dead, see UA-507)"
     },
     {
       "id": "UA-119",
@@ -1425,7 +1433,8 @@
         "lib/maker.ts"
       ],
       "change": "wish number issued in payment order by the server (wish-number)",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): Wish.no is the server's (lib/draft.ts:62 no: s.no ?? \"\"; lib/account.ts:17 'empty until paid'); lib/maker.ts has no number issuing. The only local numbering is lib/pro-data.ts:118 nextNo (dead, see UA-507)"
     },
     {
       "id": "UA-120",
@@ -1436,7 +1445,8 @@
         "lib/maker.ts"
       ],
       "change": "wish number issued in payment order by the server (wish-number)",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): Wish.no is the server's (lib/draft.ts:62 no: s.no ?? \"\"; lib/account.ts:17 'empty until paid'); lib/maker.ts has no number issuing. The only local numbering is lib/pro-data.ts:118 nextNo (dead, see UA-507)"
     },
     {
       "id": "UA-121",
@@ -1447,7 +1457,8 @@
         "lib/maker.ts"
       ],
       "change": "wish number issued in payment order by the server (wish-number)",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): Wish.no is the server's (lib/draft.ts:62 no: s.no ?? \"\"; lib/account.ts:17 'empty until paid'); lib/maker.ts has no number issuing. The only local numbering is lib/pro-data.ts:118 nextNo (dead, see UA-507)"
     },
     {
       "id": "UA-122",
@@ -1458,7 +1469,8 @@
         "lib/maker.ts"
       ],
       "change": "wish number issued in payment order by the server (wish-number)",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): Wish.no is the server's (lib/draft.ts:62 no: s.no ?? \"\"; lib/account.ts:17 'empty until paid'); lib/maker.ts has no number issuing. The only local numbering is lib/pro-data.ts:118 nextNo (dead, see UA-507)"
     },
     {
       "id": "UA-123",
@@ -1469,7 +1481,8 @@
         "lib/maker.ts"
       ],
       "change": "wish number issued in payment order by the server (wish-number)",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): Wish.no is the server's (lib/draft.ts:62 no: s.no ?? \"\"; lib/account.ts:17 'empty until paid'); lib/maker.ts has no number issuing. The only local numbering is lib/pro-data.ts:118 nextNo (dead, see UA-507)"
     },
     {
       "id": "UA-124",
@@ -1480,7 +1493,8 @@
         "lib/maker.ts"
       ],
       "change": "wish number issued in payment order by the server (wish-number)",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): Wish.no is the server's (lib/draft.ts:62 no: s.no ?? \"\"; lib/account.ts:17 'empty until paid'); lib/maker.ts has no number issuing. The only local numbering is lib/pro-data.ts:118 nextNo (dead, see UA-507)"
     },
     {
       "id": "UA-125",
@@ -1491,7 +1505,8 @@
         "lib/maker.ts"
       ],
       "change": "wish number issued in payment order by the server (wish-number)",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): Wish.no is the server's (lib/draft.ts:62 no: s.no ?? \"\"; lib/account.ts:17 'empty until paid'); lib/maker.ts has no number issuing. The only local numbering is lib/pro-data.ts:118 nextNo (dead, see UA-507)"
     },
     {
       "id": "UA-126",
@@ -1502,7 +1517,8 @@
         "lib/maker.ts"
       ],
       "change": "wish number issued in payment order by the server (wish-number)",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): Wish.no is the server's (lib/draft.ts:62 no: s.no ?? \"\"; lib/account.ts:17 'empty until paid'); lib/maker.ts has no number issuing. The only local numbering is lib/pro-data.ts:118 nextNo (dead, see UA-507)"
     },
     {
       "id": "UA-127",
@@ -1513,7 +1529,8 @@
         "lib/maker.ts"
       ],
       "change": "wish number issued in payment order by the server (wish-number)",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): Wish.no is the server's (lib/draft.ts:62 no: s.no ?? \"\"; lib/account.ts:17 'empty until paid'); lib/maker.ts has no number issuing. The only local numbering is lib/pro-data.ts:118 nextNo (dead, see UA-507)"
     },
     {
       "id": "UA-128",
@@ -1524,7 +1541,8 @@
         "lib/maker.ts"
       ],
       "change": "wish number issued in payment order by the server (wish-number)",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): Wish.no is the server's (lib/draft.ts:62 no: s.no ?? \"\"; lib/account.ts:17 'empty until paid'); lib/maker.ts has no number issuing. The only local numbering is lib/pro-data.ts:118 nextNo (dead, see UA-507)"
     },
     {
       "id": "UA-129",
@@ -1535,7 +1553,8 @@
         "lib/maker.ts"
       ],
       "change": "wish number issued in payment order by the server (wish-number)",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): Wish.no is the server's (lib/draft.ts:62 no: s.no ?? \"\"; lib/account.ts:17 'empty until paid'); lib/maker.ts has no number issuing. The only local numbering is lib/pro-data.ts:118 nextNo (dead, see UA-507)"
     },
     {
       "id": "UA-130",
@@ -1546,7 +1565,8 @@
         "lib/maker.ts"
       ],
       "change": "wish number issued in payment order by the server (wish-number)",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): Wish.no is the server's (lib/draft.ts:62 no: s.no ?? \"\"; lib/account.ts:17 'empty until paid'); lib/maker.ts has no number issuing. The only local numbering is lib/pro-data.ts:118 nextNo (dead, see UA-507)"
     },
     {
       "id": "UA-131",
@@ -1569,7 +1589,8 @@
         "lib/maker.ts"
       ],
       "change": "wish number issued in payment order by the server (wish-number)",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): Wish.no is the server's (lib/draft.ts:62 no: s.no ?? \"\"; lib/account.ts:17 'empty until paid'); lib/maker.ts has no number issuing. The only local numbering is lib/pro-data.ts:118 nextNo (dead, see UA-507)"
     },
     {
       "id": "UA-133",
@@ -1580,7 +1601,8 @@
         "lib/maker.ts"
       ],
       "change": "wish number issued in payment order by the server (wish-number)",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): Wish.no is the server's (lib/draft.ts:62 no: s.no ?? \"\"; lib/account.ts:17 'empty until paid'); lib/maker.ts has no number issuing. The only local numbering is lib/pro-data.ts:118 nextNo (dead, see UA-507)"
     },
     {
       "id": "UA-134",
@@ -1615,7 +1637,8 @@
         "lib/maker.ts"
       ],
       "change": "wish number issued in payment order by the server (wish-number)",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): Wish.no is the server's (lib/draft.ts:62 no: s.no ?? \"\"; lib/account.ts:17 'empty until paid'); lib/maker.ts has no number issuing. The only local numbering is lib/pro-data.ts:118 nextNo (dead, see UA-507)"
     },
     {
       "id": "UA-137",
@@ -1781,7 +1804,8 @@
         "lib/maker.ts"
       ],
       "change": "maker notes saved to the server draft on every step once signed in; voice notes uploaded to storage",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): the draft, makerNote included, is saved to the server on each change (lib/draft.ts header and fromServer:52; lib/maker.ts:23-38 notes read from the draft; voice note goes up through lib/files.ts:92-102 and note.voiceId)"
     },
     {
       "id": "UA-151",
@@ -1792,7 +1816,8 @@
         "lib/maker.ts"
       ],
       "change": "maker notes saved to the server draft on every step once signed in; voice notes uploaded to storage",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): the draft, makerNote included, is saved to the server on each change (lib/draft.ts header and fromServer:52; lib/maker.ts:23-38 notes read from the draft; voice note goes up through lib/files.ts:92-102 and note.voiceId)"
     },
     {
       "id": "UA-152",
@@ -2067,7 +2092,8 @@
         "lib/maker.ts"
       ],
       "change": "maker notes saved to the server draft on every step once signed in; voice notes uploaded to storage",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): the draft, makerNote included, is saved to the server on each change (lib/draft.ts header and fromServer:52; lib/maker.ts:23-38 notes read from the draft; voice note goes up through lib/files.ts:92-102 and note.voiceId)"
     },
     {
       "id": "UA-175",
@@ -2126,7 +2152,8 @@
         "lib/pro-data.ts"
       ],
       "change": "the server (business, members, client wishes, people, invoices)",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): business, people, logins, client wishes, invoices are read and written through lib/pro-api.ts (e.g. :79 readLogins, :106 saveBrand) and shown with useLoad (lib/person.ts:18, refetch on tab visible); lib/pro-data.ts only supplies types and h"
     },
     {
       "id": "UA-180",
@@ -2291,7 +2318,8 @@
         "lib/pro-data.ts"
       ],
       "change": "the server (business, members, client wishes, people, invoices)",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): business, people, logins, client wishes, invoices are read and written through lib/pro-api.ts (e.g. :79 readLogins, :106 saveBrand) and shown with useLoad (lib/person.ts:18, refetch on tab visible); lib/pro-data.ts only supplies types and h"
     },
     {
       "id": "UA-193",
@@ -2302,7 +2330,8 @@
         "lib/pro-data.ts"
       ],
       "change": "the server (business, members, client wishes, people, invoices)",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): business, people, logins, client wishes, invoices are read and written through lib/pro-api.ts (e.g. :79 readLogins, :106 saveBrand) and shown with useLoad (lib/person.ts:18, refetch on tab visible); lib/pro-data.ts only supplies types and h"
     },
     {
       "id": "UA-194",
@@ -2313,7 +2342,8 @@
         "lib/pro-data.ts"
       ],
       "change": "the server (business, members, client wishes, people, invoices)",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): business, people, logins, client wishes, invoices are read and written through lib/pro-api.ts (e.g. :79 readLogins, :106 saveBrand) and shown with useLoad (lib/person.ts:18, refetch on tab visible); lib/pro-data.ts only supplies types and h"
     },
     {
       "id": "UA-195",
@@ -2372,7 +2402,8 @@
         "lib/studio-api.ts"
       ],
       "change": "the server (Vault shoots and files, reactions/saves/follows, Studio plan/credits/reviews/drafts/submissions, Pass period)",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): lib/vault-api.ts (shoots, files by signed address, reveals, hearts read) and lib/person.ts feed reads; no local store on the path"
     },
     {
       "id": "UA-200",
@@ -2467,7 +2498,8 @@
         "lib/vault-api.ts"
       ],
       "change": "the server (Vault shoots and files, reactions/saves/follows, Studio plan/credits/reviews/drafts/submissions, Pass period)",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): lib/vault-api.ts (shoots, files by signed address, reveals, hearts read) and lib/person.ts feed reads; no local store on the path"
     },
     {
       "id": "UA-208",
@@ -2514,7 +2546,8 @@
         "lib/maker.ts"
       ],
       "change": "signed uploads straight to storage, confirm step, short-lived signed reads (storage)",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): photos and voice notes: ticket, signed put, confirm (lib/files.ts:92 POST /uploads, :102 /confirm); vault uploads in lib/vault-api.ts"
     },
     {
       "id": "UA-212",
@@ -2525,7 +2558,8 @@
         "lib/maker.ts"
       ],
       "change": "signed uploads straight to storage, confirm step, short-lived signed reads (storage)",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): photos and voice notes: ticket, signed put, confirm (lib/files.ts:92 POST /uploads, :102 /confirm); vault uploads in lib/vault-api.ts"
     },
     {
       "id": "UA-213",
@@ -2940,7 +2974,8 @@
         "lib/vault-api.ts"
       ],
       "change": "signed uploads straight to storage, confirm step, short-lived signed reads (storage)",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): photos and voice notes: ticket, signed put, confirm (lib/files.ts:92 POST /uploads, :102 /confirm); vault uploads in lib/vault-api.ts"
     },
     {
       "id": "UA-247",
@@ -3010,7 +3045,8 @@
         "lib/studio.ts"
       ],
       "change": "the web reads GET /v1/prices; the server charges only from the price book",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): one place: lib/person.ts:76 readBook (GET /v1/price-book; the route is not /v1/prices, contract E-125), lib/seal.ts:49 lineOf takes price from the book line, lib/api.ts:199 refuses non-integer kobo; lib/studio.ts holds no price literal (gre"
     },
     {
       "id": "UA-253",
@@ -3540,7 +3576,8 @@
         "lib/account.ts"
       ],
       "change": "the web reads GET /v1/prices; the server charges only from the price book",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): one place: lib/person.ts:76 readBook (GET /v1/price-book; the route is not /v1/prices, contract E-125), lib/seal.ts:49 lineOf takes price from the book line, lib/api.ts:199 refuses non-integer kobo; lib/account.ts holds no price literal (gr"
     },
     {
       "id": "UA-296",
@@ -3794,7 +3831,8 @@
         "lib/studio.ts"
       ],
       "change": "the price book's promotion with endsAt 2027-02-01 00:00 Africa/Lagos, checked by the server on every quote",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): promotion comes from the book: book.promotion read at components/app/feed/Home.tsx:110, components/app/life/sheets.tsx:101, app/app/pass/page.tsx:94; staff edit its end in components/admin/c/Prices.tsx:16,55 (promotion.endsAt). No 2027 date"
     },
     {
       "id": "UA-317",
@@ -3818,7 +3856,8 @@
         "lib/maker.ts"
       ],
       "change": "the price book's promotion with endsAt 2027-02-01 00:00 Africa/Lagos, checked by the server on every quote",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): promotion comes from the book: book.promotion read at components/app/feed/Home.tsx:110, components/app/life/sheets.tsx:101, app/app/pass/page.tsx:94; staff edit its end in components/admin/c/Prices.tsx:16,55 (promotion.endsAt). No 2027 date"
     },
     {
       "id": "UA-319",
@@ -3829,7 +3868,8 @@
         "lib/studio.ts"
       ],
       "change": "the price book's promotion with endsAt 2027-02-01 00:00 Africa/Lagos, checked by the server on every quote",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): promotion comes from the book: book.promotion read at components/app/feed/Home.tsx:110, components/app/life/sheets.tsx:101, app/app/pass/page.tsx:94; staff edit its end in components/admin/c/Prices.tsx:16,55 (promotion.endsAt). No 2027 date"
     },
     {
       "id": "UA-320",
@@ -3864,7 +3904,8 @@
         "lib/maker.ts"
       ],
       "change": "the price book's promotion with endsAt 2027-02-01 00:00 Africa/Lagos, checked by the server on every quote",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): promotion comes from the book: book.promotion read at components/app/feed/Home.tsx:110, components/app/life/sheets.tsx:101, app/app/pass/page.tsx:94; staff edit its end in components/admin/c/Prices.tsx:16,55 (promotion.endsAt). No 2027 date"
     },
     {
       "id": "UA-323",
@@ -3875,7 +3916,8 @@
         "lib/maker.ts"
       ],
       "change": "the price book's promotion with endsAt 2027-02-01 00:00 Africa/Lagos, checked by the server on every quote",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): promotion comes from the book: book.promotion read at components/app/feed/Home.tsx:110, components/app/life/sheets.tsx:101, app/app/pass/page.tsx:94; staff edit its end in components/admin/c/Prices.tsx:16,55 (promotion.endsAt). No 2027 date"
     },
     {
       "id": "UA-324",
@@ -3886,7 +3928,8 @@
         "lib/maker.ts"
       ],
       "change": "the price book's promotion with endsAt 2027-02-01 00:00 Africa/Lagos, checked by the server on every quote",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): promotion comes from the book: book.promotion read at components/app/feed/Home.tsx:110, components/app/life/sheets.tsx:101, app/app/pass/page.tsx:94; staff edit its end in components/admin/c/Prices.tsx:16,55 (promotion.endsAt). No 2027 date"
     },
     {
       "id": "UA-325",
@@ -3897,7 +3940,8 @@
         "lib/maker.ts"
       ],
       "change": "the price book's promotion with endsAt 2027-02-01 00:00 Africa/Lagos, checked by the server on every quote",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): promotion comes from the book: book.promotion read at components/app/feed/Home.tsx:110, components/app/life/sheets.tsx:101, app/app/pass/page.tsx:94; staff edit its end in components/admin/c/Prices.tsx:16,55 (promotion.endsAt). No 2027 date"
     },
     {
       "id": "UA-326",
@@ -3908,7 +3952,8 @@
         "lib/maker.ts"
       ],
       "change": "the price book's promotion with endsAt 2027-02-01 00:00 Africa/Lagos, checked by the server on every quote",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): promotion comes from the book: book.promotion read at components/app/feed/Home.tsx:110, components/app/life/sheets.tsx:101, app/app/pass/page.tsx:94; staff edit its end in components/admin/c/Prices.tsx:16,55 (promotion.endsAt). No 2027 date"
     },
     {
       "id": "UA-327",
@@ -3919,7 +3964,8 @@
         "lib/maker.ts"
       ],
       "change": "the price book's promotion with endsAt 2027-02-01 00:00 Africa/Lagos, checked by the server on every quote",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): promotion comes from the book: book.promotion read at components/app/feed/Home.tsx:110, components/app/life/sheets.tsx:101, app/app/pass/page.tsx:94; staff edit its end in components/admin/c/Prices.tsx:16,55 (promotion.endsAt). No 2027 date"
     },
     {
       "id": "UA-328",
@@ -3930,7 +3976,8 @@
         "lib/maker.ts"
       ],
       "change": "the price book's promotion with endsAt 2027-02-01 00:00 Africa/Lagos, checked by the server on every quote",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): promotion comes from the book: book.promotion read at components/app/feed/Home.tsx:110, components/app/life/sheets.tsx:101, app/app/pass/page.tsx:94; staff edit its end in components/admin/c/Prices.tsx:16,55 (promotion.endsAt). No 2027 date"
     },
     {
       "id": "UA-329",
@@ -3941,7 +3988,8 @@
         "lib/maker.ts"
       ],
       "change": "the price book's promotion with endsAt 2027-02-01 00:00 Africa/Lagos, checked by the server on every quote",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): promotion comes from the book: book.promotion read at components/app/feed/Home.tsx:110, components/app/life/sheets.tsx:101, app/app/pass/page.tsx:94; staff edit its end in components/admin/c/Prices.tsx:16,55 (promotion.endsAt). No 2027 date"
     },
     {
       "id": "UA-330",
@@ -3952,7 +4000,8 @@
         "lib/maker.ts"
       ],
       "change": "the price book's promotion with endsAt 2027-02-01 00:00 Africa/Lagos, checked by the server on every quote",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): promotion comes from the book: book.promotion read at components/app/feed/Home.tsx:110, components/app/life/sheets.tsx:101, app/app/pass/page.tsx:94; staff edit its end in components/admin/c/Prices.tsx:16,55 (promotion.endsAt). No 2027 date"
     },
     {
       "id": "UA-331",
@@ -3963,7 +4012,8 @@
         "lib/maker.ts"
       ],
       "change": "the price book's promotion with endsAt 2027-02-01 00:00 Africa/Lagos, checked by the server on every quote",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): promotion comes from the book: book.promotion read at components/app/feed/Home.tsx:110, components/app/life/sheets.tsx:101, app/app/pass/page.tsx:94; staff edit its end in components/admin/c/Prices.tsx:16,55 (promotion.endsAt). No 2027 date"
     },
     {
       "id": "UA-332",
@@ -3974,7 +4024,8 @@
         "lib/maker.ts"
       ],
       "change": "the price book's promotion with endsAt 2027-02-01 00:00 Africa/Lagos, checked by the server on every quote",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): promotion comes from the book: book.promotion read at components/app/feed/Home.tsx:110, components/app/life/sheets.tsx:101, app/app/pass/page.tsx:94; staff edit its end in components/admin/c/Prices.tsx:16,55 (promotion.endsAt). No 2027 date"
     },
     {
       "id": "UA-333",
@@ -3985,7 +4036,8 @@
         "lib/maker.ts"
       ],
       "change": "the price book's promotion with endsAt 2027-02-01 00:00 Africa/Lagos, checked by the server on every quote",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): promotion comes from the book: book.promotion read at components/app/feed/Home.tsx:110, components/app/life/sheets.tsx:101, app/app/pass/page.tsx:94; staff edit its end in components/admin/c/Prices.tsx:16,55 (promotion.endsAt). No 2027 date"
     },
     {
       "id": "UA-334",
@@ -3996,7 +4048,8 @@
         "lib/maker.ts"
       ],
       "change": "the price book's promotion with endsAt 2027-02-01 00:00 Africa/Lagos, checked by the server on every quote",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): promotion comes from the book: book.promotion read at components/app/feed/Home.tsx:110, components/app/life/sheets.tsx:101, app/app/pass/page.tsx:94; staff edit its end in components/admin/c/Prices.tsx:16,55 (promotion.endsAt). No 2027 date"
     },
     {
       "id": "UA-335",
@@ -4007,7 +4060,8 @@
         "lib/maker.ts"
       ],
       "change": "the price book's promotion with endsAt 2027-02-01 00:00 Africa/Lagos, checked by the server on every quote",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): promotion comes from the book: book.promotion read at components/app/feed/Home.tsx:110, components/app/life/sheets.tsx:101, app/app/pass/page.tsx:94; staff edit its end in components/admin/c/Prices.tsx:16,55 (promotion.endsAt). No 2027 date"
     },
     {
       "id": "UA-336",
@@ -4018,7 +4072,8 @@
         "lib/maker.ts"
       ],
       "change": "the price book's promotion with endsAt 2027-02-01 00:00 Africa/Lagos, checked by the server on every quote",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): promotion comes from the book: book.promotion read at components/app/feed/Home.tsx:110, components/app/life/sheets.tsx:101, app/app/pass/page.tsx:94; staff edit its end in components/admin/c/Prices.tsx:16,55 (promotion.endsAt). No 2027 date"
     },
     {
       "id": "UA-337",
@@ -4041,7 +4096,8 @@
         "lib/maker.ts"
       ],
       "change": "the price book's promotion with endsAt 2027-02-01 00:00 Africa/Lagos, checked by the server on every quote",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): promotion comes from the book: book.promotion read at components/app/feed/Home.tsx:110, components/app/life/sheets.tsx:101, app/app/pass/page.tsx:94; staff edit its end in components/admin/c/Prices.tsx:16,55 (promotion.endsAt). No 2027 date"
     },
     {
       "id": "UA-339",
@@ -4052,7 +4108,8 @@
         "lib/maker.ts"
       ],
       "change": "the price book's promotion with endsAt 2027-02-01 00:00 Africa/Lagos, checked by the server on every quote",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): promotion comes from the book: book.promotion read at components/app/feed/Home.tsx:110, components/app/life/sheets.tsx:101, app/app/pass/page.tsx:94; staff edit its end in components/admin/c/Prices.tsx:16,55 (promotion.endsAt). No 2027 date"
     },
     {
       "id": "UA-340",
@@ -4087,7 +4144,8 @@
         "lib/maker.ts"
       ],
       "change": "the price book's promotion with endsAt 2027-02-01 00:00 Africa/Lagos, checked by the server on every quote",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): promotion comes from the book: book.promotion read at components/app/feed/Home.tsx:110, components/app/life/sheets.tsx:101, app/app/pass/page.tsx:94; staff edit its end in components/admin/c/Prices.tsx:16,55 (promotion.endsAt). No 2027 date"
     },
     {
       "id": "UA-343",
@@ -4110,7 +4168,8 @@
         "lib/maker.ts"
       ],
       "change": "the price book's promotion with endsAt 2027-02-01 00:00 Africa/Lagos, checked by the server on every quote",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): promotion comes from the book: book.promotion read at components/app/feed/Home.tsx:110, components/app/life/sheets.tsx:101, app/app/pass/page.tsx:94; staff edit its end in components/admin/c/Prices.tsx:16,55 (promotion.endsAt). No 2027 date"
     },
     {
       "id": "UA-345",
@@ -4121,7 +4180,8 @@
         "lib/studio.ts"
       ],
       "change": "the price book's promotion with endsAt 2027-02-01 00:00 Africa/Lagos, checked by the server on every quote",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): promotion comes from the book: book.promotion read at components/app/feed/Home.tsx:110, components/app/life/sheets.tsx:101, app/app/pass/page.tsx:94; staff edit its end in components/admin/c/Prices.tsx:16,55 (promotion.endsAt). No 2027 date"
     },
     {
       "id": "UA-346",
@@ -4132,7 +4192,8 @@
         "lib/studio.ts"
       ],
       "change": "the price book's promotion with endsAt 2027-02-01 00:00 Africa/Lagos, checked by the server on every quote",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): promotion comes from the book: book.promotion read at components/app/feed/Home.tsx:110, components/app/life/sheets.tsx:101, app/app/pass/page.tsx:94; staff edit its end in components/admin/c/Prices.tsx:16,55 (promotion.endsAt). No 2027 date"
     },
     {
       "id": "UA-347",
@@ -4143,7 +4204,8 @@
         "lib/studio.ts"
       ],
       "change": "the price book's promotion with endsAt 2027-02-01 00:00 Africa/Lagos, checked by the server on every quote",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): promotion comes from the book: book.promotion read at components/app/feed/Home.tsx:110, components/app/life/sheets.tsx:101, app/app/pass/page.tsx:94; staff edit its end in components/admin/c/Prices.tsx:16,55 (promotion.endsAt). No 2027 date"
     },
     {
       "id": "UA-348",
@@ -4994,7 +5056,8 @@
         "lib/pro-data.ts"
       ],
       "change": "every epoch-ms `at` becomes createdAt/updatedAt ISO-8601 UTC strings set by the server; calendar dates are YYYY-MM-DD strings (date-only canon)",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): pro-data ClientWish uses createdAt ISO and day yyyy-mm-dd (lib/pro-data.ts ClientWish type); no epoch field"
     },
     {
       "id": "UA-419",
@@ -5005,7 +5068,8 @@
         "pro-data.ts"
       ],
       "change": "every epoch-ms `at` becomes createdAt/updatedAt ISO-8601 UTC strings set by the server; calendar dates are YYYY-MM-DD strings (date-only canon)",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): pro-data ClientWish uses createdAt ISO and day yyyy-mm-dd (lib/pro-data.ts ClientWish type); no epoch field"
     },
     {
       "id": "UA-420",
@@ -5016,7 +5080,8 @@
         "lib/pro-data.ts"
       ],
       "change": "every epoch-ms `at` becomes createdAt/updatedAt ISO-8601 UTC strings set by the server; calendar dates are YYYY-MM-DD strings (date-only canon)",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): pro-data ClientWish uses createdAt ISO and day yyyy-mm-dd (lib/pro-data.ts ClientWish type); no epoch field"
     },
     {
       "id": "UA-421",
@@ -5087,7 +5152,8 @@
         "lib/maker.ts"
       ],
       "change": "Wish.keep is null | \"month\" | \"half\" | \"year\" (the keep bought); the maker's boolean is stale and goes",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): no Wish.keep boolean on the head: lib/account.ts:14-38 Wish has none; lib/maker.ts 'keep' hits are the chapter helper (setChapter keep param, :173) and a local list (:331). The server's keep is null|month|half|year (contract line 1875) and "
     },
     {
       "id": "UA-427",
@@ -5098,7 +5164,8 @@
         "lib/maker.ts"
       ],
       "change": "Wish.keep is null | \"month\" | \"half\" | \"year\" (the keep bought); the maker's boolean is stale and goes",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): no Wish.keep boolean on the head: lib/account.ts:14-38 Wish has none; lib/maker.ts 'keep' hits are the chapter helper (setChapter keep param, :173) and a local list (:331). The server's keep is null|month|half|year (contract line 1875) and "
     },
     {
       "id": "UA-428",
@@ -5109,7 +5176,8 @@
         "lib/maker.ts"
       ],
       "change": "Wish.keep is null | \"month\" | \"half\" | \"year\" (the keep bought); the maker's boolean is stale and goes",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): no Wish.keep boolean on the head: lib/account.ts:14-38 Wish has none; lib/maker.ts 'keep' hits are the chapter helper (setChapter keep param, :173) and a local list (:331). The server's keep is null|month|half|year (contract line 1875) and "
     },
     {
       "id": "UA-429",
@@ -5120,7 +5188,8 @@
         "lib/maker.ts"
       ],
       "change": "Wish.keep is null | \"month\" | \"half\" | \"year\" (the keep bought); the maker's boolean is stale and goes",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): no Wish.keep boolean on the head: lib/account.ts:14-38 Wish has none; lib/maker.ts 'keep' hits are the chapter helper (setChapter keep param, :173) and a local list (:331). The server's keep is null|month|half|year (contract line 1875) and "
     },
     {
       "id": "UA-430",
@@ -5131,7 +5200,8 @@
         "lib/maker.ts"
       ],
       "change": "Wish.keep is null | \"month\" | \"half\" | \"year\" (the keep bought); the maker's boolean is stale and goes",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): no Wish.keep boolean on the head: lib/account.ts:14-38 Wish has none; lib/maker.ts 'keep' hits are the chapter helper (setChapter keep param, :173) and a local list (:331). The server's keep is null|month|half|year (contract line 1875) and "
     },
     {
       "id": "UA-431",
@@ -5142,7 +5212,8 @@
         "lib/maker.ts"
       ],
       "change": "Wish.keep is null | \"month\" | \"half\" | \"year\" (the keep bought); the maker's boolean is stale and goes",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): no Wish.keep boolean on the head: lib/account.ts:14-38 Wish has none; lib/maker.ts 'keep' hits are the chapter helper (setChapter keep param, :173) and a local list (:331). The server's keep is null|month|half|year (contract line 1875) and "
     },
     {
       "id": "UA-432",
@@ -5153,7 +5224,8 @@
         "lib/maker.ts"
       ],
       "change": "Wish.keep is null | \"month\" | \"half\" | \"year\" (the keep bought); the maker's boolean is stale and goes",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): no Wish.keep boolean on the head: lib/account.ts:14-38 Wish has none; lib/maker.ts 'keep' hits are the chapter helper (setChapter keep param, :173) and a local list (:331). The server's keep is null|month|half|year (contract line 1875) and "
     },
     {
       "id": "UA-433",
@@ -5164,7 +5236,8 @@
         "lib/maker.ts"
       ],
       "change": "Wish.keep is null | \"month\" | \"half\" | \"year\" (the keep bought); the maker's boolean is stale and goes",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): no Wish.keep boolean on the head: lib/account.ts:14-38 Wish has none; lib/maker.ts 'keep' hits are the chapter helper (setChapter keep param, :173) and a local list (:331). The server's keep is null|month|half|year (contract line 1875) and "
     },
     {
       "id": "UA-434",
@@ -5175,7 +5248,8 @@
         "lib/maker.ts"
       ],
       "change": "Wish.keep is null | \"month\" | \"half\" | \"year\" (the keep bought); the maker's boolean is stale and goes",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): no Wish.keep boolean on the head: lib/account.ts:14-38 Wish has none; lib/maker.ts 'keep' hits are the chapter helper (setChapter keep param, :173) and a local list (:331). The server's keep is null|month|half|year (contract line 1875) and "
     },
     {
       "id": "UA-435",
@@ -5186,7 +5260,8 @@
         "lib/maker.ts"
       ],
       "change": "Wish.keep is null | \"month\" | \"half\" | \"year\" (the keep bought); the maker's boolean is stale and goes",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): no Wish.keep boolean on the head: lib/account.ts:14-38 Wish has none; lib/maker.ts 'keep' hits are the chapter helper (setChapter keep param, :173) and a local list (:331). The server's keep is null|month|half|year (contract line 1875) and "
     },
     {
       "id": "UA-436",
@@ -5197,7 +5272,8 @@
         "lib/maker.ts"
       ],
       "change": "Wish.keep is null | \"month\" | \"half\" | \"year\" (the keep bought); the maker's boolean is stale and goes",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): no Wish.keep boolean on the head: lib/account.ts:14-38 Wish has none; lib/maker.ts 'keep' hits are the chapter helper (setChapter keep param, :173) and a local list (:331). The server's keep is null|month|half|year (contract line 1875) and "
     },
     {
       "id": "UA-437",
@@ -5208,7 +5284,8 @@
         "lib/maker.ts"
       ],
       "change": "Wish.keep is null | \"month\" | \"half\" | \"year\" (the keep bought); the maker's boolean is stale and goes",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): no Wish.keep boolean on the head: lib/account.ts:14-38 Wish has none; lib/maker.ts 'keep' hits are the chapter helper (setChapter keep param, :173) and a local list (:331). The server's keep is null|month|half|year (contract line 1875) and "
     },
     {
       "id": "UA-438",
@@ -5219,7 +5296,8 @@
         "lib/maker.ts"
       ],
       "change": "Wish.keep is null | \"month\" | \"half\" | \"year\" (the keep bought); the maker's boolean is stale and goes",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): no Wish.keep boolean on the head: lib/account.ts:14-38 Wish has none; lib/maker.ts 'keep' hits are the chapter helper (setChapter keep param, :173) and a local list (:331). The server's keep is null|month|half|year (contract line 1875) and "
     },
     {
       "id": "UA-439",
@@ -5230,7 +5308,8 @@
         "lib/maker.ts"
       ],
       "change": "Wish.keep is null | \"month\" | \"half\" | \"year\" (the keep bought); the maker's boolean is stale and goes",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): no Wish.keep boolean on the head: lib/account.ts:14-38 Wish has none; lib/maker.ts 'keep' hits are the chapter helper (setChapter keep param, :173) and a local list (:331). The server's keep is null|month|half|year (contract line 1875) and "
     },
     {
       "id": "UA-440",
@@ -5241,7 +5320,8 @@
         "lib/maker.ts"
       ],
       "change": "Wish.keep is null | \"month\" | \"half\" | \"year\" (the keep bought); the maker's boolean is stale and goes",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): no Wish.keep boolean on the head: lib/account.ts:14-38 Wish has none; lib/maker.ts 'keep' hits are the chapter helper (setChapter keep param, :173) and a local list (:331). The server's keep is null|month|half|year (contract line 1875) and "
     },
     {
       "id": "UA-441",
@@ -5252,7 +5332,8 @@
         "lib/maker.ts"
       ],
       "change": "Wish.keep is null | \"month\" | \"half\" | \"year\" (the keep bought); the maker's boolean is stale and goes",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): no Wish.keep boolean on the head: lib/account.ts:14-38 Wish has none; lib/maker.ts 'keep' hits are the chapter helper (setChapter keep param, :173) and a local list (:331). The server's keep is null|month|half|year (contract line 1875) and "
     },
     {
       "id": "UA-442",
@@ -5263,7 +5344,8 @@
         "lib/maker.ts"
       ],
       "change": "Wish.keep is null | \"month\" | \"half\" | \"year\" (the keep bought); the maker's boolean is stale and goes",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): no Wish.keep boolean on the head: lib/account.ts:14-38 Wish has none; lib/maker.ts 'keep' hits are the chapter helper (setChapter keep param, :173) and a local list (:331). The server's keep is null|month|half|year (contract line 1875) and "
     },
     {
       "id": "UA-443",
@@ -5286,7 +5368,8 @@
         "lib/maker.ts"
       ],
       "change": "Wish.keep is null | \"month\" | \"half\" | \"year\" (the keep bought); the maker's boolean is stale and goes",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): no Wish.keep boolean on the head: lib/account.ts:14-38 Wish has none; lib/maker.ts 'keep' hits are the chapter helper (setChapter keep param, :173) and a local list (:331). The server's keep is null|month|half|year (contract line 1875) and "
     },
     {
       "id": "UA-445",
@@ -5297,7 +5380,8 @@
         "lib/maker.ts"
       ],
       "change": "Wish.keep is null | \"month\" | \"half\" | \"year\" (the keep bought); the maker's boolean is stale and goes",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): no Wish.keep boolean on the head: lib/account.ts:14-38 Wish has none; lib/maker.ts 'keep' hits are the chapter helper (setChapter keep param, :173) and a local list (:331). The server's keep is null|month|half|year (contract line 1875) and "
     },
     {
       "id": "UA-446",
@@ -5332,7 +5416,8 @@
         "lib/maker.ts"
       ],
       "change": "Wish.keep is null | \"month\" | \"half\" | \"year\" (the keep bought); the maker's boolean is stale and goes",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): no Wish.keep boolean on the head: lib/account.ts:14-38 Wish has none; lib/maker.ts 'keep' hits are the chapter helper (setChapter keep param, :173) and a local list (:331). The server's keep is null|month|half|year (contract line 1875) and "
     },
     {
       "id": "UA-449",
@@ -5355,7 +5440,8 @@
         "lib/maker.ts"
       ],
       "change": "Wish.keep is null | \"month\" | \"half\" | \"year\" (the keep bought); the maker's boolean is stale and goes",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): no Wish.keep boolean on the head: lib/account.ts:14-38 Wish has none; lib/maker.ts 'keep' hits are the chapter helper (setChapter keep param, :173) and a local list (:331). The server's keep is null|month|half|year (contract line 1875) and "
     },
     {
       "id": "UA-451",
@@ -5415,7 +5501,8 @@
         "components/app/Pay.tsx"
       ],
       "change": "the client never sends an amount; Payment.amountKobo is set by the server from the price book",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): payment bodies carry purpose, id/ticket, subjectId, way and no amount (lib/seal.ts:117-122; components/app/studio/Sheets.tsx:31); amount shown is the server's Payment.amountKobo (PayStart); components/app/Pay.tsx is deleted"
     },
     {
       "id": "UA-456",
@@ -5476,7 +5563,8 @@
         "lib/maker.ts"
       ],
       "change": "every read or write of localStorage/sessionStorage/IndexedDB is replaced by its endpoint; the session is an httpOnly refresh cookie plus an in-memory access token; mode (light/dark) is a field on the account; choices before sign-in travel in the link; the build fails on the words localStorage, sessionStorage, IndexedDB in app/, components/, lib/",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): no storage words in lib/maker.ts; session is cookie plus memory (lib/session.ts header; lib/account.ts:10-14,94). Only remaining hits in the whole head are the three in lib/pro-data.ts (UA-507)"
     },
     {
       "id": "UA-461",
@@ -5586,7 +5674,8 @@
         "lib/account.ts"
       ],
       "change": "every read or write of localStorage/sessionStorage/IndexedDB is replaced by its endpoint; the session is an httpOnly refresh cookie plus an in-memory access token; mode (light/dark) is a field on the account; choices before sign-in travel in the link; the build fails on the words localStorage, sessionStorage, IndexedDB in app/, components/, lib/",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): no storage words in lib/account.ts; session is cookie plus memory (lib/session.ts header; lib/account.ts:10-14,94). Only remaining hits in the whole head are the three in lib/pro-data.ts (UA-507)"
     },
     {
       "id": "UA-470",
@@ -5597,7 +5686,8 @@
         "lib/account.ts"
       ],
       "change": "every read or write of localStorage/sessionStorage/IndexedDB is replaced by its endpoint; the session is an httpOnly refresh cookie plus an in-memory access token; mode (light/dark) is a field on the account; choices before sign-in travel in the link; the build fails on the words localStorage, sessionStorage, IndexedDB in app/, components/, lib/",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): no storage words in lib/account.ts; session is cookie plus memory (lib/session.ts header; lib/account.ts:10-14,94). Only remaining hits in the whole head are the three in lib/pro-data.ts (UA-507)"
     },
     {
       "id": "UA-471",
@@ -6129,7 +6219,8 @@
         "lib/account.ts"
       ],
       "change": "every read or write of localStorage/sessionStorage/IndexedDB is replaced by its endpoint; the session is an httpOnly refresh cookie plus an in-memory access token; mode (light/dark) is a field on the account; choices before sign-in travel in the link; the build fails on the words localStorage, sessionStorage, IndexedDB in app/, components/, lib/",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): no storage words in lib/account.ts; session is cookie plus memory (lib/session.ts header; lib/account.ts:10-14,94). Only remaining hits in the whole head are the three in lib/pro-data.ts (UA-507)"
     },
     {
       "id": "UA-512",
@@ -8459,7 +8550,8 @@
       ],
       "change": "make the coded state reachable: empty",
       "enterCondition": "not coded for any list; arrays are non-empty constants",
-      "status": "open"
+      "status": "not-applicable",
+      "resolution": "Audited on web 6760e67, 22 Nov: app/how/page.tsx is fixed copy; no list that can be empty"
     },
     {
       "id": "UA-672",
@@ -9074,7 +9166,8 @@
         "components/app/AuthFlow.tsx:86"
       ],
       "change": "replace: one-time code via SMS/WhatsApp/email and its server-side verification (6 digits, 10 min, 5 tries)",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): lib/session.ts:101 requestCode (POST /auth/codes), :115 verifyCode; email only per R11 (components/app/AuthFlow.tsx:73)"
     },
     {
       "id": "UA-715",
@@ -9119,7 +9212,8 @@
         "lib/pro-api.ts:6"
       ],
       "change": "replace: GET /pro and the business write endpoints",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): lib/pro-api.ts reads GET /business and writes (:106 saveBrand etc.)"
     },
     {
       "id": "UA-719",
@@ -9130,7 +9224,8 @@
         "lib/vault-api.ts:6"
       ],
       "change": "replace: Vault storage (signed-URL uploads to R2/Spaces), shoots, reveals, favourites and downloads",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): lib/vault-api.ts: upload ticket, put, confirm, shoots, reveals, copyLink :102"
     },
     {
       "id": "UA-720",
@@ -9153,7 +9248,8 @@
         "components/app/life/sheets.tsx:16"
       ],
       "change": "replace: the wish's public link slug resolved by the server (/w/<slug>)",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): components/app/life/sheets.tsx:16 wishLink(id) -> lib/person.ts:58 GET /wishes/:id/link; slug is the server's"
     },
     {
       "id": "UA-722",
@@ -9164,7 +9260,8 @@
         "lib/engine/unlock.ts:1"
       ],
       "change": "replace: server-side opening decision (sealed/countdown/passcode/question) using server time",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): receiver opening is decided by the server (components/wish/Showcase.tsx:89 unlockLink; header of lib/engine/unlock.ts:1-5 says so). lib/engine/unlock.ts remains for the sender's own preview only"
     },
     {
       "id": "UA-723",
@@ -9175,7 +9272,8 @@
         "lib/pro-api.ts:104"
       ],
       "change": "replace: team-login invitation (message send + member account)",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): lib/pro-api.ts:121 inviteLogin POST /business/logins; the server sends the invitation. A team LOGIN cannot use the business screens yet (api.md API-BASE-6 HR3: /me must name the login), a server change"
     },
     {
       "id": "UA-724",
@@ -9208,7 +9306,8 @@
         "lib/maker.ts:157"
       ],
       "change": "replace: group contribution link where friends add their own voices",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): components/app/maker/Gather.tsx and app/g/[slug]/page.tsx on GET /wishes/:id/gather and /g/:slug; owner cannot turn a link back on: needs a SERVER ROUTE (api.md API-BASE-11)"
     },
     {
       "id": "UA-727",
@@ -9231,7 +9330,8 @@
         "lib/vault-fixtures.ts:12"
       ],
       "change": "replace: a real 'sample data' setting (or none at all)",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): lib/vault-fixtures.ts:4 samplesOn() returns false and has no importer anywhere on the head; sample data is never on. Leftover file logged"
     },
     {
       "id": "UA-729",
@@ -9242,7 +9342,8 @@
         "app/app/pass/page.tsx:18"
       ],
       "change": "replace: Pass period held by the server (start/end, fair-use counters)",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): app/app/pass/page.tsx:17,23 readPass via useLoad: period and counters are the server's"
     },
     {
       "id": "UA-730",
@@ -9253,7 +9354,8 @@
         "components/app/life/wish.ts:84"
       ],
       "change": "replace: promotion/prices from configuration tables",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): components/app/life/wish.ts holds no price or promotion; prices come from the book (see the price rows)"
     },
     {
       "id": "UA-731",
@@ -9264,7 +9366,8 @@
         "lib/studio-api.ts:173"
       ],
       "change": "replace: style review queue worked by staff (reviewer role)",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): staff review queue: components/admin/b/Review.tsx:18 works on the server's submissions with decide and place at a level"
     },
     {
       "id": "UA-732",
@@ -9275,7 +9378,8 @@
         "lib/studio-api.ts:220"
       ],
       "change": "replace: creator payouts ledger",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): app/app/creator/published/page.tsx:27 earnings and payouts as the server holds them; staff side lib/admin/w13-api.ts:144 payout paid"
     },
     {
       "id": "UA-733",
@@ -9286,7 +9390,8 @@
         "app/w/mine/page.tsx:31"
       ],
       "change": "replace: server-held client wish resolved by number",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): app/w/mine/page.tsx now plays the maker's own wish by id from GET /wishes/:id (lines 30-50); a client wish resolves through /r/:code (lib/vault-api.ts readReveal)"
     },
     {
       "id": "UA-734",
@@ -9297,7 +9402,8 @@
         "lib/feed-api.ts:6"
       ],
       "change": "replace: feed, reactions, saves, follows, creators on the server",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): lib/feed-api.ts no longer exists on the head; the feed reads GET /styles, /showing, /creators (lib/person.ts:112,119,136)"
     },
     {
       "id": "UA-735",
@@ -9308,7 +9414,8 @@
         "lib/studio-api.ts:4"
       ],
       "change": "replace: Studio server: creator plan, credits, reviews, drafts, uploads, submissions, earnings",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): lib/studio-api.ts is the Studio's one door to GET /studio/* (prefs :72, terms :96, drafts, submissions, earnings)"
     },
     {
       "id": "UA-736",
@@ -9319,7 +9426,8 @@
         "components/app/Welcome.tsx:46"
       ],
       "change": "replace: POST account creation after verified sign-in",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): components/app/Welcome.tsx:60,66 POST /me/business and /me/creator; the account itself is made by verifyCode (lib/session.ts:115, isNew)"
     },
     {
       "id": "UA-737",
@@ -9582,7 +9690,8 @@
         "components/app/feed/Player.tsx:63"
       ],
       "change": "replace: a sample wish content for demo; this is local demo content, intentionally not server data",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): components/app/feed/Player.tsx:41 plays the style's recorded loop (components/engine/Preview.tsx, preview videos left as is per R9), not a sample wish"
     },
     {
       "id": "UA-759",
@@ -9641,7 +9750,8 @@
         "lib/feed-api.ts:240-246"
       ],
       "change": "replace: style cover images",
-      "status": "open"
+      "status": "not-applicable",
+      "resolution": "Audited on web 6760e67, 22 Nov: lib/feed-api.ts deleted; style covers are the recorded posters in lib/previews.ts, kept as is by R9"
     },
     {
       "id": "UA-764",
@@ -10210,7 +10320,8 @@
         "lib/maker.ts:388 and Photos.tsx:60"
       ],
       "change": "replace: demo content; a real photo set",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): lib/maker.ts preview() plays only the draft's own photos (:376-383 area, 'It plays ONLY what the draft holds'); components/app/maker/Live.tsx:48 says 'Nothing to play yet.' when empty"
     },
     {
       "id": "UA-812",
@@ -10245,7 +10356,8 @@
         "lib/studio-api.ts:149"
       ],
       "change": "replace: server list of the creator's studio drafts",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): lib/studio-api.ts reads the creator's drafts from the server (GET /studio styles)"
     },
     {
       "id": "UA-815",
@@ -10267,7 +10379,8 @@
         "lib/maker.ts:410"
       ],
       "change": "replace: a discount from a configuration table",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): lib/maker.ts holds no discount or percentage (grep clean); the premium-style extra is read from the book, lib/maker.ts styleCost"
     },
     {
       "id": "UA-817",
@@ -10720,7 +10833,8 @@
         "app/app/pro/wishes/page.tsx:119"
       ],
       "change": "replace: Shoot Reveal creation flow (another screen)",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): app/app/pro/reveal/new/page.tsx and lib/vault-api.ts:sendReveal (POST /business/reveals) are the Shoot Reveal flow; app/app/pro/wishes/page.tsx links to it"
     },
     {
       "id": "UA-855",
@@ -10790,7 +10904,8 @@
         "lib/vault-api.ts:155-176"
       ],
       "change": "replace: GET /r/:no",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): lib/vault-api.ts readReveal GET /r/:code (+ /unlock) is what components/app/pro/RevealPlay.tsx plays"
     },
     {
       "id": "UA-861",
@@ -10813,7 +10928,8 @@
         "lib/maker.ts:31"
       ],
       "change": "replace: the wedding day stored with the wish",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): the wedding day is stored with the wish: lib/draft.ts fromServer reads s.weddingDate (day(s.weddingDate)); lib/maker.ts:30-38 note.wedding is only the reading of it"
     },
     {
       "id": "UA-863",
@@ -10848,7 +10964,8 @@
         "app/w/[slug]/page.tsx:22"
       ],
       "change": "replace: a real showcase wish for the style",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): app/w/[slug]/page.tsx renders <Showcase slug> and no fixture; the style's wish is the server's showcaseSlug (lib/site-styles.ts SiteStyle.showcaseSlug)"
     },
     {
       "id": "UA-866",
@@ -10859,7 +10976,8 @@
         "lib/engine/adapt.ts:268-282"
       ],
       "change": "replace: a showcase wish stored on a server",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): lib/engine/adapt.ts sampleWish remains for the Studio and the style preview only; a showcase at /w/<slug> is read from the server (components/wish/Showcase.tsx)"
     },
     {
       "id": "UA-867",
@@ -11000,7 +11118,8 @@
         "components/site/Concierge.tsx:19-22"
       ],
       "change": "replace: a quote flow (no quote form exists; /contact link)",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): components/site/Concierge.tsx:19-22 'Talk to us' goes to /contact, which opens a support thread through the API (app/contact/page.tsx:11); web.md W14 says no quote form was designed"
     },
     {
       "id": "UA-879",
@@ -11059,7 +11178,8 @@
         "components/site/StudioTimeline.tsx:2"
       ],
       "change": "replace: an illustration only",
-      "status": "open"
+      "status": "not-applicable",
+      "resolution": "Audited on web 6760e67, 22 Nov: components/site/StudioTimeline.tsx:1 states it is a drawing of the idea, not data; nothing to replace"
     },
     {
       "id": "UA-884",
@@ -11259,7 +11379,8 @@
         "app/showing/page.tsx:23-26"
       ],
       "change": "replace: publish, take-down and reaction behaviours",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): publish, take-down and reaction go to the server (components/wish/link.ts heartLink/reactLink; app/app/wishes/[id]/page.tsx askPublish, withdrawPublish); app/showing/page.tsx:23-26 is the copy of how it works"
     },
     {
       "id": "UA-901",
@@ -11353,7 +11474,8 @@
         "app/styles/page.tsx:21-23"
       ],
       "change": "replace: which ticket each level needs (also in LEVEL_GET in lib/catalog.ts:355)",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): app/styles/page.tsx:21-25 reads level and counts from the server's styles (lib/site-styles.ts); LEVEL_GET survives in lib/catalog.ts:350 only for lib/styles.ts:35 (the in-app lists): minor leftover logged"
     },
     {
       "id": "UA-909",
@@ -11412,7 +11534,8 @@
         "lib/studio-api.ts:76-95"
       ],
       "change": "replace: server tables for drafts, sent styles, creator state, prefs; monthly job",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): drafts, submissions, creator state, prefs are the server's (lib/studio-api.ts); the monthly job is the API's (renews from periodEndsAt, studio-api.ts:64)"
     },
     {
       "id": "UA-914",
@@ -11423,7 +11546,8 @@
         "lib/studio-api.ts:91"
       ],
       "change": "replace: a monthly job crediting Creator plan allowances",
-      "status": "open"
+      "status": "done",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): credits renew date is read from the server (lib/studio-api.ts:64 renews); the job itself is the API's"
     },
     {
       "id": "UA-915",
@@ -12323,8 +12447,9 @@
         "lib/vault-api.ts"
       ],
       "change": "the server populates what this screen reads (usePro() in lib/pro-api.ts -> loadPro() in lib/pro-data.ts: localStorage 'fw-pro' (ProData: month, rolled, pack, busines); triggers: on page load, after sign-in, when the tab becomes visible again, and after any write. A manual button is not a trigger.",
-      "status": "open",
-      "provenance": "repository-local-store"
+      "status": "done",
+      "provenance": "repository-local-store",
+      "resolution": "Audited on web 6760e67, 22 Nov (independent read): pro pages read the server with useLoad (lib/person.ts:18-31: on load, on sign-in change, when the tab is visible again) and re-read after a write; lib/pro-api.ts has no usePro and no 'fw-pro' read. Leftover store code: UA-507"
     },
     {
       "id": "UA-977",

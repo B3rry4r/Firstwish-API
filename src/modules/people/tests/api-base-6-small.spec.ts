@@ -138,7 +138,7 @@ describe("API-BASE-6 small: HR4 day, HR5 import rows, brand logo read, failed re
     const r = await t.http().get(`/v1/wishes/${wishId}`).set(bearer(o.token));
     expect(r.status).toBe(200);
     const by = Object.fromEntries((r.body.pictures as { fileId: string; status: string; reason: string | null }[]).map((x) => [x.fileId, x]));
-    expect(by[bad]).toMatchObject({ status: "refused", reason: "This photo was not accepted: nudity. Choose another.", url: null });
+    expect(by[bad]).toMatchObject({ status: "refused", reason: "This file was not accepted.", url: null });
     expect(by[held]).toMatchObject({ status: "screening", reason: null });
   });
 });

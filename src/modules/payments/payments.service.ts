@@ -1,7 +1,9 @@
 import { createHash } from "node:crypto";
-import { Injectable } from "@nestjs/common";
+import { Inject, Injectable } from "@nestjs/common";
 import type { Payment } from "@prisma/client";
 import { PrismaService } from "../../common/db/prisma.service";
+import { ENV } from "../../common/env/env.module";
+import type { Env } from "../../common/env/env";
 import { lockAccount } from "../../common/db/account-lock";
 import { PAYMENTS_ABANDON_AFTER_MINUTES as PLAN_PENDING_MINUTES } from "./abandon";
 import { AppError } from "../../common/errors/app-error";
@@ -16,6 +18,7 @@ import { FulfilmentRegistry } from "./fulfilment.registry";
 import { paidLines, SettlementService, type SettleResult } from "./settlement.service";
 import { normaliseId } from "../../common/normalise/id";
 import { parseRequest } from "./payment-request";
+import { checkReturnPath, returnAddress } from "./return-path";
 import { readOptions, writeOptions } from "./payment-options";
 import { TicketPaymentDrop } from "./ticket-drop";
 import { ticketOf, waitingTicketPayment } from "./ticket-waiting";
@@ -27,6 +30,8 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export interface PayerByLink {
   wishId: string;
   email: string;
+  /** IF1: the slug of the link they came by: the one page they can come back to */
+  slug?: string;
 }
 
 /** The payer's own view of a payment: no idempotency key, no staff flags, no provider detail. */
@@ -89,6 +94,7 @@ export class PaymentsService {
     private readonly businesses: BusinessOf,
     private readonly registry: FulfilmentRegistry,
     private readonly ticketDrop: TicketPaymentDrop,
+    @Inject(ENV) private readonly env: Env,
   ) {}
 
   /**
@@ -102,6 +108,16 @@ export class PaymentsService {
       throw AppError.validation({ "Idempotency-Key": "Must be 8 to 100 letters, digits or . _ : -" });
     }
     if (!accountId && (!holder || req.purpose !== "keep")) throw AppError.notFound();
+    // IF1: where the payer comes back to is checked in words before anything is stored or asked of the provider; no path leaves everything as it was.
+    if (req.info.returnPath !== undefined) {
+      const subject = req.info.subjectId;
+      req.info.returnPath = await checkReturnPath(req.info.returnPath, {
+        purpose: req.wirePurpose,
+        subjectId: subject,
+        holderSlug: accountId ? undefined : (holder?.slug ?? ""),
+        linkSlugs: subject && UUID.test(subject) ? async (slug) => (await this.db.wishLink.findFirst({ where: { slug, wishId: subject }, select: { id: true } })) !== null : undefined,
+      });
+    }
     // HU1: a link holder is no account. Their payment is for the wish; the email is kept on the payment row only (never in the key: it is hashed).
     const payer = accountId ?? `hold:${createHash("sha256").update(`${holder?.wishId}:${holder?.email}`).digest("hex").slice(0, 32)}`;
     const storedKey = `${payer}:${idempotencyKey ?? this.ids.id()}`;
@@ -189,12 +205,14 @@ export class PaymentsService {
       return { started: this.started(cur), status: cur.status === "pending" ? 201 : 200 };
     }
 
+    const returnTo = readOptions(created.row.options).request.returnPath;
     let authorizationUrl: string;
     try {
       const started = await this.port.start({
         reference: created.row.providerReference,
         amount: Money.kobo(created.row.amountKobo),
         email,
+        callbackUrl: returnTo ? returnAddress(this.env.PUBLIC_SITE_URL, returnTo, created.row.providerReference) : undefined,
         metadata: { paymentId: created.row.id, purpose: req.wirePurpose },
       });
       authorizationUrl = started.authorizationUrl;

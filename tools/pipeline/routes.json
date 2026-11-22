@@ -1992,6 +1992,12 @@
         "set": {
           "ticket": "'moment'|'keepsake'|'signature'|'premiere'"
         }
+      },
+      {
+        "decision": "DEC-275",
+        "set": {
+          "returnPath": "string (optional: where the payer comes back to, a path on our own site that starts with one '/', no query or #; the server adds ?reference=; DEC-275)"
+        }
       }
     ],
     "POST /v1/wishes/:id/video": [
@@ -2035,6 +2041,12 @@
         "set": {
           "x-wish-link": "header (optional: the slug of the wish's link, for a receiver)",
           "x-unlock-token": "header (optional: the link's unlock token, where the wish has a passcode)"
+        }
+      },
+      {
+        "decision": "DEC-275",
+        "set": {
+          "returnPath": "string (optional: where the payer comes back to, a path on our own site that starts with one '/', no query or #; the server adds ?reference=; DEC-275)"
         }
       }
     ],
@@ -2528,19 +2540,27 @@
         "on": "boolean (optional; the setTemplate form)"
       }
     },
-    "POST /v1/support-threads/contact": {
-      "decision": "DEC-197",
-      "set": {
-        "email": "string (an email address)",
-        "subject": "string",
-        "body": "string"
+    "POST /v1/support-threads/contact": [
+      {
+        "decision": "DEC-197",
+        "set": {
+          "email": "string (an email address)",
+          "subject": "string",
+          "body": "string"
+        },
+        "response": {
+          "entity": "ThreadDetail",
+          "cardinality": "single",
+          "note": "the thread opened, with its first message (DEC-197)"
+        }
       },
-      "response": {
-        "entity": "ThreadDetail",
-        "cardinality": "single",
-        "note": "the thread opened, with its first message (DEC-197)"
+      {
+        "decision": "DEC-278",
+        "set": {
+          "idempotency-key": "header (optional: 8 to 100 letters, digits or . _ : -; the same key and body is one thread, the same key with another body is 409)"
+        }
       }
-    },
+    ],
     "GET /v1/admin/support/saved-replies": {
       "decision": "DEC-197",
       "response": {
@@ -2808,25 +2828,33 @@
         "note": "the price book's versions, newest first, each with createdBy and createdAt (DEC-233)"
       }
     },
-    "POST /v1/w/:slug/keep": {
-      "decision": "DEC-235",
-      "set": {
-        "email": "string (the payer's email: the receipt goes there)",
-        "keepKey": "'month'|'half'|'year'",
-        "keep": "enum(month|half|year)",
-        "days": "number 30|182|365",
-        "paymentWay": "'card'|'transfer'|'ussd' (PaySheet, not passed on)",
-        "idempotency-key": "header",
-        "x-unlock-token": "header (optional: the link's unlock token, where the wish has a passcode)",
-        "x-wish-proof": "header (the signed proof PublicWishView.keepOffer.proof gave)"
+    "POST /v1/w/:slug/keep": [
+      {
+        "decision": "DEC-235",
+        "set": {
+          "email": "string (the payer's email: the receipt goes there)",
+          "keepKey": "'month'|'half'|'year'",
+          "keep": "enum(month|half|year)",
+          "days": "number 30|182|365",
+          "paymentWay": "'card'|'transfer'|'ussd' (PaySheet, not passed on)",
+          "idempotency-key": "header",
+          "x-unlock-token": "header (optional: the link's unlock token, where the wish has a passcode)",
+          "x-wish-proof": "header (the signed proof PublicWishView.keepOffer.proof gave)"
+        },
+        "response": {
+          "entity": "PublicWishView",
+          "cardinality": "single",
+          "paymentStart": "optional",
+          "note": "{payment, item}: item is the public view of the wish (no content); DEC-235"
+        }
       },
-      "response": {
-        "entity": "PublicWishView",
-        "cardinality": "single",
-        "paymentStart": "optional",
-        "note": "{payment, item}: item is the public view of the wish (no content); DEC-235"
+      {
+        "decision": "DEC-275",
+        "set": {
+          "returnPath": "string (optional: where the payer comes back to, a path on our own site that starts with one '/', no query or #; the server adds ?reference=; DEC-275)"
+        }
       }
-    },
+    ],
     "POST /v1/w/:slug/wake": {
       "decision": "DEC-235",
       "set": {

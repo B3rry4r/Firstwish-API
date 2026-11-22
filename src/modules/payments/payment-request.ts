@@ -109,6 +109,7 @@ export function parseRequest(body: PostPaymentsBody): ParsedRequest {
   keep("way", body.way);
   keep("extraDays", body.extraDays);
   keep("options", body.options);
+  keep("returnPath", body.returnPath);
   return {
     purpose,
     wirePurpose: wire,

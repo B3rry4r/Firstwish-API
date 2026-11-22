@@ -3138,6 +3138,8 @@ export interface PostPaymentsBody {
   plan?: "open" | "creator";
   /** string */
   purpose?: string;
+  /** string (optional: where the payer comes back to, a path on our own site that starts with one '/', no query or #; the server adds ?reference=; DEC-275) */
+  returnPath?: string;
   /** string */
   subjectId?: string;
   /** 'moment'|'keepsake'|'signature'|'premiere' */
@@ -3587,6 +3589,8 @@ export interface PostWBySlugKeepBody {
   keepKey?: "month" | "half" | "year";
   /** 'card'|'transfer'|'ussd' (PaySheet, not passed on) */
   paymentWay?: "card" | "transfer" | "ussd";
+  /** string (optional: where the payer comes back to, a path on our own site that starts with one '/', no query or #; the server adds ?reference=; DEC-275) */
+  returnPath?: string;
 }
 export interface PostWBySlugKeepHeaders {
   "idempotency-key": string;
@@ -4668,7 +4672,9 @@ export interface PostSupportThreadsContactBody {
   /** string */
   subject: string;
 }
-export type PostSupportThreadsContactHeaders = Record<string, never>;
+export interface PostSupportThreadsContactHeaders {
+  "idempotency-key"?: string;
+}
 export type PostSupportThreadsContactResponse = ThreadDetail;
 
 /** E-211 POST /v1/webhooks/email/inbound. Auth: webhook signature. */
@@ -4888,6 +4894,8 @@ export interface PostWishesByIdKeepBody {
   keepKey?: "month" | "half" | "year";
   /** 'card'|'transfer'|'ussd' (PaySheet, not passed on) */
   paymentWay?: "card" | "transfer" | "ussd";
+  /** string (optional: where the payer comes back to, a path on our own site that starts with one '/', no query or #; the server adds ?reference=; DEC-275) */
+  returnPath?: string;
   /** string */
   wishId?: string;
 }

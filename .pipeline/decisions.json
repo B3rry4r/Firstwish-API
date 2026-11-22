@@ -3886,6 +3886,26 @@
       "confidence": "high",
       "source": "build/rulings-phase3.md (IE1 to IE3); build/prompts/P-API-BASE-10.md",
       "decidedAt": "2026-12-04T12:00:00Z"
+    },
+    {
+      "id": "DEC-275",
+      "topic": "A payment start names where the payer comes back to (IF1, HU1)",
+      "decision": "IF1: placeholder, rewritten when the code is done.",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/rulings-phase3.md (IF1); build/prompts/API-BASE-11A.md",
+      "decidedAt": "2026-12-05T12:00:00Z"
+    },
+    {
+      "id": "DEC-278",
+      "topic": "The contact route takes an Idempotency-Key",
+      "decision": "POST /v1/support-threads/contact (E-254): placeholder, rewritten when the code is done.",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "source": "build/sweeps/api.md; build/prompts/API-BASE-11A.md",
+      "decidedAt": "2026-12-05T12:00:00Z"
     }
   ]
 }

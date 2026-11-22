@@ -25,6 +25,8 @@ export interface PaymentRequestInfo {
   way?: string;
   extraDays?: unknown;
   options?: Record<string, unknown>;
+  /** IF1: the site path the payer comes back to (checked when the payment starts) */
+  returnPath?: string;
 }
 
 /**

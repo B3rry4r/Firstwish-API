@@ -1,4 +1,5 @@
 import { spawnSync } from "node:child_process";
+import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { PrismaService } from "../../../common/db/prisma.service";
 import { UuidV7Maker } from "../../../common/ids/uuidv7";
@@ -28,6 +29,7 @@ describe("API-BASE-17 IJ4a: a style is offered by kind and occasion; the style r
   let entitlements: EntitlementsService;
   let cat: Cat[];
   let kinds: string[];
+  let seeded: Set<string>;
 
   beforeAll(async () => {
     t = await createTestApp({ now: NOW });
@@ -36,19 +38,26 @@ describe("API-BASE-17 IJ4a: a style is offered by kind and occasion; the style r
     entitlements = t.app.get(EntitlementsService);
     const r = spawnSync(process.execPath, [join(ROOT, "scripts/seed.mjs")], { cwd: ROOT, env: process.env, encoding: "utf8" });
     if (r.status !== 0) throw new Error(`seed failed: ${r.stderr}`);
-    // the public styles list, read as the web reads it (every page of GET /v1/styles)
-    cat = [];
-    let cursor: string | undefined;
-    do {
-      const page = await t.http().get("/v1/styles").query({ limit: 50, ...(cursor ? { cursor } : {}) });
-      expect(page.status).toBe(200);
-      for (const s of page.body.items) cat.push({ slug: s.slug, level: s.level, kinds: s.kinds ?? [], occasions: s.occasions ?? {} });
-      cursor = page.body.nextCursor ?? undefined;
-    } while (cursor);
+    seeded = new Set((JSON.parse(readFileSync(join(ROOT, "prisma/seed-data/Style.json"), "utf8")).rows as { slug: string }[]).map((r) => r.slug));
+    await refresh();
     kinds = [...new Set(cat.flatMap((s) => s.kinds))].sort();
   }, 120_000);
   afterAll(() => t.close());
   beforeEach(() => t.clock.set(NOW));
+
+  /** The public styles list, read as the web reads it (every page of GET /v1/styles), the house catalogue only: other specs add and switch styles beside this one. */
+  const refresh = async (): Promise<void> => {
+    const got: Cat[] = [];
+    let cursor: string | undefined;
+    do {
+      const page = await t.http().get("/v1/styles").query({ limit: 50, ...(cursor ? { cursor } : {}) });
+      expect(page.status).toBe(200);
+      for (const s of page.body.items) if (seeded.has(s.slug)) got.push({ slug: s.slug, level: s.level, kinds: s.kinds ?? [], occasions: s.occasions ?? {} });
+      cursor = page.body.nextCursor ?? undefined;
+    } while (cursor);
+    cat = got;
+  };
+  const house = (list: string[]): string[] => list.filter((s) => seeded.has(s));
 
   /** The public list's own rule (lib/offers.ts: startStyle): the style names the kind and, if it limits occasions for it, the occasion. */
   const listed = (kind: string, occasion: string): string[] =>
@@ -117,17 +126,20 @@ describe("API-BASE-17 IJ4a: a style is offered by kind and occasion; the style r
     let saved = 0;
     let refused = 0;
     for (const kind of kinds) {
+      // one wish per kind, moved by occasion and ticket (a few wishes only: other specs count wishes beside this one)
+      const w = await wish(u, { kind });
       for (const occasion of occasionsOfKind(kind)) {
+        await refresh();
         const base = new Set(listed(kind, occasion));
         for (const [ticket, top] of TICKETS) {
-          const w = await wish(u, { kind, occasion, ticket });
+          await db.wish.update({ where: { id: w }, data: { occasion, ticket, styleSlug: "noir" } });
           const r = await read(u, w);
           expect(r.status).toBe(200);
           const want = [...base].filter((s) => LEVEL_OF[cat.find((c) => c.slug === s)?.level ?? "starter"] <= top).sort();
-          expect([kind, occasion, ticket, [...r.body.allowedStyles].sort()]).toEqual([kind, occasion, ticket, want]);
+          expect([kind, occasion, ticket, house(r.body.allowedStyles).sort()]).toEqual([kind, occasion, ticket, want]);
         }
-        const w = await wish(u, { kind, occasion, ticket: "signature" });
-        const all: string[] = (await read(u, w)).body.allowedStyles;
+        await db.wish.update({ where: { id: w }, data: { occasion, ticket: "signature", styleSlug: "noir" } });
+        const all: string[] = house((await read(u, w)).body.allowedStyles);
         for (const slug of all) {
           const p = await patch(u, w, { style: slug });
           if (p.status !== 200) throw new Error(`${kind} ${occasion} ${slug}: ${p.status} ${JSON.stringify(p.body.error)}`);
@@ -169,7 +181,8 @@ describe("API-BASE-17 IJ4a: a style is offered by kind and occasion; the style r
     expect(k.body.error.fields.style).toMatch(/not made for the celebration kind/);
     // a wish with no occasion yet is offered only styles with no occasion limit
     const e = await wish(u, { kind: "love", occasion: "" });
-    const list: string[] = (await read(u, e)).body.allowedStyles;
+    await refresh();
+    const list: string[] = house((await read(u, e)).body.allowedStyles);
     expect(list).toContain("noir");
     expect(list).not.toContain("quiet");
     expect(list.sort()).toEqual(cat.filter((s) => s.kinds.includes("love") && (s.occasions.love ?? []).length === 0).map((s) => s.slug).sort());

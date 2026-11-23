@@ -70,7 +70,7 @@ export class PublicBookService {
 
   /**
    * E-213 as the route answers it. Without `wish` it is the business side's, as before (a person with no business side is 403, a removed login says so). With `wish` any
-   * signed-in person reads it for their own wish (another's is 404), `ticket` is optional, and the quote carries `tickets`: for each ticket whether it can be bought now
+   * signed-in person reads it for their own wish (another's is 404), `ticket` is optional, and the quote carries `tickets` (only then): for each ticket whether it can be bought now
    * and the server's words when not (IL3). The quote's lines are the named ticket's; with none named, the Moment ticket's.
    */
   async offers(p: Principal | undefined, q: { ticket?: string; extras?: string[]; wish?: string }, businessHeader: string | string[] | undefined): Promise<TicketQuote> {
@@ -83,6 +83,7 @@ export class PublicBookService {
     if (q.ticket === undefined && (q.wish === undefined || (q.extras ?? []).length > 0)) throw AppError.validation({ ticket: "Name the ticket." });
     const wishId = q.wish === undefined ? null : q.wish.trim().toLowerCase();
     if (wishId !== null && !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(wishId)) throw AppError.notFound("No such wish.");
+    if (wishId === null) return this.quoteTicket(q.ticket as string, q.extras ?? []);
     const states = await this.modules.get(PurchasesService, { strict: false }).ticketStates(accountId, wishId);
     const at = this.book.now();
     const b = await this.book.versionAt(at);

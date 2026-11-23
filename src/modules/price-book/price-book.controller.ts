@@ -2,7 +2,7 @@ import { Body, Controller, createParamDecorator, ExecutionContext, Get, Headers,
 import type { Response } from "express";
 import { createHash } from "node:crypto";
 import { Transform } from "class-transformer";
-import { ArrayMaxSize, IsArray, IsOptional, IsString, ValidateIf } from "class-validator";
+import { ArrayMaxSize, IsArray, IsOptional, IsString } from "class-validator";
 import type { Principal } from "../../common/auth/principal";
 import { CurrentPrincipal, Public, Roles } from "../../common/auth/decorators";
 import {
@@ -28,7 +28,7 @@ import { PublicBookService } from "./public-book.service";
 
 /** E-213 (X13): ?ticket=ticket.single&extras=extra.a&extras=extra.b. One extra arrives as a string; it is read as a list of one. */
 export class TicketQuoteQueryDto {
-  @ValidateIf((o: { wish?: unknown }) => o.wish === undefined)
+  @IsOptional()
   @IsString()
   ticket?: string;
   @IsOptional()

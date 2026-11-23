@@ -67,7 +67,6 @@ describe("API-BASE-20 case 4: a move with no style picks the style by the server
        }
       }
     }
-    // eslint-disable-next-line no-console
     console.log(`AB20-MOVE cells=${cells} notSaved=${out.length}\n${out.join("\n")}`);
     expect(cells).toBe(204);
     expect(out).toEqual([]);

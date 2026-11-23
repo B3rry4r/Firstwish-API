@@ -174,16 +174,22 @@ describe("API-BASE-17 IJ4a: a style is offered by kind and occasion; the style r
     expect((await row(w)).styleSlug).toBe("noir");
     // a wish of the apology occasion takes Quiet; the occasion then moves away with it held: refused, unchanged
     const a = await wish(u, { kind: "love", occasion: "apology", styleSlug: "quiet" });
-    const moved = await patch(u, a, { occasion: "birthday" });
+    // API-BASE-20 (IL4): with a style named (Quiet again) the move is refused in these words; with none sent the server picks one (the next block)
+    const moved = await patch(u, a, { occasion: "birthday", style: "quiet" });
     expect(moved.status).toBe(422);
-    expect(moved.body.error.fields.style).toMatch(/Quiet is not made for the birthday occasion of the love kind\. Choose a style made for it\. Send a style made for the birthday occasion in the same save\./);
+    expect(moved.body.error.fields.style).toMatch(/Quiet is not made for the birthday occasion of the love kind\. Choose a style made for it\./);
     expect(await row(a)).toMatchObject({ occasion: "apology", styleSlug: "quiet" });
+    const picked = await patch(u, a, { occasion: "birthday" });
+    expect(picked.status).toBe(200);
+    expect(await row(a)).toMatchObject({ occasion: "birthday" });
+    expect((await row(a)).styleSlug).not.toBe("quiet");
+    await db.wish.update({ where: { id: a }, data: { occasion: "apology", styleSlug: "quiet" } });
     expect((await patch(u, a, { occasion: "birthday", style: "noir" })).status).toBe(200);
     expect(await row(a)).toMatchObject({ occasion: "birthday", styleSlug: "noir" });
     // an occasion the style is made for stays fine, a kind change with the occasion refused the same way
     const b = await wish(u, { kind: "love", occasion: "apology", styleSlug: "quiet" });
     expect((await patch(u, b, { occasion: "apology" })).status).toBe(200);
-    const k = await patch(u, b, { kind: "celebration", occasion: "birthday" });
+    const k = await patch(u, b, { kind: "celebration", occasion: "birthday", style: "quiet" });
     expect(k.status).toBe(422);
     expect(k.body.error.fields.style).toMatch(/not made for the celebration kind/);
     // a wish with no occasion yet is offered only styles with no occasion limit

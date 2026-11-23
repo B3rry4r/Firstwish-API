@@ -58,16 +58,21 @@ describe("API-BASE-15 round 1 (IJ4): the kind rule for a kind change, the server
     it("a love-only style on a love wish, kind changed to group: refused in words, the wish is unchanged", async () => {
       const u = await person();
       const w = await wish(u, { styleSlug: "letter" });
-      const r = await patch(u, w, { kind: "group", occasion: occasionsOfKind("group")[0] });
-      expect(r.status).toBe(422);
-      expect(r.body.error.fields.style).toMatch(/not made for the group kind/);
-      expect(r.body.error.fields.style).toMatch(/Send a style made for the group kind in the same save/);
+      // API-BASE-20 (IL4): a move that sends no style picks one by the rule (the held style is not made for the group kind); a style NAMED, the held one too, is refused as before
+      const named = await patch(u, w, { kind: "group", occasion: occasionsOfKind("group")[0], style: "letter" });
+      expect(named.status).toBe(422);
+      expect(named.body.error.fields.style).toMatch(/not made for the group kind/);
       expect(await row(w)).toMatchObject({ kind: "love", styleSlug: "letter" });
-      // the kind sent alone is refused the same way, a creator's style too
+      const r = await patch(u, w, { kind: "group", occasion: occasionsOfKind("group")[0] });
+      expect(r.status).toBe(200);
+      const picked = await db.style.findUniqueOrThrow({ where: { slug: (await row(w)).styleSlug } });
+      expect(await row(w)).toMatchObject({ kind: "group" });
+      expect(offeredForKind(picked.kinds, "group")).toBe(true);
+      // a creator's style: the move sends a style by name and is refused
       const slug = testSlug("cs");
       await db.style.create({ data: { id: ids.next(), slug, name: `Studio ${slug}`, on: true, level: "starter", kinds: ["love"], house: false, creator: { handle: "ada", name: "Ada" }, by: "Ada" } as never });
       const c = await wish(u, { styleSlug: slug });
-      expect((await patch(u, c, { kind: "celebration", occasion: "birthday" })).status).toBe(422);
+      expect((await patch(u, c, { kind: "celebration", occasion: "birthday", style: slug })).status).toBe(422);
       expect((await row(c)).kind).toBe("love");
     });
 

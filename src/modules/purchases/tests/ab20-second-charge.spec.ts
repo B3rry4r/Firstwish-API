@@ -46,7 +46,6 @@ describe("API-BASE-20 case 1: an extra the wish holds is never charged a second 
         }
       }
     }
-    // eslint-disable-next-line no-console
     console.log(`AB20-TABLE\n${table.join("\n")}`);
     expect(bad).toEqual([]);
   });
@@ -76,7 +75,6 @@ describe("API-BASE-20 case 1: an extra the wish holds is never charged a second 
       expect(AGAIN.has(sku) ? again.status === 201 || again.status === 422 : again.status).toBe(AGAIN.has(sku) ? true : 422);
       if (!AGAIN.has(sku)) expect(await k.db.payment.count({ where: { subjectId: w, purpose: "extra" } })).toBe(1);
     }
-    // eslint-disable-next-line no-console
     console.log(`AB20-TWENTY\n${seen.join("\n")}`);
   });
 

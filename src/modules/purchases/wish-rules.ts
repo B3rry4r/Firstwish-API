@@ -42,7 +42,7 @@ export function includedInTicket(book: EntitlementsRow, ticket: string, sku: str
   if (keys.length === 0) return false;
   return keys.every((k) => {
     const v = extra[k];
-    if (k === "styleLevel") return isLevel(v) && isLevel(own[k]) && levelRank(own[k] as never) >= levelRank(v);
+    if (k === "styleLevel") return isLevel(v) && isLevel(own[k]) && levelRank(own[k]) >= levelRank(v);
     return v === true && own[k] === true;
   });
 }

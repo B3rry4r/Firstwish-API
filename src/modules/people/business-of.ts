@@ -14,9 +14,9 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 export class BusinessOf {
   constructor(private readonly prisma: PrismaService) {}
 
-  /** The business id, or null when the account is in none. */
-  async find(accountId: string): Promise<string | null> {
-    const rows = await this.prisma.$queryRaw<{ id: string }[]>`
+  /** The business id, or null when the account is in none. Inside a transaction pass its client, so the read does not ask the pool for a second connection. */
+  async find(accountId: string, db: Pick<PrismaService, "$queryRaw"> = this.prisma): Promise<string | null> {
+    const rows = await db.$queryRaw<{ id: string }[]>`
       SELECT b.id::text AS id, 0 AS rank FROM business b WHERE b."accountId" = ${accountId}::uuid
       UNION ALL
       SELECT l."businessId"::text AS id, 1 AS rank

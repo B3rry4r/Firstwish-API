@@ -6498,7 +6498,8 @@
       ],
       "change": "make the coded state reachable: empty (prices)",
       "enterCondition": "none coded; a group with no rows is skipped",
-      "status": "open"
+      "status": "not-a-state",
+      "resolution": "23 Nov: read by the W16 builder and confirmed by a separate verifier: the server never answers an empty price book (price-admin.service.ts:109-115 always adds the payout line and the limit lines; the route takes only cursor and limit, no search or filter). A skipped group is an absent kind, not a state. Prices.tsx unchanged."
     },
     {
       "id": "UA-528",
@@ -11750,7 +11751,8 @@
         "components/app/studio/Canvas.tsx / Editor.tsx onSeen"
       ],
       "change": "replace: server-side knowledge of the base look and the layout check",
-      "status": "open"
+      "status": "done",
+      "resolution": "23 Nov: server round 19 merged (API 0189638; IK5, IK5a): the Studio's save and send-in answer 422 naming the field for an unknown base look, a layout or an added kind outside the allowed lists (checked twice by a separate verifier: 20 wrong variants refused, the editor's own documents still save). The send-in's readable check still reads the colours the editor reports: advice for the staff reviewer, who approves every style (IK5a)."
     },
     {
       "id": "UA-923",

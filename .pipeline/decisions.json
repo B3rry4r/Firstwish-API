@@ -4207,7 +4207,7 @@
       "closes": [],
       "approvedBy": "lead default, owner may override",
       "confidence": "high",
-      "decidedAt": "2026-12-07T12:00:00Z",
+      "decidedAt": "2026-11-23T12:00:00Z",
       "source": "build/sweeps/api.md (W14B check); build/prompts/API-BASE-15.md"
     },
     {
@@ -4217,7 +4217,7 @@
       "closes": [],
       "approvedBy": "lead default, owner may override",
       "confidence": "high",
-      "decidedAt": "2026-12-07T12:00:00Z",
+      "decidedAt": "2026-11-23T12:00:00Z",
       "source": "build/sweeps/api.md (W14B check); build/prompts/API-BASE-15.md"
     },
     {
@@ -4227,7 +4227,7 @@
       "closes": [],
       "approvedBy": "lead default, owner may override",
       "confidence": "high",
-      "decidedAt": "2026-12-07T12:00:00Z",
+      "decidedAt": "2026-11-23T12:00:00Z",
       "source": "build/sweeps/api.md (W14B check); build/prompts/API-BASE-15.md"
     }
   ]

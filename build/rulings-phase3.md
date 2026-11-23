@@ -1166,3 +1166,13 @@ HG1 (give race) Two staff giving one Concierge order: the code is right (overlap
   checking (the creator waits or removes it), so an approved document never carries an unchecked file. A value
   that is neither an art item's id nor shaped like a file id names no file (a house bank piece, an older item):
   it is left alone.
+- IJ1 (23 Nov, the lead, on the check of the creator style at a link; Default (lead), owner may override): the
+  web's gate marks the sample wish in style previews as a debt to remove, not a design to extend, so a creator
+  style's preview adds NO new use of it: in the maker a creator style is previewed with the wish being made (the
+  person's own photos and words), and on its public page it plays with no photos (its own fallback frames),
+  both marked as a preview. When sample wishes are served by the server as reference data (planned with the rest
+  of the old rule breaks), every preview, house or creator, reads them from there.
+- IJ2 (23 Nov, the lead; Default (lead), owner may override): a creator's style follows the same two rules as a
+  house style when a wish takes it: it must be offered for the wish's kind, and its level must be one the wish's
+  ticket allows (product truths T-02 to T-05). The server refuses the choice in words otherwise; the web never
+  offers it.

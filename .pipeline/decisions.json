@@ -4369,6 +4369,36 @@
       "confidence": "high",
       "decidedAt": "2026-11-23T14:00:00Z",
       "source": "build/prompts/API-BASE-20.md; build/sweeps/api.md (W16 and WEB-10B requests)"
+    },
+    {
+      "id": "DEC-323",
+      "topic": "The server enforces the clips a wish holds: how many, and how long",
+      "decision": "IL1a (cases 1 to 3): a wish holds as many video clips as its ticket and its extras give, each place with its own length, all read from the entitlements book (ticket `clips` and `clipSeconds`; each held extra's `clips` and `clipSeconds`; a ticket with no clips gives none, whatever extras it holds, T-08). Premiere three of up to 15 seconds; one more 15-second clip adds one place; the long clip adds one place of up to 60 seconds; each extra is held once (IL1). A draft with no ticket is on the moment line: none. The upload (POST /v1/uploads, purpose clip) refuses a clip past the places with 409 clips_full and words; an upload not yet confirmed holds its place for the 15 minutes its signed address lasts, and the account lock is held, so twenty at once pass at most the places. A confirm judges the clip again, with its length. The seal (POST /v1/wishes/:id/seal) refuses a wish holding more clips, or a longer clip, than the ticket it ends with and its held extras give (422, field clips, words that say how many to remove). A ticket start for a wish that holds clips the ticket does not give is refused (422, field subjectId, no payment row; GET /v1/ticket-offers says canBuy false, reason clips_above_ticket) and so is the settle of such a payment (refund due). A refund of a ticket or of a clip extra that would leave the wish with clips and no place for them is refused with 409 clips_held and words (a clip extra on its own, while the wish holds the clip it paid for; IJ3, IJ3a: an extra whose refund was SENT no longer gives its place). No endpoint is added or removed.",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "decidedAt": "2026-11-23T22:00:00Z",
+      "source": "build/prompts/API-BASE-21.md; build/rulings-phase3.md IL1a"
+    },
+    {
+      "id": "DEC-324",
+      "topic": "A clip's length is read from the stored file; the wish read says what the wish may hold",
+      "decision": "IL1a (cases 2 and 5): a clip's length is read from the stored FILE when it is confirmed (the new column stored_file.lengthMs, additive and null for every other file), by the clip-length port: the real adapter runs ffprobe over a short-lived signed address of the stored file (a tool the real server must have on its path: a deploy item; with none, every clip is refused in words, nothing unchecked is kept); the stand-in reads the length from the file's own MP4 or WebM header. The browser's `seconds` stays refused for a clip. A clip of up to 0.5 seconds over its place counts as that length (containers round). A file whose length cannot be read is refused and removed (422 upload_refused). The owner's single and list wish reads gain `limits`: {photos, voices, clips: {count, seconds: [each place's length, longest first]}}, so the web holds no number of its own.",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "decidedAt": "2026-11-23T22:00:00Z",
+      "source": "build/prompts/API-BASE-21.md; build/rulings-phase3.md IL1a"
+    },
+    {
+      "id": "DEC-325",
+      "topic": "The registry is not reopened for round 21",
+      "decision": "API-BASE-21 adds no endpoint, no body field and no entity: the new answers are the existing routes' (409 clips_full, 409 clips_held, 422 on the seal and the ticket start) and one optional field on the owner's wish read (Wish.limits, a hand-kept contract, as Wish.adds). registry.json and registry.lock.json are unchanged; decisions DEC-323 and DEC-324 are the rows.",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "decidedAt": "2026-11-23T22:00:00Z",
+      "source": "build/prompts/API-BASE-21.md; build/rulings-phase3.md IL1a"
     }
   ]
 }

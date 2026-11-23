@@ -32,6 +32,7 @@ import { approvedSubmissionOf } from "../styles/approved-document";
 import { kindHasOccasion, LAST_STEP } from "./kind-occasions";
 import { isLevel } from "../styles/style-view";
 import { addsFor } from "../wish-extras/wish-adds";
+import { clipLimitsOf, clipRefusal, clipSlots, heldClipSkus, readHeldClips } from "../wish-extras/wish-clips";
 import { allowedLevel, firstStyleFor, heldAdds, REFUND_WORDS, levelRank, offeredForWish, styleTakingRefusal } from "./style-rule";
 import { PriceBookService } from "../price-book/price-book.service";
 import { videoRefunded } from "../wish-extras/wish-extras";
@@ -232,7 +233,7 @@ export class WishesService {
     // the list carries `publish` as the detail does (where the owner's ask to be shown stands; null when none was made)
     const publishes = await this.showing.showing.publishStateOf(shown);
     const holds = await addsFor(this.prisma, book, rows.slice(0, limit)); // IL2: one query for the page
-    const one = (r: Wish): Obj => ({ ...this.wire(r, links.get(r.id)), pictures: pics.get(r.id) ?? [], video: videos.get(r.id) ?? "none", styleLevel: allowedLevel(book, r.ticket, r.adds), publish: publishes.get(r.id) ?? null, adds: holds.get(r.id) ?? [] });
+    const one = (r: Wish): Obj => ({ ...this.wire(r, links.get(r.id)), pictures: pics.get(r.id) ?? [], video: videos.get(r.id) ?? "none", styleLevel: allowedLevel(book, r.ticket, r.adds), publish: publishes.get(r.id) ?? null, adds: holds.get(r.id) ?? [], limits: this.limitsRead(book, r, holds.get(r.id) ?? []) });
     return toPage(rows.map(one), limit, (r) => ({ key: String(r.id), id: String(r.id) }));
   }
 
@@ -252,7 +253,7 @@ export class WishesService {
     const extrasOpen = viaOrder ? {} : await this.extrasOpenFor(row.id, book);
     // IL2: what the wish holds and where each came from (its ticket or a purchase), with the state of a refund; the owner's read only
     const adds = (await addsFor(this.prisma, book, [row])).get(row.id) ?? [];
-    return { ...this.wire(row, (await this.linksFor([id])).get(id)), activity, publish, pictures, video, styleLevel, allowedStyles, extrasOpen, adds, ticketPayment: waiting ? waitingView(waiting) : null };
+    return { ...this.wire(row, (await this.linksFor([id])).get(id)), activity, publish, pictures, video, styleLevel, allowedStyles, extrasOpen, adds, limits: this.limitsRead(book, row, adds), ticketPayment: waiting ? waitingView(waiting) : null };
   }
 
   /**
@@ -467,6 +468,21 @@ export class WishesService {
       chapters: num(g.chapters),
       ticket: slug,
     };
+  }
+
+  /** IL1a: what the owner's read says the wish may hold: photos, voices, and the clips (how many, and the length each place takes), from the book, so the web needs no number of its own. */
+  private limitsRead(book: EntitlementsRow, w: Wish, holds: readonly { sku: string; held: boolean }[]): Obj {
+    const lim = this.limitsOf(book, w.ticket, w.adds, w.conciergeOrderId !== null);
+    const slots = clipSlots(book, lim.ticket, holds.filter((h) => h.held).map((h) => h.sku));
+    return { photos: lim.photos, voices: lim.voices, clips: clipLimitsOf(slots) };
+  }
+
+  /** IL1a: a wish holding more clips, or a longer clip, than the ticket it ends with (and the extras it holds) gives is not sealed: the words say what to remove. */
+  private async checkClips(tx: Tx, book: EntitlementsRow, w: { id: string; ticket: string | null; adds: unknown }): Promise<void> {
+    const clips = await readHeldClips(tx, w.id);
+    if (clips.length === 0) return;
+    const words = clipRefusal(clipSlots(book, w.ticket, await heldClipSkus(tx, book, w)), clips, w.ticket);
+    if (words) throw AppError.validation({ clips: words }, words);
   }
 
   private checkLimits(book: EntitlementsRow, content: Obj, refs: { role: string }[], w: Wish): void {
@@ -866,6 +882,7 @@ export class WishesService {
       const ended = await tx.wish.findUniqueOrThrow({ where: { id }, select: { kind: true, ticket: true, adds: true, styleSlug: true, styleTakenLevel: true } });
       if (!ended.styleSlug) throw AppError.validation({ style: "Choose a style before sealing." }, "Choose a style before sealing.");
       await this.checkStyleTaking(tx, book, { id, ...ended }, ended.styleSlug, true);
+      await this.checkClips(tx, book, { id, ticket: ended.ticket, adds: ended.adds }); // IL1a
       const no = await this.issueNumber(tx);
       // ZB3: a client wish shares its wish's number once the wish has one.
       await tx.clientWish.updateMany({ where: { wishId: id }, data: { no } });

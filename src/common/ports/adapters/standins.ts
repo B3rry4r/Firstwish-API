@@ -2,6 +2,8 @@ import { createHash, createHmac, timingSafeEqual } from "node:crypto";
 import { appendFileSync, chmodSync, closeSync, fstatSync, openSync } from "node:fs";
 import { EnvError } from "../../env/env";
 import { ImageSizesPort, ResizeInput } from "../image-sizes.port";
+import { ClipLengthInput, ClipLengthPort } from "../clip-length.port";
+import { containerLengthMs } from "./clip-container";
 import { Money } from "../../money/money";
 import { AiWritingPort, WriteRequest, WriteResult } from "../ai.port";
 import { EmailPort, OutgoingEmail, ReceivedEmail, SentEmail } from "../email.port";
@@ -314,6 +316,20 @@ export class StandinImageSizes extends ImageSizesPort {
   resize(input: ResizeInput): Promise<void> {
     this.made.push(input);
     return Promise.resolve();
+  }
+}
+
+/**
+ * The clip-length stand-in (IL1a): reads the length from the file's own container header in the stand-in storage (an MP4 or WebM header with a length in it),
+ * the way the real reader finds it in the file; a file with no readable header has no length (null). Never reads a name or a field the browser sent.
+ */
+export class StandinClipLength extends ClipLengthPort {
+  constructor(private readonly storage: StoragePort) {
+    super();
+  }
+  async lengthMs(input: ClipLengthInput): Promise<number | null> {
+    const head = await this.storage.readStart(input.key, 1024 * 1024);
+    return head ? containerLengthMs(head) : null;
   }
 }
 

@@ -9,6 +9,7 @@ import type { UserPrincipal } from "../../common/auth/principal";
 import { Clock } from "../../common/ports/clock.port";
 import { CodeGenerator, IdGenerator } from "../../common/ports/ids.port";
 import { StoragePort } from "../../common/ports/storage.port";
+import { ClipLengthPort } from "../../common/ports/clip-length.port";
 import { lockAccount } from "../../common/db/account-lock";
 import { toWireInstant } from "../../common/time/time";
 import type { DeleteUploadsByIdBody, PostUploadsBody, StoredFile, UploadTicket } from "../../contracts";
@@ -42,6 +43,7 @@ import { ScreeningService } from "./screening.service";
 import { dropFileHearts } from "../vault/vault-shared";
 import { SHOWN_TO_BUYER } from "../wishes/wish-shown";
 import { checkOrderRoom, lockOwnOpenOrder } from "./order-files";
+import { clipRefusal, clipSlots, heldClipSkus, readHeldClips } from "../wish-extras/wish-clips";
 
 type Tx = Prisma.TransactionClient;
 
@@ -87,6 +89,7 @@ export class StoredFilesService {
     private readonly codes: CodeGenerator,
     private readonly clock: Clock,
     @Inject(ENV) private readonly env: Env,
+    private readonly clipLength: ClipLengthPort,
   ) {}
 
 
@@ -137,7 +140,7 @@ export class StoredFilesService {
       return;
     }
     if (!isUuid(subjectId)) throw AppError.validation({ subjectId: "Must be a wish id." });
-    const wish = await tx.wish.findFirst({ where: { AND: [{ id: subjectId, accountId: p.accountId }, SHOWN_TO_BUYER] }, select: { status: true, ticket: true } });
+    const wish = await tx.wish.findFirst({ where: { AND: [{ id: subjectId, accountId: p.accountId }, SHOWN_TO_BUYER] }, select: { status: true, ticket: true, adds: true } });
     if (!wish) throw AppError.notFound("No such wish.");
     // HS1: a friend's voice through the gather link may arrive while the wish is a draft or sealed and not yet open
     if (wish.status !== "draft" && !(gather && wish.status === "sealed")) throw AppError.conflict("wish_sealed", "This wish is sealed; its files cannot change.");
@@ -146,7 +149,35 @@ export class StoredFilesService {
       const tickets = (e?.tickets ?? {}) as Record<string, { clips?: unknown } | undefined>;
       const clips = wish.ticket ? tickets[wish.ticket]?.clips : 0;
       if (!(typeof clips === "number" && clips > 0)) throw AppError.forbidden("This wish's ticket does not take clips.");
+      // IL1a: a wish holds as many clips as its ticket and its extras give (the book's own numbers); an upload not yet confirmed holds its place for the 15 minutes
+      // its signed address lasts, and the account lock is held, so twenty at once cannot pass the limit
+      if (e) {
+        const places = clipSlots(e, wish.ticket, await heldClipSkus(tx, e, { id: subjectId, ticket: wish.ticket, adds: wish.adds }));
+        const held = await readHeldClips(tx, subjectId, { pendingSince: new Date(this.clock.now().getTime() - UPLOAD_TTL_SECONDS * 1000) });
+        if (held.length >= places.length) throw AppError.conflict("clips_full", this.clipsFullWords(wish.ticket, places.length));
+      }
     }
+  }
+
+  private clipsFullWords(ticket: string | null, places: number): string {
+    return `A wish on the ${ticket ?? "moment"} ticket holds at most ${places} ${places === 1 ? "clip" : "clips"}. Remove one to add another.`;
+  }
+
+  /**
+   * IL1a: a clip that has arrived is judged against the wish it was made for: the count again (the places are what fill it), then its length, read from the
+   * file itself, as a set with the clips the wish already holds. A refusal removes the clip. null when it fits, or when the upload was made for no wish.
+   */
+  private async clipFits(tx: Tx, id: string, lengthMs: number): Promise<AppError | null> {
+    const ticket = await tx.uploadTicket.findUnique({ where: { id }, select: { subjectId: true } });
+    if (!ticket?.subjectId || !isUuid(ticket.subjectId)) return null;
+    const wish = await tx.wish.findUnique({ where: { id: ticket.subjectId }, select: { id: true, ticket: true, adds: true } });
+    const book = await tx.entitlements.findFirst();
+    if (!wish || !book) return null;
+    const places = clipSlots(book, wish.ticket, await heldClipSkus(tx, book, wish));
+    const others = await readHeldClips(tx, wish.id, { except: id });
+    if (others.length + 1 > places.length) return AppError.conflict("clips_full", this.clipsFullWords(wish.ticket, places.length));
+    const words = clipRefusal(places, [...others, { lengthMs }], wish.ticket);
+    return words ? AppError.validation({ clip: words }, words) : null;
   }
 
   /**
@@ -353,6 +384,12 @@ export class StoredFilesService {
       return this.refuse(id, objectKey, refused(looksLikeSvg(head) ? "An SVG is not taken as a picture." : "The file is not of the type asked."));
     }
     const screened = await this.screening.screen({ objectKey, contentType: type }, obj.size, head);
+    // IL1a: a clip's length is read from the stored file, never taken from the browser; a clip whose length cannot be read is refused and removed
+    let clipMs: number | null = null;
+    if (row.purpose === "video_clip" && screened.verdict !== "reject") {
+      clipMs = await this.clipLength.lengthMs({ key: objectKey, contentType: type });
+      if (clipMs === null) return this.refuse(id, objectKey, refused("We could not read this clip's length. Send a video file that plays (MP4, MOV or WebM)."));
+    }
 
     type Done = { row: FileRow; removeKeys: string[]; error?: AppError };
     const done: Done = await this.db.$transaction(
@@ -370,6 +407,13 @@ export class StoredFilesService {
             if (!(e instanceof AppError)) throw e;
             await this.removeRows(tx, id);
             return { row, removeKeys: [objectKey, staging], error: e };
+          }
+        }
+        if (clipMs !== null) {
+          const no = await this.clipFits(tx, id, clipMs);
+          if (no) {
+            await this.removeRows(tx, id);
+            return { row, removeKeys: [objectKey, staging], error: no };
           }
         }
         await this.screening.record(tx, id, screened);
@@ -397,7 +441,7 @@ export class StoredFilesService {
         }
         const ready = await tx.storedFile.update({
           where: { id },
-          data: { status: screened.verdict === "pass" ? "ready" : "screening", bytes: BigInt(obj.size), kind },
+          data: { status: screened.verdict === "pass" ? "ready" : "screening", bytes: BigInt(obj.size), kind, ...(clipMs !== null ? { lengthMs: clipMs } : {}) },
         });
         // HW2: a confirmed profile picture is the creator's picture from now on (the one before it is no longer attached)
         if (row.purpose === "profile_picture" && row.ownerAccountId) await tx.creator.updateMany({ where: { accountId: row.ownerAccountId }, data: { img: id } });

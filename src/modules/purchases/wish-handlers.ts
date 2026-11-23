@@ -1,6 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { AppError } from "../../common/errors/app-error";
-import { EntitlementsService } from "../price-book/entitlements.service";
+import { EntitlementsService, grantOf } from "../price-book/entitlements.service";
+import { assessTicketClips, clipRefusal, clipSlots, heldClipSkus, readHeldClips } from "../wish-extras/wish-clips";
 import { PriceBookService } from "../price-book/price-book.service";
 import { EventsService } from "../events/events.service";
 import type { FulfilmentContext } from "../payments/fulfilment.registry";
@@ -63,6 +64,9 @@ export class WishHandlers {
     // IJ2: the wish's style (on, made for its kind, at a level this ticket allows) is judged again when the payment settles; a refusal is refund due
     const styleWhy = await assessTicketStyle(tx, w, ticket, await this.entitlements.row(tx));
     if (styleWhy) return this.store.refuse(tx, ctx, grantId, styleWhy.reason);
+    // IL1a: the clips the wish holds are judged against this ticket again when the payment settles; a refusal is refund due
+    const clipWhy = await assessTicketClips(tx, await this.entitlements.row(tx), w, ticket);
+    if (clipWhy) return this.store.refuse(tx, ctx, grantId, clipWhy.reason);
     const grant = await ctx.grant();
     await this.wishes.fulfilTicketIn(tx, w.id, ticket);
     await this.store.record(tx, grantId, { wishId: w.id, ticket, previousTicket: w.ticket, termDays: num(grant.termDays), photos: num(grant.photos) });
@@ -142,6 +146,33 @@ export class WishHandlers {
     if (!why) return null;
     const after = w.state === "draft" ? "Change the wish to a style its ticket allows first, then the extra can be refunded." : "The wish is sealed, so its look is the customer's and the extra stays paid.";
     return `The premium-style extra cannot be refunded on its own while the wish holds a style that needs it. ${why} ${after}`;
+  }
+
+  /**
+   * IL1a: a refund of a clip extra on its own, or of a ticket that gave the clips' places, is held back while the wish holds clips that the wish would then
+   * have no place for: the words say why, or null. The wish is judged as it would stand without the extra (its ticket and its other extras), or on the
+   * ticket it had before.
+   */
+  async clipBlock(tx: Tx, g: GrantRow): Promise<string | null> {
+    if (!g.wishId || (g.kind !== "extra" && g.kind !== "ticket")) return null;
+    const w = await readWish(tx, g.wishId);
+    if (!w || w.state === "erased") return null;
+    const book = await this.entitlements.row(tx);
+    const clips = await readHeldClips(tx, w.id);
+    if (clips.length === 0) return null;
+    if (g.kind === "extra") {
+      const sku = String(g.detail.extra);
+      if (!(num(grantOf(book, sku)?.clips) ?? 0) || !w.adds.includes(sku)) return null;
+      const rest = await heldClipSkus(tx, book, w);
+      const i = rest.lastIndexOf(sku);
+      if (i >= 0) rest.splice(i, 1);
+      const why = clipRefusal(clipSlots(book, w.ticket, rest), clips, w.ticket);
+      return why ? `A clip extra cannot be refunded on its own while the wish holds the clip it paid for. ${why} Remove the clip first, then the extra can be refunded.` : null;
+    }
+    if (w.ticket !== g.detail.ticket || w.state !== "draft") return null;
+    const before = typeof g.detail.previousTicket === "string" ? g.detail.previousTicket : null;
+    const why = clipRefusal(clipSlots(book, before, w.adds), clips, before);
+    return why ? `This ticket cannot be refunded while the wish holds clips that the ticket before it does not give. ${why}` : null;
   }
 
   /** A refund takes the ticket back while the wish is still a draft; a keep takes its days off the end; an extra comes off the list. */

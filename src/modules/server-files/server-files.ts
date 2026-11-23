@@ -1,6 +1,8 @@
 import { Injectable, Module } from "@nestjs/common";
 import { PrismaService } from "../../common/db/prisma.service";
 import { createHash } from "node:crypto";
+import { createReadStream } from "node:fs";
+import { Readable } from "node:stream";
 import { Inject } from "@nestjs/common";
 import { ENV } from "../../common/env/env.module";
 import type { Env } from "../../common/env/env";
@@ -18,6 +20,13 @@ export type ServerFilePurpose = "qr-card" | "render" | "export";
  */
 export abstract class ServerFileWriter {
   abstract write(input: { ownerAccountId: string; purpose: ServerFilePurpose; contentType: string; bytes: Buffer; kind: "image" | "video" | null }): Promise<string>;
+  /**
+   * R1: the same, for a file on disk (a rendered video is tens of MB): the file is STREAMED to storage and its hash made on the way,
+   * so it is never whole in memory. `bytes` is the file's size. The file is not removed here; the caller owns it.
+   */
+  abstract writeFile(input: { ownerAccountId: string; purpose: ServerFilePurpose; contentType: string; path: string; bytes: number; kind: "image" | "video" | null; signal?: AbortSignal }): Promise<string>;
+  /** P-R1: removes a file this writer just kept, NOW (its object and its row), for a job that finds it must not keep it (the wish was erased, or the time ran out). */
+  abstract discard(fileId: string): Promise<void>;
 }
 
 @Injectable()
@@ -34,12 +43,60 @@ export class StorageServerFileWriter extends ServerFileWriter {
   }
 
   async write(input: { ownerAccountId: string; purpose: ServerFilePurpose; contentType: string; bytes: Buffer; kind: "image" | "video" | null }): Promise<string> {
+    return this.keep(input, input.bytes.length, async (url) => fetch(url.url, { method: url.method, headers: url.headers, body: new Uint8Array(input.bytes) }), () => createHash("sha256").update(input.bytes).digest("hex"));
+  }
+
+  async discard(fileId: string): Promise<void> {
+    const f = await this.db.storedFile.findUnique({ where: { id: fileId }, select: { objectKey: true } });
+    if (!f) return;
+    await this.storage.delete(f.objectKey);
+    await this.db.storedFile.delete({ where: { id: fileId } });
+  }
+
+  async writeFile(input: { ownerAccountId: string; purpose: ServerFilePurpose; contentType: string; path: string; bytes: number; kind: "image" | "video" | null; signal?: AbortSignal }): Promise<string> {
+    const hash = createHash("sha256");
+    return this.keep(
+      { ...input },
+      input.bytes,
+      async (url) => {
+        if (input.signal?.aborted) throw new Error("the upload was stopped");
+        const file = createReadStream(input.path);
+        file.on("data", (c) => hash.update(c));
+        // P-R1: an abort (the time limit, an erase) stops the upload itself: the request is cancelled and the file closed
+        const stop = (): void => {
+          file.destroy(new Error("the upload was stopped"));
+        };
+        input.signal?.addEventListener("abort", stop, { once: true });
+        // a stream body: undici reads it piece by piece; the length is the one the signature bound
+        try {
+          return await fetch(url.url, { method: url.method, headers: url.headers, body: Readable.toWeb(file), duplex: "half", signal: input.signal });
+        } finally {
+          input.signal?.removeEventListener("abort", stop);
+          file.destroy();
+        }
+      },
+      () => hash.digest("hex"),
+    );
+  }
+
+  private async keep(
+    input: { ownerAccountId: string; purpose: ServerFilePurpose; contentType: string; kind: "image" | "video" | null },
+    size: number,
+    put: (signed: { url: string; method: string; headers: Record<string, string> }) => Promise<Response>,
+    sha: () => string,
+  ): Promise<string> {
     const id = this.ids.id();
     const objectKey = `${input.purpose}/${id}/${this.codes.token(16)}`;
     const staging = stagingKeyOf(objectKey);
-    const signed = await this.storage.signUpload({ key: staging, contentType: input.contentType, contentLength: input.bytes.length, expiresInSeconds: 300 });
-    const res = await fetch(signed.url, { method: signed.method, headers: signed.headers, body: new Uint8Array(input.bytes) });
-    if (!res.ok) throw new Error(`storage refused the file (${res.status})`);
+    const signed = await this.storage.signUpload({ key: staging, contentType: input.contentType, contentLength: size, expiresInSeconds: 300 });
+    try {
+      const res = await put(signed);
+      if (!res.ok) throw new Error(`storage refused the file (${res.status})`);
+    } catch (e) {
+      // P-R1: a stopped or refused upload leaves nothing at the staging key
+      await this.storage.delete(staging).catch(() => undefined);
+      throw e;
+    }
     try {
       await this.storage.copy(staging, objectKey);
       await this.db.storedFile.create({
@@ -49,8 +106,8 @@ export class StorageServerFileWriter extends ServerFileWriter {
           purpose: input.purpose === "qr-card" ? "qr_card" : input.purpose,
           objectKey,
           contentType: input.contentType,
-          bytes: BigInt(input.bytes.length),
-          sha256: createHash("sha256").update(input.bytes).digest("hex"),
+          bytes: BigInt(size),
+          sha256: sha(),
           status: "ready",
           variants: [],
           driver: this.env.STORAGE_DRIVER ?? "r2",

@@ -1,19 +1,34 @@
+import { createWriteStream } from "node:fs";
+import { rm } from "node:fs/promises";
+import { randomUUID } from "node:crypto";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { once } from "node:events";
 import { PING_STAND_IN, type PortPing, pingError } from "../../common/ports/ping";
 
 export type RenderKind = "status-video" | "keepsake-export";
 
 export interface RenderRequest {
   wishId: string;
+  /** N3: the render job's id; the file the renderer writes is named fw-render-<jobId>-..., and the job takes back only a file with its own id in the name. */
+  jobId?: string;
   kind: RenderKind;
   width: number;
   height: number;
   seconds: number;
 }
 
+/** R1: the renderer's result is a FILE on disk (a minute of 1080 x 1920 video is tens of MB; it is never held whole in memory). The job streams it to the file store and removes it. */
 export interface RenderedFile {
-  bytes: Buffer;
+  /** Where the finished file is. The caller (the job) owns it from here and removes it after a success and after a failure. */
+  path: string;
   contentType: string;
+  /** The size of the file in bytes. */
+  bytes: number;
 }
+
+/** The name every temp file of a render starts with, so a test (and an operator) can see what a render left behind. */
+export const RENDER_TEMP_PREFIX = "fw-render-";
 
 /**
  * The video renderer is a port. The real renderer is not built in this bundle: with none configured, `configured()` is false and
@@ -23,6 +38,10 @@ export abstract class VideoRenderer {
   abstract configured(): boolean;
   /** FB4: a real renderer makes one cheap read of its service and answers ok or its error; a stand-in answers "stand-in". */
   abstract ping(): Promise<PortPing>;
+  /**
+   * `signal` is aborted when the job's time limit ends or the wish is erased (R1): a real renderer stops its children, removes what it wrote
+   * and rejects. A renderer that rejects leaves no file behind; one that resolves hands the file to the job.
+   */
   abstract render(input: RenderRequest, signal?: AbortSignal): Promise<RenderedFile>;
 }
 
@@ -39,7 +58,11 @@ export class NoVideoRenderer extends VideoRenderer {
   }
 }
 
-/** The test stand-in: a small marked file, or a failure on demand. */
+/**
+ * The test stand-in: a small marked file on disk, or a failure on demand. A test may ask for a big file (`fileBytes`, written in
+ * pieces), make a render wait (`hold`, which a first call may take alone with `holdFirstOnly`) and read what overlapped (`maxActive`).
+ * It watches the abort like a real renderer: on abort it removes its file and rejects.
+ */
 export class StandinVideoRenderer extends VideoRenderer {
   readonly rendered: RenderRequest[] = [];
   ping(): Promise<PortPing> {
@@ -48,13 +71,73 @@ export class StandinVideoRenderer extends VideoRenderer {
   failWith: string | null = null;
   /** A test turns the renderer off to see the 503. */
   on = true;
+  /** When set, the file is this many bytes (written in 1 MB pieces, never whole in memory); else a small marked file. */
+  fileBytes: number | null = null;
+  /** When set, a render waits for it (or for the abort) after it has written its file. */
+  hold: Promise<void> | null = null;
+  /** true: only the first render waits for `hold`. */
+  holdFirstOnly = false;
+  /** How many renders ran at once now, the most at once, and how many saw an abort. */
+  active = 0;
+  maxActive = 0;
+  aborted = 0;
+  /** Milliseconds each render takes (real time), so two asked videos can be seen to overlap or not. */
+  takes = 0;
   configured(): boolean {
     return this.on;
   }
-  render(input: RenderRequest): Promise<RenderedFile> {
+  async render(input: RenderRequest, signal?: AbortSignal): Promise<RenderedFile> {
     this.rendered.push(input);
-    if (this.failWith) return Promise.reject(new Error(this.failWith));
-    return Promise.resolve({ bytes: Buffer.from(`standin-video:${input.wishId}:${input.kind}`), contentType: "video/mp4" });
+    this.active++;
+    this.maxActive = Math.max(this.maxActive, this.active);
+    let path: string | null = null;
+    try {
+      if (this.failWith) throw new Error(this.failWith);
+      path = join(tmpdir(), `${RENDER_TEMP_PREFIX}${input.jobId ?? "direct"}-${randomUUID()}.mp4`);
+      const size = await this.write(path, input);
+      const wait = this.hold && !(this.holdFirstOnly && this.rendered.length > 1) ? this.hold : null;
+      if (wait || this.takes > 0) {
+        await new Promise<void>((resolve, reject) => {
+          const onAbort = (): void => {
+            this.aborted++;
+            reject(new Error("render aborted"));
+          };
+          const done = (): void => {
+            signal?.removeEventListener("abort", onAbort);
+            resolve();
+          };
+          if (signal?.aborted) return onAbort();
+          signal?.addEventListener("abort", onAbort, { once: true });
+          if (this.takes > 0) setTimeout(done, this.takes);
+          if (wait) void wait.then(done);
+        });
+      }
+      return { path, contentType: "video/mp4", bytes: size };
+    } catch (e) {
+      if (path) await rm(path, { force: true });
+      throw e;
+    } finally {
+      this.active--;
+    }
+  }
+  private async write(path: string, input: RenderRequest): Promise<number> {
+    const out = createWriteStream(path);
+    let size = 0;
+    if (this.fileBytes === null) {
+      const marked = Buffer.from(`standin-video:${input.wishId}:${input.kind}`);
+      size = marked.length;
+      out.write(marked);
+    } else {
+      const piece = Buffer.alloc(1024 * 1024, 7);
+      while (size < this.fileBytes) {
+        const n = Math.min(piece.length, this.fileBytes - size);
+        if (!out.write(n === piece.length ? piece : piece.subarray(0, n))) await once(out, "drain");
+        size += n;
+      }
+    }
+    out.end();
+    await once(out, "finish");
+    return size;
   }
 }
 

@@ -215,7 +215,55 @@
     {
       "name": "RENDER_CONCURRENCY",
       "introducedBy": "video-render",
-      "purpose": "parallel render workers",
+      "purpose": "how many videos this server renders at once (a real render needs about 1.5 GB: set 1 on a 4 GB machine)",
+      "secret": false,
+      "refusesStartInProduction": "no",
+      "readBySource": true
+    },
+    {
+      "name": "RENDER_WEB_ORIGIN",
+      "introducedBy": "r1",
+      "purpose": "R1: the web origin the video renderer opens to play a wish (the render page); the real renderer needs it, none exists yet",
+      "secret": false,
+      "refusesStartInProduction": "no",
+      "readBySource": false
+    },
+    {
+      "name": "RENDER_TOKEN_SECRET",
+      "introducedBy": "r1",
+      "purpose": "R1: the secret that hashes the one-use token the video renderer reads a wish with (at least 32 characters); the real renderer needs it, none exists yet",
+      "secret": true,
+      "refusesStartInProduction": "no",
+      "readBySource": false
+    },
+    {
+      "name": "RENDER_CHROMIUM_PATH",
+      "introducedBy": "r1",
+      "purpose": "R1: the browser program the video renderer starts to play a wish; read by the real renderer, none exists yet",
+      "secret": false,
+      "refusesStartInProduction": "no",
+      "readBySource": false
+    },
+    {
+      "name": "RENDER_FFMPEG_PATH",
+      "introducedBy": "r1",
+      "purpose": "R1: the ffmpeg program the video renderer encodes with; read by the real renderer, none exists yet",
+      "secret": false,
+      "refusesStartInProduction": "no",
+      "readBySource": false
+    },
+    {
+      "name": "RENDER_TIME_LIMIT_SECONDS",
+      "introducedBy": "r1",
+      "purpose": "R1: the longest one video render may run, in seconds; the job lease is longer than this",
+      "secret": false,
+      "refusesStartInProduction": "no",
+      "readBySource": true
+    },
+    {
+      "name": "RENDER_TOKEN_TTL_SECONDS",
+      "introducedBy": "r1",
+      "purpose": "R1: how long a render token lives, in seconds; read by the real renderer, none exists yet",
       "secret": false,
       "refusesStartInProduction": "no",
       "readBySource": false

@@ -10,10 +10,15 @@ type Db = PrismaService | Prisma.TransactionClient;
 
 /** The tries a job gets (the first run counts as one), then it is parked for staff (status dead). */
 export const MAX_TRIES = 5;
+/** R1: kinds that get fewer tries than MAX_TRIES (a render that fails twice is the style's fault: it is parked for staff). */
+const MAX_TRIES_BY_KIND: Record<string, number> = { "render-video": 2 };
+export const maxTriesOf = (type: string): number => MAX_TRIES_BY_KIND[type.trim().replace(/_/g, "-")] ?? MAX_TRIES;
 /** Backoff before try n+1: 30 seconds doubled each time, at most an hour. */
 export const backoffMs = (attempts: number): number => Math.min(30_000 * 2 ** (attempts - 1), 3_600_000);
 /** A claimed job that never answers is run again after this long (its handler is safe to run twice). */
 export const LEASE_MS = 10 * 60_000;
+/** R1: a kind whose time limit is long keeps its lease past the limit by this much, so a run still inside its limit is never taken twice. */
+export const LEASE_MARGIN_MS = 60_000;
 
 /** The time limit of one run when job_kind_config has no row for the kind (EE1). */
 export const DEFAULT_TIME_LIMIT_SECONDS = 60;
@@ -143,6 +148,11 @@ export class JobsService implements OnApplicationBootstrap {
         RETURNING id::text AS id, type::text AS type, "subjectId", attempts`;
       const r = rows[0];
       if (!r) return null;
+      // R1: a kind with a long time limit (a video render: 20 minutes) is leased past its limit, else a run still inside it is claimed again
+      const limit = await this.timeLimitSeconds(r.type, tx);
+      if (limit * 1000 + LEASE_MARGIN_MS > LEASE_MS) {
+        await tx.$executeRaw`UPDATE job SET "runAt" = ${new Date(now.getTime() + limit * 1000 + LEASE_MARGIN_MS)} WHERE id = ${r.id}::uuid`;
+      }
       // Written as a run that did not finish; the end of the run rewrites it. A crash leaves exactly this.
       await tx.$executeRaw`
         INSERT INTO job_run (id, "jobId", "startedAt", outcome, error)
@@ -180,7 +190,7 @@ export class JobsService implements OnApplicationBootstrap {
         await tx.$executeRaw`UPDATE job SET status = 'scheduled', attempts = 0, "runAt" = ${again} WHERE id = ${job.id}::uuid AND status = 'running'`;
       } else if (outcome !== "failed") {
         await tx.$executeRaw`UPDATE job SET status = 'succeeded', "runAt" = ${now} WHERE id = ${job.id}::uuid AND status = 'running'`;
-      } else if (job.attempts >= MAX_TRIES) {
+      } else if (job.attempts >= maxTriesOf(job.type)) {
         await tx.$executeRaw`UPDATE job SET status = 'dead' WHERE id = ${job.id}::uuid AND status = 'running'`;
       } else {
         const next = new Date(now.getTime() + backoffMs(job.attempts));
@@ -190,8 +200,8 @@ export class JobsService implements OnApplicationBootstrap {
   }
 
   /** The run's time limit in seconds: the kind's row in job_kind_config, else 60 (EE1). */
-  private async timeLimitSeconds(type: string): Promise<number> {
-    const rows = await this.prisma.$queryRaw<{ s: number }[]>`SELECT "timeLimitSeconds" AS s FROM job_kind_config WHERE kind = ${type}`;
+  private async timeLimitSeconds(type: string, db: Db = this.prisma): Promise<number> {
+    const rows = await db.$queryRaw<{ s: number }[]>`SELECT "timeLimitSeconds" AS s FROM job_kind_config WHERE kind = ${type}`;
     const s = rows[0]?.s;
     return typeof s === "number" && s > 0 ? s : DEFAULT_TIME_LIMIT_SECONDS;
   }

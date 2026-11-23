@@ -45,7 +45,13 @@ export function routeStorage(t: TestApp): { fail: boolean; restore: () => void }
     if (state.fail) return new Response("no", { status: 500 });
     const key = decodeURI(new URL(url).pathname.replace(/^\/[^/]+\//, ""));
     const headers = (init?.headers ?? {}) as Record<string, string>;
-    const ok = t.storage.putSigned(key, Buffer.from(init?.body as Uint8Array), headers["content-type"]);
+    // R1: the server streams a rendered file (a stream body), and sends a small file as bytes
+    const body = init?.body as Uint8Array | ReadableStream<Uint8Array>;
+    const parts: Buffer[] = [];
+    if (body instanceof Uint8Array) parts.push(Buffer.from(body));
+    else for await (const c of body as unknown as AsyncIterable<Uint8Array>) parts.push(Buffer.from(c));
+    const bytes = Buffer.concat(parts);
+    const ok = t.storage.putSigned(key, bytes, headers["content-type"]);
     return new Response(ok ? "" : "bad", { status: ok ? 200 : 403 });
   };
   state.restore = () => {

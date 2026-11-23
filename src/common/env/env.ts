@@ -46,6 +46,14 @@ export interface Env {
   ANTHROPIC_API_KEY?: string;
   ANTHROPIC_MODEL?: string;
   RENDER_CONCURRENCY: number;
+  /** R1: read by the real video renderer, which does not exist yet; none of these makes the renderer "configured". */
+  RENDER_WEB_ORIGIN?: string;
+  RENDER_TOKEN_SECRET?: string;
+  RENDER_CHROMIUM_PATH: string;
+  RENDER_FFMPEG_PATH: string;
+  /** R1: the longest one render may run; the job kind's limit and lease follow it. */
+  RENDER_TIME_LIMIT_SECONDS: number;
+  RENDER_TOKEN_TTL_SECONDS: number;
   RESEND_API_KEY?: string;
   /** YY3: the svix signing secret of Resend's webhook stream (delivery news and received mail); the guard's `resend` provider checks it. */
   RESEND_WEBHOOK_SECRET?: string;

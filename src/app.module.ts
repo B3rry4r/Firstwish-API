@@ -78,6 +78,7 @@ import { ShowingModule } from "./modules/showing/showing.module";
 import { StaffReadsModule } from "./modules/staff-reads/staff-reads.module";
 import { AiWritingModule } from "./modules/ai-writing/ai-writing.module";
 import { ReferenceDataModule } from "./modules/reference-data/reference-data.module";
+import { SampleWishesModule } from "./modules/sample-wishes/sample-wishes.module";
 import { WishKeepsModule } from "./modules/wish-keeps/wish-keeps.module";
 import { MePassModule } from "./modules/me-pass/me-pass.module";
 import { LedgerEntriesModule } from "./modules/ledger-entries/ledger-entries.module";
@@ -174,6 +175,7 @@ import { LedgerEntriesModule } from "./modules/ledger-entries/ledger-entries.mod
     // B23
     AiWritingModule,
     ReferenceDataModule,
+    SampleWishesModule,
     // end B23
     // B22
     WishKeepsModule,

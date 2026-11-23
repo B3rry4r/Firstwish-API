@@ -325,7 +325,7 @@ export class SupportService {
       if (expected !== undefined && (t.assigneeId ?? "") !== expected) throw AppError.conflict("thread_changed_hands", "Someone else handed this thread over since you looked. Look at it again.");
       const staff = await tx.staffAccount.findUnique({ where: { id: assigneeId }, select: { id: true, status: true, roles: true } });
       if (!staff || staff.status !== "active") throw AppError.validation({ assigneeId: "Pick a staff member who is active." });
-      if (!(await this.roleAccess.opens(staff.roles, SECTION))) throw AppError.validation({ assigneeId: "Pick a staff member whose role opens Support." });
+      if (!(await this.roleAccess.opens(staff.roles, SECTION, tx))) throw AppError.validation({ assigneeId: "Pick a staff member whose role opens Support." });
       let row = t;
       if (t.assigneeId !== staff.id) {
         row = await tx.supportThread.update({ where: { id: t.id }, data: { assigneeId: staff.id, updatedAt: this.clock.now() } });

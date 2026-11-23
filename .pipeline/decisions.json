@@ -4229,6 +4229,56 @@
       "confidence": "high",
       "decidedAt": "2026-11-23T12:00:00Z",
       "source": "build/sweeps/api.md (W14B check); build/prompts/API-BASE-15.md"
+    },
+    {
+      "id": "DEC-309",
+      "topic": "Sample wishes are served as public reference data (IJ1)",
+      "decision": "IJ1: GET /v1/sample-wishes/:kind/:occasion (E-288) answers the designed sample wish for a kind and occasion with no sign-in, in the shape the public wish read gives a player: kind, occasion, occasionName, receiverName, call, date (the text the designed source carries, e.g. 07 · 11 · 2026), opensAt (an instant already past, 7 Nov 2026), state open, openable true, content (the designed words), files ({role, url}) and photos (the site's own paths, /img/aisha-N.webp), and sample: true. It has no slug, wish number, owner, link, style or serverTime, so the answer never changes between reads. An unknown kind or occasion is 404 in words (the same for a kind and an occasion that do not belong together). GET /v1/sample-wishes?kind= (E-287) answers the samples of the named kind, or of every kind when none is named, as {items, nextCursor: null}: every sample is whole, at most 44 in one answer (the catalogue has 44 kind-and-occasion pairs; the largest kind, celebration, has 13). An unknown kind there is 404 in words; ?kind= left empty names no kind. Both reads carry the headers of the public reads (Cache-Control: public, max-age=0, must-revalidate, and an ETag of the answer's own hash; a repeat with If-None-Match answers 304). Read only: any other method is refused.",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "decidedAt": "2026-11-23T12:00:00Z",
+      "source": "build/rulings-phase3.md (IJ1); build/tasks/W15C-PLAN.md (bundle S1); build/prompts/API-BASE-16.md"
+    },
+    {
+      "id": "DEC-310",
+      "topic": "The sample wishes are a table the API owns, never a wish (IJ1)",
+      "decision": "IJ1: the table sample_wish (model SampleWish, class config) holds one row per kind and occasion of the web's catalogue (44), seeded ONCE by scripts/export-seed-data.mjs from the web's sampleContent and SAMPLE_PHOTOS into prisma/seed-data/SampleWish.json and then owned here: the exporter writes that file only when it is absent and never reads those web files for it again (the files only it read are left out of SOURCE.json), so a later change in the web's adapt.ts changes nothing and fails no export check, as a style's get line. scripts/seed.mjs creates a row that is absent and never rewrites one; running it twice changes nothing. A sample is never a real wish: the table has no slug, owner, link, ticket or count column and is not joined to any wish table; it is in no wish list, count, report or Now showing; no route stores anything a person types in it (the two reads are the only routes), and every public wish route (/v1/w/:slug and its writes, /v1/showing/:id) given a sample's id answers 404.",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "decidedAt": "2026-11-23T12:00:00Z",
+      "source": "build/rulings-phase3.md (IJ1); build/tasks/W15C-PLAN.md (bundle S1); build/prompts/API-BASE-16.md"
+    },
+    {
+      "id": "DEC-311",
+      "topic": "The registry is frozen again after DEC-309 and DEC-310",
+      "decision": "The registry is re-frozen after DEC-309 and DEC-310 by tools/pipeline/freeze.py; reconcile.py was run twice with --reopen (identical outputs; .pipeline/ui-align-tasks.json restored byte for byte). Endpoint ids issued: E-287 (GET /v1/sample-wishes) and E-288 (GET /v1/sample-wishes/:kind/:occasion); no id already issued is changed. One resource is added: SampleWish.",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "decidedAt": "2026-11-23T12:00:00Z",
+      "source": "build/rulings-phase3.md (IJ1); build/tasks/W15C-PLAN.md (bundle S1); build/prompts/API-BASE-16.md"
+    },
+    {
+      "id": "DEC-312",
+      "topic": "A sample wish carries every field an open public wish view carries (IJ1, K1)",
+      "decision": "IJ1: E-288 and each item of E-287 carry every field the open public wish view (E-129) gives a player, with the same names and types, so a preview plays a sample with no second code path (SampleWish is declared from PublicWishView, less the slug, plus sample: true): openedAt (its opensAt), endsAt null, opening null, keepOffer null, styleSlug \"\" (the preview names the style), timeZone Africa/Lagos (the zone a new wish takes), serverTime (now), wishNo null, house false, and content.files (the same list as files). The answer has no slug (DEC-310). The ETag leaves serverTime out of its hash, so a repeat is still a 304 while the sample has not moved. Additive on the two new reads only; no endpoint id is issued or changed. Supersedes DEC-309's words that the answer has no serverTime, so it never changes between reads.",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "decidedAt": "2026-11-23T12:00:00Z",
+      "source": "build/prompts/API-BASE-16.md (case 1); build/verify/api-base-16/VERDICT.md (K1)"
+    },
+    {
+      "id": "DEC-313",
+      "topic": "The registry is frozen again after DEC-312",
+      "decision": "The registry is re-frozen after DEC-312 by tools/pipeline/freeze.py; reconcile.py was run twice with --reopen (identical outputs). No endpoint id is issued or changed; SampleWish gains nine fields.",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "decidedAt": "2026-11-23T12:00:00Z",
+      "source": "build/prompts/API-BASE-16.md (case 1); build/verify/api-base-16/VERDICT.md (K1)"
     }
   ]
 }

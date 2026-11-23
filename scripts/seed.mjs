@@ -159,7 +159,7 @@ const JOB_TIME_LIMITS = {
 };
 
 /* Q11: the config tables no route writes, from the web app's constants (prisma/seed-data, named in schema-map seedFrom). */
-const SEED_DATA = ["EndingPurpose", "OpeningDef", "ChapterSpec", "Moment", "Template", "SavedReply", "Provider", "MessageTemplate"];
+const SEED_DATA = ["EndingPurpose", "OpeningDef", "ChapterSpec", "Moment", "Template", "SavedReply", "Provider", "MessageTemplate", "SampleWish"];
 
 async function seedCatalogues(db) {
   for (const table of SEED_DATA) {
@@ -168,8 +168,8 @@ async function seedCatalogues(db) {
     for (const { seedKey, ...r } of doc.rows) {
       const row = Object.fromEntries(Object.entries(r).filter(([, v]) => v !== null && v !== undefined));
       const id = seedId(`${table}:${seedKey}`);
-      // J7: staff edit a message in place (wording and version), so a re-run only creates a row that is absent and never rewrites one.
-      await model.upsert({ where: { id }, create: { id, ...row }, update: table === "MessageTemplate" ? {} : row });
+      // J7: staff edit a message in place (wording and version), so a re-run only creates a row that is absent and never rewrites one. A sample wish (API-BASE-16) is owned here once seeded: the same.
+      await model.upsert({ where: { id }, create: { id, ...row }, update: table === "MessageTemplate" || table === "SampleWish" ? {} : row });
     }
   }
 }

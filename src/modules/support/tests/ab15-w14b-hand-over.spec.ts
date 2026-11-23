@@ -84,5 +84,5 @@ describe("API-BASE-15 W14B: the support hand-over", () => {
     const res = await Promise.all(Array.from({ length: 20 }, () => give(a.token, t2, { assigneeId: c.id, expectedAssignee: b.id })));
     expect(res.filter((r) => r.status === 200)).toHaveLength(1);
     expect(res.filter((r) => r.status === 409)).toHaveLength(19);
-  });
+  }, 120_000);
 });

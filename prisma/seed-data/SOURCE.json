@@ -544,6 +544,7 @@
  "owned": {
   "MessageTemplate": "owned here since 17 Nov 2026 (the web's fixtures were removed)",
   "Provider": "owned here since 17 Nov 2026 (the web's fixtures were removed)",
-  "SavedReply": "owned here since 17 Nov 2026 (the web's fixtures were removed)"
+  "SavedReply": "owned here since 17 Nov 2026 (the web's fixtures were removed)",
+  "SampleWish": "seeded once from the web's sample wishes (API-BASE-16, IJ1), owned here since"
  }
 }

@@ -12054,6 +12054,235 @@
       "noWriter": true
     },
     {
+      "field": "SampleWish.call",
+      "writers": [],
+      "store": "SampleWish",
+      "readers": [],
+      "writerActors": [],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "SampleWish.content",
+      "writers": [],
+      "store": "SampleWish",
+      "readers": [],
+      "writerActors": [],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "SampleWish.date",
+      "writers": [],
+      "store": "SampleWish",
+      "readers": [],
+      "writerActors": [],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "SampleWish.endsAt",
+      "writers": [],
+      "store": "SampleWish",
+      "readers": [],
+      "writerActors": [],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "SampleWish.files",
+      "writers": [],
+      "store": "SampleWish",
+      "readers": [],
+      "writerActors": [],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "SampleWish.house",
+      "writers": [],
+      "store": "SampleWish",
+      "readers": [],
+      "writerActors": [],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "SampleWish.keepOffer",
+      "writers": [],
+      "store": "SampleWish",
+      "readers": [],
+      "writerActors": [],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "SampleWish.kind",
+      "writers": [
+        "E-287",
+        "E-288"
+      ],
+      "store": "SampleWish",
+      "readers": [],
+      "writerActors": [
+        "public"
+      ],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": false
+    },
+    {
+      "field": "SampleWish.occasion",
+      "writers": [
+        "E-288"
+      ],
+      "store": "SampleWish",
+      "readers": [],
+      "writerActors": [
+        "public"
+      ],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": false
+    },
+    {
+      "field": "SampleWish.occasionName",
+      "writers": [],
+      "store": "SampleWish",
+      "readers": [],
+      "writerActors": [],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "SampleWish.openable",
+      "writers": [],
+      "store": "SampleWish",
+      "readers": [],
+      "writerActors": [],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "SampleWish.openedAt",
+      "writers": [],
+      "store": "SampleWish",
+      "readers": [],
+      "writerActors": [],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "SampleWish.opening",
+      "writers": [],
+      "store": "SampleWish",
+      "readers": [],
+      "writerActors": [],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "SampleWish.opensAt",
+      "writers": [],
+      "store": "SampleWish",
+      "readers": [],
+      "writerActors": [],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "SampleWish.photos",
+      "writers": [],
+      "store": "SampleWish",
+      "readers": [],
+      "writerActors": [],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "SampleWish.receiverName",
+      "writers": [],
+      "store": "SampleWish",
+      "readers": [],
+      "writerActors": [],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "SampleWish.sample",
+      "writers": [],
+      "store": "SampleWish",
+      "readers": [],
+      "writerActors": [],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "SampleWish.serverTime",
+      "writers": [],
+      "store": "SampleWish",
+      "readers": [],
+      "writerActors": [],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "SampleWish.state",
+      "writers": [],
+      "store": "SampleWish",
+      "readers": [],
+      "writerActors": [],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "SampleWish.styleSlug",
+      "writers": [],
+      "store": "SampleWish",
+      "readers": [],
+      "writerActors": [],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "SampleWish.timeZone",
+      "writers": [],
+      "store": "SampleWish",
+      "readers": [],
+      "writerActors": [],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "SampleWish.wishNo",
+      "writers": [],
+      "store": "SampleWish",
+      "readers": [],
+      "writerActors": [],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
       "field": "SavedReply.id",
       "writers": [],
       "store": "SavedReply",
@@ -20749,5 +20978,5 @@
     }
   ],
   "crossActor": 34,
-  "noWriter": 670
+  "noWriter": 690
 }

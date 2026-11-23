@@ -3,3 +3,6 @@
 INSERT INTO "job_kind_config" ("id", "kind", "timeLimitSeconds")
 VALUES (gen_random_uuid(), 'render-video', 1200)
 ON CONFLICT ("kind") DO NOTHING;
+
+-- DOWN (by hand, data only: no column or table changed, so nothing else is undone). Jobs of this kind then run with the 60 second default:
+--   DELETE FROM "job_kind_config" WHERE "kind" = 'render-video';

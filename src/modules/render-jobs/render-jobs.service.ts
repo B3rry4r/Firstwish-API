@@ -1,5 +1,7 @@
-import { Inject, Injectable, OnModuleInit } from "@nestjs/common";
-import { rm } from "node:fs/promises";
+import { Inject, Injectable, Logger, OnModuleInit } from "@nestjs/common";
+import { lstat, realpath, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { basename, dirname, join, resolve } from "node:path";
 import type { Entitlements as EntitlementsRow, Prisma, RenderJob as JobRow } from "@prisma/client";
 import { lockAccount } from "../../common/db/account-lock";
 import { PrismaService } from "../../common/db/prisma.service";
@@ -10,14 +12,13 @@ import { Clock } from "../../common/ports/clock.port";
 import { IdGenerator } from "../../common/ports/ids.port";
 import { toWireInstant } from "../../common/time/time";
 import type { RenderJob } from "../../contracts";
-import { JobsService } from "../jobs/jobs.service";
+import { JobsService, maxTriesOf } from "../jobs/jobs.service";
 import { EntitlementsService } from "../price-book/entitlements.service";
 import { ServerFileWriter } from "../server-files/server-files";
 import { SignedUrlsService } from "../stored-files/signed-urls.service";
 import { videoRefunded, wishHas } from "../wish-extras/wish-extras";
-import { ERASE_WISH_FILE_PREFIX } from "../wishes/wish-lifecycle.service";
 import { stateOf } from "../wishes/wish-state";
-import { VideoRenderer, type RenderKind } from "./video-renderer";
+import { RENDER_TEMP_PREFIX, VideoRenderer, type RenderKind } from "./video-renderer";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 /** Default (lead), owner may override: the portrait video is 1080 x 1920; a status video runs 30 seconds, the file of a resting wish 60. */
@@ -25,8 +26,18 @@ export const SPEC: Record<RenderKind, { width: number; height: number; seconds: 
   "status-video": { width: 1080, height: 1920, seconds: 30 },
   "keepsake-export": { width: 1080, height: 1920, seconds: 60 },
 };
-/** A job that says "rendering" for longer than this lost its worker; the next run takes it again. R1: longer than the 20 minutes a render may run (10 minutes took a 12 minute render twice). */
-export const RENDER_LEASE_MS = 25 * 60_000;
+/**
+ * P-R1: one lease rule. A render row says "rendering" for at most the job's time limit plus this margin; the job that holds it is
+ * leased for the limit plus 60 seconds (LEASE_MARGIN_MS), so the row is always free to take by the time the job is taken again.
+ * The first holder can no longer write by then: its own time limit aborted it at the limit (every step of the run checks that signal,
+ * and the store write is cancelled by it), and every write of a run is fenced by the stamp its claim left on the row, so a run whose row
+ * was taken over writes nothing. A holder that died writes nothing at all.
+ */
+export const RENDER_ROW_MARGIN_MS = 30_000;
+/** The row's lease at the default limit (RENDER_TIME_LIMIT_SECONDS says another). */
+export const RENDER_LEASE_MS = 1200 * 1000 + RENDER_ROW_MARGIN_MS;
+/** A job that found no place goes back to the queue for this long (it uses no try). */
+export const RENDER_BUSY_RETRY_MS = 15_000;
 /** R1: the job kind of a render and the limit its row holds when the environment says nothing (RENDER_TIME_LIMIT_SECONDS). */
 export const RENDER_JOB_KIND = "render-video";
 export const RENDER_TIME_LIMIT_DEFAULT_SECONDS = 1200;
@@ -36,6 +47,15 @@ class Slots {
   private held = 0;
   private readonly waiting: (() => void)[] = [];
   constructor(private readonly limit: () => number) {}
+  /** A place now, or null (the job path never waits: it goes back to the queue). */
+  tryAcquire(): (() => void) | null {
+    if (this.held >= Math.max(1, this.limit())) return null;
+    this.held++;
+    return () => {
+      this.held--;
+      this.waiting.shift()?.();
+    };
+  }
   async acquire(signal?: AbortSignal): Promise<() => void> {
     while (this.held >= Math.max(1, this.limit())) {
       await new Promise<void>((resolve, reject) => {
@@ -81,6 +101,7 @@ export class RenderJobsService implements OnModuleInit {
   ) {}
 
   /** RENDER_CONCURRENCY (default 2): how many renders this process runs at once. */
+  private readonly log = new Logger("render-jobs");
   private readonly slots = new Slots(() => this.env.RENDER_CONCURRENCY);
   /** How often a running render looks whether its wish was erased (milliseconds); a spec makes it short. */
   erasePollMs = 5000;
@@ -93,7 +114,25 @@ export class RenderJobsService implements OnModuleInit {
   }
 
   register(): void {
-    this.jobs.register(RENDER_JOB_KIND, async (c) => ({ changed: { result: await this.run(c.subjectId, c.signal) } }));
+    this.jobs.register(RENDER_JOB_KIND, async (c) => {
+      // the job was taken after more tries than the kind has: the first holders were lost; the row ends failed (the person asks again) and the job is parked
+      if (c.attempt > maxTriesOf(RENDER_JOB_KIND)) {
+        await this.db.renderJob.updateMany({ where: { id: c.subjectId, status: { in: ["queued", "rendering"] } }, data: { status: "failed" } });
+        throw new Error(`the render was lost ${c.attempt - 1} times; it is failed`);
+      }
+      const result = await this.run(c.subjectId, c.signal, false);
+      // no place now: back to the queue without a try, and the limit has not been spent
+      if (result === "busy") return { skipped: true, again: new Date(this.clock.now().getTime() + RENDER_BUSY_RETRY_MS) };
+      // a run that skipped while the row is still unfinished is not a success: the job fails and is tried again
+      if (result === "skipped" && (await this.unfinished(c.subjectId))) throw new Error("the render row is still held by an earlier run");
+      return { changed: { result } };
+    });
+  }
+
+  private async unfinished(jobId: string): Promise<boolean> {
+    if (!UUID.test(jobId)) return false;
+    const r = await this.db.renderJob.findUnique({ where: { id: jobId }, select: { status: true } });
+    return r?.status === "queued" || r?.status === "rendering";
   }
 
   /** R1: the render-video row of job_kind_config (the migration holds 1200) follows RENDER_TIME_LIMIT_SECONDS. */
@@ -102,9 +141,9 @@ export class RenderJobsService implements OnModuleInit {
     await this.db.jobKindConfig.upsert({ where: { kind: RENDER_JOB_KIND }, update: { timeLimitSeconds: seconds }, create: { id: this.ids.id(), kind: RENDER_JOB_KIND, timeLimitSeconds: seconds } });
   }
 
-  /** How long a "rendering" row is believed: past the render's own limit, never under RENDER_LEASE_MS. */
+  /** How long a "rendering" row is believed: the render's own limit and a short margin, always under the job's lease (limit + 60 s). */
   private leaseMs(): number {
-    return Math.max(RENDER_LEASE_MS, (this.env.RENDER_TIME_LIMIT_SECONDS || 0) * 1000 + 5 * 60_000);
+    return (this.env.RENDER_TIME_LIMIT_SECONDS || RENDER_TIME_LIMIT_DEFAULT_SECONDS) * 1000 + RENDER_ROW_MARGIN_MS;
   }
 
   /** E-147: the latest job for the caller's wish. */
@@ -165,9 +204,45 @@ export class RenderJobsService implements OnModuleInit {
    * R1: waits for a place (RENDER_CONCURRENCY); the renderer gets an AbortSignal that ends when the job's time limit ends or the wish is
    * erased; the file it makes is streamed to the file store and the temp file is removed after a success and after a failure.
    */
-  async run(jobId: string, signal?: AbortSignal): Promise<string> {
+  async run(jobId: string, signal?: AbortSignal, wait = true): Promise<string> {
     if (!UUID.test(jobId)) return "skipped";
-    const release = await this.slots.acquire(signal);
+    let release = this.slots.tryAcquire();
+    if (!release) {
+      // IK4a: a render waiting for a place whose wish was erased leaves at once and ends failed
+      const erased = async (): Promise<boolean> => {
+        const r = await this.db.renderJob.findUnique({ where: { id: jobId }, select: { wish: { select: { erasedAt: true } } } });
+        return !!r?.wish.erasedAt;
+      };
+      const leave = async (): Promise<string> => {
+        await this.db.renderJob.updateMany({ where: { id: jobId, status: "queued" }, data: { status: "failed" } });
+        return "failed";
+      };
+      if (!wait) return (await erased()) ? leave() : "busy";
+      const line = new AbortController();
+      const onParent = (): void => line.abort();
+      if (signal?.aborted) line.abort();
+      else signal?.addEventListener("abort", onParent, { once: true });
+      let gone = false;
+      const look = setInterval(() => {
+        erased()
+          .then((e) => {
+            if (e) {
+              gone = true;
+              line.abort();
+            }
+          })
+          .catch(() => undefined);
+      }, this.erasePollMs);
+      try {
+        release = await this.slots.acquire(line.signal);
+      } catch (e) {
+        if (gone) return leave();
+        throw e;
+      } finally {
+        clearInterval(look);
+        signal?.removeEventListener("abort", onParent);
+      }
+    }
     try {
       return await this.runOne(jobId, signal);
     } finally {
@@ -183,6 +258,8 @@ export class RenderJobsService implements OnModuleInit {
       RETURNING "wishId"::text AS "wishId", kind::text AS kind, width, height, seconds`;
     const c = claimed[0];
     if (!c) return "skipped";
+    // every write of this run is fenced by the stamp its claim left: a run whose row was taken over writes nothing
+    const mine = { id: jobId, status: "rendering" as const, updatedAt: now };
     const kind: RenderKind = c.kind === "keepsake-export" ? "keepsake-export" : "status-video";
     const stop = new AbortController();
     const onParent = (): void => stop.abort();
@@ -208,27 +285,46 @@ export class RenderJobsService implements OnModuleInit {
       const owner = await this.db.wish.findUniqueOrThrow({ where: { id: c.wishId }, select: { accountId: true, erasedAt: true } });
       if (owner.erasedAt) throw new Error("the wish was erased"); // IK4a: nothing is made for an erased wish
       const out = await this.renderer.render({ wishId: c.wishId, kind, width: c.width, height: c.height, seconds: c.seconds }, stop.signal);
-      tempPath = out.path;
+      tempPath = await this.ownTempFile(out.path);
       if (stop.signal.aborted) throw new Error("the render was stopped");
       // IK4a: erased while it rendered (between two looks): nothing is written
       if ((await this.db.wish.findUnique({ where: { id: c.wishId }, select: { erasedAt: true } }))?.erasedAt) throw new Error("the wish was erased");
-      const fileId = await this.files.writeFile({ ownerAccountId: owner.accountId, purpose: kind === "status-video" ? "render" : "export", contentType: out.contentType, path: out.path, bytes: out.bytes, kind: "video" });
-      // IK4a: the wish may have been erased while the file was being kept: the file just written goes by the same cleanup job the erase queues for the wish's files
-      if ((await this.db.wish.findUniqueOrThrow({ where: { id: c.wishId }, select: { erasedAt: true } })).erasedAt) {
-        await this.db.renderJob.updateMany({ where: { id: jobId, status: "rendering" }, data: { status: "failed", outputFileId: fileId } });
-        await this.jobs.schedule("upload-cleanup", this.clock.now(), `${ERASE_WISH_FILE_PREFIX}${fileId}`);
+      const fileId = await this.files.writeFile({ ownerAccountId: owner.accountId, purpose: kind === "status-video" ? "render" : "export", contentType: out.contentType, path: tempPath, bytes: out.bytes, kind: "video", signal: stop.signal });
+      // IK4a: the wish may have been erased, or the time may have run out, while the file was being kept: the file just written goes NOW (object and row)
+      const erased = !!(await this.db.wish.findUniqueOrThrow({ where: { id: c.wishId }, select: { erasedAt: true } })).erasedAt;
+      if (erased || stop.signal.aborted) {
+        await this.files.discard(fileId);
+        throw new Error(erased ? "the wish was erased" : "the render was stopped");
+      }
+      const done = await this.db.renderJob.updateMany({ where: mine, data: { status: "done", outputFileId: fileId } });
+      if (done.count === 0) {
+        await this.files.discard(fileId); // the row was taken over: this run's file is not the row's
         return "failed";
       }
-      await this.db.renderJob.updateMany({ where: { id: jobId, status: "rendering" }, data: { status: "done", outputFileId: fileId } });
       return "done";
-    } catch {
-      await this.db.renderJob.updateMany({ where: { id: jobId, status: "rendering" }, data: { status: "failed" } });
+    } catch (e) {
+      this.log.warn(`render ${jobId} failed: ${e instanceof Error ? e.message : String(e)}`);
+      await this.db.renderJob.updateMany({ where: mine, data: { status: "failed" } });
       return "failed";
     } finally {
       clearInterval(watch);
       signal?.removeEventListener("abort", onParent);
       if (tempPath) await rm(tempPath, { force: true });
     }
+  }
+
+  /**
+   * L1: the renderer's file must be a plain file made by a render, directly in this process's temp folder: a path outside it, or a link
+   * (even to a file inside), is refused with words in the log, before anything is read, and nothing is deleted for it. Answers the path.
+   */
+  private async ownTempFile(path: string): Promise<string> {
+    const home = await realpath(tmpdir());
+    const p = resolve(path);
+    const inside = (dirname(p) === home || dirname(p) === resolve(tmpdir())) && basename(p).startsWith(RENDER_TEMP_PREFIX);
+    if (!inside) throw new Error(`the renderer's file is outside the render temp folder (${basename(p)}); it was not read`);
+    const st = await lstat(p);
+    if (!st.isFile()) throw new Error(`the renderer's file is a link or not a plain file (${basename(p)}); it was not read`);
+    return join(home, basename(p));
   }
 
   /** IK4: a ready job also carries a short-lived signed address of its stored file (the owner's own read only). */

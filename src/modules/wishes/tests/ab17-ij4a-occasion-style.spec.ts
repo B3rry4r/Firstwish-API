@@ -132,7 +132,7 @@ describe("API-BASE-17 IJ4a: a style is offered by kind and occasion; the style r
         await refresh();
         const base = new Set(listed(kind, occasion));
         for (const [ticket, top] of TICKETS) {
-          await db.wish.update({ where: { id: w }, data: { occasion, ticket, styleSlug: "noir" } });
+          await db.wish.update({ where: { id: w }, data: { occasion, ticket: ticket as never, styleSlug: "noir" } });
           const r = await read(u, w);
           expect(r.status).toBe(200);
           const want = [...base].filter((s) => LEVEL_OF[cat.find((c) => c.slug === s)?.level ?? "starter"] <= top).sort();

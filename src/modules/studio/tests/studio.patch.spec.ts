@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { PrismaService } from "../../../common/db/prisma.service";
 import { UuidV7Maker } from "../../../common/ids/uuidv7";
 import { createTestApp, TestApp } from "../../../../test/kit/app";
+import { ownDatabase } from "../../../../test/kit/own-db";
 import { makeStaff, seedRoleTable, tag } from "../../staff-accounts/tests/staff-kit";
 import { lockAccount } from "../../../common/db/account-lock";
 import { AccountErasureService } from "../../accounts/account-erasure.service";
@@ -66,7 +67,10 @@ async function waiting(c: Creator, over: Body = {}) {
   return { styleId: d.body.id as string, sid };
 }
 
+// This spec CHANGES a shared catalogue row (it changes a seeded house style or the entitlements book), which other specs read in the shared database: it has a database of its own.
+const own = ownDatabase("sp");
 beforeAll(async () => {
+  own.use();
   t = await createTestApp({ now: NOW });
   db = t.app.get(PrismaService);
   jobs = t.app.get(JobsService);
@@ -80,7 +84,10 @@ beforeAll(async () => {
   reviewerId = s.id;
   t.tokens.set(reviewer, { kind: "staff", staffId: s.id, roles: ["reviewer"] });
 });
-afterAll(() => t.close());
+afterAll(async () => {
+  await t.close();
+  own.drop();
+});
 beforeEach(() => t.clock.set(NOW));
 
 describe("SA1: one lock order", () => {

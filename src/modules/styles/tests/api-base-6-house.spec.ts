@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { PrismaService } from "../../../common/db/prisma.service";
 import { UuidV7Maker } from "../../../common/ids/uuidv7";
 import { createTestApp, TestApp, uniqueAddress } from "../../../../test/kit/app";
+import { ownDatabase } from "../../../../test/kit/own-db";
 import { makeStaff, seedRoleTable, tag } from "../../staff-accounts/tests/staff-kit";
 
 const ROOT = join(__dirname, "../../../..");
@@ -10,6 +11,8 @@ const ids = new UuidV7Maker();
 
 /** API-BASE-6 case 5 (HS3): one house wish per style that is on. */
 describe("HS3 house wishes", () => {
+  // This spec CHANGES a shared catalogue row (it switches the seeded noir style off and on), which other specs read in the shared database: it has a database of its own.
+  const own = ownDatabase("hs3");
   let t: TestApp;
   let db: PrismaService;
   let ops = "";
@@ -21,6 +24,7 @@ describe("HS3 house wishes", () => {
   const house = () => db.wish.findMany({ where: { account: { handle: "firstwish" }, content: { path: ["house"], equals: true } } });
 
   beforeAll(async () => {
+    own.use();
     t = await createTestApp();
     db = t.app.get(PrismaService);
     await seedRoleTable(db);
@@ -29,7 +33,10 @@ describe("HS3 house wishes", () => {
     t.tokens.set(ops, { kind: "staff", staffId: s.id, roles: ["ops"] });
     seed();
   });
-  afterAll(() => t.close());
+  afterAll(async () => {
+    await t.close();
+    own.drop();
+  });
 
   it("1. one house wish per style that is on, made by the house account from the style's package, with content marked as the house's", async () => {
     const on = await db.style.findMany({ where: { on: true, packaged: true } });

@@ -1263,3 +1263,11 @@ HG1 (give race) Two staff giving one Concierge order: the code is right (overlap
 - IL2 (DEC-319): the owner's wish read (single and list) carries `adds`: each extra held, from its ticket or a purchase, with a refund's state (sent or done).
 - IL3 (DEC-320): GET /v1/ticket-offers answers a signed-in person for `wish` (their own); every ticket says canBuy, reason and words, by the start's own rules.
 - IL4 (DEC-321): a kind or occasion move that sends no style picks one by the new-draft rule; a named style is judged as before.
+- IL1 to IL4 (above, written by round 20's builder) were checked by a separate verifier on 23 Nov ("the code does what
+  they say") and are ADOPTED by the lead. Default (lead), owner may override.
+- IL1a (23 Nov, the lead, on that check's finding 2; Default (lead), owner may override): the SERVER enforces the video
+  clips it sells (T-05, T-08, T-30), read from the entitlements book: Premiere holds three clips of up to 15 seconds
+  and is the only ticket with clips; the extra "one more 15-second clip" adds one (held once); the extra "a long
+  clip" allows one clip of up to 60 seconds (held once). A clip's length is read from the file, never taken from
+  the browser. A wish holding more or longer clips than its ticket and extras give is refused at the upload, the
+  ticket start and the seal, in words that say what to remove. (Until round 21 lands only the website limits clips.)

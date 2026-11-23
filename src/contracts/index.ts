@@ -55,6 +55,7 @@ export * from "./dto/report";
 export * from "./dto/reveal-link";
 export * from "./dto/reveal-play";
 export * from "./dto/royalty-accrual";
+export * from "./dto/sample-wish";
 export * from "./dto/saved-reply";
 export * from "./dto/saved-wish";
 export * from "./dto/screening-result";

@@ -2359,6 +2359,16 @@
    "of": [
     "Account"
    ]
+  },
+  "SampleWish": {
+   "class": "config",
+   "reason": "the designed sample wishes the style previews play, one per kind and occasion, served by GET /v1/sample-wishes (IJ1, DEC-309); seeded once from the web, then owned here; never a wish (DEC-310)",
+   "seedFrom": {
+    "repo": "Firstwish-web",
+    "file": "lib/engine/adapt.ts (sampleContent for each kind and occasion of lib/catalog.ts, SAMPLE_PHOTOS)",
+    "export": "scripts/export-seed-data.mjs (the first export only; owned here after)",
+    "data": "prisma/seed-data/SampleWish.json"
+   }
   }
  },
  "joinTables": {

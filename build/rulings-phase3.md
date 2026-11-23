@@ -1227,3 +1227,22 @@ HG1 (give race) Two staff giving one Concierge order: the code is right (overlap
   is missing it stops with words that say to restore it from git, and writes nothing. The older test of the first
   export is restated to that (its "one row for each kind and occasion of the web's catalogue" check stays, read
   from the file).
+- IK2a (23 Nov, the lead, on the two checks of the secret; Default (lead), owner may override; replaces IK2's
+  "exactly as typed"): outer spaces are cut from a passcode and from an answer when they are set AND when they are
+  tried (phone keyboards add a space); what is left must be 4 to 64 characters (a secret of spaces only is refused
+  422). An answer is also matched without regard to case and in one unicode form (NFKC, then lower case); a
+  passcode keeps its case.
+- IK3a (23 Nov, the lead, on VERIFY-API-BASE-19 H1; Default (lead), owner may override): IK3 covers EVERYTHING whose
+  price includes the portrait video, not only the extra: a ticket level (Signature, Premiere today), a plan or a
+  bundle whose entitlements include it is not sold while no video renderer is configured (the same refusal and
+  words; the offers a person reads show it as not available). What tickets include is the owner's and is not
+  changed. So on the real server the top two tickets cannot be sold until the real video renderer is built: the
+  renderer is a RELEASE BLOCKER (listed to the owner; its own task before Phase 8).
+- IK4a: a wish that was erased gives no video read and no download (404, like every other read of it); an extra
+  whose refund was SENT (IJ3a) gives no download either.
+- IK5a (replaces IK5's last sentence): the send-in's "readable" check reads the colours the editor reports
+  (doc.seen); that is advice for the staff reviewer, who approves every style before it goes live; no style goes
+  live on that check alone. The contract note says so.
+- Accepted lows of that check (no real rows exist; nothing wired is released): a wish sealed before round 19 with a
+  passcode opening and no hash; an answer hashed before IK2a opens only as typed; an old Studio draft with an
+  unknown base reads but must be mended in its next save.

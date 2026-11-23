@@ -1246,3 +1246,11 @@ HG1 (give race) Two staff giving one Concierge order: the code is right (overlap
 - Accepted lows of that check (no real rows exist; nothing wired is released): a wish sealed before round 19 with a
   passcode opening and no hash; an answer hashed before IK2a opens only as typed; an old Studio draft with an
   unknown base reads but must be mended in its next save.
+- IK6 (23 Nov, the lead, on build/tasks/RENDERER-PLAN.md; Default (lead), owner may override): the real video renderer
+  is a headless browser on our own server that plays the web's own player at 1080 x 1920, 30 frames a second, on a
+  stepped clock, encoded by ffmpeg (the way the style previews are already recorded); no outside render service. The
+  file is silent; a status video is at most 30 seconds, cut at a whole scene; the file of a resting wish at most 60;
+  the ending's question is drawn unanswered; a passcode wish's video shows the wish without its lock and only the
+  owner can get it, and the ask says so. The render reads the wish through a one-use token of minutes, stored hashed.
+  A "Premiere clip" render is not built and not sold. OWNER QUESTION kept: T-49 says the receiver of a resting wish is
+  also offered the file; until answered the file is the owner's only.

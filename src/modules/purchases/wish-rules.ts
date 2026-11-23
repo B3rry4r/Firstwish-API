@@ -13,6 +13,7 @@ export interface WishFacts {
   id: string;
   accountId: string;
   kind: string;
+  occasion: string | null;
   styleSlug: string;
   styleTakenLevel: string | null;
   state: WishState;
@@ -24,12 +25,13 @@ export interface WishFacts {
 /** The wish as the rules read it. Inside the payment's transaction the caller has locked the row first. */
 export async function readWish(db: Pick<Tx, "wish">, wishId: unknown): Promise<WishFacts | null> {
   if (typeof wishId !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(wishId)) return null;
-  const w = await db.wish.findUnique({ where: { id: wishId }, select: { id: true, accountId: true, kind: true, styleSlug: true, styleTakenLevel: true, status: true, erasedAt: true, ticket: true, endsAt: true, adds: true } });
+  const w = await db.wish.findUnique({ where: { id: wishId }, select: { id: true, accountId: true, kind: true, occasion: true, styleSlug: true, styleTakenLevel: true, status: true, erasedAt: true, ticket: true, endsAt: true, adds: true } });
   if (!w) return null;
   return {
     id: w.id,
     accountId: w.accountId,
     kind: w.kind,
+    occasion: w.occasion,
     styleSlug: w.styleSlug,
     styleTakenLevel: w.styleTakenLevel,
     state: stateOf(w),
@@ -62,13 +64,13 @@ export function assessTicket(w: WishFacts | null, payerId: string | null, ticket
  * (the level the wish took it at; a premium-style extra the wish holds lifts a Keepsake). The reason is a code for the refused line, the words say which rule.
  */
 export async function assessTicketStyle(db: Pick<Tx, "style" | "purchaseGrant">, w: WishFacts, ticket: string, book: EntitlementsRow): Promise<{ reason: string; words: string } | null> {
-  const style = await db.style.findUnique({ where: { slug: w.styleSlug }, select: { name: true, level: true, kinds: true, on: true } });
+  const style = await db.style.findUnique({ where: { slug: w.styleSlug }, select: { name: true, level: true, kinds: true, occasions: true, on: true } });
   if (!style) return null;
   const held = await heldAdds(db, w.id, w.adds); // IJ3a: an extra whose refund was sent no longer counts
   const allowed = allowedLevel(book, ticket, held.adds);
   const off = styleTakingRefusal(null, ticket, w.kind, style, { checkKind: false });
   if (off) return { reason: "style_not_offered", words: off };
-  const kind = styleTakingRefusal(null, ticket, w.kind, style, { checkOn: false });
+  const kind = styleTakingRefusal(null, ticket, w.kind, style, { checkOn: false, occasion: w.occasion });
   if (kind) return { reason: "style_wrong_kind", words: kind };
   const level = styleTakingRefusal(allowed, ticket, w.kind, style, { checkOn: false, checkKind: false, level: w.styleTakenLevel });
   return level ? { reason: "style_above_ticket", words: held.refunding ? `${level} ${REFUND_WORDS}` : level } : null;

@@ -227,9 +227,9 @@ describe("API-BASE-15 round 1 H1 (IJ3): refunding the premium-style extra on its
       expect(read.body.styleLevel).toBe("standard");
       expect(read.body.allowedStyles).not.toContain("reel");
       expect(read.body.allowedStyles).toContain("status");
-      expect((await patch(u, w, { style: "polaroid-table" })).status).toBe(200); // a Standard style is still fine
+      expect((await patch(u, w, { style: "mixtape" })).status).toBe(200); // a Standard style made for a love birthday is still fine (IJ4a: polaroid-table is made for anniversary and just-because only)
       expect((await processed(x.reference, x.total)).status).toBe(200);
-      expect(await row(w)).toMatchObject({ adds: [], styleSlug: "polaroid-table" });
+      expect(await row(w)).toMatchObject({ adds: [], styleSlug: "mixtape" });
       expect((await db.payment.findUniqueOrThrow({ where: { id: x.id } })).status).toBe("refunded");
       expect((await db.refund.findUniqueOrThrow({ where: { id: s.body.id } })).note ?? "").not.toMatch(/kept_style_needs_extra/);
       expect((await patch(u, w, { style: "reel" })).status).toBe(422); // the extra is gone: a Premium style is refused as for any Keepsake

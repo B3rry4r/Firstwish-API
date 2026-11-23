@@ -1,5 +1,5 @@
 import { Injectable, OnModuleInit } from "@nestjs/common";
-import type { RenderJob as JobRow } from "@prisma/client";
+import type { Entitlements as EntitlementsRow, Prisma, RenderJob as JobRow } from "@prisma/client";
 import { lockAccount } from "../../common/db/account-lock";
 import { PrismaService } from "../../common/db/prisma.service";
 import { AppError } from "../../common/errors/app-error";
@@ -10,7 +10,9 @@ import type { RenderJob } from "../../contracts";
 import { JobsService } from "../jobs/jobs.service";
 import { EntitlementsService } from "../price-book/entitlements.service";
 import { ServerFileWriter } from "../server-files/server-files";
-import { wishHas } from "../wish-extras/wish-extras";
+import { SignedUrlsService } from "../stored-files/signed-urls.service";
+import { videoRefunded, wishHas } from "../wish-extras/wish-extras";
+import { ERASE_WISH_FILE_PREFIX } from "../wishes/wish-lifecycle.service";
 import { stateOf } from "../wishes/wish-state";
 import { VideoRenderer, type RenderKind } from "./video-renderer";
 
@@ -38,6 +40,7 @@ export class RenderJobsService implements OnModuleInit {
     private readonly renderer: VideoRenderer,
     private readonly files: ServerFileWriter,
     private readonly entitlements: EntitlementsService,
+    private readonly signed: SignedUrlsService,
   ) {}
 
   /** Not in tests (NODE_ENV=test), like the other job handlers: specs share one database and call run() themselves. */
@@ -53,9 +56,15 @@ export class RenderJobsService implements OnModuleInit {
   /** E-147: the latest job for the caller's wish. */
   async latest(accountId: string, wishId: string): Promise<RenderJob> {
     if (!UUID.test(wishId)) throw AppError.notFound();
-    const row = await this.db.renderJob.findFirst({ where: { wishId, wish: { accountId } }, orderBy: { id: "desc" } });
+    // IK4a: an erased wish gives no read and no address, like every other read of it
+    const row = await this.db.renderJob.findFirst({ where: { wishId, wish: { accountId, erasedAt: null } }, orderBy: { id: "desc" } });
     if (!row) throw AppError.notFound();
-    return this.wire(row);
+    // IK4a: a video whose extra was refunded (refund sent) is no longer the person's: no read, no address
+    if (row.kind === "status_video") {
+      const w = await this.db.wish.findUniqueOrThrow({ where: { id: wishId }, select: { ticket: true, adds: true } });
+      if (await videoRefunded(this.db, await this.entitlements.row(), { id: wishId, ...w })) throw AppError.notFound();
+    }
+    return this.view(row, accountId);
   }
 
   /** E-148: asks for the portrait video (the wish as a file when it rests). Checked: the owner, the entitlement, the renderer. */
@@ -70,12 +79,13 @@ export class RenderJobsService implements OnModuleInit {
       if (state === "taken_down" || state === "erased") throw AppError.notFound();
       if (state === "draft") throw AppError.conflict("wish_not_sealed", "Seal this wish before asking for its video.");
       const kind: RenderKind = state === "resting" ? "keepsake-export" : "status-video";
-      if (kind === "status-video" && !wishHas(await this.entitlements.row(tx), w, "portraitVideo")) {
+      if (kind === "status-video" && !(await this.holdsVideo(tx, await this.entitlements.row(tx), w))) {
         throw new AppError(402, "payment_required", "This wish needs the portrait video. Get it to make the video.");
       }
       const found = await tx.renderJob.findFirst({ where: { wishId, kind: DB_KIND[kind] }, orderBy: { id: "desc" } });
       if (found && found.status !== "failed") return found.id;
-      if (!this.renderer.configured()) throw new AppError(503, "video_unavailable", "Video is not available right now. Try again soon.");
+      // IK3: the person has the video already (paid, or on their ticket): they are told it is theirs and will not be charged again
+      if (!this.renderer.configured()) throw new AppError(503, "video_unavailable", "Your video cannot be made right now. It stays yours and you will not pay again. Ask again later.");
       const now = this.clock.now();
       let id: string;
       if (found) {
@@ -88,7 +98,12 @@ export class RenderJobsService implements OnModuleInit {
       await this.jobs.schedule("render-video", now, id, tx);
       return id;
     });
-    return { payment: null, item: this.wire(await this.db.renderJob.findUniqueOrThrow({ where: { id: jobId } })) };
+    return { payment: null, item: await this.view(await this.db.renderJob.findUniqueOrThrow({ where: { id: jobId } }), accountId) };
+  }
+
+  /** The wish has the portrait video to ask for: on its ticket, or bought and not refunded. */
+  private async holdsVideo(db: Pick<Prisma.TransactionClient, "purchaseGrant">, book: EntitlementsRow, w: { id: string; ticket: string | null; adds: unknown }): Promise<boolean> {
+    return wishHas(book, w, "portraitVideo") && !(await videoRefunded(db, book, w));
   }
 
   /** Runs one job: queued (or a lost rendering) to rendering to done or failed. A job already taken, done or failed is left alone. */
@@ -103,15 +118,30 @@ export class RenderJobsService implements OnModuleInit {
     if (!c) return "skipped";
     const kind: RenderKind = c.kind === "keepsake-export" ? "keepsake-export" : "status-video";
     try {
-      const owner = await this.db.wish.findUniqueOrThrow({ where: { id: c.wishId }, select: { accountId: true } });
+      const owner = await this.db.wish.findUniqueOrThrow({ where: { id: c.wishId }, select: { accountId: true, erasedAt: true } });
+      if (owner.erasedAt) throw new Error("the wish was erased"); // IK4a: nothing is made for an erased wish
       const out = await this.renderer.render({ wishId: c.wishId, kind, width: c.width, height: c.height, seconds: c.seconds }, signal);
       const fileId = await this.files.write({ ownerAccountId: owner.accountId, purpose: kind === "status-video" ? "render" : "export", contentType: out.contentType, bytes: out.bytes, kind: "video" });
+      // IK4a: the wish may have been erased while the renderer worked: the file just written goes by the same cleanup job the erase queues for the wish's files
+      if ((await this.db.wish.findUniqueOrThrow({ where: { id: c.wishId }, select: { erasedAt: true } })).erasedAt) {
+        await this.db.renderJob.updateMany({ where: { id: jobId, status: "rendering" }, data: { status: "failed", outputFileId: fileId } });
+        await this.jobs.schedule("upload-cleanup", this.clock.now(), `${ERASE_WISH_FILE_PREFIX}${fileId}`);
+        return "failed";
+      }
       await this.db.renderJob.updateMany({ where: { id: jobId, status: "rendering" }, data: { status: "done", outputFileId: fileId } });
       return "done";
     } catch {
       await this.db.renderJob.updateMany({ where: { id: jobId, status: "rendering" }, data: { status: "failed" } });
       return "failed";
     }
+  }
+
+  /** IK4: a ready job also carries a short-lived signed address of its stored file (the owner's own read only). */
+  private async view(r: JobRow, accountId: string): Promise<RenderJob> {
+    const out = this.wire(r);
+    if (r.status !== "done" || !r.outputFileId) return out;
+    const s = await this.signed.signedRead({ fileId: r.outputFileId }, { type: "owner", accountId });
+    return { ...out, downloadUrl: s.url, downloadExpiresAt: s.expiresAt };
   }
 
   private wire(r: JobRow): RenderJob {

@@ -1,4 +1,5 @@
 import { Injectable } from "@nestjs/common";
+import { ModuleRef } from "@nestjs/core";
 import { PrismaService } from "../../common/db/prisma.service";
 import { AppError } from "../../common/errors/app-error";
 import { decodeCursor, DEFAULT_LIMIT, toPage } from "../../common/pagination/cursor";
@@ -8,6 +9,8 @@ import { PriceBookService, safe } from "./price-book.service";
 import { readLimits } from "./book-limits";
 import { readPayoutSetting } from "./payout-setting";
 import { priceOf, promotionOf } from "./price-view";
+import { NOT_SOLD_WORDS, unsoldLines } from "../purchases/wish-rules";
+import { VideoRenderer } from "../render-jobs/video-renderer";
 
 /**
  * GET /v1/price-book: the version in force now, its lines (price now and list price), the promotion while it runs, the
@@ -22,6 +25,7 @@ export class PublicBookService {
     private readonly db: PrismaService,
     private readonly book: PriceBookService,
     private readonly entitlements: EntitlementsService,
+    private readonly modules: ModuleRef,
   ) {}
 
   async read(q: GetPriceBookQuery): Promise<{ body: PublicBook; maxAgeSeconds: number }> {
@@ -72,6 +76,10 @@ export class PublicBookService {
     const ticket = b.lines.find((l) => l.sku === ticketSku && l.sku.startsWith("ticket."));
     const fields: Record<string, string> = {};
     if (!ticket) fields.ticket = "Not a ticket in the price book.";
+    // IK3a: the ticket step reads this: a ticket that includes the portrait video is not available while no renderer is configured (the same words and code as the start)
+    const renderer = this.modules.get(VideoRenderer, { strict: false });
+    const notSold = unsoldLines(ent, renderer.configured());
+    if (ticket && notSold.has(ticket.sku)) throw new AppError(409, "extra_not_sold", NOT_SOLD_WORDS, { ticket: ticketSku });
     const seen = new Set<string>();
     const extras = extraSkus.map((s, i) => {
       const l = b.lines.find((x) => x.sku === s && x.sku.startsWith("extra."));
@@ -81,6 +89,9 @@ export class PublicBookService {
       return l;
     });
     if (Object.keys(fields).length || !ticket) throw AppError.validation(fields);
+    // N2: an unsold extra answers like the payment start (same 409, same words); the contract's quote has no "not available" field, so no wire change
+    const unsoldExtra = extraSkus.find((s) => notSold.has(s));
+    if (unsoldExtra) throw new AppError(409, "extra_not_sold", NOT_SOLD_WORDS, { extra: unsoldExtra });
     const grant = grantOf(ent, ticket.sku) ?? { sku: ticket.sku };
     const takes = Array.isArray(grant.takes) ? (grant.takes as unknown[]).filter((x): x is string => typeof x === "string") : [];
     extras.forEach((e, i) => {

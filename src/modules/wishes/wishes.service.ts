@@ -20,6 +20,7 @@ import { PassDrawService } from "../purchases/pass-draws";
 import { ProAccess } from "../pro-business/pro-access";
 import { ShowingLink } from "../showing/showing-link";
 import { localToUtc, parseOpening, utcToLocal } from "./local-time";
+import { cutSecret, normalAnswer, SECRET_LENGTH_WORDS, SECRET_WORDS, secretOpening, withoutSecrets } from "./opening-secret";
 import { CHAPTER_KEYS, DEFAULT_CONTENT_MAX_BYTES, FileRef, hasBody, readContent } from "./wish-content";
 import { readLimits } from "../price-book/book-limits";
 import type { Principal } from "../../common/auth/principal";
@@ -32,7 +33,9 @@ import { kindHasOccasion, LAST_STEP } from "./kind-occasions";
 import { isLevel } from "../styles/style-view";
 import { allowedLevel, firstStyleFor, heldAdds, REFUND_WORDS, levelRank, offeredForWish, styleTakingRefusal } from "./style-rule";
 import { PriceBookService } from "../price-book/price-book.service";
-import { assessExtra, readWish } from "../purchases/wish-rules";
+import { videoRefunded } from "../wish-extras/wish-extras";
+import { VideoRenderer } from "../render-jobs/video-renderer";
+import { assessExtra, readWish, unsoldLines } from "../purchases/wish-rules";
 import { DEFAULT_KIND, DEFAULT_OCCASION, isBareStart, START_KEY } from "./wish-start";
 
 type Tx = Prisma.TransactionClient;
@@ -128,6 +131,7 @@ export class WishesService {
     private readonly access: ProAccess,
     private readonly pictures: WishPictures,
     private readonly priceBook: PriceBookService,
+    private readonly video: VideoRenderer,
   ) {}
 
   private planSeal: PlanSealFn | null = null;
@@ -222,8 +226,8 @@ export class WishesService {
     });
     const links = await this.linksFor(rows.map((r) => r.id));
     const shown = rows.slice(0, limit).map((r) => r.id);
-    const [pics, videos] = await Promise.all([this.pictures.forWishes(shown), this.pictures.videoStates(shown)]);
     const book = await this.entitlements.row();
+    const [pics, videos] = await Promise.all([this.pictures.forWishes(shown), this.pictures.videoStates(shown, (id) => videoRefunded(this.prisma, book, rows.find((r) => r.id === id) as Wish))]);
     // the list carries `publish` as the detail does (where the owner's ask to be shown stands; null when none was made)
     const publishes = await this.showing.showing.publishStateOf(shown);
     const one = (r: Wish): Obj => ({ ...this.wire(r, links.get(r.id)), pictures: pics.get(r.id) ?? [], video: videos.get(r.id) ?? "none", styleLevel: allowedLevel(book, r.ticket, r.adds), publish: publishes.get(r.id) ?? null });
@@ -237,8 +241,8 @@ export class WishesService {
     // QQ3: where the owner's asks to be shown stand (the last one, its decline reason, whether it is listed).
     const publish = (await this.showing.showing.publishStateOf([row.id])).get(row.id) ?? null;
     const pictures = (await this.pictures.forWishes([row.id])).get(row.id) ?? [];
-    const video = (await this.pictures.videoStates([row.id])).get(row.id) ?? "none";
     const book = await this.entitlements.row();
+    const video = (await this.pictures.videoStates([row.id], () => videoRefunded(this.prisma, book, row))).get(row.id) ?? "none";
     const styleLevel = allowedLevel(book, row.ticket, (await heldAdds(this.prisma, row.id, row.adds)).adds);
     const allowedStyles = await this.allowedStyles(styleLevel, row.kind, row.occasion);
     // ID1: the ticket payment of this wish that waits to be paid (which ticket, its reference, when it lapses), null when none waits
@@ -257,7 +261,7 @@ export class WishesService {
     if (!w || !Array.isArray(takes)) return {};
     const lines = new Map((await this.priceBook.versionAt(this.clock.now())).lines.map((l) => [l.sku, l.listKobo]));
     const out: Record<string, boolean> = {};
-    for (const sku of takes) if (typeof sku === "string") out[sku] = assessExtra(w, w.accountId, sku, book, (x) => lines.get(x) ?? 0n) === null;
+    for (const sku of takes) if (typeof sku === "string") out[sku] = assessExtra(w, w.accountId, sku, book, (x) => lines.get(x) ?? 0n, unsoldLines(book, this.video.configured())) === null;
     return out;
   }
 
@@ -291,7 +295,7 @@ export class WishesService {
     const t = (d: Date | null): string | null => (d ? toWireInstant(d) : null);
     return {
       id: r.id, accountId: r.accountId, businessId: r.businessId, status: r.status, state: stateOf(r), ticket: r.ticket,
-      kind: r.kind, occasion: r.occasion, style: r.styleSlug, name: r.name, no: r.no, content: r.content ?? {}, keep: r.keep,
+      kind: r.kind, occasion: r.occasion, style: r.styleSlug, name: r.name, no: r.no, content: withoutSecrets(r.content ?? {}), keep: r.keep,
       step: r.step, opensAt: t(r.opensAt), timeZone: r.timeZone, sealedAt: t(r.sealedAt), openedAt: t(r.openedAt), endsAt: t(r.endsAt),
       restingSince: t(r.restingSince), keptUntil: t(r.keptUntil), eraseAfter: t(r.eraseAfter), erasedAt: t(r.erasedAt),
       removedAt: t(r.removedAt), restorableUntil: t(r.restorableUntil), createdAt: toWireInstant(r.createdAt), updatedAt: toWireInstant(r.updatedAt), version: r.version,
@@ -504,7 +508,7 @@ export class WishesService {
     await this.checkFiles(tx, accountId, biz, refs);
     this.checkLimits(book, content, refs, cur);
     await this.syncFiles(tx, cur.id, refs);
-    return content as Prisma.InputJsonValue;
+    return withoutSecrets(content) as Prisma.InputJsonValue; // IK1c: the code and the answer are never kept in the document
   }
 
   private async syncFiles(tx: Tx, wishId: string, refs: FileRef[]): Promise<void> {
@@ -532,7 +536,9 @@ export class WishesService {
     const zone = input.timeZone;
     if (zone !== undefined && !isTimeZone(zone)) throw AppError.validation({ timeZone: "Not a time zone, for example Africa/Lagos." });
     const wedding = this.weddingOf(input.makerNote);
-    const passHash = typeof input.passcode === "string" ? await hashPasscode(this.passcode(input.passcode)) : input.passcode;
+    // IK2a: outer spaces are cut (the passcode() step); a question's answer is also kept in one unicode form and lower case, a passcode keeps its case (both are made here, the opening decides inside)
+    const given = typeof input.passcode === "string" ? this.passcode(input.passcode) : null;
+    const hashed = given === null ? null : { exact: await hashPasscode(given), answer: normalAnswer(given) === given ? null : await hashPasscode(normalAnswer(given)) };
     const biz = await this.business.find(accountId);
     const book = await this.entitlements.row();
     return this.prisma.$transaction(async (tx) => {
@@ -581,7 +587,6 @@ export class WishesService {
       }
       if (input.keep !== undefined) data.keep = input.keep;
       if (input.step !== undefined) data.step = input.step;
-      if (passHash !== undefined) data.passcodeHash = passHash;
       if (wedding !== undefined) data.weddingDate = wedding.date;
       if (input.makerNote !== undefined) {
         // the stored note is the merge, so the limit is on the merged note (a long run of small saves cannot pile past it)
@@ -607,6 +612,16 @@ export class WishesService {
           else content[k] = v;
         }
         data.content = await this.applyContent(tx, accountId, biz, book, cur, content);
+      }
+      {
+        // IK1b: a secret is kept for one opening only. A save that names an opening with no secret leaves none; one that changes the opening
+        // keeps the old secret only if a new `passcode` comes in the same save, so the old secret never answers the new question.
+        const named = input.content !== undefined && Object.prototype.hasOwnProperty.call(input.content, "opening");
+        const was = secretOpening(cur.content);
+        const nowKind = secretOpening(data.content ?? cur.content);
+        if (input.passcode === null) data.passcodeHash = null;
+        else if (hashed) data.passcodeHash = named && nowKind === null ? null : nowKind === "question" ? (hashed.answer ?? hashed.exact) : hashed.exact;
+        else if (named && (nowKind === null || nowKind !== was)) data.passcodeHash = null;
       }
       const done = await tx.wish.updateMany({ where: { id, version: input.version }, data });
       if (done.count !== 1) throw new AppError(409, "stale_version", "This wish changed somewhere else. Load it again.");
@@ -691,8 +706,10 @@ export class WishesService {
   }
 
   private passcode(p: string): string {
-    if (p.length < 4 || p.length > 64) throw AppError.validation({ passcode: "Use 4 to 64 characters." });
-    return p;
+    // IK2a: outer spaces are cut first, then 4 to 64 characters must be left (a secret of spaces only is refused)
+    const cut = cutSecret(p);
+    if (cut.length < 4 || cut.length > 64) throw AppError.validation({ passcode: SECRET_LENGTH_WORDS }, SECRET_LENGTH_WORDS);
+    return cut;
   }
 
   // ---- paid, seal ----
@@ -813,6 +830,9 @@ export class WishesService {
       if (!w.ticket && !input.usePass && !plan && !viaOrder) throw new AppError(402, "payment_required", "Pay for this wish first.");
       const missing: Record<string, string> = {};
       if (!w.name?.trim()) missing.name = "Who is it for?";
+      // IK1: an opening that asks for a secret is never sealed without one (it would open for anyone)
+      const need = secretOpening(w.content);
+      if (need && !w.passcodeHash) throw AppError.validation({ [SECRET_WORDS[need].field]: SECRET_WORDS[need].words }, SECRET_WORDS[need].words);
       if (!hasBody(w.content as Obj | null)) missing.content = "Write at least one part of the wish.";
       if (Object.keys(missing).length) throw AppError.validation(missing, "This wish is not ready to seal.");
       const now = this.clock.now();

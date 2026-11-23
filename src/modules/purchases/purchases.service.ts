@@ -12,7 +12,8 @@ import { GrantStore, type GrantRow, type Tx } from "./grants";
 import { holderKey, KeepProofs } from "./keep-proof";
 import { PassService } from "./pass.service";
 import { WishHandlers } from "./wish-handlers";
-import { assessExtra, assessKeep, assessTicket, assessTicketStyle, readWish, REASON_TEXT } from "./wish-rules";
+import { VideoRenderer } from "../render-jobs/video-renderer";
+import { assessExtra, assessKeep, assessTicket, assessTicketStyle, readWish, REASON_TEXT, NOT_SOLD_WORDS, unsoldLines } from "./wish-rules";
 import { canMove } from "../concierge/order-state";
 import { hiddenFromBuyer } from "../wishes/wish-shown";
 import { IdGenerator } from "../../common/ports/ids.port";
@@ -61,6 +62,7 @@ export class PurchasesService implements OnModuleInit {
     private readonly creator: CreatorHandlers,
     private readonly entitlements: EntitlementsService,
     private readonly book: PriceBookService,
+    private readonly video: VideoRenderer,
     private readonly proofs: KeepProofs,
     private readonly ids: IdGenerator,
     private readonly lifecycle: WishLifecycleService,
@@ -196,6 +198,13 @@ export class PurchasesService implements OnModuleInit {
   async assertStartable(accountId: string | null, request: PaymentRequestInfo, skus: string[], db: PrismaService | Tx = this.db): Promise<void> {
     const sku = skus[0] ?? "";
     const group = sku.slice(0, sku.indexOf("."));
+    // IK3a: with no renderer nothing whose entitlements include the portrait video is sold: 409, words, no payment, no provider call. Before any other check, for every line.
+    const notSold = unsoldLines(await this.entitlements.row(db), this.video.configured());
+    const unsold = skus.find((s) => notSold.has(s));
+    if (unsold) {
+      if (unsold === "extra.portrait-video") throw new AppError(409, "extra_not_sold", REASON_TEXT.extra_not_sold, { extra: "portrait-video" });
+      throw new AppError(409, "extra_not_sold", NOT_SOLD_WORDS, { line: unsold });
+    }
     if (!["ticket", "extra", "keep"].includes(group)) return;
     const wishId = request.subjectId;
     if (!wishId) throw AppError.validation({ subjectId: "Name the wish this is for." });
@@ -208,7 +217,9 @@ export class PurchasesService implements OnModuleInit {
     else if (group === "keep") why = assessKeep(w, accountId, book, this.proofs.valid(request.options?.receiverProof, accountId, wishId, true));
     else {
       const lines = new Map((await this.book.versionAt(this.clock.now(), db)).lines.map((l) => [l.sku, l.listKobo]));
-      why = assessExtra(w, accountId, sku, book, (s) => lines.get(s) ?? 0n);
+      why = assessExtra(w, accountId, sku, book, (s) => lines.get(s) ?? 0n, notSold);
+      // IK3: 409 with its own code, so the app can tell "not on sale" from a wish that cannot take it
+      if (why === "extra_not_sold") throw new AppError(409, "extra_not_sold", REASON_TEXT.extra_not_sold, { extra: sku.slice("extra.".length) });
     }
     // GG3: the app sells no paid upgrade, so a ticket line for a wish that already has a ticket (paid or from the Pass) is refused at start
     if (!why && group === "ticket" && w?.ticket) why = "wish_has_ticket";

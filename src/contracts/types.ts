@@ -1378,6 +1378,9 @@ export interface Refund {
 export interface RenderJob {
   createdAt: Instant;
   deliveredVia?: string | null;
+  /** IK4: a short-lived signed address of the finished file; only on the owner's own read of a ready job */
+  downloadExpiresAt?: Instant | null;
+  downloadUrl?: string | null;
   height: number;
   id: string;
   kind: "status-video" | "premiere-clip" | "keepsake-export";
@@ -4950,7 +4953,7 @@ export interface PatchWishesByIdBody {
   /** string ISO-8601 from local date+time via new Date(`${day}T${time}:00`).toISOString() (browser's own time zone, no zone sent) */
   opensAt?: string;
   /** string, at least 4 chars, max 64 (write only: stored hashed, never returned; null clears it) */
-  passcode?: string;
+  passcode?: string | null;
   /** number 0..5 */
   step?: number;
   /** string */

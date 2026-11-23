@@ -2,7 +2,7 @@ import { HttpStatus, Injectable } from "@nestjs/common";
 import { Prisma, type StudioStyle as StudioStyleRow } from "@prisma/client";
 import { lockAccount } from "../../common/db/account-lock";
 import { PrismaService } from "../../common/db/prisma.service";
-import { AppError } from "../../common/errors/app-error";
+import { AppError, type ErrorFields } from "../../common/errors/app-error";
 import { decodeCursor, DEFAULT_LIMIT, type Page, toPage } from "../../common/pagination/cursor";
 import { Clock } from "../../common/ports/clock.port";
 import { IdGenerator } from "../../common/ports/ids.port";
@@ -12,7 +12,8 @@ import { FileJobs } from "../stored-files/file-jobs";
 import { StylesService } from "../styles/styles.service";
 import { CreatorStateService, type Plan } from "./creator-state.service";
 import { namedFileProblems } from "./named-files";
-import { cleanDoc, EDITABLE, isObj, json, metaOf, obj, type Obj, type ReviewView, toWire, UUID } from "./studio-doc";
+import { BLANK } from "./submission-checks";
+import { cleanDoc, EDITABLE, sceneListProblems, isObj, json, metaOf, obj, type Obj, type ReviewView, toWire, UUID } from "./studio-doc";
 
 type Tx = Prisma.TransactionClient;
 type Wire = StudioStyle & { version: number };
@@ -152,6 +153,19 @@ export class StudioStylesService {
     return { id: style.id, name: style.name ?? "", handle: style.by ?? "", house: style.house ?? false };
   }
 
+  /**
+   * IK5: the base look is one the server knows (a scene set of the catalogue, or the blank one), and each scene's layout and added kinds are in the
+   * allowed lists. The browser's word is not taken: a save and a send-in both ask. 422 naming the field.
+   */
+  async assertLists(tx: Tx, doc: Obj, field = "style"): Promise<void> {
+    const fields: ErrorFields = { ...sceneListProblems(obj(doc.scenes), field) };
+    const base = typeof doc.base === "string" ? doc.base.trim() : "";
+    if (base && base !== BLANK && !(await tx.template.findFirst({ where: { base }, select: { id: true } }))) {
+      fields[`${field}.base`] = "That is not a look Firstwish has. Start from one of the scene sets, or from a blank style.";
+    }
+    if (Object.keys(fields).length) throw AppError.validation(fields);
+  }
+
   /** II5: a document names only this style's own files that are ready (422 in words naming each place, nothing saved). */
   async assertFilesNamed(tx: Tx, accountId: string, styleId: string, doc: Obj, sendIn = false): Promise<void> {
     const fields = await namedFileProblems(tx, accountId, styleId, doc, sendIn);
@@ -161,6 +175,7 @@ export class StudioStylesService {
   private async insert(tx: Tx, accountId: string, id: string, plan: Plan, body: unknown): Promise<StudioStyleRow> {
     await this.assertRoomForDraft(tx, accountId, plan);
     const doc = cleanDoc(body);
+    await this.assertLists(tx, doc);
     await this.assertFilesNamed(tx, accountId, id, doc);
     const from = await this.resolveFrom(tx, accountId, plan, isObj(body) ? body.from : undefined);
     const now = toWireInstant(this.clock.now());
@@ -220,6 +235,7 @@ export class StudioStylesService {
         if (typeof sent !== "number" || !Number.isInteger(sent)) throw AppError.validation({ "style.version": "Send the version you read." });
         if (sent !== meta.version) throw AppError.conflict("stale_version", "This style was saved somewhere else since you opened it. Open it again.");
         const next = cleanDoc(body.style);
+        await this.assertLists(tx, next);
         await this.assertFilesNamed(tx, accountId, id, next);
         const document = { ...next, version: meta.version + 1, at: toWireInstant(this.clock.now()), byline: meta.byline || (await this.bylineOf(tx, accountId)), on: body.on ?? meta.on, template: meta.template, useExtra: meta.useExtra, from: meta.from };
         const saved = await tx.studioStyle.update({ where: { id }, data: { document: json(document) } });

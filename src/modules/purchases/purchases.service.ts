@@ -95,7 +95,9 @@ export class PurchasesService implements OnModuleInit {
    */
   async revoke(tx: Tx, payment: Pick<Payment, "id">, released?: string[]): Promise<RevokeResult[]> {
     const out: RevokeResult[] = [];
-    for (const g of await this.store.list(tx, payment.id)) {
+    const grants = await this.store.list(tx, payment.id);
+    const alone = this.extrasAlone(grants);
+    for (const g of grants) {
       if (g.revokedAt) {
         out.push({ sku: g.sku, kind: g.kind, result: "already_revoked" });
         continue;
@@ -104,11 +106,29 @@ export class PurchasesService implements OnModuleInit {
         out.push({ sku: g.sku, kind: g.kind, result: "refused_line" });
         continue;
       }
-      const result = await this.revokeOne(tx, g, released);
+      // IJ3: the money is back (the provider refunded it), but an extra a held style still needs stays on the wish, and the note says so
+      const result = alone && (await this.wish.premiumExtraBlock(tx, g)) ? "kept_style_needs_extra" : await this.revokeOne(tx, g, released);
       if (result === "revoked") await this.store.markRevoked(tx, g.id);
       out.push({ sku: g.sku, kind: g.kind, result });
     }
     return out;
+  }
+
+  /** IJ3: a payment of extras only (a whole purchase that holds a ticket or a keep follows the whole-refund rules as before). */
+  private extrasAlone(grants: GrantRow[]): boolean {
+    return grants.filter((g) => !g.revokedAt && !g.refusedReason).every((g) => g.kind === "extra");
+  }
+
+  /** IJ3: words that refuse starting a refund of this payment (the premium-style extra on its own while the wish holds a style that needs it), or null. */
+  async refundBlock(tx: Tx, paymentId: string): Promise<string | null> {
+    const grants = await this.store.list(tx, paymentId);
+    if (!this.extrasAlone(grants)) return null;
+    for (const g of grants) {
+      if (g.revokedAt || g.refusedReason) continue;
+      const why = await this.wish.premiumExtraBlock(tx, g);
+      if (why) return why;
+    }
+    return null;
   }
 
   private revokeOne(tx: Tx, g: GrantRow, released?: string[]): Promise<string> {

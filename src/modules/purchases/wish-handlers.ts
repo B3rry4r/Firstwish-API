@@ -10,8 +10,10 @@ import { WishesService } from "../wishes/wishes.service";
 import { holderKey, KeepProofs } from "./keep-proof";
 import { PassCover } from "./pass-cover";
 import { GrantStore, num, type GrantRow, type Tx } from "./grants";
+import { allowedLevel, styleTakingRefusal } from "../wishes/style-rule";
 import { assessExtra, assessKeep, assessTicket, assessTicketStyle, readWish, TICKET_ORDER, type WishFacts } from "./wish-rules";
 
+const PREMIUM_EXTRA = "extra.premium-style";
 const SLUG = /^[a-z0-9][a-z0-9-]{0,63}$/;
 type TicketName = (typeof TICKET_ORDER)[number];
 
@@ -121,6 +123,25 @@ export class WishHandlers {
     await this.store.nameWish(tx, grantId, w.id);
     const end = await this.cover.applyEnd(tx, w.id, { wake: true, cause: "purchase.keep" });
     await tx.purchaseGrant.update({ where: { id: grantId }, data: { endsAt: end } });
+  }
+
+  /**
+   * IJ3: the premium-style extra cannot be refunded on its own while the wish holds a style that needs it (sealed or not): the words say why, or null.
+   * The wish is judged as it would stand without the extra (its ticket, its other extras, the level it took its style at).
+   */
+  async premiumExtraBlock(tx: Tx, g: GrantRow): Promise<string | null> {
+    if (g.kind !== "extra" || g.detail.extra !== PREMIUM_EXTRA || !g.wishId) return null;
+    const w = await readWish(tx, g.wishId);
+    if (!w || w.state === "erased" || !w.adds.includes(PREMIUM_EXTRA)) return null;
+    const style = await tx.style.findUnique({ where: { slug: w.styleSlug }, select: { name: true, level: true, kinds: true, on: true } });
+    if (!style) return null;
+    const i = w.adds.lastIndexOf(PREMIUM_EXTRA);
+    const adds = w.adds.filter((_, k) => k !== i);
+    const allowed = allowedLevel(await this.entitlements.row(tx), w.ticket, adds);
+    const why = styleTakingRefusal(allowed, w.ticket, w.kind, style, { checkOn: false, checkKind: false, level: w.styleTakenLevel });
+    if (!why) return null;
+    const after = w.state === "draft" ? "Change the wish to a style its ticket allows first, then the extra can be refunded." : "The wish is sealed, so its look is the customer's and the extra stays paid.";
+    return `The premium-style extra cannot be refunded on its own while the wish holds a style that needs it. ${why} ${after}`;
   }
 
   /** A refund takes the ticket back while the wish is still a draft; a keep takes its days off the end; an extra comes off the list. */

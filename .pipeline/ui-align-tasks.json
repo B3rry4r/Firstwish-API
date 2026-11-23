@@ -3014,7 +3014,8 @@
         "lib/studio-api.ts"
       ],
       "change": "signed uploads straight to storage, confirm step, short-lived signed reads (storage)",
-      "status": "open"
+      "status": "done",
+      "resolution": "WEB-API-7 (web daa92f6): Studio pictures, the poster, a sound, 3D models and the profile picture are uploaded to the server (a signed put and a confirm), listed from it after a reload and on another device, and only a file that passed checking can be used; checked twice by a separate agent against the server's fourteenth round (wa7.mjs)."
     },
     {
       "id": "UA-248",

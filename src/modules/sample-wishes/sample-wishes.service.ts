@@ -61,7 +61,7 @@ export class SampleWishesService {
     return shown(row, this.clock.now());
   }
 
-  /** E-287: the samples of one kind, or of every kind when none is named. At most 44 rows (one for each kind and occasion of the catalogue), in one answer. */
+  /** E-287: the samples of one kind, or of every kind when none is named. At most 45 rows (one for each kind and occasion of the catalogue, and the web's second Shoot Reveal recipe, your-finals), in one answer. */
   async list(kind?: string): Promise<PaginatedList<SampleWish>> {
     const named = (kind ?? "").trim();
     const now = this.clock.now();

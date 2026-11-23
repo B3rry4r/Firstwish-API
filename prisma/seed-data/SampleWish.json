@@ -2756,6 +2756,71 @@
     "/img/aisha-4.webp",
     "/img/aisha-7.webp"
    ]
+  },
+  {
+   "call": "Aisha",
+   "content": {
+    "credits": [
+     {
+      "handle": "@brightframe",
+      "name": "Bright Frame Studio",
+      "role": "Photography"
+     },
+     {
+      "handle": "@glowbytari",
+      "name": "Glow by Tari",
+      "role": "Makeup"
+     },
+     {
+      "handle": "@braidsbyene",
+      "name": "Braids by Ene",
+      "role": "Hair"
+     },
+     {
+      "handle": "@nkemstyles",
+      "name": "Nkem Styles",
+      "role": "Styling"
+     }
+    ],
+    "links": {
+     "book": "/app",
+     "download": {
+      "count": 8,
+      "files": [
+       "/img/aisha-1.webp",
+       "/img/aisha-2.webp",
+       "/img/aisha-3.webp",
+       "/img/aisha-5.webp",
+       "/img/aisha-6.webp",
+       "/img/aisha-8.webp",
+       "/img/aisha-4.webp",
+       "/img/aisha-7.webp"
+      ],
+      "size": "64 MB"
+     }
+    },
+    "note": {
+     "from": "Bright Frame Studio",
+     "text": "Thank you for trusting us with your twenty-fifth. You made this one easy."
+    },
+    "studio": "Bright Frame Studio"
+   },
+   "date": "07 · 11 · 2026",
+   "kind": "photographers",
+   "name": "Aisha",
+   "occasion": "your-finals",
+   "occasionName": "Your finals",
+   "photos": [
+    "/img/aisha-1.webp",
+    "/img/aisha-2.webp",
+    "/img/aisha-3.webp",
+    "/img/aisha-5.webp",
+    "/img/aisha-6.webp",
+    "/img/aisha-8.webp",
+    "/img/aisha-4.webp",
+    "/img/aisha-7.webp"
+   ],
+   "seedKey": "photographers/your-finals"
   }
  ]
 }

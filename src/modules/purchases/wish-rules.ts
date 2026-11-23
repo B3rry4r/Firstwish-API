@@ -1,7 +1,8 @@
 import type { Entitlements as EntitlementsRow } from "@prisma/client";
 import { grantOf } from "../price-book/entitlements.service";
 import { stateOf, type WishState } from "../wishes/wish-state";
-import { allowedLevel, heldAdds, REFUND_WORDS, styleTakingRefusal } from "../wishes/style-rule";
+import { allowedLevel, heldAdds, levelRank, REFUND_WORDS, styleTakingRefusal } from "../wishes/style-rule";
+import { isLevel } from "../styles/style-view";
 import type { Tx } from "./grants";
 
 export const TICKET_ORDER = ["moment", "keepsake", "signature", "premiere"] as const;
@@ -28,6 +29,23 @@ export function unsoldLines(book: EntitlementsRow, videoConfigured: boolean): Re
   return out;
 }
 export const NOT_SOLD_WORDS = "This is not on sale right now: it includes the portrait video, which cannot be made yet. Nothing was charged.";
+/**
+ * IL1: true when the ticket already includes what the extra gives, read from the book (never a list of names): every key of the extra's grant is a yes/no or a
+ * style level, and the ticket's own grant has it (Signature and Premiere include the premium style, the portrait video and the QR card). An extra that adds a
+ * number (photos, clips) is never included: it adds to what the ticket gives.
+ */
+export function includedInTicket(book: EntitlementsRow, ticket: string, sku: string): boolean {
+  const extra = grantOf(book, sku);
+  const own = grantOf(book, `ticket.${ticket}`);
+  if (!extra || !own) return false;
+  const keys = Object.keys(extra).filter((k) => k !== "sku");
+  if (keys.length === 0) return false;
+  return keys.every((k) => {
+    const v = extra[k];
+    if (k === "styleLevel") return isLevel(v) && isLevel(own[k]) && levelRank(own[k] as never) >= levelRank(v);
+    return v === true && own[k] === true;
+  });
+}
 export const REPEATABLE_EXTRAS = new Set(["extra.five-photos"]);
 
 export interface WishFacts {
@@ -106,7 +124,7 @@ export function assessExtra(w: WishFacts | null, payerId: string | null, sku: st
   if (w.state !== "draft" && w.state !== "sealed") return "wish_not_open_to_extras";
   if (!w.ticket) return "extra_needs_a_ticket";
   const takes = grantOf(book, `ticket.${w.ticket}`)?.takes;
-  if (!Array.isArray(takes) || !takes.includes(sku)) return "extra_not_taken_by_ticket";
+  if (!Array.isArray(takes) || !takes.includes(sku)) return includedInTicket(book, w.ticket, sku) ? "extra_in_ticket" : "extra_not_taken_by_ticket";
   if (w.adds.includes(sku) && !REPEATABLE_EXTRAS.has(sku)) return "extra_already_held";
   if (w.ticket === "keepsake") {
     const held = w.adds.filter((a) => a.startsWith("extra.")).reduce((s, a) => s + listKobo(a), 0n);
@@ -138,6 +156,7 @@ export const REASON_TEXT: Record<string, string> = {
   extra_needs_a_ticket: "Pick a ticket for this wish first.",
   extra_not_taken_by_ticket: "This ticket does not take that extra.",
   extra_not_sold: "The portrait video is not on sale right now. Nothing was charged.",
+  extra_in_ticket: "This ticket already includes that extra. Nothing more to buy.",
   extra_already_held: "This wish already has that extra.",
   keepsake_extras_ceiling: "Too many extras for a Keepsake.",
   keep_already_paid: "Someone else paid to keep this wish for the same time first.",

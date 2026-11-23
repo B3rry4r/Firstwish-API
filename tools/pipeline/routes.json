@@ -1427,6 +1427,12 @@
         "user:owner"
       ],
       "decision": "DEC-231"
+    },
+    "GET /v1/ticket-offers": {
+      "auth": [
+        "user"
+      ],
+      "decision": "DEC-320"
     }
   },
   "extraEndpoints": [
@@ -2324,18 +2330,32 @@
         "note": "204; every session ends; 403 fresh_sign_in_needed for a sign-in older than 10 minutes (DEC-158)"
       }
     },
-    "GET /v1/ticket-offers": {
-      "decision": "DEC-160",
-      "set": {
-        "ticket": "string (a ticket line of the price book, such as ticket.single)",
-        "extras": "array<string> (optional, repeatable ?extras=; extra lines of the price book)"
+    "GET /v1/ticket-offers": [
+      {
+        "decision": "DEC-160",
+        "set": {
+          "ticket": "string (a ticket line of the price book, such as ticket.single)",
+          "extras": "array<string> (optional, repeatable ?extras=; extra lines of the price book)"
+        },
+        "response": {
+          "entity": "TicketQuote",
+          "cardinality": "single",
+          "note": "one quote: lines in kobo, the total, the version used (DEC-160)"
+        }
       },
-      "response": {
-        "entity": "TicketQuote",
-        "cardinality": "single",
-        "note": "one quote: lines in kobo, the total, the version used (DEC-160)"
+      {
+        "decision": "DEC-320",
+        "set": {
+          "ticket": "string (a ticket line of the price book, such as ticket.single; optional when wish is named)",
+          "wish": "string Wish.id (optional; one of the caller's own wishes: the answer then says, for each ticket, whether it can be bought for that wish now)"
+        },
+        "response": {
+          "entity": "TicketQuote",
+          "cardinality": "single",
+          "note": "one quote: lines in kobo, the total, the version used (DEC-160); tickets: every ticket and whether it can be bought now (DEC-320)"
+        }
       }
-    },
+    ],
     "GET /v1/price-book": {
       "decision": "DEC-247",
       "response": {

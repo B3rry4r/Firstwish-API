@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "frozenAt": "2026-11-23T15:56:02Z",
+  "frozenAt": "2026-11-23T20:49:25Z",
   "framework": "nestjs",
   "generatedBy": "tools/pipeline/reconcile.py",
   "resources": [
@@ -26348,8 +26348,8 @@
           "path": "/v1/ticket-offers",
           "auth": [
             {
-              "kind": "role",
-              "role": "business"
+              "kind": "user",
+              "scope": "signed in"
             }
           ],
           "body": [
@@ -26362,16 +26362,24 @@
             },
             {
               "name": "ticket",
-              "type": "string (a ticket line of the price book, such as ticket.single)",
+              "type": "string (a ticket line of the price book, such as ticket.single; optional when wish is named)",
               "from": [
-                "DEC-160"
+                "DEC-160",
+                "DEC-320"
+              ]
+            },
+            {
+              "name": "wish",
+              "type": "string Wish.id (optional; one of the caller's own wishes: the answer then says, for each ticket, whether it can be bought for that wish now)",
+              "from": [
+                "DEC-320"
               ]
             }
           ],
           "response": {
             "entity": "TicketQuote",
             "cardinality": "single",
-            "note": "one quote: lines in kobo, the total, the version used (DEC-160)"
+            "note": "one quote: lines in kobo, the total, the version used (DEC-160); tickets: every ticket and whether it can be bought now (DEC-320)"
           },
           "sources": [
             {
@@ -26380,7 +26388,9 @@
             }
           ],
           "notes": [
-            "body by DEC-160"
+            "auth by DEC-320",
+            "body by DEC-160",
+            "body by DEC-320"
           ]
         }
       ]

@@ -31,6 +31,7 @@ import { WishPictures } from "./wish-pictures";
 import { approvedSubmissionOf } from "../styles/approved-document";
 import { kindHasOccasion, LAST_STEP } from "./kind-occasions";
 import { isLevel } from "../styles/style-view";
+import { addsFor } from "../wish-extras/wish-adds";
 import { allowedLevel, firstStyleFor, heldAdds, REFUND_WORDS, levelRank, offeredForWish, styleTakingRefusal } from "./style-rule";
 import { PriceBookService } from "../price-book/price-book.service";
 import { videoRefunded } from "../wish-extras/wish-extras";
@@ -230,7 +231,8 @@ export class WishesService {
     const [pics, videos] = await Promise.all([this.pictures.forWishes(shown), this.pictures.videoStates(shown, (id) => videoRefunded(this.prisma, book, rows.find((r) => r.id === id) as Wish))]);
     // the list carries `publish` as the detail does (where the owner's ask to be shown stands; null when none was made)
     const publishes = await this.showing.showing.publishStateOf(shown);
-    const one = (r: Wish): Obj => ({ ...this.wire(r, links.get(r.id)), pictures: pics.get(r.id) ?? [], video: videos.get(r.id) ?? "none", styleLevel: allowedLevel(book, r.ticket, r.adds), publish: publishes.get(r.id) ?? null });
+    const holds = await addsFor(this.prisma, book, rows.slice(0, limit)); // IL2: one query for the page
+    const one = (r: Wish): Obj => ({ ...this.wire(r, links.get(r.id)), pictures: pics.get(r.id) ?? [], video: videos.get(r.id) ?? "none", styleLevel: allowedLevel(book, r.ticket, r.adds), publish: publishes.get(r.id) ?? null, adds: holds.get(r.id) ?? [] });
     return toPage(rows.map(one), limit, (r) => ({ key: String(r.id), id: String(r.id) }));
   }
 
@@ -248,7 +250,9 @@ export class WishesService {
     // ID1: the ticket payment of this wish that waits to be paid (which ticket, its reference, when it lapses), null when none waits
     const waiting = !viaOrder ? await waitingTicketPayment(this.prisma, accountId, row.id, this.clock.now()) : null;
     const extrasOpen = viaOrder ? {} : await this.extrasOpenFor(row.id, book);
-    return { ...this.wire(row, (await this.linksFor([id])).get(id)), activity, publish, pictures, video, styleLevel, allowedStyles, extrasOpen, ticketPayment: waiting ? waitingView(waiting) : null };
+    // IL2: what the wish holds and where each came from (its ticket or a purchase), with the state of a refund; the owner's read only
+    const adds = (await addsFor(this.prisma, book, [row])).get(row.id) ?? [];
+    return { ...this.wire(row, (await this.linksFor([id])).get(id)), activity, publish, pictures, video, styleLevel, allowedStyles, extrasOpen, adds, ticketPayment: waiting ? waitingView(waiting) : null };
   }
 
   /**
@@ -306,6 +310,7 @@ export class WishesService {
       // HP3, HP5: the owner's list and single reads fill these in; every other owner answer says no pictures and no video here
       pictures: [],
       video: "none",
+      adds: [],
     };
   }
 
@@ -422,10 +427,10 @@ export class WishesService {
    * offered for the wish's kind and allowed by its ticket (the starter level where there is no ticket yet). A kind with no such style gets slug "" and no
    * level: the wish starts with no style, and sealing it is refused until a style is chosen (the maker's style step is required).
    */
-  private async pickStyle(db: Tx, book: EntitlementsRow, kind: string, ticket: string | null, occasion?: string | null): Promise<{ slug: string; level: string | null }> {
+  private async pickStyle(db: Tx, book: EntitlementsRow, kind: string, ticket: string | null, occasion?: string | null, adds: unknown = []): Promise<{ slug: string; level: string | null }> {
     const rows = await db.style.findMany({ where: { on: true }, orderBy: [{ house: { sort: "desc", nulls: "last" } }, { id: "asc" }], select: { slug: true, level: true, kinds: true, occasions: true } });
     if (rows.length === 0) throw AppError.conflict("no_style", "No style is on, so a wish cannot be started.");
-    const allowed = ticket ? allowedLevel(book, ticket, []) : "starter";
+    const allowed = ticket ? allowedLevel(book, ticket, adds) : "starter";
     const hit = firstStyleFor(rows, kind, allowed, occasion);
     return hit?.slug ? { slug: hit.slug, level: isLevel(hit.level) ? hit.level : "starter" } : { slug: "", level: null };
   }
@@ -579,10 +584,17 @@ export class WishesService {
           await this.checkStyleTaking(tx, book, { id, ...to, ticket: cur.ticket, adds: cur.adds, styleTakenLevel: cur.styleTakenLevel }, cur.styleSlug, false, true);
         } catch (e) {
           if (e instanceof AppError && e.getStatus() === 422) {
-            const words = `${e.message} Send a style made for the ${kindMoved ? `${to.kind} kind` : `${to.occasion} occasion`} in the same save.`;
-            throw AppError.validation({ style: words }, words);
-          }
-          throw e;
+            // IL4: the move sent no style (a style named, even the held one, is judged as before), so the server picks one by the one rule (`offeredForWish`, the ticket's level, the house's own first) as it does for a new draft;
+            // only when no style fits the wish as it will stand is the save refused, in words
+            const hit = input.style === undefined ? await this.pickStyle(tx, book, to.kind, cur.ticket, to.occasion, cur.adds) : { slug: "", level: null };
+            if (!hit.slug) {
+              const words = `${e.message} Send a style made for the ${kindMoved ? `${to.kind} kind` : `${to.occasion} occasion`} in the same save.`;
+              throw AppError.validation({ style: words }, words);
+            }
+            data.styleSlug = hit.slug;
+            data.styleTakenLevel = hit.level;
+            data.styleSubmissionId = await approvedSubmissionOf(tx, hit.slug);
+          } else throw e;
         }
       }
       if (input.keep !== undefined) data.keep = input.keep;

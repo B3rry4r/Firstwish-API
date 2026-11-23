@@ -1,10 +1,10 @@
-import { Body, Controller, createParamDecorator, ExecutionContext, Get, HttpCode, Param, Post, Put, Query, Res } from "@nestjs/common";
+import { Body, Controller, createParamDecorator, ExecutionContext, Get, Headers, HttpCode, Param, Post, Put, Query, Res } from "@nestjs/common";
 import type { Response } from "express";
 import { createHash } from "node:crypto";
 import { Transform } from "class-transformer";
-import { ArrayMaxSize, IsArray, IsOptional, IsString } from "class-validator";
+import { ArrayMaxSize, IsArray, IsOptional, IsString, ValidateIf } from "class-validator";
 import type { Principal } from "../../common/auth/principal";
-import { Public, Roles } from "../../common/auth/decorators";
+import { CurrentPrincipal, Public, Roles } from "../../common/auth/decorators";
 import {
   GetAdminPriceBookVersionsQueryDto,
   GetAdminPricesQueryDto,
@@ -28,8 +28,12 @@ import { PublicBookService } from "./public-book.service";
 
 /** E-213 (X13): ?ticket=ticket.single&extras=extra.a&extras=extra.b. One extra arrives as a string; it is read as a list of one. */
 export class TicketQuoteQueryDto {
+  @ValidateIf((o: { wish?: unknown }) => o.wish === undefined)
   @IsString()
-  ticket!: string;
+  ticket?: string;
+  @IsOptional()
+  @IsString()
+  wish?: string;
   @IsOptional()
   @Transform(({ value }) => (value === undefined ? undefined : Array.isArray(value) ? value : [value]))
   @IsArray()
@@ -63,10 +67,11 @@ export class PriceBookController {
   }
 
   /** E-213 (X13): one quote for a ticket and its extras, priced by the server from the book. */
-  @Roles("business")
+  @Roles("business", "person")
   @Get("ticket-offers")
-  offers(@Query() q: TicketQuoteQueryDto): Promise<TicketQuote> {
-    return this.pub.quoteTicket(q.ticket, q.extras ?? []);
+  offers(@Query() q: TicketQuoteQueryDto, @CurrentPrincipal() p: Principal | undefined, @Headers("x-business-id") business: string | undefined): Promise<TicketQuote> {
+    // IL3: a person reads it for their own wish (`wish`); the business side reads it as before. The service tells them apart.
+    return this.pub.offers(p, q, business);
   }
 
   /** E-123 (X16): ops reads too; the role table opens /admin/prices to ops, read only. */

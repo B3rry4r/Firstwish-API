@@ -284,8 +284,8 @@ export class RenderJobsService implements OnModuleInit {
     try {
       const owner = await this.db.wish.findUniqueOrThrow({ where: { id: c.wishId }, select: { accountId: true, erasedAt: true } });
       if (owner.erasedAt) throw new Error("the wish was erased"); // IK4a: nothing is made for an erased wish
-      const out = await this.renderer.render({ wishId: c.wishId, kind, width: c.width, height: c.height, seconds: c.seconds }, stop.signal);
-      tempPath = await this.ownTempFile(out.path);
+      const out = await this.renderer.render({ wishId: c.wishId, jobId, kind, width: c.width, height: c.height, seconds: c.seconds }, stop.signal);
+      tempPath = await this.ownTempFile(out.path, jobId);
       if (stop.signal.aborted) throw new Error("the render was stopped");
       // IK4a: erased while it rendered (between two looks): nothing is written
       if ((await this.db.wish.findUnique({ where: { id: c.wishId }, select: { erasedAt: true } }))?.erasedAt) throw new Error("the wish was erased");
@@ -314,14 +314,14 @@ export class RenderJobsService implements OnModuleInit {
   }
 
   /**
-   * L1: the renderer's file must be a plain file made by a render, directly in this process's temp folder: a path outside it, or a link
+   * L1: the renderer's file must be a plain file made by a render, directly in this process's temp folder with this job's id in its name (N3): a path outside it, or a link
    * (even to a file inside), is refused with words in the log, before anything is read, and nothing is deleted for it. Answers the path.
    */
-  private async ownTempFile(path: string): Promise<string> {
+  private async ownTempFile(path: string, jobId: string): Promise<string> {
     const home = await realpath(tmpdir());
     const p = resolve(path);
-    const inside = (dirname(p) === home || dirname(p) === resolve(tmpdir())) && basename(p).startsWith(RENDER_TEMP_PREFIX);
-    if (!inside) throw new Error(`the renderer's file is outside the render temp folder (${basename(p)}); it was not read`);
+    const inside = (dirname(p) === home || dirname(p) === resolve(tmpdir())) && basename(p).startsWith(`${RENDER_TEMP_PREFIX}${jobId}-`);
+    if (!inside) throw new Error(`the renderer's file is outside the render temp folder or is not this job's (${basename(p)}); it was not read`);
     const st = await lstat(p);
     if (!st.isFile()) throw new Error(`the renderer's file is a link or not a plain file (${basename(p)}); it was not read`);
     return join(home, basename(p));

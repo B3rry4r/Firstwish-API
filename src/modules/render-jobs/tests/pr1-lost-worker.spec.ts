@@ -1,12 +1,14 @@
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { readdir } from "node:fs/promises";
 import { join } from "node:path";
+const os = jest.requireActual<typeof import("node:os")>("node:os");
 import { tmpdir } from "node:os";
 import { Logger } from "@nestjs/common";
 import { JobsService } from "../../jobs/jobs.service";
 import { RenderJobsService } from "../render-jobs.service";
 import { RENDER_TEMP_PREFIX, StandinVideoRenderer, VideoRenderer, type RenderedFile, type RenderRequest } from "../video-renderer";
 import { boot, routeStorage } from "../../concierge/tests/kit";
+import { ownDatabase } from "../../../../test/kit/own-db";
 
 /** P-R1: every case goes THROUGH THE JOB PATH (the queue's claim and run), on the stand-in clock where time matters. */
 const NOW = new Date("2027-07-07T09:00:00.000Z");
@@ -37,10 +39,14 @@ describe("P-R1: the render job path", () => {
   let jobs: JobsService;
   let envOf: { RENDER_CONCURRENCY: number };
   // a temp folder of this spec's own, so what other specs list in the shared one is not disturbed
-  const tmpWas = process.env.TMPDIR;
+  let tmpSpy: jest.SpyInstance | undefined;
   const own = mkdtempSync(join(tmpdir(), "pr1-tmp-"));
+  // N1: this spec changes the render-video limit row, so it has a database of its own
+  const ownDb = ownDatabase("pr1");
   beforeAll(async () => {
-    process.env.TMPDIR = own;
+    ownDb.use();
+    // process.env is a copy inside jest, so os.tmpdir() is pointed at the folder directly
+    tmpSpy = jest.spyOn(os, "tmpdir").mockReturnValue(own);
     r = new Odd();
     k = await boot("pr1", NOW, { configure: (b) => b.overrideProvider(VideoRenderer).useValue(r) });
     route = routeStorage(k.t);
@@ -51,9 +57,9 @@ describe("P-R1: the render job path", () => {
   afterAll(async () => {
     route.restore();
     await k.t.close();
-    if (tmpWas === undefined) delete process.env.TMPDIR;
-    else process.env.TMPDIR = tmpWas;
+    tmpSpy?.mockRestore();
     rmSync(own, { recursive: true, force: true });
+    ownDb.drop();
   });
   beforeEach(async () => {
     Object.assign(r, { fileBytes: null, hold: null, holdFirstOnly: false, takes: 0, failWith: null, fixedPath: null, aborted: 0, maxActive: 0 });
@@ -257,8 +263,13 @@ describe("P-R1: the render job path", () => {
           path = join(tmpdir(), `${RENDER_TEMP_PREFIX}pr1-link-${process.pid}.mp4`);
           symlinkSync(victim, path);
         }
-        r.fixedPath = path;
         const { id } = await asked();
+        if (name === "symlink") {
+          rmSync(path, { force: true });
+          path = join(tmpdir(), `${RENDER_TEMP_PREFIX}${id}-link.mp4`);
+          symlinkSync(victim, path);
+        }
+        r.fixedPath = path;
         const warn = jest.spyOn(Logger.prototype, "warn").mockImplementation(() => undefined);
         let streamed = 0;
         globalThis.fetch = (async (input: unknown, init?: RequestInit) => {
@@ -279,6 +290,30 @@ describe("P-R1: the render job path", () => {
           if (name === "symlink") rmSync(path, { force: true });
         }
       });
+    }
+  });
+
+  it("N3: a renderer that returns another running job's file: refused, nothing read, the other job's file is not deleted", async () => {
+    const other = join(tmpdir(), `${RENDER_TEMP_PREFIX}${"00000000-0000-4000-8000-000000000001"}-other.mp4`);
+    writeFileSync(other, "another job's video");
+    r.fixedPath = other;
+    const { id } = await asked();
+    const warn = jest.spyOn(Logger.prototype, "warn").mockImplementation(() => undefined);
+    let streamed = 0;
+    globalThis.fetch = (async (input: unknown, init?: RequestInit) => {
+      if (!String(input).startsWith("https://storage.standin.invalid/")) return real(input as never, init);
+      for await (const c of init?.body as unknown as AsyncIterable<Uint8Array>) streamed += c.length;
+      return new Response("", { status: 200 });
+    });
+    try {
+      await jobs.runDue(5, [id]);
+      expect((await row(id)).status).toBe("failed");
+      expect(streamed).toBe(0);
+      expect(existsSync(other)).toBe(true);
+      expect(warn.mock.calls.map((c) => String(c[0])).join("\n")).toMatch(/not this job's/);
+    } finally {
+      warn.mockRestore();
+      rmSync(other, { force: true });
     }
   });
 

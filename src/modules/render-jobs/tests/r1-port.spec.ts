@@ -1,9 +1,10 @@
 import { createHash } from "node:crypto";
-import { readFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { readdir, rm, stat } from "node:fs/promises";
 import { join } from "node:path";
 import { setFlagsFromString } from "node:v8";
 import { runInNewContext } from "node:vm";
+const os = jest.requireActual<typeof import("node:os")>("node:os");
 import { tmpdir } from "node:os";
 import { EnvError, loadEnv } from "../../../common/env/env";
 import { MANIFEST_VARS } from "../../../common/env/env.schema";
@@ -13,6 +14,7 @@ import { RenderJobsService, RENDER_LEASE_MS } from "../render-jobs.service";
 import { NoVideoRenderer, RENDER_TEMP_PREFIX, StandinVideoRenderer, VideoRenderer, videoRendererFor } from "../video-renderer";
 import { boot, ids, routeStorage } from "../../concierge/tests/kit";
 import { RUN } from "../../../../test/kit/unique";
+import { ownDatabase } from "../../../../test/kit/own-db";
 
 const NOW = new Date("2027-07-07T09:00:00.000Z");
 const MB = 1024 * 1024;
@@ -47,7 +49,14 @@ describe("R1 cases 1 to 4: the video port gives a file, takes an abort, has its 
   let renderer: StandinVideoRenderer;
   let svc: RenderJobsService;
   let jobs: JobsService;
+  // N1: this describe changes the render-video limit row and lists the temp folder, so it has a database and a temp folder of its own
+  const own = ownDatabase("r1p");
+  let tmpSpy: jest.SpyInstance | undefined;
+  const ownTmp = mkdtempSync(join(tmpdir(), "r1p-tmp-"));
   beforeAll(async () => {
+    own.use();
+    // process.env is a copy inside jest, so os.tmpdir() is pointed at the folder directly
+    tmpSpy = jest.spyOn(os, "tmpdir").mockReturnValue(ownTmp);
     renderer = new StandinVideoRenderer();
     k = await boot("r1p", NOW, { configure: (b) => b.overrideProvider(VideoRenderer).useValue(renderer) });
     route = routeStorage(k.t);
@@ -57,6 +66,9 @@ describe("R1 cases 1 to 4: the video port gives a file, takes an abort, has its 
   afterAll(async () => {
     route.restore();
     await k.t.close();
+    tmpSpy?.mockRestore();
+    rmSync(ownTmp, { recursive: true, force: true });
+    own.drop();
   });
   beforeEach(async () => {
     route.fail = false;
@@ -114,7 +126,7 @@ describe("R1 cases 1 to 4: the video port gives a file, takes an abort, has its 
       k.t.storage.put(key, Buffer.from("x"), "video/mp4");
       return new Response("", { status: 200 });
     };
-    const before = leftovers();
+    const before = await leftovers();
     collect();
     const m0 = process.memoryUsage();
     try {
@@ -131,7 +143,7 @@ describe("R1 cases 1 to 4: the video port gives a file, takes an abort, has its 
     const f = await k.db.storedFile.findUniqueOrThrow({ where: { id: (await row(id)).outputFileId as string } });
     expect(f).toMatchObject({ ownerAccountId: a.id, purpose: "render", kind: "video", bytes: BigInt(40 * MB) });
     expect(f.sha256).toBe(seen.sha.digest("hex"));
-    expect(await leftovers()).toEqual(await before);
+    expect(await leftovers()).toEqual(before);
 
     // a failure after the file was made (storage refuses it): still no temp file, and the person can ask again
     const second = await asked();
@@ -140,12 +152,12 @@ describe("R1 cases 1 to 4: the video port gives a file, takes an abort, has its 
     expect(await svc.run(second.id)).toBe("failed");
     route.fail = false;
     expect((await row(second.id)).status).toBe("failed");
-    expect(await leftovers()).toEqual(await before);
+    expect(await leftovers()).toEqual(before);
     // a failure in the renderer itself
     renderer.failWith = "boom";
     const third = await asked();
     expect(await svc.run(third.id)).toBe("failed");
-    expect(await leftovers()).toEqual(await before);
+    expect(await leftovers()).toEqual(before);
     renderer.failWith = null;
     expect((await ask(second.a.auth, second.w).expect(200)).body.item.status).toBe("queued");
   }, 60_000);

@@ -10,6 +10,8 @@ export type RenderKind = "status-video" | "keepsake-export";
 
 export interface RenderRequest {
   wishId: string;
+  /** N3: the render job's id; the file the renderer writes is named fw-render-<jobId>-..., and the job takes back only a file with its own id in the name. */
+  jobId?: string;
   kind: RenderKind;
   width: number;
   height: number;
@@ -91,7 +93,7 @@ export class StandinVideoRenderer extends VideoRenderer {
     let path: string | null = null;
     try {
       if (this.failWith) throw new Error(this.failWith);
-      path = join(tmpdir(), `${RENDER_TEMP_PREFIX}${randomUUID()}.mp4`);
+      path = join(tmpdir(), `${RENDER_TEMP_PREFIX}${input.jobId ?? "direct"}-${randomUUID()}.mp4`);
       const size = await this.write(path, input);
       const wait = this.hold && !(this.holdFirstOnly && this.rendered.length > 1) ? this.hold : null;
       if (wait || this.takes > 0) {

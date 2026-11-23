@@ -1187,3 +1187,7 @@ HG1 (give race) Two staff giving one Concierge order: the code is right (overlap
   a Concierge wish): it picks the first style that is on, offered for that kind and allowed by the ticket (the
   starter level where there is no ticket yet). The list of styles a wish may take (`allowedStyles`) says exactly
   what a save would accept: level AND kind.
+- IJ3a (23 Nov, the lead, on the re-check of the fifteenth round; Default (lead), owner may override): an extra
+  whose refund has been sent no longer counts as held, from the moment the refund is sent: while that refund is
+  open the wish cannot take a style that needs the extra (refused in words that say a refund for it is on its
+  way), so nobody ends with the premium style and the money back.

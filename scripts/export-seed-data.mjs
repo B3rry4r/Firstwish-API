@@ -148,35 +148,24 @@ const TABLES = {
 };
 
 /**
- * Seeded ONCE from the web (API-BASE-16, IJ1): the designed sample wishes the web's previews play (lib/engine/adapt.ts sampleContent, the kinds and
- * occasions of lib/catalog.ts, the pictures of SAMPLE_PHOTOS). The file is written only when it is not there yet; from then on the API owns it and
- * this script never reads those web files for it again (as a style's "get" is owned): a change in the web's adapt.ts changes nothing here, and the
- * files only these rows read are left out of SOURCE.json, so no web change can make the GD3 test ask for a new export.
+ * SampleWish (API-BASE-16, IJ1, IJ1a) was seeded once from the web's sample wishes; the web no longer holds them, so this script never
+ * reads the web for it and never writes it: prisma/seed-data/SampleWish.json is the API's own data (as a style's "get" is). Present, it is
+ * left as it is; missing, the run stops before writing anything. The files only these rows once read are not in SOURCE.json.
  */
-const ONCE = {
-  SampleWish: {
-    from: "lib/engine/adapt.ts (sampleContent for each kind and occasion of lib/catalog.ts, SAMPLE_PHOTOS)", key: (r) => `${r.kind}/${r.occasion}`,
-    rows: () => {
-      const { categories } = web("lib/catalog.ts");
-      const { sampleContent, SAMPLE_PHOTOS } = web("lib/engine/adapt.ts");
-      const out = [];
-      for (const c of categories.filter((x) => x.isKind)) {
-        for (const o of c.occasions) {
-          const s = sampleContent(c.slug, o.slug);
-          out.push({ kind: c.slug, occasion: o.slug, occasionName: o.name, call: s.call, name: s.name, date: s.date, content: s.content, photos: [...SAMPLE_PHOTOS] });
-        }
-      }
-      return out;
-    },
-  },
-};
+const ONCE = ["SampleWish"];
 
 /** Owned here since 17 Nov 2026 (the web's fixtures were removed): recorded in prisma/seed-data, never read from the web, never rewritten. */
 const OWNED = ["MessageTemplate", "Provider", "SavedReply", "SampleWish"];
 const OWNED_NOTE = "owned here since 17 Nov 2026 (the web's fixtures were removed)";
-const OWNED_ONCE = new Set(Object.keys(ONCE));
+const OWNED_ONCE = new Set(ONCE);
 
 const sortKeys = (v) => (Array.isArray(v) ? v.map(sortKeys) : v && typeof v === "object" ? Object.fromEntries(Object.keys(v).sort().map((k) => [k, sortKeys(v[k])])) : v);
+for (const table of ONCE) {
+  if (!existsSync(join(OUT, `${table}.json`))) {
+    console.error(`${table}: prisma/seed-data/${table}.json is missing. That file is the API's own data (the web no longer holds the sample wishes): restore it from git (git checkout -- prisma/seed-data/${table}.json). Nothing was written.`);
+    process.exit(1);
+  }
+}
 mkdirSync(OUT, { recursive: true });
 for (const [table, t] of Object.entries(TABLES)) {
   const rows = t.rows().map((r) => sortKeys(plain(r)));
@@ -189,15 +178,7 @@ for (const [table, t] of Object.entries(TABLES)) {
 }
 
 const filesOfTables = [...readFiles];
-for (const [table, t] of Object.entries(ONCE)) {
-  if (existsSync(join(OUT, `${table}.json`))) { console.log(`${table}: owned here since its first export, left as it is`); continue; }
-  const rows = t.rows().map((r) => sortKeys(plain(r)));
-  if (!rows.length) throw new Error(`${table}: the web app's ${t.from} gave no rows`);
-  const keys = rows.map(t.key);
-  if (new Set(keys).size !== keys.length) throw new Error(`${table}: two rows share a key`);
-  writeFileSync(join(OUT, `${table}.json`), JSON.stringify({ table, from: `Firstwish-web ${t.from}; seeded once, owned here after`, rows: rows.map((r, i) => ({ seedKey: keys[i], ...r })) }, null, 1) + "\n");
-  console.log(`${table}: ${rows.length} rows from ${t.from} (first and only export)`);
-}
+for (const table of ONCE) console.log(`${table}: owned here since its first export, left as it is`);
 
 // SOURCE.json: each web file read, its path relative to the web repo and the sha256 of its bytes. A test that has the web
 // checkout compares these with the files, so a web change with no new export fails there.

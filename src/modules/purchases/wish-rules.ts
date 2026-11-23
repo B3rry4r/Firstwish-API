@@ -1,7 +1,7 @@
 import type { Entitlements as EntitlementsRow } from "@prisma/client";
 import { grantOf } from "../price-book/entitlements.service";
 import { stateOf, type WishState } from "../wishes/wish-state";
-import { allowedLevel, styleTakingRefusal } from "../wishes/style-rule";
+import { allowedLevel, heldAdds, REFUND_WORDS, styleTakingRefusal } from "../wishes/style-rule";
 import type { Tx } from "./grants";
 
 export const TICKET_ORDER = ["moment", "keepsake", "signature", "premiere"] as const;
@@ -61,16 +61,17 @@ export function assessTicket(w: WishFacts | null, payerId: string | null, ticket
  * IJ2: a ticket is bought for a wish that already holds a style: the style must be on, made for the wish's kind, and at a level this ticket allows
  * (the level the wish took it at; a premium-style extra the wish holds lifts a Keepsake). The reason is a code for the refused line, the words say which rule.
  */
-export async function assessTicketStyle(db: Pick<Tx, "style">, w: WishFacts, ticket: string, book: EntitlementsRow): Promise<{ reason: string; words: string } | null> {
+export async function assessTicketStyle(db: Pick<Tx, "style" | "purchaseGrant">, w: WishFacts, ticket: string, book: EntitlementsRow): Promise<{ reason: string; words: string } | null> {
   const style = await db.style.findUnique({ where: { slug: w.styleSlug }, select: { name: true, level: true, kinds: true, on: true } });
   if (!style) return null;
-  const allowed = allowedLevel(book, ticket, w.adds);
+  const held = await heldAdds(db, w.id, w.adds); // IJ3a: an extra whose refund was sent no longer counts
+  const allowed = allowedLevel(book, ticket, held.adds);
   const off = styleTakingRefusal(null, ticket, w.kind, style, { checkKind: false });
   if (off) return { reason: "style_not_offered", words: off };
   const kind = styleTakingRefusal(null, ticket, w.kind, style, { checkOn: false });
   if (kind) return { reason: "style_wrong_kind", words: kind };
   const level = styleTakingRefusal(allowed, ticket, w.kind, style, { checkOn: false, checkKind: false, level: w.styleTakenLevel });
-  return level ? { reason: "style_above_ticket", words: level } : null;
+  return level ? { reason: "style_above_ticket", words: held.refunding ? `${level} ${REFUND_WORDS}` : level } : null;
 }
 
 /** An extra: the ticket must take it, it is not held twice, and a Keepsake stays under its extras ceiling (list prices, in kobo). */

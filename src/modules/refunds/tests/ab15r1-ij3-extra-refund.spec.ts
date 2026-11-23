@@ -203,4 +203,90 @@ describe("API-BASE-15 round 1 H1 (IJ3): refunding the premium-style extra on its
     expect(await row(id)).toMatchObject({ ticket: null, adds: [] });
     expect((await db.payment.findUniqueOrThrow({ where: { id: pid } })).status).toBe("refunded");
   });
+
+  describe("IJ3a: from the moment its refund is sent the extra no longer counts as held", () => {
+    const failed = (reference: string) => {
+      const body = JSON.stringify({ event: "refund.failed", data: { id: ++evSeq, transaction_reference: reference, failure_reason: "The bank said no." } });
+      return t.http().post("/v1/webhooks/paystack").set("content-type", "application/json").set("x-paystack-signature", t.payments.sign(body)).send(body);
+    };
+    const premiumHeld = async (w: string) => (await row(w)).styleSlug === "reel";
+
+    it("refund sent, then the Premium style picked: refused in words (PATCH, read, seal on the allowed style is fine); processed: the money is back, the extra goes, the style is the allowed one", async () => {
+      const u = await person();
+      const w = await keepsake(u);
+      const x = await payExtra(u, w);
+      const s = await startRefund(x.id, x.total);
+      expect(s.status).toBe(201);
+      expect((await approve(s.body.id)).status).toBe(200); // sent
+      expect((await db.refund.findUniqueOrThrow({ where: { id: s.body.id } })).status).toBe("sent");
+      const no = await patch(u, w, { style: "reel" });
+      expect(no.status).toBe(422);
+      expect(no.body.error.fields.style).toMatch(/Keepsake ticket takes Standard styles and below/);
+      expect(no.body.error.fields.style).toMatch(/A refund for the premium-style extra is on its way/);
+      const read = await t.http().get(`/v1/wishes/${w}`).set(auth(u.token));
+      expect(read.body.styleLevel).toBe("standard");
+      expect(read.body.allowedStyles).not.toContain("reel");
+      expect(read.body.allowedStyles).toContain("status");
+      expect((await patch(u, w, { style: "polaroid-table" })).status).toBe(200); // a Standard style is still fine
+      expect((await processed(x.reference, x.total)).status).toBe(200);
+      expect(await row(w)).toMatchObject({ adds: [], styleSlug: "polaroid-table" });
+      expect((await db.payment.findUniqueOrThrow({ where: { id: x.id } })).status).toBe("refunded");
+      expect((await db.refund.findUniqueOrThrow({ where: { id: s.body.id } })).note ?? "").not.toMatch(/kept_style_needs_extra/);
+      expect((await patch(u, w, { style: "reel" })).status).toBe(422); // the extra is gone: a Premium style is refused as for any Keepsake
+    });
+
+    it("the seal of a wish whose style needs the extra, after the refund was sent through a path that skipped the rule, is refused in words", async () => {
+      const u = await person();
+      const w = await keepsake(u);
+      const x = await payExtra(u, w);
+      const s = await startRefund(x.id, x.total);
+      expect((await approve(s.body.id)).status).toBe(200);
+      await db.wish.update({ where: { id: w }, data: { styleSlug: "reel", styleTakenLevel: "premium" } }); // written round the rule, as old data could be
+      const sealed = await seal(u, w);
+      expect(sealed.status).toBe(422);
+      expect(sealed.body.error.fields.style).toMatch(/A refund for the premium-style extra is on its way/);
+    });
+
+    it("a refund that fails: the extra counts again and the Premium style can be picked", async () => {
+      const u = await person();
+      const w = await keepsake(u);
+      const x = await payExtra(u, w);
+      const s = await startRefund(x.id, x.total);
+      expect((await approve(s.body.id)).status).toBe(200);
+      expect((await patch(u, w, { style: "reel" })).status).toBe(422);
+      expect((await failed(x.reference)).status).toBe(200);
+      expect((await db.refund.findUniqueOrThrow({ where: { id: s.body.id } })).status).toBe("failed");
+      expect((await patch(u, w, { style: "reel" })).status).toBe(200);
+      expect(await row(w)).toMatchObject({ adds: [EXTRA], styleSlug: "reel" });
+    });
+
+    it("30 style changes against the refund being sent, five times: the customer ends with the Premium style or with the money, never both", async () => {
+      for (let round = 0; round < 5; round++) {
+        const u = await person();
+        const w = await keepsake(u);
+        const x = await payExtra(u, w);
+        const s = await startRefund(x.id, x.total);
+        expect(s.status).toBe(201);
+        const version = (await row(w)).version;
+        const [sent, ...changes] = await Promise.all([
+          approve(s.body.id),
+          ...Array.from({ length: 30 }, () => t.http().patch(`/v1/wishes/${w}`).set(auth(u.token)).send({ version, style: "reel" })),
+        ]);
+        expect([200, 409]).toContain(sent.status);
+        if (sent.status === 200) await processed(x.reference, x.total);
+        const pay = await db.payment.findUniqueOrThrow({ where: { id: x.id } });
+        const wish = await row(w);
+        const style = wish.styleSlug === "reel";
+        const money = pay.status === "refunded";
+        expect([round, style && money]).toEqual([round, false]);
+        expect(style || money).toBe(true);
+        if (money) expect(wish.adds).toEqual([]);
+        else expect(wish.adds).toEqual([EXTRA]);
+        const kept = await db.refund.findUniqueOrThrow({ where: { id: s.body.id } });
+        expect(kept.note ?? "").not.toMatch(/kept_style_needs_extra/);
+        expect(changes.filter((c) => c.status === 200).length).toBeLessThanOrEqual(1);
+        expect(await premiumHeld(w)).toBe(style);
+      }
+    }, 120_000);
+  });
 });

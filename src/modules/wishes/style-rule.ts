@@ -1,4 +1,4 @@
-import type { Entitlements as EntitlementsRow } from "@prisma/client";
+import type { Entitlements as EntitlementsRow, Prisma } from "@prisma/client";
 import { grantOf } from "../price-book/entitlements.service";
 import { isLevel, LEVEL_NAME, LEVELS, type Level } from "../styles/style-view";
 
@@ -67,4 +67,19 @@ export function styleTakingRefusal(
  */
 export function firstStyleFor<T extends { slug: string | null; level: string | null; kinds: unknown; on?: boolean | null }>(rows: readonly T[], kind: string, allowed: Level | null): T | undefined {
   return rows.find((r) => !!r.slug && r.on !== false && offeredForKind(r.kinds, kind) && (allowed === null || levelRank(isLevel(r.level) ? r.level : "starter") <= levelRank(allowed)));
+}
+
+export const REFUND_WORDS = "A refund for the premium-style extra is on its way, so the extra no longer counts.";
+
+/**
+ * IJ3a: the extras a wish holds for its style rule. An extra whose refund has been SENT (an open refund of its payment, status sent) no longer counts as held:
+ * the wish's style rule treats it as gone. A refund that failed or was cancelled is no longer sent, so the extra counts again. `refunding` says one was dropped.
+ */
+export async function heldAdds(db: Pick<Prisma.TransactionClient, "purchaseGrant">, wishId: string | null | undefined, adds: unknown): Promise<{ adds: unknown; refunding: boolean }> {
+  const list = Array.isArray(adds) ? adds : [];
+  if (!wishId || !list.includes(PREMIUM_EXTRA)) return { adds, refunding: false };
+  const sent = await db.purchaseGrant.findFirst({ where: { wishId, kind: "extra", sku: PREMIUM_EXTRA, revokedAt: null, refusedReason: null, payment: { refundByPayment: { some: { status: "sent" } } } }, select: { id: true } });
+  if (!sent) return { adds, refunding: false };
+  const i = list.lastIndexOf(PREMIUM_EXTRA);
+  return { adds: list.filter((_, k) => k !== i), refunding: true };
 }

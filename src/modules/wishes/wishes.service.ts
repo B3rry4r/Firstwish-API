@@ -30,7 +30,7 @@ import { WishPictures } from "./wish-pictures";
 import { approvedSubmissionOf } from "../styles/approved-document";
 import { kindHasOccasion, LAST_STEP } from "./kind-occasions";
 import { isLevel } from "../styles/style-view";
-import { allowedLevel, firstStyleFor, levelRank, offeredForKind, styleTakingRefusal } from "./style-rule";
+import { allowedLevel, firstStyleFor, heldAdds, REFUND_WORDS, levelRank, offeredForKind, styleTakingRefusal } from "./style-rule";
 import { PriceBookService } from "../price-book/price-book.service";
 import { assessExtra, readWish } from "../purchases/wish-rules";
 import { DEFAULT_KIND, DEFAULT_OCCASION, isBareStart, START_KEY } from "./wish-start";
@@ -239,7 +239,7 @@ export class WishesService {
     const pictures = (await this.pictures.forWishes([row.id])).get(row.id) ?? [];
     const video = (await this.pictures.videoStates([row.id])).get(row.id) ?? "none";
     const book = await this.entitlements.row();
-    const styleLevel = allowedLevel(book, row.ticket, row.adds);
+    const styleLevel = allowedLevel(book, row.ticket, (await heldAdds(this.prisma, row.id, row.adds)).adds);
     const allowedStyles = await this.allowedStyles(styleLevel, row.kind);
     // ID1: the ticket payment of this wish that waits to be paid (which ticket, its reference, when it lapses), null when none waits
     const waiting = !viaOrder ? await waitingTicketPayment(this.prisma, accountId, row.id, this.clock.now()) : null;
@@ -426,12 +426,16 @@ export class WishesService {
    * 422 on `style`, with words. Returns the style's level, which the wish keeps (`styleTakenLevel`). A wish made on an order is a Signature wish (IE1).
    * At the seal (`atSeal`) only the level is judged, by the level the wish took the style at: the style's kind and switch were judged when it took it.
    */
-  private async checkStyleTaking(db: Tx | PrismaService, book: EntitlementsRow, w: { kind: string; ticket: string | null; adds: unknown; styleTakenLevel?: string | null }, slug: string, atSeal = false, keepsOff = false): Promise<string> {
-    const allowed = allowedLevel(book, w.ticket, w.adds);
+  private async checkStyleTaking(db: Tx | PrismaService, book: EntitlementsRow, w: { id?: string; kind: string; ticket: string | null; adds: unknown; styleTakenLevel?: string | null }, slug: string, atSeal = false, keepsOff = false): Promise<string> {
+    const held = await heldAdds(db, w.id, w.adds); // IJ3a
+    const allowed = allowedLevel(book, w.ticket, held.adds);
     const style = await db.style.findUnique({ where: { slug }, select: { name: true, level: true, kinds: true, on: true } });
     if (!style) return "starter";
     const words = styleTakingRefusal(allowed, w.ticket, w.kind, style, atSeal ? { level: w.styleTakenLevel, checkOn: false, checkKind: false } : keepsOff ? { level: w.styleTakenLevel, checkOn: false } : {});
-    if (words) throw AppError.validation({ style: words }, words);
+    if (words) {
+      const said = held.refunding ? `${words} ${REFUND_WORDS}` : words;
+      throw AppError.validation({ style: said }, said);
+    }
     return isLevel(style.level) ? style.level : "starter";
   }
 
@@ -551,14 +555,14 @@ export class WishesService {
         data.styleSlug = await this.styleSlug(tx, input.style, cur.styleSlug);
         // HQ5: once a ticket is chosen, a style above what it allows is refused with words
         if (data.styleSlug !== cur.styleSlug) {
-          data.styleTakenLevel = await this.checkStyleTaking(tx, book, { kind: kind ?? cur.kind, ticket: cur.ticket, adds: cur.adds }, data.styleSlug);
+          data.styleTakenLevel = await this.checkStyleTaking(tx, book, { id, kind: kind ?? cur.kind, ticket: cur.ticket, adds: cur.adds }, data.styleSlug);
           data.styleSubmissionId = await approvedSubmissionOf(tx, data.styleSlug); // II3: a new style is taken at its current approved version
         }
       }
       // IJ4: a new kind with a style held: the style must be offered for the new kind, or be replaced in the same save (a held style that went off may stay)
       if (kind !== undefined && kind !== cur.kind && cur.styleSlug && (data.styleSlug === undefined || data.styleSlug === cur.styleSlug)) {
         try {
-          await this.checkStyleTaking(tx, book, { kind, ticket: cur.ticket, adds: cur.adds, styleTakenLevel: cur.styleTakenLevel }, cur.styleSlug, false, true);
+          await this.checkStyleTaking(tx, book, { id, kind, ticket: cur.ticket, adds: cur.adds, styleTakenLevel: cur.styleTakenLevel }, cur.styleSlug, false, true);
         } catch (e) {
           if (e instanceof AppError && e.getStatus() === 422) {
             const words = `${e.message} Send a style made for the ${kind} kind in the same save.`;
@@ -821,7 +825,7 @@ export class WishesService {
       // A refusal rolls the whole transaction back: nothing drawn, charged or sealed.
       const ended = await tx.wish.findUniqueOrThrow({ where: { id }, select: { kind: true, ticket: true, adds: true, styleSlug: true, styleTakenLevel: true } });
       if (!ended.styleSlug) throw AppError.validation({ style: "Choose a style before sealing." }, "Choose a style before sealing.");
-      await this.checkStyleTaking(tx, book, ended, ended.styleSlug, true);
+      await this.checkStyleTaking(tx, book, { id, ...ended }, ended.styleSlug, true);
       const no = await this.issueNumber(tx);
       // ZB3: a client wish shares its wish's number once the wish has one.
       await tx.clientWish.updateMany({ where: { wishId: id }, data: { no } });

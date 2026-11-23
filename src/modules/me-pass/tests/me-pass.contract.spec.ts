@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { PrismaService } from "../../../common/db/prisma.service";
 import { UuidV7Maker } from "../../../common/ids/uuidv7";
 import { createTestApp, TestApp } from "../../../../test/kit/app";
+import { ownDatabase } from "../../../../test/kit/own-db";
 import { SettlementService } from "../../payments/settlement.service";
 import { RUN } from "../../../../test/kit/unique";
 
@@ -15,18 +16,24 @@ const run = RUN;
 let seq = 0;
 
 describe("B22 the Pass read (E-83)", () => {
+  // This spec CHANGES a shared catalogue row (it changes the entitlements book's pass figure), which other specs read in the shared database: it has a database of its own.
+  const own = ownDatabase("mepass");
   let t: TestApp;
   let db: PrismaService;
   let settle: SettlementService;
 
   beforeAll(async () => {
+    own.use();
     t = await createTestApp({ now: NOW });
     db = t.app.get(PrismaService);
     settle = t.app.get(SettlementService);
     const r = spawnSync(process.execPath, [join(ROOT, "scripts/seed.mjs")], { cwd: ROOT, env: process.env, encoding: "utf8" });
     if (r.status !== 0) throw new Error(`seed failed: ${r.stderr}`);
   });
-  afterAll(() => t.close());
+  afterAll(async () => {
+    await t.close();
+    own.drop();
+  });
   beforeEach(() => t.clock.set(NOW));
 
   async function user() {

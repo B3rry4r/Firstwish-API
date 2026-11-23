@@ -12,7 +12,7 @@ import { GrantStore, type GrantRow, type Tx } from "./grants";
 import { holderKey, KeepProofs } from "./keep-proof";
 import { PassService } from "./pass.service";
 import { WishHandlers } from "./wish-handlers";
-import { assessExtra, assessKeep, assessTicket, readWish, REASON_TEXT } from "./wish-rules";
+import { assessExtra, assessKeep, assessTicket, assessTicketStyle, readWish, REASON_TEXT } from "./wish-rules";
 import { canMove } from "../concierge/order-state";
 import { hiddenFromBuyer } from "../wishes/wish-shown";
 import { IdGenerator } from "../../common/ports/ids.port";
@@ -193,5 +193,10 @@ export class PurchasesService implements OnModuleInit {
     // GG3: the app sells no paid upgrade, so a ticket line for a wish that already has a ticket (paid or from the Pass) is refused at start
     if (!why && group === "ticket" && w?.ticket) why = "wish_has_ticket";
     if (why) throw AppError.validation({ subjectId: REASON_TEXT[why] ?? "This cannot be bought for this wish." });
+    // IJ2: a ticket for a wish whose style is off, made for another kind or above this ticket's level is refused at start, with the rule in words
+    if (group === "ticket" && w) {
+      const styleWhy = await assessTicketStyle(db, w, sku.slice("ticket.".length), book);
+      if (styleWhy) throw AppError.validation({ subjectId: styleWhy.words }, styleWhy.words);
+    }
   }
 }

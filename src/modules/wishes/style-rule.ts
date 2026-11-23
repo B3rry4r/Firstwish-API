@@ -29,3 +29,34 @@ export function styleRefusal(allowed: Level | null, ticket: string | null, style
   const way = allowed === "starter" ? "Choose a Starter style, or a ticket that takes more." : `Choose a style up to ${LEVEL_NAME[allowed]}, or a ticket that takes more.`;
   return `${style.name || "This style"} is a ${LEVEL_NAME[level]} style. A ${ticketName} ticket takes ${LEVEL_NAME[allowed]} styles and below. ${way}`;
 }
+
+/** Kinds that borrow another kind's styles, as they borrow its occasions (kind-occasions.ts). */
+const BORROWS: Record<string, string[]> = { planners: ["wedding"], vendors: ["love", "celebration"] };
+const KNOWN_KINDS = new Set(["love", "celebration", "group", "wedding", "teams", "photographers", ...Object.keys(BORROWS)]);
+
+/** True when a style is made for the kind: it names the kind (or one the kind borrows from), or it names none. A kind the product does not know is not judged. */
+export function offeredForKind(styleKinds: unknown, kind: string): boolean {
+  const list = (Array.isArray(styleKinds) ? styleKinds : []).filter((k): k is string => typeof k === "string");
+  if (list.length === 0 || !KNOWN_KINDS.has(kind)) return true;
+  return [kind, ...(BORROWS[kind] ?? [])].some((k) => list.includes(k));
+}
+
+export interface StyleFacts { name: string | null; level: string | null; kinds: unknown; on: boolean | null }
+
+/**
+ * IJ2: why a wish may not take this style, in words, or null. The style must be on (unless `keepsOff`: a draft saved again with the style it already has),
+ * made for the wish's kind, and at a level the ticket allows (T-02 to T-06). `level` is the style's level as the wish took it (a later raise by staff does not
+ * count against a wish that already holds the style). Used by every route that gives a wish a style: its save, the ticket's purchase and the seal.
+ */
+export function styleTakingRefusal(
+  allowed: Level | null,
+  ticket: string | null,
+  kind: string,
+  style: StyleFacts,
+  o: { level?: string | null; checkOn?: boolean; checkKind?: boolean } = {},
+): string | null {
+  const name = style.name || "This style";
+  if (o.checkOn !== false && style.on !== true) return `${name} is switched off. Choose another style.`;
+  if (o.checkKind !== false && !offeredForKind(style.kinds, kind)) return `${name} is not made for the ${kind} kind. Choose a style made for it.`;
+  return styleRefusal(allowed, ticket, { name: style.name, level: o.level ?? style.level });
+}

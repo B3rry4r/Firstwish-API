@@ -10,7 +10,7 @@ import { WishesService } from "../wishes/wishes.service";
 import { holderKey, KeepProofs } from "./keep-proof";
 import { PassCover } from "./pass-cover";
 import { GrantStore, num, type GrantRow, type Tx } from "./grants";
-import { assessExtra, assessKeep, assessTicket, readWish, TICKET_ORDER, type WishFacts } from "./wish-rules";
+import { assessExtra, assessKeep, assessTicket, assessTicketStyle, readWish, TICKET_ORDER, type WishFacts } from "./wish-rules";
 
 const SLUG = /^[a-z0-9][a-z0-9-]{0,63}$/;
 type TicketName = (typeof TICKET_ORDER)[number];
@@ -58,6 +58,9 @@ export class WishHandlers {
     }
     const why = assessTicket(w, ctx.payment.accountId, ticket);
     if (why || !w) return this.store.refuse(tx, ctx, grantId, why ?? "wish_not_payers");
+    // IJ2: the wish's style (on, made for its kind, at a level this ticket allows) is judged again when the payment settles; a refusal is refund due
+    const styleWhy = await assessTicketStyle(tx, w, ticket, await this.entitlements.row(tx));
+    if (styleWhy) return this.store.refuse(tx, ctx, grantId, styleWhy.reason);
     const grant = await ctx.grant();
     await this.wishes.fulfilTicketIn(tx, w.id, ticket);
     await this.store.record(tx, grantId, { wishId: w.id, ticket, previousTicket: w.ticket, termDays: num(grant.termDays), photos: num(grant.photos) });

@@ -1,6 +1,7 @@
 import type { Entitlements as EntitlementsRow } from "@prisma/client";
 import { grantOf } from "../price-book/entitlements.service";
 import { stateOf, type WishState } from "../wishes/wish-state";
+import { allowedLevel, styleTakingRefusal } from "../wishes/style-rule";
 import type { Tx } from "./grants";
 
 export const TICKET_ORDER = ["moment", "keepsake", "signature", "premiere"] as const;
@@ -11,6 +12,9 @@ export const REPEATABLE_EXTRAS = new Set(["extra.five-photos"]);
 export interface WishFacts {
   id: string;
   accountId: string;
+  kind: string;
+  styleSlug: string;
+  styleTakenLevel: string | null;
   state: WishState;
   ticket: string | null;
   endsAt: Date | null;
@@ -20,11 +24,14 @@ export interface WishFacts {
 /** The wish as the rules read it. Inside the payment's transaction the caller has locked the row first. */
 export async function readWish(db: Pick<Tx, "wish">, wishId: unknown): Promise<WishFacts | null> {
   if (typeof wishId !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(wishId)) return null;
-  const w = await db.wish.findUnique({ where: { id: wishId }, select: { id: true, accountId: true, status: true, erasedAt: true, ticket: true, endsAt: true, adds: true } });
+  const w = await db.wish.findUnique({ where: { id: wishId }, select: { id: true, accountId: true, kind: true, styleSlug: true, styleTakenLevel: true, status: true, erasedAt: true, ticket: true, endsAt: true, adds: true } });
   if (!w) return null;
   return {
     id: w.id,
     accountId: w.accountId,
+    kind: w.kind,
+    styleSlug: w.styleSlug,
+    styleTakenLevel: w.styleTakenLevel,
     state: stateOf(w),
     ticket: w.ticket,
     endsAt: w.endsAt,
@@ -48,6 +55,22 @@ export function assessTicket(w: WishFacts | null, payerId: string | null, ticket
   if (w.ticket === ticket) return "ticket_already_held";
   if (w.ticket && rank(ticket) <= rank(w.ticket)) return "ticket_not_an_upgrade";
   return null;
+}
+
+/**
+ * IJ2: a ticket is bought for a wish that already holds a style: the style must be on, made for the wish's kind, and at a level this ticket allows
+ * (the level the wish took it at; a premium-style extra the wish holds lifts a Keepsake). The reason is a code for the refused line, the words say which rule.
+ */
+export async function assessTicketStyle(db: Pick<Tx, "style">, w: WishFacts, ticket: string, book: EntitlementsRow): Promise<{ reason: string; words: string } | null> {
+  const style = await db.style.findUnique({ where: { slug: w.styleSlug }, select: { name: true, level: true, kinds: true, on: true } });
+  if (!style) return null;
+  const allowed = allowedLevel(book, ticket, w.adds);
+  const off = styleTakingRefusal(null, ticket, w.kind, style, { checkKind: false });
+  if (off) return { reason: "style_not_offered", words: off };
+  const kind = styleTakingRefusal(null, ticket, w.kind, style, { checkOn: false });
+  if (kind) return { reason: "style_wrong_kind", words: kind };
+  const level = styleTakingRefusal(allowed, ticket, w.kind, style, { checkOn: false, checkKind: false, level: w.styleTakenLevel });
+  return level ? { reason: "style_above_ticket", words: level } : null;
 }
 
 /** An extra: the ticket must take it, it is not held twice, and a Keepsake stays under its extras ceiling (list prices, in kobo). */
@@ -93,4 +116,7 @@ export const REASON_TEXT: Record<string, string> = {
   keep_already_paid: "Someone else paid to keep this wish for the same time first.",
   wish_not_live: "Only a wish that is showing or resting can be kept.",
   ticket_not_keepable: "This ticket cannot be kept longer.",
+  style_not_offered: "The style of this wish was switched off before the payment settled.",
+  style_wrong_kind: "The style of this wish is not made for its kind.",
+  style_above_ticket: "The style of this wish is above what this ticket takes.",
 };

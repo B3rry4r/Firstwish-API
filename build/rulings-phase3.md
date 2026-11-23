@@ -1221,3 +1221,9 @@ HG1 (give race) Two staff giving one Concierge order: the code is right (overlap
   scene's layout and added kinds against the allowed lists (422 with words naming the field); the send-in check does
   the same, so the browser's word is not taken. Colours the editor reports (doc.seen) are advice for the editor only:
   no server rule reads them (say so in the contract note).
+- IJ1a (23 Nov, the lead; Default (lead), owner may override): the web no longer holds the sample wishes (IJ1,
+  W15C-S1 merged), so the exporter's "first export" of SampleWish from the web's adapt.ts can never run again. The
+  seed file prisma/seed-data/SampleWish.json is the API's own data (GD3): the exporter never writes it; when the file
+  is missing it stops with words that say to restore it from git, and writes nothing. The older test of the first
+  export is restated to that (its "one row for each kind and occasion of the web's catalogue" check stays, read
+  from the file).

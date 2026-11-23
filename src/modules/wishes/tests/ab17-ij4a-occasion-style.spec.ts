@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { PrismaService } from "../../../common/db/prisma.service";
 import { UuidV7Maker } from "../../../common/ids/uuidv7";
 import { createTestApp, TestApp } from "../../../../test/kit/app";
+import { ownDatabase } from "../../../../test/kit/own-db";
 import { RUN, testSlug } from "../../../../test/kit/unique";
 import { EntitlementsService } from "../../price-book/entitlements.service";
 import { occasionsOfKind } from "../kind-occasions";
@@ -23,6 +24,8 @@ type Cat = { slug: string; level: string | null; kinds: string[]; occasions: Rec
 
 /** API-BASE-17 case 1 to 4 (IJ4a): a style is offered for a wish by its kind AND, where it names occasions for that kind, by the wish's occasion. */
 describe("API-BASE-17 IJ4a: a style is offered by kind and occasion; the style reads cache like the other public reads", () => {
+  // This spec reads the whole style and sample-wish lists twice and compares them: a style another spec adds in between moves the answer, so it has a database of its own.
+  const own = ownDatabase("ij4a");
   let t: TestApp;
   let db: PrismaService;
   let wishes: WishesService;
@@ -32,6 +35,7 @@ describe("API-BASE-17 IJ4a: a style is offered by kind and occasion; the style r
   let seeded: Set<string>;
 
   beforeAll(async () => {
+    own.use();
     t = await createTestApp({ now: NOW });
     db = t.app.get(PrismaService);
     wishes = t.app.get(WishesService);
@@ -42,7 +46,10 @@ describe("API-BASE-17 IJ4a: a style is offered by kind and occasion; the style r
     await refresh();
     kinds = [...new Set(cat.flatMap((s) => s.kinds))].sort();
   }, 120_000);
-  afterAll(() => t.close());
+  afterAll(async () => {
+    await t.close();
+    own.drop();
+  });
   beforeEach(() => t.clock.set(NOW));
 
   /** The public styles list, read as the web reads it (every page of GET /v1/styles), the house catalogue only: other specs add and switch styles beside this one. */

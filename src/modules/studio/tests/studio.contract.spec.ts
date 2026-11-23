@@ -5,6 +5,7 @@ import { UuidV7Maker } from "../../../common/ids/uuidv7";
 import { PortTimeoutError } from "../../../common/ports/time-limit";
 import { AiWritingPort } from "../../../common/ports/ai.port";
 import { createTestApp, TestApp } from "../../../../test/kit/app";
+import { ownDatabase } from "../../../../test/kit/own-db";
 import { makeStaff, seedRoleTable, tag } from "../../staff-accounts/tests/staff-kit";
 import { AccountErasureService } from "../../accounts/account-erasure.service";
 import { JobsService } from "../../jobs/jobs.service";
@@ -64,7 +65,10 @@ const runChecks = async (submissionId: string) => {
 };
 const sh = (role: string) => ({ Authorization: `Bearer ${staff[role]}` });
 
+// This spec CHANGES a shared catalogue row (it changes a seeded house style or the entitlements book), which other specs read in the shared database: it has a database of its own.
+const own = ownDatabase("sc");
 beforeAll(async () => {
+  own.use();
   t = await createTestApp({ now: NOW });
   db = t.app.get(PrismaService);
   jobs = t.app.get(JobsService);
@@ -79,7 +83,10 @@ beforeAll(async () => {
     staff[`${role}Id`] = s.id;
   }
 });
-afterAll(() => t.close());
+afterAll(async () => {
+  await t.close();
+  own.drop();
+});
 beforeEach(() => t.clock.set(NOW));
 
 describe("access", () => {

@@ -60,3 +60,11 @@ export function styleTakingRefusal(
   if (o.checkKind !== false && !offeredForKind(style.kinds, kind)) return `${name} is not made for the ${kind} kind. Choose a style made for it.`;
   return styleRefusal(allowed, ticket, { name: style.name, level: o.level ?? style.level });
 }
+
+/**
+ * IJ4: the style the server picks for a wish it starts: the first of `rows` (already in the house-first order) that is on, offered for the kind and at a
+ * level `allowed` takes (null: any level). undefined when no style fits: the wish then starts with no style and sealing it is refused until one is chosen.
+ */
+export function firstStyleFor<T extends { slug: string | null; level: string | null; kinds: unknown; on?: boolean | null }>(rows: readonly T[], kind: string, allowed: Level | null): T | undefined {
+  return rows.find((r) => !!r.slug && r.on !== false && offeredForKind(r.kinds, kind) && (allowed === null || levelRank(isLevel(r.level) ? r.level : "starter") <= levelRank(allowed)));
+}

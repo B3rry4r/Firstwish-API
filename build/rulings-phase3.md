@@ -1176,3 +1176,14 @@ HG1 (give race) Two staff giving one Concierge order: the code is right (overlap
   house style when a wish takes it: it must be offered for the wish's kind, and its level must be one the wish's
   ticket allows (product truths T-02 to T-05). The server refuses the choice in words otherwise; the web never
   offers it.
+- IJ3 (23 Nov, the lead, on the check of the fifteenth round; Default (lead), owner may override; a refund rule:
+  listed for the owner): the premium-style extra cannot be refunded on its own while the wish still holds a style
+  that needs it: the refund is refused in words that say why. Before sealing the person (or staff with them) picks
+  a style the ticket allows first, and then it can be refunded; after sealing the look is the customer's and the
+  extra stays paid. A refund of the whole purchase follows the existing whole-refund rules.
+- IJ4 (23 Nov, the lead; Default (lead), owner may override): IJ2's kind rule holds wherever a wish's kind or style
+  is set, also when the KIND changes with a style held (refused in words unless the style is offered for the new
+  kind or is replaced in the same change) and when the server picks a style itself (a new wish, a business draft,
+  a Concierge wish): it picks the first style that is on, offered for that kind and allowed by the ticket (the
+  starter level where there is no ticket yet). The list of styles a wish may take (`allowedStyles`) says exactly
+  what a save would accept: level AND kind.

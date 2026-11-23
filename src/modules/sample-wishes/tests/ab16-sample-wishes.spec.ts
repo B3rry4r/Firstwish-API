@@ -8,7 +8,7 @@ import { UuidV7Maker } from "../../../common/ids/uuidv7";
 import type { PublicWishView, SampleWish } from "../../../contracts";
 import { ownDatabase } from "../../../../test/kit/own-db";
 import { ensureEntitlements } from "../../stored-files/tests/files-kit";
-import { WEB_LIB, WEB_PRESENT } from "../../reference-data/tests/web-files";
+import { loadWeb, WEB_LIB, WEB_PRESENT } from "../../reference-data/tests/web-files";
 import { createTestApp, TestApp } from "../../../../test/kit/app";
 
 const ROOT = join(__dirname, "../../../..");
@@ -208,7 +208,7 @@ describe("API-BASE-16 case 3: the data, seeded once and then owned (GD3)", () =>
   });
 
   const webIt = WEB_PRESENT ? it : it.skip;
-  webIt(WEB_PRESENT ? "a second export leaves the file alone whatever the web's files say (the web's adapt.ts is never read again), and the first export gave one row for each kind and occasion of the web's catalogue" : "NOT RUN: no web checkout", () => {
+  webIt(WEB_PRESENT ? "a second export leaves the file alone whatever the web's files say (the web's adapt.ts is never read), the file missing stops the run in words and writes nothing, and the file holds one row for each kind and occasion of the web's catalogue" : "NOT RUN: no web checkout", () => {
     const web = join(WEB_LIB, "..");
     const dir = mkdtempSync(join(tmpdir(), "ab16-export-"));
     try {
@@ -224,15 +224,19 @@ describe("API-BASE-16 case 3: the data, seeded once and then owned (GD3)", () =>
       expect(run.status).toBe(0);
       expect(run.stdout).toContain("SampleWish: owned here since its first export, left as it is");
       expect(readFileSync(mine, "utf8")).toBe(text);
-      // and with the file absent, the first export is every kind by occasion of the catalogue
+      // (b) with the file absent: it stops in words, non-zero, and writes no file
       rmSync(mine);
-      const first = spawnSync(process.execPath, [join(dir, "scripts/export-seed-data.mjs")], { cwd: dir, env: { ...process.env, WEB_REPO: web, NODE_PATH: join(ROOT, "node_modules") }, encoding: "utf8" });
-      expect(first.status).toBe(0);
-      expect(existsSync(mine)).toBe(true);
-      // the file also holds photographers/your-finals, a recipe of the web that is no occasion of its catalogue, added here by hand (P-API-16B)
-      const kept = seedFile();
-      kept.rows = kept.rows.filter((r) => r.seedKey !== "photographers/your-finals");
-      expect(readFileSync(mine, "utf8")).toBe(JSON.stringify(kept, null, 1) + "\n");
+      const gone = spawnSync(process.execPath, [join(dir, "scripts/export-seed-data.mjs")], { cwd: dir, env: { ...process.env, WEB_REPO: web, NODE_PATH: join(ROOT, "node_modules") }, encoding: "utf8" });
+      expect(gone.status).not.toBe(0);
+      expect(gone.stderr).toMatch(/API's own data/);
+      expect(gone.stderr).toMatch(/restore it from git/);
+      expect(existsSync(mine)).toBe(false);
+      // (c) the committed file holds one row for each kind and occasion of the web's catalogue, and photographers/your-finals, a recipe of the web that is no occasion of its catalogue, added here by hand (P-API-16B)
+      const { categories } = loadWeb("catalog.ts") as { categories: { slug: string; isKind?: boolean; occasions: { slug: string }[] }[] };
+      const want = categories.filter((c) => c.isKind).flatMap((c) => c.occasions.map((o) => `${c.slug}/${o.slug}`));
+      const keys = seedFile().rows.map((r) => String(r.seedKey));
+      expect(keys.filter((k) => k !== "photographers/your-finals").sort()).toEqual([...want].sort());
+      expect(keys).toContain("photographers/your-finals");
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }

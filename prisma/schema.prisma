@@ -725,6 +725,22 @@ model NumbersTarget {
   @@map("numbers_target")
 }
 
+/// config: API-BASE-16 (IJ1): the designed sample wishes the style previews play, one per kind and occasion; seeded once from the web's sample content, then owned here; served by GET /v1/sample-wishes. Never a wish: no slug, owner, link or count, and nothing a person types is stored in it
+model SampleWish {
+  id           String @id @db.Uuid
+  kind         String
+  occasion     String
+  occasionName String
+  call         String
+  name         String
+  date         String
+  content      Json
+  photos       Json
+
+  @@unique([kind, occasion])
+  @@map("sample_wish")
+}
+
 /// config: the opening catalogue served by GET /v1/opening-defs; staff keep it
 model OpeningDef {
   id     String  @id @db.Uuid

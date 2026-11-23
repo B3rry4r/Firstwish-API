@@ -922,6 +922,29 @@ export interface Moment {
   tags: Record<string, unknown>;
 }
 
+/** SampleWish: config. the designed sample wishes the style previews play, one per kind and occasion, served by GET /v1/sample-wishes (IJ1, DEC-309); seeded once from the web, then owned here; never a wish (DEC-310) */
+export interface SampleWish {
+  call: string;
+  /** the designed words, as the maker keeps a wish's content */
+  content: Record<string, unknown>;
+  /** the day the sample's cover shows, as the designed source writes it, e.g. 07 · 11 · 2026; text, not an instant */
+  date: string;
+  /** {role, url}: the site's own picture paths, as the public wish read lists a wish's photos */
+  files: Array<{ role: string; url: string }>;
+  kind: string;
+  occasion: string;
+  occasionName: string;
+  openable: boolean;
+  /** an instant already past, so a preview always opens */
+  opensAt: Instant;
+  /** the same pictures as plain paths on the site, /img/aisha-N.webp */
+  photos: string[];
+  receiverName: string;
+  /** always true: this is a sample, never a person's wish */
+  sample: boolean;
+  state: "open";
+}
+
 /** Notice: table. written by E-76 and server:notices */
 export interface Notice {
   accountId?: string | null;
@@ -2693,6 +2716,24 @@ export interface GetCreatorsByHandleWishesQuery {
 }
 export type GetCreatorsByHandleWishesHeaders = Record<string, never>;
 export type GetCreatorsByHandleWishesResponse = PaginatedList<PublishedWish>;
+
+/** E-288 GET /v1/sample-wishes/:kind/:occasion. Auth: public. */
+export interface GetSampleWishesByKindByOccasionParams {
+  kind: string;
+  occasion: string;
+}
+export type GetSampleWishesByKindByOccasionQuery = Record<string, never>;
+export type GetSampleWishesByKindByOccasionHeaders = Record<string, never>;
+export type GetSampleWishesByKindByOccasionResponse = SampleWish;
+
+/** E-287 GET /v1/sample-wishes. Auth: public. */
+export type GetSampleWishesParams = Record<string, never>;
+export interface GetSampleWishesQuery {
+  /** string (optional: only the samples of this kind; a slug) */
+  kind?: string;
+}
+export type GetSampleWishesHeaders = Record<string, never>;
+export type GetSampleWishesResponse = PaginatedList<SampleWish>;
 
 /** E-43 GET /v1/studio/me. Auth: creator. */
 export type GetStudioMeParams = Record<string, never>;
@@ -5571,6 +5612,8 @@ export interface EndpointContracts {
   "E-284": { params: GetStylesByIdWishesParams; query: GetStylesByIdWishesQuery; headers: GetStylesByIdWishesHeaders; response: GetStylesByIdWishesResponse };
   "E-285": { params: GetCreatorsByHandleStylesParams; query: GetCreatorsByHandleStylesQuery; headers: GetCreatorsByHandleStylesHeaders; response: GetCreatorsByHandleStylesResponse };
   "E-286": { params: PostWishesByIdGatherOnParams; body: PostWishesByIdGatherOnBody; headers: PostWishesByIdGatherOnHeaders; response: PostWishesByIdGatherOnResponse };
+  "E-288": { params: GetSampleWishesByKindByOccasionParams; query: GetSampleWishesByKindByOccasionQuery; headers: GetSampleWishesByKindByOccasionHeaders; response: GetSampleWishesByKindByOccasionResponse };
+  "E-287": { params: GetSampleWishesParams; query: GetSampleWishesQuery; headers: GetSampleWishesHeaders; response: GetSampleWishesResponse };
   "E-273": { params: PostAdminConciergeOrdersByIdWishesParams; body: PostAdminConciergeOrdersByIdWishesBody; headers: PostAdminConciergeOrdersByIdWishesHeaders; response: PostAdminConciergeOrdersByIdWishesResponse };
   "E-279": { params: GetAdminConciergeOrdersByIdFilesParams; query: GetAdminConciergeOrdersByIdFilesQuery; headers: GetAdminConciergeOrdersByIdFilesHeaders; response: GetAdminConciergeOrdersByIdFilesResponse };
   "E-280": { params: PostAdminConciergeOrdersByIdWishesByWishIdFilesParams; body: PostAdminConciergeOrdersByIdWishesByWishIdFilesBody; headers: PostAdminConciergeOrdersByIdWishesByWishIdFilesHeaders; response: PostAdminConciergeOrdersByIdWishesByWishIdFilesResponse };

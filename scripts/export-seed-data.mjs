@@ -147,9 +147,34 @@ const TABLES = {
   },
 };
 
+/**
+ * Seeded ONCE from the web (API-BASE-16, IJ1): the designed sample wishes the web's previews play (lib/engine/adapt.ts sampleContent, the kinds and
+ * occasions of lib/catalog.ts, the pictures of SAMPLE_PHOTOS). The file is written only when it is not there yet; from then on the API owns it and
+ * this script never reads those web files for it again (as a style's "get" is owned): a change in the web's adapt.ts changes nothing here, and the
+ * files only these rows read are left out of SOURCE.json, so no web change can make the GD3 test ask for a new export.
+ */
+const ONCE = {
+  SampleWish: {
+    from: "lib/engine/adapt.ts (sampleContent for each kind and occasion of lib/catalog.ts, SAMPLE_PHOTOS)", key: (r) => `${r.kind}/${r.occasion}`,
+    rows: () => {
+      const { categories } = web("lib/catalog.ts");
+      const { sampleContent, SAMPLE_PHOTOS } = web("lib/engine/adapt.ts");
+      const out = [];
+      for (const c of categories.filter((x) => x.isKind)) {
+        for (const o of c.occasions) {
+          const s = sampleContent(c.slug, o.slug);
+          out.push({ kind: c.slug, occasion: o.slug, occasionName: o.name, call: s.call, name: s.name, date: s.date, content: s.content, photos: [...SAMPLE_PHOTOS] });
+        }
+      }
+      return out;
+    },
+  },
+};
+
 /** Owned here since 17 Nov 2026 (the web's fixtures were removed): recorded in prisma/seed-data, never read from the web, never rewritten. */
-const OWNED = ["MessageTemplate", "Provider", "SavedReply"];
+const OWNED = ["MessageTemplate", "Provider", "SavedReply", "SampleWish"];
 const OWNED_NOTE = "owned here since 17 Nov 2026 (the web's fixtures were removed)";
+const OWNED_ONCE = new Set(Object.keys(ONCE));
 
 const sortKeys = (v) => (Array.isArray(v) ? v.map(sortKeys) : v && typeof v === "object" ? Object.fromEntries(Object.keys(v).sort().map((k) => [k, sortKeys(v[k])])) : v);
 mkdirSync(OUT, { recursive: true });
@@ -163,12 +188,23 @@ for (const [table, t] of Object.entries(TABLES)) {
   console.log(`${table}: ${rows.length} rows from ${t.from}`);
 }
 
+const filesOfTables = [...readFiles];
+for (const [table, t] of Object.entries(ONCE)) {
+  if (existsSync(join(OUT, `${table}.json`))) { console.log(`${table}: owned here since its first export, left as it is`); continue; }
+  const rows = t.rows().map((r) => sortKeys(plain(r)));
+  if (!rows.length) throw new Error(`${table}: the web app's ${t.from} gave no rows`);
+  const keys = rows.map(t.key);
+  if (new Set(keys).size !== keys.length) throw new Error(`${table}: two rows share a key`);
+  writeFileSync(join(OUT, `${table}.json`), JSON.stringify({ table, from: `Firstwish-web ${t.from}; seeded once, owned here after`, rows: rows.map((r, i) => ({ seedKey: keys[i], ...r })) }, null, 1) + "\n");
+  console.log(`${table}: ${rows.length} rows from ${t.from} (first and only export)`);
+}
+
 // SOURCE.json: each web file read, its path relative to the web repo and the sha256 of its bytes. A test that has the web
 // checkout compares these with the files, so a web change with no new export fails there.
-const files = [...readFiles].map((f) => ({ path: f.slice(WEB.length + 1), sha256: createHash("sha256").update(readFileSync(f)).digest("hex") })).sort((a, b) => (a.path < b.path ? -1 : 1));
+const files = filesOfTables.map((f) => ({ path: f.slice(WEB.length + 1), sha256: createHash("sha256").update(readFileSync(f)).digest("hex") })).sort((a, b) => (a.path < b.path ? -1 : 1));
 const owned = Object.fromEntries(OWNED.map((t) => {
   if (!existsSync(join(OUT, `${t}.json`))) throw new Error(`${t}: owned here, but prisma/seed-data/${t}.json is missing`);
-  return [t, OWNED_NOTE];
+  return [t, OWNED_ONCE.has(t) ? "seeded once from the web's sample wishes (API-BASE-16, IJ1), owned here since" : OWNED_NOTE];
 }));
 writeFileSync(join(OUT, "SOURCE.json"), JSON.stringify({ files, owned }, null, 1) + "\n");
 console.log(`SOURCE.json: ${files.length} web files`);

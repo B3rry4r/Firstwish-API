@@ -1985,6 +1985,24 @@
         "public"
       ],
       "decision": "DEC-288"
+    },
+    {
+      "resource": "SampleWish",
+      "method": "GET",
+      "path": "/v1/sample-wishes/:kind/:occasion",
+      "auth": [
+        "public"
+      ],
+      "decision": "DEC-309"
+    },
+    {
+      "resource": "SampleWish",
+      "method": "GET",
+      "path": "/v1/sample-wishes",
+      "auth": [
+        "public"
+      ],
+      "decision": "DEC-309"
     }
   ],
   "fulfilment": {
@@ -3222,6 +3240,29 @@
         "expectedAssignee": "string StaffAccount.id (the staff member the caller saw holding the thread; an empty string when it had none; another holder now answers 409 thread_changed_hands and nothing changes; left out, the last hand-over wins as before)"
       },
       "require": []
+    },
+    "GET /v1/sample-wishes/:kind/:occasion": {
+      "decision": "DEC-309",
+      "set": {
+        "kind": "string (path: the kind's slug)",
+        "occasion": "string (path: the occasion's slug)"
+      },
+      "response": {
+        "entity": "SampleWish",
+        "cardinality": "single",
+        "note": "the designed sample wish for this kind and occasion, in the shape the public wish read gives a player, marked sample; an unknown kind or occasion is 404 in words (DEC-309)"
+      }
+    },
+    "GET /v1/sample-wishes": {
+      "decision": "DEC-309",
+      "set": {
+        "kind": "string (optional: only the samples of this kind; a slug)"
+      },
+      "response": {
+        "entity": "SampleWish",
+        "cardinality": "list",
+        "note": "the samples of a kind (every kind when none is named), 44 at most, in one answer with nextCursor null (DEC-309)"
+      }
     }
   },
   "extraFields": [
@@ -3812,6 +3853,97 @@
       "type": "object (W14B check: per extra the wish's ticket takes, a map from the extra's sku to whether it can still be bought for this wish now: until the wish opens, not held twice, under a Keepsake's ceiling; empty before a ticket is chosen)",
       "nullable": true,
       "decision": "DEC-306"
+    },
+    {
+      "resource": "SampleWish",
+      "name": "sample",
+      "type": "boolean (always true: this is a sample, never a person's wish)",
+      "nullable": false,
+      "decision": "DEC-309"
+    },
+    {
+      "resource": "SampleWish",
+      "name": "kind",
+      "type": "string (the kind's slug)",
+      "nullable": false,
+      "decision": "DEC-309"
+    },
+    {
+      "resource": "SampleWish",
+      "name": "occasion",
+      "type": "string (the occasion's slug)",
+      "nullable": false,
+      "decision": "DEC-309"
+    },
+    {
+      "resource": "SampleWish",
+      "name": "occasionName",
+      "type": "string (the occasion's name as the catalogue says it)",
+      "nullable": false,
+      "decision": "DEC-309"
+    },
+    {
+      "resource": "SampleWish",
+      "name": "receiverName",
+      "type": "string (the name the sample is for)",
+      "nullable": false,
+      "decision": "DEC-309"
+    },
+    {
+      "resource": "SampleWish",
+      "name": "call",
+      "type": "string (what the sender calls them)",
+      "nullable": false,
+      "decision": "DEC-309"
+    },
+    {
+      "resource": "SampleWish",
+      "name": "date",
+      "type": "string (the day the sample's cover shows, as the designed source writes it, e.g. 07 · 11 · 2026; text, not an instant)",
+      "nullable": false,
+      "decision": "DEC-309"
+    },
+    {
+      "resource": "SampleWish",
+      "name": "opensAt",
+      "type": "time (ISO-8601; an instant already past, so a preview always opens)",
+      "nullable": false,
+      "decision": "DEC-309"
+    },
+    {
+      "resource": "SampleWish",
+      "name": "state",
+      "type": "enum(open)",
+      "nullable": false,
+      "decision": "DEC-309"
+    },
+    {
+      "resource": "SampleWish",
+      "name": "openable",
+      "type": "boolean",
+      "nullable": false,
+      "decision": "DEC-309"
+    },
+    {
+      "resource": "SampleWish",
+      "name": "content",
+      "type": "object (the designed words, as the maker keeps a wish's content)",
+      "nullable": false,
+      "decision": "DEC-309"
+    },
+    {
+      "resource": "SampleWish",
+      "name": "files",
+      "type": "array ({role, url}: the site's own picture paths, as the public wish read lists a wish's photos)",
+      "nullable": false,
+      "decision": "DEC-309"
+    },
+    {
+      "resource": "SampleWish",
+      "name": "photos",
+      "type": "array<string> (the same pictures as plain paths on the site, /img/aisha-N.webp)",
+      "nullable": false,
+      "decision": "DEC-309"
     }
   ],
   "dropFields": [

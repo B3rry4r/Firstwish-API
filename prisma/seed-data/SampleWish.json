@@ -1,0 +1,2761 @@
+{
+ "table": "SampleWish",
+ "from": "Firstwish-web lib/engine/adapt.ts (sampleContent for each kind and occasion of lib/catalog.ts, SAMPLE_PHOTOS); seeded once, owned here after",
+ "rows": [
+  {
+   "seedKey": "love/birthday",
+   "call": "Babe",
+   "content": {
+    "blessing": {
+     "cite": "Numbers 6 : 24–25",
+     "note": "This is my prayer for you this year.",
+     "verse": "“The Lord bless thee, and keep thee: the Lord make his face shine upon thee, and be gracious unto thee.”"
+    },
+    "finale": {
+     "line": "Today and every day after it, I'm yours.",
+     "sign": "Always yours."
+    },
+    "letter": {
+     "line": "If I'm ever going to become love, I can't do it without you.",
+     "paras": [
+      "Before anything else, I want to say thank you. Thank you for existing. Thank you for being exactly who God made you to be.",
+      "God used you to change my life. Big time. I see His hand in how you came to me, and I will never take it lightly.",
+      "I never knew I could love someone this much, or that I could understand love the way I do now. It all started with you."
+     ]
+    },
+    "memory": {
+     "quote": "It was amazing. You were amazing. You still are.",
+     "text": "You had done your makeup, and it was the first time I was seeing it in person. You looked so beautiful that I just stood there, stunned.\n\nThen I kissed you. I didn't plan it. It happened.",
+     "title": "Our first photo shoot."
+    },
+    "reasons": [
+     {
+      "note": "There is a light in you that God put there. I feel it every single day.",
+      "title": "Your beauty, inside and out."
+     },
+     {
+      "note": "You always try to understand me. You never stop trying.",
+      "title": "You're always there."
+     },
+     {
+      "note": "The way you hide your face when I look too long? I love that one.",
+      "title": "Your shyness."
+     },
+     {
+      "note": "I'll never get tired of being the reason.",
+      "title": "That blush."
+     }
+    ],
+    "timeline": [
+     {
+      "what": "A friend's birthday. I asked for your number twice.",
+      "when": "March 2022"
+     },
+     {
+      "what": "The first photo shoot. I forgot what I was going to say.",
+      "when": "July 2022"
+     },
+     {
+      "what": "Still the first face I look for in a room.",
+      "when": "This year"
+     }
+    ]
+   },
+   "date": "07 · 11 · 2026",
+   "kind": "love",
+   "name": "Aisha",
+   "occasion": "birthday",
+   "occasionName": "Birthday",
+   "photos": [
+    "/img/aisha-1.webp",
+    "/img/aisha-2.webp",
+    "/img/aisha-3.webp",
+    "/img/aisha-5.webp",
+    "/img/aisha-6.webp",
+    "/img/aisha-8.webp",
+    "/img/aisha-4.webp",
+    "/img/aisha-7.webp"
+   ]
+  },
+  {
+   "seedKey": "love/anniversary",
+   "call": "Babe",
+   "content": {
+    "blessing": {
+     "cite": "Numbers 6 : 24–25",
+     "note": "This is my prayer for you this year.",
+     "verse": "“The Lord bless thee, and keep thee: the Lord make his face shine upon thee, and be gracious unto thee.”"
+    },
+    "finale": {
+     "line": "Every year, I would choose you again.",
+     "sign": "Always yours."
+    },
+    "letter": {
+     "line": "If I'm ever going to become love, I can't do it without you.",
+     "paras": [
+      "Before anything else, I want to say thank you. Thank you for existing. Thank you for being exactly who God made you to be.",
+      "God used you to change my life. Big time. I see His hand in how you came to me, and I will never take it lightly.",
+      "I never knew I could love someone this much, or that I could understand love the way I do now. It all started with you."
+     ]
+    },
+    "memory": {
+     "quote": "It was amazing. You were amazing. You still are.",
+     "text": "You had done your makeup, and it was the first time I was seeing it in person. You looked so beautiful that I just stood there, stunned.\n\nThen I kissed you. I didn't plan it. It happened.",
+     "title": "Our first photo shoot."
+    },
+    "reasons": [
+     {
+      "note": "There is a light in you that God put there. I feel it every single day.",
+      "title": "Your beauty, inside and out."
+     },
+     {
+      "note": "You always try to understand me. You never stop trying.",
+      "title": "You're always there."
+     },
+     {
+      "note": "The way you hide your face when I look too long? I love that one.",
+      "title": "Your shyness."
+     },
+     {
+      "note": "I'll never get tired of being the reason.",
+      "title": "That blush."
+     }
+    ],
+    "timeline": [
+     {
+      "what": "A friend's birthday. I asked for your number twice.",
+      "when": "March 2022"
+     },
+     {
+      "what": "The first photo shoot. I forgot what I was going to say.",
+      "when": "July 2022"
+     },
+     {
+      "what": "Still the first face I look for in a room.",
+      "when": "This year"
+     }
+    ]
+   },
+   "date": "07 · 11 · 2026",
+   "kind": "love",
+   "name": "Aisha",
+   "occasion": "anniversary",
+   "occasionName": "Anniversary",
+   "photos": [
+    "/img/aisha-1.webp",
+    "/img/aisha-2.webp",
+    "/img/aisha-3.webp",
+    "/img/aisha-5.webp",
+    "/img/aisha-6.webp",
+    "/img/aisha-8.webp",
+    "/img/aisha-4.webp",
+    "/img/aisha-7.webp"
+   ]
+  },
+  {
+   "seedKey": "love/valentines",
+   "call": "Babe",
+   "content": {
+    "blessing": {
+     "cite": "Numbers 6 : 24–25",
+     "note": "This is my prayer for you this year.",
+     "verse": "“The Lord bless thee, and keep thee: the Lord make his face shine upon thee, and be gracious unto thee.”"
+    },
+    "finale": {
+     "sign": "Always yours."
+    },
+    "letter": {
+     "line": "If I'm ever going to become love, I can't do it without you.",
+     "paras": [
+      "Before anything else, I want to say thank you. Thank you for existing. Thank you for being exactly who God made you to be.",
+      "God used you to change my life. Big time. I see His hand in how you came to me, and I will never take it lightly.",
+      "I never knew I could love someone this much, or that I could understand love the way I do now. It all started with you."
+     ]
+    },
+    "memory": {
+     "quote": "It was amazing. You were amazing. You still are.",
+     "text": "You had done your makeup, and it was the first time I was seeing it in person. You looked so beautiful that I just stood there, stunned.\n\nThen I kissed you. I didn't plan it. It happened.",
+     "title": "Our first photo shoot."
+    },
+    "reasons": [
+     {
+      "note": "There is a light in you that God put there. I feel it every single day.",
+      "title": "Your beauty, inside and out."
+     },
+     {
+      "note": "You always try to understand me. You never stop trying.",
+      "title": "You're always there."
+     },
+     {
+      "note": "The way you hide your face when I look too long? I love that one.",
+      "title": "Your shyness."
+     },
+     {
+      "note": "I'll never get tired of being the reason.",
+      "title": "That blush."
+     }
+    ]
+   },
+   "date": "07 · 11 · 2026",
+   "kind": "love",
+   "name": "Aisha",
+   "occasion": "valentines",
+   "occasionName": "Valentine's",
+   "photos": [
+    "/img/aisha-1.webp",
+    "/img/aisha-2.webp",
+    "/img/aisha-3.webp",
+    "/img/aisha-5.webp",
+    "/img/aisha-6.webp",
+    "/img/aisha-8.webp",
+    "/img/aisha-4.webp",
+    "/img/aisha-7.webp"
+   ]
+  },
+  {
+   "seedKey": "love/proposal",
+   "call": "Babe",
+   "content": {
+    "blessing": {
+     "cite": "Numbers 6 : 24–25",
+     "note": "This is my prayer for you this year.",
+     "verse": "“The Lord bless thee, and keep thee: the Lord make his face shine upon thee, and be gracious unto thee.”"
+    },
+    "finale": {
+     "sign": "Always yours."
+    },
+    "letter": {
+     "paras": [
+      "Four years ago I asked for your number twice. I have been asking for more of you ever since.",
+      "Every plan I make has you in it. So I want to make it official."
+     ]
+    },
+    "memory": {
+     "quote": "It was amazing. You were amazing. You still are.",
+     "text": "You had done your makeup, and it was the first time I was seeing it in person. You looked so beautiful that I just stood there, stunned.\n\nThen I kissed you. I didn't plan it. It happened.",
+     "title": "Our first photo shoot."
+    },
+    "reasons": [
+     {
+      "note": "There is a light in you that God put there. I feel it every single day.",
+      "title": "Your beauty, inside and out."
+     },
+     {
+      "note": "You always try to understand me. You never stop trying.",
+      "title": "You're always there."
+     },
+     {
+      "note": "The way you hide your face when I look too long? I love that one.",
+      "title": "Your shyness."
+     },
+     {
+      "note": "I'll never get tired of being the reason.",
+      "title": "That blush."
+     }
+    ],
+    "story": {
+     "captions": [
+      "The night we met.",
+      "The first trip.",
+      "The first home.",
+      "This morning."
+     ],
+     "title": "How we got here."
+    }
+   },
+   "date": "07 · 11 · 2026",
+   "kind": "love",
+   "name": "Aisha",
+   "occasion": "proposal",
+   "occasionName": "Proposal",
+   "photos": [
+    "/img/aisha-1.webp",
+    "/img/aisha-2.webp",
+    "/img/aisha-3.webp",
+    "/img/aisha-5.webp",
+    "/img/aisha-6.webp",
+    "/img/aisha-8.webp",
+    "/img/aisha-4.webp",
+    "/img/aisha-7.webp"
+   ]
+  },
+  {
+   "seedKey": "love/apology",
+   "call": "Babe",
+   "content": {
+    "blessing": {
+     "cite": "Numbers 6 : 24–25",
+     "note": "This is my prayer for you this year.",
+     "verse": "“The Lord bless thee, and keep thee: the Lord make his face shine upon thee, and be gracious unto thee.”"
+    },
+    "finale": {
+     "line": "Can we start again on Sunday?",
+     "sign": "Me"
+    },
+    "letter": {
+     "line": "I am sorry. I mean it.",
+     "paras": [
+      "I was wrong on Saturday. I raised my voice, and I walked out when you needed me to stay.",
+      "You did not deserve that. Not from me, not from anyone."
+     ]
+    },
+    "memory": {
+     "text": "You in my shirt, the radio on, nowhere to be.",
+     "title": "Sunday mornings."
+    },
+    "reasons": [
+     {
+      "note": "Even when it did not look like it.",
+      "title": "That I was listening."
+     },
+     {
+      "note": "About the money, and about me.",
+      "title": "That you were right."
+     },
+     {
+      "note": "And then I should have stayed.",
+      "title": "That I would stay."
+     }
+    ]
+   },
+   "date": "07 · 11 · 2026",
+   "kind": "love",
+   "name": "Aisha",
+   "occasion": "apology",
+   "occasionName": "Apology",
+   "photos": [
+    "/img/aisha-1.webp",
+    "/img/aisha-2.webp",
+    "/img/aisha-3.webp",
+    "/img/aisha-5.webp",
+    "/img/aisha-6.webp",
+    "/img/aisha-8.webp",
+    "/img/aisha-4.webp",
+    "/img/aisha-7.webp"
+   ]
+  },
+  {
+   "seedKey": "love/long-distance",
+   "call": "Babe",
+   "content": {
+    "blessing": {
+     "cite": "Numbers 6 : 24–25",
+     "note": "This is my prayer for you this year.",
+     "verse": "“The Lord bless thee, and keep thee: the Lord make his face shine upon thee, and be gracious unto thee.”"
+    },
+    "finale": {
+     "line": "Midnight there, and I am right beside you.",
+     "sign": "Always yours."
+    },
+    "letter": {
+     "line": "If I'm ever going to become love, I can't do it without you.",
+     "paras": [
+      "Before anything else, I want to say thank you. Thank you for existing. Thank you for being exactly who God made you to be.",
+      "God used you to change my life. Big time. I see His hand in how you came to me, and I will never take it lightly.",
+      "I never knew I could love someone this much, or that I could understand love the way I do now. It all started with you."
+     ]
+    },
+    "memory": {
+     "quote": "It was amazing. You were amazing. You still are.",
+     "text": "You had done your makeup, and it was the first time I was seeing it in person. You looked so beautiful that I just stood there, stunned.\n\nThen I kissed you. I didn't plan it. It happened.",
+     "title": "Our first photo shoot."
+    },
+    "reasons": [
+     {
+      "note": "There is a light in you that God put there. I feel it every single day.",
+      "title": "Your beauty, inside and out."
+     },
+     {
+      "note": "You always try to understand me. You never stop trying.",
+      "title": "You're always there."
+     },
+     {
+      "note": "The way you hide your face when I look too long? I love that one.",
+      "title": "Your shyness."
+     },
+     {
+      "note": "I'll never get tired of being the reason.",
+      "title": "That blush."
+     }
+    ]
+   },
+   "date": "07 · 11 · 2026",
+   "kind": "love",
+   "name": "Aisha",
+   "occasion": "long-distance",
+   "occasionName": "Long distance",
+   "photos": [
+    "/img/aisha-1.webp",
+    "/img/aisha-2.webp",
+    "/img/aisha-3.webp",
+    "/img/aisha-5.webp",
+    "/img/aisha-6.webp",
+    "/img/aisha-8.webp",
+    "/img/aisha-4.webp",
+    "/img/aisha-7.webp"
+   ]
+  },
+  {
+   "seedKey": "love/just-because",
+   "call": "Babe",
+   "content": {
+    "blessing": {
+     "cite": "Numbers 6 : 24–25",
+     "note": "This is my prayer for you this year.",
+     "verse": "“The Lord bless thee, and keep thee: the Lord make his face shine upon thee, and be gracious unto thee.”"
+    },
+    "finale": {
+     "sign": "Always yours."
+    },
+    "letter": {
+     "line": "If I'm ever going to become love, I can't do it without you.",
+     "paras": [
+      "Before anything else, I want to say thank you. Thank you for existing. Thank you for being exactly who God made you to be.",
+      "God used you to change my life. Big time. I see His hand in how you came to me, and I will never take it lightly.",
+      "I never knew I could love someone this much, or that I could understand love the way I do now. It all started with you."
+     ]
+    },
+    "memory": {
+     "quote": "It was amazing. You were amazing. You still are.",
+     "text": "You had done your makeup, and it was the first time I was seeing it in person. You looked so beautiful that I just stood there, stunned.\n\nThen I kissed you. I didn't plan it. It happened.",
+     "title": "Our first photo shoot."
+    },
+    "reasons": [
+     {
+      "note": "There is a light in you that God put there. I feel it every single day.",
+      "title": "Your beauty, inside and out."
+     },
+     {
+      "note": "You always try to understand me. You never stop trying.",
+      "title": "You're always there."
+     },
+     {
+      "note": "The way you hide your face when I look too long? I love that one.",
+      "title": "Your shyness."
+     },
+     {
+      "note": "I'll never get tired of being the reason.",
+      "title": "That blush."
+     }
+    ]
+   },
+   "date": "07 · 11 · 2026",
+   "kind": "love",
+   "name": "Aisha",
+   "occasion": "just-because",
+   "occasionName": "Just because",
+   "photos": [
+    "/img/aisha-1.webp",
+    "/img/aisha-2.webp",
+    "/img/aisha-3.webp",
+    "/img/aisha-5.webp",
+    "/img/aisha-6.webp",
+    "/img/aisha-8.webp",
+    "/img/aisha-4.webp",
+    "/img/aisha-7.webp"
+   ]
+  },
+  {
+   "seedKey": "celebration/birthday",
+   "call": "Sis",
+   "content": {
+    "blessing": {
+     "note": "From all of us.",
+     "verse": "May your days be long, your house be full, and your heart be light."
+    },
+    "finale": {
+     "line": "Happy birthday, from the whole family.",
+     "sign": "We love you."
+    },
+    "letter": {
+     "line": "Look how far you have come.",
+     "paras": [
+      "Twenty-five years, and I have watched every one of them. You are the best thing our family ever did."
+     ]
+    },
+    "reasons": [
+     {
+      "note": "Not once, not even on the hard days.",
+      "title": "You never gave up."
+     },
+     {
+      "note": "Every table is bigger because you sit at it.",
+      "title": "You make room for everyone."
+     },
+     {
+      "note": "We hear it two rooms away.",
+      "title": "That laugh."
+     }
+    ],
+    "story": {
+     "captions": [
+      "The studio, this year.",
+      "Still the one who laughs first.",
+      "Every room gets better when you walk in.",
+      "The dress you nearly did not buy.",
+      "Twenty-five looks good on you."
+     ],
+     "title": "The years."
+    },
+    "voices": {
+     "items": [
+      {
+       "name": "Mum",
+       "role": "Mother",
+       "text": "My first prayer answered. I thank God for you every morning."
+      },
+      {
+       "name": "Tobi",
+       "role": "Brother",
+       "text": "You still owe me from 2019. Happy birthday anyway."
+      },
+      {
+       "name": "Ada",
+       "role": "Best friend",
+       "text": "Fifteen years of you. I would do every one again."
+      }
+     ]
+    }
+   },
+   "date": "07 · 11 · 2026",
+   "kind": "celebration",
+   "name": "Aisha",
+   "occasion": "birthday",
+   "occasionName": "Birthday",
+   "photos": [
+    "/img/aisha-1.webp",
+    "/img/aisha-2.webp",
+    "/img/aisha-3.webp",
+    "/img/aisha-5.webp",
+    "/img/aisha-6.webp",
+    "/img/aisha-8.webp",
+    "/img/aisha-4.webp",
+    "/img/aisha-7.webp"
+   ]
+  },
+  {
+   "seedKey": "celebration/mothers-day",
+   "call": "Mum",
+   "content": {
+    "blessing": {
+     "note": "From all of us.",
+     "verse": "May your days be long, your house be full, and your heart be light."
+    },
+    "finale": {
+     "sign": "We love you."
+    },
+    "letter": {
+     "line": "Look how far you have come.",
+     "paras": [
+      "Twenty-five years, and I have watched every one of them. You are the best thing our family ever did."
+     ]
+    },
+    "story": {
+     "captions": [
+      "The studio, this year.",
+      "Still the one who laughs first.",
+      "Every room gets better when you walk in.",
+      "The dress you nearly did not buy.",
+      "Twenty-five looks good on you."
+     ],
+     "title": "The years."
+    },
+    "voices": {
+     "items": [
+      {
+       "name": "Mum",
+       "role": "Mother",
+       "text": "My first prayer answered. I thank God for you every morning."
+      },
+      {
+       "name": "Tobi",
+       "role": "Brother",
+       "text": "You still owe me from 2019. Happy birthday anyway."
+      },
+      {
+       "name": "Ada",
+       "role": "Best friend",
+       "text": "Fifteen years of you. I would do every one again."
+      }
+     ]
+    }
+   },
+   "date": "07 · 11 · 2026",
+   "kind": "celebration",
+   "name": "Aisha",
+   "occasion": "mothers-day",
+   "occasionName": "Mother's Day",
+   "photos": [
+    "/img/aisha-1.webp",
+    "/img/aisha-2.webp",
+    "/img/aisha-3.webp",
+    "/img/aisha-5.webp",
+    "/img/aisha-6.webp",
+    "/img/aisha-8.webp",
+    "/img/aisha-4.webp",
+    "/img/aisha-7.webp"
+   ]
+  },
+  {
+   "seedKey": "celebration/fathers-day",
+   "call": "Dad",
+   "content": {
+    "blessing": {
+     "note": "From all of us.",
+     "verse": "May your days be long, your house be full, and your heart be light."
+    },
+    "finale": {
+     "sign": "We love you."
+    },
+    "letter": {
+     "line": "Look how far you have come.",
+     "paras": [
+      "Twenty-five years, and I have watched every one of them. You are the best thing our family ever did."
+     ]
+    },
+    "reasons": [
+     {
+      "note": "Not once, not even on the hard days.",
+      "title": "You never gave up."
+     },
+     {
+      "note": "Every table is bigger because you sit at it.",
+      "title": "You make room for everyone."
+     },
+     {
+      "note": "We hear it two rooms away.",
+      "title": "That laugh."
+     }
+    ],
+    "story": {
+     "captions": [
+      "The studio, this year.",
+      "Still the one who laughs first.",
+      "Every room gets better when you walk in.",
+      "The dress you nearly did not buy.",
+      "Twenty-five looks good on you."
+     ],
+     "title": "The years."
+    },
+    "voices": {
+     "items": [
+      {
+       "name": "Mum",
+       "role": "Mother",
+       "text": "My first prayer answered. I thank God for you every morning."
+      },
+      {
+       "name": "Tobi",
+       "role": "Brother",
+       "text": "You still owe me from 2019. Happy birthday anyway."
+      },
+      {
+       "name": "Ada",
+       "role": "Best friend",
+       "text": "Fifteen years of you. I would do every one again."
+      }
+     ]
+    }
+   },
+   "date": "07 · 11 · 2026",
+   "kind": "celebration",
+   "name": "Aisha",
+   "occasion": "fathers-day",
+   "occasionName": "Father's Day",
+   "photos": [
+    "/img/aisha-1.webp",
+    "/img/aisha-2.webp",
+    "/img/aisha-3.webp",
+    "/img/aisha-5.webp",
+    "/img/aisha-6.webp",
+    "/img/aisha-8.webp",
+    "/img/aisha-4.webp",
+    "/img/aisha-7.webp"
+   ]
+  },
+  {
+   "seedKey": "celebration/graduation",
+   "call": "Sis",
+   "content": {
+    "blessing": {
+     "note": "From all of us.",
+     "verse": "May your days be long, your house be full, and your heart be light."
+    },
+    "cover": {
+     "school": "BSc Architecture, University of Lagos"
+    },
+    "finale": {
+     "line": "Look what you did.",
+     "sign": "We love you."
+    },
+    "letter": {
+     "line": "Look how far you have come.",
+     "paras": [
+      "Twenty-five years, and I have watched every one of them. You are the best thing our family ever did."
+     ]
+    },
+    "story": {
+     "captions": [
+      "The studio, this year.",
+      "Still the one who laughs first.",
+      "Every room gets better when you walk in.",
+      "The dress you nearly did not buy.",
+      "Twenty-five looks good on you."
+     ],
+     "title": "The years."
+    },
+    "voices": {
+     "items": [
+      {
+       "name": "Mum",
+       "role": "Mother",
+       "text": "My first prayer answered. I thank God for you every morning."
+      },
+      {
+       "name": "Tobi",
+       "role": "Brother",
+       "text": "You still owe me from 2019. Happy birthday anyway."
+      },
+      {
+       "name": "Ada",
+       "role": "Best friend",
+       "text": "Fifteen years of you. I would do every one again."
+      }
+     ]
+    }
+   },
+   "date": "07 · 11 · 2026",
+   "kind": "celebration",
+   "name": "Aisha",
+   "occasion": "graduation",
+   "occasionName": "Graduation",
+   "photos": [
+    "/img/aisha-1.webp",
+    "/img/aisha-2.webp",
+    "/img/aisha-3.webp",
+    "/img/aisha-5.webp",
+    "/img/aisha-6.webp",
+    "/img/aisha-8.webp",
+    "/img/aisha-4.webp",
+    "/img/aisha-7.webp"
+   ]
+  },
+  {
+   "seedKey": "celebration/new-baby",
+   "call": "Little one",
+   "content": {
+    "blessing": {
+     "note": "From all of us.",
+     "verse": "May your days be long, your house be full, and your heart be light."
+    },
+    "cover": {
+     "born": "07 November 2026"
+    },
+    "finale": {
+     "sign": "We love you."
+    },
+    "letter": {
+     "line": "Welcome to the world.",
+     "paras": [
+      "You are three days old, and you have already changed every one of us.",
+      "This was waiting for you, for whenever you are old enough to read it."
+     ]
+    },
+    "story": {
+     "captions": [
+      "The studio, this year.",
+      "Still the one who laughs first.",
+      "Every room gets better when you walk in.",
+      "The dress you nearly did not buy.",
+      "Twenty-five looks good on you."
+     ],
+     "title": "The years."
+    },
+    "voices": {
+     "items": [
+      {
+       "name": "Mum",
+       "role": "Mother",
+       "text": "My first prayer answered. I thank God for you every morning."
+      },
+      {
+       "name": "Tobi",
+       "role": "Brother",
+       "text": "You still owe me from 2019. Happy birthday anyway."
+      },
+      {
+       "name": "Ada",
+       "role": "Best friend",
+       "text": "Fifteen years of you. I would do every one again."
+      }
+     ]
+    }
+   },
+   "date": "07 · 11 · 2026",
+   "kind": "celebration",
+   "name": "Aisha",
+   "occasion": "new-baby",
+   "occasionName": "New baby",
+   "photos": [
+    "/img/aisha-1.webp",
+    "/img/aisha-2.webp",
+    "/img/aisha-3.webp",
+    "/img/aisha-5.webp",
+    "/img/aisha-6.webp",
+    "/img/aisha-8.webp",
+    "/img/aisha-4.webp",
+    "/img/aisha-7.webp"
+   ]
+  },
+  {
+   "seedKey": "celebration/thanksgiving",
+   "call": "Mum",
+   "content": {
+    "blessing": {
+     "note": "From all of us.",
+     "verse": "May your days be long, your house be full, and your heart be light."
+    },
+    "finale": {
+     "sign": "We love you."
+    },
+    "letter": {
+     "line": "Thank you, Mum.",
+     "paras": [
+      "This year was hard, and you carried us through it. Every meal, every call, every prayer."
+     ]
+    },
+    "story": {
+     "captions": [
+      "The studio, this year.",
+      "Still the one who laughs first.",
+      "Every room gets better when you walk in.",
+      "The dress you nearly did not buy.",
+      "Twenty-five looks good on you."
+     ],
+     "title": "The years."
+    },
+    "voices": {
+     "items": [
+      {
+       "name": "Mum",
+       "role": "Mother",
+       "text": "My first prayer answered. I thank God for you every morning."
+      },
+      {
+       "name": "Tobi",
+       "role": "Brother",
+       "text": "You still owe me from 2019. Happy birthday anyway."
+      },
+      {
+       "name": "Ada",
+       "role": "Best friend",
+       "text": "Fifteen years of you. I would do every one again."
+      }
+     ]
+    }
+   },
+   "date": "07 · 11 · 2026",
+   "kind": "celebration",
+   "name": "Aisha",
+   "occasion": "thanksgiving",
+   "occasionName": "Thanksgiving",
+   "photos": [
+    "/img/aisha-1.webp",
+    "/img/aisha-2.webp",
+    "/img/aisha-3.webp",
+    "/img/aisha-5.webp",
+    "/img/aisha-6.webp",
+    "/img/aisha-8.webp",
+    "/img/aisha-4.webp",
+    "/img/aisha-7.webp"
+   ]
+  },
+  {
+   "seedKey": "celebration/christmas",
+   "call": "Family",
+   "content": {
+    "blessing": {
+     "note": "From all of us.",
+     "verse": "May your days be long, your house be full, and your heart be light."
+    },
+    "cover": {
+     "more": [
+      "Tobi",
+      "Ada",
+      "Mum"
+     ]
+    },
+    "finale": {
+     "line": "Merry Christmas to all of you.",
+     "sign": "With love"
+    },
+    "letter": {
+     "line": "Merry Christmas, all of you.",
+     "paras": [
+      "Another year of all of us around one table. Loud, late and full, the way it should be.",
+      "Whatever next year brings, we bring it together."
+     ]
+    },
+    "story": {
+     "captions": [
+      "The first Sunday of the year.",
+      "The trip we nearly cancelled.",
+      "Every birthday, every cake.",
+      "All of us, again."
+     ],
+     "title": "This year."
+    },
+    "voices": {
+     "items": [
+      {
+       "name": "Mum",
+       "role": "Mother",
+       "text": "My first prayer answered. I thank God for you every morning."
+      },
+      {
+       "name": "Tobi",
+       "role": "Brother",
+       "text": "You still owe me from 2019. Happy birthday anyway."
+      },
+      {
+       "name": "Ada",
+       "role": "Best friend",
+       "text": "Fifteen years of you. I would do every one again."
+      }
+     ]
+    }
+   },
+   "date": "07 · 11 · 2026",
+   "kind": "celebration",
+   "name": "Aisha",
+   "occasion": "christmas",
+   "occasionName": "Christmas",
+   "photos": [
+    "/img/aisha-1.webp",
+    "/img/aisha-2.webp",
+    "/img/aisha-3.webp",
+    "/img/aisha-5.webp",
+    "/img/aisha-6.webp",
+    "/img/aisha-8.webp",
+    "/img/aisha-4.webp",
+    "/img/aisha-7.webp"
+   ]
+  },
+  {
+   "seedKey": "celebration/new-year",
+   "call": "Sis",
+   "content": {
+    "blessing": {
+     "note": "From all of us.",
+     "verse": "May your days be long, your house be full, and your heart be light."
+    },
+    "finale": {
+     "sign": "We love you."
+    },
+    "letter": {
+     "line": "Happy New Year.",
+     "paras": [
+      "This year asked a lot of you, and you gave it everything.",
+      "The next one starts at midnight. I hope it is kind to you."
+     ]
+    },
+    "story": {
+     "captions": [
+      "January, still sure of everything.",
+      "The middle of it.",
+      "The day it turned around.",
+      "Here, now."
+     ],
+     "title": "The year, in pictures."
+    },
+    "voices": {
+     "items": [
+      {
+       "name": "Mum",
+       "role": "Mother",
+       "text": "My first prayer answered. I thank God for you every morning."
+      },
+      {
+       "name": "Tobi",
+       "role": "Brother",
+       "text": "You still owe me from 2019. Happy birthday anyway."
+      },
+      {
+       "name": "Ada",
+       "role": "Best friend",
+       "text": "Fifteen years of you. I would do every one again."
+      }
+     ]
+    }
+   },
+   "date": "07 · 11 · 2026",
+   "kind": "celebration",
+   "name": "Aisha",
+   "occasion": "new-year",
+   "occasionName": "New Year",
+   "photos": [
+    "/img/aisha-1.webp",
+    "/img/aisha-2.webp",
+    "/img/aisha-3.webp",
+    "/img/aisha-5.webp",
+    "/img/aisha-6.webp",
+    "/img/aisha-8.webp",
+    "/img/aisha-4.webp",
+    "/img/aisha-7.webp"
+   ]
+  },
+  {
+   "seedKey": "celebration/proud-of-you",
+   "call": "Sis",
+   "content": {
+    "blessing": {
+     "note": "From all of us.",
+     "verse": "May your days be long, your house be full, and your heart be light."
+    },
+    "finale": {
+     "line": "You did that.",
+     "sign": "We are so proud."
+    },
+    "letter": {
+     "line": "Look how far you have come.",
+     "paras": [
+      "Twenty-five years, and I have watched every one of them. You are the best thing our family ever did."
+     ]
+    },
+    "reasons": [
+     {
+      "note": "Not once, not even on the hard days.",
+      "title": "You never gave up."
+     },
+     {
+      "note": "Every table is bigger because you sit at it.",
+      "title": "You make room for everyone."
+     },
+     {
+      "note": "We hear it two rooms away.",
+      "title": "That laugh."
+     }
+    ],
+    "story": {
+     "captions": [
+      "The studio, this year.",
+      "Still the one who laughs first.",
+      "Every room gets better when you walk in.",
+      "The dress you nearly did not buy.",
+      "Twenty-five looks good on you."
+     ],
+     "title": "The years."
+    },
+    "voices": {
+     "items": [
+      {
+       "name": "Mum",
+       "role": "Mother",
+       "text": "My first prayer answered. I thank God for you every morning."
+      },
+      {
+       "name": "Tobi",
+       "role": "Brother",
+       "text": "You still owe me from 2019. Happy birthday anyway."
+      },
+      {
+       "name": "Ada",
+       "role": "Best friend",
+       "text": "Fifteen years of you. I would do every one again."
+      }
+     ]
+    }
+   },
+   "date": "07 · 11 · 2026",
+   "kind": "celebration",
+   "name": "Aisha",
+   "occasion": "proud-of-you",
+   "occasionName": "Proud of you",
+   "photos": [
+    "/img/aisha-1.webp",
+    "/img/aisha-2.webp",
+    "/img/aisha-3.webp",
+    "/img/aisha-5.webp",
+    "/img/aisha-6.webp",
+    "/img/aisha-8.webp",
+    "/img/aisha-4.webp",
+    "/img/aisha-7.webp"
+   ]
+  },
+  {
+   "seedKey": "celebration/send-off",
+   "call": "Sis",
+   "content": {
+    "blessing": {
+     "note": "From all of us.",
+     "verse": "May your days be long, your house be full, and your heart be light."
+    },
+    "finale": {
+     "sign": "We love you."
+    },
+    "letter": {
+     "line": "Go well.",
+     "paras": [
+      "The city will be quieter without you, and so will I.",
+      "Go and be great. Call when it is late there and early here."
+     ]
+    },
+    "story": {
+     "captions": [
+      "The studio, this year.",
+      "Still the one who laughs first.",
+      "Every room gets better when you walk in.",
+      "The dress you nearly did not buy.",
+      "Twenty-five looks good on you."
+     ],
+     "title": "The years."
+    },
+    "voices": {
+     "items": [
+      {
+       "name": "Mum",
+       "role": "Mother",
+       "text": "My first prayer answered. I thank God for you every morning."
+      },
+      {
+       "name": "Tobi",
+       "role": "Brother",
+       "text": "You still owe me from 2019. Happy birthday anyway."
+      },
+      {
+       "name": "Ada",
+       "role": "Best friend",
+       "text": "Fifteen years of you. I would do every one again."
+      }
+     ]
+    }
+   },
+   "date": "07 · 11 · 2026",
+   "kind": "celebration",
+   "name": "Aisha",
+   "occasion": "send-off",
+   "occasionName": "Send-off",
+   "photos": [
+    "/img/aisha-1.webp",
+    "/img/aisha-2.webp",
+    "/img/aisha-3.webp",
+    "/img/aisha-5.webp",
+    "/img/aisha-6.webp",
+    "/img/aisha-8.webp",
+    "/img/aisha-4.webp",
+    "/img/aisha-7.webp"
+   ]
+  },
+  {
+   "seedKey": "celebration/wedding-wishes",
+   "call": "Sis",
+   "content": {
+    "blessing": {
+     "note": "From all of us.",
+     "verse": "May your days be long, your house be full, and your heart be light."
+    },
+    "finale": {
+     "sign": "We love you."
+    },
+    "letter": {
+     "line": "Look how far you have come.",
+     "paras": [
+      "Twenty-five years, and I have watched every one of them. You are the best thing our family ever did."
+     ]
+    },
+    "story": {
+     "captions": [
+      "The studio, this year.",
+      "Still the one who laughs first.",
+      "Every room gets better when you walk in.",
+      "The dress you nearly did not buy.",
+      "Twenty-five looks good on you."
+     ],
+     "title": "The years."
+    },
+    "voices": {
+     "items": [
+      {
+       "name": "Mum",
+       "role": "Mother",
+       "text": "My first prayer answered. I thank God for you every morning."
+      },
+      {
+       "name": "Tobi",
+       "role": "Brother",
+       "text": "You still owe me from 2019. Happy birthday anyway."
+      },
+      {
+       "name": "Ada",
+       "role": "Best friend",
+       "text": "Fifteen years of you. I would do every one again."
+      }
+     ]
+    }
+   },
+   "date": "07 · 11 · 2026",
+   "kind": "celebration",
+   "name": "Aisha",
+   "occasion": "wedding-wishes",
+   "occasionName": "Wedding wishes",
+   "photos": [
+    "/img/aisha-1.webp",
+    "/img/aisha-2.webp",
+    "/img/aisha-3.webp",
+    "/img/aisha-5.webp",
+    "/img/aisha-6.webp",
+    "/img/aisha-8.webp",
+    "/img/aisha-4.webp",
+    "/img/aisha-7.webp"
+   ]
+  },
+  {
+   "seedKey": "celebration/get-well",
+   "call": "Sis",
+   "content": {
+    "blessing": {
+     "note": "From all of us.",
+     "verse": "May your days be long, your house be full, and your heart be light."
+    },
+    "finale": {
+     "sign": "We love you."
+    },
+    "letter": {
+     "line": "Get well soon.",
+     "paras": [
+      "Rest, eat, sleep, and do exactly what the doctor says for once.",
+      "We are counting the days until you are loud again."
+     ]
+    },
+    "story": {
+     "captions": [
+      "The studio, this year.",
+      "Still the one who laughs first.",
+      "Every room gets better when you walk in.",
+      "The dress you nearly did not buy.",
+      "Twenty-five looks good on you."
+     ],
+     "title": "The years."
+    },
+    "voices": {
+     "items": [
+      {
+       "name": "Mum",
+       "role": "Mother",
+       "text": "My first prayer answered. I thank God for you every morning."
+      },
+      {
+       "name": "Tobi",
+       "role": "Brother",
+       "text": "You still owe me from 2019. Happy birthday anyway."
+      },
+      {
+       "name": "Ada",
+       "role": "Best friend",
+       "text": "Fifteen years of you. I would do every one again."
+      }
+     ]
+    }
+   },
+   "date": "07 · 11 · 2026",
+   "kind": "celebration",
+   "name": "Aisha",
+   "occasion": "get-well",
+   "occasionName": "Get well",
+   "photos": [
+    "/img/aisha-1.webp",
+    "/img/aisha-2.webp",
+    "/img/aisha-3.webp",
+    "/img/aisha-5.webp",
+    "/img/aisha-6.webp",
+    "/img/aisha-8.webp",
+    "/img/aisha-4.webp",
+    "/img/aisha-7.webp"
+   ]
+  },
+  {
+   "seedKey": "celebration/end-of-year",
+   "call": "Sis",
+   "content": {
+    "blessing": {
+     "note": "From all of us.",
+     "verse": "May your days be long, your house be full, and your heart be light."
+    },
+    "finale": {
+     "sign": "We love you."
+    },
+    "letter": {
+     "line": "Look how far you have come.",
+     "paras": [
+      "Twenty-five years, and I have watched every one of them. You are the best thing our family ever did."
+     ]
+    },
+    "story": {
+     "captions": [
+      "The studio, this year.",
+      "Still the one who laughs first.",
+      "Every room gets better when you walk in.",
+      "The dress you nearly did not buy.",
+      "Twenty-five looks good on you."
+     ],
+     "title": "The years."
+    },
+    "voices": {
+     "items": [
+      {
+       "name": "Mum",
+       "role": "Mother",
+       "text": "My first prayer answered. I thank God for you every morning."
+      },
+      {
+       "name": "Tobi",
+       "role": "Brother",
+       "text": "You still owe me from 2019. Happy birthday anyway."
+      },
+      {
+       "name": "Ada",
+       "role": "Best friend",
+       "text": "Fifteen years of you. I would do every one again."
+      }
+     ]
+    }
+   },
+   "date": "07 · 11 · 2026",
+   "kind": "celebration",
+   "name": "Aisha",
+   "occasion": "end-of-year",
+   "occasionName": "End of year",
+   "photos": [
+    "/img/aisha-1.webp",
+    "/img/aisha-2.webp",
+    "/img/aisha-3.webp",
+    "/img/aisha-5.webp",
+    "/img/aisha-6.webp",
+    "/img/aisha-8.webp",
+    "/img/aisha-4.webp",
+    "/img/aisha-7.webp"
+   ]
+  },
+  {
+   "seedKey": "group/birthday",
+   "call": "Aisha",
+   "content": {
+    "credits": [
+     {
+      "name": "Ada, Kemi, Tunde, Ife, Zainab and Chidi",
+      "role": "From"
+     }
+    ],
+    "finale": {
+     "line": "Go well. Come back often.",
+     "sign": "All of us."
+    },
+    "note": {
+     "from": "Ada",
+     "text": "We wanted your day to start with all of us at once. So here we are."
+    },
+    "story": {
+     "captions": [
+      "The day we stopped pretending.",
+      "Every version of you.",
+      "The photo your mother framed.",
+      "Four years in."
+     ],
+     "title": "Us, so far."
+    },
+    "voices": {
+     "ask": "What do you love most about her?",
+     "items": [
+      {
+       "name": "Ada",
+       "text": "The way she remembers every birthday but her own."
+      },
+      {
+       "name": "Kemi",
+       "text": "She makes every plan actually happen."
+      },
+      {
+       "name": "Tunde",
+       "text": "Her laugh from two rooms away."
+      },
+      {
+       "name": "Ife",
+       "text": "Sunday rice at hers. Always."
+      }
+     ]
+    }
+   },
+   "date": "07 · 11 · 2026",
+   "kind": "group",
+   "name": "Aisha",
+   "occasion": "birthday",
+   "occasionName": "Birthday",
+   "photos": [
+    "/img/aisha-1.webp",
+    "/img/aisha-2.webp",
+    "/img/aisha-3.webp",
+    "/img/aisha-5.webp",
+    "/img/aisha-6.webp",
+    "/img/aisha-8.webp",
+    "/img/aisha-4.webp",
+    "/img/aisha-7.webp"
+   ]
+  },
+  {
+   "seedKey": "group/send-off",
+   "call": "Aisha",
+   "content": {
+    "credits": [
+     {
+      "name": "Ada, Kemi, Tunde, Ife, Zainab and Chidi",
+      "role": "From"
+     }
+    ],
+    "finale": {
+     "sign": "All of us."
+    },
+    "note": {
+     "from": "Ada",
+     "text": "We could not let you leave with just a hug at the airport. So here is all of us, in one place, for whenever it gets quiet over there."
+    },
+    "story": {
+     "captions": [
+      "The day we stopped pretending.",
+      "Every version of you.",
+      "The photo your mother framed.",
+      "Four years in."
+     ],
+     "title": "Us, so far."
+    },
+    "voices": {
+     "ask": "What will you miss most?",
+     "items": [
+      {
+       "name": "Ada",
+       "text": "The 2 a.m. voice notes. Do not stop sending them."
+      },
+      {
+       "name": "Kemi",
+       "text": "You made every plan actually happen. Who does that now?"
+      },
+      {
+       "name": "Tunde",
+       "text": "The way you say my name when I am wrong."
+      },
+      {
+       "name": "Ife",
+       "text": "Sunday rice at yours. The city will be hungry."
+      },
+      {
+       "name": "Zainab",
+       "text": "Your laugh from two rooms away."
+      },
+      {
+       "name": "Chidi",
+       "text": "Go and be great. We already know you will."
+      }
+     ]
+    }
+   },
+   "date": "07 · 11 · 2026",
+   "kind": "group",
+   "name": "Aisha",
+   "occasion": "send-off",
+   "occasionName": "Send-off",
+   "photos": [
+    "/img/aisha-1.webp",
+    "/img/aisha-2.webp",
+    "/img/aisha-3.webp",
+    "/img/aisha-5.webp",
+    "/img/aisha-6.webp",
+    "/img/aisha-8.webp",
+    "/img/aisha-4.webp",
+    "/img/aisha-7.webp"
+   ]
+  },
+  {
+   "seedKey": "group/wedding-wishes",
+   "call": "Aisha",
+   "content": {
+    "credits": [
+     {
+      "name": "Ada, Kemi, Tunde, Ife, Zainab and Chidi",
+      "role": "From"
+     }
+    ],
+    "finale": {
+     "sign": "All of us."
+    },
+    "note": {
+     "from": "Ada",
+     "text": "We could not let you leave with just a hug at the airport. So here is all of us, in one place, for whenever it gets quiet over there."
+    },
+    "partner": "Tunde",
+    "voices": {
+     "ask": "Your wish for the two of them",
+     "items": [
+      {
+       "name": "Ada",
+       "text": "May your house always be this loud and this full."
+      },
+      {
+       "name": "Kemi",
+       "text": "Tunde, you know what you have. Keep her laughing."
+      },
+      {
+       "name": "Zainab",
+       "text": "We prayed for this one. Enjoy every minute."
+      }
+     ]
+    }
+   },
+   "date": "07 · 11 · 2026",
+   "kind": "group",
+   "name": "Aisha",
+   "occasion": "wedding-wishes",
+   "occasionName": "Wedding wishes",
+   "photos": [
+    "/img/aisha-1.webp",
+    "/img/aisha-2.webp",
+    "/img/aisha-3.webp",
+    "/img/aisha-5.webp",
+    "/img/aisha-6.webp",
+    "/img/aisha-8.webp",
+    "/img/aisha-4.webp",
+    "/img/aisha-7.webp"
+   ]
+  },
+  {
+   "seedKey": "group/proud-of-you",
+   "call": "Aisha",
+   "content": {
+    "credits": [
+     {
+      "name": "Ada, Kemi, Tunde, Ife, Zainab and Chidi",
+      "role": "From"
+     }
+    ],
+    "finale": {
+     "sign": "All of us."
+    },
+    "note": {
+     "from": "Ada",
+     "text": "We could not let you leave with just a hug at the airport. So here is all of us, in one place, for whenever it gets quiet over there."
+    },
+    "voices": {
+     "ask": "What you did for us",
+     "items": [
+      {
+       "name": "Ada",
+       "text": "The 2 a.m. voice notes. Do not stop sending them."
+      },
+      {
+       "name": "Kemi",
+       "text": "You made every plan actually happen. Who does that now?"
+      },
+      {
+       "name": "Tunde",
+       "text": "The way you say my name when I am wrong."
+      },
+      {
+       "name": "Ife",
+       "text": "Sunday rice at yours. The city will be hungry."
+      },
+      {
+       "name": "Zainab",
+       "text": "Your laugh from two rooms away."
+      },
+      {
+       "name": "Chidi",
+       "text": "Go and be great. We already know you will."
+      }
+     ]
+    }
+   },
+   "date": "07 · 11 · 2026",
+   "kind": "group",
+   "name": "Aisha",
+   "occasion": "proud-of-you",
+   "occasionName": "Proud of you",
+   "photos": [
+    "/img/aisha-1.webp",
+    "/img/aisha-2.webp",
+    "/img/aisha-3.webp",
+    "/img/aisha-5.webp",
+    "/img/aisha-6.webp",
+    "/img/aisha-8.webp",
+    "/img/aisha-4.webp",
+    "/img/aisha-7.webp"
+   ]
+  },
+  {
+   "seedKey": "group/end-of-year",
+   "call": "Aisha",
+   "content": {
+    "credits": [
+     {
+      "name": "Ada, Kemi, Tunde, Ife, Zainab and Chidi",
+      "role": "From"
+     }
+    ],
+    "finale": {
+     "sign": "All of us."
+    },
+    "note": {
+     "from": "Ada",
+     "text": "We could not let you leave with just a hug at the airport. So here is all of us, in one place, for whenever it gets quiet over there."
+    },
+    "story": {
+     "captions": [
+      "The day we stopped pretending.",
+      "Every version of you.",
+      "The photo your mother framed.",
+      "Four years in."
+     ],
+     "title": "Us, so far."
+    },
+    "voices": {
+     "ask": "Your favourite day this year?",
+     "items": [
+      {
+       "name": "Ada",
+       "text": "The 2 a.m. voice notes. Do not stop sending them."
+      },
+      {
+       "name": "Kemi",
+       "text": "You made every plan actually happen. Who does that now?"
+      },
+      {
+       "name": "Tunde",
+       "text": "The way you say my name when I am wrong."
+      },
+      {
+       "name": "Ife",
+       "text": "Sunday rice at yours. The city will be hungry."
+      },
+      {
+       "name": "Zainab",
+       "text": "Your laugh from two rooms away."
+      },
+      {
+       "name": "Chidi",
+       "text": "Go and be great. We already know you will."
+      }
+     ]
+    }
+   },
+   "date": "07 · 11 · 2026",
+   "kind": "group",
+   "name": "Aisha",
+   "occasion": "end-of-year",
+   "occasionName": "End of year",
+   "photos": [
+    "/img/aisha-1.webp",
+    "/img/aisha-2.webp",
+    "/img/aisha-3.webp",
+    "/img/aisha-5.webp",
+    "/img/aisha-6.webp",
+    "/img/aisha-8.webp",
+    "/img/aisha-4.webp",
+    "/img/aisha-7.webp"
+   ]
+  },
+  {
+   "seedKey": "group/parents-milestone",
+   "call": "Mummy",
+   "content": {
+    "credits": [
+     {
+      "name": "Ada, Kemi, Tunde, Ife, Zainab and Chidi",
+      "role": "From"
+     }
+    ],
+    "finale": {
+     "sign": "All of us."
+    },
+    "note": {
+     "from": "All of us",
+     "text": "Seventy years, and you are still the centre of every room. Happy birthday."
+    },
+    "story": {
+     "captions": [
+      "The day we stopped pretending.",
+      "Every version of you.",
+      "The photo your mother framed.",
+      "Four years in."
+     ],
+     "title": "Us, so far."
+    },
+    "voices": {
+     "ask": "What did she give you?",
+     "items": [
+      {
+       "name": "Tobi",
+       "role": "Son",
+       "text": "Every early morning and every late night, without one complaint."
+      },
+      {
+       "name": "Ada",
+       "role": "Daughter",
+       "text": "The courage to try. And her laugh."
+      },
+      {
+       "name": "Ife",
+       "role": "Grandchild",
+       "text": "The best jollof in the world, Grandma."
+      }
+     ]
+    }
+   },
+   "date": "07 · 11 · 2026",
+   "kind": "group",
+   "name": "Mummy",
+   "occasion": "parents-milestone",
+   "occasionName": "A parent's milestone",
+   "photos": [
+    "/img/aisha-1.webp",
+    "/img/aisha-2.webp",
+    "/img/aisha-3.webp",
+    "/img/aisha-5.webp",
+    "/img/aisha-6.webp",
+    "/img/aisha-8.webp",
+    "/img/aisha-4.webp",
+    "/img/aisha-7.webp"
+   ]
+  },
+  {
+   "seedKey": "wedding/save-the-date",
+   "call": "Aisha",
+   "content": {
+    "details": [
+     {
+      "label": "The day",
+      "value": "Sunday 14 February 2027"
+     },
+     {
+      "label": "Venue",
+      "value": "The Garden Hall"
+     }
+    ],
+    "finale": {
+     "line": "Keep the day. The invitation follows.",
+     "sign": "Aisha and Tunde"
+    },
+    "partner": "Tunde",
+    "story": {
+     "captions": [
+      "The day we stopped pretending.",
+      "Every version of her.",
+      "The photo his mother framed.",
+      "Four years in."
+     ],
+     "title": "Us, so far."
+    },
+    "timeline": [
+     {
+      "what": "A friend's birthday. He asked for her number twice.",
+      "when": "March 2022"
+     },
+     {
+      "what": "The first photo shoot. He forgot what he was going to say.",
+      "when": "July 2022"
+     },
+     {
+      "what": "He asked. She said yes before he finished.",
+      "when": "December 2025"
+     }
+    ]
+   },
+   "date": "14 · 02 · 2027",
+   "kind": "wedding",
+   "name": "Aisha",
+   "occasion": "save-the-date",
+   "occasionName": "Save the date",
+   "photos": [
+    "/img/aisha-1.webp",
+    "/img/aisha-2.webp",
+    "/img/aisha-3.webp",
+    "/img/aisha-5.webp",
+    "/img/aisha-6.webp",
+    "/img/aisha-8.webp",
+    "/img/aisha-4.webp",
+    "/img/aisha-7.webp"
+   ]
+  },
+  {
+   "seedKey": "wedding/our-story",
+   "call": "Aisha",
+   "content": {
+    "details": [
+     {
+      "label": "The day",
+      "value": "Sunday 14 February 2027"
+     },
+     {
+      "label": "Ceremony",
+      "value": "11:00 am · The Garden Hall"
+     },
+     {
+      "label": "Dress code",
+      "value": "Emerald and gold"
+     },
+     {
+      "label": "RSVP",
+      "value": "By 15 January"
+     }
+    ],
+    "finale": {
+     "sign": "Aisha and Tunde"
+    },
+    "partner": "Tunde",
+    "story": {
+     "captions": [
+      "The day we stopped pretending.",
+      "Every version of her.",
+      "The photo his mother framed.",
+      "Four years in."
+     ],
+     "title": "Us, so far."
+    },
+    "timeline": [
+     {
+      "what": "A friend's birthday. He asked for her number twice.",
+      "when": "March 2022"
+     },
+     {
+      "what": "The first photo shoot. He forgot what he was going to say.",
+      "when": "July 2022"
+     },
+     {
+      "what": "He asked. She said yes before he finished.",
+      "when": "December 2025"
+     }
+    ]
+   },
+   "date": "14 · 02 · 2027",
+   "kind": "wedding",
+   "name": "Aisha",
+   "occasion": "our-story",
+   "occasionName": "Our story",
+   "photos": [
+    "/img/aisha-1.webp",
+    "/img/aisha-2.webp",
+    "/img/aisha-3.webp",
+    "/img/aisha-5.webp",
+    "/img/aisha-6.webp",
+    "/img/aisha-8.webp",
+    "/img/aisha-4.webp",
+    "/img/aisha-7.webp"
+   ]
+  },
+  {
+   "seedKey": "wedding/thank-you",
+   "call": "Aisha",
+   "content": {
+    "credits": [
+     {
+      "handle": "@eventsbyrhoda",
+      "name": "Eventsbyrhoda",
+      "role": "Planning"
+     },
+     {
+      "handle": "@brightframe",
+      "name": "Bright Frame Studio",
+      "role": "Photography"
+     },
+     {
+      "handle": "@mamaspot",
+      "name": "Mama's Pot",
+      "role": "Food"
+     },
+     {
+      "handle": "@petalsandlight",
+      "name": "Petals and Light",
+      "role": "Decor"
+     }
+    ],
+    "details": [
+     {
+      "label": "The day",
+      "value": "Sunday 14 February 2027"
+     },
+     {
+      "label": "Ceremony",
+      "value": "11:00 am · The Garden Hall"
+     },
+     {
+      "label": "Dress code",
+      "value": "Emerald and gold"
+     },
+     {
+      "label": "RSVP",
+      "value": "By 15 January"
+     }
+    ],
+    "finale": {
+     "sign": "Aisha and Tunde"
+    },
+    "note": {
+     "from": "Aisha and Tunde",
+     "text": "Thank you for every prayer, every plate and every dance. The day was ours because you were in it."
+    },
+    "partner": "Tunde",
+    "story": {
+     "captions": [
+      "The day we stopped pretending.",
+      "Every version of her.",
+      "The photo his mother framed.",
+      "Four years in."
+     ],
+     "title": "Us, so far."
+    },
+    "timeline": [
+     {
+      "what": "A friend's birthday. He asked for her number twice.",
+      "when": "March 2022"
+     },
+     {
+      "what": "The first photo shoot. He forgot what he was going to say.",
+      "when": "July 2022"
+     },
+     {
+      "what": "He asked. She said yes before he finished.",
+      "when": "December 2025"
+     }
+    ]
+   },
+   "date": "14 · 02 · 2027",
+   "kind": "wedding",
+   "name": "Aisha",
+   "occasion": "thank-you",
+   "occasionName": "Thank-you",
+   "photos": [
+    "/img/aisha-1.webp",
+    "/img/aisha-2.webp",
+    "/img/aisha-3.webp",
+    "/img/aisha-5.webp",
+    "/img/aisha-6.webp",
+    "/img/aisha-8.webp",
+    "/img/aisha-4.webp",
+    "/img/aisha-7.webp"
+   ]
+  },
+  {
+   "seedKey": "teams/staff-birthday",
+   "call": "Aisha",
+   "content": {
+    "finale": {
+     "line": "Here is to the next five.",
+     "sign": "All of us at Bright Frame"
+    },
+    "gift": {
+     "text": "Pick the place. The whole team is coming.",
+     "title": "Lunch is on us."
+    },
+    "note": {
+     "from": "Everyone at Bright Frame",
+     "text": "Happy birthday. Thank you for everything you bring to the team."
+    },
+    "studio": "Bright Frame",
+    "voices": {
+     "items": [
+      {
+       "name": "Dayo",
+       "role": "Design",
+       "text": "Happy birthday to the calmest person in every meeting."
+      },
+      {
+       "name": "Ngozi",
+       "role": "Finance",
+       "text": "Cake is on the company today. Approved."
+      },
+      {
+       "name": "Sam",
+       "role": "Engineering",
+       "text": "Have the day off from fixing our mistakes."
+      }
+     ]
+    }
+   },
+   "date": "07 · 11 · 2026",
+   "kind": "teams",
+   "name": "Aisha",
+   "occasion": "staff-birthday",
+   "occasionName": "Staff birthday",
+   "photos": [
+    "/img/aisha-1.webp",
+    "/img/aisha-2.webp",
+    "/img/aisha-3.webp",
+    "/img/aisha-5.webp",
+    "/img/aisha-6.webp",
+    "/img/aisha-8.webp",
+    "/img/aisha-4.webp",
+    "/img/aisha-7.webp"
+   ]
+  },
+  {
+   "seedKey": "teams/work-anniversary",
+   "call": "Aisha",
+   "content": {
+    "cover": {
+     "years": "Five years"
+    },
+    "finale": {
+     "sign": "All of us at Bright Frame"
+    },
+    "gift": {
+     "text": "A paid day off, and dinner for two on us.",
+     "title": "Friday is yours."
+    },
+    "note": {
+     "from": "Everyone at Bright Frame",
+     "text": "Five years ago you joined a team of six. Today we are forty, and a lot of that is you. Thank you."
+    },
+    "story": {
+     "captions": [
+      "The day we stopped pretending.",
+      "Every version of you.",
+      "The photo your mother framed.",
+      "Four years in."
+     ],
+     "title": "Us, so far."
+    },
+    "studio": "Bright Frame",
+    "voices": {
+     "items": [
+      {
+       "name": "Dayo",
+       "role": "Design",
+       "text": "Five years of you fixing what the rest of us broke."
+      },
+      {
+       "name": "Ngozi",
+       "role": "Finance",
+       "text": "The only person whose expenses I never question."
+      },
+      {
+       "name": "Sam",
+       "role": "Engineering",
+       "text": "You ask the question everyone else is afraid to."
+      },
+      {
+       "name": "Lola",
+       "role": "People",
+       "text": "The team is kinder because you are on it."
+      }
+     ]
+    }
+   },
+   "date": "07 · 11 · 2026",
+   "kind": "teams",
+   "name": "Aisha",
+   "occasion": "work-anniversary",
+   "occasionName": "Work anniversary",
+   "photos": [
+    "/img/aisha-1.webp",
+    "/img/aisha-2.webp",
+    "/img/aisha-3.webp",
+    "/img/aisha-5.webp",
+    "/img/aisha-6.webp",
+    "/img/aisha-8.webp",
+    "/img/aisha-4.webp",
+    "/img/aisha-7.webp"
+   ]
+  },
+  {
+   "seedKey": "teams/client-thank-you",
+   "call": "Aisha",
+   "content": {
+    "finale": {
+     "sign": "All of us at Bright Frame"
+    },
+    "gift": {
+     "text": "A paid day off, and dinner for two on us.",
+     "title": "Friday is yours."
+    },
+    "note": {
+     "from": "Tolu, your account lead",
+     "text": "Thank you for a year of trusting us with your work. It has been our favourite project."
+    },
+    "studio": "Bright Frame",
+    "voices": {
+     "items": [
+      {
+       "name": "Dayo",
+       "role": "Design",
+       "text": "Five years of you fixing what the rest of us broke."
+      },
+      {
+       "name": "Ngozi",
+       "role": "Finance",
+       "text": "The only person whose expenses I never question."
+      },
+      {
+       "name": "Sam",
+       "role": "Engineering",
+       "text": "You ask the question everyone else is afraid to."
+      },
+      {
+       "name": "Lola",
+       "role": "People",
+       "text": "The team is kinder because you are on it."
+      }
+     ]
+    }
+   },
+   "date": "07 · 11 · 2026",
+   "kind": "teams",
+   "name": "Aisha",
+   "occasion": "client-thank-you",
+   "occasionName": "Client thank-you",
+   "photos": [
+    "/img/aisha-1.webp",
+    "/img/aisha-2.webp",
+    "/img/aisha-3.webp",
+    "/img/aisha-5.webp",
+    "/img/aisha-6.webp",
+    "/img/aisha-8.webp",
+    "/img/aisha-4.webp",
+    "/img/aisha-7.webp"
+   ]
+  },
+  {
+   "seedKey": "teams/farewell",
+   "call": "Aisha",
+   "content": {
+    "finale": {
+     "line": "The door is always open.",
+     "sign": "All of us at Bright Frame"
+    },
+    "gift": {
+     "text": "A paid day off, and dinner for two on us.",
+     "title": "Friday is yours."
+    },
+    "note": {
+     "from": "Everyone at Bright Frame",
+     "text": "Thank you for five good years. Wherever you go next is lucky to have you."
+    },
+    "story": {
+     "captions": [
+      "The day we stopped pretending.",
+      "Every version of you.",
+      "The photo your mother framed.",
+      "Four years in."
+     ],
+     "title": "Us, so far."
+    },
+    "studio": "Bright Frame",
+    "voices": {
+     "items": [
+      {
+       "name": "Dayo",
+       "role": "Design",
+       "text": "The office will be too quiet. Keep in touch."
+      },
+      {
+       "name": "Lola",
+       "role": "People",
+       "text": "You made this place kinder. Take that with you."
+      }
+     ]
+    }
+   },
+   "date": "07 · 11 · 2026",
+   "kind": "teams",
+   "name": "Aisha",
+   "occasion": "farewell",
+   "occasionName": "Farewell",
+   "photos": [
+    "/img/aisha-1.webp",
+    "/img/aisha-2.webp",
+    "/img/aisha-3.webp",
+    "/img/aisha-5.webp",
+    "/img/aisha-6.webp",
+    "/img/aisha-8.webp",
+    "/img/aisha-4.webp",
+    "/img/aisha-7.webp"
+   ]
+  },
+  {
+   "seedKey": "teams/seasons-greetings",
+   "call": "Aisha",
+   "content": {
+    "finale": {
+     "line": "Season's greetings.",
+     "sign": "All of us at Bright Frame"
+    },
+    "gift": {
+     "text": "A paid day off, and dinner for two on us.",
+     "title": "Friday is yours."
+    },
+    "note": {
+     "from": "Everyone at Bright Frame",
+     "text": "Thank you for this year. Rest well, and we will see you in January."
+    },
+    "studio": "Bright Frame",
+    "voices": {
+     "items": [
+      {
+       "name": "Dayo",
+       "role": "Design",
+       "text": "Five years of you fixing what the rest of us broke."
+      },
+      {
+       "name": "Ngozi",
+       "role": "Finance",
+       "text": "The only person whose expenses I never question."
+      },
+      {
+       "name": "Sam",
+       "role": "Engineering",
+       "text": "You ask the question everyone else is afraid to."
+      },
+      {
+       "name": "Lola",
+       "role": "People",
+       "text": "The team is kinder because you are on it."
+      }
+     ]
+    }
+   },
+   "date": "07 · 11 · 2026",
+   "kind": "teams",
+   "name": "Aisha",
+   "occasion": "seasons-greetings",
+   "occasionName": "Season's greetings",
+   "photos": [
+    "/img/aisha-1.webp",
+    "/img/aisha-2.webp",
+    "/img/aisha-3.webp",
+    "/img/aisha-5.webp",
+    "/img/aisha-6.webp",
+    "/img/aisha-8.webp",
+    "/img/aisha-4.webp",
+    "/img/aisha-7.webp"
+   ]
+  },
+  {
+   "seedKey": "teams/welcome",
+   "call": "Aisha",
+   "content": {
+    "finale": {
+     "line": "Your desk is by the window, next to Dayo.",
+     "sign": "All of us at Bright Frame"
+    },
+    "gift": {
+     "text": "A paid day off, and dinner for two on us.",
+     "title": "Friday is yours."
+    },
+    "note": {
+     "from": "Everyone at Bright Frame",
+     "text": "Welcome to the team. Tomorrow is your first day, and we are ready for you."
+    },
+    "studio": "Bright Frame",
+    "voices": {
+     "items": [
+      {
+       "name": "Dayo",
+       "role": "Design",
+       "text": "Welcome. I sit next to you and I make good tea."
+      },
+      {
+       "name": "Ngozi",
+       "role": "Finance",
+       "text": "Ask me anything. I mean it."
+      },
+      {
+       "name": "Sam",
+       "role": "Engineering",
+       "text": "We have been waiting for you. Glad you are here."
+      }
+     ]
+    }
+   },
+   "date": "07 · 11 · 2026",
+   "kind": "teams",
+   "name": "Aisha",
+   "occasion": "welcome",
+   "occasionName": "Welcome",
+   "photos": [
+    "/img/aisha-1.webp",
+    "/img/aisha-2.webp",
+    "/img/aisha-3.webp",
+    "/img/aisha-5.webp",
+    "/img/aisha-6.webp",
+    "/img/aisha-8.webp",
+    "/img/aisha-4.webp",
+    "/img/aisha-7.webp"
+   ]
+  },
+  {
+   "seedKey": "photographers/birthday-shoot",
+   "call": "Aisha",
+   "content": {
+    "credits": [
+     {
+      "handle": "@brightframe",
+      "name": "Bright Frame Studio",
+      "role": "Photography"
+     },
+     {
+      "handle": "@glowbytari",
+      "name": "Glow by Tari",
+      "role": "Makeup"
+     },
+     {
+      "handle": "@braidsbyene",
+      "name": "Braids by Ene",
+      "role": "Hair"
+     },
+     {
+      "handle": "@nkemstyles",
+      "name": "Nkem Styles",
+      "role": "Styling"
+     }
+    ],
+    "links": {
+     "book": "/app",
+     "files": "/app"
+    },
+    "note": {
+     "from": "Bright Frame Studio",
+     "text": "Thank you for trusting us with your twenty-fifth. You made this one easy."
+    },
+    "studio": "Bright Frame Studio"
+   },
+   "date": "07 · 11 · 2026",
+   "kind": "photographers",
+   "name": "Aisha",
+   "occasion": "birthday-shoot",
+   "occasionName": "Birthday shoot",
+   "photos": [
+    "/img/aisha-1.webp",
+    "/img/aisha-2.webp",
+    "/img/aisha-3.webp",
+    "/img/aisha-5.webp",
+    "/img/aisha-6.webp",
+    "/img/aisha-8.webp",
+    "/img/aisha-4.webp",
+    "/img/aisha-7.webp"
+   ]
+  },
+  {
+   "seedKey": "photographers/couple",
+   "call": "Aisha",
+   "content": {
+    "credits": [
+     {
+      "handle": "@brightframe",
+      "name": "Bright Frame Studio",
+      "role": "Photography"
+     },
+     {
+      "handle": "@glowbytari",
+      "name": "Glow by Tari",
+      "role": "Makeup"
+     },
+     {
+      "handle": "@braidsbyene",
+      "name": "Braids by Ene",
+      "role": "Hair"
+     },
+     {
+      "handle": "@nkemstyles",
+      "name": "Nkem Styles",
+      "role": "Styling"
+     }
+    ],
+    "links": {
+     "book": "/app",
+     "files": "/app"
+    },
+    "note": {
+     "from": "Bright Frame Studio",
+     "text": "Thank you for trusting us with your twenty-fifth. You made this one easy."
+    },
+    "partner": "Tunde",
+    "studio": "Bright Frame Studio"
+   },
+   "date": "07 · 11 · 2026",
+   "kind": "photographers",
+   "name": "Aisha",
+   "occasion": "couple",
+   "occasionName": "Couple",
+   "photos": [
+    "/img/aisha-1.webp",
+    "/img/aisha-2.webp",
+    "/img/aisha-3.webp",
+    "/img/aisha-5.webp",
+    "/img/aisha-6.webp",
+    "/img/aisha-8.webp",
+    "/img/aisha-4.webp",
+    "/img/aisha-7.webp"
+   ]
+  },
+  {
+   "seedKey": "photographers/pre-wedding",
+   "call": "Aisha",
+   "content": {
+    "credits": [
+     {
+      "handle": "@brightframe",
+      "name": "Bright Frame Studio",
+      "role": "Photography"
+     },
+     {
+      "handle": "@glowbytari",
+      "name": "Glow by Tari",
+      "role": "Makeup"
+     },
+     {
+      "handle": "@braidsbyene",
+      "name": "Braids by Ene",
+      "role": "Hair"
+     },
+     {
+      "handle": "@nkemstyles",
+      "name": "Nkem Styles",
+      "role": "Styling"
+     }
+    ],
+    "links": {
+     "book": "/app",
+     "files": "/app"
+    },
+    "note": {
+     "from": "Bright Frame Studio",
+     "text": "Thank you for trusting us with your twenty-fifth. You made this one easy."
+    },
+    "partner": "Tunde",
+    "studio": "Bright Frame Studio"
+   },
+   "date": "07 · 11 · 2026",
+   "kind": "photographers",
+   "name": "Aisha",
+   "occasion": "pre-wedding",
+   "occasionName": "Pre-wedding",
+   "photos": [
+    "/img/aisha-1.webp",
+    "/img/aisha-2.webp",
+    "/img/aisha-3.webp",
+    "/img/aisha-5.webp",
+    "/img/aisha-6.webp",
+    "/img/aisha-8.webp",
+    "/img/aisha-4.webp",
+    "/img/aisha-7.webp"
+   ]
+  },
+  {
+   "seedKey": "photographers/maternity",
+   "call": "Aisha",
+   "content": {
+    "credits": [
+     {
+      "handle": "@brightframe",
+      "name": "Bright Frame Studio",
+      "role": "Photography"
+     },
+     {
+      "handle": "@glowbytari",
+      "name": "Glow by Tari",
+      "role": "Makeup"
+     },
+     {
+      "handle": "@braidsbyene",
+      "name": "Braids by Ene",
+      "role": "Hair"
+     },
+     {
+      "handle": "@nkemstyles",
+      "name": "Nkem Styles",
+      "role": "Styling"
+     }
+    ],
+    "links": {
+     "book": "/app",
+     "files": "/app"
+    },
+    "note": {
+     "from": "Bright Frame Studio",
+     "text": "Thank you for trusting us with your twenty-fifth. You made this one easy."
+    },
+    "studio": "Bright Frame Studio"
+   },
+   "date": "07 · 11 · 2026",
+   "kind": "photographers",
+   "name": "Aisha",
+   "occasion": "maternity",
+   "occasionName": "Maternity",
+   "photos": [
+    "/img/aisha-1.webp",
+    "/img/aisha-2.webp",
+    "/img/aisha-3.webp",
+    "/img/aisha-5.webp",
+    "/img/aisha-6.webp",
+    "/img/aisha-8.webp",
+    "/img/aisha-4.webp",
+    "/img/aisha-7.webp"
+   ]
+  },
+  {
+   "seedKey": "photographers/graduation",
+   "call": "Aisha",
+   "content": {
+    "credits": [
+     {
+      "handle": "@brightframe",
+      "name": "Bright Frame Studio",
+      "role": "Photography"
+     },
+     {
+      "handle": "@glowbytari",
+      "name": "Glow by Tari",
+      "role": "Makeup"
+     },
+     {
+      "handle": "@braidsbyene",
+      "name": "Braids by Ene",
+      "role": "Hair"
+     },
+     {
+      "handle": "@nkemstyles",
+      "name": "Nkem Styles",
+      "role": "Styling"
+     }
+    ],
+    "links": {
+     "book": "/app",
+     "files": "/app"
+    },
+    "note": {
+     "from": "Bright Frame Studio",
+     "text": "Thank you for trusting us with your twenty-fifth. You made this one easy."
+    },
+    "studio": "Bright Frame Studio"
+   },
+   "date": "07 · 11 · 2026",
+   "kind": "photographers",
+   "name": "Aisha",
+   "occasion": "graduation",
+   "occasionName": "Graduation",
+   "photos": [
+    "/img/aisha-1.webp",
+    "/img/aisha-2.webp",
+    "/img/aisha-3.webp",
+    "/img/aisha-5.webp",
+    "/img/aisha-6.webp",
+    "/img/aisha-8.webp",
+    "/img/aisha-4.webp",
+    "/img/aisha-7.webp"
+   ]
+  },
+  {
+   "seedKey": "photographers/family-portrait",
+   "call": "Aisha",
+   "content": {
+    "credits": [
+     {
+      "handle": "@brightframe",
+      "name": "Bright Frame Studio",
+      "role": "Photography"
+     },
+     {
+      "handle": "@glowbytari",
+      "name": "Glow by Tari",
+      "role": "Makeup"
+     },
+     {
+      "handle": "@braidsbyene",
+      "name": "Braids by Ene",
+      "role": "Hair"
+     },
+     {
+      "handle": "@nkemstyles",
+      "name": "Nkem Styles",
+      "role": "Styling"
+     }
+    ],
+    "links": {
+     "book": "/app",
+     "files": "/app"
+    },
+    "note": {
+     "from": "Bright Frame Studio",
+     "text": "Thank you for trusting us with your twenty-fifth. You made this one easy."
+    },
+    "studio": "Bright Frame Studio"
+   },
+   "date": "07 · 11 · 2026",
+   "kind": "photographers",
+   "name": "Aisha",
+   "occasion": "family-portrait",
+   "occasionName": "Family portrait",
+   "photos": [
+    "/img/aisha-1.webp",
+    "/img/aisha-2.webp",
+    "/img/aisha-3.webp",
+    "/img/aisha-5.webp",
+    "/img/aisha-6.webp",
+    "/img/aisha-8.webp",
+    "/img/aisha-4.webp",
+    "/img/aisha-7.webp"
+   ]
+  },
+  {
+   "seedKey": "photographers/bridal-look",
+   "call": "Aisha",
+   "content": {
+    "credits": [
+     {
+      "handle": "@brightframe",
+      "name": "Bright Frame Studio",
+      "role": "Photography"
+     },
+     {
+      "handle": "@glowbytari",
+      "name": "Glow by Tari",
+      "role": "Makeup"
+     },
+     {
+      "handle": "@braidsbyene",
+      "name": "Braids by Ene",
+      "role": "Hair"
+     },
+     {
+      "handle": "@nkemstyles",
+      "name": "Nkem Styles",
+      "role": "Styling"
+     }
+    ],
+    "links": {
+     "book": "/app",
+     "files": "/app"
+    },
+    "note": {
+     "from": "Bright Frame Studio",
+     "text": "Thank you for trusting us with your twenty-fifth. You made this one easy."
+    },
+    "studio": "Bright Frame Studio"
+   },
+   "date": "07 · 11 · 2026",
+   "kind": "photographers",
+   "name": "Aisha",
+   "occasion": "bridal-look",
+   "occasionName": "Bridal look",
+   "photos": [
+    "/img/aisha-1.webp",
+    "/img/aisha-2.webp",
+    "/img/aisha-3.webp",
+    "/img/aisha-5.webp",
+    "/img/aisha-6.webp",
+    "/img/aisha-8.webp",
+    "/img/aisha-4.webp",
+    "/img/aisha-7.webp"
+   ]
+  },
+  {
+   "seedKey": "photographers/finished-outfit",
+   "call": "Aisha",
+   "content": {
+    "credits": [
+     {
+      "handle": "@brightframe",
+      "name": "Bright Frame Studio",
+      "role": "Photography"
+     },
+     {
+      "handle": "@glowbytari",
+      "name": "Glow by Tari",
+      "role": "Makeup"
+     },
+     {
+      "handle": "@braidsbyene",
+      "name": "Braids by Ene",
+      "role": "Hair"
+     },
+     {
+      "handle": "@nkemstyles",
+      "name": "Nkem Styles",
+      "role": "Styling"
+     }
+    ],
+    "links": {
+     "book": "/app",
+     "files": "/app"
+    },
+    "note": {
+     "from": "Bright Frame Studio",
+     "text": "Thank you for trusting us with your twenty-fifth. You made this one easy."
+    },
+    "studio": "Bright Frame Studio"
+   },
+   "date": "07 · 11 · 2026",
+   "kind": "photographers",
+   "name": "Aisha",
+   "occasion": "finished-outfit",
+   "occasionName": "Finished outfit",
+   "photos": [
+    "/img/aisha-1.webp",
+    "/img/aisha-2.webp",
+    "/img/aisha-3.webp",
+    "/img/aisha-5.webp",
+    "/img/aisha-6.webp",
+    "/img/aisha-8.webp",
+    "/img/aisha-4.webp",
+    "/img/aisha-7.webp"
+   ]
+  },
+  {
+   "seedKey": "photographers/film-stills",
+   "call": "Aisha",
+   "content": {
+    "credits": [
+     {
+      "handle": "@brightframe",
+      "name": "Bright Frame Studio",
+      "role": "Photography"
+     },
+     {
+      "handle": "@glowbytari",
+      "name": "Glow by Tari",
+      "role": "Makeup"
+     },
+     {
+      "handle": "@braidsbyene",
+      "name": "Braids by Ene",
+      "role": "Hair"
+     },
+     {
+      "handle": "@nkemstyles",
+      "name": "Nkem Styles",
+      "role": "Styling"
+     }
+    ],
+    "links": {
+     "book": "/app",
+     "files": "/app"
+    },
+    "note": {
+     "from": "Bright Frame Studio",
+     "text": "Thank you for trusting us with your twenty-fifth. You made this one easy."
+    },
+    "studio": "Bright Frame Studio"
+   },
+   "date": "07 · 11 · 2026",
+   "kind": "photographers",
+   "name": "Aisha",
+   "occasion": "film-stills",
+   "occasionName": "Film stills",
+   "photos": [
+    "/img/aisha-1.webp",
+    "/img/aisha-2.webp",
+    "/img/aisha-3.webp",
+    "/img/aisha-5.webp",
+    "/img/aisha-6.webp",
+    "/img/aisha-8.webp",
+    "/img/aisha-4.webp",
+    "/img/aisha-7.webp"
+   ]
+  }
+ ]
+}

@@ -10,6 +10,7 @@ import type { RenderJob } from "../../contracts";
 import { JobsService } from "../jobs/jobs.service";
 import { EntitlementsService } from "../price-book/entitlements.service";
 import { ServerFileWriter } from "../server-files/server-files";
+import { SignedUrlsService } from "../stored-files/signed-urls.service";
 import { wishHas } from "../wish-extras/wish-extras";
 import { stateOf } from "../wishes/wish-state";
 import { VideoRenderer, type RenderKind } from "./video-renderer";
@@ -38,6 +39,7 @@ export class RenderJobsService implements OnModuleInit {
     private readonly renderer: VideoRenderer,
     private readonly files: ServerFileWriter,
     private readonly entitlements: EntitlementsService,
+    private readonly signed: SignedUrlsService,
   ) {}
 
   /** Not in tests (NODE_ENV=test), like the other job handlers: specs share one database and call run() themselves. */
@@ -55,7 +57,7 @@ export class RenderJobsService implements OnModuleInit {
     if (!UUID.test(wishId)) throw AppError.notFound();
     const row = await this.db.renderJob.findFirst({ where: { wishId, wish: { accountId } }, orderBy: { id: "desc" } });
     if (!row) throw AppError.notFound();
-    return this.wire(row);
+    return this.view(row, accountId);
   }
 
   /** E-148: asks for the portrait video (the wish as a file when it rests). Checked: the owner, the entitlement, the renderer. */
@@ -75,7 +77,8 @@ export class RenderJobsService implements OnModuleInit {
       }
       const found = await tx.renderJob.findFirst({ where: { wishId, kind: DB_KIND[kind] }, orderBy: { id: "desc" } });
       if (found && found.status !== "failed") return found.id;
-      if (!this.renderer.configured()) throw new AppError(503, "video_unavailable", "Video is not available right now. Try again soon.");
+      if (!this.renderer.configured()) // IK3: the person has the video already (paid, or on their ticket): they are told it is theirs and will not be charged again
+      if (!this.renderer.configured()) throw new AppError(503, "video_unavailable", "Your video cannot be made right now. It stays yours and you will not pay again. Ask again later.");
       const now = this.clock.now();
       let id: string;
       if (found) {
@@ -88,7 +91,7 @@ export class RenderJobsService implements OnModuleInit {
       await this.jobs.schedule("render-video", now, id, tx);
       return id;
     });
-    return { payment: null, item: this.wire(await this.db.renderJob.findUniqueOrThrow({ where: { id: jobId } })) };
+    return { payment: null, item: await this.view(await this.db.renderJob.findUniqueOrThrow({ where: { id: jobId } }), accountId) };
   }
 
   /** Runs one job: queued (or a lost rendering) to rendering to done or failed. A job already taken, done or failed is left alone. */
@@ -112,6 +115,14 @@ export class RenderJobsService implements OnModuleInit {
       await this.db.renderJob.updateMany({ where: { id: jobId, status: "rendering" }, data: { status: "failed" } });
       return "failed";
     }
+  }
+
+  /** IK4: a ready job also carries a short-lived signed address of its stored file (the owner's own read only). */
+  private async view(r: JobRow, accountId: string): Promise<RenderJob> {
+    const out = this.wire(r);
+    if (r.status !== "done" || !r.outputFileId) return out;
+    const s = await this.signed.signedRead({ fileId: r.outputFileId }, { type: "owner", accountId });
+    return { ...out, downloadUrl: s.url, downloadExpiresAt: s.expiresAt };
   }
 
   private wire(r: JobRow): RenderJob {

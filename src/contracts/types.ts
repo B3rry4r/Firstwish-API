@@ -1378,6 +1378,9 @@ export interface Refund {
 export interface RenderJob {
   createdAt: Instant;
   deliveredVia?: string | null;
+  /** IK4: a short-lived signed address of the finished file; only on the owner's own read of a ready job */
+  downloadExpiresAt?: Instant | null;
+  downloadUrl?: string | null;
   height: number;
   id: string;
   kind: "status-video" | "premiere-clip" | "keepsake-export";

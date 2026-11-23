@@ -67,6 +67,8 @@ export class SubmissionsService implements OnModuleInit {
         if (sent !== undefined && sent !== meta.version) throw AppError.conflict("stale_version", "This style was saved somewhere else since you opened it. Open it again.");
         // II5: a style saved before the rule may still name a file that is not its own or not ready: it opens, and is not sent in until the name is removed
         await this.drafts.assertFilesNamed(tx, accountId, id, doc, true);
+        // IK5: a style saved before the rule may hold a base or a layout the server does not know: it opens, and is not sent in until it is mended
+        await this.drafts.assertLists(tx, doc);
         const creator = await tx.creator.findUnique({ where: { accountId }, select: { id: true } });
         if (!creator) throw AppError.forbidden("Set up your creator profile first.");
         const used = await this.state.takeReview(tx, accountId);

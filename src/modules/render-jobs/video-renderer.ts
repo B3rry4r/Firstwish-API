@@ -57,3 +57,14 @@ export class StandinVideoRenderer extends VideoRenderer {
     return Promise.resolve({ bytes: Buffer.from(`standin-video:${input.wishId}:${input.kind}`), contentType: "video/mp4" });
   }
 }
+
+/**
+ * IK3: PROVIDERS=standin binds the stand-in renderer (STANDIN_VIDEO=fail makes every job fail); live providers bind the renderer that
+ * says it is not configured, until a real one is built (OWED: its own task). The env check refuses the switch with live providers.
+ */
+export function videoRendererFor(env: { PROVIDERS: string; STANDIN_VIDEO?: string }): VideoRenderer {
+  if (env.PROVIDERS !== "standin") return new NoVideoRenderer();
+  const r = new StandinVideoRenderer();
+  if (env.STANDIN_VIDEO === "fail") r.failWith = "stand-in video renderer: STANDIN_VIDEO=fail";
+  return r;
+}

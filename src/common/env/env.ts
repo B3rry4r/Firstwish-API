@@ -12,6 +12,8 @@ export interface Env {
   STANDIN_CLOCK_OFFSET?: string;
   /** API-BASE-12 case 4: rules for the stand-in screening by file name (hold:<text>, reject:<text>); tests and verifier stacks only. */
   STANDIN_SCREENING?: string;
+  /** IK3: `fail` makes the stand-in video renderer fail every job; tests and verifier stacks only. */
+  STANDIN_VIDEO?: string;
   INTERNAL_TOKEN: string;
   DATABASE_URL: string;
   REDIS_URL: string;
@@ -171,6 +173,15 @@ export function loadEnv(raw: Record<string, string | undefined> = process.env): 
       problems.push({ name: "STANDIN_SCREENING", problem: "refused: it drives the stand-in screening only (needs PROVIDERS=standin and a NODE_ENV other than production)" });
     } else if (!parseScreeningRules(screening)) {
       problems.push({ name: "STANDIN_SCREENING", problem: "must be a comma list of hold:<part of a file name> or reject:<part of a file name>[:<kind: type-not-taken, empty, too-large or type-mismatch>], for example hold:held,reject:refused:too-large" });
+    }
+  }
+  // IK3: the stand-in video renderer's failure switch moves a paid job to failed, so it is never allowed where real people pay
+  const video = get("STANDIN_VIDEO");
+  if (video !== undefined) {
+    if (providers !== "standin" || out.NODE_ENV === "production") {
+      problems.push({ name: "STANDIN_VIDEO", problem: "refused: it drives the stand-in video renderer only (needs PROVIDERS=standin and a NODE_ENV other than production)" });
+    } else if (video !== "fail") {
+      problems.push({ name: "STANDIN_VIDEO", problem: "must be fail (every video job then fails) or left out" });
     }
   }
   if (problems.length) throw new EnvError(problems);

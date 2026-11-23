@@ -7,6 +7,9 @@ import type { Tx } from "./grants";
 export const TICKET_ORDER = ["moment", "keepsake", "signature", "premiere"] as const;
 const rank = (t: string | null): number => (t ? TICKET_ORDER.indexOf(t as (typeof TICKET_ORDER)[number]) : -1);
 /** An extra that may be bought again for the same wish: each one adds photos to the count (wishes.service limitsOf). */
+const NONE: ReadonlySet<string> = new Set();
+/** IK3: the extras that are not sold now: the portrait video while no video renderer is configured. */
+export const unsoldExtras = (videoConfigured: boolean): ReadonlySet<string> => (videoConfigured ? NONE : new Set(["extra.portrait-video"]));
 export const REPEATABLE_EXTRAS = new Set(["extra.five-photos"]);
 
 export interface WishFacts {
@@ -77,9 +80,11 @@ export async function assessTicketStyle(db: Pick<Tx, "style" | "purchaseGrant">,
 }
 
 /** An extra: the ticket must take it, it is not held twice, and a Keepsake stays under its extras ceiling (list prices, in kobo). */
-export function assessExtra(w: WishFacts | null, payerId: string | null, sku: string, book: EntitlementsRow, listKobo: (sku: string) => bigint): string | null {
+export function assessExtra(w: WishFacts | null, payerId: string | null, sku: string, book: EntitlementsRow, listKobo: (sku: string) => bigint, notSold: ReadonlySet<string> = NONE): string | null {
   const r = reach(w, payerId);
   if (r || !w) return r;
+  // IK3: an extra the server cannot make is not sold (sold is built). Only the START and the read ask this; a payment already taken is never refused for it.
+  if (notSold.has(sku) && !w.adds.includes(sku)) return "extra_not_sold";
   if (w.state !== "draft" && w.state !== "sealed") return "wish_not_open_to_extras";
   if (!w.ticket) return "extra_needs_a_ticket";
   const takes = grantOf(book, `ticket.${w.ticket}`)?.takes;
@@ -114,6 +119,7 @@ export const REASON_TEXT: Record<string, string> = {
   wish_not_open_to_extras: "Extras can be added until the wish opens.",
   extra_needs_a_ticket: "Pick a ticket for this wish first.",
   extra_not_taken_by_ticket: "This ticket does not take that extra.",
+  extra_not_sold: "The portrait video is not on sale right now. Nothing was charged.",
   extra_already_held: "This wish already has that extra.",
   keepsake_extras_ceiling: "Too many extras for a Keepsake.",
   keep_already_paid: "Someone else paid to keep this wish for the same time first.",

@@ -18,9 +18,38 @@ export const EDITABLE: readonly string[] = ["draft", "returned"];
 /** The most a stored document may weigh, as JSON. The kernel's body limit is larger; this keeps one row sane. */
 export const MAX_DOC_BYTES = 400_000;
 const MAX_ART = 200;
+/** IK5: the lists the web's editor draws from (lib/studio-layout.ts SceneLayout, lib/studio.ts AddedKind); a document names nothing outside them. */
+export const LAYOUT_MODES: readonly string[] = ["auto", "free"];
+export const LAYOUT_BOARDS: readonly string[] = ["portrait", "landscape"];
+export const LAYOUT_FITS: readonly string[] = ["contain", "cover"];
+export const ADDED_KINDS: readonly string[] = ["shape", "artwork", "effect", "text", "model", "photo", "element", "three"];
 const MAX_SCENES = 60;
 
 export const text = (v: unknown, max: number): string | null => (typeof v === "string" ? v.trim().slice(0, max) : null);
+
+/** IK5: each scene's layout (an object whose mode, board and fit are in the lists) and each added thing's kind. Answers the fields that fail, in words. */
+export function sceneListProblems(scenes: Obj, field: string): ErrorFields {
+  const fields: ErrorFields = {};
+  const one = (v: unknown, list: readonly string[]) => typeof v === "string" && list.includes(v);
+  for (const [name, scene] of Object.entries(scenes)) {
+    const s = obj(scene);
+    const at = `${field}.scenes.${name}`;
+    if (s.layout !== undefined && s.layout !== null) {
+      const l = s.layout;
+      if (!isObj(l) || !one(l.mode, LAYOUT_MODES)) fields[`${at}.layout`] = `The layout must be an object whose mode is ${LAYOUT_MODES.join(" or ")}.`;
+      else if (l.board !== undefined && !one(l.board, LAYOUT_BOARDS)) fields[`${at}.layout.board`] = `The board must be ${LAYOUT_BOARDS.join(" or ")}.`;
+      else if (l.fit !== undefined && !one(l.fit, LAYOUT_FITS)) fields[`${at}.layout.fit`] = `The fit must be ${LAYOUT_FITS.join(" or ")}.`;
+    }
+    if (s.added !== undefined && s.added !== null) {
+      if (!Array.isArray(s.added)) fields[`${at}.added`] = "What is added must be a list.";
+      else {
+        const i = s.added.findIndex((a) => !isObj(a) || !one(a.kind, ADDED_KINDS));
+        if (i >= 0) fields[`${at}.added[${i}].kind`] = `Must be one of ${ADDED_KINDS.join(", ")}.`;
+      }
+    }
+  }
+  return fields;
+}
 
 /**
  * The shape rules for the parts of a document that are objects: shared by a save (cleanDoc) and by what the AI answers (SA3), so
@@ -36,6 +65,7 @@ export function shapeParts(input: Obj, field: string, out: Obj): ErrorFields {
   const scenes = obj(out.scenes);
   if (Object.keys(scenes).length > MAX_SCENES) fields[`${field}.scenes`] = `At most ${MAX_SCENES} scenes.`;
   else if (Object.values(scenes).some((v) => !isObj(v))) fields[`${field}.scenes`] = "Each scene must be an object.";
+  else Object.assign(fields, sceneListProblems(scenes, field));
   if (input.theme !== undefined && input.theme !== null) {
     if (typeof input.theme === "string" || isObj(input.theme)) out.theme = input.theme;
     else fields[`${field}.theme`] = "Must be a theme object or the name of one.";

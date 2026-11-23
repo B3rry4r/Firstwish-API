@@ -284,6 +284,13 @@
       "refusesStartInProduction": "no"
     },
     {
+      "name": "STANDIN_VIDEO",
+      "introducedBy": "api-base-19",
+      "purpose": "IK3: `fail` makes the stand-in video renderer fail every job (PROVIDERS=standin binds the stand-in renderer, a small marked file); tests and verifier stacks only, refused with PROVIDERS=live or NODE_ENV=production",
+      "secret": false,
+      "refusesStartInProduction": "no"
+    },
+    {
       "name": "INTERNAL_TOKEN",
       "introducedBy": "api-0",
       "purpose": "shared secret an internal route needs in the x-internal-token header (32 or more characters)",

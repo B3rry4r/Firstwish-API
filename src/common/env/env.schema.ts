@@ -83,6 +83,12 @@ export const MANIFEST_VARS: readonly VarSpec[] = [
     purpose: "API-BASE-12 case 4: rules for the stand-in screening by file name, as a comma list of hold:<part of a name> (the file waits in screening) or reject:<part of a name>[:<kind>] (the file is refused; the kind, one of type-not-taken, empty, too-large, type-mismatch, picks the words the refusal carries); tests and verifier stacks only, refused with PROVIDERS=live or NODE_ENV=production",
   },
   {
+    name: "STANDIN_VIDEO",
+    need: "optional",
+    kind: "string",
+    purpose: "IK3: `fail` makes the stand-in video renderer fail every job, so a test stack reaches the failed state and Ask again; PROVIDERS=standin binds the stand-in renderer (a small marked file); tests and verifier stacks only, refused with PROVIDERS=live or NODE_ENV=production",
+  },
+  {
     name: "INTERNAL_TOKEN",
     need: "always",
     kind: "secret",

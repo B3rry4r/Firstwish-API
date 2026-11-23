@@ -33,7 +33,8 @@ import { kindHasOccasion, LAST_STEP } from "./kind-occasions";
 import { isLevel } from "../styles/style-view";
 import { allowedLevel, firstStyleFor, heldAdds, REFUND_WORDS, levelRank, offeredForWish, styleTakingRefusal } from "./style-rule";
 import { PriceBookService } from "../price-book/price-book.service";
-import { assessExtra, readWish } from "../purchases/wish-rules";
+import { VideoRenderer } from "../render-jobs/video-renderer";
+import { assessExtra, readWish, unsoldExtras } from "../purchases/wish-rules";
 import { DEFAULT_KIND, DEFAULT_OCCASION, isBareStart, START_KEY } from "./wish-start";
 
 type Tx = Prisma.TransactionClient;
@@ -129,6 +130,7 @@ export class WishesService {
     private readonly access: ProAccess,
     private readonly pictures: WishPictures,
     private readonly priceBook: PriceBookService,
+    private readonly video: VideoRenderer,
   ) {}
 
   private planSeal: PlanSealFn | null = null;
@@ -258,7 +260,7 @@ export class WishesService {
     if (!w || !Array.isArray(takes)) return {};
     const lines = new Map((await this.priceBook.versionAt(this.clock.now())).lines.map((l) => [l.sku, l.listKobo]));
     const out: Record<string, boolean> = {};
-    for (const sku of takes) if (typeof sku === "string") out[sku] = assessExtra(w, w.accountId, sku, book, (x) => lines.get(x) ?? 0n) === null;
+    for (const sku of takes) if (typeof sku === "string") out[sku] = assessExtra(w, w.accountId, sku, book, (x) => lines.get(x) ?? 0n, unsoldExtras(this.video.configured())) === null;
     return out;
   }
 

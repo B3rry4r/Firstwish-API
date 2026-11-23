@@ -30,7 +30,9 @@ import { WishPictures } from "./wish-pictures";
 import { approvedSubmissionOf } from "../styles/approved-document";
 import { kindHasOccasion, LAST_STEP } from "./kind-occasions";
 import { isLevel } from "../styles/style-view";
-import { allowedLevel, levelRank, styleRefusal } from "./style-rule";
+import { allowedLevel, firstStyleFor, heldAdds, REFUND_WORDS, levelRank, offeredForKind, styleTakingRefusal } from "./style-rule";
+import { PriceBookService } from "../price-book/price-book.service";
+import { assessExtra, readWish } from "../purchases/wish-rules";
 import { DEFAULT_KIND, DEFAULT_OCCASION, isBareStart, START_KEY } from "./wish-start";
 
 type Tx = Prisma.TransactionClient;
@@ -125,6 +127,7 @@ export class WishesService {
     private readonly showing: ShowingLink,
     private readonly access: ProAccess,
     private readonly pictures: WishPictures,
+    private readonly priceBook: PriceBookService,
   ) {}
 
   private planSeal: PlanSealFn | null = null;
@@ -149,14 +152,13 @@ export class WishesService {
   async createBusinessDraftIn(tx: Tx, a: { accountId: string; businessId: string; kind: string; occasion: string; name: string }): Promise<string> {
     const kind = this.slugOf(a.kind, "kind");
     const occasion = this.slugOf(a.occasion, "occasion");
-    const style = await tx.style.findFirst({ where: { on: true }, orderBy: [{ house: { sort: "desc", nulls: "last" } }, { id: "asc" }], select: { slug: true } });
-    if (!style?.slug) throw AppError.conflict("no_style", "No style is on, so a wish cannot be started.");
+    const style = await this.pickStyle(tx, await this.entitlements.row(tx), kind, "signature");
     const biz = await tx.business.findUnique({ where: { id: a.businessId }, select: { name: true, business: true } });
     const from = (biz?.name ?? biz?.business ?? "").trim();
     const id = this.ids.id();
     await tx.wish.create({
       data: {
-        id, accountId: a.accountId, businessId: a.businessId, status: "draft", kind, occasion, styleSlug: style.slug, styleSubmissionId: await approvedSubmissionOf(tx, style.slug), timeZone: DEFAULT_ZONE,
+        id, accountId: a.accountId, businessId: a.businessId, status: "draft", kind, occasion, styleSlug: style.slug, styleTakenLevel: style.level, styleSubmissionId: style.slug ? await approvedSubmissionOf(tx, style.slug) : null, timeZone: DEFAULT_ZONE,
         name: this.text(a.name, "name", 120), content: { cover: { from } }, version: 0,
       },
     });
@@ -172,12 +174,11 @@ export class WishesService {
     const kind = this.slugOf(a.kind, "kind");
     const occasion = this.slugOf(a.occasion, "occasion");
     if (!kindHasOccasion(kind, occasion)) throw AppError.validation({ occasion: `The ${kind} kind has no occasion called ${occasion}.` });
-    const style = await tx.style.findFirst({ where: { on: true }, orderBy: [{ house: { sort: "desc", nulls: "last" } }, { id: "asc" }], select: { slug: true } });
-    if (!style?.slug) throw AppError.conflict("no_style", "No style is on, so a wish cannot be started.");
+    const style = await this.pickStyle(tx, await this.entitlements.row(tx), kind, "signature");
     const id = this.ids.id();
     await tx.wish.create({
       data: {
-        id, accountId: a.accountId, businessId: a.businessId, conciergeOrderId: a.orderId, status: "draft", kind, occasion, styleSlug: style.slug, styleSubmissionId: await approvedSubmissionOf(tx, style.slug), timeZone: DEFAULT_ZONE,
+        id, accountId: a.accountId, businessId: a.businessId, conciergeOrderId: a.orderId, status: "draft", kind, occasion, styleSlug: style.slug, styleTakenLevel: style.level, styleSubmissionId: style.slug ? await approvedSubmissionOf(tx, style.slug) : null, timeZone: DEFAULT_ZONE,
         name: this.text(a.name, "name", 120), content: {}, version: 0,
         // IE1: a wish made for an order is a Signature wish from its start; the order paid for it (no ticket payment, no ledger line of its own)
         ticket: "signature",
@@ -238,17 +239,32 @@ export class WishesService {
     const pictures = (await this.pictures.forWishes([row.id])).get(row.id) ?? [];
     const video = (await this.pictures.videoStates([row.id])).get(row.id) ?? "none";
     const book = await this.entitlements.row();
-    const styleLevel = allowedLevel(book, row.ticket, row.adds);
-    const allowedStyles = await this.allowedStyles(styleLevel);
+    const styleLevel = allowedLevel(book, row.ticket, (await heldAdds(this.prisma, row.id, row.adds)).adds);
+    const allowedStyles = await this.allowedStyles(styleLevel, row.kind);
     // ID1: the ticket payment of this wish that waits to be paid (which ticket, its reference, when it lapses), null when none waits
     const waiting = !viaOrder ? await waitingTicketPayment(this.prisma, accountId, row.id, this.clock.now()) : null;
-    return { ...this.wire(row, (await this.linksFor([id])).get(id)), activity, publish, pictures, video, styleLevel, allowedStyles, ticketPayment: waiting ? waitingView(waiting) : null };
+    const extrasOpen = viaOrder ? {} : await this.extrasOpenFor(row.id, book);
+    return { ...this.wire(row, (await this.linksFor([id])).get(id)), activity, publish, pictures, video, styleLevel, allowedStyles, extrasOpen, ticketPayment: waiting ? waitingView(waiting) : null };
   }
 
-  /** HQ5: the slugs of the styles that are on and that a ticket taking up to `level` may use (every style that is on when no ticket is chosen yet). */
-  private async allowedStyles(level: ReturnType<typeof allowedLevel>): Promise<string[]> {
-    const rows = await this.prisma.style.findMany({ where: { on: true }, select: { slug: true, level: true }, orderBy: { slug: "asc" } });
-    return rows.filter((r) => !!r.slug && (level === null || levelRank(isLevel(r.level) ? r.level : "starter") <= levelRank(level))).map((r) => r.slug as string);
+  /**
+   * Per extra the wish's ticket takes: whether it can still be bought for this wish now (until the wish opens, not held twice, under a Keepsake's ceiling): the
+   * same rule the payment's start and settle use (purchases/wish-rules assessExtra), so no screen guesses. Empty before a ticket is chosen.
+   */
+  private async extrasOpenFor(wishId: string, book: EntitlementsRow): Promise<Record<string, boolean>> {
+    const w = await readWish(this.prisma, wishId);
+    const takes = w?.ticket ? grantOf(book, `ticket.${w.ticket}`)?.takes : null;
+    if (!w || !Array.isArray(takes)) return {};
+    const lines = new Map((await this.priceBook.versionAt(this.clock.now())).lines.map((l) => [l.sku, l.listKobo]));
+    const out: Record<string, boolean> = {};
+    for (const sku of takes) if (typeof sku === "string") out[sku] = assessExtra(w, w.accountId, sku, book, (x) => lines.get(x) ?? 0n) === null;
+    return out;
+  }
+
+  /** HQ5, IJ4: the slugs of the styles a save would accept: on, offered for the wish's kind, and at a level a ticket taking up to `level` may use (any level when no ticket is chosen yet). */
+  private async allowedStyles(level: ReturnType<typeof allowedLevel>, kind: string): Promise<string[]> {
+    const rows = await this.prisma.style.findMany({ where: { on: true }, select: { slug: true, level: true, kinds: true }, orderBy: { slug: "asc" } });
+    return rows.filter((r) => !!r.slug && offeredForKind(r.kinds, kind) && (level === null || levelRank(isLevel(r.level) ? r.level : "starter") <= levelRank(level))).map((r) => r.slug as string);
   }
 
   async link(accountId: string, id: string): Promise<{ link: string; slug: string }> {
@@ -350,6 +366,7 @@ export class WishesService {
     if (styleIn) chosen.style = true;
     const answered = Object.keys(chosen).length > 0;
     const id = this.ids.id();
+    const book = await this.entitlements.row(); // read before the transaction: a pool connection is never held while waiting for another
     const out = await this.prisma.$transaction(async (tx) => {
       await lockAccount(tx, accountId);
       const remember = async (wishId: string): Promise<void> => {
@@ -372,12 +389,16 @@ export class WishesService {
           return { row: open, fresh: false };
         }
       }
-      const styleSlug = styleIn ? await this.styleSlug(tx, styleIn) : await this.defaultStyle(tx);
+      // IJ2: a style named at the start is judged like one named later (a new wish has no ticket yet: kind and switch only)
+      // IJ4: with none named the server picks one that is on, offered for the kind and at the starter level; a kind with none starts with no style
+      const picked = styleIn ? null : await this.pickStyle(tx, book, kind, null);
+      const styleSlug = styleIn ? await this.styleSlug(tx, styleIn) : (picked as { slug: string }).slug;
+      const styleTakenLevel = styleIn ? await this.checkStyleTaking(tx, book, { kind, ticket: null, adds: [] }, styleSlug) : (picked as { level: string | null }).level;
       const content: Obj = { cover: { from } };
       if (studio) content.studio = studio;
       const row = await tx.wish.create({
         data: {
-          id, accountId, status: "draft", kind, occasion, styleSlug, styleSubmissionId: await approvedSubmissionOf(tx, styleSlug), timeZone: DEFAULT_ZONE, name, content: content as Prisma.InputJsonValue, version: 0,
+          id, accountId, status: "draft", kind, occasion, styleSlug, styleTakenLevel, styleSubmissionId: styleSlug ? await approvedSubmissionOf(tx, styleSlug) : null, timeZone: DEFAULT_ZONE, name, content: content as Prisma.InputJsonValue, version: 0,
           ...(answered ? { makerNote: { chosen } as Prisma.InputJsonValue } : {}),
         },
       });
@@ -387,20 +408,35 @@ export class WishesService {
     return { wish: this.wire(out.row, out.fresh ? undefined : (await this.linksFor([out.row.id])).get(out.row.id)), fresh: out.fresh };
   }
 
-  /** The style a start with none begins on: the first style that is on, the house's own first (as a client wish's draft does). */
-  private async defaultStyle(tx: Tx): Promise<string> {
-    const s = await tx.style.findFirst({ where: { on: true }, orderBy: [{ house: { sort: "desc", nulls: "last" } }, { id: "asc" }], select: { slug: true } });
-    if (!s?.slug) throw AppError.conflict("no_style", "No style is on, so a wish cannot be started.");
-    return s.slug;
+  /**
+   * IJ4: the style the server picks for a wish it starts (a new wish, a business draft, a Concierge wish): the first style that is on (the house's own first),
+   * offered for the wish's kind and allowed by its ticket (the starter level where there is no ticket yet). A kind with no such style gets slug "" and no
+   * level: the wish starts with no style, and sealing it is refused until a style is chosen (the maker's style step is required).
+   */
+  private async pickStyle(db: Tx, book: EntitlementsRow, kind: string, ticket: string | null): Promise<{ slug: string; level: string | null }> {
+    const rows = await db.style.findMany({ where: { on: true }, orderBy: [{ house: { sort: "desc", nulls: "last" } }, { id: "asc" }], select: { slug: true, level: true, kinds: true } });
+    if (rows.length === 0) throw AppError.conflict("no_style", "No style is on, so a wish cannot be started.");
+    const allowed = ticket ? allowedLevel(book, ticket, []) : "starter";
+    const hit = firstStyleFor(rows, kind, allowed);
+    return hit?.slug ? { slug: hit.slug, level: isLevel(hit.level) ? hit.level : "starter" } : { slug: "", level: null };
   }
 
-  /** HQ5: the style's level against the highest the ticket allows (price book `styleLevel`, a premium-style extra lifts it): 422 on `style`, with words. */
-  private async checkStyleLevel(db: Tx | PrismaService, book: EntitlementsRow, ticket: string | null, adds: unknown, slug: string): Promise<void> {
-    const allowed = allowedLevel(book, ticket, adds);
-    if (allowed === null) return;
-    const style = await db.style.findUnique({ where: { slug }, select: { name: true, level: true } });
-    const words = style ? styleRefusal(allowed, ticket, style) : null;
-    if (words) throw AppError.validation({ style: words }, words);
+  /**
+   * HQ5, IJ2: the style a wish is about to take against its kind and the highest level its ticket allows (price book `styleLevel`, a premium-style extra lifts it):
+   * 422 on `style`, with words. Returns the style's level, which the wish keeps (`styleTakenLevel`). A wish made on an order is a Signature wish (IE1).
+   * At the seal (`atSeal`) only the level is judged, by the level the wish took the style at: the style's kind and switch were judged when it took it.
+   */
+  private async checkStyleTaking(db: Tx | PrismaService, book: EntitlementsRow, w: { id?: string; kind: string; ticket: string | null; adds: unknown; styleTakenLevel?: string | null }, slug: string, atSeal = false, keepsOff = false): Promise<string> {
+    const held = await heldAdds(db, w.id, w.adds); // IJ3a
+    const allowed = allowedLevel(book, w.ticket, held.adds);
+    const style = await db.style.findUnique({ where: { slug }, select: { name: true, level: true, kinds: true, on: true } });
+    if (!style) return "starter";
+    const words = styleTakingRefusal(allowed, w.ticket, w.kind, style, atSeal ? { level: w.styleTakenLevel, checkOn: false, checkKind: false } : keepsOff ? { level: w.styleTakenLevel, checkOn: false } : {});
+    if (words) {
+      const said = held.refunding ? `${words} ${REFUND_WORDS}` : words;
+      throw AppError.validation({ style: said }, said);
+    }
+    return isLevel(style.level) ? style.level : "starter";
   }
 
   /** What the ticket allows. A wish with no paid ticket is on Starter (the moment line). A wish made for a Concierge order is a Signature wish (IE1). */
@@ -519,8 +555,20 @@ export class WishesService {
         data.styleSlug = await this.styleSlug(tx, input.style, cur.styleSlug);
         // HQ5: once a ticket is chosen, a style above what it allows is refused with words
         if (data.styleSlug !== cur.styleSlug) {
-          await this.checkStyleLevel(tx, book, cur.ticket, cur.adds, data.styleSlug);
+          data.styleTakenLevel = await this.checkStyleTaking(tx, book, { id, kind: kind ?? cur.kind, ticket: cur.ticket, adds: cur.adds }, data.styleSlug);
           data.styleSubmissionId = await approvedSubmissionOf(tx, data.styleSlug); // II3: a new style is taken at its current approved version
+        }
+      }
+      // IJ4: a new kind with a style held: the style must be offered for the new kind, or be replaced in the same save (a held style that went off may stay)
+      if (kind !== undefined && kind !== cur.kind && cur.styleSlug && (data.styleSlug === undefined || data.styleSlug === cur.styleSlug)) {
+        try {
+          await this.checkStyleTaking(tx, book, { id, kind, ticket: cur.ticket, adds: cur.adds, styleTakenLevel: cur.styleTakenLevel }, cur.styleSlug, false, true);
+        } catch (e) {
+          if (e instanceof AppError && e.getStatus() === 422) {
+            const words = `${e.message} Send a style made for the ${kind} kind in the same save.`;
+            throw AppError.validation({ style: words }, words);
+          }
+          throw e;
         }
       }
       if (input.keep !== undefined) data.keep = input.keep;
@@ -775,8 +823,9 @@ export class WishesService {
       }
       // HQ5: the style is checked against the ticket the seal REALLY ends with (a paid ticket, or the one a Pass, plan or pack just drew).
       // A refusal rolls the whole transaction back: nothing drawn, charged or sealed.
-      const ended = await tx.wish.findUniqueOrThrow({ where: { id }, select: { ticket: true, adds: true, styleSlug: true } });
-      await this.checkStyleLevel(tx, book, ended.ticket, ended.adds, ended.styleSlug);
+      const ended = await tx.wish.findUniqueOrThrow({ where: { id }, select: { kind: true, ticket: true, adds: true, styleSlug: true, styleTakenLevel: true } });
+      if (!ended.styleSlug) throw AppError.validation({ style: "Choose a style before sealing." }, "Choose a style before sealing.");
+      await this.checkStyleTaking(tx, book, { id, ...ended }, ended.styleSlug, true);
       const no = await this.issueNumber(tx);
       // ZB3: a client wish shares its wish's number once the wish has one.
       await tx.clientWish.updateMany({ where: { wishId: id }, data: { no } });

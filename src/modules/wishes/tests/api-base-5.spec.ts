@@ -151,7 +151,7 @@ describe("API-BASE-5 wishes (through the real routes)", () => {
     it("a draft with no ticket takes any style; with a ticket the PATCH refuses a style above it, with words, and the draft keeps its style", async () => {
       const u = await user();
       const none = await ticketed(u, null);
-      expect((await save(u, none.id, { version: none.version, style: "owambe" })).status).toBe(200);
+      expect((await save(u, none.id, { version: none.version, style: "reel" })).status).toBe(200);
       const moment = await ticketed(u, "moment");
       const ok = await save(u, moment.id, { version: moment.version, style: "letter" });
       expect(ok.status).toBe(200);
@@ -159,19 +159,19 @@ describe("API-BASE-5 wishes (through the real routes)", () => {
       const standard = await save(u, moment.id, { version: v1.version, style: "status" });
       expect(standard.status).toBe(422);
       expect(standard.body.error.fields.style).toMatch(/Standard style\. A Moment ticket takes Starter styles and below/);
-      const premium = await save(u, moment.id, { version: v1.version, style: "owambe" });
+      const premium = await save(u, moment.id, { version: v1.version, style: "reel" });
       expect(premium.status).toBe(422);
       expect(premium.body.error.message).toMatch(/Premium style/);
       expect(((await read(u, moment.id)).body as W & { style: string }).style).toBe("letter");
       const keep = await ticketed(u, "keepsake");
       expect((await save(u, keep.id, { version: keep.version, style: "status" })).status).toBe(200);
       const k1 = (await read(u, keep.id)).body as W;
-      expect((await save(u, keep.id, { version: k1.version, style: "owambe" })).status).toBe(422);
+      expect((await save(u, keep.id, { version: k1.version, style: "reel" })).status).toBe(422);
       const extra = await ticketed(u, "keepsake", ["extra.premium-style"]);
-      expect((await save(u, extra.id, { version: extra.version, style: "owambe" })).status).toBe(200);
+      expect((await save(u, extra.id, { version: extra.version, style: "reel" })).status).toBe(200);
       for (const ticket of ["signature", "premiere"]) {
         const w = await ticketed(u, ticket);
-        expect((await save(u, w.id, { version: w.version, style: "owambe" })).status).toBe(200);
+        expect((await save(u, w.id, { version: w.version, style: "reel" })).status).toBe(200);
       }
     });
 
@@ -179,7 +179,7 @@ describe("API-BASE-5 wishes (through the real routes)", () => {
       const u = await user();
       const none = (await read(u, (await ticketed(u, null)).id)).body as W & { styleLevel: string | null; allowedStyles: string[] };
       expect(none.styleLevel).toBeNull();
-      expect(none.allowedStyles).toEqual(expect.arrayContaining(["noir", "status", "owambe"]));
+      expect(none.allowedStyles).toEqual(expect.arrayContaining(["noir", "status", "reel"]));
       const m = await ticketed(u, "moment");
       const moment = (await read(u, m.id)).body as W & { styleLevel: string | null; allowedStyles: string[] };
       expect(moment.styleLevel).toBe("starter");
@@ -197,7 +197,7 @@ describe("API-BASE-5 wishes (through the real routes)", () => {
     it("the seal refuses a style the ticket does not allow, with words, and the draft stays a draft", async () => {
       const u = await user();
       const w = await ticketed(u, null);
-      await save(u, w.id, { version: w.version, style: "owambe", content: letter });
+      await save(u, w.id, { version: w.version, style: "reel", content: letter });
       await db.wish.update({ where: { id: w.id }, data: { ticket: "moment" } }); // the ticket is chosen after the style (a payment settles later)
       const row = await db.wish.findUniqueOrThrow({ where: { id: w.id } });
       const sealed = await t.http().post(`/v1/wishes/${w.id}/seal`).set(bearer(u.token)).send({ version: row.version, openNow: true });

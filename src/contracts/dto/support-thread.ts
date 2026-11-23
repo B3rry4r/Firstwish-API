@@ -8,6 +8,9 @@ import type { GetAdminSupportThreadsByIdParams, GetAdminSupportThreadsQuery, Pos
 export class PostAdminSupportThreadsByIdAssigneeBodyDto implements PostAdminSupportThreadsByIdAssigneeBody {
   @IsString()
   assigneeId!: string;
+  @IsOptional()
+  @IsString()
+  expectedAssignee?: string;
   @IsString()
   @MinTrimmed(4)
   reason!: string;

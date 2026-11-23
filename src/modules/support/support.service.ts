@@ -15,6 +15,7 @@ import { toWireInstant } from "../../common/time/time";
 import type { SavedReply, StaffHandOver, SupportMessage, SupportThread, ThreadCounts } from "../../contracts";
 import { AuditActor, AuditService, requireReason } from "../audit/audit.service";
 import { NoticesService } from "../notices/notices.service";
+import { RoleAccessService } from "../role-access/role-access.service";
 import { EmailSuppression } from "../notices/suppression";
 import { IntakeLimits } from "./intake-limits";
 import { isOwnAddress, maskContact, MESSAGE_MAX, replyDomain, REPLY_LOCAL, replyToken, SUBJECT_MAX, textProblem } from "./rules";
@@ -43,6 +44,7 @@ export class SupportService {
     private readonly suppression: EmailSuppression,
     private readonly limits: IntakeLimits,
     @Inject(ENV) private readonly env: Env,
+    private readonly roleAccess: RoleAccessService,
   ) {}
 
   // ---------- wire ----------
@@ -241,8 +243,11 @@ export class SupportService {
    * a sign-in detail. The owner's role comes first when a member holds several.
    */
   async staffToHandOver(): Promise<Page<StaffHandOver>> {
-    const rows = await this.prisma.staffAccount.findMany({ where: { status: "active" }, select: { id: true, name: true, roles: true }, orderBy: [{ name: "asc" }, { id: "asc" }] });
-    const items = rows.map((r): StaffHandOver => ({ id: r.id, name: r.name, role: r.roles.includes("owner") ? "owner" : (r.roles[0] ?? "") }));
+    const rows = (await this.prisma.staffAccount.findMany({ where: { status: "active" }, select: { id: true, name: true, roles: true }, orderBy: [{ name: "asc" }, { id: "asc" }] }));
+    // W14B: only a member whose role opens Support is offered (the Team access table, the same one the route guard reads); a thread never sits with someone who cannot read it
+    const open: typeof rows = [];
+    for (const r of rows) if (await this.roleAccess.opens(r.roles, SECTION)) open.push(r);
+    const items = open.map((r): StaffHandOver => ({ id: r.id, name: r.name, role: r.roles.includes("owner") ? "owner" : (r.roles[0] ?? "") }));
     return { items, nextCursor: null };
   }
 
@@ -309,13 +314,18 @@ export class SupportService {
   }
 
   /** E-204: give the thread to a staff member who is active. The same assignee again changes nothing. */
-  async assign(id: string, assigneeId: string, reasonIn: string, actor: AuditActor): Promise<SupportThread> {
+  async assign(id: string, assigneeId: string, reasonIn: string, actor: AuditActor, expectedAssignee?: string): Promise<SupportThread> {
     const reason = requireReason(reasonIn);
     if (!UUID.test(assigneeId)) throw AppError.validation({ assigneeId: "Pick a staff member." });
+    // W14B: the holder the caller saw ("" when the thread had none); without it the last hand-over wins, as before
+    const expected = expectedAssignee === undefined ? undefined : expectedAssignee.trim().toLowerCase();
+    if (expected !== undefined && expected !== "" && !UUID.test(expected)) throw AppError.validation({ expectedAssignee: "Send the staff member you saw holding this thread, or an empty value when it had none." });
     return this.prisma.$transaction(async (tx) => {
       const t = await this.lockThread(tx, id);
-      const staff = await tx.staffAccount.findUnique({ where: { id: assigneeId }, select: { id: true, status: true } });
+      if (expected !== undefined && (t.assigneeId ?? "") !== expected) throw AppError.conflict("thread_changed_hands", "Someone else handed this thread over since you looked. Look at it again.");
+      const staff = await tx.staffAccount.findUnique({ where: { id: assigneeId }, select: { id: true, status: true, roles: true } });
       if (!staff || staff.status !== "active") throw AppError.validation({ assigneeId: "Pick a staff member who is active." });
+      if (!(await this.roleAccess.opens(staff.roles, SECTION))) throw AppError.validation({ assigneeId: "Pick a staff member whose role opens Support." });
       let row = t;
       if (t.assigneeId !== staff.id) {
         row = await tx.supportThread.update({ where: { id: t.id }, data: { assigneeId: staff.id, updatedAt: this.clock.now() } });

@@ -67,9 +67,9 @@ describe("wave 5 join: money (J1 to J5)", () => {
     await db.style.create({ data: { id: ids.next(), slug: s, level, tier: level, name: slug, house: false, on: true, creator: (creatorId ? { creatorId } : undefined) as never } });
     return s;
   };
-  const wish = async (accountId: string, styleSlug: string) => {
+  const wish = async (accountId: string, styleSlug: string, adds: string[] = []) => {
     const id = ids.next();
-    await db.wish.create({ data: { id, accountId, status: "draft", kind: "birthday", occasion: "birthday", styleSlug, timeZone: "Africa/Lagos" } as never });
+    await db.wish.create({ data: { id, accountId, status: "draft", kind: "birthday", occasion: "birthday", styleSlug, timeZone: "Africa/Lagos", adds } as never });
     return id;
   };
   /** A payment as the start would store it, then the provider's good answer through the one settle path. */
@@ -173,7 +173,7 @@ describe("wave 5 join: money (J1 to J5)", () => {
       const c = await creator();
       const premium = await style("prem", "premium", c.creatorId);
       const payer = await account();
-      const w = await wish(payer, premium);
+      const w = await wish(payer, premium, ["extra.premium-style"]); // IJ2: a Keepsake takes a Premium style only with the premium-style extra
       const p = await pay(payer, "ticket.keepsake", { subjectId: w, options: { style: premium } });
       expect(p.outcome).toBe("fulfilled");
       const rows = await accruals(c.creatorId);

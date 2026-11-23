@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "frozenAt": "2026-11-22T17:13:51Z",
+  "frozenAt": "2026-11-23T05:33:18Z",
   "framework": "nestjs",
   "generatedBy": "tools/pipeline/reconcile.py",
   "resources": [
@@ -25061,6 +25061,13 @@
               ]
             },
             {
+              "name": "expectedAssignee",
+              "type": "string StaffAccount.id (the staff member the caller saw holding the thread; an empty string when it had none; another holder now answers 409 thread_changed_hands and nothing changes; left out, the last hand-over wins as before)",
+              "from": [
+                "DEC-307"
+              ]
+            },
+            {
               "name": "id",
               "type": "string",
               "from": [
@@ -25086,6 +25093,7 @@
             }
           ],
           "notes": [
+            "body by DEC-307",
             "reason by DEC-125",
             "route by conventions naming"
           ]
@@ -27710,6 +27718,18 @@
           "provenance": [
             "admin-wishes",
             "admin-wishes-detail"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "extrasOpen",
+          "type": "object",
+          "classes": [
+            "object"
+          ],
+          "nullable": true,
+          "provenance": [
+            "DEC-306"
           ],
           "supersedes": []
         },

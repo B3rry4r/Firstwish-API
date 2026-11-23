@@ -223,7 +223,7 @@ describe("II3: a wish plays the version of its style that was approved when it w
   });
 
   it("a house style takes no version; the erased-creator and switched-off cases still play the version the wish was made under", async () => {
-    const house = await db.style.findFirstOrThrow({ where: { house: true, on: true, slug: { not: null } }, orderBy: { slug: "asc" } });
+    const house = await db.style.findFirstOrThrow({ where: { house: true, on: true, slug: { not: null }, kinds: { array_contains: ["love"] } }, orderBy: { slug: "asc" } });
     const h = await madeIn(house.slug as string);
     expect(await pointerOf(h.wishId)).toBeNull();
     expect((await player(h.link)).body).toEqual({ style: house.slug, items: [], document: null });

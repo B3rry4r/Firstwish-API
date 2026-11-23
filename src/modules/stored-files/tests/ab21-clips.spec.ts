@@ -192,7 +192,7 @@ describe("API-BASE-21: the clip rules", () => {
     const w = await wishOf(u, "premiere");
     const noLength = await clip(u, w, Buffer.concat([Buffer.from([0, 0, 0, 20]), Buffer.from("ftypisom"), Buffer.alloc(40, 1)]));
     expect([noLength.at, noLength.status, noLength.body.error.code]).toEqual(["confirm", 422, "upload_refused"]);
-    expect(noLength.body.error.message).toMatch(/could not read this clip's length/);
+    expect(noLength.body.error.message).toMatch(/could not read a video in this file/);
     expect(await db.storedFile.count({ where: { id: noLength.id } })).toBe(0);
     // a WebM with no length in it is the same
     const r = await ticketFor(u, w, 64);
@@ -219,11 +219,11 @@ describe("API-BASE-21: the clip rules", () => {
     await plant(u, longer, 20_000);
     const l = await seal(u, longer);
     expect(l.status).toBe(422);
-    expect(l.body.error.fields.clips).toMatch(/^1 clip is longer than this wish may hold: the premiere ticket gives 3 clips of up to 15 seconds\. Remove it/);
+    expect(l.body.error.fields.clips).toMatch(/^the clip added on \d+ \w+ \d+ \(ref \w{6}\) is longer than this wish may hold: the premiere ticket gives 3 clips of up to 15 seconds\. Remove it/);
     // a clip whose length was never read from its file
     const unread = await wishOf(u, "premiere");
     await plant(u, unread, null);
-    expect((await seal(u, unread)).body.error.fields.clips).toMatch(/never read from the file/);
+    expect((await seal(u, unread)).body.error.fields.clips).toMatch(/could not be read from the file/);
     // an extra that was refunded away no longer gives its place
     const refunded = await wishOf(u, "premiere");
     const x = await payExtra(u, refunded, "extra.clip-15s");

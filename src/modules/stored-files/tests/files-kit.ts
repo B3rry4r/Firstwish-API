@@ -10,8 +10,8 @@ export const JPEG = (n: number) => Buffer.concat([Buffer.from([0xff, 0xd8, 0xff,
 export const WEBM = (n: number) => Buffer.concat([Buffer.from([0x1a, 0x45, 0xdf, 0xa3]), Buffer.alloc(Math.max(0, n - 4), 2)]);
 export const PNG = (n: number) => Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), Buffer.alloc(Math.max(0, n - 8), 3)]);
 export const SVG = (n: number) => Buffer.concat([Buffer.from('<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>'), Buffer.alloc(Math.max(0, n - 70), 32)]).subarray(0, n);
-/** IL1a: a small MP4 whose own header (moov, mvhd) says it is `seconds` long, as a phone's file does; the stand-in reads the length from it. */
-export const MP4 = (seconds: number, padding = 64): Buffer => {
+/** IL1a: a small MP4 whose own header (moov, mvhd, and a trak whose handler is video, or sound with `audio`) says it is `seconds` long, as a phone's file does; the stand-in reads the length from it. */
+export const MP4 = (seconds: number, padding = 64, handler: "vide" | "soun" = "vide"): Buffer => {
   const box = (type: string, body: Buffer): Buffer => {
     const head = Buffer.alloc(8);
     head.writeUInt32BE(8 + body.length, 0);
@@ -21,7 +21,10 @@ export const MP4 = (seconds: number, padding = 64): Buffer => {
   const mvhd = Buffer.alloc(100);
   mvhd.writeUInt32BE(1000, 12); // timescale: milliseconds
   mvhd.writeUInt32BE(Math.round(seconds * 1000), 16);
-  return Buffer.concat([box("ftyp", Buffer.from("isom\0\0\0\0isom", "latin1")), box("moov", box("mvhd", mvhd)), Buffer.alloc(padding, 7)]);
+  const hdlr = Buffer.alloc(24);
+  hdlr.write(handler, 8, "latin1"); // version and flags, predefined, then the handler type
+  const trak = box("trak", box("mdia", box("hdlr", hdlr)));
+  return Buffer.concat([box("ftyp", Buffer.from("isom\0\0\0\0isom", "latin1")), box("moov", Buffer.concat([box("mvhd", mvhd), trak])), Buffer.alloc(padding, 7)]);
 };
 export const MB = 1024 * 1024;
 export const GB = 1024 * MB;

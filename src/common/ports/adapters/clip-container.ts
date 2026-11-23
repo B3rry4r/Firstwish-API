@@ -1,16 +1,35 @@
 /**
  * The length of a video file read from its own header, with no outside tool: an MP4 or QuickTime file's `mvhd` box, a WebM file's Segment Info Duration.
- * Used by the stand-in clip length (and by the real adapter's tests); answers null when the header is not in the bytes given or says no length.
+ * Used by the stand-in clip length (and by the real adapter's tests); answers null when the header is not in the bytes given, says no length, or names no
+ * VIDEO track (M3: an audio-only file is not a clip). A stand-in's limit, accepted: it believes the header (a file whose header lies about its length is read
+ * as the header says; the real ffprobe adapter reads the content) and it reads only the first 1 MB, so a clip whose header sits after that is not read here.
  */
 export function containerLengthMs(buf: Buffer): number | null {
   return mp4LengthMs(buf) ?? webmLengthMs(buf);
+}
+
+/** An MP4 or QuickTime header names a video track when a trak's handler (mdia, hdlr) is `vide`. */
+function mp4HasVideo(buf: Buffer, moov: { start: number; end: number }): boolean {
+  let at = moov.start;
+  while (at + 8 <= moov.end) {
+    const size = buf.readUInt32BE(at);
+    if (size < 8) return false;
+    if (buf.toString("latin1", at + 4, at + 8) === "trak") {
+      const end = Math.min(at + size, buf.length);
+      const mdia = findBox(buf, at + 8, end, "mdia");
+      const hdlr = mdia ? findBox(buf, mdia.start, mdia.end, "hdlr") : null;
+      if (hdlr && hdlr.start + 12 <= buf.length && buf.toString("latin1", hdlr.start + 8, hdlr.start + 12) === "vide") return true;
+    }
+    at += size;
+  }
+  return false;
 }
 
 function mp4LengthMs(buf: Buffer): number | null {
   const moov = findBox(buf, 0, buf.length, "moov");
   if (!moov) return null;
   const mvhd = findBox(buf, moov.start, moov.end, "mvhd");
-  if (!mvhd) return null;
+  if (!mvhd || !mp4HasVideo(buf, moov)) return null;
   const d = mvhd.start; // the box body: version and flags, then the times
   if (d + 4 > buf.length) return null;
   const version = buf[d];
@@ -51,12 +70,15 @@ const SEGMENT = 0x18538067;
 const INFO = 0x1549a966;
 const TIMECODE_SCALE = 0x2ad7b1;
 const DURATION = 0x4489;
+const TRACKS = 0x1654ae6b;
+const TRACK_ENTRY = 0xae;
+const TRACK_TYPE = 0x83; // 1 is video
 
 function webmLengthMs(buf: Buffer): number | null {
   if (buf.length < 4 || buf.readUInt32BE(0) !== EBML_HEAD) return null;
-  const state = { scale: 1_000_000, duration: null as number | null };
+  const state = { scale: 1_000_000, duration: null as number | null, video: false };
   walk(buf, 0, buf.length, state);
-  return state.duration && state.duration > 0 ? Math.round((state.duration * state.scale) / 1_000_000) : null;
+  return state.video && state.duration && state.duration > 0 ? Math.round((state.duration * state.scale) / 1_000_000) : null;
 }
 
 function vint(buf: Buffer, at: number, keepMarker: boolean): { value: number; len: number; unknown: boolean } | null {
@@ -74,7 +96,7 @@ function vint(buf: Buffer, at: number, keepMarker: boolean): { value: number; le
   return { value, len, unknown: !keepMarker && allOnes };
 }
 
-function walk(buf: Buffer, from: number, to: number, state: { scale: number; duration: number | null }): void {
+function walk(buf: Buffer, from: number, to: number, state: { scale: number; duration: number | null; video: boolean }): void {
   let at = from;
   while (at < to) {
     const id = vint(buf, at, true);
@@ -83,7 +105,8 @@ function walk(buf: Buffer, from: number, to: number, state: { scale: number; dur
     if (!size) return;
     const body = at + id.len + size.len;
     const end = size.unknown ? to : Math.min(body + size.value, to);
-    if (id.value === SEGMENT || id.value === INFO) walk(buf, body, end, state);
+    if (id.value === SEGMENT || id.value === INFO || id.value === TRACKS || id.value === TRACK_ENTRY) walk(buf, body, end, state);
+    else if (id.value === TRACK_TYPE && end - body === 1 && buf[body] === 1) state.video = true;
     else if (id.value === TIMECODE_SCALE && end - body <= 6) state.scale = buf.readUIntBE(body, end - body) || state.scale;
     else if (id.value === DURATION) {
       if (end - body === 4) state.duration = buf.readFloatBE(body);

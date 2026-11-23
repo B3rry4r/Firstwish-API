@@ -43,7 +43,7 @@ import { ScreeningService } from "./screening.service";
 import { dropFileHearts } from "../vault/vault-shared";
 import { SHOWN_TO_BUYER } from "../wishes/wish-shown";
 import { checkOrderRoom, lockOwnOpenOrder } from "./order-files";
-import { clipRefusal, clipSlots, heldClipSkus, readHeldClips } from "../wish-extras/wish-clips";
+import { clipRefusal, clipSlots, fillClipLengths, heldClipSkus, readClipLength, readHeldClips } from "../wish-extras/wish-clips";
 
 type Tx = Prisma.TransactionClient;
 
@@ -174,7 +174,9 @@ export class StoredFilesService {
     const book = await tx.entitlements.findFirst();
     if (!wish || !book) return null;
     const places = clipSlots(book, wish.ticket, await heldClipSkus(tx, book, wish));
-    const others = await readHeldClips(tx, wish.id, { except: id });
+    // H1: confirms of one wish are judged one after another (the account lock): this clip against the clips already confirmed, plus itself; a clip still
+    // in flight has no length yet and is judged by its own confirm
+    const others = await readHeldClips(tx, wish.id, { except: id, confirmed: true });
     if (others.length + 1 > places.length) return AppError.conflict("clips_full", this.clipsFullWords(wish.ticket, places.length));
     const words = clipRefusal(places, [...others, { lengthMs }], wish.ticket);
     return words ? AppError.validation({ clip: words }, words) : null;
@@ -387,8 +389,16 @@ export class StoredFilesService {
     // IL1a: a clip's length is read from the stored file, never taken from the browser; a clip whose length cannot be read is refused and removed
     let clipMs: number | null = null;
     if (row.purpose === "video_clip" && screened.verdict !== "reject") {
-      clipMs = await this.clipLength.lengthMs({ key: objectKey, contentType: type });
-      if (clipMs === null) return this.refuse(id, objectKey, refused("We could not read this clip's length. Send a video file that plays (MP4, MOV or WebM)."));
+      try {
+        clipMs = await readClipLength(this.clipLength, { key: objectKey, contentType: type });
+        // M2: clips stored before lengths were read are read now, once, and kept (an old clip that cannot be read is named in the words, never removed)
+        const forWish = await this.db.uploadTicket.findUnique({ where: { id }, select: { subjectId: true } });
+        if (clipMs !== null && forWish?.subjectId && isUuid(forWish.subjectId)) await fillClipLengths(this.db, this.clipLength, forWish.subjectId);
+      } catch (e) {
+        if (e instanceof AppError) return this.refuse(id, objectKey, e); // L6: the server's tool is down: 503, the file is not kept
+        throw e;
+      }
+      if (clipMs === null) return this.refuse(id, objectKey, refused("We could not read a video in this file. Send a video file that plays, with a picture (MP4, MOV or WebM)."));
     }
 
     type Done = { row: FileRow; removeKeys: string[]; error?: AppError };

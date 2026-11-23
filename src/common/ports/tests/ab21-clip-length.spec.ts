@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { containerLengthMs } from "../adapters/clip-container";
 import { FfprobeClipLength } from "../adapters/ffprobe-clip-length.adapter";
-import { MissingClipLength } from "../clip-length.port";
+import { ClipToolUnavailable, MissingClipLength } from "../clip-length.port";
 import { MP4 } from "../../../modules/stored-files/tests/files-kit";
 
 /** API-BASE-21 (IL1a): the clip length is read from the file: the header reader the stand-in uses, and the real ffprobe adapter behind its port. */
@@ -15,21 +15,32 @@ describe("clip length", () => {
     expect(containerLengthMs(Buffer.concat([Buffer.from([0, 0, 0, 20]), Buffer.from("ftypisom"), Buffer.alloc(40, 1)]))).toBeNull();
     expect(containerLengthMs(MP4(15).subarray(0, 30))).toBeNull(); // the header is cut short: no guess
     expect(containerLengthMs(Buffer.alloc(0))).toBeNull();
+    expect(containerLengthMs(MP4(10, 64, "soun"))).toBeNull(); // M3: no video track in the header is not a clip
     expect(containerLengthMs(Buffer.from([0x1a, 0x45, 0xdf, 0xa3, 0x80]))).toBeNull(); // a WebM with no Segment
   });
 
-  it("the adapter takes the length from the tool's answer, never throws, and answers null when the tool is missing, fails or says nothing", async () => {
+  const json = (seconds: string, ...kinds: string[]) => JSON.stringify({ format: { duration: seconds }, streams: kinds.map((k) => ({ codec_type: k, disposition: { attached_pic: 0 } })) });
+  it("the adapter takes the length from the tool's answer; a bad file is null; a missing or timed-out tool is not the file's fault (throws)", async () => {
     const seen: string[][] = [];
-    const ok = new FfprobeClipLength((k) => Promise.resolve(`https://signed.invalid/${k}`), (_f, args) => (seen.push(args), Promise.resolve("14.987000\n")));
+    const ok = new FfprobeClipLength((k) => Promise.resolve(`https://signed.invalid/${k}`), (_f, args) => (seen.push(args), Promise.resolve(json("14.987000", "video", "audio"))));
     expect(await ok.lengthMs({ key: "video-clip/a/b", contentType: "video/mp4" })).toBe(14987);
     expect(seen[0].at(-1)).toBe("https://signed.invalid/video-clip/a/b"); // the address is one argument, no shell
-    const gone = new FfprobeClipLength((k) => Promise.resolve(k), () => Promise.reject(new Error("spawn ffprobe ENOENT")));
-    expect(await gone.lengthMs({ key: "k", contentType: "video/mp4" })).toBeNull();
-    const nothing = new FfprobeClipLength((k) => Promise.resolve(k), () => Promise.resolve("N/A\n"));
-    expect(await nothing.lengthMs({ key: "k", contentType: "video/mp4" })).toBeNull();
-    const noSign = new FfprobeClipLength(() => Promise.reject(new Error("no storage")), () => Promise.resolve("3"));
-    expect(await noSign.lengthMs({ key: "k", contentType: "video/mp4" })).toBeNull();
-    expect(await new MissingClipLength().lengthMs()).toBeNull();
+    const probe = (run: () => Promise<string>) => new FfprobeClipLength((k) => Promise.resolve(k), run);
+    // M3: no video stream (audio only, or a cover picture inside it) is a bad file
+    expect(await probe(() => Promise.resolve(json("10", "audio"))).lengthMs({ key: "k", contentType: "video/mp4" })).toBeNull();
+    const cover = JSON.stringify({ format: { duration: "10" }, streams: [{ codec_type: "audio" }, { codec_type: "video", disposition: { attached_pic: 1 } }] });
+    expect(await probe(() => Promise.resolve(cover)).lengthMs({ key: "k", contentType: "video/mp4" })).toBeNull();
+    expect(await probe(() => Promise.resolve("N/A\n")).lengthMs({ key: "k", contentType: "video/mp4" })).toBeNull();
+    expect(await probe(() => Promise.resolve(json("N/A", "video"))).lengthMs({ key: "k", contentType: "video/mp4" })).toBeNull();
+    // a failed read of the file (ffprobe exits with an error) is the file's
+    expect(await probe(() => Promise.reject(new Error("Invalid data found"))).lengthMs({ key: "k", contentType: "video/mp4" })).toBeNull();
+    // L6: the tool missing, not allowed, or killed by the time limit, or no address for the file: the server's
+    for (const why of [{ code: "ENOENT" }, { code: "EACCES" }, { killed: true }]) {
+      await expect(probe(() => Promise.reject(Object.assign(new Error("x"), why))).lengthMs({ key: "k", contentType: "video/mp4" })).rejects.toBeInstanceOf(ClipToolUnavailable);
+    }
+    const noSign = new FfprobeClipLength(() => Promise.reject(new Error("no storage")), () => Promise.resolve(json("3", "video")));
+    await expect(noSign.lengthMs({ key: "k", contentType: "video/mp4" })).rejects.toBeInstanceOf(ClipToolUnavailable);
+    await expect(new MissingClipLength().lengthMs()).rejects.toBeInstanceOf(ClipToolUnavailable);
   });
 
   const has = (tool: string): boolean => spawnSync(tool, ["-version"]).status === 0;

@@ -32,7 +32,8 @@ import { approvedSubmissionOf } from "../styles/approved-document";
 import { kindHasOccasion, LAST_STEP } from "./kind-occasions";
 import { isLevel } from "../styles/style-view";
 import { addsFor } from "../wish-extras/wish-adds";
-import { clipLimitsOf, clipRefusal, clipSlots, heldClipSkus, readHeldClips } from "../wish-extras/wish-clips";
+import { clipLimitsOf, clipRefusal, clipSlots, fillClipLengths, heldClipSkus, readHeldClips } from "../wish-extras/wish-clips";
+import { ClipLengthPort } from "../../common/ports/clip-length.port";
 import { allowedLevel, firstStyleFor, heldAdds, REFUND_WORDS, levelRank, offeredForWish, styleTakingRefusal } from "./style-rule";
 import { PriceBookService } from "../price-book/price-book.service";
 import { videoRefunded } from "../wish-extras/wish-extras";
@@ -134,6 +135,7 @@ export class WishesService {
     private readonly pictures: WishPictures,
     private readonly priceBook: PriceBookService,
     private readonly video: VideoRenderer,
+    private readonly clipLength: ClipLengthPort,
   ) {}
 
   private planSeal: PlanSealFn | null = null;
@@ -840,6 +842,8 @@ export class WishesService {
     if (input.usePlan && !plan) throw AppError.forbidden("You are not part of a business.");
     const biz = plan ? plan.businessId : await this.business.find(accountId);
     const book = await this.entitlements.row(); // read before the transaction: a pool connection is never held while another is asked for
+    // M2: clips stored before lengths were read are read now (before the transaction: the tool may be slow), once, and kept
+    if (await this.prisma.wish.findFirst({ where: { id, accountId }, select: { id: true } })) await fillClipLengths(this.prisma, this.clipLength, id);
     const row = await this.prisma.$transaction(async (tx) => {
       // HD3: one lock order for everything a business's money touches: the owner's account first, then the caller's. A seal that took the
       // caller's account first and the owner's second deadlocked with a client wish being made (it takes the owner's, then writes a row

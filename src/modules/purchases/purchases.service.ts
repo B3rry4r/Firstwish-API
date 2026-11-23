@@ -13,7 +13,8 @@ import { holderKey, KeepProofs } from "./keep-proof";
 import { PassService } from "./pass.service";
 import { WishHandlers } from "./wish-handlers";
 import { VideoRenderer } from "../render-jobs/video-renderer";
-import { assessTicketClips, readHeldClips } from "../wish-extras/wish-clips";
+import { assessTicketClips, fillClipLengths, readHeldClips } from "../wish-extras/wish-clips";
+import { ClipLengthPort } from "../../common/ports/clip-length.port";
 import { assessExtra, assessKeep, assessTicket, assessTicketStyle, readWish, REASON_TEXT, NOT_SOLD_WORDS, TICKET_ORDER, unsoldLines } from "./wish-rules";
 import { canMove } from "../concierge/order-state";
 import { hiddenFromBuyer } from "../wishes/wish-shown";
@@ -68,6 +69,7 @@ export class PurchasesService implements OnModuleInit {
     private readonly proofs: KeepProofs,
     private readonly ids: IdGenerator,
     private readonly lifecycle: WishLifecycleService,
+    private readonly clipLength: ClipLengthPort,
   ) {}
 
   onModuleInit(): void {
@@ -208,6 +210,7 @@ export class PurchasesService implements OnModuleInit {
     const w = wishId ? ((await hiddenFromBuyer(this.db, wishId)) ? null : await readWish(this.db, wishId)) : null;
     if (wishId && (!w || w.accountId !== accountId || w.state === "erased")) throw AppError.notFound("No such wish.");
     const waiting = w ? await waitingTicketPayment(this.db, accountId, w.id, this.clock.now()) : null;
+    if (w) await fillClipLengths(this.db, this.clipLength, w.id); // M2: an old clip's length is read when first needed, and kept
     const clips = w ? await readHeldClips(this.db, w.id) : [];
     const out = new Map<string, { reason: string; words: string } | null>();
     for (const t of TICKET_ORDER) {
@@ -263,6 +266,7 @@ export class PurchasesService implements OnModuleInit {
     if (group === "ticket" && w) {
       const styleWhy = await assessTicketStyle(db, w, sku.slice("ticket.".length), book);
       if (styleWhy) throw AppError.validation({ subjectId: styleWhy.words }, styleWhy.words);
+      await fillClipLengths(db, this.clipLength, w.id); // M2
       // IL1a: a ticket that gives fewer clips, or shorter ones, than the wish holds is refused at start, in words that say what to remove
       const clipWhy = await assessTicketClips(db, book, w, sku.slice("ticket.".length));
       if (clipWhy) throw AppError.validation({ subjectId: clipWhy.words }, clipWhy.words);

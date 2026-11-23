@@ -530,11 +530,15 @@
   },
   {
    "path": "lib/studio.ts",
-   "sha256": "41f5fcdd160b520146a116031ee76a86c6bb0730481f278b673f0befd66c8171"
+   "sha256": "5164a7855c0695f384531519bc5471fdb0c00c5d26a2c5ae2920e0e7fdadf67f"
   },
   {
    "path": "lib/styles.ts",
    "sha256": "025fb1095ec03e84162ae9b4aabda0e517e059d20e34a9d8caff97b003284640"
+  },
+  {
+   "path": "styles/studio-colours.ts",
+   "sha256": "ef8da4c639800a3053b5f7084e7d5629dcf9a56a9761ef764cc4fd84e53f5829"
   }
  ],
  "owned": {

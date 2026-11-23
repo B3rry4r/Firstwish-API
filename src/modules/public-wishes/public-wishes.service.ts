@@ -10,7 +10,7 @@ import type { PublicWishView, ReactionResult, UnlockResult } from "../../contrac
 import { SignedUrlsService } from "../stored-files/signed-urls.service";
 import { HOUSE_HANDLE } from "../wishes/house";
 import { WishLifecycleService } from "../wishes/wish-lifecycle.service";
-import { normalAnswer, secretOpening, withoutSecrets } from "../wishes/opening-secret";
+import { cutSecret, normalAnswer, secretOpening, withoutSecrets } from "../wishes/opening-secret";
 import { LinkLimits, READS_PER_MINUTE, UNLOCKS_PER_HOUR } from "./link-limits";
 import { UnlockTokens } from "./unlock-token";
 
@@ -197,9 +197,10 @@ export class PublicWishesService {
     await this.limits.countTry("wish_link", row.linkId);
     const candidate = input.passcode ?? input.answer ?? (typeof input.opening?.answer === "string" ? input.opening.answer : "");
     const ask = questionOf(row.content) !== null || secretOpening(row.content) === "question";
-    // IK2: a question's answer matches without case or outer spaces (new answers are kept that way; an older one kept as typed still matches as typed); a passcode only as typed
-    const good = typeof candidate === "string" && candidate.length > 0 && candidate.length <= 200
-      && ((ask && (await verify(normalAnswer(candidate), row.passcodeHash))) || (await verify(candidate, row.passcodeHash)));
+    // IK2a: outer spaces are cut from what is tried; a question's answer then matches in NFKC and lower case, a passcode keeps its case (an older answer kept as typed still matches as typed)
+    const cut = typeof candidate === "string" ? cutSecret(candidate) : "";
+    const good = cut.length > 0 && cut.length <= 200
+      && ((ask && (await verify(normalAnswer(cut), row.passcodeHash))) || (await verify(cut, row.passcodeHash)));
     if (!good) return { ok: false, error: questionOf(row.content) ? "That is not the answer." : "That is not the passcode." };
     // a good code does not reset the count: a reset would let tries made at the same moment pass the lock (at most 30 are checked)
     const t = this.tokens.issue(row.linkId, row.passcodeHash);

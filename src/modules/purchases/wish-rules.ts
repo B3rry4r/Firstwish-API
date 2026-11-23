@@ -8,8 +8,26 @@ export const TICKET_ORDER = ["moment", "keepsake", "signature", "premiere"] as c
 const rank = (t: string | null): number => (t ? TICKET_ORDER.indexOf(t as (typeof TICKET_ORDER)[number]) : -1);
 /** An extra that may be bought again for the same wish: each one adds photos to the count (wishes.service limitsOf). */
 const NONE: ReadonlySet<string> = new Set();
-/** IK3: the extras that are not sold now: the portrait video while no video renderer is configured. */
-export const unsoldExtras = (videoConfigured: boolean): ReadonlySet<string> => (videoConfigured ? NONE : new Set(["extra.portrait-video"]));
+/** The lines that hand a person Signature wishes (a Pass upgrade, a business's client wish, a Concierge wish are Signature wishes, IE1, GG3, ZB3). */
+const GIVE_SIGNATURE = ["pass.year", "pro.starter", "pro.studio", "pro.pack", "concierge.single"];
+/**
+ * IK3, IK3a: the lines that are not sold now: while no video renderer is configured, every line whose entitlements include the portrait video. Read from the
+ * entitlements book, never a list of names: a ticket or an extra whose grant says `portraitVideo`, and the lines that hand out wishes of such a ticket.
+ */
+export function unsoldLines(book: EntitlementsRow, videoConfigured: boolean): ReadonlySet<string> {
+  if (videoConfigured) return NONE;
+  const out = new Set<string>();
+  const t = (book.tickets && typeof book.tickets === "object" && !Array.isArray(book.tickets) ? book.tickets : {}) as Record<string, unknown>;
+  const groups: [string, unknown][] = [["ticket", t], ["extra", t.extras]];
+  for (const [group, o] of groups) {
+    if (!o || typeof o !== "object" || Array.isArray(o)) continue;
+    for (const name of Object.keys(o)) if (grantOf(book, `${group}.${name}`)?.portraitVideo === true) out.add(`${group}.${name}`);
+  }
+  const hasVideo = (sku: string): boolean => out.has(sku);
+  if (hasVideo("ticket.signature")) for (const sku of GIVE_SIGNATURE) out.add(sku);
+  return out;
+}
+export const NOT_SOLD_WORDS = "This is not on sale right now: it includes the portrait video, which cannot be made yet. Nothing was charged.";
 export const REPEATABLE_EXTRAS = new Set(["extra.five-photos"]);
 
 export interface WishFacts {

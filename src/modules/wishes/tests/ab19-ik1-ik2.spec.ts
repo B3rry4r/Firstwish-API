@@ -160,14 +160,16 @@ describe("API-BASE-19 IK1, IK2: the receiver's secret", () => {
   }
   const unlock = (slug: string, body: Record<string, unknown>) => http().post(`/v1/w/${slug}/unlock`).set("x-forwarded-for", address).send(body);
 
-  it("1d: a question's answer opens without case or outer spaces; a passcode only as typed", async () => {
+  it("1d: a question's answer opens without case or outer spaces; a passcode without outer spaces, with its case", async () => {
     const q = await sealed("question", "Baobab");
     for (const a of ["BAOBAB", " baobab ", "Baobab", "baobab"]) expect((await unlock(q.slug, { answer: a })).body.ok).toBe(true);
     expect((await unlock(q.slug, { opening: { answer: "  BaObAb" } })).body.ok).toBe(true);
     expect((await unlock(q.slug, { answer: "baobabs" })).body.ok).toBe(false);
     const p = await sealed("passcode", "Sesame7");
     expect((await unlock(p.slug, { passcode: "Sesame7" })).body.ok).toBe(true);
-    for (const a of ["sesame7", "SESAME7", " Sesame7 "]) expect((await unlock(p.slug, { passcode: a })).body).toMatchObject({ ok: false, error: "That is not the passcode." });
+    // IK2a: outer spaces are cut from a passcode too; its case is kept
+    expect((await unlock(p.slug, { passcode: " Sesame7 " })).body.ok).toBe(true);
+    for (const a of ["sesame7", "SESAME7"]) expect((await unlock(p.slug, { passcode: a })).body).toMatchObject({ ok: false, error: "That is not the passcode." });
   });
 
   it("1d: the tries are counted as before: 10 an hour per address, 30 lock the link", async () => {

@@ -20,7 +20,7 @@ import { PassDrawService } from "../purchases/pass-draws";
 import { ProAccess } from "../pro-business/pro-access";
 import { ShowingLink } from "../showing/showing-link";
 import { localToUtc, parseOpening, utcToLocal } from "./local-time";
-import { normalAnswer, SECRET_WORDS, secretOpening, withoutSecrets } from "./opening-secret";
+import { cutSecret, normalAnswer, SECRET_LENGTH_WORDS, SECRET_WORDS, secretOpening, withoutSecrets } from "./opening-secret";
 import { CHAPTER_KEYS, DEFAULT_CONTENT_MAX_BYTES, FileRef, hasBody, readContent } from "./wish-content";
 import { readLimits } from "../price-book/book-limits";
 import type { Principal } from "../../common/auth/principal";
@@ -34,7 +34,7 @@ import { isLevel } from "../styles/style-view";
 import { allowedLevel, firstStyleFor, heldAdds, REFUND_WORDS, levelRank, offeredForWish, styleTakingRefusal } from "./style-rule";
 import { PriceBookService } from "../price-book/price-book.service";
 import { VideoRenderer } from "../render-jobs/video-renderer";
-import { assessExtra, readWish, unsoldExtras } from "../purchases/wish-rules";
+import { assessExtra, readWish, unsoldLines } from "../purchases/wish-rules";
 import { DEFAULT_KIND, DEFAULT_OCCASION, isBareStart, START_KEY } from "./wish-start";
 
 type Tx = Prisma.TransactionClient;
@@ -260,7 +260,7 @@ export class WishesService {
     if (!w || !Array.isArray(takes)) return {};
     const lines = new Map((await this.priceBook.versionAt(this.clock.now())).lines.map((l) => [l.sku, l.listKobo]));
     const out: Record<string, boolean> = {};
-    for (const sku of takes) if (typeof sku === "string") out[sku] = assessExtra(w, w.accountId, sku, book, (x) => lines.get(x) ?? 0n, unsoldExtras(this.video.configured())) === null;
+    for (const sku of takes) if (typeof sku === "string") out[sku] = assessExtra(w, w.accountId, sku, book, (x) => lines.get(x) ?? 0n, unsoldLines(book, this.video.configured())) === null;
     return out;
   }
 
@@ -535,7 +535,7 @@ export class WishesService {
     const zone = input.timeZone;
     if (zone !== undefined && !isTimeZone(zone)) throw AppError.validation({ timeZone: "Not a time zone, for example Africa/Lagos." });
     const wedding = this.weddingOf(input.makerNote);
-    // IK2: a question's answer is kept without case or outer spaces, so it is hashed that way; a passcode as typed (both are made here, the opening decides inside)
+    // IK2a: outer spaces are cut (the passcode() step); a question's answer is also kept in one unicode form and lower case, a passcode keeps its case (both are made here, the opening decides inside)
     const given = typeof input.passcode === "string" ? this.passcode(input.passcode) : null;
     const hashed = given === null ? null : { exact: await hashPasscode(given), answer: normalAnswer(given) === given ? null : await hashPasscode(normalAnswer(given)) };
     const biz = await this.business.find(accountId);
@@ -705,8 +705,10 @@ export class WishesService {
   }
 
   private passcode(p: string): string {
-    if (p.length < 4 || p.length > 64) throw AppError.validation({ passcode: "Use 4 to 64 characters." });
-    return p;
+    // IK2a: outer spaces are cut first, then 4 to 64 characters must be left (a secret of spaces only is refused)
+    const cut = cutSecret(p);
+    if (cut.length < 4 || cut.length > 64) throw AppError.validation({ passcode: SECRET_LENGTH_WORDS }, SECRET_LENGTH_WORDS);
+    return cut;
   }
 
   // ---- paid, seal ----

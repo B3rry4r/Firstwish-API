@@ -28,5 +28,12 @@ export const SECRET_WORDS: Record<SecretOpening, { field: string; words: string 
   question: { field: "passcode", words: "Set the answer before you seal it." },
 };
 
-/** IK2: a question's answer without case or outer spaces. A passcode is never passed through this. */
-export const normalAnswer = (a: string): string => a.trim().toLowerCase();
+/** IK2a: a secret without its outer spaces (phone keyboards add one), as it is set and as it is tried. A passcode is matched in this form and keeps its case. */
+export const cutSecret = (s: string): string => s.trim();
+/**
+ * IK2a: a question's answer without outer spaces, in one unicode form (NFKC: "Cafe" with a combining accent is "Café"; full-width letters are plain ones), then in lower case.
+ * This is lower case, not a full case fold: "STRASSE" and "Straße" are different answers ("straße" matches "STRAßE"). A passcode is never passed through this.
+ */
+export const normalAnswer = (a: string): string => cutSecret(a).normalize("NFKC").trim().toLowerCase();
+/** IK2a: the words for a secret that is too short or too long once its outer spaces are cut (spaces only included). */
+export const SECRET_LENGTH_WORDS = "Use 4 to 64 characters. Spaces at the start and the end do not count.";

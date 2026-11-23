@@ -105,7 +105,7 @@ describe("API-BASE-5 patch: the seal checks the style against the ticket it ends
     const u = await person();
     const m = await withPass(u);
     const w = await wish(u);
-    expect((await patch(u, w, { style: LEVELS.premium })).status).toBe(200);
+    expect((await patch(u, w, { style: "reel" })).status).toBe(200);
     const r = await seal(u, w, { usePass: true });
     expect(r.status).toBe(422);
     expect(r.body.error.message).toMatch(/Premium style/);

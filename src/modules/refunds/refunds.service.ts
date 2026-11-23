@@ -10,6 +10,7 @@ import { isPortTimeout } from "../../common/ports/time-limit";
 import type { Refund as RefundWire } from "../../contracts";
 import { AuditActor, AuditService, requireReason } from "../audit/audit.service";
 import { RefundProviderPort, RefundRefused } from "../../common/ports/refund-provider.port";
+import { PurchasesService } from "../purchases/purchases.service";
 import { RefundEvents } from "./refund-events.service";
 import { refundView } from "./refund-wire";
 
@@ -47,6 +48,7 @@ export class RefundsService {
     private readonly ids: IdGenerator,
     private readonly audit: AuditService,
     private readonly provider: RefundProviderPort,
+    private readonly purchases: PurchasesService,
     // refund-events.service imports OPEN_REFUND from this file, so the two reach each other by a forward reference
     @Inject(forwardRef(() => RefundEvents)) private readonly events: RefundEvents,
   ) {}
@@ -82,6 +84,9 @@ export class RefundsService {
       if (input.amountKobo !== undefined && BigInt(input.amountKobo) !== p.amountKobo) {
         throw AppError.validation({ amountKobo: `A refund is for the whole payment: ${p.amountKobo} kobo.` });
       }
+      // IJ3: the premium-style extra alone is not refunded while the wish holds a style that needs it
+      const block = await this.purchases.refundBlock(tx, p.id);
+      if (block) throw AppError.conflict("extra_needed_by_style", block);
       const open = await tx.refund.findFirst({ where: { paymentId: p.id, status: { in: [...OPEN_REFUND] } }, select: { id: true } });
       if (open) throw AppError.conflict("refund_open", "This payment is already being refunded.");
       const row = await tx.refund.create({
@@ -105,6 +110,10 @@ export class RefundsService {
     const ready = await this.db.$transaction(async (tx) => {
       await this.lock(tx, pre.payment);
       const r = await tx.refund.findUniqueOrThrow({ where: { id } });
+      if (r.status === "requested" || r.status === "approved") {
+        const block = await this.purchases.refundBlock(tx, pre.payment.id);
+        if (block) throw AppError.conflict("extra_needed_by_style", block);
+      }
       if (r.status === "requested") {
         if (!allowSelf && r.requestedBy === actor.id) throw AppError.forbidden("A refund is sent by someone other than who asked for it.");
         await tx.refund.update({ where: { id }, data: { status: "approved", approvedBy: staffId(actor), updatedAt: this.clock.now() } });

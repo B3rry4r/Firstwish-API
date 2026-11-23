@@ -1559,6 +1559,8 @@ model Wish {
   styleSlug                String
   /// the approved Studio submission whose version this wish plays (II3); null for a house style
   styleSubmissionId        String?             @db.Uuid
+  /// the level the style had when the wish took it (IJ2): a later raise by staff does not change what the wish may keep; null reads as the style's level now
+  styleTakenLevel          String?
   opensAt                  DateTime?           @db.Timestamptz(3)
   timeZone                 String
   weddingDate              DateTime?           @db.Date

@@ -18318,6 +18318,16 @@
       "noWriter": true
     },
     {
+      "field": "Wish.extrasOpen",
+      "writers": [],
+      "store": "Wish",
+      "readers": [],
+      "writerActors": [],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
       "field": "Wish.files",
       "writers": [
         "E-226"
@@ -20739,5 +20749,5 @@
     }
   ],
   "crossActor": 34,
-  "noWriter": 669
+  "noWriter": 670
 }

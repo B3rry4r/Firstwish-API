@@ -3215,6 +3215,13 @@
       "set": {
         "style": "string (optional: only wishes shown in this style; a slug)"
       }
+    },
+    "POST /v1/admin/support-threads/:id/assignee": {
+      "decision": "DEC-307",
+      "set": {
+        "expectedAssignee": "string StaffAccount.id (the staff member the caller saw holding the thread; an empty string when it had none; another holder now answers 409 thread_changed_hands and nothing changes; left out, the last hand-over wins as before)"
+      },
+      "require": []
     }
   },
   "extraFields": [
@@ -3798,6 +3805,13 @@
       "type": "string (II2: the plain words of a refusal from a fixed list by the screening result's kind, when status is rejected; null in every other state)",
       "nullable": true,
       "decision": "DEC-303"
+    },
+    {
+      "resource": "Wish",
+      "name": "extrasOpen",
+      "type": "object (W14B check: per extra the wish's ticket takes, a map from the extra's sku to whether it can still be bought for this wish now: until the wish opens, not held twice, under a Keepsake's ceiling; empty before a ticket is chosen)",
+      "nullable": true,
+      "decision": "DEC-306"
     }
   ],
   "dropFields": [

@@ -12,7 +12,7 @@ import { GrantStore, type GrantRow, type Tx } from "./grants";
 import { holderKey, KeepProofs } from "./keep-proof";
 import { PassService } from "./pass.service";
 import { WishHandlers } from "./wish-handlers";
-import { assessExtra, assessKeep, assessTicket, readWish, REASON_TEXT } from "./wish-rules";
+import { assessExtra, assessKeep, assessTicket, assessTicketStyle, readWish, REASON_TEXT } from "./wish-rules";
 import { canMove } from "../concierge/order-state";
 import { hiddenFromBuyer } from "../wishes/wish-shown";
 import { IdGenerator } from "../../common/ports/ids.port";
@@ -95,7 +95,9 @@ export class PurchasesService implements OnModuleInit {
    */
   async revoke(tx: Tx, payment: Pick<Payment, "id">, released?: string[]): Promise<RevokeResult[]> {
     const out: RevokeResult[] = [];
-    for (const g of await this.store.list(tx, payment.id)) {
+    const grants = await this.store.list(tx, payment.id);
+    const alone = this.extrasAlone(grants);
+    for (const g of grants) {
       if (g.revokedAt) {
         out.push({ sku: g.sku, kind: g.kind, result: "already_revoked" });
         continue;
@@ -104,11 +106,29 @@ export class PurchasesService implements OnModuleInit {
         out.push({ sku: g.sku, kind: g.kind, result: "refused_line" });
         continue;
       }
-      const result = await this.revokeOne(tx, g, released);
+      // IJ3: the money is back (the provider refunded it), but an extra a held style still needs stays on the wish, and the note says so
+      const result = alone && (await this.wish.premiumExtraBlock(tx, g)) ? "kept_style_needs_extra" : await this.revokeOne(tx, g, released);
       if (result === "revoked") await this.store.markRevoked(tx, g.id);
       out.push({ sku: g.sku, kind: g.kind, result });
     }
     return out;
+  }
+
+  /** IJ3: a payment of extras only (a whole purchase that holds a ticket or a keep follows the whole-refund rules as before). */
+  private extrasAlone(grants: GrantRow[]): boolean {
+    return grants.filter((g) => !g.revokedAt && !g.refusedReason).every((g) => g.kind === "extra");
+  }
+
+  /** IJ3: words that refuse starting a refund of this payment (the premium-style extra on its own while the wish holds a style that needs it), or null. */
+  async refundBlock(tx: Tx, paymentId: string): Promise<string | null> {
+    const grants = await this.store.list(tx, paymentId);
+    if (!this.extrasAlone(grants)) return null;
+    for (const g of grants) {
+      if (g.revokedAt || g.refusedReason) continue;
+      const why = await this.wish.premiumExtraBlock(tx, g);
+      if (why) return why;
+    }
+    return null;
   }
 
   private revokeOne(tx: Tx, g: GrantRow, released?: string[]): Promise<string> {
@@ -193,5 +213,10 @@ export class PurchasesService implements OnModuleInit {
     // GG3: the app sells no paid upgrade, so a ticket line for a wish that already has a ticket (paid or from the Pass) is refused at start
     if (!why && group === "ticket" && w?.ticket) why = "wish_has_ticket";
     if (why) throw AppError.validation({ subjectId: REASON_TEXT[why] ?? "This cannot be bought for this wish." });
+    // IJ2: a ticket for a wish whose style is off, made for another kind or above this ticket's level is refused at start, with the rule in words
+    if (group === "ticket" && w) {
+      const styleWhy = await assessTicketStyle(db, w, sku.slice("ticket.".length), book);
+      if (styleWhy) throw AppError.validation({ subjectId: styleWhy.words }, styleWhy.words);
+    }
   }
 }

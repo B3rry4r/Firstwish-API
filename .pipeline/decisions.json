@@ -4199,6 +4199,36 @@
       "confidence": "high",
       "source": "build/prompts/API-BASE-13.md",
       "decidedAt": "2026-12-09T12:00:00Z"
+    },
+    {
+      "id": "DEC-306",
+      "topic": "A wish read says which extras can still be bought for the wish",
+      "decision": "W14B check (case 3): GET /v1/wishes/:id (E-220 read) gains the optional field extrasOpen: for each extra the wish's ticket takes, true when it can be bought for this wish now (until the wish opens, not held twice, a Keepsake under its extras ceiling), by the same rule the payment's start and settle use. Empty object before a ticket is chosen and on a maker's read. No endpoint is added or removed; ids already issued do not change.",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "decidedAt": "2026-11-23T12:00:00Z",
+      "source": "build/sweeps/api.md (W14B check); build/prompts/API-BASE-15.md"
+    },
+    {
+      "id": "DEC-307",
+      "topic": "A support hand-over carries the holder the caller saw; only staff who can open Support are offered",
+      "decision": "W14B check (case 2): POST /v1/admin/support-threads/:id/assignee (E-204) gains the optional body field expectedAssignee (a StaffAccount.id, or an empty string when the thread had none). A hand-over whose expectedAssignee is not the thread's holder now is 409 thread_changed_hands and nothing changes; without the field the last hand-over wins as before. GET /v1/admin/support/staff (E-271) lists, and the hand-over accepts (422 on assigneeId), only active staff whose role opens Support in the Team access table. No endpoint is added or removed; ids already issued do not change.",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "decidedAt": "2026-11-23T12:00:00Z",
+      "source": "build/sweeps/api.md (W14B check); build/prompts/API-BASE-15.md"
+    },
+    {
+      "id": "DEC-308",
+      "topic": "The registry is frozen again after DEC-285 and DEC-286",
+      "decision": "The registry is re-frozen after DEC-285 and DEC-286 by tools/pipeline/freeze.py; reconcile.py was run twice with --reopen (identical outputs; .pipeline/ui-align-tasks.json restored byte for byte). No endpoint id is issued or changed. Wish gains the optional field extrasOpen; E-204 gains the optional body field expectedAssignee.",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "decidedAt": "2026-11-23T12:00:00Z",
+      "source": "build/sweeps/api.md (W14B check); build/prompts/API-BASE-15.md"
     }
   ]
 }

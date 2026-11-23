@@ -153,7 +153,7 @@ export class SupportController {
   @Post("admin/support-threads/:id/assignee")
   @HttpCode(200)
   assign(@Param() p: PostAdminSupportThreadsByIdAssigneeParamsDto, @Body() b: PostAdminSupportThreadsByIdAssigneeBodyDto, @StaffActor() actor: AuditActor): Promise<SupportThread> {
-    return this.support.assign(p.id, b.assigneeId, b.reason, actor);
+    return this.support.assign(p.id, b.assigneeId, b.reason, actor, b.expectedAssignee);
   }
 }
 

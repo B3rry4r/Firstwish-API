@@ -177,7 +177,7 @@ describe("API-BASE-17 IJ4a: a style is offered by kind and occasion; the style r
     // API-BASE-20 (IL4): with a style named (Quiet again) the move is refused in these words; with none sent the server picks one (the next block)
     const moved = await patch(u, a, { occasion: "birthday", style: "quiet" });
     expect(moved.status).toBe(422);
-    expect(moved.body.error.fields.style).toMatch(/Quiet is not made for the birthday occasion of the love kind\. Choose a style made for it\./);
+    expect(moved.body.error.fields.style).toMatch(/Quiet is not made for the birthday occasion of the love kind\. Choose a style made for it\. Send a style made for the birthday occasion in the same save\./);
     expect(await row(a)).toMatchObject({ occasion: "apology", styleSlug: "quiet" });
     const picked = await patch(u, a, { occasion: "birthday" });
     expect(picked.status).toBe(200);

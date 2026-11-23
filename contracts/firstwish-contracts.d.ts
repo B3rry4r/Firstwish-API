@@ -1935,8 +1935,8 @@ export interface Wish {
         favourites: number;
         shares: number;
     } | null;
-    /** IL2 (DEC-319): the extras the wish holds, each with where it came from and a refund's state; sent on the owner's reads only (empty on every other answer) */
-    adds: WishAdd[];
+    /** IL2 (DEC-319): the extras the wish holds, each with where it came from and a refund's state; sent on the owner's single and list reads only (absent on every other answer) */
+    adds?: WishAdd[];
     allowedStyles?: Array<string> | null;
     extrasOpen?: Record<string, boolean> | null;
     amount: Kobo;

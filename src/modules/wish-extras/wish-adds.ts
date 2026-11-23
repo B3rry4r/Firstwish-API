@@ -54,7 +54,7 @@ export async function addsFor(db: Db, book: EntitlementsRow, wishes: readonly { 
       if (typeof a !== "string") continue;
       const left = counted.get(a) ?? 0;
       if (left > 0) counted.set(a, left - 1);
-      else list.push({ sku: a, from: "purchase", held: true, refund: null, reference: null });
+      else if (!list.some((x) => x.sku === a && x.from === "ticket")) list.push({ sku: a, from: "purchase", held: true, refund: null, reference: null }); // an extra the ticket includes shows once, from the ticket
     }
     out.set(w.id, list);
   }

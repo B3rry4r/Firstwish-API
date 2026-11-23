@@ -308,9 +308,9 @@ export class WishesService {
       // HM1: the maker's own note, as the contract types it (null until one is saved); only the owner's routes build this wire
       makerNote: r.makerNote ?? null,
       // HP3, HP5: the owner's list and single reads fill these in; every other owner answer says no pictures and no video here
+      // IL2: `adds` is filled in by those two reads only; on every other answer it is absent (the truth is not read there), never an empty list
       pictures: [],
       video: "none",
-      adds: [],
     };
   }
 
@@ -586,7 +586,7 @@ export class WishesService {
           if (e instanceof AppError && e.getStatus() === 422) {
             // IL4: the move sent no style (a style named, even the held one, is judged as before), so the server picks one by the one rule (`offeredForWish`, the ticket's level, the house's own first) as it does for a new draft;
             // only when no style fits the wish as it will stand is the save refused, in words
-            const hit = input.style === undefined ? await this.pickStyle(tx, book, to.kind, cur.ticket, to.occasion, cur.adds) : { slug: "", level: null };
+            const hit = input.style === undefined ? await this.pickStyle(tx, book, to.kind, cur.ticket, to.occasion, (await heldAdds(tx, id, cur.adds)).adds) : { slug: "", level: null }; // IJ3a: the pick reads what the wish holds, not its raw adds
             if (!hit.slug) {
               const words = `${e.message} Send a style made for the ${kindMoved ? `${to.kind} kind` : `${to.occasion} occasion`} in the same save.`;
               throw AppError.validation({ style: words }, words);

@@ -10384,7 +10384,8 @@
         "components/app/maker/Ways.tsx:106-125 passcode/question fields"
       ],
       "change": "replace: a secret the server stores hashed and checks; the phone's clock and client never trusted (conventions)",
-      "status": "open"
+      "status": "done",
+      "resolution": "23 Nov: WEB-10A merged (web 8299dcb) after a full check and a re-check: the maker sends the passcode or the answer only as the draft save's write-only `passcode`; the server stores it hashed (scrypt) and checks it at the link (wrong tries counted and locked); nothing kept in the browser; a browser clock moved forward leaves the wish sealed. The seal's refusal of a missing secret is server round 19 (IK1)."
     },
     {
       "id": "UA-809",

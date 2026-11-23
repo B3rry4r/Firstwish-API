@@ -127,7 +127,7 @@ export class ConciergeService implements OnModuleInit {
       const pass = await this.hasPass(tx, accountId, now);
       const percent = pass ? (await this.entitlements.row(tx)).conciergePassDiscountPercent : 0;
       const amount = discounted(BigInt(quote.totalKobo), percent);
-      const businessId = await this.businesses.find(accountId);
+      const businessId = await this.businesses.find(accountId, tx);
       await tx.conciergeOrder.create({
         data: { id, accountId, businessId, kind, count: body.count, rush: false, brief: body.brief.trim(), status: "brief", createdAt: now },
       });

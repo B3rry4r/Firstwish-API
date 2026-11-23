@@ -6745,7 +6745,8 @@
       ],
       "change": "implement the designed loading state",
       "enterCondition": "a request for this surface is in flight (conventions Runtime contract)",
-      "status": "open"
+      "status": "done",
+      "resolution": "P-FLOW-1 (web 23d6542): while the account is being read every signed-in screen, the You screen among them, draws \"Getting your account.\" (components/app/AppShell.tsx) and the Pass row its own loading state; entered with the account read held; checked by a separate agent on ten routes (pf1.mjs B-checks)."
     },
     {
       "id": "UA-545",
@@ -6759,7 +6760,8 @@
       ],
       "change": "implement the designed error state",
       "enterCondition": "the request fails; show retry",
-      "status": "open"
+      "status": "done",
+      "resolution": "P-FLOW-1 (web 23d6542): when the account read fails the screen says the server's words with Try again (AppShell.tsx; the Pass row its own), and Try again recovers on the same address; checked by a separate agent with the read failed, cut and held."
     },
     {
       "id": "UA-546",

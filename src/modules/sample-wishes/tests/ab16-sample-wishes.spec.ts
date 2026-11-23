@@ -4,7 +4,10 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Prisma } from "@prisma/client";
 import { PrismaService } from "../../../common/db/prisma.service";
-import type { SampleWish } from "../../../contracts";
+import { UuidV7Maker } from "../../../common/ids/uuidv7";
+import type { PublicWishView, SampleWish } from "../../../contracts";
+import { ownDatabase } from "../../../../test/kit/own-db";
+import { ensureEntitlements } from "../../stored-files/tests/files-kit";
 import { WEB_LIB, WEB_PRESENT } from "../../reference-data/tests/web-files";
 import { createTestApp, TestApp } from "../../../../test/kit/app";
 
@@ -19,13 +22,24 @@ const seedNow = (): void => {
   if (r.status !== 0) throw new Error(`seed failed: ${r.stderr}`);
 };
 
+// K2: the spec counts and snapshots whole tables (wish, sample_wish), which other specs also write in the shared database: it has a database of its own.
+const own = ownDatabase("ab16");
 beforeAll(async () => {
+  own.use();
   t = await createTestApp();
   seedNow();
   db = t.app.get(PrismaService);
+  await ensureEntitlements(db);
   t.tokens.set("person", { kind: "user", accountId: "01900000-0000-7000-8000-0000000000a1", sides: ["person"] });
 });
-afterAll(() => t.close());
+afterAll(async () => {
+  await t.close();
+  own.drop();
+});
+
+/** The keys of an object and, for each value that is a plain object, its keys under it (arrays and `content` are the wish's own words, not its shape). */
+const shape = (v: unknown, skip: string[] = ["content"]): unknown =>
+  v && typeof v === "object" && !Array.isArray(v) ? Object.fromEntries(Object.keys(v).sort().map((k) => [k, skip.includes(k) ? "*" : shape((v as Row)[k], skip)])) : "*";
 
 describe("API-BASE-16 case 1: one sample wish (E-288)", () => {
   it("answers the designed sample of a kind and occasion with no sign-in, marked as a sample, in the shape a player reads", async () => {
@@ -38,7 +52,41 @@ describe("API-BASE-16 case 1: one sample wish (E-288)", () => {
     expect(w.photos.length).toBe(8);
     expect(w.photos.every((p) => /^\/img\/aisha-\d\.webp$/.test(p))).toBe(true);
     expect(w.files).toEqual(w.photos.map((url) => ({ role: "photo", url })));
-    for (const k of ["slug", "id", "wishNo", "no", "accountId", "owner", "styleSlug", "link", "serverTime"]) expect(r.body).not.toHaveProperty(k);
+    for (const k of ["slug", "id", "no", "accountId", "owner", "link"]) expect(r.body).not.toHaveProperty(k);
+  });
+
+  it("K1: carries every field an open public wish view carries, with a truthful fixed value for a sample", async () => {
+    const w = (await t.http().get("/v1/sample-wishes/love/birthday")).body as SampleWish;
+    expect(w).toMatchObject({ openedAt: w.opensAt, endsAt: null, opening: null, keepOffer: null, styleSlug: "", timeZone: "Africa/Lagos", wishNo: null, house: false });
+    expect(Math.abs(Date.parse(w.serverTime) - t.clock.now().getTime())).toBe(0);
+    expect((w.content as { files?: unknown }).files).toEqual(w.files);
+    expect(w.files.length).toBe(8);
+    // the two cannot drift: the sample's type is the public wish view's own (a compile-time check) and its keys are a real open wish's
+    const asView: Omit<PublicWishView, "slug"> = w;
+    expect(asView.kind).toBe("love");
+    const ids = new UuidV7Maker();
+    const owner = ids.next();
+    await db.account.create({ data: { id: owner, sides: ["person"], lastSide: "person" } });
+    const id = ids.next();
+    const slug = `ab16-${process.pid}`;
+    await db.wish.create({ data: { id, accountId: owner, status: "sealed", ticket: "moment", kind: "love", occasion: "birthday", styleSlug: "noir", timeZone: "Africa/Lagos", opensAt: new Date(t.clock.now().getTime() - 60_000), sealedAt: t.clock.now(), name: "Chidi", no: `AB16-${process.pid}`, content: { letter: { paras: ["Hello."] } } } as never });
+    await db.wishLink.create({ data: { id: ids.next(), slug, wishId: id, active: true } });
+    const real = await t.http().post(`/v1/w/${slug}/opens`).send({});
+    expect([real.status, real.body.state]).toEqual([200, "open"]);
+    const { slug: _slug, ...realKeys } = real.body as Row;
+    const sample = (await t.http().get("/v1/sample-wishes/love/birthday")).body as Row;
+    for (const [k, v] of Object.entries(realKeys)) if (v === undefined) delete realKeys[k];
+    const extra = Object.keys(sample).filter((k) => !(k in realKeys)).sort();
+    expect(extra).toEqual(["call", "date", "occasionName", "photos", "sample"]);
+    expect(shape(Object.fromEntries(Object.entries(sample).filter(([k]) => k in realKeys)))).toEqual(shape(Object.fromEntries(Object.entries(realKeys).filter(([k]) => k in sample))));
+    expect(Object.keys(realKeys).filter((k) => !(k in sample))).toEqual([]);
+    expect(Array.isArray((real.body.content as Row).files)).toBe(true);
+    const list = ((await t.http().get("/v1/sample-wishes").query({ kind: "love" })).body.items as Row[]);
+    for (const item of list) expect(Object.keys(item).sort()).toEqual(Object.keys(sample).sort());
+    // the tag leaves out the clock, so a repeat is a 304
+    const first = await t.http().get("/v1/sample-wishes/love/birthday");
+    const again = await t.http().get("/v1/sample-wishes/love/birthday").set("If-None-Match", first.headers.etag);
+    expect(again.status).toBe(304);
   });
 
   it("a kind and occasion each have their own words; the wedding date is said as the source says it", async () => {
@@ -112,7 +160,7 @@ describe("API-BASE-16 case 3: the data, seeded once and then owned (GD3)", () =>
     expect(keys.size).toBe(44);
     for (const r of file) {
       const w = (await t.http().get(`/v1/sample-wishes/${String(r.kind)}/${String(r.occasion)}`)).body as SampleWish;
-      expect(w.content).toEqual(r.content);
+      expect(w.content).toEqual({ ...(r.content as Row), files: w.files });
       expect(w.photos).toEqual(r.photos);
       expect(w.receiverName).toBe(r.name);
       expect(w.date).toBe(r.date);

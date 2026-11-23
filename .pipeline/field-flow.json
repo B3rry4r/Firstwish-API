@@ -12084,7 +12084,37 @@
       "noWriter": true
     },
     {
+      "field": "SampleWish.endsAt",
+      "writers": [],
+      "store": "SampleWish",
+      "readers": [],
+      "writerActors": [],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
       "field": "SampleWish.files",
+      "writers": [],
+      "store": "SampleWish",
+      "readers": [],
+      "writerActors": [],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "SampleWish.house",
+      "writers": [],
+      "store": "SampleWish",
+      "readers": [],
+      "writerActors": [],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "SampleWish.keepOffer",
       "writers": [],
       "store": "SampleWish",
       "readers": [],
@@ -12143,6 +12173,26 @@
       "noWriter": true
     },
     {
+      "field": "SampleWish.openedAt",
+      "writers": [],
+      "store": "SampleWish",
+      "readers": [],
+      "writerActors": [],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "SampleWish.opening",
+      "writers": [],
+      "store": "SampleWish",
+      "readers": [],
+      "writerActors": [],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
       "field": "SampleWish.opensAt",
       "writers": [],
       "store": "SampleWish",
@@ -12183,7 +12233,47 @@
       "noWriter": true
     },
     {
+      "field": "SampleWish.serverTime",
+      "writers": [],
+      "store": "SampleWish",
+      "readers": [],
+      "writerActors": [],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
       "field": "SampleWish.state",
+      "writers": [],
+      "store": "SampleWish",
+      "readers": [],
+      "writerActors": [],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "SampleWish.styleSlug",
+      "writers": [],
+      "store": "SampleWish",
+      "readers": [],
+      "writerActors": [],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "SampleWish.timeZone",
+      "writers": [],
+      "store": "SampleWish",
+      "readers": [],
+      "writerActors": [],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "SampleWish.wishNo",
       "writers": [],
       "store": "SampleWish",
       "readers": [],
@@ -20888,5 +20978,5 @@
     }
   ],
   "crossActor": 34,
-  "noWriter": 681
+  "noWriter": 690
 }

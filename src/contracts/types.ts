@@ -922,10 +922,10 @@ export interface Moment {
   tags: Record<string, unknown>;
 }
 
-/** SampleWish: config. the designed sample wishes the style previews play, one per kind and occasion, served by GET /v1/sample-wishes (IJ1, DEC-309); seeded once from the web, then owned here; never a wish (DEC-310) */
+/** SampleWish: config. the designed sample wishes the style previews play, one per kind and occasion, served by GET /v1/sample-wishes (IJ1, DEC-309, DEC-312); seeded once from the web, then owned here; never a wish (DEC-310). It carries every field of an open PublicWishView (E-129) but the slug, with the same names and types, so a preview plays it with no second code path (the ab16 spec checks it is assignable to Omit<PublicWishView, 'slug'> and that its keys are a real open wish's) */
 export interface SampleWish {
   call: string;
-  /** the designed words, as the maker keeps a wish's content */
+  /** the designed words, as the maker keeps a wish's content; content.files is the same list as files */
   content: Record<string, unknown>;
   /** the day the sample's cover shows, as the designed source writes it, e.g. 07 · 11 · 2026; text, not an instant */
   date: string;
@@ -934,15 +934,28 @@ export interface SampleWish {
   kind: string;
   occasion: string;
   occasionName: string;
-  openable: boolean;
+  openable: true;
   /** an instant already past, so a preview always opens */
   opensAt: Instant;
   /** the same pictures as plain paths on the site, /img/aisha-N.webp */
   photos: string[];
   receiverName: string;
   /** always true: this is a sample, never a person's wish */
-  sample: boolean;
+  sample: true;
   state: "open";
+  /** the instant the sample opens at (its opensAt) */
+  openedAt: Instant;
+  endsAt: null;
+  opening: null;
+  keepOffer: null;
+  /** now, as the public wish read gives it */
+  serverTime: Instant;
+  /** "": the preview names the style */
+  styleSlug: "";
+  /** the zone a new wish takes (Africa/Lagos) */
+  timeZone: string;
+  wishNo: null;
+  house: false;
 }
 
 /** Notice: table. written by E-76 and server:notices */

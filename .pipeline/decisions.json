@@ -4259,6 +4259,26 @@
       "confidence": "high",
       "decidedAt": "2026-11-23T12:00:00Z",
       "source": "build/rulings-phase3.md (IJ1); build/tasks/W15C-PLAN.md (bundle S1); build/prompts/API-BASE-16.md"
+    },
+    {
+      "id": "DEC-312",
+      "topic": "A sample wish carries every field an open public wish view carries (IJ1, K1)",
+      "decision": "IJ1: E-288 and each item of E-287 carry every field the open public wish view (E-129) gives a player, with the same names and types, so a preview plays a sample with no second code path (SampleWish is declared from PublicWishView, less the slug, plus sample: true): openedAt (its opensAt), endsAt null, opening null, keepOffer null, styleSlug \"\" (the preview names the style), timeZone Africa/Lagos (the zone a new wish takes), serverTime (now), wishNo null, house false, and content.files (the same list as files). The answer has no slug (DEC-310). The ETag leaves serverTime out of its hash, so a repeat is still a 304 while the sample has not moved. Additive on the two new reads only; no endpoint id is issued or changed. Supersedes DEC-309's words that the answer has no serverTime, so it never changes between reads.",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "decidedAt": "2026-11-23T12:00:00Z",
+      "source": "build/prompts/API-BASE-16.md (case 1); build/verify/api-base-16/VERDICT.md (K1)"
+    },
+    {
+      "id": "DEC-313",
+      "topic": "The registry is frozen again after DEC-312",
+      "decision": "The registry is re-frozen after DEC-312 by tools/pipeline/freeze.py; reconcile.py was run twice with --reopen (identical outputs). No endpoint id is issued or changed; SampleWish gains nine fields.",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "decidedAt": "2026-11-23T12:00:00Z",
+      "source": "build/prompts/API-BASE-16.md (case 1); build/verify/api-base-16/VERDICT.md (K1)"
     }
   ]
 }

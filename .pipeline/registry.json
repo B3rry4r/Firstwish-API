@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "frozenAt": "2026-11-23T09:22:57Z",
+  "frozenAt": "2026-11-23T10:02:33Z",
   "framework": "nestjs",
   "generatedBy": "tools/pipeline/reconcile.py",
   "resources": [
@@ -19011,6 +19011,18 @@
           "supersedes": []
         },
         {
+          "name": "endsAt",
+          "type": "unknown",
+          "classes": [
+            "unknown"
+          ],
+          "nullable": true,
+          "provenance": [
+            "DEC-312"
+          ],
+          "supersedes": []
+        },
+        {
           "name": "files",
           "type": "array",
           "classes": [
@@ -19019,6 +19031,30 @@
           "nullable": false,
           "provenance": [
             "DEC-309"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "house",
+          "type": "boolean",
+          "classes": [
+            "boolean"
+          ],
+          "nullable": false,
+          "provenance": [
+            "DEC-312"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "keepOffer",
+          "type": "object",
+          "classes": [
+            "object"
+          ],
+          "nullable": true,
+          "provenance": [
+            "DEC-312"
           ],
           "supersedes": []
         },
@@ -19071,6 +19107,30 @@
           "supersedes": []
         },
         {
+          "name": "openedAt",
+          "type": "time",
+          "classes": [
+            "time-iso"
+          ],
+          "nullable": false,
+          "provenance": [
+            "DEC-312"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "opening",
+          "type": "object",
+          "classes": [
+            "object"
+          ],
+          "nullable": true,
+          "provenance": [
+            "DEC-312"
+          ],
+          "supersedes": []
+        },
+        {
           "name": "opensAt",
           "type": "time",
           "classes": [
@@ -19119,6 +19179,18 @@
           "supersedes": []
         },
         {
+          "name": "serverTime",
+          "type": "time",
+          "classes": [
+            "time-iso"
+          ],
+          "nullable": false,
+          "provenance": [
+            "DEC-312"
+          ],
+          "supersedes": []
+        },
+        {
           "name": "state",
           "type": "string",
           "classes": [
@@ -19127,6 +19199,42 @@
           "nullable": false,
           "provenance": [
             "DEC-309"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "styleSlug",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "DEC-312"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "timeZone",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": false,
+          "provenance": [
+            "DEC-312"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "wishNo",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": true,
+          "provenance": [
+            "DEC-312"
           ],
           "supersedes": []
         }

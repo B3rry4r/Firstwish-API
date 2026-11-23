@@ -3944,6 +3944,69 @@
       "type": "array<string> (the same pictures as plain paths on the site, /img/aisha-N.webp)",
       "nullable": false,
       "decision": "DEC-309"
+    },
+    {
+      "resource": "SampleWish",
+      "name": "openedAt",
+      "type": "time (ISO-8601; the sample's opensAt, as an open wish view carries when it opened)",
+      "nullable": false,
+      "decision": "DEC-312"
+    },
+    {
+      "resource": "SampleWish",
+      "name": "endsAt",
+      "type": "time (always null: a sample does not end)",
+      "nullable": true,
+      "decision": "DEC-312"
+    },
+    {
+      "resource": "SampleWish",
+      "name": "opening",
+      "type": "object (always null: a sample has no opening to answer)",
+      "nullable": true,
+      "decision": "DEC-312"
+    },
+    {
+      "resource": "SampleWish",
+      "name": "keepOffer",
+      "type": "object (always null: a sample cannot be kept)",
+      "nullable": true,
+      "decision": "DEC-312"
+    },
+    {
+      "resource": "SampleWish",
+      "name": "styleSlug",
+      "type": "string (always empty: the preview names the style)",
+      "nullable": false,
+      "decision": "DEC-312"
+    },
+    {
+      "resource": "SampleWish",
+      "name": "timeZone",
+      "type": "string (the zone a new wish takes, Africa/Lagos)",
+      "nullable": false,
+      "decision": "DEC-312"
+    },
+    {
+      "resource": "SampleWish",
+      "name": "serverTime",
+      "type": "time (ISO-8601; now, as the public wish read gives it)",
+      "nullable": false,
+      "decision": "DEC-312"
+    },
+    {
+      "resource": "SampleWish",
+      "name": "wishNo",
+      "type": "string (always null: a sample has no wish number)",
+      "nullable": true,
+      "decision": "DEC-312"
+    },
+    {
+      "resource": "SampleWish",
+      "name": "house",
+      "type": "boolean (always false: a sample is no house wish)",
+      "nullable": false,
+      "decision": "DEC-312"
     }
   ],
   "dropFields": [

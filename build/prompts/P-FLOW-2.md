@@ -1,8 +1,8 @@
 BUILDER P-FLOW-2 | TIER T0 (the live test harness only: no screen, no server code) | Budget 45 steps. Four harness faults that make whole runs fail for no product reason; change nothing else.
 ONE heavy job at a time; NEVER commit tsconfig.json; stop only PIDs you started; hand back once, nothing running.
 Read /home/user/Firstwish-API/build/prompts/P6-COMMON.md (the stack). Work: a new local branch `p-flow-2` of /home/user/Firstwish-web from claude/sleepy-mayer-f0hkb8
-(the head in your spawn line) in a new worktree .../build/wt/p-flow-2 (`npm ci`); API worktree .../build/wt/
-p-flow-2-api at the API commit in your spawn line. Ports 5700-5719; stack prefix pf2; the stack BUILT.
+(the head in your spawn line) in a new worktree /tmp/claude-0/-home-user/533566a9-6497-503f-863f-065ac253d739/scratchpad/build/wt/p-flow-2 (`npm ci`); API worktree
+/tmp/claude-0/-home-user/533566a9-6497-503f-863f-065ac253d739/scratchpad/build/wt/p-flow-2-api at the API commit in your spawn line. Ports 5700-5719; stack prefix pf2; the stack BUILT.
 You own: scripts/live/stack.mjs, scripts/live/flows/wa6b.mjs, pw3.mjs, w5b.mjs, wa7.mjs (its header only).
  1. scripts/live/stack.mjs does not set STANDIN_SCREENING, so wa7.mjs's held and refused checks pass only when a
     person starts the stack with it by hand (a bare stack: about 10 FAIL). The stack script starts the API with

@@ -6,7 +6,7 @@ import { ENV } from "../env/env.module";
 import type { Env } from "../env/env";
 import { PrismaService } from "../db/prisma.service";
 import { AppError } from "../errors/app-error";
-import { loginRemoved, loginWasRemoved } from "./login-removed";
+import { loginRemoved, loginWasRemoved, removedFromBusiness } from "./login-removed";
 import { PaymentsPort } from "../ports/payments.port";
 import { assertCookieOrigin, COOKIE_ORIGIN } from "./cookie-origin";
 import { checkSvix } from "./svix";
@@ -90,17 +90,8 @@ export class AccessGuard implements CanActivate {
   }
 
   /** True when the business the request works in (the one named by x-business-id, else any) is one the person was removed from and has no other way into. */
-  private async removedFromBusiness(accountId: string, req: Req): Promise<boolean> {
-    const h = req.headers["x-business-id"];
-    if (typeof h === "string" && h) return loginWasRemoved(this.db, accountId, h);
-    if (!(await loginWasRemoved(this.db, accountId))) return false;
-    const rows = await this.db.$queryRaw<{ id: string }[]>`
-      SELECT b.id::text AS id FROM business b WHERE b."accountId" = ${accountId}::uuid
-      UNION ALL
-      SELECT l."businessId"::text FROM login l JOIN account a ON a.id = ${accountId}::uuid
-       WHERE l."businessId" IS NOT NULL AND a.contact IS NOT NULL AND lower(trim(l.contact)) = lower(a.contact) AND coalesce(l.status, '') <> 'removed'
-      LIMIT 1`;
-    return rows.length === 0;
+  private removedFromBusiness(accountId: string, req: Req): Promise<boolean> {
+    return removedFromBusiness(this.db, accountId, req.headers["x-business-id"]);
   }
 
   private async principal(req: Req): Promise<Principal> {

@@ -1254,3 +1254,12 @@ HG1 (give race) Two staff giving one Concierge order: the code is right (overlap
   owner can get it, and the ask says so. The render reads the wish through a one-use token of minutes, stored hashed.
   A "Premiere clip" render is not built and not sold. OWNER QUESTION kept: T-49 says the receiver of a resting wish is
   also offered the file; until answered the file is the owner's only.
+
+## 23 Nov: API-BASE-20 (what a wish holds; a possible second charge). Default (lead), owner may override. Registry reopen DEC-318 to DEC-321, frozen DEC-322.
+- IL1 (DEC-318): an extra a wish already holds, bought or included in its ticket (the ticket's own grant has what the extra gives: read from the price book), is
+  refused at the payment start in words with no payment row; the one extra that may be bought again is five more photos (T-30: each adds five). The premium
+  style, the portrait video, the QR card and both clips are held once. The 15-second clip is not repeatable because the server counts no clips (owner may
+  override, with a clip count). An extra the ticket includes answers "This ticket already includes that extra. Nothing more to buy." Twenty starts at once: one.
+- IL2 (DEC-319): the owner's wish read (single and list) carries `adds`: each extra held, from its ticket or a purchase, with a refund's state (sent or done).
+- IL3 (DEC-320): GET /v1/ticket-offers answers a signed-in person for `wish` (their own); every ticket says canBuy, reason and words, by the start's own rules.
+- IL4 (DEC-321): a kind or occasion move that sends no style picks one by the new-draft rule; a named style is judged as before.

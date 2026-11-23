@@ -20,3 +20,16 @@ export async function loginWasRemoved(db: Pick<PrismaService, "$queryRaw">, acco
 export async function notInBusiness(db: Pick<PrismaService, "$queryRaw">, accountId: string, words: string): Promise<AppError> {
   return (await loginWasRemoved(db, accountId)) ? loginRemoved() : AppError.forbidden(words);
 }
+
+/** True when the business the request works in (the one named by x-business-id, else any) is one the person was removed from and has no other way into. */
+export async function removedFromBusiness(db: Pick<PrismaService, "$queryRaw">, accountId: string, header: string | string[] | undefined): Promise<boolean> {
+  if (typeof header === "string" && header) return loginWasRemoved(db, accountId, header);
+  if (!(await loginWasRemoved(db, accountId))) return false;
+  const rows = await db.$queryRaw<{ id: string }[]>`
+    SELECT b.id::text AS id FROM business b WHERE b."accountId" = ${accountId}::uuid
+    UNION ALL
+    SELECT l."businessId"::text FROM login l JOIN account a ON a.id = ${accountId}::uuid
+     WHERE l."businessId" IS NOT NULL AND a.contact IS NOT NULL AND lower(trim(l.contact)) = lower(a.contact) AND coalesce(l.status, '') <> 'removed'
+    LIMIT 1`;
+  return rows.length === 0;
+}

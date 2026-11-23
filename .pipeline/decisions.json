@@ -4319,6 +4319,56 @@
       "approvedBy": "lead default, owner may override",
       "confidence": "high",
       "decidedAt": "2026-11-23T12:00:00Z"
+    },
+    {
+      "id": "DEC-318",
+      "topic": "An extra the wish already holds is never charged a second time",
+      "decision": "IL1 (case 1): a payment start for an extra is refused in words, with no payment row, when the wish already holds it (bought, or included in its ticket: the ticket's own grant has what the extra gives, read from the price book). Only the extra that adds a number to what the ticket gives and is sold as \"more\" may be bought again: five more photos (T-30). Every other extra, the premium style, the portrait video, the QR card and both clips, is held once; a ticket that includes an extra answers \"This ticket already includes that extra. Nothing more to buy.\" (code extra_in_ticket). Twenty starts at once make one payment (the account lock and the waiting-payment rule). No endpoint is added or removed; ids already issued do not change. Default (lead), owner may override: the 15-second clip is not repeatable because the server counts no clips, so a second clip would add nothing.",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "decidedAt": "2026-11-23T14:00:00Z",
+      "source": "build/prompts/API-BASE-20.md; build/sweeps/api.md (W16 and WEB-10B requests)"
+    },
+    {
+      "id": "DEC-319",
+      "topic": "The owner's wish read says what the wish holds",
+      "decision": "IL2 (case 2): Wish.adds, which the contract already had as an array and the wire left empty, is filled on the owner's single read (E-220) and list read (E-219, one query for the page): one entry for each extra the wish holds {sku, from: ticket or purchase, held, refund: sent, done or null, reference}. An extra the ticket includes comes from the price book. A purchase whose refund was sent or done keeps its entry with that state. The public link's read, the maker's and every other answer carry an empty list. No endpoint is added or removed; ids already issued do not change.",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "decidedAt": "2026-11-23T14:00:00Z",
+      "source": "build/prompts/API-BASE-20.md; build/sweeps/api.md (W16 and WEB-10B requests)"
+    },
+    {
+      "id": "DEC-320",
+      "topic": "A signed-in person reads ticket offers for their own wish, and the read says which tickets can be bought",
+      "decision": "IL3 (case 3): GET /v1/ticket-offers (E-213) is open to any signed-in person for the query field wish (one of their own wishes; another's is 404). Without wish it stays for the business side as before (403, login_removed). With wish, ticket is optional, and the answer carries the new TicketQuote field tickets: for each ticket of the book {ticket, name, canBuy, reason, words, priceKobo, listKobo}, by the rules and in the order the payment start uses (not sold while no renderer, a ticket payment that waits, the wish's reach, state, ticket and style). The 409 for a named unsold ticket stays. With no ticket named the quote lines are those of the Moment ticket. No endpoint is added or removed; ids already issued do not change.",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "decidedAt": "2026-11-23T14:00:00Z",
+      "source": "build/prompts/API-BASE-20.md; build/sweeps/api.md (W16 and WEB-10B requests)"
+    },
+    {
+      "id": "DEC-321",
+      "topic": "A kind or occasion move that sends no style picks one",
+      "decision": "IL4 (case 4; IJ4, IJ4a): PATCH /v1/wishes/:id (E-218) with a new kind or occasion and no style, where the held style is not offered for the wish as it will stand, picks a style by the one rule the new draft uses (on, offeredForWish, the ticket's level with the extras it holds, the house's own first); the held style stays when it is still offered. A style named in the save, the held one too, is judged as before. Only when no style fits is the save refused, in the old words. No registry change.",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "decidedAt": "2026-11-23T14:00:00Z",
+      "source": "build/prompts/API-BASE-20.md; build/sweeps/api.md (W16 and WEB-10B requests)"
+    },
+    {
+      "id": "DEC-322",
+      "topic": "The registry is frozen again after DEC-320",
+      "decision": "The registry is re-frozen after DEC-320 by tools/pipeline/freeze.py; reconcile.py was run twice with --reopen (identical outputs; .pipeline/ui-align-tasks.json restored byte for byte). No endpoint id is issued or changed. E-213 gains the optional query field wish, an optional ticket and the signed-in person's access; the answer carries the optional list tickets (named in the response note and typed in the contract note). Wish.adds is now sent (typed in the contract note).",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "decidedAt": "2026-11-23T14:00:00Z",
+      "source": "build/prompts/API-BASE-20.md; build/sweeps/api.md (W16 and WEB-10B requests)"
     }
   ]
 }

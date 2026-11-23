@@ -13,13 +13,14 @@ import { holderKey, KeepProofs } from "./keep-proof";
 import { PassService } from "./pass.service";
 import { WishHandlers } from "./wish-handlers";
 import { VideoRenderer } from "../render-jobs/video-renderer";
-import { assessExtra, assessKeep, assessTicket, assessTicketStyle, readWish, REASON_TEXT, NOT_SOLD_WORDS, unsoldLines } from "./wish-rules";
+import { assessExtra, assessKeep, assessTicket, assessTicketStyle, readWish, REASON_TEXT, NOT_SOLD_WORDS, TICKET_ORDER, unsoldLines } from "./wish-rules";
 import { canMove } from "../concierge/order-state";
 import { hiddenFromBuyer } from "../wishes/wish-shown";
 import { IdGenerator } from "../../common/ports/ids.port";
 import { releaseOrderFiles } from "../stored-files/order-files";
 import { ERASE_WISH_FILE_PREFIX, WishLifecycleService } from "../wishes/wish-lifecycle.service";
 import type { JobContext } from "../jobs/jobs.service";
+import { waitingTicketPayment } from "../payments/ticket-waiting";
 
 /**
  * Every line the price book sells, by its sku. A new line in the book needs its sku here (a test walks the seeded book and fails
@@ -189,6 +190,34 @@ export class PurchasesService implements OnModuleInit {
     }
     await releaseOrderFiles(tx, this.ids, orderId, now, { keepUsed: false, released });
     return "revoked";
+  }
+
+  /**
+   * IL3: for each ticket of the book: whether it can be bought now, and the server's words when not. The same rules, in the same order, as the payment's start
+   * (not sold while no renderer, a ticket payment that waits, the wish's reach, its state and ticket, its style), so a screen draws all the tickets from one read.
+   * `wishId` null (a business reading with no wish): only what is not sold. A wish that is not the caller's is 404, like every other read of it.
+   */
+  async ticketStates(accountId: string, wishId: string | null): Promise<Map<string, { reason: string; words: string } | null>> {
+    const book = await this.entitlements.row();
+    const notSold = unsoldLines(book, this.video.configured());
+    const w = wishId ? ((await hiddenFromBuyer(this.db, wishId)) ? null : await readWish(this.db, wishId)) : null;
+    if (wishId && (!w || w.accountId !== accountId || w.state === "erased")) throw AppError.notFound("No such wish.");
+    const waiting = w ? await waitingTicketPayment(this.db, accountId, w.id, this.clock.now()) : null;
+    const out = new Map<string, { reason: string; words: string } | null>();
+    for (const t of TICKET_ORDER) {
+      const sku = `ticket.${t}`;
+      let no: { reason: string; words: string } | null = null;
+      if (notSold.has(sku)) no = { reason: "extra_not_sold", words: NOT_SOLD_WORDS };
+      else if (waiting) no = { reason: "ticket_payment_pending", words: "A payment for a ticket of this wish is waiting to be paid. Continue it, or drop it and choose again." };
+      else if (w) {
+        let why = assessTicket(w, accountId, t);
+        if (!why && w.ticket) why = "wish_has_ticket";
+        if (why) no = { reason: why, words: REASON_TEXT[why] ?? "This cannot be bought for this wish." };
+        else no = await assessTicketStyle(this.db, w, t, book);
+      }
+      out.set(sku, no);
+    }
+    return out;
   }
 
   /**

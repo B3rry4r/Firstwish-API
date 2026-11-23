@@ -31,6 +31,8 @@ import { approvedSubmissionOf } from "../styles/approved-document";
 import { kindHasOccasion, LAST_STEP } from "./kind-occasions";
 import { isLevel } from "../styles/style-view";
 import { allowedLevel, levelRank, styleTakingRefusal } from "./style-rule";
+import { PriceBookService } from "../price-book/price-book.service";
+import { assessExtra, readWish } from "../purchases/wish-rules";
 import { DEFAULT_KIND, DEFAULT_OCCASION, isBareStart, START_KEY } from "./wish-start";
 
 type Tx = Prisma.TransactionClient;
@@ -125,6 +127,7 @@ export class WishesService {
     private readonly showing: ShowingLink,
     private readonly access: ProAccess,
     private readonly pictures: WishPictures,
+    private readonly priceBook: PriceBookService,
   ) {}
 
   private planSeal: PlanSealFn | null = null;
@@ -242,7 +245,22 @@ export class WishesService {
     const allowedStyles = await this.allowedStyles(styleLevel);
     // ID1: the ticket payment of this wish that waits to be paid (which ticket, its reference, when it lapses), null when none waits
     const waiting = !viaOrder ? await waitingTicketPayment(this.prisma, accountId, row.id, this.clock.now()) : null;
-    return { ...this.wire(row, (await this.linksFor([id])).get(id)), activity, publish, pictures, video, styleLevel, allowedStyles, ticketPayment: waiting ? waitingView(waiting) : null };
+    const extrasOpen = viaOrder ? {} : await this.extrasOpenFor(row.id, book);
+    return { ...this.wire(row, (await this.linksFor([id])).get(id)), activity, publish, pictures, video, styleLevel, allowedStyles, extrasOpen, ticketPayment: waiting ? waitingView(waiting) : null };
+  }
+
+  /**
+   * Per extra the wish's ticket takes: whether it can still be bought for this wish now (until the wish opens, not held twice, under a Keepsake's ceiling): the
+   * same rule the payment's start and settle use (purchases/wish-rules assessExtra), so no screen guesses. Empty before a ticket is chosen.
+   */
+  private async extrasOpenFor(wishId: string, book: EntitlementsRow): Promise<Record<string, boolean>> {
+    const w = await readWish(this.prisma, wishId);
+    const takes = w?.ticket ? grantOf(book, `ticket.${w.ticket}`)?.takes : null;
+    if (!w || !Array.isArray(takes)) return {};
+    const lines = new Map((await this.priceBook.versionAt(this.clock.now())).lines.map((l) => [l.sku, l.listKobo]));
+    const out: Record<string, boolean> = {};
+    for (const sku of takes) if (typeof sku === "string") out[sku] = assessExtra(w, w.accountId, sku, book, (x) => lines.get(x) ?? 0n) === null;
+    return out;
   }
 
   /** HQ5: the slugs of the styles that are on and that a ticket taking up to `level` may use (every style that is on when no ticket is chosen yet). */

@@ -2216,6 +2216,10 @@
     "timeZone": {
      "rule": "keep",
      "why": "a time zone"
+    },
+    "styleTakenLevel": {
+     "rule": "keep",
+     "why": "the level (starter, standard or premium) a style had when the wish took it: a word of the catalogue, not the person's"
     }
    },
    "keep": {

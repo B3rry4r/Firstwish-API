@@ -1868,6 +1868,7 @@ export interface Wish {
   activity?: { opens: number; plays: number; reactions: Record<string, number>; favourites: number; shares: number } | null;
   adds: unknown[];
   allowedStyles?: Array<string> | null;
+  extrasOpen?: Record<string, boolean> | null;
   amount: Kobo;
   at: Instant;
   businessId?: string | null;
@@ -4632,6 +4633,8 @@ export interface PostAdminSupportThreadsByIdAssigneeParams {
 export interface PostAdminSupportThreadsByIdAssigneeBody {
   /** string */
   assigneeId: string;
+  /** string (optional; the staff member the caller saw holding the thread, "" when none; another holder answers 409) */
+  expectedAssignee?: string;
   /** string (4 or more characters; written to the audit row) */
   reason: string;
 }

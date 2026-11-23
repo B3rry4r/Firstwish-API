@@ -10,3 +10,6 @@ coverage/
 *.pid
 dump.rdb
 *.out
+
+# worktrees a checking agent makes while it works (never part of the repo)
+build/wt/

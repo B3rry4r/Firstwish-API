@@ -4279,6 +4279,46 @@
       "confidence": "high",
       "decidedAt": "2026-11-23T12:00:00Z",
       "source": "build/prompts/API-BASE-16.md (case 1); build/verify/api-base-16/VERDICT.md (K1)"
+    },
+    {
+      "id": "DEC-314",
+      "topic": "A secret opening is never sealed without its secret; the secret lives only as a hash (IK1, IK2)",
+      "decision": "IK1: POST /v1/wishes/:id/seal (E-231), by every way a wish is sealed (a paid ticket, the Pass, a business plan, a Concierge maker on an order), answers 422 when the wish's opening is `passcode` or `question` and no secret is stored: fields.passcode and the message say \"Set the passcode before you seal it.\" or \"Set the answer before you seal it.\"; nothing is drawn or charged. PATCH /v1/wishes/:id (E-225): `passcode` is typed string or null (additive; null clears it, as its note always said); a save that names an opening with no secret, or changes the opening from one secret kind to another without a new `passcode` in the same save, clears the stored hash; content.opening.values never stores `code` or `answer` (the server drops them before the save, so a body that carries them is answered 200, not 500; hint and question stay) and no read returns them. IK2: a question's answer is matched without regard to case or outer spaces (kept so when set; an answer kept as typed before still matches as typed); a passcode is matched exactly as typed; 10 wrong tries an hour per address and the lock at 30 on the link are unchanged. No endpoint id is issued or changed; no field is renamed or removed.",
+      "source": "build/prompts/API-BASE-19.md; build/verify/ua-rows/VERDICT.md (UA-808, UA-725, UA-922); build/rulings-phase3.md (IK1 to IK5)",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "decidedAt": "2026-11-23T12:00:00Z"
+    },
+    {
+      "id": "DEC-315",
+      "topic": "The portrait video is not sold without a renderer; the stand-in renderer; a ready video gives a signed address (IK3, IK4)",
+      "decision": "IK3: POST /v1/payments (E-87) for extra.portrait-video answers 409 extra_not_sold (message \"The portrait video is not on sale right now. Nothing was charged.\", field `extra`) while no video renderer is configured, and makes no payment; the wish read's extrasOpen (DEC-306) says false for that extra; a wish that already holds the extra keeps the 503 video_unavailable on POST /v1/wishes/:id/video (E-148), now worded \"Your video cannot be made right now. It stays yours and you will not pay again. Ask again later.\". A second start for an extra the wish holds is 422 on subjectId (\"This wish already has that extra.\") and makes no second payment. PROVIDERS=standin binds the stand-in video renderer; the new setting STANDIN_VIDEO=fail makes every job fail, and is refused at boot with PROVIDERS=live or NODE_ENV=production; live providers keep no renderer until the real one is built (OWED, its own task). IK4: RenderJob gains the optional fields downloadUrl and downloadExpiresAt (E-147 and E-148): a short-lived (ten minutes) signed address of the stored file, only on the owner's own read of a done job; another person is 404, signed out 401. Additive only.",
+      "source": "build/prompts/API-BASE-19.md; build/verify/ua-rows/VERDICT.md (UA-808, UA-725, UA-922); build/rulings-phase3.md (IK1 to IK5)",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "decidedAt": "2026-11-23T12:00:00Z"
+    },
+    {
+      "id": "DEC-316",
+      "topic": "The Studio takes no base look, layout or added kind the server does not know (IK5)",
+      "decision": "IK5: PATCH /v1/studio/styles/:id and POST /v1/studio/styles (E-190, E-191) answer 422 naming the field when style.base is not a scene set of the catalogue (Template.base) or `blank`, when a scene's layout is not an object whose mode is auto or free (board portrait or landscape, fit contain or cover when given), or when an added thing's kind is not one of shape, artwork, effect, text, model, photo, element, three (fields style.base, style.scenes.<scene>.layout, style.scenes.<scene>.added[<n>].kind). The send-in (E-192) asks the same of the stored document, so a style saved before the rule is mended before it is sent in. doc.seen is the editor's own advice: no refusal reads it (the readable check still takes its colours into account; noted, not changed here). No new field; new 422 fields only.",
+      "source": "build/prompts/API-BASE-19.md; build/verify/ua-rows/VERDICT.md (UA-808, UA-725, UA-922); build/rulings-phase3.md (IK1 to IK5)",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "decidedAt": "2026-11-23T12:00:00Z"
+    },
+    {
+      "id": "DEC-317",
+      "topic": "The registry is frozen again after DEC-316",
+      "decision": "The registry is re-frozen after DEC-316 by tools/pipeline/freeze.py; reconcile.py was run twice with --reopen (identical outputs). No endpoint id is issued or changed; RenderJob gains downloadUrl and downloadExpiresAt; PATCH /v1/wishes/:id passcode is string or null.",
+      "source": "build/prompts/API-BASE-19.md; build/verify/ua-rows/VERDICT.md (UA-808, UA-725, UA-922); build/rulings-phase3.md (IK1 to IK5)",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "decidedAt": "2026-11-23T12:00:00Z"
     }
   ]
 }

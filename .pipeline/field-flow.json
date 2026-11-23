@@ -11129,6 +11129,26 @@
       "noWriter": false
     },
     {
+      "field": "RenderJob.downloadExpiresAt",
+      "writers": [],
+      "store": "RenderJob",
+      "readers": [],
+      "writerActors": [],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
+      "field": "RenderJob.downloadUrl",
+      "writers": [],
+      "store": "RenderJob",
+      "readers": [],
+      "writerActors": [],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
       "field": "RenderJob.height",
       "writers": [
         "server:video-render"
@@ -20978,5 +20998,5 @@
     }
   ],
   "crossActor": 34,
-  "noWriter": 690
+  "noWriter": 692
 }

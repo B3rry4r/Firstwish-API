@@ -375,7 +375,9 @@ export class WishLifecycleService implements OnModuleInit {
     // IF4: the voices friends gave through the gather link go with the wish: their names (one row each) at once, their files with the others
     const voices = (await tx.voiceNote.findMany({ where: { wishId }, select: { id: true } })).map((r) => r.id);
     await tx.wishGatherVoice.deleteMany({ where: { wishId } });
-    const mine = [...new Set([...(await tx.wishFile.findMany({ where: { wishId }, select: { fileId: true } })).map((r) => r.fileId), ...voices])];
+    // IK4a: the portrait video the wish had made (its stored file) goes with the wish's other files: the render job's output is named by the job, not by a wish file row
+    const videos = (await tx.renderJob.findMany({ where: { wishId, outputFileId: { not: null } }, select: { outputFileId: true } })).map((r) => r.outputFileId as string);
+    const mine = [...new Set([...(await tx.wishFile.findMany({ where: { wishId }, select: { fileId: true } })).map((r) => r.fileId), ...voices, ...videos])];
     await tx.wishFile.deleteMany({ where: { wishId } });
     if (!mine.length) return;
     const shared = new Set((await tx.wishFile.findMany({ where: { fileId: { in: mine }, wishId: { not: wishId } }, select: { fileId: true } })).map((r) => r.fileId));

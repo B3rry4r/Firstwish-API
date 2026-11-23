@@ -123,7 +123,7 @@ export class PatchWishesByIdBodyDto implements PatchWishesByIdBody {
   @IsString()
   @MinTrimmed(4)
   @MaxLength(64)
-  passcode?: string;
+  passcode?: string | null;
   @IsOptional()
   @IsNumber()
   step?: number;

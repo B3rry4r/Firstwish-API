@@ -2465,6 +2465,12 @@
         "set": {
           "passcode": "string, at least 4 chars, max 64 (write only: stored hashed, never returned; null clears it)"
         }
+      },
+      {
+        "decision": "DEC-314",
+        "set": {
+          "passcode": "string, at least 4 chars, max 64, or null (write only: stored hashed, never returned; null clears it)"
+        }
       }
     ],
     "GET /v1/payments": {
@@ -4007,6 +4013,20 @@
       "type": "boolean (always false: a sample is no house wish)",
       "nullable": false,
       "decision": "DEC-312"
+    },
+    {
+      "resource": "RenderJob",
+      "name": "downloadUrl",
+      "type": "string (IK4: a short-lived signed address of the finished file; only on the owner's own read of a done job)",
+      "nullable": true,
+      "decision": "DEC-315"
+    },
+    {
+      "resource": "RenderJob",
+      "name": "downloadExpiresAt",
+      "type": "time (ISO-8601; when downloadUrl stops working)",
+      "nullable": true,
+      "decision": "DEC-315"
     }
   ],
   "dropFields": [

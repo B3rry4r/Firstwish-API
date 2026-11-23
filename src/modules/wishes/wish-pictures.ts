@@ -54,11 +54,12 @@ export class WishPictures {
     return out;
   }
 
-  async videoStates(ids: string[]): Promise<Map<string, VideoState>> {
+  /** `gone`: a status video whose extra was refunded is not shown (the video read is 404 for it): the wish says "none", a state HP5 already has. */
+  async videoStates(ids: string[], gone?: (wishId: string) => Promise<boolean>): Promise<Map<string, VideoState>> {
     const out = new Map<string, VideoState>();
     if (!ids.length) return out;
-    const jobs = await this.db.renderJob.findMany({ where: { wishId: { in: ids } }, orderBy: { id: "desc" }, select: { wishId: true, status: true } });
-    for (const j of jobs) if (!out.has(j.wishId)) out.set(j.wishId, JOB_STATE[j.status] ?? "none");
+    const jobs = await this.db.renderJob.findMany({ where: { wishId: { in: ids } }, orderBy: { id: "desc" }, select: { wishId: true, status: true, kind: true } });
+    for (const j of jobs) if (!out.has(j.wishId)) out.set(j.wishId, j.kind === "status_video" && gone && (await gone(j.wishId)) ? "none" : (JOB_STATE[j.status] ?? "none"));
     return out;
   }
 }

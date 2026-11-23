@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "frozenAt": "2026-11-23T10:02:33Z",
+  "frozenAt": "2026-11-23T15:56:02Z",
   "framework": "nestjs",
   "generatedBy": "tools/pipeline/reconcile.py",
   "resources": [
@@ -17644,6 +17644,30 @@
           "supersedes": []
         },
         {
+          "name": "downloadExpiresAt",
+          "type": "time",
+          "classes": [
+            "time-iso"
+          ],
+          "nullable": true,
+          "provenance": [
+            "DEC-315"
+          ],
+          "supersedes": []
+        },
+        {
+          "name": "downloadUrl",
+          "type": "string",
+          "classes": [
+            "string"
+          ],
+          "nullable": true,
+          "provenance": [
+            "DEC-315"
+          ],
+          "supersedes": []
+        },
+        {
           "name": "height",
           "type": "number",
           "classes": [
@@ -30264,9 +30288,10 @@
             },
             {
               "name": "passcode",
-              "type": "string, at least 4 chars, max 64 (write only: stored hashed, never returned; null clears it)",
+              "type": "string, at least 4 chars, max 64, or null (write only: stored hashed, never returned; null clears it)",
               "from": [
-                "DEC-178"
+                "DEC-178",
+                "DEC-314"
               ]
             },
             {
@@ -30594,6 +30619,7 @@
           "notes": [
             "body by DEC-170",
             "body by DEC-178",
+            "body by DEC-314",
             "embedded by S-10",
             "route by DEC-91"
           ]

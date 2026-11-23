@@ -10,6 +10,7 @@ import type { PublicWishView, ReactionResult, UnlockResult } from "../../contrac
 import { SignedUrlsService } from "../stored-files/signed-urls.service";
 import { HOUSE_HANDLE } from "../wishes/house";
 import { WishLifecycleService } from "../wishes/wish-lifecycle.service";
+import { cutSecret, normalAnswer, secretOpening, withoutSecrets } from "../wishes/opening-secret";
 import { LinkLimits, READS_PER_MINUTE, UNLOCKS_PER_HOUR } from "./link-limits";
 import { UnlockTokens } from "./unlock-token";
 
@@ -176,7 +177,7 @@ export class PublicWishesService {
 
   /** The full view of a wish whose content may show now. The first call for a wish starts its term in one transaction. */
   private async serve(row: Row, base: PublicWishView, c: Caller, kind: "read" | "play"): Promise<PublicWishView | "refused"> {
-    const stored = plain(row.content) ? row.content : {};
+    const stored = plain(row.content) ? withoutSecrets(row.content) : {}; // IK1c: no read returns a code or an answer, whatever an older row holds
     if (c.head) return { ...base, state: "open", openable: true, openedAt: row.openedAt ? toWireInstant(row.openedAt) : null, endsAt: row.endsAt ? toWireInstant(row.endsAt) : null };
     const files = await this.fileLinks(row.id);
     const done = await this.recordRead(row, this.clock.now(), c, kind);
@@ -195,7 +196,11 @@ export class PublicWishesService {
     // the try is counted in ONE statement on the link; a link locked until a time refuses with that time (LinkLimits.countTry, shared with reveal links)
     await this.limits.countTry("wish_link", row.linkId);
     const candidate = input.passcode ?? input.answer ?? (typeof input.opening?.answer === "string" ? input.opening.answer : "");
-    const good = typeof candidate === "string" && candidate.length > 0 && candidate.length <= 200 && (await verify(candidate, row.passcodeHash));
+    const ask = questionOf(row.content) !== null || secretOpening(row.content) === "question";
+    // IK2a: outer spaces are cut from what is tried; a question's answer then matches in NFKC and lower case, a passcode keeps its case (an older answer kept as typed still matches as typed)
+    const cut = typeof candidate === "string" ? cutSecret(candidate) : "";
+    const good = cut.length > 0 && cut.length <= 200
+      && ((ask && (await verify(normalAnswer(cut), row.passcodeHash))) || (await verify(cut, row.passcodeHash)));
     if (!good) return { ok: false, error: questionOf(row.content) ? "That is not the answer." : "That is not the passcode." };
     // a good code does not reset the count: a reset would let tries made at the same moment pass the lock (at most 30 are checked)
     const t = this.tokens.issue(row.linkId, row.passcodeHash);

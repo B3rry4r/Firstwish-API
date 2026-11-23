@@ -20,6 +20,7 @@ import { PassDrawService } from "../purchases/pass-draws";
 import { ProAccess } from "../pro-business/pro-access";
 import { ShowingLink } from "../showing/showing-link";
 import { localToUtc, parseOpening, utcToLocal } from "./local-time";
+import { normalAnswer, SECRET_WORDS, secretOpening, withoutSecrets } from "./opening-secret";
 import { CHAPTER_KEYS, DEFAULT_CONTENT_MAX_BYTES, FileRef, hasBody, readContent } from "./wish-content";
 import { readLimits } from "../price-book/book-limits";
 import type { Principal } from "../../common/auth/principal";
@@ -291,7 +292,7 @@ export class WishesService {
     const t = (d: Date | null): string | null => (d ? toWireInstant(d) : null);
     return {
       id: r.id, accountId: r.accountId, businessId: r.businessId, status: r.status, state: stateOf(r), ticket: r.ticket,
-      kind: r.kind, occasion: r.occasion, style: r.styleSlug, name: r.name, no: r.no, content: r.content ?? {}, keep: r.keep,
+      kind: r.kind, occasion: r.occasion, style: r.styleSlug, name: r.name, no: r.no, content: withoutSecrets(r.content ?? {}), keep: r.keep,
       step: r.step, opensAt: t(r.opensAt), timeZone: r.timeZone, sealedAt: t(r.sealedAt), openedAt: t(r.openedAt), endsAt: t(r.endsAt),
       restingSince: t(r.restingSince), keptUntil: t(r.keptUntil), eraseAfter: t(r.eraseAfter), erasedAt: t(r.erasedAt),
       removedAt: t(r.removedAt), restorableUntil: t(r.restorableUntil), createdAt: toWireInstant(r.createdAt), updatedAt: toWireInstant(r.updatedAt), version: r.version,
@@ -504,7 +505,7 @@ export class WishesService {
     await this.checkFiles(tx, accountId, biz, refs);
     this.checkLimits(book, content, refs, cur);
     await this.syncFiles(tx, cur.id, refs);
-    return content as Prisma.InputJsonValue;
+    return withoutSecrets(content) as Prisma.InputJsonValue; // IK1c: the code and the answer are never kept in the document
   }
 
   private async syncFiles(tx: Tx, wishId: string, refs: FileRef[]): Promise<void> {
@@ -532,7 +533,9 @@ export class WishesService {
     const zone = input.timeZone;
     if (zone !== undefined && !isTimeZone(zone)) throw AppError.validation({ timeZone: "Not a time zone, for example Africa/Lagos." });
     const wedding = this.weddingOf(input.makerNote);
-    const passHash = typeof input.passcode === "string" ? await hashPasscode(this.passcode(input.passcode)) : input.passcode;
+    // IK2: a question's answer is kept without case or outer spaces, so it is hashed that way; a passcode as typed (both are made here, the opening decides inside)
+    const given = typeof input.passcode === "string" ? this.passcode(input.passcode) : null;
+    const hashed = given === null ? null : { exact: await hashPasscode(given), answer: normalAnswer(given) === given ? null : await hashPasscode(normalAnswer(given)) };
     const biz = await this.business.find(accountId);
     const book = await this.entitlements.row();
     return this.prisma.$transaction(async (tx) => {
@@ -581,7 +584,6 @@ export class WishesService {
       }
       if (input.keep !== undefined) data.keep = input.keep;
       if (input.step !== undefined) data.step = input.step;
-      if (passHash !== undefined) data.passcodeHash = passHash;
       if (wedding !== undefined) data.weddingDate = wedding.date;
       if (input.makerNote !== undefined) {
         // the stored note is the merge, so the limit is on the merged note (a long run of small saves cannot pile past it)
@@ -607,6 +609,16 @@ export class WishesService {
           else content[k] = v;
         }
         data.content = await this.applyContent(tx, accountId, biz, book, cur, content);
+      }
+      {
+        // IK1b: the secret belongs to one opening. A save that names an opening with no secret leaves none; one that changes the opening
+        // keeps the old secret only if a new `passcode` comes in the same save, so the old secret never answers the new question.
+        const named = input.content !== undefined && Object.prototype.hasOwnProperty.call(input.content, "opening");
+        const was = secretOpening(cur.content);
+        const nowKind = secretOpening(data.content ?? cur.content);
+        if (input.passcode === null) data.passcodeHash = null;
+        else if (hashed) data.passcodeHash = named && nowKind === null ? null : nowKind === "question" ? (hashed.answer ?? hashed.exact) : hashed.exact;
+        else if (named && (nowKind === null || nowKind !== was)) data.passcodeHash = null;
       }
       const done = await tx.wish.updateMany({ where: { id, version: input.version }, data });
       if (done.count !== 1) throw new AppError(409, "stale_version", "This wish changed somewhere else. Load it again.");
@@ -813,6 +825,9 @@ export class WishesService {
       if (!w.ticket && !input.usePass && !plan && !viaOrder) throw new AppError(402, "payment_required", "Pay for this wish first.");
       const missing: Record<string, string> = {};
       if (!w.name?.trim()) missing.name = "Who is it for?";
+      // IK1: an opening that asks for a secret is never sealed without one (it would open for anyone)
+      const need = secretOpening(w.content);
+      if (need && !w.passcodeHash) throw AppError.validation({ [SECRET_WORDS[need].field]: SECRET_WORDS[need].words }, SECRET_WORDS[need].words);
       if (!hasBody(w.content as Obj | null)) missing.content = "Write at least one part of the wish.";
       if (Object.keys(missing).length) throw AppError.validation(missing, "This wish is not ready to seal.");
       const now = this.clock.now();

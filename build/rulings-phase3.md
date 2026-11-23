@@ -1201,3 +1201,23 @@ HG1 (give race) Two staff giving one Concierge order: the code is right (overlap
   took a style while the style was offered for its kind and occasion keeps it when staff later narrow that
   style's kinds or occasions, exactly as it keeps a style whose level staff later raise (IJ2): the seal does not
   refuse it and its link plays. The change applies to wishes that take the style afterwards.
+
+## 23 Nov: the three rows a verifier found still open (UA-808, UA-725, UA-922). Default (lead), owner may override.
+- IK1 (UA-808, blocker found by VERIFY-UA-725-808-922): a wish whose opening is a passcode or a question holds a secret the
+  SERVER stores hashed (Q8, GG7). The web sends it only as the write-only body field `passcode` of the draft save, never
+  inside content; the hint and the question's text stay in content.opening.values (LL3). The server refuses to SEAL a wish
+  whose opening needs a secret and has none (422, words naming the step), so a wish is never sealed "locked" and open to
+  anyone. Changing the opening to one with no secret clears the stored hash.
+- IK2: a question's answer is matched without regard to case or outer spaces (the maker says "Not case sensitive"); a
+  passcode is matched exactly as typed.
+- IK3 (UA-725): the portrait video extra is NOT SOLD while no video renderer is configured: its payment start is refused
+  with words and the wish read says the extra is not available, so the app draws no offer (law: sold is built). With
+  PROVIDERS=standin the stand-in renderer is bound (with a failure switch, refused at boot with live providers) so a
+  test stack reaches "ready" and "failed". Production keeps "no renderer" until the real one is built: OWED, its own
+  task (listed to the owner).
+- IK4: a wish that holds the video extra is never offered it again at a price: it shows the video's state (asked, being
+  made, ready with a download, failed with Ask again). The ready state gives a short-lived signed download address.
+- IK5 (UA-922): the Studio's save checks a style document's base look against the server's known looks and each
+  scene's layout and added kinds against the allowed lists (422 with words naming the field); the send-in check does
+  the same, so the browser's word is not taken. Colours the editor reports (doc.seen) are advice for the editor only:
+  no server rule reads them (say so in the contract note).

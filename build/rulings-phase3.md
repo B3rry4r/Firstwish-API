@@ -1197,3 +1197,7 @@ HG1 (give race) Two staff giving one Concierge order: the code is right (overlap
   `allowedStyles` all use that one rule. A wish with no occasion yet is offered only styles that name no occasion
   for its kind; an occasion change with a style held is re-checked like a kind change. (Seen: the server picked
   Quiet, an apology-only style, for a love birthday wish; the maker then rightly kept Continue off.)
+- IJ4b (23 Nov, the lead, on the check of the seventeenth round; Default (lead), owner may override): a wish that
+  took a style while the style was offered for its kind and occasion keeps it when staff later narrow that
+  style's kinds or occasions, exactly as it keeps a style whose level staff later raise (IJ2): the seal does not
+  refuse it and its link plays. The change applies to wishes that take the style afterwards.

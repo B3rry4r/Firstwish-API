@@ -100,6 +100,24 @@ describe("API-BASE-16 case 1: one sample wish (E-288)", () => {
     expect(Date.parse(w.opensAt)).toBeLessThan(Date.now());
   });
 
+  it("P-API-16B: answers the finals (photographers / your-finals) in the open-view shape, with the eight sample photos to download", async () => {
+    const r = await t.http().get("/v1/sample-wishes/photographers/your-finals");
+    expect(r.status).toBe(200);
+    const w = r.body as SampleWish;
+    expect(w).toMatchObject({ sample: true, kind: "photographers", occasion: "your-finals", occasionName: "Your finals", state: "open", openable: true, receiverName: "Aisha", date: "07 · 11 · 2026" });
+    expect(Date.parse(w.opensAt)).toBeLessThan(Date.now());
+    const links = (w.content as { links?: { book?: string; download?: { count: number; size: string; files: string[] } } }).links;
+    expect(links?.book).toBe("/app");
+    expect(links?.download).toMatchObject({ count: 8, size: "64 MB" });
+    expect(links?.download?.files).toEqual(w.photos);
+    expect(w.photos.length).toBe(8);
+    expect(w.photos.every((p) => /^\/img\/aisha-\d\.webp$/.test(p))).toBe(true);
+    for (const k of ["slug", "id", "no", "accountId", "owner", "link"]) expect(r.body).not.toHaveProperty(k);
+    expect(Object.keys(w).sort()).toEqual(Object.keys((await t.http().get("/v1/sample-wishes/photographers/couple")).body as Row).sort());
+    const kind = await t.http().get("/v1/sample-wishes").query({ kind: "photographers" });
+    expect((kind.body.items as SampleWish[]).length).toBe(10);
+  });
+
   it("an unknown kind, an unknown occasion and an occasion of another kind are 404 in words", async () => {
     for (const [path, words] of [["/v1/sample-wishes/nothing/birthday", /no sample wish for the kind/], ["/v1/sample-wishes/love/nothing", /no sample wish for the occasion/], ["/v1/sample-wishes/love/graduation", /no sample wish for the occasion/], ["/v1/sample-wishes/LOVE/birthday", /no sample wish/]] as [string, RegExp][]) {
       const r = await t.http().get(path);
@@ -134,12 +152,12 @@ describe("API-BASE-16 case 2: the list (E-287)", () => {
     expect((await t.http().get("/v1/sample-wishes").query({ kind: "celebration" }).set("If-None-Match", r.headers.etag)).status).toBe(304);
   });
 
-  it("names every kind when none is given (44 in one answer, under 100 kB a kind), and 404 for a kind that is not one", async () => {
+  it("names every kind when none is given (45 in one answer, under 100 kB a kind), and 404 for a kind that is not one", async () => {
     const all = await t.http().get("/v1/sample-wishes");
     expect(all.status).toBe(200);
-    expect(all.body.items.length).toBe(44);
+    expect(all.body.items.length).toBe(45);
     expect(new Set((all.body.items as SampleWish[]).map((w) => w.kind))).toEqual(new Set(["love", "celebration", "group", "wedding", "teams", "photographers"]));
-    expect((await t.http().get("/v1/sample-wishes").query({ kind: "" })).body.items.length).toBe(44);
+    expect((await t.http().get("/v1/sample-wishes").query({ kind: "" })).body.items.length).toBe(45);
     for (const kind of ["love", "celebration", "group", "wedding", "teams", "photographers"]) {
       const r = await t.http().get("/v1/sample-wishes").query({ kind });
       expect(r.status).toBe(200);
@@ -152,12 +170,12 @@ describe("API-BASE-16 case 2: the list (E-287)", () => {
 });
 
 describe("API-BASE-16 case 3: the data, seeded once and then owned (GD3)", () => {
-  it("the table holds the 44 rows of prisma/seed-data/SampleWish.json, each kind by occasion once, and the served words are the file's", async () => {
+  it("the table holds the 45 rows of prisma/seed-data/SampleWish.json, each kind by occasion once (the 44 of the catalogue and the API-owned your-finals), and the served words are the file's", async () => {
     const file = seedFile().rows;
-    expect(file.length).toBe(44);
-    expect(await db.sampleWish.count()).toBe(44);
+    expect(file.length).toBe(45);
+    expect(await db.sampleWish.count()).toBe(45);
     const keys = new Set(file.map((r) => `${String(r.kind)}/${String(r.occasion)}`));
-    expect(keys.size).toBe(44);
+    expect(keys.size).toBe(45);
     for (const r of file) {
       const w = (await t.http().get(`/v1/sample-wishes/${String(r.kind)}/${String(r.occasion)}`)).body as SampleWish;
       expect(w.content).toEqual({ ...(r.content as Row), files: w.files });
@@ -211,7 +229,10 @@ describe("API-BASE-16 case 3: the data, seeded once and then owned (GD3)", () =>
       const first = spawnSync(process.execPath, [join(dir, "scripts/export-seed-data.mjs")], { cwd: dir, env: { ...process.env, WEB_REPO: web, NODE_PATH: join(ROOT, "node_modules") }, encoding: "utf8" });
       expect(first.status).toBe(0);
       expect(existsSync(mine)).toBe(true);
-      expect(readFileSync(mine, "utf8")).toBe(readFileSync(join(ROOT, "prisma/seed-data/SampleWish.json"), "utf8"));
+      // the file also holds photographers/your-finals, a recipe of the web that is no occasion of its catalogue, added here by hand (P-API-16B)
+      const kept = seedFile();
+      kept.rows = kept.rows.filter((r) => r.seedKey !== "photographers/your-finals");
+      expect(readFileSync(mine, "utf8")).toBe(JSON.stringify(kept, null, 1) + "\n");
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
@@ -254,6 +275,6 @@ describe("API-BASE-16 case 4: a sample is never a real wish", () => {
       }
     }
     expect(await snap()).toBe(before);
-    expect(await db.sampleWish.count()).toBe(44);
+    expect(await db.sampleWish.count()).toBe(45);
   });
 });

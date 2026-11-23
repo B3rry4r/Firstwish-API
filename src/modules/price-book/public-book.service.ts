@@ -3,14 +3,17 @@ import { ModuleRef } from "@nestjs/core";
 import { PrismaService } from "../../common/db/prisma.service";
 import { AppError } from "../../common/errors/app-error";
 import { decodeCursor, DEFAULT_LIMIT, toPage } from "../../common/pagination/cursor";
-import type { GetPriceBookQuery, LifecycleConfig, PriceBook, TicketQuote } from "../../contracts";
+import type { GetPriceBookQuery, LifecycleConfig, PriceBook, TicketOfferState, TicketQuote } from "../../contracts";
+import type { Principal } from "../../common/auth/principal";
+import { notInBusiness, removedFromBusiness, loginRemoved } from "../../common/auth/login-removed";
 import { EntitlementsService, grantOf } from "./entitlements.service";
 import { PriceBookService, safe } from "./price-book.service";
 import { readLimits } from "./book-limits";
 import { readPayoutSetting } from "./payout-setting";
 import { priceOf, promotionOf } from "./price-view";
-import { NOT_SOLD_WORDS, unsoldLines } from "../purchases/wish-rules";
+import { NOT_SOLD_WORDS, TICKET_ORDER, unsoldLines } from "../purchases/wish-rules";
 import { VideoRenderer } from "../render-jobs/video-renderer";
+import { PurchasesService } from "../purchases/purchases.service";
 
 /**
  * GET /v1/price-book: the version in force now, its lines (price now and list price), the promotion while it runs, the
@@ -64,6 +67,35 @@ export class PublicBookService {
   }
 
   /* ---------------- TicketQuote (E-213, X13) ---------------- */
+
+  /**
+   * E-213 as the route answers it. Without `wish` it is the business side's, as before (a person with no business side is 403, a removed login says so). With `wish` any
+   * signed-in person reads it for their own wish (another's is 404), `ticket` is optional, and the quote carries `tickets` (only then): for each ticket whether it can be bought now
+   * and the server's words when not (IL3). The quote's lines are the named ticket's; with none named, the Moment ticket's.
+   */
+  async offers(p: Principal | undefined, q: { ticket?: string; extras?: string[]; wish?: string }, businessHeader: string | string[] | undefined): Promise<TicketQuote> {
+    if (!p || p.kind !== "user") throw AppError.forbidden();
+    const accountId = p.accountId;
+    if (q.wish === undefined) {
+      if (!p.sides.includes("business")) throw await notInBusiness(this.db, accountId, "Forbidden.");
+      if (await removedFromBusiness(this.db, accountId, businessHeader)) throw loginRemoved();
+    }
+    if (q.ticket === undefined && (q.wish === undefined || (q.extras ?? []).length > 0)) throw AppError.validation({ ticket: "Name the ticket." });
+    const wishId = q.wish === undefined ? null : q.wish.trim().toLowerCase();
+    if (wishId !== null && !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(wishId)) throw AppError.notFound("No such wish.");
+    if (wishId === null) return this.quoteTicket(q.ticket as string, q.extras ?? []);
+    const states = await this.modules.get(PurchasesService, { strict: false }).ticketStates(accountId, wishId);
+    const at = this.book.now();
+    const b = await this.book.versionAt(at);
+    const tickets: TicketOfferState[] = [];
+    const order = (sku: string): number => TICKET_ORDER.indexOf(sku.slice("ticket.".length) as (typeof TICKET_ORDER)[number]);
+    for (const l of b.lines.filter((x) => x.sku.startsWith("ticket.") && order(x.sku) >= 0).sort((x, y) => order(x.sku) - order(y.sku))) {
+      const no = states.get(l.sku) ?? null;
+      tickets.push({ ticket: l.sku, name: l.name, canBuy: no === null, reason: no?.reason ?? null, words: no?.words ?? null, priceKobo: safe(PriceBookService.chargedAt(l, at)), listKobo: safe(l.listKobo) });
+    }
+    const quote = await this.quoteTicket(q.ticket ?? "ticket.moment", q.extras ?? []);
+    return { ...quote, tickets };
+  }
 
   /**
    * What a ticket plus extras costs now: ONE quote from the book (never from the request), through quote(). An unknown line,

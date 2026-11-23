@@ -8,6 +8,11 @@ export class GetTicketOffersQueryDto implements GetTicketOffersQuery {
   @IsArray()
   @IsString({ each: true })
   extras?: string[];
+  /** IL3: required unless `wish` names the person's own wish (then the answer lists every ticket); the service asks for it after the business gate. */
+  @IsOptional()
   @IsString()
-  ticket!: string;
+  ticket?: string;
+  @IsOptional()
+  @IsString()
+  wish?: string;
 }

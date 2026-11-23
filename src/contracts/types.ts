@@ -174,6 +174,18 @@ export interface TicketQuote {
   lines: QuoteLine[];
   totalKobo: Kobo;
   listTotalKobo: Kobo;
+  /** IL3: with `wish` named: every ticket of the book, whether it can be bought for that wish now and the server's words when not. Absent without `wish`. */
+  tickets?: TicketOfferState[] | null;
+}
+/** IL3: one ticket in the offers read. `reason` is the refusal's code (the start answers the same) and `words` the sentence to show; both null when it can be bought. */
+export interface TicketOfferState {
+  ticket: string;
+  name: string;
+  canBuy: boolean;
+  reason: string | null;
+  words: string | null;
+  priceKobo: Kobo;
+  listKobo: Kobo;
 }
 /** E-125 (X14, DEC-161): the public price book, paged by ?cursor=&limit=. */
 export interface PriceBook {
@@ -1901,11 +1913,20 @@ export interface WebhookEvent {
 }
 
 /** Wish: table. written by E-220, E-222..E-233 and server:wish-lifecycle; content is a document column; content is JSON (DEC-64 typed WishData, DEC-82 Wish.content.details object) typed object in the registry (HM4, DEC-215) */
+/** IL2: one extra a wish holds, as the owner's read says it: where it came from (its ticket or a purchase), whether the wish still holds it, and the state of a refund of the purchase. */
+export interface WishAdd {
+  sku: string;
+  from: "ticket" | "purchase";
+  held: boolean;
+  refund: "sent" | "done" | null;
+  reference: string | null;
+}
 export interface Wish {
   accountId: string;
   action: unknown;
   activity?: { opens: number; plays: number; reactions: Record<string, number>; favourites: number; shares: number } | null;
-  adds: unknown[];
+  /** IL2 (DEC-319): the extras the wish holds, each with where it came from and a refund's state; sent on the owner's single and list reads only (absent on every other answer) */
+  adds?: WishAdd[];
   allowedStyles?: Array<string> | null;
   extrasOpen?: Record<string, boolean> | null;
   amount: Kobo;
@@ -4808,8 +4829,10 @@ export type GetTicketOffersParams = Record<string, never>;
 export interface GetTicketOffersQuery {
   /** array<string> (optional, repeatable ?extras=; extra lines of the price book) */
   extras?: string[];
-  /** string (a ticket line of the price book, such as ticket.single) */
-  ticket: string;
+  /** string (a ticket line of the price book, such as ticket.single; optional when `wish` is named) */
+  ticket?: string;
+  /** string Wish.id (optional; one of the caller's own wishes: the answer then says, for each ticket, whether it can be bought for that wish now) */
+  wish?: string;
 }
 export type GetTicketOffersHeaders = Record<string, never>;
 export type GetTicketOffersResponse = TicketQuote;

@@ -16,9 +16,11 @@ export function secretOpening(content: unknown): SecretOpening | null {
 
 /** IK1c: the document without the secret fields (a copy; the input is not changed). */
 export function withoutSecrets<T>(content: T): T {
-  if (!plain(content) || !plain(content.opening) || !plain(content.opening.values)) return content;
-  const { code: _c, answer: _a, ...values } = content.opening.values;
-  return { ...content, opening: { ...content.opening, values } } as T;
+  const same: unknown = content;
+  if (!plain(same) || !plain(same.opening) || !plain(same.opening.values)) return content;
+  const { code: _c, answer: _a, ...values } = same.opening.values;
+  const out: unknown = { ...same, opening: { ...same.opening, values } };
+  return out as T;
 }
 
 export const SECRET_WORDS: Record<SecretOpening, { field: string; words: string }> = {

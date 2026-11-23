@@ -101,7 +101,7 @@ describe("API-BASE-19 IK3, IK4: with PROVIDERS=standin the video is bought once,
   beforeEach(() => k.t.clock.set(NOW));
 
   it("2b, 2c, 2d: bought once; the job fails on STANDIN_VIDEO=fail, is asked again and reaches ready; the ready read gives a signed address of the stored file; a second purchase is refused", async () => {
-    const renderer = k.t.app.get(VideoRenderer) as StandinVideoRenderer;
+    const renderer = k.t.app.get<StandinVideoRenderer>(VideoRenderer);
     expect(renderer).toBeInstanceOf(StandinVideoRenderer);
     expect(renderer.failWith).toBeTruthy();
     const a = await k.account();

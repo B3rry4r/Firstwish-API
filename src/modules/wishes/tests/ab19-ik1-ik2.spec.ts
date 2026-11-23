@@ -43,13 +43,13 @@ describe("API-BASE-19 IK1, IK2: the receiver's secret", () => {
   }
 
   /** Each way a wish is sealed: the maker's own ticket, the Pass, a business plan, and a Concierge maker on an order (a business's order and a group wish end in these same calls). */
-  type Way = { name: string; prepare: (kind: "passcode" | "question") => Promise<{ auth: string; id: string; extra: Record<string, unknown>; untouched: () => Promise<void> }> };
+  type Way = { name: string; prepare: (kind: "passcode" | "question") => Promise<{ auth: string; id: string; extra: Record<string, unknown>; untouched: () => Promise<unknown> }> };
   const opening = { passcode: PASSCODE, question: QUESTION };
   const ways: Way[] = [
     { name: "ticket", prepare: async (kind) => {
       const u = await k.account();
       const id = await draft(u.id, { ticket: "keepsake", content: { ...letter, opening: opening[kind] } });
-      return { auth: u.auth, id, extra: {}, untouched: async () => undefined };
+      return { auth: u.auth, id, extra: {}, untouched: () => Promise.resolve() };
     } },
     { name: "pass", prepare: async (kind) => {
       const u = await k.account();
@@ -78,7 +78,7 @@ describe("API-BASE-19 IK1, IK2: the receiver's secret", () => {
       const made = await http().post(`/v1/admin/concierge/orders/${orderId}/wishes`).set("Authorization", maker.auth).send({ reason: "making it", kind: "birthday", occasion: "birthday", name: "Ada Obi" });
       const id = made.body.id as string;
       await db.wish.update({ where: { id }, data: { styleSlug: "noir", content: { ...letter, opening: opening[kind] } } });
-      return { auth: maker.auth, id, extra: {}, untouched: async () => undefined };
+      return { auth: maker.auth, id, extra: {}, untouched: () => Promise.resolve() };
     } },
   ];
 

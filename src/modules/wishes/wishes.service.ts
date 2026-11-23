@@ -613,7 +613,7 @@ export class WishesService {
         data.content = await this.applyContent(tx, accountId, biz, book, cur, content);
       }
       {
-        // IK1b: the secret belongs to one opening. A save that names an opening with no secret leaves none; one that changes the opening
+        // IK1b: a secret is kept for one opening only. A save that names an opening with no secret leaves none; one that changes the opening
         // keeps the old secret only if a new `passcode` comes in the same save, so the old secret never answers the new question.
         const named = input.content !== undefined && Object.prototype.hasOwnProperty.call(input.content, "opening");
         const was = secretOpening(cur.content);

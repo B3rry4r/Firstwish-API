@@ -13,6 +13,8 @@ import { holderKey, KeepProofs } from "./keep-proof";
 import { PassService } from "./pass.service";
 import { WishHandlers } from "./wish-handlers";
 import { VideoRenderer } from "../render-jobs/video-renderer";
+import { assessTicketClips, fillClipLengths, readHeldClips } from "../wish-extras/wish-clips";
+import { ClipLengthPort } from "../../common/ports/clip-length.port";
 import { assessExtra, assessKeep, assessTicket, assessTicketStyle, readWish, REASON_TEXT, NOT_SOLD_WORDS, TICKET_ORDER, unsoldLines } from "./wish-rules";
 import { canMove } from "../concierge/order-state";
 import { hiddenFromBuyer } from "../wishes/wish-shown";
@@ -67,6 +69,7 @@ export class PurchasesService implements OnModuleInit {
     private readonly proofs: KeepProofs,
     private readonly ids: IdGenerator,
     private readonly lifecycle: WishLifecycleService,
+    private readonly clipLength: ClipLengthPort,
   ) {}
 
   onModuleInit(): void {
@@ -110,7 +113,8 @@ export class PurchasesService implements OnModuleInit {
         continue;
       }
       // IJ3: the money is back (the provider refunded it), but an extra a held style still needs stays on the wish, and the note says so
-      const result = alone && (await this.wish.premiumExtraBlock(tx, g)) ? "kept_style_needs_extra" : await this.revokeOne(tx, g, released);
+      const keptClips = !(alone && (await this.wish.premiumExtraBlock(tx, g))) && (g.kind === "ticket" || alone) ? await this.wish.clipBlock(tx, g) : null; // IL1a
+      const result = alone && (await this.wish.premiumExtraBlock(tx, g)) ? "kept_style_needs_extra" : keptClips ? "kept_clips_held" : await this.revokeOne(tx, g, released);
       if (result === "revoked") await this.store.markRevoked(tx, g.id);
       out.push({ sku: g.sku, kind: g.kind, result });
     }
@@ -122,14 +126,17 @@ export class PurchasesService implements OnModuleInit {
     return grants.filter((g) => !g.revokedAt && !g.refusedReason).every((g) => g.kind === "extra");
   }
 
-  /** IJ3: words that refuse starting a refund of this payment (the premium-style extra on its own while the wish holds a style that needs it), or null. */
-  async refundBlock(tx: Tx, paymentId: string): Promise<string | null> {
+  /** IJ3: words that refuse starting a refund of this payment (the premium-style extra on its own while the wish holds a style that needs it; IL1a: a clip extra or a ticket while the wish holds the clips), or null. */
+  async refundBlock(tx: Tx, paymentId: string): Promise<{ code: string; words: string } | null> {
     const grants = await this.store.list(tx, paymentId);
-    if (!this.extrasAlone(grants)) return null;
+    const alone = this.extrasAlone(grants);
     for (const g of grants) {
       if (g.revokedAt || g.refusedReason) continue;
-      const why = await this.wish.premiumExtraBlock(tx, g);
-      if (why) return why;
+      const why = alone ? await this.wish.premiumExtraBlock(tx, g) : null;
+      if (why) return { code: "extra_needed_by_style", words: why };
+      // IL1a: a clip extra on its own, or a ticket, is not refunded while the wish holds the clips it paid for
+      const clips = g.kind === "ticket" || alone ? await this.wish.clipBlock(tx, g) : null;
+      if (clips) return { code: "clips_held", words: clips };
     }
     return null;
   }
@@ -203,6 +210,8 @@ export class PurchasesService implements OnModuleInit {
     const w = wishId ? ((await hiddenFromBuyer(this.db, wishId)) ? null : await readWish(this.db, wishId)) : null;
     if (wishId && (!w || w.accountId !== accountId || w.state === "erased")) throw AppError.notFound("No such wish.");
     const waiting = w ? await waitingTicketPayment(this.db, accountId, w.id, this.clock.now()) : null;
+    if (w) await fillClipLengths(this.db, this.clipLength, w.id); // M2: an old clip's length is read when first needed, and kept
+    const clips = w ? await readHeldClips(this.db, w.id) : [];
     const out = new Map<string, { reason: string; words: string } | null>();
     for (const t of TICKET_ORDER) {
       const sku = `ticket.${t}`;
@@ -213,7 +222,7 @@ export class PurchasesService implements OnModuleInit {
         let why = assessTicket(w, accountId, t);
         if (!why && w.ticket) why = "wish_has_ticket";
         if (why) no = { reason: why, words: REASON_TEXT[why] ?? "This cannot be bought for this wish." };
-        else no = await assessTicketStyle(this.db, w, t, book);
+        else no = (await assessTicketStyle(this.db, w, t, book)) ?? (await assessTicketClips(this.db, book, w, t, clips)); // IL1a: clips the ticket does not give
       }
       out.set(sku, no);
     }
@@ -257,6 +266,10 @@ export class PurchasesService implements OnModuleInit {
     if (group === "ticket" && w) {
       const styleWhy = await assessTicketStyle(db, w, sku.slice("ticket.".length), book);
       if (styleWhy) throw AppError.validation({ subjectId: styleWhy.words }, styleWhy.words);
+      await fillClipLengths(db, this.clipLength, w.id); // M2
+      // IL1a: a ticket that gives fewer clips, or shorter ones, than the wish holds is refused at start, in words that say what to remove
+      const clipWhy = await assessTicketClips(db, book, w, sku.slice("ticket.".length));
+      if (clipWhy) throw AppError.validation({ subjectId: clipWhy.words }, clipWhy.words);
     }
   }
 }

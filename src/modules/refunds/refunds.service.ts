@@ -86,7 +86,7 @@ export class RefundsService {
       }
       // IJ3: the premium-style extra alone is not refunded while the wish holds a style that needs it
       const block = await this.purchases.refundBlock(tx, p.id);
-      if (block) throw AppError.conflict("extra_needed_by_style", block);
+      if (block) throw AppError.conflict(block.code, block.words);
       const open = await tx.refund.findFirst({ where: { paymentId: p.id, status: { in: [...OPEN_REFUND] } }, select: { id: true } });
       if (open) throw AppError.conflict("refund_open", "This payment is already being refunded.");
       const row = await tx.refund.create({
@@ -112,7 +112,7 @@ export class RefundsService {
       const r = await tx.refund.findUniqueOrThrow({ where: { id } });
       if (r.status === "requested" || r.status === "approved") {
         const block = await this.purchases.refundBlock(tx, pre.payment.id);
-        if (block) throw AppError.conflict("extra_needed_by_style", block);
+        if (block) throw AppError.conflict(block.code, block.words);
       }
       if (r.status === "requested") {
         if (!allowSelf && r.requestedBy === actor.id) throw AppError.forbidden("A refund is sent by someone other than who asked for it.");

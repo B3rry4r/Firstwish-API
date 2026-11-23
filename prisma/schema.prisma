@@ -1316,6 +1316,8 @@ model StoredFile {
   kind                       StoredFileKind?
   styleId                    String?             @db.Uuid
   shownName                  String?
+  /// IL1a (round 21): a video clip's length in milliseconds, read from the stored file itself when it is confirmed (never taken from the browser); null for every other file
+  lengthMs                   Int?
   business                   Business?           @relation("StoredFile_businessId", fields: [businessId], references: [id])
   style                      StudioStyle?        @relation("StoredFile_styleId", fields: [styleId], references: [id], onDelete: SetNull)
   ownerAccount               Account?            @relation("StoredFile_ownerAccountId", fields: [ownerAccountId], references: [id])

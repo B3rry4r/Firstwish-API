@@ -165,4 +165,5 @@ export const REASON_TEXT: Record<string, string> = {
   style_not_offered: "The style of this wish was switched off before the payment settled.",
   style_wrong_kind: "The style of this wish is not made for its kind.",
   style_above_ticket: "The style of this wish is above what this ticket takes.",
+  clips_above_ticket: "This wish holds more clips, or a longer clip, than this ticket gives.",
 };

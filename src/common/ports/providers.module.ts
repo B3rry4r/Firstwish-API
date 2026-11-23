@@ -10,6 +10,8 @@ import { PaymentsPort } from "./payments.port";
 import { PayoutProviderPort } from "./payout-provider.port";
 import { RefundProviderPort } from "./refund-provider.port";
 import { ImageSizesPort, MissingImageSizes } from "./image-sizes.port";
+import { ClipLengthPort } from "./clip-length.port";
+import { FfprobeClipLength } from "./adapters/ffprobe-clip-length.adapter";
 import { LimitedPort, portTimeouts, withTimeLimit } from "./time-limit";
 import { UploadScreeningPort } from "./screening.port";
 import { StoragePort } from "./storage.port";
@@ -29,6 +31,7 @@ import {
   StandinEmail,
   StandinGoogle,
   StandinImageSizes,
+  StandinClipLength,
   StandinPayments,
   StandinScreening,
   StandinStorage,
@@ -96,11 +99,18 @@ const providers: Provider[] = [
   { provide: UploadScreeningPort, inject: [ENV], useFactory: (env: Env) => limited(env, "screening", standin(env) ? new StandinScreening(parseScreeningRules(env.STANDIN_SCREENING ?? "") ?? []) : new BasicScreening()) },
   // X22: the image-sizes port; its real adapter comes with the jobs frame (B06)
   { provide: ImageSizesPort, inject: [ENV], useFactory: (env: Env) => limited(env, "imageSizes", standin(env) ? new StandinImageSizes() : new MissingImageSizes()) },
+  // IL1a: a clip's length is read from the stored file (ffprobe on the real server, a header reader in the stand-in)
+  {
+    provide: ClipLengthPort,
+    inject: [ENV, StoragePort],
+    useFactory: (env: Env, storage: StoragePort) =>
+      limited(env, "clipLength", standin(env) ? new StandinClipLength(storage) : new FfprobeClipLength((key) => storage.signDownload(key, 300))),
+  },
 ];
 
 @Global()
 @Module({
   providers,
-  exports: [STANDIN_STORAGE, Clock, IdGenerator, CodeGenerator, PaymentsPort, RefundProviderPort, PayoutProviderPort, EmailPort, StoragePort, AiWritingPort, UploadScreeningPort, GoogleIdentityPort, ImageSizesPort],
+  exports: [STANDIN_STORAGE, Clock, IdGenerator, CodeGenerator, PaymentsPort, RefundProviderPort, PayoutProviderPort, EmailPort, StoragePort, AiWritingPort, UploadScreeningPort, GoogleIdentityPort, ImageSizesPort, ClipLengthPort],
 })
 export class ProvidersModule {}

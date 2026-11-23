@@ -1925,6 +1925,12 @@ export interface WishAdd {
     refund: "sent" | "done" | null;
     reference: string | null;
 }
+/** IL1a: what the wish may hold, from the price book (so no screen holds a number of its own): photos, voices, and clips (`count` places; `seconds` is the length each place takes, longest first, for example [15, 15, 15, 60]). */
+export interface WishLimits {
+    photos: number;
+    voices: number;
+    clips: { count: number; seconds: number[] };
+}
 export interface Wish {
     accountId: string;
     action: unknown;
@@ -1937,6 +1943,8 @@ export interface Wish {
     } | null;
     /** IL2 (DEC-319): the extras the wish holds, each with where it came from and a refund's state; sent on the owner's single and list reads only (absent on every other answer) */
     adds?: WishAdd[];
+    /** IL1a (DEC-324): what the wish may hold: photos, voices and clips (how many, and the length each place takes); sent on the owner's single and list reads only */
+    limits?: WishLimits;
     allowedStyles?: Array<string> | null;
     extrasOpen?: Record<string, boolean> | null;
     amount: Kobo;

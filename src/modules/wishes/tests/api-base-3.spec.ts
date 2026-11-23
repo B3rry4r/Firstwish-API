@@ -150,7 +150,7 @@ describe("API-BASE-3 HM1 HM3 HM4 (through the real routes)", () => {
     it("HO1 PATCH kind then a start with another kind: a NEW draft, the old one unchanged", async () => {
       const u = await user();
       const a = (await start(u)).body as W;
-      expect((await save(u, a.id, { version: a.version, kind: "celebration" })).status).toBe(200);
+      expect((await save(u, a.id, { version: a.version, kind: "celebration", style: "grace" })).status).toBe(200);
       const before = (await read(u, a.id)).body;
       const b = await start(u, { kind: "love" });
       expect([b.status, b.body.id === a.id, b.body.kind]).toEqual([201, false, "love"]);

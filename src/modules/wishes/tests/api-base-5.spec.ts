@@ -179,7 +179,7 @@ describe("API-BASE-5 wishes (through the real routes)", () => {
       const u = await user();
       const none = (await read(u, (await ticketed(u, null)).id)).body as W & { styleLevel: string | null; allowedStyles: string[] };
       expect(none.styleLevel).toBeNull();
-      expect(none.allowedStyles).toEqual(expect.arrayContaining(["noir", "status", "owambe"]));
+      expect(none.allowedStyles).toEqual(expect.arrayContaining(["noir", "status", "reel"]));
       const m = await ticketed(u, "moment");
       const moment = (await read(u, m.id)).body as W & { styleLevel: string | null; allowedStyles: string[] };
       expect(moment.styleLevel).toBe("starter");

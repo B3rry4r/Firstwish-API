@@ -61,7 +61,7 @@ describe("API-BASE-4 wishes (through the real routes)", () => {
       const ok = await save(u, w.id, { version: w.version, occasion: "anniversary", step: 5 });
       expect(ok.status).toBe(200);
       expect(((await read(u, w.id)).body as { occasion: string; step: number })).toMatchObject({ occasion: "anniversary", step: 5 });
-      const both = await save(u, w.id, { version: ok.body.version, kind: "wedding", occasion: "save-the-date", step: 0 });
+      const both = await save(u, w.id, { version: ok.body.version, kind: "wedding", style: "golden", occasion: "save-the-date", step: 0 });
       expect(both.status).toBe(200);
       const back = await save(u, w.id, { version: both.body.version, occasion: "birthday" });
       expect(back.status).toBe(422);
@@ -85,7 +85,7 @@ describe("API-BASE-4 wishes (through the real routes)", () => {
       expect(alone.status).toBe(422);
       expect(JSON.stringify(alone.body)).toContain("occasion");
       expect(((await read(u, w.id)).body as { kind: string; occasion: string })).toMatchObject({ kind: "love", occasion: "birthday" });
-      const both = await save(u, w.id, { version: w.version, kind: "wedding", occasion: "save-the-date" });
+      const both = await save(u, w.id, { version: w.version, kind: "wedding", style: "golden", occasion: "save-the-date" });
       expect(both.status).toBe(200);
       expect((await save(u, w.id, { version: both.body.version, kind: "wedding" })).status).toBe(200);
     });

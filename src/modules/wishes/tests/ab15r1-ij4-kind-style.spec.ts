@@ -45,7 +45,7 @@ describe("API-BASE-15 round 1 (IJ4): the kind rule for a kind change, the server
     return { id, token };
   };
   const wish = async (u: U, over: Record<string, unknown> = {}) => {
-    const kind = String(over.kind ?? "love");
+    const kind = typeof over.kind === "string" ? over.kind : "love";
     const id = ids.next();
     await db.wish.create({ data: { id, accountId: u.id, status: "draft", kind, occasion: occasionsOfKind(kind)[0], styleSlug: "noir", timeZone: "Africa/Lagos", name: "Ada", content: { letter: { paras: ["Hello."] } }, ...over } as never });
     return id;
@@ -136,11 +136,11 @@ describe("API-BASE-15 round 1 (IJ4): the kind rule for a kind change, the server
       expect(firstStyleFor(rows, "group", "starter")).toBeUndefined();
       expect(firstStyleFor(rows, "group", null)?.slug).toBe("only-premium-group");
       expect(firstStyleFor(rows, "love", "starter")?.slug).toBe("only-love");
-      const fake = { style: { findMany: async () => rows.filter((r) => r.on) } } as unknown as PrismaService;
+      const fake = { style: { findMany: () => Promise.resolve(rows.filter((r) => r.on)) } } as unknown as PrismaService;
       const pick = (wishes as unknown as { pickStyle(db: unknown, book: unknown, kind: string, ticket: string | null): Promise<{ slug: string; level: string | null }> }).pickStyle.bind(wishes);
       expect(await pick(fake, await entitlements.row(), "group", null)).toEqual({ slug: "", level: null });
       expect((await pick(fake, await entitlements.row(), "love", null)).slug).toBe("only-love");
-      await expect(pick({ style: { findMany: async () => [] } }, await entitlements.row(), "love", null)).rejects.toMatchObject({ response: { code: "no_style" } });
+      await expect(pick({ style: { findMany: () => Promise.resolve([]) } }, await entitlements.row(), "love", null)).rejects.toMatchObject({ response: { code: "no_style" } });
       // the wish that started with no style: its read says nothing is offered by accident, a ticket may be bought, and the seal asks for the style step
       const u = await person();
       const w = await wish(u, { styleSlug: "", ticket: "keepsake" });

@@ -89,6 +89,9 @@ export class PublicBookService {
       return l;
     });
     if (Object.keys(fields).length || !ticket) throw AppError.validation(fields);
+    // N2: an unsold extra answers like the payment start (same 409, same words); the contract's quote has no "not available" field, so no wire change
+    const unsoldExtra = extraSkus.find((s) => notSold.has(s));
+    if (unsoldExtra) throw new AppError(409, "extra_not_sold", NOT_SOLD_WORDS, { extra: unsoldExtra });
     const grant = grantOf(ent, ticket.sku) ?? { sku: ticket.sku };
     const takes = Array.isArray(grant.takes) ? (grant.takes as unknown[]).filter((x): x is string => typeof x === "string") : [];
     extras.forEach((e, i) => {

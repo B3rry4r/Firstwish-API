@@ -11,7 +11,7 @@ import { JobsService } from "../jobs/jobs.service";
 import { EntitlementsService } from "../price-book/entitlements.service";
 import { ServerFileWriter } from "../server-files/server-files";
 import { SignedUrlsService } from "../stored-files/signed-urls.service";
-import { wishHas } from "../wish-extras/wish-extras";
+import { videoRefunded, wishHas } from "../wish-extras/wish-extras";
 import { ERASE_WISH_FILE_PREFIX } from "../wishes/wish-lifecycle.service";
 import { stateOf } from "../wishes/wish-state";
 import { VideoRenderer, type RenderKind } from "./video-renderer";
@@ -62,7 +62,7 @@ export class RenderJobsService implements OnModuleInit {
     // IK4a: a video whose extra was refunded (refund sent) is no longer the person's: no read, no address
     if (row.kind === "status_video") {
       const w = await this.db.wish.findUniqueOrThrow({ where: { id: wishId }, select: { ticket: true, adds: true } });
-      if (await this.refundedVideo(this.db, await this.entitlements.row(), { id: wishId, ...w })) throw AppError.notFound();
+      if (await videoRefunded(this.db, await this.entitlements.row(), { id: wishId, ...w })) throw AppError.notFound();
     }
     return this.view(row, accountId);
   }
@@ -101,16 +101,9 @@ export class RenderJobsService implements OnModuleInit {
     return { payment: null, item: await this.view(await this.db.renderJob.findUniqueOrThrow({ where: { id: jobId } }), accountId) };
   }
 
-  /** IK4a: the video is the extra's (not its ticket's) and a refund of that extra was SENT: it is no longer the person's. A refund that failed or was cancelled is no longer sent. */
-  private async refundedVideo(db: Pick<Prisma.TransactionClient, "purchaseGrant">, book: EntitlementsRow, w: { id: string; ticket: string | null; adds: unknown }): Promise<boolean> {
-    if (wishHas(book, { ticket: w.ticket, adds: [] }, "portraitVideo") || !wishHas(book, w, "portraitVideo")) return false;
-    const sent = await db.purchaseGrant.findFirst({ where: { wishId: w.id, kind: "extra", sku: "extra.portrait-video", revokedAt: null, refusedReason: null, payment: { refundByPayment: { some: { status: "sent" } } } }, select: { id: true } });
-    return !!sent;
-  }
-
   /** The wish has the portrait video to ask for: on its ticket, or bought and not refunded. */
   private async holdsVideo(db: Pick<Prisma.TransactionClient, "purchaseGrant">, book: EntitlementsRow, w: { id: string; ticket: string | null; adds: unknown }): Promise<boolean> {
-    return wishHas(book, w, "portraitVideo") && !(await this.refundedVideo(db, book, w));
+    return wishHas(book, w, "portraitVideo") && !(await videoRefunded(db, book, w));
   }
 
   /** Runs one job: queued (or a lost rendering) to rendering to done or failed. A job already taken, done or failed is left alone. */

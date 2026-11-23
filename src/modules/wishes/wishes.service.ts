@@ -33,6 +33,7 @@ import { kindHasOccasion, LAST_STEP } from "./kind-occasions";
 import { isLevel } from "../styles/style-view";
 import { allowedLevel, firstStyleFor, heldAdds, REFUND_WORDS, levelRank, offeredForWish, styleTakingRefusal } from "./style-rule";
 import { PriceBookService } from "../price-book/price-book.service";
+import { videoRefunded } from "../wish-extras/wish-extras";
 import { VideoRenderer } from "../render-jobs/video-renderer";
 import { assessExtra, readWish, unsoldLines } from "../purchases/wish-rules";
 import { DEFAULT_KIND, DEFAULT_OCCASION, isBareStart, START_KEY } from "./wish-start";
@@ -225,8 +226,8 @@ export class WishesService {
     });
     const links = await this.linksFor(rows.map((r) => r.id));
     const shown = rows.slice(0, limit).map((r) => r.id);
-    const [pics, videos] = await Promise.all([this.pictures.forWishes(shown), this.pictures.videoStates(shown)]);
     const book = await this.entitlements.row();
+    const [pics, videos] = await Promise.all([this.pictures.forWishes(shown), this.pictures.videoStates(shown, (id) => videoRefunded(this.prisma, book, rows.find((r) => r.id === id) as Wish))]);
     // the list carries `publish` as the detail does (where the owner's ask to be shown stands; null when none was made)
     const publishes = await this.showing.showing.publishStateOf(shown);
     const one = (r: Wish): Obj => ({ ...this.wire(r, links.get(r.id)), pictures: pics.get(r.id) ?? [], video: videos.get(r.id) ?? "none", styleLevel: allowedLevel(book, r.ticket, r.adds), publish: publishes.get(r.id) ?? null });
@@ -240,8 +241,8 @@ export class WishesService {
     // QQ3: where the owner's asks to be shown stand (the last one, its decline reason, whether it is listed).
     const publish = (await this.showing.showing.publishStateOf([row.id])).get(row.id) ?? null;
     const pictures = (await this.pictures.forWishes([row.id])).get(row.id) ?? [];
-    const video = (await this.pictures.videoStates([row.id])).get(row.id) ?? "none";
     const book = await this.entitlements.row();
+    const video = (await this.pictures.videoStates([row.id], () => videoRefunded(this.prisma, book, row))).get(row.id) ?? "none";
     const styleLevel = allowedLevel(book, row.ticket, (await heldAdds(this.prisma, row.id, row.adds)).adds);
     const allowedStyles = await this.allowedStyles(styleLevel, row.kind, row.occasion);
     // ID1: the ticket payment of this wish that waits to be paid (which ticket, its reference, when it lapses), null when none waits

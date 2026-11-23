@@ -1,4 +1,5 @@
 import { Injectable } from "@nestjs/common";
+import type { Prisma } from "@prisma/client";
 import { PrismaService } from "../../common/db/prisma.service";
 import type { StaffRole } from "../../common/auth/principal";
 import type { RoleAccess } from "../../contracts";
@@ -8,18 +9,19 @@ import type { RoleAccess } from "../../contracts";
 export class RoleAccessService {
   constructor(private readonly db: PrismaService) {}
 
-  async all(): Promise<RoleAccess[]> {
-    const rows = await this.db.roleAccess.findMany();
+  /** `db` is the caller's open transaction when it has one: a read inside a transaction must not ask the pool for a second connection (a crowd of them holding every connection while they wait on one row lock would starve it). */
+  async all(db: Prisma.TransactionClient | PrismaService = this.db): Promise<RoleAccess[]> {
+    const rows = await db.roleAccess.findMany();
     return rows
       .filter((r) => typeof r.role === "string")
       .map((r) => ({ role: r.role, sections: Array.isArray(r.sections) ? r.sections.filter((s) => typeof s === "string") : [] }));
   }
 
   /** True when one of these roles opens the section. The owner opens every section. */
-  async opens(roles: readonly StaffRole[], section: string): Promise<boolean> {
+  async opens(roles: readonly StaffRole[], section: string, db: Prisma.TransactionClient | PrismaService = this.db): Promise<boolean> {
     if (roles.includes("owner")) return true;
     if (roles.length === 0) return false;
-    const table = await this.all();
+    const table = await this.all(db);
     return table.some((r) => roles.includes(r.role as StaffRole) && r.sections.includes(section));
   }
 

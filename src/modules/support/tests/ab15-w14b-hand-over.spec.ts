@@ -85,4 +85,24 @@ describe("API-BASE-15 W14B: the support hand-over", () => {
     expect(res.filter((r) => r.status === 200)).toHaveLength(1);
     expect(res.filter((r) => r.status === 409)).toHaveLength(19);
   }, 120_000);
+
+  // CI run 437: a hand-over that lost the race once answered 503 (P2024): each held a pool connection while it waited on the thread row,
+  // and its role check asked the pool for another. The role check now reads inside the transaction, so every loser answers in words.
+  it("30 rounds of 20 hand-overs at once from the same read: every round is one 200 and nineteen 409 thread_changed_hands", async () => {
+    const a = await staff("support");
+    const b = await staff("support");
+    const c = await staff("support");
+    const th = await thread(b.id); // one thread, handed back to b each round, so the shared open-thread count moves once
+    for (let round = 0; round < 30; round++) {
+      await db.supportThread.update({ where: { id: th }, data: { assigneeId: b.id } });
+      const res = await Promise.all(Array.from({ length: 20 }, () => give(a.token, th, { assigneeId: c.id, expectedAssignee: b.id })));
+      expect(res.filter((r) => r.status === 200)).toHaveLength(1);
+      const lost = res.filter((r) => r.status !== 200);
+      expect(lost).toHaveLength(19);
+      for (const r of lost) {
+        expect(r.status).toBe(409);
+        expect(r.body.error.code).toBe("thread_changed_hands");
+      }
+    }
+  }, 300_000);
 });

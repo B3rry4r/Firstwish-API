@@ -368,6 +368,7 @@ export class WishesService {
     if (styleIn) chosen.style = true;
     const answered = Object.keys(chosen).length > 0;
     const id = this.ids.id();
+    const book = styleIn ? await this.entitlements.row() : null; // read before the transaction: a pool connection is never held while waiting for another
     const out = await this.prisma.$transaction(async (tx) => {
       await lockAccount(tx, accountId);
       const remember = async (wishId: string): Promise<void> => {
@@ -393,7 +394,7 @@ export class WishesService {
       const styleSlug = styleIn ? await this.styleSlug(tx, styleIn) : await this.defaultStyle(tx);
       // IJ2: a style named at the start is judged like one named later (a new wish has no ticket yet: kind and switch only)
       const styleTakenLevel = styleIn
-        ? await this.checkStyleTaking(tx, await this.entitlements.row(), { kind, ticket: null, adds: [] }, styleSlug)
+        ? await this.checkStyleTaking(tx, book as EntitlementsRow, { kind, ticket: null, adds: [] }, styleSlug)
         : await tx.style.findUnique({ where: { slug: styleSlug }, select: { level: true } }).then((r) => (isLevel(r?.level) ? r.level : "starter"));
       const content: Obj = { cover: { from } };
       if (studio) content.studio = studio;

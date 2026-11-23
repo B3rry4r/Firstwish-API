@@ -35,7 +35,9 @@ export class StylesController {
   /** E-196 */
   @Public()
   @Get(":id")
-  one(@Param() p: GetStylesByIdParamsDto): Promise<StyleOut> {
-    return this.styles.publicOne(p.id);
+  async one(@Param() p: GetStylesByIdParamsDto, @Res({ passthrough: true }) res: Response): Promise<StyleOut> {
+    const style = await this.styles.publicOne(p.id);
+    res.setHeader("Cache-Control", "public, max-age=0, must-revalidate"); // as the other public reads (E-198): revalidated every time, 304 while nothing moved
+    return style;
   }
 }

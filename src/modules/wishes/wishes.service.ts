@@ -30,7 +30,7 @@ import { WishPictures } from "./wish-pictures";
 import { approvedSubmissionOf } from "../styles/approved-document";
 import { kindHasOccasion, LAST_STEP } from "./kind-occasions";
 import { isLevel } from "../styles/style-view";
-import { allowedLevel, firstStyleFor, heldAdds, REFUND_WORDS, levelRank, offeredForKind, styleTakingRefusal } from "./style-rule";
+import { allowedLevel, firstStyleFor, heldAdds, REFUND_WORDS, levelRank, offeredForWish, styleTakingRefusal } from "./style-rule";
 import { PriceBookService } from "../price-book/price-book.service";
 import { assessExtra, readWish } from "../purchases/wish-rules";
 import { DEFAULT_KIND, DEFAULT_OCCASION, isBareStart, START_KEY } from "./wish-start";
@@ -152,7 +152,7 @@ export class WishesService {
   async createBusinessDraftIn(tx: Tx, a: { accountId: string; businessId: string; kind: string; occasion: string; name: string }): Promise<string> {
     const kind = this.slugOf(a.kind, "kind");
     const occasion = this.slugOf(a.occasion, "occasion");
-    const style = await this.pickStyle(tx, await this.entitlements.row(tx), kind, "signature");
+    const style = await this.pickStyle(tx, await this.entitlements.row(tx), kind, "signature", occasion);
     const biz = await tx.business.findUnique({ where: { id: a.businessId }, select: { name: true, business: true } });
     const from = (biz?.name ?? biz?.business ?? "").trim();
     const id = this.ids.id();
@@ -174,7 +174,7 @@ export class WishesService {
     const kind = this.slugOf(a.kind, "kind");
     const occasion = this.slugOf(a.occasion, "occasion");
     if (!kindHasOccasion(kind, occasion)) throw AppError.validation({ occasion: `The ${kind} kind has no occasion called ${occasion}.` });
-    const style = await this.pickStyle(tx, await this.entitlements.row(tx), kind, "signature");
+    const style = await this.pickStyle(tx, await this.entitlements.row(tx), kind, "signature", occasion);
     const id = this.ids.id();
     await tx.wish.create({
       data: {
@@ -240,7 +240,7 @@ export class WishesService {
     const video = (await this.pictures.videoStates([row.id])).get(row.id) ?? "none";
     const book = await this.entitlements.row();
     const styleLevel = allowedLevel(book, row.ticket, (await heldAdds(this.prisma, row.id, row.adds)).adds);
-    const allowedStyles = await this.allowedStyles(styleLevel, row.kind);
+    const allowedStyles = await this.allowedStyles(styleLevel, row.kind, row.occasion);
     // ID1: the ticket payment of this wish that waits to be paid (which ticket, its reference, when it lapses), null when none waits
     const waiting = !viaOrder ? await waitingTicketPayment(this.prisma, accountId, row.id, this.clock.now()) : null;
     const extrasOpen = viaOrder ? {} : await this.extrasOpenFor(row.id, book);
@@ -262,9 +262,9 @@ export class WishesService {
   }
 
   /** HQ5, IJ4: the slugs of the styles a save would accept: on, offered for the wish's kind, and at a level a ticket taking up to `level` may use (any level when no ticket is chosen yet). */
-  private async allowedStyles(level: ReturnType<typeof allowedLevel>, kind: string): Promise<string[]> {
-    const rows = await this.prisma.style.findMany({ where: { on: true }, select: { slug: true, level: true, kinds: true }, orderBy: { slug: "asc" } });
-    return rows.filter((r) => !!r.slug && offeredForKind(r.kinds, kind) && (level === null || levelRank(isLevel(r.level) ? r.level : "starter") <= levelRank(level))).map((r) => r.slug as string);
+  private async allowedStyles(level: ReturnType<typeof allowedLevel>, kind: string, occasion: string | null): Promise<string[]> {
+    const rows = await this.prisma.style.findMany({ where: { on: true }, select: { slug: true, level: true, kinds: true, occasions: true }, orderBy: { slug: "asc" } });
+    return rows.filter((r) => !!r.slug && offeredForWish(r.kinds, r.occasions, kind, occasion) && (level === null || levelRank(isLevel(r.level) ? r.level : "starter") <= levelRank(level))).map((r) => r.slug as string);
   }
 
   async link(accountId: string, id: string): Promise<{ link: string; slug: string }> {
@@ -327,9 +327,14 @@ export class WishesService {
     const slug = raw.trim().toLowerCase();
     // A draft saved again with its own current style is accepted even after that style went off: only a CHANGE to an off style is refused.
     if (current !== undefined && slug === current) return slug;
-    const found = slug ? await db.style.findUnique({ where: { slug }, select: { id: true, on: true } }) : null;
+    const found = slug ? await db.style.findUnique({ where: { slug }, select: { id: true, on: true, name: true } }) : null;
     // SA5: only a style that is on can be picked (a held, returned or withdrawn Studio style is off); a wish already made keeps its own.
-    if (!found || found.on !== true) throw AppError.validation({ style: "That style is not offered." });
+    if (!found) throw AppError.validation({ style: "That style is not offered." });
+    // IJ2: a style that is off is refused in the style rule's own words, a house style and a creator's alike
+    if (found.on !== true) {
+      const said = styleTakingRefusal(null, null, "", { name: found.name, level: null, kinds: null, on: found.on }, { checkKind: false }) as string;
+      throw AppError.validation({ style: said });
+    }
     return slug;
   }
 
@@ -391,9 +396,9 @@ export class WishesService {
       }
       // IJ2: a style named at the start is judged like one named later (a new wish has no ticket yet: kind and switch only)
       // IJ4: with none named the server picks one that is on, offered for the kind and at the starter level; a kind with none starts with no style
-      const picked = styleIn ? null : await this.pickStyle(tx, book, kind, null);
+      const picked = styleIn ? null : await this.pickStyle(tx, book, kind, null, occasion);
       const styleSlug = styleIn ? await this.styleSlug(tx, styleIn) : (picked as { slug: string }).slug;
-      const styleTakenLevel = styleIn ? await this.checkStyleTaking(tx, book, { kind, ticket: null, adds: [] }, styleSlug) : (picked as { level: string | null }).level;
+      const styleTakenLevel = styleIn ? await this.checkStyleTaking(tx, book, { kind, occasion, ticket: null, adds: [] }, styleSlug) : (picked as { level: string | null }).level;
       const content: Obj = { cover: { from } };
       if (studio) content.studio = studio;
       const row = await tx.wish.create({
@@ -413,11 +418,11 @@ export class WishesService {
    * offered for the wish's kind and allowed by its ticket (the starter level where there is no ticket yet). A kind with no such style gets slug "" and no
    * level: the wish starts with no style, and sealing it is refused until a style is chosen (the maker's style step is required).
    */
-  private async pickStyle(db: Tx, book: EntitlementsRow, kind: string, ticket: string | null): Promise<{ slug: string; level: string | null }> {
-    const rows = await db.style.findMany({ where: { on: true }, orderBy: [{ house: { sort: "desc", nulls: "last" } }, { id: "asc" }], select: { slug: true, level: true, kinds: true } });
+  private async pickStyle(db: Tx, book: EntitlementsRow, kind: string, ticket: string | null, occasion?: string | null): Promise<{ slug: string; level: string | null }> {
+    const rows = await db.style.findMany({ where: { on: true }, orderBy: [{ house: { sort: "desc", nulls: "last" } }, { id: "asc" }], select: { slug: true, level: true, kinds: true, occasions: true } });
     if (rows.length === 0) throw AppError.conflict("no_style", "No style is on, so a wish cannot be started.");
     const allowed = ticket ? allowedLevel(book, ticket, []) : "starter";
-    const hit = firstStyleFor(rows, kind, allowed);
+    const hit = firstStyleFor(rows, kind, allowed, occasion);
     return hit?.slug ? { slug: hit.slug, level: isLevel(hit.level) ? hit.level : "starter" } : { slug: "", level: null };
   }
 
@@ -426,12 +431,12 @@ export class WishesService {
    * 422 on `style`, with words. Returns the style's level, which the wish keeps (`styleTakenLevel`). A wish made on an order is a Signature wish (IE1).
    * At the seal (`atSeal`) only the level is judged, by the level the wish took the style at: the style's kind and switch were judged when it took it.
    */
-  private async checkStyleTaking(db: Tx | PrismaService, book: EntitlementsRow, w: { id?: string; kind: string; ticket: string | null; adds: unknown; styleTakenLevel?: string | null }, slug: string, atSeal = false, keepsOff = false): Promise<string> {
+  private async checkStyleTaking(db: Tx | PrismaService, book: EntitlementsRow, w: { id?: string; kind: string; occasion?: string | null; ticket: string | null; adds: unknown; styleTakenLevel?: string | null }, slug: string, atSeal = false, keepsOff = false): Promise<string> {
     const held = await heldAdds(db, w.id, w.adds); // IJ3a
     const allowed = allowedLevel(book, w.ticket, held.adds);
-    const style = await db.style.findUnique({ where: { slug }, select: { name: true, level: true, kinds: true, on: true } });
+    const style = await db.style.findUnique({ where: { slug }, select: { name: true, level: true, kinds: true, occasions: true, on: true } });
     if (!style) return "starter";
-    const words = styleTakingRefusal(allowed, w.ticket, w.kind, style, atSeal ? { level: w.styleTakenLevel, checkOn: false, checkKind: false } : keepsOff ? { level: w.styleTakenLevel, checkOn: false } : {});
+    const words = styleTakingRefusal(allowed, w.ticket, w.kind, style, atSeal ? { level: w.styleTakenLevel, checkOn: false, checkKind: false } : keepsOff ? { level: w.styleTakenLevel, checkOn: false, occasion: w.occasion } : { occasion: w.occasion });
     if (words) {
       const said = held.refunding ? `${words} ${REFUND_WORDS}` : words;
       throw AppError.validation({ style: said }, said);
@@ -555,17 +560,20 @@ export class WishesService {
         data.styleSlug = await this.styleSlug(tx, input.style, cur.styleSlug);
         // HQ5: once a ticket is chosen, a style above what it allows is refused with words
         if (data.styleSlug !== cur.styleSlug) {
-          data.styleTakenLevel = await this.checkStyleTaking(tx, book, { id, kind: kind ?? cur.kind, ticket: cur.ticket, adds: cur.adds }, data.styleSlug);
+          data.styleTakenLevel = await this.checkStyleTaking(tx, book, { id, kind: kind ?? cur.kind, occasion: occasion ?? cur.occasion, ticket: cur.ticket, adds: cur.adds }, data.styleSlug);
           data.styleSubmissionId = await approvedSubmissionOf(tx, data.styleSlug); // II3: a new style is taken at its current approved version
         }
       }
-      // IJ4: a new kind with a style held: the style must be offered for the new kind, or be replaced in the same save (a held style that went off may stay)
-      if (kind !== undefined && kind !== cur.kind && cur.styleSlug && (data.styleSlug === undefined || data.styleSlug === cur.styleSlug)) {
+      // IJ4, IJ4a: a new kind or a new occasion with a style held: the style must be offered for the wish as it will stand, or be replaced in the same save (a held style that went off may stay)
+      const kindMoved = kind !== undefined && kind !== cur.kind;
+      const occasionMoved = occasion !== undefined && occasion !== cur.occasion;
+      if ((kindMoved || occasionMoved) && cur.styleSlug && (data.styleSlug === undefined || data.styleSlug === cur.styleSlug)) {
+        const to = { kind: kind ?? cur.kind, occasion: occasion ?? cur.occasion };
         try {
-          await this.checkStyleTaking(tx, book, { id, kind, ticket: cur.ticket, adds: cur.adds, styleTakenLevel: cur.styleTakenLevel }, cur.styleSlug, false, true);
+          await this.checkStyleTaking(tx, book, { id, ...to, ticket: cur.ticket, adds: cur.adds, styleTakenLevel: cur.styleTakenLevel }, cur.styleSlug, false, true);
         } catch (e) {
           if (e instanceof AppError && e.getStatus() === 422) {
-            const words = `${e.message} Send a style made for the ${kind} kind in the same save.`;
+            const words = `${e.message} Send a style made for the ${kindMoved ? `${to.kind} kind` : `${to.occasion} occasion`} in the same save.`;
             throw AppError.validation({ style: words }, words);
           }
           throw e;

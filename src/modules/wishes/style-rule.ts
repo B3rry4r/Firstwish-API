@@ -41,7 +41,27 @@ export function offeredForKind(styleKinds: unknown, kind: string): boolean {
   return [kind, ...(BORROWS[kind] ?? [])].some((k) => list.includes(k));
 }
 
-export interface StyleFacts { name: string | null; level: string | null; kinds: unknown; on: boolean | null }
+/**
+ * IJ4a: true when a style is offered for a wish: made for the wish's kind (offeredForKind) AND, where the style names occasions for that kind (or a kind it
+ * borrows), made for the wish's occasion. A style that names no occasion for the kind is made for every occasion of it; a wish with no occasion yet is
+ * offered only those. The one rule behind the server's pick, the save, the ticket and `allowedStyles`, and the one the public styles list answers by.
+ */
+export function offeredForWish(styleKinds: unknown, styleOccasions: unknown, kind: string, occasion: string | null | undefined): boolean {
+  if (!offeredForKind(styleKinds, kind)) return false;
+  const list = (Array.isArray(styleKinds) ? styleKinds : []).filter((k): k is string => typeof k === "string");
+  const named = occasionLimits(styleOccasions);
+  const mine = [kind, ...(BORROWS[kind] ?? [])].filter((k) => list.includes(k));
+  if (list.length === 0 || mine.length === 0) return true;
+  return mine.some((k) => { const only = named[k]; return !only || only.length === 0 || (!!occasion && only.includes(occasion)); });
+}
+
+function occasionLimits(v: unknown): Record<string, string[]> {
+  const out: Record<string, string[]> = {};
+  if (v && typeof v === "object" && !Array.isArray(v)) for (const [k, list] of Object.entries(v)) out[k] = (Array.isArray(list) ? list : []).filter((o): o is string => typeof o === "string");
+  return out;
+}
+
+export interface StyleFacts { name: string | null; level: string | null; kinds: unknown; on: boolean | null; occasions?: unknown }
 
 /**
  * IJ2: why a wish may not take this style, in words, or null. The style must be on (unless `keepsOff`: a draft saved again with the style it already has),
@@ -53,11 +73,16 @@ export function styleTakingRefusal(
   ticket: string | null,
   kind: string,
   style: StyleFacts,
-  o: { level?: string | null; checkOn?: boolean; checkKind?: boolean } = {},
+  o: { level?: string | null; checkOn?: boolean; checkKind?: boolean; occasion?: string | null } = {},
 ): string | null {
   const name = style.name || "This style";
   if (o.checkOn !== false && style.on !== true) return `${name} is switched off. Choose another style.`;
   if (o.checkKind !== false && !offeredForKind(style.kinds, kind)) return `${name} is not made for the ${kind} kind. Choose a style made for it.`;
+  if (o.checkKind !== false && !offeredForWish(style.kinds, style.occasions, kind, o.occasion)) {
+    return o.occasion
+      ? `${name} is not made for the ${o.occasion} occasion of the ${kind} kind. Choose a style made for it.`
+      : `${name} is made for chosen occasions only, and this wish has no occasion yet. Choose an occasion first, or another style.`;
+  }
   return styleRefusal(allowed, ticket, { name: style.name, level: o.level ?? style.level });
 }
 
@@ -65,8 +90,8 @@ export function styleTakingRefusal(
  * IJ4: the style the server picks for a wish it starts: the first of `rows` (already in the house-first order) that is on, offered for the kind and at a
  * level `allowed` takes (null: any level). undefined when no style fits: the wish then starts with no style and sealing it is refused until one is chosen.
  */
-export function firstStyleFor<T extends { slug: string | null; level: string | null; kinds: unknown; on?: boolean | null }>(rows: readonly T[], kind: string, allowed: Level | null): T | undefined {
-  return rows.find((r) => !!r.slug && r.on !== false && offeredForKind(r.kinds, kind) && (allowed === null || levelRank(isLevel(r.level) ? r.level : "starter") <= levelRank(allowed)));
+export function firstStyleFor<T extends { slug: string | null; level: string | null; kinds: unknown; on?: boolean | null; occasions?: unknown }>(rows: readonly T[], kind: string, allowed: Level | null, occasion?: string | null): T | undefined {
+  return rows.find((r) => !!r.slug && r.on !== false && offeredForWish(r.kinds, r.occasions, kind, occasion) && (allowed === null || levelRank(isLevel(r.level) ? r.level : "starter") <= levelRank(allowed)));
 }
 
 export const REFUND_WORDS = "A refund for the premium-style extra is on its way, so the extra no longer counts.";

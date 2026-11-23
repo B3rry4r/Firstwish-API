@@ -1191,3 +1191,9 @@ HG1 (give race) Two staff giving one Concierge order: the code is right (overlap
   whose refund has been sent no longer counts as held, from the moment the refund is sent: while that refund is
   open the wish cannot take a style that needs the extra (refused in words that say a refund for it is on its
   way), so nobody ends with the premium style and the money back.
+- IJ4a (23 Nov, the lead, on what the harness task found; Default (lead), owner may override): a style is "offered
+  for a wish" by its kind AND, where the style names occasions for that kind, by the wish's occasion (the same
+  rule the public styles list already answers by). The server's own pick, the save, the seal, the ticket start and
+  `allowedStyles` all use that one rule. A wish with no occasion yet is offered only styles that name no occasion
+  for its kind; an occasion change with a style held is re-checked like a kind change. (Seen: the server picked
+  Quiet, an apology-only style, for a love birthday wish; the maker then rightly kept Continue off.)

@@ -13,6 +13,10 @@ alone passes 10 of 10. Its notes: /tmp/claude-0/-home-user/533566a9-6497-503f-86
     pair beside the one suspect.
  2. Fix the kind: a spec that changes a shared row runs in its own database (ownDatabase) or makes its own rows
     with unique names; do it for every spec you find doing the same, and list each.
+ 2b. A second fault of the same family (the lead's full run, 24 Nov, machine load 7 to 8): src/modules/render-jobs/tests/r3-render-token.spec.ts
+    test 1 ("mint") passed its 20 s limit once in the full suite; alone it takes 10 s for the whole file. Find what
+    it waits on (the queue's tick, a poll) and make the wait not depend on the machine's speed (wait on the
+    event, not on time); raise no limit unless you show the work itself needs it.
  3. No expectation loosened, no retry, no skip; no src change outside tests and test/kit.
 Checks (quiet logs, EXIT lines): typecheck, the WHOLE `npm run lint`, scripts/gates.sh; the failing command 10 times: 0
 failed; do NOT run the full suite (the lead's merge check runs it; if your session refuses a command, do not retry

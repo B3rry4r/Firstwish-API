@@ -19,6 +19,8 @@ export const REJECT_SCORE = 0.9;
 export const REVIEW_SCORE = 0.5;
 /** Case 8: image widths made after confirm. */
 export const IMAGE_WIDTHS = [320, 768, 1600] as const;
+/** The key of one sized copy of a stored image. */
+export const sizedKeyOf = (objectKey: string, width: number) => `${objectKey}.w${width}`;
 /** The contract's longest voice note (E-182: up to 180 s). */
 export const MAX_VOICE_SECONDS = 180;
 

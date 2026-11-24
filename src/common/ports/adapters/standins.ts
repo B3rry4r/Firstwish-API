@@ -297,6 +297,13 @@ export class StandinStorage extends StoragePort {
     return Promise.resolve(o ? o.bytes.subarray(0, bytes) : null);
   }
 
+  readObject(key: string, maxBytes: number): Promise<Buffer | null> {
+    const o = this.objects.get(key);
+    if (!o) return Promise.resolve(null);
+    if (o.bytes.length > maxBytes) return Promise.reject(new Error(`The stored file is larger than the ${maxBytes} bytes this read allows.`));
+    return Promise.resolve(Buffer.from(o.bytes));
+  }
+
   delete(key: string): Promise<void> {
     this.remove(key);
     return Promise.resolve();
@@ -316,6 +323,10 @@ export class StandinImageSizes extends ImageSizesPort {
   resize(input: ResizeInput): Promise<void> {
     this.made.push(input);
     return Promise.resolve();
+  }
+  /** FB4: a stand-in calls nothing. */
+  ping(): Promise<PortPing> {
+    return Promise.resolve(PING_STAND_IN);
   }
 }
 

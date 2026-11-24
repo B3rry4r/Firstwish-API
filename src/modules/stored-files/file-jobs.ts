@@ -3,7 +3,8 @@ import { Prisma } from "@prisma/client";
 import { PrismaService } from "../../common/db/prisma.service";
 import { Clock } from "../../common/ports/clock.port";
 import { StoragePort } from "../../common/ports/storage.port";
-import { IMAGE_WIDTHS, isImage, STAGING_PREFIX, stagingKeyOf, UNCONFIRMED_MAX_AGE_MS, Variant, variantsOf } from "./file-rules";
+import { MAX_SOURCE_BYTES } from "../../common/ports/image-sizes.port";
+import { IMAGE_WIDTHS, isImage, sizedKeyOf, STAGING_PREFIX, stagingKeyOf, UNCONFIRMED_MAX_AGE_MS, Variant, variantsOf } from "./file-rules";
 import { IdGenerator } from "../../common/ports/ids.port";
 import { playableFileIds } from "../styles/approved-document";
 import { readLimits } from "../price-book/book-limits";
@@ -301,7 +302,9 @@ export class FileJobs {
 
   /** The objects first (safe to repeat), then every row that names the file and the file's own row. */
   private async dropFile(f: { id: string; objectKey: string; variants: Prisma.JsonValue }): Promise<void> {
-    for (const key of [f.objectKey, stagingKeyOf(f.objectKey), ...variantsOf(f as Parameters<typeof variantsOf>[0]).map((v) => v.key)]) await this.storage.delete(key);
+    // every sized key the rules can name (all IMAGE_WIDTHS), not only those the row lists: a sizing job may have written one it has not saved yet
+    const keys = [f.objectKey, stagingKeyOf(f.objectKey), ...new Set([...variantsOf(f as Parameters<typeof variantsOf>[0]).map((v) => v.key), ...IMAGE_WIDTHS.map((w) => sizedKeyOf(f.objectKey, w))])];
+    for (const key of keys) await this.storage.delete(key);
     await this.db.$transaction(async (tx) => {
       const id = f.id;
       await tx.aiRequest.updateMany({ where: { inputFileId: id }, data: { inputFileId: null } });
@@ -315,6 +318,8 @@ export class FileJobs {
       await tx.uploadTicket.deleteMany({ where: { id } });
       await tx.storedFile.deleteMany({ where: { id } });
     });
+    // a sizing job that wrote a copy after the first pass and before the row went finds the row on its own re-check, or this pass removes the copy
+    for (const key of keys) await this.storage.delete(key);
   }
 
   /**
@@ -349,13 +354,26 @@ export class FileJobs {
     if (!file || !isImage(file.contentType)) return { made: 0 };
     const have = new Set(variantsOf(file).map((v) => v.width));
     const variants: Variant[] = variantsOf(file);
+    const written: string[] = [];
+    // The file may be erased while this runs: what was written is then removed (the erase removes every key the rules name, too).
+    const gone = async (): Promise<boolean> => {
+      if (await this.db.storedFile.findUnique({ where: { id: file.id }, select: { id: true } })) return false;
+      for (const k of written) await this.storage.delete(k);
+      return true;
+    };
+    let source: Buffer | undefined; // read once for all the widths
     for (const width of IMAGE_WIDTHS) {
       if (have.has(width)) continue;
-      const key = `${file.objectKey}.w${width}`;
-      await this.sizes.resize({ sourceKey: file.objectKey, targetKey: key, width, contentType: file.contentType });
+      const key = sizedKeyOf(file.objectKey, width);
+      source ??= (await this.storage.readObject(file.objectKey, MAX_SOURCE_BYTES)) ?? undefined;
+      if (!source) throw new Error("The picture to size is not in storage.");
+      written.push(key);
+      await this.sizes.resize({ sourceKey: file.objectKey, targetKey: key, width, contentType: file.contentType, source });
+      if (await gone()) return { made: 0 };
       variants.push({ width, key });
     }
-    await this.db.storedFile.update({ where: { id: file.id }, data: { variants: variants.map((v) => ({ width: v.width, key: v.key })) } });
+    const saved = await this.db.storedFile.updateMany({ where: { id: file.id }, data: { variants: variants.map((v) => ({ width: v.width, key: v.key })) } });
+    if (saved.count === 0 && (await gone())) return { made: 0 };
     return { made: variants.length - have.size };
   }
 }

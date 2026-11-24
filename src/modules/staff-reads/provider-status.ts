@@ -4,6 +4,7 @@ import { ENV } from "../../common/env/env.module";
 import { AiWritingPort } from "../../common/ports/ai.port";
 import { Clock } from "../../common/ports/clock.port";
 import { EmailPort } from "../../common/ports/email.port";
+import { ImageSizesPort } from "../../common/ports/image-sizes.port";
 import { PaymentsPort } from "../../common/ports/payments.port";
 import { PayoutProviderPort } from "../../common/ports/payout-provider.port";
 import { type PortPing, pingError } from "../../common/ports/ping";
@@ -15,14 +16,15 @@ import { VideoRenderer } from "../render-jobs/video-renderer";
 /** How long a ping answer stands before the provider is asked again (FB4). */
 export const PING_CACHE_MS = 60_000;
 
-type PortName = "payments" | "refunds" | "payouts" | "email" | "storage" | "ai" | "screening" | "video";
-const LABEL: Record<PortName, string> = { payments: "Payments", refunds: "Refunds", payouts: "Payouts", email: "Email", storage: "Storage", ai: "AI", screening: "Screening", video: "Video" };
+type PortName = "payments" | "refunds" | "payouts" | "email" | "storage" | "ai" | "screening" | "video" | "imageSizes";
+const LABEL: Record<PortName, string> = { payments: "Payments", refunds: "Refunds", payouts: "Payouts", email: "Email", storage: "Storage", ai: "AI", screening: "Screening", video: "Video", imageSizes: "Image sizing" };
 /** The ports behind each line of the staff Providers read: Paystack is three ports (take money, refund, pay out), the rest one each. */
 const PORTS_OF: Record<string, PortName[]> = {
   payments: ["payments", "refunds", "payouts"],
   email: ["email"],
   ai: ["ai"],
-  storage: ["storage"],
+  // X22: image sizing is part of the Storage line (it reads and writes the same bucket); a sizing that cannot run reads as not connected
+  storage: ["storage", "imageSizes"],
   screening: ["screening"],
   video: ["video"],
 };
@@ -53,10 +55,11 @@ export class ProviderStatus {
     private readonly ai: AiWritingPort,
     private readonly screening: UploadScreeningPort,
     private readonly video: VideoRenderer,
+    private readonly imageSizes: ImageSizesPort,
   ) {}
 
   private port(name: PortName): { ping(): Promise<PortPing> } {
-    return { payments: this.payments, refunds: this.refunds, payouts: this.payouts, email: this.email, storage: this.storage, ai: this.ai, screening: this.screening, video: this.video }[name];
+    return { payments: this.payments, refunds: this.refunds, payouts: this.payouts, email: this.email, storage: this.storage, ai: this.ai, screening: this.screening, video: this.video, imageSizes: this.imageSizes }[name];
   }
 
   private ping(name: PortName): Promise<PortPing> {

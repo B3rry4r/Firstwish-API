@@ -14,6 +14,10 @@ export interface Env {
   STANDIN_SCREENING?: string;
   /** IK3: `fail` makes the stand-in video renderer fail every job; tests and verifier stacks only. */
   STANDIN_VIDEO?: string;
+  /** IK7: a file the stand-in video renderer appends each render's token to (mode 0600); test stacks only. */
+  STANDIN_RENDER_TOKENS?: string;
+  /** IK7: the most seconds STANDIN_VIDEO=hold waits; test stacks only. */
+  RENDER_STANDIN_HOLD_SECONDS: number;
   INTERNAL_TOKEN: string;
   DATABASE_URL: string;
   REDIS_URL: string;
@@ -188,9 +192,13 @@ export function loadEnv(raw: Record<string, string | undefined> = process.env): 
   if (video !== undefined) {
     if (providers !== "standin" || out.NODE_ENV === "production") {
       problems.push({ name: "STANDIN_VIDEO", problem: "refused: it drives the stand-in video renderer only (needs PROVIDERS=standin and a NODE_ENV other than production)" });
-    } else if (video !== "fail") {
-      problems.push({ name: "STANDIN_VIDEO", problem: "must be fail (every video job then fails) or left out" });
+    } else if (video !== "fail" && video !== "hold") {
+      problems.push({ name: "STANDIN_VIDEO", problem: "must be fail (every video job then fails), hold (a job waits until its token is read) or left out" });
     }
+  }
+  // IK7: the stand-in renderer's token file hands out a render token, so it is never allowed where real people pay: not with live providers, not in production.
+  if (get("STANDIN_RENDER_TOKENS") !== undefined && (providers !== "standin" || out.NODE_ENV === "production")) {
+    problems.push({ name: "STANDIN_RENDER_TOKENS", problem: "refused: it is for the stand-in video renderer only (needs PROVIDERS=standin and a NODE_ENV other than production)" });
   }
   if (problems.length) throw new EnvError(problems);
   return out as unknown as Env;

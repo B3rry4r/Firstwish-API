@@ -6,6 +6,7 @@ import { StoredFilesModule } from "../stored-files/stored-files.module";
 import { RenderJobsController } from "./render-jobs.controller";
 import { RenderJobsService } from "./render-jobs.service";
 import { ENV } from "../../common/env/env.module";
+import { PrismaService } from "../../common/db/prisma.service";
 import { RenderTokens } from "./render-token";
 import { VideoRenderer, videoRendererFor } from "./video-renderer";
 
@@ -13,7 +14,7 @@ import { VideoRenderer, videoRendererFor } from "./video-renderer";
 @Module({
   imports: [JobsModule, PriceBookModule, ServerFilesModule, StoredFilesModule],
   controllers: [RenderJobsController],
-  providers: [RenderJobsService, RenderTokens, { provide: VideoRenderer, inject: [ENV], useFactory: videoRendererFor }],
+  providers: [RenderJobsService, RenderTokens, { provide: VideoRenderer, inject: [ENV, PrismaService], useFactory: videoRendererFor }],
   exports: [RenderJobsService, VideoRenderer, RenderTokens],
 })
 export class RenderJobsModule {}

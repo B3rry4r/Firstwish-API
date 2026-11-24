@@ -1051,19 +1051,23 @@ model Refund {
 
 /// table: written by E-148 and server:video-render
 model RenderJob {
-  id           String          @id @db.Uuid
-  wishId       String          @db.Uuid
-  kind         RenderJobKind
-  status       RenderJobStatus
-  outputFileId String?         @db.Uuid
-  width        Int
-  height       Int
-  seconds      Int
-  deliveredVia String?
-  createdAt    DateTime        @default(now()) @db.Timestamptz(3)
-  updatedAt    DateTime        @updatedAt @db.Timestamptz(3)
-  wish         Wish            @relation("RenderJob_wishId", fields: [wishId], references: [id])
-  outputFile   StoredFile?     @relation("RenderJob_outputFileId", fields: [outputFileId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  id             String          @id @db.Uuid
+  wishId         String          @db.Uuid
+  kind           RenderJobKind
+  status         RenderJobStatus
+  outputFileId   String?         @db.Uuid
+  width          Int
+  height         Int
+  seconds        Int
+  deliveredVia   String?
+  /// R3: the HMAC of the one-use render token minted when the job's run starts (never the token); null when none is live
+  tokenHash      String?         @unique
+  tokenExpiresAt DateTime?       @db.Timestamptz(3)
+  tokenUsedAt    DateTime?       @db.Timestamptz(3)
+  createdAt      DateTime        @default(now()) @db.Timestamptz(3)
+  updatedAt      DateTime        @updatedAt @db.Timestamptz(3)
+  wish           Wish            @relation("RenderJob_wishId", fields: [wishId], references: [id])
+  outputFile     StoredFile?     @relation("RenderJob_outputFileId", fields: [outputFileId], references: [id], onDelete: Restrict, onUpdate: Restrict)
 
   @@index([wishId, id])
   @@index([outputFileId, id])

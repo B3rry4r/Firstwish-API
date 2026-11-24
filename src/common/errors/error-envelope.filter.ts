@@ -53,7 +53,7 @@ export class ErrorEnvelopeFilter implements ExceptionFilter {
     const { status, body } = this.toEnvelope(exception, req, requestId);
     if (status >= 500) {
       const err = exception instanceof Error ? exception : new Error(String(exception));
-      this.log.error(`${req.method} ${req.originalUrl} ${status} requestId=${requestId}: ${err.message}`, err.stack);
+      this.log.error(`${req.method} ${req.originalUrl.replace(/^(\/v1\/render\/)[^/?#]*/, "$1:token")} ${status} requestId=${requestId}: ${err.message}`, err.stack);
     }
     if (res.headersSent) return;
     res.setHeader("x-request-id", requestId);

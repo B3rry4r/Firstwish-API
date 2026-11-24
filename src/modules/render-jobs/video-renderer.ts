@@ -16,6 +16,8 @@ export interface RenderRequest {
   width: number;
   height: number;
   seconds: number;
+  /** R3: the one-use token the render page reads the wish with (GET /v1/render/:token/wish). Held in memory by the renderer; never logged, stored or queued in the clear. */
+  token?: string;
 }
 
 /** R1: the renderer's result is a FILE on disk (a minute of 1080 x 1920 video is tens of MB; it is never held whole in memory). The job streams it to the file store and removes it. */

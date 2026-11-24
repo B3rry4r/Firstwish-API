@@ -4399,6 +4399,26 @@
       "confidence": "high",
       "decidedAt": "2026-11-23T22:00:00Z",
       "source": "build/prompts/API-BASE-21.md; build/rulings-phase3.md IL1a"
+    },
+    {
+      "id": "DEC-326",
+      "topic": "The render page reads its wish with a one-use token (R3, IK6, IK4a)",
+      "decision": "IK6, IK4a (R3): when a render job's run starts the server makes a token (32 random bytes, base64url), bound to that job and its wish, kept only as an HMAC on the job's row (render_job.tokenHash, tokenExpiresAt, tokenUsedAt; migration 20261210090000_render_token_r3), good RENDER_TOKEN_TTL_SECONDS (900) and for ONE read; no route mints one, and the token is held in memory by the renderer (RenderRequest.token), never in a job payload, a log line, an audit row or a notice. GET /v1/render/:token/wish (E-289, public, no session, Cache-Control no-store, the link's read limit per address) answers {kind, seconds, width, height, wish, style}: wish is the public link's view as a receiver gets it after a right unlock (state open, opening null, content without code, answer or hash, signed addresses of the files that passed screening, valid for the render's limit plus ten minutes), style is the player's {style, items, document} (the approved Studio document of the version the wish holds). A passcode or question wish gives its content here (IK6); the secret and its hash never appear. The second read of a token is 410, an expired or ended job's token 410 or 404, an unknown or malformed token 404 with the same words; a wish that is erased, taken down, not sealed, of an erased account (a business wish stays), not delivered by Concierge, or whose portrait-video extra was refunded (IK4a) is 404 with nothing returned. The read starts no term, counts no open, notifies no sender and marks nothing opened. Only this route and its types are added to the registry (the types RenderWish and GetRenderByTokenWish* are hand-kept, as StyleFiles is).",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "decidedAt": "2026-11-24T10:00:00Z",
+      "source": "build/prompts/R3.md; build/rulings-phase3.md IK4a, IK6; build/tasks/RENDERER-PLAN.md section 3"
+    },
+    {
+      "id": "DEC-327",
+      "topic": "The registry is frozen again after DEC-326",
+      "decision": "The registry is re-frozen after DEC-326 by tools/pipeline/freeze.py; reconcile.py was run twice with --reopen (identical outputs; .pipeline/ui-align-tasks.json restored byte for byte). Endpoint id issued: E-289 (GET /v1/render/:token/wish); no id already issued is changed; no resource and no field is added.",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "decidedAt": "2026-11-24T10:00:00Z",
+      "source": "build/prompts/R3.md; build/rulings-phase3.md IK4a, IK6; build/tasks/RENDERER-PLAN.md section 3"
     }
   ]
 }

@@ -78,7 +78,8 @@ describe("API-BASE-5 staff and money (through the real routes)", () => {
       const paid = await mk("succeeded", `ab5-s-${run}`);
       const sent = await mk("succeeded", `ab5-r-${run}`);
       await db.refund.create({ data: { id: t.id(), paymentId: sent, amountKobo: 500000n, status: "sent", reason: "staff_decision", requestedBy: (await staffOf(t, "finance")).id, createdAt: t.clock.now() } as never });
-      const ids = async (state: string) => ((await t.http().get(`/v1/admin/payments?limit=50&state=${state}`).set(bearer(finance.token))).body.items as { ref?: string; reference?: string; id?: string }[]).map((i) => i.reference ?? i.ref);
+      // the list is every payment in the database, newest first: q names this payer's own address (the route finds the payer's rows by it), so the page holds this spec's three rows and no other spec's
+      const ids = async (state: string) => ((await t.http().get(`/v1/admin/payments?limit=50&q=${encodeURIComponent(payer.email)}&state=${state}`).set(bearer(finance.token))).body.items as { ref?: string; reference?: string; id?: string }[]).map((i) => i.reference ?? i.ref);
       expect(await ids("failed")).toContain(`ab5-f-${run}`);
       expect(await ids("failed")).not.toContain(`ab5-s-${run}`);
       expect(await ids("succeeded")).toContain(`ab5-s-${run}`);

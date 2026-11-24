@@ -194,14 +194,15 @@ describe("HY2 to HY4, HZ1, HZ2: staff search, the hand-over list, the order's pa
     const owner = await staff(["owner"]);
     const finance = await staff(["maker", "finance"]);
     const maker = await staff(["maker"]);
-    const buyer = await person(word("buyer"));
+    const buyerName = word("buyer");
+    const buyer = await person(buyerName);
     const paid = await paidOrder(buyer.id, buyer.auth, maker.id);
     const unpaid = (await http().post("/v1/concierge-orders").set("Authorization", buyer.auth).send({ brief: word("brief"), count: 1, kind: "single", rush: false })).body.id as string;
     for (const who of [ops, owner]) {
       const one = await http().get(`/v1/admin/concierge/orders/${paid.id}`).set("Authorization", who.auth);
       expect(one.status).toBe(200);
       expect(one.body).toMatchObject({ paymentId: paid.payId, paymentReference: paid.reference });
-      const row = ((await orders(who.auth, "limit=50")).body.items as { id: string }[]).find((o) => o.id === paid.id);
+      const row = ((await orders(who.auth, `limit=50&q=${encodeURIComponent(buyerName)}`)).body.items as { id: string }[]).find((o) => o.id === paid.id);
       expect(row).toMatchObject({ paymentId: paid.payId, paymentReference: paid.reference });
       // the unpaid order has the fields, empty
       expect((await http().get(`/v1/admin/concierge/orders/${unpaid}`).set("Authorization", who.auth)).body).toMatchObject({ paymentId: null, paymentReference: null });

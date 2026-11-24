@@ -390,7 +390,7 @@ describe("support (contract)", () => {
       expect(list.status).toBe(200);
       expect(list.body.items.length).toBeGreaterThan(0);
       expect(items(list).every((x) => x.status === "waiting")).toBe(true);
-      const mine = items(await t.http().get("/v1/admin/support/threads?limit=50").set(bearer(supportStaff.token))).find((x) => x.id === th)!;
+      const mine = items(await t.http().get(`/v1/admin/support/threads?limit=50&q=${encodeURIComponent(a.email)}`).set(bearer(supportStaff.token))).find((x) => x.id === th)!;
       expect(mine.contact).toBe(`${a.email[0]}***${a.email.slice(a.email.indexOf("@"))}`);
       expect(mine.email).toBe(mine.contact);
       expect(mine.last).toBe("Hello.");

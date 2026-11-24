@@ -22,9 +22,9 @@ import { RenderTokens } from "./render-token";
 import { RENDER_TEMP_PREFIX, VideoRenderer, type RenderKind } from "./video-renderer";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-/** Default (lead), owner may override: the portrait video is 1080 x 1920; a status video runs 30 seconds, the file of a resting wish 60. */
+/** Default (lead), owner may override: the portrait video is 1080 x 1920; a status video runs 60 seconds (IK6a), the file of a resting wish 60. */
 export const SPEC: Record<RenderKind, { width: number; height: number; seconds: number }> = {
-  "status-video": { width: 1080, height: 1920, seconds: 30 },
+  "status-video": { width: 1080, height: 1920, seconds: 60 },
   "keepsake-export": { width: 1080, height: 1920, seconds: 60 },
 };
 /**

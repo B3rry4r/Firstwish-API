@@ -97,7 +97,7 @@ describe("R1 cases 1 to 4: the video port gives a file, takes an abort, has its 
   const row = (id: string) => k.db.renderJob.findUniqueOrThrow({ where: { id } });
 
   it("1. the result is a file on disk with its size; the job streams a 40 MB file to the store without holding it, and removes the temp file after a success and after a failure", async () => {
-    const direct = await renderer.render({ wishId: ids.next(), kind: "status-video", width: 1080, height: 1920, seconds: 30 });
+    const direct = await renderer.render({ wishId: ids.next(), kind: "status-video", width: 1080, height: 1920, seconds: 60 });
     expect(Buffer.isBuffer((direct as unknown as { bytes: unknown }).bytes)).toBe(false);
     expect(direct).toMatchObject({ contentType: "video/mp4" });
     expect((await stat(direct.path)).size).toBe(direct.bytes);
@@ -375,7 +375,7 @@ describe("R1 case 5: the render env is named and optional; the production bindin
     expect(r).toBeInstanceOf(NoVideoRenderer);
     expect(r.configured()).toBe(false);
     expect((await r.ping()).state).toBe("error");
-    await expect(r.render({ wishId: ids.next(), kind: "status-video", width: 1080, height: 1920, seconds: 30 })).rejects.toThrow(/no video renderer is configured/);
+    await expect(r.render({ wishId: ids.next(), kind: "status-video", width: 1080, height: 1920, seconds: 60 })).rejects.toThrow(/no video renderer is configured/);
   });
 
   describe("PROVIDERS=live binds it: nothing is sold that includes the portrait video (IK3, IK3a), and an ask is 503", () => {

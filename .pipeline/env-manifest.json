@@ -346,6 +346,13 @@
       "refusesStartInProduction": "no"
     },
     {
+      "name": "STANDIN_RENDER_HOLD_FILE",
+      "introducedBy": "r3c",
+      "purpose": "IK7a: with STANDIN_VIDEO=hold, a render holds only if this file exists when the render starts; test stacks only, refused with PROVIDERS=live or NODE_ENV=production",
+      "secret": false,
+      "refusesStartInProduction": "no"
+    },
+    {
       "name": "RENDER_STANDIN_HOLD_SECONDS",
       "introducedBy": "r3b",
       "purpose": "IK7: the most seconds the stand-in video renderer waits with STANDIN_VIDEO=hold; test stacks only",

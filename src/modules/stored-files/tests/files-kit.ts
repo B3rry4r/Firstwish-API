@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import type { WishStatus, WishTicket } from "@prisma/client";
 import { PrismaService } from "../../../common/db/prisma.service";
 import { UuidV7Maker } from "../../../common/ids/uuidv7";
@@ -72,9 +73,23 @@ export async function ensureEntitlements(db: PrismaService): Promise<void> {
     creator: {},
     pro: { starter: { wishes: 10, logins: 1, vaultGb: 100 }, studio: { wishes: 35, logins: 3, vaultGb: 500 }, pack: { wishes: 5, vaultGb: 20, days: 90 } },
   };
-  const existing = await db.entitlements.findFirst();
-  if (!existing) await db.entitlements.create({ data: { id: "019a8000-0000-7000-8000-00000000b009", ...data } }).catch(() => undefined);
+  // The row's id is the one scripts/seed.mjs gives it (seedId("entitlements:1")), and an existing row is never touched: a spec that runs the seed
+  // beside this one upserts the SAME row. With an id of its own there were two rows, and the services' findFirst could read this poorer one
+  // (no extras, no "takes"), so a ticket start answered 409 in the clip specs.
+  await db.entitlements.upsert({ where: { id: ENTITLEMENTS_SEED_ID }, create: { id: ENTITLEMENTS_SEED_ID, ...data }, update: {} });
 }
+
+/** scripts/seed.mjs seedId("entitlements:1"): the same hash, so the kit and the seed name one row. */
+const ENTITLEMENTS_SEED_ID = ((): string => {
+  const h = createHash("sha256").update("firstwish-seed:entitlements:1").digest();
+  const b = Buffer.alloc(16);
+  b.writeUIntBE(Date.UTC(2026, 10, 15), 0, 6);
+  h.copy(b, 6, 0, 10);
+  b[6] = 0x70 | (b[6] & 0x0f);
+  b[8] = 0x80 | (b[8] & 0x3f);
+  const x = b.toString("hex");
+  return `${x.slice(0, 8)}-${x.slice(8, 12)}-${x.slice(12, 16)}-${x.slice(16, 20)}-${x.slice(20)}`;
+})();
 
 export async function makeAccount(db: PrismaService, t: TestApp, sides: ("person" | "creator" | "business")[] = ["person"]): Promise<{ id: string; token: string }> {
   const id = ids.next();

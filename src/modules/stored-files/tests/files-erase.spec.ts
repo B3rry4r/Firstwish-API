@@ -1,5 +1,6 @@
 import { PrismaService } from "../../../common/db/prisma.service";
 import type { TestApp } from "../../../../test/kit/app";
+import { ownDatabase } from "../../../../test/kit/own-db";
 import { AccountErasureService } from "../../accounts/account-erasure.service";
 import { SavedWishesService } from "../../saved-wishes/saved-wishes.service";
 import { FileJobs } from "../file-jobs";
@@ -8,10 +9,16 @@ import { filesApp, ids, makeAccount, makeBusiness, makeWish, PNG } from "./files
 describe("X10 and BB6: erasing an account removes its files and its wishes' saves", () => {
   let t: TestApp;
   let db: PrismaService;
+  // cleanupUnconfirmed sweeps every unconfirmed upload ticket of the database, so another spec's open ticket in a shared database changes its count: this spec has its own
+  const own = ownDatabase("erase");
   beforeAll(async () => {
+    own.use();
     ({ t, db } = await filesApp());
   });
-  afterAll(() => t.close());
+  afterAll(async () => {
+    await t.close();
+    own.drop();
+  });
   const actor = { type: "staff" as const, id: null, requestId: "test-join2" };
 
   /** A confirmed (ready) file with an object and one image size, both in the stand-in storage. */

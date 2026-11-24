@@ -55,12 +55,18 @@ describe("R3: the render token and GET /v1/render/:token/wish", () => {
   /** Starts a render and holds it mid-render (as a real one is while its page reads the wish): answers its token, the job id and a way to finish it. */
   async function rendering(wishId: string, auth: string) {
     let release: () => void = () => undefined;
-    renderer.hold = new Promise<void>((r) => (release = r));
+    const gate = new Promise<void>((r) => (release = r));
+    // The renderer awaits its hold once its file is written. A thenable tells us the moment it is awaited, so the spec goes on at that event
+    // (the render is running, its token minted and stored, and it has taken THIS hold before the next call sets another), not after a guessed time.
+    let reached: () => void = () => undefined;
+    const holding = new Promise<void>((r) => (reached = r));
+    renderer.hold = { then: (ok: () => void, no: (e: unknown) => void) => { reached(); return gate.then(ok, no); } } as unknown as Promise<void>;
     open.push(() => release());
     const before = renderer.rendered.length;
     const job = (await ask(auth, wishId).expect(200)).body.item as { id: string };
     const done = svc.run(job.id);
-    for (let i = 0; i < 200 && renderer.rendered.length === before; i++) await new Promise((r) => setTimeout(r, 25));
+    // go on when the render holds, or when the run ended without one (then it never will)
+    await Promise.race([holding, done.then(() => undefined)]);
     const req = renderer.rendered[before];
     if (!req?.token) throw new Error("the render did not start");
     return { jobId: job.id, token: req.token, finish: async () => { release(); return done; } };

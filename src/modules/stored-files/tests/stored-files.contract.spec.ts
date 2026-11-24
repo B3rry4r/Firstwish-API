@@ -10,9 +10,14 @@ import { verdictOf } from "../screening.service";
 import { stagingKeyOf } from "../file-rules";
 import { filesApp, GB, ids, JPEG, makeAccount, makeBusiness, makeWish, MB, PNG, ScoredScreening, stage, SVG, WEBM } from "./files-kit";
 import { holdSettingLockForFile } from "../../../../test/kit/setting-lock";
+import { ownDatabase } from "../../../../test/kit/own-db";
 
 // the book's limits are shared by every spec in the run's database: hold the setting lock for the file
 holdSettingLockForFile();
+// cleanupUnconfirmed sweeps every open upload ticket of the database by this spec's own clock, so in a shared database it also removes another spec's open ticket: both describes here use a database of their own
+const own = ownDatabase("sfc");
+beforeAll(() => own.use());
+afterAll(() => own.drop());
 
 describe("storage adapters (case 1: one port, two adapters)", () => {
   it("switching STORAGE_DRIVER between r2 and spaces changes only the signed host", async () => {

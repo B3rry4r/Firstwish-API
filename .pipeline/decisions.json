@@ -4419,6 +4419,31 @@
       "confidence": "high",
       "decidedAt": "2026-11-24T10:00:00Z",
       "source": "build/prompts/R3.md; build/rulings-phase3.md IK4a, IK6; build/tasks/RENDERER-PLAN.md section 3"
+    },
+    {
+      "id": "DEC-328",
+      "topic": "Photos given to others are clean, each photo view carries its sizes, HEIC is not taken, the render status limit is 60 seconds, Wish.limits is in the registry (IM1, IM1a, IM2, IK6a, IL1a)",
+      "decision": "IM1, IM1a, IM2 (round 23): the owner's wish read (Wish.pictures, E-220 family), the public link's view (PublicWishView.files) and the render read (E-289, its wish.files) give each photo `variants`: three entries, one each for w320, w768 and w1600, each {width, variant, url, expiresAt, sized}; sized false means the size job has not made that size (or failed) and url is the clean full-size copy: never nothing, never an untouched original (none is kept, IM1a). Additive: url and expiresAt are unchanged. A picture of a kind the server cannot open that was stored before is shown refused with words, never a broken picture. POST /v1/uploads (E-182): contentType image/heic and image/heif are refused 422 with the words \"HEIC pictures are not taken. Send a JPEG or PNG.\" and the same at confirm for a file that says JPEG but is HEIC inside; the kinds taken are JPEG, PNG, WebP and GIF. videoRender.statusMaxSeconds is 60 (IK6a; replaces the provisional 30 of DEC-56; .pipeline/declared/video-render.json). Wish.limits (IL1a, DEC-323, DEC-324) is typed in the registry: {photos, voices, clips: {count, seconds[]}}, sent on the owner's single and list reads only.",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "decidedAt": "2026-11-24T12:00:00Z",
+      "source": "build/prompts/API-BASE-23.md, API-BASE-23B.md; build/rulings-phase3.md IM1, IM1a, IM2, IK6a, IL1a",
+      "fieldTypes": {
+        "Wish.pictures": "shape array<{fileId: string, role: enum(photo|cover), status: enum(ready|screening|refused), url: string | null, expiresAt: time | null, variants?: array<{width: number, variant: string, url: string, expiresAt: time, sized: boolean}>}>",
+        "PublicWishView.files": "array<{role: string, url: string, fileId?: string, expiresAt?: time, variants?: array<{width: number, variant: string, url: string, expiresAt: time, sized: boolean}>}>",
+        "Wish.limits": "shape {photos: number, voices: number, clips: {count: number, seconds: array<number>}}"
+      }
+    },
+    {
+      "id": "DEC-329",
+      "topic": "The registry is frozen again after DEC-328",
+      "decision": "The registry is re-frozen after DEC-328 by tools/pipeline/freeze.py; reconcile.py was run twice with --reopen (identical outputs). No endpoint id is issued or changed. Wish.pictures, PublicWishView.files and the render read's wish.files gain variants; Wish.limits is typed; POST /v1/uploads contentType says the kinds taken.",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "decidedAt": "2026-11-24T12:00:00Z",
+      "source": "build/prompts/API-BASE-23B.md"
     }
   ]
 }

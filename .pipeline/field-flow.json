@@ -18922,6 +18922,16 @@
       "noWriter": true
     },
     {
+      "field": "Wish.limits",
+      "writers": [],
+      "store": "Wish",
+      "readers": [],
+      "writerActors": [],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": true
+    },
+    {
       "field": "Wish.link",
       "writers": [],
       "store": "Wish",
@@ -20998,5 +21008,5 @@
     }
   ],
   "crossActor": 34,
-  "noWriter": 692
+  "noWriter": 693
 }

@@ -2373,19 +2373,27 @@
         "note": "{version, items, promotion, lifecycle, entitlements, payout, nextCursor} (DEC-161, DEC-247)"
       }
     },
-    "POST /v1/uploads": {
-      "decision": "DEC-165",
-      "set": {
-        "purpose": "string (photo|voice|clip|vault|studio|brand|order-photo|order-voice; what the file is for, DEC-165; order-photo and order-voice are the buyer's files for a Concierge order, subjectId is the order's id, DEC-271)",
-        "kind": "image|sound|model|video (optional; the media kind, DEC-165)",
-        "fileName": "string (optional; the file's name, at most 200 characters; read only by the stand-in screening when STANDIN_SCREENING is set, kept nowhere else)"
+    "POST /v1/uploads": [
+      {
+        "decision": "DEC-165",
+        "set": {
+          "purpose": "string (photo|voice|clip|vault|studio|brand|order-photo|order-voice; what the file is for, DEC-165; order-photo and order-voice are the buyer's files for a Concierge order, subjectId is the order's id, DEC-271)",
+          "kind": "image|sound|model|video (optional; the media kind, DEC-165)",
+          "fileName": "string (optional; the file's name, at most 200 characters; read only by the stand-in screening when STANDIN_SCREENING is set, kept nowhere else)"
+        },
+        "response": {
+          "entity": "UploadTicket",
+          "cardinality": "single",
+          "note": "{id, purpose, upload: {url, method, headers, expiresAt}} (DEC-163)"
+        }
       },
-      "response": {
-        "entity": "UploadTicket",
-        "cardinality": "single",
-        "note": "{id, purpose, upload: {url, method, headers, expiresAt}} (DEC-163)"
+      {
+        "decision": "DEC-328",
+        "set": {
+          "contentType": "string (the picture kinds taken are image/jpeg, image/png, image/webp and image/gif; image/heic and image/heif are refused with 422 and the words \"HEIC pictures are not taken. Send a JPEG or PNG.\" (IM2))"
+        }
       }
-    },
+    ],
     "DELETE /v1/uploads/:id": {
       "decision": "DEC-163",
       "response": {
@@ -3304,7 +3312,7 @@
       "response": {
         "entity": "RenderJob",
         "cardinality": "single",
-        "note": "{kind, seconds, width, height, wish, style}: what the web's render page reads to play one wish with no gate: wish is the public link's view as a receiver gets it after a right unlock (state open, the opening passed, content without any secret, signed file addresses), style is {style, items, document} as the player's style read gives it (RenderWish, hand-kept); read once with the render's one-use token, no session (DEC-326)"
+        "note": "{kind, seconds, width, height, wish, style}: what the web's render page reads to play one wish with no gate: wish is the public link's view as a receiver gets it after a right unlock (state open, the opening passed, content without any secret, signed file addresses, each file with its variants w320, w768 and w1600 (DEC-328)), style is {style, items, document} as the player's style read gives it (RenderWish, hand-kept); read once with the render's one-use token, no session (DEC-326)"
       }
     }
   },
@@ -4064,6 +4072,13 @@
       "type": "time (ISO-8601; when downloadUrl stops working)",
       "nullable": true,
       "decision": "DEC-315"
+    },
+    {
+      "resource": "Wish",
+      "name": "limits",
+      "type": "shape {photos: number, voices: number, clips: {count: number, seconds: array<number>}} (IL1a: what the wish may hold, from the price book; the owner's single and list reads only)",
+      "nullable": true,
+      "decision": "DEC-328"
     }
   ],
   "dropFields": [

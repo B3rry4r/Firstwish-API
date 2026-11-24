@@ -80,7 +80,7 @@ export function useKit(now: Date = NOW) {
     };
     k.vaultFile = async (o, bytes = 1000, status = "ready", type = "image/jpeg") => {
       const id = ids.next();
-      await k.db.storedFile.create({ data: { id, ownerAccountId: o.accountId, businessId: o.businessId, purpose: "vault_file", objectKey: `vault-file/${id}/k`, contentType: type, bytes: BigInt(bytes), status, variants: [], driver: "r2" } });
+      await k.db.storedFile.create({ data: { cleanAt: new Date(), id, ownerAccountId: o.accountId, businessId: o.businessId, purpose: "vault_file", objectKey: `vault-file/${id}/k`, contentType: type, bytes: BigInt(bytes), status, variants: [], driver: "r2" } });
       return id;
     };
     k.shootWith = async (o, set = "proofs", n = 2) => {

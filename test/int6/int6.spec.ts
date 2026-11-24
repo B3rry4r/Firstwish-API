@@ -15,7 +15,7 @@ describe("INT-6 closing base", () => {
   it("GC2: deleting the voice file of an AI request clears the link; the request and its words stay", async () => {
     const a = await account(t, ["creator"]);
     const fileId = t.id();
-    await db.storedFile.create({ data: { id: fileId, purpose: "voice_note", objectKey: `int6/${fileId}`, contentType: "audio/mp4", bytes: 10n, status: "ready", variants: {}, driver: "r2" } });
+    await db.storedFile.create({ data: { cleanAt: new Date(), id: fileId, purpose: "voice_note", objectKey: `int6/${fileId}`, contentType: "audio/mp4", bytes: 10n, status: "ready", variants: {}, driver: "r2" } });
     const reqId = t.id();
     await db.aiRequest.create({ data: { id: reqId, accountId: a.accountId, kind: "letter_from_voice", creditsSpent: 0, status: "done", model: "m", voiceFileId: fileId, transcript: "words" } });
     await db.storedFile.delete({ where: { id: fileId } });

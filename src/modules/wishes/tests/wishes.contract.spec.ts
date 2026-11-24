@@ -69,7 +69,7 @@ describe("wishes E-221 E-222 E-224 E-225 E-229 E-231 (contract)", () => {
   async function file(accountId: string, status: "ready" | "pending" = "ready") {
     const id = nid();
     await db.storedFile.create({
-      data: { id, ownerAccountId: accountId, purpose: "wish_photo", objectKey: `k/${id}`, contentType: "image/jpeg", bytes: 10n, status, variants: {}, driver: "r2" },
+      data: { cleanAt: new Date(), id, ownerAccountId: accountId, purpose: "wish_photo", objectKey: `k/${id}`, contentType: "image/jpeg", bytes: 10n, status, variants: {}, driver: "r2" },
     });
     return id;
   }

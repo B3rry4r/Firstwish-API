@@ -54,7 +54,7 @@ describe("EA4 (wave 6 join): after an owner's erase a client wish's reveal is bl
     const shoot = await t.http().post("/v1/business/shoots").set(auth(token)).send({ client: `Zorbaquux${run} Ibeji`, date: "2027-07-20", title: "Wedding" });
     expect(shoot.status).toBe(201);
     const file = ids.next();
-    await db.storedFile.create({ data: { id: file, ownerAccountId: accountId, businessId, purpose: "vault_file", objectKey: `vault-file/${file}/k`, contentType: "image/jpeg", bytes: 1000n, status: "ready", variants: [], driver: "r2" } });
+    await db.storedFile.create({ data: { cleanAt: new Date(), id: file, ownerAccountId: accountId, businessId, purpose: "vault_file", objectKey: `vault-file/${file}/k`, contentType: "image/jpeg", bytes: 1000n, status: "ready", variants: [], driver: "r2" } });
     expect((await t.http().post(`/v1/business/shoots/${shoot.body.id}/files`).set(auth(token)).send({ files: [file], set: "proofs", shoot: shoot.body.id })).status).toBe(201);
     const cw = ids.next();
     await db.clientWish.create({ data: { id: cw, businessId, client: `Zorbaquux${run} Ibeji`, kind: "photographers", occasion: "wedding", day: new Date("2027-08-02T00:00:00Z"), no: testWishNo(), key: `k-${cw}`, wish: "", shoot: "", hearts: [], sentAt: NOW } });

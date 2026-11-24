@@ -40,7 +40,7 @@ describe("HC1 (join 6 patch): after an owner's erase, the Vault files a playing 
   async function file(b: { accountId: string; businessId: string }, bytes: Buffer): Promise<{ id: string; key: string }> {
     const id = ids.next();
     const key = `vault-file/${id}/k`;
-    await db.storedFile.create({ data: { id, ownerAccountId: b.accountId, businessId: b.businessId, purpose: "vault_file", objectKey: key, contentType: "image/jpeg", bytes: BigInt(bytes.length), status: "ready", variants: [], driver: "r2" } });
+    await db.storedFile.create({ data: { cleanAt: new Date(), id, ownerAccountId: b.accountId, businessId: b.businessId, purpose: "vault_file", objectKey: key, contentType: "image/jpeg", bytes: BigInt(bytes.length), status: "ready", variants: [], driver: "r2" } });
     await t.storage.putObject(key, bytes, "image/jpeg");
     return { id, key };
   }

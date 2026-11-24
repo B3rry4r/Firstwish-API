@@ -5,6 +5,10 @@ import { ENV } from "../../common/env/env.module";
 import { fileNameTag } from "../../common/env/env";
 import type { Env } from "../../common/env/env";
 import { AppError } from "../../common/errors/app-error";
+import { isCleanableMedia } from "../../common/ports/adapters/ffmpeg-media-clean.adapter";
+import { MediaToolUnavailable } from "../../common/ports/media-clean.port";
+import { UnopenablePicture } from "../../common/ports/image-sizes.port";
+import { isPortTimeout } from "../../common/ports/time-limit";
 import type { UserPrincipal } from "../../common/auth/principal";
 import { Clock } from "../../common/ports/clock.port";
 import { CodeGenerator, IdGenerator } from "../../common/ports/ids.port";
@@ -16,8 +20,11 @@ import type { DeleteUploadsByIdBody, PostUploadsBody, StoredFile, UploadTicket }
 import {
   fileView,
   GB,
+  HEIC_WORDS,
+  isHeicType,
   isImage,
   isUuid,
+  looksLikeHeic,
   looksLikeSvg,
   MAX_VOICE_SECONDS,
   maxBytesFor,
@@ -40,6 +47,7 @@ import { notInBusiness } from "../../common/auth/login-removed";
 import { businessAccessOf } from "./vault-access";
 import { namedBusiness } from "../people/business-of";
 import { ScreeningService } from "./screening.service";
+import { PhotoCleaner } from "./photo-cleaner";
 import { dropFileHearts } from "../vault/vault-shared";
 import { SHOWN_TO_BUYER } from "../wishes/wish-shown";
 import { checkOrderRoom, lockOwnOpenOrder } from "./order-files";
@@ -90,6 +98,7 @@ export class StoredFilesService {
     private readonly clock: Clock,
     @Inject(ENV) private readonly env: Env,
     private readonly clipLength: ClipLengthPort,
+    private readonly cleaner: PhotoCleaner,
   ) {}
 
 
@@ -191,7 +200,7 @@ export class StoredFilesService {
     if (!rule) throw AppError.validation({ purpose: "Must be one of photo, voice, clip, vault, studio, picture, poster, sound, model, profile or brand." });
     const contentType = normaliseType(body.contentType);
     if (!contentType || !rule.types.includes(contentType)) {
-      throw AppError.validation({ contentType: contentType === "image/svg+xml" ? "An SVG is not taken as a picture." : `Not a type taken for ${rule.purpose}.` });
+      throw AppError.validation({ contentType: contentType === "image/svg+xml" ? "An SVG is not taken as a picture." : isHeicType(contentType) ? HEIC_WORDS : `Not a type taken for ${rule.purpose}.` });
     }
     // X25: kind is the media kind (image, sound, model, video) and must agree with the type.
     if (body.kind !== undefined && body.kind !== mediaKindOf(contentType)) throw AppError.validation({ kind: "Does not match the type." });
@@ -383,9 +392,45 @@ export class StoredFilesService {
     const head = (await this.storage.readStart(objectKey, 64)) ?? Buffer.alloc(0);
     const type = typeFromBytes(head, row.contentType);
     if (!type) {
-      return this.refuse(id, objectKey, refused(looksLikeSvg(head) ? "An SVG is not taken as a picture." : "The file is not of the type asked."));
+      return this.refuse(id, objectKey, refused(looksLikeSvg(head) ? "An SVG is not taken as a picture." : row.contentType.startsWith("image/") && looksLikeHeic(head) ? HEIC_WORDS : "The file is not of the type asked."));
     }
-    const screened = await this.screening.screen({ objectKey, contentType: type }, obj.size, head);
+    // IM1: a picture is made clean here, before screening and before anything is counted: the copy without metadata REPLACES the original at its own
+    // key (no untouched original is kept), and its size and sha-256 are the file's from now on.
+    let size = obj.size;
+    let sha256: string | null = null;
+    let cleanAt: Date | null = null;
+    let seen = head;
+    if (isImage(type)) {
+      try {
+        const out = await this.cleaner.makeClean(objectKey, type);
+        if (!out.unchanged) size = out.bytes;
+        sha256 = out.sha256;
+        cleanAt = this.clock.now();
+        seen = (await this.storage.readStart(objectKey, 64)) ?? head;
+      } catch (e) {
+        if (!(e instanceof UnopenablePicture)) {
+          // M1: the server could not do it (time limit, storage, memory): not the uploader's fault. The upload is kept, unconfirmed, and can be confirmed again; the sweep reaps it if not.
+          await this.db.storedFile.updateMany({ where: { id, status: "uploaded" }, data: { status: "pending" } });
+          throw new AppError(HttpStatus.SERVICE_UNAVAILABLE, "picture_check_unavailable", "We could not check this picture just now. Nothing was lost. Try again in a moment.");
+        }
+        return this.refuse(id, objectKey, refused(e.message));
+      }
+    }
+    // IM3: a voice, a clip or a Studio sound is rewritten here with no location or device tags and no re-encoding; the clean file replaces the upload, and its size
+    // and sha-256 are the file's from now on. A file ffmpeg cannot rewrite is refused in words; with ffmpeg missing on the server nothing of these kinds is kept.
+    if (isCleanableMedia(type)) {
+      try {
+        const out = await this.cleaner.makeCleanMedia(objectKey, type);
+        if (!out.unchanged) size = out.bytes;
+        sha256 = out.sha256;
+        cleanAt = this.clock.now();
+        seen = (await this.storage.readStart(objectKey, 64)) ?? head;
+      } catch (e) {
+        if (e instanceof MediaToolUnavailable || isPortTimeout(e)) return this.refuse(id, objectKey, new AppError(HttpStatus.SERVICE_UNAVAILABLE, "media_tool_unavailable", "Voices, clips and videos cannot be taken right now. Nothing was kept. Try again later."));
+        return this.refuse(id, objectKey, refused(e instanceof Error ? e.message : "We could not rewrite this file. Send a different recording."));
+      }
+    }
+    const screened = await this.screening.screen({ objectKey, contentType: type }, size, seen);
     // IL1a: a clip's length is read from the stored file, never taken from the browser; a clip whose length cannot be read is refused and removed
     let clipMs: number | null = null;
     if (row.purpose === "video_clip" && screened.verdict !== "reject") {
@@ -437,8 +482,8 @@ export class StoredFilesService {
           const biz = await tx.business.findUniqueOrThrow({ where: { id: row.businessId } });
           const limit = await vaultLimitBytes(tx, biz, this.clock.now());
           const counted = await tx.$queryRaw<{ id: string; vault: bigint }[]>`
-            UPDATE business SET vault = COALESCE(vault, 0) + ${obj.size}, version = version + 1
-            WHERE id = ${row.businessId}::uuid AND COALESCE(vault, 0) + ${obj.size} <= ${limit}
+            UPDATE business SET vault = COALESCE(vault, 0) + ${size}, version = version + 1
+            WHERE id = ${row.businessId}::uuid AND COALESCE(vault, 0) + ${size} <= ${limit}
             RETURNING id, vault`;
           if (!counted.length) {
             await this.removeRows(tx, id);
@@ -451,7 +496,7 @@ export class StoredFilesService {
         }
         const ready = await tx.storedFile.update({
           where: { id },
-          data: { status: screened.verdict === "pass" ? "ready" : "screening", bytes: BigInt(obj.size), kind, ...(clipMs !== null ? { lengthMs: clipMs } : {}) },
+          data: { status: screened.verdict === "pass" ? "ready" : "screening", bytes: BigInt(size), kind, ...(clipMs !== null ? { lengthMs: clipMs } : {}), ...(cleanAt ? { cleanAt, sha256 } : {}) },
         });
         // HW2: a confirmed profile picture is the creator's picture from now on (the one before it is no longer attached)
         if (row.purpose === "profile_picture" && row.ownerAccountId) await tx.creator.updateMany({ where: { accountId: row.ownerAccountId }, data: { img: id } });

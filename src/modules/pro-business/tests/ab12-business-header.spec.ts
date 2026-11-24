@@ -203,7 +203,7 @@ describe("HR3: the people, payment and brand routes follow x-business-id", () =>
     const file = async (businessId: string, ownerAccountId: string) => {
       const id = ids.next();
       t.app.get<StandinStorage>(StoragePort).put(`files/${id}`, PNG(10), "image/png");
-      await db.storedFile.create({ data: { id, ownerAccountId, businessId, purpose: "brand_logo", objectKey: `files/${id}`, contentType: "image/png", bytes: BigInt(10), status: "ready", variants: [], driver: "r2" } as never });
+      await db.storedFile.create({ data: { cleanAt: new Date(), id, ownerAccountId, businessId, purpose: "brand_logo", objectKey: `files/${id}`, contentType: "image/png", bytes: BigInt(10), status: "ready", variants: [], driver: "r2" } as never });
       return id;
     };
     const patch = (token: string, header: string, brand: object) => t.http().patch("/v1/business").set(bearer(token)).set("x-business-id", header).send({ brand });

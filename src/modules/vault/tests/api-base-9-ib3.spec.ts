@@ -77,7 +77,7 @@ describe("API-BASE-9 case 6 (IB3): rename a shoot and a file", () => {
     expect((await k.patch(`/v1/business/vault-files/${s.files[0]}`, nobody.token, { name: "x.jpg" })).status).toBe(403);
     expect((await k.patch("/v1/business/vault-files/nope", o.token, { name: "x.jpg" })).status).toBe(404);
     const wishFile = k.ids.next();
-    await k.db.storedFile.create({ data: { id: wishFile, ownerAccountId: o.accountId, businessId: o.businessId, purpose: "brand_logo", objectKey: `b/${wishFile}`, contentType: "image/png", bytes: 10n, status: "ready", variants: [], driver: "r2" } });
+    await k.db.storedFile.create({ data: { cleanAt: new Date(), id: wishFile, ownerAccountId: o.accountId, businessId: o.businessId, purpose: "brand_logo", objectKey: `b/${wishFile}`, contentType: "image/png", bytes: 10n, status: "ready", variants: [], driver: "r2" } });
     expect((await k.patch(`/v1/business/vault-files/${wishFile}`, o.token, { name: "Logo.png" })).status).toBe(404);
     for (const name of ["", "   ", "a/b.jpg", "a\\b.jpg", "x".repeat(101), "bad\u0001name"]) expect((await k.patch(`/v1/business/vault-files/${s.files[0]}`, o.token, { name })).status).toBe(422);
     expect((await k.patch(`/v1/business/vault-files/${s.files[0]}`, o.token, {})).status).toBe(422);

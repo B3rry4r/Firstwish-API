@@ -5,6 +5,7 @@ import { AiWritingPort } from "../../common/ports/ai.port";
 import { Clock } from "../../common/ports/clock.port";
 import { EmailPort } from "../../common/ports/email.port";
 import { ImageSizesPort } from "../../common/ports/image-sizes.port";
+import { MediaCleanPort } from "../../common/ports/media-clean.port";
 import { PaymentsPort } from "../../common/ports/payments.port";
 import { PayoutProviderPort } from "../../common/ports/payout-provider.port";
 import { type PortPing, pingError } from "../../common/ports/ping";
@@ -16,15 +17,16 @@ import { VideoRenderer } from "../render-jobs/video-renderer";
 /** How long a ping answer stands before the provider is asked again (FB4). */
 export const PING_CACHE_MS = 60_000;
 
-type PortName = "payments" | "refunds" | "payouts" | "email" | "storage" | "ai" | "screening" | "video" | "imageSizes";
-const LABEL: Record<PortName, string> = { payments: "Payments", refunds: "Refunds", payouts: "Payouts", email: "Email", storage: "Storage", ai: "AI", screening: "Screening", video: "Video", imageSizes: "Image sizing" };
+type PortName = "payments" | "refunds" | "payouts" | "email" | "storage" | "ai" | "screening" | "video" | "imageSizes" | "mediaClean";
+const LABEL: Record<PortName, string> = { payments: "Payments", refunds: "Refunds", payouts: "Payouts", email: "Email", storage: "Storage", ai: "AI", screening: "Screening", video: "Video", imageSizes: "Image sizing", mediaClean: "Voice and video cleaning" };
 /** The ports behind each line of the staff Providers read: Paystack is three ports (take money, refund, pay out), the rest one each. */
 const PORTS_OF: Record<string, PortName[]> = {
   payments: ["payments", "refunds", "payouts"],
   email: ["email"],
   ai: ["ai"],
-  // X22: image sizing is part of the Storage line (it reads and writes the same bucket); a sizing that cannot run reads as not connected
-  storage: ["storage", "imageSizes"],
+  // X22: image sizing is part of the Storage line (it reads and writes the same bucket); a sizing that cannot run reads as not connected.
+  // IM3: so is the voice and video cleaner (ffmpeg and ffprobe): with either missing the line says so, and uploads of those kinds are refused in words
+  storage: ["storage", "imageSizes", "mediaClean"],
   screening: ["screening"],
   video: ["video"],
 };
@@ -56,10 +58,11 @@ export class ProviderStatus {
     private readonly screening: UploadScreeningPort,
     private readonly video: VideoRenderer,
     private readonly imageSizes: ImageSizesPort,
+    private readonly mediaClean?: MediaCleanPort,
   ) {}
 
-  private port(name: PortName): { ping(): Promise<PortPing> } {
-    return { payments: this.payments, refunds: this.refunds, payouts: this.payouts, email: this.email, storage: this.storage, ai: this.ai, screening: this.screening, video: this.video, imageSizes: this.imageSizes }[name];
+  private port(name: PortName): { ping(): Promise<PortPing> } | undefined {
+    return { payments: this.payments, refunds: this.refunds, payouts: this.payouts, email: this.email, storage: this.storage, ai: this.ai, screening: this.screening, video: this.video, imageSizes: this.imageSizes, mediaClean: this.mediaClean }[name];
   }
 
   private ping(name: PortName): Promise<PortPing> {
@@ -67,15 +70,15 @@ export class ProviderStatus {
     const hit = this.kept.get(name);
     if (hit && now - hit.at >= 0 && now - hit.at < PING_CACHE_MS) return hit.answer;
     const answer = Promise.resolve()
-      .then(() => this.port(name).ping())
+      .then(() => (this.port(name) as { ping(): Promise<PortPing> }).ping())
       .catch((e: unknown) => pingError(e));
     this.kept.set(name, { at: now, answer });
     return answer;
   }
 
   async state(key: string): Promise<ProviderState> {
-    const names = PORTS_OF[key];
-    if (!names) return { connected: false, line: "Not checked from here." };
+    const names = PORTS_OF[key]?.filter((n) => this.port(n));
+    if (!names?.length) return { connected: false, line: "Not checked from here." };
     // stand-ins answer for themselves and never leave the process: ask them too, so the read is the same in every mode
     const answers = await Promise.all(names.map(async (n) => ({ n, a: await this.ping(n) })));
     if (this.env.PROVIDERS !== "live" || answers.some((x) => x.a.state === "stand-in")) return { connected: false, line: "Running on stand-ins, so nothing real has been called." };

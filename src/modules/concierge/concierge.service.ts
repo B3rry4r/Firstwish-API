@@ -26,6 +26,7 @@ import { WishLifecycleService } from "../wishes/wish-lifecycle.service";
 import { canMove, dueAtFor, OPEN, stateOf, UUID } from "./order-state";
 import { orderFileLimits, orderFileRows, releaseOrderFiles, type OrderFileRow } from "../stored-files/order-files";
 import { SignedUrlsService } from "../stored-files/signed-urls.service";
+import { PHOTO_NOT_SHOWN_CODE } from "../stored-files/photo-cleaner";
 
 const SECTION = "/admin/concierge";
 const SKU = "concierge.single";
@@ -189,7 +190,7 @@ export class ConciergeService implements OnModuleInit {
     for (const r of rows) {
       const item: ConciergeOrderFile = { id: r.id, kind: r.kind, contentType: r.contentType, bytes: r.bytes, seconds: r.seconds, status: r.status as ConciergeOrderFile["status"], inWish: r.inWish, createdAt: toWireInstant(r.createdAt) };
       if (signedReads) {
-        const read = r.status === "ready" ? await this.signed.signedRead({ fileId: r.id }, { type: "allowed" }) : null;
+        const read = r.status === "ready" ? await this.signed.signedRead({ fileId: r.id }, { type: "allowed" }).catch((e: unknown) => { if (e instanceof AppError && e.code === PHOTO_NOT_SHOWN_CODE) return null; throw e; }) : null; // IM1: a picture the server cannot open has no address
         item.url = read?.url ?? null;
         item.expiresAt = read?.expiresAt ?? null;
       }

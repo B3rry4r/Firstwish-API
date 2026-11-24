@@ -7,6 +7,7 @@ import { decodeCursor, DEFAULT_LIMIT, toPage } from "../../common/pagination/cur
 import type { GetBusinessVaultFilesQuery, GetBusinessVaultFilesResponse, PatchBusinessVaultFilesByIdResponse } from "../../contracts";
 import { isUuid } from "../stored-files/file-rules";
 import { SignedUrlsService } from "../stored-files/signed-urls.service";
+import { PHOTO_NOT_SHOWN_CODE } from "../stored-files/photo-cleaner";
 import { notInBusiness } from "../../common/auth/login-removed";
 import { businessAccessOf } from "../stored-files/vault-access";
 import { dotsOnly, plainName } from "../vault/vault-shared";
@@ -51,7 +52,8 @@ export class VaultFilesService {
     const page = toPage(rows, limit, (r) => ({ key: r.id, id: r.id }));
     const items = [];
     for (const r of page.items) {
-      const read = await this.reads.signedRead({ fileId: r.id }, { type: "vault", accountId: p.accountId });
+      const read = await this.reads.signedRead({ fileId: r.id }, { type: "vault", accountId: p.accountId }).catch((e: unknown) => { if (e instanceof AppError && e.code === PHOTO_NOT_SHOWN_CODE) return null; throw e; });
+      if (!read) continue; // IM1: a login of the business is not given a picture the server cannot open
       items.push({ id: r.id, name: r.shownName || `vault-${r.id.slice(-12)}.${EXT[r.contentType] ?? "bin"}`, size: Number(r.bytes), url: read.url });
     }
     return { items, nextCursor: page.nextCursor };

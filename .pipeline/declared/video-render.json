@@ -148,11 +148,11 @@
     },
     {
       "key": "videoRender.statusMaxSeconds",
-      "value": 30,
+      "value": 60,
       "unit": "seconds",
-      "status": "PROVISIONAL",
+      "status": "RULED",
       "owner": "owner",
-      "why": "documents give no figure"
+      "why": "ruling IK6a: 60 seconds (DEC-328; replaces the provisional 30 of DEC-56)"
     }
   ],
   "truths": [

@@ -113,6 +113,7 @@ export class StorageServerFileWriter extends ServerFileWriter {
           driver: this.env.STORAGE_DRIVER ?? "r2",
           kind: input.kind,
           createdAt: this.clock.now(),
+          cleanAt: this.clock.now(), // IM1, IM3: the server made this file (a QR card, a render): it holds no one's location or device tags
         },
       });
     } catch (e) {

@@ -103,7 +103,7 @@ describe("INT-3: the global sweeps run by the jobs frame (a clock before every o
     const id = ids.next();
     const objectKey = `files/${id}`;
     await db.storedFile.create({
-      data: { id, ownerAccountId: me.id, purpose: "wish_photo", objectKey, contentType: "image/png", bytes: BigInt(10), status: "pending", variants: [], driver: "r2", createdAt: new Date(NOW.getTime() - 25 * 60 * MIN) },
+      data: { cleanAt: new Date(), id, ownerAccountId: me.id, purpose: "wish_photo", objectKey, contentType: "image/png", bytes: BigInt(10), status: "pending", variants: [], driver: "r2", createdAt: new Date(NOW.getTime() - 25 * 60 * MIN) },
     });
     await db.uploadTicket.create({ data: { id, bytes: BigInt(10), contentType: "image/png", purpose: "wish-photo" } });
     t.storage.put(objectKey, PNG(10), "image/png");
@@ -146,7 +146,7 @@ describe("INT-3: the jobs of one subject, and X10, J1, J2 and Y1 on the merged b
     t.storage.put(objectKey, PNG(100), "image/png");
     t.storage.put(sized, PNG(50), "image/png");
     await db.storedFile.create({
-      data: { id, ownerAccountId: accountId, businessId: businessId ?? null, purpose: "wish_photo", objectKey, contentType: "image/png", bytes: BigInt(100), status: "ready", variants: [{ width: 320, key: sized }], driver: "r2" },
+      data: { cleanAt: new Date(), id, ownerAccountId: accountId, businessId: businessId ?? null, purpose: "wish_photo", objectKey, contentType: "image/png", bytes: BigInt(100), status: "ready", variants: [{ width: 320, key: sized }], driver: "r2" },
     });
     return { id, keys: [objectKey, sized] };
   }

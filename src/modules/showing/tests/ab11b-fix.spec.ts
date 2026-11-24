@@ -46,7 +46,7 @@ describe("IF4a fixes: account erase and friends' voices, creator reads by accoun
     const id = t.id();
     const objectKey = `files/${id}`;
     t.storage.put(objectKey, Buffer.from("VOICE"), "audio/webm");
-    await db.storedFile.create({ data: { id, ownerAccountId: ownerId, purpose: "voice_note", objectKey, contentType: "audio/webm", bytes: BigInt(5), status: "ready", driver: "r2", variants: [] } as never });
+    await db.storedFile.create({ data: { cleanAt: new Date(), id, ownerAccountId: ownerId, purpose: "voice_note", objectKey, contentType: "audio/webm", bytes: BigInt(5), status: "ready", driver: "r2", variants: [] } as never });
     await db.uploadTicket.create({ data: { id, bytes: BigInt(5), contentType: "audio/webm", purpose: "voice-note" } });
     await db.voiceNote.create({ data: { id, wishId, seconds: 3 } });
     await db.wishGatherVoice.create({ data: { id, wishId, fromName: from } });

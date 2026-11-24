@@ -78,7 +78,7 @@ describe("API-BASE-6 small: HR4 day, HR5 import rows, brand logo read, failed re
     const other = await businessOwner(t);
     const file = async (businessId: string, status: "ready" | "pending", ownerAccountId: string) => {
       const id = t.id();
-      await t.db.storedFile.create({ data: { id, ownerAccountId, businessId, purpose: "brand_logo", objectKey: `brand_logo/${id}/x`, contentType: "image/png", bytes: 100n, status, variants: [], driver: "r2", fileId: id, kind: "image" } as never });
+      await t.db.storedFile.create({ data: { cleanAt: new Date(), id, ownerAccountId, businessId, purpose: "brand_logo", objectKey: `brand_logo/${id}/x`, contentType: "image/png", bytes: 100n, status, variants: [], driver: "r2", fileId: id, kind: "image" } as never });
       return id;
     };
     const mine = await file(o.businessId, "ready", o.accountId);
@@ -128,7 +128,7 @@ describe("API-BASE-6 small: HR4 day, HR5 import rows, brand logo read, failed re
     await t.db.wish.create({ data: { id: wishId, accountId: o.accountId, status: "draft", kind: "birthday", occasion: "birthday", styleSlug: "classic", timeZone: "Africa/Lagos", ticket: "keepsake" } as never });
     const photo = async (status: "rejected" | "ready" | "screening", labels: string[]) => {
       const id = t.id();
-      await t.db.storedFile.create({ data: { id, ownerAccountId: o.accountId, purpose: "wish_photo", objectKey: `wish_photo/${id}/x`, contentType: "image/jpeg", bytes: 100n, status, variants: [], driver: "r2", fileId: id, kind: "image" } as never });
+      await t.db.storedFile.create({ data: { cleanAt: new Date(), id, ownerAccountId: o.accountId, purpose: "wish_photo", objectKey: `wish_photo/${id}/x`, contentType: "image/jpeg", bytes: 100n, status, variants: [], driver: "r2", fileId: id, kind: "image" } as never });
       await t.db.wishFile.create({ data: { id: t.id(), wishId, fileId: id, role: "photo" } as never });
       if (labels.length) await t.db.screeningResult.create({ data: { id: t.id(), fileId: id, provider: "stand-in", verdict: "reject", labels } as never });
       return id;

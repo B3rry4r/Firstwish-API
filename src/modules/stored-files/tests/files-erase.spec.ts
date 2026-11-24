@@ -22,7 +22,7 @@ describe("X10 and BB6: erasing an account removes its files and its wishes' save
     t.storage.put(objectKey, PNG(100), "image/png");
     t.storage.put(sized, PNG(50), "image/png");
     await db.storedFile.create({
-      data: {
+      data: { cleanAt: new Date(),
         id, ownerAccountId: accountId, businessId: businessId ?? null, purpose: "wish_photo", objectKey, contentType: "image/png", bytes: BigInt(100),
         status: "ready", variants: [{ width: 320, key: sized }], driver: "r2",
       },

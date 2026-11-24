@@ -440,7 +440,7 @@ describe("case 4: submit", () => {
     // II5: a draft names only a ready file of its own style, so the file is made for the draft and then named
     const d = await draft(c);
     await db.storedFile.create({
-      data: { id: fileId, ownerAccountId: c.id, styleId: d.id, purpose: "studio_asset", objectKey: `k/${fileId}`, contentType: "image/png", bytes: 500 * 1024, status: "ready", variants: {}, driver: "r2", kind: "image" } as never,
+      data: { cleanAt: new Date(), id: fileId, ownerAccountId: c.id, styleId: d.id, purpose: "studio_asset", objectKey: `k/${fileId}`, contentType: "image/png", bytes: 500 * 1024, status: "ready", variants: {}, driver: "r2", kind: "image" } as never,
     });
     expect((await patch(c, `/studio/styles/${d.id}`, { style: { ...d, ...goodDoc({ art: [{ fileId }] }) } })).status).toBe(200);
     const r = await post(c, `/studio/styles/${d.id}/submissions`);

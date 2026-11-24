@@ -33,7 +33,7 @@ type Sender = Awaited<ReturnType<typeof sender>>;
 const post = (s: Sender, path: string, body: Body) => t.http().post(`/v1/ai/${path}`).set(s.h).send(body);
 const file = async (owner: string, purpose: "wish_photo" | "voice_note", status = "ready") => {
   const id = ids.next();
-  await db.storedFile.create({ data: { id, ownerAccountId: owner, purpose, status, contentType: "image/jpeg", bytes: 10n, objectKey: `k/${id}`, variants: [], driver: "r2" } as never });
+  await db.storedFile.create({ data: { cleanAt: new Date(), id, ownerAccountId: owner, purpose, status, contentType: "image/jpeg", bytes: 10n, objectKey: `k/${id}`, variants: [], driver: "r2" } as never });
   return id;
 };
 const letterJson = JSON.stringify({ paras: ["You made every year better.", "Thank you."] });

@@ -2,7 +2,7 @@ import { HttpStatus } from "@nestjs/common";
 import { AppError } from "../errors/app-error";
 
 /** The ports that call a provider over the network (FF1). The clock and the id and code generators call nothing and are not here. */
-export const LIMITED_PORTS = ["payments", "email", "storage", "ai", "google", "screening", "imageSizes", "clipLength"] as const;
+export const LIMITED_PORTS = ["payments", "email", "storage", "ai", "google", "screening", "imageSizes", "clipLength", "mediaClean"] as const;
 export type LimitedPort = (typeof LIMITED_PORTS)[number];
 
 /** The time limit of one call to each port, in milliseconds. Payments is 10 s (FF1). PORT_TIMEOUTS_MS changes any of them. */
@@ -15,6 +15,7 @@ export const DEFAULT_PORT_TIMEOUTS_MS: Readonly<Record<LimitedPort, number>> = {
   screening: 20_000,
   imageSizes: 60_000,
   clipLength: 30_000,
+  mediaClean: 150_000,
 };
 
 /** A call to a provider did not answer in time. Callers that can say what they know (a payment as it stands) catch this. */

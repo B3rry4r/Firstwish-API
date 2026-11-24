@@ -22,7 +22,7 @@ describe("business E-26 PATCH /v1/business (contract)", () => {
   const logoFor = async (accountId: string) => {
     const id = randomUUID();
     t.app.get<StandinStorage>(StoragePort).put(`files/${id}`, PNG(10), "image/png");
-    await t.db.storedFile.create({ data: { id, ownerAccountId: accountId, purpose: "brand_logo", objectKey: `files/${id}`, contentType: "image/png", bytes: BigInt(10), status: "ready", variants: [], driver: "r2" } as never });
+    await t.db.storedFile.create({ data: { cleanAt: new Date(), id, ownerAccountId: accountId, purpose: "brand_logo", objectKey: `files/${id}`, contentType: "image/png", bytes: BigInt(10), status: "ready", variants: [], driver: "r2" } as never });
     return id;
   };
 

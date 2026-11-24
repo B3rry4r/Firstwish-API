@@ -1263,7 +1263,8 @@ export interface Provider {
 export interface PublicWishView {
   content?: Record<string, unknown> | null;
   endsAt?: Instant | null;
-  files: unknown[];
+  /** IM1 (DEC-328): each file of a real wish with its sizes (variants: w320, w768, w1600); a sample wish's files carry the role and url only */
+  files: Array<{ role: string; url: string; fileId?: string; expiresAt?: Instant; variants?: PictureSize[] }>;
   house: boolean;
   /** HU2 (DEC-287): what a held link offers: the wish's id, the signed proof, and the keeps on offer with their price book prices; null for a house wish, a wish whose ticket cannot be kept, a head read or no price book */
   keepOffer?: { wishId: string; proof: string; proofExpiresAt: Instant; resting: boolean; wake: boolean; keeps: Array<{ key: "month" | "half" | "year"; name: string; days: number | null; priceKobo: Kobo }> } | null;
@@ -1923,6 +1924,14 @@ export interface WebhookEvent {
 }
 
 /** Wish: table. written by E-220, E-222..E-233 and server:wish-lifecycle; content is a document column; content is JSON (DEC-64 typed WishData, DEC-82 Wish.content.details object) typed object in the registry (HM4, DEC-215) */
+/** IM1 (DEC-328): one size of a picture: the signed address of w320, w768 or w1600, or, with `sized` false, the clean full-size copy (the size is not made yet). */
+export interface PictureSize {
+  width: number;
+  variant: string;
+  url: string;
+  expiresAt: Instant;
+  sized: boolean;
+}
 /** IL2: one extra a wish holds, as the owner's read says it: where it came from (its ticket or a purchase), whether the wish still holds it, and the state of a refund of the purchase. */
 export interface WishAdd {
   sku: string;
@@ -1982,7 +1991,8 @@ export interface Wish {
   paymentWay: "card" | "transfer" | "ussd";
   person: string;
   personName: string;
-  pictures: Array<{ fileId: string; role: "photo" | "cover"; status: "ready" | "screening" | "refused"; url: string | null; expiresAt: Instant | null }>;
+  /** IM1 (DEC-328): each picture with its sizes: `variants` is w320, w768 and w1600; `sized` false is a size not made yet (the url is then the clean full-size copy). A picture the server cannot open is `refused` with words. */
+  pictures: Array<{ fileId: string; role: "photo" | "cover"; status: "ready" | "screening" | "refused"; url: string | null; expiresAt: Instant | null; variants?: PictureSize[] }>;
   price: Kobo;
   publish?: { status: string; reason: string | null; decidedAt: string | null; listed: boolean } | null;
   reaction?: string | null;
@@ -4437,7 +4447,7 @@ export interface PostUploadsBody {
   audio?: unknown;
   /** integer */
   bytes?: number;
-  /** string */
+  /** string (the picture kinds taken are image/jpeg, image/png, image/webp and image/gif; image/heic and image/heif are refused with 422 and the words "HEIC pictures are not taken. Send a JPEG or PNG." (IM2, DEC-328)) */
   contentType?: string;
   /** File (image png/jpeg/webp/svg, sound mp3/mp4/aac/ogg/wav, model .glb/.riv) */
   file?: unknown;

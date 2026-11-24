@@ -101,6 +101,12 @@ export const MANIFEST_VARS: readonly VarSpec[] = [
     purpose: "IK7: a file the stand-in video renderer appends each render's one-use token to, one JSON line (jobId, wishId, kind, width, height, seconds, token), created with mode 0600, so a test stack can drive the render page; test stacks only, refused with PROVIDERS=live or NODE_ENV=production",
   },
   {
+    name: "STANDIN_RENDER_HOLD_FILE",
+    need: "optional",
+    kind: "string",
+    purpose: "IK7a: with STANDIN_VIDEO=hold, a render holds only if this file exists at the moment the render starts (a test makes it before its asks and removes it after); with no file the render is made at once; with the name not set, hold holds every render; test stacks only, refused with PROVIDERS=live or NODE_ENV=production",
+  },
+  {
     name: "RENDER_STANDIN_HOLD_SECONDS",
     need: "optional",
     kind: "int",

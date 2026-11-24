@@ -133,7 +133,7 @@ describe("R3: the render token and GET /v1/render/:token/wish", () => {
     const r = await rendering(w, a.auth);
     const res = await readWish(r.token).expect(200);
     expect(res.headers["cache-control"]).toBe("no-store");
-    expect(res.body).toMatchObject({ kind: "status-video", seconds: 30, width: 1080, height: 1920 });
+    expect(res.body).toMatchObject({ kind: "status-video", seconds: 60, width: 1080, height: 1920 });
     expect(res.body.wish).toMatchObject({ state: "open", openable: true, opening: null, wishNo: no, receiverName: "Ada", styleSlug: "golden", kind: "birthday", house: false });
     expect(res.body.wish.content).toMatchObject({ to: "Ada", text: "Happy birthday" });
     expect(res.body.wish.files).toHaveLength(1);

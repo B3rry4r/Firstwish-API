@@ -1,4 +1,4 @@
-import { createWriteStream } from "node:fs";
+import { createWriteStream, existsSync } from "node:fs";
 import { appendFile, rm } from "node:fs/promises";
 import { randomUUID } from "node:crypto";
 import { tmpdir } from "node:os";
@@ -91,6 +91,8 @@ export class StandinVideoRenderer extends VideoRenderer {
   /** IK7: when set, a render waits after its line until this answers true (the job's token is spent), the abort, or `holdSeconds`, then writes its file. */
   holdUntilSpent: ((input: RenderRequest) => Promise<boolean>) | null = null;
   holdSeconds = 120;
+  /** IK7a: when set (with the hold on), a render holds only if this file exists at the moment it starts; removing it later does not end a running hold. */
+  holdFile: string | null = null;
   configured(): boolean {
     return this.on;
   }
@@ -105,7 +107,7 @@ export class StandinVideoRenderer extends VideoRenderer {
         await appendFile(this.tokenFile, `${JSON.stringify({ jobId, wishId, kind, width, height, seconds, token })}\n`, { mode: 0o600 });
       }
       if (this.failWith) throw new Error(this.failWith);
-      if (this.holdUntilSpent) await this.holdTillSpent(input, signal);
+      if (this.holdUntilSpent && (!this.holdFile || existsSync(this.holdFile))) await this.holdTillSpent(input, signal);
       path = join(tmpdir(), `${RENDER_TEMP_PREFIX}${input.jobId ?? "direct"}-${randomUUID()}.mp4`);
       const size = await this.write(path, input);
       const wait = this.hold && !(this.holdFirstOnly && this.rendered.length > 1) ? this.hold : null;
@@ -178,11 +180,12 @@ export class StandinVideoRenderer extends VideoRenderer {
  * IK3: PROVIDERS=standin binds the stand-in renderer (STANDIN_VIDEO=fail makes every job fail); live providers bind the renderer that
  * says it is not configured, until a real one is built (OWED: its own task). The env check refuses the switch with live providers.
  * IK7: STANDIN_RENDER_TOKENS names the file the stand-in writes each render's token to, and STANDIN_VIDEO=hold makes it wait (after
- * that line) until the job's token is spent, the abort, or RENDER_STANDIN_HOLD_SECONDS. Both are refused at boot unless PROVIDERS=standin
+ * that line) until the job's token is spent, the abort, or RENDER_STANDIN_HOLD_SECONDS. IK7a: with STANDIN_RENDER_HOLD_FILE also set, a render holds
+ * only if that file exists when it starts. Both are refused at boot unless PROVIDERS=standin
  * and NODE_ENV is not production, and here nothing is read from them with live providers.
  */
 export function videoRendererFor(
-  env: { PROVIDERS: string; STANDIN_VIDEO?: string; STANDIN_RENDER_TOKENS?: string; RENDER_STANDIN_HOLD_SECONDS?: number },
+  env: { PROVIDERS: string; STANDIN_VIDEO?: string; STANDIN_RENDER_TOKENS?: string; STANDIN_RENDER_HOLD_FILE?: string; RENDER_STANDIN_HOLD_SECONDS?: number },
   db?: Pick<PrismaService, "renderJob">,
 ): VideoRenderer {
   if (env.PROVIDERS !== "standin") return new NoVideoRenderer();
@@ -190,6 +193,7 @@ export function videoRendererFor(
   if (env.STANDIN_VIDEO === "fail") r.failWith = "stand-in video renderer: STANDIN_VIDEO=fail";
   if (env.STANDIN_RENDER_TOKENS) r.tokenFile = env.STANDIN_RENDER_TOKENS;
   if (env.STANDIN_VIDEO === "hold") {
+    if (env.STANDIN_RENDER_HOLD_FILE) r.holdFile = env.STANDIN_RENDER_HOLD_FILE;
     if (env.RENDER_STANDIN_HOLD_SECONDS !== undefined) r.holdSeconds = env.RENDER_STANDIN_HOLD_SECONDS;
     r.holdUntilSpent = async (input) => {
       if (!db || !input.jobId) return false;

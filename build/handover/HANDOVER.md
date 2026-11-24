@@ -189,6 +189,66 @@ or dark for the /g and /w pages; VAT and copy questions; what to do about slow 3
 Never run against a real provider by anyone: every adapter in section 3. Real fonts were never measured (Google
 Fonts is blocked on the build machine). Real Vercel ISR was never run.
 
-## 9. State at the stop
+## 9. State at the stop (24 Nov 2026, about 16:45 UTC)
 
-(Filled in when the last two jobs handed back: see the end of this file.)
+The owner said: finish the running jobs, spawn nothing more (the weekly limit is nearly spent), write this folder.
+
+- Nothing is running. No agent, no server, no browser. The hourly check (scheduled task "Firstwish build check",
+  `trig_01UZnQfsw4nyGgQ1mfmfu3QA`) is switched OFF (not deleted).
+- Pushed and clean: web `2f1cdc8`; server: the commit that holds this file. Both on `claude/sleepy-mayer-f0hkb8`.
+- The build machine is temporary. Local branches and the temporary work folder are LOST when it goes. Everything
+  needed is in this folder; the two unmerged pieces are patch files:
+
+| unmerged work | patch (in `build/handover/branches/`) | apply with |
+|---|---|---|
+| R5, the recorder (server; base 992efe4, head 725d21c; 3 files, +1,782) | `api-r5-from-992efe4.patch` | `git checkout -b r5 992efe4 && git am < the patch` (then merge onto the work head) |
+| R4C, the 43-style recording test (web; base 88bcd46, head a770810; 18 files) | `web-r4c-from-88bcd46.patch` | `git checkout -b r4c 88bcd46 && git am < the patch` |
+
+### R5, the recorder: built, two fix rounds done, NOT merged, NOT re-checked after the last round
+
+Verdicts of both checks: `verdicts/r5-VERDICT.md`. Ruling IK6h says what happens next (no third fix round).
+
+- Claimed fixed in the last round, not yet tested by a separate verifier: the browser is driven through a private
+  pipe (no listening port, so no other program can read the token); a killed server program leaves no browser,
+  ffmpeg or port; a picture or font that never arrives fails the recording in words (limit 30 s); the proxy asks
+  for a per-recording secret (407 to anyone else); plain words for two raw errors.
+- Still OPEN (the builder said so itself):
+  1. A real wish is still not repeatable: two recordings of the same content differ in 106 of 160 frames. The
+     clock now stays at 0 until the page is ready, and a stand-in page gives 0 differing frames, so the cause is
+     in the web's render page (an entrance that starts by real time). Not located.
+  2. A Studio wish NEVER becomes ready with the clock at 0: it waits on a 120 ms interval (web
+     `components/engine/made/StudioHost.tsx:96`; `components/render/conduct.ts:61` needs `.mk-studio-over`, drawn
+     after it at :165; a 90 ms debounce at :105). Every Studio recording fails with words after 150 s. Needs a
+     web task: the render page must become ready with no time passing.
+  3. After a kill -9 a temporary profile and work folder stay on disk (R6's leftovers sweep is written to clean them).
+  4. Not run: an https CONNECT through the proxy with the secret; film and Studio repeatability; the full suite.
+- Next step: a short re-check (fresh Sonnet verifier) of the claimed fixes; on a pass merge r5; cut the web task
+  for points 1 and 2; then R6 (`build/prompts/R6.md`).
+
+### R4C, the 43-style test: built, checked, verdict FIX FIRST, NOT merged
+
+Verdict: `verdicts/r4c-VERDICT.md`; five frames in `verdicts/r4c-pics/`. Ruling IK8a says what must not be drawn.
+
+- Held: 95 of 95 cases end with no page error (also on the new clock); no play is over 60 s (longest 47 s);
+  receivers lost nothing.
+- To fix (one patch round by a fresh Sonnet builder on branch r4c, then a re-check that LOOKS at frames):
+  "Touch the star" in `stage/tinsel/endings/candle.tsx:238` and `stage/constellation/endings/candle.tsx:166`; the
+  send arrow and reply bar in `stories/group-chat/Scene.tsx:614-624`; an empty white pill in the group-chat
+  envelope ending; a pull cord left in the lullaby candle ending; "Hold to light the runway" in
+  `boarding-pass/endings/candle.tsx:363` (not proven absent); page counters and pips (polaroid-table, mixtape,
+  midnight, mosaic). The sweep's word list misses any cue outside its seed words and cannot see shapes.
+
+### Ready to start, not started (briefs written)
+
+- `build/prompts/R6.md`: wire the recorder (needs r5 merged).
+- `build/prompts/WEB-10D.md`: screens use the sized photos; pickers without HEIC (start after R4C merges: same files).
+
+### Things a new chat should know before it spends anything
+
+- Every agent on Sonnet (R17). The lead writes no task code. At most two browser jobs and one other job at once.
+- This session's safety check refused three things; none was worked around: editing the web gates' settings
+  (22 Nov: a gate change is the owner's); stopping a leftover browser by its whole process group together with
+  deleting its folder (24 Nov: a plain stop of the one process was allowed); and, inside agents' sessions, some
+  repeated test runs, a loop with `rm -rf`, and `git worktree remove` (those steps are marked NOT RUN where they
+  matter: the cause of a one-off failure of `ab22-sizes-job.spec.ts` (confirm answered 422 once) is still unshown).
+- Three worktrees of the last checker may still be on the machine (`build/wt/v-r4c*` under the temporary folder).

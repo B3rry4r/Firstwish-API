@@ -1339,3 +1339,17 @@ HG1 (give race) Two staff giving one Concierge order: the code is right (overlap
   driven through a private pipe, never a listening port, and its proxy asks for a secret made for that one
   recording: no other program on the server can read the wish's token or use the proxy. If the server program dies,
   the browser dies with it.
+- IK6h (24 Nov, the lead, after the recorder's second and last fix round; Default (lead), owner may override): no
+  third fix round. The recorder (branch r5, 725d21c) is re-cut: (a) a SHORT re-check by a separate verifier of the
+  round's claims that can be tested without a real wish (the private pipe, death with the server program, a
+  missing picture fails, the proxy's secret, plain words); on a pass, r5 merges; (b) what is still open moves to
+  its own tasks: a real wish is still not frame-for-frame repeatable (106 of 160 frames; cause not found: it looks
+  like an entrance animation that starts by real time in the web's render page), and a Studio wish never says
+  ready while the clock stands at 0 (it waits on a 120 ms interval: web components/engine/made/StudioHost.tsx:96,
+  conduct.ts:61): a web task (the render page becomes ready with no time passing; every entrance starts from the
+  stepped clock) and then one recorder follow-up. Until then a Studio wish's video fails with words; it is never
+  handed out wrong. The video stays unsold (IK3) until R6 and R9 anyway.
+- IK8a (24 Nov, the lead, on the check of the 43-style recording test): under the render page nothing that only
+  makes sense to a person holding the phone is drawn: cue words in any wording ("Touch the star"), send arrows and
+  reply bars, pull cords, page counters and progress pips ("04 / 04"), and no empty shape is left where one was.
+  The sweep's word list cannot see pictures: its check always includes a person-like look at real frames.

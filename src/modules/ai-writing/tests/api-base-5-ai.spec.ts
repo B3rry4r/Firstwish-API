@@ -38,7 +38,7 @@ describe("API-BASE-5 case 1: the stand-in AI answers in the contract's shape", (
     expect(reasons.status).toBe(200);
     expect(reasons.body.output.reasons[0].title).toEqual(expect.any(String));
     const photoIds = [ids.next(), ids.next(), ids.next()];
-    for (const id of photoIds) await db.storedFile.create({ data: { id, ownerAccountId: s.id, purpose: "wish_photo", status: "ready", contentType: "image/jpeg", bytes: 10n, objectKey: `k/${id}`, variants: [], driver: "r2" } as never });
+    for (const id of photoIds) await db.storedFile.create({ data: { cleanAt: new Date(), id, ownerAccountId: s.id, purpose: "wish_photo", status: "ready", contentType: "image/jpeg", bytes: 10n, objectKey: `k/${id}`, variants: [], driver: "r2" } as never });
     await db.wish.update({ where: { id: s.wishId }, data: { content: { story: { photos: photoIds.map((photoId, i) => ({ photoId, caption: `Photo ${i}` })) } } } });
     const pick = await t.http().post("/v1/ai/pick-photos").set(s.h).send({ wishId: s.wishId, fileIds: photoIds });
     expect(pick.status).toBe(200);

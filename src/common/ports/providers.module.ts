@@ -13,6 +13,8 @@ import { ImageSizesPort } from "./image-sizes.port";
 import { SharpImageSizes } from "./adapters/sharp-image-sizes.adapter";
 import { ClipLengthPort } from "./clip-length.port";
 import { FfprobeClipLength } from "./adapters/ffprobe-clip-length.adapter";
+import { MediaCleanPort } from "./media-clean.port";
+import { FfmpegMediaClean } from "./adapters/ffmpeg-media-clean.adapter";
 import { LimitedPort, portTimeouts, withTimeLimit } from "./time-limit";
 import { UploadScreeningPort } from "./screening.port";
 import { StoragePort } from "./storage.port";
@@ -33,6 +35,7 @@ import {
   StandinGoogle,
   StandinImageSizes,
   StandinClipLength,
+  StandinMediaClean,
   StandinPayments,
   StandinScreening,
   StandinStorage,
@@ -102,7 +105,7 @@ const providers: Provider[] = [
   {
     provide: ImageSizesPort,
     inject: [ENV, StoragePort],
-    useFactory: (env: Env, storage: StoragePort) => limited(env, "imageSizes", standin(env) ? new StandinImageSizes() : new SharpImageSizes(storage)),
+    useFactory: (env: Env, storage: StoragePort) => limited(env, "imageSizes", standin(env) ? new StandinImageSizes(storage) : new SharpImageSizes(storage)),
   },
   // IL1a: a clip's length is read from the stored file (ffprobe on the real server, a header reader in the stand-in)
   {
@@ -111,11 +114,17 @@ const providers: Provider[] = [
     useFactory: (env: Env, storage: StoragePort) =>
       limited(env, "clipLength", standin(env) ? new StandinClipLength(storage) : new FfprobeClipLength((key) => storage.signDownload(key, 300))),
   },
+  // IM3: a voice, a clip and a Studio sound lose their location and device tags at confirm (ffmpeg on the real server, a stand-in that rewrites nothing)
+  {
+    provide: MediaCleanPort,
+    inject: [ENV, StoragePort],
+    useFactory: (env: Env, storage: StoragePort) => limited(env, "mediaClean", standin(env) ? new StandinMediaClean(storage) : new FfmpegMediaClean(storage)),
+  },
 ];
 
 @Global()
 @Module({
   providers,
-  exports: [STANDIN_STORAGE, Clock, IdGenerator, CodeGenerator, PaymentsPort, RefundProviderPort, PayoutProviderPort, EmailPort, StoragePort, AiWritingPort, UploadScreeningPort, GoogleIdentityPort, ImageSizesPort, ClipLengthPort],
+  exports: [STANDIN_STORAGE, Clock, IdGenerator, CodeGenerator, PaymentsPort, RefundProviderPort, PayoutProviderPort, EmailPort, StoragePort, AiWritingPort, UploadScreeningPort, GoogleIdentityPort, ImageSizesPort, ClipLengthPort, MediaCleanPort],
 })
 export class ProvidersModule {}

@@ -1,7 +1,9 @@
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "../../common/db/prisma.service";
 import { refusalWords } from "../stored-files/refusal-words";
-import { SignedUrlsService } from "../stored-files/signed-urls.service";
+import { AppError } from "../../common/errors/app-error";
+import { PHOTO_NOT_SHOWN, PHOTO_NOT_SHOWN_CODE } from "../stored-files/photo-cleaner";
+import { SignedUrlsService, type SizedRead } from "../stored-files/signed-urls.service";
 
 /** HP3: one picture of a wish as its owner reads it. `url` and `expiresAt` are null unless the file passed screening (ready). */
 export interface WishPicture {
@@ -12,6 +14,8 @@ export interface WishPicture {
   reason?: string | null;
   url: string | null;
   expiresAt: string | null;
+  /** IM1: the three sizes (w320, w768, w1600), each with its signed address; a size not made yet is the clean full-size copy (sized false). Left out when there is no url. */
+  variants?: SizedRead[];
 }
 
 /** HP5: the video's state on a wish read. */
@@ -48,8 +52,14 @@ export class WishPictures {
         list.push({ fileId: r.fileId, role: r.role as "photo" | "cover", status, reason: status === "refused" ? refusalWords(r.file.screeningResultByFile[0]?.labels) : null, url: null, expiresAt: null });
         continue;
       }
-      const s = await this.signed.signedRead({ fileId: r.fileId }, { type: "allowed" });
-      list.push({ fileId: r.fileId, role: r.role as "photo" | "cover", status, reason: null, url: s.url, expiresAt: s.expiresAt });
+      try {
+        const { read: s, sizes } = await this.signed.signedSet({ fileId: r.fileId }, { type: "allowed" });
+        list.push({ fileId: r.fileId, role: r.role as "photo" | "cover", status, reason: null, url: s.url, expiresAt: s.expiresAt, variants: sizes });
+      } catch (e) {
+        // IM1/IM2: a picture the server cannot open (a HEIC stored before) is shown as refused with words, never as a broken picture
+        if (!(e instanceof AppError) || e.code !== PHOTO_NOT_SHOWN_CODE) throw e;
+        list.push({ fileId: r.fileId, role: r.role as "photo" | "cover", status: "refused", reason: PHOTO_NOT_SHOWN, url: null, expiresAt: null });
+      }
     }
     return out;
   }

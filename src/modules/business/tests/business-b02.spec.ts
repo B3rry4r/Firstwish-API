@@ -21,7 +21,7 @@ describe("patch B02: business brand", () => {
     const id = t.app.get(IdGenerator).id();
     if (bytes) t.app.get<StandinStorage>(StoragePort).put(`files/${id}`, bytes, "image/png");
     await t.db.storedFile.create({
-      data: {
+      data: { cleanAt: new Date(),
         id,
         ownerAccountId: o.accountId,
         purpose: "brand_logo",

@@ -96,7 +96,7 @@ describe("API-BASE-4 wishes (through the real routes)", () => {
       const id = nid();
       const objectKey = `files/${id}`;
       t.storage.put(objectKey, Buffer.from(bytes), "image/png");
-      await db.storedFile.create({ data: { id, ownerAccountId: u.accountId, purpose: "wish_photo", objectKey, contentType: "image/png", bytes: BigInt(bytes.length), status, variants: [], driver: "r2" } });
+      await db.storedFile.create({ data: { cleanAt: new Date(), id, ownerAccountId: u.accountId, purpose: "wish_photo", objectKey, contentType: "image/png", bytes: BigInt(bytes.length), status, variants: [], driver: "r2" } });
       await db.uploadTicket.create({ data: { id, bytes: BigInt(bytes.length), contentType: "image/png", purpose: "wish-photo" } });
       return { id, objectKey };
     }

@@ -9,6 +9,7 @@ import { IdGenerator } from "../../common/ports/ids.port";
 import { playableFileIds } from "../styles/approved-document";
 import { readLimits } from "../price-book/book-limits";
 import { ImageSizesPort } from "../../common/ports/image-sizes.port";
+import { PhotoCleaner } from "./photo-cleaner";
 
 /** HW5: a confirmed upload that nothing names is removed once it is this old. */
 export const UNATTACHED_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
@@ -47,6 +48,7 @@ export class FileJobs {
     private readonly sizes: ImageSizesPort,
     private readonly clock: Clock,
     private readonly ids: IdGenerator,
+    private readonly cleaner: PhotoCleaner,
   ) {}
 
   /**
@@ -221,6 +223,8 @@ export class FileJobs {
     let removed = await this.sweepUnconfirmed(batch);
     removed += await this.sweepUnattached(batch);
     removed += await this.sweepUnpaidOrderFiles(batch);
+    // IM1: pictures stored before round 23 are made clean here (the first read cleans one too); not counted as removed
+    await this.cleaner.sweep(batch);
     let swept = 0;
     const due = await this.db.job.findMany({
       where: { type: "upload_cleanup", status: "scheduled", runAt: { lte: now }, subjectId: { startsWith: STAGING_PREFIX } },

@@ -1,8 +1,9 @@
 import { createHash, createHmac, timingSafeEqual } from "node:crypto";
 import { appendFileSync, chmodSync, closeSync, fstatSync, openSync } from "node:fs";
 import { EnvError } from "../../env/env";
-import { ImageSizesPort, ResizeInput } from "../image-sizes.port";
+import { CleanInput, CleanResult, ImageSizesPort, MAX_SOURCE_BYTES, ResizeInput } from "../image-sizes.port";
 import { ClipLengthInput, ClipLengthPort } from "../clip-length.port";
+import { MAX_MEDIA_BYTES, MediaCleanInput, MediaCleanPort, MediaCleanResult } from "../media-clean.port";
 import { containerLengthMs } from "./clip-container";
 import { Money } from "../../money/money";
 import { AiWritingPort, WriteRequest, WriteResult } from "../ai.port";
@@ -317,12 +318,38 @@ export class StandinStorage extends StoragePort {
   }
 }
 
-/** The image-sizes stand-in (X22): records each request and makes nothing. */
+/** The image-sizes stand-in (X22): records each request and makes nothing. Its clean copy is the picture as it is (a stand-in decodes nothing): a stack that must prove the real clean copy binds SharpImageSizes. */
 export class StandinImageSizes extends ImageSizesPort {
   readonly made: ResizeInput[] = [];
+  readonly cleaned: CleanInput[] = [];
+  constructor(private readonly storage?: StoragePort) {
+    super();
+  }
+  async clean(input: CleanInput): Promise<CleanResult> {
+    this.cleaned.push(input);
+    const bytes = input.source ?? (this.storage ? await this.storage.readObject(input.sourceKey, MAX_SOURCE_BYTES) : null);
+    return { bytes: bytes?.length ?? 0, sha256: bytes ? createHash("sha256").update(bytes).digest("hex") : null, unchanged: true };
+  }
   resize(input: ResizeInput): Promise<void> {
     this.made.push(input);
     return Promise.resolve();
+  }
+  /** FB4: a stand-in calls nothing. */
+  ping(): Promise<PortPing> {
+    return Promise.resolve(PING_STAND_IN);
+  }
+}
+
+/** The media-clean stand-in (IM3): records each request and rewrites nothing (the file stays as it is, its hash is the file's own). A stack that must prove the real clean file binds FfmpegMediaClean. */
+export class StandinMediaClean extends MediaCleanPort {
+  readonly cleaned: MediaCleanInput[] = [];
+  constructor(private readonly storage?: StoragePort) {
+    super();
+  }
+  async clean(input: MediaCleanInput): Promise<MediaCleanResult> {
+    this.cleaned.push(input);
+    const bytes = this.storage ? await this.storage.readObject(input.key, MAX_MEDIA_BYTES) : null;
+    return { bytes: bytes?.length ?? 0, sha256: bytes ? createHash("sha256").update(bytes).digest("hex") : null, unchanged: true };
   }
   /** FB4: a stand-in calls nothing. */
   ping(): Promise<PortPing> {

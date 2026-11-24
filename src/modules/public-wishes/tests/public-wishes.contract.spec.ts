@@ -99,7 +99,7 @@ describe("public wishes E-129 E-130 E-131 E-132 E-134 and the feed's E-122 E-142
     const fileId = ids.next();
     const strayId = ids.next();
     for (const id of [fileId, strayId]) {
-      await db.storedFile.create({ data: { id, ownerAccountId: owner, purpose: "wish_photo", objectKey: `k/${id}`, contentType: "image/jpeg", bytes: 10n, status: "ready", variants: [], driver: "r2" } });
+      await db.storedFile.create({ data: { cleanAt: new Date(), id, ownerAccountId: owner, purpose: "wish_photo", objectKey: `k/${id}`, contentType: "image/jpeg", bytes: 10n, status: "ready", variants: [], driver: "r2" } });
     }
     await db.wishFile.create({ data: { id: ids.next(), wishId: w.id, fileId, role: "photo" } });
     await db.wish.update({ where: { id: w.id }, data: { content: { story: { photos: [{ photoId: strayId }] }, letter: { paras: ["Happy birthday."] } } } });

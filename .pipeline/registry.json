@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "frozenAt": "2026-11-24T00:20:46Z",
+  "frozenAt": "2026-11-24T12:28:13Z",
   "framework": "nestjs",
   "generatedBy": "tools/pipeline/reconcile.py",
   "resources": [
@@ -15161,7 +15161,7 @@
         },
         {
           "name": "files",
-          "type": "array",
+          "type": "array<{role: string, url: string, fileId?: string, expiresAt?: time, variants?: array<{width: number, variant: string, url: string, expiresAt: time, sized: boolean}>}>",
           "classes": [
             "array"
           ],
@@ -15169,7 +15169,8 @@
           "provenance": [
             "DEC-183"
           ],
-          "supersedes": []
+          "supersedes": [],
+          "typeBy": "DEC-328"
         },
         {
           "name": "house",
@@ -17790,7 +17791,7 @@
           "response": {
             "entity": "RenderJob",
             "cardinality": "single",
-            "note": "{kind, seconds, width, height, wish, style}: what the web's render page reads to play one wish with no gate: wish is the public link's view as a receiver gets it after a right unlock (state open, the opening passed, content without any secret, signed file addresses), style is {style, items, document} as the player's style read gives it (RenderWish, hand-kept); read once with the render's one-use token, no session (DEC-326)"
+            "note": "{kind, seconds, width, height, wish, style}: what the web's render page reads to play one wish with no gate: wish is the public link's view as a receiver gets it after a right unlock (state open, the opening passed, content without any secret, signed file addresses, each file with its variants w320, w768 and w1600 (DEC-328)), style is {style, items, document} as the player's style read gives it (RenderWish, hand-kept); read once with the render's one-use token, no session (DEC-326)"
           },
           "sources": [
             {
@@ -22039,8 +22040,9 @@
             },
             {
               "name": "contentType",
-              "type": "string",
+              "type": "string (the picture kinds taken are image/jpeg, image/png, image/webp and image/gif; image/heic and image/heif are refused with 422 and the words \"HEIC pictures are not taken. Send a JPEG or PNG.\" (IM2))",
               "from": [
+                "DEC-328",
                 "storage"
               ]
             },
@@ -22128,6 +22130,7 @@
           ],
           "notes": [
             "body by DEC-165",
+            "body by DEC-328",
             "route by DEC-10"
           ]
         },
@@ -28376,6 +28379,19 @@
           "supersedes": []
         },
         {
+          "name": "limits",
+          "type": "shape {photos: number, voices: number, clips: {count: number, seconds: array<number>}}",
+          "classes": [
+            "unknown"
+          ],
+          "nullable": true,
+          "provenance": [
+            "DEC-328"
+          ],
+          "supersedes": [],
+          "typeBy": "DEC-328"
+        },
+        {
           "name": "link",
           "type": "string",
           "classes": [
@@ -28911,7 +28927,7 @@
         },
         {
           "name": "pictures",
-          "type": "shape array<{fileId: string, role: enum(photo|cover), status: enum(ready|screening|refused), url: string | null, expiresAt: time | null}>",
+          "type": "shape array<{fileId: string, role: enum(photo|cover), status: enum(ready|screening|refused), url: string | null, expiresAt: time | null, variants?: array<{width: number, variant: string, url: string, expiresAt: time, sized: boolean}>}>",
           "classes": [
             "array"
           ],
@@ -28920,7 +28936,7 @@
             "api-base-4"
           ],
           "supersedes": [],
-          "typeBy": "DEC-220"
+          "typeBy": "DEC-328"
         },
         {
           "name": "price",

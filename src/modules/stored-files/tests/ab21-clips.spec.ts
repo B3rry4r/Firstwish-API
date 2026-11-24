@@ -89,7 +89,7 @@ describe("API-BASE-21: the clip rules", () => {
   async function plant(u: U, wish: string, lengthMs: number | null): Promise<string> {
     const id = ids.next();
     await db.storedFile.create({
-      data: { id, ownerAccountId: u.id, purpose: "video_clip", objectKey: `video-clip/${id}/x`, contentType: "video/mp4", bytes: 100n, status: "ready", variants: [], driver: "r2", fileId: id, kind: "video", lengthMs } as never,
+      data: { cleanAt: new Date(), id, ownerAccountId: u.id, purpose: "video_clip", objectKey: `video-clip/${id}/x`, contentType: "video/mp4", bytes: 100n, status: "ready", variants: [], driver: "r2", fileId: id, kind: "video", lengthMs } as never,
     });
     await db.uploadTicket.create({ data: { id, bytes: 100n, contentType: "video/mp4", purpose: "video-clip", subjectId: wish } });
     return id;

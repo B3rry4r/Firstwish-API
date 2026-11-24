@@ -1322,6 +1322,8 @@ model StoredFile {
   shownName                  String?
   /// IL1a (round 21): a video clip's length in milliseconds, read from the stored file itself when it is confirmed (never taken from the browser); null for every other file
   lengthMs                   Int?
+  /// IM1 (round 23): set when the stored picture has been re-made without metadata (no GPS, no serial): from then on the bytes at the file's own key ARE that clean copy, and only then is an address for it given. Null: not yet (a file stored before round 23).
+  cleanAt                    DateTime?           @db.Timestamptz(3)
   business                   Business?           @relation("StoredFile_businessId", fields: [businessId], references: [id])
   style                      StudioStyle?        @relation("StoredFile_styleId", fields: [styleId], references: [id], onDelete: SetNull)
   ownerAccount               Account?            @relation("StoredFile_ownerAccountId", fields: [ownerAccountId], references: [id])

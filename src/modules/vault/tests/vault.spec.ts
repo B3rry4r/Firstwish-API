@@ -76,7 +76,7 @@ describe("B18 Vault: shoots, space, reveal links, plays, E-33", () => {
   const vaultFile = async (businessId: string, accountId: string, bytes = 1000, status: "ready" | "screening" = "ready") => {
     const id = ids.next();
     await db.storedFile.create({
-      data: { id, ownerAccountId: accountId, businessId, purpose: "vault_file", objectKey: `vault-file/${id}/k`, contentType: "image/jpeg", bytes: BigInt(bytes), status, variants: [], driver: "r2" },
+      data: { cleanAt: new Date(), id, ownerAccountId: accountId, businessId, purpose: "vault_file", objectKey: `vault-file/${id}/k`, contentType: "image/jpeg", bytes: BigInt(bytes), status, variants: [], driver: "r2" },
     });
     return id;
   };

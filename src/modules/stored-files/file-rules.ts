@@ -32,7 +32,11 @@ export const stagingKeyOf = (objectKey: string) => `${STAGING_PREFIX}${objectKey
 /** The sweep of a staging key runs once every signed PUT for it has expired (the ticket's 15 minutes, plus a minute). */
 export const STAGING_SWEEP_AFTER_SECONDS = UPLOAD_TTL_SECONDS + 60;
 
-const IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/heic", "image/gif"];
+/** IM2: the picture kinds taken: JPEG, PNG, WebP and GIF. HEIC and HEIF are not (the server cannot open them: no decoder ships with the image library), so an iPhone sends a JPEG. */
+const IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+/** IM2: the words for a HEIC or HEIF picture, at the start of an upload and at confirm. */
+export const HEIC_WORDS = "HEIC pictures are not taken. Send a JPEG or PNG.";
+export const isHeicType = (contentType: string | null) => contentType === "image/heic" || contentType === "image/heif" || contentType === "image/heic-sequence" || contentType === "image/heif-sequence";
 const AUDIO_TYPES = ["audio/webm", "audio/mpeg", "audio/mp4", "audio/x-m4a", "audio/ogg", "audio/wav"];
 const VIDEO_TYPES = ["video/mp4", "video/quicktime", "video/webm"];
 const MODEL_TYPES = ["model/gltf-binary"];
@@ -127,7 +131,10 @@ export function normaliseType(input: unknown): string | null {
 
 export const isImage = (contentType: string) => IMAGE_TYPES.includes(contentType);
 
-const HEIC_BRANDS = ["heic", "heix", "hevc", "hevx", "heim", "heis", "mif1", "msf1"];
+const HEIC_BRANDS = ["heic", "heix", "hevc", "hevx", "heim", "heis", "heif", "mif1", "msf1"];
+
+/** IM2: true when the first bytes are a HEIC or HEIF file, whatever type was said (a file that claims JPEG but is HEIC inside). */
+export const looksLikeHeic = (head: Buffer): boolean => head.length >= 12 && head.toString("latin1", 4, 8) === "ftyp" && HEIC_BRANDS.includes(head.toString("latin1", 8, 12));
 
 /** True when the first bytes are an SVG (or XML that can carry one): never a photo, whatever the type said (Y3, AA5). */
 export function looksLikeSvg(head: Buffer): boolean {
@@ -143,7 +150,6 @@ export function typeFromBytes(head: Buffer, declared: string): string | null {
   if (looksLikeSvg(head)) return null;
   const sniff = SIGNATURES[declared];
   if (!sniff || !sniff(head)) return null;
-  if (declared === "image/heic" && !HEIC_BRANDS.includes(head.toString("latin1", 8, 12))) return null;
   return declared;
 }
 

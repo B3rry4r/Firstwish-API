@@ -24,7 +24,7 @@ describe("API-BASE-4 Now showing (HP9, HP13) through the real routes", () => {
     if (withCover) {
       fileId = t.id();
       t.storage.put(`files/${fileId}`, Buffer.from("COVERPIXELS"), "image/png");
-      await db.storedFile.create({ data: { id: fileId, ownerAccountId: owner.accountId, purpose: "wish_photo", objectKey: `files/${fileId}`, contentType: "image/png", bytes: BigInt(11), status: "ready", variants: [], driver: "r2" } });
+      await db.storedFile.create({ data: { cleanAt: new Date(), id: fileId, ownerAccountId: owner.accountId, purpose: "wish_photo", objectKey: `files/${fileId}`, contentType: "image/png", bytes: BigInt(11), status: "ready", variants: [], driver: "r2" } });
       await db.uploadTicket.create({ data: { id: fileId, bytes: BigInt(11), contentType: "image/png", purpose: "wish-photo" } });
       await db.wish.update({ where: { id: w.id }, data: { content: { cover: { photoId: fileId } } } });
       await db.wishFile.create({ data: { id: t.id(), wishId: w.id, fileId, role: "photo" } });

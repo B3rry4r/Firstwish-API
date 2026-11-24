@@ -1,5 +1,6 @@
 import { Module } from "@nestjs/common";
 import { FileJobs } from "./file-jobs";
+import { PhotoCleaner } from "./photo-cleaner";
 import { ScreeningService } from "./screening.service";
 import { SignedUrlsService } from "./signed-urls.service";
 import { StoredFilesController } from "./stored-files.controller";
@@ -11,7 +12,7 @@ import { StoredFilesService } from "./stored-files.service";
  */
 @Module({
   controllers: [StoredFilesController],
-  providers: [StoredFilesService, ScreeningService, SignedUrlsService, FileJobs],
-  exports: [StoredFilesService, ScreeningService, SignedUrlsService, FileJobs],
+  providers: [StoredFilesService, ScreeningService, SignedUrlsService, FileJobs, PhotoCleaner],
+  exports: [StoredFilesService, ScreeningService, SignedUrlsService, FileJobs, PhotoCleaner],
 })
 export class StoredFilesModule {}

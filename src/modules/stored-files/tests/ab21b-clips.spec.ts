@@ -90,7 +90,7 @@ describe("P-API-BASE-21: the clip rules, round 1 (H1, M2, M3, L5, L6, refund app
   async function plant(u: U, wish: string, lengthMs: number | null, file?: Buffer): Promise<string> {
     const id = ids.next();
     await db.storedFile.create({
-      data: { id, ownerAccountId: u.id, purpose: "video_clip", objectKey: `video-clip/${id}/x`, contentType: "video/mp4", bytes: 100n, status: "ready", variants: [], driver: "r2", fileId: id, kind: "video", lengthMs } as never,
+      data: { cleanAt: new Date(), id, ownerAccountId: u.id, purpose: "video_clip", objectKey: `video-clip/${id}/x`, contentType: "video/mp4", bytes: 100n, status: "ready", variants: [], driver: "r2", fileId: id, kind: "video", lengthMs } as never,
     });
     await db.uploadTicket.create({ data: { id, bytes: 100n, contentType: "video/mp4", purpose: "video-clip", subjectId: wish } });
     if (file) t.storage.put(`video-clip/${id}/x`, file, "video/mp4");

@@ -74,7 +74,7 @@ describe("R3: the render token and GET /v1/render/:token/wish", () => {
   }
   const addFile = async (ownerId: string, wishId: string, status: string, role = "photo") => {
     const id = ids.next();
-    await k.db.storedFile.create({ data: { id, ownerAccountId: ownerId, purpose: "wish_photo", status, contentType: "image/jpeg", bytes: 10n, objectKey: `r3/${id}`, variants: [], driver: "r2" } as never });
+    await k.db.storedFile.create({ data: { cleanAt: new Date(), id, ownerAccountId: ownerId, purpose: "wish_photo", status, contentType: "image/jpeg", bytes: 10n, objectKey: `r3/${id}`, variants: [], driver: "r2" } as never });
     await k.db.wishFile.create({ data: { id: ids.next(), wishId, fileId: id, role } as never });
     return id;
   };
@@ -153,7 +153,7 @@ describe("R3: the render token and GET /v1/render/:token/wish", () => {
     await k.db.style.create({ data: { id: styleId, slug, on: true, name: "Gold hour", level: "free", house: false } as never });
     await k.db.studioStyle.create({ data: { id: styleId, status: "live", liveAt: NOW, document: doc, version: 1 } });
     const asset = ids.next();
-    await k.db.storedFile.create({ data: { id: asset, purpose: "studio_asset", status: "ready", contentType: "image/png", bytes: 10n, objectKey: `r3/${asset}`, variants: [], driver: "r2", styleId } as never });
+    await k.db.storedFile.create({ data: { cleanAt: new Date(), id: asset, purpose: "studio_asset", status: "ready", contentType: "image/png", bytes: 10n, objectKey: `r3/${asset}`, variants: [], driver: "r2", styleId } as never });
     const { a, w } = await wishFor({ styleSlug: slug });
     const r = await rendering(w, a.auth);
     const res = await readWish(r.token).expect(200);

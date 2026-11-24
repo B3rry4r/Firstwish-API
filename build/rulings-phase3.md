@@ -1310,3 +1310,18 @@ HG1 (give race) Two staff giving one Concierge order: the code is right (overlap
 - IK6c (24 Nov, the lead): the server does not need a checkout of the website to record. The website serves its own
   stepped clock as a plain file under the render path; the recorder reads it from the web origin at each render
   (pinned by its hash when one is set). Built with the wiring (R6) and a small web change.
+- IK6d (24 Nov, the lead, on the check of the recorder; Default (lead), owner may override): the recorder's browser may
+  reach only the listed hosts, matched by host AND port (an entry with no port means that scheme's own port only). A
+  WebSocket, WebRTC and WebTransport are never allowed (the render page needs none), whatever the list says. The
+  metadata address is blocked in every written form (IPv4, IPv4-mapped IPv6, decimal).
+- IK6e (24 Nov, the lead; replaces IK6c's detail and the check's "the pin must be required"): the website serves the
+  clock's page script (the text of CLOCK_SHIM only: a script for the page, never code the server runs) at
+  /render-clock.js; the recorder fetches it from the web origin at each render (size cap, the allow-list), and BEFORE
+  it records it checks the clock in a blank page: k steps move Date.now and performance.now by exactly k steps and
+  fire the frame callback exactly k times; a clock that fails is "clock drift" and nothing is recorded. The hash pin
+  stays, optional. Why not a required hash: it would stop every recording at each website release that touches the
+  file until someone changed a setting. No code fetched from the website is ever run by the server itself.
+- IK6f (24 Nov, the lead): a recording is repeatable: the clock freezes from the first script at virtual time 0 and
+  at a wall time the recorder gives (the render job's own start, to the second); two renders given the same wall
+  time and content give the same frames. An error thrown in a stepped timer or frame callback is a page error: the
+  recording fails, never a video handed out as good.

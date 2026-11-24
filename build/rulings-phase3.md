@@ -1325,3 +1325,10 @@ HG1 (give race) Two staff giving one Concierge order: the code is right (overlap
   at a wall time the recorder gives (the render job's own start, to the second); two renders given the same wall
   time and content give the same frames. An error thrown in a stepped timer or frame callback is a page error: the
   recording fails, never a video handed out as good.
+- IM1a (24 Nov, the lead, on round 23's hand-back; Default (lead), owner may override): the clean copy REPLACES the
+  upload: no untouched original is kept anywhere. A JPEG or WebP is saved again at quality 92, turned upright; a
+  picture the server cannot open is refused at upload, in words.
+- IM3 (24 Nov, the lead): a voice, a clip and a Studio media file carry location and device tags too (seen with
+  ffprobe on an m4a and an mp4). They are removed at confirm by ffmpeg without re-encoding (the server already needs
+  ffmpeg and ffprobe for clip lengths and the video maker); a file ffmpeg cannot rewrite is refused in words. Until a
+  stored file is clean it is handed to no one but its owner, as for photos.

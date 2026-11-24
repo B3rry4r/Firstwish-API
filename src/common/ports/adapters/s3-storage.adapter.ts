@@ -99,6 +99,40 @@ export class S3Storage extends StoragePort {
     }
   }
 
+  async readObject(key: string, maxBytes: number): Promise<Buffer | null> {
+    try {
+      const r = await this.client.send(new GetObjectCommand({ Bucket: this.config.bucket, Key: key }));
+      if (r.ContentLength !== undefined && r.ContentLength > maxBytes) {
+        // the body is never read: the connection is dropped
+        (r.Body as { destroy?: () => void } | undefined)?.destroy?.();
+        throw new Error(`The stored file is larger than the ${maxBytes} bytes this read allows.`);
+      }
+      if (!r.Body) return Buffer.alloc(0);
+      const tooBig = () => new Error(`The stored file is larger than the ${maxBytes} bytes this read allows.`);
+      const body = r.Body as unknown as AsyncIterable<Uint8Array> & { destroy?: () => void };
+      if (typeof body[Symbol.asyncIterator] !== "function") {
+        const bytes = Buffer.from(await r.Body.transformToByteArray());
+        if (bytes.length > maxBytes) throw tooBig();
+        return bytes;
+      }
+      // no (or a wrong) ContentLength: count the bytes as they arrive and stop at the first byte past the limit
+      const chunks: Buffer[] = [];
+      let total = 0;
+      for await (const c of body) {
+        total += c.length;
+        if (total > maxBytes) {
+          body.destroy?.();
+          throw tooBig();
+        }
+        chunks.push(Buffer.from(c));
+      }
+      return Buffer.concat(chunks, total);
+    } catch (e) {
+      if (isMissing(e)) return null;
+      throw e;
+    }
+  }
+
   async delete(key: string): Promise<void> {
     await this.client.send(new DeleteObjectCommand({ Bucket: this.config.bucket, Key: key }));
   }

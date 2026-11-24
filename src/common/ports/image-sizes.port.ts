@@ -24,6 +24,9 @@ export interface CleanResult {
   unchanged?: boolean;
 }
 
+/** A picture that cannot be opened (damaged, too many pixels, a kind not read): the uploader's to fix. Any other failure of a clean is the server's. */
+export class UnopenablePicture extends Error {}
+
 /** The largest source a sizing job holds in memory: the largest image an upload rule takes (a Vault file, 100 MB). A photo is 15 MB. */
 export const MAX_SOURCE_BYTES = 100 * 1024 * 1024;
 

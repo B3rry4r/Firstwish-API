@@ -5,7 +5,8 @@ import { Clock } from "../../common/ports/clock.port";
 import { CleanResult, ImageSizesPort } from "../../common/ports/image-sizes.port";
 import { MediaCleanPort } from "../../common/ports/media-clean.port";
 import { isCleanableMedia } from "../../common/ports/adapters/ffmpeg-media-clean.adapter";
-import { isImage } from "./file-rules";
+import { isImage, stagingKeyOf } from "./file-rules";
+import { StoragePort } from "../../common/ports/storage.port";
 
 /** The words a reader gets for a stored picture the server cannot open (a HEIC stored before round 23, a damaged file): never a broken picture. */
 export const PHOTO_NOT_SHOWN = "This picture is in a kind we cannot open. Send it again as a JPEG or PNG.";
@@ -33,6 +34,7 @@ export class PhotoCleaner {
     private readonly sizes: ImageSizesPort,
     private readonly clock: Clock,
     private readonly media: MediaCleanPort,
+    private readonly storage: StoragePort,
   ) {}
 
   /** IM1: at confirm, the picture at `key` made clean in place (its own key). Rejects with plain words when it cannot be opened. */
@@ -53,6 +55,12 @@ export class PhotoCleaner {
       const out = isImage(file.contentType)
         ? await this.sizes.clean({ sourceKey: file.objectKey, targetKey: file.objectKey, contentType: file.contentType })
         : await this.media.clean({ key: file.objectKey, contentType: file.contentType });
+      // M2: the file may be erased between the read and the put: what was written is then removed (the same rule as the sizing job), and nothing is marked.
+      if (!(await this.db.storedFile.findUnique({ where: { id: file.id }, select: { id: true } }))) {
+        await this.storage.delete(file.objectKey);
+        await this.storage.delete(stagingKeyOf(file.objectKey));
+        return false;
+      }
       const kept = out.unchanged ? (out.sha256 ? { sha256: out.sha256 } : {}) : { bytes: BigInt(out.bytes), sha256: out.sha256 };
       await this.db.storedFile.updateMany({ where: { id: file.id, cleanAt: null }, data: { cleanAt: this.clock.now(), ...kept } });
       return true;

@@ -7,6 +7,7 @@ import type { Env } from "../../common/env/env";
 import { AppError } from "../../common/errors/app-error";
 import { isCleanableMedia } from "../../common/ports/adapters/ffmpeg-media-clean.adapter";
 import { MediaToolUnavailable } from "../../common/ports/media-clean.port";
+import { UnopenablePicture } from "../../common/ports/image-sizes.port";
 import { isPortTimeout } from "../../common/ports/time-limit";
 import type { UserPrincipal } from "../../common/auth/principal";
 import { Clock } from "../../common/ports/clock.port";
@@ -407,7 +408,12 @@ export class StoredFilesService {
         cleanAt = this.clock.now();
         seen = (await this.storage.readStart(objectKey, 64)) ?? head;
       } catch (e) {
-        return this.refuse(id, objectKey, refused(e instanceof Error ? e.message : "We could not open this picture. Send a JPEG or PNG."));
+        if (!(e instanceof UnopenablePicture)) {
+          // M1: the server could not do it (time limit, storage, memory): not the uploader's fault. The upload is kept, unconfirmed, and can be confirmed again; the sweep reaps it if not.
+          await this.db.storedFile.updateMany({ where: { id, status: "uploaded" }, data: { status: "pending" } });
+          throw new AppError(HttpStatus.SERVICE_UNAVAILABLE, "picture_check_unavailable", "We could not check this picture just now. Nothing was lost. Try again in a moment.");
+        }
+        return this.refuse(id, objectKey, refused(e.message));
       }
     }
     // IM3: a voice, a clip or a Studio sound is rewritten here with no location or device tags and no re-encoding; the clean file replaces the upload, and its size

@@ -1,0 +1,133 @@
+<title>Firstwish Build Board</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600&display=swap">
+<style>
+/* One screen, no scroll: a six-step track on top, four bars left, the 18 wiring parts as pills right (the part in flight shows its stage), what the owner holds below. */
+:root{
+  --bg:#0b0a09; --panel:#151311; --line:#2a2623; --fg:#f3efe9; --dim:#9a9189;
+  --accent:#c8693a; --done:#5fa978; --built:#d8a23c; --next:#c8693a; --idle:#3a3531;
+  --display:"Bebas Neue","Arial Narrow",Impact,sans-serif; --text:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;
+  color-scheme:dark;
+}
+@media (prefers-color-scheme: light){ :root:not([data-theme="dark"]){
+  --bg:#f5f1ea; --panel:#fffdf9; --line:#ddd5ca; --fg:#16130f; --dim:#6d655d;
+  --accent:#b4552a; --done:#2f7d4f; --built:#a8770f; --next:#b4552a; --idle:#d9d1c6; color-scheme:light } }
+:root[data-theme="light"]{
+  --bg:#f5f1ea; --panel:#fffdf9; --line:#ddd5ca; --fg:#16130f; --dim:#6d655d;
+  --accent:#b4552a; --done:#2f7d4f; --built:#a8770f; --next:#b4552a; --idle:#d9d1c6; color-scheme:light }
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font:13px/1.35 var(--text);padding-block:14px;
+  padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}
+.wrap{max-width:1120px;margin:0 auto;display:grid;gap:12px}
+.top{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}
+h1{font:400 30px/1 var(--display);letter-spacing:.04em;margin:0}
+h1 b{color:var(--accent);font-weight:400}
+.when{color:var(--dim);font-size:12px}
+h2{font:400 15px/1 var(--display);letter-spacing:.12em;color:var(--dim);margin:0 0 8px}
+.card{background:var(--panel);border:1px solid var(--line);padding:12px;min-width:0}
+
+/* the track */
+.track{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:0;position:relative}
+.step{position:relative;padding-top:20px;text-align:center;min-width:0}
+.step::before{content:"";position:absolute;top:6px;left:0;right:0;height:3px;background:var(--idle)}
+.step.done::before{background:var(--done)}
+.step.now::before{background:linear-gradient(90deg,var(--accent) 4%,var(--idle) 4%)}
+.step i{position:absolute;top:0;left:50%;width:15px;height:15px;margin-left:-7.5px;border-radius:50%;background:var(--idle);border:3px solid var(--panel)}
+.step.done i{background:var(--done)} .step.now i{background:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 30%,transparent)}
+.step b{display:block;font:400 15px/1.05 var(--display);letter-spacing:.06em}
+.step span{display:block;color:var(--dim);font-size:11px;line-height:1.25;margin-top:2px}
+.step.now b{color:var(--accent)}
+
+.mid{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:12px}
+@media (max-width:760px){ .mid{grid-template-columns:minmax(0,1fr);gap:8px} .wrap{gap:8px} body{padding-block:10px} h1{font-size:24px}
+  .card{padding:9px 10px} h2{margin-bottom:6px;font-size:14px} .step span{font-size:10px} .step b{font-size:13px}
+  .bars{gap:6px} .rail{height:7px;margin-top:3px} .pills{gap:4px} .pill{font-size:11px;padding:5px 7px;gap:5px}
+  .key{margin-top:6px;gap:6px 10px} .bars + .key, .note, .when span{display:none} }
+
+/* bars */
+.bars{display:grid;gap:9px}
+.bar .lab{display:flex;justify-content:space-between;gap:8px;font-size:12px}
+.bar .lab b{font-weight:600} .bar .lab em{font-style:normal;color:var(--dim);font-variant-numeric:tabular-nums}
+.rail{height:9px;background:var(--idle);margin-top:4px;display:flex;overflow:hidden}
+.rail u{display:block;height:100%;background:var(--done)} .rail u.b{background:var(--built)}
+
+/* pills */
+.pills{display:flex;flex-wrap:wrap;gap:6px}
+.pill{font-size:11.5px;line-height:1;padding:6px 9px;border:1px solid var(--line);border-radius:999px;white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
+.pill::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--idle);flex:none}
+.pill.d{border-color:color-mix(in srgb,var(--done) 55%,var(--line))} .pill.d::before{background:var(--done)}
+.pill.b{border-color:color-mix(in srgb,var(--built) 55%,var(--line))} .pill.b::before{background:var(--built)}
+.pill.n{border-color:var(--next);color:var(--next)} .pill.n::before{background:var(--next)}
+.pill.i{color:var(--dim)}
+.pill.o{border-style:dashed;color:var(--fg)} .pill.o::before{background:transparent;border:1.5px solid var(--accent)}
+.pill em{font-style:normal;color:var(--dim);font-variant-numeric:tabular-nums}
+.pill.n em{color:inherit;opacity:.8}
+.fly{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;font-size:12px;margin:0 0 6px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+.fly b{font:400 14px/1 var(--display);letter-spacing:.1em;color:var(--accent)}
+.fly span{font-weight:600}
+@media (max-width:760px){ .fly{margin-bottom:4px;padding-bottom:4px} }
+.stg{display:inline-flex;gap:0;margin-left:auto}
+.stg i{font-style:normal;font-size:10.5px;line-height:1;padding:4px 7px;border:1px solid var(--line);color:var(--dim);margin-left:-1px}
+.stg i.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.stg i.ok{color:var(--done);border-color:color-mix(in srgb,var(--done) 55%,var(--line))}
+.key{display:flex;flex-wrap:wrap;gap:10px 14px;color:var(--dim);font-size:11px;margin-top:9px}
+.key span{display:inline-flex;align-items:center;gap:5px}
+.key span::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--idle)}
+.key .d::before{background:var(--done)} .key .b::before{background:var(--built)} .key .n::before{background:var(--next)}
+.foot{display:grid;grid-template-columns:minmax(0,1fr);gap:0}
+.note{color:var(--dim);font-size:11px;margin:8px 0 0}
+</style>
+
+<div class="wrap">
+  <div class="top">
+    <h1>Firstwish <b>Build Board</b></h1>
+    <div class="when">Updated 24 Nov 2026, 15:27 UTC<span> · API on stand-ins · not working for real until step 6</span></div>
+  </div>
+
+  <div class="card">
+    <div class="track" role="list" aria-label="Steps of the build">
+      <div class="step done" role="listitem"><i></i><b>Screens</b><span>89 built</span></div>
+      <div class="step done" role="listitem"><i></i><b>Contract</b><span>288 endpoints</span></div>
+      <div class="step done" role="listitem"><i></i><b>Database</b><span>78 tables</span></div>
+      <div class="step done" role="listitem"><i></i><b>Build the API</b><span>23 of 23 in</span></div>
+      <div class="step now" role="listitem"><i></i><b>Wire screens</b><span>89 of 89, follow-ups left</span></div>
+      <div class="step" role="listitem"><i></i><b>Live check</b><span>real data</span></div>
+    </div>
+  </div>
+
+  <div class="mid">
+    <div class="card">
+      <h2>How far</h2>
+      <div class="bars">
+        <div class="bar"><div class="lab"><b>Screens reading from our server</b><em>89 of 89</em></div><div class="rail"><u style="width:100%"></u></div></div>
+        <div class="bar"><div class="lab"><b>Follow-up fixes done</b><em>957 of 963</em></div><div class="rail"><u style="width:99.4%"></u><u class="b" style="width:0.6%"></u></div></div>
+        <div class="bar"><div class="lab"><b>Old sample data and colours removed</b><em>237 of 526</em></div><div class="rail"><u style="width:45.1%"></u></div></div>
+        <div class="bar"><div class="lab"><b>Links to real services: code written</b><em>8 of 9</em></div><div class="rail"><u style="width:88.9%"></u><u class="b" style="width:11.1%"></u></div></div>
+        <div class="bar"><div class="lab"><b>Links run with your real keys</b><em>0 of 9</em></div><div class="rail"></div></div>
+      </div>
+      <div class="key"><span class="d">in and checked</span><span class="b">being built or checked</span></div>
+    </div>
+
+    <div class="card">
+      <h2>After the 89 screens: follow-ups</h2>
+      
+      <div class="fly"><b>Now</b><span>Video maker, task 5: the recorder</span><div class="stg" aria-label="Stage: second check"><i class="ok">Build</i><i class="ok">Check</i><i class="on">Fix</i><i>In</i></div></div>
+      <div class="pills">
+        <span class="pill d">All 89 screens wired</span><span class="pill d">Live test <em>2,351 of 2,351</em></span>
+        <span class="pill d">Server rounds 11 to 23</span><span class="pill d">Studio and creator fixes</span>
+        <span class="pill d">Photo resizing: real</span><span class="pill d">No hidden location</span>
+        <span class="pill n">Video 5 of 9 <em>last fix</em></span><span class="pill b">43 styles recorded <em>in check</em></span>
+        <span class="pill i">Sized photos on screens <em>next</em></span><span class="pill o">248 colours: your call</span>
+      </div>
+      <div class="key"><span class="d">in</span><span class="b">being checked</span><span class="n">building now</span><span>not started</span></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Only you can give these</h2>
+    <div class="pills">
+      <span class="pill o">Paystack keys</span><span class="pill o">Google ID</span><span class="pill o">Anthropic key</span><span class="pill o">Resend and DNS</span><span class="pill o">DigitalOcean</span><span class="pill o">R2 or Spaces</span><span class="pill o">Domain</span><span class="pill o">GitHub billing</span>
+    </div>
+    <p class="note">The real links are written; none has been run with real keys yet. Until then tests use stand-ins.</p>
+  </div>
+</div>

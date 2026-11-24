@@ -1302,3 +1302,11 @@ HG1 (give race) Two staff giving one Concierge order: the code is right (overlap
   upload accepts (the server's rule and the web's file picker), so an iPhone hands over a JPEG as it does for any
   site that does not ask for HEIC; a HEIC sent anyway is refused in words that say to send a JPEG or PNG. (No
   HEIC decoder ships with the image library; adding one is a licence matter.)
+- IK6b (24 Nov, the lead, on the recorder's hand-back; Default (lead), owner may override): a wish's opening and its
+  ending stay whole in the video even when the two alone pass the asked length (as built: an 8 second ask on a film
+  gave 12.2 seconds). At the real limit of 60 seconds no style may have an opening and ending that together pass
+  it: the render sweep (R4C) and the real-host proof (R9) measure this, and a style that does is a fault of that
+  style, fixed there, never a cut-off ending.
+- IK6c (24 Nov, the lead): the server does not need a checkout of the website to record. The website serves its own
+  stepped clock as a plain file under the render path; the recorder reads it from the web origin at each render
+  (pinned by its hash when one is set). Built with the wiring (R6) and a small web change.

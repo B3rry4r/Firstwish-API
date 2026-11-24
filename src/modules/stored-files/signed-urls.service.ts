@@ -8,7 +8,7 @@ import { StoragePort } from "../../common/ports/storage.port";
 import { toWireInstant } from "../../common/time/time";
 import type { InternalSignedUrlsSignedReadBody, SignedUrl } from "../../contracts";
 import { IMAGE_WIDTHS, isUuid, READ_TTL_SECONDS, variantsOf } from "./file-rules";
-import { photoNotShown, PhotoCleaner } from "./photo-cleaner";
+import { needsCleaning, photoNotShown, PhotoCleaner } from "./photo-cleaner";
 import { businessAccessOf } from "./vault-access";
 
 /**
@@ -69,12 +69,12 @@ export class SignedUrlsService {
   }
 
   /**
-   * IM1: the address of a picture is given only for bytes that are clean. A picture not yet clean (stored before round 23) is made clean now, and the
+   * IM1 and IM3: the address of a picture, a voice, a clip or a video is given only for bytes that are clean. A picture not yet clean (stored before round 23) is made clean now, and the
    * read waits for it. One that cannot be opened (a HEIC stored before, a damaged file) is given to no one but its own owner (the owner reads their
    * own file; a Vault's owner, theirs): everyone else gets the plain words (a 404 that the reads which leave out a file they cannot give leave out).
    */
   private async cleanFirst(file: FileRow, reader: Reader): Promise<void> {
-    if (!file.contentType.startsWith("image/") || file.cleanAt) return;
+    if (!needsCleaning(file.contentType) || file.cleanAt) return;
     if (await this.cleaner.cleanStored(file)) {
       file.cleanAt = this.clock.now();
       return;
@@ -83,7 +83,7 @@ export class SignedUrlsService {
       const mine = reader.type === "owner" ? file.ownerAccountId === reader.accountId : file.businessId !== null && (await businessAccessOf(this.db, reader.accountId)).owned.includes(file.businessId);
       if (mine) return;
     }
-    throw photoNotShown();
+    throw photoNotShown(file.contentType);
   }
 
   private async grant(file: FileRow, variant: string, ttlSeconds: number): Promise<SignedRead> {

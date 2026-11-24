@@ -5,6 +5,9 @@ import { ENV } from "../../common/env/env.module";
 import { fileNameTag } from "../../common/env/env";
 import type { Env } from "../../common/env/env";
 import { AppError } from "../../common/errors/app-error";
+import { isCleanableMedia } from "../../common/ports/adapters/ffmpeg-media-clean.adapter";
+import { MediaToolUnavailable } from "../../common/ports/media-clean.port";
+import { isPortTimeout } from "../../common/ports/time-limit";
 import type { UserPrincipal } from "../../common/auth/principal";
 import { Clock } from "../../common/ports/clock.port";
 import { CodeGenerator, IdGenerator } from "../../common/ports/ids.port";
@@ -405,6 +408,20 @@ export class StoredFilesService {
         seen = (await this.storage.readStart(objectKey, 64)) ?? head;
       } catch (e) {
         return this.refuse(id, objectKey, refused(e instanceof Error ? e.message : "We could not open this picture. Send a JPEG or PNG."));
+      }
+    }
+    // IM3: a voice, a clip or a Studio sound is rewritten here with no location or device tags and no re-encoding; the clean file replaces the upload, and its size
+    // and sha-256 are the file's from now on. A file ffmpeg cannot rewrite is refused in words; with ffmpeg missing on the server nothing of these kinds is kept.
+    if (isCleanableMedia(type)) {
+      try {
+        const out = await this.cleaner.makeCleanMedia(objectKey, type);
+        if (!out.unchanged) size = out.bytes;
+        sha256 = out.sha256;
+        cleanAt = this.clock.now();
+        seen = (await this.storage.readStart(objectKey, 64)) ?? head;
+      } catch (e) {
+        if (e instanceof MediaToolUnavailable || isPortTimeout(e)) return this.refuse(id, objectKey, new AppError(HttpStatus.SERVICE_UNAVAILABLE, "media_tool_unavailable", "Voices, clips and videos cannot be taken right now. Nothing was kept. Try again later."));
+        return this.refuse(id, objectKey, refused(e instanceof Error ? e.message : "We could not rewrite this file. Send a different recording."));
       }
     }
     const screened = await this.screening.screen({ objectKey, contentType: type }, size, seen);

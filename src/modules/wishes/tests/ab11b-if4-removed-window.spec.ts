@@ -85,7 +85,7 @@ describe("IF4 a removed wish: the day it can be brought back until, then the era
       const id = ids.next();
       const objectKey = `files/${id}`;
       t.storage.put(objectKey, WEBM(4000), "audio/webm");
-      await db.storedFile.create({ data: { id, ownerAccountId: w.me.id, purpose: "voice_note", objectKey, contentType: "audio/webm", bytes: BigInt(4000), status: "ready", driver: "r2", variants: [] } as never });
+      await db.storedFile.create({ data: { cleanAt: new Date(), id, ownerAccountId: w.me.id, purpose: "voice_note", objectKey, contentType: "audio/webm", bytes: BigInt(4000), status: "ready", driver: "r2", variants: [] } as never });
       await db.voiceNote.create({ data: { id, wishId: w.id, seconds: 12 } });
       await db.wishGatherVoice.create({ data: { id, wishId: w.id, fromName: n } });
       voices.push(id);

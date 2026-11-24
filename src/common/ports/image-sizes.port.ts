@@ -5,7 +5,12 @@ export interface ResizeInput {
   targetKey: string;
   width: number;
   contentType: string;
+  /** The source bytes, when the caller already holds them (one read for all the widths of a photo); else the adapter reads sourceKey. */
+  source?: Buffer;
 }
+
+/** The largest source a sizing job holds in memory: the largest image an upload rule takes (a Vault file, 100 MB). A photo is 15 MB. */
+export const MAX_SOURCE_BYTES = 100 * 1024 * 1024;
 
 /**
  * Image sizes (X22): makes one width of a stored image under its own key, inside storage. The real adapter is SharpImageSizes

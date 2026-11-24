@@ -1,11 +1,9 @@
 import sharp from "sharp";
-import { ImageSizesPort, ResizeInput } from "../image-sizes.port";
+import { ImageSizesPort, MAX_SOURCE_BYTES, ResizeInput } from "../image-sizes.port";
 import { PING_OK, type PortPing, pingError } from "../ping";
 import { StoragePort } from "../storage.port";
 
-const MB = 1024 * 1024;
-/** The largest source this adapter holds in memory: the largest image an upload rule takes (a Vault file, 100 MB). A photo is 15 MB. */
-export const MAX_SOURCE_BYTES = 100 * MB;
+export { MAX_SOURCE_BYTES };
 /** Decompression-bomb limit: a picture of more pixels than this is refused from its header, before any pixel is decoded (a 108 MP phone photo is under it). */
 export const MAX_SOURCE_PIXELS = 128_000_000;
 
@@ -47,7 +45,7 @@ export class SharpImageSizes extends ImageSizesPort {
     const out = OUT[type];
     if (!out) throw new Error(`Pictures of type ${type} cannot be sized.`);
     if (!Number.isInteger(input.width) || input.width < 1 || input.width > 16_000) throw new Error("The width asked for is not a size this server makes.");
-    const source = await this.storage.readObject(input.sourceKey, MAX_SOURCE_BYTES);
+    const source = input.source ?? (await this.storage.readObject(input.sourceKey, MAX_SOURCE_BYTES));
     if (!source) throw new Error("The picture to size is not in storage.");
     let bytes: Buffer;
     try {

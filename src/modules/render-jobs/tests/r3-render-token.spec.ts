@@ -1,7 +1,7 @@
 import { Logger } from "@nestjs/common";
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
-import { RUN, testSlug, testWishNo } from "../../../../test/kit/unique";
+import { testSlug, testWishNo } from "../../../../test/kit/unique";
 import { boot, ids, routeStorage } from "../../concierge/tests/kit";
 import { RenderJobsService } from "../render-jobs.service";
 import { StandinVideoRenderer, VideoRenderer } from "../video-renderer";
@@ -17,7 +17,6 @@ describe("R3: the render token and GET /v1/render/:token/wish", () => {
   let route: ReturnType<typeof routeStorage>;
   let renderer: StandinVideoRenderer;
   let svc: RenderJobsService;
-  let seq = 0;
   const logged: string[] = [];
   const spies: jest.SpyInstance[] = [];
 
@@ -157,7 +156,7 @@ describe("R3: the render token and GET /v1/render/:token/wish", () => {
     const res = await readWish(r.token).expect(200);
     expect(res.body.style.style).toBe(slug);
     expect(res.body.style.document).toMatchObject({ id: styleId, name: "Gold hour", base: "noir" });
-    expect(res.body.style.items.map((i: Body) => i.fileId)).toEqual([asset]);
+    expect((res.body.style.items as Body[]).map((i) => i.fileId as string)).toEqual([asset]);
     expect(Date.parse(res.body.style.items[0].expiresAt)).toBe(NOW.getTime() + 1800_000);
     await r.finish();
   });
@@ -286,8 +285,8 @@ describe("R3: the render token and GET /v1/render/:token/wish", () => {
     const r = await rendering(x.w, x.a.auth);
     const res = await readWish(r.token).expect(200);
     const pub = await http().get(`/v1/w/${slug}`).expect(200);
-    expect(res.body.wish.files.map((f: Body) => f.fileId)).toEqual([ready]);
-    expect(pub.body.files.map((f: Body) => f.fileId)).toEqual([ready]);
+    expect((res.body.wish.files as Body[]).map((f) => f.fileId as string)).toEqual([ready]);
+    expect((pub.body.files as Body[]).map((f) => f.fileId as string)).toEqual([ready]);
     expect(res.body.wish.slug).toBe(slug);
     await r.finish();
   });
@@ -333,7 +332,5 @@ describe("R3: the render token and GET /v1/render/:token/wish", () => {
     expect(res.headers["retry-after"]).toBeDefined();
     expect(res.headers["cache-control"]).toBe("no-store");
     expect((await readWish("a".repeat(43))).headers["cache-control"]).toBe("no-store");
-    expect(RUN).toBeDefined();
-    seq++;
   });
 });

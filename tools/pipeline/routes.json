@@ -2009,6 +2009,15 @@
         "public"
       ],
       "decision": "DEC-309"
+    },
+    {
+      "resource": "RenderJob",
+      "method": "GET",
+      "path": "/v1/render/:token/wish",
+      "auth": [
+        "public"
+      ],
+      "decision": "DEC-326"
     }
   ],
   "fulfilment": {
@@ -3288,6 +3297,14 @@
         "entity": "SampleWish",
         "cardinality": "list",
         "note": "the samples of a kind (every kind when none is named), 44 at most, in one answer with nextCursor null (DEC-309)"
+      }
+    },
+    "GET /v1/render/:token/wish": {
+      "decision": "DEC-326",
+      "response": {
+        "entity": "RenderJob",
+        "cardinality": "single",
+        "note": "{kind, seconds, width, height, wish, style}: what the web's render page reads to play one wish with no gate: wish is the public link's view as a receiver gets it after a right unlock (state open, the opening passed, content without any secret, signed file addresses), style is {style, items, document} as the player's style read gives it (RenderWish, hand-kept); read once with the render's one-use token, no session (DEC-326)"
       }
     }
   },

@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "frozenAt": "2026-11-23T20:49:25Z",
+  "frozenAt": "2026-11-24T00:20:46Z",
   "framework": "nestjs",
   "generatedBy": "tools/pipeline/reconcile.py",
   "resources": [
@@ -17777,6 +17777,31 @@
         }
       ],
       "endpoints": [
+        {
+          "id": "E-289",
+          "method": "GET",
+          "path": "/v1/render/:token/wish",
+          "auth": [
+            {
+              "kind": "public"
+            }
+          ],
+          "body": [],
+          "response": {
+            "entity": "RenderJob",
+            "cardinality": "single",
+            "note": "{kind, seconds, width, height, wish, style}: what the web's render page reads to play one wish with no gate: wish is the public link's view as a receiver gets it after a right unlock (state open, the opening passed, content without any secret, signed file addresses), style is {style, items, document} as the player's style read gives it (RenderWish, hand-kept); read once with the render's one-use token, no session (DEC-326)"
+          },
+          "sources": [
+            {
+              "src": "DEC-326",
+              "via": "ruling:DEC-326"
+            }
+          ],
+          "notes": [
+            "body by DEC-326"
+          ]
+        },
         {
           "id": "E-147",
           "method": "GET",

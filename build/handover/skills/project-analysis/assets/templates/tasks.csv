@@ -1,0 +1,14 @@
+id,area,title,size,kind,tier,bundle,depends_on,source,wait_days
+S1,Setup,"Repos, CI on every push, gates and environments",M,ops,T1,,,brief,
+S2,Setup,"Backend skeleton, core schema and migrations",M,backend,T1,,S1,brief,
+S3,Setup,"Local test stack in one command",M,ops,T1,,S2,brief,
+O1,Owner,"Payment provider sandbox keys",,owner,,,,brief,5
+M1,Money,"Wallet open and balance from the provider",M,backend,T2,MB1,S2;O1,canvas W1,
+M2,Money,"Add money and its webhook",M,backend,T2,MB1,M1,canvas W2,
+M3,Money,"Wallet screens: home, add money, send",M,app,T2,MA1,M1,canvas W1-W8,
+A1,Auth,"Sign-up and sign-in screens",M,app,T1,AU1,S2,canvas A1-A4,
+A2,Auth,"Forgot password screens",S,app,T1,AU1,A1,canvas A5-A6,
+C1,Copy,"Store copy and legal links",S,app,T0,,A1,brief,
+Q1,QA,"Checkpoint audit of the money flows (agents that built none of them)",M,qa,T2,,M3,brief,
+R1,Release,"Store builds and submissions",M,release,T1,,Q1;O2,brief,
+O2,Owner,"Apple and Google developer accounts and store listings",,owner,,,,brief,7

@@ -1,0 +1,87 @@
+name: Gates
+
+# The executable form of the project's build laws.
+#
+# Every rule this repo has about stubs, fixtures, dead controls, forked
+# components and hand-typed wire shapes lives in scripts/gates/ as code that
+# exits non-zero. A rule that lives only in a skill file, a CLAUDE.md, or a
+# code review is a rule that gets re-broken by the next agent within the hour;
+# this workflow is what makes them stick to any contributor, human or model,
+# on any model tier, forever.
+#
+# Adopting an existing violation is deliberate and is the lead's or owner's act,
+# in its own commit: `python3 scripts/gates/run.py --accept` writes it to
+# scripts/gates/baseline.json, where it needs an owner and a reason. A builder
+# never edits a baseline entry or a gate to get green. Nothing else silences a
+# gate.
+#
+# If main already has FAIL lines, replace the "Run gates" step with
+#   python3 scripts/gates/compare.py --base origin/main
+# (it needs `fetch-depth: 0` on checkout): the check is "same FAIL lines as
+# main", not zero.
+
+on:
+  push:
+    branches: [ '**' ]      # every work branch, so the suite runs BEFORE merge
+  pull_request:
+  workflow_dispatch:
+
+# A branch with a PR fires both `push` and `pull_request`. One group per branch name
+# (head_ref on a PR, ref_name on a push) lets the newest run replace the older one, so a
+# PR branch is checked once, not twice. A push-only branch (no PR yet) still runs.
+concurrency:
+  group: gates-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  gates:
+    name: Executable gates
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Run gates
+        run: python3 scripts/gates/run.py
+
+      - name: Machine-readable report
+        if: always()
+        run: python3 scripts/gates/run.py --json > gate-report.json || true
+
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gate-report
+          path: gate-report.json
+
+  baseline-hygiene:
+    name: Baseline entries have an owner and a reason
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Check baseline
+        run: python3 scripts/gates/check_baseline.py
+
+  tests:
+    # Merge needs this green. Agents run only the affected specs and never wait on this job;
+    # the full suite (unit, protected-route and contract checks) runs here, on
+    # the pushed branch, not for the first time after merge. Edit the steps to
+    # the repo's stack and add the services the suite needs.
+    name: Full test suite
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Full suite
+        run: npm test

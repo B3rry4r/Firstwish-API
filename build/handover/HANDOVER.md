@@ -1,7 +1,20 @@
 # Firstwish build: handover (written 24 Nov 2026)
 
 Read this first in a new chat. It says what is being built, where everything is, what is done, what is half done,
-what comes next in order, and the rules the owner has set. The last section, "State at the stop", is the newest.
+what comes next in order, and the rules the owner has set.
+
+Reading order: this file; then `PROTOCOL.md` (how chats work together and what every chat must write down); then
+`JOURNAL.md` (the diary: its LAST entry is the newest state, newer than section 9 here); then the owner's skills
+(by name on the account, or the exact copies in `skills/`). Do not spawn anything before all four are read.
+
+## 0. The machine (a fresh build machine needs this before any test runs)
+
+Node 22; PostgreSQL 16 (`pg_ctlcluster 16 main start`; a role `firstwish` with password `firstwish` that may
+create databases: see `.env.example`); Redis (`redis-server --daemonize yes --dir <a folder>`); ffmpeg and
+ffprobe; Chromium with Playwright (pre-installed on Claude's cloud machines at `/opt/pw-browsers/chromium`; do
+not install another). If PostgreSQL or Redis is missing, install it (or put it in the environment's set-up
+script) before anything else. `npm ci` and `npx prisma generate` in each worktree. The server's own `README.md`
+has the rest. Google Fonts is blocked on the build machine (real fonts were never measured).
 
 ## 1. What this is
 
@@ -34,7 +47,10 @@ must be REAL code, so that all the owner does is hand over API keys. No stubs, n
 | Rules every agent reads | `build/common-rules.md`, `build/prompts/P6-COMMON.md` |
 | The contract (frozen registry, 288 endpoints; newest decision DEC-329) | `.pipeline/registry.json`, `.pipeline/declared/`, `.pipeline/env-manifest.json` |
 | Follow-up rows on wired screens (956 done, 6 open) | `.pipeline/ui-align-tasks.json` |
-| The full working log of the build, newest at the END (very long: read only the last 60 lines) | `build/handover/working-log.md` |
+| How chats work together; what must be written down and where | `build/handover/PROTOCOL.md` |
+| The diary every chat appends to (newest LAST) | `build/handover/JOURNAL.md` |
+| The owner's six skills, exact copies (the workflow) | `build/handover/skills/` |
+| The first chat's full working log up to 24 Nov (very long: read only the last 60 lines, and only if needed) | `build/handover/working-log.md` |
 | The owner's one-screen progress board (file + the script that measures it) | `build/handover/board/` |
 | The lead's merge and drive scripts (they hold the OLD temporary folder's path: change it) | `build/handover/scripts/` |
 | Verifier verdicts for the newest work | `build/handover/verdicts/` |

@@ -1,0 +1,87 @@
+{
+  "_comment": "Flutter/Dart example. Rename to gates.config.json and edit `repo`/`files`. See gates.config.example.node.json for a React/Next/TS variant. Delete this _comment key -- it is not read by run.py.",
+  "repo": "your-repo-name",
+  "stack": "flutter",
+  "files": {
+    "source": [
+      "lib/**/*.dart",
+      "test/**/*.dart",
+      "integration_test/**/*.dart"
+    ],
+    "test": [
+      "test/**",
+      "integration_test/**"
+    ],
+    "exclude": [
+      "**/*.g.dart",
+      "**/*.freezed.dart",
+      "**/*.mocks.dart",
+      "build/**",
+      ".dart_tool/**"
+    ]
+  },
+  "gates": {
+    "deferrals": {
+      "enabled": true,
+      "include_tests": false
+    },
+    "fake_data": {
+      "enabled": true,
+      "allow_paths": []
+    },
+    "wire_types": {
+      "enabled": true,
+      "data_layer": [
+        "lib/data/**"
+      ]
+    },
+    "forks": {
+      "enabled": true,
+      "min_name_length": 4,
+      "ignore_names": [
+        "State",
+        "Result",
+        "Data",
+        "Item",
+        "Model",
+        "Args",
+        "Params"
+      ]
+    },
+    "hardcoded_signals": {
+      "enabled": true,
+      "token_layer": [
+        "lib/theme/**"
+      ],
+      "check_colors": true,
+      "allow_paths": []
+    },
+    "dead_controls": {
+      "enabled": true
+    },
+    "product_invariants": {
+      "enabled": true,
+      "banned": [
+        {
+          "pattern": "\\blorem ipsum\\b",
+          "ruling": "EXAMPLE-1",
+          "why": "replace with a real product rule this project has actually made -- a banned term, a retired feature name, a claim the backend cannot back. See references/writing-a-gate.md."
+        }
+      ]
+    },
+    "pipeline_open_items": {
+      "enabled": false,
+      "require_pipeline": false,
+      "pipeline_dirs": [
+        ".pipeline"
+      ],
+      "_why": "Only fires if you're using the contract-driven-backend / admin-surface-extension pipeline skills, which write stubs.json / ui-align-tasks.json / conflicts.json to .pipeline/. Leave disabled otherwise -- there is nothing for it to read."
+    },
+    "provisional": {
+      "enabled": true
+    },
+    "unbacked_promises": {
+      "enabled": true
+    }
+  }
+}

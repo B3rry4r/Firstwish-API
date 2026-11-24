@@ -1,11 +1,13 @@
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { readdir, rm } from "node:fs/promises";
 import { createServer, type Server } from "node:http";
 import type { AddressInfo } from "node:net";
 import { tmpdir } from "node:os";
-import { ChromiumVideoRenderer, chooseScenes, DEFAULT_FONT_HOSTS, defaultAllowedHosts, hostAllowed, loadClockShim, maskToken, type ChromiumRendererOptions } from "../chromium-video-renderer";
+import { createSocket } from "node:dgram";
+import { createServer as createTcp } from "node:net";
+import { ChromiumVideoRenderer, chooseScenes, DEFAULT_FONT_HOSTS, defaultAllowedHosts, hostAllowed, maskToken, type ChromiumRendererOptions } from "../chromium-video-renderer";
 import { RENDER_TEMP_PREFIX, type RenderRequest } from "../video-renderer";
 
 /**
@@ -15,7 +17,8 @@ import { RENDER_TEMP_PREFIX, type RenderRequest } from "../video-renderer";
  * Where they are: RENDER_CHROMIUM_PATH, RENDER_CLOCK_PATH, RENDER_PLAYWRIGHT_MODULE (defaults are this machine's).
  */
 const CHROMIUM = process.env.RENDER_CHROMIUM_PATH || "/opt/pw-browsers/chromium";
-const CLOCK = process.env.RENDER_CLOCK_PATH || "/home/user/Firstwish-web/scripts/lib/stepped-clock.mjs";
+/* the web's page script for the clock: the stand-in serves its text as GET /render-clock.js (test code reads the web's pure module; the ADAPTER imports nothing) */
+const WEB_SHIM = process.env.WEB_CLOCK_SHIM_MJS || "/home/user/Firstwish-web/scripts/lib/clock-shim.mjs";
 const PLAYWRIGHT = process.env.RENDER_PLAYWRIGHT_MODULE || "/opt/node-tools/node_modules/playwright-core";
 const FFMPEG = process.env.RENDER_FFMPEG_PATH || "/usr/bin/ffmpeg";
 const FFPROBE = "/usr/bin/ffprobe";
@@ -23,7 +26,7 @@ const missing = [
   [CHROMIUM, "Chromium (RENDER_CHROMIUM_PATH)"],
   [FFMPEG, "ffmpeg"],
   [FFPROBE, "ffprobe"],
-  [CLOCK, "the web's scripts/lib/stepped-clock.mjs (RENDER_CLOCK_PATH)"],
+  [WEB_SHIM, "the web's scripts/lib/clock-shim.mjs (WEB_CLOCK_SHIM_MJS)"],
   [PLAYWRIGHT, "playwright-core (RENDER_PLAYWRIGHT_MODULE)"],
 ]
   .filter(([p]) => !existsSync(p))
@@ -33,7 +36,7 @@ const WHY = missing.length ? ` (SKIPPED: not on this machine: ${missing.join(", 
 
 const W = 360;
 const H = 640;
-const req = (token: string, over: Partial<RenderRequest> = {}): RenderRequest => ({ wishId: "w1", jobId: "r5job", kind: "status-video", width: W, height: H, seconds: 60, token, ...over });
+const req = (token: string, over: Partial<RenderRequest & { epochMs: number }> = {}): RenderRequest => ({ wishId: "w1", jobId: "r5job", kind: "status-video", width: W, height: H, seconds: 60, token, ...over });
 
 /** The stand-in web: /render/<token> is a page chosen by the token's first word. Scenes are 15 frames each (500 ms of stepped time). */
 const SCENES = `["opening","cover","a","b","c","d","ending"]`;
@@ -64,17 +67,68 @@ const pages: Record<string, (host: string, token: string) => string> = {
         }, ms));
         setTimeout(() => { if (frames < 30 || frames > 80) window.__render.error = "clock drift: " + frames + " frames"; }, 1600);
       }, 400);`),
+  timerthrows: () => page("", `${play()} setTimeout(() => { throw new Error("timer boom"); }, 900);`),
+  rafthrows: () => page("", `${play()} setTimeout(() => requestAnimationFrame(() => { throw new Error("frame boom"); }), 900);`),
+  navsame: () => page("", `${play()} setTimeout(() => { location.href = "/render/other-zzzzzzzzzz"; }, 900);`),
+  face: () =>
+    page("", `${play()}
+      const d = document.createElement("div"); d.style.cssText = "position:fixed;left:8px;top:8px;font:28px monospace;color:#fff;white-space:pre";
+      document.documentElement.appendChild(d);
+      requestAnimationFrame(function f() { d.textContent = Date.now() + "\\n" + Math.round(performance.now() * 1000) / 1000; requestAnimationFrame(f); });`),
+  kinds: (h) => {
+    const urls = [`ws://127.0.0.1:${portB}/a`, `wss://127.0.0.1:${portB}/a`, `ws://127.0.0.1:${portC}/a`, `wss://127.0.0.1:${portC}/a`, `ws://${h}/a`, `wss://${h}/a`, "ws://203.0.113.9:81/a", "wss://other.invalid/a"];
+    const B = `http://127.0.0.1:${portB}`;
+    return page("", `${play()}
+      const urls = ${JSON.stringify(urls)}; const t = (f) => { try { f(); } catch (e) {} };
+      t(() => fetch("${B}/f").catch(() => {})); t(() => { new Image().src = "${B}/i.png"; });
+      t(() => { const x = new XMLHttpRequest(); x.open("GET", "${B}/x"); x.send(); }); t(() => new EventSource("${B}/e"));
+      t(() => navigator.sendBeacon("${B}/b", "x"));
+      t(() => { const f = document.createElement("iframe"); f.src = "${B}/frame"; document.body.appendChild(f); });
+      t(() => { const l = document.createElement("link"); l.rel = "stylesheet"; l.href = "${B}/s.css"; document.head.appendChild(l); });
+      for (const u of urls) t(() => new WebSocket(u));
+      t(() => { const w = new Worker(URL.createObjectURL(new Blob(["for (const u of " + JSON.stringify(urls) + ") { try { new WebSocket(u); } catch (e) {} }"]))); });
+      t(() => { const f = document.createElement("iframe"); document.documentElement.appendChild(f); const W = f.contentWindow.WebSocket; for (const u of urls) t(() => new W(u)); const K = f.contentWindow.Worker; t(() => new K(URL.createObjectURL(new Blob(["for (const u of " + JSON.stringify(urls) + ") { try { new WebSocket(u); } catch (e) {} }"])))); });
+      t(() => { const p = new RTCPeerConnection({ iceServers: [{ urls: "stun:127.0.0.1:${portD}" }] }); p.createDataChannel("x"); p.createOffer().then((o) => p.setLocalDescription(o)); });
+      t(() => new WebTransport("https://127.0.0.1:${portD}/wt"));`);
+  },
   hangs: () => page("", `${play()} setTimeout(() => { window.__vt.step = () => new Promise(() => {}); }, 700);`),
 };
 
 let server: Server;
 let host = "";
 const seen: string[] = [];
+let shimText = "";
+let portB = 0;
+let portC = 0;
+let portD = 0;
+const tcpSeen = { b: 0, c: 0 };
+let udpSeen = 0;
+const closers: (() => void)[] = [];
+/** What the stand-in serves at /render-clock.js: the web's text, or a spoiled one (a spec sets it, and puts it back). */
+let clockMode: "good" | "double" | "nofreeze" | "html" | "garbage" | "huge" | "redirect" = "good";
+let clockHits = 0;
+const upgrades: string[] = [];
+const spoil = (mode: typeof clockMode): { type: string; body: string } => {
+  if (mode === "double") return { type: "text/javascript", body: `${shimText}\n;(() => { const s = window.__vt.step; window.__vt.step = (ms) => s(ms * 2); })();` };
+  if (mode === "nofreeze") return { type: "text/javascript", body: `${shimText}\n;window.__vt.freeze = function () {};` };
+  if (mode === "html") return { type: "text/html", body: "<html>not a script</html>" };
+  if (mode === "garbage") return { type: "text/javascript", body: "this is {{ not javascript" };
+  if (mode === "huge") return { type: "text/javascript", body: `${shimText}\n/*${"x".repeat(300 * 1024)}*/` };
+  return { type: "text/javascript; charset=utf-8", body: shimText };
+};
 const origin = (): string => `http://${host}`;
 
 beforeAll(async () => {
   if (missing.length) return;
+  shimText = (JSON.parse(spawnSync(process.execPath, ["--input-type=module", "-e", `import { pathToFileURL } from "node:url"; const m = await import(pathToFileURL(process.argv[1]).href); process.stdout.write(JSON.stringify(m.CLOCK_SHIM));`, WEB_SHIM], { encoding: "utf8" }).stdout) as string);
   server = createServer((rq, rs) => {
+    if (rq.url === "/to-b.png") return void rs.writeHead(302, { location: `http://127.0.0.1:${portB}/landed.png` }).end();
+    if (rq.url === "/render-clock.js") {
+      clockHits++;
+      if (clockMode === "redirect") return void rs.writeHead(302, { location: "http://203.0.113.7/render-clock.js" }).end();
+      const c = spoil(clockMode);
+      return void rs.writeHead(200, { "content-type": c.type, "cache-control": "no-store" }).end(c.body);
+    }
     seen.push((rq.url ?? "").replace(/^\/render\/[^/]+/, "/render/[token]"));
     const m = /^\/render\/([^/?#]+)/.exec(rq.url ?? "");
     if (!m) {
@@ -83,17 +137,41 @@ beforeAll(async () => {
     }
     const token = decodeURIComponent(m[1]);
     const kind = token.split("-")[0];
+    if (kind === "redir") return void rs.writeHead(200, { "content-type": "text/html" }).end(page('<img src="/to-b.png">', play()));
     rs.writeHead(200, { "content-type": "text/html", "cache-control": "no-store" }).end((pages[kind] ?? pages.good)?.(host, token));
   });
+  server.on("upgrade", (_q, sock) => {
+    upgrades.push("web");
+    sock.destroy();
+  });
   await new Promise<void>((r) => server.listen(0, "127.0.0.1", r));
+  for (const k of ["b", "c"] as const) {
+    const t = createTcp((c) => {
+      tcpSeen[k]++;
+      c.destroy();
+    });
+    await new Promise<void>((r) => t.listen(0, "127.0.0.1", r));
+    const port = (t.address() as AddressInfo).port;
+    if (k === "b") portB = port;
+    else portC = port;
+    closers.push(() => t.close());
+  }
+  const u = createSocket("udp4");
+  u.on("message", () => udpSeen++);
+  await new Promise<void>((r) => u.bind(0, "127.0.0.1", () => r()));
+  portD = u.address().port;
+  closers.push(() => u.close());
   host = `127.0.0.1:${(server.address() as AddressInfo).port}`;
 });
 afterAll(async () => {
+  for (const c of closers) c();
   if (server) await new Promise<void>((r) => server.close(() => r()));
 });
 
 const mine = async (): Promise<string[]> => (await readdir(tmpdir())).filter((f) => f.startsWith(`${RENDER_TEMP_PREFIX}r5job-`) || f.startsWith(`${RENDER_TEMP_PREFIX}r5x-`)).sort();
-const groupMembers = (pid: number): number[] => spawnSync("ps", ["-eo", "pid=,pgid="], { encoding: "utf8" }).stdout.split("\n").map((l) => l.trim().split(/\s+/).map(Number)).filter(([p, g]) => g === pid || p === pid).map(([p]) => p);
+/** Live processes of a group (a zombie only waits for init to reap it: it is not a process left behind). */
+const groupMembers = (pid: number): number[] =>
+  spawnSync("ps", ["-eo", "pid=,pgid=,stat="], { encoding: "utf8" }).stdout.split("\n").map((l) => l.trim().split(/\s+/)).filter(([p, g, st]) => (Number(g) === pid || Number(p) === pid) && st && !st.startsWith("Z")).map(([p]) => Number(p));
 const alive = (pid: number): boolean => {
   try {
     process.kill(pid, 0);
@@ -115,7 +193,7 @@ function make(over: Partial<ChromiumRendererOptions> = {}): { r: ChromiumVideoRe
   const logs: string[] = [];
   const line = (t: unknown): void => void logs.push(String(t));
   const r = new ChromiumVideoRenderer({
-    webOrigin: origin(), chromiumPath: CHROMIUM, ffmpegPath: FFMPEG, clockPath: CLOCK, playwrightModule: PLAYWRIGHT,
+    webOrigin: origin(), chromiumPath: CHROMIUM, ffmpegPath: FFMPEG, playwrightModule: PLAYWRIGHT,
     onSpawn: (kind, pid) => pids.push({ kind, pid }), logger: { log: line, warn: line, error: line }, frameTimeoutMs: 20_000, ...over,
   });
   return { r, pids, logs };
@@ -296,7 +374,7 @@ real(`R5 the Chromium renderer, on a stand-in web page${WHY}`, () => {
     const t0 = Date.now();
     while (!pids.some((c) => c.kind === "ffmpeg") && Date.now() - t0 < 30_000) await new Promise((x) => setTimeout(x, 50));
     await new Promise((x) => setTimeout(x, 800));
-    const target = pids.filter((c) => c.kind === victim).pop();
+    const target = pids.filter((c) => c.kind === victim && alive(c.pid)).pop();
     expect(target).toBeDefined();
     process.kill((target as { pid: number }).pid, "SIGKILL");
     const err = (await done) as Error;
@@ -307,24 +385,189 @@ real(`R5 the Chromium renderer, on a stand-in web page${WHY}`, () => {
   }, 90_000);
 });
 
-real(`R5 the stepped clock is the web's, and drift is loud${WHY}`, () => {
-  it("the shim is read from the web's own file and keeps its contract: a stepped clock moves performance.now, Date.now and timers by exact steps, one animation frame a step", async () => {
-    const shim = loadClockShim(CLOCK);
-    expect(shim.source).toContain("window.__vt");
-    expect(shim.sha256).toBe(createHash("sha256").update(readFileSync(CLOCK)).digest("hex"));
-    /* the page checks itself: at each of its timers (every 500 ms of stepped time) the clock reads exactly that, and a frame callback comes once a step */
-    const { r } = make();
-    const out = await r.render(req("exact-mmmmmmmmmmmm", { seconds: 60 }));
-    expect(out.bytes).toBeGreaterThan(0);
-    expect(r.lastRun?.frames).toBeGreaterThan(100);
+
+const sleepMs = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms));
+const frameHashes = (file: string): string[] =>
+  spawnSync(FFMPEG, ["-v", "error", "-i", file, "-f", "framemd5", "-"], { encoding: "utf8", maxBuffer: 1 << 26 }).stdout.split("\n").filter((l) => l && !l.startsWith("#")).map((l) => l.split(",").pop()?.trim() ?? "");
+
+describe("R5 round 1: the allow-list and the metadata address (pure)", () => {
+  it("H1: an entry matches host AND port; an entry with no port means the scheme's own port only", () => {
+    const only = ["web.example"];
+    expect(hostAllowed("https://web.example/x", only)).toBe(true);
+    expect(hostAllowed("https://web.example:443/x", only)).toBe(true);
+    expect(hostAllowed("https://web.example:6379/", only)).toBe(false);
+    expect(hostAllowed("http://web.example:6379/", only)).toBe(false);
+    expect(hostAllowed("wss://web.example:6379/", only)).toBe(false);
+    expect(hostAllowed("https://web.example:6379/", ["web.example:6379"])).toBe(true);
+    expect(hostAllowed("https://web.example/", ["web.example:6379"])).toBe(false);
+    expect(hostAllowed("https://web.example/", ["web.example:443"])).toBe(true);
+    expect(hostAllowed("https://a.store.example:6379/", ["*.store.example"])).toBe(false);
+    expect(hostAllowed("https://a.store.example/", ["*.store.example"])).toBe(true);
+    expect(hostAllowed("https://a.store.example:8443/", ["*.store.example:8443"])).toBe(true);
+    expect(hostAllowed("https://a.store.example/", ["*.store.example:8443"])).toBe(false);
+  });
+  it("H1: the metadata address is blocked in IPv4, IPv4-mapped IPv6 and decimal (and hex) forms, even when listed", () => {
+    const forms = ["169.254.169.254", "[::ffff:169.254.169.254]", "[::ffff:a9fe:a9fe]", "[0:0:0:0:0:ffff:a9fe:a9fe]", "2852039166", "0xa9fea9fe", "0251.0376.0251.0376", "[fd00:ec2::254]", "[fd00:ec2:0:0:0:0:0:254]", "metadata.google.internal", "169.254.1.1"];
+    for (const f of forms) {
+      expect([f, hostAllowed(`http://${f}/latest/meta-data/`, [f, f.replace(/^\[|\]$/g, ""), "*.internal"])]).toEqual([f, false]);
+    }
+    expect(hostAllowed("http://[::ffff:7f00:1]:8080/", ["[::ffff:7f00:1]:8080"])).toBe(true);
+  });
+  it("M5: the adapter imports and runs no code from the website (no child node, no dynamic import)", () => {
+    const src = readFileSync(`${__dirname}/../chromium-video-renderer.ts`, "utf8");
+    expect(src).not.toMatch(/--input-type|execFileSync|execSync|\bimport\s*\(|vm\.run|new Function\(|\beval\(/);
+  });
+});
+
+real(`R5 round 1 on a stand-in web page${WHY}`, () => {
+  it("H1: no WebSocket, WebRTC or WebTransport ever connects (not to another port of the host, a listed host, any host), and no other kind reaches an unlisted host or port", async () => {
+    const before = { b: tcpSeen.b, c: tcpSeen.c, u: udpSeen, up: upgrades.length };
+    const { r } = make({ allowedHosts: [host, `127.0.0.1:${portC}`] });
+    await r.render(req("kinds-oooooooooooo"));
+    await sleepMs(500);
+    expect({ b: tcpSeen.b - before.b, c: tcpSeen.c - before.c, udp: udpSeen - before.u, webUpgrades: upgrades.length - before.up }).toEqual({ b: 0, c: 0, udp: 0, webUpgrades: 0 });
+    const run = r.lastRun;
+    expect(run?.blocked).toBeGreaterThanOrEqual(10);
+    const hosts = run?.blockedHosts.join(" ") ?? "";
+    expect(hosts).toContain(`127.0.0.1:${portB}`);
+    expect(hosts).toMatch(/203\.0\.113\.9:81/);
+    expect(hosts).toMatch(/other\.invalid/);
   }, 90_000);
 
-  it("a pinned hash that does not match fails the render loudly before any browser starts", async () => {
-    const { r, pids } = make({ clockSha256: "0".repeat(64) });
-    await expect(r.render(req("good-nnnnnnnnnnnn"))).rejects.toThrow(/drift/);
-    expect(pids).toEqual([]);
-    expect(await r.ping()).toMatchObject({ state: "error" });
-    const ok = make({ clockSha256: loadClockShim(CLOCK).sha256 });
-    expect(await ok.r.ping()).toMatchObject({ state: "ok" });
+  it("H1: a redirect from the web origin to an unlisted port of the same host is refused", async () => {
+    const before = tcpSeen.b;
+    const { r } = make();
+    await r.render(req("redir-ppppppppppp"));
+    expect(tcpSeen.b - before).toBe(0);
+    expect(r.lastRun?.blockedHosts.join(" ")).toContain(`127.0.0.1:${portB}`);
   }, 60_000);
+
+  it("M2: an abort at any moment of Chromium's start (0 to 900 ms, five times each) rejects in under 2 s with 'render aborted' and leaves nothing", async () => {
+    for (const ms of [0, 100, 200, 300, 400, 600, 900]) {
+      for (let k = 0; k < 5; k++) {
+        const { r, pids } = make();
+        const ac = new AbortController();
+        const done = r.render(req(`good-abort${ms}k${k}xxxx`), ac.signal).catch((e: Error) => e);
+        await sleepMs(ms);
+        const at = Date.now();
+        ac.abort();
+        const err = (await done) as Error;
+        const took = Date.now() - at;
+        expect({ ms, k, msg: err.message, fast: took < 2000 }).toEqual({ ms, k, msg: "render aborted", fast: true });
+        for (const c of pids) expect(alive(c.pid)).toBe(false);
+        expect(await mine()).toEqual([]);
+      }
+    }
+  }, 280_000);
+
+  it("M3: the same wish rendered twice with the same epochMs has every decoded frame equal; another epochMs differs", async () => {
+    const epochMs = 1_700_000_000_000;
+    const a = await make().r.render(req("face-qqqqqqqqqqqq", { epochMs, seconds: 60 }));
+    const ha = frameHashes(a.path);
+    const b = await make().r.render(req("face-rrrrrrrrrrrr", { epochMs, seconds: 60 }));
+    const hb = frameHashes(b.path);
+    expect(ha.length).toBeGreaterThan(80);
+    expect(hb.length).toBe(ha.length);
+    expect(hb.filter((h, i) => h !== ha[i]).length).toBe(0);
+    const c = await make().r.render(req("face-ssssssssssss", { epochMs: epochMs + 5000, seconds: 60 }));
+    expect(frameHashes(c.path).filter((h, i) => h !== ha[i]).length).toBeGreaterThan(10);
+  }, 180_000);
+
+  it("M4: a throw in a stepped timer or a frame callback fails the render with the page's words and hands out no video", async () => {
+    for (const [tok, words] of [["timerthrows-tttttttttttt", "timer boom"], ["rafthrows-uuuuuuuuuuuu", "frame boom"]]) {
+      const { r } = make();
+      const err = (await r.render(req(tok)).catch((e: Error) => e)) as Error;
+      expect(err.message).toMatch(new RegExp(`^the render page threw: .*${words}`));
+      expect(await mine()).toEqual([]);
+    }
+  }, 90_000);
+
+  it("M5: the clock script is fetched from RENDER_WEB_ORIGIN/render-clock.js at each render; its self-check costs a few hundred ms", async () => {
+    clockMode = "good";
+    const h0 = clockHits;
+    const { r } = make();
+    await r.render(req("good-vvvvvvvvvvvv"));
+    expect(clockHits - h0).toBe(1);
+    expect(r.lastRun?.clockCheckMs).toBeGreaterThan(0);
+    expect(r.lastRun?.clockCheckMs).toBeLessThan(5000);
+    await r.render(req("good-wwwwwwwwwwww"));
+    expect(clockHits - h0).toBe(2);
+    process.stdout.write(`clock self-check cost: ${r.lastRun?.clockCheckMs} ms\n`);
+  }, 120_000);
+
+  it.each([["double"], ["nofreeze"], ["html"], ["garbage"]] as const)("M5: a clock that is '%s' fails as clock drift before any recording, with no file", async (mode) => {
+    clockMode = mode;
+    try {
+      const { r } = make();
+      const err = (await r.render(req("good-xxxxxxxxxxxx")).catch((e: Error) => e)) as Error;
+      expect(err.message).toMatch(/clock drift/);
+      expect(r.lastRun?.frames ?? 0).toBe(0);
+      expect(await mine()).toEqual([]);
+    } finally {
+      clockMode = "good";
+    }
+  }, 60_000);
+
+  it("M5: a clock bigger than 256 KB, a redirect, and an address outside the allow-list are refused with words", async () => {
+    try {
+      clockMode = "huge";
+      await expect(make().r.render(req("good-yyyyyyyyyyyy"))).rejects.toThrow(/clock drift.*256 KB|256 KB/);
+      clockMode = "redirect";
+      await expect(make().r.render(req("good-yyyyyyyyyyyy"))).rejects.toThrow(/clock/);
+    } finally {
+      clockMode = "good";
+    }
+    const h0 = clockHits;
+    await expect(make({ allowedHosts: ["web.example"] }).r.render(req("good-yyyyyyyyyyyy"))).rejects.toThrow(/clock.*allow/);
+    expect(clockHits - h0).toBe(0);
+    expect(await mine()).toEqual([]);
+  }, 90_000);
+
+  it("M5/L8: RENDER_CLOCK_PATH overrides the fetch; the optional pin holds; a broken clock file fails with plain words (no command line)", async () => {
+    const dir = tmpdir();
+    const good = `${dir}/pr5-clock-good.js`;
+    const bad = `${dir}/pr5-clock-bad.js`;
+    writeFileSync(good, shimText);
+    writeFileSync(bad, "export const nothing = {{ broken");
+    try {
+      const h0 = clockHits;
+      const { r } = make({ clockPath: good, clockSha256: createHash("sha256").update(shimText).digest("hex") });
+      await rm((await r.render(req("good-zzzzzzzzzzzz"))).path, { force: true });
+      expect(clockHits - h0).toBe(0);
+      await expect(make({ clockPath: good, clockSha256: "0".repeat(64) }).r.render(req("good-zzzzzzzzzzzz"))).rejects.toThrow(/drift/);
+      const err = (await make({ clockPath: bad }).r.render(req("good-zzzzzzzzzzzz")).catch((e: Error) => e)) as Error;
+      expect(err.message).toMatch(/clock drift/);
+      expect(err.message).not.toMatch(/Command failed|--input-type|node:|\bnode\b/);
+      const gone = (await make({ clockPath: `${dir}/pr5-clock-missing.js` }).r.render(req("good-zzzzzzzzzzzz")).catch((e: Error) => e)) as Error;
+      expect(gone.message).toMatch(/clock/);
+      expect(gone.message).not.toMatch(/ENOENT|Command failed|--input-type/);
+    } finally {
+      await rm(good, { force: true });
+      await rm(bad, { force: true });
+    }
+    expect(await mine()).toEqual([]);
+  }, 120_000);
+
+  it("L8: a navigation to another page of the same host fails with plain words", async () => {
+    const { r } = make();
+    const err = (await r.render(req("navsame-aaaaaaaaaaaa")).catch((e: Error) => e)) as Error;
+    expect(err.message).toBe("the render page navigated away");
+    expect(await mine()).toEqual([]);
+  }, 60_000);
+
+  it("L7: an ffmpeg that dies while flushing a scene fails the render at once, not at the end of play", async () => {
+    const wrap = `${tmpdir()}/pr5-ffmpeg-wrap.sh`;
+    writeFileSync(wrap, `#!/bin/sh\nfor last; do :; done\ncase "$last" in *seg-0.ts) cat >/dev/null; sleep 1; echo boom >&2; exit 1;; esac\nexec ${FFMPEG} "$@"\n`, { mode: 0o755 });
+    try {
+      const { r, pids } = make({ ffmpegPath: wrap });
+      const t0 = Date.now();
+      const err = (await r.render(req("long-bbbbbbbbbbbb")).catch((e: Error) => e)) as Error;
+      expect(err.message).toMatch(/ffmpeg/);
+      expect(Date.now() - t0).toBeLessThan(15_000);
+      for (const c of pids) expect(groupMembers(c.pid)).toEqual([]);
+      expect(await mine()).toEqual([]);
+    } finally {
+      await rm(wrap, { force: true });
+    }
+  }, 40_000);
 });

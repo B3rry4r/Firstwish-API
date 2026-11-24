@@ -1,7 +1,11 @@
-import { execFileSync, spawn, type ChildProcess } from "node:child_process";
+import { spawn, type ChildProcess } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
-import { accessSync, constants, existsSync, readFileSync, statSync, writeFileSync } from "node:fs";
-import { mkdir, rm, stat } from "node:fs/promises";
+import { lookup } from "node:dns/promises";
+import { accessSync, constants, readFileSync, statSync, writeFileSync } from "node:fs";
+import { createServer as createHttpServer, request as httpRequest } from "node:http";
+import { connect as netConnect, isIP } from "node:net";
+import type { Duplex } from "node:stream";
+import { mkdir, readdir, readFile, rm, stat } from "node:fs/promises";
 import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -16,10 +20,18 @@ import { RENDER_TEMP_PREFIX, VideoRenderer, type RenderedFile, type RenderReques
  * first script, steps time 1/30 s at a time, captures each frame over the browser protocol and pipes it to ffmpeg (H.264, yuv420p, no sound).
  *
  * How the pieces are chosen (the brief's decisions):
- *  - The stepped clock is the WEB's module (scripts/lib/stepped-clock.mjs). The API holds no copy: the renderer reads CLOCK_SHIM from the file
- *    named by RENDER_CLOCK_PATH (the web checkout the worker ships with), so the two cannot drift by hand. Drift is loud: RENDER_CLOCK_SHA256
- *    (optional) pins the file and a mismatch fails the render with words; a spec runs the shim in Chromium and fails if the clock's calls
- *    (freeze, step, now) no longer step time exactly.
+ *  - The stepped clock is the WEB's page script (IK6e). The API holds no copy and runs none of it: each render fetches RENDER_WEB_ORIGIN/render-clock.js
+ *    (a JavaScript type, at most 256 KB, inside the allow-list, no redirect) and puts the TEXT into the browser's first script (the frame loop here is
+ *    this file's own; nothing fetched from the website is imported or run by node). RENDER_CLOCK_PATH names a file of that text instead (tests);
+ *    RENDER_CLOCK_SHA256 (optional) pins the text. BEFORE recording, a self-check in a blank page proves the clock: k steps move Date.now and
+ *    performance.now by exactly k steps and fire the frame callback k times, and it is frozen at the given start; else "clock drift" and nothing is recorded.
+ *  - The clock is frozen from the first script at virtual time 0 and at a wall time the request gives (epochMs; default the render's start to the second): IK6f.
+ *  - Egress (IK6d). Chromium runs through a small proxy this adapter owns (--proxy-server, loopback not bypassed), the one place every TCP request of every
+ *    kind (page, frame, worker, fetch, XHR, EventSource, beacon, css, redirect, ws/wss) must pass: it allows only host AND port from the allow-list (an
+ *    entry with no port = the scheme's own port), never the metadata address in any written form or a name that resolves to it, and refuses a plain-text
+ *    tunnel (a ws:// handshake) outright. WebSocket is closed at the browser (context.routeWebSocket: never connects, counted) and Worker/SharedWorker do not exist
+ *    in the page (a worker has its own WebSocket that no route sees); WebRTC is closed at the browser's own switch (--webrtc-ip-handling-policy=
+ *    disable_non_proxied_udp: no STUN or candidate leaves) and WebTransport/QUIC cannot pass an HTTP proxy (--disable-quic). The route (context.route) stays as the second gate and the counter.
  *  - Playwright is only the protocol driver (connectOverCDP to the Chromium this class started). `playwright-core` (or `playwright`) must be
  *    resolvable on the worker (RENDER_PLAYWRIGHT_MODULE names it by path); it is a deploy item, not a dependency of the web-facing server.
  *  - Frames never touch the disk as pictures. Each whole scene is encoded as its own short H.264 segment (MPEG-TS, a few MB); at the page's
@@ -38,9 +50,9 @@ export interface ChromiumRendererOptions {
   fontHosts?: string[];
   chromiumPath?: string;
   ffmpegPath?: string;
-  /** The web's scripts/lib/stepped-clock.mjs. */
+  /** A file holding the clock's page script text, used instead of fetching RENDER_WEB_ORIGIN/render-clock.js (tests; RENDER_CLOCK_PATH). */
   clockPath?: string;
-  /** When set, the clock file must hash to this (hex sha256), else the render fails loudly. */
+  /** When set, the clock script's text must hash to this (hex sha256), else the render fails loudly (optional: IK6e). */
   clockSha256?: string;
   /** Where playwright-core is (a path to the module); else `playwright-core` / `playwright` are looked up. */
   playwrightModule?: string;
@@ -69,6 +81,8 @@ export interface ChromiumRunStats {
   allowedRequests: number;
   readyMs: number;
   totalMs: number;
+  /** What the clock self-check cost, in real milliseconds (fetch excluded). */
+  clockCheckMs: number;
 }
 
 const META_HOSTS = ["169.254.169.254", "metadata.google.internal", "metadata", "fd00:ec2::254", "100.100.100.200"];
@@ -92,8 +106,28 @@ function hostOf(url: string): { host: string; hostname: string } | null {
   }
 }
 
-function isMetadata(hostname: string): boolean {
-  return META_HOSTS.includes(hostname) || /^169\.254\./.test(hostname) || hostname.startsWith("fe80:");
+/** A host as the browser's own parser reads it: IPv4 in decimal, hex and octal forms become dotted, IPv6 is compressed and lower case. */
+function normHost(h: string): string {
+  let x = h.toLowerCase().replace(/^\[|\]$/g, "").replace(/\.$/, "");
+  try {
+    x = new URL(`http://${x.includes(":") ? `[${x}]` : x}`).hostname.replace(/^\[|\]$/g, "");
+  } catch {
+    /* keep as written */
+  }
+  return x;
+}
+
+/** The cloud metadata address in every written form: dotted, decimal, hex, octal, IPv4-mapped IPv6 (dotted or hex groups), fd00:ec2::254, and the link-local ranges. */
+function isMetadata(host: string): boolean {
+  const x = normHost(host);
+  if (META_HOSTS.includes(x) || /^169\.254\./.test(x) || x.startsWith("fe80:")) return true;
+  const m = /^::ffff:([0-9a-f]{1,4}):([0-9a-f]{1,4})$/.exec(x);
+  if (m) {
+    const a = parseInt(m[1], 16);
+    const b = parseInt(m[2], 16);
+    return isMetadata(`${a >> 8}.${a & 255}.${b >> 8}.${b & 255}`);
+  }
+  return false;
 }
 
 /** The default allowed hosts: the two origins, the storage hosts and the font hosts. */
@@ -108,15 +142,32 @@ export function defaultAllowedHosts(o: Pick<ChromiumRendererOptions, "webOrigin"
   return [...out];
 }
 
-/** A request is allowed when its host (or host:port) is listed, or a "*.suffix" entry matches; the metadata addresses never are. */
-export function hostAllowed(url: string, allowed: readonly string[]): boolean {
-  const h = hostOf(url);
-  if (!h || isMetadata(h.hostname)) return false;
-  return allowed.some((a) => {
-    const e = a.toLowerCase();
-    if (e.startsWith("*.")) return h.hostname.endsWith(e.slice(1)) && h.hostname.length > e.length - 1;
-    return e === h.host || e === h.hostname;
+/**
+ * IK6d: a host and port are allowed when an entry matches BOTH. An entry with no port means the scheme's own port only (`own`: 443 for https and wss, 80 for
+ * http and ws); an entry "*.suffix" matches subdomains, with or without a port the same way. The metadata address never is, whatever the list says.
+ */
+export function hostPortAllowed(hostname: string, port: number, allowed: readonly string[], own: readonly number[]): boolean {
+  const h = normHost(hostname);
+  if (isMetadata(h)) return false;
+  return allowed.some((raw) => {
+    const m = /^(\[[^\]]+\]|[^:]+)(?::(\d{1,5}))?$/.exec(raw.trim().toLowerCase());
+    if (!m) return false;
+    const entry = m[1].startsWith("*.") ? m[1] : normHost(m[1]);
+    const hostOk = entry.startsWith("*.") ? h.endsWith(entry.slice(1)) && h.length > entry.length - 1 : entry === h;
+    return hostOk && (m[2] !== undefined ? Number(m[2]) === port : own.includes(port));
   });
+}
+
+/** A request is allowed when its host and port are listed (see hostPortAllowed); the metadata addresses never are. */
+export function hostAllowed(url: string, allowed: readonly string[]): boolean {
+  try {
+    const u = new URL(url);
+    const scheme = u.protocol.replace(":", "");
+    const own = scheme === "https" || scheme === "wss" ? 443 : scheme === "http" || scheme === "ws" ? 80 : 0;
+    return hostPortAllowed(u.hostname, u.port ? Number(u.port) : own, allowed, [own]);
+  } catch {
+    return false;
+  }
 }
 
 /** Settings from the environment (R6 wires these into the env check; here they are only read). */
@@ -139,22 +190,180 @@ export function chromiumRendererOptionsFromEnv(env: NodeJS.ProcessEnv): Chromium
   return opts;
 }
 
-/** Loads CLOCK_SHIM from the web's ES module in a child node (so it works the same under every module system). Cached by path and time. */
-const shimCache = new Map<string, { mtime: number; source: string; sha256: string }>();
-export function loadClockShim(clockPath: string): { source: string; sha256: string } {
-  const st = statSync(clockPath);
-  const hit = shimCache.get(clockPath);
-  if (hit && hit.mtime === st.mtimeMs) return hit;
-  const out = execFileSync(
-    process.execPath,
-    ["--input-type=module", "-e", `import { pathToFileURL } from "node:url"; const m = await import(pathToFileURL(process.argv[1]).href); process.stdout.write(JSON.stringify({ shim: m.CLOCK_SHIM }));`, clockPath],
-    { encoding: "utf8", maxBuffer: 1 << 24, timeout: 20000 },
-  );
-  const shim = (JSON.parse(out) as { shim?: unknown }).shim;
-  if (typeof shim !== "string" || !shim.includes("__vt")) throw new Error("the stepped clock file does not export CLOCK_SHIM (the web's module changed: the renderer must be brought up to date)");
-  const entry = { mtime: st.mtimeMs, source: shim, sha256: createHash("sha256").update(readFileSync(clockPath)).digest("hex") };
-  shimCache.set(clockPath, entry);
-  return entry;
+const CLOCK_CAP = 256 * 1024;
+const PLAIN_HTTP = /^(GET|POST|PUT|HEAD|DELETE|OPTIONS|PATCH|TRACE|CONNECT) /;
+
+/**
+ * The small proxy the adapter owns (IK6d): every TCP request Chromium makes passes here. Allowed: host AND port from the list. Refused: everything else, the
+ * metadata address in any form (also when a name resolves to it), and a plain-text tunnel (the handshake of a ws:// WebSocket). Nothing here logs an address:
+ * it counts by host.
+ */
+export class EgressProxy {
+  private readonly server = createHttpServer();
+  private readonly sockets = new Set<Duplex>();
+  port = 0;
+
+  constructor(
+    private readonly allowed: readonly string[],
+    private readonly onBlocked: (host: string) => void,
+  ) {
+    this.server.on("connection", (s) => this.track(s));
+    this.server.on("request", (rq, rs) => {
+      let u: URL | null = null;
+      try {
+        u = new URL(rq.url ?? "");
+      } catch {
+        /* not an absolute address */
+      }
+      if (!u || u.protocol !== "http:" || !hostAllowed(u.href, this.allowed)) {
+        this.onBlocked(u?.host ?? "unknown");
+        rs.writeHead(403, { connection: "close" }).end();
+        return;
+      }
+      const target = u;
+      void this.resolve(target.hostname).then((addr) => {
+        if (!addr) {
+          this.onBlocked(target.host);
+          rs.writeHead(403, { connection: "close" }).end();
+          return;
+        }
+        const headers = { ...rq.headers, host: target.host } as Record<string, string | string[] | undefined>;
+        delete headers["proxy-connection"];
+        delete headers["proxy-authorization"];
+        const up = httpRequest({ host: addr, port: Number(target.port || 80), path: `${target.pathname}${target.search}`, method: rq.method, headers, agent: false }, (res) => {
+          rs.writeHead(res.statusCode ?? 502, res.headers);
+          res.pipe(rs);
+        });
+        up.on("error", () => (rs.headersSent ? rs.destroy() : rs.writeHead(502, { connection: "close" }).end()));
+        rs.on("close", () => up.destroy());
+        rq.pipe(up);
+      });
+    });
+    this.server.on("connect", (rq, socket, head) => {
+      this.track(socket);
+      socket.on("error", () => undefined);
+      const m = /^(\[[^\]]+\]|[^:]+):(\d{1,5})$/.exec(rq.url ?? "");
+      const host = m?.[1].replace(/^\[|\]$/g, "") ?? "";
+      const port = Number(m?.[2] ?? 0);
+      if (!m || !hostPortAllowed(host, port, this.allowed, [80, 443])) {
+        this.onBlocked(m ? `${host}:${port}` : "unknown");
+        socket.end("HTTP/1.1 403 Forbidden\r\nConnection: close\r\n\r\n");
+        return;
+      }
+      void this.resolve(host).then((addr) => {
+        if (!addr) {
+          this.onBlocked(`${host}:${port}`);
+          socket.end("HTTP/1.1 403 Forbidden\r\nConnection: close\r\n\r\n");
+          return;
+        }
+        socket.write("HTTP/1.1 200 Connection Established\r\n\r\n");
+        const open = (first: Buffer): void => {
+          if (PLAIN_HTTP.test(first.toString("latin1", 0, 8))) {
+            this.onBlocked(`${host}:${port} (plain text tunnel)`);
+            socket.destroy();
+            return;
+          }
+          const up = netConnect(port, addr);
+          this.track(up);
+          up.on("error", () => socket.destroy());
+          socket.on("close", () => up.destroy());
+          up.on("close", () => socket.destroy());
+          up.write(first);
+          socket.pipe(up);
+          up.pipe(socket);
+        };
+        if (head.length) open(head);
+        else socket.once("data", open);
+      });
+    });
+  }
+
+  private track(s: Duplex): void {
+    this.sockets.add(s);
+    s.once("close", () => this.sockets.delete(s));
+  }
+
+  /** The address to connect to, or null when it is (or resolves to) the metadata address or the name has none. */
+  private async resolve(hostname: string): Promise<string | null> {
+    const h = hostname.replace(/^\[|\]$/g, "");
+    if (isMetadata(h)) return null;
+    if (isIP(h)) return h;
+    try {
+      const addr = (await lookup(h)).address;
+      return isMetadata(addr) ? null : addr;
+    } catch {
+      return null;
+    }
+  }
+
+  async start(): Promise<number> {
+    await new Promise<void>((resolve) => this.server.listen(0, "127.0.0.1", resolve));
+    this.port = (this.server.address() as { port: number }).port;
+    return this.port;
+  }
+
+  close(): void {
+    for (const s of this.sockets) s.destroy();
+    this.server.close();
+  }
+}
+
+/** Words for a clock that is wrong; the render stops before any recording. */
+const drift = (what: string): Error => new Error(`clock drift: ${what}`);
+
+/** Reads the clock's page script: from the file RENDER_CLOCK_PATH names (tests), else from the web origin at /render-clock.js. Never imports or runs it. */
+async function readClockText(o: { webOrigin: string; clockPath?: string }, allowed: readonly string[], signal?: AbortSignal): Promise<{ source: string; sha256: string }> {
+  let bytes: Buffer;
+  if (o.clockPath) {
+    let size = -1;
+    try {
+      size = statSync(o.clockPath).size;
+    } catch {
+      /* said below */
+    }
+    if (size < 0) throw new Error("the clock file could not be read (RENDER_CLOCK_PATH)");
+    if (size > CLOCK_CAP) throw drift("the clock file is bigger than 256 KB");
+    try {
+      bytes = readFileSync(o.clockPath);
+    } catch {
+      throw new Error("the clock file could not be read (RENDER_CLOCK_PATH)");
+    }
+  } else {
+    const url = `${o.webOrigin.replace(/\/$/, "")}/render-clock.js`;
+    if (!hostAllowed(url, allowed)) throw new Error("the clock script's address is not inside the allow-list (RENDER_ALLOWED_HOSTS)");
+    let res: Response;
+    try {
+      res = await fetch(url, { redirect: "manual", signal: AbortSignal.any([AbortSignal.timeout(15_000), ...(signal ? [signal] : [])]) });
+    } catch {
+      if (signal?.aborted) throw new RenderStop("render aborted");
+      throw new Error("the clock script could not be fetched from the web origin (/render-clock.js)");
+    }
+    if (res.status !== 200) {
+      void res.body?.cancel().catch(() => undefined);
+      throw new Error(`the clock script could not be fetched (the web answered ${res.status}${res.status >= 300 && res.status < 400 ? ", a redirect is not followed" : ""})`);
+    }
+    const type = res.headers.get("content-type") ?? "";
+    if (!/(java|ecma)script/i.test(type)) {
+      void res.body?.cancel().catch(() => undefined);
+      throw drift("the clock script is not served as JavaScript");
+    }
+    const chunks: Buffer[] = [];
+    let size = 0;
+    const reader = res.body?.getReader();
+    for (;;) {
+      const part = await reader?.read();
+      if (!part || part.done) break;
+      const piece = Buffer.from(part.value as Uint8Array);
+      size += piece.length;
+      if (size > CLOCK_CAP) {
+        void reader?.cancel().catch(() => undefined);
+        throw drift("the clock script is bigger than 256 KB");
+      }
+      chunks.push(piece);
+    }
+    bytes = Buffer.concat(chunks);
+  }
+  return { source: bytes.toString("utf8"), sha256: createHash("sha256").update(bytes).digest("hex") };
 }
 
 /* ---- the little part of Playwright this file touches ---- */
@@ -164,9 +373,11 @@ interface PwPage {
   /** An expression (or an async function call) run in the page. */
   evaluate<R>(expression: string): Promise<R>;
   mainFrame(): unknown;
+  close(): Promise<void>;
 }
 interface PwContext {
   route(match: string, h: (r: PwRoute) => unknown): Promise<void>;
+  routeWebSocket(match: RegExp, h: (ws: { url(): string; close(): Promise<void> | void }) => unknown): Promise<void>;
   addInitScript(s: string): Promise<void>;
   newPage(): Promise<PwPage>;
   newCDPSession(p: PwPage): Promise<{ send(m: string, p?: object): Promise<{ data: string }> }>;
@@ -240,7 +451,6 @@ export class ChromiumVideoRenderer extends VideoRenderer {
     } catch {
       return `ffmpeg is not at ${this.ffmpegPath}`;
     }
-    if (!this.o.clockPath || !existsSync(this.o.clockPath)) return "RENDER_CLOCK_PATH does not name the web's stepped clock file";
     try {
       loadPlaywright(this.o.playwrightModule);
     } catch (e) {
@@ -253,8 +463,8 @@ export class ChromiumVideoRenderer extends VideoRenderer {
     const p = this.problem();
     if (p) return pingError(p);
     return pingWith(async () => {
-      const sum = loadClockShim(this.o.clockPath as string);
-      if (this.o.clockSha256 && sum.sha256 !== this.o.clockSha256) throw new Error("the web's stepped clock file is not the one this renderer was pinned to");
+      const sum = await readClockText(this.o, this.allowed);
+      if (this.o.clockSha256 && sum.sha256 !== this.o.clockSha256) throw new Error("the web's clock script is not the one this renderer was pinned to");
       const r = await fetch(`${this.o.webOrigin.replace(/\/$/, "")}/`, { method: "HEAD", signal: AbortSignal.timeout(8000), redirect: "manual" });
       if (r.status >= 500) throw new Error(`the web answered ${r.status}`);
     });
@@ -268,8 +478,12 @@ export class ChromiumVideoRenderer extends VideoRenderer {
     if (!token) throw new Error("the render has no token to open the wish with");
     const problem = this.problem();
     if (problem) throw new Error(mask(`the video renderer is not ready: ${problem}`));
-    const clock = loadClockShim(this.o.clockPath as string);
-    if (this.o.clockSha256 && clock.sha256 !== this.o.clockSha256) throw new Error("the web's stepped clock file is not the one this renderer was pinned to (drift): update RENDER_CLOCK_SHA256 or the web checkout");
+    const epoch = Math.floor(input.epochMs ?? Math.floor(Date.now() / 1000) * 1000);
+    if (!Number.isFinite(epoch)) throw new Error("the render's epochMs is not a number");
+    const clock = await readClockText(this.o, this.allowed, signal).catch((e: Error) => {
+      throw e instanceof RenderStop ? e : new Error(mask(e.message));
+    });
+    if (this.o.clockSha256 && clock.sha256 !== this.o.clockSha256) throw drift("the web's clock script is not the one this renderer was pinned to (RENDER_CLOCK_SHA256)");
 
     const root = this.o.tmpRoot ?? tmpdir();
     const stem = `${RENDER_TEMP_PREFIX}${jobId}-${randomUUID()}`;
@@ -290,25 +504,35 @@ export class ChromiumVideoRenderer extends VideoRenderer {
     };
     const onAbort = (): void => {
       stopped = true;
+      die(new RenderStop("render aborted"));
       killAll();
     };
+    /* every wait of the start (the folder, Chromium's first line, the browser link, the page load) ends the moment a child dies or the job aborts */
+    const early = <T>(p: Promise<T>): Promise<T> => Promise.race([p, dead]);
     /* what the page or a child did wrong, in the order it was seen: the first is the reason a job fails (a protocol error after it is only the echo) */
     const failures: string[] = [];
     const blockedHosts = new Map<string, number>();
     let blocked = 0;
     let allowedRequests = 0;
     const allowed = this.allowed;
-    const stats: ChromiumRunStats = { jobId, frames: 0, keptFrames: 0, scenes: [], blocked: 0, blockedHosts: [], allowedRequests: 0, readyMs: 0, totalMs: 0 };
+    const stats: ChromiumRunStats = { jobId, frames: 0, keptFrames: 0, scenes: [], blocked: 0, blockedHosts: [], allowedRequests: 0, readyMs: 0, totalMs: 0, clockCheckMs: 0 };
     const check = (): void => {
       if (stopped || signal?.aborted) throw new RenderStop("render aborted");
     };
     let browser: PwBrowser | null = null;
+    const countBlocked = (h: string): void => {
+      blocked++;
+      blockedHosts.set(h, (blockedHosts.get(h) ?? 0) + 1);
+    };
+    const proxy = new EgressProxy(allowed, countBlocked);
     try {
       if (signal?.aborted) throw new RenderStop("render aborted");
       signal?.addEventListener("abort", onAbort, { once: true });
       await mkdir(join(work, "profile"), { recursive: true, mode: 0o700 });
+      check();
 
-      /* Chromium: our own process, our own profile folder, a debugging port we read from its first line */
+      /* Chromium: our own process, our own profile folder, a debugging port we read from its first line; all its traffic goes through our own proxy */
+      const proxyPort = await proxy.start();
       const hostRules = `MAP * ~NOTFOUND , ${allowed.filter((a) => !a.startsWith("*.")).map((a) => `EXCLUDE ${a.replace(/:\d+$/, "")}`).join(" , ")}`;
       const args = [
         "--headless=new", "--remote-debugging-port=0", `--user-data-dir=${join(work, "profile")}`, "--no-first-run", "--no-default-browser-check",
@@ -316,6 +540,7 @@ export class ChromiumVideoRenderer extends VideoRenderer {
         "--disable-breakpad", "--disable-dev-shm-usage", "--mute-audio", "--hide-scrollbars", "--force-color-profile=srgb",
         "--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist", "--autoplay-policy=no-user-gesture-required",
         `--host-resolver-rules=${hostRules}`, `--window-size=${input.width},${input.height}`, "--no-pings", "--disable-features=Translate,MediaRouter",
+        `--proxy-server=http://127.0.0.1:${proxyPort}`, "--proxy-bypass-list=<-loopback>", "--webrtc-ip-handling-policy=disable_non_proxied_udp", "--disable-quic",
       ];
       if (typeof process.getuid === "function" && process.getuid() === 0) args.push("--no-sandbox");
       args.push("about:blank");
@@ -329,7 +554,7 @@ export class ChromiumVideoRenderer extends VideoRenderer {
         chromiumDied = `Chromium stopped (${sig ?? `exit ${code}`})`;
         die(new Error(chromiumDied));
       });
-      const wsUrl = await new Promise<string>((resolve, reject) => {
+      const wsUrl = await early(new Promise<string>((resolve, reject) => {
         let buf = "";
         const timer = setTimeout(() => reject(new Error("Chromium did not start within 30 s")), 30_000);
         child.stderr?.on("data", (d: Buffer) => {
@@ -349,14 +574,14 @@ export class ChromiumVideoRenderer extends VideoRenderer {
           clearTimeout(timer);
           reject(e);
         });
-      });
+      }));
       check();
       const pw = loadPlaywright(this.o.playwrightModule);
-      browser = await pw.chromium.connectOverCDP(wsUrl, { timeout: 30_000 });
-      const ctx = await browser.newContext({
+      browser = await early(pw.chromium.connectOverCDP(wsUrl, { timeout: 30_000 }));
+      const ctx = await early(browser.newContext({
         viewport: { width: input.width, height: input.height }, deviceScaleFactor: 1, colorScheme: "dark", reducedMotion: "no-preference",
         serviceWorkers: "block", acceptDownloads: false, permissions: [], locale: "en-US", javaScriptEnabled: true,
-      });
+      }));
       const fail = (words: string): void => {
         failures.push(words);
         die(new Error(words));
@@ -369,28 +594,58 @@ export class ChromiumVideoRenderer extends VideoRenderer {
           await route.continue().catch(() => undefined);
           return;
         }
-        const h = hostOf(url)?.host ?? "unknown";
-        blocked++;
-        blockedHosts.set(h, (blockedHosts.get(h) ?? 0) + 1);
+        countBlocked(hostOf(url)?.host ?? "unknown");
         await route.abort("blockedbyclient").catch(() => undefined);
+      });
+      /* a WebSocket never connects, whatever its address (IK6d): it is answered and closed here, in the browser, and counted */
+      await ctx.routeWebSocket(/.*/, (ws) => {
+        countBlocked(`${hostOf(ws.url().replace(/^ws/, "http"))?.host ?? "unknown"} (websocket)`);
+        void Promise.resolve(ws.close()).catch(() => undefined);
       });
       let pages = 0;
       ctx.on("page", (p: PwPage & { close?: () => Promise<void> }) => {
-        /* any second page (a pop-up) is closed at once */
-        if (pages > 0) void p.close?.().catch(() => undefined);
+        /* the clock's blank page and the render page are the two; any other page (a pop-up) is closed at once */
+        if (pages > 1) void p.close?.().catch(() => undefined);
         pages++;
       });
-      await ctx.addInitScript(clock.source);
-      await ctx.addInitScript("window.__vt.freeze();");
-      const page = await ctx.newPage();
+      /* the clock, frozen from the very first script at virtual time 0 and the given wall time (IK6f); a worker has a WebSocket no route sees, so no worker exists */
+      await early(ctx.addInitScript(`${clock.source}\n;window.__vt.freeze({ epoch: ${epoch} });\n;for (const n of ["Worker", "SharedWorker"]) { try { Object.defineProperty(window, n, { value: undefined, configurable: false, writable: false }); } catch (e) {} }`));
+      const blank = await early(ctx.newPage());
+      const checkBegan = performance.now();
+      try {
+        await guard(blank.goto("about:blank", { waitUntil: "load", timeout: 15_000 }), "the blank page did not load");
+        const read = `({ p: performance.now(), d: Date.now(), raf: window.__chk ? window.__chk.raf : -1 })`;
+        const a = await guard(blank.evaluate<{ p: number; d: number } | null>(`(() => { const x = window.__vt; if (!x || typeof x.step !== "function" || typeof x.freeze !== "function") return null; window.__chk = { raf: 0 }; const f = () => { window.__chk.raf++; requestAnimationFrame(f); }; requestAnimationFrame(f); return { p: performance.now(), d: Date.now() }; })()`), "the clock check did not answer");
+        if (!a) throw drift("the page script does not define the stepped clock (window.__vt)");
+        if (a.p !== 0 || a.d !== epoch) throw drift(`it did not start frozen at virtual time 0 and the given wall time (read ${a.p} ms and ${a.d})`);
+        await sleep(120);
+        const b = await guard(blank.evaluate<{ p: number; d: number; raf: number }>(read), "the clock check did not answer");
+        if (b.p !== a.p || b.d !== a.d || b.raf !== 0) throw drift("it does not stay frozen: time moved by itself");
+        const k = 6;
+        const step = 1000 / this.o.fps;
+        const c = await guard(blank.evaluate<{ p: number; d: number; raf: number }>(`(async () => { for (let i = 0; i < ${k}; i++) await window.__vt.step(${step}); return ${read}; })()`), "the clock check did not answer a step");
+        if (Math.abs(c.p - b.p - k * step) > 1e-6) throw drift(`${k} steps moved performance.now by ${Math.round((c.p - b.p) * 1000) / 1000} ms, not ${Math.round(k * step * 1000) / 1000}`);
+        if (Math.abs(c.d - b.d - k * step) > 1) throw drift(`${k} steps moved Date.now by ${c.d - b.d} ms, not ${Math.round(k * step)}`);
+        if (c.raf !== k) throw drift(`the frame callback fired ${c.raf} times for ${k} steps`);
+      } catch (e) {
+        if (e instanceof Error && e.message.startsWith("clock drift")) throw e;
+        if (stopped || signal?.aborted || chromiumDied) throw e;
+        throw drift(`the check could not run (${mask(String((e as Error)?.message ?? e)).slice(0, 120)})`);
+      } finally {
+        /* on an abort or a dead browser there is nothing to close: never wait on it */
+        if (!stopped && !chromiumDied) await Promise.race([blank.close().catch(() => undefined), sleep(2000)]);
+      }
+      stats.clockCheckMs = Math.round(performance.now() - checkBegan);
+      const page = await early(ctx.newPage());
       const pageUrl = `${this.o.webOrigin.replace(/\/$/, "")}/render/${encodeURIComponent(token)}`;
       let loaded = false;
       page.on("pageerror", (e: Error) => fail(`the render page threw: ${mask(String(e?.message ?? e)).slice(0, 200)}`));
       page.on("crash", () => fail("the render page crashed"));
       page.on("framenavigated", (f: { url(): string }) => {
         if (f !== page.mainFrame() || !loaded) return;
+        /* any other address, on this host or another, is a navigation away (a move inside the same page, a hash or a query, is not) */
         const at = hostOf(f.url());
-        if (!at || at.host !== hostOf(pageUrl)?.host || !new URL(f.url()).pathname.startsWith("/render/")) fail("the render page navigated away");
+        if (!at || at.host !== hostOf(pageUrl)?.host || new URL(f.url()).pathname !== new URL(pageUrl).pathname) fail("the render page navigated away");
       });
       page.on("download", () => fail("the render page tried to download a file"));
       page.on("dialog", (d: { dismiss(): Promise<void> }) => void d.dismiss().catch(() => undefined));
@@ -400,9 +655,21 @@ export class ChromiumVideoRenderer extends VideoRenderer {
         if (failures.length) throw new Error(failures[0]);
       };
 
-      await page.goto(pageUrl, { waitUntil: "domcontentloaded", timeout: 90_000 });
+      await early(page.goto(pageUrl, { waitUntil: "domcontentloaded", timeout: 90_000 }));
       loaded = true;
       const readyBegan = performance.now();
+      let inflight = 0;
+      let lastNet = performance.now();
+      page.on("request", () => {
+        inflight++;
+        lastNet = performance.now();
+      });
+      const done1 = (): void => {
+        inflight = Math.max(0, inflight - 1);
+        lastNet = performance.now();
+      };
+      page.on("requestfinished", done1);
+      page.on("requestfailed", done1);
       /* step 16 ms of stepped time for each 50 ms real while the page loads, so its own short waits (the Studio rig's 120 ms poll) do not run out */
       for (;;) {
         bad();
@@ -410,10 +677,19 @@ export class ChromiumVideoRenderer extends VideoRenderer {
         if (s.error) throw new Error(mask(`the render page said: ${s.error}`).slice(0, 300));
         if (s.ready) break;
         if (performance.now() - readyBegan > this.o.readyTimeoutMs) throw new Error(`the render page was never ready within ${Math.round(this.o.readyTimeoutMs / 1000)} s`);
-        await guard(page.evaluate("window.__vt.step(16)"), "the page did not answer a step");
+        /* stepped time moves only while the page waits for nothing outside (no request in flight; a request that hangs for 1.5 s no longer holds it), so what the network brings arrives at the same virtual moment in every render (IK6f) */
+        if (inflight === 0 || performance.now() - lastNet > 1500) await guard(page.evaluate("window.__vt.step(16)"), "the page did not answer a step");
         await sleep(50);
       }
       stats.readyMs = Math.round(performance.now() - readyBegan);
+      /* IK6f: the page's fonts and pictures load on real time, not stepped time, so the first frame must wait for them or two renders differ (a fallback font in one, the real one in the other):
+         wait, in real time and without stepping, until the fonts are loaded and every picture is complete, twice in a row; a page that never settles is recorded as it is after 20 s */
+      for (let settled = 0, began = performance.now(); settled < 2 && performance.now() - began < 20_000; ) {
+        bad();
+        const st = await guard(page.evaluate<boolean>(`(document.fonts ? document.fonts.status === "loaded" : true) && [...document.images].every((i) => i.complete)`), "the page did not answer");
+        settled = st ? settled + 1 : 0;
+        await sleep(st ? 60 : 100);
+      }
       const cdp = await ctx.newCDPSession(page);
 
       /* the frame loop: one stepped tick, one capture, one write to the scene's own encoder */
@@ -489,13 +765,15 @@ export class ChromiumVideoRenderer extends VideoRenderer {
       await rm(finalPath, { force: true });
       const aborted = stopped || signal?.aborted || e instanceof RenderStop;
       if (!aborted && !failures.length) await sleep(200);
-      const words = aborted ? "render aborted" : mask(failures[0] ?? (e instanceof Error ? e.message : String(e))).slice(0, 400);
+      const raw = failures[0] ?? (e instanceof Error ? e.message : String(e));
+      const words = aborted ? "render aborted" : /Execution context was destroyed|frame was detached/i.test(raw) ? "the render page navigated away" : mask(raw).slice(0, 400);
       this.log.warn(`render ${jobId} failed: ${words}`);
       /* no `cause`: the original error may hold the token; only the masked words travel */
       // eslint-disable-next-line preserve-caught-error
       throw new Error(words);
     } finally {
       signal?.removeEventListener("abort", onAbort);
+      proxy.close();
       killAll();
       await Promise.race([browser?.close().catch(() => undefined), sleep(500)]);
       killAll();
@@ -527,7 +805,8 @@ export class ChromiumVideoRenderer extends VideoRenderer {
     let finishing = false;
     const exited = new Promise<number | null>((resolve) => p.once("exit", (code, sig) => resolve(sig ? null : code)));
     void exited.then((code) => {
-      if (!finishing) die(new Error(mask(`ffmpeg stopped early (${code === null ? "killed" : `exit ${code}`}): ${err.trim().slice(0, 200)}`)));
+      /* an encoder that dies while it is still taking frames, or while it flushes its scene, fails the render at once (L7): not at the end of play */
+      if (!finishing || code !== 0) die(new Error(mask(`ffmpeg ${finishing ? "failed" : "stopped early"} (${code === null ? "killed" : `exit ${code}`}): ${err.trim().slice(0, 200)}`)));
     });
     void input;
     let done: Promise<void> | null = null;
@@ -612,14 +891,39 @@ function killPid(p: ChildProcess, group: boolean): void {
   }
 }
 
-/** Waits (a few seconds at most) until no process of the browser's group is left, so a caller sees a clean process table. */
+/** The live (not zombie) processes of one process group, from /proc; null where /proc is not there. A zombie waits only for its parent to be reaped by init: it is not a process left behind. */
+async function liveGroup(pgid: number): Promise<number[] | null> {
+  let names: string[];
+  try {
+    names = await readdir("/proc");
+  } catch {
+    return null;
+  }
+  const out: number[] = [];
+  for (const d of names) {
+    if (!/^\d+$/.test(d)) continue;
+    try {
+      const st = await readFile(`/proc/${d}/stat`, "utf8");
+      const rest = st.slice(st.lastIndexOf(")") + 2).split(" ");
+      if (Number(rest[2]) === pgid && rest[0] !== "Z") out.push(Number(d));
+    } catch {
+      /* gone while we looked */
+    }
+  }
+  return out;
+}
+
+/** Waits (a few seconds at most) until no live process of the browser's group is left, so a caller sees a clean process table. */
 async function groupGone(pid: number): Promise<void> {
   for (let i = 0; i < 100; i++) {
-    try {
-      process.kill(-pid, 0);
-    } catch {
-      return;
-    }
+    const live = await liveGroup(pid);
+    if (live === null) {
+      try {
+        process.kill(-pid, 0);
+      } catch {
+        return;
+      }
+    } else if (live.length === 0) return;
     try {
       process.kill(-pid, "SIGKILL");
     } catch {

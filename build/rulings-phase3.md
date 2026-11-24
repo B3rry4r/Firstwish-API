@@ -1285,3 +1285,11 @@ HG1 (give race) Two staff giving one Concierge order: the code is right (overlap
 - IK7a (24 Nov, the lead): the stand-in's hold is asked for by a test, not set for a whole stack: STANDIN_VIDEO=hold
   holds a render only while the file named by STANDIN_RENDER_HOLD_FILE exists (a flow makes it before its asks and
   removes it after); with no such file every other flow's video is made at once, as before.
+- IK8 (24 Nov, the lead, after the render page's second and last fix round; a ruling, not a new round): R4 is MERGED
+  as it stands, because what real people see is proven unchanged (a receiver's view before and after on twenty
+  styles and seven endings, by the builder and by a separate verifier) and the render page is opened by nothing
+  until a real renderer exists (IK3: nothing that includes the video is sold). What is NOT finished is RE-CUT as
+  its own task, R4C, and it gates the renderer's release proof (R9): the render sweep must cover all 43 house
+  styles and every ending of each (it read only the first page of 20); every one must reach done under the render
+  page with nothing pressable and no action word (today owambe and harvest-light with the envelope do not finish,
+  and mosaic draws the word "hold").

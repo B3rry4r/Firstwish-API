@@ -1293,3 +1293,12 @@ HG1 (give race) Two staff giving one Concierge order: the code is right (overlap
   styles and every ending of each (it read only the first page of 20); every one must reach done under the render
   page with nothing pressable and no action word (today owambe and harvest-light with the envelope do not finish,
   and mosaic draws the word "hold").
+- IM1 (24 Nov, the lead, on API-BASE-22's findings; Default (lead), owner may override): a photo a person gives us
+  must never carry their position to someone else. The file a receiver, a friend or the public is given is always
+  free of metadata (no GPS, no camera serial): the server makes a clean copy when the upload is confirmed and
+  serves that (or a sized copy of it); the untouched original is never served to anyone but its owner, and the
+  web shows sized copies (w320, w768, w1600), not originals.
+- IM2 (24 Nov, the lead): a photo kind the server cannot open cannot be accepted: HEIC is taken out of the kinds the
+  upload accepts (the server's rule and the web's file picker), so an iPhone hands over a JPEG as it does for any
+  site that does not ask for HEIC; a HEIC sent anyway is refused in words that say to send a JPEG or PNG. (No
+  HEIC decoder ships with the image library; adding one is a licence matter.)

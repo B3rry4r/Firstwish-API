@@ -115,3 +115,4 @@
 - R5 check: a photo that arrives late is in the frames only when the page waits for it before it says ready: the render page must wait for every photo and font of the wish (check in R4C's hand-back; else a task).
 - W18 check (24 Nov) LOW: when frozen from the first script, an animation first seen in step k starts at the start of that step (ends one step, 33 ms, early: bounded); the clock's test needs a running build for case 3 (without --origin it skips and exits 2).
 - W18 check: the list previews are NOT repeatable even with one script (base against base differs in 229 of 288 frames; a cap-toss rerun gave 359 then 392 frames): they freeze late, after live-page randomness. Old fault, not W18's; the owner ruled the preview files stay as they are (R9).
+- R5 second check (24 Nov) LOW: the clock shim throws inside a sandboxed iframe (it fails the render: right today, since the render page draws none).

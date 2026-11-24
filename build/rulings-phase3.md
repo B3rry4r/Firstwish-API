@@ -1332,3 +1332,10 @@ HG1 (give race) Two staff giving one Concierge order: the code is right (overlap
   ffprobe on an m4a and an mp4). They are removed at confirm by ffmpeg without re-encoding (the server already needs
   ffmpeg and ffprobe for clip lengths and the video maker); a file ffmpeg cannot rewrite is refused in words. Until a
   stored file is clean it is handed to no one but its owner, as for photos.
+- IK6g (24 Nov, the lead, on the second check of the recorder; Default (lead), owner may override): nothing plays
+  before the recording starts: the page's clock stays at exactly 0 until the page says it is ready (only work that
+  is already due is run); the first frame is the wish's first moment. A picture or font that never arrives fails the
+  recording with words inside the time limit: a video with a hole is never handed out. The recorder's browser is
+  driven through a private pipe, never a listening port, and its proxy asks for a secret made for that one
+  recording: no other program on the server can read the wish's token or use the proxy. If the server program dies,
+  the browser dies with it.

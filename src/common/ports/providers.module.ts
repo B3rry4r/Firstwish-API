@@ -9,7 +9,8 @@ import { CodeGenerator, IdGenerator, StandinCodeGenerator, StandinIdGenerator, S
 import { PaymentsPort } from "./payments.port";
 import { PayoutProviderPort } from "./payout-provider.port";
 import { RefundProviderPort } from "./refund-provider.port";
-import { ImageSizesPort, MissingImageSizes } from "./image-sizes.port";
+import { ImageSizesPort } from "./image-sizes.port";
+import { SharpImageSizes } from "./adapters/sharp-image-sizes.adapter";
 import { ClipLengthPort } from "./clip-length.port";
 import { FfprobeClipLength } from "./adapters/ffprobe-clip-length.adapter";
 import { LimitedPort, portTimeouts, withTimeLimit } from "./time-limit";
@@ -97,8 +98,12 @@ const providers: Provider[] = [
       limited(env, "google", standin(env) ? new StandinGoogle() : new GoogleOidc(need(env.GOOGLE_CLIENT_ID), need(env.GOOGLE_CLIENT_SECRET), clock)),
   },
   { provide: UploadScreeningPort, inject: [ENV], useFactory: (env: Env) => limited(env, "screening", standin(env) ? new StandinScreening(parseScreeningRules(env.STANDIN_SCREENING ?? "") ?? []) : new BasicScreening()) },
-  // X22: the image-sizes port; its real adapter comes with the jobs frame (B06)
-  { provide: ImageSizesPort, inject: [ENV], useFactory: (env: Env) => limited(env, "imageSizes", standin(env) ? new StandinImageSizes() : new MissingImageSizes()) },
+  // X22: the image-sizes port; the real adapter reads and writes through the storage port (the sized copy never passes through a request)
+  {
+    provide: ImageSizesPort,
+    inject: [ENV, StoragePort],
+    useFactory: (env: Env, storage: StoragePort) => limited(env, "imageSizes", standin(env) ? new StandinImageSizes() : new SharpImageSizes(storage)),
+  },
   // IL1a: a clip's length is read from the stored file (ffprobe on the real server, a header reader in the stand-in)
   {
     provide: ClipLengthPort,

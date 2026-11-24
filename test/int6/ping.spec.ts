@@ -133,11 +133,11 @@ describe("FB4: ping on every port", () => {
       const f = { calls: 0, ping: () => { f.calls++; return Promise.resolve(ans()); } };
       return f;
     };
-    const build = (env: "live" | "standin", over: Partial<Record<"payments" | "refunds" | "payouts" | "email" | "storage" | "ai" | "screening" | "video", { calls: number; ping: () => Promise<PortPing> }>> = {}) => {
+    const build = (env: "live" | "standin", over: Partial<Record<"payments" | "refunds" | "payouts" | "email" | "storage" | "ai" | "screening" | "video" | "imageSizes", { calls: number; ping: () => Promise<PortPing> }>> = {}) => {
       const ok = () => fake(() => ({ state: "ok" }));
       const clock = new StandinClock(new Date("2040-01-01T00:00:00Z"));
-      const ports = { payments: ok(), refunds: ok(), payouts: ok(), email: ok(), storage: ok(), ai: ok(), screening: ok(), video: ok(), ...over };
-      const s = new ProviderStatus({ PROVIDERS: env } as never, clock, ports.payments as never, ports.refunds as never, ports.payouts as never, ports.email as never, ports.storage as never, ports.ai as never, ports.screening as never, ports.video as never);
+      const ports = { payments: ok(), refunds: ok(), payouts: ok(), email: ok(), storage: ok(), ai: ok(), screening: ok(), video: ok(), imageSizes: ok(), ...over };
+      const s = new ProviderStatus({ PROVIDERS: env } as never, clock, ports.payments as never, ports.refunds as never, ports.payouts as never, ports.email as never, ports.storage as never, ports.ai as never, ports.screening as never, ports.video as never, ports.imageSizes as never);
       return { s, clock, ports };
     };
 

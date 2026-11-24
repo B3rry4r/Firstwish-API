@@ -29,6 +29,11 @@ export abstract class StoragePort {
   abstract head(key: string): Promise<StoredObject | null>;
   /** The first `bytes` bytes of an object (for screening by file signature), or null when there is none. */
   abstract readStart(key: string, bytes: number): Promise<Buffer | null>;
+  /**
+   * The whole object, or null when there is none. `maxBytes` bounds the read: an object larger than that is refused (rejects) before its
+   * bytes are read, so a caller that must hold the bytes (a resize) never holds more than it chose to.
+   */
+  abstract readObject(key: string, maxBytes: number): Promise<Buffer | null>;
   abstract delete(key: string): Promise<void>;
   /** Copies an object inside storage (Y1: a confirmed upload moves from its staging key to a final key no PUT was signed for). */
   abstract copy(fromKey: string, toKey: string): Promise<void>;

@@ -99,6 +99,24 @@ export class S3Storage extends StoragePort {
     }
   }
 
+  async readObject(key: string, maxBytes: number): Promise<Buffer | null> {
+    try {
+      const r = await this.client.send(new GetObjectCommand({ Bucket: this.config.bucket, Key: key }));
+      if (r.ContentLength !== undefined && r.ContentLength > maxBytes) {
+        // the body is never read: the connection is dropped
+        (r.Body as { destroy?: () => void } | undefined)?.destroy?.();
+        throw new Error(`The stored file is larger than the ${maxBytes} bytes this read allows.`);
+      }
+      if (!r.Body) return Buffer.alloc(0);
+      const bytes = Buffer.from(await r.Body.transformToByteArray());
+      if (bytes.length > maxBytes) throw new Error(`The stored file is larger than the ${maxBytes} bytes this read allows.`);
+      return bytes;
+    } catch (e) {
+      if (isMissing(e)) return null;
+      throw e;
+    }
+  }
+
   async delete(key: string): Promise<void> {
     await this.client.send(new DeleteObjectCommand({ Bucket: this.config.bucket, Key: key }));
   }

@@ -1,7 +1,7 @@
 import sharp from "sharp";
 import { PrismaService } from "../../../common/db/prisma.service";
 import { SharpImageSizes } from "../../../common/ports/adapters/sharp-image-sizes.adapter";
-import { ImageSizesPort, ResizeInput } from "../../../common/ports/image-sizes.port";
+import { ImageSizesPort, CleanInput, ResizeInput } from "../../../common/ports/image-sizes.port";
 import { StoragePort } from "../../../common/ports/storage.port";
 import { createTestApp, TestApp } from "../../../../test/kit/app";
 import { holdSettingLockForFile } from "../../../../test/kit/setting-lock";
@@ -22,6 +22,9 @@ class HookedSizes extends ImageSizesPort {
   }
   ping() {
     return this.real.ping();
+  }
+  clean(input: CleanInput) {
+    return this.real.clean(input);
   }
   async resize(input: ResizeInput): Promise<void> {
     await this.real.resize(input);

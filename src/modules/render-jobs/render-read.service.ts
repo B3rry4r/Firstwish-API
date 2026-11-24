@@ -8,7 +8,7 @@ import { toWireInstant } from "../../common/time/time";
 import type { PublicWishView, RenderWish } from "../../contracts";
 import { LinkLimits, READS_PER_MINUTE } from "../public-wishes/link-limits";
 import { EntitlementsService } from "../price-book/entitlements.service";
-import { SignedUrlsService } from "../stored-files/signed-urls.service";
+import { SignedUrlsService, type SizedRead } from "../stored-files/signed-urls.service";
 import { StudioFilesService } from "../studio/studio-files.service";
 import { videoRefunded } from "../wish-extras/wish-extras";
 import { HOUSE_HANDLE } from "../wishes/house";
@@ -96,13 +96,13 @@ export class RenderReadService {
   }
 
   /** A signed read for each file the wish-to-file rows name; a file not passed by screening (held, refused, still checking) is left out, as the public link leaves it out. */
-  private async fileLinks(wishId: string, ttl: number): Promise<{ fileId: string; role: string; url: string; expiresAt: string }[]> {
+  private async fileLinks(wishId: string, ttl: number): Promise<{ fileId: string; role: string; url: string; expiresAt: string; variants: SizedRead[] }[]> {
     const rows = await this.db.wishFile.findMany({ where: { wishId }, orderBy: [{ createdAt: "asc" }, { id: "asc" }], select: { fileId: true, role: true } });
-    const out: { fileId: string; role: string; url: string; expiresAt: string }[] = [];
+    const out: { fileId: string; role: string; url: string; expiresAt: string; variants: SizedRead[] }[] = [];
     for (const r of rows) {
       try {
-        const s = await this.signed.signedRead({ fileId: r.fileId }, { type: "allowed" }, ttl);
-        out.push({ fileId: r.fileId, role: r.role, url: s.url, expiresAt: s.expiresAt });
+        const { read: s, sizes } = await this.signed.signedSet({ fileId: r.fileId }, { type: "allowed" }, ttl);
+        out.push({ fileId: r.fileId, role: r.role, url: s.url, expiresAt: s.expiresAt, variants: sizes });
       } catch (e) {
         if (!(e instanceof AppError) || e.getStatus() !== 404) throw e;
       }

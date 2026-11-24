@@ -1,5 +1,6 @@
+import { createHash } from "node:crypto";
 import sharp from "sharp";
-import { ImageSizesPort, MAX_SOURCE_BYTES, ResizeInput } from "../image-sizes.port";
+import { CleanInput, CleanResult, ImageSizesPort, MAX_SOURCE_BYTES, ResizeInput } from "../image-sizes.port";
 import { PING_OK, type PortPing, pingError } from "../ping";
 import { StoragePort } from "../storage.port";
 
@@ -38,6 +39,29 @@ export class SharpImageSizes extends ImageSizesPort {
     } catch (e) {
       return pingError(e);
     }
+  }
+
+  /**
+   * IM1: the picture again at its own size and its own type, with nothing of the original's metadata (the library writes none unless asked: no EXIF
+   * with its GPS and serial and thumbnail, no XMP, IPTC or profile). Turned upright by its orientation. A GIF and a WebP keep their frames. The file
+   * written at targetKey is the one that is hashed. A picture it cannot open rejects with plain words (the library's own message is dropped).
+   */
+  async clean(input: CleanInput): Promise<CleanResult> {
+    const type = input.contentType.toLowerCase().split(";")[0].trim();
+    if (!["image/jpeg", "image/png", "image/webp", "image/gif"].includes(type)) throw new Error("This kind of picture cannot be opened here. Send a JPEG or PNG.");
+    const source = input.source ?? (await this.storage.readObject(input.sourceKey, MAX_SOURCE_BYTES));
+    if (!source) throw new Error("The picture is not in storage.");
+    let bytes: Buffer;
+    try {
+      const frames = type === "image/gif" || type === "image/webp";
+      const img = sharp(source, { animated: frames, limitInputPixels: MAX_SOURCE_PIXELS, failOn: "error", sequentialRead: !frames }).rotate();
+      bytes = await (type === "image/jpeg" ? img.jpeg({ quality: 92, mozjpeg: true }) : type === "image/png" ? img.png({ compressionLevel: 9 }) : type === "image/webp" ? img.webp({ quality: 92 }) : img.gif()).toBuffer();
+    } catch (e) {
+      const raw = e instanceof Error ? e.message : "";
+      throw new Error(/pixel limit|exceeds/i.test(raw) ? "This picture has too many pixels. Send a smaller JPEG or PNG." : "We could not open this picture. Send a JPEG or PNG.", { cause: e });
+    }
+    await this.storage.putObject(input.targetKey, bytes, type);
+    return { bytes: bytes.length, sha256: createHash("sha256").update(bytes).digest("hex") };
   }
 
   async resize(input: ResizeInput): Promise<void> {

@@ -102,7 +102,7 @@ const providers: Provider[] = [
   {
     provide: ImageSizesPort,
     inject: [ENV, StoragePort],
-    useFactory: (env: Env, storage: StoragePort) => limited(env, "imageSizes", standin(env) ? new StandinImageSizes() : new SharpImageSizes(storage)),
+    useFactory: (env: Env, storage: StoragePort) => limited(env, "imageSizes", standin(env) ? new StandinImageSizes(storage) : new SharpImageSizes(storage)),
   },
   // IL1a: a clip's length is read from the stored file (ffprobe on the real server, a header reader in the stand-in)
   {

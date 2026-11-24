@@ -1,7 +1,7 @@
 import { createHash, createHmac, timingSafeEqual } from "node:crypto";
 import { appendFileSync, chmodSync, closeSync, fstatSync, openSync } from "node:fs";
 import { EnvError } from "../../env/env";
-import { ImageSizesPort, ResizeInput } from "../image-sizes.port";
+import { CleanInput, CleanResult, ImageSizesPort, MAX_SOURCE_BYTES, ResizeInput } from "../image-sizes.port";
 import { ClipLengthInput, ClipLengthPort } from "../clip-length.port";
 import { containerLengthMs } from "./clip-container";
 import { Money } from "../../money/money";
@@ -317,9 +317,18 @@ export class StandinStorage extends StoragePort {
   }
 }
 
-/** The image-sizes stand-in (X22): records each request and makes nothing. */
+/** The image-sizes stand-in (X22): records each request and makes nothing. Its clean copy is the picture as it is (a stand-in decodes nothing): a stack that must prove the real clean copy binds SharpImageSizes. */
 export class StandinImageSizes extends ImageSizesPort {
   readonly made: ResizeInput[] = [];
+  readonly cleaned: CleanInput[] = [];
+  constructor(private readonly storage?: StoragePort) {
+    super();
+  }
+  async clean(input: CleanInput): Promise<CleanResult> {
+    this.cleaned.push(input);
+    const bytes = input.source ?? (this.storage ? await this.storage.readObject(input.sourceKey, MAX_SOURCE_BYTES) : null);
+    return { bytes: bytes?.length ?? 0, sha256: bytes ? createHash("sha256").update(bytes).digest("hex") : null, unchanged: true };
+  }
   resize(input: ResizeInput): Promise<void> {
     this.made.push(input);
     return Promise.resolve();

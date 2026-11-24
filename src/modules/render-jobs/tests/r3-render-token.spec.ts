@@ -2,6 +2,7 @@ import { Logger } from "@nestjs/common";
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { testSlug, testWishNo } from "../../../../test/kit/unique";
+import { uniqueAddress } from "../../../../test/kit/app";
 import { boot, ids, routeStorage } from "../../concierge/tests/kit";
 import { RenderJobsService } from "../render-jobs.service";
 import { StandinVideoRenderer, VideoRenderer } from "../video-renderer";
@@ -47,7 +48,9 @@ describe("R3: the render token and GET /v1/render/:token/wish", () => {
 
   const http = () => k.t.http();
   const ask = (auth: string, id: string) => http().post(`/v1/wishes/${id}/video`).set("Authorization", auth).send({});
-  const readWish = (token: string) => http().get(`/v1/render/${token}/wish`);
+  // the read limit counts per address: this spec reads from addresses of its own, so it never uses another spec's allowance (nor they its)
+  const me = uniqueAddress();
+  const readWish = (token: string, from = me) => http().get(`/v1/render/${token}/wish`).set("X-Forwarded-For", from);
 
   /** Starts a render and holds it mid-render (as a real one is while its page reads the wish): answers its token, the job id and a way to finish it. */
   async function rendering(wishId: string, auth: string) {
@@ -321,16 +324,16 @@ describe("R3: the render token and GET /v1/render/:token/wish", () => {
   });
 
   it("6. limits: the read is limited like the link's reads (a minute, per address), with Retry-After and no-store, even on an error", async () => {
-    k.t.clock.set(new Date(NOW.getTime() + 3600_000));
+    const from = uniqueAddress();
     let last = 200;
-    let res = await readWish("a".repeat(43));
+    let res = await readWish("a".repeat(43), from);
     for (let i = 0; i < 70 && last !== 429; i++) {
-      res = await readWish("a".repeat(43));
+      res = await readWish("a".repeat(43), from);
       last = res.status;
     }
     expect(last).toBe(429);
     expect(res.headers["retry-after"]).toBeDefined();
     expect(res.headers["cache-control"]).toBe("no-store");
-    expect((await readWish("a".repeat(43))).headers["cache-control"]).toBe("no-store");
+    expect((await readWish("a".repeat(43), from)).headers["cache-control"]).toBe("no-store");
   });
 });

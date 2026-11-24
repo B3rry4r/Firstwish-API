@@ -1277,3 +1277,11 @@ HG1 (give race) Two staff giving one Concierge order: the code is right (overlap
   named by STANDIN_RENDER_TOKENS (mode 0600) and, with STANDIN_VIDEO=hold, waits until the token is spent (or the
   abort, or a cap) before it writes its marked file, so a page can read while the job is still rendering. No route
   mints a token; the real server never writes one anywhere but the row's hash.
+- IK6a (24 Nov, the lead, on the check of the render page; Default (lead), owner may override; replaces IK6's "at most
+  30 seconds"): a status video is at most 60 seconds (WhatsApp's status takes a minute by the public reports read on
+  24 Nov; some say 90 seconds is rolling out; no official page was found: so 60), and the file is kept small enough to
+  send (aim under 16 MB). A wish whose own play is longer than the limit keeps its opening and its ending whole and
+  loses whole scenes from the middle, cut at scene ends; it is never cut off before its ending.
+- IK7a (24 Nov, the lead): the stand-in's hold is asked for by a test, not set for a whole stack: STANDIN_VIDEO=hold
+  holds a render only while the file named by STANDIN_RENDER_HOLD_FILE exists (a flow makes it before its asks and
+  removes it after); with no such file every other flow's video is made at once, as before.

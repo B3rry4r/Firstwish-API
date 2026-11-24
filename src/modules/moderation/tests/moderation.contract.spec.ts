@@ -230,7 +230,7 @@ describe("Moderation: reports, take-down asks, decisions, bans, queues (B13)", (
     const second = (await report(a.slug)).body.id as string;
     const fileOwner = await account(t, ["creator"]);
     const fileId = t.id();
-    await db.storedFile.create({ data: { id: fileId, ownerAccountId: fileOwner.accountId, purpose: "wish_photo", status: "screening", contentType: "image/jpeg", bytes: 10n, objectKey: `k/${fileId}`, variants: [], driver: "r2" } });
+    await db.storedFile.create({ data: { cleanAt: new Date(), id: fileId, ownerAccountId: fileOwner.accountId, purpose: "wish_photo", status: "screening", contentType: "image/jpeg", bytes: 10n, objectKey: `k/${fileId}`, variants: [], driver: "r2" } });
     const flagged = t.id();
     await db.screeningResult.create({ data: { id: flagged, fileId, provider: "standin", verdict: "review", labels: [], createdAt: t.clock.now() } });
     const r = await t.http().get("/v1/admin/moderation?limit=50").set(bearer(mod.token));

@@ -47,7 +47,7 @@ describe("IF4 a removed wish: the day it can be brought back until, then the era
     const id = ids.next();
     const objectKey = `files/${id}`;
     t.storage.put(objectKey, PNG(100), "image/png");
-    await db.storedFile.create({ data: { id, ownerAccountId: accountId, purpose: "wish_photo", objectKey, contentType: "image/png", bytes: BigInt(100), status: "ready", driver: "r2", variants: [] } as never });
+    await db.storedFile.create({ data: { cleanAt: new Date(), id, ownerAccountId: accountId, purpose: "wish_photo", objectKey, contentType: "image/png", bytes: BigInt(100), status: "ready", driver: "r2", variants: [] } as never });
     await db.uploadTicket.create({ data: { id, bytes: BigInt(100), contentType: "image/png", purpose: "wish-photo" } });
     await db.wishFile.create({ data: { id: ids.next(), wishId, fileId: id, role: "photo" } as never });
     return { id, key: objectKey };

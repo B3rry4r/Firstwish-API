@@ -257,7 +257,7 @@ describe("ZB3: a business's client wishes are wishes (no reveal) and the maker s
     const fileIds: string[] = [];
     for (const [wishId, accountId] of [[sw.id, o.accountId], [lDraft.wishId, l.accountId]] as const) {
       const id = ids.next();
-      await db.storedFile.create({ data: { id, ownerAccountId: accountId, purpose: "wish_photo", objectKey: `k/${id}`, contentType: "image/jpeg", bytes: 10n, status: "ready", variants: {}, driver: "r2" } });
+      await db.storedFile.create({ data: { cleanAt: new Date(), id, ownerAccountId: accountId, purpose: "wish_photo", objectKey: `k/${id}`, contentType: "image/jpeg", bytes: 10n, status: "ready", variants: {}, driver: "r2" } });
       await db.wishFile.create({ data: { id: ids.next(), wishId, fileId: id, role: "photo" } });
       fileIds.push(id);
     }

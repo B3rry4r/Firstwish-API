@@ -1,3 +1,4 @@
+import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { join } from "node:path";
@@ -8,11 +9,11 @@ import { ImageSizesPort } from "../../../common/ports/image-sizes.port";
 import { StoragePort } from "../../../common/ports/storage.port";
 import { createTestApp, TestApp, uniqueAddress } from "../../../../test/kit/app";
 import { holdSettingLockForFile } from "../../../../test/kit/setting-lock";
+import { ownDatabase } from "../../../../test/kit/own-db";
 import { JobsService } from "../../jobs/jobs.service";
 import { JobHandlers } from "../../job-handlers/job-handlers.service";
 import { FileJobs } from "../file-jobs";
 import { RULES } from "../file-rules";
-import { WishPictures } from "../../wishes/wish-pictures";
 import { PhotoCleaner } from "../photo-cleaner";
 import { SignedUrlsService } from "../signed-urls.service";
 import { ensureEntitlements, ids, makeAccount, makeBusiness, makeWish, stage } from "./files-kit";
@@ -20,7 +21,7 @@ import { leaks, phonePhoto, phonePng, phoneWebp } from "./ab23-pictures";
 import { testSlug } from "../../../../test/kit/unique";
 
 /** API-BASE-23 (IM1, IM2): no photo carries a position to someone else; no kind the server cannot open. Real pictures with GPS, a serial, XMP and a thumbnail, through the real routes. */
-const NOW = new Date("2025-06-01T09:00:00.000Z");
+const NOW = new Date("2026-11-24T09:00:00.000Z"); // after the seeded price book takes effect (15 Nov 2026)
 holdSettingLockForFile();
 type Body = Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
 type Size = { width: number; variant: string; sized: boolean; url: string; expiresAt: string };
@@ -33,15 +34,23 @@ describe("API-BASE-23: photos given to others are clean; HEIC is not taken", () 
   const address = uniqueAddress();
   const auth = (token: string) => ({ authorization: `Bearer ${token}` });
 
+  // the owner's wish read needs the seeded price book: the spec has a database of its own, with the seed, and reads the real route (GET /v1/wishes/:id)
+  const own = ownDatabase("ab23");
   beforeAll(async () => {
+    own.use();
     t = await createTestApp({ now: NOW, configure: (b) => b.overrideProvider(ImageSizesPort).useFactory({ factory: (s: StoragePort) => new SharpImageSizes(s), inject: [StoragePort] }) });
+    const seeded = spawnSync(process.execPath, [join(__dirname, "../../../../scripts/seed.mjs")], { cwd: join(__dirname, "../../../.."), env: process.env, encoding: "utf8" });
+    if (seeded.status !== 0) throw new Error(`seed failed: ${seeded.stderr}`);
     db = t.app.get(PrismaService);
     await ensureEntitlements(db);
     jobs = t.app.get(JobsService);
     signed = t.app.get(SignedUrlsService);
     t.app.get(JobHandlers).registerAll();
   });
-  afterAll(() => t.close());
+  afterAll(async () => {
+    await t.close();
+    own.drop();
+  });
 
   const keyOf = (url: string): string => {
     const path = decodeURI(new URL(url).pathname);
@@ -67,8 +76,12 @@ describe("API-BASE-23: photos given to others are clean; HEIC is not taken", () 
     return { id, slug };
   }
   const publicOpen = (slug: string) => t.http().post(`/v1/w/${slug}/opens`).set("x-forwarded-for", address).send({});
-  // the owner's wish read builds its pictures with WishPictures (the route needs the seeded price book, which a shared test database may not hold: this reads the same code)
-  const ownerRead = async (_me: { token: string }, wishId: string) => ({ body: { pictures: (await t.app.get(WishPictures).forWishes([wishId])).get(wishId) as unknown as Body[] } });
+  // the owner's wish read: the real route
+  const ownerRead = async (me: { token: string }, wishId: string) => {
+    const r = await t.http().get(`/v1/wishes/${wishId}`).set(auth(me.token));
+    expect(r.status).toBe(200);
+    return { body: { pictures: r.body.pictures as Body[] } };
+  };
 
   it("0. the pictures used here really carry a position, a serial, XMP and a thumbnail (what the head handed out untouched)", async () => {
     const jpeg = await phonePhoto();

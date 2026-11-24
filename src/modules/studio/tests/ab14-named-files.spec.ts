@@ -96,7 +96,7 @@ async function upload(c: Creator, styleId: string, purpose: keyof typeof KINDS =
 async function row(accountId: string, styleId: string | null, status: string, extra: Body = {}): Promise<string> {
   const id = ids.next();
   await db.storedFile.create({
-    data: { id, ownerAccountId: accountId, styleId, purpose: "studio_asset", objectKey: `k/${id}`, contentType: "image/png", bytes: 40, status, variants: {}, driver: "r2", kind: "image", ...extra } as never,
+    data: { cleanAt: new Date(), id, ownerAccountId: accountId, styleId, purpose: "studio_asset", objectKey: `k/${id}`, contentType: "image/png", bytes: 40, status, variants: {}, driver: "r2", kind: "image", ...extra } as never,
   });
   return id;
 }

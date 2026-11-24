@@ -20,7 +20,7 @@ describe("API-BASE-13 round 1 F2: a refused photo's words on the owner's wish re
     await t.db.wish.create({ data: { id: wishId, accountId: o.accountId, status: "draft", kind: "birthday", occasion: "birthday", styleSlug: "classic", timeZone: "Africa/Lagos", ticket: "keepsake" } as never });
     const photo = async (labels: string[]) => {
       const id = t.id();
-      await t.db.storedFile.create({ data: { id, ownerAccountId: o.accountId, purpose: "wish_photo", objectKey: `wish_photo/${id}/x`, contentType: "image/jpeg", bytes: 100n, status: "rejected", variants: [], driver: "r2", fileId: id, kind: "image" } as never });
+      await t.db.storedFile.create({ data: { cleanAt: new Date(), id, ownerAccountId: o.accountId, purpose: "wish_photo", objectKey: `wish_photo/${id}/x`, contentType: "image/jpeg", bytes: 100n, status: "rejected", variants: [], driver: "r2", fileId: id, kind: "image" } as never });
       await t.db.wishFile.create({ data: { id: t.id(), wishId, fileId: id, role: "photo" } as never });
       await t.db.screeningResult.create({ data: { id: t.id(), fileId: id, provider: "stand-in", verdict: "reject", labels } as never });
       return id;

@@ -34,7 +34,7 @@ describe("API-BASE-5 case 7: the reveal email count follows the Clock port, not 
     await db.business.create({ data: { id: businessId, accountId, name: "Studio", business: "Lens House", since: NOW, plan: "starter", renews: new Date("2027-12-01T09:00:00.000Z"), allowance: 10, used: 0, rolled: 0, month: "2027-09" } });
     const shoot = await t.http().post("/v1/business/shoots").set(auth(token)).send({ client: "Ada Obi", date: "2027-08-20", title: "Wedding" });
     const file = ids.next();
-    await db.storedFile.create({ data: { id: file, ownerAccountId: accountId, businessId, purpose: "vault_file", objectKey: `vault-file/${file}/k`, contentType: "image/jpeg", bytes: 1000n, status: "ready", variants: [], driver: "r2" } });
+    await db.storedFile.create({ data: { cleanAt: new Date(), id: file, ownerAccountId: accountId, businessId, purpose: "vault_file", objectKey: `vault-file/${file}/k`, contentType: "image/jpeg", bytes: 1000n, status: "ready", variants: [], driver: "r2" } });
     expect((await t.http().post(`/v1/business/shoots/${shoot.body.id}/files`).set(auth(token)).send({ files: [file], set: "proofs", shoot: shoot.body.id })).status).toBe(201);
     return { accountId, token, businessId, shoot: shoot.body.id as string };
   }

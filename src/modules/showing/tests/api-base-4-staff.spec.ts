@@ -30,7 +30,7 @@ describe("API-BASE-4 HP12 staff reads (through the real routes)", () => {
     const fileOwner = await account(t, ["creator"]);
     const fileId = t.id();
     t.storage.put(`k/${fileId}`, Buffer.from("HELDBYTES"), "image/jpeg");
-    await db.storedFile.create({ data: { id: fileId, ownerAccountId: fileOwner.accountId, purpose: "wish_photo", status: "screening", contentType: "image/jpeg", bytes: 9n, objectKey: `k/${fileId}`, variants: [], driver: "r2" } });
+    await db.storedFile.create({ data: { cleanAt: new Date(), id: fileId, ownerAccountId: fileOwner.accountId, purpose: "wish_photo", status: "screening", contentType: "image/jpeg", bytes: 9n, objectKey: `k/${fileId}`, variants: [], driver: "r2" } });
     await db.uploadTicket.create({ data: { id: fileId, bytes: 9n, contentType: "image/jpeg", purpose: "wish-photo" } });
     const flagged = t.id();
     await db.screeningResult.create({ data: { id: flagged, fileId, provider: "standin", verdict: "review", labels: [], createdAt: t.clock.now() } });

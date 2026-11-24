@@ -334,9 +334,24 @@
     {
       "name": "STANDIN_VIDEO",
       "introducedBy": "api-base-19",
-      "purpose": "IK3: `fail` makes the stand-in video renderer fail every job (PROVIDERS=standin binds the stand-in renderer, a small marked file); tests and verifier stacks only, refused with PROVIDERS=live or NODE_ENV=production",
+      "purpose": "IK3: `fail` makes the stand-in video renderer fail every job; IK7: `hold` makes it wait until the job's token is read (PROVIDERS=standin binds the stand-in renderer, a small marked file); tests and verifier stacks only, refused with PROVIDERS=live or NODE_ENV=production",
       "secret": false,
       "refusesStartInProduction": "no"
+    },
+    {
+      "name": "STANDIN_RENDER_TOKENS",
+      "introducedBy": "r3b",
+      "purpose": "IK7: a file the stand-in video renderer appends each render's one-use token to (mode 0600); test stacks only, refused with PROVIDERS=live or NODE_ENV=production",
+      "secret": false,
+      "refusesStartInProduction": "no"
+    },
+    {
+      "name": "RENDER_STANDIN_HOLD_SECONDS",
+      "introducedBy": "r3b",
+      "purpose": "IK7: the most seconds the stand-in video renderer waits with STANDIN_VIDEO=hold; test stacks only",
+      "secret": false,
+      "refusesStartInProduction": "no",
+      "readBySource": true
     },
     {
       "name": "INTERNAL_TOKEN",

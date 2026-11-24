@@ -92,7 +92,20 @@ export const MANIFEST_VARS: readonly VarSpec[] = [
     name: "STANDIN_VIDEO",
     need: "optional",
     kind: "string",
-    purpose: "IK3: `fail` makes the stand-in video renderer fail every job, so a test stack reaches the failed state and Ask again; PROVIDERS=standin binds the stand-in renderer (a small marked file); tests and verifier stacks only, refused with PROVIDERS=live or NODE_ENV=production",
+    purpose: "IK3: `fail` makes the stand-in video renderer fail every job, so a test stack reaches the failed state and Ask again; IK7: `hold` makes it wait, after writing its STANDIN_RENDER_TOKENS line, until the job's token is read (or the abort, or RENDER_STANDIN_HOLD_SECONDS), so a page can read while the job is rendering; PROVIDERS=standin binds the stand-in renderer (a small marked file); tests and verifier stacks only, refused with PROVIDERS=live or NODE_ENV=production",
+  },
+  {
+    name: "STANDIN_RENDER_TOKENS",
+    need: "optional",
+    kind: "string",
+    purpose: "IK7: a file the stand-in video renderer appends each render's one-use token to, one JSON line (jobId, wishId, kind, width, height, seconds, token), created with mode 0600, so a test stack can drive the render page; test stacks only, refused with PROVIDERS=live or NODE_ENV=production",
+  },
+  {
+    name: "RENDER_STANDIN_HOLD_SECONDS",
+    need: "optional",
+    kind: "int",
+    purpose: "IK7: the most seconds the stand-in video renderer waits with STANDIN_VIDEO=hold before it writes its file; test stacks only",
+    default: "120",
   },
   {
     name: "INTERNAL_TOKEN",

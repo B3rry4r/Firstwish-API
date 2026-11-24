@@ -1271,3 +1271,9 @@ HG1 (give race) Two staff giving one Concierge order: the code is right (overlap
   clip" allows one clip of up to 60 seconds (held once). A clip's length is read from the file, never taken from
   the browser. A wish holding more or longer clips than its ticket and extras give is refused at the upload, the
   ticket start and the seal, in words that say what to remove. (Until round 21 lands only the website limits clips.)
+- IK7 (24 Nov, the lead, on R4's stop; Default (lead), owner may override): a TEST stack may learn a render token, the
+  way it learns a sign-in code from the stand-in mail outbox: with PROVIDERS=standin and NODE_ENV not production
+  (refused at boot otherwise, like STANDIN_MAIL_OUTBOX) the stand-in renderer writes each run's token to the file
+  named by STANDIN_RENDER_TOKENS (mode 0600) and, with STANDIN_VIDEO=hold, waits until the token is spent (or the
+  abort, or a cap) before it writes its marked file, so a page can read while the job is still rendering. No route
+  mints a token; the real server never writes one anywhere but the row's hash.

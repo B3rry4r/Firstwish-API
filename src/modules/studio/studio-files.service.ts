@@ -33,11 +33,11 @@ export class StudioFilesService {
     private readonly clock: Clock,
   ) {}
 
-  private async view(f: FileRow, reader: Reader, reasons?: Map<string, string>): Promise<StyleFile> {
+  private async view(f: FileRow, reader: Reader, reasons?: Map<string, string>, ttlSeconds?: number): Promise<StyleFile> {
     let url: string | null = null;
     let expiresAt: string | null = null;
     if (f.status === "ready" || (f.status === "screening" && reader.type === "owner")) {
-      const s = await this.signed.signedRead({ fileId: f.id }, reader);
+      const s = await this.signed.signedRead({ fileId: f.id }, reader, ttlSeconds);
       url = s.url;
       expiresAt = s.expiresAt;
     }
@@ -97,6 +97,18 @@ export class StudioFilesService {
     if (wish.account.erasedAt && !wish.businessId) throw none();
     if (!wish.openedAt || !wish.endsAt || wish.endsAt.getTime() <= this.clock.now().getTime()) throw none();
     if (wish.passcodeHash && !this.tokens.valid(token, link.id, wish.passcodeHash)) throw none();
+    return this.playerFiles(wish, undefined);
+  }
+
+  /**
+   * R3: the same files and approved document, for the render's one read (the wish is not judged here: the render read has judged it). The signed
+   * addresses live `ttlSeconds`. A style the wish holds that has no approved document (a house style) answers its name, no files, no document.
+   */
+  async forRender(wish: { styleSlug: string; styleSubmissionId: string | null }, ttlSeconds: number): Promise<StyleFiles> {
+    return this.playerFiles(wish, ttlSeconds);
+  }
+
+  private async playerFiles(wish: { styleSlug: string; styleSubmissionId: string | null }, ttlSeconds: number | undefined): Promise<StyleFiles> {
     const style = await this.db.style.findFirst({ where: { slug: wish.styleSlug }, select: { id: true } });
     const document = style ? await this.approved.of(style.id, wish.styleSubmissionId) : null;
     if (!style || !document) return { style: wish.styleSlug, items: [], document: null };
@@ -118,6 +130,6 @@ export class StudioFilesService {
       orderBy: { id: "asc" },
       take: PLAYER_FILES,
     });
-    return { style: wish.styleSlug, items: await Promise.all(rows.map((r) => this.view(r, { type: "allowed" }))), document };
+    return { style: wish.styleSlug, items: await Promise.all(rows.map((r) => this.view(r, { type: "allowed" }, undefined, ttlSeconds))), document };
   }
 }

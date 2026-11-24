@@ -18,6 +18,7 @@ import { ServerFileWriter } from "../server-files/server-files";
 import { SignedUrlsService } from "../stored-files/signed-urls.service";
 import { videoRefunded, wishHas } from "../wish-extras/wish-extras";
 import { stateOf } from "../wishes/wish-state";
+import { RenderTokens } from "./render-token";
 import { RENDER_TEMP_PREFIX, VideoRenderer, type RenderKind } from "./video-renderer";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -97,6 +98,7 @@ export class RenderJobsService implements OnModuleInit {
     private readonly files: ServerFileWriter,
     private readonly entitlements: EntitlementsService,
     private readonly signed: SignedUrlsService,
+    private readonly tokens: RenderTokens,
     @Inject(ENV) private readonly env: Env,
   ) {}
 
@@ -284,7 +286,11 @@ export class RenderJobsService implements OnModuleInit {
     try {
       const owner = await this.db.wish.findUniqueOrThrow({ where: { id: c.wishId }, select: { accountId: true, erasedAt: true } });
       if (owner.erasedAt) throw new Error("the wish was erased"); // IK4a: nothing is made for an erased wish
-      const out = await this.renderer.render({ wishId: c.wishId, jobId, kind, width: c.width, height: c.height, seconds: c.seconds }, stop.signal);
+      // R3: the run starts, so the server makes the render's one-use token (bound to this job and wish; only its HMAC is stored). The renderer holds it in memory.
+      const minted = this.tokens.make();
+      const kept = await this.db.renderJob.updateMany({ where: mine, data: { tokenHash: minted.hash, tokenExpiresAt: minted.expiresAt, tokenUsedAt: null, updatedAt: now } });
+      if (kept.count === 0) return "failed"; // the row was taken over: this run mints nothing and renders nothing
+      const out = await this.renderer.render({ wishId: c.wishId, jobId, kind, width: c.width, height: c.height, seconds: c.seconds, token: minted.token }, stop.signal);
       tempPath = await this.ownTempFile(out.path, jobId);
       if (stop.signal.aborted) throw new Error("the render was stopped");
       // IK4a: erased while it rendered (between two looks): nothing is written
@@ -309,6 +315,10 @@ export class RenderJobsService implements OnModuleInit {
     } finally {
       clearInterval(watch);
       signal?.removeEventListener("abort", onParent);
+      // R3: a run that ends leaves no live token (a row taken over by a later run keeps that run's own)
+      await this.db
+        .$executeRaw`UPDATE render_job SET "tokenHash" = NULL, "tokenExpiresAt" = NULL WHERE id = ${jobId}::uuid AND "tokenHash" IS NOT NULL AND (status <> 'rendering' OR "updatedAt" = ${now})`
+        .catch(() => undefined);
       if (tempPath) await rm(tempPath, { force: true });
     }
   }

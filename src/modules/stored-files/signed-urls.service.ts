@@ -34,7 +34,8 @@ export class SignedUrlsService {
     private readonly clock: Clock,
   ) {}
 
-  async signedRead(input: InternalSignedUrlsSignedReadBody, reader: Reader): Promise<SignedRead> {
+  /** `ttlSeconds` (R3: a render's files live as long as the render may run) replaces the ten minutes; nothing else passes it. */
+  async signedRead(input: InternalSignedUrlsSignedReadBody, reader: Reader, ttlSeconds: number = READ_TTL_SECONDS): Promise<SignedRead> {
     if (!isUuid(input.fileId)) throw AppError.notFound("No such file.");
     let where: Prisma.StoredFileWhereInput;
     if (reader.type === "owner") where = { id: input.fileId, ownerAccountId: reader.accountId, status: { in: ["ready", "screening"] } };
@@ -59,10 +60,10 @@ export class SignedUrlsService {
       if (!v) throw AppError.notFound("No such size of this file.");
       key = v.key;
     }
-    const expiresAt = new Date(this.clock.now().getTime() + READ_TTL_SECONDS * 1000);
+    const expiresAt = new Date(this.clock.now().getTime() + ttlSeconds * 1000);
     // X20: the row records the read granted (file, size, expiry); the link itself is never stored.
     await this.db.signedUrl.create({ data: { id: this.ids.id(), fileId: file.id, variant, expiresAt } });
-    const url = await this.storage.signDownload(key, READ_TTL_SECONDS);
+    const url = await this.storage.signDownload(key, ttlSeconds);
     return { fileId: file.id, variant, url, expiresAt: toWireInstant(expiresAt) };
   }
 }

@@ -298,5 +298,6 @@ export const ENDPOINTS: readonly EndpointRow[] = [
   { id: "E-285", method: "GET", path: "/v1/creators/:handle/styles", resource: "Style", operation: "GetCreatorsByHandleStyles", request: "GetCreatorsByHandleStylesQueryDto", rawBody: false, noContent: false },
   { id: "E-286", method: "POST", path: "/v1/wishes/:id/gather/on", resource: "Wish", operation: "PostWishesByIdGatherOn", request: "PostWishesByIdGatherOnBodyDto", rawBody: false, noContent: false },
   { id: "E-288", method: "GET", path: "/v1/sample-wishes/:kind/:occasion", resource: "SampleWish", operation: "GetSampleWishesByKindByOccasion", request: "GetSampleWishesByKindByOccasionQueryDto", rawBody: false, noContent: false },
+  { id: "E-289", method: "GET", path: "/v1/render/:token/wish", resource: "RenderJob", operation: "GetRenderByTokenWish", request: "GetRenderByTokenWishQueryDto", rawBody: false, noContent: false },
   { id: "E-287", method: "GET", path: "/v1/sample-wishes", resource: "SampleWish", operation: "GetSampleWishes", request: "GetSampleWishesQueryDto", rawBody: false, noContent: false },
 ];

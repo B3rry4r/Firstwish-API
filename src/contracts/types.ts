@@ -1283,6 +1283,16 @@ export interface PublicWishView {
   wishNo?: string | null;
 }
 
+/** RenderWish: view. what the web's render page reads to play one wish with no gate (R3, IK6): the public link's view as a receiver gets it after a right unlock (state open, the opening passed, content without any secret, signed file addresses that live as long as the render may run plus a margin), the style the wish holds with its Studio style document and files, and the render's kind and length; read once with the render's one-use token, never a session, never cached */
+export interface RenderWish {
+  height: number;
+  kind: "status-video" | "keepsake-export";
+  seconds: number;
+  style: StyleFiles;
+  width: number;
+  wish: PublicWishView;
+}
+
 /** PublishRequest: table. written by E-135..E-137 and server:now-showing-review */
 export interface PublishRequest {
   consent: boolean;
@@ -3666,6 +3676,14 @@ export type GetBusinessUsageQuery = Record<string, never>;
 export type GetBusinessUsageHeaders = Record<string, never>;
 export type GetBusinessUsageResponse = ProUsage;
 
+/** E-289 GET /v1/render/:token/wish. Auth: public (the render's one-use token in the address). */
+export interface GetRenderByTokenWishParams {
+  token: string;
+}
+export type GetRenderByTokenWishQuery = Record<string, never>;
+export type GetRenderByTokenWishHeaders = Record<string, never>;
+export type GetRenderByTokenWishResponse = RenderWish;
+
 /** E-129 GET /v1/w/:slug. Auth: public. */
 export interface GetWBySlugParams {
   slug: string;
@@ -5520,6 +5538,7 @@ export interface EndpointContracts {
   "E-126": { params: PostAdminPriceBookVersionsParams; body: PostAdminPriceBookVersionsBody; headers: PostAdminPriceBookVersionsHeaders; response: PostAdminPriceBookVersionsResponse };
   "E-127": { params: PostAdminPriceBookVersionsByIdPublishParams; body: PostAdminPriceBookVersionsByIdPublishBody; headers: PostAdminPriceBookVersionsByIdPublishHeaders; response: PostAdminPriceBookVersionsByIdPublishResponse };
   "E-128": { params: GetBusinessUsageParams; query: GetBusinessUsageQuery; headers: GetBusinessUsageHeaders; response: GetBusinessUsageResponse };
+  "E-289": { params: GetRenderByTokenWishParams; query: GetRenderByTokenWishQuery; headers: GetRenderByTokenWishHeaders; response: GetRenderByTokenWishResponse };
   "E-129": { params: GetWBySlugParams; query: GetWBySlugQuery; headers: GetWBySlugHeaders; response: GetWBySlugResponse };
   "E-130": { params: PostWBySlugFavouritesParams; body: PostWBySlugFavouritesBody; headers: PostWBySlugFavouritesHeaders; response: PostWBySlugFavouritesResponse };
   "E-131": { params: PostWBySlugOpensParams; body: PostWBySlugOpensBody; headers: PostWBySlugOpensHeaders; response: PostWBySlugOpensResponse };

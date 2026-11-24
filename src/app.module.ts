@@ -20,6 +20,7 @@ import { TemplatesModule } from "./modules/templates/templates.module";
 import { ConciergeModule } from "./modules/concierge/concierge.module";
 import { QrCardsModule } from "./modules/qr-cards/qr-cards.module";
 import { RenderJobsModule } from "./modules/render-jobs/render-jobs.module";
+import { RenderReadModule } from "./modules/render-jobs/render-read.module";
 import { PriceBookModule } from "./modules/price-book/price-book.module";
 // end B04
 // B02: account sides, creators, business profile, follow
@@ -168,6 +169,7 @@ import { LedgerEntriesModule } from "./modules/ledger-entries/ledger-entries.mod
     ConciergeModule,
     QrCardsModule,
     RenderJobsModule,
+    RenderReadModule,
     // end B19
     // B21
     StaffReadsModule,

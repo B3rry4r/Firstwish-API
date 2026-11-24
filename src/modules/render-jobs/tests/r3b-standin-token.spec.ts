@@ -24,7 +24,7 @@ const problems = (raw: Record<string, string | undefined>): string[] => {
   }
 };
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
-const req = (jobId: string, token = "tok-" + jobId) => ({ wishId: "w-1", jobId, kind: "status-video" as const, width: 1080, height: 1920, seconds: 30, token });
+const req = (jobId: string, token = "tok-" + jobId) => ({ wishId: "w-1", jobId, kind: "status-video" as const, width: 1080, height: 1920, seconds: 60, token });
 const lines = (file: string) => readFileSync(file, "utf8").split("\n").filter(Boolean).map((l) => JSON.parse(l) as Record<string, unknown>);
 
 describe("R3B (IK7): the stand-in renderer's token file and hold, for test stacks", () => {
@@ -58,8 +58,8 @@ describe("R3B (IK7): the stand-in renderer's token file and hold, for test stack
     rmSync(a.path);
     rmSync(b.path);
     expect(lines(file)).toEqual([
-      { jobId: "j1", wishId: "w-1", kind: "status-video", width: 1080, height: 1920, seconds: 30, token: "tok-j1" },
-      { jobId: "j2", wishId: "w-1", kind: "status-video", width: 1080, height: 1920, seconds: 30, token: "tok-j2" },
+      { jobId: "j1", wishId: "w-1", kind: "status-video", width: 1080, height: 1920, seconds: 60, token: "tok-j1" },
+      { jobId: "j2", wishId: "w-1", kind: "status-video", width: 1080, height: 1920, seconds: 60, token: "tok-j2" },
     ]);
     expect(statSync(file).mode & 0o777).toBe(0o600);
     const before = readdirSync(dir).sort();

@@ -145,7 +145,7 @@ describe("API-BASE-4 wishes (through the real routes)", () => {
       const states: [string, string][] = [["queued", "asked"], ["rendering", "rendering"], ["done", "ready"], ["failed", "failed"]];
       for (const [stored, shown] of states) {
         const jobId = nid();
-        await db.renderJob.create({ data: { id: jobId, wishId: w.id, kind: "status_video", status: stored as never, width: 1080, height: 1920, seconds: 30 } });
+        await db.renderJob.create({ data: { id: jobId, wishId: w.id, kind: "status_video", status: stored as never, width: 1080, height: 1920, seconds: 60 } });
         expect((await read(u, w.id)).body.video).toBe(shown);
         const listed = ((await t.http().get("/v1/wishes").set(bearer(u.token))).body.items as W[]).find((x) => x.id === w.id) as W;
         expect(listed.video).toBe(shown);

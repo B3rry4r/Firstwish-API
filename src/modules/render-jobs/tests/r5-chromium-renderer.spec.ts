@@ -7,7 +7,7 @@ import type { AddressInfo } from "node:net";
 import { tmpdir } from "node:os";
 import { createSocket } from "node:dgram";
 import { createServer as createTcp } from "node:net";
-import { ChromiumVideoRenderer, chooseScenes, DEFAULT_FONT_HOSTS, defaultAllowedHosts, hostAllowed, maskToken, type ChromiumRendererOptions } from "../chromium-video-renderer";
+import { ChromiumVideoRenderer, chooseScenes, plainWords, DEFAULT_FONT_HOSTS, defaultAllowedHosts, hostAllowed, maskToken, type ChromiumRendererOptions } from "../chromium-video-renderer";
 import { RENDER_TEMP_PREFIX, type RenderRequest } from "../video-renderer";
 
 /**
@@ -39,15 +39,18 @@ const H = 640;
 const req = (token: string, over: Partial<RenderRequest & { epochMs: number }> = {}): RenderRequest => ({ wishId: "w1", jobId: "r5job", kind: "status-video", width: W, height: H, seconds: 60, token, ...over });
 
 /** The stand-in web: /render/<token> is a page chosen by the token's first word. Scenes are 15 frames each (500 ms of stepped time). */
+const RED = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO9TXL0Y4OHwAAAABJRU5ErkJggg==", "base64");
 const SCENES = `["opening","cover","a","b","c","d","ending"]`;
 const page = (body: string, script: string): string => `<!doctype html><html><head><meta charset="utf-8"><title>t</title><style>html,body{margin:0;background:#123}body{color:#fff;font:40px sans-serif}</style></head><body>${body}<script>${script}</script></body></html>`;
-const play = (every = 500, endless = false): string => `
+/** `gate` is the page's own wait before it says ready: a REAL network read, as the web's render page has (the stepped clock is at 0 until then: IK6g). */
+const play = (every = 500, endless = false, gate = `fetch("/asset.txt").then((r) => r.text())`, atStart = ""): string => `
   const R = window.__render = { ready: false, scene: 0, sceneName: "", scenes: [], done: false };
   const names = ${SCENES}; let t0 = 0;
   const start = (i) => { R.scenes.push({ name: names[i], at: Math.round(performance.now() - t0) }); R.scene = R.scenes.length; R.sceneName = names[i]; document.body.style.background = "hsl(" + (i * 50) + ",60%,35%)"; document.body.textContent = names[i]; };
-  setTimeout(() => { t0 = performance.now(); R.ready = true; let i = 0; start(0);
+  const go = () => { ${atStart} t0 = performance.now(); R.ready = true; let i = 0; start(0);
     const next = () => { if (++i < names.length) setTimeout(() => { start(i); next(); }, ${every}); else if (!${endless}) setTimeout(() => { R.done = true; }, 750); else setTimeout(next, ${every}); };
-    next(); }, 300);`;
+    next(); };
+  (${gate}).then(go, go);`;
 const pages: Record<string, (host: string, token: string) => string> = {
   good: () => page("", play()),
   long: () => page("", play(500, true)),
@@ -92,7 +95,19 @@ const pages: Record<string, (host: string, token: string) => string> = {
       t(() => new WebTransport("https://127.0.0.1:${portD}/wt"));`);
   },
   hangs: () => page("", `${play()} setTimeout(() => { window.__vt.step = () => new Promise(() => {}); }, 700);`),
+  /* R5 round 2 (H1): ready comes from REAL work only (a zero-delay timer, a frame callback at time 0, a network read); the clock must still be at exactly 0 then */
+  h1fast: () => h1(0),
+  h1slow: () => h1(2600),
+  pic3: () => picPage(3000),
+  pic10: () => picPage(10000),
+  pichang: () => picPage(-1),
 };
+const h1 = (ms: number): string =>
+  page("", play(500, false, `Promise.all([new Promise((r) => setTimeout(r, 0)), new Promise((r) => requestAnimationFrame((ts) => { window.__raf0 = ts; r(); })), fetch("/asset.txt?ms=${ms}")])`,
+    `if (performance.now() !== 0 || window.__raf0 !== 0) R.error = "virtual time moved before ready: " + performance.now() + " ms, first frame callback at " + window.__raf0;`));
+/** a page that says ready at once and shows one full-size picture, which the stand-in web serves after `ms` real milliseconds (-1: never finishes) */
+const picPage = (ms: number): string =>
+  page("", `${play()} { const i = document.createElement("img"); i.style.cssText = "position:fixed;left:0;top:0;width:100%;height:100%;z-index:9"; i.src = "/pic.png?ms=${ms}"; document.documentElement.appendChild(i); }`);
 
 let server: Server;
 let host = "";
@@ -128,6 +143,12 @@ beforeAll(async () => {
       if (clockMode === "redirect") return void rs.writeHead(302, { location: "http://203.0.113.7/render-clock.js" }).end();
       const c = spoil(clockMode);
       return void rs.writeHead(200, { "content-type": c.type, "cache-control": "no-store" }).end(c.body);
+    }
+    const asset = /^\/(asset\.txt|pic\.png)\?ms=(-?\d+)$/.exec(rq.url ?? "") ?? (rq.url === "/asset.txt" ? ["", "asset.txt", "0"] : null);
+    if (asset) {
+      const ms = Number(asset[2]);
+      if (ms < 0) return void rs.writeHead(200, { "content-type": "image/png", "content-length": "99999" }).write("x");
+      return void setTimeout(() => (asset[1] === "pic.png" ? rs.writeHead(200, { "content-type": "image/png", "cache-control": "no-store" }).end(RED) : rs.writeHead(200, { "content-type": "text/plain", "cache-control": "no-store" }).end("x")), ms);
     }
     seen.push((rq.url ?? "").replace(/^\/render\/[^/]+/, "/render/[token]"));
     const m = /^\/render\/([^/?#]+)/.exec(rq.url ?? "");
@@ -165,7 +186,10 @@ beforeAll(async () => {
 });
 afterAll(async () => {
   for (const c of closers) c();
-  if (server) await new Promise<void>((r) => server.close(() => r()));
+  if (server) {
+    server.closeAllConnections();
+    await new Promise<void>((r) => server.close(() => r()));
+  }
 });
 
 const mine = async (): Promise<string[]> => (await readdir(tmpdir())).filter((f) => f.startsWith(`${RENDER_TEMP_PREFIX}r5job-`) || f.startsWith(`${RENDER_TEMP_PREFIX}r5x-`)).sort();
@@ -571,3 +595,186 @@ real(`R5 round 1 on a stand-in web page${WHY}`, () => {
     }
   }, 40_000);
 });
+
+/* ---- R5 round 2 (IK6g) ---- */
+import { spawn } from "node:child_process";
+import { mkdirSync, mkdtempSync, readdirSync, readlinkSync } from "node:fs";
+import { connect as netConnect } from "node:net";
+import { join as pjoin } from "node:path";
+
+/** The first moment of a frame (the middle pixel of decoded frame n, as r g b). */
+const pixel = (file: string, n: number, x: number, y: number): number[] => [...spawnSync(FFMPEG, ["-v", "error", "-i", file, "-vf", `select=eq(n\\,${n}),crop=2:2:${x}:${y}`, "-frames:v", "1", "-f", "rawvideo", "-pix_fmt", "rgb24", "-"], { maxBuffer: 1 << 20 }).stdout].slice(0, 3);
+/** Every listening TCP socket of this machine: port -> the process ids that hold it (from /proc). */
+const listening = (): Map<number, number[]> => {
+  const inodes = new Map<string, number>();
+  for (const f of ["/proc/net/tcp", "/proc/net/tcp6"].filter((x) => existsSync(x))) {
+    for (const l of readFileSync(f, "utf8").split("\n").slice(1)) {
+      const c = l.trim().split(/\s+/);
+      if (c[3] === "0A") inodes.set(c[9], parseInt(c[1].split(":")[1], 16));
+    }
+  }
+  const out = new Map<number, number[]>();
+  for (const port of inodes.values()) out.set(port, out.get(port) ?? []);
+  for (const d of readdirSync("/proc")) {
+    if (!/^\d+$/.test(d)) continue;
+    let fds: string[];
+    try {
+      fds = readdirSync(`/proc/${d}/fd`);
+    } catch {
+      continue;
+    }
+    for (const fd of fds) {
+      try {
+        const m = /^socket:\[(\d+)\]$/.exec(readlinkSync(`/proc/${d}/fd/${fd}`));
+        const port = m ? inodes.get(m[1]) : undefined;
+        if (port !== undefined) out.get(port)?.push(Number(d));
+      } catch {
+        /* gone */
+      }
+    }
+  }
+  return out;
+};
+const waitFor = async (what: () => boolean, ms: number): Promise<boolean> => {
+  for (const end = Date.now() + ms; Date.now() < end; await sleepMs(40)) if (what()) return true;
+  return what();
+};
+const raw = (port: number, text: string): Promise<string> =>
+  new Promise((resolve) => {
+    const s = netConnect(port, "127.0.0.1", () => s.write(text));
+    let got = "";
+    s.on("data", (d) => (got += d.toString("latin1")));
+    s.on("close", () => resolve(got));
+    s.on("error", () => resolve(got));
+    setTimeout(() => s.destroy(), 1500);
+  });
+
+real(`R5 round 2 on a stand-in web page${WHY}`, () => {
+  it("H1: the clock is at exactly 0 until ready, whatever the page waits on; the same wish twice with one epochMs has 0 frames that differ, with a slow read in one run too; frame 0 is the first moment", async () => {
+    const epochMs = 1_700_000_000_000;
+    const a = await make().r.render(req("h1fast-aaaaaaaaaaaa", { epochMs, seconds: 60 }));
+    const b = await make().r.render(req("h1slow-bbbbbbbbbbbb", { epochMs, seconds: 60 }));
+    const ha = frameHashes(a.path);
+    const hb = frameHashes(b.path);
+    expect(ha.length).toBeGreaterThan(80);
+    expect(hb.length).toBe(ha.length);
+    expect(hb.filter((h, i) => h !== ha[i]).length).toBe(0);
+    /* frame 0 shows the first scene ("opening": hsl(0,60%,35%)), not a later moment */
+    const [r, g, bl] = pixel(a.path, 0, W - 30, 10);
+    expect({ rgb: [r, g, bl], near: r > 120 && g < 70 && bl < 70 }).toEqual({ rgb: [r, g, bl], near: true });
+  }, 120_000);
+
+  it("M4: a picture that is merely slow (3 s, 10 s) is in the first frame; one that never completes FAILS in plain words inside the limit and hands out no video", async () => {
+    for (const [tok, ms] of [["pic3-cccccccccccc", 3000], ["pic10-dddddddddddd", 10_000]] as const) {
+      const f = await make({ assetTimeoutMs: 30_000 }).r.render(req(tok, { epochMs: 1_700_000_000_000, seconds: 60 }));
+      const [r, g, bl] = pixel(f.path, 0, W / 2, H / 2);
+      expect({ ms, rgb: [r, g, bl], red: r > 200 && g < 60 && bl < 60 }).toEqual({ ms, rgb: [r, g, bl], red: true });
+      await rm(f.path, { force: true });
+    }
+    const t0 = Date.now();
+    const err = (await make({ assetTimeoutMs: 4000 }).r.render(req("pichang-eeeeeeeeeeee", { seconds: 60 })).catch((e: Error) => e)) as Error | RenderedLike;
+    expect(err).toBeInstanceOf(Error);
+    expect((err as Error).message).toMatch(/picture or a font did not finish loading within 4 s/);
+    expect(Date.now() - t0).toBeLessThan(15_000);
+    expect(await mine()).toEqual([]);
+  }, 120_000);
+
+  it("H2: Chromium listens on no port during a render, and no local port gives the token away", async () => {
+    const { r, pids } = make();
+    const token = "long-ffffffffffffffffffff";
+    const done = r.render(req(token)).catch((e: Error) => e);
+    expect(await waitFor(() => pids.some((c) => c.kind === "ffmpeg"), 30_000)).toBe(true);
+    await sleepMs(1200);
+    const chromium = pids.find((c) => c.kind === "chromium")?.pid ?? -1;
+    const group = new Set(groupMembers(chromium));
+    expect(group.size).toBeGreaterThan(0);
+    const ports = listening();
+    const held = [...ports].filter(([, owners]) => owners.some((p) => group.has(p))).map(([port]) => port);
+    expect(held).toEqual([]);
+    /* a sweep of every listening port of the machine: no body, on any usual debugging path, holds the token */
+    for (const port of ports.keys()) {
+      for (const path of ["/json/list", "/json/version", "/json", "/"]) {
+        const body = await raw(port, `GET ${path} HTTP/1.0\r\nHost: 127.0.0.1:${port}\r\n\r\n`);
+        expect({ port, leaks: body.includes("ffffffffffffffffffff") }).toEqual({ port, leaks: false });
+      }
+    }
+    pids.forEach((c) => c.kind === "chromium" && process.kill(-c.pid, "SIGKILL"));
+    await done;
+  }, 120_000);
+
+  it("M5: the proxy asks for a secret made for this render: another local process gets 407 for a listed host as well as for an unlisted one, and the render itself works", async () => {
+    const { r, pids, logs } = make();
+    const done = r.render(req("long-gggggggggggggggggggg")).catch((e: Error) => e);
+    expect(await waitFor(() => pids.some((c) => c.kind === "ffmpeg"), 30_000)).toBe(true);
+    await sleepMs(800);
+    const known = new Set([Number(host.split(":")[1]), portB, portC]);
+    const mineHeld = [...listening()].filter(([port, owners]) => owners.includes(process.pid) && !known.has(port)).map(([port]) => port);
+    expect(mineHeld.length).toBe(1);
+    const proxy = mineHeld[0];
+    for (const target of [host, "203.0.113.7:80", "169.254.169.254:80"]) {
+      expect({ target, get: /^HTTP\/1\.1 407/.test(await raw(proxy, `GET http://${target}/asset.txt HTTP/1.1\r\nHost: ${target}\r\n\r\n`)) }).toEqual({ target, get: true });
+      expect({ target, connect: /^HTTP\/1\.1 407/.test(await raw(proxy, `CONNECT ${target} HTTP/1.1\r\nHost: ${target}\r\n\r\n`)) }).toEqual({ target, connect: true });
+    }
+    const ps = spawnSync("ps", ["-eo", "args="], { encoding: "utf8" }).stdout;
+    expect(ps).not.toMatch(/--proxy-server=[^ ]*@/);
+    expect(ps).not.toMatch(/proxy-auth|proxy-pass/i);
+    pids.forEach((c) => c.kind === "chromium" && process.kill(-c.pid, "SIGKILL"));
+    await done;
+    expect(logs.join("\n")).not.toMatch(/proxy-auth|Basic /i);
+    /* and a whole render with the secret in place works */
+    await make().r.render(req("good-hhhhhhhhhhhh"));
+  }, 120_000);
+
+  it("L: plain words for 'write EPIPE' and 'Target page ... closed'; a clean render counts no blocked request (Chromium's own background calls are not the page's)", async () => {
+    expect(plainWords("write EPIPE")).toBe("ffmpeg stopped taking frames");
+    expect(plainWords("page.evaluate: Target page, context or browser has been closed")).toBe("Chromium stopped");
+    expect(plainWords("Target closed")).toBe("Chromium stopped");
+    expect(plainWords("something else entirely")).toBe("something else entirely");
+    const { r } = make();
+    await r.render(req("good-iiiiiiiiiiii"));
+    expect({ blocked: r.lastRun?.blocked, hosts: r.lastRun?.blockedHosts }).toEqual({ blocked: 0, hosts: [] });
+  }, 60_000);
+
+  it("H3: SIGKILL of the node process mid-render leaves no Chromium, no ffmpeg, no proxy port and no listening port of theirs within 5 s", async () => {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const ts = require("typescript") as typeof import("typescript");
+    const out = mkdtempSync(pjoin(tmpdir(), "r5h3-"));
+    const root = pjoin(__dirname, "..", "..", "..");
+    for (const f of ["modules/render-jobs/chromium-video-renderer", "modules/render-jobs/video-renderer", "common/ports/ping"]) {
+      const js = ts.transpileModule(readFileSync(pjoin(root, `${f}.ts`), "utf8"), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, esModuleInterop: true } }).outputText;
+      const dest = pjoin(out, `${f}.js`);
+      mkdirSync(pjoin(dest, ".."), { recursive: true });
+      writeFileSync(dest, js);
+    }
+    const script = pjoin(out, "child.cjs");
+    writeFileSync(script, `
+      const { ChromiumVideoRenderer } = require(${JSON.stringify(pjoin(out, "modules/render-jobs/chromium-video-renderer.js"))});
+      const o = JSON.parse(process.argv[2]);
+      const quiet = { log() {}, warn() {}, error() {} };
+      const r = new ChromiumVideoRenderer({ ...o.options, onSpawn: (k, pid) => console.log(JSON.stringify({ k, pid })), logger: quiet });
+      r.render(o.req).then(() => process.exit(0), (e) => { console.log("ERR " + e.message); process.exit(1); });`);
+    const child = spawn(process.execPath, [script, JSON.stringify({ options: { webOrigin: origin(), chromiumPath: CHROMIUM, ffmpegPath: FFMPEG, playwrightModule: PLAYWRIGHT }, req: req("long-jjjjjjjjjjjjjjjj") })], {
+      stdio: ["ignore", "pipe", "inherit"],
+      env: { ...process.env, NODE_PATH: pjoin(root, "..", "node_modules") },
+    });
+    const kids: { k: string; pid: number }[] = [];
+    child.stdout.on("data", (d: Buffer) => {
+      for (const l of d.toString().split("\n")) if (l.startsWith("{")) kids.push(JSON.parse(l));
+    });
+    expect(await waitFor(() => kids.some((c) => c.k === "ffmpeg"), 40_000)).toBe(true);
+    await sleepMs(1500);
+    const chromium = kids.find((c) => c.k === "chromium")?.pid ?? -1;
+    const before = new Set([...kids.map((c) => c.pid), ...groupMembers(chromium)]);
+    const theirs = [...listening()].filter(([, owners]) => owners.some((p) => p === child.pid || before.has(p))).map(([port]) => port);
+    expect(theirs.length).toBeGreaterThan(0); /* the proxy at least */
+    const gone = (): boolean => [...before].every((p) => !spawnSync("ps", ["-o", "stat=", "-p", String(p)], { encoding: "utf8" }).stdout.trim() || spawnSync("ps", ["-o", "stat=", "-p", String(p)], { encoding: "utf8" }).stdout.trim().startsWith("Z"));
+    process.kill(child.pid as number, "SIGKILL");
+    const t0 = Date.now();
+    const ok = await waitFor(() => gone() && [...listening().keys()].every((p) => !theirs.includes(p)), 5000);
+    const left = [...before].filter((p) => alive(p) && !spawnSync("ps", ["-o", "stat=", "-p", String(p)], { encoding: "utf8" }).stdout.trim().startsWith("Z"));
+    if (!ok) left.forEach((p) => { try { process.kill(p, "SIGKILL"); } catch { /* gone */ } });
+    expect({ ok, left, tookMs: Date.now() - t0 < 5200 }).toEqual({ ok: true, left: [], tookMs: true });
+    await rm(out, { recursive: true, force: true });
+  }, 90_000);
+});
+type RenderedLike = { path: string };

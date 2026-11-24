@@ -1,5 +1,5 @@
 import { spawn, type ChildProcess } from "node:child_process";
-import { createHash, randomUUID } from "node:crypto";
+import { createHash, randomBytes, randomUUID, timingSafeEqual } from "node:crypto";
 import { lookup } from "node:dns/promises";
 import { accessSync, constants, readFileSync, statSync, writeFileSync } from "node:fs";
 import { createServer as createHttpServer, request as httpRequest } from "node:http";
@@ -18,6 +18,10 @@ import { RENDER_TEMP_PREFIX, VideoRenderer, type RenderedFile, type RenderReques
  * R5: the real video renderer behind the VideoRenderer port. It opens the web's render page (RENDER_WEB_ORIGIN + /render/<token>) in a
  * headless Chromium that it starts itself (so it holds the process id and can kill it), freezes the web's stepped clock from the page's
  * first script, steps time 1/30 s at a time, captures each frame over the browser protocol and pipes it to ffmpeg (H.264, yuv420p, no sound).
+ *
+ * R5 round 2 (IK6g): the page's clock stays at exactly 0 until the page says ready (only work already due is flushed: step(0)); the browser is driven
+ * through a private pipe (no debugging port: Playwright launches it with --remote-debugging-pipe, so its death follows ours); the proxy asks for a
+ * secret made for this one render; a picture or font that never completes fails the render inside `assetTimeoutMs`.
  *
  * How the pieces are chosen (the brief's decisions):
  *  - The stepped clock is the WEB's page script (IK6e). The API holds no copy and runs none of it: each render fetches RENDER_WEB_ORIGIN/render-clock.js
@@ -66,6 +70,8 @@ export interface ChromiumRendererOptions {
   /** How long to wait for the page's ready (real milliseconds), and for any one frame to come back. */
   readyTimeoutMs?: number;
   frameTimeoutMs?: number;
+  /** The longest a picture, font, style sheet or clip may stay unfinished (real milliseconds; default 30 s): then the render FAILS in words, never a video without it. */
+  assetTimeoutMs?: number;
   /** A proof script or a spec learns each child process id as it starts (to sample its memory, or to kill it). Never a token. */
   onSpawn?: (kind: "chromium" | "ffmpeg", pid: number) => void;
   logger?: Pick<Logger, "log" | "warn" | "error">;
@@ -78,6 +84,8 @@ export interface ChromiumRunStats {
   scenes: { name: string; frames: number; kept: boolean }[];
   blocked: number;
   blockedHosts: string[];
+  /** Calls the browser makes for itself (Google update, safe browsing, connectivity): refused at the proxy and kept OUT of `blocked`. */
+  browserOwnCalls: number;
   allowedRequests: number;
   readyMs: number;
   totalMs: number;
@@ -190,7 +198,10 @@ export function chromiumRendererOptionsFromEnv(env: NodeJS.ProcessEnv): Chromium
   return opts;
 }
 
+/** Hosts the browser itself calls for its own business (update, safe browsing, connectivity): not the page's, so not counted as blocked. */
+const BROWSER_OWN = /(^|\.)(google\.com|googleapis\.com|gvt1\.com|gvt2\.com|googleusercontent\.com)(:\d+)?$/i;
 const CLOCK_CAP = 256 * 1024;
+const PROXY_USER = "render";
 const PLAIN_HTTP = /^(GET|POST|PUT|HEAD|DELETE|OPTIONS|PATCH|TRACE|CONNECT) /;
 
 /**
@@ -203,12 +214,21 @@ export class EgressProxy {
   private readonly sockets = new Set<Duplex>();
   port = 0;
 
+  /** M5: with a secret the proxy answers only a browser that was given it: anyone else gets 407 first, for a listed host and an unlisted one alike. */
+  private readonly want: Buffer | null;
+
   constructor(
     private readonly allowed: readonly string[],
     private readonly onBlocked: (host: string) => void,
+    secret?: string,
   ) {
+    this.want = secret ? createHash("sha256").update(`Basic ${Buffer.from(`${PROXY_USER}:${secret}`).toString("base64")}`).digest() : null;
     this.server.on("connection", (s) => this.track(s));
     this.server.on("request", (rq, rs) => {
+      if (!this.authorised(rq.headers["proxy-authorization"])) {
+        rs.writeHead(407, { "proxy-authenticate": 'Basic realm="render"', connection: "close" }).end();
+        return;
+      }
       let u: URL | null = null;
       try {
         u = new URL(rq.url ?? "");
@@ -242,6 +262,10 @@ export class EgressProxy {
     this.server.on("connect", (rq, socket, head) => {
       this.track(socket);
       socket.on("error", () => undefined);
+      if (!this.authorised(rq.headers["proxy-authorization"])) {
+        socket.end('HTTP/1.1 407 Proxy Authentication Required\r\nProxy-Authenticate: Basic realm="render"\r\nConnection: close\r\n\r\n');
+        return;
+      }
       const m = /^(\[[^\]]+\]|[^:]+):(\d{1,5})$/.exec(rq.url ?? "");
       const host = m?.[1].replace(/^\[|\]$/g, "") ?? "";
       const port = Number(m?.[2] ?? 0);
@@ -276,6 +300,11 @@ export class EgressProxy {
         else socket.once("data", open);
       });
     });
+  }
+
+  private authorised(header: string | undefined): boolean {
+    if (!this.want) return true;
+    return timingSafeEqual(createHash("sha256").update(header ?? "").digest(), this.want);
   }
 
   private track(s: Duplex): void {
@@ -375,6 +404,9 @@ interface PwPage {
   mainFrame(): unknown;
   close(): Promise<void>;
 }
+interface PwRequestLike {
+  resourceType(): string;
+}
 interface PwContext {
   route(match: string, h: (r: PwRoute) => unknown): Promise<void>;
   routeWebSocket(match: RegExp, h: (ws: { url(): string; close(): Promise<void> | void }) => unknown): Promise<void>;
@@ -392,9 +424,13 @@ interface PwRoute {
 interface PwBrowser {
   newContext(o: object): Promise<PwContext>;
   close(): Promise<void>;
+  on(ev: string, fn: (...a: any[]) => void): void; // eslint-disable-line @typescript-eslint/no-explicit-any
+  /** The browser's own protocol session (over the same private pipe): used once, to learn the browser's process id. */
+  newBrowserCDPSession(): Promise<{ send(m: string, p?: object): Promise<unknown> }>;
 }
 interface PwModule {
-  chromium: { connectOverCDP(url: string, o?: { timeout?: number }): Promise<PwBrowser> };
+  /** `launch` starts the browser itself and talks to it over a private pipe (--remote-debugging-pipe): no port, no address, and the browser ends when the pipe closes. */
+  chromium: { launch(o: object): Promise<PwBrowser> };
 }
 
 function loadPlaywright(explicit?: string): PwModule {
@@ -413,14 +449,14 @@ function loadPlaywright(explicit?: string): PwModule {
 class RenderStop extends Error {}
 
 export class ChromiumVideoRenderer extends VideoRenderer {
-  private readonly o: Required<Pick<ChromiumRendererOptions, "fps" | "crf" | "maxKbps" | "preset" | "readyTimeoutMs" | "frameTimeoutMs">> & ChromiumRendererOptions;
+  private readonly o: Required<Pick<ChromiumRendererOptions, "fps" | "crf" | "maxKbps" | "preset" | "readyTimeoutMs" | "frameTimeoutMs" | "assetTimeoutMs">> & ChromiumRendererOptions;
   private readonly log: Pick<Logger, "log" | "warn" | "error">;
   /** The numbers of the newest finished (or failed) run, for a proof script and a spec; never holds the token. */
   lastRun: ChromiumRunStats | null = null;
 
   constructor(options: ChromiumRendererOptions) {
     super();
-    this.o = { fps: 30, crf: 23, maxKbps: 1800, preset: "veryfast", readyTimeoutMs: 150_000, frameTimeoutMs: 60_000, ...options };
+    this.o = { fps: 30, crf: 23, maxKbps: 1800, preset: "veryfast", readyTimeoutMs: 150_000, frameTimeoutMs: 60_000, assetTimeoutMs: 30_000, ...options };
     this.log = options.logger ?? new Logger("chromium-video-renderer");
   }
 
@@ -490,7 +526,7 @@ export class ChromiumVideoRenderer extends VideoRenderer {
     const work = join(root, `${stem}-work`);
     const finalPath = join(tmpdir(), `${stem}.mp4`);
     const procs = new Set<ChildProcess>();
-    let chromium: ChildProcess | null = null;
+    let chromiumPid = 0;
     let stopped = false;
     /* settles (rejects) the moment a child dies that should be alive, so no call waits out a time limit on a dead browser or encoder */
     let die: (e: Error) => void = () => undefined;
@@ -500,7 +536,14 @@ export class ChromiumVideoRenderer extends VideoRenderer {
     dead.catch(() => undefined);
     const guard = <T>(p: Promise<T>, words: string): Promise<T> => withTimeout(Promise.race([p, dead]), this.o.frameTimeoutMs, words);
     const killAll = (): void => {
-      for (const p of procs) killPid(p, p === chromium);
+      for (const p of procs) killPid(p, false);
+      if (chromiumPid) {
+        try {
+          process.kill(-chromiumPid, "SIGKILL");
+        } catch {
+          /* gone */
+        }
+      }
     };
     const onAbort = (): void => {
       stopped = true;
@@ -515,7 +558,7 @@ export class ChromiumVideoRenderer extends VideoRenderer {
     let blocked = 0;
     let allowedRequests = 0;
     const allowed = this.allowed;
-    const stats: ChromiumRunStats = { jobId, frames: 0, keptFrames: 0, scenes: [], blocked: 0, blockedHosts: [], allowedRequests: 0, readyMs: 0, totalMs: 0, clockCheckMs: 0 };
+    const stats: ChromiumRunStats = { jobId, frames: 0, keptFrames: 0, scenes: [], blocked: 0, blockedHosts: [], browserOwnCalls: 0, allowedRequests: 0, readyMs: 0, totalMs: 0, clockCheckMs: 0 };
     const check = (): void => {
       if (stopped || signal?.aborted) throw new RenderStop("render aborted");
     };
@@ -524,60 +567,49 @@ export class ChromiumVideoRenderer extends VideoRenderer {
       blocked++;
       blockedHosts.set(h, (blockedHosts.get(h) ?? 0) + 1);
     };
-    const proxy = new EgressProxy(allowed, countBlocked);
+    /* what the browser asks for by itself (update, safe browsing, connectivity) is refused at the proxy like any other host, but is not the page's and is not counted as blocked */
+    const secret = randomBytes(24).toString("base64url");
+    let ownCalls = 0;
+    const proxy = new EgressProxy(allowed, (h) => (BROWSER_OWN.test(h) ? void ownCalls++ : countBlocked(h)), secret);
+    const assetLimit = this.o.assetTimeoutMs;
+    const pendingAssets = new Map<unknown, number>();
+    let launching: Promise<PwBrowser> | null = null;
     try {
       if (signal?.aborted) throw new RenderStop("render aborted");
       signal?.addEventListener("abort", onAbort, { once: true });
       await mkdir(join(work, "profile"), { recursive: true, mode: 0o700 });
       check();
 
-      /* Chromium: our own process, our own profile folder, a debugging port we read from its first line; all its traffic goes through our own proxy */
+      /* Chromium: launched by the driver over a private pipe (--remote-debugging-pipe): no debugging port exists, the page's address is known to this process only,
+         and when this process dies the pipe closes and the browser ends with it. All its traffic goes through our own proxy, which asks for this render's secret. */
       const proxyPort = await proxy.start();
       const hostRules = `MAP * ~NOTFOUND , ${allowed.filter((a) => !a.startsWith("*.")).map((a) => `EXCLUDE ${a.replace(/:\d+$/, "")}`).join(" , ")}`;
       const args = [
-        "--headless=new", "--remote-debugging-port=0", `--user-data-dir=${join(work, "profile")}`, "--no-first-run", "--no-default-browser-check",
-        "--disable-extensions", "--disable-background-networking", "--disable-sync", "--disable-component-update", "--disable-default-apps",
-        "--disable-breakpad", "--disable-dev-shm-usage", "--mute-audio", "--hide-scrollbars", "--force-color-profile=srgb",
+        "--no-first-run", "--disable-extensions", "--disable-sync", "--disable-default-apps", "--disable-domain-reliability", "--metrics-recording-only",
+        "--safebrowsing-disable-auto-update", "--disable-component-update", "--force-color-profile=srgb",
         "--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist", "--autoplay-policy=no-user-gesture-required",
-        `--host-resolver-rules=${hostRules}`, `--window-size=${input.width},${input.height}`, "--no-pings", "--disable-features=Translate,MediaRouter",
-        `--proxy-server=http://127.0.0.1:${proxyPort}`, "--proxy-bypass-list=<-loopback>", "--webrtc-ip-handling-policy=disable_non_proxied_udp", "--disable-quic",
+        `--host-resolver-rules=${hostRules}`, `--window-size=${input.width},${input.height}`, "--no-pings",
+        "--webrtc-ip-handling-policy=disable_non_proxied_udp", "--disable-quic",
       ];
-      if (typeof process.getuid === "function" && process.getuid() === 0) args.push("--no-sandbox");
-      args.push("about:blank");
-      const child = spawn(this.chromiumPath, args, { detached: true, stdio: ["ignore", "ignore", "pipe"], env: { ...process.env, HOME: join(work, "profile") } });
-      chromium = child;
-      if (child.pid) this.o.onSpawn?.("chromium", child.pid);
-      procs.add(child);
+      const pw = loadPlaywright(this.o.playwrightModule);
+      launching = pw.chromium.launch({
+        executablePath: this.chromiumPath, headless: true, args, timeout: 30_000, env: { ...process.env, HOME: join(work, "profile") },
+        handleSIGINT: false, handleSIGTERM: false, handleSIGHUP: false,
+        proxy: { server: `http://127.0.0.1:${proxyPort}`, username: PROXY_USER, password: secret, bypass: "<-loopback>" },
+      });
+      launching.catch(() => undefined);
+      browser = await early(launching);
+      /* the browser's process id (it leads its own group): to end it by id, and to show it gone */
+      const info = (await early((await early(browser.newBrowserCDPSession())).send("SystemInfo.getProcessInfo"))) as { processInfo?: { type: string; id: number }[] };
+      chromiumPid = info.processInfo?.find((x) => x.type === "browser")?.id ?? 0;
+      if (chromiumPid) this.o.onSpawn?.("chromium", chromiumPid);
       let chromiumDied = "";
-      child.once("exit", (code, sig) => {
-        if (stopped) return;
-        chromiumDied = `Chromium stopped (${sig ?? `exit ${code}`})`;
+      browser.on("disconnected", () => {
+        if (stopped || chromiumDied) return;
+        chromiumDied = "Chromium stopped (the pipe closed)";
         die(new Error(chromiumDied));
       });
-      const wsUrl = await early(new Promise<string>((resolve, reject) => {
-        let buf = "";
-        const timer = setTimeout(() => reject(new Error("Chromium did not start within 30 s")), 30_000);
-        child.stderr?.on("data", (d: Buffer) => {
-          if (buf.length > 20_000) return;
-          buf += d.toString();
-          const m = /DevTools listening on (ws:\/\/\S+)/.exec(buf);
-          if (m) {
-            clearTimeout(timer);
-            resolve(m[1]);
-          }
-        });
-        child.once("exit", (code, sig) => {
-          clearTimeout(timer);
-          reject(new Error(`Chromium stopped before it was ready (${sig ?? `exit ${code}`})`));
-        });
-        child.once("error", (e) => {
-          clearTimeout(timer);
-          reject(e);
-        });
-      }));
       check();
-      const pw = loadPlaywright(this.o.playwrightModule);
-      browser = await early(pw.chromium.connectOverCDP(wsUrl, { timeout: 30_000 }));
       const ctx = await early(browser.newContext({
         viewport: { width: input.width, height: input.height }, deviceScaleFactor: 1, colorScheme: "dark", reducedMotion: "no-preference",
         serviceWorkers: "block", acceptDownloads: false, permissions: [], locale: "en-US", javaScriptEnabled: true,
@@ -658,34 +690,33 @@ export class ChromiumVideoRenderer extends VideoRenderer {
       await early(page.goto(pageUrl, { waitUntil: "domcontentloaded", timeout: 90_000 }));
       loaded = true;
       const readyBegan = performance.now();
-      let inflight = 0;
-      let lastNet = performance.now();
-      page.on("request", () => {
-        inflight++;
-        lastNet = performance.now();
+      /* a picture, font, style sheet or clip that stays unfinished past the limit fails the render in words (M4): never a video without it */
+      page.on("request", (r: PwRequestLike) => {
+        if (["image", "font", "stylesheet", "media"].includes(r.resourceType())) pendingAssets.set(r, performance.now());
       });
-      const done1 = (): void => {
-        inflight = Math.max(0, inflight - 1);
-        lastNet = performance.now();
-      };
+      const done1 = (r: PwRequestLike): void => void pendingAssets.delete(r);
       page.on("requestfinished", done1);
       page.on("requestfailed", done1);
-      /* step 16 ms of stepped time for each 50 ms real while the page loads, so its own short waits (the Studio rig's 120 ms poll) do not run out */
+      const stuckWords = `a picture or a font did not finish loading within ${Math.round(assetLimit / 1000)} s`;
+      const stuck = (): boolean => [...pendingAssets.values()].some((t) => performance.now() - t > assetLimit);
+      /* IK6g: nothing plays before the recording starts. The page's clock stays at exactly 0 until it says ready; real time (the network, decoding, the browser's own work) goes on.
+         Only what is already due is flushed, with a step of 0: zero-delay timers, frame callbacks at time 0, promises. */
       for (;;) {
         bad();
         const s = await guard(page.evaluate<{ ready: boolean; error: string }>(`({ ready: !!window.__render?.ready, error: window.__render?.error ?? "" })`), "the page did not answer");
         if (s.error) throw new Error(mask(`the render page said: ${s.error}`).slice(0, 300));
         if (s.ready) break;
+        if (stuck()) throw new Error(stuckWords);
         if (performance.now() - readyBegan > this.o.readyTimeoutMs) throw new Error(`the render page was never ready within ${Math.round(this.o.readyTimeoutMs / 1000)} s`);
-        /* stepped time moves only while the page waits for nothing outside (no request in flight; a request that hangs for 1.5 s no longer holds it), so what the network brings arrives at the same virtual moment in every render (IK6f) */
-        if (inflight === 0 || performance.now() - lastNet > 1500) await guard(page.evaluate("window.__vt.step(16)"), "the page did not answer a step");
+        await guard(page.evaluate("window.__vt.step(0)"), "the page did not answer a step");
         await sleep(50);
       }
       stats.readyMs = Math.round(performance.now() - readyBegan);
-      /* IK6f: the page's fonts and pictures load on real time, not stepped time, so the first frame must wait for them or two renders differ (a fallback font in one, the real one in the other):
-         wait, in real time and without stepping, until the fonts are loaded and every picture is complete, twice in a row; a page that never settles is recorded as it is after 20 s */
-      for (let settled = 0, began = performance.now(); settled < 2 && performance.now() - began < 20_000; ) {
+      /* IK6f: the page's fonts and pictures load on real time, not stepped time, so the first frame waits for them (a fallback font in one render and the real one in another would differ):
+         wait, in real time and without stepping, until the fonts are loaded and every picture is complete, twice in a row; one that does not within the limit FAILS the render (M4) */
+      for (let settled = 0, began = performance.now(); settled < 2; ) {
         bad();
+        if (performance.now() - began > assetLimit || stuck()) throw new Error(stuckWords);
         const st = await guard(page.evaluate<boolean>(`(document.fonts ? document.fonts.status === "loaded" : true) && [...document.images].every((i) => i.complete)`), "the page did not answer");
         settled = st ? settled + 1 : 0;
         await sleep(st ? 60 : 100);
@@ -710,15 +741,26 @@ export class ChromiumVideoRenderer extends VideoRenderer {
         }
         return segs[i];
       };
-      const frameOf = async (i: number): Promise<void> => {
+      const shoot = async (): Promise<string> => (await guard(cdp.send("Page.captureScreenshot", { format: "jpeg", quality: 90, optimizeForSpeed: true }), "a frame never came")).data;
+      const frameOf = async (i: number, data?: string): Promise<void> => {
         bad();
-        const shot = await guard(cdp.send("Page.captureScreenshot", { format: "jpeg", quality: 90, optimizeForSpeed: true }), "a frame never came");
+        const shot = data ?? (await shoot());
         const seg = segment(i);
-        await seg.write(Buffer.from(shot.data, "base64"));
+        await seg.write(Buffer.from(shot, "base64"));
         stats.frames++;
       };
       let scene = 0;
-      await frameOf(0);
+      /* frame 0 is the wish's first moment as the page drew it at ready: what the page painted at ready may not be on the screen at the first shot, so shoot until two shots in a row are the same (at most 8) */
+      let first = await shoot();
+      for (let k = 0; k < 8; k++) {
+        await sleep(40);
+        bad();
+        const again = await shoot();
+        const same = again === first;
+        first = again;
+        if (same) break;
+      }
+      await frameOf(0, first);
       for (let n = 1; ; n++) {
         if (n > cap) throw new Error(`the wish did not finish within ${Math.round(cap / this.o.fps)} s of play`);
         const r = await guard(
@@ -750,6 +792,7 @@ export class ChromiumVideoRenderer extends VideoRenderer {
       check();
       const size = (await stat(finalPath)).size;
       stats.blocked = blocked;
+      stats.browserOwnCalls = ownCalls;
       stats.blockedHosts = [...blockedHosts.entries()].map(([h, c]) => `${h} x${c}`);
       stats.allowedRequests = allowedRequests;
       stats.totalMs = Math.round(performance.now() - started);
@@ -758,6 +801,7 @@ export class ChromiumVideoRenderer extends VideoRenderer {
       return { path: finalPath, contentType: "video/mp4", bytes: size };
     } catch (e) {
       stats.blocked = blocked;
+      stats.browserOwnCalls = ownCalls;
       stats.blockedHosts = [...blockedHosts.entries()].map(([h, c]) => `${h} x${c}`);
       stats.allowedRequests = allowedRequests;
       stats.totalMs = Math.round(performance.now() - started);
@@ -766,7 +810,7 @@ export class ChromiumVideoRenderer extends VideoRenderer {
       const aborted = stopped || signal?.aborted || e instanceof RenderStop;
       if (!aborted && !failures.length) await sleep(200);
       const raw = failures[0] ?? (e instanceof Error ? e.message : String(e));
-      const words = aborted ? "render aborted" : /Execution context was destroyed|frame was detached/i.test(raw) ? "the render page navigated away" : mask(raw).slice(0, 400);
+      const words = aborted ? "render aborted" : /Execution context was destroyed|frame was detached/i.test(raw) ? "the render page navigated away" : plainWords(mask(raw)).slice(0, 400);
       this.log.warn(`render ${jobId} failed: ${words}`);
       /* no `cause`: the original error may hold the token; only the masked words travel */
       // eslint-disable-next-line preserve-caught-error
@@ -775,10 +819,17 @@ export class ChromiumVideoRenderer extends VideoRenderer {
       signal?.removeEventListener("abort", onAbort);
       proxy.close();
       killAll();
+      /* an abort during the browser's start: the launch may still finish, and what it starts is ours to end (never a browser left behind) */
+      if (launching && !chromiumPid) {
+        await Promise.race([
+          launching.then((b) => b.close()).catch(() => undefined),
+          sleep(3000),
+        ]);
+      }
       await Promise.race([browser?.close().catch(() => undefined), sleep(500)]);
       killAll();
       for (const p of procs) if (p.exitCode === null && p.signalCode === null) await Promise.race([once(p, "exit"), sleep(3000)]);
-      if (chromium?.pid) await groupGone(chromium.pid);
+      if (chromiumPid) await groupGone(chromiumPid);
       await rm(work, { recursive: true, force: true });
     }
   }
@@ -816,7 +867,7 @@ export class ChromiumVideoRenderer extends VideoRenderer {
       async write(buf: Buffer): Promise<void> {
         if (failed) throw failed;
         if (p.exitCode !== null || p.signalCode !== null) throw new Error(mask(`ffmpeg stopped early: ${err.trim().slice(0, 200)}`));
-        if (!(p.stdin as NodeJS.WritableStream).write(buf)) await Promise.race([once(p.stdin as NodeJS.WritableStream, "drain"), exited]);
+        if (!(p.stdin as NodeJS.WritableStream).write(buf)) await Promise.race([once(p.stdin as NodeJS.WritableStream, "drain").catch(() => { throw new Error("ffmpeg stopped taking frames"); }), exited]);
         seg.frames++;
       },
       finish(): Promise<void> {
@@ -856,6 +907,12 @@ interface Segment {
  * IK6a: which scenes to keep. The opening scenes (leading "opening" or "cover") and the ending (from the scene named "ending" on, or the last
  * scene) are always kept whole; while the total is over `limitFrames`, the whole middle scene nearest the middle goes first. Never a cut inside a scene.
  */
+/** The raw words of a broken pipe or a closed browser, in plain ones (L). */
+export function plainWords(raw: string): string {
+  if (/\b(EPIPE|ERR_STREAM_DESTROYED|ERR_STREAM_WRITE_AFTER_END|write after end)\b/.test(raw)) return "ffmpeg stopped taking frames";
+  if (/Target (page|closed)|(browser|context|page) has been closed|browser has disconnected|Connection closed/i.test(raw)) return "Chromium stopped";
+  return raw;
+}
 export function chooseScenes(names: readonly string[], frames: readonly number[], limitFrames: number): boolean[] {
   const n = names.length;
   const keep = names.map(() => true);

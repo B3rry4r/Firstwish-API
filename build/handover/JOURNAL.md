@@ -27,7 +27,7 @@ Did: started. Read HANDOVER, PROTOCOL, JOURNAL, rulings; loaded the six skills b
 Redis started, role firstwish made; npm ci in both clones. Re-applied the patches: server `r5` = e5a56ad (same content as 725d21c), web `r4c` =
 847b3fd (same as a770810); both merge clean onto the heads. common-rules.md: new scratch path, session link, machine line (2 browser jobs + 1 other).
 Briefs: build/prompts/VERIFY3-R5.md (IK6h (a)), build/prompts/P-R4C.md (IK8a).
-Running: (next line).
+Running: VERIFY3-R5 (T2 re-check, Sonnet, server r5 e5a56ad on 79c74fe); P-R4C (T2 fix round, Sonnet, web r4c 847b3fd + head 2f45b9d).
 Unmerged: r5 e5a56ad, r4c 847b3fd (patches in build/handover/branches/).
 Next: (1) VERIFY3-R5, then merge r5; (2) P-R4C, then a re-check that looks at frames, then merge r4c; (3) the web render-page task (Studio ready at
 clock 0; entrances from the stepped clock), then R6; (4) WEB-10D after r4c.

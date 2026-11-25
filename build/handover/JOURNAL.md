@@ -41,3 +41,12 @@ real https CONNECT, a 60 s file. Verdict copied to verdicts/r5-VERDICT.md (round
 Running: P-R4C (builder); m50 (lead's full check).
 Next: merge r5 if m50 is all EXIT 0; then R6 (needs r5); W19 after r4c merges.
 For the owner: nothing new.
+
+### 2026-11-25 · second chat · ccr-91b3ed11-fx445c
+Heads: server 73fcf20, web 2f45b9d.
+Did: merge check m50 (r5 on the head): npm, prisma, seed, tsc, lint, gates, contracts, drift, routes EXIT 0; full suite 1 failed, 1,770 passed
+(225 suites): V7 in test/identity/int1-rulings.spec.ts, Date.now() in chromium-video-renderer.ts :517 (server) and :649-650 (page script). r5 NOT
+merged. Ruling IK6i. Started P3-R5 (T2 patch, Sonnet, branch r5 e5a56ad; the lead reads the diff, then m51 reruns the whole suite).
+Running: P-R4C (builder); P3-R5 (builder).
+Next: P3-R5 diff read, then m51 and merge r5; then R6.
+For the owner: nothing new.

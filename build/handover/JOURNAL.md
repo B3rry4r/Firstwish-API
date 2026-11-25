@@ -144,3 +144,14 @@ mid-render: all PASS; render-jobs + wishes 245 tests). Two lows to the sweep lis
 Verdict in verdicts/r7-VERDICT.md. Renderer tasks left: W19 (after r4c), the recorder follow-up (IK6h, IK6k), R9 (needs the owner's server).
 Running: VERIFY2-R4C (verifier).
 Started VERIFY-P7A (Phase 7 item 5: the five photo readers and the export fetched at the bytes; T2 check, Sonnet; API 64b91e6).
+
+### 2026-11-25 · second chat · ccr-91b3ed11-fx445c
+Did: VERIFY2-R4C: FIX FIRST: empty shapes in recorded frames (group-chat pill, contact-sheet plate, constellation ring and eclipse), ends left
+closed (group-chat scratch, pidgin-gist), progress lines (boarding-pass, pidgin-gist); 95 of 95 sweep clean; receivers 578 of 578 identical at
+1440 (360 only to the gate). Verdict in verdicts/r4c-VERDICT2.md, three frames in r4c2-pics/. Ruling IK8c: no third round; r4c MERGES; the rest
+re-cut as W20 (style files; brief build/prompts/W20.md). Web merge of r4c committed, webmerge check wm1 running.
+VERIFY-P7A: PASS: no tag reaches any reader fetched at the bytes (feed cover, friend's group wish, /w, owner reads, business wish and vault
+files, sized copies); HEIC and broken files refused in the IM2/IM1a/IM3 words. NOT run: the video download; the data export (no export route
+exists in this head: the "export" purpose is the keepsake video's file; the handover's "data export" reader was that). Verdict in verdicts/.
+Running: wm1 (web merge check).
+Next: push the web on a green wm1; then W19 and W20 in parallel (file-disjoint); WEB-10D after them (shares components/render/**).

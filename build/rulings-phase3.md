@@ -1378,3 +1378,9 @@ HG1 (give race) Two staff giving one Concierge order: the code is right (overlap
   r5-chromium-renderer.spec.ts:495 (M3, a stand-in page rendered twice with one epochMs: 16 frames differed) at load 7.6 to 9.7; the same spec alone
   passed 37 of 37 twice (load 5 and 3), and it passed in m51 and m52. A recording whose frames depend on the machine's load is a repeatability fault:
   it goes to the recorder follow-up of IK6h (after W19), which must make M3 hold under load (two stacks running), not only on a quiet machine.
+- IK8c (25 Nov, the lead, second chat, on VERIFY2-R4C after R4C's two fix rounds; Default (lead), owner may override): no third round. R4C merges
+  (95 of 95 cases end clean, no control or cue word, receivers unchanged in 578 of 578 moments at 1440, checks green): it is a clear gain and the
+  video is unsold until R9 anyway. What is left is re-cut as W20 (style files only): under the render page every ending shows its finished, opened
+  state (a letter open with its words, a foil scratched, a card opened, a ring lit, an eclipse open with its line), never an empty plate, pill, ring
+  or tile; no stepper rail, progress line or arc drawn only for a phone holder (boarding-pass, pidgin-gist). Photo cards are judged with a wish that
+  HAS photos. The 360 receiver past the "Open it" gate is proven in W20's check.

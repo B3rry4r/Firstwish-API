@@ -32,3 +32,12 @@ Unmerged: r5 e5a56ad, r4c 847b3fd (patches in build/handover/branches/).
 Next: (1) VERIFY3-R5, then merge r5; (2) P-R4C, then a re-check that looks at frames, then merge r4c; (3) the web render-page task (Studio ready at
 clock 0; entrances from the stepped clock), then R6; (4) WEB-10D after r4c.
 For the owner: nothing new.
+
+### 2026-11-25 · second chat · ccr-91b3ed11-fx445c
+Heads: server see below, web 2f45b9d.
+Did: VERIFY3-R5 handed back: MERGE, no finding (H2 pipe, H3 kill -9 clean in 2 s, M4 hung picture/font fail in words at 31 s, M5 407 without the
+secret, L plain words; render-jobs 111 of 111 twice; checks EXIT 0). NOT run by it: full suite, real-wish repeatability and Studio (moved by IK6h),
+real https CONNECT, a 60 s file. Verdict copied to verdicts/r5-VERDICT.md (round 3). Lead's merge check m50 started (p-merge50 = r5 on the head).
+Running: P-R4C (builder); m50 (lead's full check).
+Next: merge r5 if m50 is all EXIT 0; then R6 (needs r5); W19 after r4c merges.
+For the owner: nothing new.

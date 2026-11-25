@@ -70,6 +70,8 @@ export interface Env {
   RENDER_CLOCK_SHA256?: string;
   PROCESS_ROLE: "all" | "web" | "render-worker";
   RENDER_WORKER_PORT: number;
+  /** R6: this machine's render worker name (see env.schema.ts). */
+  RENDER_WORKER_ID?: string;
   RESEND_API_KEY?: string;
   /** YY3: the svix signing secret of Resend's webhook stream (delivery news and received mail); the guard's `resend` provider checks it. */
   RESEND_WEBHOOK_SECRET?: string;

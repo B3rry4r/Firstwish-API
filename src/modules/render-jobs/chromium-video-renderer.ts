@@ -193,6 +193,14 @@ export function hostAllowed(url: string, allowed: readonly string[]): boolean {
   }
 }
 
+/** The names a recorder child (browser, encoder, probe) may inherit; the server's own secrets are never among them (IK6j 1). */
+const CHILD_ENV_NAMES = ["PATH", "HOME", "LANG", "TMPDIR"] as const;
+export function childEnv(extra: Record<string, string>): NodeJS.ProcessEnv {
+  const out: NodeJS.ProcessEnv = {};
+  for (const n of CHILD_ENV_NAMES) if (process.env[n] !== undefined) out[n] = process.env[n];
+  return { ...out, ...extra };
+}
+
 /** Settings from the environment (R6: every name read here is in env.schema.ts and the env manifest). */
 export function chromiumRendererOptionsFromEnv(env: NodeJS.ProcessEnv): ChromiumRendererOptions | null {
   const webOrigin = env.RENDER_WEB_ORIGIN?.trim();
@@ -516,7 +524,7 @@ export class ChromiumVideoRenderer extends VideoRenderer {
     const dir = dirname(this.ffmpegPath);
     for (const [name, path] of [["ffmpeg", this.ffmpegPath], ["ffprobe", join(dir, "ffprobe")]] as const) {
       const ok = await new Promise<boolean>((resolve) => {
-        const c = spawn(path, ["-version"], { stdio: "ignore", timeout: 10_000 });
+        const c = spawn(path, ["-version"], { stdio: "ignore", timeout: 10_000, env: childEnv({}) });
         c.once("error", () => resolve(false));
         c.once("exit", (code) => resolve(code === 0));
       });
@@ -524,7 +532,7 @@ export class ChromiumVideoRenderer extends VideoRenderer {
     }
     const home = await mkdtemp(join(tmpdir(), `${RENDER_TEMP_PREFIX}probe-`));
     try {
-      const b = await loadPlaywright(this.o.playwrightModule).chromium.launch({ executablePath: this.chromiumPath, headless: true, args: ["--no-first-run", "--disable-extensions"], timeout: 30_000, env: { ...process.env, HOME: home } });
+      const b = await loadPlaywright(this.o.playwrightModule).chromium.launch({ executablePath: this.chromiumPath, headless: true, args: ["--no-first-run", "--disable-extensions"], timeout: 30_000, env: childEnv({ HOME: home }) });
       await b.close();
     } catch (e) {
       return (this.bootProblem = `Chromium does not start (${plainWords(String((e as Error)?.message ?? e)).slice(0, 160)})`);
@@ -677,7 +685,7 @@ export class ChromiumVideoRenderer extends VideoRenderer {
       ];
       const pw = loadPlaywright(this.o.playwrightModule);
       launching = pw.chromium.launch({
-        executablePath: this.chromiumPath, headless: true, args, timeout: 30_000, env: { ...process.env, HOME: join(work, "profile") },
+        executablePath: this.chromiumPath, headless: true, args, timeout: 30_000, env: childEnv({ HOME: join(work, "profile") }),
         handleSIGINT: false, handleSIGTERM: false, handleSIGHUP: false,
         proxy: { server: `http://127.0.0.1:${proxyPort}`, username: PROXY_USER, password: secret, bypass: "<-loopback>" },
       });
@@ -928,7 +936,7 @@ export class ChromiumVideoRenderer extends VideoRenderer {
       "-c:v", "libx264", "-profile:v", "high", "-preset", this.o.preset, "-crf", String(this.o.crf), "-maxrate", `${this.o.maxKbps}k`, "-bufsize", `${this.o.maxKbps * 2}k`,
       "-threads", "2", "-g", String(fps * 2), "-pix_fmt", "yuv420p", "-an", "-f", "mpegts", path,
     ];
-    const p = spawn(this.ffmpegPath, args, { stdio: ["pipe", "ignore", "pipe"] });
+    const p = spawn(this.ffmpegPath, args, { stdio: ["pipe", "ignore", "pipe"], env: childEnv({}) });
     procs.add(p);
     if (p.pid) onChild("ffmpeg", p.pid);
     let err = "";
@@ -969,7 +977,7 @@ export class ChromiumVideoRenderer extends VideoRenderer {
   }
 
   private async runFfmpeg(onChild: (k: "chromium" | "ffmpeg", pid: number) => void, argv: string[], procs: Set<ChildProcess>, mask: (t: string) => string, check: () => void): Promise<void> {
-    const p = spawn(this.ffmpegPath, ["-hide_banner", "-loglevel", "error", "-y", ...argv], { stdio: ["ignore", "ignore", "pipe"] });
+    const p = spawn(this.ffmpegPath, ["-hide_banner", "-loglevel", "error", "-y", ...argv], { stdio: ["ignore", "ignore", "pipe"], env: childEnv({}) });
     procs.add(p);
     if (p.pid) onChild("ffmpeg", p.pid);
     let err = "";

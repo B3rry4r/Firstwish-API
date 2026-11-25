@@ -1,5 +1,4 @@
 import { Inject, Injectable, Logger, OnModuleInit } from "@nestjs/common";
-import { hostname } from "node:os";
 import { lstat, realpath, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { basename, dirname, join, resolve } from "node:path";
@@ -116,8 +115,13 @@ export class RenderJobsService implements OnModuleInit {
   private readonly slots = new Slots(() => this.concurrency());
   /** How often a running render renews its lease (milliseconds); a spec makes it short. */
   renewMs = RENDER_RENEW_MS;
-  /** This process, as a render row names its holder: host, process id and the process's start time (so a reused id is not mistaken for the holder). */
-  readonly workerId = `${hostname()}:${process.pid}:${procStart(process.pid)}`;
+  /**
+   * This process, as a render row names its holder: RENDER_WORKER_ID (one value per machine; "-" when none is set), process id and the process's start time
+   * (so a reused id is not mistaken for the holder). A hostname is never used: cloned machines share one.
+   */
+  get workerId(): string {
+    return `${this.env.RENDER_WORKER_ID?.trim() || "-"}:${process.pid}:${procStart(process.pid)}`;
+  }
 
   /** RENDER_CONCURRENCY when it is written down; else 1 with the real recorder (about 1.5 GB each) and 2 with the stand-in. */
   concurrency(): number {
@@ -168,15 +172,20 @@ export class RenderJobsService implements OnModuleInit {
   }
 
   /**
-   * R6: at a render worker's start: a row held by a worker process of THIS machine that is no longer that process (killed, crashed) is lost now, not at the end of its lease:
-   * back to the queue with one loss counted, or failed for good with words at the second. Rows of another machine wait for their lease.
+   * R6 (IK6j 2): at a render worker's start: a row held under THIS worker's RENDER_WORKER_ID by a process that is no longer that process (killed, crashed) is lost now,
+   * not at the end of its lease: back to the queue with one loss counted, or failed for good with words at the second. With no RENDER_WORKER_ID nothing is freed here,
+   * and a row of any other id waits for its lease to run out.
    */
   async releaseDeadHolders(): Promise<number> {
+    const own = this.env.RENDER_WORKER_ID?.trim();
+    if (!own) return 0;
     const rows = await this.db.renderJob.findMany({ where: { status: "rendering", workerId: { not: null } }, select: { id: true, workerId: true, losses: true } });
     let n = 0;
     for (const r of rows) {
-      const [host, pid, start] = (r.workerId ?? "").split(":");
-      if (host !== hostname() || !pid || alive(Number(pid), Number(start))) continue;
+      const parts = (r.workerId ?? "").split(":");
+      const start = parts.pop();
+      const pid = parts.pop();
+      if (parts.join(":") !== own || !pid || alive(Number(pid), Number(start))) continue;
       const final = r.losses + 1 >= RENDER_MAX_LOSSES;
       const data = final
         ? { status: "failed" as const, losses: { increment: 1 }, failureWords: LOST_WORDS, tokenHash: null, tokenExpiresAt: null }

@@ -309,6 +309,14 @@
       "readBySource": true
     },
     {
+      "name": "RENDER_WORKER_ID",
+      "introducedBy": "r6",
+      "purpose": "R6: a name for this machine's render worker, one value per machine and different on every machine (never the hostname of a cloned one). A restarted worker frees the renders it held at once only when this is set and matches; with none set, a render left by a dead worker is freed only when its lease runs out",
+      "secret": false,
+      "refusesStartInProduction": "no",
+      "readBySource": true
+    },
+    {
       "name": "RENDER_TIME_LIMIT_SECONDS",
       "introducedBy": "r1",
       "purpose": "R6: the longest one video render may run, in seconds; the render's lease is longer than this and is renewed while frames still come",

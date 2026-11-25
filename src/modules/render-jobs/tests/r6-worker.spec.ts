@@ -93,8 +93,9 @@ describe("R6: the video maker's worker", () => {
     expect(auth).toBeTruthy();
   });
 
-  it("3. a worker of this machine that is gone releases its row at once: queued with one loss, then failed for good with words at the second", async () => {
+  it("3. a worker of this machine (the same RENDER_WORKER_ID) that is gone releases its row at once: queued with one loss, then failed for good with words at the second", async () => {
     const id = await asked();
+    (svc as unknown as { env: { RENDER_WORKER_ID?: string } }).env.RENDER_WORKER_ID = "m-spec";
     await k.db.$executeRaw`UPDATE render_job SET status = 'rendering', "workerId" = ${`${svc.workerId.split(":")[0]}:999999:1`} WHERE id = ${id}::uuid`;
     await k.db.$executeRaw`UPDATE job SET status = 'running' WHERE "subjectId" = ${id}`;
     expect(await svc.releaseDeadHolders()).toBe(1);
@@ -109,6 +110,7 @@ describe("R6: the video maker's worker", () => {
     expect(await svc.releaseDeadHolders()).toBe(0);
     await k.db.$executeRaw`UPDATE render_job SET "workerId" = 'other-machine:1:1' WHERE id = ${id}::uuid`;
     expect(await svc.releaseDeadHolders()).toBe(0);
+    delete (svc as unknown as { env: { RENDER_WORKER_ID?: string } }).env.RENDER_WORKER_ID;
   });
 
   it("4. the leftover sweep stops a browser a dead worker left (only the very process written down) and removes the old folders and files", async () => {
@@ -137,7 +139,7 @@ describe("R6: the video maker's worker", () => {
       expect(existsSync(live)).toBe(true); // a live owner's young folder stays
       expect(existsSync(join(root, "fw-render-job3-ccc.mp4"))).toBe(true); // young: stays
       const later = await sweepRenderLeftovers(10 * MIN, Date.now() + 20 * MIN, root);
-      expect(later.removed).toBeGreaterThanOrEqual(2);
+      expect(later.removed).toBeGreaterThanOrEqual(1); // the old result file; a live owner's folder stays whatever its age (see r6-ik6j.spec.ts)
       expect(existsSync(join(root, "keep-me.txt"))).toBe(true);
     } finally {
       for (const c of [child, impostor]) {

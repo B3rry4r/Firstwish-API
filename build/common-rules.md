@@ -1,16 +1,16 @@
 # Rules every agent follows (read in full by every run)
 ## Machine
-- 4 CPUs, 15 GB, about 20 GB free disk. At most 4 heavy agents (servers, suites, builds). Start a heavy job only when `free -g` shows
+- 4 CPUs, 15 GB, about 60 GB free disk (measured 25 Nov). At most 2 browser or stack jobs and 1 other heavy job at once. Start a heavy job only when `free -g` shows
   5 GB available, else look again within 4 minutes. `df -h /home/user /tmp` before a build or pictures; stop if under 5 GB free.
 - "Killed", a jest SIGKILL or a server dying silently is a memory kill, not a code failure: wait, run again.
 - Repos: web /home/user/Firstwish-web (origin B3rry4r/Firstwish-web), api /home/user/Firstwish-API (origin B3rry4r/Firstwish-API). Work
-  branches are named in your brief. Never change a shared clone's branch: `git -C <repo> worktree add --detach /tmp/claude-0/-home-user/533566a9-6497-503f-863f-065ac253d739/scratchpad/build/wt/<name> <ref>`,
-  removed at the end with your big outputs. `/home/user/fw-baseline` is a frozen copy: never edit it.
+  branches are named in your brief. Never change a shared clone's branch: `git -C <repo> worktree add --detach /tmp/claude-0/-home-user/eafa830a-41bc-56b4-853f-17665575469b/scratchpad/build/wt/<name> <ref>`,
+  removed at the end with your big outputs.
 - Dependencies: `cp -al <repo>/node_modules <worktree>/node_modules` (a changed lockfile: clean install in your worktree).
 - Database: local PostgreSQL 16; only databases whose names start with your prefix and contain `test`; drop them at the end. Only your ports.
 ## Checks and spend (cost is steps times context)
 - Run only the affected tests, typecheck and lint on changed files. Never the full suite; never wait on or poll CI.
-- Quiet output: `(cmd; echo "EXIT $?") > /tmp/claude-0/-home-user/533566a9-6497-503f-863f-065ac253d739/scratchpad/build/logs/x.log 2>&1; tail -n 15 /tmp/claude-0/-home-user/533566a9-6497-503f-863f-065ac253d739/scratchpad/build/logs/x.log`. Gate on that EXIT line. On failure
+- Quiet output: `(cmd; echo "EXIT $?") > /tmp/claude-0/-home-user/eafa830a-41bc-56b4-853f-17665575469b/scratchpad/build/logs/x.log 2>&1; tail -n 15 /tmp/claude-0/-home-user/eafa830a-41bc-56b4-853f-17665575469b/scratchpad/build/logs/x.log`. Gate on that EXIT line. On failure
   `grep -n -m 20 -E "FAIL|Error"`. Never cat a log or a whole diff (`git diff --stat`); read files by line range.
 - Never idle over 4 minutes. Your brief gives the step budget and the hand-back length. At the budget: push, hand back what remains.
 ## Never
@@ -28,8 +28,8 @@
   360 x 740, then 390 x 844, then 1440 x 900; `documentElement.scrollWidth <= innerWidth`; zero console errors; light and dark.
 ## Committing and hand-back
 - Commit as Claude <noreply@anthropic.com> on the local branch your brief names, in your own worktree. Trailers on every commit:
-  Co-Authored-By: Claude <noreply@anthropic.com>
-  Claude-Session: https://claude.ai/code/session_01Ji5DsgbRbxW8JX4EbGEa5o
+  Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+  Claude-Session: https://claude.ai/code/session_01VNvA3zNK8bJENArUhDXHfa
 - Do NOT push: this session may push only one branch, and the lead does it after merging yours. Commit at each milestone, hand back
   with the head sha. Stop every process you started, by PID.
 ## Owner rules you will meet (build/rulings.md in the API repo has the exact words)

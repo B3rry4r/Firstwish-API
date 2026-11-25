@@ -33,6 +33,6 @@ export async function bindVideoRenderer(env: BindEnv, db: Pick<PrismaService, "r
     log.warn(`The video maker is OFF: ${missing.join("; ")}. Everything whose price holds the portrait video stays unsold until it works.`);
     return new NoVideoRenderer(missing);
   }
-  log.log("The video maker is ON: the web address and the token secret are set, ffmpeg and ffprobe run, Chromium starts, playwright-core loads. Videos are made by the real recorder.");
+  log.log("The video maker is ON: the web address and the render secret are set, ffmpeg and ffprobe run, Chromium starts, playwright-core loads. Videos are made by the real recorder.");
   return real;
 }

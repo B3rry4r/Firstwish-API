@@ -51,7 +51,7 @@ export const MANIFEST_VARS: readonly VarSpec[] = [
   { name: "SCREENING_API_KEY", need: "optional", kind: "string", purpose: "screening provider auth" },
   { name: "ANTHROPIC_API_KEY", need: "live", kind: "string", purpose: "Anthropic API (owner key)" },
   { name: "ANTHROPIC_MODEL", need: "live", kind: "string", purpose: "model id used for writing" },
-  { name: "RENDER_CONCURRENCY", need: "optional", kind: "int", purpose: "how many videos one process renders at once (a real render needs about 1.5 GB). Not set: 1 with the real recorder, 2 with the stand-in", },
+  { name: "RENDER_CONCURRENCY", need: "optional", kind: "int", purpose: "how many videos one process renders at once (a real render needs about 1.5 GB). Not written down: 1 with the real recorder, 2 with the stand-in", default: "2" },
   { name: "RENDER_WEB_ORIGIN", need: "optional", kind: "url", purpose: "R6: the web address the video maker opens to play a wish (its /render page and /render-clock.js). Without it the video maker is off and the top tickets stay unsold" },
   { name: "RENDER_TOKEN_SECRET", need: "optional", kind: "secret", purpose: "R6: the secret that hashes the one-use token the video maker reads a wish with (32 characters or more). The video maker is off without it" },
   { name: "RENDER_CHROMIUM_PATH", need: "optional", kind: "string", purpose: "R6: the browser program the video maker starts to play a wish", default: "/usr/bin/google-chrome" },

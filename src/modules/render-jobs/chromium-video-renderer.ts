@@ -13,7 +13,6 @@ import { once } from "node:events";
 import type { Clock } from "../../common/ports/clock.port";
 import { Logger } from "@nestjs/common";
 import { type PortPing, pingError, pingWith } from "../../common/ports/ping";
-import { procStart } from "./render-leftovers";
 import { RENDER_TEMP_PREFIX, VideoRenderer, type RenderedFile, type RenderRequest } from "./video-renderer";
 
 /**
@@ -45,6 +44,17 @@ import { RENDER_TEMP_PREFIX, VideoRenderer, type RenderedFile, type RenderReques
  *
  * Nothing here ever logs, stores or names a file with the token: every message passes through `mask`.
  */
+
+/** The start time of a process in clock ticks since boot (field 22 of /proc/<pid>/stat), or 0 when there is no such process. A pid is only ever stopped when this still matches. */
+export function procStart(pid: number): number {
+  try {
+    const raw = readFileSync(`/proc/${pid}/stat`, "utf8");
+    const rest = raw.slice(raw.lastIndexOf(")") + 2).split(" ");
+    return Number(rest[19]) || 0;
+  } catch {
+    return 0;
+  }
+}
 
 export interface ChromiumRendererOptions {
   /** The web origin, e.g. https://firstwish.example (RENDER_WEB_ORIGIN). */

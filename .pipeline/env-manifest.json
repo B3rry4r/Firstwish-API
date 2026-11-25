@@ -215,7 +215,7 @@
     {
       "name": "RENDER_CONCURRENCY",
       "introducedBy": "video-render",
-      "purpose": "how many videos one process renders at once (a real render needs about 1.5 GB). Not set: 1 with the real recorder, 2 with the stand-in",
+      "purpose": "how many videos one process renders at once (a real render needs about 1.5 GB). Not written down: 1 with the real recorder, 2 with the stand-in",
       "secret": false,
       "refusesStartInProduction": "no",
       "readBySource": true

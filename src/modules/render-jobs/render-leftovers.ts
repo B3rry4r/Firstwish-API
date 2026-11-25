@@ -1,19 +1,11 @@
 import { readFileSync } from "node:fs";
+import { procStart } from "./chromium-video-renderer";
+
+export { procStart };
 import { readdir, rm, stat } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { RENDER_TEMP_PREFIX } from "./video-renderer";
-
-/** The start time of a process in clock ticks since boot (field 22 of /proc/<pid>/stat), or 0 when there is no such process. A pid is only ever stopped when this still matches. */
-export function procStart(pid: number): number {
-  try {
-    const raw = readFileSync(`/proc/${pid}/stat`, "utf8");
-    const rest = raw.slice(raw.lastIndexOf(")") + 2).split(" ");
-    return Number(rest[19]) || 0;
-  } catch {
-    return 0;
-  }
-}
 
 export const alive = (pid: number, start: number): boolean => start > 0 && procStart(pid) === start;
 

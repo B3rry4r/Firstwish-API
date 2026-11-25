@@ -51,7 +51,7 @@ export interface Env {
   SCREENING_API_KEY?: string;
   ANTHROPIC_API_KEY?: string;
   ANTHROPIC_MODEL?: string;
-  RENDER_CONCURRENCY?: number;
+  RENDER_CONCURRENCY: number;
   /** R1: read by the real video renderer, which does not exist yet; none of these makes the renderer "configured". */
   RENDER_WEB_ORIGIN?: string;
   RENDER_TOKEN_SECRET?: string;

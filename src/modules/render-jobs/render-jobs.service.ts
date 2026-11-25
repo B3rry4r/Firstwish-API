@@ -50,7 +50,7 @@ export const RENDER_MAX_LOSSES = 2;
 export const RENDER_RENEW_MS = 30_000;
 export const RENDER_RETRY_MS = 15_000;
 export const LOST_WORDS = "Your video could not be made: the video maker stopped twice while making it. Nothing more is charged, and it is still yours. Press Ask again.";
-const failedWords = (reason: string): string => `Your video could not be made after two tries (${reason.replace(/[.\s]+$/, "").slice(0, 160)}). Nothing more is charged, and it is still yours. Press Ask again.`;
+const failedWords = (reason: string): string => `Your video could not be made (${reason.replace(/[.\s]+$/, "").slice(0, 160)}). Nothing more is charged, and it is still yours. Press Ask again.`;
 
 /** R1: RENDER_CONCURRENCY: at most `limit()` holders at once; the rest wait in order, and leave when their signal aborts. */
 class Slots {
@@ -119,9 +119,11 @@ export class RenderJobsService implements OnModuleInit {
   /** This process, as a render row names its holder: host, process id and the process's start time (so a reused id is not mistaken for the holder). */
   readonly workerId = `${hostname()}:${process.pid}:${procStart(process.pid)}`;
 
-  /** RENDER_CONCURRENCY when it is set; else 1 with the real recorder (about 1.5 GB each) and 2 with the stand-in. */
+  /** RENDER_CONCURRENCY when it is written down; else 1 with the real recorder (about 1.5 GB each) and 2 with the stand-in. */
   concurrency(): number {
-    return this.env.RENDER_CONCURRENCY ?? (this.renderer.describe().real ? 1 : 2);
+    // the default of the environment (2) is for the stand-in; the real recorder takes 1 unless the setting was written down
+    if (this.renderer.describe().real && process.env.RENDER_CONCURRENCY === undefined) return 1;
+    return this.env.RENDER_CONCURRENCY ?? 2;
   }
 
   /** R6: does this process take render jobs? (PROCESS_ROLE web does not.) */
@@ -149,28 +151,12 @@ export class RenderJobsService implements OnModuleInit {
         throw new Error(`the render was lost ${c.attempt - 1} times; it is failed`);
       }
       const result = await this.run(c.subjectId, c.signal, false, () => this.jobs.touch(c.jobId, this.leaseMs() + 30_000));
-      // R6: a first failure goes back to the queue once on the same row (losses counted on the ROW); the second is failed for good with words
-      if (result === "failed" && (await this.retryOrEnd(c.subjectId))) return { skipped: true, again: new Date(this.clock.now().getTime() + RENDER_RETRY_MS) };
       // no place now: back to the queue without a try, and the limit has not been spent
       if (result === "busy") return { skipped: true, again: new Date(this.clock.now().getTime() + RENDER_BUSY_RETRY_MS) };
       // a run that skipped while the row is still unfinished is not a success: the job fails and is tried again
       if (result === "skipped" && (await this.unfinished(c.subjectId))) throw new Error("the render row is still held by an earlier run");
       return { changed: { result } };
     });
-  }
-
-  /** R6: the render just failed. Back to the queue (true) when it has tries left and the wish still wants the video; else it stays failed for good with its words (false). */
-  private async retryOrEnd(jobId: string): Promise<boolean> {
-    if (!UUID.test(jobId)) return false;
-    const row = await this.db.renderJob.findUnique({ where: { id: jobId }, select: { status: true, losses: true, failureWords: true, kind: true, wishId: true } });
-    if (!row || row.status !== "failed") return false;
-    const wanted = await this.stillWanted(row.wishId, row.kind === "status_video" ? "status-video" : "keepsake-export");
-    if (wanted && row.losses + 1 < RENDER_MAX_LOSSES) {
-      const back = await this.db.renderJob.updateMany({ where: { id: jobId, status: "failed" }, data: { status: "queued", losses: { increment: 1 }, failureWords: null } });
-      return back.count > 0;
-    }
-    if (wanted) await this.db.renderJob.updateMany({ where: { id: jobId, status: "failed" }, data: { losses: { increment: 1 } } });
-    return false;
   }
 
   /** IK4a: the wish still wants its video: not erased, and (for the status video) the extra not refunded. */
@@ -410,7 +396,7 @@ export class RenderJobsService implements OnModuleInit {
     } catch (e) {
       const reason = e instanceof Error ? e.message : String(e);
       this.log.warn(`render ${jobId} failed: ${reason}`);
-      await this.db.renderJob.updateMany({ where: mine, data: { status: "failed", failureWords: failedWords(reason), tookMs: Math.round(performance.now() - began) } });
+      await this.db.renderJob.updateMany({ where: mine, data: { status: "failed", losses: { increment: 1 }, failureWords: failedWords(reason), tookMs: Math.round(performance.now() - began) } });
       return "failed";
     } finally {
       clearInterval(watch);

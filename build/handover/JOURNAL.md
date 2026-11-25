@@ -126,3 +126,8 @@ Did: the R5 M3 spec alone: 37 of 37 twice (load 5, 3). Ruling IK6k: MERGED R6 (m
 load-sensitive, to the recorder follow-up). The video maker is now wired; still unsold until R9 (IK3). r6 patch removed.
 Running: VERIFY2-R4C (verifier).
 Next: R4C verdict, then merge or re-cut; W19 after r4c; WEB-10D after r4c; R7 re-scope, R8 notes.
+
+### 2026-11-25 · second chat · ccr-91b3ed11-fx445c
+Did: R7 re-scoped by the lead: its cleanup landed with R1, R3, R6; now a T2 check only (build/prompts/VERIFY-R7.md); a builder only if it finds
+something. R8 brief written (T0 records: docs/DEPLOY.md, systemd units, setup script). Started VERIFY-R7 and R8 (Sonnet).
+Running: VERIFY2-R4C (verifier); VERIFY-R7 (checker); R8 (T0 builder, text only).

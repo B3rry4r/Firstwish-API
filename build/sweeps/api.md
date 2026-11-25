@@ -159,3 +159,5 @@
 - API-23 check (24 Nov) LOW: a 16-bit PNG comes out 8-bit and an APNG is flattened, with no words; studio-files.service.ts:40 and pro-business.service.ts:101 do not catch the legacy-HEIC 404 (one old uncleanable file 404s the whole read; no such row exists); a second confirm of a clean JPEG re-encodes it.
 - API-23 check: not fetched by anyone at the bytes: feed cover, friend on a group wish, business client read, wish video download, data export (read in code only: all through SignedUrlsService): do it in Phase 7's smoke.
 - P-CI-10 (24 Nov) LOW: files-kit.ts re-computes scripts/seed.mjs's seedId by hand (a second copy of that rule: if the seed's id rule changes the kit makes a second row again): share one helper.
+- (R6, IK3b) RenderJob has no wire field for the failure words: the owner's screen shows the generic failed state; words only on the row and staff read.
+- (R6, IK3b) the video maker's deep check has no HTTP route; the staff page shows only the cheap check.

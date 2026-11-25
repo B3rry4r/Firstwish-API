@@ -71,3 +71,11 @@ wrapper), M5 shown absent; word list extended (found 3 more cues, fixed). NOT fi
 styles NOT run with the new list. Receivers: 13 compared, identical. Checks green. Pictures: scratch pr4c-out (lost with the machine).
 Ruling IK8b. Started P2-R4C (T2, last fix round, Sonnet), then a verifier that looks at frames.
 Running: R6 (builder); P2-R4C (builder).
+
+### 2026-11-25 · second chat · ccr-91b3ed11-fx445c
+Did: R6 handed back: r6 02b5311 (4 commits on 040ec83; 29 files +964/-80; migration 20261212090000_render_worker_r6, sorts last). Claims: 1 to 6
+done (binding checked at boot, PROCESS_ROLE all/web/render-worker, losses on the row, token bucket, leftovers sweep, staff line); proof on this
+machine: status video 26.7 s h264 1080x1920 30 fps in 65.7 s, film 32.2 s in 381.7 s, worker peak 1.5 GB; kill -9 retaken; twice lost failed;
+erase stores nothing. Gaps: failure words not on the wire; deep check has no route (ruling IK3b, sweep rows). NOT run by it: Studio, refund
+mid-render, owambe, real storage, full suite, live boot. Started VERIFY-R6 (T2 full verifier, Sonnet).
+Running: P2-R4C (builder); VERIFY-R6 (verifier).

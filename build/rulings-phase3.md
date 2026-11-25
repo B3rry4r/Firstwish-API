@@ -1364,3 +1364,7 @@ HG1 (give race) Two staff giving one Concierge order: the code is right (overlap
   (its finished line and state), never the ask. A step or stop counter ("1 of 3", boarding-pass pages.tsx:243) is a counter under IK8a. A thing the
   style draws as part of its look, not a control or a count of pages left (group-chat's chat header with its "Birthday" name pill, the status
   style's header line with name and time), stays. An ending whose words only show after a pull shows them, as done, under the render page (M3).
+- IK3b (25 Nov, the lead, second chat, on R6's hand-back; Default (lead), owner may override): no registry reopen for R6. A render failed for good
+  shows the web's own failed state with "Ask again" (IK3); the exact words are kept on the render row and in the staff Providers read, not on the
+  wire. The staff deep check of the video maker stays a server-side call (one per ten minutes) with no route of its own; the cheap check is what the
+  staff page reads. Both go on the sweep list (build/sweeps/api.md) for a later additive contract round if the owner wants them.

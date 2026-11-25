@@ -161,3 +161,15 @@ Did: MERGED R4C into the web: acd5550 (wm1: npm, tsc, records, gates, baseline, 
 no lib/ change, so no seed export). r4c branch and patch removed. Started W19 (T1, render page: Studio ready at clock 0, every motion on the
 stepped clock; web acd5550, API below) and W20 (T2, style files: finished endings, no empty shape or progress line; web acd5550). File-disjoint.
 Running: W19 (builder); W20 (builder).
+
+### 2026-11-25 · second chat · ccr-91b3ed11-fx445c
+Did: W19 handed back (w19 f0ded72, 2 commits, 6 files): Studio ready at virtual time 0 (React held the lazy StudioHost 300 ms; RenderStage now
+renders it directly; rig and dressing need no timer); four real-time starts fixed in clock-shim.mjs (step(0) runs no frame, first-seen animations
+start at 0, IntersectionObserver told on each step, Math.random seeded by the epoch); input JPEGs 0 differing on 6 styles; decoded frames still
+differ on owambe and polaroid because the API recorder encodes with `-threads 2` (`-threads 1` gave identical files): recorder follow-up, not W19.
+W20 handed back (w20 45b38da, 1 commit, 20 files): E1 to E7 done; flat-shape check S in r4.mjs; sweep 95 done, 76 clean, 19 flagged NOT fixed
+(cinema, gold-card, lookbook, marquee, midnight, milestone, owambe confetti, reel, screening, status, tailored, letter balloon); receivers same
+except scrapbook "Swipe to turn" at 1440 (cause not found) and boarding-pass ending not reached. Default (lead): W20 goes to its verifier as it
+stands; the verified findings are its round 1.
+Started VERIFY-W19 (T1) and VERIFY-W20 (T2), Sonnet, briefs in build/prompts/.
+Running: VERIFY-W19; VERIFY-W20.

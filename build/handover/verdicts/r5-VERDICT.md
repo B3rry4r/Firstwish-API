@@ -33,3 +33,20 @@ LOW
 6. Raw words: "write EPIPE" (ffmpeg killed, events.once drain, :819), "page.evaluate: Target page, context or browser has been closed" (Chromium -9 late). 7. Blocked count is noise (66-85 a real render: Chromium's own google.com calls). 8. Web shim throws in a sandboxed iframe (navigator.serviceWorker): render fails.
 HELD: H1 every kind (ws/wss incl. same host:port, fetch, xhr, SSE, beacon, img, preconnect, prefetch, prerender, iframes srcdoc/blob/data, Worker gone in every frame, WebRTC TURN/STUN 0 candidates, WebTransport rejected): server hits 0, UDP 0; proxy CONNECT matrix, mapped/decimal/hex/fd00 metadata, rebinding (one lookup), 2 MB header 431, 200 idle tunnels. M2 24 of 24 in 12-279 ms (14 at ~330 ms), nothing left. M4 3 of 3, M5 11 cases plain words (454-912 ms), L7 0.3 s, L8, joins/moov/video-only/frames=sec x 30, 5 in a row + 2 at once, token on no command line, kill -9 of both children. Real wish with web+API only: renders, photo in frames. Owambe 5 s at 540x960 done (343 s, ready 12 s); golden, marquee 34 s.
 CHECKS: typecheck, check-contracts, check-drift, check-routes, gates.sh, whole lint EXIT 0; render-jobs 104 of 104 once (run 2), runs 1 and 3 failed only on the foreign orphan's folder. NOT RUN: full suite; a hostile clock that passes the check.
+
+Round 3 re-check (VERIFY3-R5, verifier, r5 e5a56ad merged onto ccr-91b3ed11-fx445c 7318cd3): MERGE
+VERDICT3 R5 re-check (verifier, r5 e5a56ad merged on ccr-91b3ed11-fx445c, whose head was 7318cd3 not 79c74fe; merge clean): MERGE
+No finding. HIGH 0, MEDIUM 0. Own probes (old ones lost), 360x640, 8 s ask, stand-in web on 127.0.0.1:5400-5403.
+H2 HELD. During a render lsof shows no listening socket owned by the Chromium group (only node: web stand-in and proxy). curl sweep of every listening
+   port (/json/list, /json/version, /json, /; 6 ports) found the token 0 times and no DevTools answer. /proc cmdline+environ scan: token, secret, base64 login: 0 hits.
+H3 HELD. node child SIGKILLed mid-render (Chromium + 3 ffmpeg running): chromium/ffmpeg gone at +2 s (1 left at +1 s); listening ports back to the 4 pre-existing; no proxy port.
+M4 HELD. Hung picture and hung font: render FAILED at 31.2 s and 31.0 s (30 s limit plus ~1 s browser start): "a picture or a font did not finish loading
+   within 30 s". Picture slowed 3 s and 10 s: video done (8.0 s, 15.0 s), frames 0, 50, 100 all red (240,0,1). Font slowed 3 s: done.
+M5 HELD. No secret: GET listed host 407, GET unlisted 407, wrong secret 407, CONNECT listed 407, CONNECT unlisted 407. With the secret (read from the child): CONNECT
+   listed 200, CONNECT :5432 403, CONNECT 169.254.169.254 403. Plain-http render needs the login to load at all and succeeded. Not seen: a real https site (no cert stand-in).
+L HELD. ffmpeg killed: "ffmpeg stopped early (killed): " (no EPIPE; trailing ": " is cosmetic, chooseScenes/plainWords path unchanged).
+   Chromium killed: "Chromium stopped (the pipe closed)" (no "Target page"). Blocked count 0 on 8 clean renders (was 66-85); no leftovers after either kill (own filter).
+ONCE: ws to another port of the same host (5402) and ws to the same port (5401): 0 connections, 0 upgrades seen. Abort at 330 ms x5: rejected 50-84 ms after abort.
+CHECKS (EXIT 0 each): typecheck, whole npm run lint, gates.sh, check-contracts, check-drift, check-routes. render-jobs folder twice: 111 of 111, 12 suites, both runs (181 s).
+NOT RUN: full suite; frame-for-frame repeat on a real wish (IK6h moved it); Studio wish; a real https/CONNECT through the browser; 60 s file; other styles; hostile clock.
+NOTE: a foreign chrome-headless-shell (node scripts/live/flows/r4.mjs, pid 7461) ran beside me; not mine, left alone.

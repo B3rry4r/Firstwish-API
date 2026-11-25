@@ -155,3 +155,9 @@ files, sized copies); HEIC and broken files refused in the IM2/IM1a/IM3 words. N
 exists in this head: the "export" purpose is the keepsake video's file; the handover's "data export" reader was that). Verdict in verdicts/.
 Running: wm1 (web merge check).
 Next: push the web on a green wm1; then W19 and W20 in parallel (file-disjoint); WEB-10D after them (shares components/render/**).
+
+### 2026-11-25 · second chat · ccr-91b3ed11-fx445c
+Did: MERGED R4C into the web: acd5550 (wm1: npm, tsc, records, gates, baseline, test:client, contracts, lint, css, build all EXIT 0; tree clean;
+no lib/ change, so no seed export). r4c branch and patch removed. Started W19 (T1, render page: Studio ready at clock 0, every motion on the
+stepped clock; web acd5550, API below) and W20 (T2, style files: finished endings, no empty shape or progress line; web acd5550). File-disjoint.
+Running: W19 (builder); W20 (builder).

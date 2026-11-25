@@ -121,6 +121,12 @@ export const MANIFEST_VARS: readonly VarSpec[] = [
     default: "120",
   },
   {
+    name: "STANDIN_STORAGE_DIR",
+    need: "optional",
+    kind: "string",
+    purpose: "R6: a folder that holds the stand-in storage in files, so the web process and the render worker of one test stack see the same files (the stand-in keeps them in memory otherwise); proofs and test stacks only, refused with PROVIDERS=live or NODE_ENV=production",
+  },
+  {
     name: "INTERNAL_TOKEN",
     need: "always",
     kind: "secret",

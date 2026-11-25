@@ -417,6 +417,14 @@
       "readBySource": true
     },
     {
+      "name": "STANDIN_STORAGE_DIR",
+      "introducedBy": "r6",
+      "purpose": "R6: a folder that holds the stand-in storage in files, so the web process and the render worker of one test stack see the same files (the stand-in keeps them in memory otherwise); proofs and test stacks only, refused with PROVIDERS=live or NODE_ENV=production",
+      "secret": false,
+      "refusesStartInProduction": "no",
+      "readBySource": true
+    },
+    {
       "name": "INTERNAL_TOKEN",
       "introducedBy": "api-0",
       "purpose": "shared secret an internal route needs in the x-internal-token header (32 or more characters)",

@@ -82,7 +82,7 @@ const providers: Provider[] = [
     provide: STANDIN_STORAGE,
     inject: [ENV, Clock],
     useFactory: (env: Env, clock: Clock) =>
-      standin(env) ? new StandinStorage(clock, undefined, env.NODE_ENV === "test" ? undefined : `${env.API_PUBLIC_URL.replace(/\/+$/, "")}/v1/standin-storage`) : null,
+      standin(env) ? new StandinStorage(clock, undefined, env.NODE_ENV === "test" ? undefined : `${env.API_PUBLIC_URL.replace(/\/+$/, "")}/v1/standin-storage`, undefined, env.STANDIN_STORAGE_DIR) : null,
   },
   {
     provide: StoragePort,

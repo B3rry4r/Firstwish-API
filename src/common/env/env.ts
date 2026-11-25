@@ -16,6 +16,8 @@ export interface Env {
   STANDIN_VIDEO?: string;
   /** IK7: a file the stand-in video renderer appends each render's token to (mode 0600); test stacks only. */
   STANDIN_RENDER_TOKENS?: string;
+  /** R6: a folder the stand-in storage keeps its files in, so two processes of a proof stack share it; test stacks only. */
+  STANDIN_STORAGE_DIR?: string;
   /** IK7a: with STANDIN_VIDEO=hold, a render holds only while this file exists when it starts; test stacks only. */
   STANDIN_RENDER_HOLD_FILE?: string;
   /** IK7: the most seconds STANDIN_VIDEO=hold waits; test stacks only. */
@@ -213,6 +215,9 @@ export function loadEnv(raw: Record<string, string | undefined> = process.env): 
   // IK7a: the hold file only shapes the stand-in renderer's hold, so it is refused where the token file is.
   if (get("STANDIN_RENDER_HOLD_FILE") !== undefined && (providers !== "standin" || out.NODE_ENV === "production")) {
     problems.push({ name: "STANDIN_RENDER_HOLD_FILE", problem: "refused: it is for the stand-in video renderer only (needs PROVIDERS=standin and a NODE_ENV other than production)" });
+  }
+  if (get("STANDIN_STORAGE_DIR") !== undefined && (providers !== "standin" || out.NODE_ENV === "production")) {
+    problems.push({ name: "STANDIN_STORAGE_DIR", problem: "refused: it is for the stand-in storage only (needs PROVIDERS=standin and a NODE_ENV other than production)" });
   }
   // R6: the secret that hashes a render token is long, or the video maker stays off (the binding says why); a short one is a typo and boot refuses it
   const renderSecret = out.RENDER_TOKEN_SECRET;

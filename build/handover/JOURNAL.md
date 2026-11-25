@@ -79,3 +79,10 @@ machine: status video 26.7 s h264 1080x1920 30 fps in 65.7 s, film 32.2 s in 381
 erase stores nothing. Gaps: failure words not on the wire; deep check has no route (ruling IK3b, sweep rows). NOT run by it: Studio, refund
 mid-render, owambe, real storage, full suite, live boot. Started VERIFY-R6 (T2 full verifier, Sonnet).
 Running: P2-R4C (builder); VERIFY-R6 (verifier).
+
+### 2026-11-25 · second chat · ccr-91b3ed11-fx445c
+Did: VERIFY-R6 handed back "MERGE" with MED-1 (the recorder's children get the server's whole env: database URL and secrets in /proc environ),
+MED-2 (dead holder judged by hostname), LOW-1..3. All 9 attacks held (sold-or-not each missing part, two workers, kill -9, erase and refund mid-render,
+sweep PID check, token bucket, migration on old rows, cheap check, no token in logs). Read as FIX FIRST (ruling IK6j). Verdict in
+verdicts/r6-VERDICT.md. Deploy note: the web needs API_ORIGIN at build time. Started P-R6 (T2 patch, Sonnet, r6 02b5311).
+Running: P2-R4C (builder); P-R6 (builder).

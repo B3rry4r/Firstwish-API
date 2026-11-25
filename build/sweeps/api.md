@@ -161,3 +161,5 @@
 - P-CI-10 (24 Nov) LOW: files-kit.ts re-computes scripts/seed.mjs's seedId by hand (a second copy of that rule: if the seed's id rule changes the kit makes a second row again): share one helper.
 - (R6, IK3b) RenderJob has no wire field for the failure words: the owner's screen shows the generic failed state; words only on the row and staff read.
 - (R6, IK3b) the video maker's deep check has no HTTP route; the staff page shows only the cheap check.
+- (R6 LOW-2) RENDER_RETRY_MS is read nowhere and its comment is wrong (a plain failure is final at once): remove or wire.
+- (R6 LOW-3) render read: isKnown() reads the database before the address limit, so wrong tokens are limited at 60 a minute, not 30.

@@ -1368,3 +1368,9 @@ HG1 (give race) Two staff giving one Concierge order: the code is right (overlap
   shows the web's own failed state with "Ask again" (IK3); the exact words are kept on the render row and in the staff Providers read, not on the
   wire. The staff deep check of the video maker stays a server-side call (one per ten minutes) with no route of its own; the cheap check is what the
   staff page reads. Both go on the sweep list (build/sweeps/api.md) for a later additive contract round if the owner wants them.
+- IK6j (25 Nov, the lead, second chat, on VERIFY-R6; Default (lead), owner may override): the verifier's MERGE with two mediums is read as FIX FIRST
+  (a medium gets a round). (1) The recorder's children (Chromium, ffmpeg, ffprobe) get only the variables they need (PATH, HOME, LANG, TMPDIR and
+  what the adapter itself sets), never the server's own environment. (2) A render row held by another worker is freed only when its lease runs out;
+  a restarted worker frees its own rows at once only when RENDER_WORKER_ID is set (one value per machine, in the env manifest) and matches; a
+  hostname is never taken as proof of who held a row. (3) The leftovers sweep never stops the children of, or removes the folder of, an owner that
+  is still alive, however old. RENDER_RETRY_MS (unused) and the wrong-token read order go on the sweep list.

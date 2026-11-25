@@ -19,6 +19,8 @@ export interface RenderRequest {
   seconds: number;
   /** R3: the one-use token the render page reads the wish with (GET /v1/render/:token/wish). Held in memory by the renderer; never logged, stored or queued in the clear. */
   token?: string;
+  /** R5 (IK6f): the wall time the page's clock starts at, in milliseconds since 1970. Two renders of one wish given the same value give the same frames. Default: the render's own start, to the second. */
+  epochMs?: number;
 }
 
 /** R1: the renderer's result is a FILE on disk (a minute of 1080 x 1920 video is tens of MB; it is never held whole in memory). The job streams it to the file store and removes it. */

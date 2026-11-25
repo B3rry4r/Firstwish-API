@@ -44,6 +44,12 @@ export class RenderTokens {
     return createHmac("sha256", key).update(token).digest("hex");
   }
 
+  /** R6: was this token ever issued (its hash is on a row)? One indexed read; a wrong or malformed token is false and costs the same. */
+  async isKnown(token: string): Promise<boolean> {
+    if (!TOKEN.test(token)) return false;
+    return !!(await this.db.renderJob.findUnique({ where: { tokenHash: this.hashOf(token) }, select: { id: true } }));
+  }
+
   /** A fresh token and what is stored for it. The caller writes the hash and expiry on the job's row and hands the token to the renderer in memory only. */
   make(): { token: string; hash: string; expiresAt: Date } {
     const token = randomBytes(32).toString("base64url");

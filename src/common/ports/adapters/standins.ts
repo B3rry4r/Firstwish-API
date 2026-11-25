@@ -1,5 +1,6 @@
 import { createHash, createHmac, timingSafeEqual } from "node:crypto";
-import { appendFileSync, chmodSync, closeSync, fstatSync, openSync } from "node:fs";
+import { appendFileSync, chmodSync, closeSync, existsSync, fstatSync, mkdirSync, openSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
 import { EnvError } from "../../env/env";
 import { CleanInput, CleanResult, ImageSizesPort, MAX_SOURCE_BYTES, ResizeInput } from "../image-sizes.port";
 import { ClipLengthInput, ClipLengthPort } from "../clip-length.port";
@@ -144,6 +145,65 @@ export class StandinEmail extends EmailPort {
 export const STANDIN_MAX_BYTES = 256 * 1024 * 1024;
 const DROPPED_KEEP = 10_000;
 
+/**
+ * R6 (proofs only): with STANDIN_STORAGE_DIR the stand-in keeps its objects, the signed-put bindings and the landed marks in files of that folder, so two processes of one
+ * test stack (the web process and the render worker) see the same storage. A Map or Set in look only: no cap, no order.
+ */
+const slot = (dir: string, sub: string, key: string): string => join(dir, sub, createHash("sha256").update(key).digest("hex"));
+class FileObjects extends Map<string, { bytes: Buffer; contentType: string }> {
+  constructor(private readonly dir: string) {
+    super();
+    mkdirSync(join(dir, "o"), { recursive: true });
+  }
+  override get(key: string): { bytes: Buffer; contentType: string } | undefined {
+    const f = slot(this.dir, "o", key);
+    return existsSync(f) ? { bytes: readFileSync(f), contentType: readFileSync(`${f}.type`, "utf8") } : undefined;
+  }
+  override set(key: string, v: { bytes: Buffer; contentType: string }): this {
+    const f = slot(this.dir, "o", key);
+    writeFileSync(`${f}.type`, v.contentType);
+    writeFileSync(f, v.bytes);
+    return this;
+  }
+  override delete(key: string): boolean {
+    const f = slot(this.dir, "o", key);
+    const had = existsSync(f);
+    rmSync(f, { force: true });
+    rmSync(`${f}.type`, { force: true });
+    return had;
+  }
+  override keys(): MapIterator<string> {
+    return new Map<string, never>().keys();
+  }
+}
+class FileBound extends Map<string, { contentType: string; contentLength: number }> {
+  constructor(private readonly dir: string) {
+    super();
+    mkdirSync(join(dir, "b"), { recursive: true });
+  }
+  override get(key: string): { contentType: string; contentLength: number } | undefined {
+    const f = slot(this.dir, "b", key);
+    return existsSync(f) ? (JSON.parse(readFileSync(f, "utf8")) as { contentType: string; contentLength: number }) : undefined;
+  }
+  override set(key: string, v: { contentType: string; contentLength: number }): this {
+    writeFileSync(slot(this.dir, "b", key), JSON.stringify(v));
+    return this;
+  }
+}
+class FileLanded extends Set<string> {
+  constructor(private readonly dir: string) {
+    super();
+    mkdirSync(join(dir, "l"), { recursive: true });
+  }
+  override has(key: string): boolean {
+    return existsSync(slot(this.dir, "l", key));
+  }
+  override add(key: string): this {
+    writeFileSync(slot(this.dir, "l", key), "1");
+    return this;
+  }
+}
+
 export class StandinStorage extends StoragePort {
   /** FB4: a stand-in calls nothing. */
   ping(): Promise<PortPing> {
@@ -151,12 +211,12 @@ export class StandinStorage extends StoragePort {
   }
 
   /** Oldest first (a Map keeps the order keys were first set in). Bounded by `maxBytes` in total: see store(). */
-  private readonly objects = new Map<string, { bytes: Buffer; contentType: string }>();
+  private objects: Map<string, { bytes: Buffer; contentType: string }> = new Map();
   private total = 0;
   /** Keys the cap dropped, so a read can say so instead of "not found" (a key is short; the list is cut at DROPPED_KEEP). */
   private readonly dropped = new Set<string>();
   /** Keys a signed put has already filled: a second put to the same ticket is refused, even after the cap dropped the bytes (L1). */
-  private readonly landed = new Set<string>();
+  private landed: Set<string> = new Set();
 
   /**
    * `base` is where the urls point. Tests keep the host that never resolves; a stack points it at the API's own
@@ -168,8 +228,15 @@ export class StandinStorage extends StoragePort {
     private readonly base = `https://storage.${STANDIN_HOST}`,
     /** Test stacks only: the most bytes the stand-in holds in total (M2). The oldest objects go first. */
     readonly maxBytes = STANDIN_MAX_BYTES,
+    /** R6 (proofs only): a folder that holds the storage in files, so two processes share it. */
+    dir?: string,
   ) {
     super();
+    if (dir) {
+      this.objects = new FileObjects(dir);
+      this.bound = new FileBound(dir);
+      this.landed = new FileLanded(dir);
+    }
   }
 
   /** The one place an object is stored: replaces the key's old bytes, then drops the oldest objects until the total fits the cap. */
@@ -209,7 +276,7 @@ export class StandinStorage extends StoragePort {
   }
 
   /** What each signed PUT bound (X26): the type and the exact length. */
-  readonly bound = new Map<string, { contentType: string; contentLength: number }>();
+  bound: Map<string, { contentType: string; contentLength: number }> = new Map();
 
   private sig(key: string, exp: number, bound = ""): string {
     return createHash("sha256").update(`${key}:${exp}:${bound}`).digest("hex").slice(0, 16);

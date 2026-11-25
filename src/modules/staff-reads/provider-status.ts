@@ -1,4 +1,4 @@
-import { Inject, Injectable } from "@nestjs/common";
+import { Inject, Injectable, Optional } from "@nestjs/common";
 import type { Env } from "../../common/env/env";
 import { ENV } from "../../common/env/env.module";
 import { AiWritingPort } from "../../common/ports/ai.port";
@@ -12,6 +12,7 @@ import { type PortPing, pingError } from "../../common/ports/ping";
 import { RefundProviderPort } from "../../common/ports/refund-provider.port";
 import { UploadScreeningPort } from "../../common/ports/screening.port";
 import { StoragePort } from "../../common/ports/storage.port";
+import { PrismaService } from "../../common/db/prisma.service";
 import { VideoRenderer } from "../render-jobs/video-renderer";
 
 /** How long a ping answer stands before the provider is asked again (FB4). */
@@ -59,6 +60,7 @@ export class ProviderStatus {
     private readonly video: VideoRenderer,
     private readonly imageSizes: ImageSizesPort,
     private readonly mediaClean?: MediaCleanPort,
+    @Optional() private readonly db?: PrismaService,
   ) {}
 
   private port(name: PortName): { ping(): Promise<PortPing> } | undefined {
@@ -76,7 +78,40 @@ export class ProviderStatus {
     return answer;
   }
 
-  async state(key: string): Promise<ProviderState> {
+  /**
+   * R6: the video maker's line: working, or WHICH part is missing; then the last render's time, length and result. The cheap check only (no browser starts on a read:
+   * the programs and the web address were checked at boot and the web is asked for its clock script); `deep` starts the browser (the renderer limits it to once in ten minutes).
+   */
+  private async videoState(deep: boolean): Promise<ProviderState> {
+    // any VideoRenderer port: an older shape has no describe(), so read configured() (real = configured, nothing missing)
+    const v = this.video as Partial<VideoRenderer> & Pick<VideoRenderer, "ping">;
+    const d = typeof v.describe === "function" ? v.describe() : { real: typeof v.configured === "function" && v.configured(), missing: [] as string[] };
+    let connected = false;
+    let head: string;
+    if (!d.real) {
+      head = `The video maker is off. ${d.missing.length ? `Missing: ${d.missing.join("; ")}.` : ""} The portrait video stays unsold.`.replace("  ", " ");
+      if (this.env.PROVIDERS !== "live" && !d.missing.length) head = "Running on stand-ins, so nothing real has been called.";
+    } else {
+      const a = deep ? await (typeof v.deepCheck === "function" ? v.deepCheck() : this.ping("video")).catch((e: unknown) => pingError(e)) : await this.ping("video");
+      if (a.state === "error") head = `The video maker is not working: ${a.error}`;
+      else {
+        connected = this.env.PROVIDERS === "live";
+        head = `The video maker is working${deep ? " (the browser was started just now)" : " (programs and web address checked; the browser was not started for this read)"}.`;
+      }
+    }
+    let last = "";
+    if (this.db) {
+      const r = await this.db.renderJob.findFirst({ where: { status: { in: ["done", "failed"] } }, orderBy: { updatedAt: "desc" }, select: { status: true, updatedAt: true, seconds: true, videoMs: true, tookMs: true, failureWords: true } }).catch(() => null);
+      if (r) {
+        const len = r.videoMs ? `${Math.round(r.videoMs / 100) / 10} s long` : `up to ${r.seconds} s`;
+        last = ` Last video: ${r.updatedAt.toISOString()}, ${len}, ${r.status === "done" ? "made" : "failed"}${r.tookMs ? ` in ${Math.round(r.tookMs / 1000)} s` : ""}.`;
+      } else last = " No video has been made yet.";
+    }
+    return { connected, line: `${head}${last}` };
+  }
+
+  async state(key: string, deep = false): Promise<ProviderState> {
+    if (key === "video") return this.videoState(deep);
     const names = PORTS_OF[key]?.filter((n) => this.port(n));
     if (!names?.length) return { connected: false, line: "Not checked from here." };
     // stand-ins answer for themselves and never leave the process: ask them too, so the read is the same in every mode

@@ -18,6 +18,8 @@ import { RenderTokens } from "./render-token";
 
 /** The signed addresses of a render's files live the render's own limit plus this margin (seconds). */
 export const RENDER_FILE_MARGIN_SECONDS = 600;
+/** R6: reads a minute for one token (the page reads once; a few tries are allowed). */
+export const RENDER_READS_PER_MINUTE = 20;
 
 interface WishRow {
   id: string;
@@ -62,8 +64,10 @@ export class RenderReadService {
   ) {}
 
   async read(token: string, address: string | null): Promise<RenderWish> {
-    // the same limit the public link's reads have (one bucket, per address)
-    await this.limits.take("read", this.limits.keyOf(address), READS_PER_MINUTE, 60);
+    // R6: the worker's one read by a RIGHT token has its own bucket, keyed by the token's hash, so a flood of the public link from the same address cannot refuse it;
+    // a wrong or malformed token is limited by address, in the public link's shared "read" bucket, as before
+    if (await this.tokens.isKnown(token)) await this.limits.take("render-read", this.limits.keyOf("render-token", this.tokens.hashOf(token)), RENDER_READS_PER_MINUTE, 60);
+    else await this.limits.take("read", this.limits.keyOf(address), READS_PER_MINUTE, 60);
     const job = await this.tokens.consume(token);
     const row = await this.wishOf(job.wishId);
     if (!row) throw AppError.notFound("No such render.");

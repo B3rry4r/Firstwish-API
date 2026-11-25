@@ -19,6 +19,7 @@ import { SignedUrlsService } from "../stored-files/signed-urls.service";
 import { videoRefunded, wishHas } from "../wish-extras/wish-extras";
 import { stateOf } from "../wishes/wish-state";
 import { RenderTokens } from "./render-token";
+import { alive, procStart } from "./render-leftovers";
 import { RENDER_TEMP_PREFIX, VideoRenderer, type RenderKind } from "./video-renderer";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -42,6 +43,13 @@ export const RENDER_BUSY_RETRY_MS = 15_000;
 /** R1: the job kind of a render and the limit its row holds when the environment says nothing (RENDER_TIME_LIMIT_SECONDS). */
 export const RENDER_JOB_KIND = "render-video";
 export const RENDER_TIME_LIMIT_DEFAULT_SECONDS = 1200;
+/** R6: a render lost (its worker died) or failed this many times is failed for good: the person asks again; never a loop. */
+export const RENDER_MAX_LOSSES = 2;
+/** R6: how often a running render looks to renew its lease (it renews only if frames came since the last look), and how soon a failed first try goes back to the queue. */
+export const RENDER_RENEW_MS = 30_000;
+export const RENDER_RETRY_MS = 15_000;
+export const LOST_WORDS = "Your video could not be made: the video maker stopped twice while making it. Nothing more is charged, and it is still yours. Press Ask again.";
+const failedWords = (reason: string): string => `Your video could not be made (${reason.replace(/[.\s]+$/, "").slice(0, 160)}). Nothing more is charged, and it is still yours. Press Ask again.`;
 
 /** R1: RENDER_CONCURRENCY: at most `limit()` holders at once; the rest wait in order, and leave when their signal aborts. */
 class Slots {
@@ -104,7 +112,28 @@ export class RenderJobsService implements OnModuleInit {
 
   /** RENDER_CONCURRENCY (default 2): how many renders this process runs at once. */
   private readonly log = new Logger("render-jobs");
-  private readonly slots = new Slots(() => this.env.RENDER_CONCURRENCY);
+  private readonly slots = new Slots(() => this.concurrency());
+  /** How often a running render renews its lease (milliseconds); a spec makes it short. */
+  renewMs = RENDER_RENEW_MS;
+  /**
+   * This process, as a render row names its holder: RENDER_WORKER_ID (one value per machine; "-" when none is set), process id and the process's start time
+   * (so a reused id is not mistaken for the holder). A hostname is never used: cloned machines share one.
+   */
+  get workerId(): string {
+    return `${this.env.RENDER_WORKER_ID?.trim() || "-"}:${process.pid}:${procStart(process.pid)}`;
+  }
+
+  /** RENDER_CONCURRENCY when it is written down; else 1 with the real recorder (about 1.5 GB each) and 2 with the stand-in. */
+  concurrency(): number {
+    // the default of the environment (2) is for the stand-in; the real recorder takes 1 unless the setting was written down
+    if (this.renderer.describe().real && process.env.RENDER_CONCURRENCY === undefined) return 1;
+    return this.env.RENDER_CONCURRENCY ?? 2;
+  }
+
+  /** R6: does this process take render jobs? (PROCESS_ROLE web does not.) */
+  get takesRenders(): boolean {
+    return this.env.PROCESS_ROLE !== "web";
+  }
   /** How often a running render looks whether its wish was erased (milliseconds); a spec makes it short. */
   erasePollMs = 5000;
 
@@ -112,23 +141,63 @@ export class RenderJobsService implements OnModuleInit {
   async onModuleInit(): Promise<void> {
     if (process.env.NODE_ENV === "test") return;
     await this.setTimeLimit();
-    this.register();
+    // R6: a render never runs inside the serial tick, in any role: it has its own loop (RenderWorker), so a 20-minute render holds no other job
+    this.jobs.takeOutOfTick(RENDER_JOB_KIND);
+    if (this.env.PROCESS_ROLE === "render-worker") this.jobs.switchTickOff();
+    if (this.takesRenders) this.register();
   }
 
   register(): void {
     this.jobs.register(RENDER_JOB_KIND, async (c) => {
       // the job was taken after more tries than the kind has: the first holders were lost; the row ends failed (the person asks again) and the job is parked
       if (c.attempt > maxTriesOf(RENDER_JOB_KIND)) {
-        await this.db.renderJob.updateMany({ where: { id: c.subjectId, status: { in: ["queued", "rendering"] } }, data: { status: "failed" } });
+        if (UUID.test(c.subjectId)) await this.db.renderJob.updateMany({ where: { id: c.subjectId, status: { in: ["queued", "rendering"] } }, data: { status: "failed", losses: { increment: 1 }, failureWords: LOST_WORDS } });
         throw new Error(`the render was lost ${c.attempt - 1} times; it is failed`);
       }
-      const result = await this.run(c.subjectId, c.signal, false);
+      const result = await this.run(c.subjectId, c.signal, false, () => this.jobs.touch(c.jobId, this.leaseMs() + 30_000));
       // no place now: back to the queue without a try, and the limit has not been spent
       if (result === "busy") return { skipped: true, again: new Date(this.clock.now().getTime() + RENDER_BUSY_RETRY_MS) };
       // a run that skipped while the row is still unfinished is not a success: the job fails and is tried again
       if (result === "skipped" && (await this.unfinished(c.subjectId))) throw new Error("the render row is still held by an earlier run");
       return { changed: { result } };
     });
+  }
+
+  /** IK4a: the wish still wants its video: not erased, and (for the status video) the extra not refunded. */
+  private async stillWanted(wishId: string, kind: RenderKind): Promise<boolean> {
+    const w = await this.db.wish.findUnique({ where: { id: wishId }, select: { erasedAt: true, ticket: true, adds: true } });
+    if (!w || w.erasedAt) return false;
+    if (kind === "status-video" && (await videoRefunded(this.db, await this.entitlements.row(), { id: wishId, ticket: w.ticket, adds: w.adds }))) return false;
+    return true;
+  }
+
+  /**
+   * R6 (IK6j 2): at a render worker's start: a row held under THIS worker's RENDER_WORKER_ID by a process that is no longer that process (killed, crashed) is lost now,
+   * not at the end of its lease: back to the queue with one loss counted, or failed for good with words at the second. With no RENDER_WORKER_ID nothing is freed here,
+   * and a row of any other id waits for its lease to run out.
+   */
+  async releaseDeadHolders(): Promise<number> {
+    const own = this.env.RENDER_WORKER_ID?.trim();
+    if (!own) return 0;
+    const rows = await this.db.renderJob.findMany({ where: { status: "rendering", workerId: { not: null } }, select: { id: true, workerId: true, losses: true } });
+    let n = 0;
+    for (const r of rows) {
+      const parts = (r.workerId ?? "").split(":");
+      const start = parts.pop();
+      const pid = parts.pop();
+      if (parts.join(":") !== own || !pid || alive(Number(pid), Number(start))) continue;
+      const final = r.losses + 1 >= RENDER_MAX_LOSSES;
+      const data = final
+        ? { status: "failed" as const, losses: { increment: 1 }, failureWords: LOST_WORDS, tokenHash: null, tokenExpiresAt: null }
+        : { status: "queued" as const, losses: { increment: 1 }, tokenHash: null, tokenExpiresAt: null };
+      const moved = await this.db.renderJob.updateMany({ where: { id: r.id, status: "rendering", workerId: r.workerId }, data });
+      if (!moved.count) continue;
+      n++;
+      this.log.warn(`render ${r.id}: its worker (${r.workerId}) is gone; ${final ? "failed for good" : "queued again"}`);
+      if (final) await this.db.$executeRaw`UPDATE job SET status = 'succeeded' WHERE type = 'render-video'::"JobType" AND "subjectId" = ${r.id} AND status = 'running'`;
+      else await this.db.$executeRaw`UPDATE job SET status = 'scheduled', attempts = 0, "runAt" = ${this.clock.now()} WHERE type = 'render-video'::"JobType" AND "subjectId" = ${r.id} AND status = 'running'`;
+    }
+    return n;
   }
 
   private async unfinished(jobId: string): Promise<boolean> {
@@ -144,7 +213,7 @@ export class RenderJobsService implements OnModuleInit {
   }
 
   /** How long a "rendering" row is believed: the render's own limit and a short margin, always under the job's lease (limit + 60 s). */
-  private leaseMs(): number {
+  leaseMs(): number {
     return (this.env.RENDER_TIME_LIMIT_SECONDS || RENDER_TIME_LIMIT_DEFAULT_SECONDS) * 1000 + RENDER_ROW_MARGIN_MS;
   }
 
@@ -185,7 +254,7 @@ export class RenderJobsService implements OnModuleInit {
       let id: string;
       if (found) {
         id = found.id;
-        await tx.renderJob.update({ where: { id }, data: { status: "queued", updatedAt: now } });
+        await tx.renderJob.update({ where: { id }, data: { status: "queued", updatedAt: now, losses: 0, failureWords: null } });
       } else {
         id = this.ids.id();
         await tx.renderJob.create({ data: { id, wishId, kind: DB_KIND[kind], status: "queued", ...SPEC[kind], createdAt: now, updatedAt: now } });
@@ -206,7 +275,7 @@ export class RenderJobsService implements OnModuleInit {
    * R1: waits for a place (RENDER_CONCURRENCY); the renderer gets an AbortSignal that ends when the job's time limit ends or the wish is
    * erased; the file it makes is streamed to the file store and the temp file is removed after a success and after a failure.
    */
-  async run(jobId: string, signal?: AbortSignal, wait = true): Promise<string> {
+  async run(jobId: string, signal?: AbortSignal, wait = true, lease?: () => Promise<void>): Promise<string> {
     if (!UUID.test(jobId)) return "skipped";
     let release = this.slots.tryAcquire();
     if (!release) {
@@ -246,22 +315,27 @@ export class RenderJobsService implements OnModuleInit {
       }
     }
     try {
-      return await this.runOne(jobId, signal);
+      return await this.runOne(jobId, signal, lease);
     } finally {
       release();
     }
   }
 
-  private async runOne(jobId: string, signal?: AbortSignal): Promise<string> {
+  private async runOne(jobId: string, signal?: AbortSignal, lease?: () => Promise<void>): Promise<string> {
     const now = this.clock.now();
     const claimed = await this.db.$queryRaw<{ wishId: string; kind: string; width: number; height: number; seconds: number }[]>`
-      UPDATE render_job SET status = 'rendering', "updatedAt" = ${now}
-       WHERE id = ${jobId}::uuid AND (status = 'queued' OR (status = 'rendering' AND "updatedAt" < ${new Date(now.getTime() - this.leaseMs())}))
+      UPDATE render_job SET status = 'rendering', "updatedAt" = ${now}, "workerId" = ${this.workerId}, losses = CASE WHEN status = 'rendering' THEN losses + 1 ELSE losses END
+       WHERE id = ${jobId}::uuid AND (status = 'queued' OR (status = 'rendering' AND "updatedAt" < ${new Date(now.getTime() - this.leaseMs())} AND losses + 1 < ${RENDER_MAX_LOSSES}))
       RETURNING "wishId"::text AS "wishId", kind::text AS kind, width, height, seconds`;
     const c = claimed[0];
-    if (!c) return "skipped";
+    if (!c) {
+      // R6: a row whose holder was lost already once is lost again: failed for good, with words (the third holder never starts)
+      const gone = await this.db.renderJob.updateMany({ where: { id: jobId, status: "rendering", updatedAt: { lt: new Date(now.getTime() - this.leaseMs()) }, losses: { gte: RENDER_MAX_LOSSES - 1 } }, data: { status: "failed", losses: { increment: 1 }, failureWords: LOST_WORDS, tokenHash: null, tokenExpiresAt: null } });
+      return gone.count > 0 ? "failed" : "skipped";
+    }
     // every write of this run is fenced by the stamp its claim left: a run whose row was taken over writes nothing
     const mine = { id: jobId, status: "rendering" as const, updatedAt: now };
+    const began = performance.now();
     const kind: RenderKind = c.kind === "keepsake-export" ? "keepsake-export" : "status-video";
     const stop = new AbortController();
     const onParent = (): void => stop.abort();
@@ -272,16 +346,36 @@ export class RenderJobsService implements OnModuleInit {
     const watch = setInterval(() => {
       if (looking || stop.signal.aborted) return;
       looking = true;
-      this.db.wish
-        .findUnique({ where: { id: c.wishId }, select: { erasedAt: true } })
-        .then((w) => {
-          if (!w || w.erasedAt) stop.abort();
+      this.stillWanted(c.wishId, kind)
+        .then((wanted) => {
+          if (!wanted) stop.abort(); // IK4a: an erase or a refund during a render stops the recorder
         })
         .catch(() => undefined)
         .finally(() => {
           looking = false;
         });
     }, this.erasePollMs);
+    // R6: the lease is renewed while frames still come (a render that makes no frame renews nothing and is lost at its lease)
+    let frames = 0;
+    let seen = 0;
+    let renewing = false;
+    const renew = setInterval(() => {
+      if (renewing || stop.signal.aborted || frames === seen) return;
+      renewing = true;
+      seen = frames;
+      const next = this.clock.now();
+      this.db.renderJob
+        .updateMany({ where: mine, data: { updatedAt: next } })
+        .then(async (r) => {
+          if (r.count === 0) return stop.abort(); // the row was taken over: this run stops
+          mine.updatedAt = next;
+          await lease?.();
+        })
+        .catch(() => undefined)
+        .finally(() => {
+          renewing = false;
+        });
+    }, this.renewMs);
     let tempPath: string | null = null;
     try {
       const owner = await this.db.wish.findUniqueOrThrow({ where: { id: c.wishId }, select: { accountId: true, erasedAt: true } });
@@ -290,34 +384,36 @@ export class RenderJobsService implements OnModuleInit {
       const minted = this.tokens.make();
       const kept = await this.db.renderJob.updateMany({ where: mine, data: { tokenHash: minted.hash, tokenExpiresAt: minted.expiresAt, tokenUsedAt: null, updatedAt: now } });
       if (kept.count === 0) return "failed"; // the row was taken over: this run mints nothing and renders nothing
-      const out = await this.renderer.render({ wishId: c.wishId, jobId, kind, width: c.width, height: c.height, seconds: c.seconds, token: minted.token }, stop.signal);
+      const out = await this.renderer.render({ wishId: c.wishId, jobId, kind, width: c.width, height: c.height, seconds: c.seconds, token: minted.token, onProgress: () => void frames++ }, stop.signal);
       tempPath = await this.ownTempFile(out.path, jobId);
       if (stop.signal.aborted) throw new Error("the render was stopped");
       // IK4a: erased while it rendered (between two looks): nothing is written
-      if ((await this.db.wish.findUnique({ where: { id: c.wishId }, select: { erasedAt: true } }))?.erasedAt) throw new Error("the wish was erased");
+      if (!(await this.stillWanted(c.wishId, kind))) throw new Error("the wish was erased or its video was refunded");
       const fileId = await this.files.writeFile({ ownerAccountId: owner.accountId, purpose: kind === "status-video" ? "render" : "export", contentType: out.contentType, path: tempPath, bytes: out.bytes, kind: "video", signal: stop.signal });
       // IK4a: the wish may have been erased, or the time may have run out, while the file was being kept: the file just written goes NOW (object and row)
-      const erased = !!(await this.db.wish.findUniqueOrThrow({ where: { id: c.wishId }, select: { erasedAt: true } })).erasedAt;
-      if (erased || stop.signal.aborted) {
+      const wanted = await this.stillWanted(c.wishId, kind);
+      if (!wanted || stop.signal.aborted) {
         await this.files.discard(fileId);
-        throw new Error(erased ? "the wish was erased" : "the render was stopped");
+        throw new Error(!wanted ? "the wish was erased or its video was refunded" : "the render was stopped");
       }
-      const done = await this.db.renderJob.updateMany({ where: mine, data: { status: "done", outputFileId: fileId } });
+      const done = await this.db.renderJob.updateMany({ where: mine, data: { status: "done", outputFileId: fileId, failureWords: null, tookMs: Math.round(performance.now() - began), videoMs: out.videoMs ?? null } });
       if (done.count === 0) {
         await this.files.discard(fileId); // the row was taken over: this run's file is not the row's
         return "failed";
       }
       return "done";
     } catch (e) {
-      this.log.warn(`render ${jobId} failed: ${e instanceof Error ? e.message : String(e)}`);
-      await this.db.renderJob.updateMany({ where: mine, data: { status: "failed" } });
+      const reason = e instanceof Error ? e.message : String(e);
+      this.log.warn(`render ${jobId} failed: ${reason}`);
+      await this.db.renderJob.updateMany({ where: mine, data: { status: "failed", losses: { increment: 1 }, failureWords: failedWords(reason), tookMs: Math.round(performance.now() - began) } });
       return "failed";
     } finally {
       clearInterval(watch);
+      clearInterval(renew);
       signal?.removeEventListener("abort", onParent);
       // R3: a run that ends leaves no live token (a row taken over by a later run keeps that run's own)
       await this.db
-        .$executeRaw`UPDATE render_job SET "tokenHash" = NULL, "tokenExpiresAt" = NULL WHERE id = ${jobId}::uuid AND "tokenHash" IS NOT NULL AND (status <> 'rendering' OR "updatedAt" = ${now})`
+        .$executeRaw`UPDATE render_job SET "tokenHash" = NULL, "tokenExpiresAt" = NULL WHERE id = ${jobId}::uuid AND "tokenHash" IS NOT NULL AND (status <> 'rendering' OR "updatedAt" = ${mine.updatedAt})`
         .catch(() => undefined);
       if (tempPath) await rm(tempPath, { force: true });
     }

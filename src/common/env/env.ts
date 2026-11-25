@@ -16,6 +16,8 @@ export interface Env {
   STANDIN_VIDEO?: string;
   /** IK7: a file the stand-in video renderer appends each render's token to (mode 0600); test stacks only. */
   STANDIN_RENDER_TOKENS?: string;
+  /** R6: a folder the stand-in storage keeps its files in, so two processes of a proof stack share it; test stacks only. */
+  STANDIN_STORAGE_DIR?: string;
   /** IK7a: with STANDIN_VIDEO=hold, a render holds only while this file exists when it starts; test stacks only. */
   STANDIN_RENDER_HOLD_FILE?: string;
   /** IK7: the most seconds STANDIN_VIDEO=hold waits; test stacks only. */
@@ -60,6 +62,16 @@ export interface Env {
   /** R1: the longest one render may run; the job kind's limit and lease follow it. */
   RENDER_TIME_LIMIT_SECONDS: number;
   RENDER_TOKEN_TTL_SECONDS: number;
+  /** R6: the video maker's switches (see env.schema.ts). */
+  RENDER_ADAPTER?: "chromium";
+  RENDER_STORAGE_HOSTS?: string;
+  RENDER_ALLOWED_HOSTS?: string;
+  RENDER_CLOCK_PATH?: string;
+  RENDER_CLOCK_SHA256?: string;
+  PROCESS_ROLE: "all" | "web" | "render-worker";
+  RENDER_WORKER_PORT: number;
+  /** R6: this machine's render worker name (see env.schema.ts). */
+  RENDER_WORKER_ID?: string;
   RESEND_API_KEY?: string;
   /** YY3: the svix signing secret of Resend's webhook stream (delivery news and received mail); the guard's `resend` provider checks it. */
   RESEND_WEBHOOK_SECRET?: string;
@@ -205,6 +217,14 @@ export function loadEnv(raw: Record<string, string | undefined> = process.env): 
   // IK7a: the hold file only shapes the stand-in renderer's hold, so it is refused where the token file is.
   if (get("STANDIN_RENDER_HOLD_FILE") !== undefined && (providers !== "standin" || out.NODE_ENV === "production")) {
     problems.push({ name: "STANDIN_RENDER_HOLD_FILE", problem: "refused: it is for the stand-in video renderer only (needs PROVIDERS=standin and a NODE_ENV other than production)" });
+  }
+  if (get("STANDIN_STORAGE_DIR") !== undefined && (providers !== "standin" || out.NODE_ENV === "production")) {
+    problems.push({ name: "STANDIN_STORAGE_DIR", problem: "refused: it is for the stand-in storage only (needs PROVIDERS=standin and a NODE_ENV other than production)" });
+  }
+  // R6: the secret that hashes a render token is long, or the video maker stays off (the binding says why); a short one is a typo and boot refuses it
+  const renderSecret = out.RENDER_TOKEN_SECRET;
+  if (typeof renderSecret === "string" && renderSecret.length < 32) {
+    problems.push({ name: "RENDER_TOKEN_SECRET", problem: "must be at least 32 characters" });
   }
   if (problems.length) throw new EnvError(problems);
   return out as unknown as Env;

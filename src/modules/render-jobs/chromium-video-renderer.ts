@@ -5,10 +5,10 @@ import { accessSync, constants, readFileSync, statSync, writeFileSync } from "no
 import { createServer as createHttpServer, request as httpRequest } from "node:http";
 import { connect as netConnect, isIP } from "node:net";
 import type { Duplex } from "node:stream";
-import { mkdir, readdir, readFile, rm, stat } from "node:fs/promises";
+import { mkdir, mkdtemp, readdir, readFile, rm, stat } from "node:fs/promises";
 import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { once } from "node:events";
 import type { Clock } from "../../common/ports/clock.port";
 import { Logger } from "@nestjs/common";
@@ -45,6 +45,17 @@ import { RENDER_TEMP_PREFIX, VideoRenderer, type RenderedFile, type RenderReques
  * Nothing here ever logs, stores or names a file with the token: every message passes through `mask`.
  */
 
+/** The start time of a process in clock ticks since boot (field 22 of /proc/<pid>/stat), or 0 when there is no such process. A pid is only ever stopped when this still matches. */
+export function procStart(pid: number): number {
+  try {
+    const raw = readFileSync(`/proc/${pid}/stat`, "utf8");
+    const rest = raw.slice(raw.lastIndexOf(")") + 2).split(" ");
+    return Number(rest[19]) || 0;
+  } catch {
+    return 0;
+  }
+}
+
 export interface ChromiumRendererOptions {
   /** The web origin, e.g. https://firstwish.example (RENDER_WEB_ORIGIN). */
   webOrigin: string;
@@ -77,6 +88,7 @@ export interface ChromiumRendererOptions {
   assetTimeoutMs?: number;
   /** A proof script or a spec learns each child process id as it starts (to sample its memory, or to kill it). Never a token. */
   onSpawn?: (kind: "chromium" | "ffmpeg", pid: number) => void;
+  /** R6: the browser start check (probe) may use another launcher in a spec; default: the same driver a render uses. */
   logger?: Pick<Logger, "log" | "warn" | "error">;
 }
 
@@ -181,7 +193,15 @@ export function hostAllowed(url: string, allowed: readonly string[]): boolean {
   }
 }
 
-/** Settings from the environment (R6 wires these into the env check; here they are only read). */
+/** The names a recorder child (browser, encoder, probe) may inherit; the server's own secrets are never among them (IK6j 1). */
+const CHILD_ENV_NAMES = ["PATH", "HOME", "LANG", "TMPDIR"] as const;
+export function childEnv(extra: Record<string, string>): NodeJS.ProcessEnv {
+  const out: NodeJS.ProcessEnv = {};
+  for (const n of CHILD_ENV_NAMES) if (process.env[n] !== undefined) out[n] = process.env[n];
+  return { ...out, ...extra };
+}
+
+/** Settings from the environment (R6: every name read here is in env.schema.ts and the env manifest). */
 export function chromiumRendererOptionsFromEnv(env: NodeJS.ProcessEnv): ChromiumRendererOptions | null {
   const webOrigin = env.RENDER_WEB_ORIGIN?.trim();
   if (!webOrigin) return null;
@@ -197,7 +217,6 @@ export function chromiumRendererOptionsFromEnv(env: NodeJS.ProcessEnv): Chromium
   if (env.RENDER_FFMPEG_PATH) opts.ffmpegPath = env.RENDER_FFMPEG_PATH;
   if (env.RENDER_CLOCK_PATH) opts.clockPath = env.RENDER_CLOCK_PATH;
   if (env.RENDER_CLOCK_SHA256) opts.clockSha256 = env.RENDER_CLOCK_SHA256;
-  if (env.RENDER_PLAYWRIGHT_MODULE) opts.playwrightModule = env.RENDER_PLAYWRIGHT_MODULE;
   return opts;
 }
 
@@ -438,7 +457,7 @@ interface PwModule {
 
 function loadPlaywright(explicit?: string): PwModule {
   const req = createRequire(__filename);
-  const names = [explicit, process.env.RENDER_PLAYWRIGHT_MODULE, "playwright-core", "playwright", "/opt/node-tools/node_modules/playwright-core"].filter((x): x is string => !!x);
+  const names = [explicit, "playwright-core"].filter((x): x is string => !!x);
   for (const n of names) {
     try {
       return req(n) as PwModule;
@@ -446,7 +465,7 @@ function loadPlaywright(explicit?: string): PwModule {
       /* next */
     }
   }
-  throw new Error("playwright-core is not installed on this machine (RENDER_PLAYWRIGHT_MODULE names where it is)");
+  throw new Error("playwright-core is not installed on this machine");
 }
 
 class RenderStop extends Error {}
@@ -457,6 +476,10 @@ export class ChromiumVideoRenderer extends VideoRenderer {
   /** The numbers of the newest finished (or failed) run, for a proof script and a spec; never holds the token. */
   lastRun: ChromiumRunStats | null = null;
   private readonly clock: Clock;
+  /** R6: what the boot check found wrong (null: nothing, or not yet looked). Set by probe(); configured() reads it. */
+  private bootProblem: string | null = null;
+  private deepAt = 0;
+  private deepAnswer: PortPing | null = null;
 
   constructor(options: ChromiumRendererOptions) {
     super();
@@ -480,7 +503,56 @@ export class ChromiumVideoRenderer extends VideoRenderer {
     return this.problem() === null;
   }
 
+  /** R6: in words, why this renderer cannot work now (null: it can). */
+  whyNot(): string | null {
+    return this.problem();
+  }
+
+  override describe(): { real: boolean; missing: string[] } {
+    const p = this.problem();
+    return { real: true, missing: p ? [p] : [] };
+  }
+
+  /**
+   * R6: the boot check, run once: the programs run (ffmpeg and ffprobe answer -version) and Chromium starts and stops. Answers the problem in words, or null.
+   * After it, configured() is false when it found one.
+   */
+  async probe(): Promise<string | null> {
+    this.bootProblem = null;
+    const first = this.problem();
+    if (first) return (this.bootProblem = first);
+    const dir = dirname(this.ffmpegPath);
+    for (const [name, path] of [["ffmpeg", this.ffmpegPath], ["ffprobe", join(dir, "ffprobe")]] as const) {
+      const ok = await new Promise<boolean>((resolve) => {
+        const c = spawn(path, ["-version"], { stdio: "ignore", timeout: 10_000, env: childEnv({}) });
+        c.once("error", () => resolve(false));
+        c.once("exit", (code) => resolve(code === 0));
+      });
+      if (!ok) return (this.bootProblem = `${name} does not run (${path})`);
+    }
+    const home = await mkdtemp(join(tmpdir(), `${RENDER_TEMP_PREFIX}probe-`));
+    try {
+      const b = await loadPlaywright(this.o.playwrightModule).chromium.launch({ executablePath: this.chromiumPath, headless: true, args: ["--no-first-run", "--disable-extensions"], timeout: 30_000, env: childEnv({ HOME: home }) });
+      await b.close();
+    } catch (e) {
+      return (this.bootProblem = `Chromium does not start (${plainWords(String((e as Error)?.message ?? e)).slice(0, 160)})`);
+    } finally {
+      await rm(home, { recursive: true, force: true });
+    }
+    return null;
+  }
+
+  /** R6: a check that does the real work (starts the browser), asked for by staff: at most one in ten minutes, the earlier answer standing in between. */
+  override async deepCheck(): Promise<PortPing> {
+    const now = this.clock.now().getTime();
+    if (this.deepAnswer && now - this.deepAt < 600_000) return this.deepAnswer;
+    const why = await this.probe();
+    this.deepAt = now;
+    return (this.deepAnswer = why ? pingError(why) : await this.ping());
+  }
+
   private problem(): string | null {
+    if (this.bootProblem) return this.bootProblem;
     try {
       if (!this.o.webOrigin) return "RENDER_WEB_ORIGIN is not set";
       accessSync(this.chromiumPath, constants.X_OK);
@@ -533,6 +605,20 @@ export class ChromiumVideoRenderer extends VideoRenderer {
     const procs = new Set<ChildProcess>();
     let chromiumPid = 0;
     let stopped = false;
+    /* R6 (leftovers): each child's id and start time go into the work folder, so a worker that finds the folder after its owner died can stop a browser or encoder that is still the same process */
+    const kids: { kind: string; pid: number; start: number }[] = [];
+    const writeKids = (): void => {
+      try {
+        writeFileSync(join(work, "children.json"), JSON.stringify({ owner: { pid: process.pid, start: procStart(process.pid) }, children: kids }));
+      } catch {
+        /* the folder is gone: the render has ended */
+      }
+    };
+    const onChild = (kind: "chromium" | "ffmpeg", pid: number): void => {
+      kids.push({ kind, pid, start: procStart(pid) });
+      writeKids();
+      this.o.onSpawn?.(kind, pid);
+    };
     /* settles (rejects) the moment a child dies that should be alive, so no call waits out a time limit on a dead browser or encoder */
     let die: (e: Error) => void = () => undefined;
     const dead = new Promise<never>((_, reject) => {
@@ -583,6 +669,7 @@ export class ChromiumVideoRenderer extends VideoRenderer {
       if (signal?.aborted) throw new RenderStop("render aborted");
       signal?.addEventListener("abort", onAbort, { once: true });
       await mkdir(join(work, "profile"), { recursive: true, mode: 0o700 });
+      writeKids();
       check();
 
       /* Chromium: launched by the driver over a private pipe (--remote-debugging-pipe): no debugging port exists, the page's address is known to this process only,
@@ -598,7 +685,7 @@ export class ChromiumVideoRenderer extends VideoRenderer {
       ];
       const pw = loadPlaywright(this.o.playwrightModule);
       launching = pw.chromium.launch({
-        executablePath: this.chromiumPath, headless: true, args, timeout: 30_000, env: { ...process.env, HOME: join(work, "profile") },
+        executablePath: this.chromiumPath, headless: true, args, timeout: 30_000, env: childEnv({ HOME: join(work, "profile") }),
         handleSIGINT: false, handleSIGTERM: false, handleSIGHUP: false,
         proxy: { server: `http://127.0.0.1:${proxyPort}`, username: PROXY_USER, password: secret, bypass: "<-loopback>" },
       });
@@ -607,7 +694,7 @@ export class ChromiumVideoRenderer extends VideoRenderer {
       /* the browser's process id (it leads its own group): to end it by id, and to show it gone */
       const info = (await early((await early(browser.newBrowserCDPSession())).send("SystemInfo.getProcessInfo"))) as { processInfo?: { type: string; id: number }[] };
       chromiumPid = info.processInfo?.find((x) => x.type === "browser")?.id ?? 0;
-      if (chromiumPid) this.o.onSpawn?.("chromium", chromiumPid);
+      if (chromiumPid) onChild("chromium", chromiumPid);
       let chromiumDied = "";
       browser.on("disconnected", () => {
         if (stopped || chromiumDied) return;
@@ -743,7 +830,7 @@ export class ChromiumVideoRenderer extends VideoRenderer {
             c.catch(() => undefined);
             closing.push(c);
           }
-          segs.push(this.openSegment(join(work, `seg-${segs.length}.ts`), input, procs, mask, (e) => die(e)));
+          segs.push(this.openSegment(join(work, `seg-${segs.length}.ts`), input, procs, mask, (e) => die(e), onChild));
         }
         return segs[i];
       };
@@ -754,6 +841,7 @@ export class ChromiumVideoRenderer extends VideoRenderer {
         const seg = segment(i);
         await seg.write(Buffer.from(shot, "base64"));
         stats.frames++;
+        input.onProgress?.(); // R6: a frame came: the worker renews its lease
       };
       let scene = 0;
       /* frame 0 is the wish's first moment as the page drew it at ready: what the page painted at ready may not be on the screen at the first shot, so shoot until two shots in a row are the same (at most 8) */
@@ -794,7 +882,7 @@ export class ChromiumVideoRenderer extends VideoRenderer {
       stats.keptFrames = stats.scenes.filter((s) => s.kept).reduce((a, s) => a + s.frames, 0);
       const listFile = join(work, "list.txt");
       writeFileSync(listFile, segs.map((s, i) => (keep[i] ? `file '${s.path}'\n` : "")).join(""));
-      await this.runFfmpeg(["-f", "concat", "-safe", "0", "-i", listFile, "-c", "copy", "-an", "-movflags", "+faststart", "-f", "mp4", finalPath], procs, mask, check);
+      await this.runFfmpeg(onChild, ["-f", "concat", "-safe", "0", "-i", listFile, "-c", "copy", "-an", "-movflags", "+faststart", "-f", "mp4", finalPath], procs, mask, check);
       check();
       const size = (await stat(finalPath)).size;
       stats.blocked = blocked;
@@ -804,7 +892,7 @@ export class ChromiumVideoRenderer extends VideoRenderer {
       stats.totalMs = Math.round(performance.now() - started);
       this.lastRun = stats;
       this.log.log(mask(`render ${jobId}: ${stats.keptFrames} of ${stats.frames} frames kept, ${stats.scenes.length} scenes, ${size} bytes, ready in ${stats.readyMs} ms, ${stats.totalMs} ms in all, ${blocked} blocked request(s)${blocked ? ` (${stats.blockedHosts.join(", ")})` : ""}`));
-      return { path: finalPath, contentType: "video/mp4", bytes: size };
+      return { path: finalPath, contentType: "video/mp4", bytes: size, videoMs: Math.round((stats.keptFrames / this.o.fps) * 1000) };
     } catch (e) {
       stats.blocked = blocked;
       stats.browserOwnCalls = ownCalls;
@@ -840,7 +928,7 @@ export class ChromiumVideoRenderer extends VideoRenderer {
     }
   }
 
-  private openSegment(path: string, input: RenderRequest, procs: Set<ChildProcess>, mask: (t: string) => string, die: (e: Error) => void): Segment {
+  private openSegment(path: string, input: RenderRequest, procs: Set<ChildProcess>, mask: (t: string) => string, die: (e: Error) => void, onChild: (k: "chromium" | "ffmpeg", pid: number) => void): Segment {
     const fps = this.o.fps;
     const args = [
       "-hide_banner", "-loglevel", "error", "-y", "-f", "image2pipe", "-framerate", String(fps), "-c:v", "mjpeg", "-i", "-",
@@ -848,9 +936,9 @@ export class ChromiumVideoRenderer extends VideoRenderer {
       "-c:v", "libx264", "-profile:v", "high", "-preset", this.o.preset, "-crf", String(this.o.crf), "-maxrate", `${this.o.maxKbps}k`, "-bufsize", `${this.o.maxKbps * 2}k`,
       "-threads", "2", "-g", String(fps * 2), "-pix_fmt", "yuv420p", "-an", "-f", "mpegts", path,
     ];
-    const p = spawn(this.ffmpegPath, args, { stdio: ["pipe", "ignore", "pipe"] });
+    const p = spawn(this.ffmpegPath, args, { stdio: ["pipe", "ignore", "pipe"], env: childEnv({}) });
     procs.add(p);
-    if (p.pid) this.o.onSpawn?.("ffmpeg", p.pid);
+    if (p.pid) onChild("ffmpeg", p.pid);
     let err = "";
     p.stderr?.on("data", (d: Buffer) => {
       if (err.length < 800) err += d.toString();
@@ -888,10 +976,10 @@ export class ChromiumVideoRenderer extends VideoRenderer {
     return seg;
   }
 
-  private async runFfmpeg(argv: string[], procs: Set<ChildProcess>, mask: (t: string) => string, check: () => void): Promise<void> {
-    const p = spawn(this.ffmpegPath, ["-hide_banner", "-loglevel", "error", "-y", ...argv], { stdio: ["ignore", "ignore", "pipe"] });
+  private async runFfmpeg(onChild: (k: "chromium" | "ffmpeg", pid: number) => void, argv: string[], procs: Set<ChildProcess>, mask: (t: string) => string, check: () => void): Promise<void> {
+    const p = spawn(this.ffmpegPath, ["-hide_banner", "-loglevel", "error", "-y", ...argv], { stdio: ["ignore", "ignore", "pipe"], env: childEnv({}) });
     procs.add(p);
-    if (p.pid) this.o.onSpawn?.("ffmpeg", p.pid);
+    if (p.pid) onChild("ffmpeg", p.pid);
     let err = "";
     p.stderr?.on("data", (d: Buffer) => {
       if (err.length < 800) err += d.toString();

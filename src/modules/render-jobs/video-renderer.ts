@@ -21,6 +21,8 @@ export interface RenderRequest {
   token?: string;
   /** R5 (IK6f): the wall time the page's clock starts at, in milliseconds since 1970. Two renders of one wish given the same value give the same frames. Default: the render's own start, to the second. */
   epochMs?: number;
+  /** R6: the renderer calls this each time a frame was made; the worker renews the render's lease while frames still come. Never carries data. */
+  onProgress?: () => void;
 }
 
 /** R1: the renderer's result is a FILE on disk (a minute of 1080 x 1920 video is tens of MB; it is never held whole in memory). The job streams it to the file store and removes it. */
@@ -30,6 +32,8 @@ export interface RenderedFile {
   contentType: string;
   /** The size of the file in bytes. */
   bytes: number;
+  /** R6: how long the finished video is, in milliseconds, when the renderer knows. */
+  videoMs?: number;
 }
 
 /** The name every temp file of a render starts with, so a test (and an operator) can see what a render left behind. */
@@ -48,15 +52,30 @@ export abstract class VideoRenderer {
    * and rejects. A renderer that rejects leaves no file behind; one that resolves hands the file to the job.
    */
   abstract render(input: RenderRequest, signal?: AbortSignal): Promise<RenderedFile>;
+  /** R6: for the staff Providers read: is this the real recorder, and which parts are missing now (plain words; none when it works). */
+  describe(): { real: boolean; missing: string[] } {
+    return { real: false, missing: [] };
+  }
+  /** R6: a check that does the real work (the real recorder starts its browser); limited by the renderer itself. A stand-in answers its ping. */
+  deepCheck(): Promise<PortPing> {
+    return this.ping();
+  }
 }
 
 /** What production binds until a renderer exists. */
 export class NoVideoRenderer extends VideoRenderer {
+  /** R6: the parts the binding found missing at boot, in plain words (shown in the staff Providers read). */
+  constructor(readonly missing: string[] = []) {
+    super();
+  }
+  override describe(): { real: boolean; missing: string[] } {
+    return { real: false, missing: this.missing.length ? this.missing : ["no video maker is bound"] };
+  }
   configured(): boolean {
     return false;
   }
   ping(): Promise<PortPing> {
-    return Promise.resolve(pingError("No video renderer is configured."));
+    return Promise.resolve(pingError(this.missing.length ? `The video maker is off: ${this.missing.join("; ")}.` : "No video renderer is configured."));
   }
   render(): Promise<RenderedFile> {
     return Promise.reject(new Error("no video renderer is configured"));

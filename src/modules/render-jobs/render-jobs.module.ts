@@ -8,13 +8,16 @@ import { RenderJobsService } from "./render-jobs.service";
 import { ENV } from "../../common/env/env.module";
 import { PrismaService } from "../../common/db/prisma.service";
 import { RenderTokens } from "./render-token";
-import { VideoRenderer, videoRendererFor } from "./video-renderer";
+import { Clock } from "../../common/ports/clock.port";
+import { RenderWorker } from "./render-worker.service";
+import { VideoRenderer } from "./video-renderer";
+import { bindVideoRenderer } from "./video-binding";
 
-/** The video job (B19, E-147, E-148). With PROVIDERS=standin the stand-in renderer is bound; with live providers the one that says it is not configured, until a real one is built (IK3). */
+/** The video job (B19, E-147, E-148). R6: PROVIDERS=live binds the real recorder when it can work (checked once at boot), else the one that says it is not configured (IK3); PROVIDERS=standin binds the stand-in unless RENDER_ADAPTER=chromium. */
 @Module({
   imports: [JobsModule, PriceBookModule, ServerFilesModule, StoredFilesModule],
   controllers: [RenderJobsController],
-  providers: [RenderJobsService, RenderTokens, { provide: VideoRenderer, inject: [ENV, PrismaService], useFactory: videoRendererFor }],
-  exports: [RenderJobsService, VideoRenderer, RenderTokens],
+  providers: [RenderJobsService, RenderWorker, RenderTokens, { provide: VideoRenderer, inject: [ENV, PrismaService, Clock], useFactory: bindVideoRenderer }],
+  exports: [RenderJobsService, RenderWorker, VideoRenderer, RenderTokens],
 })
 export class RenderJobsModule {}

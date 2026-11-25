@@ -1064,6 +1064,15 @@ model RenderJob {
   tokenHash      String?         @unique
   tokenExpiresAt DateTime?       @db.Timestamptz(3)
   tokenUsedAt    DateTime?       @db.Timestamptz(3)
+  /// R6: how many times this render was lost (its worker died) or failed; at two it is failed for good
+  losses         Int             @default(0)
+  /// R6: the plain words a failed-for-good render keeps (staff read; the owner's app draws its own failed words and "Ask again")
+  failureWords   String?
+  /// R6: which worker process holds the render now (host:pid:start), so a restarted worker can tell a dead holder's row
+  workerId       String?
+  /// R6: how long the last run took (real milliseconds) and how long the finished video is (milliseconds)
+  tookMs         Int?
+  videoMs        Int?
   createdAt      DateTime        @default(now()) @db.Timestamptz(3)
   updatedAt      DateTime        @updatedAt @db.Timestamptz(3)
   wish           Wish            @relation("RenderJob_wishId", fields: [wishId], references: [id])

@@ -2,7 +2,7 @@ PHASE 6 VERIFY COMMON (every wiring verifier reads this once). You did not build
 Read: /home/user/Firstwish-API/build/common-rules.md; /home/user/Firstwish-API/build/prompts/P6-COMMON.md (what the builder was held to); the bundle's
 builder brief (its cases are the contract); the builder's claims (your spawn line) and its measure file; /home/user/Firstwish-API/.pipeline/
 conventions.md (auth, error envelope); rulings R10, R11 in /home/user/Firstwish-API/build/rulings.md;
-/root/.claude/skills/synced/f85b4e60-1876-4137-a2c7-d7d119745a79_8f677423-0744-4c12-8d0d-331ba6815a77/frontend-surface-build/SKILL.md (Core laws 2, 4, 7, 8, 9; Phase 5).
+/home/user/Firstwish-API/build/handover/skills/frontend-surface-build/SKILL.md (Core laws 2, 4, 7, 8, 9; Phase 5).
 Set up: your own worktrees (web: detached at the branch under test, `npm ci`; API: detached at the commit in your spawn
 line, `npm ci`), the stack through `node scripts/live/stack.mjs` with API_DIR and your prefix, a PRODUCTION web build
 (`--built`; origin 127.0.0.1:PORT). Sign-in codes: scripts/live/standin.mjs. Kill what you start by PID; remove your

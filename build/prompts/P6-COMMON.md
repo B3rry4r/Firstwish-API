@@ -3,8 +3,8 @@ Built on W0b (merged 16 Nov): lib/api.ts, lib/session.ts, lib/contracts/, script
 `npm run test:client`, `npm run contracts:check`. Read lib/api.ts and lib/session.ts before writing a line.
 Read: /home/user/Firstwish-API/build/common-rules.md; /home/user/Firstwish-API/build/tasks/PHASE6.md; /home/user/Firstwish-API/.pipeline/conventions.md (auth, error
 envelope, format canon, Runtime contract); /home/user/Firstwish-web/AGENTS.md, .pipeline-ui/invariants.md, .pipeline-ui/surface-map.json;
-/root/.claude/skills/synced/f85b4e60-1876-4137-a2c7-d7d119745a79_8f677423-0744-4c12-8d0d-331ba6815a77/frontend-surface-build/SKILL.md (Core laws, Phase 5) and
-/root/.claude/skills/synced/f85b4e60-1876-4137-a2c7-d7d119745a79_8f677423-0744-4c12-8d0d-331ba6815a77/contract-driven-backend/SKILL.md (Phase 6). Per screen: the fragment
+/home/user/Firstwish-API/build/handover/skills/frontend-surface-build/SKILL.md (Core laws, Phase 5) and
+/home/user/Firstwish-API/build/handover/skills/contract-driven-backend/SKILL.md (Phase 6). Per screen: the fragment
 /home/user/Firstwish-API/.pipeline/fragments/<screenId>.json, its open tasks in .pipeline/ui-align-tasks.json (screenId) and its stubs in
 .pipeline/stubs.json; endpoints by `python3 tools/pipeline/show.py <Resource>` in /home/user/Firstwish-API; rulings in build/rulings.md (R1-R17)
 and build/rulings-phase3.md.

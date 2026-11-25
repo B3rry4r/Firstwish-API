@@ -131,3 +131,9 @@ Next: R4C verdict, then merge or re-cut; W19 after r4c; WEB-10D after r4c; R7 re
 Did: R7 re-scoped by the lead: its cleanup landed with R1, R3, R6; now a T2 check only (build/prompts/VERIFY-R7.md); a builder only if it finds
 something. R8 brief written (T0 records: docs/DEPLOY.md, systemd units, setup script). Started VERIFY-R7 and R8 (Sonnet).
 Running: VERIFY2-R4C (verifier); VERIFY-R7 (checker); R8 (T0 builder, text only).
+
+### 2026-11-25 · second chat · ccr-91b3ed11-fx445c
+Did: R8 handed back (r8 89ac3e8, 4 new files: docs/DEPLOY.md, deploy/systemd/firstwish-api.service, firstwish-render-worker.service, deploy/
+setup-ubuntu.sh; bash -n ok; systemd-analyze only complains /usr/bin/node is absent here; 57 of 58 env names in the manifest, the 58th is the
+web's API_ORIGIN at build time). T0: lead read the diff (apt installs only, no secret, start commands match package.json); gates EXIT 0; MERGED.
+Running: VERIFY2-R4C (verifier); VERIFY-R7 (checker).

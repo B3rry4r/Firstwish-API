@@ -115,3 +115,8 @@ Running: VERIFY2-R4C (verifier); P2-R6 (builder).
 Did: P2-R6 handed back: r6 a70dea1 (provider-status.ts +4/-2: an older-shape video port reads configured()); ping + staff-reads + render-jobs 163
 of 163. Lead read the diff: accepted. Merge check m53 started (p-merge53). Agents' commit trailer in common-rules now names Sonnet.
 Running: VERIFY2-R4C (verifier); m53.
+
+### 2026-11-25 · second chat · ccr-91b3ed11-fx445c
+Did: m53 (r6 a70dea1 on the head): static checks EXIT 0; full suite 1 failed, 1,781 passed: r5-chromium-renderer.spec.ts:495 M3 (stand-in page,
+same epochMs twice: 16 frames differ). It passed in m51 and m52; load was 7.6 to 9.7 (VERIFY2-R4C browsers running). Rerunning that spec alone
+twice before believing it. r6 NOT merged yet.

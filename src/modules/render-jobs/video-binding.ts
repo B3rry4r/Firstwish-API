@@ -22,7 +22,7 @@ export async function bindVideoRenderer(env: BindEnv, db: Pick<PrismaService, "r
   const missing: string[] = [];
   if (!env.RENDER_WEB_ORIGIN) missing.push("RENDER_WEB_ORIGIN is not set (the web address the video maker opens)");
   if (!env.RENDER_TOKEN_SECRET) missing.push("RENDER_TOKEN_SECRET is not set (the secret that hashes the render token)");
-  const options = chromiumRendererOptionsFromEnv({ ...raw, ...(env as unknown as Record<string, string>) } as NodeJS.ProcessEnv);
+  const options = chromiumRendererOptionsFromEnv({ ...raw, ...(env as unknown as Record<string, string>) });
   let real: ChromiumVideoRenderer | null = null;
   if (options) {
     real = new ChromiumVideoRenderer({ ...options, clock });

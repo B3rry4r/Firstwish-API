@@ -101,7 +101,7 @@ export class ProviderStatus {
     if (this.db) {
       const r = await this.db.renderJob.findFirst({ where: { status: { in: ["done", "failed"] } }, orderBy: { updatedAt: "desc" }, select: { status: true, updatedAt: true, seconds: true, videoMs: true, tookMs: true, failureWords: true } }).catch(() => null);
       if (r) {
-        const len = r.videoMs ? `${(r.videoMs / 1000).toFixed(1)} s long` : `up to ${r.seconds} s`;
+        const len = r.videoMs ? `${Math.round(r.videoMs / 100) / 10} s long` : `up to ${r.seconds} s`;
         last = ` Last video: ${r.updatedAt.toISOString()}, ${len}, ${r.status === "done" ? "made" : "failed"}${r.tookMs ? ` in ${Math.round(r.tookMs / 1000)} s` : ""}.`;
       } else last = " No video has been made yet.";
     }

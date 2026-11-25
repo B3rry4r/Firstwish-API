@@ -21,7 +21,7 @@ export interface SweepResult {
  */
 export async function sweepRenderLeftovers(olderThanMs: number, nowMs: number, root: string = tmpdir()): Promise<SweepResult> {
   const out: SweepResult = { stopped: 0, removed: 0 };
-  let names: string[] = [];
+  let names: string[];
   try {
     names = (await readdir(root)).filter((n) => n.startsWith(RENDER_TEMP_PREFIX));
   } catch {
@@ -29,7 +29,7 @@ export async function sweepRenderLeftovers(olderThanMs: number, nowMs: number, r
   }
   for (const n of names) {
     const path = join(root, n);
-    let age = 0;
+    let age: number;
     try {
       age = nowMs - (await stat(path)).mtimeMs;
     } catch {

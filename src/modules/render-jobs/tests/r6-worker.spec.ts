@@ -154,7 +154,7 @@ describe("R6: the video maker's worker", () => {
   it("5. the binding: live providers with nothing set is the 'not configured' maker with the missing parts named; standin is the stand-in; the web role takes no render", async () => {
     const noDb = { renderJob: {} } as never;
     const clock = { now: () => NOW };
-    const off = await bindVideoRenderer({ PROVIDERS: "live" } as never, noDb, clock, {});
+    const off = await bindVideoRenderer({ PROVIDERS: "live" }, noDb, clock, {});
     expect(off).toBeInstanceOf(NoVideoRenderer);
     expect(off.configured()).toBe(false);
     expect(off.describe().missing.join(" ")).toMatch(/RENDER_WEB_ORIGIN.*RENDER_TOKEN_SECRET/);
@@ -162,7 +162,7 @@ describe("R6: the video maker's worker", () => {
     const bad = await bindVideoRenderer({ PROVIDERS: "live", RENDER_WEB_ORIGIN: "http://127.0.0.1:1", RENDER_TOKEN_SECRET: "x".repeat(40), RENDER_CHROMIUM_PATH: "/nowhere/chrome" } as never, noDb, clock, {});
     expect(bad.configured()).toBe(false);
     expect(bad.describe().missing.join(" ")).toMatch(/Chromium is not at \/nowhere\/chrome/);
-    const standin = await bindVideoRenderer({ PROVIDERS: "standin" } as never, noDb, clock, {});
+    const standin = await bindVideoRenderer({ PROVIDERS: "standin" }, noDb, clock, {});
     expect(standin).toBeInstanceOf(StandinVideoRenderer);
     expect(standin.describe().real).toBe(false);
     expect(worker.status().concurrency).toBe(2); // the stand-in's default

@@ -86,3 +86,9 @@ MED-2 (dead holder judged by hostname), LOW-1..3. All 9 attacks held (sold-or-no
 sweep PID check, token bucket, migration on old rows, cheap check, no token in logs). Read as FIX FIRST (ruling IK6j). Verdict in
 verdicts/r6-VERDICT.md. Deploy note: the web needs API_ORIGIN at build time. Started P-R6 (T2 patch, Sonnet, r6 02b5311).
 Running: P2-R4C (builder); P-R6 (builder).
+
+### 2026-11-25 · second chat · ccr-91b3ed11-fx445c
+Did: P-R6 handed back: r6 7f42893 (8 files +195/-18): childEnv() allow-list for every recorder child; workerId without hostname, early free only
+with RENDER_WORKER_ID; sweep keeps a live owner's folder; new spec r6-ik6j; two assertions of r6-worker.spec.ts changed to IK6j. render-jobs + env
+136 tests. Its /proc check was on a sleep child, not a live Chromium. Over 30 lines: started VERIFY2-R6 (re-check of the named ids, Sonnet).
+Running: P2-R4C (builder); VERIFY2-R6 (verifier).

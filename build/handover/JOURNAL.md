@@ -110,3 +110,8 @@ Did: m52 (r6 on the head): all static checks EXIT 0; full suite 1 failed, 1,781 
 video.describe() on an older-shape port (provider-status.ts:86). r6 NOT merged. Started P2-R6 (T2 patch, Sonnet, 30 lines or fewer, lead reads the
 diff, then m53 reruns the suite).
 Running: VERIFY2-R4C (verifier); P2-R6 (builder).
+
+### 2026-11-25 · second chat · ccr-91b3ed11-fx445c
+Did: P2-R6 handed back: r6 a70dea1 (provider-status.ts +4/-2: an older-shape video port reads configured()); ping + staff-reads + render-jobs 163
+of 163. Lead read the diff: accepted. Merge check m53 started (p-merge53). Agents' commit trailer in common-rules now names Sonnet.
+Running: VERIFY2-R4C (verifier); m53.

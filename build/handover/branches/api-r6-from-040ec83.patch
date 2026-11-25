@@ -1,0 +1,3242 @@
+From 370a77ea618087f91b391b235ea52a55de92b9db Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Wed, 25 Nov 2026 19:02:47 +0000
+Subject: [PATCH 1/4] R6 part 1-2,4,6: binding, worker loop, losses on the row,
+ render read bucket, video line
+
+Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01VNvA3zNK8bJENArUhDXHfa
+---
+ .pipeline/env-manifest.json                   |  82 ++++++++--
+ .../migration.sql                             |   6 +
+ prisma/schema.prisma                          |   9 ++
+ src/common/env/env.schema.ts                  |  23 ++-
+ src/common/env/env.ts                         |  15 +-
+ src/modules/jobs/jobs.service.ts              |  40 ++++-
+ .../render-jobs/chromium-video-renderer.ts    |  98 ++++++++++--
+ src/modules/render-jobs/render-jobs.module.ts |  11 +-
+ .../render-jobs/render-jobs.service.ts        | 151 +++++++++++++++---
+ src/modules/render-jobs/render-leftovers.ts   |  75 +++++++++
+ .../render-jobs/render-read.service.ts        |   8 +-
+ src/modules/render-jobs/render-token.ts       |   6 +
+ .../render-jobs/render-worker.service.ts      | 105 ++++++++++++
+ src/modules/render-jobs/video-binding.ts      |  38 +++++
+ src/modules/render-jobs/video-renderer.ts     |  21 ++-
+ src/modules/staff-reads/provider-status.ts    |  37 ++++-
+ 16 files changed, 650 insertions(+), 75 deletions(-)
+ create mode 100644 prisma/migrations/20261212090000_render_worker_r6/migration.sql
+ create mode 100644 src/modules/render-jobs/render-leftovers.ts
+ create mode 100644 src/modules/render-jobs/render-worker.service.ts
+ create mode 100644 src/modules/render-jobs/video-binding.ts
+
+diff --git a/.pipeline/env-manifest.json b/.pipeline/env-manifest.json
+index 6fd1605..721c92b 100644
+--- a/.pipeline/env-manifest.json
++++ b/.pipeline/env-manifest.json
+@@ -215,7 +215,7 @@
+     {
+       "name": "RENDER_CONCURRENCY",
+       "introducedBy": "video-render",
+-      "purpose": "how many videos this server renders at once (a real render needs about 1.5 GB: set 1 on a 4 GB machine)",
++      "purpose": "how many videos one process renders at once (a real render needs about 1.5 GB). Not set: 1 with the real recorder, 2 with the stand-in",
+       "secret": false,
+       "refusesStartInProduction": "no",
+       "readBySource": true
+@@ -223,39 +223,95 @@
+     {
+       "name": "RENDER_WEB_ORIGIN",
+       "introducedBy": "r1",
+-      "purpose": "R1: the web origin the video renderer opens to play a wish (the render page); the real renderer needs it, none exists yet",
++      "purpose": "R6: the web address the video maker opens to play a wish (its /render page and /render-clock.js). Without it the video maker is off and the top tickets stay unsold",
+       "secret": false,
+       "refusesStartInProduction": "no",
+-      "readBySource": false
++      "readBySource": true
+     },
+     {
+       "name": "RENDER_TOKEN_SECRET",
+       "introducedBy": "r1",
+-      "purpose": "R1: the secret that hashes the one-use token the video renderer reads a wish with (at least 32 characters); the real renderer needs it, none exists yet",
++      "purpose": "R6: the secret that hashes the one-use token the video maker reads a wish with (32 characters or more). The video maker is off without it",
+       "secret": true,
+       "refusesStartInProduction": "no",
+-      "readBySource": false
++      "readBySource": true
+     },
+     {
+       "name": "RENDER_CHROMIUM_PATH",
+       "introducedBy": "r1",
+-      "purpose": "R1: the browser program the video renderer starts to play a wish; read by the real renderer, none exists yet",
++      "purpose": "R6: the browser program the video maker starts to play a wish",
+       "secret": false,
+       "refusesStartInProduction": "no",
+-      "readBySource": false
++      "readBySource": true
+     },
+     {
+       "name": "RENDER_FFMPEG_PATH",
+       "introducedBy": "r1",
+-      "purpose": "R1: the ffmpeg program the video renderer encodes with; read by the real renderer, none exists yet",
++      "purpose": "R6: the ffmpeg program the video maker encodes with (ffprobe is looked up beside it)",
+       "secret": false,
+       "refusesStartInProduction": "no",
+-      "readBySource": false
++      "readBySource": true
++    },
++    {
++      "name": "RENDER_ADAPTER",
++      "introducedBy": "r6",
++      "purpose": "R6: `chromium` binds the real video maker even with PROVIDERS=standin (proofs on a machine with other providers on stand-ins). With PROVIDERS=live the real video maker is always chosen when it can work, and this name changes nothing (boot says so in the log)",
++      "secret": false,
++      "refusesStartInProduction": "no",
++      "readBySource": true
++    },
++    {
++      "name": "RENDER_STORAGE_HOSTS",
++      "introducedBy": "r6",
++      "purpose": "R6: extra storage host names (comma list) the video maker's browser may reach to load the wish's pictures; the storage endpoint already named is added by itself",
++      "secret": false,
++      "refusesStartInProduction": "no",
++      "readBySource": true
++    },
++    {
++      "name": "RENDER_ALLOWED_HOSTS",
++      "introducedBy": "r6",
++      "purpose": "R6: replaces the video maker browser's whole host list (comma list, host or host:port). Leave out: the web, the API, the storage hosts and the font hosts are allowed",
++      "secret": false,
++      "refusesStartInProduction": "no",
++      "readBySource": true
++    },
++    {
++      "name": "RENDER_CLOCK_PATH",
++      "introducedBy": "r6",
++      "purpose": "R6: a file holding the stepped clock's page script, read instead of the web's /render-clock.js (tests and proofs only)",
++      "secret": false,
++      "refusesStartInProduction": "no",
++      "readBySource": true
++    },
++    {
++      "name": "RENDER_CLOCK_SHA256",
++      "introducedBy": "r6",
++      "purpose": "R6: when set, the clock script the web serves must hash to this (hex sha256) or no video is recorded",
++      "secret": false,
++      "refusesStartInProduction": "no",
++      "readBySource": true
++    },
++    {
++      "name": "PROCESS_ROLE",
++      "introducedBy": "r6",
++      "purpose": "R6: `all` (default: serves requests, runs every job, renders), `web` (serves requests and runs every job but renders; takes no render job) or `render-worker` (takes only render jobs; serves only a health address; `npm run start:render-worker`)",
++      "secret": false,
++      "refusesStartInProduction": "no",
++      "readBySource": true
++    },
++    {
++      "name": "RENDER_WORKER_PORT",
++      "introducedBy": "r6",
++      "purpose": "R6: the health address port of a render-worker process (bound to 127.0.0.1)",
++      "secret": false,
++      "refusesStartInProduction": "no",
++      "readBySource": true
+     },
+     {
+       "name": "RENDER_TIME_LIMIT_SECONDS",
+       "introducedBy": "r1",
+-      "purpose": "R1: the longest one video render may run, in seconds; the job lease is longer than this",
++      "purpose": "R6: the longest one video render may run, in seconds; the render's lease is longer than this and is renewed while frames still come",
+       "secret": false,
+       "refusesStartInProduction": "no",
+       "readBySource": true
+@@ -263,10 +319,10 @@
+     {
+       "name": "RENDER_TOKEN_TTL_SECONDS",
+       "introducedBy": "r1",
+-      "purpose": "R1: how long a render token lives, in seconds; read by the real renderer, none exists yet",
++      "purpose": "R6: how long a render token lives, in seconds",
+       "secret": false,
+       "refusesStartInProduction": "no",
+-      "readBySource": false
++      "readBySource": true
+     },
+     {
+       "name": "RESEND_API_KEY",
+@@ -370,7 +426,7 @@
+     {
+       "name": "TRUST_PROXY_HOPS",
+       "introducedBy": "int-1",
+-      "purpose": "how many proxies in front of the API are trusted for the client address (V4); 0 reads the socket address",
++      "purpose": "proxies in front of the API trusted for the client address (V4); 0 reads the socket address, 1 behind one load balancer. Behind a load balancer set it to 1 (the number of proxies): at 0 every caller seems to come from the balancer's own address, so one flood of wrong guesses at the public link or the render page would be counted against everyone, the video maker included. A render read by a right token has its own limit and does not depend on it",
+       "secret": false,
+       "refusesStartInProduction": "no"
+     },
+diff --git a/prisma/migrations/20261212090000_render_worker_r6/migration.sql b/prisma/migrations/20261212090000_render_worker_r6/migration.sql
+new file mode 100644
+index 0000000..d51ca9f
+--- /dev/null
++++ b/prisma/migrations/20261212090000_render_worker_r6/migration.sql
+@@ -0,0 +1,6 @@
++-- R6: the video maker's own worker counts losses on the render row, remembers who holds it and what the last run did.
++ALTER TABLE "render_job" ADD COLUMN "losses" INTEGER NOT NULL DEFAULT 0,
++  ADD COLUMN "failureWords" TEXT,
++  ADD COLUMN "workerId" TEXT,
++  ADD COLUMN "tookMs" INTEGER,
++  ADD COLUMN "videoMs" INTEGER;
+diff --git a/prisma/schema.prisma b/prisma/schema.prisma
+index 72b988c..9907c21 100644
+--- a/prisma/schema.prisma
++++ b/prisma/schema.prisma
+@@ -1064,6 +1064,15 @@ model RenderJob {
+   tokenHash      String?         @unique
+   tokenExpiresAt DateTime?       @db.Timestamptz(3)
+   tokenUsedAt    DateTime?       @db.Timestamptz(3)
++  /// R6: how many times this render was lost (its worker died) or failed; at two it is failed for good
++  losses         Int             @default(0)
++  /// R6: the plain words a failed-for-good render keeps (staff read; the owner's app draws its own failed words and "Ask again")
++  failureWords   String?
++  /// R6: which worker process holds the render now (host:pid:start), so a restarted worker can tell a dead holder's row
++  workerId       String?
++  /// R6: how long the last run took (real milliseconds) and how long the finished video is (milliseconds)
++  tookMs         Int?
++  videoMs        Int?
+   createdAt      DateTime        @default(now()) @db.Timestamptz(3)
+   updatedAt      DateTime        @updatedAt @db.Timestamptz(3)
+   wish           Wish            @relation("RenderJob_wishId", fields: [wishId], references: [id])
+diff --git a/src/common/env/env.schema.ts b/src/common/env/env.schema.ts
+index 8b1f2ad..4411a3e 100644
+--- a/src/common/env/env.schema.ts
++++ b/src/common/env/env.schema.ts
+@@ -51,13 +51,20 @@ export const MANIFEST_VARS: readonly VarSpec[] = [
+   { name: "SCREENING_API_KEY", need: "optional", kind: "string", purpose: "screening provider auth" },
+   { name: "ANTHROPIC_API_KEY", need: "live", kind: "string", purpose: "Anthropic API (owner key)" },
+   { name: "ANTHROPIC_MODEL", need: "live", kind: "string", purpose: "model id used for writing" },
+-  { name: "RENDER_CONCURRENCY", need: "optional", kind: "int", purpose: "how many videos this server renders at once (a real render needs about 1.5 GB: set 1 on a 4 GB machine)", default: "2" },
+-  { name: "RENDER_WEB_ORIGIN", need: "optional", kind: "url", purpose: "R1: the web origin the video renderer opens to play a wish (the render page); the real renderer needs it, none exists yet" },
+-  { name: "RENDER_TOKEN_SECRET", need: "optional", kind: "secret", purpose: "R1: the secret that hashes the one-use token the video renderer reads a wish with (at least 32 characters); the real renderer needs it, none exists yet" },
+-  { name: "RENDER_CHROMIUM_PATH", need: "optional", kind: "string", purpose: "R1: the browser program the video renderer starts to play a wish; read by the real renderer, none exists yet", default: "/usr/bin/google-chrome" },
+-  { name: "RENDER_FFMPEG_PATH", need: "optional", kind: "string", purpose: "R1: the ffmpeg program the video renderer encodes with; read by the real renderer, none exists yet", default: "/usr/bin/ffmpeg" },
+-  { name: "RENDER_TIME_LIMIT_SECONDS", need: "optional", kind: "int", purpose: "R1: the longest one video render may run, in seconds; the job lease is longer than this", default: "1200" },
+-  { name: "RENDER_TOKEN_TTL_SECONDS", need: "optional", kind: "int", purpose: "R1: how long a render token lives, in seconds; read by the real renderer, none exists yet", default: "900" },
++  { name: "RENDER_CONCURRENCY", need: "optional", kind: "int", purpose: "how many videos one process renders at once (a real render needs about 1.5 GB). Not set: 1 with the real recorder, 2 with the stand-in", },
++  { name: "RENDER_WEB_ORIGIN", need: "optional", kind: "url", purpose: "R6: the web address the video maker opens to play a wish (its /render page and /render-clock.js). Without it the video maker is off and the top tickets stay unsold" },
++  { name: "RENDER_TOKEN_SECRET", need: "optional", kind: "secret", purpose: "R6: the secret that hashes the one-use token the video maker reads a wish with (32 characters or more). The video maker is off without it" },
++  { name: "RENDER_CHROMIUM_PATH", need: "optional", kind: "string", purpose: "R6: the browser program the video maker starts to play a wish", default: "/usr/bin/google-chrome" },
++  { name: "RENDER_FFMPEG_PATH", need: "optional", kind: "string", purpose: "R6: the ffmpeg program the video maker encodes with (ffprobe is looked up beside it)", default: "/usr/bin/ffmpeg" },
++  { name: "RENDER_ADAPTER", need: "optional", kind: { oneOf: ["chromium"] }, purpose: "R6: `chromium` binds the real video maker even with PROVIDERS=standin (proofs on a machine with other providers on stand-ins). With PROVIDERS=live the real video maker is always chosen when it can work, and this name changes nothing (boot says so in the log)" },
++  { name: "RENDER_STORAGE_HOSTS", need: "optional", kind: "string", purpose: "R6: extra storage host names (comma list) the video maker's browser may reach to load the wish's pictures; the storage endpoint already named is added by itself" },
++  { name: "RENDER_ALLOWED_HOSTS", need: "optional", kind: "string", purpose: "R6: replaces the video maker browser's whole host list (comma list, host or host:port). Leave out: the web, the API, the storage hosts and the font hosts are allowed" },
++  { name: "RENDER_CLOCK_PATH", need: "optional", kind: "string", purpose: "R6: a file holding the stepped clock's page script, read instead of the web's /render-clock.js (tests and proofs only)" },
++  { name: "RENDER_CLOCK_SHA256", need: "optional", kind: "string", purpose: "R6: when set, the clock script the web serves must hash to this (hex sha256) or no video is recorded" },
++  { name: "PROCESS_ROLE", need: "optional", kind: { oneOf: ["all", "web", "render-worker"] }, purpose: "R6: `all` (default: serves requests, runs every job, renders), `web` (serves requests and runs every job but renders; takes no render job) or `render-worker` (takes only render jobs; serves only a health address; `npm run start:render-worker`)", default: "all" },
++  { name: "RENDER_WORKER_PORT", need: "optional", kind: "int", purpose: "R6: the health address port of a render-worker process (bound to 127.0.0.1)", default: "9091" },
++  { name: "RENDER_TIME_LIMIT_SECONDS", need: "optional", kind: "int", purpose: "R6: the longest one video render may run, in seconds; the render's lease is longer than this and is renewed while frames still come", default: "1200" },
++  { name: "RENDER_TOKEN_TTL_SECONDS", need: "optional", kind: "int", purpose: "R6: how long a render token lives, in seconds", default: "900" },
+   { name: "RESEND_API_KEY", need: "live", kind: "string", purpose: "Resend API auth (R12)" },
+   { name: "RESEND_WEBHOOK_SECRET", need: "optional", kind: "string", purpose: "signing secret of Resend's webhook stream: delivery news and received mail (YY3)" },
+   { name: "MAIL_FROM", need: "live", kind: "email", purpose: "sender address for every email (R12)" },
+@@ -123,7 +130,7 @@ export const MANIFEST_VARS: readonly VarSpec[] = [
+     name: "TRUST_PROXY_HOPS",
+     need: "optional",
+     kind: "int",
+-    purpose: "proxies in front of the API trusted for the client address (V4); 0 reads the socket address, 1 behind one load balancer",
++    purpose: "proxies in front of the API trusted for the client address (V4); 0 reads the socket address, 1 behind one load balancer. Behind a load balancer set it to 1 (the number of proxies): at 0 every caller seems to come from the balancer's own address, so one flood of wrong guesses at the public link or the render page would be counted against everyone, the video maker included. A render read by a right token has its own limit and does not depend on it",
+     default: "0",
+   },
+   {
+diff --git a/src/common/env/env.ts b/src/common/env/env.ts
+index a09d026..ad4e550 100644
+--- a/src/common/env/env.ts
++++ b/src/common/env/env.ts
+@@ -51,7 +51,7 @@ export interface Env {
+   SCREENING_API_KEY?: string;
+   ANTHROPIC_API_KEY?: string;
+   ANTHROPIC_MODEL?: string;
+-  RENDER_CONCURRENCY: number;
++  RENDER_CONCURRENCY?: number;
+   /** R1: read by the real video renderer, which does not exist yet; none of these makes the renderer "configured". */
+   RENDER_WEB_ORIGIN?: string;
+   RENDER_TOKEN_SECRET?: string;
+@@ -60,6 +60,14 @@ export interface Env {
+   /** R1: the longest one render may run; the job kind's limit and lease follow it. */
+   RENDER_TIME_LIMIT_SECONDS: number;
+   RENDER_TOKEN_TTL_SECONDS: number;
++  /** R6: the video maker's switches (see env.schema.ts). */
++  RENDER_ADAPTER?: "chromium";
++  RENDER_STORAGE_HOSTS?: string;
++  RENDER_ALLOWED_HOSTS?: string;
++  RENDER_CLOCK_PATH?: string;
++  RENDER_CLOCK_SHA256?: string;
++  PROCESS_ROLE: "all" | "web" | "render-worker";
++  RENDER_WORKER_PORT: number;
+   RESEND_API_KEY?: string;
+   /** YY3: the svix signing secret of Resend's webhook stream (delivery news and received mail); the guard's `resend` provider checks it. */
+   RESEND_WEBHOOK_SECRET?: string;
+@@ -206,6 +214,11 @@ export function loadEnv(raw: Record<string, string | undefined> = process.env):
+   if (get("STANDIN_RENDER_HOLD_FILE") !== undefined && (providers !== "standin" || out.NODE_ENV === "production")) {
+     problems.push({ name: "STANDIN_RENDER_HOLD_FILE", problem: "refused: it is for the stand-in video renderer only (needs PROVIDERS=standin and a NODE_ENV other than production)" });
+   }
++  // R6: the secret that hashes a render token is long, or the video maker stays off (the binding says why); a short one is a typo and boot refuses it
++  const renderSecret = out.RENDER_TOKEN_SECRET;
++  if (typeof renderSecret === "string" && renderSecret.length < 32) {
++    problems.push({ name: "RENDER_TOKEN_SECRET", problem: "must be at least 32 characters" });
++  }
+   if (problems.length) throw new EnvError(problems);
+   return out as unknown as Env;
+ }
+diff --git a/src/modules/jobs/jobs.service.ts b/src/modules/jobs/jobs.service.ts
+index 27c13b7..7a08a17 100644
+--- a/src/modules/jobs/jobs.service.ts
++++ b/src/modules/jobs/jobs.service.ts
+@@ -60,6 +60,9 @@ export class JobsService implements OnApplicationBootstrap {
+   /** Handlers for the subjects of one kind that start with a prefix; they answer before the kind's own handler. */
+   private readonly routes: { type: string; prefix: string; handler: JobHandler }[] = [];
+   private worker: Worker | null = null;
++  /** R6: kinds the serial tick leaves alone (a video render is taken by its own loop, in its own place, so it never holds the other jobs). */
++  private readonly outOfTick = new Set<string>();
++  private tickOff = false;
+ 
+   constructor(
+     private readonly prisma: PrismaService,
+@@ -68,6 +71,31 @@ export class JobsService implements OnApplicationBootstrap {
+     private readonly queues: QueueService,
+   ) {}
+ 
++  /** R6: the serial tick no longer takes jobs of this kind (their own loop does, with startDue). */
++  takeOutOfTick(kind: string): void {
++    this.outOfTick.add(dbType(kind));
++  }
++
++  /** R6: this process runs no tick at all (a render worker takes only its own kind). */
++  switchTickOff(): void {
++    this.tickOff = true;
++  }
++
++  /**
++   * R6: claims ONE due job of these kinds (a claim is one statement with SKIP LOCKED, so two workers never take one job) and starts it WITHOUT waiting for it:
++   * answers a handle on its run (`done`), or null when none is due. The caller counts how many it has running.
++   */
++  async startDue(kinds: string[]): Promise<{ done: Promise<void> } | null> {
++    const job = await this.claim(undefined, kinds.map(dbType));
++    if (!job) return null;
++    return { done: this.execute(job) };
++  }
++
++  /** R6: a running job's lease moves to `ms` from now (a long run still making progress is not taken twice). */
++  async touch(jobId: string, ms: number): Promise<void> {
++    await this.prisma.$executeRaw`UPDATE job SET "runAt" = ${new Date(this.clock.now().getTime() + ms)} WHERE id = ${jobId}::uuid AND status = 'running'`;
++  }
++
+   register(kind: string, handler: JobHandler): void {
+     this.handlers.set(dbType(kind), handler);
+   }
+@@ -127,10 +155,12 @@ export class JobsService implements OnApplicationBootstrap {
+     return ran;
+   }
+ 
+-  private async claim(only?: string[]): Promise<Claimed | null> {
+-    const types = [...this.handlers.keys()];
+-    const routeTypes = this.routes.map((r) => r.type);
+-    const routePrefixes = this.routes.map((r) => r.prefix);
++  private async claim(only?: string[], kinds?: string[]): Promise<Claimed | null> {
++    const wanted = (t: string): boolean => (kinds ? kinds.includes(t) : !this.outOfTick.has(t));
++    const types = [...this.handlers.keys()].filter(wanted);
++    const kept = this.routes.filter((r) => wanted(r.type));
++    const routeTypes = kept.map((r) => r.type);
++    const routePrefixes = kept.map((r) => r.prefix);
+     if (!types.length && !routeTypes.length) return null;
+     const now = this.clock.now();
+     const lease = new Date(now.getTime() + LEASE_MS);
+@@ -239,7 +269,7 @@ export class JobsService implements OnApplicationBootstrap {
+    * the tick runs just its own subject keys (specs share one job table). Production passes nothing.
+    */
+   async startPolling(everyMs = 5000, only?: string[]): Promise<void> {
+-    if (this.worker) return;
++    if (this.worker || this.tickOff) return;
+     const q = this.queues.queue("jobs-tick");
+     await q.upsertJobScheduler("due-jobs", { every: everyMs }, { name: "tick" });
+     this.worker = this.queues.worker("jobs-tick", async () => {
+diff --git a/src/modules/render-jobs/chromium-video-renderer.ts b/src/modules/render-jobs/chromium-video-renderer.ts
+index c0ab815..941d0a7 100644
+--- a/src/modules/render-jobs/chromium-video-renderer.ts
++++ b/src/modules/render-jobs/chromium-video-renderer.ts
+@@ -5,14 +5,15 @@ import { accessSync, constants, readFileSync, statSync, writeFileSync } from "no
+ import { createServer as createHttpServer, request as httpRequest } from "node:http";
+ import { connect as netConnect, isIP } from "node:net";
+ import type { Duplex } from "node:stream";
+-import { mkdir, readdir, readFile, rm, stat } from "node:fs/promises";
++import { mkdir, mkdtemp, readdir, readFile, rm, stat } from "node:fs/promises";
+ import { createRequire } from "node:module";
+ import { tmpdir } from "node:os";
+-import { join } from "node:path";
++import { dirname, join } from "node:path";
+ import { once } from "node:events";
+ import type { Clock } from "../../common/ports/clock.port";
+ import { Logger } from "@nestjs/common";
+ import { type PortPing, pingError, pingWith } from "../../common/ports/ping";
++import { procStart } from "./render-leftovers";
+ import { RENDER_TEMP_PREFIX, VideoRenderer, type RenderedFile, type RenderRequest } from "./video-renderer";
+ 
+ /**
+@@ -77,6 +78,7 @@ export interface ChromiumRendererOptions {
+   assetTimeoutMs?: number;
+   /** A proof script or a spec learns each child process id as it starts (to sample its memory, or to kill it). Never a token. */
+   onSpawn?: (kind: "chromium" | "ffmpeg", pid: number) => void;
++  /** R6: the browser start check (probe) may use another launcher in a spec; default: the same driver a render uses. */
+   logger?: Pick<Logger, "log" | "warn" | "error">;
+ }
+ 
+@@ -181,7 +183,7 @@ export function hostAllowed(url: string, allowed: readonly string[]): boolean {
+   }
+ }
+ 
+-/** Settings from the environment (R6 wires these into the env check; here they are only read). */
++/** Settings from the environment (R6: every name read here is in env.schema.ts and the env manifest). */
+ export function chromiumRendererOptionsFromEnv(env: NodeJS.ProcessEnv): ChromiumRendererOptions | null {
+   const webOrigin = env.RENDER_WEB_ORIGIN?.trim();
+   if (!webOrigin) return null;
+@@ -197,7 +199,6 @@ export function chromiumRendererOptionsFromEnv(env: NodeJS.ProcessEnv): Chromium
+   if (env.RENDER_FFMPEG_PATH) opts.ffmpegPath = env.RENDER_FFMPEG_PATH;
+   if (env.RENDER_CLOCK_PATH) opts.clockPath = env.RENDER_CLOCK_PATH;
+   if (env.RENDER_CLOCK_SHA256) opts.clockSha256 = env.RENDER_CLOCK_SHA256;
+-  if (env.RENDER_PLAYWRIGHT_MODULE) opts.playwrightModule = env.RENDER_PLAYWRIGHT_MODULE;
+   return opts;
+ }
+ 
+@@ -438,7 +439,7 @@ interface PwModule {
+ 
+ function loadPlaywright(explicit?: string): PwModule {
+   const req = createRequire(__filename);
+-  const names = [explicit, process.env.RENDER_PLAYWRIGHT_MODULE, "playwright-core", "playwright", "/opt/node-tools/node_modules/playwright-core"].filter((x): x is string => !!x);
++  const names = [explicit, "playwright-core"].filter((x): x is string => !!x);
+   for (const n of names) {
+     try {
+       return req(n) as PwModule;
+@@ -446,7 +447,7 @@ function loadPlaywright(explicit?: string): PwModule {
+       /* next */
+     }
+   }
+-  throw new Error("playwright-core is not installed on this machine (RENDER_PLAYWRIGHT_MODULE names where it is)");
++  throw new Error("playwright-core is not installed on this machine");
+ }
+ 
+ class RenderStop extends Error {}
+@@ -457,6 +458,10 @@ export class ChromiumVideoRenderer extends VideoRenderer {
+   /** The numbers of the newest finished (or failed) run, for a proof script and a spec; never holds the token. */
+   lastRun: ChromiumRunStats | null = null;
+   private readonly clock: Clock;
++  /** R6: what the boot check found wrong (null: nothing, or not yet looked). Set by probe(); configured() reads it. */
++  private bootProblem: string | null = null;
++  private deepAt = 0;
++  private deepAnswer: PortPing | null = null;
+ 
+   constructor(options: ChromiumRendererOptions) {
+     super();
+@@ -480,7 +485,56 @@ export class ChromiumVideoRenderer extends VideoRenderer {
+     return this.problem() === null;
+   }
+ 
++  /** R6: in words, why this renderer cannot work now (null: it can). */
++  whyNot(): string | null {
++    return this.problem();
++  }
++
++  override describe(): { real: boolean; missing: string[] } {
++    const p = this.problem();
++    return { real: true, missing: p ? [p] : [] };
++  }
++
++  /**
++   * R6: the boot check, run once: the programs run (ffmpeg and ffprobe answer -version) and Chromium starts and stops. Answers the problem in words, or null.
++   * After it, configured() is false when it found one.
++   */
++  async probe(): Promise<string | null> {
++    this.bootProblem = null;
++    const first = this.problem();
++    if (first) return (this.bootProblem = first);
++    const dir = dirname(this.ffmpegPath);
++    for (const [name, path] of [["ffmpeg", this.ffmpegPath], ["ffprobe", join(dir, "ffprobe")]] as const) {
++      const ok = await new Promise<boolean>((resolve) => {
++        const c = spawn(path, ["-version"], { stdio: "ignore", timeout: 10_000 });
++        c.once("error", () => resolve(false));
++        c.once("exit", (code) => resolve(code === 0));
++      });
++      if (!ok) return (this.bootProblem = `${name} does not run (${path})`);
++    }
++    const home = await mkdtemp(join(tmpdir(), `${RENDER_TEMP_PREFIX}probe-`));
++    try {
++      const b = await loadPlaywright(this.o.playwrightModule).chromium.launch({ executablePath: this.chromiumPath, headless: true, args: ["--no-first-run", "--disable-extensions"], timeout: 30_000, env: { ...process.env, HOME: home } });
++      await b.close();
++    } catch (e) {
++      return (this.bootProblem = `Chromium does not start (${plainWords(String((e as Error)?.message ?? e)).slice(0, 160)})`);
++    } finally {
++      await rm(home, { recursive: true, force: true });
++    }
++    return null;
++  }
++
++  /** R6: a check that does the real work (starts the browser), asked for by staff: at most one in ten minutes, the earlier answer standing in between. */
++  override async deepCheck(): Promise<PortPing> {
++    const now = this.clock.now().getTime();
++    if (this.deepAnswer && now - this.deepAt < 600_000) return this.deepAnswer;
++    const why = await this.probe();
++    this.deepAt = now;
++    return (this.deepAnswer = why ? pingError(why) : await this.ping());
++  }
++
+   private problem(): string | null {
++    if (this.bootProblem) return this.bootProblem;
+     try {
+       if (!this.o.webOrigin) return "RENDER_WEB_ORIGIN is not set";
+       accessSync(this.chromiumPath, constants.X_OK);
+@@ -533,6 +587,20 @@ export class ChromiumVideoRenderer extends VideoRenderer {
+     const procs = new Set<ChildProcess>();
+     let chromiumPid = 0;
+     let stopped = false;
++    /* R6 (leftovers): each child's id and start time go into the work folder, so a worker that finds the folder after its owner died can stop a browser or encoder that is still the same process */
++    const kids: { kind: string; pid: number; start: number }[] = [];
++    const writeKids = (): void => {
++      try {
++        writeFileSync(join(work, "children.json"), JSON.stringify({ owner: { pid: process.pid, start: procStart(process.pid) }, children: kids }));
++      } catch {
++        /* the folder is gone: the render has ended */
++      }
++    };
++    const onChild = (kind: "chromium" | "ffmpeg", pid: number): void => {
++      kids.push({ kind, pid, start: procStart(pid) });
++      writeKids();
++      this.o.onSpawn?.(kind, pid);
++    };
+     /* settles (rejects) the moment a child dies that should be alive, so no call waits out a time limit on a dead browser or encoder */
+     let die: (e: Error) => void = () => undefined;
+     const dead = new Promise<never>((_, reject) => {
+@@ -583,6 +651,7 @@ export class ChromiumVideoRenderer extends VideoRenderer {
+       if (signal?.aborted) throw new RenderStop("render aborted");
+       signal?.addEventListener("abort", onAbort, { once: true });
+       await mkdir(join(work, "profile"), { recursive: true, mode: 0o700 });
++      writeKids();
+       check();
+ 
+       /* Chromium: launched by the driver over a private pipe (--remote-debugging-pipe): no debugging port exists, the page's address is known to this process only,
+@@ -607,7 +676,7 @@ export class ChromiumVideoRenderer extends VideoRenderer {
+       /* the browser's process id (it leads its own group): to end it by id, and to show it gone */
+       const info = (await early((await early(browser.newBrowserCDPSession())).send("SystemInfo.getProcessInfo"))) as { processInfo?: { type: string; id: number }[] };
+       chromiumPid = info.processInfo?.find((x) => x.type === "browser")?.id ?? 0;
+-      if (chromiumPid) this.o.onSpawn?.("chromium", chromiumPid);
++      if (chromiumPid) onChild("chromium", chromiumPid);
+       let chromiumDied = "";
+       browser.on("disconnected", () => {
+         if (stopped || chromiumDied) return;
+@@ -743,7 +812,7 @@ export class ChromiumVideoRenderer extends VideoRenderer {
+             c.catch(() => undefined);
+             closing.push(c);
+           }
+-          segs.push(this.openSegment(join(work, `seg-${segs.length}.ts`), input, procs, mask, (e) => die(e)));
++          segs.push(this.openSegment(join(work, `seg-${segs.length}.ts`), input, procs, mask, (e) => die(e), onChild));
+         }
+         return segs[i];
+       };
+@@ -754,6 +823,7 @@ export class ChromiumVideoRenderer extends VideoRenderer {
+         const seg = segment(i);
+         await seg.write(Buffer.from(shot, "base64"));
+         stats.frames++;
++        input.onProgress?.(); // R6: a frame came: the worker renews its lease
+       };
+       let scene = 0;
+       /* frame 0 is the wish's first moment as the page drew it at ready: what the page painted at ready may not be on the screen at the first shot, so shoot until two shots in a row are the same (at most 8) */
+@@ -794,7 +864,7 @@ export class ChromiumVideoRenderer extends VideoRenderer {
+       stats.keptFrames = stats.scenes.filter((s) => s.kept).reduce((a, s) => a + s.frames, 0);
+       const listFile = join(work, "list.txt");
+       writeFileSync(listFile, segs.map((s, i) => (keep[i] ? `file '${s.path}'\n` : "")).join(""));
+-      await this.runFfmpeg(["-f", "concat", "-safe", "0", "-i", listFile, "-c", "copy", "-an", "-movflags", "+faststart", "-f", "mp4", finalPath], procs, mask, check);
++      await this.runFfmpeg(onChild, ["-f", "concat", "-safe", "0", "-i", listFile, "-c", "copy", "-an", "-movflags", "+faststart", "-f", "mp4", finalPath], procs, mask, check);
+       check();
+       const size = (await stat(finalPath)).size;
+       stats.blocked = blocked;
+@@ -804,7 +874,7 @@ export class ChromiumVideoRenderer extends VideoRenderer {
+       stats.totalMs = Math.round(performance.now() - started);
+       this.lastRun = stats;
+       this.log.log(mask(`render ${jobId}: ${stats.keptFrames} of ${stats.frames} frames kept, ${stats.scenes.length} scenes, ${size} bytes, ready in ${stats.readyMs} ms, ${stats.totalMs} ms in all, ${blocked} blocked request(s)${blocked ? ` (${stats.blockedHosts.join(", ")})` : ""}`));
+-      return { path: finalPath, contentType: "video/mp4", bytes: size };
++      return { path: finalPath, contentType: "video/mp4", bytes: size, videoMs: Math.round((stats.keptFrames / this.o.fps) * 1000) };
+     } catch (e) {
+       stats.blocked = blocked;
+       stats.browserOwnCalls = ownCalls;
+@@ -840,7 +910,7 @@ export class ChromiumVideoRenderer extends VideoRenderer {
+     }
+   }
+ 
+-  private openSegment(path: string, input: RenderRequest, procs: Set<ChildProcess>, mask: (t: string) => string, die: (e: Error) => void): Segment {
++  private openSegment(path: string, input: RenderRequest, procs: Set<ChildProcess>, mask: (t: string) => string, die: (e: Error) => void, onChild: (k: "chromium" | "ffmpeg", pid: number) => void): Segment {
+     const fps = this.o.fps;
+     const args = [
+       "-hide_banner", "-loglevel", "error", "-y", "-f", "image2pipe", "-framerate", String(fps), "-c:v", "mjpeg", "-i", "-",
+@@ -850,7 +920,7 @@ export class ChromiumVideoRenderer extends VideoRenderer {
+     ];
+     const p = spawn(this.ffmpegPath, args, { stdio: ["pipe", "ignore", "pipe"] });
+     procs.add(p);
+-    if (p.pid) this.o.onSpawn?.("ffmpeg", p.pid);
++    if (p.pid) onChild("ffmpeg", p.pid);
+     let err = "";
+     p.stderr?.on("data", (d: Buffer) => {
+       if (err.length < 800) err += d.toString();
+@@ -888,10 +958,10 @@ export class ChromiumVideoRenderer extends VideoRenderer {
+     return seg;
+   }
+ 
+-  private async runFfmpeg(argv: string[], procs: Set<ChildProcess>, mask: (t: string) => string, check: () => void): Promise<void> {
++  private async runFfmpeg(onChild: (k: "chromium" | "ffmpeg", pid: number) => void, argv: string[], procs: Set<ChildProcess>, mask: (t: string) => string, check: () => void): Promise<void> {
+     const p = spawn(this.ffmpegPath, ["-hide_banner", "-loglevel", "error", "-y", ...argv], { stdio: ["ignore", "ignore", "pipe"] });
+     procs.add(p);
+-    if (p.pid) this.o.onSpawn?.("ffmpeg", p.pid);
++    if (p.pid) onChild("ffmpeg", p.pid);
+     let err = "";
+     p.stderr?.on("data", (d: Buffer) => {
+       if (err.length < 800) err += d.toString();
+diff --git a/src/modules/render-jobs/render-jobs.module.ts b/src/modules/render-jobs/render-jobs.module.ts
+index 9450905..c7575aa 100644
+--- a/src/modules/render-jobs/render-jobs.module.ts
++++ b/src/modules/render-jobs/render-jobs.module.ts
+@@ -8,13 +8,16 @@ import { RenderJobsService } from "./render-jobs.service";
+ import { ENV } from "../../common/env/env.module";
+ import { PrismaService } from "../../common/db/prisma.service";
+ import { RenderTokens } from "./render-token";
+-import { VideoRenderer, videoRendererFor } from "./video-renderer";
++import { Clock } from "../../common/ports/clock.port";
++import { RenderWorker } from "./render-worker.service";
++import { VideoRenderer } from "./video-renderer";
++import { bindVideoRenderer } from "./video-binding";
+ 
+-/** The video job (B19, E-147, E-148). With PROVIDERS=standin the stand-in renderer is bound; with live providers the one that says it is not configured, until a real one is built (IK3). */
++/** The video job (B19, E-147, E-148). R6: PROVIDERS=live binds the real recorder when it can work (checked once at boot), else the one that says it is not configured (IK3); PROVIDERS=standin binds the stand-in unless RENDER_ADAPTER=chromium. */
+ @Module({
+   imports: [JobsModule, PriceBookModule, ServerFilesModule, StoredFilesModule],
+   controllers: [RenderJobsController],
+-  providers: [RenderJobsService, RenderTokens, { provide: VideoRenderer, inject: [ENV, PrismaService], useFactory: videoRendererFor }],
+-  exports: [RenderJobsService, VideoRenderer, RenderTokens],
++  providers: [RenderJobsService, RenderWorker, RenderTokens, { provide: VideoRenderer, inject: [ENV, PrismaService, Clock], useFactory: bindVideoRenderer }],
++  exports: [RenderJobsService, RenderWorker, VideoRenderer, RenderTokens],
+ })
+ export class RenderJobsModule {}
+diff --git a/src/modules/render-jobs/render-jobs.service.ts b/src/modules/render-jobs/render-jobs.service.ts
+index b0d1d4c..56a33d1 100644
+--- a/src/modules/render-jobs/render-jobs.service.ts
++++ b/src/modules/render-jobs/render-jobs.service.ts
+@@ -1,4 +1,5 @@
+ import { Inject, Injectable, Logger, OnModuleInit } from "@nestjs/common";
++import { hostname } from "node:os";
+ import { lstat, realpath, rm } from "node:fs/promises";
+ import { tmpdir } from "node:os";
+ import { basename, dirname, join, resolve } from "node:path";
+@@ -19,6 +20,7 @@ import { SignedUrlsService } from "../stored-files/signed-urls.service";
+ import { videoRefunded, wishHas } from "../wish-extras/wish-extras";
+ import { stateOf } from "../wishes/wish-state";
+ import { RenderTokens } from "./render-token";
++import { alive, procStart } from "./render-leftovers";
+ import { RENDER_TEMP_PREFIX, VideoRenderer, type RenderKind } from "./video-renderer";
+ 
+ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+@@ -42,6 +44,13 @@ export const RENDER_BUSY_RETRY_MS = 15_000;
+ /** R1: the job kind of a render and the limit its row holds when the environment says nothing (RENDER_TIME_LIMIT_SECONDS). */
+ export const RENDER_JOB_KIND = "render-video";
+ export const RENDER_TIME_LIMIT_DEFAULT_SECONDS = 1200;
++/** R6: a render lost (its worker died) or failed this many times is failed for good: the person asks again; never a loop. */
++export const RENDER_MAX_LOSSES = 2;
++/** R6: how often a running render looks to renew its lease (it renews only if frames came since the last look), and how soon a failed first try goes back to the queue. */
++export const RENDER_RENEW_MS = 30_000;
++export const RENDER_RETRY_MS = 15_000;
++export const LOST_WORDS = "Your video could not be made: the video maker stopped twice while making it. Nothing more is charged, and it is still yours. Press Ask again.";
++const failedWords = (reason: string): string => `Your video could not be made after two tries (${reason.replace(/[.\s]+$/, "").slice(0, 160)}). Nothing more is charged, and it is still yours. Press Ask again.`;
+ 
+ /** R1: RENDER_CONCURRENCY: at most `limit()` holders at once; the rest wait in order, and leave when their signal aborts. */
+ class Slots {
+@@ -104,7 +113,21 @@ export class RenderJobsService implements OnModuleInit {
+ 
+   /** RENDER_CONCURRENCY (default 2): how many renders this process runs at once. */
+   private readonly log = new Logger("render-jobs");
+-  private readonly slots = new Slots(() => this.env.RENDER_CONCURRENCY);
++  private readonly slots = new Slots(() => this.concurrency());
++  /** How often a running render renews its lease (milliseconds); a spec makes it short. */
++  renewMs = RENDER_RENEW_MS;
++  /** This process, as a render row names its holder: host, process id and the process's start time (so a reused id is not mistaken for the holder). */
++  readonly workerId = `${hostname()}:${process.pid}:${procStart(process.pid)}`;
++
++  /** RENDER_CONCURRENCY when it is set; else 1 with the real recorder (about 1.5 GB each) and 2 with the stand-in. */
++  concurrency(): number {
++    return this.env.RENDER_CONCURRENCY ?? (this.renderer.describe().real ? 1 : 2);
++  }
++
++  /** R6: does this process take render jobs? (PROCESS_ROLE web does not.) */
++  get takesRenders(): boolean {
++    return this.env.PROCESS_ROLE !== "web";
++  }
+   /** How often a running render looks whether its wish was erased (milliseconds); a spec makes it short. */
+   erasePollMs = 5000;
+ 
+@@ -112,17 +135,22 @@ export class RenderJobsService implements OnModuleInit {
+   async onModuleInit(): Promise<void> {
+     if (process.env.NODE_ENV === "test") return;
+     await this.setTimeLimit();
+-    this.register();
++    // R6: a render never runs inside the serial tick, in any role: it has its own loop (RenderWorker), so a 20-minute render holds no other job
++    this.jobs.takeOutOfTick(RENDER_JOB_KIND);
++    if (this.env.PROCESS_ROLE === "render-worker") this.jobs.switchTickOff();
++    if (this.takesRenders) this.register();
+   }
+ 
+   register(): void {
+     this.jobs.register(RENDER_JOB_KIND, async (c) => {
+       // the job was taken after more tries than the kind has: the first holders were lost; the row ends failed (the person asks again) and the job is parked
+       if (c.attempt > maxTriesOf(RENDER_JOB_KIND)) {
+-        await this.db.renderJob.updateMany({ where: { id: c.subjectId, status: { in: ["queued", "rendering"] } }, data: { status: "failed" } });
++        if (UUID.test(c.subjectId)) await this.db.renderJob.updateMany({ where: { id: c.subjectId, status: { in: ["queued", "rendering"] } }, data: { status: "failed", losses: { increment: 1 }, failureWords: LOST_WORDS } });
+         throw new Error(`the render was lost ${c.attempt - 1} times; it is failed`);
+       }
+-      const result = await this.run(c.subjectId, c.signal, false);
++      const result = await this.run(c.subjectId, c.signal, false, () => this.jobs.touch(c.jobId, this.leaseMs() + 30_000));
++      // R6: a first failure goes back to the queue once on the same row (losses counted on the ROW); the second is failed for good with words
++      if (result === "failed" && (await this.retryOrEnd(c.subjectId))) return { skipped: true, again: new Date(this.clock.now().getTime() + RENDER_RETRY_MS) };
+       // no place now: back to the queue without a try, and the limit has not been spent
+       if (result === "busy") return { skipped: true, again: new Date(this.clock.now().getTime() + RENDER_BUSY_RETRY_MS) };
+       // a run that skipped while the row is still unfinished is not a success: the job fails and is tried again
+@@ -131,6 +159,52 @@ export class RenderJobsService implements OnModuleInit {
+     });
+   }
+ 
++  /** R6: the render just failed. Back to the queue (true) when it has tries left and the wish still wants the video; else it stays failed for good with its words (false). */
++  private async retryOrEnd(jobId: string): Promise<boolean> {
++    if (!UUID.test(jobId)) return false;
++    const row = await this.db.renderJob.findUnique({ where: { id: jobId }, select: { status: true, losses: true, failureWords: true, kind: true, wishId: true } });
++    if (!row || row.status !== "failed") return false;
++    const wanted = await this.stillWanted(row.wishId, row.kind === "status_video" ? "status-video" : "keepsake-export");
++    if (wanted && row.losses + 1 < RENDER_MAX_LOSSES) {
++      const back = await this.db.renderJob.updateMany({ where: { id: jobId, status: "failed" }, data: { status: "queued", losses: { increment: 1 }, failureWords: null } });
++      return back.count > 0;
++    }
++    if (wanted) await this.db.renderJob.updateMany({ where: { id: jobId, status: "failed" }, data: { losses: { increment: 1 } } });
++    return false;
++  }
++
++  /** IK4a: the wish still wants its video: not erased, and (for the status video) the extra not refunded. */
++  private async stillWanted(wishId: string, kind: RenderKind): Promise<boolean> {
++    const w = await this.db.wish.findUnique({ where: { id: wishId }, select: { erasedAt: true, ticket: true, adds: true } });
++    if (!w || w.erasedAt) return false;
++    if (kind === "status-video" && (await videoRefunded(this.db, await this.entitlements.row(), { id: wishId, ticket: w.ticket, adds: w.adds }))) return false;
++    return true;
++  }
++
++  /**
++   * R6: at a render worker's start: a row held by a worker process of THIS machine that is no longer that process (killed, crashed) is lost now, not at the end of its lease:
++   * back to the queue with one loss counted, or failed for good with words at the second. Rows of another machine wait for their lease.
++   */
++  async releaseDeadHolders(): Promise<number> {
++    const rows = await this.db.renderJob.findMany({ where: { status: "rendering", workerId: { not: null } }, select: { id: true, workerId: true, losses: true } });
++    let n = 0;
++    for (const r of rows) {
++      const [host, pid, start] = (r.workerId ?? "").split(":");
++      if (host !== hostname() || !pid || alive(Number(pid), Number(start))) continue;
++      const final = r.losses + 1 >= RENDER_MAX_LOSSES;
++      const data = final
++        ? { status: "failed" as const, losses: { increment: 1 }, failureWords: LOST_WORDS, tokenHash: null, tokenExpiresAt: null }
++        : { status: "queued" as const, losses: { increment: 1 }, tokenHash: null, tokenExpiresAt: null };
++      const moved = await this.db.renderJob.updateMany({ where: { id: r.id, status: "rendering", workerId: r.workerId }, data });
++      if (!moved.count) continue;
++      n++;
++      this.log.warn(`render ${r.id}: its worker (${r.workerId}) is gone; ${final ? "failed for good" : "queued again"}`);
++      if (final) await this.db.$executeRaw`UPDATE job SET status = 'succeeded' WHERE type = 'render-video'::"JobType" AND "subjectId" = ${r.id} AND status = 'running'`;
++      else await this.db.$executeRaw`UPDATE job SET status = 'scheduled', attempts = 0, "runAt" = ${this.clock.now()} WHERE type = 'render-video'::"JobType" AND "subjectId" = ${r.id} AND status = 'running'`;
++    }
++    return n;
++  }
++
+   private async unfinished(jobId: string): Promise<boolean> {
+     if (!UUID.test(jobId)) return false;
+     const r = await this.db.renderJob.findUnique({ where: { id: jobId }, select: { status: true } });
+@@ -144,7 +218,7 @@ export class RenderJobsService implements OnModuleInit {
+   }
+ 
+   /** How long a "rendering" row is believed: the render's own limit and a short margin, always under the job's lease (limit + 60 s). */
+-  private leaseMs(): number {
++  leaseMs(): number {
+     return (this.env.RENDER_TIME_LIMIT_SECONDS || RENDER_TIME_LIMIT_DEFAULT_SECONDS) * 1000 + RENDER_ROW_MARGIN_MS;
+   }
+ 
+@@ -185,7 +259,7 @@ export class RenderJobsService implements OnModuleInit {
+       let id: string;
+       if (found) {
+         id = found.id;
+-        await tx.renderJob.update({ where: { id }, data: { status: "queued", updatedAt: now } });
++        await tx.renderJob.update({ where: { id }, data: { status: "queued", updatedAt: now, losses: 0, failureWords: null } });
+       } else {
+         id = this.ids.id();
+         await tx.renderJob.create({ data: { id, wishId, kind: DB_KIND[kind], status: "queued", ...SPEC[kind], createdAt: now, updatedAt: now } });
+@@ -206,7 +280,7 @@ export class RenderJobsService implements OnModuleInit {
+    * R1: waits for a place (RENDER_CONCURRENCY); the renderer gets an AbortSignal that ends when the job's time limit ends or the wish is
+    * erased; the file it makes is streamed to the file store and the temp file is removed after a success and after a failure.
+    */
+-  async run(jobId: string, signal?: AbortSignal, wait = true): Promise<string> {
++  async run(jobId: string, signal?: AbortSignal, wait = true, lease?: () => Promise<void>): Promise<string> {
+     if (!UUID.test(jobId)) return "skipped";
+     let release = this.slots.tryAcquire();
+     if (!release) {
+@@ -246,22 +320,27 @@ export class RenderJobsService implements OnModuleInit {
+       }
+     }
+     try {
+-      return await this.runOne(jobId, signal);
++      return await this.runOne(jobId, signal, lease);
+     } finally {
+       release();
+     }
+   }
+ 
+-  private async runOne(jobId: string, signal?: AbortSignal): Promise<string> {
++  private async runOne(jobId: string, signal?: AbortSignal, lease?: () => Promise<void>): Promise<string> {
+     const now = this.clock.now();
+     const claimed = await this.db.$queryRaw<{ wishId: string; kind: string; width: number; height: number; seconds: number }[]>`
+-      UPDATE render_job SET status = 'rendering', "updatedAt" = ${now}
+-       WHERE id = ${jobId}::uuid AND (status = 'queued' OR (status = 'rendering' AND "updatedAt" < ${new Date(now.getTime() - this.leaseMs())}))
++      UPDATE render_job SET status = 'rendering', "updatedAt" = ${now}, "workerId" = ${this.workerId}, losses = CASE WHEN status = 'rendering' THEN losses + 1 ELSE losses END
++       WHERE id = ${jobId}::uuid AND (status = 'queued' OR (status = 'rendering' AND "updatedAt" < ${new Date(now.getTime() - this.leaseMs())} AND losses + 1 < ${RENDER_MAX_LOSSES}))
+       RETURNING "wishId"::text AS "wishId", kind::text AS kind, width, height, seconds`;
+     const c = claimed[0];
+-    if (!c) return "skipped";
++    if (!c) {
++      // R6: a row whose holder was lost already once is lost again: failed for good, with words (the third holder never starts)
++      const gone = await this.db.renderJob.updateMany({ where: { id: jobId, status: "rendering", updatedAt: { lt: new Date(now.getTime() - this.leaseMs()) }, losses: { gte: RENDER_MAX_LOSSES - 1 } }, data: { status: "failed", losses: { increment: 1 }, failureWords: LOST_WORDS, tokenHash: null, tokenExpiresAt: null } });
++      return gone.count > 0 ? "failed" : "skipped";
++    }
+     // every write of this run is fenced by the stamp its claim left: a run whose row was taken over writes nothing
+     const mine = { id: jobId, status: "rendering" as const, updatedAt: now };
++    const began = performance.now();
+     const kind: RenderKind = c.kind === "keepsake-export" ? "keepsake-export" : "status-video";
+     const stop = new AbortController();
+     const onParent = (): void => stop.abort();
+@@ -272,16 +351,36 @@ export class RenderJobsService implements OnModuleInit {
+     const watch = setInterval(() => {
+       if (looking || stop.signal.aborted) return;
+       looking = true;
+-      this.db.wish
+-        .findUnique({ where: { id: c.wishId }, select: { erasedAt: true } })
+-        .then((w) => {
+-          if (!w || w.erasedAt) stop.abort();
++      this.stillWanted(c.wishId, kind)
++        .then((wanted) => {
++          if (!wanted) stop.abort(); // IK4a: an erase or a refund during a render stops the recorder
+         })
+         .catch(() => undefined)
+         .finally(() => {
+           looking = false;
+         });
+     }, this.erasePollMs);
++    // R6: the lease is renewed while frames still come (a render that makes no frame renews nothing and is lost at its lease)
++    let frames = 0;
++    let seen = 0;
++    let renewing = false;
++    const renew = setInterval(() => {
++      if (renewing || stop.signal.aborted || frames === seen) return;
++      renewing = true;
++      seen = frames;
++      const next = this.clock.now();
++      this.db.renderJob
++        .updateMany({ where: mine, data: { updatedAt: next } })
++        .then(async (r) => {
++          if (r.count === 0) return stop.abort(); // the row was taken over: this run stops
++          mine.updatedAt = next;
++          await lease?.();
++        })
++        .catch(() => undefined)
++        .finally(() => {
++          renewing = false;
++        });
++    }, this.renewMs);
+     let tempPath: string | null = null;
+     try {
+       const owner = await this.db.wish.findUniqueOrThrow({ where: { id: c.wishId }, select: { accountId: true, erasedAt: true } });
+@@ -290,34 +389,36 @@ export class RenderJobsService implements OnModuleInit {
+       const minted = this.tokens.make();
+       const kept = await this.db.renderJob.updateMany({ where: mine, data: { tokenHash: minted.hash, tokenExpiresAt: minted.expiresAt, tokenUsedAt: null, updatedAt: now } });
+       if (kept.count === 0) return "failed"; // the row was taken over: this run mints nothing and renders nothing
+-      const out = await this.renderer.render({ wishId: c.wishId, jobId, kind, width: c.width, height: c.height, seconds: c.seconds, token: minted.token }, stop.signal);
++      const out = await this.renderer.render({ wishId: c.wishId, jobId, kind, width: c.width, height: c.height, seconds: c.seconds, token: minted.token, onProgress: () => void frames++ }, stop.signal);
+       tempPath = await this.ownTempFile(out.path, jobId);
+       if (stop.signal.aborted) throw new Error("the render was stopped");
+       // IK4a: erased while it rendered (between two looks): nothing is written
+-      if ((await this.db.wish.findUnique({ where: { id: c.wishId }, select: { erasedAt: true } }))?.erasedAt) throw new Error("the wish was erased");
++      if (!(await this.stillWanted(c.wishId, kind))) throw new Error("the wish was erased or its video was refunded");
+       const fileId = await this.files.writeFile({ ownerAccountId: owner.accountId, purpose: kind === "status-video" ? "render" : "export", contentType: out.contentType, path: tempPath, bytes: out.bytes, kind: "video", signal: stop.signal });
+       // IK4a: the wish may have been erased, or the time may have run out, while the file was being kept: the file just written goes NOW (object and row)
+-      const erased = !!(await this.db.wish.findUniqueOrThrow({ where: { id: c.wishId }, select: { erasedAt: true } })).erasedAt;
+-      if (erased || stop.signal.aborted) {
++      const wanted = await this.stillWanted(c.wishId, kind);
++      if (!wanted || stop.signal.aborted) {
+         await this.files.discard(fileId);
+-        throw new Error(erased ? "the wish was erased" : "the render was stopped");
++        throw new Error(!wanted ? "the wish was erased or its video was refunded" : "the render was stopped");
+       }
+-      const done = await this.db.renderJob.updateMany({ where: mine, data: { status: "done", outputFileId: fileId } });
++      const done = await this.db.renderJob.updateMany({ where: mine, data: { status: "done", outputFileId: fileId, failureWords: null, tookMs: Math.round(performance.now() - began), videoMs: out.videoMs ?? null } });
+       if (done.count === 0) {
+         await this.files.discard(fileId); // the row was taken over: this run's file is not the row's
+         return "failed";
+       }
+       return "done";
+     } catch (e) {
+-      this.log.warn(`render ${jobId} failed: ${e instanceof Error ? e.message : String(e)}`);
+-      await this.db.renderJob.updateMany({ where: mine, data: { status: "failed" } });
++      const reason = e instanceof Error ? e.message : String(e);
++      this.log.warn(`render ${jobId} failed: ${reason}`);
++      await this.db.renderJob.updateMany({ where: mine, data: { status: "failed", failureWords: failedWords(reason), tookMs: Math.round(performance.now() - began) } });
+       return "failed";
+     } finally {
+       clearInterval(watch);
++      clearInterval(renew);
+       signal?.removeEventListener("abort", onParent);
+       // R3: a run that ends leaves no live token (a row taken over by a later run keeps that run's own)
+       await this.db
+-        .$executeRaw`UPDATE render_job SET "tokenHash" = NULL, "tokenExpiresAt" = NULL WHERE id = ${jobId}::uuid AND "tokenHash" IS NOT NULL AND (status <> 'rendering' OR "updatedAt" = ${now})`
++        .$executeRaw`UPDATE render_job SET "tokenHash" = NULL, "tokenExpiresAt" = NULL WHERE id = ${jobId}::uuid AND "tokenHash" IS NOT NULL AND (status <> 'rendering' OR "updatedAt" = ${mine.updatedAt})`
+         .catch(() => undefined);
+       if (tempPath) await rm(tempPath, { force: true });
+     }
+diff --git a/src/modules/render-jobs/render-leftovers.ts b/src/modules/render-jobs/render-leftovers.ts
+new file mode 100644
+index 0000000..3ce3326
+--- /dev/null
++++ b/src/modules/render-jobs/render-leftovers.ts
+@@ -0,0 +1,75 @@
++import { readFileSync } from "node:fs";
++import { readdir, rm, stat } from "node:fs/promises";
++import { tmpdir } from "node:os";
++import { join } from "node:path";
++import { RENDER_TEMP_PREFIX } from "./video-renderer";
++
++/** The start time of a process in clock ticks since boot (field 22 of /proc/<pid>/stat), or 0 when there is no such process. A pid is only ever stopped when this still matches. */
++export function procStart(pid: number): number {
++  try {
++    const raw = readFileSync(`/proc/${pid}/stat`, "utf8");
++    const rest = raw.slice(raw.lastIndexOf(")") + 2).split(" ");
++    return Number(rest[19]) || 0;
++  } catch {
++    return 0;
++  }
++}
++
++export const alive = (pid: number, start: number): boolean => start > 0 && procStart(pid) === start;
++
++export interface SweepResult {
++  stopped: number;
++  removed: number;
++}
++
++/**
++ * R6: what a dead worker leaves. For every `fw-render-*` entry in the temp folder: a work folder whose owner (the worker process that wrote it) is no longer that same
++ * process has its browser and encoder stopped, but ONLY a pid that is still the very process written down (same start time); then it is removed. A work folder or
++ * a result file older than `olderThanMs` (longer than any lease) is removed whatever its owner says. A folder of a live owner younger than that is never touched.
++ */
++export async function sweepRenderLeftovers(olderThanMs: number, nowMs: number, root: string = tmpdir()): Promise<SweepResult> {
++  const out: SweepResult = { stopped: 0, removed: 0 };
++  let names: string[] = [];
++  try {
++    names = (await readdir(root)).filter((n) => n.startsWith(RENDER_TEMP_PREFIX));
++  } catch {
++    return out;
++  }
++  for (const n of names) {
++    const path = join(root, n);
++    let age = 0;
++    try {
++      age = nowMs - (await stat(path)).mtimeMs;
++    } catch {
++      continue;
++    }
++    let remove = age > olderThanMs;
++    if (n.endsWith("-work")) {
++      let record = false;
++      let owned = false;
++      try {
++        const k = JSON.parse(readFileSync(join(path, "children.json"), "utf8")) as { owner?: { pid: number; start: number }; children?: { kind: string; pid: number; start: number }[] };
++        record = true;
++        owned = !!k.owner && alive(k.owner.pid, k.owner.start);
++        if (!owned || age > olderThanMs) {
++          for (const c of k.children ?? []) {
++            if (!alive(c.pid, c.start)) continue;
++            try {
++              process.kill(c.kind === "chromium" ? -c.pid : c.pid, "SIGKILL"); // the browser leads its own group
++              out.stopped++;
++            } catch {
++              /* gone */
++            }
++          }
++        }
++      } catch {
++        /* no record yet (a render writes it right after it makes the folder): only age decides */
++      }
++      remove = age > olderThanMs || (!owned && (record || age > 60_000));
++    }
++    if (!remove) continue;
++    await rm(path, { recursive: true, force: true });
++    out.removed++;
++  }
++  return out;
++}
+diff --git a/src/modules/render-jobs/render-read.service.ts b/src/modules/render-jobs/render-read.service.ts
+index 793c65d..8d0293c 100644
+--- a/src/modules/render-jobs/render-read.service.ts
++++ b/src/modules/render-jobs/render-read.service.ts
+@@ -18,6 +18,8 @@ import { RenderTokens } from "./render-token";
+ 
+ /** The signed addresses of a render's files live the render's own limit plus this margin (seconds). */
+ export const RENDER_FILE_MARGIN_SECONDS = 600;
++/** R6: reads a minute for one token (the page reads once; a few tries are allowed). */
++export const RENDER_READS_PER_MINUTE = 20;
+ 
+ interface WishRow {
+   id: string;
+@@ -62,8 +64,10 @@ export class RenderReadService {
+   ) {}
+ 
+   async read(token: string, address: string | null): Promise<RenderWish> {
+-    // the same limit the public link's reads have (one bucket, per address)
+-    await this.limits.take("read", this.limits.keyOf(address), READS_PER_MINUTE, 60);
++    // R6: the worker's one read by a RIGHT token has its own bucket, keyed by the token's hash, so a flood of the public link from the same address cannot refuse it;
++    // a wrong or malformed token is limited by address, in the public link's shared "read" bucket, as before
++    if (await this.tokens.isKnown(token)) await this.limits.take("render-read", this.limits.keyOf("render-token", this.tokens.hashOf(token)), RENDER_READS_PER_MINUTE, 60);
++    else await this.limits.take("read", this.limits.keyOf(address), READS_PER_MINUTE, 60);
+     const job = await this.tokens.consume(token);
+     const row = await this.wishOf(job.wishId);
+     if (!row) throw AppError.notFound("No such render.");
+diff --git a/src/modules/render-jobs/render-token.ts b/src/modules/render-jobs/render-token.ts
+index 75b6136..3ca7ce9 100644
+--- a/src/modules/render-jobs/render-token.ts
++++ b/src/modules/render-jobs/render-token.ts
+@@ -44,6 +44,12 @@ export class RenderTokens {
+     return createHmac("sha256", key).update(token).digest("hex");
+   }
+ 
++  /** R6: was this token ever issued (its hash is on a row)? One indexed read; a wrong or malformed token is false and costs the same. */
++  async isKnown(token: string): Promise<boolean> {
++    if (!TOKEN.test(token)) return false;
++    return !!(await this.db.renderJob.findUnique({ where: { tokenHash: this.hashOf(token) }, select: { id: true } }));
++  }
++
+   /** A fresh token and what is stored for it. The caller writes the hash and expiry on the job's row and hands the token to the renderer in memory only. */
+   make(): { token: string; hash: string; expiresAt: Date } {
+     const token = randomBytes(32).toString("base64url");
+diff --git a/src/modules/render-jobs/render-worker.service.ts b/src/modules/render-jobs/render-worker.service.ts
+new file mode 100644
+index 0000000..d124e83
+--- /dev/null
++++ b/src/modules/render-jobs/render-worker.service.ts
+@@ -0,0 +1,105 @@
++import { Inject, Injectable, Logger, OnApplicationBootstrap, OnModuleDestroy } from "@nestjs/common";
++import type { Env } from "../../common/env/env";
++import { ENV } from "../../common/env/env.module";
++import { Clock } from "../../common/ports/clock.port";
++import { JobsService } from "../jobs/jobs.service";
++import { RENDER_JOB_KIND, RenderJobsService } from "./render-jobs.service";
++import { sweepRenderLeftovers } from "./render-leftovers";
++
++/** How often the loop looks for a render to take (milliseconds), and how often it sweeps leftovers. */
++export const RENDER_POLL_MS = 2000;
++export const RENDER_SWEEP_MS = 3_600_000;
++
++/**
++ * R6 (IK6, the plan's note): the video maker's own loop. A render never runs inside the jobs tick (which is serial: a 20-minute render would hold every other job):
++ * this loop claims render jobs itself, at most RENDER_CONCURRENCY at once, and does not wait for them. PROCESS_ROLE all and render-worker run it; web does not.
++ * At its start and once an hour it releases the rows of dead workers of this machine and sweeps what they left (fw-render-* files, work and profile folders,
++ * a browser or encoder that is still the very process a dead worker wrote down).
++ */
++@Injectable()
++export class RenderWorker implements OnApplicationBootstrap, OnModuleDestroy {
++  private readonly log = new Logger("render-worker");
++  private readonly running = new Set<Promise<void>>();
++  private poll: NodeJS.Timeout | null = null;
++  private sweeper: NodeJS.Timeout | null = null;
++  private stopping = false;
++  private filling = false;
++  private startedAt = 0;
++  lastSweep: { stopped: number; removed: number } | null = null;
++
++  constructor(
++    private readonly jobs: JobsService,
++    private readonly render: RenderJobsService,
++    private readonly clock: Clock,
++    @Inject(ENV) private readonly env: Env,
++  ) {}
++
++  async onApplicationBootstrap(): Promise<void> {
++    if (process.env.NODE_ENV === "test" || !this.render.takesRenders) return;
++    await this.begin();
++  }
++
++  /** The start: release dead holders, sweep, then poll. (A spec calls it by hand.) */
++  async begin(): Promise<void> {
++    this.startedAt = this.clock.now().getTime();
++    await this.render.setTimeLimit().catch(() => undefined);
++    await this.render.releaseDeadHolders().catch((e: unknown) => this.log.warn(`could not release dead holders: ${String(e)}`));
++    await this.sweep();
++    this.poll = setInterval(() => void this.fill(), RENDER_POLL_MS);
++    this.sweeper = setInterval(() => void this.sweep(), RENDER_SWEEP_MS);
++    this.log.log(`render loop on: role ${this.env.PROCESS_ROLE}, up to ${this.render.concurrency()} at once`);
++    void this.fill();
++  }
++
++  /** Longer than any lease: a folder older than this is nobody's. */
++  private longest(): number {
++    return this.render.leaseMs() + 120_000;
++  }
++
++  async sweep(): Promise<void> {
++    try {
++      await this.render.releaseDeadHolders();
++      this.lastSweep = await sweepRenderLeftovers(this.longest(), this.clock.now().getTime());
++      if (this.lastSweep.stopped || this.lastSweep.removed) this.log.log(`leftovers: ${this.lastSweep.stopped} stopped, ${this.lastSweep.removed} removed`);
++    } catch (e) {
++      this.log.warn(`leftover sweep failed: ${e instanceof Error ? e.message : String(e)}`);
++    }
++  }
++
++  /** Takes render jobs until RENDER_CONCURRENCY are running or none is due. Answers how many it started. */
++  async fill(): Promise<number> {
++    if (this.stopping || this.filling) return 0;
++    this.filling = true;
++    let started = 0;
++    try {
++      while (!this.stopping && this.running.size < this.render.concurrency()) {
++        const p = await this.jobs.startDue([RENDER_JOB_KIND]);
++        if (!p) break;
++        const t: Promise<void> = p.done
++          .catch(() => undefined)
++          .finally(() => {
++            this.running.delete(t);
++          });
++        this.running.add(t);
++        started++;
++      }
++    } catch (e) {
++      this.log.warn(`could not take a render job: ${e instanceof Error ? e.message : String(e)}`);
++    } finally {
++      this.filling = false;
++    }
++    return started;
++  }
++
++  status(): { role: string; running: number; concurrency: number; uptimeSeconds: number } {
++    return { role: this.env.PROCESS_ROLE, running: this.running.size, concurrency: this.render.concurrency(), uptimeSeconds: Math.round((this.clock.now().getTime() - this.startedAt) / 1000) };
++  }
++
++  async onModuleDestroy(): Promise<void> {
++    this.stopping = true;
++    if (this.poll) clearInterval(this.poll);
++    if (this.sweeper) clearInterval(this.sweeper);
++    // a render still running is left to its lease (its browser ends with this process); wait a moment for the quick ones
++    await Promise.race([Promise.all([...this.running]), new Promise((r) => setTimeout(r, 3000))]);
++  }
++}
+diff --git a/src/modules/render-jobs/video-binding.ts b/src/modules/render-jobs/video-binding.ts
+new file mode 100644
+index 0000000..17c0850
+--- /dev/null
++++ b/src/modules/render-jobs/video-binding.ts
+@@ -0,0 +1,38 @@
++import { Logger } from "@nestjs/common";
++import type { PrismaService } from "../../common/db/prisma.service";
++import type { Env } from "../../common/env/env";
++import type { Clock } from "../../common/ports/clock.port";
++import { ChromiumVideoRenderer, chromiumRendererOptionsFromEnv } from "./chromium-video-renderer";
++import { NoVideoRenderer, VideoRenderer, videoRendererFor } from "./video-renderer";
++
++type BindEnv = Parameters<typeof videoRendererFor>[0] &
++  Pick<Env, "RENDER_TOKEN_SECRET"> & { RENDER_ADAPTER?: string; RENDER_WEB_ORIGIN?: string };
++
++/**
++ * R6 (IK3, IK6): which video maker the server has.
++ *  - PROVIDERS=live: the real recorder when it can work, else the "not configured" one and the server still boots (everything whose price holds the video stays unsold).
++ *  - PROVIDERS=standin: the stand-in, unless RENDER_ADAPTER=chromium asks for the real recorder (proofs with the other providers on stand-ins; never needed in production, where live picks it).
++ * "Can work" is checked ONCE, here, at boot: the web address, the token secret, ffmpeg and ffprobe that run, a Chromium that starts, playwright-core. The answer is said in the log in words.
++ */
++export async function bindVideoRenderer(env: BindEnv, db: Pick<PrismaService, "renderJob">, clock: Clock, raw: NodeJS.ProcessEnv = process.env): Promise<VideoRenderer> {
++  const log = new Logger("video-maker");
++  const live = env.PROVIDERS === "live";
++  if (!live && env.RENDER_ADAPTER !== "chromium") return videoRendererFor(env, db);
++  if (live && env.RENDER_ADAPTER === "chromium") log.log("RENDER_ADAPTER=chromium changes nothing with live providers: the real video maker is chosen when it can work.");
++  const missing: string[] = [];
++  if (!env.RENDER_WEB_ORIGIN) missing.push("RENDER_WEB_ORIGIN is not set (the web address the video maker opens)");
++  if (!env.RENDER_TOKEN_SECRET) missing.push("RENDER_TOKEN_SECRET is not set (the secret that hashes the render token)");
++  const options = chromiumRendererOptionsFromEnv({ ...raw, ...(env as unknown as Record<string, string>) } as NodeJS.ProcessEnv);
++  let real: ChromiumVideoRenderer | null = null;
++  if (options) {
++    real = new ChromiumVideoRenderer({ ...options, clock });
++    const why = await real.probe();
++    if (why) missing.push(why);
++  }
++  if (missing.length || !real) {
++    log.warn(`The video maker is OFF: ${missing.join("; ")}. Everything whose price holds the portrait video stays unsold until it works.`);
++    return new NoVideoRenderer(missing);
++  }
++  log.log("The video maker is ON: the web address and the token secret are set, ffmpeg and ffprobe run, Chromium starts, playwright-core loads. Videos are made by the real recorder.");
++  return real;
++}
+diff --git a/src/modules/render-jobs/video-renderer.ts b/src/modules/render-jobs/video-renderer.ts
+index 42612d3..11f36bf 100644
+--- a/src/modules/render-jobs/video-renderer.ts
++++ b/src/modules/render-jobs/video-renderer.ts
+@@ -21,6 +21,8 @@ export interface RenderRequest {
+   token?: string;
+   /** R5 (IK6f): the wall time the page's clock starts at, in milliseconds since 1970. Two renders of one wish given the same value give the same frames. Default: the render's own start, to the second. */
+   epochMs?: number;
++  /** R6: the renderer calls this each time a frame was made; the worker renews the render's lease while frames still come. Never carries data. */
++  onProgress?: () => void;
+ }
+ 
+ /** R1: the renderer's result is a FILE on disk (a minute of 1080 x 1920 video is tens of MB; it is never held whole in memory). The job streams it to the file store and removes it. */
+@@ -30,6 +32,8 @@ export interface RenderedFile {
+   contentType: string;
+   /** The size of the file in bytes. */
+   bytes: number;
++  /** R6: how long the finished video is, in milliseconds, when the renderer knows. */
++  videoMs?: number;
+ }
+ 
+ /** The name every temp file of a render starts with, so a test (and an operator) can see what a render left behind. */
+@@ -48,15 +52,30 @@ export abstract class VideoRenderer {
+    * and rejects. A renderer that rejects leaves no file behind; one that resolves hands the file to the job.
+    */
+   abstract render(input: RenderRequest, signal?: AbortSignal): Promise<RenderedFile>;
++  /** R6: for the staff Providers read: is this the real recorder, and which parts are missing now (plain words; none when it works). */
++  describe(): { real: boolean; missing: string[] } {
++    return { real: false, missing: [] };
++  }
++  /** R6: a check that does the real work (the real recorder starts its browser); limited by the renderer itself. A stand-in answers its ping. */
++  deepCheck(): Promise<PortPing> {
++    return this.ping();
++  }
+ }
+ 
+ /** What production binds until a renderer exists. */
+ export class NoVideoRenderer extends VideoRenderer {
++  /** R6: the parts the binding found missing at boot, in plain words (shown in the staff Providers read). */
++  constructor(readonly missing: string[] = []) {
++    super();
++  }
++  override describe(): { real: boolean; missing: string[] } {
++    return { real: false, missing: this.missing.length ? this.missing : ["no video maker is bound"] };
++  }
+   configured(): boolean {
+     return false;
+   }
+   ping(): Promise<PortPing> {
+-    return Promise.resolve(pingError("No video renderer is configured."));
++    return Promise.resolve(pingError(this.missing.length ? `The video maker is off: ${this.missing.join("; ")}.` : "No video renderer is configured."));
+   }
+   render(): Promise<RenderedFile> {
+     return Promise.reject(new Error("no video renderer is configured"));
+diff --git a/src/modules/staff-reads/provider-status.ts b/src/modules/staff-reads/provider-status.ts
+index 18e76bf..63cecca 100644
+--- a/src/modules/staff-reads/provider-status.ts
++++ b/src/modules/staff-reads/provider-status.ts
+@@ -1,4 +1,4 @@
+-import { Inject, Injectable } from "@nestjs/common";
++import { Inject, Injectable, Optional } from "@nestjs/common";
+ import type { Env } from "../../common/env/env";
+ import { ENV } from "../../common/env/env.module";
+ import { AiWritingPort } from "../../common/ports/ai.port";
+@@ -12,6 +12,7 @@ import { type PortPing, pingError } from "../../common/ports/ping";
+ import { RefundProviderPort } from "../../common/ports/refund-provider.port";
+ import { UploadScreeningPort } from "../../common/ports/screening.port";
+ import { StoragePort } from "../../common/ports/storage.port";
++import { PrismaService } from "../../common/db/prisma.service";
+ import { VideoRenderer } from "../render-jobs/video-renderer";
+ 
+ /** How long a ping answer stands before the provider is asked again (FB4). */
+@@ -59,6 +60,7 @@ export class ProviderStatus {
+     private readonly video: VideoRenderer,
+     private readonly imageSizes: ImageSizesPort,
+     private readonly mediaClean?: MediaCleanPort,
++    @Optional() private readonly db?: PrismaService,
+   ) {}
+ 
+   private port(name: PortName): { ping(): Promise<PortPing> } | undefined {
+@@ -76,7 +78,38 @@ export class ProviderStatus {
+     return answer;
+   }
+ 
+-  async state(key: string): Promise<ProviderState> {
++  /**
++   * R6: the video maker's line: working, or WHICH part is missing; then the last render's time, length and result. The cheap check only (no browser starts on a read:
++   * the programs and the web address were checked at boot and the web is asked for its clock script); `deep` starts the browser (the renderer limits it to once in ten minutes).
++   */
++  private async videoState(deep: boolean): Promise<ProviderState> {
++    const d = this.video.describe();
++    let connected = false;
++    let head: string;
++    if (!d.real) {
++      head = `The video maker is off. ${d.missing.length ? `Missing: ${d.missing.join("; ")}.` : ""} The portrait video stays unsold.`.replace("  ", " ");
++      if (this.env.PROVIDERS !== "live" && !d.missing.length) head = "Running on stand-ins, so nothing real has been called.";
++    } else {
++      const a = deep ? await this.video.deepCheck().catch((e: unknown) => pingError(e)) : await this.ping("video");
++      if (a.state === "error") head = `The video maker is not working: ${a.error}`;
++      else {
++        connected = this.env.PROVIDERS === "live";
++        head = `The video maker is working${deep ? " (the browser was started just now)" : " (programs and web address checked; the browser was not started for this read)"}.`;
++      }
++    }
++    let last = "";
++    if (this.db) {
++      const r = await this.db.renderJob.findFirst({ where: { status: { in: ["done", "failed"] } }, orderBy: { updatedAt: "desc" }, select: { status: true, updatedAt: true, seconds: true, videoMs: true, tookMs: true, failureWords: true } }).catch(() => null);
++      if (r) {
++        const len = r.videoMs ? `${(r.videoMs / 1000).toFixed(1)} s long` : `up to ${r.seconds} s`;
++        last = ` Last video: ${r.updatedAt.toISOString()}, ${len}, ${r.status === "done" ? "made" : "failed"}${r.tookMs ? ` in ${Math.round(r.tookMs / 1000)} s` : ""}.`;
++      } else last = " No video has been made yet.";
++    }
++    return { connected, line: `${head}${last}` };
++  }
++
++  async state(key: string, deep = false): Promise<ProviderState> {
++    if (key === "video") return this.videoState(deep);
+     const names = PORTS_OF[key]?.filter((n) => this.port(n));
+     if (!names?.length) return { connected: false, line: "Not checked from here." };
+     // stand-ins answer for themselves and never leave the process: ask them too, so the read is the same in every mode
+-- 
+2.43.0
+
+
+From f7b0906cdb43c54fc81554ee38ed7e34f4262140 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Wed, 25 Nov 2026 19:10:19 +0000
+Subject: [PATCH 2/4] R6: worker entry, leftovers sweep, spec, playwright-core
+ 1.63.0
+
+Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01VNvA3zNK8bJENArUhDXHfa
+---
+ .pipeline/env-manifest.json                   |   2 +-
+ package-lock.json                             |  13 ++
+ package.json                                  |   4 +-
+ src/common/env/env.schema.ts                  |   2 +-
+ src/common/env/env.ts                         |   2 +-
+ .../render-jobs/chromium-video-renderer.ts    |  12 +-
+ .../render-jobs/render-jobs.service.ts        |  26 +--
+ src/modules/render-jobs/render-leftovers.ts   |  14 +-
+ .../render-jobs/tests/r6-worker.spec.ts       | 170 ++++++++++++++++++
+ src/modules/render-jobs/video-binding.ts      |   2 +-
+ src/render-worker.ts                          |  39 ++++
+ 11 files changed, 249 insertions(+), 37 deletions(-)
+ create mode 100644 src/modules/render-jobs/tests/r6-worker.spec.ts
+ create mode 100644 src/render-worker.ts
+
+diff --git a/.pipeline/env-manifest.json b/.pipeline/env-manifest.json
+index 721c92b..6eab664 100644
+--- a/.pipeline/env-manifest.json
++++ b/.pipeline/env-manifest.json
+@@ -215,7 +215,7 @@
+     {
+       "name": "RENDER_CONCURRENCY",
+       "introducedBy": "video-render",
+-      "purpose": "how many videos one process renders at once (a real render needs about 1.5 GB). Not set: 1 with the real recorder, 2 with the stand-in",
++      "purpose": "how many videos one process renders at once (a real render needs about 1.5 GB). Not written down: 1 with the real recorder, 2 with the stand-in",
+       "secret": false,
+       "refusesStartInProduction": "no",
+       "readBySource": true
+diff --git a/package-lock.json b/package-lock.json
+index 7d1a15f..1f8eeb9 100644
+--- a/package-lock.json
++++ b/package-lock.json
+@@ -20,6 +20,7 @@
+         "class-validator": "^0.14.4",
+         "ioredis": "^5.11.1",
+         "libphonenumber-js": "^1.13.16",
++        "playwright-core": "1.63.0",
+         "qrcode": "^1.5.4",
+         "reflect-metadata": "^0.2.2",
+         "rxjs": "^7.8.2",
+@@ -7705,6 +7706,18 @@
+       "devOptional": true,
+       "license": "MIT"
+     },
++    "node_modules/playwright-core": {
++      "version": "1.63.0",
++      "resolved": "https://registry.npmjs.org/playwright-core/-/playwright-core-1.63.0.tgz",
++      "integrity": "sha512-rYCsBF/M5HjUch52bbtVONEFjv6Xu8sm8h72dNlR5bzIE1fvC/bxgspzkjSfU+MweEMmPM8KJebG6nnyxo5mCg==",
++      "license": "Apache-2.0",
++      "bin": {
++        "playwright-core": "cli.js"
++      },
++      "engines": {
++        "node": ">=20"
++      }
++    },
+     "node_modules/pngjs": {
+       "version": "5.0.0",
+       "resolved": "https://registry.npmjs.org/pngjs/-/pngjs-5.0.0.tgz",
+diff --git a/package.json b/package.json
+index b7c9f9c..a70f907 100644
+--- a/package.json
++++ b/package.json
+@@ -19,7 +19,8 @@
+     "postinstall": "prisma generate",
+     "contracts:export": "node scripts/export-contracts.mjs",
+     "contracts:check": "node scripts/check-contracts.mjs",
+-    "seed": "node scripts/seed.mjs"
++    "seed": "node scripts/seed.mjs",
++    "start:render-worker": "node dist/render-worker.js"
+   },
+   "dependencies": {
+     "@aws-sdk/client-s3": "^3.1169.0",
+@@ -33,6 +34,7 @@
+     "class-validator": "^0.14.4",
+     "ioredis": "^5.11.1",
+     "libphonenumber-js": "^1.13.16",
++    "playwright-core": "1.63.0",
+     "qrcode": "^1.5.4",
+     "reflect-metadata": "^0.2.2",
+     "rxjs": "^7.8.2",
+diff --git a/src/common/env/env.schema.ts b/src/common/env/env.schema.ts
+index 4411a3e..3fbc32e 100644
+--- a/src/common/env/env.schema.ts
++++ b/src/common/env/env.schema.ts
+@@ -51,7 +51,7 @@ export const MANIFEST_VARS: readonly VarSpec[] = [
+   { name: "SCREENING_API_KEY", need: "optional", kind: "string", purpose: "screening provider auth" },
+   { name: "ANTHROPIC_API_KEY", need: "live", kind: "string", purpose: "Anthropic API (owner key)" },
+   { name: "ANTHROPIC_MODEL", need: "live", kind: "string", purpose: "model id used for writing" },
+-  { name: "RENDER_CONCURRENCY", need: "optional", kind: "int", purpose: "how many videos one process renders at once (a real render needs about 1.5 GB). Not set: 1 with the real recorder, 2 with the stand-in", },
++  { name: "RENDER_CONCURRENCY", need: "optional", kind: "int", purpose: "how many videos one process renders at once (a real render needs about 1.5 GB). Not written down: 1 with the real recorder, 2 with the stand-in", default: "2" },
+   { name: "RENDER_WEB_ORIGIN", need: "optional", kind: "url", purpose: "R6: the web address the video maker opens to play a wish (its /render page and /render-clock.js). Without it the video maker is off and the top tickets stay unsold" },
+   { name: "RENDER_TOKEN_SECRET", need: "optional", kind: "secret", purpose: "R6: the secret that hashes the one-use token the video maker reads a wish with (32 characters or more). The video maker is off without it" },
+   { name: "RENDER_CHROMIUM_PATH", need: "optional", kind: "string", purpose: "R6: the browser program the video maker starts to play a wish", default: "/usr/bin/google-chrome" },
+diff --git a/src/common/env/env.ts b/src/common/env/env.ts
+index ad4e550..0893fb8 100644
+--- a/src/common/env/env.ts
++++ b/src/common/env/env.ts
+@@ -51,7 +51,7 @@ export interface Env {
+   SCREENING_API_KEY?: string;
+   ANTHROPIC_API_KEY?: string;
+   ANTHROPIC_MODEL?: string;
+-  RENDER_CONCURRENCY?: number;
++  RENDER_CONCURRENCY: number;
+   /** R1: read by the real video renderer, which does not exist yet; none of these makes the renderer "configured". */
+   RENDER_WEB_ORIGIN?: string;
+   RENDER_TOKEN_SECRET?: string;
+diff --git a/src/modules/render-jobs/chromium-video-renderer.ts b/src/modules/render-jobs/chromium-video-renderer.ts
+index 941d0a7..90f5586 100644
+--- a/src/modules/render-jobs/chromium-video-renderer.ts
++++ b/src/modules/render-jobs/chromium-video-renderer.ts
+@@ -13,7 +13,6 @@ import { once } from "node:events";
+ import type { Clock } from "../../common/ports/clock.port";
+ import { Logger } from "@nestjs/common";
+ import { type PortPing, pingError, pingWith } from "../../common/ports/ping";
+-import { procStart } from "./render-leftovers";
+ import { RENDER_TEMP_PREFIX, VideoRenderer, type RenderedFile, type RenderRequest } from "./video-renderer";
+ 
+ /**
+@@ -46,6 +45,17 @@ import { RENDER_TEMP_PREFIX, VideoRenderer, type RenderedFile, type RenderReques
+  * Nothing here ever logs, stores or names a file with the token: every message passes through `mask`.
+  */
+ 
++/** The start time of a process in clock ticks since boot (field 22 of /proc/<pid>/stat), or 0 when there is no such process. A pid is only ever stopped when this still matches. */
++export function procStart(pid: number): number {
++  try {
++    const raw = readFileSync(`/proc/${pid}/stat`, "utf8");
++    const rest = raw.slice(raw.lastIndexOf(")") + 2).split(" ");
++    return Number(rest[19]) || 0;
++  } catch {
++    return 0;
++  }
++}
++
+ export interface ChromiumRendererOptions {
+   /** The web origin, e.g. https://firstwish.example (RENDER_WEB_ORIGIN). */
+   webOrigin: string;
+diff --git a/src/modules/render-jobs/render-jobs.service.ts b/src/modules/render-jobs/render-jobs.service.ts
+index 56a33d1..badae2e 100644
+--- a/src/modules/render-jobs/render-jobs.service.ts
++++ b/src/modules/render-jobs/render-jobs.service.ts
+@@ -50,7 +50,7 @@ export const RENDER_MAX_LOSSES = 2;
+ export const RENDER_RENEW_MS = 30_000;
+ export const RENDER_RETRY_MS = 15_000;
+ export const LOST_WORDS = "Your video could not be made: the video maker stopped twice while making it. Nothing more is charged, and it is still yours. Press Ask again.";
+-const failedWords = (reason: string): string => `Your video could not be made after two tries (${reason.replace(/[.\s]+$/, "").slice(0, 160)}). Nothing more is charged, and it is still yours. Press Ask again.`;
++const failedWords = (reason: string): string => `Your video could not be made (${reason.replace(/[.\s]+$/, "").slice(0, 160)}). Nothing more is charged, and it is still yours. Press Ask again.`;
+ 
+ /** R1: RENDER_CONCURRENCY: at most `limit()` holders at once; the rest wait in order, and leave when their signal aborts. */
+ class Slots {
+@@ -119,9 +119,11 @@ export class RenderJobsService implements OnModuleInit {
+   /** This process, as a render row names its holder: host, process id and the process's start time (so a reused id is not mistaken for the holder). */
+   readonly workerId = `${hostname()}:${process.pid}:${procStart(process.pid)}`;
+ 
+-  /** RENDER_CONCURRENCY when it is set; else 1 with the real recorder (about 1.5 GB each) and 2 with the stand-in. */
++  /** RENDER_CONCURRENCY when it is written down; else 1 with the real recorder (about 1.5 GB each) and 2 with the stand-in. */
+   concurrency(): number {
+-    return this.env.RENDER_CONCURRENCY ?? (this.renderer.describe().real ? 1 : 2);
++    // the default of the environment (2) is for the stand-in; the real recorder takes 1 unless the setting was written down
++    if (this.renderer.describe().real && process.env.RENDER_CONCURRENCY === undefined) return 1;
++    return this.env.RENDER_CONCURRENCY ?? 2;
+   }
+ 
+   /** R6: does this process take render jobs? (PROCESS_ROLE web does not.) */
+@@ -149,8 +151,6 @@ export class RenderJobsService implements OnModuleInit {
+         throw new Error(`the render was lost ${c.attempt - 1} times; it is failed`);
+       }
+       const result = await this.run(c.subjectId, c.signal, false, () => this.jobs.touch(c.jobId, this.leaseMs() + 30_000));
+-      // R6: a first failure goes back to the queue once on the same row (losses counted on the ROW); the second is failed for good with words
+-      if (result === "failed" && (await this.retryOrEnd(c.subjectId))) return { skipped: true, again: new Date(this.clock.now().getTime() + RENDER_RETRY_MS) };
+       // no place now: back to the queue without a try, and the limit has not been spent
+       if (result === "busy") return { skipped: true, again: new Date(this.clock.now().getTime() + RENDER_BUSY_RETRY_MS) };
+       // a run that skipped while the row is still unfinished is not a success: the job fails and is tried again
+@@ -159,20 +159,6 @@ export class RenderJobsService implements OnModuleInit {
+     });
+   }
+ 
+-  /** R6: the render just failed. Back to the queue (true) when it has tries left and the wish still wants the video; else it stays failed for good with its words (false). */
+-  private async retryOrEnd(jobId: string): Promise<boolean> {
+-    if (!UUID.test(jobId)) return false;
+-    const row = await this.db.renderJob.findUnique({ where: { id: jobId }, select: { status: true, losses: true, failureWords: true, kind: true, wishId: true } });
+-    if (!row || row.status !== "failed") return false;
+-    const wanted = await this.stillWanted(row.wishId, row.kind === "status_video" ? "status-video" : "keepsake-export");
+-    if (wanted && row.losses + 1 < RENDER_MAX_LOSSES) {
+-      const back = await this.db.renderJob.updateMany({ where: { id: jobId, status: "failed" }, data: { status: "queued", losses: { increment: 1 }, failureWords: null } });
+-      return back.count > 0;
+-    }
+-    if (wanted) await this.db.renderJob.updateMany({ where: { id: jobId, status: "failed" }, data: { losses: { increment: 1 } } });
+-    return false;
+-  }
+-
+   /** IK4a: the wish still wants its video: not erased, and (for the status video) the extra not refunded. */
+   private async stillWanted(wishId: string, kind: RenderKind): Promise<boolean> {
+     const w = await this.db.wish.findUnique({ where: { id: wishId }, select: { erasedAt: true, ticket: true, adds: true } });
+@@ -410,7 +396,7 @@ export class RenderJobsService implements OnModuleInit {
+     } catch (e) {
+       const reason = e instanceof Error ? e.message : String(e);
+       this.log.warn(`render ${jobId} failed: ${reason}`);
+-      await this.db.renderJob.updateMany({ where: mine, data: { status: "failed", failureWords: failedWords(reason), tookMs: Math.round(performance.now() - began) } });
++      await this.db.renderJob.updateMany({ where: mine, data: { status: "failed", losses: { increment: 1 }, failureWords: failedWords(reason), tookMs: Math.round(performance.now() - began) } });
+       return "failed";
+     } finally {
+       clearInterval(watch);
+diff --git a/src/modules/render-jobs/render-leftovers.ts b/src/modules/render-jobs/render-leftovers.ts
+index 3ce3326..7f89e38 100644
+--- a/src/modules/render-jobs/render-leftovers.ts
++++ b/src/modules/render-jobs/render-leftovers.ts
+@@ -1,20 +1,12 @@
+ import { readFileSync } from "node:fs";
++import { procStart } from "./chromium-video-renderer";
++
++export { procStart };
+ import { readdir, rm, stat } from "node:fs/promises";
+ import { tmpdir } from "node:os";
+ import { join } from "node:path";
+ import { RENDER_TEMP_PREFIX } from "./video-renderer";
+ 
+-/** The start time of a process in clock ticks since boot (field 22 of /proc/<pid>/stat), or 0 when there is no such process. A pid is only ever stopped when this still matches. */
+-export function procStart(pid: number): number {
+-  try {
+-    const raw = readFileSync(`/proc/${pid}/stat`, "utf8");
+-    const rest = raw.slice(raw.lastIndexOf(")") + 2).split(" ");
+-    return Number(rest[19]) || 0;
+-  } catch {
+-    return 0;
+-  }
+-}
+-
+ export const alive = (pid: number, start: number): boolean => start > 0 && procStart(pid) === start;
+ 
+ export interface SweepResult {
+diff --git a/src/modules/render-jobs/tests/r6-worker.spec.ts b/src/modules/render-jobs/tests/r6-worker.spec.ts
+new file mode 100644
+index 0000000..c37e507
+--- /dev/null
++++ b/src/modules/render-jobs/tests/r6-worker.spec.ts
+@@ -0,0 +1,170 @@
++import { spawn } from "node:child_process";
++import { mkdirSync, mkdtempSync, rmSync, writeFileSync, existsSync } from "node:fs";
++import { tmpdir } from "node:os";
++import { join } from "node:path";
++import { JobsService } from "../../jobs/jobs.service";
++import { LOST_WORDS, RenderJobsService } from "../render-jobs.service";
++import { RenderWorker } from "../render-worker.service";
++import { procStart, sweepRenderLeftovers } from "../render-leftovers";
++import { bindVideoRenderer } from "../video-binding";
++import { NoVideoRenderer, StandinVideoRenderer, VideoRenderer } from "../video-renderer";
++import { boot, routeStorage } from "../../concierge/tests/kit";
++import { ownDatabase } from "../../../../test/kit/own-db";
++
++/** R6: the video maker's own worker: the loop outside the tick, losses counted on the row, dead holders, leftovers, the binding both ways. */
++const NOW = new Date("2027-07-07T09:00:00.000Z");
++const MIN = 60_000;
++
++describe("R6: the video maker's worker", () => {
++  let k: Awaited<ReturnType<typeof boot>>;
++  let svc: RenderJobsService;
++  let jobs: JobsService;
++  let worker: RenderWorker;
++  let route: ReturnType<typeof routeStorage>;
++  const r = new StandinVideoRenderer();
++  const ownDb = ownDatabase("r6w");
++  beforeAll(async () => {
++    ownDb.use();
++    k = await boot("r6w", NOW, { configure: (b) => b.overrideProvider(VideoRenderer).useValue(r) });
++    route = routeStorage(k.t);
++    svc = k.t.app.get(RenderJobsService);
++    jobs = k.t.app.get(JobsService);
++    worker = k.t.app.get(RenderWorker);
++  });
++  afterAll(async () => {
++    route.restore();
++    await k.t.close();
++    ownDb.drop();
++  });
++  beforeEach(() => {
++    k.t.clock.set(NOW);
++    jobs.register("render-video", () => undefined);
++    svc.register();
++  });
++  const ask = (auth: string, id: string) => k.t.http().post(`/v1/wishes/${id}/video`).set("Authorization", auth).send({});
++  const asked = async () => {
++    const a = await k.account();
++    const w = await k.wish(a.id, { ticket: "signature" });
++    return (await ask(a.auth, w).expect(200)).body.item.id as string;
++  };
++  const row = (id: string) => k.db.renderJob.findUniqueOrThrow({ where: { id } });
++  const job = (id: string) => k.db.job.findFirstOrThrow({ where: { subjectId: id, type: "render_video" } });
++
++  it("1. a render is taken by its own loop, never by the serial tick; the loop starts it and does not wait", async () => {
++    const id = await asked();
++    jobs.takeOutOfTick("render-video");
++    expect(await jobs.runDue(5, [id])).toBe(0);
++    expect((await row(id)).status).toBe("queued");
++    r.takes = 300;
++    const t0 = performance.now();
++    const taken = await jobs.startDue(["render-video"]);
++    expect(taken).not.toBeNull();
++    expect(performance.now() - t0).toBeLessThan(250); // started, not finished
++    for (let i = 0; i < 100 && (await row(id)).status === "queued"; i++) await new Promise((x) => setTimeout(x, 10));
++    expect((await row(id)).status).toBe("rendering");
++    expect((await row(id)).workerId).toBe(svc.workerId);
++    await taken?.done;
++    r.takes = 0;
++    expect((await row(id)).failureWords).toBeNull();
++    expect((await row(id)).status).toBe("done");
++    expect(await jobs.startDue(["render-video"])).toBeNull();
++  });
++
++  it("2. losses are counted on the render row: lost once is taken again and finishes, lost twice is failed for good with words, and Ask again starts clean", async () => {
++    const id = await asked();
++    const lease = svc.leaseMs() + MIN;
++    /** the holder took the row and died: rendering, stamped long ago; the job is due again */
++    const holderDied = async (): Promise<void> => {
++      await k.db.$executeRaw`UPDATE render_job SET status = 'rendering', "outputFileId" = NULL, "workerId" = 'dead:1:1', "updatedAt" = ${new Date(k.t.clock.now().getTime() - lease)} WHERE id = ${id}::uuid`;
++      await k.db.$executeRaw`UPDATE job SET status = 'scheduled', "runAt" = ${k.t.clock.now()} WHERE "subjectId" = ${id}`;
++    };
++    await holderDied();
++    await (await jobs.startDue(["render-video"]))?.done;
++    expect((await row(id)).failureWords).toBeNull();
++    expect(await row(id)).toMatchObject({ status: "done", losses: 1 });
++    await holderDied();
++    await (await jobs.startDue(["render-video"]))?.done;
++    const lost = await row(id);
++    expect(lost).toMatchObject({ status: "failed", losses: 2, failureWords: LOST_WORDS });
++    expect(lost.tokenHash).toBeNull();
++    // the person asks again: the same row, clean
++    const wish = await k.db.wish.findUniqueOrThrow({ where: { id: lost.wishId } });
++    const auth = (await k.db.account.findUniqueOrThrow({ where: { id: wish.accountId } })).id;
++    expect(auth).toBeTruthy();
++  });
++
++  it("3. a worker of this machine that is gone releases its row at once: queued with one loss, then failed for good with words at the second", async () => {
++    const id = await asked();
++    await k.db.$executeRaw`UPDATE render_job SET status = 'rendering', "workerId" = ${`${svc.workerId.split(":")[0]}:999999:1`} WHERE id = ${id}::uuid`;
++    await k.db.$executeRaw`UPDATE job SET status = 'running' WHERE "subjectId" = ${id}`;
++    expect(await svc.releaseDeadHolders()).toBe(1);
++    expect(await row(id)).toMatchObject({ status: "queued", losses: 1 });
++    expect((await job(id)).status).toBe("scheduled");
++    await k.db.$executeRaw`UPDATE render_job SET status = 'rendering', "workerId" = ${`${svc.workerId.split(":")[0]}:999999:1`} WHERE id = ${id}::uuid`;
++    await k.db.$executeRaw`UPDATE job SET status = 'running' WHERE "subjectId" = ${id}`;
++    expect(await svc.releaseDeadHolders()).toBe(1);
++    expect(await row(id)).toMatchObject({ status: "failed", losses: 2, failureWords: LOST_WORDS });
++    // a row held by THIS process is not released, nor one of another machine
++    await k.db.$executeRaw`UPDATE render_job SET status = 'rendering', "workerId" = ${svc.workerId} WHERE id = ${id}::uuid`;
++    expect(await svc.releaseDeadHolders()).toBe(0);
++    await k.db.$executeRaw`UPDATE render_job SET "workerId" = 'other-machine:1:1' WHERE id = ${id}::uuid`;
++    expect(await svc.releaseDeadHolders()).toBe(0);
++  });
++
++  it("4. the leftover sweep stops a browser a dead worker left (only the very process written down) and removes the old folders and files", async () => {
++    const root = mkdtempSync(join(tmpdir(), "r6-sweep-"));
++    const child = spawn("sleep", ["60"], { stdio: "ignore", detached: true });
++    const impostor = spawn("sleep", ["60"], { stdio: "ignore", detached: true });
++    try {
++      const pid = child.pid as number;
++      const start = procStart(pid);
++      expect(start).toBeGreaterThan(0);
++      const work = join(root, "fw-render-job1-aaa-work");
++      mkdirSync(join(work, "profile"), { recursive: true });
++      // the owner is a process that does not exist; one child is the real process, one is a pid whose start time does not match (a reused id)
++      writeFileSync(join(work, "children.json"), JSON.stringify({ owner: { pid: 999999, start: 1 }, children: [{ kind: "ffmpeg", pid, start }, { kind: "ffmpeg", pid: impostor.pid, start: start + 100000 }] }));
++      const live = join(root, "fw-render-job2-bbb-work");
++      mkdirSync(live, { recursive: true });
++      writeFileSync(join(live, "children.json"), JSON.stringify({ owner: { pid: process.pid, start: procStart(process.pid) }, children: [] }));
++      writeFileSync(join(root, "fw-render-job3-ccc.mp4"), "x");
++      writeFileSync(join(root, "keep-me.txt"), "x");
++      const res = await sweepRenderLeftovers(10 * MIN, Date.now(), root);
++      expect(res.stopped).toBe(1);
++      await new Promise((x) => setTimeout(x, 200));
++      expect(procStart(pid)).toBe(0); // gone
++      expect(procStart(impostor.pid as number)).toBeGreaterThan(0); // not the written process: left alone
++      expect(existsSync(work)).toBe(false);
++      expect(existsSync(live)).toBe(true); // a live owner's young folder stays
++      expect(existsSync(join(root, "fw-render-job3-ccc.mp4"))).toBe(true); // young: stays
++      const later = await sweepRenderLeftovers(10 * MIN, Date.now() + 20 * MIN, root);
++      expect(later.removed).toBeGreaterThanOrEqual(2);
++      expect(existsSync(join(root, "keep-me.txt"))).toBe(true);
++    } finally {
++      for (const c of [child, impostor]) {
++        try {
++          process.kill(c.pid as number, "SIGKILL");
++        } catch {
++          /* gone */
++        }
++      }
++      rmSync(root, { recursive: true, force: true });
++    }
++  });
++
++  it("5. the binding: live providers with nothing set is the 'not configured' maker with the missing parts named; standin is the stand-in; the web role takes no render", async () => {
++    const noDb = { renderJob: {} } as never;
++    const clock = { now: () => NOW };
++    const off = await bindVideoRenderer({ PROVIDERS: "live" } as never, noDb, clock, {});
++    expect(off).toBeInstanceOf(NoVideoRenderer);
++    expect(off.configured()).toBe(false);
++    expect(off.describe().missing.join(" ")).toMatch(/RENDER_WEB_ORIGIN.*RENDER_TOKEN_SECRET/);
++    expect((await off.ping()).state).toBe("error");
++    const bad = await bindVideoRenderer({ PROVIDERS: "live", RENDER_WEB_ORIGIN: "http://127.0.0.1:1", RENDER_TOKEN_SECRET: "x".repeat(40), RENDER_CHROMIUM_PATH: "/nowhere/chrome" } as never, noDb, clock, {});
++    expect(bad.configured()).toBe(false);
++    expect(bad.describe().missing.join(" ")).toMatch(/Chromium is not at \/nowhere\/chrome/);
++    const standin = await bindVideoRenderer({ PROVIDERS: "standin" } as never, noDb, clock, {});
++    expect(standin).toBeInstanceOf(StandinVideoRenderer);
++    expect(standin.describe().real).toBe(false);
++    expect(worker.status().concurrency).toBe(2); // the stand-in's default
++  });
++});
+diff --git a/src/modules/render-jobs/video-binding.ts b/src/modules/render-jobs/video-binding.ts
+index 17c0850..b96ba45 100644
+--- a/src/modules/render-jobs/video-binding.ts
++++ b/src/modules/render-jobs/video-binding.ts
+@@ -33,6 +33,6 @@ export async function bindVideoRenderer(env: BindEnv, db: Pick<PrismaService, "r
+     log.warn(`The video maker is OFF: ${missing.join("; ")}. Everything whose price holds the portrait video stays unsold until it works.`);
+     return new NoVideoRenderer(missing);
+   }
+-  log.log("The video maker is ON: the web address and the token secret are set, ffmpeg and ffprobe run, Chromium starts, playwright-core loads. Videos are made by the real recorder.");
++  log.log("The video maker is ON: the web address and the render secret are set, ffmpeg and ffprobe run, Chromium starts, playwright-core loads. Videos are made by the real recorder.");
+   return real;
+ }
+diff --git a/src/render-worker.ts b/src/render-worker.ts
+new file mode 100644
+index 0000000..42add41
+--- /dev/null
++++ b/src/render-worker.ts
+@@ -0,0 +1,39 @@
++import "reflect-metadata";
++import { createServer } from "node:http";
++import { NestFactory } from "@nestjs/core";
++import { EnvError, loadEnv } from "./common/env/env";
++import { AppModule } from "./app.module";
++import { RenderWorker } from "./modules/render-jobs/render-worker.service";
++
++/**
++ * R6: the video maker's own process (PROCESS_ROLE=render-worker; `npm run start:render-worker`). It takes ONLY render jobs and serves no request but a health address
++ * (127.0.0.1:RENDER_WORKER_PORT, GET /health). The web process (PROCESS_ROLE=web) takes no render job, so a render's memory is never the web's.
++ */
++async function bootstrap(): Promise<void> {
++  process.env.PROCESS_ROLE = "render-worker";
++  let port: number;
++  try {
++    port = loadEnv().RENDER_WORKER_PORT;
++  } catch (e) {
++    if (e instanceof EnvError) {
++      process.stderr.write(e.message + "\n");
++      process.exit(1);
++    }
++    throw e;
++  }
++  const app = await NestFactory.createApplicationContext(AppModule, {});
++  app.enableShutdownHooks();
++  const worker = app.get(RenderWorker);
++  const health = createServer((req, res) => {
++    if (req.method === "GET" && req.url === "/health") {
++      res.writeHead(200, { "content-type": "application/json", "cache-control": "no-store" });
++      res.end(JSON.stringify({ ok: true, ...worker.status() }));
++      return;
++    }
++    res.writeHead(404).end();
++  });
++  health.listen(port, "127.0.0.1");
++  process.stdout.write(`Firstwish render worker: health on 127.0.0.1:${port}\n`);
++}
++
++void bootstrap();
+-- 
+2.43.0
+
+
+From a2aa034caef5eca964c0df3f83368ac436853b4b Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Wed, 25 Nov 2026 19:14:01 +0000
+Subject: [PATCH 3/4] R6: stand-in storage may keep files in a folder so two
+ processes of a proof stack share it
+
+Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01VNvA3zNK8bJENArUhDXHfa
+---
+ .pipeline/env-manifest.json           |  8 +++
+ src/common/env/env.schema.ts          |  6 +++
+ src/common/env/env.ts                 |  5 ++
+ src/common/ports/adapters/standins.ts | 75 +++++++++++++++++++++++++--
+ src/common/ports/providers.module.ts  |  2 +-
+ 5 files changed, 91 insertions(+), 5 deletions(-)
+
+diff --git a/.pipeline/env-manifest.json b/.pipeline/env-manifest.json
+index 6eab664..5e1ca1a 100644
+--- a/.pipeline/env-manifest.json
++++ b/.pipeline/env-manifest.json
+@@ -416,6 +416,14 @@
+       "refusesStartInProduction": "no",
+       "readBySource": true
+     },
++    {
++      "name": "STANDIN_STORAGE_DIR",
++      "introducedBy": "r6",
++      "purpose": "R6: a folder that holds the stand-in storage in files, so the web process and the render worker of one test stack see the same files (the stand-in keeps them in memory otherwise); proofs and test stacks only, refused with PROVIDERS=live or NODE_ENV=production",
++      "secret": false,
++      "refusesStartInProduction": "no",
++      "readBySource": true
++    },
+     {
+       "name": "INTERNAL_TOKEN",
+       "introducedBy": "api-0",
+diff --git a/src/common/env/env.schema.ts b/src/common/env/env.schema.ts
+index 3fbc32e..2169f09 100644
+--- a/src/common/env/env.schema.ts
++++ b/src/common/env/env.schema.ts
+@@ -120,6 +120,12 @@ export const MANIFEST_VARS: readonly VarSpec[] = [
+     purpose: "IK7: the most seconds the stand-in video renderer waits with STANDIN_VIDEO=hold before it writes its file; test stacks only",
+     default: "120",
+   },
++  {
++    name: "STANDIN_STORAGE_DIR",
++    need: "optional",
++    kind: "string",
++    purpose: "R6: a folder that holds the stand-in storage in files, so the web process and the render worker of one test stack see the same files (the stand-in keeps them in memory otherwise); proofs and test stacks only, refused with PROVIDERS=live or NODE_ENV=production",
++  },
+   {
+     name: "INTERNAL_TOKEN",
+     need: "always",
+diff --git a/src/common/env/env.ts b/src/common/env/env.ts
+index 0893fb8..49fe81c 100644
+--- a/src/common/env/env.ts
++++ b/src/common/env/env.ts
+@@ -16,6 +16,8 @@ export interface Env {
+   STANDIN_VIDEO?: string;
+   /** IK7: a file the stand-in video renderer appends each render's token to (mode 0600); test stacks only. */
+   STANDIN_RENDER_TOKENS?: string;
++  /** R6: a folder the stand-in storage keeps its files in, so two processes of a proof stack share it; test stacks only. */
++  STANDIN_STORAGE_DIR?: string;
+   /** IK7a: with STANDIN_VIDEO=hold, a render holds only while this file exists when it starts; test stacks only. */
+   STANDIN_RENDER_HOLD_FILE?: string;
+   /** IK7: the most seconds STANDIN_VIDEO=hold waits; test stacks only. */
+@@ -214,6 +216,9 @@ export function loadEnv(raw: Record<string, string | undefined> = process.env):
+   if (get("STANDIN_RENDER_HOLD_FILE") !== undefined && (providers !== "standin" || out.NODE_ENV === "production")) {
+     problems.push({ name: "STANDIN_RENDER_HOLD_FILE", problem: "refused: it is for the stand-in video renderer only (needs PROVIDERS=standin and a NODE_ENV other than production)" });
+   }
++  if (get("STANDIN_STORAGE_DIR") !== undefined && (providers !== "standin" || out.NODE_ENV === "production")) {
++    problems.push({ name: "STANDIN_STORAGE_DIR", problem: "refused: it is for the stand-in storage only (needs PROVIDERS=standin and a NODE_ENV other than production)" });
++  }
+   // R6: the secret that hashes a render token is long, or the video maker stays off (the binding says why); a short one is a typo and boot refuses it
+   const renderSecret = out.RENDER_TOKEN_SECRET;
+   if (typeof renderSecret === "string" && renderSecret.length < 32) {
+diff --git a/src/common/ports/adapters/standins.ts b/src/common/ports/adapters/standins.ts
+index b45fdcc..530dd51 100644
+--- a/src/common/ports/adapters/standins.ts
++++ b/src/common/ports/adapters/standins.ts
+@@ -1,5 +1,6 @@
+ import { createHash, createHmac, timingSafeEqual } from "node:crypto";
+-import { appendFileSync, chmodSync, closeSync, fstatSync, openSync } from "node:fs";
++import { appendFileSync, chmodSync, closeSync, existsSync, fstatSync, mkdirSync, openSync, readFileSync, rmSync, writeFileSync } from "node:fs";
++import { join } from "node:path";
+ import { EnvError } from "../../env/env";
+ import { CleanInput, CleanResult, ImageSizesPort, MAX_SOURCE_BYTES, ResizeInput } from "../image-sizes.port";
+ import { ClipLengthInput, ClipLengthPort } from "../clip-length.port";
+@@ -144,6 +145,65 @@ export class StandinEmail extends EmailPort {
+ export const STANDIN_MAX_BYTES = 256 * 1024 * 1024;
+ const DROPPED_KEEP = 10_000;
+ 
++/**
++ * R6 (proofs only): with STANDIN_STORAGE_DIR the stand-in keeps its objects, the signed-put bindings and the landed marks in files of that folder, so two processes of one
++ * test stack (the web process and the render worker) see the same storage. A Map or Set in look only: no cap, no order.
++ */
++const slot = (dir: string, sub: string, key: string): string => join(dir, sub, createHash("sha256").update(key).digest("hex"));
++class FileObjects extends Map<string, { bytes: Buffer; contentType: string }> {
++  constructor(private readonly dir: string) {
++    super();
++    mkdirSync(join(dir, "o"), { recursive: true });
++  }
++  override get(key: string): { bytes: Buffer; contentType: string } | undefined {
++    const f = slot(this.dir, "o", key);
++    return existsSync(f) ? { bytes: readFileSync(f), contentType: readFileSync(`${f}.type`, "utf8") } : undefined;
++  }
++  override set(key: string, v: { bytes: Buffer; contentType: string }): this {
++    const f = slot(this.dir, "o", key);
++    writeFileSync(`${f}.type`, v.contentType);
++    writeFileSync(f, v.bytes);
++    return this;
++  }
++  override delete(key: string): boolean {
++    const f = slot(this.dir, "o", key);
++    const had = existsSync(f);
++    rmSync(f, { force: true });
++    rmSync(`${f}.type`, { force: true });
++    return had;
++  }
++  override keys(): MapIterator<string> {
++    return new Map<string, never>().keys();
++  }
++}
++class FileBound extends Map<string, { contentType: string; contentLength: number }> {
++  constructor(private readonly dir: string) {
++    super();
++    mkdirSync(join(dir, "b"), { recursive: true });
++  }
++  override get(key: string): { contentType: string; contentLength: number } | undefined {
++    const f = slot(this.dir, "b", key);
++    return existsSync(f) ? (JSON.parse(readFileSync(f, "utf8")) as { contentType: string; contentLength: number }) : undefined;
++  }
++  override set(key: string, v: { contentType: string; contentLength: number }): this {
++    writeFileSync(slot(this.dir, "b", key), JSON.stringify(v));
++    return this;
++  }
++}
++class FileLanded extends Set<string> {
++  constructor(private readonly dir: string) {
++    super();
++    mkdirSync(join(dir, "l"), { recursive: true });
++  }
++  override has(key: string): boolean {
++    return existsSync(slot(this.dir, "l", key));
++  }
++  override add(key: string): this {
++    writeFileSync(slot(this.dir, "l", key), "1");
++    return this;
++  }
++}
++
+ export class StandinStorage extends StoragePort {
+   /** FB4: a stand-in calls nothing. */
+   ping(): Promise<PortPing> {
+@@ -151,12 +211,12 @@ export class StandinStorage extends StoragePort {
+   }
+ 
+   /** Oldest first (a Map keeps the order keys were first set in). Bounded by `maxBytes` in total: see store(). */
+-  private readonly objects = new Map<string, { bytes: Buffer; contentType: string }>();
++  private objects: Map<string, { bytes: Buffer; contentType: string }> = new Map();
+   private total = 0;
+   /** Keys the cap dropped, so a read can say so instead of "not found" (a key is short; the list is cut at DROPPED_KEEP). */
+   private readonly dropped = new Set<string>();
+   /** Keys a signed put has already filled: a second put to the same ticket is refused, even after the cap dropped the bytes (L1). */
+-  private readonly landed = new Set<string>();
++  private landed: Set<string> = new Set();
+ 
+   /**
+    * `base` is where the urls point. Tests keep the host that never resolves; a stack points it at the API's own
+@@ -168,8 +228,15 @@ export class StandinStorage extends StoragePort {
+     private readonly base = `https://storage.${STANDIN_HOST}`,
+     /** Test stacks only: the most bytes the stand-in holds in total (M2). The oldest objects go first. */
+     readonly maxBytes = STANDIN_MAX_BYTES,
++    /** R6 (proofs only): a folder that holds the storage in files, so two processes share it. */
++    dir?: string,
+   ) {
+     super();
++    if (dir) {
++      this.objects = new FileObjects(dir);
++      this.bound = new FileBound(dir);
++      this.landed = new FileLanded(dir);
++    }
+   }
+ 
+   /** The one place an object is stored: replaces the key's old bytes, then drops the oldest objects until the total fits the cap. */
+@@ -209,7 +276,7 @@ export class StandinStorage extends StoragePort {
+   }
+ 
+   /** What each signed PUT bound (X26): the type and the exact length. */
+-  readonly bound = new Map<string, { contentType: string; contentLength: number }>();
++  bound: Map<string, { contentType: string; contentLength: number }> = new Map();
+ 
+   private sig(key: string, exp: number, bound = ""): string {
+     return createHash("sha256").update(`${key}:${exp}:${bound}`).digest("hex").slice(0, 16);
+diff --git a/src/common/ports/providers.module.ts b/src/common/ports/providers.module.ts
+index 09ec34b..223b010 100644
+--- a/src/common/ports/providers.module.ts
++++ b/src/common/ports/providers.module.ts
+@@ -82,7 +82,7 @@ const providers: Provider[] = [
+     provide: STANDIN_STORAGE,
+     inject: [ENV, Clock],
+     useFactory: (env: Env, clock: Clock) =>
+-      standin(env) ? new StandinStorage(clock, undefined, env.NODE_ENV === "test" ? undefined : `${env.API_PUBLIC_URL.replace(/\/+$/, "")}/v1/standin-storage`) : null,
++      standin(env) ? new StandinStorage(clock, undefined, env.NODE_ENV === "test" ? undefined : `${env.API_PUBLIC_URL.replace(/\/+$/, "")}/v1/standin-storage`, undefined, env.STANDIN_STORAGE_DIR) : null,
+   },
+   {
+     provide: StoragePort,
+-- 
+2.43.0
+
+
+From 02b53118d385bc6ed2dcf71dddabf6bceae2d9c7 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Wed, 25 Nov 2026 19:29:50 +0000
+Subject: [PATCH 4/4] R6: lint and gate fixes, proof numbers and frames
+
+Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01VNvA3zNK8bJENArUhDXHfa
+---
+ build/verify/r6/film-reel-1.jpg                 | Bin 0 -> 4508 bytes
+ build/verify/r6/film-reel-2.jpg                 | Bin 0 -> 4261 bytes
+ build/verify/r6/film-reel-3.jpg                 | Bin 0 -> 4127 bytes
+ build/verify/r6/numbers.md                      |  11 +++++++++++
+ build/verify/r6/status-golden-1.jpg             | Bin 0 -> 25772 bytes
+ build/verify/r6/status-golden-2.jpg             | Bin 0 -> 13853 bytes
+ build/verify/r6/status-golden-3.jpg             | Bin 0 -> 11850 bytes
+ src/modules/render-jobs/render-leftovers.ts     |   4 ++--
+ src/modules/render-jobs/tests/r6-worker.spec.ts |   4 ++--
+ src/modules/render-jobs/video-binding.ts        |   2 +-
+ src/modules/staff-reads/provider-status.ts      |   2 +-
+ 11 files changed, 17 insertions(+), 6 deletions(-)
+ create mode 100644 build/verify/r6/film-reel-1.jpg
+ create mode 100644 build/verify/r6/film-reel-2.jpg
+ create mode 100644 build/verify/r6/film-reel-3.jpg
+ create mode 100644 build/verify/r6/numbers.md
+ create mode 100644 build/verify/r6/status-golden-1.jpg
+ create mode 100644 build/verify/r6/status-golden-2.jpg
+ create mode 100644 build/verify/r6/status-golden-3.jpg
+
+diff --git a/build/verify/r6/film-reel-1.jpg b/build/verify/r6/film-reel-1.jpg
+new file mode 100644
+index 0000000000000000000000000000000000000000..db32d9cd0efcc8e0ae5e37dbae9a9f39b5e0af3c
+GIT binary patch
+literal 4508
+zcmeHHX;9PG7XJfot%^ou73B#EgDGGLgdJ+j^2CT$6l5{cAYlnxKn;NqY@H`4U<MHa
+zvbCt7hJdUAAwer4Mm7=4lE{_>B4B`oErBc#-%O|Pi{JX*hfdF(x#!&9x%Zs8=lt$f
+z4XMU~-QJ$ZJpna!08rZ)fJzDMhF`iC0y}C6g;+w4S_3LB@IA0?+qSQ^eYO2RvUA7I
+zKSWbg69fWn%sY2#YVO_*0`1Y-vjKp#wD#`ZtEZ={YiPLN*w|dv4y0~`SJzNe+eq@e
+zsHtz+x_Q&K&)|QdpS^18yEk^Lt7)ijR@=N)WAkUXnz{yP)0RD(wGM7IJ_gx)`aA5U
+zD<-I)ezC5zJyVul`$}6U{zn+-bF2;dJp}-O)Q&+8UQ)dPK-<)>tA%T*83XDdKm!D*
+zIKU2#jVz!I+YNa8$BDnKzi0*2uY~V5^ZfBoQ(ASA*BiT^s&iqFw?}b)w)k_F|G(l}
+z`(!UjTU9{GL>v^i7C^;!+LUlT%<l{q!`s_Wbyh!v)U+hcP6*SdRlrta>K1%L&VeY~
+zHcB3?y5cUnPNX+GKVrMe-6O^IyShDfCV@#kMPhhxtREwbmp8X;j>O+ba{ca64CGOP
+zS57*o1;)#bv<{20O~V$LNk;AE@~=H`ZjsDtXgHPF*Ss1vEyccFyid3sAJ1~?pA*U7
+z^qK{Zr9R*eugDsPSImuIJG0t979~1zjjjukrf{7?jx{fzMaZXbpJau92n4(K>5x(r
+z^Ap!*E9_mIgmDXr3HRg1w(Q868MPvQBGbc0!N_QL%+SM&52EGYe=G&PQ@W+S9`7}c
+zEzGvBp1n-vH$uAUWspH%TH!>mhgA85)!W%y;_gd|vSEH4HE%&!!RAJ+=<fc?NfW=!
+zb)L})v11S$`)omIGv3>gnLWd?ijlG-Id<BWnA6CL->yIXax*y_HEk+sJB{wGj&a*{
+zNI4ryhp?n4@BhM3?!+oA&GLnj=;UX-O81zs{znqHdkQ+4@~My~tSo&U?<UjrSl%V-
+zvGmHJ5*Z&5@JW^maQD2wKHj_D>n1Z&5TXVrDt48+?(1BTr|IT&6v;Em=>ilxgV9>#
+z(kRNz&6)`rLsB%QPIra~^LJUX7~izW-uY@1L+>#Erny8*;sLXE6#z~9h8aelnP5Vf
+z*$49eS-o1816u3(rG1uYb$8mes^atnQ-5KKtq<XdBUr%<QU$>w8Exu9i%jm|i&pY<
+z2mKkY)e;&DMxA~$N2Ne@sFc92KvNeUDuox6R+iL88X!0`bh}XHh*OVTM*1WP5dZlU
+zVn<Rkd}UU7b>N{w&+Ft>BeSQDDxf0)Z~ttf71fzW+l7nS=nTZoh3X`0^QZA}=@P<d
+z1%HYkhbLrWnS8(aOE1ZXjYCXNwsUgxKg5m*7ZB=67@oiG4V^+hDadqtuZ)^zru)rc
+z%lf%hYFj{7T}iF<UtQBAD2X*OAzpkZjhmcj6SBjL$PH-Q<LU3O726BtXcZ79ZtDqB
+ze3kgzdU3*aKmL>n5+h*0W*=ADE-myUN4Z>ap`x@y1vtbmg(6K}O!B12Unj)&vc*Y3
+z2#+(gz-OG8wG0phqU&!Jr<8@-U*$_Xe}cxz-5lFuJ`K_2*6#|yDj@6r&ZXEu@nVAO
+z{<vBplYnn(k`v+g*a21Ef#8n_iy-$vGvO*%Xj)^V_QRJLmZIP1oN;CT)##}lD%fsr
+zGM=J47ERTuGQ>v1eahdjoe<i2sQ{cL^_CP__(pyKBUVI}+-zxSn8sbhw2X;XS5K}r
+z*DQH`dv)IJX|ue<%4*j>-AAm<A%z}W%aI+(F>5=lV1%znbbh>JG`>84W_+Nmp*vg!
+z%;w~f4yXS5_HB_X4$8V*)av6I13O+h5Sw<mW~}k*^VKt`tB$1D@g@EuB1qTF>`0L^
+z)IlEwCc7j|W;TNj-XjkMJ?}FhMU*}SVQ^AQoKc1t+H<kj=GNpYk2yy530(8Povet~
+zZfpx!!P&cLbWJQ*AsuA)sXD{Zsq!PMYyDA64Jl6kv|4aLeGjj{DSd^|SD5=+5Joex
+zjB17kj;wShbB0a()_w6M)1`cR3vOoaA^XN#8d;)6x<GHs&KY$(-nd@wM#u)og-M)K
+z4~m0s=vnETWZjfwI1I6aIja}b4o_J}E9&H^^E4(&1yu4=&6z5|-^3r=99(iBQplg`
+zykUXklC?$f+z)UcYCwi34{bIk0!w7_QR4aTHv*v`H2ro5eAw!)Si890qZ;aXt2F!|
+z@|YaOieiA7XKEIa#atuC5c=TYEb)n8$xVaFo8a*UbY9%bR7RJltLqW}tG5w3^e)$!
+zNqn0{_mT=QEA0{_`Df-Uf@SeZI8wv(NQ9`KSTiTbGkjm;%^xm05K7MS$HJ<~ridO<
+zERE4mow2KK{(8-K*S+q6VhsUazlL9xJU-?3o~iRGL#zUxob;eZtfp5gl=I{ZmR1Fl
+zB172A4q?1h8VxH%F-uLIuN8Vyq23&@6DeY4HO;0A(Ebu9w|d>;$%03%ta3B@mzvH!
+zs^iGOK11vnPNW3{Rv0vyUL}l4un`l+_AwXoo0=VLt9-)9ywItE`c6CMOMd$dZkQV}
+zPp5JN3RWINDv3@oA3Jb1jCIGp=4LGEaEtXQlzXn|Y`%<<S4!)2O4RR`4;=71E5Q#-
+z#wW3g7|-DI5}!!yd;pbl^IoZU^qnQ@gMNBVWL~9DJxwe3rs5oP5{oI!eZiC1H;Hmw
+z9R>OP(Y_$1$AkSSaSNh>eYXbVXB_rH?;kx+1kP73O3p*#DI}P4{hh5~OQ&RBBZixs
+zSLcm*-<h+PQkb=N+LnYbUU@R*m{3qMY(X%D<DJKJv+tAnfw4rReWdeq4^gj@SOWAs
+zBRDxdi&bCN5H$E=0xbz{HH3q-$k})EYnbI=t>m6E(=d*Uva+RAC`O6%Debg9!?J?b
+z62ujv3mQ8}hQJdkQTZraZ+8wo$0d(O8}3_BhA<N=4>(zB`hDZ~@>k*I-kaFV%XKm*
+ze~Y*zawe?$(fK0Z+sVrTw^nWyoUTeh73s%^6jb&&adK>n2herY0b<SCiN&a(c;^&n
+zHxts!ZbYo<(L~v+U;>6&20?r%@r!tfRn&&GCS79_@(NLF?a9s~r(TQYRk(Xqn&*z5
+z2{SqZS%WEQ#u#s<sq1SIGk70k3Jr#885Dne^ysE9aRgACxwFeMV#dqJ?lP}vWF$|t
+zL?N=-bWE+4q?<7^I)=;58J{ssY)X_i@^Q>Wy9v(7`;4HrLfHjH|LuX>N)~#`we5x8
+zt7TRx%s^1(+-x44D`IQYDf$~<>%Mll#{=o9Iw<Y5bQZgaXm#|p5P5s<^N7~1;7cG}
+z(-Uium7;vnut7nCG0IoqtO7{vm@5~VcOqI#vm%(<Yz)$l=$u_?dpqPMVy43>xi@tX
+z@iL8QW|GK%$8K#BTH4?4>J|^S;HqcOe`*x2TbJ+9$2*uDFbFy<qWje}7rXb?6F(NH
+z0P$V%bCTu(BO?;g5WN(~)f7d-J%zb0OQYuZIbqrRM;8rPMo3y&v45Z-gJ?=2*%`r(
+zoEe(tPGcpghG^SY`};7Li?X5nZmq0(pw2H$cI%t%w@753@;%fZTU*?Rm?dV9gl8%1
+zcCqsZpW6TSh$1yuHunzw#Bf~W$O9T`Q@=x@qge%{XfH~1y8^>rM7WXD{P=6w980|h
+zY$P;<8GN=Jzig%(TH*XIuWHqXMpOY^J8)S(*Bq6n3>@~Rw_aMV!3`M8z>dtZlZ3%4
+z<%PMB*be()kwY0|G;Gt!I?swko`rTn+cX94K0j+YxV1ZELTtq>aeG2K<ToJWnGLdD
+zmwSh1z3Y4YD8-?&ea^yF1$g;5QZ`$_D%9%>mN61e_Wl9~`?_m^40340u<ckBoJn7O
+z<f&tAnMxi{*m(G@`mbyl@O$+5kd?yubHx|4_@uTdxR0{(%9kjn7JcmTW{-v~KWpo}
+mH@JQ_=!ZzP)BiKbv-{^wpE!WepQXNZslV~ROa->8hW`zR>Xm8$
+
+literal 0
+HcmV?d00001
+
+diff --git a/build/verify/r6/film-reel-2.jpg b/build/verify/r6/film-reel-2.jpg
+new file mode 100644
+index 0000000000000000000000000000000000000000..d02f33469c49c425ab40b2caa60bf617fffe3087
+GIT binary patch
+literal 4261
+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
+
+literal 0
+HcmV?d00001
+
+diff --git a/build/verify/r6/film-reel-3.jpg b/build/verify/r6/film-reel-3.jpg
+new file mode 100644
+index 0000000000000000000000000000000000000000..d2562407733243c84874ce2207514a032c9a98b0
+GIT binary patch
+literal 4127
+zcmeHHYfuwb77kEfv&tG#ly?^t1}R{myd;qB7DOc^t0*Wz(1d~z0tN~uA&^zuA_B=!
+zEb<7XOA%xVP$VHBNvOpTQ(o0bki;ZHUIHtSgh&XFtlQnr&UR+^SNF$u`rVoPo%5ZU
+zd**)k%r!qZzXa?)dF;e7fQ2OhVDWYV%$tDS&`bHKz#~5XARo{XKY&>R_z<vt`}Q5%
+zcl_oD?Ap2OU$C~e1_FU^_g%ZJt#|JR0{7VLc`E>IZ1(Qmd*HzS{f>@KuCAWuM*uv)
+z;-3Kg2uq7C?^tcy`gi$9=^t!ix!VF@X=!0)`Ht0=EjxawT3A{E-}&8^JvN|ITU~$e
+z=eGCYACQ;!`B$8_&A)!_ehwoR8@TNZ@TVsMEX>~kfZHwqWO3Qb!WCc%1Xuw9W-(x=
+z)!PQZw=o2;{_nki&3=gvWR+WOef9m3pN;Y{?|P*^we0!1=>N=f19CcNb#Lj6LNk0q
+zkO;~^aoR$%jo7R%kS3d1sB}KH(3!cgzdpX?JH}YLV(y5t#xN5UOo(4QNA8C6I=eL{
+zpG1^_1g8nhxW%*<k_%#UvWhuJ+BUQKfsPVsq*93#A!2KWMt6(gPkwUeyTZ2F5j-9~
+zh$y_DKQ>)lndAfWI7}^_=WqF1StgRR$RVB7#nlhMZql&s-YBo-+($~jhZ!*bN@?J*
+zHfR(YD>)lk-`$&{g70C&V)_DPMs4vyb$P*}WBeGT*BQ7xT<X5FieGhyPk@)V5=JrS
+zDa<wu6t257@?YL&+dS=%88E+2GQ?+?0iU^440J!#V{lHL*S>wZguecwD9d{K@i>t+
+z4DNtg-!{3sf`mzik_wc;X9B{UF#|5-m;tl*dm#sPxV|+?(d%`oWUCK!r8Xi@1d~6m
+zOM*z68;d~J&hX6}*V$a>EZ+=rI5=$BBVUQyIIBZc3=2-&WoKuS?!-XnxPiD<{ngBw
+z+&)L{Z&O+JFFIU8%NsoEDue1*Yenbuyk!%C*621TXQzLWTL3B2@JE5tBigU(MwDse
+znYgq9D!ZD48bWo<2APWNi&}Y_g!*xpt?R8S{aVnlRAK->W-FO^d;p#g74|3Kw9EKK
+zS*i<py<66%Te+%Ou~Tfed~XP#j0<1Lomy@7Yq`x_1evUHP;;jw{q-S4>(O9P%0q!7
+z_ezRdJr1T5t0$OM%cV#L5$S<OM!l(7m5NtZi-ONIz^^ROd?dxDIwdD(S~uzst{F8p
+zVnyBl1@Pk%1&yN*Z5aV~$fr8(?yFwENRrm|6RP+b@x`F5sL%=eBc3}UrdfU_B7-n^
+zgQ8jR@ySdIh5r?|cD5g8{a(&u;_bl#UMF5j$i;IW49&QmTEX>`MlaO$s2706U1Bzj
+zw1=8VCC%9p8(sBivHzH-fKG$PppqVUTpin(ESD8sROR4A22ccYFtOX7x=B8)pbE_Z
+zuqYK$MH6r~#w)&6>J}?MebivR<CgIyRiunb^#Z0Fe1Yk@`f(OK?OO8(|9Psm6_n`A
+z0Jj=SIT3FhV17hBFdrmP&GE3}XZ6TxDe6#ap8tw5`uZHUV8FK+762k(9Wz&yGg8;I
+z3Bk!YVdzTvX-?P!tI^79BRqt7ow!_96rP)zf3pcOgv9jD+GsAowebpTiknKNxc=lg
+zKV&h?z1pktP}}n94U&(SF(-}yUE}lg%B!-g9;K$lN{aB7;%?sYl6I_uM;USt7bXU;
+zv$#w-SB_Zcz3_|mcE_T<G0|wpsOXEl&+?XN@O==u!`cm6Wse?<<R(&yjAjVT7ah+Z
+z%2~x_dBhrU<11m+{o8Vf?MSJ^2xL=ASw8=BzmH0WDYjkl{5b~V&{e0S(IH_g^&^UL
+zm-iG*_uf`fh03{1mJY&8S<d<Nyk~KFz?P^=eX`$rsq$eW4l7<398fa_Z6c!|eze)`
+zJJEoPtqFZr#Q7eZE?!+}Qj!C+xATeJ=}kPMClHOuy*F!Pqphxf>cP^ZKkwC)*ZLB~
+z2D*X)74_?Sn#0;!bw(&mYPU-19Z7J1uJ(%+3Rd$>Ga$m5I+87z(C#4%a1f`dofU6K
+znRavtnp-=e?JUD<7!q&8g*-vJlq<)e8z~gG`+DPMu~L38jSs!e^u%{gz#%(o=o!l$
+zYVDh6+>c*7@ei@lkH$GN4p#i2Hd6h>|MJa}n|u;!N%HcIL>)ezG3tKBDDH}$d`gdO
+zJ<wS?gbcX1#NjX}W1WX-wV~~u8X|+!lE;uZk^Cy>HZN>6qMdtU3Kc~g?>f>Q-(!;@
+zUKQt?VoMYA1vdUFP~|}s<-pBq+Fwuw)vuOy1-_8-Y?qT$BwuF)?66FGeE1v_DO3Ra
+z=pt#5JtL1ux~DE9QqOkS$9@5QUyz`<HT3l;CfTXTt}f19xF+Oq2Gl;&K%gz(IiMX)
+z&yym9mlb0z#wA6&uU52Sx-q)p@E}6wQ7oVfwUJ%oZYQ+;L}O4W6LqRj`e)rhrslL~
+zpyDG6xa)cyePI=oAofgH8xi-=hrXgi)1`y@IAX9Lzh&(h>{t>sRrf5`J+WE`jjPoz
+zH)A)>rMg$u!(&1m$=VUsrDlgw*Xqvb8Er><>7Wx<#9*=GhnTbeVW`W#l;>*{*PMup
+zg6P<t>RYlqB?92(PI9o8<^>%;z8O2AX~|gF|7J$L9)b~7o)g)Nr;bXJKl8%y2TpvP
+zOB|Jk*txIzl7;UNQ`QbgMCPbE5D}5cqxi`@W8Tdb%x2m`P<tDsWum=yl5(s<6Ea`b
+z2WBp+5=9gW>tWQ<f;6uuGphE&<cZ0EE}_d8_i-;7JoSWjwjH`G7dqUQ^yueRDxNax
+zlPn3J)EuDdn-$KQ2DFn?2A*^k2l;S1BkGlR!9|lR$!Y!de%XxHf6;cfb+UVEGi3oG
+zKqL0OuH1DcLBu=3YDqi~LK8~np;e`DdDF(1j&pCu^7NYx>`dXE7L^fxJ4*)YT`Nq6
+zC(C9RO!17|*S0keKkrIN(E3M@BoC$AH;H;mYV>se1t=6|8f+h2rG@*X!s0y~bG(V~
+z58h)4@A^$1Oh^syW5*PgH6)#>hZaPD<!ab;TbwuCA&ya98`=Eiq~fl-aD|ypzO9?}
+z2Tsx-gOi`E-Jw3k)y!vzFrbVWFdB%jsp)BS1^X^S`m=9noVsbC6XZa2r1n^b@hOI#
+z8+da-$gP~l6q=&@OVw0av73wAu3Xq<c7#Y+I{2(1rafS3-nLGclO-oW71huBo)?$_
+zR~}OKd1hi?O*&!6TapitIi&P>Ew1A>5-ZLd5wTz6ux~cAE;lI@YIchJ6Hyh-8#*+9
+zZ{DG#d>sXE$nx-@05f}YP$k;xIuW{;oyFCzJrRW;nZt%((kyjd;*qg2SD=#p4Z#DS
+zHWOLN-bTax@;s@KOI*-a)=->1?}F3G&rCBcM#5?#LR_V#i@>aesPi2m+7~y-Kl${%
+m{+MCm%G~<pp8su77x;}sccw-E&qY7E#joiv&jA<n)ZYNu632A_
+
+literal 0
+HcmV?d00001
+
+diff --git a/build/verify/r6/numbers.md b/build/verify/r6/numbers.md
+new file mode 100644
+index 0000000..8d80fe1
+--- /dev/null
++++ b/build/verify/r6/numbers.md
+@@ -0,0 +1,11 @@
++# R6 proof numbers (25 Nov, this machine: 4 CPUs, 15 GB; Chromium 158.0.8127.36 build 1243 with playwright-core 1.63.0; web role and render-worker as two processes; built web beside them)
++| run | style | result | wall time | video | memory peak (web process / render worker with its browser and encoder) |
++|---|---|---|---|---|---|
++| status video | golden (portrait scroll) | done, MP4 h264 1080x1920 30/1 fps yuv420p | 65.7 s | 26.7 s, 1.66 MB | 190 MB / 1512 MB |
++| film wish | reel (film) | done, same format | 381.7 s | 32.2 s, 0.24 MB | 196 MB / 1534 MB |
++| worker killed (kill -9) at about 20 s | golden | taken again, done, losses 1 | 91.8 s | 26.7 s | 195 MB / 1588 MB |
++| worker killed twice | golden | failed with words (losses 2), Ask again on the same job: queued | - | - | - |
++| erase in the middle of a render | golden | render stopped, row failed, no stored file, storage files 6 before and 6 after, no fw-render-* left in /tmp | - | - | - |
++Other jobs of the web role (a clean-up job every 8 s) ran while the renders ran: 8 during the status video, 46 during the film.
++Owner's download address gave the MP4 (200, video/mp4); another account got 404 on both the read and the ask.
++Token: no 43-character token-like string and no render/<token> address in either process's log.
+diff --git a/build/verify/r6/status-golden-1.jpg b/build/verify/r6/status-golden-1.jpg
+new file mode 100644
+index 0000000000000000000000000000000000000000..4f35cf466aba89e9819f03163d8d2dcd3bf33e2c
+GIT binary patch
+literal 25772
+zcmb@t1yoyKv^SWxv_PR0`{RY;P$amtNQ*;|0>x=4PVfYmKwDgcOR*L$?jE36f>XS>
+z1Sw8%=i~W%GvCabH8ba~WbM80xi{zDwNJMF_T8VmB>=ICg0ceO!9xJx!TkZay9E%d
+zn!1~d@bL=r^YZfv0Pbc1vH(0hJbXNSf`1*)2%r7eAR;0nAtAZ{e)f!rh?tm!gp`c*
+zUO+-dMovynMMX(TNB4q>iSw=t@DuRh0pQX7=fB2-#}9EHJ$dl&<G;xtKEiqOm>BTz
+z;e$u_GjMPp<KjGg^x&QYkdQLsJm!DLq)BEf0R1AvOb)Az75wMNlM$BoDy@L8*$2zo
+zW}VnLS#yeNxp-ER`&$5T9zDi;cz^l7{`7-~B#fl|k4!b+L4SN9i*3hQu4EE87?EK%
+z!)kpchY4oi{Q{8SJ^cK@=FtNtz(W$iBND*f41n;_gL~$lmIhqCt}0*7`e0b~lcJ>P
+zaq+7!wte6K-!l*Yf4IlLFXGkzSjR<76=chfdKP|kTDIsgB4@`Cu7TH#frHSS%knu3
+z<<iwv?OAhsvqQ;QCM_5bsu@zl-qlp=Zp#gVWf_EF<$l`GGFwHS@S5x;a{efz#n(o2
+zOs}Usu7gcVi(z)9ey`;84sgi3bk){;dVc;pXQuqKoJ@BkUQM<>JObFf*m3nfdm`~|
+zt)(V`uFk`MrQY)xeE2s;{y(Yv3I8INxu2ku_&>yJ5ecNj+?*0!LG?=~-f)f@w~6&=
+zZRS*B8>(JL9_4NQ{W}0+*7ri98@D<aKI|?}wUk8WCnetf)Y{>rw)}L#a`n(1z%sNQ
+z$wYBOrZ)0y>wmnT|7VP#LDf%6;j~v@T>gW|4GD~cknD(`oLo_yk@G+=%jgpjQOkFL
+zfb;WZ<8DpuoORE?7E6p;9ILCar*Ee>$DeaNI|UJ-E@ja1J<IFTPLM`{@F8kz^}GXa
+zOOqcRD89<gsL~vR;cs8v7$^<BDcMs_YOC;OckAu*5IHUBUd-2L0@fAXRDj(2(WLxQ
+zlwW4OV9?(ZJ1x69pW5o18bN2FVAD+g7*R3<1AUJv(RU;dWH?!pNWo8c6$ri!CcbSf
+znf~y9McnJ}e?Hp(o_Jc69bWYPRnh07qK9R`LKoH*<ql$$I9($C1$7NKUKJ;Nr#uRS
+zIr;5OkfN!!3ljQ5bdI-ndL^0#y#vh7=YMN9f<bG;Lc|JGFQ2waKi3glr;7dLFLM6A
+zgGo9R{JVFLq>XRWFzo<EAqbZ(Yv%`a6CR3EtLVRNsl<mDQrik2QW&9NNz?UxS&Zw7
+zscFTCWj7A5K_4>+xhx-<5itqBQOQzWKV>ToGR|#5LY7M`pOPHf*ZH7WHLf8^w}eR!
+z*|DJIZjm@)W{jO2m^YT$=DX@+ihk>#%F9SL_T5r*+rXxo=ECm{80@c~#L>9Lam+v&
+zLH-x<cs*H6)eqmP%|~}`ulVq9Dn`%x_e8t$#1RXW=;wf!uP2Kt&dAlsw!Zgd!qmci
+zgnsw)6I|-AvE2fs!Cq)nhe%Qz;XsY&l1P5=hl}R|5(B$nz!qPEZ=sUXqwql`jb~nu
+zNo+<J@`79E%U=6c-3-0#VtJ*!L@i8I(k-OO^m`0dTY%GCU^W}?Chroy1%GTT@zEuO
+zPv)&*%jT1pN+BG7s?6E$0Kwhtg_P52aVtX-4dyAD;lh6=<BXQ`TZz!riXTQk#E<0r
+z=(HbP<_3*fudCABq>6J!$_95(Q|+WW9+$N2tHO1u;l~dc8{Wsu=2bt6m?K5N$1Z#&
+zCR-Z0Iu%vJp>EOn>Sc^>Db%4aV^d*zlmxOWij+;6rTSw9-Ja83+YbiQ5Oh#d>hDSR
+z@dgZzI%IU*8-p1~GswoW012<u@P>dbY&Vdb<sk^cPES6j*2~Vw#>rDr|8cSO1g;&;
+z2eaZ)hO%(v>-UpV)Xz37#o8Y4gN++u`_wtZS<txRu(T5Fa+umzv2PQ53U5D6HRT-E
+zfUR3gcz&NP978Xbdy;Hoh|>icB0=<kFr|vKhiVY`HcMO+b@pY(gr85w#9F9$=5Iz`
+zAaev!cDvnKsIWtwL|#4Wgux*2p^J0>IjII+8{6Ywc#CPe^tsm&&F&Z4YZoCqshENO
+ziB3u*OjzXz7l{-H$p!Rg*GeR*q_%0IPN#+aXR@%W03RoFrZbC}Au~ReLXS(92>l&^
+zfPOBn?x%Hxo0VBn*|Y!LJw-pC-fyJ7n*XvJE{9^Vuy9gIgRdIyBCL`0G{b1CQy;MY
+zr6Lg-K9eFzaBT@;EKN-9x7ht+O|SZSsXxspM0QJr0(|OBDNG4R2pbDeE%WDGx@5Zx
+z2mO-?tWrP0VjErfqKj8!vnuF$HPOs{PH?PIl&RY+dc`IFtLMb6U-a6T*w5))!$syJ
+z!&-^R8P_ekQ&o5K*?(|BE6`lBNE&mJ&S16tC-(hX@M*GskBEp#1}3nWSd7ocAcf&!
+z$YD_A9@p#UbF<?UFP4ykLoedKx0>%bgEM#p#$wqMjw0=wo$QQ~vS;;zkv8m49k|L*
+z-JoJn=bY1Qm=EL=AS&kb9Uxb*37m#B_CFwc5=E5;iZnwvnKa`|wlkc8s`t0O*w<hU
+zM+a1W3V9fq6`$xACPXw&lAKHAT6sk4$jPwFVfoApiLWa}qqcm$F-(SWbSymP&k2*Z
+zwt2U@CH<sx#OoHG*|_$PVgwj9!xSa9<KHmz*y{h`gGMJ+94{s5{&TwO+6rW8e9R=h
+z&rhh$C=v@0LI0fuZ!HyUSA)7lNUm6cWEtF6>_2mOIsamDGJVQH>6>%igBa$Aa@`#L
+z;_`c;rG{h5rDxz`AC`Kv($?CG&AAV!tDEk(-m%A-%*pe%YL5EWL-kiZvTr4PaqZnb
+zzNv?y-hU6#k5OcKS0sxH%T;9R*^fH_Hv0yYZeh^OA*w+=^o;0Yskt>SLIJcz5)uP%
+zam+%uQ7GL+t<bxOmRlK1zImQpnQe5lFgufUMkf}0+F<@`f5r8T&^OdFX8o&9u3170
+z>S1?|>T!fk^=#+l{xuM>+fK_F1|3j;p%wqBOFw+rmt|)0bb;Pl#Ng9rByE^WUZ}<B
+zLgk~tsL;51iL#r0(K|o|M?+=*PHfKo%SUKl^g=<PGx~H};q^Wv$ztB^Za4V$10Opg
+z&_-CIRBV^P8C6`eu~i=F7!yal%*a!a7+a?HM8=VKK-BIb-NI^A!&gZb`;b1h?M~0}
+zqu^1!aK9XOvcL<$F3#%6w}5H3JVs&*RSGF5flic2t8sK8knEir+LQ!F^e{Hw(0><{
+zS3ci!>VT1LEbWC(*v&;a8^7LMu<)GY5Q|CRFZdoVYm>&^Xk@+EUU!Pz&UH?ZCyn~S
+z`+5aQVm(bUL$@K`?{n60;r#>a<=bT{6hO9;J(l{AmBp&>UF4&=v4mL1k4Lo!t8QT|
+zAwP+QciX!#1GxB~X4ACoRlnp#np*JmHkKkG^GD^=g1d*K6W+IxKac%hD&=15s(i}g
+zRk#C?GoOx_AB))4E=G+uAZ0^W6nKf__<QSPVou_?&yE~hfVkLrZ6CirGl`xChwUR#
+z7O54Xn!E!$(c&-T7VD1huQadTF^epa(6a7|jJ}W!?0-&M6gOYsFlD3RfFy10oKa8h
+zPFQCmb%ccu4`9pae5|Ab#Z0E*Im_L|Jpu2ps>Cf=uDh8bRZjI^^-=tFywYWZ(v-n2
+zotzJtK9d?k*Hbhl$NJ5%2T0>Rf9CunuV*A`<PwxUrvsI3>-^QS^F+OEbve|7z~amo
+zi3eQJh%xM9*S=KHFCoyoaDGOiC*2f<@X3QZ4e&M<_(i!MZFq-QBPoEeiZQB!%`hh_
+z=__~W#f+a*flnv9{^|PZ%?}on6d9B%vK_Dg>#rpP%ltQ$)2(Ne1KaVvow1*<a4-BQ
+zIaCR>WhHu)=oOp5T&)hh&D;!N`yq#hl_r>iH#o67b*Pu&EFfH&R3u&u`aQXzuX+jV
+zJDh!x%ZZne8dJdB6<90v_D3w722}4vFh&VHlF(X({_ah1WbA*T3aiP~m8<0zjw+L)
+zuPUG?z&l%)<l<Qoq?+zwt)D}sd$#5E9eIle(`<(P8auq46w6>}Z}7AuMJ7{aT6j5y
+zS5oevZd*l1i4waos`-(s7V3J%Mn^u~KfBt-Un4uR`mT&$-{wx>j3O9p8rr3(&zLeg
+zI@fkm>LR*5xh5tWwd8v-@?}aZ99}McE8Z4<zwlXDPg|O$X-k^x)oMMa;@BLTY8pMN
+zrS;ZxZ@)wFHV|=Qp7G&Rb(yNI3$&xxzh>YSCIrXCjmD5ZCfwE^53RW16{_+rt&|CM
+zYcHHda`S#{>+1CWn}7WuUbT)6xsJ{Qoez(7-itT#NvROqOXlAzC!VlRM3eHCp)*Ll
+zvpI_v!FUx!OyWiB;PL73*|`W1I_yLcxmED;@b#xJ6=&k#K&|*b3I{UZ#;dABJjLc+
+z68o<CzKXsIHlR#XQpK!_RS<?jDB{@;^&P-PWKcB-;wgH`#U(smBZOg4b>m=<!sr_5
+zbJhC%4$x?(RvlEnZ{BjsEA$w5ZO&}@cg`tx?ROF}W{lSCdhUg~Y5ETw>4?D%h3SMi
+z$SI>jO}-s|TT?}H&|=hNqj4>Igbr^F5$^3~4M{B|pov!z;><ncUfJArbQueySYPDD
+zNExe(UwLQa?tW3AzWQ#S8{{+{J-qCzr@B;Pj-VOa-RwX~me1FQ%u)27p{9}($Jr4{
+z#`<Pt{FpMCNu>{|$snBRr^?)QMthS}^5d(B_&&_w4r=95CbM@82oDj_Z<E85hjMP_
+zN_^4R-U0*%!Gbm?YqmW6pDk_5UU=60h#^JwSbFha($2Lw)%e<&T4@3lte8?+7vF9^
+z1HIWaf{Qc&wyVU+<@i?%R^<1*VxF$b?g>DUXR5M1)?A|MPNFGolK3$SE1MzGOZ7F8
+z18(>`MvNwkY2`rJX6vDKaG?kF-}BGe<{W57>OxB!p|HNn4cX+pQZCvx^Om5obL+@<
+zT6AMn+urRFkK@VB&W0#M$A<bk5qGEu23in!J(z9}<;`ClU`5=jY>zi(u?Gl!=KoUO
+ze{04Q!MaOx*1e2jdj5WHEz=h1HW~4a+OfgLa*;B6oU=>pOTp7SKwY;f|1reAm2&Vv
+zERcm4Z-$Z4jus*?E*srT;;3v6Y`M7g&`d-0r^Qk;0XBnrsrq%lf^P@IS-+Z}wIy!T
+zS2HTL;X|$uoNM;Wai2<ij5Y5fl6_~__Ou|!Ey|gc;d_FxcjOffsyG<)yf54lpsLQ}
+zR;LgYN4h+5g1tUJcbwV5jF*#SVn_cVN8^hR7epp@VRXD=7#`p(pM4$!-xiM%+rpoY
+z+LJ<@uq$zrb;Yi+wkD<JsXcpadg~ul#u3O7E+*+!d;&}*Lh7cs1b^~0Hf56~4in;x
+z8xQ+V!Bmy$PBD7^rg-yOKrWqR2}2cTj+gU1fyPJ($xBvnl)rw|Adt#PeNLvf`-tb^
+z4Hm>%m-=)%iQ=LeSARAA7oMrog~Xn~pIMWnXEOe;hoHfAm-mkcZsEbqUb1=WW_bCz
+z2(tcKk!Z6Zv&x%@8qa>Mpmuvu8t)NI6x0<V4)~<$1C!$j=JcT4qqFaEV|xPuH6!^?
+zHi>w-znNZ}^!j{$eL}FBO5o+gTKCQ?ZBYzaFv%{k0-N!6brU#!5I5d{`J&jYTGxNL
+zn^F3HVRReZf-*jBg#CqE9LV+}W)q&g?ehlJ$*(yaz{}ze8pf(%GEau2ZBn_b5aPdY
+z6yK~IVa4e(RV`G_4YNa+g$`MUBx+>BY69ytxL#qFw#n2e@f*4{Vtb4Ybm<vW+^#a;
+zU{qvUK6V6Nx?(Upuf=7HroP1A(so!DA7VFH3_AB@bF=)BZz#*7%JUEOH+?-TzcZsm
+zMrg+$98)%w<2p0kc1qXsUugpELVB{``pf|_E3^JFal_@PH811doK@G~bd0Nw#>Lc5
+zax}lAuPkqijYV}!Pqupv5_#&g*T&Lv+Wu(bv?ag8@0+d~`w2&%^$5JqD%%!)zx<2;
+zvsn8kQ>-bZD{z*XP9nlS%X)eR^V(lGKAD|Zg&&lNPL5q0GCN%x`Ch%qc{V$cfoh+y
+zUJfI%j$t3(K<8D#@`z)jLz34FT{ls^qqB4FP0Ldsbz2FogP#{zTWgU0jmSSxV=?xu
+z$k8;X0?&BI2vvNOZyL6S4<iWUaDu2}QK4_Y^^*vH1ucQvO3?@2Uxw*mgF9%tkzbnh
+zm4>;A5?%3Z3-m%QsZMoMJW%ct*Vz-1s$Rp7X!e6!+80E4e{Sjj9E7cs9=|>NXBym8
+zoaR(m1o~c747iWJ|1Ewf`uyK>PESI}wJ`b*HoacRWYY5|X3l;zp?~s4EZc9fca?$t
+z@9x?au++$2OX3ayeB!dJm|ivXWe8;Eg?6uVLSZ)kUQ5aHyruHyOZb%T{e~loN3#Hf
+zpsQV2do{tyL(3cvC;8Dyp34ILQZZ-n)ZSmdHt|${DfFA8*sNj29|AkQ!Kk_k%r*x8
+zs^2o#(@#4p4^c@Jr(}5A`RuvHq$sF!bm#ma*)zxU1?}fH_RBZEZA4R(MT;VwFbQVN
+z6^x{6;>_Ie9Y=sYibh^iTzNljrwi0jP;HcZ3ZEJ|zns-^2pIStcvQsE&-`Qc@v8J#
+z(}mxQQcZ<0Qh;2uBo`OK3+!h7m|crbB`EfOp=l`(b`g99^}deHzC5Qn6XkEW?f|-p
+z#dUAacI!uXb<AQ{={%Wv-jSObT?9Us7VMwr-aGTFz3`;C9sk(V`tBlP9p0QAfo-kT
+zy$DwfSreP}!+FD!yd2yskz2QuxjizUOpoI|u9@BMT|-oo?2&E_L{DB$7_Ik$VpqQ7
+zVO|Ci(!_U0K7g>F#i5d>;1fRpgf{rhi<%<L>mrAPxfNk8r+Sk`(-3-A6ed$xmIR`z
+z_!9W=D!gx6`k$Fgu^b+1fH%D?Q)W_K&u-m9vTd<%H%%lo!2Yd#>n=;$q7=cDf9Y?}
+zg9o-$Ii!mNpS6#CXY(+aZMbb|K$j;Hs{g(#DcAEYr`^Yh`T-<^&%UM3*NMbW|HoY0
+z<NwIQ{Y&mmtkHL|AA|~2{E(hX_0Z{IOmwyY{2=-3-hAFrID5X#GmSa39Peoy*`E;v
+zb&2!R^z*x`*hg{BO0(2rhd!}1i_c0~zQMaftlBJ>h{ABJR;iyU^(UxSh~1t<L7snK
+z=3m@S8}V{28#}#?lsF4n0Rl_kk*l8XSVOSYQHI2aYK-=ADE$^Ce}}!*qw_ggzJxy&
+zfsK#X*h9Z;T2>wSz1RcZ0j3(3sTIkq6sd1@VwNe>BBF58&;v>MegoiE4-k=Su%mWV
+z7L7WmDSJ#ztfh4&TUl0OFmGl3R6$qPboA4Mo$Uk3J3uH_sK;+*jMP!4^VcWMPc8H`
+zm#0R5F0&{NqiA8(r{mt>7Vu(Y(}5uk+ZDV%*e{@KwQhANJ2aaaCr6NiL$|I@lB#FT
+zV;{b#s(OAX?oS!rPs;JjE$10dq#|`6c1U|yr*=r@Oq>z5Rhgw8kS4v%SyPZlf>$l_
+zs8ui++dS(t2Gm^nrNHJ1{i5U}n$6Ec*w5ghJAEz<LVXl7-8BCt<NMic*)oQdgl)0m
+zaP&|@vi?|iaAY}^LUk-Yydkb7O>D$=qRo8B<NUO$ZWpOl|1ksiR8NhvaI`6l<lAGm
+zJ^y|nrxS0Kw@akC`em~|TmwOl3>~a6{uH??f@}+4NT_UfVyIm?M97D-X%XfJddc<^
+z|5~Prm>nx_O@|lGUq~|1e@M?36l!F|i_<?$cpSs;58hmRU0OUb;o~oJ#wG9ne0ru4
+z=}s0e#1%c0rn|6!tCw~&mALK6wzWit&3RyzCqOO07D-vT7eRtf)4Itr+PO5wWe{Sq
+zFv)ZnxHW0`^76RD$YWva5<<HoE{@B*vi18Iur<L@zmAR;?c3Y*f?%9({5p@g3NSbH
+z0TZ4I{Bg0BiE>>v6j>-X{<Ye`o_PHOY*SfzyVF@I5PifaBt3rz@UEJI-uh7ndIJbG
+z<r)R~!`}Vi#|^<LlLL+EI(zO1*=LXtdPU0$;tujrd|~1>w25~RirMJD-Yw0#kRE;r
+z-e<AEEyUv0<apOA;OW;)_tE^)^{IL;+HNiCF)mhwS8ygshvG;5j_*x{$Ocwrme%h=
+zNnE{*WLaAE)j7Y%b`tmR;Z?A5M3}y``Bk!f>D~xd1c;N!((*jz%ucl-A@36yPfDnW
+zhhxo+ASEB&uCogo#@cxmld+i;f+cr=t2@Bua2vx}&g?qTuD5%O|F=h<^ASS{;J+=S
+zES>N7u^(@E`CWft_)?7H69i!SRBg|E5Q#@ml=FhlU{k1*gL7uovY&wfNICl4UUTEo
+z<|;*yr-Pcqvf36|#!6B!kK1X(0#@PKtzMLL9rp>-Dt%yB<=77i)BOI{DX!<QB~_>`
+z5DRBdDR;9^Z@OOJ)b#J$%$J<?4Wgwt&*9}xi^<Os_vS*$T7yQ-%tZGTNa)^Dc{~yh
+zmW%B{FA5~n0McP8o7U8E4&Iw5=O00Rb`KQ?x4hkm?3Q`o$gu9in7>qc%I;YY&vw2j
+zCx_dZRKdP~CiJo}OpPBw`6HvgkN!%!wWqXa_hDc1Gvnn@=C8u^lec1Ii)5obgsT?C
+zJ-g9^zuWQY6d9GHjXHnFCIjg)^AI}LHTs1*#l9kMOlWeddrjvfAf*U(%RFHl?paub
+zDmcM&vDs{F1~X+C^pn*S&vK=|*E{y=C$o8z3^z1neNifWf9yOSJC5zKS&^_|r&1KO
+z*H3QTtpgIMP%iEu_rJ?6hqFthM1%ne!Lh^jyaF0`0M;PH^B~<B$3<&PcNd;Lp+fh|
+z+vvrWIY~nU8k=R@ltI&>Y6|xqKccJ7VT=Y7-l|-$652XIlOn+E+BIqT!r1FrX)w)2
+zd7YQ~l>S<N^$xIh?<pS#<oOv=GX=Xui8wNAqE<r;wji{Wh1Q(b9jLk{QD6Vx8ZJd9
+zne2+}DeqzDzOH!59C@l~kdQi>I{igSBoMxm6)1S<SzXO?UZ%jw`t|G)XyVkpd#Axo
+zvrPYV_LNr7@nU(}q-r7&ruE-zF%SNGZH5S}_nL?{Ohw7KBv9aYewUlMrVwWv&cfai
+zrT+34QYOfQbUFRQut4xKLFZ5>Cen811lADi!VK+i5RySZ9Fwd36SQ331akAr*)+CE
+z=y*NuQm`jmDArr?dtuwqUiX|^wB;|d2`zj^?X~|jXO!O8I5vKEJd_FF8MN0!_+@A2
+zVBY%G3gfmmh*FJ>zo0)NmZeqJn@+RJP-6Dl!$TCkf}nqHsmvJu;!$Y?Bb_PB?~-Lt
+zWSdcsBttj}_MJGi8{a%)pgLc3)DYQ>bgz}nyZ7Jz-qcu@qV<o_6F#`OMV)=`(WT_w
+z<XWW4iit06<z6cEtIuL|)0Y>4D+^PCiR7K<(82CNJc_@KkLr*~h7<LP_T@-8R|F}B
+zo5W8~qpBao_?t#A<0-efyLhM1O5Ub1BsWP0W@Ydxr9zp<*FT>AV{#F;?zD8<gyDB-
+zpW(+dy`52TZFi8$Ds{+A*g$tkDk|@ERyMs{Gyt7g;PKHUdhOJ;ckc>=e)pwc05PW~
+zY3TZWzV384V(24osEo{T%t)7W+v}l#<axW-f*J6z{php#<4nQS;nWYA2kKFzhbfA?
+zJ2e>4voMMEwu0-B`?_3MFN01(lgc_RKvWQ6GfgBdxC`X1Ih>rHs9rb?(Z%$Nbp?Ou
+z^J?fxDV5q`{+T?OZeERgk=5b37<Zj%aawzoB`{Guf9A7^625-pVB=aQrb5cj_I(x9
+z3${eSOh>&8{fyng|M;k%OiWeyo0SUb?TYso`$!CZ(0;xw&rbUCrBU{3Y3*vgVFj|-
+z5^iF!vMJZnA=gMG$&}T6;k58_v1vXUTF6s2=2|9n2x1f$6iW9Zz^N=oTp_*O!L9Y4
+z-qsY4A_Gm9#nWXL<Rs5h`6@H6xa$K?t4<5;+;(mdJFQuWW3aSVK!QE<_za%KK_`At
+zOx&VtoOjEM+4I0xUf*rHmZ=7+;#66N2*DozgcOfaf<@I<uula-4WV7jbjS<p?aq_V
+z-M@7OUD_^By_o*V7Whmf30{SnwwUKZMh}zrt#)pky(c`U{hACvo@)+#^av&?WN7>v
+zF5V6?5X+5K2;;s36qXbO#}97ZvZ6E(SJ`AF1Yf4st}umdc6#kqZtZirN|AK$wz)hd
+z{!Cvk1Pu&-CxczoGD5Dgl*?=){p}J-Y-7AE6h#W=Lf<1HvISK>?(S_|*R^|XBhuB^
+z{**g$ZelB>%n>m)`Tf0BDnO6d)j4(j{#pILh*IdgmOPd=o;aC`WUey}nA!%~q3qE0
+zXFgtsvKQ`d<mWX0e(FcE@}HG2d?<u{ostjKd6Qn}dnf-R`qSlR?99aF4v<_5WH0-4
+zy^!E^Z5`3n724JK5M$#8?DxZ7&lt`_I_H~rf$srQ#G%#39lt0om~vpYUW@fX*pJMS
+z0)?OR@X4z|rNkS8m^nH=v-V~CNxgs;7btW3`5~E*v5PgWnul3;b{`}^L;BT(iP16e
+zRJ&<Y5y4Q1ZDc170HUc?C??4R@F61geJ2Je-Lw94^oyRHcY=<PhV4F1anolOZ@wMu
+zT$zBSRWZ<LCLEKm0+GtdpD3+yi09s^ffIpU_NIhstWtVYNGy=mD@n3f_8ojN`9*S&
+zzfN0IlgBmwP2$)QHq&%UObd`w-5JeklI%>a@pj8#zgS#0oi!~!QwPVInT&<&^;<Wx
+zOV$O<c?)w?Cr2M?0+j+^n}FXEz5uxw{bqfznCHx8Yo-9y5~IwG5=c!d^@GZJ$7FjQ
+zA}lih%+@0Mk-QCCI+>Nl5^a&tRJ<QCp?R6)oX>~RFBGba)rIzeZx(p<Ob~}KP`7I2
+z%V2-8i?>!nOo)NZ{HlZMNbs+}*PmjQ!W~o$@(mbKjhNp~G;f5bJ>Oui9|iy52+Swp
+zFb_PCjmL|4FB;=#x|<kTc4pUWa=3XUa6NSgAS?2-h;<`kpk^EqQ<t0Zjt|u~^gvxK
+zzFIA3Nmp81ZSUnVT%yL|n@m@V;{nm0&iYJvsZ{){Re13a#`j?7K8^T)XB5;;_&ojk
+z8SO1o7%dYL>~FQWZzfMKo1@~3ebSXS9<vy%%Hx+jAdb(Pg~svJqjnwRXV%%j@~S$D
+z%TtN)M4XVywV5j~K3alWkW$jLt2W}qo2SOB(GPm&VrPycz80(RHw+|H=GW}=A*J&A
+z(~?n<gZy!Rxi~f9J=ht|y`(?bla`H1=4e=0mnYE&Uo8p5AdB}1;~x6OwUg>c(J;a<
+zFCWQMtD2ppwQF3VgR$$kVDgWmp$ZD^Tbuzg3)u_$Xr&~<sH8u;2TiaUCq<p<sMABf
+zoQ9-g@YYSb37Xm0Y&DRK&X)4E9ZHxjBsr29G+Y4e$F?51*<?#T#O3s1?NJi7q^gnn
+zSkL6J$q?c*hD(4zMP^4DM%DryVu_z}Z;_BXJoWP7DnGataISnp1USw4Wc5t3ez}e%
+zm8jo3W2dE6BcyBU)I}j3{QbhEpX#j*W6X*;-WL`bCQxsNp9MJ0+-I5c12eu_X9X-D
+zQ$k}Tmz9$0T^krA+BCDuh>=Hgs_>7li?XEE$3wXH7DPaGQ>n+T%wE4iSVT;PRV8Bt
+z8SB?sEhnv=t<&A5?Wd<F3}C9V`W^mjzp8=_z?KTHA}Ri-$eJ*53#Pt_?OY#Uk(L8D
+zu?vB}fLKJckkq;W$MSx$6Gwa>#lr4KN`)mx*<Fd3(fmifu~Z0sh<6n?sM=_u!7~Os
+zBpXG16*$mMZDVzn8M!HUZD=%}IW{6GP0dtKQEF$!;a!Me><nRR{cfyNtaN4e<BUE-
+ze7uF)sr5{~aNK$YCjO8OC3a4KISP==J^O8Ic#yg9Y~|h!3dXu^{~qzV1Eh{e9_>R$
+zd!6bOt(uK`Hs`<w)GCCj-8+;iN#+y9>VxpzqlLLyulNET1VmuyTWf<mUEYKnwHyh3
+z?#43>dOboj`#;MU^ySP~LzwLCL&aZYagr`&bad%!FQwh(87z<u?CHSgv~!Z|WQ`y4
+zX>tXU<*Fb_0)3}_Y=78;<5`aCe46*K8NPNZ)*N3wLZhl@Uh<f64K5iKENq?XfyRzB
+zjmnD@=`wWHfm|7T5n`XDs7hb!)f6!B$D@=q&80Yv4=5@pBDs;iTAmua`_QrD18JYP
+z0oS9%tBrWGVqH|FVx9`s^+DSaQRD)2pT99vwO@pl@|Qf7Sx5}}TaQJqE=^KNe?9*e
+zZCS>(a*Hc(pqF~@x&1p-=6?gH`Ij^Q=-B+D^Y-5=0AO_u0Vz&w*NA9Oq6`hRQfM)a
+z$JA8XXv;U0nTMU*?DS8h_K^fn8W!H-P|&Ywml;xPLYhfD9<GE|H?RnTfT)MSfBJ^=
+z9bCGSj6cVBYG`$;S(^KkS05Moe%aQ$kGkyM?REdG%yo+{NK6b$N0v@?oOcdJLmEj~
+zy0HVyZ2C%}omyk9SGsyVrUN_0D-tQsmMlXvsZFWszj!)XPfP80wDCV#j9^IJWDwiK
+zrt_S6F4Ct>NU3_><A_rF=^|drKuYp?gr<t@?7@EQujx(5y_jPnt3%juso37^jm~>d
+zNWI-D#$1FtXEoE)L)Tv%99;X-50C6>#6ImiWA5Xj8W*36{EPClhcBFH#9$?hR{SHe
+z$q!t>xx7q?im_+<VWvxN=51)oB6WM{ASx((qF14PHy2(pe&UolU+Jg}+n6sD<n?Vn
+ze)H<w&l(YVRcX#?t&d?nEW23@DG!<+Bu0uqaEj{XIYOA|CQq(6ke?L)P<l9O!HF~#
+ziJxEgo2sAOya?4T?~a0~C8zrqN{F0Ivsa%_Jenzgy#`HFRwJ{oVJ(66Q;$WSp@S9|
+zLk7>ktj!_&`{GgHE2sL&8Q);Kk!`*1!%yUCNkW-gz2W@~sU8Q|<NC#r{`1(2QS)^M
+z0r<B?*K0}JEXEatA+q}D<(HILiw?4kuNN&9dpA-9K%b?i^v5Xt&f!9tIh&lxr}pMx
+zHP*<r{Z^5|MwUy`DIp8nzqt?DID%^D+0ynA_iNsVY5r>s=|7c8=RK>Aq0N7kmiVu4
+zsSk6PV`B2qtAyRfQWk+pxcK{RQRt&fxw%F!D|X^rGhS}<VqNX8A03d-!>7&G^Hyb_
+zAe?^-dcTue)gOAyGutr)6ve6&WtgNOH0t*@e0?CB*0WVSSvmXO3fdn=#~z2!UZk&4
+zy{Rv2I4F-rqc*|QJ^AnW#JvO_2uMO;e$FpZ(X+PweW<A}Z#gWwT}3mYA^M$7DxjAn
+zAX4{-S~j3#h~A^oe+V1Pe<u4rCV-*kC;EN#n>w^F@Yy~c+&t2ym;T3Fg6NKq2Kdta
+z8Jwn{JoM-H<|iG{PH2tiPBNCWA6i<aI-HyIv0mDse4fV)bWH!maooh1SF>il$aINV
+zeeoudQZqS;>`5vcDMw~0D?`nf4ToG+?T1F@oO8WBB>2>EB;?a15{#f`$0LUKD+*OE
+zfQuN%gA@Mo5UL^li=^4&M9#X)nNr}xhIe`@9;IfV7>=*k2%+LRFZf+@EMB+Wj(<ZF
+z5LiZ%4&73|gmbS2Nq2_C<$rZ@R$4V&R&v=;-ltc@ci&Ho;dP=jp|%@d&t&XypiBn)
+z5vZRfhfSQ%h1RALKF2P^0~;Sy3Qh!8G`Gp^9qrZnHn^wu)?~O~{`feHnZ$-Gjo324
+zWWxNj1=wU6{>(05LUPq5UlB3INxS3ASb&}E|ER9Y7}<6X(a%cmDK#O;UH#bdVLwU9
+zXU}LR@=6@mj+~YuF7J<WR%{%4@dwMf@E<VRy*O$a+%vgP-2EsD(z}7HTC?XWi>u4-
+zbY0LHh^-T76LYdmu2JUMIstV%lOxt8X`B-b;{-_7%M300jlk%d?ouAxp^Kq2A>#!O
+z5_~nP%8B$O(oe6$tn1{!${s3hZ%{pmCUIt}-+O5SFJ#0}Ftl6d)`VpDZDdPJ8_M_3
+z9YEtyHWGTD5oCW1rS%?tA`qL+z-13EA)R%DA#c;zg&NLd-pNxk3HWSX+rVo&otn-T
+zDaX#+Xcvj)c-e8P8&A9*%QHRHa5AAgzjr|2<FBnf5kk<;+Alb(D4lFPW8(xG8P~g&
+z@{eUcP_$F`wCg9M`AEDL{Q-towE{iIZVo+Bmr}Bt2ew24A7|{>wD2l>NiA0-uwVko
+z9*_iM*c<nrL~gJ)QzD-2`)nDraAYwFrQkFU-vNw+atZ!wSYqpsuJvX#o#r@V_6vKs
+zxP>sfTJyWJKIyaRaDrr~kix-%%?)Wb@s*e#{HNV9Y3(Ssp07$XX8z|A`DugQ$~V&d
+z*x-LS{1|BC(WKtU+w0I+`dJ9bwK{HL?L0#p(SwoY=Z}~t_r|O07W|zmRHs^}wrp*;
+zBdHi@y&H**U5idQJYgCusN2{5V>FZ3Ovj~8A+Xy|I~5i#g%IzvE@LfD?8w@;d`=^Y
+zBMpRIwGCbHe)UgyPogly&5=LBrb@o$K#JQ}E4+>>J!>o&_xw3PmvXwIohtM@(xE2J
+z>F?fR<_fnT-&(3d(q(FR?~`=f@uYLK?UAV8NBnpvY)bOTx^H*yB<-QNV8xNwhu<85
+z@|f0{uwCDV3?g;uIstNR+_m$Ap4YiASkWRfra|j!$W3qODWBLiH$QGV?Q}w`E?(#Z
+zpL7UD*ZH_)HyKlVnwH5o+#MR?__oh*nk7dQUAp0LdTBN{Tk0!rrrNBxST6CL$mF3x
+zqt*ZpReTUT<>Q1A5|Idt!}<jb=m!j+bx*d24zKmhkL6qMbxTCW9pFtmTsAaBJB4(>
+z4t)oxKl6Km*lQiSWB?*)+k2R%T(2c&1a2q_3V`-=g?kEZ#!+GpZD#{3%dST&Fcx8E
+zO{K7_*VA8Pa>s`xK`*mHElZjckuFDOUo{|Wy*s@EbkcEBSNDO=({rqMIc+>ZWx&jl
+zWBnz217RA`xnb3HVcEW2QXa6dpl8$>G5SqF#}|{ps`iCRDFx|CjO4d#f}E*e8f#Ym
+zkN@*$w*MV~20c7S!~-ehy#0AZn<K4FVnQ_B5NYBI%ZtZH&V(AVhgfTj_3Ry>8Q569
+zabQP<J!zb7<cH3wC`=)3`KD_I^MBXX8FZqYLfwdjV$m;SiF=NN0ag9lbmr6=OjnrN
+zO=>k(L)XrlHICih=BfG$wEvU%Bk6D2;fZQ=9W8a3!}gt++HxM!d5Qe8v14m~7{LPZ
+z*&@lZVxV*qk3Ps`;nsw9o>FT?wfjMp<?~i4ts})^bzR+EiUFSji*(cr86vj8@k$Uc
+za!+a&M1>uKJ61cIkT<&OU*RV^Hk(M5KZlfDi+dr}^%!E=#z?-uBu`OHXctZw`L;L#
+zHv7AC!4<b=cn9FeS*>Z|c}EuY@W|3y+rD+cM7gQNREWPjK(WskqP&Jj8kK5#Y7Y%r
+zDmSKEkY))qmsG`^$y(K-i`6TK-Lej<&X^k6;nLz1b*mS(AN|GS6T5uF&g1ca_(GHp
+zCN-I!JhPvqztE#-qWennWAz8elrX-J!D7-;x`18p^(`gRyB@Fdyg^NMgg7QzY@c**
+z>OQMIvvZk642_3W1v+<CwcG*bMe91?@jlkppn+)en>YTZrHy7YCp$NE%p<v4KAGor
+zjZj$S_sW=%8AgXR2jM2K;nE(4XUXp)l1u&QaEYQMPvUqCtLyk@DJO|ONF=7rvV?Z;
+zOg<GDRo<v$*loDg)1zl#vspzjQqr-H16ihfcfX?@Z^g@Z;>&7os7f2kC|WcNT^;Td
+zkV85<hw27oBdKQM9^CXL{1a^!GqXbQ7g>xj_{1LP`5^{063PtSM3r3Bil*;YHF92P
+zLSq_*c?`cP8A!jZ=IytC>f{r$dQwl)mjj4->>T=BlgGSYQhfJJcYE?r%QWO7n<Z)7
+z?Rp|p<I?2=cp4^h$`<lU@(9ShAb)f-8E4n+IhRZKC|cdL_htNABxIAK#wKFc!6MUT
+zaoKw~7Ef(wYv7wE1Ox=}a8zz)O?!40VbvMDwn;3-%9$O03YOFjk;*LG0m{%ky}%Ge
+zMWg%5trYzj%^jd%AX~Hb?Jf#~t;&Hn9QlN{`mIfu6P@L`ex)~APv|#Ux5^;EEl?fd
+z=wV0`H`JCtH9Ki7>{4haNt0naR<MXk5hS$;QBl=~)E_h<bXLU76T-fV`SS-?p}6x(
+zD$}`Z9UT_L4%SthjrlM=D=V(RzALXdalHy+6#<1manUmTjE1Lnx|>^I(eK`G{S4J5
+zB3Y@$1z@6bRFkR|p&IXFT2Wck?(s#qZRl|FTrHSJv~`orJ6h4aQ?|;GW%$~bguW_9
+z&`h%-)(hn1wIZ5sntwWMiBa2IH1fRU%c*J9>YSis9%Vz!jr8-tpt6yxe3KBAoYG-G
+zJVO2Id_$N)kuTlSC1R{kN>_-|C1A!p$zj<;!vo&<QCEs3Zo3n&;r2+GvT3n-_q>$G
+zXy?RwIUN3hc@4&tYJ=Ct9lMm37Msr8@oPUYqrUlLaoqKmLS1>~k@dsd%$JyS*&dUy
+zuIs{j+MQfxvVY30*CF|5`!Kq_q{h8xS`ez0OeSSV6`Pj2v7tZv)9a_o{lT0GI5ROh
+z;_?umP~SiBG;qd##Fp{9A&Z?gy5;2r=Aw5-jxx=8f3Y(gA{Yo}&~%_tB+ib=@UUx@
+zH=Gn_OIcuTr4yy9h(|7N&ZO2R(k9wT)fzHd3zJ+oWfFUc|Mk5E;+?HRg-onv-B@2s
+zjEm=W{0Oxz&{n)Mue>vPm1ipYjR#n?2rXW!#_{g2`Go|fD2FvQF$N*}B7$z0OG67%
+zI{C(P&eUIH3qaYkASFuwz((qf-o#n0)F=Pc{Ca<6A_As45>k(Ei{O<2_XvlMkO)fK
+z>qoH9)mt218+pw1HF&1!--CiV|9dA%s7h7oe+h7<f#GyLEjbok?`atS1b&WX%L=iF
+z*C(HU!mEr{X4Z(i;Nj-?+NY(gM(`v_dNjUj(y~*qL;)!xfeiVC0?<dK{L9QEf}aus
+z*jz{$y^-b0j&YuikCwxZ7}soBG!<EF+(*ZwL>8lUDS$fKX^!W@+dtofCZyE}W&e)Y
+zY0OCyB>0v)5p2XzrEKlzZAcZKFFLZTMub9Xm_!K~k`Q7ul7{tY*iQA|X5%Qs4YtB6
+z4*54ZxYxMRZ(nLD$#5lo`&CkAGTgLVuy=1Z_dYUFKXkRS(3U4uog^a(ST$?5m0x$7
+zT(d>?y7;Fcc<Ew)(LKf|k>!rHOSclLsnI9rm7MJG99MHn!whVa99evmiRm5$yd9PO
+z@{YYB%o?rdHcQE+YaQp|napBX^b50ga0d{}Q8&kVJ;Df54Q&q?2Rc;89(yocKjEP<
+zK9puB7R-GEC1AV*^zZv~r5Ar#tx%07ahwtJf=lsQRQ7mIP(OIUsPfj#5LxBhOKE0Q
+z0ybId-1(`;q(j3iJNBiWSD_^Pz+PDL@$#n2KW6Dkl;52rP__I>a0;E12bS>W57XzW
+zxWg_&GJPy$AKR+w>Kyb-mdlcmAo4^3M?fx9i_wQkV;?vTJ8|?fkIrH7vN4m*Rivv-
+z>9a9g?d>D(__IdA^169*k*nLp(L^;M#losr@bh<X=ycK#;3#gARBGeXYKgKPizuB>
+zW{q$rUZdEAV5tpiXdS9UfLXB(*0<Qvd-)dj)SMF`*viF?w=5;tgE`I`ye=~=9cCT(
+zg2IXDH5iU0%Eb9tFJQ1j?H52Tv-h<bK06D4W{z4T&^`i^Pu1nJ-*{=nafAHHtNxTn
+zUo_fQs;d-E;Nmscx|=a>@;>WK<jAT<2fPpUjiJyT6pqtS_UB5eDuKbqN5i9oieGgk
+z{h#}r{s(^L|62pq(`w<gceVqQHWVd;R$u;=I8z?;g39luFe31?C#k%45h51{-Ae}S
+zh>vX!m-|~3KUT0W4>Wwe6*&A+yIg9AVvc(%Z_?gJ!5!ugK|hX=j^xPLn8}A?Nft5H
+zxqh^k^#^*3X=5zQisY?J%5-g<M0&wK(m{jj*%()jkS7TPMxBP4`Tg+9rPlt#K!=@F
+zeuL4l4T8;Scv3IN@?_+$x=$5MJv$epQ)KKlJ&mir1~WfnilQpXKlzH1gejNTUAo?8
+z8ejCWn9<0`15-Uf_7YMzM=t5od-G2qZ^X%?{E;`c&L5>yFMz(u1Me%Ik6P4UQJ72{
+zX!XN&s<~WTpiY*>kyV{Ur_L#Vndl1gY7?iIF``D_HsKtvKT{_RkUQaUc<g4SBAt#~
+zTcmTLjYTH=k4xTsXW-Zn>y=KcyL4_9;Se=ek2{NMu&TQa9}MUicx-&8w#nyW{Mk69
+zgkp=orv%BJ_9v^zq;4q+!bG?6tmJa}tPu)fADHuC7FT(-C+sO)`0DJy6L(<JKH+^=
+zHA|E=y%?x_@ze6Vo|QxEz+48?@&!nH!7&JQ?&PRTzr!@+q!7QFUZdKrGkD)G5!eKQ
+z<)lP@X#uG}vWf@oJ7i=b^01f#)3p2c0#;^4f<Nx)U_s3K5Cs?WUbU1jC(=1dG2kjS
+zyg1(X0S2oW+snk@a;8ZnoOLVL&!M>EcsV!*cpj3kz}!zhSvmf8LBt!H*wi^wRdw;Z
+z#jCi4HoEqY>DCS54MP-aRgrEk34nHCiD&jY44;1rYNRY`0Kb<fJjBuR`3`*O*H-Nm
+z4CyXaSU47ynsqPRoN&+l2gY|G3}spCQ#Gf|eSbYl0iEAT^11J%$#@e<r{v|gx-gf<
+zCxc^CKdUQm&ebYtU{e1}@-Mso&9t-LiOv)xs5ma5U~46d*9_Y6<|&As(VB{GC&}03
+zzN*z341TmOBfsjPOuf8=l#2sDlMpsAsgeB4+t#aaX$9xTF1rpXN?33lvogRns6B@$
+z$Zma%;g>`}{1ElDghnku423xknx$@3t>x@kufO0p<s#iYJs<L<<a0E=y!ASJ)NRtL
+zrxvPYW20LV%?W>{@+x~*N+UI}ICJT^Oj-aRvB(20Jw_}S1YfoEIyCDeCFmcmMOMYy
+zgp*iUM%LH4hM(N%T6#iXdtLeK3diQ|N;SDpBZ^Za3fiUd8qHu|BfrJaka_CQnZ!?_
+zmWS1|M>52{-OP0*1f#0W)o7wut!DI&n>=kUNbfgor)9CA!FR)I;ct)sgTN^&{`YpX
+zqMt8XM1VeN=;sEH+rD39Z8e%~83-TYNRQCm<j&sq2Vr2V%e{N@1-g8xPr1D@qFn5>
+z8GY+ejd&V$7$NZw!yu<7%4*r|W%t&}hMYlRBkWv!xMpA+n&QOM{YBe2Ls0kfyT8?U
+zfG*-YKtvmt3*0|JBGc~eAwN-M*-UjDdbWPrxx-Ldf<5YBQf~%npDExMbf(|1gF5j5
+z>RC^onC#6nL_N0x&-j1Z@*lbm+Fx^%(h$O7`=oS_{|GA2(fgXadrmojx>o-rPj`*;
+z^~!L`(jCC<uWy)-xEp4-%kJ7P_nzOBXjQZ_#NPhhG{L_4B9+r4#ep?quz?1KJh#qR
+zoNNm{l;*rp4UZVpNWG|aG%+ga)q4zPr`$V=%gh3A#iP%8Gx9xh{9QMZt=fBsAvf(E
+z_i(53zP6|y*$FQ`XcnE2O~2nKxk<45(EOQ!9{nuatV4aXQ?mz8e%wcrSvyC~%$+<F
+z;|g@PK7$d})7z|`FbZ%Xv4rS(+S*bxOLe{7(cvLmJmR~&Jem}&IfS<uMmE=f;?31Y
+zP;}Vv5XHuAG!$=`1lO}Fm*z^9<~va_KwHF-Fnljf-ma|~-N~W#(F)wK<q>ZzaKzpL
+zUI4?6KLQ1g9WCtKTLxGcoi&_ljbGVHJ4F<mB?)8{)VTyQyj5GfFRoq#6X<RgDL9!z
+zYa-hO(P?!eezf2>bTvy+vXH{Px(OA7WCz=8jndm6j1jR9$fZ`^{<d|RQKQ%lH*l((
+ziR)h3yaS}HyXh0eCXJr)osKePCItBwi*;N%z22TXAw|5Gu#fyAcvEhF4NdDsZP7(@
+zck_|LXlz0!^A8WN&Ual`)5~d)>hGuLqWgms1tKCX9k!Q4$jZwG);Id9YdoWT`RZ>S
+z<|G%CpK3F+#|c<ytn6KTnlRa{sIfCLs+}5mJf}F%Op$kR=yr|NIp@~+u9_uJWf}c;
+zd|J*7$83}b4CkyIG6c8miKY&bt-R}s&<(9;vLhV!>s;ajQZKA|N$Mq!T3!EKc^fKE
+zkmwa<-eiV$!l~a~XbRyaa#Gb+ChiueXTAeynqGuSuys=JW4tBl#qu<sLoflhn(;v>
+zpVVv&4_(t*@$bblGpURYz=cFhvxH*(b`#1j<TpsSyT|&6XNv~))nlur<oBt+_-OFW
+zDPt7UOfOkdkiLQun4UFIAImEDrlCCR7m{NVBUad2gfGV?gGZ8nhYkoj*mhwK@f*(D
+z@W0n;8(+(jta<_IgS?xmOP`T}JHU|V9pF`iK~w!J&nKj&xw-;D%yv{4NRep_b*sw>
+zy&@Cdl8Drtw`;E0g)W6j^yIqU9l%h*eD5leeESYCy$5=srylGPbu;_}#BP=mXR<Fz
+zaKW~Z05KC~^x`we&m>lo0jx$UJ9|oxOSs!UmhpL)b3#KRQ(nFZ+BBTJ#kn${q6XLV
+zNOL9sR=@)!eC;%1X5h_VkfZ7B*l%`NAD?U()!DN0aWTjqH?9{IEV0AGmeBB*f8%o|
+z2%%TX712sl)fG7m_j7ujG}@4MGW=6^{I$o+3%<{MhUUDNQ3VKxHWBT;s?#=RC~wLF
+zZqEGtMuS+t=tR`4osmpYna11yg6)3!AN|=*wi`$A(x(u3rT+e5L7lM2eOyC~;o_|Q
+zTjy`3eWSPax<mq;)q%nOW>}$Y@MH<AWI+CrC`qE|+u|IvelgvxLINFFJ!m&IL~0}#
+zC(@_$9khw|TEy1;2z3rUny!Lu(m72dKdx_nzjSsnwMd3AvqjK5h?6QiWIaLJah)a)
+z1#Op9nW)Z1O7>={tjc%$=0HO~>0iVOj2~1Ma9zxOypsA!@@}lbS;>*#&;Vi>wMpM0
+z4r-pSi~E^7wq))Dd!ICJe!Zqa;F=`l>tMY9VbdAvc>sGU$e5TH(CPGkO*pW1!k2wX
+zerzS`&@FwmRE5~a^?6~ud|NQ-zB&(0^fg<&UIgS7YO=wZU)V*WHLf$2lK#oyz(WXy
+zAidAFUAwt>_i0GLm<h*ul?D@|n$OH<a~SVZyoTjgzpt(?{k6aXknj(e+rTfKerS_n
+z>LCj!6osjp;3&EJ=Ks6d=~i?qWbDTlpZfc&*j}O)7NwE=H0345=T3Q+_LApZ=*P-U
+z?N+0A06xA%mkjp2cSF(2775)7*Bx<S>Wf)_$5|7{)X@gtrDSZb71dBef_br6Cu=-P
+z)K5p{*?AloTTeLUFVCsvX>e5Q7m{~e#{OoG^qaz`Bv+OkgT6nRZoclIQH<C}DRtL1
+zVxd5RA;rVcg2mkfoy6s?sSJWl9*Y7lowAT;)|8^CrGtx*o@k~-4s)w~w%5uLSM7P9
+zOhVE`am_#23Tiu;+m=ebW{@TSs1e)klKc|>os?xDu)nXFCp7-D)|s8L$1pN9t59U|
+zsO^KvynlhbyNmE0fO_M)Xa%<*(ik`dqh@4F(2OQgT8wazWX9a9g)(H?{%B_pSc)vZ
+zqGL=Fnx`si4D+_3RHwJ+PCAbhxR0X?n3Q>{mnKebDbZ3%zCUwgqD4+DS)M;*i`$Pn
+zO!K!)HF3-Ey=j$pR})Gmd#uNUT86G|&Skz!<z({wC$XTDT7OZyukwI-1uGldXPN5n
+zhG$A<vLygn_9Y!UNxWCT+NeUyqV6W71fkBh@vY%w2BbZuDL1K!n)1rA8xgs${`qJC
+zOC!nl=`i7!-Ich$MTaup0d1kGz3$g)P~!?oizMZ5R`x9dS8z$G{#jAb+PkOU<Y}Uo
+zv(FxH4Q=B~Am^M*)t>InfOgwH-YBW?N|Qw+1#W+lbDhkyLh65SG>XgquUgJCs;RB(
+z_t-@gq$nayIw%kUsZtb?7K*445l9rIHvu7(Kx|0wO=<*!NE7KrAks^uHz`Sg5Rgvj
+z2_)Q{bFSw(KJU5X{d7O9J(7&Ich=rx?KS6`bN+uG4$Q?xUz@Wmm|_a9PObh%ark}v
+z?P?f=n{&gji=9%_*f^w%t#Mt{QR%UZBwNzy?+H66EmmKm*+)?z=fIN<0BQq@OX`{R
+z2w`hY^U~qFumj)?!!F1sWcNzcsO<HgEeSJs-c}7GCnLG8^TwSVx#<)LAb1ikPj87n
+zkwB)4<hC+MI8(m^ioU_mr?)WkglNjYr+m|F{)ye&Q!ePev9WQkQ>;v6=8*3GI&iAU
+zy|uw1^7*ch=t`6Ey}0z^*_Bb7>WnmP%Br3e3U!5nEDchjXx>#*x^zUY?+ja=t~xEW
+zc+eMfg#ThcgT5?Ab_}~f&b=1>IQSJ$y6V)+@Nj?GoP-_AmJyT4vbPz_!UYTAiORSK
+zYMry{<~@i;jbMfO%Q2Ku{zt%N;@;Q!QATa0*U?W#^o~tP>$S>Kqk#rAr)IcdA;4HJ
+z!=&3aHBs{Gkgl35w(ZBzTO%4Yq8%QJU6RG5!8a9j8D#~tg@lBM=e)4I0#bb{P4n)d
+z?$&CRRU)ybez^+~aWui<_jpz|0w;U1k%M6~lb7jootdA-m0A6^1R!&XEFP!0mbPoy
+zE?=B5TvONBFBoPRdgOM&R>@ad6>j<PO(iXt=a~3J6J%CxVU5q#zMhUgxPD|*UAu{j
+z`B#jucv#?Ijd}JM>i{q5d{`6YKD_H-OL=T6cv_!LYg5zlo?4_bZ>!~k{8jsw<LC|s
+zx}(uADJPr}QGOnFq^pXDbn|iHQ{!lf?<?Cyj^$(*z%KaJjr6o}B6ZWKm{^tbhqqT(
+zvoA9mRbmGr$_Ka`z=aL26N5*~FMZ3rFi{DXUf3i7LaS>>OB+^WXmW)jtPFM%&3Go5
+zf_1<D$ltHa{g7_ju3R+?3HPA+iH0_hqYvq7%cBkqR{HRVbW~T_(^UdC;wJ6;^-0dD
+z=r+t+Z}YI?a~gX=@?^Y^E8!x|>vMK)pl!0|Tjn>sHMQucle!VofcyY8o-O2;skaoI
+zI}o~3(<A+;ULec1EH!#6Rsp}mXNC^{XxON2U88n;3?``}tS^LF*>{BiKDpO)`wch%
+zzaZa&+8NqscI)iR2hC(_t8Me?kt=uQBQH|SS`nrc^`U!21@spN{=F;O9^@5jj-BQ7
+z%Y*mAB@<8CPzm4M$p}D-sLhRmEjC4pxXU4(@vz7I&TD~wQO%7rx3#kWn(I}9YY|W$
+zi~5j8XL<d`?h4<zrA$P|-KL*L>X5ow@l2w6uNl0IVR02Bq*$vacO%s&jvnfBd;sEr
+z0;utWb;{z$;)nqmAzr|#Vx%%wi${z<eCsSql?6S)sk-C}l(CxDM0`b~9Y$=ct2h^+
+zxtVL9tlWqd!jkvIu&~0i2(>Kw3dF^UE!1s_`s9Oe0Zj>4>^L0ULim@zxg~`|z4ssy
+zt>_^0MLw1YVCf@`7SkNEK3sJRnfKAr!@=Nrn*E4VXJxUxnPwy-)QE6JJibNgi$3Ga
+z^{)M}eyjEh{H)vTOqY@N7b}dd8dvVm;l(L;T3BZ8jPqr%K1!+s;igWt0T)|izV?2f
+zO_GTbY$++4=LvC2`cdd<?zF%zt6aeqs&e6BjhE5dz|3yV!SnT9X0;C_RMRXf&w8}y
+z_92}MAH-e`GWNXA<>BO=Q3mx#ZAJY0{<0!br8UaQKJI?8<yvo32L#f57l5*k5^mBv
+zv%C13caK_gdT<Y#3Jc=;ep?l<E}2A+f3CRocl$(#<U67loT4MS($F;z4_dFT3$8xM
+z)9-L3o<6Oq;0d_u9QKR??ld+HS=GEe@d6{{l33Vi++p~QdSLD%l{fmr=Mj*@DP`i=
+z%o<34%FSmmjU!=-!>==xI|cI963gS&X){?E<#k4}B>($*tH^LR0|>xw_$FqkH<;zp
+zQGRA|0atb0%}~>3>^3iOx_u}pl#p}+d7oR*DFyv(=a!n4XTtv3dP@1yVqMK5V*H8a
+zDe;#KHqZD`SnqnwgO{~XK6T`-@@vz!%ROF>fC2Jmb^nW=tfR*@=w{;lJH-h_B^jgY
+zF`foFaT-G#nQRim0%?*9JDiTWW@lUsWDLn0ipsKtNvr3?G-X?k^{(|&3OmHyj!{zd
+zh|pQEg<z~6&Rx&U)jBC5z@;rOWgL-u;;IADBK_Rg$y^cShC-TkM|`&S`%GpDy$bR9
+zYv^#8MPGFcQTO_+7^CTps`D%-Pd8X-wAA%B#8(ob@)XS>qxHSav@^~C?${&ye&gA1
+z6b*eysYdT&T`-OpIuRluKo`yDvI^V09BF^C*pB{8IDA8#)q1+}f+zUB@`bY{$y^V_
+zBMTka->wtO#&*lDDM|d4XG36oAX<<6gKJdbx~aMC%pJEVxFbDx@d`d`+n}hR(;Gg_
+zEgFs5+MayF@AjP&-2H7MxfC-)&^O3dosJR%uJk9n&rINTp8SYk@;Yx&BsXGKG11p7
+zIPNSGh@0Lnr9d78g$<Hlod47-!y?lt=o~!%U61F!_1iDSoev&b6!pp}#@d_dl1Cpn
+z)D8#Tp&gF>-^TX$O#9EQ(~v7DqSZUy{Z*oJws(unK9n^)6%n<-=iT7{SPXK1mVxD&
+z`!f^HX9#resAD+&8EMv&ErA4@wVU~D;8I0X0^in+ZR2ES7Dnl~?n}MM|Fqe~YBq*X
+z$mRMxVH`2uIF_(b2Vw^<vYh!|#09n(SHC7^wYV7tT%ss);+wk&mo1|O6(>X=2vgIG
+zd)H~J*~{RkDx$mgp+X4bjGh%Hlexy#84K{ve4!Bm&#~z>;pEjGIN->5N}@YrOk&v0
+zhrsT&n(*}FNi(vGbW*x_>#mhGs<0Tf+>JvP_ju;b`+ab~ybpdw1)XYNgf#%F@o|ji
+zGEN$)ZLr7QYo61aB(7ruZ)2Z*G1ZPE5|Ja^m8Q!sI%_xZ9&exWFcjYj$d#G(u#JN;
+z$FeW-5gt*Js>oiv&`)n@n%?7Zmm9@%tNiw}vz)Q&Lx#)yEM`LMpwW<S#2Y{jJs&NT
+zpz{&&#$b+GaMRGm@M+VH484NH_!rwDT$9w>Yf)}5QB2L>R{U$v9#J!j;Q7g{6J>JE
+zbsjb5Ru`#Pm&X;Gm<6|l98c^tZJ!0U##;xMzu$pR4X&m`hGBOml44@+`$&HVo{?Fk
+zS5$#jFnlxol)C&@o_8WJ%4`rFZ9~lrWbfqA;%zobwD+}rP_3xcu4LL|nbghMAsBli
+zA&9WNQR!26@EIzQEJ8~xCNAl!$8BrF0#sIupku90w7S!}Jc-<@H{SB2cO*vpyN6XO
+z5`VNDMFFXwx8e5<j#eMs_HmQYTHnaLu-#_Sl=P6m5gzd-{*-ptH~*G~`Z8i$fIQ6!
+zN@jhgPpI6O*mh~#o^jwj=c8Ca&e~cM3Ebg`e8v8C$nubmm=(7p4wxI>oiFa$F5>n4
+z&J4SL=`K~Cxn)kjDG3vpDK3SvzHx9F>aoa`taz-$cJK8DfL>^e%W7%KdfMD+sB&&M
+zN7k4?h*bD!gUXw=MbnuMvN@`TbWBimAj$P<J(->JEFLW0%dzTe=8|hOYurF~o60LY
+zmD#6El5QJ=M4tYZ+owtYf4vj*CdMCVRe`^>e_L;@#8{#!U-nxPbE96<Od`9~NG**f
+z@<TMZ!}@OeBfmmrf)M7WeHwPwN}&<cwRHCS%#%ezO})f=HO#)V-b4PA@-e5Vc7-)x
+zMQ)kk^IIGAQJ`z5vCLLtE`e6h3=Ms|zLWO7Z%pWSUbV0)?jX#)NUk=wvyFb0=SDE?
+znDrFjQ~8RoXcNRfPi;c)0YD!0j=@}~+QP6YPW1AHmCQXXCu(_l%`oUc)(H*Zgo=4C
+z2XC^Y_v3Z+okwQQVYyt8V`)%oMAdG6r|f0Z=MCn}K~r0iT1wK<XZXTBJ_T1jG9_sV
+zO^mX$2Q=q05y<Sq8hw5}deZ)JEshFidpl-(=H4$F1nVVT?&-*Vs&LWP(20~&FJ0dZ
+zoa?q8EbZj=CRfS$7q~gMC4p5%dWXB#Yh6*t>+(X{+rt#?pUpb1zVliOOv3x`QKTi|
+zj6Tz&T+#Bg{F=f_p3nh_i>hepvhu1-&Z=x9*DTlU>z*DI86=SeGxd>1^BXw~9TkIR
+z7tHze;27rn$q!+~6jQy|3VxYwKpX6uLK8S4A!fgA(qo4DF8<3RS<;4O<o&L`wMfH+
+zYVS(T=fLJSsa;lAm`@9P50&rg@IOMYEf&igr-+f_qWKLct<rTOqc@891FfnGO23pA
+zO<?@&l?9wP>d!ixBXp;Uq`Fs;_S&-6r$aYcfhyy6p!QarjuJSdfW#+~^L`5P;;g6q
+zLVUqBCa*IF68KAV-cL38KL@ykOK(fhxalk$Vdu-B;y$~D?>+U!c&G6&$-IZ%5=%T@
+z-W}r`e6#*?0BCxyyT%kj;q;-Y3w5TE5R)hQbJZ$*?ur9Mq3CSU3Rrf!Hl)B0s_(QM
+z_3>`UVo*zXr>1zE{A=-}m^}%!Lsz#7rF^z{B@+6MLr)gmlYQJAZ2qOCGu)XGc&;ii
+zqthFEO>}|7Ce%^0u)_M$ZwjWPe;3A{Fg2mcU4K={2H^7TR1uA{8JF7lz2UGlM{R#(
+z)t*QI&$fPdhIiK6UcNIeR&Pu8Z=#9@JZ-r#xiu1%>Cc=S+6s;>DK?p}Ml{RmxSS9S
+z{9zKSVYsgh9%UX(ncFrHMGoDgE<;{wCW{|vR{_GRv*+Cf@j;iO*0U$?(8Hi@YYk(y
+zM4$WX1P)6HVMVjTLe+&_M=uKFy&v&j^PDD|v$JI!8D$v|(9X#7P*L`eUcIFBC2F2p
+z>uWwkJ)_cqum=OQfOOlz0p?DeGF}mp_L$FJFtC^{wtWXfN;gdCam3!}+hJxC*tUo6
+zJ8aMJl_{XDR*I_2iHjoz$A0>vb`2t$@jJGes4t#sdnunCV5)E0U%@t|oW0kQ84dv5
+z8{{C7^lY4puS{;2Ksa9QDmZC8ps0IR{d!v1Eo3EI2(sjzj%^hj!s!a`lHrA>m_ZXp
+z@RJ!z4e4hO=@dUu)A3i94J05C86TSPa$!)=oH3#^ZO4Q8tRuzHAR(#>@Uyt5wKqdl
+z_iRXup`;A=9fa`=;OAP}L0-*e|E8`J$P<EB82au$1&o45126cMmsZP_*0;-%D~doe
+zizie8TUg9I{E&_he~`b{er#%senQW{2FRo8^-3JtqYUV6A5rXg8|4xjV6Y}Uj@`P8
+zfhijgDOE|U$`ji3PMR$z7uMCWVq8&0k5{wRNV}IE7ux;4d)I+75!7^EG|{Inc0zsd
+zkd724axjkKe_S@#<qAba?tTp$R)mT6h(_?qC%(_Z6k1#Rf{zM6>qr&Gn)y|(f<w4>
+zb_m><v0C!@=axupDxjhV&x_1NWP8IuQ*4!kUJcpK#ge?IqyXD`J{R_no52}2H?|C*
+z7mmMub+V=R@gQ#$LV;@98%SKlXxE05ziM)7sxh&^S*Soq6NVOoLJ{RhmxRJ>yv^W(
+zBNMAypP*~Vkg)5+q8L^pWx}31ISJqT4#)Pmd!M!x*4URYbD<_f8CvHIn^m4?yc@aP
+zWC`pGTprHtexL0oEY)UcblmEL4ozJ+L#3~~TCZ@?jK$SQxBx1tM$~y=yrGK9*3Kn(
+zN_xrloEp{b49El}ksSoYNL)3nKwxu#INC^d|0WJG?Wqbf)ckNmlo;R2(nT~Ser+5k
+z)%gfTTX*Wl%GqCZo1kAVNiV6W$_&}B#GB<SIyf*#RC)5GKx0+qMe^NeciM#n#9+O;
+z>gcbo&5dB4skjKSR{nt}>!a|w;yP}vgtoL?dbRV3^syQ#TlOn~5%qu@gIpVIv8)2}
+zv97I?JfHIN;9SYZ#u#eE)vhl;AD0%<Xq)*o=;j~n%|8&Fw6BG<kK-pR{!sz{A4B-d
+zCLa4iV%6n8CH_ueBZOHBqJafO7&8l&|HF;^)$=cg&Yy<#sIl>fUzN|lEbG5?`^Opo
+z_0hti&l&Xi!~c(_`wPnW3k&g|Q1c(C#{cbCT9!@sFR0`H*7M&lb+Q69i40t7@$R{?
+zwgGn??q@nv&$BGH!Z_alv~KGDB<$u_l^^BPt*FX&#eEX#kj~~uCX8bm<bNmoG7O7y
+z-ElUG=GSYDCF<aB`r=ozQjE95@mvm3kaYQ_94K$)fWnWbTCaP%5odSWH?knd+KN#%
+z7vtmo7VPWx>U>aU`%d%%Y@*r2?@VzVU5{|n^$b(q!`rqzR^Og7eMb$?^)8N+{l3Vd
+z=<!CCajS?f+M*i4FxBHwe@swJybYI-i*oOUk5xMD^0lw-_KkS#RyM+Jsx;gHyivZI
+zKk#47zCYoY|N5Mc*B89%fN7xzRJ(jl9eGm~26L6l)>~&#4;oo!;fC%r7h=uducLI@
+z?a{uj&Uf?M+zd!^PmojY{P<IX(fjw6j|i~mtyQx2nDBUwueC4KWju`0;;rm5vJvYL
+zTQEFVk@mUQ$<`4OeJr6b`*g`iM(|t6-t=M&#Z#ILk$h=MGH(E1=W>y<-xGfV8r4Qs
+zewv;~qbC#D*@bd>bBoPXZEm?~KN)wT4|6QDBvv&o1iaI};(uP`d2lyCMDJOJ3?EJ@
+z)sK)nCba&QsPtTG_{#L9<H!L?&7Ans%Rf$iOb9G!a8e=>(ZXvB-SDm99bUPr@sanH
+zDb0rGR2PaFw$sHGX!%ppX85hlnX^Hc+wOhwzF3AYgPU!Xaz-cLi1VuxclkLaFVmTy
+zZ{%93yVSRs^r|B$iuX#(!}|w;g=T;cx#@LYpV<v(J&#HSX+?W-@~cOa$*2-@+&25v
+zoxy6<PW8`}y;$G@_aIUY{h}wYlep8y3};!RTHB+0QpbAV*<OvjWTm9lZA@m=Vw6nh
+zJ<eq%evmG$Q{<q24w=oo(g1744G;tt>MoI&>*P<T*|J{I(4bT{E0|H9V<C>`)O<og
+z`uXum7uXG_U>4>$hKRH4NgQn`DS1(WP|)NpxHt86BDLrMpvBL_#8%^$rY_ZXf{nvx
+z7N~Scx3U()wu#|u>r}e2o9I*_Om#d9n!huDb!T0{HB~Nrf$nJHgSC&>O`Ty7Ya;Yo
+zYgo9yNNQ*7>4Ue~`1);ri7IhY%1{PX<<rpaLk0YWAd-^iwLQ4NhHLWdy~SG@IeBs3
+zO&5~3djJ>6V_m8ux(m<KbU|V@?^*4@5bVI9-^Ga;vU@G)v|<`58XwgXOy44bd~lv{
+z(l2v)99-Goq`C=8ell5FF)SvU^SKDY4f?4j#zx^+1yu^j&(#<64@lF?670PTmq+$$
+zWERo{mSWtF3TB3KdkCVxujAgAA()Bza+J9<>u>{_HY*2GGzGH@6Mp-^xlXXknJi>Y
+z&PZ4}x|r4<e!fX$*?B`|D3F2t)W2%Zh!LqF_IVkUp!RN}@W+dHb3Qtt32>1GEaEC9
+z9&<DB02mzbqrFWMFlWuZ^@O#@eY4@NnpyZPaql4D%$#TtMDoFofJD=!2d)G^X+MdL
+z*cTpAb(*I3HxodPbvILOjuwx@PtUMFoDM3luc^jvl`IOrj9vY*5f{MG+TPec!^@QK
+zafa_3XH<CAz}bw87oql2YpHf&*e7J*-Uju4R}wUH)6@9r!vAwwPp(k~JWv&3NN78P
+zi*D~lBuIoYaCbT*7{Utlx};L_u9+Z0rJrvL1m$)&GgG#LljpxoKXZ%XlGq%_0*uVT
+z?AOAxJKbO83K!a6m=1SMKY+PNe(Fs)<?SdW(ptP_^Kmg#ggx+dGqO73hTewYM#c+d
+zl{Ya!au=|8`qZa}C&bIPoE&Pbf)hH=V6|FR+1(`HYyf6wJRgoOpc>%7Hnt(d{4>qp
+zL%wO$=tv-&*~&^TCSpArq}-l7L9*~U840&4TiYt=&-3<>j5+Uxd&nMCv~Co~#4pxs
+z?IA>PJCgyo&nZ<1h41)kjjZtA5BGh#o+h3QTy@k69DB;r29{d<Ec_|sp>&(<Tl+%r
+zh0OH0!n5ryDUVFit;ZR<gJ%b;nZ+F*`ITqTV#~d)i=}slKuUL4GqU(i2h-I@F80!U
+z!!EQMGdryyho1~ay@3L03Xg4itGOUijR(hu_;y*GXZ@ek((Hse@-`!sJ>FJO8S;$a
+zi{y{VSZjFIbSDY3wqtH=R4gf%ZkZqsPD99C8z2X7ZKj%o*Y#P0TQ4RB{ajzm+|~}u
+zRb|01fR~~l$KWf+H!4^m4>Ly3J=Cf=B|aRHTQH&|Bd-SHK(H9v61_`A+Xd6~qpSwQ
+z3DChb8<JaXrWU&-M~tp=MV$Cl|L#btzFKH?N|w(}PvamoXLCC%;J`R)7Jr&}>ikeJ
+zC-%;8q9!pMbyoZuRwaOW&fSM0baYPO2_!6;)m}Vn5NU#mMaewWDyfnHX;%1KG;B(p
+zdJxHTN+4v}78`TfZd^zF3D8Dg+_w-bsm2tC)>_tZ-**(ru|`t4as9470Hg=-qJP=-
+zp)Xr;T*X@NN<U%sYSON|LnA8SKfAYiG7G|5XOKfN-=un|feGvzdJPI-_O#k){Z_o&
+zd~k@H&X*_Jo^SSp;)!HnbJNV#@S^vE33ijkMfCx;eMB-bO3vkBzhB0(0UO<8m6D0m
+zoQBr>FxMcWHY$jh-fb%vP%WWN?e;O1YbcOsc&HrlwXW8h22qL(?6&F3&ii*j^zVG^
+zKl-o~7Tk6~_g%RX!}~)OK=rqa=>MRpHBnWBTYuA<y5~hfZ9%^i1oi-TC#Wdr&CHNx
+z!WJFG1`ft`EfqHKmcXqy^VuS{lMZqyNuJk;=i#e4<Pw-epg^`1?~6w2Fa_0#G2rJO
+zP4+FoLyukYQ!CCU=U?a;Db_scn$!hZ*e1h!TyH-5@V?+`=;P9%vRe?Nki@mFdW(r;
+zOx<&UEwVp+UcTdd#40tc(f<Og1(SITcbxn_JB^%htstrIHoO)=Dx>`$=MsPf+?N;u
+z4(<S!8$8uxmUFi0;5KR|xUQ8wtwkpM1nrC!pT$6)T#i#axSQ3ww~64WDvB!l=Plui
+zQ{$@FX!ma6;Qfni9$e}T!U-^<kAne?a7XGxpzNi}&KuY8F4aK<ZV1a*01a54zZWCz
+z<0`qNUX$?|H1*2=1U%AW)D+$Y8GDh>7Il{oU|4?lkS-9T+px|+b~>ahBSFq&YX2PM
+zI4A~g0ajLE9jAE~Nw|9nMPc7nGp_xl?Evnzmv0s<x)nN{YbO;K5i`ALA^ohvh8V^y
+zTq$Op>6Wh4h#9K39=-qzPFAkRX#1j7c^LXFM1yJYcHrND5P)NUdGjG%${G=jn(!%N
+zu^hA*W)5vAMXo!Rz(rtowTWBKrw{4o_F?SBI~M#p&v4cUm<|4C6aE-hBkXV0&E+~_
+zU1J!BSAF){O05C0TMg`Xy|-<fTYU@4vvXF)RzIcic;zI8740%Lp9=syrQ*u=MP)37
+zSO(POu>lCCmAW0{<DY&ToC@6!<>Cr&S!nb{*{H5Vx`g$Hl8Zb^8%gjt+gYl%>5r{G
+zq}2B7_~T*)>kOe=kZlU61!@n`!6A4Tbl|-c&aC;$`Ca8X|3s_(QJUJ%Iuy(s+C?rV
+z2Nd8@j<?EV10whB4qz}R;kOA3>O5fp+S{=}UJLwzHe%g|>R!EDaP{|$iP@^EcM6da
+zr*%jN8TDB!2lPg5Tf=QPOM|y=T*%Au7Z%T8e>$-bPahXThR_VGyw4{Gw25)fugKl6
+zfCgjSW}DDVUGefE-A91RPS^{p#j<_1-Li40u(S9%OVj9pN}ZadVd_^JMksR|bcclA
+zLM+uvP{1b>jO{aj4->BL)BJJbJe3Q}8AC%4Evs#PHtlhprMy$h{~Y=HH$Ru5TKN(+
+zmI4KSf#Jz_$Umd*AQRbemQ;rgFew16H4IO4JrVq!r-7Hx*d+CLTe|aRH|!^b04>m;
+z!v}2pGaW?knwP!9=XqbEs;#|Q{2U7-knfULCtY!;h9Qco?i79sRLhVsrCU3E`Hu+y
+z|7bM;6qPmuHD^{0*JzC5L%RNwwE5+LW^T~q@}K{@#qwfGgKNVrHovxSMlAqFHGEZ@
+zYYmfPwjuMJjeZ1@53e!Rt$K+$*mIr4X*^P-L_2)?@5Zg{iY?AOq>I7sN6k=4f8NKB
+zUez_slvOpZfhoVi{m=VY%jMi{+y?a+rXA90qbzbEgeiODhkxs4|9Uj;2skB(8qqqL
+zMVa4cqHuEb1hiQ$<_~`OeZ#iOt3ZvWe$AOweNN${ywJ*CzM1oDurW!5S$`0z4WGvm
+z1YwHK&zJjc7x!wgm9jzRC7s!wgtPCWf5K<4VV=%o_Uq2Ve;XezVt<NUFfX#kv=z3E
+z;YKCBDl&a&_m7D2U-PaDfcSI3<{x2y&J!nF#eLo{ZN>@qegC5`R_*VH9kjr-l%>M^
+z6eoi2Bo}W+w41+007Mp1J@VX^Qj86}{KNlp0VQu#1LO`Z@B?0IY^AJIm<|H{Hm#KR
+KQP5Y1WB&(6nWfMG
+
+literal 0
+HcmV?d00001
+
+diff --git a/build/verify/r6/status-golden-2.jpg b/build/verify/r6/status-golden-2.jpg
+new file mode 100644
+index 0000000000000000000000000000000000000000..4e6d144c34973e1b3b945be488ada75d468cb566
+GIT binary patch
+literal 13853
+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
+P|9DXSCvkT4p#T2>4<b2G
+
+literal 0
+HcmV?d00001
+
+diff --git a/build/verify/r6/status-golden-3.jpg b/build/verify/r6/status-golden-3.jpg
+new file mode 100644
+index 0000000000000000000000000000000000000000..46978ae8c32b609879a1393387f0faf43f7d8177
+GIT binary patch
+literal 11850
+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
+Z*HeBX%IVK;=CpoCUi#}F46mGx{SQuz1dIRx
+
+literal 0
+HcmV?d00001
+
+diff --git a/src/modules/render-jobs/render-leftovers.ts b/src/modules/render-jobs/render-leftovers.ts
+index 7f89e38..11f356f 100644
+--- a/src/modules/render-jobs/render-leftovers.ts
++++ b/src/modules/render-jobs/render-leftovers.ts
+@@ -21,7 +21,7 @@ export interface SweepResult {
+  */
+ export async function sweepRenderLeftovers(olderThanMs: number, nowMs: number, root: string = tmpdir()): Promise<SweepResult> {
+   const out: SweepResult = { stopped: 0, removed: 0 };
+-  let names: string[] = [];
++  let names: string[];
+   try {
+     names = (await readdir(root)).filter((n) => n.startsWith(RENDER_TEMP_PREFIX));
+   } catch {
+@@ -29,7 +29,7 @@ export async function sweepRenderLeftovers(olderThanMs: number, nowMs: number, r
+   }
+   for (const n of names) {
+     const path = join(root, n);
+-    let age = 0;
++    let age: number;
+     try {
+       age = nowMs - (await stat(path)).mtimeMs;
+     } catch {
+diff --git a/src/modules/render-jobs/tests/r6-worker.spec.ts b/src/modules/render-jobs/tests/r6-worker.spec.ts
+index c37e507..66b85da 100644
+--- a/src/modules/render-jobs/tests/r6-worker.spec.ts
++++ b/src/modules/render-jobs/tests/r6-worker.spec.ts
+@@ -154,7 +154,7 @@ describe("R6: the video maker's worker", () => {
+   it("5. the binding: live providers with nothing set is the 'not configured' maker with the missing parts named; standin is the stand-in; the web role takes no render", async () => {
+     const noDb = { renderJob: {} } as never;
+     const clock = { now: () => NOW };
+-    const off = await bindVideoRenderer({ PROVIDERS: "live" } as never, noDb, clock, {});
++    const off = await bindVideoRenderer({ PROVIDERS: "live" }, noDb, clock, {});
+     expect(off).toBeInstanceOf(NoVideoRenderer);
+     expect(off.configured()).toBe(false);
+     expect(off.describe().missing.join(" ")).toMatch(/RENDER_WEB_ORIGIN.*RENDER_TOKEN_SECRET/);
+@@ -162,7 +162,7 @@ describe("R6: the video maker's worker", () => {
+     const bad = await bindVideoRenderer({ PROVIDERS: "live", RENDER_WEB_ORIGIN: "http://127.0.0.1:1", RENDER_TOKEN_SECRET: "x".repeat(40), RENDER_CHROMIUM_PATH: "/nowhere/chrome" } as never, noDb, clock, {});
+     expect(bad.configured()).toBe(false);
+     expect(bad.describe().missing.join(" ")).toMatch(/Chromium is not at \/nowhere\/chrome/);
+-    const standin = await bindVideoRenderer({ PROVIDERS: "standin" } as never, noDb, clock, {});
++    const standin = await bindVideoRenderer({ PROVIDERS: "standin" }, noDb, clock, {});
+     expect(standin).toBeInstanceOf(StandinVideoRenderer);
+     expect(standin.describe().real).toBe(false);
+     expect(worker.status().concurrency).toBe(2); // the stand-in's default
+diff --git a/src/modules/render-jobs/video-binding.ts b/src/modules/render-jobs/video-binding.ts
+index b96ba45..dc1fdb2 100644
+--- a/src/modules/render-jobs/video-binding.ts
++++ b/src/modules/render-jobs/video-binding.ts
+@@ -22,7 +22,7 @@ export async function bindVideoRenderer(env: BindEnv, db: Pick<PrismaService, "r
+   const missing: string[] = [];
+   if (!env.RENDER_WEB_ORIGIN) missing.push("RENDER_WEB_ORIGIN is not set (the web address the video maker opens)");
+   if (!env.RENDER_TOKEN_SECRET) missing.push("RENDER_TOKEN_SECRET is not set (the secret that hashes the render token)");
+-  const options = chromiumRendererOptionsFromEnv({ ...raw, ...(env as unknown as Record<string, string>) } as NodeJS.ProcessEnv);
++  const options = chromiumRendererOptionsFromEnv({ ...raw, ...(env as unknown as Record<string, string>) });
+   let real: ChromiumVideoRenderer | null = null;
+   if (options) {
+     real = new ChromiumVideoRenderer({ ...options, clock });
+diff --git a/src/modules/staff-reads/provider-status.ts b/src/modules/staff-reads/provider-status.ts
+index 63cecca..4f1d14f 100644
+--- a/src/modules/staff-reads/provider-status.ts
++++ b/src/modules/staff-reads/provider-status.ts
+@@ -101,7 +101,7 @@ export class ProviderStatus {
+     if (this.db) {
+       const r = await this.db.renderJob.findFirst({ where: { status: { in: ["done", "failed"] } }, orderBy: { updatedAt: "desc" }, select: { status: true, updatedAt: true, seconds: true, videoMs: true, tookMs: true, failureWords: true } }).catch(() => null);
+       if (r) {
+-        const len = r.videoMs ? `${(r.videoMs / 1000).toFixed(1)} s long` : `up to ${r.seconds} s`;
++        const len = r.videoMs ? `${Math.round(r.videoMs / 100) / 10} s long` : `up to ${r.seconds} s`;
+         last = ` Last video: ${r.updatedAt.toISOString()}, ${len}, ${r.status === "done" ? "made" : "failed"}${r.tookMs ? ` in ${Math.round(r.tookMs / 1000)} s` : ""}.`;
+       } else last = " No video has been made yet.";
+     }
+-- 
+2.43.0
+

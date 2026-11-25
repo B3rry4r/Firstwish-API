@@ -173,3 +173,10 @@ except scrapbook "Swipe to turn" at 1440 (cause not found) and boarding-pass end
 stands; the verified findings are its round 1.
 Started VERIFY-W19 (T1) and VERIFY-W20 (T2), Sonnet, briefs in build/prompts/.
 Running: VERIFY-W19; VERIFY-W20.
+
+### 2026-11-25 · second chat · ccr-91b3ed11-fx445c
+Did: VERIFY-W19: FIX FIRST, one HIGH: letter's input frames differ in the first ~1.3 s (an entrance off by a sub-step; file size bimodal, a race),
+even with `-threads 1`; cause not found. Confirmed: Studio ready at 0 and done twice (0 of 160 with `-threads 1`, byte-equal); owambe 540x960 0 of
+215 under load; receivers same (Studio, letter, noir, golden; 360 and 1440; no clock script, native Math.random, Studio still lazy); checks green;
+clock test 27 of 27 with --origin. Verdict in verdicts/w19-VERDICT.md. Started P-W19 (round 1, Sonnet, brief build/prompts/P-W19.md).
+Running: VERIFY-W20 (verifier); P-W19 (patch).

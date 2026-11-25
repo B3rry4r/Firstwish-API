@@ -97,3 +97,10 @@ Running: P2-R4C (builder); VERIFY2-R6 (verifier).
 Did: VERIFY2-R6: MERGE (MED-1 held on a real render: 1,075 Chromium and 114 ffmpeg environ samples, no secret; MED-2 live with RENDER_WORKER_ID;
 LOW-1 held; the two edited assertions follow IK6j, one is loose: sweep row). Merge check m52 started (p-merge52 = r6 7f42893 on the head).
 Running: P2-R4C (builder); m52.
+
+### 2026-11-25 · second chat · ccr-91b3ed11-fx445c
+Did: P2-R4C handed back: r4c ebc5c30 (39 files vs web 2f45b9d). M3 letter shows its words under render; C1 counter hidden; C2 fireworks plays to its
+finished line; a counter-by-shape rule found 10 more cases, fixed; sweep 95 of 95 done and clean (200 ms). Checks green (lint 863). NOT run: the
+receiver compare. Still drawn: thin progress lines in several styles. Patch refreshed: branches/web-r4c-from-2f45b9d.patch. Started VERIFY2-R4C
+(T2, Sonnet): receivers, frames, sweep. No third fix round (IK8a): after this verdict the lead merges or re-cuts.
+Running: m52 (R6 merge check); VERIFY2-R4C.

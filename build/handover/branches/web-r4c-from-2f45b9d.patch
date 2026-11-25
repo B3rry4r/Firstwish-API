@@ -1,7 +1,7 @@
 From 847b3fd56d66404210c7e869ace75797f40bd5d6 Mon Sep 17 00:00:00 2001
 From: Claude <noreply@anthropic.com>
 Date: Tue, 24 Nov 2026 14:16:39 +0000
-Subject: [PATCH 1/2] R4C: every house style and ending plays to its end under
+Subject: [PATCH 1/3] R4C: every house style and ending plays to its end under
  the render page; render-only cues wrapped; sweep covers all 43 styles, every
  ending, one action-word list
 
@@ -680,7 +680,7 @@ index 90c1796..dfea156 100644
 From 8b445d7a67ca2ae61bb71dc4a6fe4ef9162b6f31 Mon Sep 17 00:00:00 2001
 From: Claude <noreply@anthropic.com>
 Date: Wed, 25 Nov 2026 19:15:35 +0000
-Subject: [PATCH 2/2] R4C round 1 (IK8a): no touch cue, composer, cord,
+Subject: [PATCH 2/3] R4C round 1 (IK8a): no touch cue, composer, cord,
  counters or pips under the render page; sweep word list adds touch, brush,
  rub, light the, shake, tilt, type, say, speak
 
@@ -1218,6 +1218,375 @@ index dfea156..d1b1d32 100644
      const line = (x) => { console.log(x); if (MEASURE) fs.appendFileSync(MEASURE, `${x}\n`); };
      line(`SWEEP ${styles.length} house styles read, ${cases.length} cases in all (${every ? "every ending" : "the first ending"} of each style, and ${scenes.length} ending scenes on letter); this run: ${run.length}; action words: ${WORDS.counts.seed} seed + ${WORDS.counts.fromHints} read from ${WORDS.counts.hints} hint strings (${WORDS.fromHints.join(",")}) + ${WORDS.counts.phrases} whole phrases`);
      line("CASE style | ending | done | scene stopped on | focusable | role button or link | action words | verdict");
+-- 
+2.43.0
+
+
+From ebc5c30879ff84d5436ffdcff10aa070d184b86e Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Wed, 25 Nov 2026 20:31:54 +0000
+Subject: [PATCH 3/3] R4C round 2 (IK8a, IK8b): group-chat envelope opens
+ itself under the render page; boarding-pass stop count, fireworks ask and
+ dots, and page counters in contact-sheet, quiet, runway, scrapbook and
+ group-chat not drawn; sweep finds counters by shape
+
+Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01VNvA3zNK8bJENArUhDXHfa
+---
+ components/moments/ending/fireworks/Scene.tsx | 14 ++++++++---
+ components/styles/film/runway/Scene.tsx       |  4 ++-
+ .../styles/stage/contact-sheet/Scene.tsx      | 12 +++++----
+ .../styles/stage/contact-sheet/words.tsx      |  6 ++---
+ .../styles/stories/group-chat/beats.tsx       | 25 +++++++++++++------
+ .../stories/group-chat/endings/envelope.tsx   | 20 +++++++++------
+ .../styles/swipe/boarding-pass/pages.tsx      | 10 +++++---
+ components/styles/swipe/quiet/Scene.tsx       | 10 +++++---
+ components/styles/swipe/scrapbook/Scene.tsx   |  4 ++-
+ scripts/live/flows/r4.mjs                     |  4 +++
+ 10 files changed, 71 insertions(+), 38 deletions(-)
+
+diff --git a/components/moments/ending/fireworks/Scene.tsx b/components/moments/ending/fireworks/Scene.tsx
+index f29b044..d99c17b 100644
+--- a/components/moments/ending/fireworks/Scene.tsx
++++ b/components/moments/ending/fireworks/Scene.tsx
+@@ -1,6 +1,6 @@
+ "use client";
+ 
+-import { Hint, useRender } from "@/components/engine/controls";
++import { Hint, Hush, Pips, useRender } from "@/components/engine/controls";
+ import { useEffect, useRef, useState } from "react";
+ import "./fireworks.css";
+ import type { EndingSceneProps } from "@/lib/engine/types";
+@@ -33,7 +33,12 @@ export default function Fireworks({ wish, ending, still, tier, onEnding, demo, e
+     fw.current = f;
+     return () => { stars.kill(); f.kill(); fw.current = null; };
+   }, [still, tier, edit]);
+-  useReached(root, () => { if (!still) sc.later(() => fw.current?.emit?.(0.5, 0.3), 500); }, 0.45, !!edit);
++  const sendRef = useRef<(x: number, y: number) => void>(() => {});
++  useReached(root, () => {
++    if (!still) sc.later(() => fw.current?.emit?.(0.5, 0.3), 500);
++    /* the recorder's render page (IK8b): nobody taps the sky, so the scene plays as if three were sent: the volley and the finished line */
++    if (render && !still) [0.3, 0.65, 0.5].forEach((x, i) => sc.later(() => sendRef.current(x, 0.22 + i * 0.08), 300 + i * 200));
++  }, 0.45, !!edit);
+ 
+   const send = (x: number, y: number) => {
+     if (edit) return;
+@@ -45,6 +50,7 @@ export default function Fireworks({ wish, ending, still, tier, onEnding, demo, e
+       [0.25, 0.7, 0.45, 0.82, 0.16, 0.55].forEach((px, i) => sc.later(() => fw.current?.emit?.(px, 0.14 + (i % 3) * 0.1), 700 + i * 330));
+     }
+   };
++  useEffect(() => { sendRef.current = send; });
+   const tap = (e: React.PointerEvent) => { const r = sky.current?.getBoundingClientRect(); if (!r || still) return; send((e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height); };
+   useDemo(demo, () => { [0.3, 0.65, 0.5].forEach((x, i) => sc.later(() => send(x, 0.22 + i * 0.08), i * 650)); }, 900);
+ 
+@@ -54,9 +60,9 @@ export default function Fireworks({ wish, ending, still, tier, onEnding, demo, e
+         onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); send(0.3 + Math.random() * 0.4, 0.25); } }}></div>
+       <div className="mo-fireworks-ground" aria-hidden="true"></div>
+       <div className="mo-fireworks-words">
+-        {!finished && <h2 className="fe-h" data-layer="title">Light the sky, {wish.call}.</h2>}
++        {!finished && <Hush><h2 className="fe-h" data-layer="title">Light the sky, {wish.call}.</h2></Hush>}
+         {!finished && <Hint className="fe-tap" aria-live="polite" data-layer="words">{sent === 0 ? "Tap the sky" : `${NEED - sent} more`}</Hint>}
+-        {!finished && <p className="mo-fireworks-dots" aria-hidden="true" data-layer="counter" data-name="Counter" data-colours="Dot:--mo-fireworks-dot">{Array.from({ length: NEED }, (_, i) => <i key={i} className={i < sent ? "on" : ""}></i>)}</p>}
++        {!finished && <Pips><p className="mo-fireworks-dots" aria-hidden="true" data-layer="counter" data-name="Counter" data-colours="Dot:--mo-fireworks-dot">{Array.from({ length: NEED }, (_, i) => <i key={i} className={i < sent ? "on" : ""}></i>)}</p></Pips>}
+         <Lines show={finished} line={v.line} sign={v.sign} still={still} move="type-letters-rise" />
+       </div>
+     </div>
+diff --git a/components/styles/film/runway/Scene.tsx b/components/styles/film/runway/Scene.tsx
+index 3ab225e..2ed94f3 100644
+--- a/components/styles/film/runway/Scene.tsx
++++ b/components/styles/film/runway/Scene.tsx
+@@ -7,6 +7,7 @@
+    every shot uses, runs one shot at a time on that shot's GSAP timeline, takes tap, hold and drag, and hands
+    the ending to the host. */
+ 
++import { Pips } from "@/components/engine/controls";
+ import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+ import gsap from "gsap";
+ import type { StyleProps, Theme } from "@/lib/engine/types";
+@@ -393,6 +394,7 @@ export default function Scene({ wish, embedded, still, tier, theme, renderEnding
+   }, [i, reel, still, wish.photos]);
+ 
+   /* the chapter's title in the head turns over when the chapter changes: it rises from behind its mask */
++  const counter = !(shot.part === 0 || shot.k === "ending"); /* a chapter number "02 / 05" counts pages (IK8a): not drawn under the render page; the occasion name stays */
+   const title = shot.part === 0 || shot.k === "ending" ? wish.occasionName : String(shot.part).padStart(2, "0") + " / " + String(wish.chapters.length).padStart(2, "0");
+   useIso(() => {
+     const el = chap.current;
+@@ -578,7 +580,7 @@ export default function Scene({ wish, embedded, still, tier, theme, renderEnding
+               </span>
+               <span className="st-runway-chap" data-layer="eyebrow">
+                 <span ref={chap} key={title}>
+-                  {title}
++                  {counter ? <Pips>{title}</Pips> : title}
+                 </span>
+               </span>
+             </header>
+diff --git a/components/styles/stage/contact-sheet/Scene.tsx b/components/styles/stage/contact-sheet/Scene.tsx
+index db231fb..2237c4f 100644
+--- a/components/styles/stage/contact-sheet/Scene.tsx
++++ b/components/styles/stage/contact-sheet/Scene.tsx
+@@ -5,7 +5,7 @@
+    This file is the room. It measures its own box, loads the photos, lays the plan on the table, mounts the
+    one canvas, and listens to the hand. The moves themselves are in show.ts; the table is in gl.ts. */
+ 
+-import { Press } from "@/components/engine/controls";
++import { Press, Pips } from "@/components/engine/controls";
+ import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+ import gsap from "gsap";
+ import type { SceneAsk, StyleProps } from "@/lib/engine/types";
+@@ -509,7 +509,7 @@ function Stage({ wish, embedded, tier, theme, renderEnding, onEnding, opened, ac
+         {plan && f && stop && view.kind === "stop" && !ending ? <WordsView key={stop.id} stop={stop} box={f} kept={hearts.size} status={status} accent={look.accent} closer={sheetStop ? lookCloser : undefined} mark={sceneMark(sceneKey)} /> : null}
+         {plan && f && view.kind === "peek" && peekInfo ? (
+           <div className="st-contact-sheet-words st-contact-sheet-peek" style={{ left: f.wordsBig.x, top: f.wordsBig.y, width: f.wordsBig.w, height: f.wordsBig.h }} {...sceneMark(sceneKey)}>
+-            <Counter key={peekInfo.k} text={two(peekInfo.k) + " / " + two(peekInfo.n)} large roll />
++            <Pips><Counter key={peekInfo.k} text={two(peekInfo.k) + " / " + two(peekInfo.n)} large roll /></Pips>
+             <div className="st-contact-sheet-peekact" data-ui="">
+               {canPick && stop && stop.kind === "sheet" ? (
+                 <Press type="button" className={"st-contact-sheet-btn st-contact-sheet-keep" + (hearts.has(peekInfo.photo) ? " st-contact-sheet-kept-on" : "")} aria-pressed={hearts.has(peekInfo.photo)} onClick={() => keep(peekInfo.photo)} data-pop="" data-layer="button" data-name="Keep" data-colours="Edge:--st-contact-sheet-ink, Fill:--st-contact-sheet-glass, Kept:--st-contact-sheet-accent">
+@@ -537,9 +537,11 @@ function Stage({ wish, embedded, tier, theme, renderEnding, onEnding, opened, ac
+               <path d="M19 12H5M11 6l-6 6 6 6" />
+             </svg>
+           </Press>
+-          <span className="st-contact-sheet-step" aria-hidden="true" data-layer="words">
+-            {plan ? two(Math.min(view.i, n - 1) + 1) + " / " + two(n) : ""}
+-          </span>
++          <Pips>
++            <span className="st-contact-sheet-step" aria-hidden="true" data-layer="words">
++              {plan ? two(Math.min(view.i, n - 1) + 1) + " / " + two(n) : ""}
++            </span>
++          </Pips>
+           <Press type="button" className="st-contact-sheet-nav st-contact-sheet-next" onClick={last ? again : next} data-layer="button" data-name="Next" data-colours="Arrow:--st-contact-sheet-ink">
+             <span>{last ? "Again" : "Next"}</span>
+             <svg viewBox="0 0 24 24" aria-hidden="true">
+diff --git a/components/styles/stage/contact-sheet/words.tsx b/components/styles/stage/contact-sheet/words.tsx
+index fbcdb99..d0efb39 100644
+--- a/components/styles/stage/contact-sheet/words.tsx
++++ b/components/styles/stage/contact-sheet/words.tsx
+@@ -5,7 +5,7 @@
+    leading edge, in steps, like edge print), data-rule (a hairline that draws), data-pop (a button opened from
+    its middle), data-pencil (a red pencil stroke that draws itself). The scene plays them. */
+ 
+-import { Press, Anchor } from "@/components/engine/controls";
++import { Press, Anchor, Pips } from "@/components/engine/controls";
+ import React, { useEffect, useRef } from "react";
+ import type { Chapter } from "@/lib/engine/types";
+ import type { Box, Stop, Words } from "./plan";
+@@ -169,10 +169,10 @@ export function WordsView({ stop, box, kept, status, accent, closer, mark }: { s
+               {wd.kicker}
+             </span>
+           ) : null}
+-          {wd.count && !bare ? <Counter text={wd.count} /> : null}
++          {wd.count && !bare ? <Pips><Counter text={wd.count} /></Pips> : null}
+         </div>
+       ) : null}
+-      {bare && wd.count ? <Counter text={wd.count} large /> : null}
++      {bare && wd.count ? <Pips><Counter text={wd.count} large /></Pips> : null}
+       {wd.heading ? (
+         <p className="st-contact-sheet-head" data-layer="words">
+           <Rise text={wd.heading} />
+diff --git a/components/styles/stories/group-chat/beats.tsx b/components/styles/stories/group-chat/beats.tsx
+index 43b162e..890d25c 100644
+--- a/components/styles/stories/group-chat/beats.tsx
++++ b/components/styles/stories/group-chat/beats.tsx
+@@ -108,6 +108,11 @@ export const Dots = () => (
+   </span>
+ );
+ 
++/* a chip that only counts ("2 / 3") is a counter: not drawn under the render page (IK8a); a date or "More photos" stays */
++function Count({ text, children }: { text: string; children: React.ReactNode }) {
++  return /^\d{1,2} \/ \d{1,2}$/.test(text) ? <Pips>{children}</Pips> : <>{children}</>;
++}
++
+ function Pic({ wish, n }: { wish: WishData; n: number }) {
+   const ph = wish.photos[n];
+   if (!ph) return null;
+@@ -705,11 +710,13 @@ export function BeatView({ b, id, wish, phase, ver, u, light, delay, keep, cross
+         <div className={P + "flow"}>
+           <WhoRow who={b.who} />
+           {b.chip ? (
+-            <span className={P + "chip"} data-layer="words">
+-              <span className={P + "rise"}>
+-                <i>{b.chip}</i>
++            <Count text={b.chip}>
++              <span className={P + "chip"} data-layer="words">
++                <span className={P + "rise"}>
++                  <i>{b.chip}</i>
++                </span>
+               </span>
+-            </span>
++            </Count>
+           ) : null}
+           <div className={`${P}grid ${P}grid-${b.photos.length}`}>
+             {b.photos.map((n) => (
+@@ -733,11 +740,13 @@ export function BeatView({ b, id, wish, phase, ver, u, light, delay, keep, cross
+         <div className={P + "said " + P + "fit"}>
+           <WhoRow who={b.who} />
+           {b.chip ? (
+-            <span className={P + "chip"} data-layer="words">
+-              <span className={P + "rise"}>
+-                <i>{b.chip}</i>
++            <Count text={b.chip}>
++              <span className={P + "chip"} data-layer="words">
++                <span className={P + "rise"}>
++                  <i>{b.chip}</i>
++                </span>
+               </span>
+-            </span>
++            </Count>
+           ) : null}
+           <Bubble m={b} />
+           {b.sub ? (
+diff --git a/components/styles/stories/group-chat/endings/envelope.tsx b/components/styles/stories/group-chat/endings/envelope.tsx
+index 000ca3b..6da9601 100644
+--- a/components/styles/stories/group-chat/endings/envelope.tsx
++++ b/components/styles/stories/group-chat/endings/envelope.tsx
+@@ -4,7 +4,7 @@
+    read yet. The receiver pulls it down and it opens under the finger, with weight; let go too early and it
+    springs shut. Open, the line stands up word by word and the sender signs it. Nothing celebratory follows. */
+ 
+-import { Hush, Press } from "@/components/engine/controls";
++import { Hush, Press, useRender } from "@/components/engine/controls";
+ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+ import { gsap } from "gsap";
+ import type { EndingProps } from "./kit";
+@@ -12,13 +12,14 @@ import { E, Words, first, useMasks, useUnit } from "./kit";
+ import Crowd, { everyone } from "./crowd";
+ 
+ export default function Envelope({ wish, still, light, play, onEnding, again }: EndingProps) {
++  const render = useRender();
+   const root = useRef<HTMLDivElement>(null);
+   const cast = useMemo(() => everyone(wish), [wish]);
+   const plate = useRef<HTMLDivElement>(null);
+-  const open = useRef({ v: 0 });
++  const open = useRef({ v: render ? 1 : 0 }); /* the recorder's render page (IK8b): nobody pulls, so the letter is open from the start and shows its words, as if pulled */
+   const grab = useRef<{ id: number; y0: number; v0: number } | null>(null);
+-  const opened = useRef(false);
+-  const [done, setDone] = useState(false);
++  const opened = useRef(render);
++  const [done, setDone] = useState(render);
+   const { u } = useUnit(root);
+   useMasks(root, still, done);
+   const line = (wish.ending.values.line || "").trim() || wish.cover.line;
+@@ -44,13 +45,16 @@ export default function Envelope({ wish, still, light, play, onEnding, again }:
+     const el = root.current;
+     if (!el || still || !play) return;
+     const ctx = gsap.context(() => {
+-      gsap.fromTo(`.${E}label > i, .${E}who .${E}rise > i`, { yPercent: 140 }, { yPercent: 0, duration: 1, ease: "expo.out", stagger: 0.1, delay: 0.5 });
+-      gsap.fromTo(`.${E}disc`, { scale: 0, rotation: -50 }, { scale: 1, rotation: 0, duration: 0.7, ease: "back.out(2.4)", delay: 0.7 });
+-      gsap.fromTo(`.${E}letter`, { scale: 0 }, { scale: 1, duration: 0.7, ease: "back.out(1.9)", delay: 0.95 });
++      /* under the render page the page is told it is done 1.5 s after the ending shows: the same entrance, quicker, so the words are up by then */
++      const q = render ? 0.35 : 1;
++      gsap.fromTo(`.${E}label > i, .${E}who .${E}rise > i`, { yPercent: 140 }, { yPercent: 0, duration: 1 * q, ease: "expo.out", stagger: 0.1 * q, delay: 0.5 * q });
++      gsap.fromTo(`.${E}disc`, { scale: 0, rotation: -50 }, { scale: 1, rotation: 0, duration: 0.7 * q, ease: "back.out(2.4)", delay: 0.7 * q });
++      gsap.fromTo(`.${E}letter`, { scale: 0 }, { scale: 1, duration: 0.7 * q, ease: "back.out(1.9)", delay: 0.95 * q });
++      if (render) gsap.fromTo(`.${E}letter .${E}w > i`, { yPercent: 140 }, { yPercent: 0, duration: 0.5, ease: "expo.out", stagger: 0.025, delay: 0.55 });
+       gsap.fromTo(`.${E}hint > i, .${E}open > i`, { yPercent: 140 }, { yPercent: 0, duration: 0.8, ease: "expo.out", delay: 1.4, stagger: 0.1 });
+     }, el);
+     return () => ctx.revert();
+-  }, [play, still]);
++  }, [play, still, render]);
+ 
+   const finish = useCallback(() => {
+     if (opened.current) return;
+diff --git a/components/styles/swipe/boarding-pass/pages.tsx b/components/styles/swipe/boarding-pass/pages.tsx
+index 5de5e53..fa2b3ef 100644
+--- a/components/styles/swipe/boarding-pass/pages.tsx
++++ b/components/styles/swipe/boarding-pass/pages.tsx
+@@ -7,7 +7,7 @@
+    the things on it that are mechanical move after it lands: figures flap in, the large line rises letter by
+    letter, and the shade lifts on each window. */
+ 
+-import { Press, Anchor } from "@/components/engine/controls";
++import { Press, Anchor, Pips } from "@/components/engine/controls";
+ import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
+ import { gsap } from "gsap";
+ import { SplitText } from "gsap/SplitText";
+@@ -239,9 +239,11 @@ export function Body({ page, wish, total, still, sound, act, ending }: BodyProps
+           <div className={k("words")}>
+             <div className={k("row")}>
+               <span className={k("cap")} data-layer="eyebrow">Stop</span>
+-              <span className={k("cap dim")}>
+-                {page.stop} of {total - 2}
+-              </span>
++              <Pips>
++                <span className={k("cap dim")}>
++                  {page.stop} of {total - 2}
++                </span>
++              </Pips>
+             </div>
+             <p className={k("big")} aria-hidden="true" data-layer="figure" data-name="Stop number" data-colours="Number:--st-boarding-pass-ink">
+               {String(page.stop)
+diff --git a/components/styles/swipe/quiet/Scene.tsx b/components/styles/swipe/quiet/Scene.tsx
+index 00a6fe1..a5abf1a 100644
+--- a/components/styles/swipe/quiet/Scene.tsx
++++ b/components/styles/swipe/quiet/Scene.tsx
+@@ -7,7 +7,7 @@
+    sheet, runs the one canvas under everything (stage.ts) and the typist (typer.ts), and tells the host about
+    the ending. */
+ 
+-import { Press, Hush } from "@/components/engine/controls";
++import { Press, Hush, Pips } from "@/components/engine/controls";
+ import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+ import { gsap } from "gsap";
+ import type { StyleProps, Theme } from "@/lib/engine/types";
+@@ -759,9 +759,11 @@ export default function Scene({ wish, embedded, still, tier, theme, renderEnding
+             <path d="M14.5 6 8.5 12l6 6" />
+           </svg>
+         </Press>
+-        <span className="st-quiet-count" key={hint && at === 0 ? "hint" : "n"} data-layer="count" data-name="Page count" data-colours="Count:--st-quiet-count-ink">
+-          {hint && at === 0 ? <Hush>Swipe</Hush> : open ? `${at + 1} / ${pages.length}` : ""}
+-        </span>
++        <Pips>
++          <span className="st-quiet-count" key={hint && at === 0 ? "hint" : "n"} data-layer="count" data-name="Page count" data-colours="Count:--st-quiet-count-ink">
++            {hint && at === 0 ? <Hush>Swipe</Hush> : open ? `${at + 1} / ${pages.length}` : ""}
++          </span>
++        </Pips>
+         <Press type="button" className="st-quiet-key" aria-label="Next" data-layer="key" data-name="Next key" data-colours="Key:--st-quiet-key, Key shade:--st-quiet-key-low, Arrow:--st-quiet-key-ink" disabled={!open || at === pages.length - 1} onClick={() => go(at + 1)}>
+           <svg viewBox="0 0 24 24" aria-hidden="true">
+             <path d="M9.5 6l6 6-6 6" />
+diff --git a/components/styles/swipe/scrapbook/Scene.tsx b/components/styles/swipe/scrapbook/Scene.tsx
+index 7d70726..e8777e1 100644
+--- a/components/styles/swipe/scrapbook/Scene.tsx
++++ b/components/styles/swipe/scrapbook/Scene.tsx
+@@ -8,7 +8,7 @@
+    (stage.ts). The words are drawn on the paper so they can bend with it; the same words sit in the DOM, unseen,
+    for screen readers. */
+ 
+-import { Press, Anchor, Hush } from "@/components/engine/controls";
++import { Press, Anchor, Hush, Pips } from "@/components/engine/controls";
+ import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+ import { gsap } from "gsap";
+ import type { StyleProps } from "@/lib/engine/types";
+@@ -789,6 +789,7 @@ export default function Scene({ wish, embedded, still, tier, theme, renderEnding
+             <path d="M14.5 5.5 8 12l6.5 6.5" />
+           </svg>
+         </Press>
++        <Pips>
+         <span className="st-scrapbook-count">
+           <b data-layer="words">{at === 0 ? "\u00a0" : at === 1 ? <Hush>Swipe to turn</Hush> : atEnd ? "The last page" : `${at} / ${S - 1}`}</b>
+           {/* the ribbon marker: where the reader is in the album, on a gilt thread */}
+@@ -798,6 +799,7 @@ export default function Scene({ wish, embedded, still, tier, theme, renderEnding
+             </i>
+           </i>
+         </span>
++        </Pips>
+         {atEnd ? (
+           <Press type="button" className="st-scrapbook-nav st-scrapbook-again" data-layer="button" data-name="Read again" data-colours="Arrow:--st-scrapbook-nav-ink" aria-label="Read again" onClick={() => go(1)}>
+             <svg viewBox="0 0 24 24" aria-hidden="true">
+diff --git a/scripts/live/flows/r4.mjs b/scripts/live/flows/r4.mjs
+index d1b1d32..be4017e 100644
+--- a/scripts/live/flows/r4.mjs
++++ b/scripts/live/flows/r4.mjs
+@@ -274,6 +274,10 @@ export async function runR4({ APP, ok }) {
+       const words = (text.match(new RegExp(re, "gi")) || []).map((x) => x.toLowerCase());
+       const flat = text.toLowerCase().replace(/\s+/g, " ");
+       for (const ph of phrases) if (flat.includes(ph)) words.push(`phrase "${ph}"`);
++      /* IK8a/IK8b: a counter ("1 of 3", "04 / 04", "2 more") is a count of pages or taps left; it is no action word, so it is looked for by its shape */
++      const counterRe = /\b\d{1,2} of \d{1,2}\b|\b\d{1,2} ?\/ ?\d{1,2}\b|\b\d{1,2} more\b/;
++      const tw = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
++      for (let n = tw.nextNode(); n; n = tw.nextNode()) { const m = n.textContent.match(counterRe); if (m && n.parentElement && vis(n.parentElement)) words.push(`counter "${m[0]}" in ${(() => { const a = []; for (let e = n.parentElement; e && e !== document.body && a.length < 4; e = e.parentElement) a.push(`${e.tagName.toLowerCase()}.${String(e.className).split(" ")[0].slice(0, 36)}`); return a.join("<"); })()}`); }
+       return { out, focus: focus.length, roles: roles.length, words, done: !!window.__render.done, err: window.__render.error || "", scene: window.__render.sceneName };
+     }, [ACTION, WORDS.phrases]);
+     const t1 = Date.now();
 -- 
 2.43.0
 

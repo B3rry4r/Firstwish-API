@@ -1,0 +1,23 @@
+[Unit]
+Description=Firstwish API (web role: serves requests, runs every job but video renders)
+After=network-online.target postgresql.service redis-server.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=firstwish
+Group=firstwish
+WorkingDirectory=/opt/firstwish/api
+# Names and values live only in this file (mode 0600, owner root or firstwish). Nothing secret is written in this unit.
+EnvironmentFile=/etc/firstwish/api.env
+Environment=NODE_ENV=production
+Environment=PROCESS_ROLE=web
+ExecStart=/usr/bin/node dist/main.js
+Restart=always
+RestartSec=5
+LimitNOFILE=65535
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

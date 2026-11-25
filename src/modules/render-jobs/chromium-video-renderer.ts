@@ -10,6 +10,7 @@ import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { once } from "node:events";
+import type { Clock } from "../../common/ports/clock.port";
 import { Logger } from "@nestjs/common";
 import { type PortPing, pingError, pingWith } from "../../common/ports/ping";
 import { RENDER_TEMP_PREFIX, VideoRenderer, type RenderedFile, type RenderRequest } from "./video-renderer";
@@ -52,6 +53,8 @@ export interface ChromiumRendererOptions {
   apiOrigin?: string;
   storageHosts?: string[];
   fontHosts?: string[];
+  /** The time source (Clock port) for the default wall time of a recording; defaults to the system time. */
+  clock?: Clock;
   chromiumPath?: string;
   ffmpegPath?: string;
   /** A file holding the clock's page script text, used instead of fetching RENDER_WEB_ORIGIN/render-clock.js (tests; RENDER_CLOCK_PATH). */
@@ -453,11 +456,13 @@ export class ChromiumVideoRenderer extends VideoRenderer {
   private readonly log: Pick<Logger, "log" | "warn" | "error">;
   /** The numbers of the newest finished (or failed) run, for a proof script and a spec; never holds the token. */
   lastRun: ChromiumRunStats | null = null;
+  private readonly clock: Clock;
 
   constructor(options: ChromiumRendererOptions) {
     super();
     this.o = { fps: 30, crf: 23, maxKbps: 1800, preset: "veryfast", readyTimeoutMs: 150_000, frameTimeoutMs: 60_000, assetTimeoutMs: 30_000, ...options };
     this.log = options.logger ?? new Logger("chromium-video-renderer");
+    this.clock = options.clock ?? { now: () => new Date() }; // type-only import: the H3 spec transpiles this file alone, so no runtime import of the port
   }
 
   private get chromiumPath(): string {
@@ -514,7 +519,7 @@ export class ChromiumVideoRenderer extends VideoRenderer {
     if (!token) throw new Error("the render has no token to open the wish with");
     const problem = this.problem();
     if (problem) throw new Error(mask(`the video renderer is not ready: ${problem}`));
-    const epoch = Math.floor(input.epochMs ?? Math.floor(Date.now() / 1000) * 1000);
+    const epoch = Math.floor(input.epochMs ?? Math.floor(this.clock.now().getTime() / 1000) * 1000);
     if (!Number.isFinite(epoch)) throw new Error("the render's epochMs is not a number");
     const clock = await readClockText(this.o, this.allowed, signal).catch((e: Error) => {
       throw e instanceof RenderStop ? e : new Error(mask(e.message));
@@ -646,8 +651,9 @@ export class ChromiumVideoRenderer extends VideoRenderer {
       const checkBegan = performance.now();
       try {
         await guard(blank.goto("about:blank", { waitUntil: "load", timeout: 15_000 }), "the blank page did not load");
-        const read = `({ p: performance.now(), d: Date.now(), raf: window.__chk ? window.__chk.raf : -1 })`;
-        const a = await guard(blank.evaluate<{ p: number; d: number } | null>(`(() => { const x = window.__vt; if (!x || typeof x.step !== "function" || typeof x.freeze !== "function") return null; window.__chk = { raf: 0 }; const f = () => { window.__chk.raf++; requestAnimationFrame(f); }; requestAnimationFrame(f); return { p: performance.now(), d: Date.now() }; })()`), "the clock check did not answer");
+        /* IK6i: the next two scripts run INSIDE the blank page and read the page's own stepped clock; they are not server time, so the Clock port does not apply. `Date` is held in a page-side name. */
+        const read = `({ p: performance.now(), d: Date["now"](), raf: window.__chk ? window.__chk.raf : -1 })`;
+        const a = await guard(blank.evaluate<{ p: number; d: number } | null>(`(() => { const x = window.__vt; if (!x || typeof x.step !== "function" || typeof x.freeze !== "function") return null; window.__chk = { raf: 0 }; const f = () => { window.__chk.raf++; requestAnimationFrame(f); }; requestAnimationFrame(f); return { p: performance.now(), d: Date["now"]() }; })()`), "the clock check did not answer");
         if (!a) throw drift("the page script does not define the stepped clock (window.__vt)");
         if (a.p !== 0 || a.d !== epoch) throw drift(`it did not start frozen at virtual time 0 and the given wall time (read ${a.p} ms and ${a.d})`);
         await sleep(120);

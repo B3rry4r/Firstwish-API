@@ -143,3 +143,4 @@ Did: VERIFY-R7: R7 DONE, nothing to build (erase, refund, refund mid-render, own
 mid-render: all PASS; render-jobs + wishes 245 tests). Two lows to the sweep list. NOT run: web build, real Chromium, the passcode screen in a browser.
 Verdict in verdicts/r7-VERDICT.md. Renderer tasks left: W19 (after r4c), the recorder follow-up (IK6h, IK6k), R9 (needs the owner's server).
 Running: VERIFY2-R4C (verifier).
+Started VERIFY-P7A (Phase 7 item 5: the five photo readers and the export fetched at the bytes; T2 check, Sonnet; API 64b91e6).

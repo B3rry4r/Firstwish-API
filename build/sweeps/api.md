@@ -163,3 +163,5 @@
 - (R6, IK3b) the video maker's deep check has no HTTP route; the staff page shows only the cheap check.
 - (R6 LOW-2) RENDER_RETRY_MS is read nowhere and its comment is wrong (a plain failure is final at once): remove or wire.
 - (R6 LOW-3) render read: isKnown() reads the database before the address limit, so wrong tokens are limited at 60 a minute, not 30.
+- (R6 re-check LOW) tests/r6-worker.spec.ts:142 `removed >= 1` is loose: assert exactly 1, the old .mp4 gone, the live folder kept.
+- (R6 re-check LOW) a SIGTERM'd render worker leaves its row rendering until the lease runs out (no graceful release on shutdown).

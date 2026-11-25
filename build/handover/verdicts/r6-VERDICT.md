@@ -28,3 +28,21 @@ LOW-3 render-read.service.ts: isKnown() reads the database before the address li
 ## Claims: 1 confirmed, 2 confirmed, 3 confirmed (twice lost not re-run), 4 confirmed, 5 confirmed (LOW-1), 6 confirmed.
 NOT RUN: full suite; Studio wish file (W19); owambe; twice-lost live; two machines with distinct hostnames; lease renewal past the first lease (no render outlasts it: limit+30 s).
 Setup note: the built web needs API_ORIGIN at BUILD time (rewrites); without it the render page 404s and every render fails. Deploy notes must say so.
+
+Round 2 re-check (VERIFY2-R6, r6 7f42893): MERGE
+# VERIFY2 R6 (IK6j re-check): MERGE (no HIGH, no MED; two LOW)
+r6 7f42893 on 02b5311. T2. Real recorder, web role + render-worker as separate processes, own DB v2r6_e2e, web built with API_ORIGIN.
+Checks: typecheck EXIT 0; eslint on the 5 changed .ts files EXIT 0; npm test render-jobs + common/env (v2r6, maxWorkers=2): 15 suites 136 tests pass.
+1 MED-1 FIXED on a real render (golden wish, done, file stored, 75 s): 1075 /proc/<pid>/environ samples of Chromium (browser, zygote, gpu, renderers) and 114 of ffmpeg:
+  0 hits for DATABASE_URL, JWT_*, INTERNAL_TOKEN, RENDER_TOKEN_SECRET, REDIS_URL, PAYSTACK_*, RESEND_* (all set in the worker: its own environ has them).
+  ffmpeg has HOME,PATH,TMPDIR; Chromium has HOME,PATH,PWD,TMPDIR + its own ANGLE var. Fonts drew, render succeeded. (LANG is unset on this box: locale value itself not exercised.)
+2 MED-2 FIXED live: id machine-a: row held by machine-b:<pid> and by <hostname>:999999:1 (live lease) stayed rendering after the worker started (losses 0);
+  machine-a:999999:1 freed at once (loss 1, taken again); a killed machine-a worker's row freed by the restart (failed at loss 2, as designed). No id: a dead machine-a row untouched.
+3 LOW-1 FIXED: 5-hour-old folder of a live owner kept with its child; dead owner's folder removed and child stopped ({stopped:1,removed:1}).
+4 Edited spec hunks, r6-worker.spec.ts: (a) test 3 sets RENDER_WORKER_ID "m-spec", uses its prefix, clears it at the end: follows IK6j 2, keeps the 1-then-failed and other-machine checks. OK.
+  (b) test 4 line 142 `removed >= 2` -> `>= 1`: follows IK6j 3 (the live folder no longer goes) but is now loose: it does not assert the old .mp4 is gone nor the live folder kept.
+## Findings
+LOW-1 src/modules/render-jobs/tests/r6-worker.spec.ts:142: make it `toBe(1)` and assert the old .mp4 is gone and `live` exists (r6-ik6j.spec.ts covers the live folder, not the .mp4 in this spec).
+LOW-2 render-jobs.service.ts workerId getter: a worker with no RENDER_WORKER_ID writes "-:pid:start"; its crashed rows wait for the lease (up to limit+30 s) by ruling; RENDER_WORKER_ID="-" would match them (harmless). Note: SIGTERM of a worker mid-render left its row rendering (lease frees it; same as before).
+Deploy: RENDER_WORKER_ID in manifest and schema, one value per machine; the built web still needs API_ORIGIN at build time.
+Cleaned: my processes stopped, worktrees v2-r6 and v2-r6-web removed, databases v2r6_e2e and v2r6* dropped.

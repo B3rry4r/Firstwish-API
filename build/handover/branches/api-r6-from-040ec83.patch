@@ -1,7 +1,7 @@
 From 370a77ea618087f91b391b235ea52a55de92b9db Mon Sep 17 00:00:00 2001
 From: Claude <noreply@anthropic.com>
 Date: Wed, 25 Nov 2026 19:02:47 +0000
-Subject: [PATCH 1/4] R6 part 1-2,4,6: binding, worker loop, losses on the row,
+Subject: [PATCH 1/5] R6 part 1-2,4,6: binding, worker loop, losses on the row,
  render read bucket, video line
 
 Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
@@ -1303,7 +1303,7 @@ index 18e76bf..63cecca 100644
 From f7b0906cdb43c54fc81554ee38ed7e34f4262140 Mon Sep 17 00:00:00 2001
 From: Claude <noreply@anthropic.com>
 Date: Wed, 25 Nov 2026 19:10:19 +0000
-Subject: [PATCH 2/4] R6: worker entry, leftovers sweep, spec, playwright-core
+Subject: [PATCH 2/5] R6: worker entry, leftovers sweep, spec, playwright-core
  1.63.0
 
 Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
@@ -1780,7 +1780,7 @@ index 0000000..42add41
 From a2aa034caef5eca964c0df3f83368ac436853b4b Mon Sep 17 00:00:00 2001
 From: Claude <noreply@anthropic.com>
 Date: Wed, 25 Nov 2026 19:14:01 +0000
-Subject: [PATCH 3/4] R6: stand-in storage may keep files in a folder so two
+Subject: [PATCH 3/5] R6: stand-in storage may keep files in a folder so two
  processes of a proof stack share it
 
 Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
@@ -1990,7 +1990,7 @@ index 09ec34b..223b010 100644
 From 02b53118d385bc6ed2dcf71dddabf6bceae2d9c7 Mon Sep 17 00:00:00 2001
 From: Claude <noreply@anthropic.com>
 Date: Wed, 25 Nov 2026 19:29:50 +0000
-Subject: [PATCH 4/4] R6: lint and gate fixes, proof numbers and frames
+Subject: [PATCH 4/5] R6: lint and gate fixes, proof numbers and frames
 
 Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
 Claude-Session: https://claude.ai/code/session_01VNvA3zNK8bJENArUhDXHfa
@@ -3237,6 +3237,411 @@ index 63cecca..4f1d14f 100644
          last = ` Last video: ${r.updatedAt.toISOString()}, ${len}, ${r.status === "done" ? "made" : "failed"}${r.tookMs ? ` in ${Math.round(r.tookMs / 1000)} s` : ""}.`;
        } else last = " No video has been made yet.";
      }
+-- 
+2.43.0
+
+
+From 7f4289373158cdccb453364bfb7071fb22672b40 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Wed, 25 Nov 2026 20:18:02 +0000
+Subject: [PATCH 5/5] R6 round 1 (IK6j): recorder children get a short
+ environment, worker id replaces hostname, sweep keeps a live owner
+
+MED-1 browser, encoder and probes start with PATH, HOME, LANG, TMPDIR only.
+MED-2 RENDER_WORKER_ID (env schema and manifest); dead holders freed only under the same id, none set frees nothing early.
+LOW-1 the leftovers sweep never stops or removes a live owner's folder, whatever its age.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01VNvA3zNK8bJENArUhDXHfa
+---
+ .pipeline/env-manifest.json                   |   8 +
+ src/common/env/env.schema.ts                  |   1 +
+ src/common/env/env.ts                         |   2 +
+ .../render-jobs/chromium-video-renderer.ts    |  18 ++-
+ .../render-jobs/render-jobs.service.ts        |  23 ++-
+ src/modules/render-jobs/render-leftovers.ts   |   8 +-
+ src/modules/render-jobs/tests/r6-ik6j.spec.ts | 147 ++++++++++++++++++
+ .../render-jobs/tests/r6-worker.spec.ts       |   6 +-
+ 8 files changed, 195 insertions(+), 18 deletions(-)
+ create mode 100644 src/modules/render-jobs/tests/r6-ik6j.spec.ts
+
+diff --git a/.pipeline/env-manifest.json b/.pipeline/env-manifest.json
+index 5e1ca1a..be9b4c8 100644
+--- a/.pipeline/env-manifest.json
++++ b/.pipeline/env-manifest.json
+@@ -308,6 +308,14 @@
+       "refusesStartInProduction": "no",
+       "readBySource": true
+     },
++    {
++      "name": "RENDER_WORKER_ID",
++      "introducedBy": "r6",
++      "purpose": "R6: a name for this machine's render worker, one value per machine and different on every machine (never the hostname of a cloned one). A restarted worker frees the renders it held at once only when this is set and matches; with none set, a render left by a dead worker is freed only when its lease runs out",
++      "secret": false,
++      "refusesStartInProduction": "no",
++      "readBySource": true
++    },
+     {
+       "name": "RENDER_TIME_LIMIT_SECONDS",
+       "introducedBy": "r1",
+diff --git a/src/common/env/env.schema.ts b/src/common/env/env.schema.ts
+index 2169f09..d18bd1b 100644
+--- a/src/common/env/env.schema.ts
++++ b/src/common/env/env.schema.ts
+@@ -63,6 +63,7 @@ export const MANIFEST_VARS: readonly VarSpec[] = [
+   { name: "RENDER_CLOCK_SHA256", need: "optional", kind: "string", purpose: "R6: when set, the clock script the web serves must hash to this (hex sha256) or no video is recorded" },
+   { name: "PROCESS_ROLE", need: "optional", kind: { oneOf: ["all", "web", "render-worker"] }, purpose: "R6: `all` (default: serves requests, runs every job, renders), `web` (serves requests and runs every job but renders; takes no render job) or `render-worker` (takes only render jobs; serves only a health address; `npm run start:render-worker`)", default: "all" },
+   { name: "RENDER_WORKER_PORT", need: "optional", kind: "int", purpose: "R6: the health address port of a render-worker process (bound to 127.0.0.1)", default: "9091" },
++  { name: "RENDER_WORKER_ID", need: "optional", kind: "string", purpose: "R6: a name for this machine's render worker, one value per machine and different on every machine (never the hostname of a cloned one). A restarted worker frees the renders it held at once only when this is set and matches; with none set, a render left by a dead worker is freed only when its lease runs out" },
+   { name: "RENDER_TIME_LIMIT_SECONDS", need: "optional", kind: "int", purpose: "R6: the longest one video render may run, in seconds; the render's lease is longer than this and is renewed while frames still come", default: "1200" },
+   { name: "RENDER_TOKEN_TTL_SECONDS", need: "optional", kind: "int", purpose: "R6: how long a render token lives, in seconds", default: "900" },
+   { name: "RESEND_API_KEY", need: "live", kind: "string", purpose: "Resend API auth (R12)" },
+diff --git a/src/common/env/env.ts b/src/common/env/env.ts
+index 49fe81c..b8548a1 100644
+--- a/src/common/env/env.ts
++++ b/src/common/env/env.ts
+@@ -70,6 +70,8 @@ export interface Env {
+   RENDER_CLOCK_SHA256?: string;
+   PROCESS_ROLE: "all" | "web" | "render-worker";
+   RENDER_WORKER_PORT: number;
++  /** R6: this machine's render worker name (see env.schema.ts). */
++  RENDER_WORKER_ID?: string;
+   RESEND_API_KEY?: string;
+   /** YY3: the svix signing secret of Resend's webhook stream (delivery news and received mail); the guard's `resend` provider checks it. */
+   RESEND_WEBHOOK_SECRET?: string;
+diff --git a/src/modules/render-jobs/chromium-video-renderer.ts b/src/modules/render-jobs/chromium-video-renderer.ts
+index 90f5586..5c827cb 100644
+--- a/src/modules/render-jobs/chromium-video-renderer.ts
++++ b/src/modules/render-jobs/chromium-video-renderer.ts
+@@ -193,6 +193,14 @@ export function hostAllowed(url: string, allowed: readonly string[]): boolean {
+   }
+ }
+ 
++/** The names a recorder child (browser, encoder, probe) may inherit; the server's own secrets are never among them (IK6j 1). */
++const CHILD_ENV_NAMES = ["PATH", "HOME", "LANG", "TMPDIR"] as const;
++export function childEnv(extra: Record<string, string>): NodeJS.ProcessEnv {
++  const out: NodeJS.ProcessEnv = {};
++  for (const n of CHILD_ENV_NAMES) if (process.env[n] !== undefined) out[n] = process.env[n];
++  return { ...out, ...extra };
++}
++
+ /** Settings from the environment (R6: every name read here is in env.schema.ts and the env manifest). */
+ export function chromiumRendererOptionsFromEnv(env: NodeJS.ProcessEnv): ChromiumRendererOptions | null {
+   const webOrigin = env.RENDER_WEB_ORIGIN?.trim();
+@@ -516,7 +524,7 @@ export class ChromiumVideoRenderer extends VideoRenderer {
+     const dir = dirname(this.ffmpegPath);
+     for (const [name, path] of [["ffmpeg", this.ffmpegPath], ["ffprobe", join(dir, "ffprobe")]] as const) {
+       const ok = await new Promise<boolean>((resolve) => {
+-        const c = spawn(path, ["-version"], { stdio: "ignore", timeout: 10_000 });
++        const c = spawn(path, ["-version"], { stdio: "ignore", timeout: 10_000, env: childEnv({}) });
+         c.once("error", () => resolve(false));
+         c.once("exit", (code) => resolve(code === 0));
+       });
+@@ -524,7 +532,7 @@ export class ChromiumVideoRenderer extends VideoRenderer {
+     }
+     const home = await mkdtemp(join(tmpdir(), `${RENDER_TEMP_PREFIX}probe-`));
+     try {
+-      const b = await loadPlaywright(this.o.playwrightModule).chromium.launch({ executablePath: this.chromiumPath, headless: true, args: ["--no-first-run", "--disable-extensions"], timeout: 30_000, env: { ...process.env, HOME: home } });
++      const b = await loadPlaywright(this.o.playwrightModule).chromium.launch({ executablePath: this.chromiumPath, headless: true, args: ["--no-first-run", "--disable-extensions"], timeout: 30_000, env: childEnv({ HOME: home }) });
+       await b.close();
+     } catch (e) {
+       return (this.bootProblem = `Chromium does not start (${plainWords(String((e as Error)?.message ?? e)).slice(0, 160)})`);
+@@ -677,7 +685,7 @@ export class ChromiumVideoRenderer extends VideoRenderer {
+       ];
+       const pw = loadPlaywright(this.o.playwrightModule);
+       launching = pw.chromium.launch({
+-        executablePath: this.chromiumPath, headless: true, args, timeout: 30_000, env: { ...process.env, HOME: join(work, "profile") },
++        executablePath: this.chromiumPath, headless: true, args, timeout: 30_000, env: childEnv({ HOME: join(work, "profile") }),
+         handleSIGINT: false, handleSIGTERM: false, handleSIGHUP: false,
+         proxy: { server: `http://127.0.0.1:${proxyPort}`, username: PROXY_USER, password: secret, bypass: "<-loopback>" },
+       });
+@@ -928,7 +936,7 @@ export class ChromiumVideoRenderer extends VideoRenderer {
+       "-c:v", "libx264", "-profile:v", "high", "-preset", this.o.preset, "-crf", String(this.o.crf), "-maxrate", `${this.o.maxKbps}k`, "-bufsize", `${this.o.maxKbps * 2}k`,
+       "-threads", "2", "-g", String(fps * 2), "-pix_fmt", "yuv420p", "-an", "-f", "mpegts", path,
+     ];
+-    const p = spawn(this.ffmpegPath, args, { stdio: ["pipe", "ignore", "pipe"] });
++    const p = spawn(this.ffmpegPath, args, { stdio: ["pipe", "ignore", "pipe"], env: childEnv({}) });
+     procs.add(p);
+     if (p.pid) onChild("ffmpeg", p.pid);
+     let err = "";
+@@ -969,7 +977,7 @@ export class ChromiumVideoRenderer extends VideoRenderer {
+   }
+ 
+   private async runFfmpeg(onChild: (k: "chromium" | "ffmpeg", pid: number) => void, argv: string[], procs: Set<ChildProcess>, mask: (t: string) => string, check: () => void): Promise<void> {
+-    const p = spawn(this.ffmpegPath, ["-hide_banner", "-loglevel", "error", "-y", ...argv], { stdio: ["ignore", "ignore", "pipe"] });
++    const p = spawn(this.ffmpegPath, ["-hide_banner", "-loglevel", "error", "-y", ...argv], { stdio: ["ignore", "ignore", "pipe"], env: childEnv({}) });
+     procs.add(p);
+     if (p.pid) onChild("ffmpeg", p.pid);
+     let err = "";
+diff --git a/src/modules/render-jobs/render-jobs.service.ts b/src/modules/render-jobs/render-jobs.service.ts
+index badae2e..0188b0b 100644
+--- a/src/modules/render-jobs/render-jobs.service.ts
++++ b/src/modules/render-jobs/render-jobs.service.ts
+@@ -1,5 +1,4 @@
+ import { Inject, Injectable, Logger, OnModuleInit } from "@nestjs/common";
+-import { hostname } from "node:os";
+ import { lstat, realpath, rm } from "node:fs/promises";
+ import { tmpdir } from "node:os";
+ import { basename, dirname, join, resolve } from "node:path";
+@@ -116,8 +115,13 @@ export class RenderJobsService implements OnModuleInit {
+   private readonly slots = new Slots(() => this.concurrency());
+   /** How often a running render renews its lease (milliseconds); a spec makes it short. */
+   renewMs = RENDER_RENEW_MS;
+-  /** This process, as a render row names its holder: host, process id and the process's start time (so a reused id is not mistaken for the holder). */
+-  readonly workerId = `${hostname()}:${process.pid}:${procStart(process.pid)}`;
++  /**
++   * This process, as a render row names its holder: RENDER_WORKER_ID (one value per machine; "-" when none is set), process id and the process's start time
++   * (so a reused id is not mistaken for the holder). A hostname is never used: cloned machines share one.
++   */
++  get workerId(): string {
++    return `${this.env.RENDER_WORKER_ID?.trim() || "-"}:${process.pid}:${procStart(process.pid)}`;
++  }
+ 
+   /** RENDER_CONCURRENCY when it is written down; else 1 with the real recorder (about 1.5 GB each) and 2 with the stand-in. */
+   concurrency(): number {
+@@ -168,15 +172,20 @@ export class RenderJobsService implements OnModuleInit {
+   }
+ 
+   /**
+-   * R6: at a render worker's start: a row held by a worker process of THIS machine that is no longer that process (killed, crashed) is lost now, not at the end of its lease:
+-   * back to the queue with one loss counted, or failed for good with words at the second. Rows of another machine wait for their lease.
++   * R6 (IK6j 2): at a render worker's start: a row held under THIS worker's RENDER_WORKER_ID by a process that is no longer that process (killed, crashed) is lost now,
++   * not at the end of its lease: back to the queue with one loss counted, or failed for good with words at the second. With no RENDER_WORKER_ID nothing is freed here,
++   * and a row of any other id waits for its lease to run out.
+    */
+   async releaseDeadHolders(): Promise<number> {
++    const own = this.env.RENDER_WORKER_ID?.trim();
++    if (!own) return 0;
+     const rows = await this.db.renderJob.findMany({ where: { status: "rendering", workerId: { not: null } }, select: { id: true, workerId: true, losses: true } });
+     let n = 0;
+     for (const r of rows) {
+-      const [host, pid, start] = (r.workerId ?? "").split(":");
+-      if (host !== hostname() || !pid || alive(Number(pid), Number(start))) continue;
++      const parts = (r.workerId ?? "").split(":");
++      const start = parts.pop();
++      const pid = parts.pop();
++      if (parts.join(":") !== own || !pid || alive(Number(pid), Number(start))) continue;
+       const final = r.losses + 1 >= RENDER_MAX_LOSSES;
+       const data = final
+         ? { status: "failed" as const, losses: { increment: 1 }, failureWords: LOST_WORDS, tokenHash: null, tokenExpiresAt: null }
+diff --git a/src/modules/render-jobs/render-leftovers.ts b/src/modules/render-jobs/render-leftovers.ts
+index 11f356f..fd05c3e 100644
+--- a/src/modules/render-jobs/render-leftovers.ts
++++ b/src/modules/render-jobs/render-leftovers.ts
+@@ -16,8 +16,8 @@ export interface SweepResult {
+ 
+ /**
+  * R6: what a dead worker leaves. For every `fw-render-*` entry in the temp folder: a work folder whose owner (the worker process that wrote it) is no longer that same
+- * process has its browser and encoder stopped, but ONLY a pid that is still the very process written down (same start time); then it is removed. A work folder or
+- * a result file older than `olderThanMs` (longer than any lease) is removed whatever its owner says. A folder of a live owner younger than that is never touched.
++ * process has its browser and encoder stopped, but ONLY a pid that is still the very process written down (same start time); then it is removed. A result file
++ * older than `olderThanMs` is removed, and so is a work folder with no live owner. A work folder of a live owner is never touched, nor are its children, however old.
+  */
+ export async function sweepRenderLeftovers(olderThanMs: number, nowMs: number, root: string = tmpdir()): Promise<SweepResult> {
+   const out: SweepResult = { stopped: 0, removed: 0 };
+@@ -43,7 +43,7 @@ export async function sweepRenderLeftovers(olderThanMs: number, nowMs: number, r
+         const k = JSON.parse(readFileSync(join(path, "children.json"), "utf8")) as { owner?: { pid: number; start: number }; children?: { kind: string; pid: number; start: number }[] };
+         record = true;
+         owned = !!k.owner && alive(k.owner.pid, k.owner.start);
+-        if (!owned || age > olderThanMs) {
++        if (!owned) {
+           for (const c of k.children ?? []) {
+             if (!alive(c.pid, c.start)) continue;
+             try {
+@@ -57,7 +57,7 @@ export async function sweepRenderLeftovers(olderThanMs: number, nowMs: number, r
+       } catch {
+         /* no record yet (a render writes it right after it makes the folder): only age decides */
+       }
+-      remove = age > olderThanMs || (!owned && (record || age > 60_000));
++      remove = !owned && (age > olderThanMs || record || age > 60_000);
+     }
+     if (!remove) continue;
+     await rm(path, { recursive: true, force: true });
+diff --git a/src/modules/render-jobs/tests/r6-ik6j.spec.ts b/src/modules/render-jobs/tests/r6-ik6j.spec.ts
+new file mode 100644
+index 0000000..180c8c7
+--- /dev/null
++++ b/src/modules/render-jobs/tests/r6-ik6j.spec.ts
+@@ -0,0 +1,147 @@
++import { spawn } from "node:child_process";
++import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, utimesSync, writeFileSync } from "node:fs";
++import { hostname, tmpdir } from "node:os";
++import { join } from "node:path";
++import { ChromiumVideoRenderer, childEnv } from "../chromium-video-renderer";
++import { JobsService } from "../../jobs/jobs.service";
++import { RenderJobsService } from "../render-jobs.service";
++import { procStart, sweepRenderLeftovers } from "../render-leftovers";
++import { StandinVideoRenderer, VideoRenderer } from "../video-renderer";
++import { boot } from "../../concierge/tests/kit";
++import { ownDatabase } from "../../../../test/kit/own-db";
++
++/** R6 round 1 (IK6j): the recorder's children get a short environment; a hostname proves nothing about a holder; a live owner's folder is never swept. */
++const SECRETS = { DATABASE_URL: "postgres://s", JWT_ACCESS_SECRET: "jwt-s", INTERNAL_TOKEN: "int-s", RENDER_TOKEN_SECRET: "rts-s" };
++const NOW = new Date("2027-07-07T09:00:00.000Z");
++
++describe("R6 IK6j 1: the recorder's children never see the server's secrets", () => {
++  const saved: Record<string, string | undefined> = {};
++  beforeAll(() => {
++    for (const [k, v] of Object.entries(SECRETS)) {
++      saved[k] = process.env[k];
++      process.env[k] = v;
++    }
++  });
++  afterAll(() => {
++    for (const [k, v] of Object.entries(saved)) {
++      if (v === undefined) delete process.env[k];
++      else process.env[k] = v;
++    }
++  });
++
++  it("a real child started with childEnv has no secret in /proc/<pid>/environ", () => {
++    const c = spawn("sleep", ["30"], { stdio: "ignore", env: childEnv({ HOME: "/tmp/x" }) });
++    try {
++      const environ = readFileSync(`/proc/${c.pid}/environ`, "utf8");
++      for (const k of Object.keys(SECRETS)) expect(environ).not.toContain(k);
++      expect(environ).toContain("HOME=/tmp/x");
++    } finally {
++      c.kill("SIGKILL");
++    }
++  });
++
++  it("the browser launch of the boot check gets the short environment", async () => {
++    const dir = mkdtempSync(join(tmpdir(), "r6-pw-"));
++    const seen = join(dir, "seen.json");
++    const mod = join(dir, "fake-pw.js");
++    writeFileSync(mod, `module.exports = { chromium: { launch: async (o) => { require("fs").writeFileSync(${JSON.stringify(seen)}, JSON.stringify(o.env)); return { close: async () => undefined }; } } };`);
++    try {
++      const r = new ChromiumVideoRenderer({ webOrigin: "http://127.0.0.1:1", chromiumPath: "/bin/sh", ffmpegPath: "/usr/bin/ffmpeg", playwrightModule: mod });
++      const why = await r.probe();
++      if (why && /ffmpeg|ffprobe/.test(why)) return; // no encoder on this machine: the launch is not reached
++      expect(why).toBeNull();
++      const env = JSON.parse(readFileSync(seen, "utf8")) as Record<string, string>;
++      for (const k of Object.keys(SECRETS)) expect(env[k]).toBeUndefined();
++      expect(Object.keys(env).filter((n) => !["HOME", "LANG", "PATH", "TMPDIR"].includes(n))).toEqual([]);
++      expect(env.HOME).toContain("fw-render-");
++    } finally {
++      rmSync(dir, { recursive: true, force: true });
++    }
++  });
++});
++
++describe("R6 IK6j 3: the leftovers sweep keeps a live owner's folder and children", () => {
++  it("an old folder of a live owner stays with its child, whatever its age; the same folder of a dead owner goes", async () => {
++    const root = mkdtempSync(join(tmpdir(), "r6-sweep2-"));
++    const child = spawn("sleep", ["60"], { stdio: "ignore", detached: true });
++    try {
++      const pid = child.pid as number;
++      const rec = (owner: { pid: number; start: number }) => JSON.stringify({ owner, children: [{ kind: "ffmpeg", pid, start: procStart(pid) }] });
++      const live = join(root, "fw-render-live-work");
++      mkdirSync(live, { recursive: true });
++      writeFileSync(join(live, "children.json"), rec({ pid: process.pid, start: procStart(process.pid) }));
++      const old = new Date(Date.now() - 3 * 3600_000);
++      utimesSync(live, old, old);
++      const res = await sweepRenderLeftovers(10 * 60_000, Date.now(), root);
++      expect(res).toEqual({ stopped: 0, removed: 0 });
++      expect(existsSync(live)).toBe(true);
++      expect(procStart(pid)).toBeGreaterThan(0);
++      writeFileSync(join(live, "children.json"), rec({ pid: 999999, start: 1 }));
++      const res2 = await sweepRenderLeftovers(10 * 60_000, Date.now(), root);
++      expect(res2).toEqual({ stopped: 1, removed: 1 });
++      expect(existsSync(live)).toBe(false);
++    } finally {
++      try {
++        process.kill(child.pid as number, "SIGKILL");
++      } catch {
++        /* gone */
++      }
++      rmSync(root, { recursive: true, force: true });
++    }
++  });
++});
++
++describe("R6 IK6j 2: who held a render row", () => {
++  let k: Awaited<ReturnType<typeof boot>>;
++  let svc: RenderJobsService;
++  const ownDb = ownDatabase("r6i");
++  const envOf = () => (svc as unknown as { env: { RENDER_WORKER_ID?: string } }).env;
++  beforeAll(async () => {
++    ownDb.use();
++    k = await boot("r6i", NOW, { configure: (b) => b.overrideProvider(VideoRenderer).useValue(new StandinVideoRenderer()) });
++    svc = k.t.app.get(RenderJobsService);
++    k.t.app.get(JobsService).register("render-video", () => undefined);
++    svc.register();
++  });
++  afterAll(async () => {
++    await k.t.close();
++    ownDb.drop();
++  });
++  afterEach(() => {
++    delete envOf().RENDER_WORKER_ID;
++  });
++  const held = async (holder: string): Promise<string> => {
++    const a = await k.account();
++    const w = await k.wish(a.id, { ticket: "signature" });
++    const id = (await k.t.http().post(`/v1/wishes/${w}/video`).set("Authorization", a.auth).send({}).expect(200)).body.item.id as string;
++    await k.db.$executeRaw`UPDATE render_job SET status = 'rendering', "workerId" = ${holder}, "updatedAt" = ${k.t.clock.now()} WHERE id = ${id}::uuid`;
++    await k.db.$executeRaw`UPDATE job SET status = 'running' WHERE "subjectId" = ${id}`;
++    return id;
++  };
++  const status = async (id: string) => (await k.db.renderJob.findUniqueOrThrow({ where: { id } })).status;
++
++  it("a row held by a different id with a live lease is never freed", async () => {
++    envOf().RENDER_WORKER_ID = "machine-a";
++    const id = await held("machine-b:999999:1");
++    expect(await svc.releaseDeadHolders()).toBe(0);
++    expect(await status(id)).toBe("rendering");
++    const id2 = await held(`${hostname()}:999999:1`); // a hostname-shaped holder is no proof either
++    expect(await svc.releaseDeadHolders()).toBe(0);
++    expect(await status(id2)).toBe("rendering");
++  });
++
++  it("the same id after a restart is freed at once", async () => {
++    envOf().RENDER_WORKER_ID = "machine-a";
++    const id = await held("machine-a:999999:1");
++    expect(svc.workerId.startsWith("machine-a:")).toBe(true);
++    expect(await svc.releaseDeadHolders()).toBeGreaterThanOrEqual(1);
++    expect(await status(id)).toBe("queued");
++  });
++
++  it("with no id set, nothing is freed early: only lease expiry frees", async () => {
++    const id = await held("machine-a:999999:1");
++    expect(svc.workerId.startsWith("-:")).toBe(true);
++    expect(await svc.releaseDeadHolders()).toBe(0);
++    expect(await status(id)).toBe("rendering");
++  });
++});
+diff --git a/src/modules/render-jobs/tests/r6-worker.spec.ts b/src/modules/render-jobs/tests/r6-worker.spec.ts
+index 66b85da..ccb2d1a 100644
+--- a/src/modules/render-jobs/tests/r6-worker.spec.ts
++++ b/src/modules/render-jobs/tests/r6-worker.spec.ts
+@@ -93,8 +93,9 @@ describe("R6: the video maker's worker", () => {
+     expect(auth).toBeTruthy();
+   });
+ 
+-  it("3. a worker of this machine that is gone releases its row at once: queued with one loss, then failed for good with words at the second", async () => {
++  it("3. a worker of this machine (the same RENDER_WORKER_ID) that is gone releases its row at once: queued with one loss, then failed for good with words at the second", async () => {
+     const id = await asked();
++    (svc as unknown as { env: { RENDER_WORKER_ID?: string } }).env.RENDER_WORKER_ID = "m-spec";
+     await k.db.$executeRaw`UPDATE render_job SET status = 'rendering', "workerId" = ${`${svc.workerId.split(":")[0]}:999999:1`} WHERE id = ${id}::uuid`;
+     await k.db.$executeRaw`UPDATE job SET status = 'running' WHERE "subjectId" = ${id}`;
+     expect(await svc.releaseDeadHolders()).toBe(1);
+@@ -109,6 +110,7 @@ describe("R6: the video maker's worker", () => {
+     expect(await svc.releaseDeadHolders()).toBe(0);
+     await k.db.$executeRaw`UPDATE render_job SET "workerId" = 'other-machine:1:1' WHERE id = ${id}::uuid`;
+     expect(await svc.releaseDeadHolders()).toBe(0);
++    delete (svc as unknown as { env: { RENDER_WORKER_ID?: string } }).env.RENDER_WORKER_ID;
+   });
+ 
+   it("4. the leftover sweep stops a browser a dead worker left (only the very process written down) and removes the old folders and files", async () => {
+@@ -137,7 +139,7 @@ describe("R6: the video maker's worker", () => {
+       expect(existsSync(live)).toBe(true); // a live owner's young folder stays
+       expect(existsSync(join(root, "fw-render-job3-ccc.mp4"))).toBe(true); // young: stays
+       const later = await sweepRenderLeftovers(10 * MIN, Date.now() + 20 * MIN, root);
+-      expect(later.removed).toBeGreaterThanOrEqual(2);
++      expect(later.removed).toBeGreaterThanOrEqual(1); // the old result file; a live owner's folder stays whatever its age (see r6-ik6j.spec.ts)
+       expect(existsSync(join(root, "keep-me.txt"))).toBe(true);
+     } finally {
+       for (const c of [child, impostor]) {
 -- 
 2.43.0
 

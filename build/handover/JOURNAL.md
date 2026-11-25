@@ -137,3 +137,9 @@ Did: R8 handed back (r8 89ac3e8, 4 new files: docs/DEPLOY.md, deploy/systemd/fir
 setup-ubuntu.sh; bash -n ok; systemd-analyze only complains /usr/bin/node is absent here; 57 of 58 env names in the manifest, the 58th is the
 web's API_ORIGIN at build time). T0: lead read the diff (apt installs only, no secret, start commands match package.json); gates EXIT 0; MERGED.
 Running: VERIFY2-R4C (verifier); VERIFY-R7 (checker).
+
+### 2026-11-25 · second chat · ccr-91b3ed11-fx445c
+Did: VERIFY-R7: R7 DONE, nothing to build (erase, refund, refund mid-render, owner-only 10-minute download, nothing on public reads, account erase
+mid-render: all PASS; render-jobs + wishes 245 tests). Two lows to the sweep list. NOT run: web build, real Chromium, the passcode screen in a browser.
+Verdict in verdicts/r7-VERDICT.md. Renderer tasks left: W19 (after r4c), the recorder follow-up (IK6h, IK6k), R9 (needs the owner's server).
+Running: VERIFY2-R4C (verifier).

@@ -1,0 +1,1223 @@
+From 847b3fd56d66404210c7e869ace75797f40bd5d6 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Tue, 24 Nov 2026 14:16:39 +0000
+Subject: [PATCH 1/2] R4C: every house style and ending plays to its end under
+ the render page; render-only cues wrapped; sweep covers all 43 styles, every
+ ending, one action-word list
+
+Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Ji5DsgbRbxW8JX4EbGEa5o
+---
+ .../styles/film/midnight/endings/candle.tsx   |   4 +-
+ .../styles/stage/lullaby/endings/candle.tsx   |   4 +-
+ components/styles/stage/lullaby/views.tsx     |   4 +-
+ components/styles/stage/mosaic/Scene.tsx      |   4 +-
+ components/styles/stage/owambe/Scene.tsx      |   5 +-
+ .../styles/stage/polaroid-table/sheets.tsx    |   5 +-
+ .../styles/stage/the-question/Stage.tsx       |   3 +-
+ components/styles/stage/tinsel/Scene.tsx      |   4 +-
+ .../stories/group-chat/endings/envelope.tsx   |  10 +-
+ .../styles/stories/pidgin-gist/cards.tsx      |   6 +-
+ .../stories/pidgin-gist/endings/envelope.tsx  |  10 +-
+ .../stories/pidgin-gist/endings/scratch.tsx   |   6 +-
+ components/styles/stories/status/Scene.tsx    |   4 +-
+ components/styles/swipe/mixtape/panels.tsx    |  20 ++--
+ components/styles/swipe/scrapbook/Scene.tsx   |   4 +-
+ components/styles/swipe/the-aisle/Scene.tsx   |  10 +-
+ scripts/live/flows/r4-words.mjs               |  52 +++++++++
+ scripts/live/flows/r4.mjs                     | 102 +++++++++++++-----
+ 18 files changed, 183 insertions(+), 74 deletions(-)
+ create mode 100644 scripts/live/flows/r4-words.mjs
+
+diff --git a/components/styles/film/midnight/endings/candle.tsx b/components/styles/film/midnight/endings/candle.tsx
+index 6410603..345eb89 100644
+--- a/components/styles/film/midnight/endings/candle.tsx
++++ b/components/styles/film/midnight/endings/candle.tsx
+@@ -7,7 +7,7 @@
+    Under `edit` (Style Studio's canvas) it rests as it waits for the receiver: the label, the line to the sky, the
+    rocket in its seat, the hint and the button on show; it takes no touch and sets nothing off. */
+ 
+-import { Press } from "@/components/engine/controls";
++import { Hint, Press } from "@/components/engine/controls";
+ import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
+ import { gsap } from "gsap";
+ import { SplitText } from "gsap/SplitText";
+@@ -282,7 +282,7 @@ export default function Candle({ line, from, live, still, quiet, sky, onDone, ag
+           </Press>
+         ) : null}
+       </div>
+-      <p className="st-midnight-e-hint" data-layer="words">Hold, then let go</p>
++      <Hint className="st-midnight-e-hint" data-layer="words">Hold, then let go</Hint>
+       <Press type="button" className="st-midnight-e-act" onClick={() => send(true)} tabIndex={done || edit ? -1 : 0} data-layer="button" data-name="Send it up" data-colours="Fill:--st-midnight-accent, Words:--st-midnight-ground">
+         Send it up
+       </Press>
+diff --git a/components/styles/stage/lullaby/endings/candle.tsx b/components/styles/stage/lullaby/endings/candle.tsx
+index 572676a..fcb0e75 100644
+--- a/components/styles/stage/lullaby/endings/candle.tsx
++++ b/components/styles/stage/lullaby/endings/candle.tsx
+@@ -5,7 +5,7 @@
+    let down. Self-contained: it needs only the wish, `still`, `onEnding`, and two optional hooks. With `onLight`
+    the stage's own room goes dark; without it this component draws its own dusk. */
+ 
+-import { Press } from "@/components/engine/controls";
++import { Hush, Press } from "@/components/engine/controls";
+ import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
+ import { gsap } from "gsap";
+ import type { EndingEvent, WishData } from "@/lib/engine/types";
+@@ -161,7 +161,7 @@ export default function Candle({ wish, still, onEnding, onLight, again, edit }:
+         <Press ref={pull} type="button" className="st-lullaby-candle-pull" aria-label="Turn down the light" disabled={down} onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp} onClick={onClick}>
+           <i aria-hidden="true" />
+         </Press>
+-        {down ? null : <span className="st-lullaby-candle-tag st-lullaby-candle-in" aria-hidden="true" data-layer="words">Pull to turn <br />down the light</span>}
++        {down ? null : <Hush><span className="st-lullaby-candle-tag st-lullaby-candle-in" aria-hidden="true" data-layer="words">Pull to turn <br />down the light</span></Hush>}
+       </div>
+       <div className="st-lullaby-candle-words">
+         {down ? (
+diff --git a/components/styles/stage/lullaby/views.tsx b/components/styles/stage/lullaby/views.tsx
+index b5662b9..94c8a00 100644
+--- a/components/styles/stage/lullaby/views.tsx
++++ b/components/styles/stage/lullaby/views.tsx
+@@ -1,7 +1,7 @@
+ /* The words of each stop. They stay in the DOM, above the canvas, so type is sharp and can be read aloud.
+    Every element that arrives carries data-in: the Scene reads it and scores how that element is let down. */
+ 
+-import { Anchor } from "@/components/engine/controls";
++import { Anchor, Hint } from "@/components/engine/controls";
+ import React from "react";
+ import type { WishData } from "@/lib/engine/types";
+ import { roman } from "./plan";
+@@ -85,7 +85,7 @@ export function Cover({ wish, shot }: { wish: WishData; shot: Shot }) {
+       {wish.cover.line ? <p className="st-lullaby-line" data-in="hang" data-layer="words"><W t={wish.cover.line} /></p> : null}
+       {wish.cover.title ? <p className="st-lullaby-date" data-in="track" data-layer="words"><Tr t={wish.cover.title} /></p> : null}
+       {wish.cover.date ? <p className="st-lullaby-date" data-in="track" data-layer="words"><Tr t={wish.cover.date} /></p> : null}
+-      <p className="st-lullaby-hint" data-in="hint" data-layer="words">Tap to go on</p>
++      <Hint className="st-lullaby-hint" data-in="hint" data-layer="words">Tap to go on</Hint>
+     </div>
+   );
+ }
+diff --git a/components/styles/stage/mosaic/Scene.tsx b/components/styles/stage/mosaic/Scene.tsx
+index 3b450f6..f58b09b 100644
+--- a/components/styles/stage/mosaic/Scene.tsx
++++ b/components/styles/stage/mosaic/Scene.tsx
+@@ -5,7 +5,7 @@
+    it measures its own box, lays the wish out as stops, sends the stage's camera from tile to tile, and
+    turns a tablet over at each stop with that stop's words. */
+ 
+-import { Press } from "@/components/engine/controls";
++import { Hush, Press } from "@/components/engine/controls";
+ import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+ import gsap from "gsap";
+ import type { StyleProps, Theme } from "@/lib/engine/types";
+@@ -755,7 +755,7 @@ function Film({ wish, embedded, tier, theme, renderEnding, onEnding, opened, at:
+             </svg>
+           </Press>
+         ) : (
+-          <span className="st-mosaic-hold" data-layer="words">Hold the picture</span>
++          <Hush><span className="st-mosaic-hold" data-layer="words">Hold the picture</span></Hush>
+         )}
+       </div>
+     </div>
+diff --git a/components/styles/stage/owambe/Scene.tsx b/components/styles/stage/owambe/Scene.tsx
+index 2c50cc4..5731750 100644
+--- a/components/styles/stage/owambe/Scene.tsx
++++ b/components/styles/stage/owambe/Scene.tsx
+@@ -8,6 +8,7 @@
+ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+ import { gsap } from "gsap";
+ import type { StyleProps, Theme, WishData } from "@/lib/engine/types";
++import { Hint } from "@/components/engine/controls";
+ import { coloursFor, css, lum, mix, patch } from "./cloth";
+ import type { Colours, Rgb } from "./cloth";
+ import { edit, partsOf } from "./edit";
+@@ -610,10 +611,10 @@ export default function Scene({ wish, embedded, still, tier, theme, renderEnding
+         {firsts.slice(1).map((n, k) => (n > 0 ? <b key={k} className={n <= i ? "st-owambe-done" : ""} style={{ left: ((n / Math.max(1, last)) * 100).toFixed(2) + "%" }} /> : null))}
+       </div>
+       {beat.layout !== "ending" ? (
+-        <p className={"st-owambe-hint" + (i > 1 ? " st-owambe-hint-quiet" : "") + (hint === at.run ? " st-owambe-hint-on" : "")} data-layer="hint" data-name="Tap to go on" data-colours="Pill:--st-owambe-plate, Edge:--st-owambe-line, Arrow:--st-owambe-gold">
++        <Hint className={"st-owambe-hint" + (i > 1 ? " st-owambe-hint-quiet" : "") + (hint === at.run ? " st-owambe-hint-on" : "")} data-layer="hint" data-name="Tap to go on" data-colours="Pill:--st-owambe-plate, Edge:--st-owambe-line, Arrow:--st-owambe-gold">
+           {i > 1 ? null : <span>Tap to go on</span>}
+           <i aria-hidden="true" />
+-        </p>
++        </Hint>
+       ) : null}
+     </div>
+   );
+diff --git a/components/styles/stage/polaroid-table/sheets.tsx b/components/styles/stage/polaroid-table/sheets.tsx
+index f33f310..30e1d47 100644
+--- a/components/styles/stage/polaroid-table/sheets.tsx
++++ b/components/styles/stage/polaroid-table/sheets.tsx
+@@ -2,6 +2,7 @@
+    written on. The prints are not here; the stage draws them over this. Every line is set in its own mask,
+    so it can rise into view when the print over it is moved away. */
+ 
++import { Hint } from "@/components/engine/controls";
+ import React from "react";
+ import type { Frame, Ln, Paper, Station } from "./plan";
+ import { leadOf, scaled, sizeOf } from "./plan";
+@@ -110,7 +111,7 @@ export function StationView({ s, f, hint, links, children }: { s: Station; f: Fr
+           </p>
+           <Line l={{ t: c.date, k: "label", gap: 6, end: true }} f={f} layer="words" />
+         </div>
+-        <p className={"st-polaroid-table-hint" + (hint ? "" : " st-polaroid-table-gone")} style={{ top: f.sh * 0.3, left: -f.sw * 0.44, width: f.sw * 0.88 }} aria-hidden={hint ? undefined : true} data-layer="hint" data-name="Drag the prints aside" data-colours="Arrow:--st-polaroid-table-accent">
++        <Hint className={"st-polaroid-table-hint" + (hint ? "" : " st-polaroid-table-gone")} style={{ top: f.sh * 0.3, left: -f.sw * 0.44, width: f.sw * 0.88 }} aria-hidden={hint ? undefined : true} data-layer="hint" data-name="Drag the prints aside" data-colours="Arrow:--st-polaroid-table-accent">
+           <svg viewBox="0 0 64 40" aria-hidden="true">
+             <path d="M4 30 C 18 6, 40 4, 56 18" pathLength={1} data-draw="" />
+             <path d="M46 8 L 57 19 L 43 23" pathLength={1} data-draw="" />
+@@ -118,7 +119,7 @@ export function StationView({ s, f, hint, links, children }: { s: Station; f: Fr
+           <span className="st-polaroid-table-row st-polaroid-table-k-label">
+             <span data-rise="">Drag the prints aside</span>
+           </span>
+-        </p>
++        </Hint>
+       </>
+     );
+   }
+diff --git a/components/styles/stage/the-question/Stage.tsx b/components/styles/stage/the-question/Stage.tsx
+index eb6f61c..7ff3e34 100644
+--- a/components/styles/stage/the-question/Stage.tsx
++++ b/components/styles/stage/the-question/Stage.tsx
+@@ -8,6 +8,7 @@
+ import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+ import { gsap } from "gsap";
+ import type { Photo, SceneAsk, StyleProps, WishData } from "@/lib/engine/types";
++import { Hint } from "@/components/engine/controls";
+ import type { Part, Stop } from "./route";
+ import { hangs, place } from "./walk";
+ import type { Hang } from "./walk";
+@@ -766,7 +767,7 @@ export default function Stage({ wish, stops, parts, box, light, tint, open, rend
+           {first.slice(1, -1).map((n, k) => (n > 0 ? <b key={k} style={{ bottom: ((n / far) * 100).toFixed(2) + "%" }} /> : null))}
+           <i className="st-the-question-way-dot" style={{ bottom: ((i / far) * 100).toFixed(2) + "%" }} />
+         </div>
+-        {open && !ending && taps < 2 && i < 3 ? <p className="st-the-question-hint" data-layer="words" data-name="Hint" key={stop.k === "cover" ? "a" : "b"}>{stop.k === "cover" ? "Tap to open" : "Tap to walk on"}</p> : null}
++        {open && !ending && taps < 2 && i < 3 ? <Hint className="st-the-question-hint" data-layer="words" data-name="Hint" key={stop.k === "cover" ? "a" : "b"}>{stop.k === "cover" ? "Tap to open" : "Tap to walk on"}</Hint> : null}
+       </div>
+       <div ref={dipEl} className="st-the-question-dip" aria-hidden="true" />
+     </div>
+diff --git a/components/styles/stage/tinsel/Scene.tsx b/components/styles/stage/tinsel/Scene.tsx
+index ea4d449..d4b03c1 100644
+--- a/components/styles/stage/tinsel/Scene.tsx
++++ b/components/styles/stage/tinsel/Scene.tsx
+@@ -8,7 +8,7 @@
+    scores each stop on a GSAP timeline, pins the words to the paper tags, takes tap, drag and keys, and hands the
+    ending on. */
+ 
+-import { Press } from "@/components/engine/controls";
++import { Hush, Press } from "@/components/engine/controls";
+ import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+ import { gsap } from "gsap";
+ import { SplitText } from "gsap/SplitText";
+@@ -739,7 +739,7 @@ export default function Scene({ wish, still, tier, theme, renderEnding, onEnding
+         ) : null}
+       </header>
+       <p ref={hint} className="st-tinsel-hint" aria-hidden={stop.k !== "cover"}>
+-        {stop.k === "cover" ? <span data-layer="hint" data-name="Tap hint" data-colours="Words:--st-tinsel-muted">Tap to go on</span> : null}
++        {stop.k === "cover" ? <Hush><span data-layer="hint" data-name="Tap hint" data-colours="Words:--st-tinsel-muted">Tap to go on</span></Hush> : null}
+       </p>
+       <div ref={flood} className="st-tinsel-flood" aria-hidden="true" />
+       <nav className="st-tinsel-nav" aria-label="Move through the wish">
+diff --git a/components/styles/stories/group-chat/endings/envelope.tsx b/components/styles/stories/group-chat/endings/envelope.tsx
+index ef946d4..000ca3b 100644
+--- a/components/styles/stories/group-chat/endings/envelope.tsx
++++ b/components/styles/stories/group-chat/endings/envelope.tsx
+@@ -4,7 +4,7 @@
+    read yet. The receiver pulls it down and it opens under the finger, with weight; let go too early and it
+    springs shut. Open, the line stands up word by word and the sender signs it. Nothing celebratory follows. */
+ 
+-import { Press } from "@/components/engine/controls";
++import { Hush, Press } from "@/components/engine/controls";
+ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+ import { gsap } from "gsap";
+ import type { EndingProps } from "./kit";
+@@ -125,9 +125,11 @@ export default function Envelope({ wish, still, light, play, onEnding, again }:
+         <div className={E + "letter"} onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp}>
+           <div ref={plate} className={E + "plate"} data-layer="letter" data-name="Letter" data-colours="Paper:--st-group-chat-e-paper">
+             {!done && !still ? (
+-              <span className={E + "hint " + E + "rise"} data-layer="words" aria-hidden="true">
+-                <i>Pull down to read</i>
+-              </span>
++              <Hush>
++                <span className={E + "hint " + E + "rise"} data-layer="words" aria-hidden="true">
++                  <i>Pull down to read</i>
++                </span>
++              </Hush>
+             ) : null}
+             <p className={E + "said"} data-layer="words" style={{ "--st-group-chat-e-k": Math.min(1, Math.pow(40 / Math.max(40, line.length), 0.5)) } as React.CSSProperties} aria-hidden={!done && !still ? true : undefined}>
+               {still && !done ? <span className={E + "closed"}>Not read yet</span> : <Words text={line} />}
+diff --git a/components/styles/stories/pidgin-gist/cards.tsx b/components/styles/stories/pidgin-gist/cards.tsx
+index f5b7ca3..69329d3 100644
+--- a/components/styles/stories/pidgin-gist/cards.tsx
++++ b/components/styles/stories/pidgin-gist/cards.tsx
+@@ -4,7 +4,7 @@
+    into place, a photo opens out of a dot, and the green dot of the stage flies to wherever the card needs it.
+    Scene.tsx plays, pauses and floods between them. */
+ 
+-import { Press, Anchor } from "@/components/engine/controls";
++import { Press, Anchor, Hint } from "@/components/engine/controls";
+ import React, { createContext, useContext, useLayoutEffect, useRef } from "react";
+ import { gsap } from "gsap";
+ import type { Photo, WishData } from "@/lib/engine/types";
+@@ -221,9 +221,9 @@ function Cover({ beat, wish }: { beat: Of<"cover">; wish: WishData }) {
+         )}
+         {wish.quiet ? null : <Reaction n={0} />}
+       </div>
+-      <p className={cx("hint")} data-layer="eyebrow">
++      <Hint className={cx("hint")} data-layer="eyebrow">
+         <Words text="Tap am. Hold am to pause." />
+-      </p>
++      </Hint>
+     </div>
+   );
+ }
+diff --git a/components/styles/stories/pidgin-gist/endings/envelope.tsx b/components/styles/stories/pidgin-gist/endings/envelope.tsx
+index 7867da8..cca3c3f 100644
+--- a/components/styles/stories/pidgin-gist/endings/envelope.tsx
++++ b/components/styles/stories/pidgin-gist/endings/envelope.tsx
+@@ -7,7 +7,7 @@
+    sender's name. Quiet: nothing celebratory follows. With
+    `still`, nothing moves: one button opens it. */
+ 
+-import { Press } from "@/components/engine/controls";
++import { Hush, Press } from "@/components/engine/controls";
+ import React, { useLayoutEffect, useRef, useState } from "react";
+ import { gsap } from "gsap";
+ import { EASE, inset, OPEN, rise, SHUT } from "../moves";
+@@ -178,9 +178,11 @@ export default function Envelope({ wish, values, u, still, fx, onEnding }: Endin
+               <b className={cx("e-env-to")} data-layer="title">
+                 <Words text={wish.call || wish.cover.names[0] || ""} />
+               </b>
+-              <span className={cx("e-env-hint")}>
+-                <Words text="Pull am" />
+-              </span>
++              <Hush>
++                <span className={cx("e-env-hint")}>
++                  <Words text="Pull am" />
++                </span>
++              </Hush>
+             </div>
+             <i ref={seal} className={cx("e-env-seal")} data-dot="" aria-hidden="true" data-layer="seal" data-name="Green seal" data-colours={fx ? undefined : "Seal:--st-pidgin-gist-accent"} />
+           </div>
+diff --git a/components/styles/stories/pidgin-gist/endings/scratch.tsx b/components/styles/stories/pidgin-gist/endings/scratch.tsx
+index 06d0c46..4ef8f4a 100644
+--- a/components/styles/stories/pidgin-gist/endings/scratch.tsx
++++ b/components/styles/stories/pidgin-gist/endings/scratch.tsx
+@@ -4,7 +4,7 @@
+    the finger, dust flies off the way the finger was going, and the letters stand up one by one. The green dot
+    is the coin. When most of it is clear the rest follows. With `still`, nothing moves: one button clears it. */
+ 
+-import { Press } from "@/components/engine/controls";
++import { Hint, Press } from "@/components/engine/controls";
+ import React, { useLayoutEffect, useRef, useState } from "react";
+ import { gsap } from "gsap";
+ import { EASE, OPEN, rise, SHUT } from "../moves";
+@@ -139,9 +139,9 @@ export default function Scratch({ values, u, still, light, fx, onEnding }: Endin
+   let n = 0;
+   return (
+     <div ref={root} className={cx("e", "e-scr", !fx && "e-nofx", done && "e-done")}>
+-      <p className={cx("e-label")} data-layer="eyebrow">
++      <Hint className={cx("e-label")} data-layer="eyebrow">
+         <Words text="Scratch am make you see" />
+-      </p>
++      </Hint>
+       <div className={cx("e-scr-pad")} onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp}>
+         <p className={cx("e-big", sizeOf(line), "e-scr-line")} aria-label={done ? line : "Scratch am make you see"} aria-live="polite" data-layer="scratch" data-name="Scratch line" data-colours="Foil:--st-pidgin-gist-fg">
+           {words.map((word, w) => (
+diff --git a/components/styles/stories/status/Scene.tsx b/components/styles/stories/status/Scene.tsx
+index 4748fc9..2f5d840 100644
+--- a/components/styles/stories/status/Scene.tsx
++++ b/components/styles/stories/status/Scene.tsx
+@@ -11,7 +11,7 @@
+    - `still` keeps every screen as it is and never moves on by itself: the receiver taps through.
+    - On a wide screen the story stands in a portrait card in the middle, with arrows beside it. */
+ 
+-import { Press, Anchor } from "@/components/engine/controls";
++import { Press, Anchor, Hint } from "@/components/engine/controls";
+ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+ import type { Photo, StyleProps, Theme, WishAction, WishData } from "@/lib/engine/types";
+ import { buildScreens, type Screen } from "./screens";
+@@ -304,7 +304,7 @@ export default function StatusScene({ wish, embedded, still, tier, theme, render
+           onContextMenu={(e) => e.preventDefault()} aria-live="polite">
+           <ScreenView s={s} wish={wish} renderEnding={renderEnding} hearts={hearts} />
+           {s.look === "end" && i > 0 && <Press type="button" className="st-status-backstrip" onClick={() => go(-1)} aria-label="Back"></Press>}
+-          {i === 0 && <p className="st-status-tapcue" aria-hidden="true">Tap to continue</p>}
++          {i === 0 && <Hint className="st-status-tapcue" aria-hidden="true">Tap to continue</Hint>}
+         </div>
+ 
+         <header className="st-status-top">
+diff --git a/components/styles/swipe/mixtape/panels.tsx b/components/styles/swipe/mixtape/panels.tsx
+index fd9f4db..161bf0a 100644
+--- a/components/styles/swipe/mixtape/panels.tsx
++++ b/components/styles/swipe/mixtape/panels.tsx
+@@ -5,7 +5,7 @@
+    own choreography on one GSAP timeline. Arriving plays it; the finger scrubs it, so leaving a screen is the
+    same score run backward under the hand: words sink into their masks, numbers roll down, photos iris shut. */
+ 
+-import { Press, Anchor } from "@/components/engine/controls";
++import { Press, Anchor, Hush } from "@/components/engine/controls";
+ import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+ import { gsap } from "gsap";
+ import type { ChapterContent, Photo, StyleProps, WishData } from "@/lib/engine/types";
+@@ -535,14 +535,16 @@ export function Panel({ t, i, wish, active, ver, sound, sides, register, renderE
+             ) : null}
+           </div>
+         </div>
+-        <div className="st-mixtape-swipe" data-layer="hint" data-name="Swipe hint" data-colours="Arrow:--st-mixtape-a" data-depth="0.1">
+-          <span data-in="wipe" data-late="" data-at={wish.soundFirst && sound ? 6 : 2.2}>
+-            Swipe
+-            <svg viewBox="0 0 30 12" aria-hidden="true">
+-              <path d="M1 6h26M21 1l6 5-6 5" />
+-            </svg>
+-          </span>
+-        </div>
++        <Hush>
++          <div className="st-mixtape-swipe" data-layer="hint" data-name="Swipe hint" data-colours="Arrow:--st-mixtape-a" data-depth="0.1">
++            <span data-in="wipe" data-late="" data-at={wish.soundFirst && sound ? 6 : 2.2}>
++              Swipe
++              <svg viewBox="0 0 30 12" aria-hidden="true">
++                <path d="M1 6h26M21 1l6 5-6 5" />
++              </svg>
++            </span>
++          </div>
++        </Hush>
+       </>
+     );
+   } else if (t.k === "side") {
+diff --git a/components/styles/swipe/scrapbook/Scene.tsx b/components/styles/swipe/scrapbook/Scene.tsx
+index c889a3b..7d70726 100644
+--- a/components/styles/swipe/scrapbook/Scene.tsx
++++ b/components/styles/swipe/scrapbook/Scene.tsx
+@@ -8,7 +8,7 @@
+    (stage.ts). The words are drawn on the paper so they can bend with it; the same words sit in the DOM, unseen,
+    for screen readers. */
+ 
+-import { Press, Anchor } from "@/components/engine/controls";
++import { Press, Anchor, Hush } from "@/components/engine/controls";
+ import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+ import { gsap } from "gsap";
+ import type { StyleProps } from "@/lib/engine/types";
+@@ -790,7 +790,7 @@ export default function Scene({ wish, embedded, still, tier, theme, renderEnding
+           </svg>
+         </Press>
+         <span className="st-scrapbook-count">
+-          <b data-layer="words">{at === 0 ? "\u00a0" : at === 1 ? "Swipe to turn" : atEnd ? "The last page" : `${at} / ${S - 1}`}</b>
++          <b data-layer="words">{at === 0 ? "\u00a0" : at === 1 ? <Hush>Swipe to turn</Hush> : atEnd ? "The last page" : `${at} / ${S - 1}`}</b>
+           {/* the ribbon marker: where the reader is in the album, on a gilt thread */}
+           <i className="st-scrapbook-thread" aria-hidden="true" data-layer="ribbon" data-name="Ribbon marker" data-colours="Ribbon:--st-scrapbook-ribbon, Sheen:--st-scrapbook-ribbon-light">
+             <i style={{ transform: `translateX(${(clamp((at - 1) / Math.max(1, S - 2)) * 100).toFixed(2)}%)` }}>
+diff --git a/components/styles/swipe/the-aisle/Scene.tsx b/components/styles/swipe/the-aisle/Scene.tsx
+index 6d75837..b91601c 100644
+--- a/components/styles/swipe/the-aisle/Scene.tsx
++++ b/components/styles/swipe/the-aisle/Scene.tsx
+@@ -7,7 +7,7 @@
+    places the words' windows between the pillars, runs the one canvas under everything (stage.ts), and tells
+    the host about the ending. */
+ 
+-import { Press } from "@/components/engine/controls";
++import { Hush, Press } from "@/components/engine/controls";
+ import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+ import { gsap } from "gsap";
+ import type { StyleProps, Theme } from "@/lib/engine/types";
+@@ -569,9 +569,11 @@ export default function Scene({ wish, embedded, still: calm, tier, theme, render
+               <path d="M14.5 5.5 8 12l6.5 6.5" />
+             </svg>
+           </Press>
+-          <span className={"st-the-aisle-hint" + (open && at === 0 ? " st-the-aisle-on" : "")} aria-hidden="true">
+-            Swipe
+-          </span>
++          <Hush>
++            <span className={"st-the-aisle-hint" + (open && at === 0 ? " st-the-aisle-on" : "")} aria-hidden="true">
++              Swipe
++            </span>
++          </Hush>
+           <Press type="button" className="st-the-aisle-step st-the-aisle-next" aria-label="Next" disabled={!open || at === n - 1} onClick={() => go(at + 1, true)}>
+             <svg viewBox="0 0 24 24" aria-hidden="true">
+               <path d="M9.5 5.5 16 12l-6.5 6.5" />
+diff --git a/scripts/live/flows/r4-words.mjs b/scripts/live/flows/r4-words.mjs
+new file mode 100644
+index 0000000..7a78d62
+--- /dev/null
++++ b/scripts/live/flows/r4-words.mjs
+@@ -0,0 +1,52 @@
++/* The action words the render sweep looks for on screen: ONE list, in this one place (P-R4C).
++   Two sources, both read when the sweep starts:
++     1. the hint strings the styles, openings and endings themselves draw: every string literal inside a <Hint>...</Hint> or <Hush>...</Hush> in
++        components/** (the two wrappers of components/engine/controls.tsx that draw nothing under the render flag). The whole phrase is looked for,
++        and its first word is looked for as a word on its own ("Tap the flame" gives "tap"; a new hint "Shake to open" gives "shake" with no edit here);
++     2. SEED: the verbs that name an action on any part of a scene that is not a Hint (a button's name, a caption). A word may be added here; a hint
++        string never needs to be.
++   FIRST_WORD_SKIP is the short list of first words that are not an action ("For you", "Wish made", "Not yet"): nothing else is skipped. */
++import fs from "node:fs";
++import path from "node:path";
++
++export const SEED = ["tap", "swipe", "scroll", "press", "hold", "drag", "click", "blow", "open it", "scratch", "unwrap", "pull", "slide", "watch again", "read again", "play again", "replay", "walk it again", "see it again", "throw", "spin", "roll again", "make one", "turn your phone", "paused", "pause", "microphone", "send your", "cut the", "fasten", "break the", "download", "book again", "skip", "mute", "volume"];
++const FIRST_WORD_SKIP = new Set(["for", "send", "it", "wish", "found", "not", "you", "your", "yours", "the", "a", "an", "one", "no", "all", "this", "that", "is", "and", "to", "of", "in", "on", "with", "from", "now", "hint", "line", "more", "cap", "here", "there", "nothing", "done", "ready", "made", "love", "happy"]);
++
++function* walk(dir) {
++  for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
++    const f = path.join(dir, e.name);
++    if (e.isDirectory()) yield* walk(f); else if (/\.(tsx|ts)$/.test(e.name)) yield f;
++  }
++}
++
++/* the string literals inside every <Hint ...>...</Hint> and <Hush>...</Hush> of the source */
++export function hintStrings(root) {
++  const out = new Set();
++  const re = /<(Hint|Hush)\b[^>]*?(?:>|\n[^>]*>)([\s\S]*?)<\/\1>/g;
++  for (const f of walk(path.join(root, "components"))) {
++    const src = fs.readFileSync(f, "utf8");
++    if (!/<(Hint|Hush)\b/.test(src)) continue;
++    for (const m of src.matchAll(re)) {
++      const body = m[2].replace(/\bk\([^)]*\)/g, " ");
++      for (const s of body.matchAll(/"((?:[^"\\\n]|\\.)+)"|'((?:[^'\\\n]|\\.)+)'|`([^`$\n]+)`/g)) out.add((s[1] ?? s[2] ?? s[3]).trim());
++      for (const x of [...out]) if (/[`${}=]|:--/.test(x)) out.delete(x);
++      const plain = body.replace(/\{[\s\S]*?\}/g, " ").replace(/<[^>]*>/g, " ").trim();
++      if (plain) out.add(plain);
++    }
++  }
++  return [...out].filter((s) => /[A-Za-z]{3}/.test(s) && !/^[a-z-]+$/.test(s));
++}
++
++const esc = (s) => s.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
++/* { words: [...every word and phrase], source: {seed, fromHints, phrases} } */
++export function actionWords(root) {
++  const strings = hintStrings(root);
++  const first = new Set();
++  for (const s of strings) { const w = (s.toLowerCase().match(/^[a-z]+/) || [""])[0]; if (w.length >= 3 && !FIRST_WORD_SKIP.has(w)) first.add(w); }
++  const words = [...new Set([...SEED, ...first])];
++  /* a whole phrase counts when it opens with an action word ("Tap the flame"); "For you" or "Wish made" are not actions and may be told */
++  const phrases = strings.filter((s) => s.split(/\s+/).length >= 2).map((s) => s.toLowerCase().replace(/\s+/g, " ")).filter((s) => words.some((w) => s.startsWith(w + " ") || s.startsWith(w + ".")));
++  /* a word that follows "your", "their", a, the... is a noun ("Your turn", "the pull"), not an action */
++  const re = `(?<!\\b(?:your|their|my|his|her|our|a|the|each) )\\b(${words.map(esc).join("|")})\\b`;
++  return { re, phrases, counts: { seed: SEED.length, fromHints: [...first].filter((w) => !SEED.includes(w)).length, hints: strings.length, phrases: phrases.length }, fromHints: [...first].sort() };
++}
+diff --git a/scripts/live/flows/r4.mjs b/scripts/live/flows/r4.mjs
+index 90c1796..dfea156 100644
+--- a/scripts/live/flows/r4.mjs
++++ b/scripts/live/flows/r4.mjs
+@@ -14,6 +14,7 @@ import path from "node:path";
+ import { clearCodeLimits, codeFor, stack } from "../standin.mjs";
+ import { call, settle, signUp } from "./w3-api.mjs";
+ import { installClock, createFrameLoop, encodeVideo } from "../../lib/stepped-clock.mjs";
++import { actionWords } from "./r4-words.mjs";
+ 
+ const MEASURE = process.env.R4_MEASURE || "";
+ const PICS = process.env.R4_PICS || "";
+@@ -67,7 +68,7 @@ export async function runR4({ APP, ok }) {
+   const jpg = path.join(WORK, "photo.jpg");
+   spawnSync("/usr/bin/ffmpeg", ["-hide_banner", "-loglevel", "error", "-y", "-f", "lavfi", "-i", "gradients=s=540x960:c0=0x884422:c1=0x223355:seed=4", "-frames:v", "1", jpg]);
+   const photo = fs.readFileSync(jpg);
+-  const wishIn = async (styleSlug, { name, passcode, withPhoto } = {}) => {
++  const wishIn = async (styleSlug, { name, passcode, withPhoto, withVoice } = {}) => {
+     const d = await call(tokO, "POST", "/wishes", { from: "Driver", kind: "love", name, occasion: "birthday", studio: "", style: styleSlug });
+     if (d.status >= 300) throw new Error(`start ${d.status} ${JSON.stringify(d.json)}`);
+     const id = d.json.id;
+@@ -81,7 +82,21 @@ export async function runR4({ APP, ok }) {
+       if (cf.status >= 300) throw new Error(`confirm ${cf.status} ${JSON.stringify(cf.json)}`);
+       photoId = tk.json.id;
+     }
+-    const content = { cover: { from: "Driver", title: `For ${name}`, ...(photoId ? { photoId } : {}) }, ...(photoId ? { story: { photos: [{ photoId }] } } : {}), letter: { paras: [`Dear ${name}, this is for you.`] }, reasons: [{ title: "You laugh" }, { title: "You stay" }] };
++    /* a voice note, uploaded the real way: a short tone (the wish names it in its voices chapter, so the read carries its signed address) */
++    let voiceId = null;
++    if (withVoice) {
++      const wav = path.join(WORK, "note.wav");
++      spawnSync("/usr/bin/ffmpeg", ["-hide_banner", "-loglevel", "error", "-y", "-f", "lavfi", "-i", "sine=frequency=440:duration=2", wav]);
++      const audio = fs.readFileSync(wav);
++      const tk = await call(tokO, "POST", "/uploads", { contentType: "audio/wav", bytes: audio.length, purpose: "voice", kind: "sound", subjectId: id });
++      if (tk.status >= 300) throw new Error(`voice ticket ${tk.status} ${JSON.stringify(tk.json)}`);
++      const put = await fetch(tk.json.upload.url, { method: "PUT", headers: { "content-type": "audio/wav", ...(tk.json.upload.headers ?? {}) }, body: audio });
++      if (put.status >= 300) throw new Error(`voice put ${put.status}`);
++      const cf = await call(tokO, "POST", `/uploads/${tk.json.id}/confirm`, { fileId: tk.json.id });
++      if (cf.status >= 300) throw new Error(`voice confirm ${cf.status} ${JSON.stringify(cf.json)}`);
++      voiceId = tk.json.id;
++    }
++    const content = { cover: { from: "Driver", title: `For ${name}`, ...(photoId ? { photoId } : {}) }, ...(voiceId ? { voices: { items: [{ name: "Mum", text: "Happy birthday", voiceId }] } } : {}), ...(photoId ? { story: { photos: [{ photoId }] } } : {}), letter: { paras: [`Dear ${name}, this is for you.`] }, reasons: [{ title: "You laugh" }, { title: "You stay" }] };
+     const p = await call(tokO, "PATCH", `/wishes/${id}`, { version: d.json.version, content, step: 5, ...(passcode ? { passcode } : {}) });
+     if (p.status >= 300) throw new Error(`patch ${p.status} ${JSON.stringify(p.json)}`);
+     const pay = await call(tokO, "POST", "/payments", { purpose: "ticket", ticket: "signature", subjectId: id, way: "card" }, { "idempotency-key": key() });
+@@ -122,6 +137,8 @@ export async function runR4({ APP, ok }) {
+     await ctx.route((u) => !["127.0.0.1", "localhost"].includes(u.hostname), (r) => { externals.push(new URL(r.request().url()).hostname); r.abort(); });
+     await installClock(ctx);
+     await ctx.addInitScript("window.__vt.freeze();");
++    /* anything that would make a sound is counted: a media element told to play, an audio context made, a microphone asked for */
++    await ctx.addInitScript("window.__sounds = { play: 0, ctx: 0, mic: 0 }; const p = HTMLMediaElement.prototype.play; HTMLMediaElement.prototype.play = function () { window.__sounds.play++; return p.apply(this, arguments); }; for (const n of ['AudioContext', 'webkitAudioContext']) { const C = window[n]; if (C) window[n] = class extends C { constructor(...a) { super(...a); window.__sounds.ctx++; } }; } if (navigator.mediaDevices) { const g = navigator.mediaDevices.getUserMedia?.bind(navigator.mediaDevices); navigator.mediaDevices.getUserMedia = (...a) => { window.__sounds.mic++; return g ? g(...a) : Promise.reject(new Error('none')); }; }");
+     const page = await ctx.newPage();
+     page.on("pageerror", (e) => errors.push(`${label}: ${String(e.message).slice(0, 140)}`));
+     page.on("console", (m) => { if (m.type() === "error" && !/Failed to load resource|net::ERR_/.test(m.text())) errors.push(`${label}: ${m.text().slice(0, 140)}`); });
+@@ -164,7 +181,7 @@ export async function runR4({ APP, ok }) {
+         sound: document.querySelectorAll(".fe-sound").length, gate: document.querySelectorAll(".fe-gate, #wp-link-ask, .fe-open").length, menu: document.querySelectorAll(".wp-dock, [class*=menu], [class*=keep]").length,
+         buttons: btn, title: document.title, robots: document.querySelector('meta[name="robots"]')?.content || "", referrer: document.querySelector('meta[name="referrer"]')?.content || "",
+         text: document.body.innerText, studio: !!document.querySelector(".mk-studio-host"), over: !!document.querySelector(".mk-studio-over"), host: document.querySelector(".fe-host")?.getAttribute("data-style") || "",
+-        stores: { l: localStorage.length, s: sessionStorage.length },
++        stores: { l: localStorage.length, s: sessionStorage.length }, sounds: window.__sounds || null,
+       };
+     });
+     const scenes = await page.evaluate(() => window.__render.scenes);
+@@ -226,7 +243,9 @@ export async function runR4({ APP, ok }) {
+   /* P-R4 (IK6, no controls): from ready to done, under the render page NOTHING a person could press or that names an action is drawn, for every style
+      (each ending its manifest draws) and every ending scene: zero focusable elements, zero elements with role button, link or slider, none of the
+      known action words on screen. One wish is made for each case, its style and ending set in the stack's own database (the render read gives them as the row holds them). */
+-  const ACTION = "\\b(tap|swipe|scroll|press|hold|drag|click|blow|open it|scratch|unwrap|pull|slide|watch again|read again|play again|replay|walk it again|see it again|throw|spin|roll again|make one|turn your phone|paused|pause|microphone|send your|cut the|fasten|break the|download|book again|skip|mute|volume)\\b";
++  /* the action words: one list, in scripts/live/flows/r4-words.mjs (the seed verbs plus every hint string the components draw, read from the source when the sweep starts) */
++  const WORDS = actionWords(path.resolve(path.dirname(new URL(import.meta.url).pathname), "../../.."));
++  const ACTION = WORDS.re;
+   const bare = async (label, w) => {
+     const t = await askVideo(w);
+     tokensSeen.push(t.token);
+@@ -243,52 +262,74 @@ export async function runR4({ APP, ok }) {
+       if (Date.now() - t0 > 120000) throw new Error(`${label}: never ready`);
+       await page.evaluate(() => window.__vt.step(16)); await sleep(30);
+     }
+-    const found = new Set(); let steps = 0, done = false, first = true;
+-    const look = () => page.evaluate((re) => {
++    const found = new Set(); let steps = 0, done = false, first = true, focusMax = 0, rolesMax = 0, lastScene = "", words = new Set();
++    const look = () => page.evaluate(([re, phrases]) => {
+       const vis = (e) => { const r = e.getBoundingClientRect(), cs = getComputedStyle(e); return r.width > 0 && r.height > 0 && cs.visibility !== "hidden" && cs.display !== "none"; };
+-      const out = [];
++      const out = [], focus = [], roles = [];
+       const tag = (e) => `${e.tagName.toLowerCase()}${e.getAttribute("role") ? `[role=${e.getAttribute("role")}]` : ""}.${String(e.className).slice(0, 30)}${vis(e) ? "" : "(hidden)"}`;
+-      for (const e of document.querySelectorAll("a, button, input, select, textarea, summary, [contenteditable], [role=button], [role=link], [role=slider], [role=textbox]")) out.push(tag(e));
++      for (const e of document.querySelectorAll("a, button, input, select, textarea, summary, [contenteditable], [role=button], [role=link], [role=slider], [role=textbox]")) { out.push(tag(e)); if (e.matches("a, button, [role=button], [role=link]")) roles.push(tag(e)); }
+       /* anything else that carries a tabindex counts only if the browser really lets it take focus (the stage is inert) */
+-      for (const e of document.querySelectorAll("[tabindex]")) { e.focus({ preventScroll: true }); if (document.activeElement === e) out.push(`focusable ${tag(e)}`); }
+-      const words = (document.body.innerText.match(new RegExp(re, "gi")) || []).map((x) => x.toLowerCase());
+-      return { out, words, done: !!window.__render.done, err: window.__render.error || "" };
+-    }, ACTION);
++      for (const e of document.querySelectorAll("[tabindex]")) { e.focus({ preventScroll: true }); if (document.activeElement === e) { out.push(`focusable ${tag(e)}`); focus.push(tag(e)); } }
++      const text = document.body.innerText;
++      const words = (text.match(new RegExp(re, "gi")) || []).map((x) => x.toLowerCase());
++      const flat = text.toLowerCase().replace(/\s+/g, " ");
++      for (const ph of phrases) if (flat.includes(ph)) words.push(`phrase "${ph}"`);
++      return { out, focus: focus.length, roles: roles.length, words, done: !!window.__render.done, err: window.__render.error || "", scene: window.__render.sceneName };
++    }, [ACTION, WORDS.phrases]);
+     const t1 = Date.now();
+-    while (!done && steps < 2400 && Date.now() - t1 < Number(process.env.R4_CASE_MS || 100000)) {
+-      await page.evaluate(async (ms) => { for (let i = 0; i < 15; i++) await window.__vt.step(ms); }, Number(process.env.R4_STEP_MS || 1000 / 30));
+-      steps += 15;
++    /* a case is cut by STEPPED time (150 s, longer than any wish plays: IK6a gives 60 s) or, only for a page too slow to get there, by real time (R4_CASE_MS, 7 min).
++       The step is 200 ms (R4_STEP_MS), looked at every 5 steps (1 s stepped): the WebGL styles cost a second or more a 33 ms frame on this machine and would be cut by real time long before their ending. */
++    const STEP = Number(process.env.R4_STEP_MS || 200);
++    while (!done && steps * STEP < 150000 && Date.now() - t1 < Number(process.env.R4_CASE_MS || 420000)) {
++      await page.evaluate(async (ms) => { for (let i = 0; i < 5; i++) await window.__vt.step(ms); }, STEP);
++      steps += 5;
+       const r = await look(); done = r.done;
+-      for (const x of r.out) found.add(x); for (const x of r.words) found.add(`word:${x}`);
++      focusMax = Math.max(focusMax, r.focus); rolesMax = Math.max(rolesMax, r.roles); lastScene = r.scene;
++      for (const x of r.out) found.add(x); for (const x of r.words) { found.add(`word:${x}`); words.add(x); }
+       if (r.err) throw new Error(`${label}: ${r.err}`);
+     }
+-    if (!done) found.add(`state:${steps}steps,${Math.round((Date.now() - t1) / 1000)}s ${JSON.stringify(await page.evaluate(() => ({ n: window.__render.sceneName, s: window.__render.scenes, host: document.querySelector('.fe-host')?.className, ending: document.querySelector('[data-part=ending]')?.className })).catch(() => null))}`);
++    if (!done) found.add(`state:${steps}steps,${Math.round((Date.now() - t1) / 1000)}s real ${JSON.stringify(await page.evaluate(() => ({ n: window.__render.sceneName, s: window.__render.scenes, host: document.querySelector('.fe-host')?.className, ending: document.querySelector('[data-part=ending]')?.className })).catch(() => null))}`);
+     await ctx.close();
+-    return { done, steps, found: [...found] };
++    return { done, steps, stepped: Math.round(steps * STEP / 1000), real: Math.round((Date.now() - t1) / 1000), found: [...found], scene: lastScene, focus: focusMax, roles: rolesMax, words: [...words] };
++  };
++  /* every house style, read page by page (GET /v1/styles is cursor-paged: limit 50, nextCursor until it is null) */
++  const houseStyles = async () => {
++    const slugs = []; let cursor = "";
++    for (let page = 0; page < 20; page++) {
++      const j = await (await fetch(`${API}/v1/styles?limit=50${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}`)).json();
++      for (const i of j.items) if (i.house && i.on) slugs.push(i.slug);
++      cursor = j.nextCursor || ""; if (!cursor) break;
++    }
++    return [...new Set(slugs)];
+   };
+   const sweep = async () => {
+-    const kinds = {};
+-    const manifestEndings = (slug) => { for (const dir of ["scroll", "film", "stage", "stories", "swipe"]) { const f = path.join(path.dirname(new URL(import.meta.url).pathname), `../../../components/styles/${dir}/${slug}/manifest.ts`); if (fs.existsSync(f)) { const m = fs.readFileSync(f, "utf8").match(/endings:\s*\[([^\]]*)\]/); return m ? [...m[1].matchAll(/"([^"]+)"/g)].map((x) => x[1]) : []; } } return []; };
+-    const styles = (await (await fetch(`${API}/v1/styles`)).json()).items.filter((i) => i.house && i.on).map((i) => i.slug);
++    const here = path.dirname(new URL(import.meta.url).pathname);
++    const manifestEndings = (slug) => { for (const dir of ["scroll", "film", "stage", "stories", "swipe"]) { const f = path.join(here, `../../../components/styles/${dir}/${slug}/manifest.ts`); if (fs.existsSync(f)) { const m = fs.readFileSync(f, "utf8").match(/endings:\s*\[([^\]]*)\]/); return m ? [...m[1].matchAll(/"([^"]+)"/g)].map((x) => x[1]) : []; } } return []; };
++    const styles = await houseStyles();
++    const every = process.env.R4_SWEEP === "all" || process.env.R4_SWEEP === "only-all";
+     const cases = [];
+-    for (const slug of styles) { const es = manifestEndings(slug); for (const e of es.length ? (process.env.R4_SWEEP === "all" || process.env.R4_SWEEP === "only-all" ? es : es.slice(0, 1)) : [""]) cases.push({ slug, ending: e, scene: "" }); }
+-    const scenes = fs.readdirSync(path.join(path.dirname(new URL(import.meta.url).pathname), "../../../components/moments/ending"));
++    for (const slug of styles) { const es = manifestEndings(slug); for (const e of es.length ? (every ? es : es.slice(0, 1)) : [""]) cases.push({ slug, ending: e, scene: "" }); }
++    const scenes = fs.readdirSync(path.join(here, "../../../components/moments/ending"));
+     for (const sc of scenes) cases.push({ slug: "letter", ending: "", scene: sc });
+     let bad = 0;
+-    /* R4_PART="from:to" runs a slice of the cases (a sweep is split into parts of about five); R4_PART_ONLY="slug,slug" runs those styles or scenes */
++    /* R4_PART="from:to" runs a slice of the cases (a sweep is split into parts); R4_PART_ONLY="slug,slug" runs those styles or scenes */
+     const part = (process.env.R4_PART || "").split(":").map(Number), only = (process.env.R4_PART_ONLY || "").split(",").filter(Boolean);
+     const run = cases.filter((c, i) => (!process.env.R4_PART || (i >= part[0] && i < part[1])) && (!only.length || only.includes(c.slug) || only.includes(c.scene)));
++    const line = (x) => { console.log(x); if (MEASURE) fs.appendFileSync(MEASURE, `${x}\n`); };
++    line(`SWEEP ${styles.length} house styles read, ${cases.length} cases in all (${every ? "every ending" : "the first ending"} of each style, and ${scenes.length} ending scenes on letter); this run: ${run.length}; action words: ${WORDS.counts.seed} seed + ${WORDS.counts.fromHints} read from ${WORDS.counts.hints} hint strings (${WORDS.fromHints.join(",")}) + ${WORDS.counts.phrases} whole phrases`);
++    line("CASE style | ending | done | scene stopped on | focusable | role button or link | action words | verdict");
+     for (const c of run) {
+       const label = `${c.slug}/${c.ending || "default"}${c.scene ? `/scene:${c.scene}` : ""}`;
+       const w = await wishIn("letter", { name: `Sw${tag}` });
+       const ending = c.ending || c.scene ? { id: c.ending || "candle", values: {}, ...(c.scene ? { scene: c.scene } : {}) } : null;
+       sql(`UPDATE wish SET "styleSlug" = '${c.slug}'${ending ? `, content = content || '${JSON.stringify({ ending }).replace(/'/g, "''")}'::jsonb` : ""} WHERE id = '${w.id}'`);
+       let r;
+-      try { r = await bare(label, w); } catch (e) { r = { done: false, steps: 0, found: [`error:${String(e.message).slice(0, 80)}`] }; }
+-      kinds[label] = r;
+-      if (!r.done || r.found.length) { bad++; check(`controls: ${label}`, false, `done=${r.done} found=${r.found.slice(0, 6).join(" ")}`); }
++      try { r = await bare(label, w); } catch (e) { r = { done: false, steps: 0, found: [`error:${String(e.message).slice(0, 80)}`], scene: "", focus: 0, roles: 0, words: [] }; }
++      const clean = r.done && !r.found.length;
++      line(`CASE ${c.slug} | ${c.scene ? `scene:${c.scene}` : c.ending || "default"} | ${r.done ? "done" : "NOT done"} | ${r.scene} | ${r.focus} | ${r.roles} | ${[...new Set(r.words)].join(",") || "none"} | ${clean ? "clean" : "NOT clean"} (${r.stepped ?? 0} s stepped, ${r.real ?? 0} s real)`);
++      if (!clean) { bad++; check(`controls: ${label}`, false, `done=${r.done} found=${r.found.slice(0, 6).join(" ")}`); }
+     }
+-    check(`no control and no action word from ready to done in ${run.length} cases: every house style with the first ending it draws (R4_SWEEP=all: each), and every ending scene`, bad === 0, `${run.length - bad} clean, ${bad} not`);
++    check(`no control and no action word from ready to done in ${run.length} cases: every house style with ${every ? "each ending" : "the first ending"} it draws, and every ending scene`, bad === 0, `${run.length - bad} clean, ${bad} not`);
+   };
+   try {
+     if (!holdFile) throw new Error("the stack gives no render hold file");
+@@ -307,6 +348,11 @@ export async function runR4({ APP, ok }) {
+     results.film = await render("film", wFilm, { picture: true });
+     results.studio = await render("studio", wStudio, { picture: true });
+     check("studio: a creator's style is dressed from the one read (the Studio host is on the page, its dressing layer is on, no second request)", results.studio.m.studio && results.studio.m.over && results.studio.m.host === "noir", `host=${results.studio.m.host} over=${results.studio.m.over}`);
++    /* a wish with a voice note: the read carries the file, and the page draws no sound control and plays nothing */
++    const wVoice = await wishIn("letter", { name: `Fumi${tag}`, withVoice: true });
++    results.voice = await render("voice", wVoice);
++    const vs = results.voice.m.sounds || {};
++    check("voice: a wish with a voice note: no sound control is drawn (no .fe-sound, no button named voice, song or sound) and nothing plays (no play call, no audio context, no microphone asked for)", results.voice.m.sound === 0 && !results.voice.m.buttons.some((b) => /voice|song|sound|pause|play/i.test(b)) && vs.play === 0 && vs.ctx === 0 && vs.mic === 0 && results.voice.m.media === 0, `sound controls=${results.voice.m.sound} buttons=[${results.voice.m.buttons.join("|")}] plays=${vs.play} contexts=${vs.ctx} mic=${vs.mic} playing=${results.voice.m.media}`);
+     results.pass = await render("passcode", wPass);
+     check("passcode: the video shows the letter and no lock (no passcode field, the letter's words are on the page)", results.pass.m.gate === 0 && results.pass.m.inputs === 0 && /this is for you/i.test(results.pass.m.text), `text has the letter=${/this is for you/i.test(results.pass.m.text)}`);
+     /* a title-card opening: its animation plays (the host passes it by itself), then the scenes */
+-- 
+2.43.0
+
+
+From 8b445d7a67ca2ae61bb71dc4a6fe4ef9162b6f31 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Wed, 25 Nov 2026 19:15:35 +0000
+Subject: [PATCH 2/2] R4C round 1 (IK8a): no touch cue, composer, cord,
+ counters or pips under the render page; sweep word list adds touch, brush,
+ rub, light the, shake, tilt, type, say, speak
+
+Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01VNvA3zNK8bJENArUhDXHfa
+---
+ components/engine/controls.tsx                            | 2 ++
+ components/styles/film/midnight/Scene.tsx                 | 3 ++-
+ components/styles/film/midnight/endings/confetti.tsx      | 4 ++--
+ components/styles/stage/constellation/Opening.tsx         | 4 ++--
+ components/styles/stage/constellation/Scene.tsx           | 3 +++
+ components/styles/stage/constellation/endings/candle.tsx  | 4 ++--
+ .../styles/stage/constellation/endings/envelope.tsx       | 4 ++--
+ components/styles/stage/lullaby/Scene.tsx                 | 8 +++++---
+ components/styles/stage/lullaby/endings/candle.tsx        | 4 ++--
+ components/styles/stage/mosaic/Scene.tsx                  | 6 +++---
+ components/styles/stage/polaroid-table/Scene.tsx          | 6 +++---
+ components/styles/stage/tinsel/endings/candle.tsx         | 6 +++---
+ components/styles/stories/group-chat/Scene.tsx            | 6 +++++-
+ components/styles/stories/group-chat/beats.tsx            | 4 +++-
+ components/styles/stories/group-chat/endings/scratch.tsx  | 6 +++---
+ components/styles/stories/pidgin-gist/Scene.tsx           | 3 +++
+ components/styles/stories/status/Scene.tsx                | 6 ++++--
+ components/styles/swipe/mixtape/Scene.tsx                 | 6 +++---
+ scripts/live/flows/r4-words.mjs                           | 2 +-
+ scripts/live/flows/r4.mjs                                 | 8 +++++++-
+ 20 files changed, 60 insertions(+), 35 deletions(-)
+
+diff --git a/components/engine/controls.tsx b/components/engine/controls.tsx
+index 20bc259..61cf3ef 100644
+--- a/components/engine/controls.tsx
++++ b/components/engine/controls.tsx
+@@ -16,4 +16,6 @@ export function Field(props: ComponentProps<"input">) { return useRender() ? nul
+ /* a hint that names an action ("Tap the flame"): not drawn under the flag */
+ /* any other cue that names an action (a "Swipe" caption, "Scroll down"): left out under the flag */
+ export function Hush({ children }: { children: ReactNode }) { return useRender() ? null : <>{children}</>; }
++/* progress bars, pips, counters, a pull cord, a reply bar: what only a person holding the phone needs. Drawn nothing under the flag. Not a cue, so the sweep's word list does not read its strings. */
++export function Pips({ children }: { children: ReactNode }) { return useRender() ? null : <>{children}</>; }
+ export function Hint(props: ComponentProps<"p">) { return useRender() ? null : <p {...props} />; }
+diff --git a/components/styles/film/midnight/Scene.tsx b/components/styles/film/midnight/Scene.tsx
+index a06f782..f477aa1 100644
+--- a/components/styles/film/midnight/Scene.tsx
++++ b/components/styles/film/midnight/Scene.tsx
+@@ -10,6 +10,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
+ import type { StyleProps, Theme } from "@/lib/engine/types";
+ import { NIGHT, bright, lay } from "./night";
+ import type { Palette } from "./night";
++import { Pips } from "@/components/engine/controls";
+ import { edit, partsOf, roman } from "./reel";
+ import type { Shot } from "./reel";
+ import { CueContext, FrameContext, STRIKE, SkyContext, View, focusOf } from "./shots";
+@@ -519,7 +520,7 @@ export default function Scene({ wish, embedded, still, tier, theme, renderEnding
+               <span ref={clock} className="st-midnight-time">
+                 12:00:00
+               </span>
+-              <span className="st-midnight-mark">{held ? "Held" : mark}</span>
++              <Pips><span className="st-midnight-mark">{held ? "Held" : mark}</span></Pips>
+             </p>
+             <div className="st-midnight-bar" aria-hidden="true" data-layer="progress" data-name="Progress line" data-colours="Line:--st-midnight-line, Lit:--st-midnight-accent, Ticks:--st-midnight-ink">
+               <i ref={bar} />
+diff --git a/components/styles/film/midnight/endings/confetti.tsx b/components/styles/film/midnight/endings/confetti.tsx
+index 49d1225..513d232 100644
+--- a/components/styles/film/midnight/endings/confetti.tsx
++++ b/components/styles/film/midnight/endings/confetti.tsx
+@@ -8,7 +8,7 @@
+    Under `edit` (Style Studio's canvas) it rests as it waits for the receiver: the finale over, the last line, the
+    hint and the buttons on show; it takes no touch and sets nothing off. */
+ 
+-import { Press } from "@/components/engine/controls";
++import { Hush, Press } from "@/components/engine/controls";
+ import React, { useEffect, useLayoutEffect, useRef } from "react";
+ import { gsap } from "gsap";
+ import { SplitText } from "gsap/SplitText";
+@@ -241,7 +241,7 @@ export default function Confetti({ line, from, live, still, quiet, light, sky, a
+         <i className="st-midnight-e-rule" aria-hidden="true" data-layer="rule" data-name="Gold rule" data-colours="Rule:--st-midnight-accent" />
+         {from ? <p className="st-midnight-e-from" data-layer="words">{from}</p> : null}
+       </div>
+-      {quiet ? null : <p className="st-midnight-e-hint" data-layer="words">Touch the sky</p>}
++      {quiet ? null : <Hush><p className="st-midnight-e-hint" data-layer="words">Touch the sky</p></Hush>}
+       <p className="st-midnight-e-foot">
+         {quiet ? null : (
+           <Press
+diff --git a/components/styles/stage/constellation/Opening.tsx b/components/styles/stage/constellation/Opening.tsx
+index de93a6a..a443dfa 100644
+--- a/components/styles/stage/constellation/Opening.tsx
++++ b/components/styles/stage/constellation/Opening.tsx
+@@ -7,7 +7,7 @@
+    fly out past the edges of the frame, and the night is left clear for the sky that follows.
+    It stands on its own: it reads nothing from the scene, only its props and its own box. */
+ 
+-import { Press, Field } from "@/components/engine/controls";
++import { Hush, Press, Field } from "@/components/engine/controls";
+ import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+ import { gsap } from "gsap";
+ import type { OpeningProps } from "@/lib/engine/types";
+@@ -397,7 +397,7 @@ export default function Opening({ wish, opening, unlock, error, left, edit }: Op
+             {error}
+           </p>
+         ) : null}
+-        {!locked && !secret ? <p className="st-constellation-open-kick st-constellation-open-wipe st-constellation-open-soft" data-layer="words">Touch the star</p> : null}
++        {!locked && !secret ? <Hush><p className="st-constellation-open-kick st-constellation-open-wipe st-constellation-open-soft" data-layer="words">Touch the star</p></Hush> : null}
+       </div>
+     </div>
+   );
+diff --git a/components/styles/stage/constellation/Scene.tsx b/components/styles/stage/constellation/Scene.tsx
+index c621bff..0a9ce0a 100644
+--- a/components/styles/stage/constellation/Scene.tsx
++++ b/components/styles/stage/constellation/Scene.tsx
+@@ -7,6 +7,7 @@
+    This file is the stage: it measures its own box (never the window), owns the camera and the rig the sky is drawn
+    from, scores each stop on one GSAP timeline, takes tap, hold, drag and tilt, and hands the ending to the host. */
+ 
++import { Pips } from "@/components/engine/controls";
+ import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+ import { gsap } from "gsap";
+ import type { StyleProps, Theme } from "@/lib/engine/types";
+@@ -945,10 +946,12 @@ export default function Scene({ wish, embedded, still, tier, theme, renderEnding
+           </>
+         ) : null}
+       </header>
++      <Pips>
+       <div className="st-constellation-route" aria-hidden="true" data-layer="route" data-name="Route line" data-colours="Line:--st-constellation-accent, Here:--st-constellation-ink, Ground:--st-constellation-ground">
+         <i ref={fill} />
+         {plan.first.map((n, k) => (n >= 0 ? <b key={k} className={k === stop.part ? "st-constellation-here" : k < stop.part ? "st-constellation-past" : ""} style={{ left: ((n / Math.max(1, stops.length - 1)) * 100).toFixed(2) + "%" }} /> : null))}
+       </div>
++      </Pips>
+       {held ? <i className="st-constellation-held" aria-hidden="true" /> : null}
+     </div>
+   );
+diff --git a/components/styles/stage/constellation/endings/candle.tsx b/components/styles/stage/constellation/endings/candle.tsx
+index d7a04fc..046d8c8 100644
+--- a/components/styles/stage/constellation/endings/candle.tsx
++++ b/components/styles/stage/constellation/endings/candle.tsx
+@@ -4,7 +4,7 @@
+    shooting star, and the last line rises where it was. This is Constellation's drawing of the "candle" ending.
+    It stands on its own: it needs only the wish, whether to hold still, and somewhere to report to. */
+ 
+-import { Press } from "@/components/engine/controls";
++import { Hush, Press } from "@/components/engine/controls";
+ import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
+ import { gsap } from "gsap";
+ import type { EndingEvent, WishData } from "@/lib/engine/types";
+@@ -163,7 +163,7 @@ export default function Candle({ wish, still, light, onEnding, onRelease }: Prop
+           </div>
+         ) : null}
+       </div>
+-      {!gone ? <p className="st-constellation-wish-hint" data-layer="words">Touch the star</p> : null}
++      {!gone ? <Hush><p className="st-constellation-wish-hint" data-layer="words">Touch the star</p></Hush> : null}
+       {gone ? (
+         <div className="st-constellation-wish-after">
+           <i className="st-constellation-wish-rule" aria-hidden="true" data-layer="rule" data-name="Gold rule" data-colours="Gold:--st-constellation-wish-gold" />
+diff --git a/components/styles/stage/constellation/endings/envelope.tsx b/components/styles/stage/constellation/endings/envelope.tsx
+index 731f0cf..778244c 100644
+--- a/components/styles/stage/constellation/endings/envelope.tsx
++++ b/components/styles/stage/constellation/endings/envelope.tsx
+@@ -5,7 +5,7 @@
+    follows. This is Constellation's drawing of the "envelope" ending. It stands on its own: it needs only the
+    wish, whether to hold still, and somewhere to report to. */
+ 
+-import { Press } from "@/components/engine/controls";
++import { Hush, Press } from "@/components/engine/controls";
+ import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
+ import { gsap } from "gsap";
+ import type { EndingEvent, WishData } from "@/lib/engine/types";
+@@ -122,7 +122,7 @@ export default function Envelope({ wish, still, light, onEnding }: Props) {
+           <Press type="button" className="st-constellation-veil-moon" onClick={reveal} aria-label="Open the last line" data-layer="moon" data-name="Eclipse disc" data-colours="Light:--st-constellation-ground2, Night:--st-constellation-veil-night" />
+         ) : null}
+       </div>
+-      {!open ? <p className="st-constellation-veil-hint" data-layer="words">Touch to open</p> : null}
++      {!open ? <Hush><p className="st-constellation-veil-hint" data-layer="words">Touch to open</p></Hush> : null}
+       {open ? (
+         <div className="st-constellation-veil-after">
+           <i className="st-constellation-veil-rule" aria-hidden="true" data-layer="rule" data-name="Gold rule" data-colours="Gold:--st-constellation-veil-gold" />
+diff --git a/components/styles/stage/lullaby/Scene.tsx b/components/styles/stage/lullaby/Scene.tsx
+index c20763d..600eadf 100644
+--- a/components/styles/stage/lullaby/Scene.tsx
++++ b/components/styles/stage/lullaby/Scene.tsx
+@@ -7,7 +7,7 @@
+    each stop on one GSAP timeline (where the camera goes, which print comes round, how the words are let down),
+    takes tap, hold and drag, and gives the ending to the host or to the style's own lamp cord. */
+ 
+-import { Press } from "@/components/engine/controls";
++import { Press, Pips } from "@/components/engine/controls";
+ import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+ import { gsap } from "gsap";
+ import type { StyleProps, Theme } from "@/lib/engine/types";
+@@ -872,16 +872,18 @@ export default function Scene({ wish, embedded, still, tier, theme, renderEnding
+             {stop.act > 0 ? <b>{roman(stop.act)}</b> : null}
+             <span>{stop.act > 0 ? stop.title : "Every photo"}</span>
+             {stop.k === "turn" ? (
+-              <i className="st-lullaby-count" key={now.run + "-" + i}><em ref={countEl}>1</em> / {stop.photos.length}</i>
++              <Pips><i className="st-lullaby-count" key={now.run + "-" + i}><em ref={countEl}>1</em> / {stop.photos.length}</i></Pips>
+             ) : stop.of > 1 ? (
+-              <i className="st-lullaby-count"><em key={stop.n} className="st-lullaby-roll">{stop.n}</em> / {stop.of}</i>
++              <Pips><i className="st-lullaby-count"><em key={stop.n} className="st-lullaby-roll">{stop.n}</em> / {stop.of}</i></Pips>
+             ) : null}
+           </>
+         ) : null}
+       </header>
++      <Pips>
+       <div className="st-lullaby-beads" aria-hidden="true" data-layer="beads" data-name="Route beads" data-colours="Bead:--st-lullaby-ink, Here:--st-lullaby-accent, Night bead:--st-lullaby-bead-night, Night here:--st-lullaby-bead-night-here">
+         {first.map((n, k) => (n >= 0 ? <b key={k} className={k === stop.part ? "st-lullaby-here" : k < stop.part ? "st-lullaby-past" : ""} /> : null))}
+       </div>
++      </Pips>
+       {held ? <i className="st-lullaby-held" aria-hidden="true" /> : null}
+       {veil ? <Veil wish={wish} play={open} onDone={unveil} /> : null}
+     </div>
+diff --git a/components/styles/stage/lullaby/endings/candle.tsx b/components/styles/stage/lullaby/endings/candle.tsx
+index fcb0e75..54561e1 100644
+--- a/components/styles/stage/lullaby/endings/candle.tsx
++++ b/components/styles/stage/lullaby/endings/candle.tsx
+@@ -5,7 +5,7 @@
+    let down. Self-contained: it needs only the wish, `still`, `onEnding`, and two optional hooks. With `onLight`
+    the stage's own room goes dark; without it this component draws its own dusk. */
+ 
+-import { Hush, Press } from "@/components/engine/controls";
++import { Hush, Press, Pips } from "@/components/engine/controls";
+ import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
+ import { gsap } from "gsap";
+ import type { EndingEvent, WishData } from "@/lib/engine/types";
+@@ -157,7 +157,7 @@ export default function Candle({ wish, still, onEnding, onLight, again, edit }:
+     <div ref={root} className={cls} data-ending="candle">
+       {onLight ? null : <i className="st-lullaby-candle-dusk" aria-hidden="true" data-layer="dusk" data-name="Dusk" data-colours="Dusk:--st-lullaby-candle-dusk, Deep:--st-lullaby-candle-dusk-deep" />}
+       <div ref={cord} className="st-lullaby-candle-cord" data-layer="cord" data-name="Lamp cord">
+-        <i className="st-lullaby-candle-thread" aria-hidden="true" />
++        <Pips><i className="st-lullaby-candle-thread" aria-hidden="true" /></Pips>
+         <Press ref={pull} type="button" className="st-lullaby-candle-pull" aria-label="Turn down the light" disabled={down} onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp} onClick={onClick}>
+           <i aria-hidden="true" />
+         </Press>
+diff --git a/components/styles/stage/mosaic/Scene.tsx b/components/styles/stage/mosaic/Scene.tsx
+index f58b09b..eb25891 100644
+--- a/components/styles/stage/mosaic/Scene.tsx
++++ b/components/styles/stage/mosaic/Scene.tsx
+@@ -5,7 +5,7 @@
+    it measures its own box, lays the wish out as stops, sends the stage's camera from tile to tile, and
+    turns a tablet over at each stop with that stop's words. */
+ 
+-import { Hush, Press } from "@/components/engine/controls";
++import { Hush, Press, Pips } from "@/components/engine/controls";
+ import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+ import gsap from "gsap";
+ import type { StyleProps, Theme } from "@/lib/engine/types";
+@@ -743,9 +743,9 @@ function Film({ wish, embedded, tier, theme, renderEnding, onEnding, opened, at:
+         {isEnd ? (
+           <span />
+         ) : (
+-          <span className="st-mosaic-count" aria-hidden="true" data-layer="words">
++          <Pips><span className="st-mosaic-count" aria-hidden="true" data-layer="words">
+             {two(at + 1) + " / " + two(n)}
+-          </span>
++          </span></Pips>
+         )}
+         {at < n - 1 ? (
+           <Press type="button" className="st-mosaic-nav st-mosaic-next" onClick={next} data-layer="button" data-name="Next button" data-colours="Key:--st-mosaic-key, Arrow:--st-mosaic-accent">
+diff --git a/components/styles/stage/polaroid-table/Scene.tsx b/components/styles/stage/polaroid-table/Scene.tsx
+index 84fd692..c6f7f52 100644
+--- a/components/styles/stage/polaroid-table/Scene.tsx
++++ b/components/styles/stage/polaroid-table/Scene.tsx
+@@ -5,7 +5,7 @@
+    its own box, lays the plan out as stations on one table, hands the prints to the stage, and listens for
+    what the table reports (words uncovered, a station found, the camera arriving). */
+ 
+-import { Press, Anchor } from "@/components/engine/controls";
++import { Press, Anchor, Pips } from "@/components/engine/controls";
+ import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+ import gsap from "gsap";
+ import type { Chapter, StyleProps, Theme } from "@/lib/engine/types";
+@@ -453,9 +453,9 @@ function Film({ wish, embedded, tier, theme, renderEnding, onEnding, opened, at:
+             <path d="M19 12H5M11 6l-6 6 6 6" />
+           </svg>
+         </Press>
+-        <span className="st-polaroid-table-count" aria-hidden="true" data-layer="words" data-name="Stop counter">
++        <Pips><span className="st-polaroid-table-count" aria-hidden="true" data-layer="words" data-name="Stop counter">
+           {plan ? two(at + 1) + " / " + two(n) : ""}
+-        </span>
++        </span></Pips>
+         {at < n - 1 ? (
+           <Press type="button" className={"st-polaroid-table-next" + (clear ? " st-polaroid-table-go" : "")} onClick={next} data-layer="button" data-name="Next" data-colours="Plate:--st-polaroid-table-plate, Edge:--st-polaroid-table-plate-edge, Label:--st-polaroid-table-plate-ink">
+             <span className="st-polaroid-table-lab" key={clear ? "n" : "m"}>
+diff --git a/components/styles/stage/tinsel/endings/candle.tsx b/components/styles/stage/tinsel/endings/candle.tsx
+index c273698..27b4dac 100644
+--- a/components/styles/stage/tinsel/endings/candle.tsx
++++ b/components/styles/stage/tinsel/endings/candle.tsx
+@@ -6,7 +6,7 @@
+    It stands alone: it draws its own star and needs only these props. A stage that has a star of its own can say
+    where it is (track) and hear the light come on (onLight). */
+ 
+-import { Press } from "@/components/engine/controls";
++import { Hush, Press } from "@/components/engine/controls";
+ import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+ import { gsap } from "gsap";
+ import type { EndingEvent } from "@/lib/engine/types";
+@@ -234,9 +234,9 @@ export default function Candle({ line, from, quiet, still, light, wait, onEnding
+       </Press>
+       <div ref={words} className="st-tinsel-candle-words">
+         {!lit ? (
+-          <p className="st-tinsel-candle-ask" data-layer="words">
++          <Hush><p className="st-tinsel-candle-ask" data-layer="words">
+             <span>{still ? "Light the star" : "Touch the star"}</span>
+-          </p>
++          </p></Hush>
+         ) : null}
+         {lit && said ? (
+           <p className="st-tinsel-candle-line" aria-live="polite" data-layer="title">
+diff --git a/components/styles/stories/group-chat/Scene.tsx b/components/styles/stories/group-chat/Scene.tsx
+index d214e21..feb13ec 100644
+--- a/components/styles/stories/group-chat/Scene.tsx
++++ b/components/styles/stories/group-chat/Scene.tsx
+@@ -6,7 +6,7 @@
+    This file is the thread: it measures its own box (never the window), keeps the beat, the taps and the hold,
+    runs the one canvas under everything (stage.ts), and tells the host about the ending. */
+ 
+-import { Hush } from "@/components/engine/controls";
++import { Hush, Pips } from "@/components/engine/controls";
+ import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+ import { gsap } from "gsap";
+ import type { StyleProps, Theme } from "@/lib/engine/types";
+@@ -580,6 +580,7 @@ export default function Scene({ wish, embedded, still, tier, theme, renderEnding
+         </BeatView>
+ 
+         <header className={P + "top"}>
++          <Pips>
+           <div className={P + "prog"} aria-hidden="true">
+             {parts.map((_, k) => (
+               <i key={k} style={{ flexGrow: Math.max(1, plan.n[k]) }}>
+@@ -592,6 +593,7 @@ export default function Scene({ wish, embedded, still, tier, theme, renderEnding
+               </i>
+             ))}
+           </div>
++          </Pips>
+           <div className={P + "bar"}>
+             <span ref={pin} className={P + "pin"} style={now.k === "ending" ? { display: "none" } : undefined}>
+               <svg viewBox="0 0 16 16" aria-hidden="true">
+@@ -611,6 +613,7 @@ export default function Scene({ wish, embedded, still, tier, theme, renderEnding
+         </header>
+ 
+         {now.k !== "ending" ? (
++          <Pips>
+           <div className={P + "composer"} aria-hidden="true">
+             <span className={P + "field"}>
+               <Hush><span className={P + "held-off"}>Tap to go on. Hold to pause.</span></Hush>
+@@ -622,6 +625,7 @@ export default function Scene({ wish, embedded, still, tier, theme, renderEnding
+               </svg>
+             </span>
+           </div>
++          </Pips>
+         ) : null}
+       </div>
+     </div>
+diff --git a/components/styles/stories/group-chat/beats.tsx b/components/styles/stories/group-chat/beats.tsx
+index a0ce5c4..43b162e 100644
+--- a/components/styles/stories/group-chat/beats.tsx
++++ b/components/styles/stories/group-chat/beats.tsx
+@@ -5,7 +5,7 @@
+    stand up one after another) and how it is put away (the bubble closes back to its pill, the speaker's disc
+    flies up to join the others). The photo's blocks are drawn by the stage; the sharp picture is the page's. */
+ 
+-import { Anchor } from "@/components/engine/controls";
++import { Anchor, Pips } from "@/components/engine/controls";
+ import React, { useLayoutEffect, useRef } from "react";
+ import { gsap } from "gsap";
+ import type { WishData } from "@/lib/engine/types";
+@@ -657,11 +657,13 @@ export function BeatView({ b, id, wish, phase, ver, u, light, delay, keep, cross
+         </i>
+         <div className={P + "flow"}>
+           <div className={P + "pin-body " + P + "fit"}>
++            <Pips>
+             <span className={P + "kick " + P + "rise"} data-layer="eyebrow">
+               <i>
+                 {b.n} / {b.of}
+               </i>
+             </span>
++            </Pips>
+             <h2 className={P + "title"} data-layer="title">
+               <Words text={b.title} />
+             </h2>
+diff --git a/components/styles/stories/group-chat/endings/scratch.tsx b/components/styles/stories/group-chat/endings/scratch.tsx
+index 517730e..6e8022d 100644
+--- a/components/styles/stories/group-chat/endings/scratch.tsx
++++ b/components/styles/stories/group-chat/endings/scratch.tsx
+@@ -4,7 +4,7 @@
+    specks that never sits still. A finger dragged across it wipes the specks away, and dust flies the way the
+    finger went. When enough is clear the rest lets go from under the finger. A button does the same. */
+ 
+-import { Press } from "@/components/engine/controls";
++import { Hush, Press } from "@/components/engine/controls";
+ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+ import { gsap } from "gsap";
+ import type { EndingProps } from "./kit";
+@@ -261,9 +261,9 @@ export default function Scratch({ wish, still, light, play, onEnding, again }: E
+         ) : (
+           <>
+             {!still ? (
+-              <span className={E + "tip " + E + "rise"} data-layer="words" aria-hidden="true">
++              <Hush><span className={E + "tip " + E + "rise"} data-layer="words" aria-hidden="true">
+                 <i>Rub it with a finger</i>
+-              </span>
++              </span></Hush>
+             ) : null}
+             <Press type="button" className={E + "open " + E + "rise"} data-layer="button" data-name="Open button" data-colours="Words:--st-group-chat-e-cream" onClick={() => finish()}>
+               <i>Show it</i>
+diff --git a/components/styles/stories/pidgin-gist/Scene.tsx b/components/styles/stories/pidgin-gist/Scene.tsx
+index 36e9408..172f7c2 100644
+--- a/components/styles/stories/pidgin-gist/Scene.tsx
++++ b/components/styles/stories/pidgin-gist/Scene.tsx
+@@ -6,6 +6,7 @@
+    stage, plays one card at a time on that card's GSAP timeline, floods the next ground in from under the
+    finger, takes tap and hold, and draws its own endings. */
+ 
++import { Pips } from "@/components/engine/controls";
+ import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+ import { gsap } from "gsap";
+ import type { StyleProps } from "@/lib/engine/types";
+@@ -668,6 +669,7 @@ export default function Scene({ wish, embedded, still, tier, theme, renderEnding
+           <>
+             {prev && prev.run !== at.run ? layerOf(prev, true) : null}
+             {layerOf(at, false)}
++            <Pips>
+             <div className={cx("bar")} aria-hidden="true" data-layer="bars" data-name="Progress bar" data-colours="Bar:--st-pidgin-gist-chrome">
+               {parts.map((_, p) => (
+                 <span key={p}>
+@@ -679,6 +681,7 @@ export default function Scene({ wish, embedded, still, tier, theme, renderEnding
+                 </span>
+               ))}
+             </div>
++            </Pips>
+             {held ? <i className={cx("held")} aria-hidden="true" /> : null}
+           </>
+         )}
+diff --git a/components/styles/stories/status/Scene.tsx b/components/styles/stories/status/Scene.tsx
+index 2f5d840..a333375 100644
+--- a/components/styles/stories/status/Scene.tsx
++++ b/components/styles/stories/status/Scene.tsx
+@@ -11,7 +11,7 @@
+    - `still` keeps every screen as it is and never moves on by itself: the receiver taps through.
+    - On a wide screen the story stands in a portrait card in the middle, with arrows beside it. */
+ 
+-import { Press, Anchor, Hint } from "@/components/engine/controls";
++import { Press, Anchor, Hint, Pips } from "@/components/engine/controls";
+ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+ import type { Photo, StyleProps, Theme, WishAction, WishData } from "@/lib/engine/types";
+ import { buildScreens, type Screen } from "./screens";
+@@ -308,14 +308,16 @@ export default function StatusScene({ wish, embedded, still, tier, theme, render
+         </div>
+ 
+         <header className="st-status-top">
++          <Pips>
+           <div className="st-status-bars" data-layer="bars" data-name="Progress bars" data-colours="Bar:--st-status-ink">
+             {groups.map((x, k) => (
+               <span key={x.id}><i ref={k === g ? (el) => { fill.current = el; } : undefined} style={{ transform: `scaleX(${k < g ? 1 : k > g ? 0 : (i - x.from) / x.count})` }}></i></span>
+             ))}
+           </div>
++          </Pips>
+           <div className="st-status-who-top">
+             {face && <span className="st-status-face"><Img p={face} /></span>}
+-            <p><b>{wish.from}</b>{label && <span>{label}</span>}{grp && grp.count > 1 && <span className="st-status-count">{i - grp.from + 1} / {grp.count}</span>}</p>
++            <p><b>{wish.from}</b>{label && <span>{label}</span>}{grp && grp.count > 1 && <Pips><span className="st-status-count">{i - grp.from + 1} / {grp.count}</span></Pips>}</p>
+             {!still && s.look !== "end" && (
+               <Press type="button" className="st-status-pause" {...keep} onClick={() => setPaused((p) => !p)} aria-label={paused ? "Play" : "Pause"}>
+                 {paused ? <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5v15l12-7.5z" className="fill" /></svg> : <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14M16 5v14" /></svg>}
+diff --git a/components/styles/swipe/mixtape/Scene.tsx b/components/styles/swipe/mixtape/Scene.tsx
+index 5dd191c..4cfa7fa 100644
+--- a/components/styles/swipe/mixtape/Scene.tsx
++++ b/components/styles/swipe/mixtape/Scene.tsx
+@@ -6,7 +6,7 @@
+    This file is the deck: it measures its own box (never the window), follows the finger, snaps to a screen,
+    moves the record, runs the one canvas under everything (stage.ts), and tells the host about the ending. */
+ 
+-import { Press } from "@/components/engine/controls";
++import { Press, Pips } from "@/components/engine/controls";
+ import React, { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
+ import { gsap } from "gsap";
+ import type { StyleProps, Theme } from "@/lib/engine/types";
+@@ -591,7 +591,7 @@ export default function Scene({ wish, embedded, still, tier, theme, renderEnding
+         <Panel key={n} t={tracks[n]} i={n} wish={wish} active={open && n === at} ver={ver} sound={sound} sides={sides} register={register} renderEnding={renderEnding} onEnding={onEnding} light={light} again={() => go(0)} replay={again.i === n ? again.n : 0} edit={holdAsk} />
+       ))}
+ 
+-      <nav className="st-mixtape-hud" aria-label="Tracks" data-layer="transport" data-name="Transport" data-colours="Progress:--st-mixtape-flame">
++      <Pips><nav className="st-mixtape-hud" aria-label="Tracks" data-layer="transport" data-name="Transport" data-colours="Progress:--st-mixtape-flame">
+         <Press type="button" className="st-mixtape-skip" aria-label="Back" disabled={!open || holdAsk || at === 0} onClick={() => go(at - 1, "power2.inOut")}>
+           <svg viewBox="0 0 24 24" aria-hidden="true">
+             <path d="M19 5v14l-9-7zM7 5v14" />
+@@ -622,7 +622,7 @@ export default function Scene({ wish, embedded, still, tier, theme, renderEnding
+             <path d="M5 5v14l9-7zM17 5v14" />
+           </svg>
+         </Press>
+-      </nav>
++      </nav></Pips>
+     </div>
+   );
+ }
+diff --git a/scripts/live/flows/r4-words.mjs b/scripts/live/flows/r4-words.mjs
+index 7a78d62..2439292 100644
+--- a/scripts/live/flows/r4-words.mjs
++++ b/scripts/live/flows/r4-words.mjs
+@@ -9,7 +9,7 @@
+ import fs from "node:fs";
+ import path from "node:path";
+ 
+-export const SEED = ["tap", "swipe", "scroll", "press", "hold", "drag", "click", "blow", "open it", "scratch", "unwrap", "pull", "slide", "watch again", "read again", "play again", "replay", "walk it again", "see it again", "throw", "spin", "roll again", "make one", "turn your phone", "paused", "pause", "microphone", "send your", "cut the", "fasten", "break the", "download", "book again", "skip", "mute", "volume"];
++export const SEED = ["touch", "brush", "rub", "light the", "shake", "tilt", "type", "say", "speak", "tap", "swipe", "scroll", "press", "hold", "drag", "click", "blow", "open it", "scratch", "unwrap", "pull", "slide", "watch again", "read again", "play again", "replay", "walk it again", "see it again", "throw", "spin", "roll again", "make one", "turn your phone", "paused", "pause", "microphone", "send your", "cut the", "fasten", "break the", "download", "book again", "skip", "mute", "volume"];
+ const FIRST_WORD_SKIP = new Set(["for", "send", "it", "wish", "found", "not", "you", "your", "yours", "the", "a", "an", "one", "no", "all", "this", "that", "is", "and", "to", "of", "in", "on", "with", "from", "now", "hint", "line", "more", "cap", "here", "there", "nothing", "done", "ready", "made", "love", "happy"]);
+ 
+ function* walk(dir) {
+diff --git a/scripts/live/flows/r4.mjs b/scripts/live/flows/r4.mjs
+index dfea156..d1b1d32 100644
+--- a/scripts/live/flows/r4.mjs
++++ b/scripts/live/flows/r4.mjs
+@@ -280,6 +280,10 @@ export async function runR4({ APP, ok }) {
+     /* a case is cut by STEPPED time (150 s, longer than any wish plays: IK6a gives 60 s) or, only for a page too slow to get there, by real time (R4_CASE_MS, 7 min).
+        The step is 200 ms (R4_STEP_MS), looked at every 5 steps (1 s stepped): the WebGL styles cost a second or more a 33 ms frame on this machine and would be cut by real time long before their ending. */
+     const STEP = Number(process.env.R4_STEP_MS || 200);
++    /* R4_SHOTS=<dir>: five pictures a case (opening, two middle moments, the ending's start, the last frame), 1080 x 1920 */
++    const SHOTS = process.env.R4_SHOTS || ""; const cdp = SHOTS ? await ctx.newCDPSession(page) : null; const taken = new Set();
++    const snap = async (n) => { if (!cdp || taken.has(n)) return; taken.add(n); fs.mkdirSync(SHOTS, { recursive: true }); const { data } = await cdp.send("Page.captureScreenshot", { format: "jpeg", quality: 80 }); fs.writeFileSync(path.join(SHOTS, `${label.replace(/[^\w-]+/g, "_")}-${n}.jpg`), Buffer.from(data, "base64")); };
++    await snap("1-opening");
+     while (!done && steps * STEP < 150000 && Date.now() - t1 < Number(process.env.R4_CASE_MS || 420000)) {
+       await page.evaluate(async (ms) => { for (let i = 0; i < 5; i++) await window.__vt.step(ms); }, STEP);
+       steps += 5;
+@@ -287,6 +291,7 @@ export async function runR4({ APP, ok }) {
+       focusMax = Math.max(focusMax, r.focus); rolesMax = Math.max(rolesMax, r.roles); lastScene = r.scene;
+       for (const x of r.out) found.add(x); for (const x of r.words) { found.add(`word:${x}`); words.add(x); }
+       if (r.err) throw new Error(`${label}: ${r.err}`);
++      if (steps * STEP >= 4000) await snap("2-middle"); if (steps * STEP >= 8000) await snap("3-middle"); if (/end/i.test(r.scene)) await snap("4-ending"); if (done) await snap("5-last");
+     }
+     if (!done) found.add(`state:${steps}steps,${Math.round((Date.now() - t1) / 1000)}s real ${JSON.stringify(await page.evaluate(() => ({ n: window.__render.sceneName, s: window.__render.scenes, host: document.querySelector('.fe-host')?.className, ending: document.querySelector('[data-part=ending]')?.className })).catch(() => null))}`);
+     await ctx.close();
+@@ -314,7 +319,8 @@ export async function runR4({ APP, ok }) {
+     let bad = 0;
+     /* R4_PART="from:to" runs a slice of the cases (a sweep is split into parts); R4_PART_ONLY="slug,slug" runs those styles or scenes */
+     const part = (process.env.R4_PART || "").split(":").map(Number), only = (process.env.R4_PART_ONLY || "").split(",").filter(Boolean);
+-    const run = cases.filter((c, i) => (!process.env.R4_PART || (i >= part[0] && i < part[1])) && (!only.length || only.includes(c.slug) || only.includes(c.scene)));
++    const exact = (process.env.R4_CASES || "").split(",").filter(Boolean); /* R4_CASES="slug/ending,..." runs exactly those cases */
++    const run = cases.filter((c, i) => (!process.env.R4_PART || (i >= part[0] && i < part[1])) && (!only.length || only.includes(c.slug) || only.includes(c.scene)) && (!exact.length || exact.includes(`${c.slug}/${c.ending}`)));
+     const line = (x) => { console.log(x); if (MEASURE) fs.appendFileSync(MEASURE, `${x}\n`); };
+     line(`SWEEP ${styles.length} house styles read, ${cases.length} cases in all (${every ? "every ending" : "the first ending"} of each style, and ${scenes.length} ending scenes on letter); this run: ${run.length}; action words: ${WORDS.counts.seed} seed + ${WORDS.counts.fromHints} read from ${WORDS.counts.hints} hint strings (${WORDS.fromHints.join(",")}) + ${WORDS.counts.phrases} whole phrases`);
+     line("CASE style | ending | done | scene stopped on | focusable | role button or link | action words | verdict");
+-- 
+2.43.0
+

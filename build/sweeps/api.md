@@ -165,3 +165,4 @@
 - (R6 LOW-3) render read: isKnown() reads the database before the address limit, so wrong tokens are limited at 60 a minute, not 30.
 - (R6 re-check LOW) tests/r6-worker.spec.ts:142 `removed >= 1` is loose: assert exactly 1, the old .mp4 gone, the live folder kept.
 - (R6 re-check LOW) a SIGTERM'd render worker leaves its row rendering until the lease runs out (no graceful release on shutdown).
+- (IK6k) r5-chromium-renderer.spec.ts M3 fails under load (16 of ~90 frames differ at load 8 to 10): for the recorder follow-up after W19.

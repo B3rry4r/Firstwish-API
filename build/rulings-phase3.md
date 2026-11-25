@@ -1374,3 +1374,7 @@ HG1 (give race) Two staff giving one Concierge order: the code is right (overlap
   a restarted worker frees its own rows at once only when RENDER_WORKER_ID is set (one value per machine, in the env manifest) and matches; a
   hostname is never taken as proof of who held a row. (3) The leftovers sweep never stops the children of, or removes the folder of, an owner that
   is still alive, however old. RENDER_RETRY_MS (unused) and the wrong-token read order go on the sweep list.
+- IK6k (25 Nov, the lead, second chat, on merge check m53; Default (lead), owner may override): R6 merges although the full suite had one red:
+  r5-chromium-renderer.spec.ts:495 (M3, a stand-in page rendered twice with one epochMs: 16 frames differed) at load 7.6 to 9.7; the same spec alone
+  passed 37 of 37 twice (load 5 and 3), and it passed in m51 and m52. A recording whose frames depend on the machine's load is a repeatability fault:
+  it goes to the recorder follow-up of IK6h (after W19), which must make M3 hold under load (two stacks running), not only on a quiet machine.

@@ -120,3 +120,9 @@ Running: VERIFY2-R4C (verifier); m53.
 Did: m53 (r6 a70dea1 on the head): static checks EXIT 0; full suite 1 failed, 1,781 passed: r5-chromium-renderer.spec.ts:495 M3 (stand-in page,
 same epochMs twice: 16 frames differ). It passed in m51 and m52; load was 7.6 to 9.7 (VERIFY2-R4C browsers running). Rerunning that spec alone
 twice before believing it. r6 NOT merged yet.
+
+### 2026-11-25 · second chat · ccr-91b3ed11-fx445c
+Did: the R5 M3 spec alone: 37 of 37 twice (load 5, 3). Ruling IK6k: MERGED R6 (m53: static checks EXIT 0; suite 1,781 of 1,782, the one red
+load-sensitive, to the recorder follow-up). The video maker is now wired; still unsold until R9 (IK3). r6 patch removed.
+Running: VERIFY2-R4C (verifier).
+Next: R4C verdict, then merge or re-cut; W19 after r4c; WEB-10D after r4c; R7 re-scope, R8 notes.

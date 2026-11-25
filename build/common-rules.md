@@ -28,7 +28,7 @@
   360 x 740, then 390 x 844, then 1440 x 900; `documentElement.scrollWidth <= innerWidth`; zero console errors; light and dark.
 ## Committing and hand-back
 - Commit as Claude <noreply@anthropic.com> on the local branch your brief names, in your own worktree. Trailers on every commit:
-  Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+  Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>   (agents; the lead uses its own model line)
   Claude-Session: https://claude.ai/code/session_01VNvA3zNK8bJENArUhDXHfa
 - Do NOT push: this session may push only one branch, and the lead does it after merging yours. Commit at each milestone, hand back
   with the head sha. Stop every process you started, by PID.

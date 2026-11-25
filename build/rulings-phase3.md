@@ -1353,3 +1353,9 @@ HG1 (give race) Two staff giving one Concierge order: the code is right (overlap
   makes sense to a person holding the phone is drawn: cue words in any wording ("Touch the star"), send arrows and
   reply bars, pull cords, page counters and progress pips ("04 / 04"), and no empty shape is left where one was.
   The sweep's word list cannot see pictures: its check always includes a person-like look at real frames.
+- IK6i (25 Nov, the lead, second chat, on the merge check of r5: test V7 in test/identity/int1-rulings.spec.ts failed; Default (lead), owner may
+  override): server time comes only from the Clock port, so the recorder's default start time (chromium-video-renderer.ts:517) is read from the
+  Clock port, never Date.now(). The script text the recorder sends INTO the browser (the clock self-check, :649-650) is the page's own time, which
+  the stepped clock is there to control; V7 does not govern it. It is written so it does not spell the server call (for example `Date.now` held in
+  a page-side name), with a comment saying it runs in the page. V7 itself is not edited. Executed by patch P3-R5 (no verifier: 30 lines or fewer,
+  the lead reads the diff, the merge check runs the whole suite again).

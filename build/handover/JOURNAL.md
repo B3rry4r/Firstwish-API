@@ -92,3 +92,8 @@ Did: P-R6 handed back: r6 7f42893 (8 files +195/-18): childEnv() allow-list for 
 with RENDER_WORKER_ID; sweep keeps a live owner's folder; new spec r6-ik6j; two assertions of r6-worker.spec.ts changed to IK6j. render-jobs + env
 136 tests. Its /proc check was on a sleep child, not a live Chromium. Over 30 lines: started VERIFY2-R6 (re-check of the named ids, Sonnet).
 Running: P2-R4C (builder); VERIFY2-R6 (verifier).
+
+### 2026-11-25 · second chat · ccr-91b3ed11-fx445c
+Did: VERIFY2-R6: MERGE (MED-1 held on a real render: 1,075 Chromium and 114 ffmpeg environ samples, no secret; MED-2 live with RENDER_WORKER_ID;
+LOW-1 held; the two edited assertions follow IK6j, one is loose: sweep row). Merge check m52 started (p-merge52 = r6 7f42893 on the head).
+Running: P2-R4C (builder); m52.

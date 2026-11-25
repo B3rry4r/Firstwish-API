@@ -5,8 +5,8 @@ themselves; no single command over 8 minutes; no `rm -rf` inside a loop; quiet l
 Read /home/user/Firstwish-API/build/prompts/P6-COMMON.md; rulings IM1, IM1a, IM2, IM3 (the END of /home/user/Firstwish-API/build/rulings-phase3.md) and R10 in /home/user/Firstwish-API/build/rulings.md
 (nothing stored in the browser); lib/contracts/firstwish-contracts.d.ts (PictureSize; `variants` on Wish.pictures, PublicWishView.files and the render
 read; the upload's refusal words); lib/files.ts, lib/engine/adapt.ts, components/render/**, components/app/maker/Photos.tsx, components/gather/Friend.tsx.
-Work: a new local branch `web-10d` of /home/user/Firstwish-web from claude/sleepy-mayer-f0hkb8 (the head in your spawn line) in a new worktree
-/tmp/claude-0/-home-user/533566a9-6497-503f-863f-065ac253d739/scratchpad/build/wt/web-10d (`npm ci`); the API at the commit in your spawn line in a detached worktree
+Work: a new local branch `web-10d` of /home/user/Firstwish-web from ccr-91b3ed11-fx445c (the head in your spawn line) in a new worktree
+/tmp/claude-0/-home-user/eafa830a-41bc-56b4-853f-17665575469b/scratchpad/build/wt/web-10d (`npm ci`); the API at the commit in your spawn line in a detached worktree
 .../build/wt/web-10d-api (`npm ci`, `npx prisma generate`); stack by scripts/live/stack.mjs (name web10d, ports 5300-5319, TEST_DB_PREFIX=web10d).
 The server now (round 23): every photo it hands out is a clean copy; each photo's view carries `variants` (w320, w768, w1600, each a signed url and
 `sized`: false means the size is not made yet and the url is the clean full-size copy); HEIC and HEIF are refused at the upload's start and at

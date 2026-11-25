@@ -20,8 +20,8 @@ Wiring means: the screen reads and writes only through lib/api.ts; every state i
 with the server's own words, signed out, not allowed); a write shows its result from the server's answer, never from a
 guess; a 409/422/402/403/429 each shows what the server said; double taps send one request (Idempotency-Key on writes that
 take one); every fixture import, sample array and memory-only stand-in for these screens is REMOVED in the same commit.
-Work: the WEB repo /home/user/Firstwish-web, your branch from claude/sleepy-mayer-f0hkb8 in your own worktree (`npm ci`); never commit on
-claude/sleepy-mayer-f0hkb8; the API through `node scripts/live/stack.mjs` (API_DIR = your own detached API worktree with `npm ci`; live checks
+Work: the WEB repo /home/user/Firstwish-web, your branch from ccr-91b3ed11-fx445c in your own worktree (`npm ci`); never commit on
+ccr-91b3ed11-fx445c; the API through `node scripts/live/stack.mjs` (API_DIR = your own detached API worktree with `npm ci`; live checks
 run on a BUILT web, origin 127.0.0.1:PORT). Do NOT edit scripts/gates/, its baseline.json, or the API repo: an API gap is
 a HALT line in the hand-back (the endpoint, what the screen needs, what it gives).
 Measure in a real browser on the built web against the stack, numbers not adjectives, to your measure file: each screen at

@@ -83,14 +83,16 @@ export class ProviderStatus {
    * the programs and the web address were checked at boot and the web is asked for its clock script); `deep` starts the browser (the renderer limits it to once in ten minutes).
    */
   private async videoState(deep: boolean): Promise<ProviderState> {
-    const d = this.video.describe();
+    // any VideoRenderer port: an older shape has no describe(), so read configured() (real = configured, nothing missing)
+    const v = this.video as Partial<VideoRenderer> & Pick<VideoRenderer, "ping">;
+    const d = typeof v.describe === "function" ? v.describe() : { real: typeof v.configured === "function" && v.configured(), missing: [] as string[] };
     let connected = false;
     let head: string;
     if (!d.real) {
       head = `The video maker is off. ${d.missing.length ? `Missing: ${d.missing.join("; ")}.` : ""} The portrait video stays unsold.`.replace("  ", " ");
       if (this.env.PROVIDERS !== "live" && !d.missing.length) head = "Running on stand-ins, so nothing real has been called.";
     } else {
-      const a = deep ? await this.video.deepCheck().catch((e: unknown) => pingError(e)) : await this.ping("video");
+      const a = deep ? await (typeof v.deepCheck === "function" ? v.deepCheck() : this.ping("video")).catch((e: unknown) => pingError(e)) : await this.ping("video");
       if (a.state === "error") head = `The video maker is not working: ${a.error}`;
       else {
         connected = this.env.PROVIDERS === "live";

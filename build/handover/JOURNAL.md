@@ -63,3 +63,11 @@ Did: MERGED R5 (the real recorder, not wired). m51: npm, prisma, seed, tsc, lint
 Started R6 (T2 builder, Sonnet; branch r6 from the server head below; web 2f45b9d).
 Running: P-R4C (builder); R6 (builder).
 Next: P-R4C hand-back, then a re-check that looks at frames; R6 hand-back, then its T2 verifier.
+
+### 2026-11-25 · second chat · ccr-91b3ed11-fx445c
+Did: P-R4C handed back: r4c 8b445d7 (merged the head in; 26 files vs 847b3fd). Closed: H1 touch cues, H2 composer, M4 cord, L6 pips (new `Pips`
+wrapper), M5 shown absent; word list extended (found 3 more cues, fixed). NOT fixed: M3 empty plate in group-chat envelope ending; boarding-pass
+"1 OF 3" counter; fireworks title "Light the sky, X.". Sweep: first ending of 43 styles + 10 scenes 52 of 53 clean; other endings of 32 unedited
+styles NOT run with the new list. Receivers: 13 compared, identical. Checks green. Pictures: scratch pr4c-out (lost with the machine).
+Ruling IK8b. Started P2-R4C (T2, last fix round, Sonnet), then a verifier that looks at frames.
+Running: R6 (builder); P2-R4C (builder).

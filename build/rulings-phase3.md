@@ -1359,3 +1359,8 @@ HG1 (give race) Two staff giving one Concierge order: the code is right (overlap
   the stepped clock is there to control; V7 does not govern it. It is written so it does not spell the server call (for example `Date.now` held in
   a page-side name), with a comment saying it runs in the page. V7 itself is not edited. Executed by patch P3-R5 (no verifier: 30 lines or fewer,
   the lead reads the diff, the merge check runs the whole suite again).
+- IK8b (25 Nov, the lead, second chat, on P-R4C round 1; Default (lead), owner may override): a title that asks the receiver to act ("Light the
+  sky, X." in components/moments/ending/fireworks/Scene.tsx:57) is a cue under IK8a: under the render page the scene plays as if the act was done
+  (its finished line and state), never the ask. A step or stop counter ("1 of 3", boarding-pass pages.tsx:243) is a counter under IK8a. A thing the
+  style draws as part of its look, not a control or a count of pages left (group-chat's chat header with its "Birthday" name pill, the status
+  style's header line with name and time), stays. An ending whose words only show after a pull shows them, as done, under the render page (M3).

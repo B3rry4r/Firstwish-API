@@ -51,7 +51,7 @@ export interface Env {
   SCREENING_API_KEY?: string;
   ANTHROPIC_API_KEY?: string;
   ANTHROPIC_MODEL?: string;
-  RENDER_CONCURRENCY: number;
+  RENDER_CONCURRENCY?: number;
   /** R1: read by the real video renderer, which does not exist yet; none of these makes the renderer "configured". */
   RENDER_WEB_ORIGIN?: string;
   RENDER_TOKEN_SECRET?: string;
@@ -60,6 +60,14 @@ export interface Env {
   /** R1: the longest one render may run; the job kind's limit and lease follow it. */
   RENDER_TIME_LIMIT_SECONDS: number;
   RENDER_TOKEN_TTL_SECONDS: number;
+  /** R6: the video maker's switches (see env.schema.ts). */
+  RENDER_ADAPTER?: "chromium";
+  RENDER_STORAGE_HOSTS?: string;
+  RENDER_ALLOWED_HOSTS?: string;
+  RENDER_CLOCK_PATH?: string;
+  RENDER_CLOCK_SHA256?: string;
+  PROCESS_ROLE: "all" | "web" | "render-worker";
+  RENDER_WORKER_PORT: number;
   RESEND_API_KEY?: string;
   /** YY3: the svix signing secret of Resend's webhook stream (delivery news and received mail); the guard's `resend` provider checks it. */
   RESEND_WEBHOOK_SECRET?: string;
@@ -205,6 +213,11 @@ export function loadEnv(raw: Record<string, string | undefined> = process.env): 
   // IK7a: the hold file only shapes the stand-in renderer's hold, so it is refused where the token file is.
   if (get("STANDIN_RENDER_HOLD_FILE") !== undefined && (providers !== "standin" || out.NODE_ENV === "production")) {
     problems.push({ name: "STANDIN_RENDER_HOLD_FILE", problem: "refused: it is for the stand-in video renderer only (needs PROVIDERS=standin and a NODE_ENV other than production)" });
+  }
+  // R6: the secret that hashes a render token is long, or the video maker stays off (the binding says why); a short one is a typo and boot refuses it
+  const renderSecret = out.RENDER_TOKEN_SECRET;
+  if (typeof renderSecret === "string" && renderSecret.length < 32) {
+    problems.push({ name: "RENDER_TOKEN_SECRET", problem: "must be at least 32 characters" });
   }
   if (problems.length) throw new EnvError(problems);
   return out as unknown as Env;

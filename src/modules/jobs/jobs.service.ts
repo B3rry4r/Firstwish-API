@@ -60,6 +60,9 @@ export class JobsService implements OnApplicationBootstrap {
   /** Handlers for the subjects of one kind that start with a prefix; they answer before the kind's own handler. */
   private readonly routes: { type: string; prefix: string; handler: JobHandler }[] = [];
   private worker: Worker | null = null;
+  /** R6: kinds the serial tick leaves alone (a video render is taken by its own loop, in its own place, so it never holds the other jobs). */
+  private readonly outOfTick = new Set<string>();
+  private tickOff = false;
 
   constructor(
     private readonly prisma: PrismaService,
@@ -67,6 +70,31 @@ export class JobsService implements OnApplicationBootstrap {
     private readonly ids: IdGenerator,
     private readonly queues: QueueService,
   ) {}
+
+  /** R6: the serial tick no longer takes jobs of this kind (their own loop does, with startDue). */
+  takeOutOfTick(kind: string): void {
+    this.outOfTick.add(dbType(kind));
+  }
+
+  /** R6: this process runs no tick at all (a render worker takes only its own kind). */
+  switchTickOff(): void {
+    this.tickOff = true;
+  }
+
+  /**
+   * R6: claims ONE due job of these kinds (a claim is one statement with SKIP LOCKED, so two workers never take one job) and starts it WITHOUT waiting for it:
+   * answers a handle on its run (`done`), or null when none is due. The caller counts how many it has running.
+   */
+  async startDue(kinds: string[]): Promise<{ done: Promise<void> } | null> {
+    const job = await this.claim(undefined, kinds.map(dbType));
+    if (!job) return null;
+    return { done: this.execute(job) };
+  }
+
+  /** R6: a running job's lease moves to `ms` from now (a long run still making progress is not taken twice). */
+  async touch(jobId: string, ms: number): Promise<void> {
+    await this.prisma.$executeRaw`UPDATE job SET "runAt" = ${new Date(this.clock.now().getTime() + ms)} WHERE id = ${jobId}::uuid AND status = 'running'`;
+  }
 
   register(kind: string, handler: JobHandler): void {
     this.handlers.set(dbType(kind), handler);
@@ -127,10 +155,12 @@ export class JobsService implements OnApplicationBootstrap {
     return ran;
   }
 
-  private async claim(only?: string[]): Promise<Claimed | null> {
-    const types = [...this.handlers.keys()];
-    const routeTypes = this.routes.map((r) => r.type);
-    const routePrefixes = this.routes.map((r) => r.prefix);
+  private async claim(only?: string[], kinds?: string[]): Promise<Claimed | null> {
+    const wanted = (t: string): boolean => (kinds ? kinds.includes(t) : !this.outOfTick.has(t));
+    const types = [...this.handlers.keys()].filter(wanted);
+    const kept = this.routes.filter((r) => wanted(r.type));
+    const routeTypes = kept.map((r) => r.type);
+    const routePrefixes = kept.map((r) => r.prefix);
     if (!types.length && !routeTypes.length) return null;
     const now = this.clock.now();
     const lease = new Date(now.getTime() + LEASE_MS);
@@ -239,7 +269,7 @@ export class JobsService implements OnApplicationBootstrap {
    * the tick runs just its own subject keys (specs share one job table). Production passes nothing.
    */
   async startPolling(everyMs = 5000, only?: string[]): Promise<void> {
-    if (this.worker) return;
+    if (this.worker || this.tickOff) return;
     const q = this.queues.queue("jobs-tick");
     await q.upsertJobScheduler("due-jobs", { every: everyMs }, { name: "tick" });
     this.worker = this.queues.worker("jobs-tick", async () => {

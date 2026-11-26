@@ -1384,3 +1384,10 @@ HG1 (give race) Two staff giving one Concierge order: the code is right (overlap
   state (a letter open with its words, a foil scratched, a card opened, a ring lit, an eclipse open with its line), never an empty plate, pill, ring
   or tile; no stepper rail, progress line or arc drawn only for a phone holder (boarding-pass, pidgin-gist). Photo cards are judged with a wish that
   HAS photos. The 360 receiver past the "Open it" gate is proven in W20's check.
+- IK8d (26 Nov, the lead, second chat, on VERIFY-W20; Default (lead), owner may override): (1) "Make a wish, X." on a candle ending is the
+  birthday line said to the person, not an instruction for working the screen: it stays under the render page (an action title such as "Light
+  the sky" stays a cue, IK8b). (2) A "..." typing pill in group-chat is a drawn message on its way, not an empty shape: it stays. (3) Runway
+  approach lights that are lit are scenery and stay; an empty progress track is not. (4) A frame that is black or empty on the base too (the
+  contact-sheet film frame mid-move) is pre-existing: W20 fixes it only if it is the ending's first or last frame. (5) A counter such as
+  "03 / 03", a "PEEL" tab, a lamp switch or any other control drawn in a recorded frame is HIGH, as before. (6) The flat-shape check S is a help,
+  not proof: the verifier's eyes on the frames decide; S must catch a planted flat plate that never held words, or say plainly why it cannot.

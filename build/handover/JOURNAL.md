@@ -180,3 +180,13 @@ even with `-threads 1`; cause not found. Confirmed: Studio ready at 0 and done t
 215 under load; receivers same (Studio, letter, noir, golden; 360 and 1440; no clock script, native Math.random, Studio still lazy); checks green;
 clock test 27 of 27 with --origin. Verdict in verdicts/w19-VERDICT.md. Started P-W19 (round 1, Sonnet, brief build/prompts/P-W19.md).
 Running: VERIFY-W20 (verifier); P-W19 (patch).
+
+### 2026-11-26 · second chat · ccr-91b3ed11-fx445c
+Did: VERIFY-W20: FIX FIRST. Confirmed E3, E4, E5, E7; checks green, 20 owned files. HIGH: before-and-after progress segments and empty opening
+plate; gold-card counters "03 / 03", "08 / 08" and a PEEL tab (the sweep misses them); lookbook close, screening close, tailored gift, milestone
+gift end empty or mid-move; contact-sheet lamp switch on the photo; boarding-pass empty progress track. MED: S misses a flat plate that never held
+words; "Make a wish, X." on candle endings. About 10 of the 19 flags are false. Receivers same (scrapbook "Swipe to turn" is a flake in an
+untouched file); boarding-pass and polaroid-table envelope at 360 not reached, on base too. Verdict in verdicts/w20-VERDICT.md, sheets in w20-pics/.
+Ruling IK8d: "Make a wish, X." and the group-chat "..." pill stay; lit approach lights stay; S is a help, the verifier's eyes decide.
+Started P-W20 (round 1, Sonnet, brief build/prompts/P-W20.md).
+Running: P-W19 (patch); P-W20 (patch).

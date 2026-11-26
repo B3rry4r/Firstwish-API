@@ -116,3 +116,5 @@
 - W18 check (24 Nov) LOW: when frozen from the first script, an animation first seen in step k starts at the start of that step (ends one step, 33 ms, early: bounded); the clock's test needs a running build for case 3 (without --origin it skips and exits 2).
 - W18 check: the list previews are NOT repeatable even with one script (base against base differs in 229 of 288 frames; a cap-toss rerun gave 359 then 392 frames): they freeze late, after live-page randomness. Old fault, not W18's; the owner ruled the preview files stay as they are (R9).
 - R5 second check (24 Nov) LOW: the clock shim throws inside a sandboxed iframe (it fails the render: right today, since the render page draws none).
+- W20 verify: boarding-pass (both endings) and polaroid-table envelope cannot be driven to the ending at 360 by r4rc.mjs, on base too; cause unknown (tool or style).
+- W20 verify: scrapbook/candle at 1440 shows the page-1 hint "Swipe to turn" in some runs only (Scene.tsx:794): a timing flake on base and branch.

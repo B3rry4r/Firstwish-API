@@ -345,3 +345,11 @@ creators, me, logo, concierge and Studio file reads; DEC-330 reopen, DEC-331 fre
 a shoot page 25,584 KB to 4 KB, a reveal page 25,584 KB to 6,617 KB, 0 full copies, 0 broken. Started VERIFY-API-10E (T1, Sonnet).
 Live test: 1,314 PASS so far; the same two W14B FAILs only.
 Running: lead-drive (the lead's live test); VERIFY-API-10E (verifier).
+
+### 2026-11-26 · second chat · ccr-91b3ed11-fx445c
+Did: VERIFY-API-10E: MERGE (registry additive only, DEC-330 and DEC-331 present; access unchanged: signed-out 401, other account 403, wrong
+code 404; sizes expire with the full copy, a tampered signature 404; sizes from five reads carry 0 EXIF, 0 GPS; real stack 0 full copies, 0
+broken; 349 specs; web checks green). LOW accepted: four registry types tightened from array/object to their shapes (no field lost). INFO: the
+stand-in cleaner does not clean, so IM1's real clean copy is proved only with the real adapter. Verdict in verdicts/a10e-VERDICT.md.
+MERGED API-10E into the server: bdc3cb6 (m56: all EXIT 0; 1,788 of 1,788 tests). The web half (w10e e9c49e4) and G1 wait for the live test.
+Running: lead-drive (the lead's live test).

@@ -376,3 +376,9 @@ gets the video with no price; two losses give "Ask again" with no second payment
 recorder cannot work. Gaps: the sheet's close X has no hover or active state; the "Take it as a video" row has no focus-visible state.
 Started VERIFY-V1 (Sonnet; the flow re-run and attacked) and W24 (T1, Sonnet; brief build/prompts/W24.md: the two states, CSS only).
 Running: VERIFY-V1 (verifier); W24 (builder).
+
+### 2026-11-26 · second chat · ccr-91b3ed11-fx445c
+Did: W24 handed back (w24 27ffd4e, 2 css files, +5 -1, tokens only). VERIFY-W24: MERGE (close X hover 1.94 and 1.85, active 16.9 and 19.3, on
+three sheets incl. the video sheet; rows focus-visible by Tab on four rows incl. "Take it as a video"; no shift, no overflow; css, gates, build).
+MERGED W24 into the web (wm8 all EXIT 0). w24 removed.
+Running: VERIFY-V1 (verifier).

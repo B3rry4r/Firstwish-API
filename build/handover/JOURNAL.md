@@ -240,3 +240,12 @@ h264 1080x1920 30 fps 14.57 s, other account 404); no token in any log; all chec
 verdicts/r5f-VERDICT.md. Started P-R5F (round 1, Sonnet; brief build/prompts/P-R5F.md): API r5f plus a new web branch w21 for
 components/render/** and the shim if the cause is there (style files stay with P2-W20).
 Running: P2-W20 (patch); P-R5F (patch).
+
+### 2026-11-26 · second chat · ccr-91b3ed11-fx445c
+Did: P2-W20 handed back (w20 5423978, round 2, 13 files): first-day gift opened (no PEEL, no bar), first-day scratch with no counter and a
+scratched foil, tailored with no ruler, boarding-pass with no empty cells, contact-sheet and lookbook endings start on their picture, pinboard
+gift opened; the sweep now sees counters in labels and bars on a canvas (fails all three on 05940e7); sweep 95 of 95 done, 78 clean, 16 real
+progress lines in film styles W20 never touched, 1 false (reel); plants found in 95 of 95; receivers same, 24 of 24 presses same.
+Ruling IK8e: no third round; a short re-check (VERIFY3-W20) then merge; the 16 film progress lines are re-cut as W22.
+Started VERIFY3-W20 (Sonnet).
+Running: P-R5F (patch); VERIFY3-W20 (verifier).

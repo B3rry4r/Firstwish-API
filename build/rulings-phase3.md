@@ -1391,3 +1391,8 @@ HG1 (give race) Two staff giving one Concierge order: the code is right (overlap
   contact-sheet film frame mid-move) is pre-existing: W20 fixes it only if it is the ending's first or last frame. (5) A counter such as
   "03 / 03", a "PEEL" tab, a lamp switch or any other control drawn in a recorded frame is HIGH, as before. (6) The flat-shape check S is a help,
   not proof: the verifier's eyes on the frames decide; S must catch a planted flat plate that never held words, or say plainly why it cannot.
+- IK8e (26 Nov, the lead, second chat, after W20's second and last fix round; Default (lead), owner may override): no third round. A short
+  re-check by a separate verifier of round 2's named findings (first-day gift and scratch, tailored ruler, boarding-pass cells, contact-sheet and
+  lookbook ending starts, pinboard gift) and its receivers; on a pass W20 merges. The 16 progress lines the new bar read found in film styles W20
+  never touched (bloom, cinema, harvest-light, midnight, owambe, runway, screening) are re-cut as W22 (T1, one Pips wrap each), with the LOW cut
+  line in midnight/confetti.

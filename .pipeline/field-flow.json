@@ -3501,6 +3501,20 @@
       "noWriter": true
     },
     {
+      "field": "Creator.imgVariants",
+      "writers": [
+        "server:photo-sizes"
+      ],
+      "store": "Creator",
+      "readers": [],
+      "writerActors": [
+        "server"
+      ],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": false
+    },
+    {
       "field": "Creator.line",
       "writers": [],
       "store": "Creator",
@@ -10295,6 +10309,20 @@
       "noWriter": true
     },
     {
+      "field": "PublishedWish.imgVariants",
+      "writers": [
+        "server:photo-sizes"
+      ],
+      "store": "PublishedWish",
+      "readers": [],
+      "writerActors": [
+        "server"
+      ],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": false
+    },
+    {
       "field": "PublishedWish.kind",
       "writers": [],
       "store": "PublishedWish",
@@ -11858,6 +11886,20 @@
       ],
       "crossActor": false,
       "noWriter": true
+    },
+    {
+      "field": "RevealPlay.photoVariants",
+      "writers": [
+        "server:photo-sizes"
+      ],
+      "store": "RevealPlay",
+      "readers": [],
+      "writerActors": [
+        "server"
+      ],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": false
     },
     {
       "field": "RevealPlay.photos",
@@ -16941,6 +16983,20 @@
       ],
       "crossActor": false,
       "noWriter": true
+    },
+    {
+      "field": "VaultFile.variants",
+      "writers": [
+        "server:photo-sizes"
+      ],
+      "store": "VaultFile",
+      "readers": [],
+      "writerActors": [
+        "server"
+      ],
+      "readerActors": [],
+      "crossActor": false,
+      "noWriter": false
     },
     {
       "field": "VaultPricing.block",

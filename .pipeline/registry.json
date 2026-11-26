@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "frozenAt": "2026-11-24T12:28:13Z",
+  "frozenAt": "2026-11-26T07:57:59Z",
   "framework": "nestjs",
   "generatedBy": "tools/pipeline/reconcile.py",
   "resources": [
@@ -382,7 +382,7 @@
         },
         {
           "name": "picture",
-          "type": "object",
+          "type": "shape {fileId: string, url: string, expiresAt: time, variants?: array<{width: number, variant: string, url: string, expiresAt: time, sized: boolean}>} | null",
           "classes": [
             "object"
           ],
@@ -390,7 +390,8 @@
           "provenance": [
             "DEC-245"
           ],
-          "supersedes": []
+          "supersedes": [],
+          "typeBy": "DEC-330"
         },
         {
           "name": "pro",
@@ -5772,7 +5773,8 @@
         "site-showing"
       ],
       "sourceDeclarations": [
-        "api-base-4"
+        "api-base-4",
+        "photo-sizes"
       ],
       "embedded": [],
       "fields": [
@@ -5901,6 +5903,19 @@
             "app-home"
           ],
           "supersedes": []
+        },
+        {
+          "name": "imgVariants",
+          "type": "array<{width: number, variant: string, url: string, expiresAt: time, sized: boolean}>",
+          "classes": [
+            "array"
+          ],
+          "nullable": true,
+          "provenance": [
+            "photo-sizes"
+          ],
+          "supersedes": [],
+          "typeBy": "DEC-330"
         },
         {
           "name": "line",
@@ -16253,7 +16268,9 @@
         "site-showing",
         "site-style-detail"
       ],
-      "sourceDeclarations": [],
+      "sourceDeclarations": [
+        "photo-sizes"
+      ],
       "embedded": [],
       "fields": [
         {
@@ -16410,6 +16427,19 @@
             "site-style-detail"
           ],
           "supersedes": []
+        },
+        {
+          "name": "imgVariants",
+          "type": "array<{width: number, variant: string, url: string, expiresAt: time, sized: boolean}>",
+          "classes": [
+            "array"
+          ],
+          "nullable": true,
+          "provenance": [
+            "photo-sizes"
+          ],
+          "supersedes": [],
+          "typeBy": "DEC-330"
         },
         {
           "name": "kind",
@@ -18040,7 +18070,7 @@
         },
         {
           "name": "heldPhoto",
-          "type": "shape {url: string, expiresAt: time} | null",
+          "type": "shape {url: string, expiresAt: time, variants?: array<{width: number, variant: string, url: string, expiresAt: time, sized: boolean}>} | null",
           "classes": [
             "object"
           ],
@@ -18049,7 +18079,7 @@
             "api-base-4"
           ],
           "supersedes": [],
-          "typeBy": "DEC-226"
+          "typeBy": "DEC-330"
         },
         {
           "name": "id",
@@ -18591,7 +18621,9 @@
       "sourceScreens": [
         "receiver-wish-mine"
       ],
-      "sourceDeclarations": [],
+      "sourceDeclarations": [
+        "photo-sizes"
+      ],
       "embedded": [],
       "fields": [
         {
@@ -18677,6 +18709,19 @@
             "receiver-wish-mine"
           ],
           "supersedes": []
+        },
+        {
+          "name": "photoVariants",
+          "type": "array<array<{width: number, variant: string, url: string, expiresAt: time, sized: boolean}> | null>",
+          "classes": [
+            "array"
+          ],
+          "nullable": true,
+          "provenance": [
+            "photo-sizes"
+          ],
+          "supersedes": [],
+          "typeBy": "DEC-330"
         },
         {
           "name": "photos",
@@ -20589,7 +20634,7 @@
         },
         {
           "name": "files",
-          "type": "array",
+          "type": "array<{id: string, name: string, size: number, url?: string, variants?: array<{width: number, variant: string, url: string, expiresAt: time, sized: boolean}>}>",
           "classes": [
             "array"
           ],
@@ -20598,11 +20643,12 @@
             "pro-vault",
             "pro-vault-shoot"
           ],
-          "supersedes": []
+          "supersedes": [],
+          "typeBy": "DEC-330"
         },
         {
           "name": "finals",
-          "type": "array",
+          "type": "array<{id: string, name: string, size: number, url?: string, variants?: array<{width: number, variant: string, url: string, expiresAt: time, sized: boolean}>}>",
           "classes": [
             "array"
           ],
@@ -20614,7 +20660,8 @@
             "pro-vault-shoot",
             "pro-vault-shoot-reveal"
           ],
-          "supersedes": []
+          "supersedes": [],
+          "typeBy": "DEC-330"
         },
         {
           "name": "finalsReveal",
@@ -20665,7 +20712,7 @@
         },
         {
           "name": "proofs",
-          "type": "array",
+          "type": "array<{id: string, name: string, size: number, url?: string, variants?: array<{width: number, variant: string, url: string, expiresAt: time, sized: boolean}>}>",
           "classes": [
             "array"
           ],
@@ -20677,7 +20724,8 @@
             "pro-vault-shoot",
             "pro-vault-shoot-reveal"
           ],
-          "supersedes": []
+          "supersedes": [],
+          "typeBy": "DEC-330"
         },
         {
           "name": "proofsReveal",
@@ -26536,7 +26584,9 @@
         "pro-favourites",
         "pro-vault-shoot"
       ],
-      "sourceDeclarations": [],
+      "sourceDeclarations": [
+        "photo-sizes"
+      ],
       "embedded": [],
       "fields": [
         {
@@ -26589,6 +26639,19 @@
             "pro-vault-shoot"
           ],
           "supersedes": []
+        },
+        {
+          "name": "variants",
+          "type": "array<{width: number, variant: string, url: string, expiresAt: time, sized: boolean}>",
+          "classes": [
+            "array"
+          ],
+          "nullable": true,
+          "provenance": [
+            "photo-sizes"
+          ],
+          "supersedes": [],
+          "typeBy": "DEC-330"
         }
       ],
       "endpoints": [

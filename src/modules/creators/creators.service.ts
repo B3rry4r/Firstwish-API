@@ -6,7 +6,7 @@ import { isUuidV7 } from "../../common/ids/uuidv7";
 import { AppError } from "../../common/errors/app-error";
 import type { PublishedWish } from "../../contracts";
 import { ShowingService } from "../showing/showing.service";
-import { SignedUrlsService } from "../stored-files/signed-urls.service";
+import { SignedUrlsService, type SizedRead } from "../stored-files/signed-urls.service";
 import type { StyleOut } from "../styles/style-view";
 import { StylesService } from "../styles/styles.service";
 import { findPublicCreator, listPublicCreators, lookupHandle, PublicCreator, toPublicCreator } from "../accounts/public-creators";
@@ -36,7 +36,7 @@ export class CreatorsService {
       for (const f of mine) if (f.handle) follows.add(f.handle);
     }
     const page = rows.slice(0, limit);
-    const items = await Promise.all(page.map(async (r) => ({ ...toPublicCreator(r, { accountId: viewerId, follows }), img: await this.pictureOf(r.img) })));
+    const items = await Promise.all(page.map(async (r) => ({ ...toPublicCreator(r, { accountId: viewerId, follows }), ...(await this.pictureOf(r.img)) })));
     const last = page[page.length - 1];
     return { items, nextCursor: rows.length > limit && last ? encodeCursor({ key: 0, id: last.creatorId }) : null };
   }
@@ -56,7 +56,7 @@ export class CreatorsService {
       const mine = await this.prisma.follow.findFirst({ where: { accountId: viewerId, handle: row.handle }, select: { id: true } });
       if (mine) follows.add(row.handle);
     }
-    return { ...toPublicCreator(row, { accountId: viewerId, follows }), img: await this.pictureOf(row.img) };
+    return { ...toPublicCreator(row, { accountId: viewerId, follows }), ...(await this.pictureOf(row.img)) };
   }
 
   /** The row of a creator whose page is public (a handle that is missing, or whose side is off, or that is banned or erased, is one 404: DEC-157). */
@@ -78,8 +78,9 @@ export class CreatorsService {
   }
 
   /** HW2: a profile picture is a file id on the creator row; anyone reads it as a signed address once it passed screening (any other text stays as it was). */
-  private async pictureOf(img: string | null): Promise<string | null> {
-    if (!img || !/^[0-9a-f-]{36}$/i.test(img)) return img;
-    return (await this.signed.signedRead({ fileId: img }, { type: "allowed" }).catch(() => null))?.url ?? null;
+  private async pictureOf(img: string | null): Promise<{ img: string | null; imgVariants?: SizedRead[] }> {
+    if (!img || !/^[0-9a-f-]{36}$/i.test(img)) return { img };
+    const one = await this.signed.signedPhoto({ fileId: img }, { type: "allowed" }).catch(() => null); // IM4: the sizes beside the address
+    return { img: one?.read.url ?? null, ...(one?.variants ? { imgVariants: one.variants } : {}) };
   }
 }

@@ -1,0 +1,74 @@
+{
+  "screenId": null,
+  "resource": "photo-sizes",
+  "sourceScreens": [],
+  "provenance": "declaration",
+  "declaredAs": "other",
+  "reads": [
+    {
+      "entity": "VaultFile",
+      "fields": [
+        {
+          "name": "variants",
+          "type": "array<{width: number, variant: string, url: string, expiresAt: time, sized: boolean}>",
+          "nullable": true,
+          "note": "IM4 (DEC-330): the sizes of a Vault file that is a picture; left out for any other file"
+        }
+      ],
+      "cardinality": "list",
+      "filtersOrSort": [],
+      "pagination": "paged"
+    },
+    {
+      "entity": "RevealPlay",
+      "fields": [
+        {
+          "name": "photoVariants",
+          "type": "array<array<{width: number, variant: string, url: string, expiresAt: time, sized: boolean}> | null>",
+          "nullable": true,
+          "note": "IM4 (DEC-330): the sizes of each photo, in the order of photos; null where a file is not a picture"
+        }
+      ],
+      "cardinality": "single",
+      "filtersOrSort": [],
+      "pagination": null
+    },
+    {
+      "entity": "PublishedWish",
+      "fields": [
+        {
+          "name": "imgVariants",
+          "type": "array<{width: number, variant: string, url: string, expiresAt: time, sized: boolean}>",
+          "nullable": true,
+          "note": "IM4 (DEC-330): the sizes of the cover that img addresses"
+        }
+      ],
+      "cardinality": "list",
+      "filtersOrSort": [],
+      "pagination": "paged"
+    },
+    {
+      "entity": "Creator",
+      "fields": [
+        {
+          "name": "imgVariants",
+          "type": "array<{width: number, variant: string, url: string, expiresAt: time, sized: boolean}>",
+          "nullable": true,
+          "note": "IM4 (DEC-330): the sizes of the profile picture that img addresses"
+        }
+      ],
+      "cardinality": "single",
+      "filtersOrSort": [],
+      "pagination": null
+    }
+  ],
+  "actions": [],
+  "authContext": {},
+  "special": {},
+  "uiStatesHandled": [],
+  "uiStatesDesigned": [],
+  "stubsObserved": [],
+  "behaviour": [],
+  "provisional": [],
+  "supersedes": []
+}

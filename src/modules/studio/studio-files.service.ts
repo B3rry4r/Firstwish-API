@@ -11,7 +11,7 @@ import { ApprovedStyleDocuments, NEWEST_APPROVED } from "../styles/approved-docu
 import { fileIdsOf } from "./submission-checks";
 import { NOT_ACCEPTED, refusalsOf } from "../stored-files/refusal-words";
 import { isUuid, mediaKindOf, purposeOnWire } from "../stored-files/file-rules";
-import { type Reader, SignedUrlsService } from "../stored-files/signed-urls.service";
+import { type Reader, SignedUrlsService, type SizedRead } from "../stored-files/signed-urls.service";
 import { hiddenFromBuyer } from "../wishes/wish-shown";
 
 const notFound = () => AppError.notFound("No style has this id.");
@@ -36,12 +36,14 @@ export class StudioFilesService {
   private async view(f: FileRow, reader: Reader, reasons?: Map<string, string>, ttlSeconds?: number): Promise<StyleFile> {
     let url: string | null = null;
     let expiresAt: string | null = null;
+    let variants: SizedRead[] | undefined;
     if (f.status === "ready" || (f.status === "screening" && reader.type === "owner")) {
-      const s = await this.signed.signedRead({ fileId: f.id }, reader, ttlSeconds);
-      url = s.url;
-      expiresAt = s.expiresAt;
+      const s = await this.signed.signedPhoto({ fileId: f.id }, reader, ttlSeconds);
+      url = s.read.url;
+      expiresAt = s.read.expiresAt;
+      variants = s.variants; // IM4
     }
-    return { fileId: f.id, purpose: purposeOnWire(f.purpose), kind: f.kind ?? mediaKindOf(f.contentType), contentType: f.contentType, bytes: Number(f.bytes), status: f.status, reason: f.status === "rejected" ? (reasons ?? (await refusalsOf(this.db, [f]))).get(f.id) ?? NOT_ACCEPTED : null, url, expiresAt, createdAt: toWireInstant(f.createdAt) };
+    return { fileId: f.id, purpose: purposeOnWire(f.purpose), kind: f.kind ?? mediaKindOf(f.contentType), contentType: f.contentType, bytes: Number(f.bytes), status: f.status, reason: f.status === "rejected" ? (reasons ?? (await refusalsOf(this.db, [f]))).get(f.id) ?? NOT_ACCEPTED : null, url, expiresAt, ...(variants ? { variants } : {}), createdAt: toWireInstant(f.createdAt) };
   }
 
   private async ownStyle(accountId: string, styleId: string): Promise<void> {

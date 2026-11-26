@@ -294,7 +294,7 @@ export class ReportsService {
       if (!may || !staff || it.queue !== "flagged" || typeof it.photo !== "string") continue;
       let read;
       try {
-        read = await this.signed.signedRead({ fileId: it.photo }, { type: "staff" });
+        read = await this.signed.signedPhoto({ fileId: it.photo }, { type: "staff" });
       } catch (e) {
         if (e instanceof AppError && e.getStatus() === 404) continue;
         throw e;
@@ -302,7 +302,7 @@ export class ReportsService {
       await this.db.$transaction((tx) =>
         this.audit.write(tx, { actor: staff.actor, section: "/admin/moderation", action: "moderation.view-photo", target: { type: "StoredFile", id: it.photo as string }, reason: null, changedFields: ["heldPhoto"] }),
       );
-      it.heldPhoto = { url: read.url, expiresAt: read.expiresAt };
+      it.heldPhoto = { url: read.read.url, expiresAt: read.read.expiresAt, ...(read.variants ? { variants: read.variants } : {}) }; // IM4
     }
   }
 

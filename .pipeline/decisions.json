@@ -4444,6 +4444,37 @@
       "confidence": "high",
       "decidedAt": "2026-11-24T12:00:00Z",
       "source": "build/prompts/API-BASE-23B.md"
+    },
+    {
+      "id": "DEC-330",
+      "topic": "Every read that hands out a person's photo carries its sizes (IM4)",
+      "decision": "IM4: each read that hands out a person's photo gives the same `variants` as Wish.pictures (DEC-328): three entries (w320, w768, w1600), each {width, variant, url, expiresAt, sized}; sized false is a size not made yet and its url is the clean full-size copy. Additive: every url and expiresAt is unchanged. A file that is not a picture (a voice, a clip, a document) carries none. The reads: GET /v1/business/vault/files and PATCH /v1/business/vault/files/:id (VaultFile.variants); the shoot's files, proofs and finals (Shoot items, with the shoot's single read); the reveal's photos (RevealPlay.photoVariants, one entry for each photo in the order of `photos`, null where a file is not a picture); the staff flagged queue (Report.heldPhoto.variants); the signed-in play read E-122 (PlayWish.data.files[].variants); a published wish's cover (PublishedWish.imgVariants); a creator's profile picture (Creator.imgVariants; Me picture.variants); a business logo (Business.brand.logoRead.variants); a concierge order's files (ConciergeOrderFile.variants, photos only); a Studio style's files (StyleFile.variants, pictures only). Readers and refusals are unchanged: another account's read is still 404.",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "decidedAt": "2026-11-26T12:00:00Z",
+      "source": "build/prompts/API-10E.md; build/rulings-phase3.md IM4",
+      "fieldTypes": {
+        "VaultFile.variants": "array<{width: number, variant: string, url: string, expiresAt: time, sized: boolean}>",
+        "Shoot.files": "array<{id: string, name: string, size: number, url?: string, variants?: array<{width: number, variant: string, url: string, expiresAt: time, sized: boolean}>}>",
+        "Shoot.proofs": "array<{id: string, name: string, size: number, url?: string, variants?: array<{width: number, variant: string, url: string, expiresAt: time, sized: boolean}>}>",
+        "Shoot.finals": "array<{id: string, name: string, size: number, url?: string, variants?: array<{width: number, variant: string, url: string, expiresAt: time, sized: boolean}>}>",
+        "RevealPlay.photoVariants": "array<array<{width: number, variant: string, url: string, expiresAt: time, sized: boolean}> | null>",
+        "Report.heldPhoto": "shape {url: string, expiresAt: time, variants?: array<{width: number, variant: string, url: string, expiresAt: time, sized: boolean}>} | null",
+        "PublishedWish.imgVariants": "array<{width: number, variant: string, url: string, expiresAt: time, sized: boolean}>",
+        "Creator.imgVariants": "array<{width: number, variant: string, url: string, expiresAt: time, sized: boolean}>",
+        "Account.picture": "shape {fileId: string, url: string, expiresAt: time, variants?: array<{width: number, variant: string, url: string, expiresAt: time, sized: boolean}>} | null"
+      }
+    },
+    {
+      "id": "DEC-331",
+      "topic": "The registry is frozen again after DEC-330",
+      "decision": "The registry is re-frozen after DEC-330 by tools/pipeline/freeze.py; reconcile.py was run twice with --reopen (identical outputs). No endpoint id is issued or changed.",
+      "closes": [],
+      "approvedBy": "lead default, owner may override",
+      "confidence": "high",
+      "decidedAt": "2026-11-26T12:00:00Z",
+      "source": "build/prompts/API-10E.md"
     }
   ]
 }

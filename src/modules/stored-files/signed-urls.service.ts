@@ -7,7 +7,7 @@ import { IdGenerator } from "../../common/ports/ids.port";
 import { StoragePort } from "../../common/ports/storage.port";
 import { toWireInstant } from "../../common/time/time";
 import type { InternalSignedUrlsSignedReadBody, SignedUrl } from "../../contracts";
-import { IMAGE_WIDTHS, isUuid, READ_TTL_SECONDS, variantsOf } from "./file-rules";
+import { IMAGE_WIDTHS, isImage, isUuid, READ_TTL_SECONDS, variantsOf } from "./file-rules";
 import { needsCleaning, photoNotShown, PhotoCleaner } from "./photo-cleaner";
 import { businessAccessOf } from "./vault-access";
 
@@ -108,6 +108,21 @@ export class SignedUrlsService {
   async signedSet(input: InternalSignedUrlsSignedReadBody, reader: Reader, ttlSeconds: number = READ_TTL_SECONDS): Promise<{ read: SignedRead; sizes: SizedRead[] }> {
     const read = await this.signedRead(input, reader, ttlSeconds);
     const file = await this.db.storedFile.findUnique({ where: { id: read.fileId } });
+    return { read, sizes: await this.sizesOf(file, read, ttlSeconds) };
+  }
+
+  /**
+   * IM4: the read of a file a view hands out as a person's photo: the clean full-size copy and, for a picture only, its three sizes (the same ones signedSet gives).
+   * A file that is not a picture (a voice, a clip, a document) carries no sizes. Same readers and rules as signedRead.
+   */
+  async signedPhoto(input: InternalSignedUrlsSignedReadBody, reader: Reader, ttlSeconds: number = READ_TTL_SECONDS): Promise<{ read: SignedRead; variants?: SizedRead[] }> {
+    const read = await this.signedRead(input, reader, ttlSeconds);
+    const file = await this.db.storedFile.findUnique({ where: { id: read.fileId } });
+    if (!file || !isImage(file.contentType)) return { read };
+    return { read, variants: await this.sizesOf(file, read, ttlSeconds) };
+  }
+
+  private async sizesOf(file: FileRow | null, read: SignedRead, ttlSeconds: number): Promise<SizedRead[]> {
     const have = file ? variantsOf(file) : [];
     const sizes: SizedRead[] = [];
     for (const width of IMAGE_WIDTHS) {
@@ -116,6 +131,6 @@ export class SignedUrlsService {
         sizes.push({ width, variant: g.variant, url: g.url, expiresAt: g.expiresAt, sized: true });
       } else sizes.push({ width, variant: `w${width}`, url: read.url, expiresAt: read.expiresAt, sized: false });
     }
-    return { read, sizes };
+    return sizes;
   }
 }

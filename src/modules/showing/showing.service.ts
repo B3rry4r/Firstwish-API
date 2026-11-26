@@ -15,7 +15,7 @@ import { SavedWishesService } from "../saved-wishes/saved-wishes.service";
 import { stateOf } from "../wishes/wish-state";
 import { CHAPTER_KEYS } from "../wishes/wish-content";
 import { WishesService } from "../wishes/wishes.service";
-import { SignedUrlsService } from "../stored-files/signed-urls.service";
+import { SignedUrlsService, type SizedRead } from "../stored-files/signed-urls.service";
 import { ShowingLink } from "./showing-link";
 import { DAY_MS, lagosToday, PICK_DAYS, publicJoins, publicNow } from "./showing-sql";
 
@@ -308,7 +308,7 @@ export class ShowingService implements OnModuleInit {
       const at = toWireInstant(r.listedAt ?? new Date(0));
       return {
         id: r.id, at, date: at, listedAt: at, publishedAt: at, counts: { reactions: rc.get(r.id) ?? 0, saves: sc.get(r.id) ?? 0 },
-        creator: this.creatorOf(r.creator, r.from, looks.get(r.wishId ?? "")?.handle), forName: r.forName ?? "", from: r.from ?? "", href: r.href ?? "", img: looks.get(r.wishId ?? "")?.img ?? r.img ?? "", kind: r.kind ?? "",
+        creator: this.creatorOf(r.creator, r.from, looks.get(r.wishId ?? "")?.handle), forName: r.forName ?? "", from: r.from ?? "", href: r.href ?? "", img: looks.get(r.wishId ?? "")?.img ?? r.img ?? "", ...(looks.get(r.wishId ?? "")?.imgVariants ? { imgVariants: looks.get(r.wishId ?? "")?.imgVariants } : {}), kind: r.kind ?? "",
         name: r.name ?? "", no: r.no, occasion: r.occasion ?? "", occasionName: r.occasionName ?? "", pos: looks.get(r.wishId ?? "")?.img ? (looks.get(r.wishId ?? "")?.pos ?? "") : r.pos ?? "", reason: "", scope: who === "staff" ? "listed" : "public",
         screen: who === "staff" ? ((r.screen as Obj | null) ?? {}) : {}, style: r.style ?? "", styleName: r.styleName ?? "", title: r.title ?? "", wish: r.wish ?? "",
         mine: marks.has(r.id) ? { reaction: marks.get(r.id)?.reaction ?? null, saved: marks.get(r.id)?.saved ?? false } : {}, decided: who === "staff" ? (r.decided as Obj | null) : null, featured: !!r.no && r.no === today, own: false,
@@ -321,8 +321,8 @@ export class ShowingService implements OnModuleInit {
    * signed picture never goes stale in a row): the creator's handle when the publisher has the creator side and a handle, and the
    * cover as a short-lived signed read url (img) with its focus (pos). A cover that did not pass screening gives none (img stays "").
    */
-  private async looksOf(wishIds: string[]): Promise<Map<string, { handle: string | null; img: string; pos: string }>> {
-    const out = new Map<string, { handle: string | null; img: string; pos: string }>();
+  private async looksOf(wishIds: string[]): Promise<Map<string, { handle: string | null; img: string; pos: string; imgVariants?: SizedRead[] }>> {
+    const out = new Map<string, { handle: string | null; img: string; pos: string; imgVariants?: SizedRead[] }>();
     if (!wishIds.length) return out;
     const wishes = await this.db.wish.findMany({ where: { id: { in: wishIds } }, select: { id: true, content: true, account: { select: { handle: true, sides: true, erasedAt: true } } } });
     for (const w of wishes) {
@@ -331,14 +331,17 @@ export class ShowingService implements OnModuleInit {
       const cover = (w.content && typeof w.content === "object" && !Array.isArray(w.content) ? (w.content as Obj).cover : null) as Obj | null;
       const fileId = [cover?.coverId, cover?.photoId].find((x): x is string => typeof x === "string");
       let img = "";
+      let imgVariants: SizedRead[] | undefined;
       if (fileId) {
         try {
-          img = (await this.signed.signedRead({ fileId }, { type: "allowed" })).url;
+          const one = await this.signed.signedPhoto({ fileId }, { type: "allowed" });
+          img = one.read.url;
+          imgVariants = one.variants; // IM4
         } catch (e) {
           if (!(e instanceof AppError) || e.getStatus() !== 404) throw e;
         }
       }
-      out.set(w.id, { handle, img, pos: img ? "50% 50%" : "" });
+      out.set(w.id, { handle, img, pos: img ? "50% 50%" : "", ...(imgVariants ? { imgVariants } : {}) });
     }
     return out;
   }

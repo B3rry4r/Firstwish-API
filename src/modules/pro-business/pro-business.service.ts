@@ -7,7 +7,7 @@ import { decodeCursor, Page, toPage } from "../../common/pagination/cursor";
 import { isUuidV7 } from "../../common/ids/uuidv7";
 import { clientWishWire } from "./client-wish-wire";
 import { invoiceWire, InvoiceRow } from "./invoices.service";
-import { SignedUrlsService } from "../stored-files/signed-urls.service";
+import { SignedUrlsService, type SizedRead } from "../stored-files/signed-urls.service";
 import { PlanState, PlanView } from "./plan-view";
 
 /** E-27 and E-128 answer the plan state with the usage fields of ProUsage first; the extra fields are the plan, logins and Vault. */
@@ -92,14 +92,14 @@ export class ProBusinessService {
   }
 
   /** API-BASE-6: brand.logo is a file id; the read gives its signed address (ten minutes) beside it, like a wish's pictures. Only a logo that is ready and the business's own gets one. */
-  private async logoRead(brand: unknown, businessId: string): Promise<{ logoRead?: { url: string; expiresAt: string } }> {
+  private async logoRead(brand: unknown, businessId: string): Promise<{ logoRead?: { url: string; expiresAt: string; variants?: SizedRead[] } }> {
     const id = brand && typeof brand === "object" ? (brand as { logo?: unknown }).logo : undefined;
     if (typeof id !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) return {};
     try {
       // the file must be a brand logo of this business: a logo that names someone else's file gets no address
       if (!(await this.prisma.storedFile.findFirst({ where: { id, purpose: "brand_logo", businessId }, select: { id: true } }))) return {};
-      const s = await this.signed.signedRead({ fileId: id }, { type: "allowed" });
-      return { logoRead: { url: s.url, expiresAt: s.expiresAt } };
+      const s = await this.signed.signedPhoto({ fileId: id }, { type: "allowed" });
+      return { logoRead: { url: s.read.url, expiresAt: s.read.expiresAt, ...(s.variants ? { variants: s.variants } : {}) } }; // IM4
     } catch {
       return {};
     }

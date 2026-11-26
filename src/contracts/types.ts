@@ -267,7 +267,7 @@ export interface Account {
   /** HR3 (E-6, E-7): the business the person owns and every business they are a login of, owner first: id, name, role and the login's state */
   businesses?: Array<{ id: string; name: string; role: "owner" | "login"; state: "owner" | "invited" | "active" | "removed" }>;
   /** HW2 (E-6, E-7): the creator's profile picture, read through a signed address; null when there is none */
-  picture?: { fileId: string; url: string; expiresAt: Instant } | null;
+  picture?: { fileId: string; url: string; expiresAt: Instant; variants?: PictureSize[] } | null;
   ban?: Record<string, unknown> | null;
   bio?: string | null;
   business: string;
@@ -459,6 +459,8 @@ export interface StyleFile {
   reason: string | null;
   url: string | null;
   expiresAt: Instant | null;
+  /** IM4 (DEC-330): a picture's sizes (w320, w768, w1600); left out for a file that is not a picture */
+  variants?: PictureSize[];
   createdAt: Instant;
 }
 /** HW2: the files of the style a wish is played in (the style is approved), those that passed screening. */
@@ -623,6 +625,8 @@ export interface Creator {
   href: string;
   id: string;
   img?: string | null;
+  /** IM4 (DEC-330): the sizes of the profile picture that `img` addresses (w320, w768, w1600) */
+  imgVariants?: PictureSize[];
   line: string;
   name: string;
   own?: boolean | null;
@@ -1155,6 +1159,7 @@ export interface PersonDetail {
 
 /** PlayWish: view. a wish and its content for playing in the app */
 export interface PlayWish {
+  /** the wish's content with `files`: each {fileId, role, url, expiresAt, variants?}; a photo carries its sizes (IM4, DEC-330) */
   data: Record<string, unknown>;
   wish: { id: string; no: string | null; kind: string; occasion: string; styleSlug: string; receiverName: string | null };
 }
@@ -1325,6 +1330,8 @@ export interface PublishedWish {
   href: string;
   id: string;
   img: string;
+  /** IM4 (DEC-330): the sizes of the cover that `img` addresses (w320, w768, w1600); left out when there is no cover */
+  imgVariants?: PictureSize[];
   kind: string;
   listedAt: Instant;
   mine: { reaction?: "love" | "joy" | "clap" | "wow" | null; saved?: boolean };
@@ -1428,7 +1435,8 @@ export interface Report {
   dueAt: Instant;
   forName: string;
   from: string;
-  heldPhoto?: { url: string; expiresAt: Instant } | null;
+  /** IM4 (DEC-330): with the sizes of the photo (w320, w768, w1600) */
+  heldPhoto?: { url: string; expiresAt: Instant; variants?: PictureSize[] } | null;
   id: string;
   late: boolean;
   minutesLeft: number;
@@ -1471,6 +1479,8 @@ export interface RevealPlay {
   index?: unknown[] | null;
   no?: string | null;
   photos?: unknown[] | null;
+  /** IM4 (DEC-330): the sizes of each photo in the order of `photos`; null where a file is not a picture */
+  photoVariants?: Array<PictureSize[] | null> | null;
   state: string;
   style?: string | null;
 }
@@ -1557,12 +1567,13 @@ export interface Shoot {
   client: string;
   createdAt: Instant;
   date: DateOnly;
-  files: unknown[];
-  finals: unknown[];
+  /** IM4 (DEC-330): each file {id, name, size, url?, variants?}; a picture carries its sizes (w320, w768, w1600) */
+  files: Array<{ id: string; name: string; size: number; url?: string; variants?: PictureSize[] }>;
+  finals: Array<{ id: string; name: string; size: number; url?: string; variants?: PictureSize[] }>;
   finalsReveal?: Record<string, unknown> | null;
   hearts: unknown[];
   id: string;
-  proofs: unknown[];
+  proofs: Array<{ id: string; name: string; size: number; url?: string; variants?: PictureSize[] }>;
   proofsReveal?: Record<string, unknown> | null;
   set: unknown;
   shoot: string;
@@ -1874,6 +1885,8 @@ export interface VaultFile {
   name: string;
   size: number;
   url?: string | null;
+  /** IM4 (DEC-330): the sizes of a picture (w320, w768, w1600); left out for a file that is not a picture */
+  variants?: PictureSize[];
 }
 
 /** VaultPricing: view. Vault space prices read from the price book (DEC-96) */
@@ -2651,6 +2664,8 @@ export interface ConciergeOrderFile {
   createdAt: Instant;
   url?: string | null;
   expiresAt?: Instant | null;
+  /** IM4 (DEC-330): a photo's sizes (w320, w768, w1600); left out for a voice note */
+  variants?: PictureSize[];
 }
 /** IC7 (DEC-271): the order's own limits: at most this many photos and voice notes per order (not the buyer's Vault, not their wishes' limits) */
 export interface ConciergeOrderFiles {

@@ -8,7 +8,7 @@ import { toWireInstant } from "../../common/time/time";
 import { LinkLimits, READS_PER_MINUTE, UNLOCKS_PER_HOUR } from "../public-wishes/link-limits";
 import { UnlockTokens } from "../public-wishes/unlock-token";
 import { verify } from "../public-wishes/public-wishes.service";
-import { SignedUrlsService } from "../stored-files/signed-urls.service";
+import { SignedUrlsService, type SizedRead } from "../stored-files/signed-urls.service";
 import { fileName } from "./vault-shared";
 import { heartPositions, idsOf, MAX_HEARTS, SetName, syncHearts } from "./vault-shared";
 
@@ -90,6 +90,7 @@ export class RevealsPublicService {
     const r = await this.resolve(code);
     if (r.passcodeHash && !this.tokens.valid(v.token, r.linkId, r.passcodeHash)) return { state: "passcode" };
     const photos: string[] = [];
+    const photoVariants: (SizedRead[] | null)[] = [];
     const index: number[] = [];
     const downloads: { name: string; url: string }[] = [];
     // IB2: a download address for each FINAL file when the business left downloads on; a proof never has one
@@ -99,7 +100,9 @@ export class RevealsPublicService {
     const meta = new Map(found.map((f) => [f.id, f]));
     for (const [pos, id] of ids.entries()) {
       try {
-        photos.push((await this.reads.signedRead({ fileId: id }, { type: "allowed" })).url);
+        const one = await this.reads.signedPhoto({ fileId: id }, { type: "allowed" });
+        photos.push(one.read.url);
+        photoVariants.push(one.variants ?? null); // IM4: the sizes of each photo, in the order of `photos` (null where a file is not a picture)
         index.push(pos);
         if (giveDownloads) {
           const f = meta.get(id);
@@ -118,6 +121,7 @@ export class RevealsPublicService {
       style: typeof words.style === "string" ? words.style : "",
       date: toWireInstant(r.sentAt ?? this.clock.now()),
       photos,
+      photoVariants,
       index,
       content: words,
       business: r.business ?? "",

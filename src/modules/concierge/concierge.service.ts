@@ -190,9 +190,10 @@ export class ConciergeService implements OnModuleInit {
     for (const r of rows) {
       const item: ConciergeOrderFile = { id: r.id, kind: r.kind, contentType: r.contentType, bytes: r.bytes, seconds: r.seconds, status: r.status as ConciergeOrderFile["status"], inWish: r.inWish, createdAt: toWireInstant(r.createdAt) };
       if (signedReads) {
-        const read = r.status === "ready" ? await this.signed.signedRead({ fileId: r.id }, { type: "allowed" }).catch((e: unknown) => { if (e instanceof AppError && e.code === PHOTO_NOT_SHOWN_CODE) return null; throw e; }) : null; // IM1: a picture the server cannot open has no address
-        item.url = read?.url ?? null;
-        item.expiresAt = read?.expiresAt ?? null;
+        const read = r.status === "ready" ? await this.signed.signedPhoto({ fileId: r.id }, { type: "allowed" }).catch((e: unknown) => { if (e instanceof AppError && e.code === PHOTO_NOT_SHOWN_CODE) return null; throw e; }) : null; // IM1: a picture the server cannot open has no address
+        item.url = read?.read.url ?? null;
+        item.expiresAt = read?.read.expiresAt ?? null;
+        if (read?.variants) item.variants = read.variants; // IM4
       }
       items.push(item);
     }

@@ -222,3 +222,11 @@ every case (5 endings not reached at 360, base too). HIGH: first-day/gift "PEEL 
 close start on empty frames; pinboard gift ends closed. LOW and the gallery three.js error (on base too) to the sweep list. Verdict in
 verdicts/w20-VERDICT2.md. Started P2-W20 (round 2, the last; Sonnet; brief build/prompts/P2-W20.md).
 Running: R5F (builder); P2-W20 (patch).
+
+### 2026-11-26 · second chat · ccr-91b3ed11-fx445c
+Did: R5F handed back (r5f f4c8776, 2 commits, 26 code lines): x264 on one thread (no time cost); two real frames from an isolated script world
+before every shot; M3 would not fail here (8 pairs at load 18 to 23), r5 spec 37 of 37 three times under load; studio, reel, owambe, polaroid 0
+differing; letter's first pair 60 of 160 differ, 5 later pairs 0 (cause not found); the R6 Studio proof done through two processes (48 s;
+h264 1080x1920 30 fps 14.57 s; other account 404); the polaroid 404 not reproduced: the read is right (404 bad token or wish not live, 410
+after). Per video second: owambe 35 to 38 s, reel 11 to 12, letter 9.7, polaroid 8.5. Started VERIFY-R5F (T2, Sonnet).
+Running: P2-W20 (patch); VERIFY-R5F (verifier).

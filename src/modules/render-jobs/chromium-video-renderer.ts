@@ -834,7 +834,27 @@ export class ChromiumVideoRenderer extends VideoRenderer {
         }
         return segs[i];
       };
-      const shoot = async (): Promise<string> => (await guard(cdp.send("Page.captureScreenshot", { format: "jpeg", quality: 90, optimizeForSpeed: true }), "a frame never came")).data;
+      /* R5F: a shot taken at once after a step can show the compositor's older picture when the machine is busy (a text set in a frame callback, drawn one frame late).
+         The page's own frame callback is the stepped clock's, so a REAL one is asked for from a separate script world of the same page (its own window, the native
+         callback, the same document): two real frames are drawn before every shot, never longer than 400 ms. */
+      let world = 0;
+      try {
+        const tree = (await cdp.send("Page.getFrameTree") as unknown) as { frameTree: { frame: { id: string } } };
+        world = ((await cdp.send("Page.createIsolatedWorld", { frameId: tree.frameTree.frame.id, worldName: "fw-frames" }) as unknown) as { executionContextId: number }).executionContextId;
+      } catch {
+        world = 0;
+      }
+      const realFrames = async (): Promise<void> => {
+        if (!world) return;
+        await guard(
+          cdp.send("Runtime.evaluate", { contextId: world, awaitPromise: true, expression: `new Promise((res) => { const t = setTimeout(res, 400); requestAnimationFrame(() => requestAnimationFrame(() => { clearTimeout(t); res(); })); })` }),
+          "the page did not draw a frame",
+        );
+      };
+      const shoot = async (): Promise<string> => {
+        await realFrames();
+        return (await guard(cdp.send("Page.captureScreenshot", { format: "jpeg", quality: 90, optimizeForSpeed: true }), "a frame never came")).data;
+      };
       const frameOf = async (i: number, data?: string): Promise<void> => {
         bad();
         const shot = data ?? (await shoot());
@@ -934,7 +954,7 @@ export class ChromiumVideoRenderer extends VideoRenderer {
       "-hide_banner", "-loglevel", "error", "-y", "-f", "image2pipe", "-framerate", String(fps), "-c:v", "mjpeg", "-i", "-",
       "-vf", "scale=trunc(iw/2)*2:trunc(ih/2)*2:flags=bicubic,format=yuv420p", "-r", String(fps),
       "-c:v", "libx264", "-profile:v", "high", "-preset", this.o.preset, "-crf", String(this.o.crf), "-maxrate", `${this.o.maxKbps}k`, "-bufsize", `${this.o.maxKbps * 2}k`,
-      "-threads", "2", "-g", String(fps * 2), "-pix_fmt", "yuv420p", "-an", "-f", "mpegts", path,
+      "-threads", "1", "-x264-params", "threads=1:lookahead-threads=1:sliced-threads=0", "-g", String(fps * 2), "-pix_fmt", "yuv420p", "-an", "-f", "mpegts", path,
     ];
     const p = spawn(this.ffmpegPath, args, { stdio: ["pipe", "ignore", "pipe"], env: childEnv({}) });
     procs.add(p);

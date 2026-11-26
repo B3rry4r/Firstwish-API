@@ -214,3 +214,11 @@ part (segments gone, frame 1 near-black with the outline name); the counter chec
 wrapped except first-day/scratch "1 / 2" (source not found); sweep 95 of 95 done, 0 controls, 0 action words; receivers 22 of 30 views same,
 1 box-only, 5 not reached (base too); gallery/default throws "e is not a function" on base and branch. Started VERIFY2-W20 (Sonnet, T2 re-check).
 Running: R5F (builder); VERIFY2-W20 (verifier).
+
+### 2026-11-26 · second chat · ccr-91b3ed11-fx445c
+Did: VERIFY2-W20: FIX FIRST. Confirmed H1, H2 (gold-card), H3 end frames, H4 in part; checks green, owned files only; receivers identical in
+every case (5 endings not reached at 360, base too). HIGH: first-day/gift "PEEL THE CORNER" on a closed gift; first-day/scratch "1 / 2"
+(edit.ts:168, cards.tsx:424) and unscratched foil; tailored/gift progress ruler. MED: boarding-pass empty header cells; contact-sheet and lookbook
+close start on empty frames; pinboard gift ends closed. LOW and the gallery three.js error (on base too) to the sweep list. Verdict in
+verdicts/w20-VERDICT2.md. Started P2-W20 (round 2, the last; Sonnet; brief build/prompts/P2-W20.md).
+Running: R5F (builder); P2-W20 (patch).

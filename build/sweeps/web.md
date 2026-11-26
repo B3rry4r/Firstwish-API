@@ -118,3 +118,5 @@
 - R5 second check (24 Nov) LOW: the clock shim throws inside a sandboxed iframe (it fails the render: right today, since the render page draws none).
 - W20 verify: boarding-pass (both endings) and polaroid-table envelope cannot be driven to the ending at 360 by r4rc.mjs, on base too; cause unknown (tool or style).
 - W20 verify: scrapbook/candle at 1440 shows the page-1 hint "Swipe to turn" in some runs only (Scene.tsx:794): a timing flake on base and branch.
+- W20 re-check LOW: midnight/confetti's line "Happy birthd" is cut mid-reveal in the last recorded frame.
+- W20 re-check: gallery throws "e is not a function" (vendored three.js WebGLState.texSubImage2D, from the gallery's texture upload) 14 to 18 times per receiver visit, on base too; controls work. Its own small task (G1): find what the upload passes and whether a photo is missing for the receiver.

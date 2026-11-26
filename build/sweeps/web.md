@@ -123,3 +123,5 @@
 - W20 last re-check LOW: boarding-pass middle frames show "01 THE LETTER / 1A" flip cells (a stop number and a seat: words of the pass, kept unless the owner says they read as a counter).
 - W20 last re-check LOW: the opening frame of first-day and tailored under the render page is near-black (the cover before its entrance).
 - W20: the receiver press script used by P2-W20 was never committed; scripts/live/flows/r4rc.mjs has no press step.
+- W22 verify LOW: last recorded frames cut a word: owambe candle, confetti and names; runway close ("DRIVER" cut at its foot); a faint "DRIVE" behind the harvest-light slats. The sweep does not read cut words.
+- W22 verify: cinema, harvest-light (candle) and screening at 360 are not driven to the ending by r4rc.mjs, on base too.

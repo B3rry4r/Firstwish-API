@@ -272,3 +272,11 @@ again once; the log line counts waits ended by the cap; a spec. L3 done. Ruling 
 (VERIFY2-R5F), then merge on a green full suite.
 Started VERIFY2-R5F (Sonnet).
 Running: VERIFY-W22 (verifier); VERIFY2-R5F (verifier).
+
+### 2026-11-26 · second chat · ccr-91b3ed11-fx445c
+Did: VERIFY-W22: MERGE (17 of 17 cases clean by eye; midnight's line whole; receivers same, presses same, bars still drawn for receivers; checks
+green; 8 files only). Lows (cut words in owambe, runway, harvest-light last frames) to the sweep list. Verdict in verdicts/w22-VERDICT.md.
+MERGED W22 into the web: dae0324 (wm4: all EXIT 0). w22 removed.
+Started WEB-10D (T1, Sonnet; brief build/prompts/WEB-10D.md; web dae0324, API below): screens use the server's sized photos; pickers take only
+the kinds the server takes.
+Running: VERIFY2-R5F (verifier); WEB-10D (builder).

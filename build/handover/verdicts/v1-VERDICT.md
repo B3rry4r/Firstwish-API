@@ -1,0 +1,12 @@
+VERDICT V1 (verifier): MERGE (test-only change; two page defects and three test weaknesses below, none blocks the flow file)
+Run on web ba469f6 / API 1b4538f, built web, two API processes, real Chromium + ffmpeg.
+1. Flow main: 42 PASS, 2 FAIL (same 2 as the builder's log). House 390 and Studio 1440: ask, pay, making>ready in 53 s, MP4 h264 1080x1920 30/1 14.57 s; other account read 404 / ask 404; two kills -> failed|2 -> "Ask again" -> ready, payments=1; refund mid-render: words, no Download. Flow norender: 3/3 PASS only when started as RENDER_ADAPTER=chromium without RENDER_WEB_ORIGIN/RENDER_TOKEN_SECRET (video maker OFF).
+2. Attacks: two simultaneous payment starts -> 201 + 409, 1 payment row; webhook x3 + late replay -> 200s, 1 succeeded, 1 render_job; 3 simultaneous asks -> 1 job. Other account: GET/POST video 404. Download address: expires in 600 s; at +10 min 404; tampered signature, extended expires, other file path: 404. Signature ticket (probe): sheet "Included with your signature", one button "Send me the video", no price, ends ready.
+3. tsc 0 errors; gates 0 fail (289 accepted); lint 0 errors, 770 warnings (<= 863); diff is the flow file only.
+Findings:
+- F1 (page, UA-725 item 4): "sheet close" (components/app/ui.tsx:73 .fa-sheet-x) has no hover or active change; wish row "Take it as a video" (app/app/wishes/[id]/page.tsx) has no hover or focus change. The flow FAILS on both (exit 1); the builder knew. Not a server fault.
+- F2 (flow doc): v1-video.mjs:3-5 says norender = "started without RENDER_ADAPTER"; on PROVIDERS=standin that gives the stand-in maker (src/modules/render-jobs/video-binding.ts:17), video offered, 3 FAIL. It is the "chromium but cannot work" case that passes.
+- F3 (weak checks): v1-video.mjs "4 making: no side scroll" is T(..., true) and asserts nothing; the 14.57 s length is printed, never asserted; "another account" page text is read after gotoWish(...).catch(() => {}), so an empty page would pass that part (its two 404 checks are real). No double-tap, replay or Signature case in the flow (I ran them by hand).
+- F4: startWorker hardcodes ports 5322/5323 (v1-video.mjs:37); a second stack clashes. The job read says seconds:60 while the file is 14.57 s (server job field, not checked by the flow).
+- Download address is a bearer link (anyone holding it, no token, gets the file until it ends); owner-only holds at issuing (404 for others). Matches IK4a as built.
+NOT run: npm run lint --fix, test:client, check:css, full-width visual pairs, 360 on live flow beyond side().

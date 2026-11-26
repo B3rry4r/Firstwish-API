@@ -128,3 +128,5 @@
 - WEB-10D: /w at 390 and up draws the stage's w1600 copy where w768 would do (one fetch per photo, about 3.4 MB for three photos); pics.ts stage() could ask by the drawn box.
 - G1 verify LOW: gallery under the render page still draws the bottom nav plate and the chapter label, cut ("Swe...", "The l...") (Scene.tsx:389-391); base the same; r4 passes it.
 - Live test (lead-drive, 26 Nov): W14B support and concierge at 360: the search placeholder is cut ("Subject, name, email, wish" needs 202 px, room 154 px; "Order number, sender, name" 217 px).
+- V1 verify: v1-video.mjs's header (lines 3-5) says "no RENDER_ADAPTER" for the no-recorder case, but under PROVIDERS=standin that binds the stand-in maker (video-binding.ts:17); the case needs RENDER_ADAPTER=chromium with no RENDER_WEB_ORIGIN. Weak checks: "4 making: no side scroll" asserts nothing; the 14.57 s length is printed, not asserted; the other-account text is read after a swallowed goto error; startWorker hardcodes ports 5322/5323 (line 37).
+- V1 verify INFO: the video download address is a bearer link for its 10 minutes (anyone holding it can fetch it; owner-only holds at issuing), as IK4a set it.

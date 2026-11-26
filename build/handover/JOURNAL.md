@@ -382,3 +382,10 @@ Did: W24 handed back (w24 27ffd4e, 2 css files, +5 -1, tokens only). VERIFY-W24:
 three sheets incl. the video sheet; rows focus-visible by Tab on four rows incl. "Take it as a video"; no shift, no overflow; css, gates, build).
 MERGED W24 into the web (wm8 all EXIT 0). w24 removed.
 Running: VERIFY-V1 (verifier).
+
+### 2026-11-26 · second chat · ccr-91b3ed11-fx445c
+Did: VERIFY-V1: MERGE (flow re-run: house style and Studio made in 53 s, MP4 h264 1080x1920 30 fps 14.57 s; other account 404; two kills give
+"Ask again" with one payment; a refund mid-render shows its words; attacks: two payment starts at once 201 + 409 and one payment row, webhook
+replayed 4 times and 3 asks at once give 1 payment and 1 render; the download expires at 600 s and refuses a tampered signature, a longer expiry
+and another file's path). Its 2 FAILs were the two states W24 has since merged. Lows to the sweep list.
+MERGED V1 into the web (wm9 all EXIT 0). UA-725 set to done (proof: v1-video.mjs and verdicts/v1-VERDICT.md).

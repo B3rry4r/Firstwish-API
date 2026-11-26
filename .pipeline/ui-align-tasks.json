@@ -9390,7 +9390,8 @@
         "app/app/wishes/[id]/page.tsx:93"
       ],
       "change": "replace: portrait video render + delivery job",
-      "status": "open"
+      "status": "done",
+      "proof": "web scripts/live/flows/v1-video.mjs (V1, verified: build/handover/verdicts/v1-VERDICT.md); the real recorder merged in R5, R6, R5F"
     },
     {
       "id": "UA-726",

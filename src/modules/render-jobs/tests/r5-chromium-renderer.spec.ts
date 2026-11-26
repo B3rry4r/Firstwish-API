@@ -103,7 +103,7 @@ const pages: Record<string, (host: string, token: string) => string> = {
   pichang: () => picPage(-1),
 };
 const h1 = (ms: number): string =>
-  page("", play(500, false, `Promise.all([new Promise((r) => setTimeout(r, 0)), new Promise((r) => requestAnimationFrame((ts) => { window.__raf0 = ts; r(); })), fetch("/asset.txt?ms=${ms}")])`,
+  page("", play(500, false, `Promise.all([new Promise((r) => setTimeout(r, 0)), new Promise((r) => { requestAnimationFrame((ts) => { window.__raf0 = ts; r(); }); window.__vt.frame(); }), fetch("/asset.txt?ms=${ms}")])`,
     `if (performance.now() !== 0 || window.__raf0 !== 0) R.error = "virtual time moved before ready: " + performance.now() + " ms, first frame callback at " + window.__raf0;`));
 /** a page that says ready at once and shows one full-size picture, which the stand-in web serves after `ms` real milliseconds (-1: never finishes) */
 const picPage = (ms: number): string =>
@@ -578,6 +578,18 @@ real(`R5 round 1 on a stand-in web page${WHY}`, () => {
     expect(err.message).toBe("the render page navigated away");
     expect(await mine()).toEqual([]);
   }, 60_000);
+
+  it("R5F M2: a frame wait that hits its cap is counted in the render's log line (the cap set to 1 ms here; 400 ms is the default); a quiet page counts none and names no remade script world", async () => {
+    const b = make({ frameWaitCapMs: 1 });
+    await b.r.render(req("good-bbbbbbbbbbbb", { seconds: 60 }));
+    expect(b.r.lastRun?.frameWaitCaps).toBeGreaterThanOrEqual(1);
+    expect(b.logs.join("\n")).toMatch(/[1-9]\d* frame wait\(s\) hit the 400 ms cap/);
+    const c = make();
+    await c.r.render(req("good-aaaaaaaaaaaa", { seconds: 60 }));
+    expect(c.logs.join("\n")).toMatch(/\b\d+ frame wait\(s\) hit the 400 ms cap/);
+    expect(c.r.lastRun?.worldsRemade).toBe(0);
+    expect(c.logs.join("\n")).not.toMatch(/script world/);
+  }, 120_000);
 
   it("L7: an ffmpeg that dies while flushing a scene fails the render at once, not at the end of play", async () => {
     const wrap = `${tmpdir()}/pr5-ffmpeg-wrap.sh`;

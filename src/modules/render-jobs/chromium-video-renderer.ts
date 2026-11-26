@@ -84,6 +84,8 @@ export interface ChromiumRendererOptions {
   /** How long to wait for the page's ready (real milliseconds), and for any one frame to come back. */
   readyTimeoutMs?: number;
   frameTimeoutMs?: number;
+  /** R5F: the longest wait for two real frames before a shot, in ms (default 400); a spec sets it small to count the waits that end by the cap. */
+  frameWaitCapMs?: number;
   /** The longest a picture, font, style sheet or clip may stay unfinished (real milliseconds; default 30 s): then the render FAILS in words, never a video without it. */
   assetTimeoutMs?: number;
   /** A proof script or a spec learns each child process id as it starts (to sample its memory, or to kill it). Never a token. */
@@ -106,6 +108,9 @@ export interface ChromiumRunStats {
   totalMs: number;
   /** What the clock self-check cost, in real milliseconds (fetch excluded). */
   clockCheckMs: number;
+  /** R5F M2: how many times the 400 ms wait for two real frames ended by its cap (a frame that did not come in time), and how many times the script world was made again. */
+  frameWaitCaps: number;
+  worldsRemade: number;
 }
 
 const META_HOSTS = ["169.254.169.254", "metadata.google.internal", "metadata", "fd00:ec2::254", "100.100.100.200"];
@@ -471,7 +476,7 @@ function loadPlaywright(explicit?: string): PwModule {
 class RenderStop extends Error {}
 
 export class ChromiumVideoRenderer extends VideoRenderer {
-  private readonly o: Required<Pick<ChromiumRendererOptions, "fps" | "crf" | "maxKbps" | "preset" | "readyTimeoutMs" | "frameTimeoutMs" | "assetTimeoutMs">> & ChromiumRendererOptions;
+  private readonly o: Required<Pick<ChromiumRendererOptions, "fps" | "crf" | "maxKbps" | "preset" | "readyTimeoutMs" | "frameTimeoutMs" | "frameWaitCapMs" | "assetTimeoutMs">> & ChromiumRendererOptions;
   private readonly log: Pick<Logger, "log" | "warn" | "error">;
   /** The numbers of the newest finished (or failed) run, for a proof script and a spec; never holds the token. */
   lastRun: ChromiumRunStats | null = null;
@@ -483,7 +488,7 @@ export class ChromiumVideoRenderer extends VideoRenderer {
 
   constructor(options: ChromiumRendererOptions) {
     super();
-    this.o = { fps: 30, crf: 23, maxKbps: 1800, preset: "veryfast", readyTimeoutMs: 150_000, frameTimeoutMs: 60_000, assetTimeoutMs: 30_000, ...options };
+    this.o = { fps: 30, crf: 23, maxKbps: 1800, preset: "veryfast", readyTimeoutMs: 150_000, frameTimeoutMs: 60_000, frameWaitCapMs: 400, assetTimeoutMs: 30_000, ...options };
     this.log = options.logger ?? new Logger("chromium-video-renderer");
     this.clock = options.clock ?? { now: () => new Date() }; // type-only import: the H3 spec transpiles this file alone, so no runtime import of the port
   }
@@ -649,7 +654,7 @@ export class ChromiumVideoRenderer extends VideoRenderer {
     let blocked = 0;
     let allowedRequests = 0;
     const allowed = this.allowed;
-    const stats: ChromiumRunStats = { jobId, frames: 0, keptFrames: 0, scenes: [], blocked: 0, blockedHosts: [], browserOwnCalls: 0, allowedRequests: 0, readyMs: 0, totalMs: 0, clockCheckMs: 0 };
+    const stats: ChromiumRunStats = { jobId, frames: 0, keptFrames: 0, scenes: [], blocked: 0, blockedHosts: [], browserOwnCalls: 0, allowedRequests: 0, readyMs: 0, totalMs: 0, clockCheckMs: 0, frameWaitCaps: 0, worldsRemade: 0 };
     const check = (): void => {
       if (stopped || signal?.aborted) throw new RenderStop("render aborted");
     };
@@ -679,7 +684,7 @@ export class ChromiumVideoRenderer extends VideoRenderer {
       const args = [
         "--no-first-run", "--disable-extensions", "--disable-sync", "--disable-default-apps", "--disable-domain-reliability", "--metrics-recording-only",
         "--safebrowsing-disable-auto-update", "--disable-component-update", "--force-color-profile=srgb",
-        "--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist", "--autoplay-policy=no-user-gesture-required",
+        "--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--disable-threaded-animation", "--ignore-gpu-blocklist", "--autoplay-policy=no-user-gesture-required",
         `--host-resolver-rules=${hostRules}`, `--window-size=${input.width},${input.height}`, "--no-pings",
         "--webrtc-ip-handling-policy=disable_non_proxied_udp", "--disable-quic",
       ];
@@ -834,7 +839,41 @@ export class ChromiumVideoRenderer extends VideoRenderer {
         }
         return segs[i];
       };
-      const shoot = async (): Promise<string> => (await guard(cdp.send("Page.captureScreenshot", { format: "jpeg", quality: 90, optimizeForSpeed: true }), "a frame never came")).data;
+      /* R5F: a shot taken at once after a step can show the compositor's older picture when the machine is busy (a text set in a frame callback, drawn one frame late).
+         The page's own frame callback is the stepped clock's, so a REAL one is asked for from a separate script world of the same page (its own window, the native
+         callback, the same document): two real frames are drawn before every shot, never longer than 400 ms. */
+      let world = 0;
+      const makeWorld = async (): Promise<void> => {
+        try {
+          const tree = (await cdp.send("Page.getFrameTree") as unknown) as { frameTree: { frame: { id: string } } };
+          world = ((await cdp.send("Page.createIsolatedWorld", { frameId: tree.frameTree.frame.id, worldName: "fw-frames" }) as unknown) as { executionContextId: number }).executionContextId;
+        } catch {
+          world = 0;
+        }
+      };
+      await makeWorld();
+      /* the wait says 1 when its 400 ms cap ended it (no frame was drawn in time), 0 when two frames came: the count is in the render's log line (R5F M2) */
+      const twoFrames = `new Promise((res) => { const t = setTimeout(() => res(1), ${this.o.frameWaitCapMs}); requestAnimationFrame(() => requestAnimationFrame(() => { clearTimeout(t); res(0); })); })`;
+      const inWorld = (): Promise<unknown> => guard(cdp.send("Runtime.evaluate", { contextId: world, awaitPromise: true, returnByValue: true, expression: twoFrames }), "the page did not draw a frame");
+      const realFrames = async (): Promise<void> => {
+        if (!world) return;
+        let r: unknown;
+        try {
+          r = await inWorld();
+        } catch (e) {
+          /* the page was loaded again (a service restart of the web mid-render): its world is gone, so make it again and ask once more; any other error is the render's */
+          if (!/Cannot find context/i.test(e instanceof Error ? e.message : String(e))) throw e;
+          await makeWorld();
+          stats.worldsRemade++;
+          if (!world) return;
+          r = await inWorld();
+        }
+        if ((r as { result?: { value?: unknown } } | undefined)?.result?.value === 1) stats.frameWaitCaps++;
+      };
+      const shoot = async (): Promise<string> => {
+        await realFrames();
+        return (await guard(cdp.send("Page.captureScreenshot", { format: "jpeg", quality: 90, optimizeForSpeed: true }), "a frame never came")).data;
+      };
       const frameOf = async (i: number, data?: string): Promise<void> => {
         bad();
         const shot = data ?? (await shoot());
@@ -891,7 +930,7 @@ export class ChromiumVideoRenderer extends VideoRenderer {
       stats.allowedRequests = allowedRequests;
       stats.totalMs = Math.round(performance.now() - started);
       this.lastRun = stats;
-      this.log.log(mask(`render ${jobId}: ${stats.keptFrames} of ${stats.frames} frames kept, ${stats.scenes.length} scenes, ${size} bytes, ready in ${stats.readyMs} ms, ${stats.totalMs} ms in all, ${blocked} blocked request(s)${blocked ? ` (${stats.blockedHosts.join(", ")})` : ""}`));
+      this.log.log(mask(`render ${jobId}: ${stats.keptFrames} of ${stats.frames} frames kept, ${stats.scenes.length} scenes, ${size} bytes, ready in ${stats.readyMs} ms, ${stats.totalMs} ms in all, ${blocked} blocked request(s), ${stats.frameWaitCaps} frame wait(s) hit the 400 ms cap${stats.worldsRemade ? `, ${stats.worldsRemade} script world(s) made again` : ""}${blocked ? ` (${stats.blockedHosts.join(", ")})` : ""}`));
       return { path: finalPath, contentType: "video/mp4", bytes: size, videoMs: Math.round((stats.keptFrames / this.o.fps) * 1000) };
     } catch (e) {
       stats.blocked = blocked;
@@ -934,7 +973,7 @@ export class ChromiumVideoRenderer extends VideoRenderer {
       "-hide_banner", "-loglevel", "error", "-y", "-f", "image2pipe", "-framerate", String(fps), "-c:v", "mjpeg", "-i", "-",
       "-vf", "scale=trunc(iw/2)*2:trunc(ih/2)*2:flags=bicubic,format=yuv420p", "-r", String(fps),
       "-c:v", "libx264", "-profile:v", "high", "-preset", this.o.preset, "-crf", String(this.o.crf), "-maxrate", `${this.o.maxKbps}k`, "-bufsize", `${this.o.maxKbps * 2}k`,
-      "-threads", "2", "-g", String(fps * 2), "-pix_fmt", "yuv420p", "-an", "-f", "mpegts", path,
+      "-threads", "1", "-x264-params", "threads=1:lookahead-threads=1:sliced-threads=0", "-g", String(fps * 2), "-pix_fmt", "yuv420p", "-an", "-f", "mpegts", path,
     ];
     const p = spawn(this.ffmpegPath, args, { stdio: ["pipe", "ignore", "pipe"], env: childEnv({}) });
     procs.add(p);

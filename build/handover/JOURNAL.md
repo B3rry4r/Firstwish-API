@@ -230,3 +230,13 @@ differing; letter's first pair 60 of 160 differ, 5 later pairs 0 (cause not foun
 h264 1080x1920 30 fps 14.57 s; other account 404); the polaroid 404 not reproduced: the read is right (404 bad token or wish not live, 410
 after). Per video second: owambe 35 to 38 s, reel 11 to 12, letter 9.7, polaroid 8.5. Started VERIFY-R5F (T2, Sonnet).
 Running: P2-W20 (patch); VERIFY-R5F (verifier).
+
+### 2026-11-26 · second chat · ccr-91b3ed11-fx445c
+Did: VERIFY-R5F: FIX FIRST. HIGH: letter from a COLD web differs (11 pairs: 6 same, 3 with 60 of 160, 2 with 160 of 160; always the first
+recording after `next start`; frames 1 to 25, the card higher and turned; fonts and images settled): an entrance on real time at first load,
+cause not pinned. MED: realFrames' isolated world is not made again after a reload ("Cannot find context": the render fails with words) and its
+400 ms cap is silent. LOW: numbers.md points at the hand-back. Confirmed: npm ci alone loads playwright-core in the worker; the Studio proof (52 s,
+h264 1080x1920 30 fps 14.57 s, other account 404); no token in any log; all checks and the render-jobs folder (122 tests). Verdict in
+verdicts/r5f-VERDICT.md. Started P-R5F (round 1, Sonnet; brief build/prompts/P-R5F.md): API r5f plus a new web branch w21 for
+components/render/** and the shim if the cause is there (style files stay with P2-W20).
+Running: P2-W20 (patch); P-R5F (patch).

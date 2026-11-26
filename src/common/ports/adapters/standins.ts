@@ -3,6 +3,7 @@ import { appendFileSync, chmodSync, closeSync, existsSync, fstatSync, mkdirSync,
 import { join } from "node:path";
 import { EnvError } from "../../env/env";
 import { CleanInput, CleanResult, ImageSizesPort, MAX_SOURCE_BYTES, ResizeInput } from "../image-sizes.port";
+import { SharpImageSizes } from "./sharp-image-sizes.adapter";
 import { ClipLengthInput, ClipLengthPort } from "../clip-length.port";
 import { MAX_MEDIA_BYTES, MediaCleanInput, MediaCleanPort, MediaCleanResult } from "../media-clean.port";
 import { containerLengthMs } from "./clip-container";
@@ -397,9 +398,21 @@ export class StandinImageSizes extends ImageSizesPort {
     const bytes = input.source ?? (this.storage ? await this.storage.readObject(input.sourceKey, MAX_SOURCE_BYTES) : null);
     return { bytes: bytes?.length ?? 0, sha256: bytes ? createHash("sha256").update(bytes).digest("hex") : null, unchanged: true };
   }
-  resize(input: ResizeInput): Promise<void> {
+  /**
+   * Records the request, and (when it has storage) writes the sized copy at targetKey, as the real adapter does: the job marks the size as made, so a signed read
+   * of it must find bytes (a stack whose sized urls answered 404 broke every photo the website drew at a size). The copy is made by the real sizing when the
+   * source is a picture, else it is the source as it is.
+   */
+  async resize(input: ResizeInput): Promise<void> {
     this.made.push(input);
-    return Promise.resolve();
+    if (!this.storage) return;
+    const source = input.source ?? (await this.storage.readObject(input.sourceKey, MAX_SOURCE_BYTES));
+    if (!source) return;
+    try {
+      await new SharpImageSizes(this.storage).resize({ ...input, source });
+    } catch {
+      await this.storage.putObject(input.targetKey, source, input.contentType);
+    }
   }
   /** FB4: a stand-in calls nothing. */
   ping(): Promise<PortPing> {

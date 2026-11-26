@@ -318,3 +318,12 @@ the state at the stop. R9 and Phase 8 need the owner's keys and server.
 ### 2026-11-26 · second chat · ccr-91b3ed11-fx445c
 Started G1 (T1, Sonnet; brief build/prompts/G1.md; web 8ec7682): the gallery's receiver visit throws "e is not a function" from three.js.
 Running: G1 (builder). Next: the whole live test (lead-drive, paths for this machine) beside it.
+
+### 2026-11-26 · second chat · ccr-91b3ed11-fx445c
+Did: G1 handed back (g1 0ff0835, 2 gallery files, +7 -3): the photo Image had no crossOrigin (gallery/room.ts ~:93), so its canvas was
+tainted and three.js's texSubImage2D threw (the minifier's `e` hid the real words); now crossOrigin "anonymous" and a dark blank on error;
+the gallery's progress bar is in Pips. Started VERIFY-G1 (T1, Sonnet).
+The whole live test (lead-drive, this machine's paths; web 8ec7682, API 2cd191c): the first run was stopped by the 30-minute limit on a
+background job after 1,156 PASS; its only real FAILs: W14B support and concierge at 360, the search placeholder is cut ("Subject, name, email,
+wish" needs 202 px, room 154 px). The four W9 FAILs are the cut. Restarted with a two-hour limit.
+Running: VERIFY-G1 (verifier); lead-drive (the lead's live test).

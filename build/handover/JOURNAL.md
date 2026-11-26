@@ -207,3 +207,10 @@ Running: P-W20 (patch).
 Started R5F, the recorder follow-up (T2, Sonnet, brief build/prompts/R5F.md; API d4f47e7, web 3c9b8e6): a deterministic encode, M3 under load,
 five kinds of wish repeat frame for frame, the R6 Studio proof, the polaroid "404 This render is not available".
 Running: P-W20 (patch); R5F (builder).
+
+### 2026-11-26 · second chat · ccr-91b3ed11-fx445c
+Did: P-W20 handed back (w20 05940e7, round 1, 22 files): H2, H3, H4, M1 closed (S catches planted plates in 94 of 95, 0 false flags); H1 in
+part (segments gone, frame 1 near-black with the outline name); the counter check now reads per element and caught 13 more counters, all
+wrapped except first-day/scratch "1 / 2" (source not found); sweep 95 of 95 done, 0 controls, 0 action words; receivers 22 of 30 views same,
+1 box-only, 5 not reached (base too); gallery/default throws "e is not a function" on base and branch. Started VERIFY2-W20 (Sonnet, T2 re-check).
+Running: R5F (builder); VERIFY2-W20 (verifier).

@@ -389,3 +389,18 @@ Did: VERIFY-V1: MERGE (flow re-run: house style and Studio made in 53 s, MP4 h26
 replayed 4 times and 3 asks at once give 1 payment and 1 render; the download expires at 600 s and refuses a tampered signature, a longer expiry
 and another file's path). Its 2 FAILs were the two states W24 has since merged. Lows to the sweep list.
 MERGED V1 into the web (wm9 all EXIT 0). UA-725 set to done (proof: v1-video.mjs and verdicts/v1-VERDICT.md).
+
+### 2026-11-26 · second chat · ccr-91b3ed11-fx445c · State at the stop
+Heads: server ccr-91b3ed11-fx445c (this commit; code head bdc3cb6 + records), web ccr-91b3ed11-fx445c a3552e4. Both pushed. No agent running; no
+unmerged branch (nothing to save under build/handover/branches/); worktrees, stacks and old Chromium temp folders cleared.
+Done this chat: R5, R6, R7 (check), R8, P7A (check), R4C, W19, W20, W22, R5F (the recorder repeats frame for frame, the Studio proof), WEB-10D and
+P10D-API (sized photos; the stand-in sizer), G1 (gallery photos for receivers), API-10E and WEB-10E (IM4: every photo read carries its sizes),
+W23, W24, V1 (the website's video flow end to end; UA-725 done). Last full server suite m56: 1,788 of 1,788. Last whole live test: 2,552 of
+2,556 (its four FAILs since closed by W23 and W24; not re-run as a whole after them).
+Rulings this chat: IK6i to IK6m, IK3b, IK8b to IK8f, IM4, CP1 (all "Default (lead), owner may override"; END of build/rulings-phase3.md).
+Left for the agents: the sweep lists (build/sweeps/api.md, web.md: lows only, e.g. cut words in a few last frames, the rare cold-start recorder
+difference, the leftovers sweep and Chromium temp folders); a whole live test re-run.
+Left for the owner: Paystack keys and the server (UA-149, UA-715, UA-716; Phase 8; R9: the video stays unsold until then, IK3); which real reveal
+replaces the sample link (UA-875); what makes a style "featured" (UA-896); the style lab (O1), 34 gate-wrong entries (O2), the sample link (O3),
+the 248 colours in the style packages (O4); owambe takes about 36 s of work per second of video (a 60 s owambe about 36 minutes).
+Next: the sweep bundles (one per repo) and a whole live test, or Phase 8 when the owner's keys and server are here.

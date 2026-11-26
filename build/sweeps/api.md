@@ -168,3 +168,4 @@
 - (IK6k) r5-chromium-renderer.spec.ts M3 fails under load (16 of ~90 frames differ at load 8 to 10): for the recorder follow-up after W19.
 - (R7 L1) erase nulls RenderJob.outputFileId but keeps the row (file-jobs.ts:319, wish-lifecycle.service.ts:403); the plan says the row goes too (no letter text in it).
 - (R7 L2) a refunded video's file stays stored until the wish or account is erased; an address issued before the refund serves up to 10 minutes.
+- IK6l: the recorder's first recording after a web start can differ in every frame from the next one (1 of 16 cold letter pairs; one text line 1/64 px wider). Invisible; a candidate fix: the worker opens the render page once at its start.

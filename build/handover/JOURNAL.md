@@ -263,3 +263,12 @@ Did: W22 handed back (w22 20d360e, 8 files, +52 -32): a Pips wrap on the bar in 
 midnight/confetti's last line whole; 17 of 17 cases clean (16 flagged on the head); 95 of 95 done, 94 clean, 1 false (reel letterbox); receivers
 same, bars still drawn for receivers. Ruling IK8f: midnight's corner clock stays. Started VERIFY-W22 (T1, Sonnet).
 Running: P-R5F (patch); VERIFY-W22 (verifier).
+
+### 2026-11-26 · second chat · ccr-91b3ed11-fx445c
+Did: P-R5F handed back (r5f a810aaf, round 1; no web change, w21 not made): cause shown (the animation list equal in both recordings, the pictures
+not: the compositor drew the entrance from its own time); `--disable-threaded-animation`; cold letter 6 pairs 0, one under load 0, Studio and owambe
+cold 0; a second run 15 of 16 clean: the one left is every frame different, a text line 1/64 px wider, cause not found. M2: the script world is made
+again once; the log line counts waits ended by the cap; a spec. L3 done. Ruling IK6l: that rarer kind to the sweep list; a short re-check
+(VERIFY2-R5F), then merge on a green full suite.
+Started VERIFY2-R5F (Sonnet).
+Running: VERIFY-W22 (verifier); VERIFY2-R5F (verifier).

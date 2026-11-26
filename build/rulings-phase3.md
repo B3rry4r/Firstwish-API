@@ -1398,3 +1398,8 @@ HG1 (give race) Two staff giving one Concierge order: the code is right (overlap
   line in midnight/confetti.
 - IK8f (26 Nov, the lead, second chat, on W22's hand-back; Default (lead), owner may override): the midnight style's corner clock ("12:00:03") is
   the scene's own clock past midnight, not a counter of the wish's progress: it stays under the render page.
+- IK6l (26 Nov, the lead, second chat, on R5F's fix round 1; Default (lead), owner may override): the cold-web fault's common kind is closed
+  (`--disable-threaded-animation`: the compositor drew an entrance from its own time). The rarer kind (1 of 16 cold pairs: every frame differs,
+  one text line 1/64 px wider, only in the first recording after a web start) is invisible in the picture and does not make a video wrong; it
+  goes to the sweep list (a candidate: the worker opens the render page once at its start, before its first job), not a second round. R5F merges
+  on a short re-check of round 1 and a green full suite.

@@ -103,7 +103,7 @@ const pages: Record<string, (host: string, token: string) => string> = {
   pichang: () => picPage(-1),
 };
 const h1 = (ms: number): string =>
-  page("", play(500, false, `Promise.all([new Promise((r) => setTimeout(r, 0)), new Promise((r) => requestAnimationFrame((ts) => { window.__raf0 = ts; r(); })), fetch("/asset.txt?ms=${ms}")])`,
+  page("", play(500, false, `Promise.all([new Promise((r) => setTimeout(r, 0)), new Promise((r) => { requestAnimationFrame((ts) => { window.__raf0 = ts; r(); }); window.__vt.frame(); }), fetch("/asset.txt?ms=${ms}")])`,
     `if (performance.now() !== 0 || window.__raf0 !== 0) R.error = "virtual time moved before ready: " + performance.now() + " ms, first frame callback at " + window.__raf0;`));
 /** a page that says ready at once and shows one full-size picture, which the stand-in web serves after `ms` real milliseconds (-1: never finishes) */
 const picPage = (ms: number): string =>

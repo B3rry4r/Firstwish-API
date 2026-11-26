@@ -338,3 +338,10 @@ Running: lead-drive (the lead's live test).
 Ruling IM4: every read that hands out a person's photo carries `variants` (one additive reopen). Started API-10E (T1, Sonnet; brief
 build/prompts/API-10E.md; API db60812, web 8ec7682): the Vault, a reveal and staff reads get sized copies, and the website draws them.
 Running: lead-drive (the lead's live test); API-10E (builder).
+
+### 2026-11-26 · second chat · ccr-91b3ed11-fx445c
+Did: API-10E handed back (a10e b4b544c, 21 files; w10e e9c49e4, 15 files): `variants` on the Vault, shoot, reveal, moderation, play, showing,
+creators, me, logo, concierge and Studio file reads; DEC-330 reopen, DEC-331 freeze, reconcile twice identical; the web feeds each to SizedImg;
+a shoot page 25,584 KB to 4 KB, a reveal page 25,584 KB to 6,617 KB, 0 full copies, 0 broken. Started VERIFY-API-10E (T1, Sonnet).
+Live test: 1,314 PASS so far; the same two W14B FAILs only.
+Running: lead-drive (the lead's live test); VERIFY-API-10E (verifier).

@@ -1403,3 +1403,7 @@ HG1 (give race) Two staff giving one Concierge order: the code is right (overlap
   one text line 1/64 px wider, only in the first recording after a web start) is invisible in the picture and does not make a video wrong; it
   goes to the sweep list (a candidate: the worker opens the render page once at its start, before its first job), not a second round. R5F merges
   on a short re-check of round 1 and a green full suite.
+- IK6m (26 Nov, the lead, second chat, on merge check m55; Default (lead), owner may override): the two reds of m55 (r5 spec M2, an abort at
+  Chromium's start timed out; M5 then saw a second port held) are the machine, not the code: the same head passed 38 of 38 in a fresh worktree,
+  and in the main clone once 2,328 old org.chromium.Chromium.* folders were removed from /tmp. The merges of WEB-10D and P10D-API stand. Whether
+  a render leaves such a folder behind (and the leftovers sweep must remove it) goes to the sweep list.

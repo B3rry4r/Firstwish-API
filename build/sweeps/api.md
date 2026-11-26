@@ -170,3 +170,5 @@
 - (R7 L2) a refunded video's file stays stored until the wish or account is erased; an address issued before the refund serves up to 10 minutes.
 - IK6l: the recorder's first recording after a web start can differ in every frame from the next one (1 of 16 cold letter pairs; one text line 1/64 px wider). Invisible; a candidate fix: the worker opens the render page once at its start.
 - R5F re-check LOW: the world-remade path in realFrames (chromium-video-renderer.ts:862-870) has no test; the log text says "400 ms" even when frameWaitCapMs differs (:933); numbers.md cites the flag at :682 (it is :687).
+- IK6m: about 2,300 org.chromium.Chromium.* folders had piled up in /tmp on the build machine (from recorder runs, Playwright sweeps or both) and slowed Chromium's start until r5 M2 timed out. Check whether one render leaves such a folder; if so, the leftovers sweep (render-leftovers.ts) removes it.
+- WEB-10D request: the server sends `variants` only on Wish.pictures and PublicWishView.files: the Vault, a reveal and staff reads still hand out full copies (an additive registry reopen, its own task).

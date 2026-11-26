@@ -303,3 +303,14 @@ broken, and SizedImg has no fall-back. MED: /w fetches two photos twice; r4.mjs'
 HEIC anywhere), 503 Try again (1 ticket, 1 put, 2 confirms), flows, 10-style sweep, no browser storage. Verdict in verdicts/web-10d-VERDICT.md.
 Started P-WEB-10D (round 1, Sonnet; brief build/prompts/P-WEB-10D.md): may fix the 404 on a local API branch p10d-api if its cause is there.
 Running: P-WEB-10D (patch).
+
+### 2026-11-26 · second chat · ccr-91b3ed11-fx445c
+Did: P-WEB-10D handed back (web-10d d47280d, 4 files +24 -8; API p10d-api 649ee04, the stand-in sizer, +15 and a spec): the 404 was the API
+stand-in's resize writing nothing while the job marked the size made (standins.ts ~:400; the real adapter was right); SizedImg falls back to the
+full copy once; owner wish, list, home fetch one w320 copy (749 B, was 4.37 MB); /w fetches each photo once; r4.mjs knows the size urls. Both
+fixes under 30 lines closing the named findings: ACCEPTED on the lead's diff read.
+MERGED WEB-10D into the web: 8ec7682 (wm5 all EXIT 0). MERGED P10D-API into the server: ea86c45 (m55: all EXIT 0 but test: 2 reds in the r5
+spec, M2 and M5; the same head passed 38 of 38 in a fresh worktree and in the main clone once 2,328 old Chromium temp folders were removed from
+/tmp: ruling IK6m, the machine). web-10d and p10d-api removed.
+Next: G1 (the gallery three.js error, on base too); the whole live test (build/handover/scripts/lead-drive.sh, paths for this machine); then
+the state at the stop. R9 and Phase 8 need the owner's keys and server.

@@ -125,3 +125,4 @@
 - W20: the receiver press script used by P2-W20 was never committed; scripts/live/flows/r4rc.mjs has no press step.
 - W22 verify LOW: last recorded frames cut a word: owambe candle, confetti and names; runway close ("DRIVER" cut at its foot); a faint "DRIVE" behind the harvest-light slats. The sweep does not read cut words.
 - W22 verify: cinema, harvest-light (candle) and screening at 360 are not driven to the ending by r4rc.mjs, on base too.
+- WEB-10D: /w at 390 and up draws the stage's w1600 copy where w768 would do (one fetch per photo, about 3.4 MB for three photos); pics.ts stage() could ask by the drawn box.

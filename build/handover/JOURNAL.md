@@ -333,3 +333,8 @@ Did: VERIFY-G1: MERGE (3 different photos, 7 stops: 0 page errors at 360 and 144
 EMPTY WHITE frames where the photos were; render page clean; a blocked photo gives the dark blank, no loop; checks green). The merge waits
 for the live test, which runs from the main web clone. Verdict in verdicts/g1-VERDICT.md.
 Running: lead-drive (the lead's live test).
+
+### 2026-11-26 · second chat · ccr-91b3ed11-fx445c
+Ruling IM4: every read that hands out a person's photo carries `variants` (one additive reopen). Started API-10E (T1, Sonnet; brief
+build/prompts/API-10E.md; API db60812, web 8ec7682): the Vault, a reveal and staff reads get sized copies, and the website draws them.
+Running: lead-drive (the lead's live test); API-10E (builder).

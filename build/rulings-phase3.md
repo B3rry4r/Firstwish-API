@@ -1407,3 +1407,7 @@ HG1 (give race) Two staff giving one Concierge order: the code is right (overlap
   Chromium's start timed out; M5 then saw a second port held) are the machine, not the code: the same head passed 38 of 38 in a fresh worktree,
   and in the main clone once 2,328 old org.chromium.Chromium.* folders were removed from /tmp. The merges of WEB-10D and P10D-API stand. Whether
   a render leaves such a folder behind (and the leftovers sweep must remove it) goes to the sweep list.
+- IM4 (26 Nov, the lead, second chat, on WEB-10D's request; Default (lead), owner may override): every read that hands out a person's photo
+  carries the sized copies, not only Wish.pictures and PublicWishView.files: the Vault's files, a reveal's photos and the staff reads that show
+  a photo get `variants` (w320, w768, w1600, each a signed url and `sized`) by one additive registry reopen (DEC rows; ids never change), and
+  the website draws them through SizedImg. A business's Vault file that is not a photo carries none.

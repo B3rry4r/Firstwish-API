@@ -353,3 +353,11 @@ broken; 349 specs; web checks green). LOW accepted: four registry types tightene
 stand-in cleaner does not clean, so IM1's real clean copy is proved only with the real adapter. Verdict in verdicts/a10e-VERDICT.md.
 MERGED API-10E into the server: bdc3cb6 (m56: all EXIT 0; 1,788 of 1,788 tests). The web half (w10e e9c49e4) and G1 wait for the live test.
 Running: lead-drive (the lead's live test).
+
+### 2026-11-26 · second chat · ccr-91b3ed11-fx445c
+Did: the whole live test (lead-drive, web 8ec7682, API 2cd191c; two-hour run): 2,552 of 2,556 checks pass, wired 89 of 89. FAILs: W14B support
+and concierge at 360 (search placeholder cut); R4 reel/default flat read (the black letterbox ground, a known false flag), which fails its
+summary. Stack down by PID, tsconfig restored, worktree removed.
+MERGED G1 (ca2ba63) and WEB-10E (5f9fd26) into the web (wm6 all EXIT 0); seed export gives no change. Branches removed.
+Started W23 (T1, Sonnet; brief build/prompts/W23.md): the two placeholders and the reel false flag.
+Running: W23 (builder).

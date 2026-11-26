@@ -202,3 +202,8 @@ passed, 1 skipped without --origin). w19 branch removed.
 Next for the recorder follow-up (IK6h, IK6k; API): `-threads 1` in openSegment; M3 holds under load; the R6 Studio proof; a polaroid render once
 said "404 This render is not available" to the patch builder (cause not looked at): the follow-up finds out.
 Running: P-W20 (patch).
+
+### 2026-11-26 · second chat · ccr-91b3ed11-fx445c
+Started R5F, the recorder follow-up (T2, Sonnet, brief build/prompts/R5F.md; API d4f47e7, web 3c9b8e6): a deterministic encode, M3 under load,
+five kinds of wish repeat frame for frame, the R6 Studio proof, the polaroid "404 This render is not available".
+Running: P-W20 (patch); R5F (builder).

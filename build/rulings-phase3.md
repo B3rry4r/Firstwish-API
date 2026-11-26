@@ -1411,3 +1411,5 @@ HG1 (give race) Two staff giving one Concierge order: the code is right (overlap
   carries the sized copies, not only Wish.pictures and PublicWishView.files: the Vault's files, a reveal's photos and the staff reads that show
   a photo get `variants` (w320, w768, w1600, each a signed url and `sized`) by one additive registry reopen (DEC rows; ids never change), and
   the website draws them through SizedImg. A business's Vault file that is not a photo carries none.
+- CP1 (26 Nov, the lead, second chat, on W23; Default (lead), owner may override): the staff search hints are shortened so they fit at 360
+  ("Subject, name or email"; "Order, sender or name"); what the search finds is unchanged. The live test's "designed words" lines follow them.

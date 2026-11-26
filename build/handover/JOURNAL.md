@@ -368,3 +368,11 @@ a black plate with a ring still flagged). Ruling CP1 (shorter staff search hints
 Open rows left: UA-149, UA-715, UA-716 (owner's keys), UA-875, UA-896 (owner), UA-725 (the wish page's video, now that the real recorder is in).
 Started V1 (T2, Sonnet; brief build/prompts/V1.md): the website's video flow end to end through the real recorder; close UA-725.
 Running: V1 (builder).
+
+### 2026-11-26 · second chat · ccr-91b3ed11-fx445c
+Did: V1 handed back (v1 ba469f6: the flow scripts/live/flows/v1-video.mjs only; the wish page needed no change): asked, paid (stand-in), made in
+54 s, downloaded an MP4 (h264 1080x1920 30 fps 14.57 s) for a house style at 390 and Studio at 1440; another account 404; a Signature ticket
+gets the video with no price; two losses give "Ask again" with no second payment; a refund mid-render shows its words; no control when the
+recorder cannot work. Gaps: the sheet's close X has no hover or active state; the "Take it as a video" row has no focus-visible state.
+Started VERIFY-V1 (Sonnet; the flow re-run and attacked) and W24 (T1, Sonnet; brief build/prompts/W24.md: the two states, CSS only).
+Running: VERIFY-V1 (verifier); W24 (builder).

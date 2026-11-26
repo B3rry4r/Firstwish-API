@@ -52,9 +52,9 @@ export class VaultFilesService {
     const page = toPage(rows, limit, (r) => ({ key: r.id, id: r.id }));
     const items = [];
     for (const r of page.items) {
-      const read = await this.reads.signedRead({ fileId: r.id }, { type: "vault", accountId: p.accountId }).catch((e: unknown) => { if (e instanceof AppError && e.code === PHOTO_NOT_SHOWN_CODE) return null; throw e; });
+      const read = await this.reads.signedPhoto({ fileId: r.id }, { type: "vault", accountId: p.accountId }).catch((e: unknown) => { if (e instanceof AppError && e.code === PHOTO_NOT_SHOWN_CODE) return null; throw e; });
       if (!read) continue; // IM1: a login of the business is not given a picture the server cannot open
-      items.push({ id: r.id, name: r.shownName || `vault-${r.id.slice(-12)}.${EXT[r.contentType] ?? "bin"}`, size: Number(r.bytes), url: read.url });
+      items.push({ id: r.id, name: r.shownName || `vault-${r.id.slice(-12)}.${EXT[r.contentType] ?? "bin"}`, size: Number(r.bytes), url: read.read.url, ...(read.variants ? { variants: read.variants } : {}) }); // IM4: a picture carries its sizes
     }
     return { items, nextCursor: page.nextCursor };
   }
@@ -82,7 +82,7 @@ export class VaultFilesService {
     });
     if (n.count === 0) throw AppError.notFound("No such file.");
     const row = await this.db.storedFile.findUniqueOrThrow({ where: { id } });
-    const read = await this.reads.signedRead({ fileId: id }, { type: "vault", accountId: p.accountId });
-    return { id, name: row.shownName || `vault-${id.slice(-12)}.${EXT[row.contentType] ?? "bin"}`, size: Number(row.bytes), url: read.url };
+    const read = await this.reads.signedPhoto({ fileId: id }, { type: "vault", accountId: p.accountId });
+    return { id, name: row.shownName || `vault-${id.slice(-12)}.${EXT[row.contentType] ?? "bin"}`, size: Number(row.bytes), url: read.read.url, ...(read.variants ? { variants: read.variants } : {}) };
   }
 }

@@ -174,8 +174,8 @@ export class AccountsService {
     if (row.erasedAt) return null;
     const c = await this.prisma.creator.findUnique({ where: { accountId: row.id }, select: { img: true } });
     if (!c?.img || !/^[0-9a-f-]{36}$/i.test(c.img)) return null;
-    const s = await this.signed.signedRead({ fileId: c.img }, { type: "owner", accountId: row.id }).catch(() => null);
-    return s ? { fileId: s.fileId, url: s.url, expiresAt: s.expiresAt } : null;
+    const s = await this.signed.signedPhoto({ fileId: c.img }, { type: "owner", accountId: row.id }).catch(() => null);
+    return s ? { fileId: s.read.fileId, url: s.read.url, expiresAt: s.read.expiresAt, ...(s.variants ? { variants: s.variants } : {}) } : null; // IM4
   }
 
   /** HR3: the owned business first, then each business the person's sign-in email is a login of (the login's state is the server's: invited, active or removed). */

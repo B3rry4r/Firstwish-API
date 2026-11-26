@@ -9,7 +9,7 @@ import { ENV } from "../../common/env/env.module";
 import { Clock } from "../../common/ports/clock.port";
 import { IdGenerator } from "../../common/ports/ids.port";
 import type { PlayWish, ReactResponse, ShareResponse } from "../../contracts";
-import { SignedUrlsService } from "../stored-files/signed-urls.service";
+import { SignedUrlsService, type SizedRead } from "../stored-files/signed-urls.service";
 
 type Reaction = "love" | "joy" | "clap" | "wow";
 type Db = PrismaService | Prisma.TransactionClient;
@@ -73,11 +73,11 @@ export class FeedWishesService {
     const f = await this.feed(this.db, id);
     const w = await this.db.wish.findUniqueOrThrow({ where: { id: f.wishId as string } });
     const rows = await this.db.wishFile.findMany({ where: { wishId: w.id }, orderBy: [{ createdAt: "asc" }, { id: "asc" }], select: { fileId: true, role: true } });
-    const files: { fileId: string; role: string; url: string; expiresAt: string }[] = [];
+    const files: { fileId: string; role: string; url: string; expiresAt: string; variants?: SizedRead[] }[] = [];
     for (const r of rows) {
       try {
-        const s = await this.signed.signedRead({ fileId: r.fileId }, { type: "allowed" });
-        files.push({ fileId: r.fileId, role: r.role, url: s.url, expiresAt: s.expiresAt });
+        const s = await this.signed.signedPhoto({ fileId: r.fileId }, { type: "allowed" });
+        files.push({ fileId: r.fileId, role: r.role, url: s.read.url, expiresAt: s.read.expiresAt, ...(s.variants ? { variants: s.variants } : {}) }); // IM4
       } catch (e) {
         if (!(e instanceof AppError) || e.getStatus() !== 404) throw e;
       }

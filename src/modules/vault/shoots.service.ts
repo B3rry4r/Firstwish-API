@@ -11,7 +11,7 @@ import { IdGenerator } from "../../common/ports/ids.port";
 import { toWireInstant } from "../../common/time/time";
 import { StoredFilesService } from "../stored-files/stored-files.service";
 import { playingRevealNames } from "../stored-files/file-jobs";
-import { SignedUrlsService } from "../stored-files/signed-urls.service";
+import { SignedUrlsService, type SizedRead } from "../stored-files/signed-urls.service";
 import { dotsOnly, fileName, idsOf, MAX_FILES_PER_ADD, plainName, SetName, UUID } from "./vault-shared";
 import { VaultSpaceService } from "./vault-space.service";
 
@@ -23,6 +23,7 @@ interface FileItem {
   name: string;
   size: number;
   url?: string;
+  variants?: SizedRead[];
 }
 
 const ymd = (d: Date): string => d.toISOString().slice(0, 10);
@@ -57,7 +58,11 @@ export class ShootsService {
       const f = by.get(id);
       if (!f) return null;
       const out: FileItem = { id, name: fileName(id, f.contentType, f.shownName), size: Number(f.bytes) };
-      if (ownerId && f.status === "ready") out.url = (await this.reads.signedRead({ fileId: id }, { type: "vault", accountId: ownerId })).url;
+      if (ownerId && f.status === "ready") {
+        const r = await this.reads.signedPhoto({ fileId: id }, { type: "vault", accountId: ownerId });
+        out.url = r.read.url;
+        if (r.variants) out.variants = r.variants; // IM4
+      }
       return out;
     };
     const list = async (ids: string[]): Promise<FileItem[]> => (await Promise.all(ids.map(item))).filter((x): x is FileItem => x !== null);

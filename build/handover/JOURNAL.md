@@ -327,3 +327,9 @@ The whole live test (lead-drive, this machine's paths; web 8ec7682, API 2cd191c)
 background job after 1,156 PASS; its only real FAILs: W14B support and concierge at 360, the search placeholder is cut ("Subject, name, email,
 wish" needs 202 px, room 154 px). The four W9 FAILs are the cut. Restarted with a two-hour limit.
 Running: VERIFY-G1 (verifier); lead-drive (the lead's live test).
+
+### 2026-11-26 · second chat · ccr-91b3ed11-fx445c
+Did: VERIFY-G1: MERGE (3 different photos, 7 stops: 0 page errors at 360 and 1440 on the branch; on base 6 and 7 errors and the receiver saw
+EMPTY WHITE frames where the photos were; render page clean; a blocked photo gives the dark blank, no loop; checks green). The merge waits
+for the live test, which runs from the main web clone. Verdict in verdicts/g1-VERDICT.md.
+Running: lead-drive (the lead's live test).

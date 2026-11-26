@@ -126,3 +126,5 @@
 - W22 verify LOW: last recorded frames cut a word: owambe candle, confetti and names; runway close ("DRIVER" cut at its foot); a faint "DRIVE" behind the harvest-light slats. The sweep does not read cut words.
 - W22 verify: cinema, harvest-light (candle) and screening at 360 are not driven to the ending by r4rc.mjs, on base too.
 - WEB-10D: /w at 390 and up draws the stage's w1600 copy where w768 would do (one fetch per photo, about 3.4 MB for three photos); pics.ts stage() could ask by the drawn box.
+- G1 verify LOW: gallery under the render page still draws the bottom nav plate and the chapter label, cut ("Swe...", "The l...") (Scene.tsx:389-391); base the same; r4 passes it.
+- Live test (lead-drive, 26 Nov): W14B support and concierge at 360: the search placeholder is cut ("Subject, name, email, wish" needs 202 px, room 154 px; "Order number, sender, name" 217 px).

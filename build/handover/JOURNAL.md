@@ -295,3 +295,11 @@ under load; render-jobs 123 tests; checks green; no token in any log). Lows to t
 MERGED R5F into the server: 59d787d (m54: npm, prisma, seed, tsc, lint, gates, contracts, drift, routes, test all EXIT 0; Tests:       1783 passed, 1783 total).
 r5f removed. The renderer work of IK6h is done; R9 (the owner's server and keys) is what is left before the video can be sold (IK3).
 Running: VERIFY-WEB-10D (verifier).
+
+### 2026-11-26 · second chat · ccr-91b3ed11-fx445c
+Did: VERIFY-WEB-10D: FIX FIRST. HIGH: on the real stack the owner's wish, list and home draw the full copy where sizes exist (a 100 px thumb
+fetched 4.37 MB: only two reads feed SizedImg); every sized variant url answers 404 on the stack (full url 200), so /w drew 3 of 3 photos
+broken, and SizedImg has no fall-back. MED: /w fetches two photos twice; r4.mjs's allow-set fails film and studio. Passed: checks, pickers (no
+HEIC anywhere), 503 Try again (1 ticket, 1 put, 2 confirms), flows, 10-style sweep, no browser storage. Verdict in verdicts/web-10d-VERDICT.md.
+Started P-WEB-10D (round 1, Sonnet; brief build/prompts/P-WEB-10D.md): may fix the 404 on a local API branch p10d-api if its cause is there.
+Running: P-WEB-10D (patch).

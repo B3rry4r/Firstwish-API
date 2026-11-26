@@ -314,3 +314,7 @@ spec, M2 and M5; the same head passed 38 of 38 in a fresh worktree and in the ma
 /tmp: ruling IK6m, the machine). web-10d and p10d-api removed.
 Next: G1 (the gallery three.js error, on base too); the whole live test (build/handover/scripts/lead-drive.sh, paths for this machine); then
 the state at the stop. R9 and Phase 8 need the owner's keys and server.
+
+### 2026-11-26 · second chat · ccr-91b3ed11-fx445c
+Started G1 (T1, Sonnet; brief build/prompts/G1.md; web 8ec7682): the gallery's receiver visit throws "e is not a function" from three.js.
+Running: G1 (builder). Next: the whole live test (lead-drive, paths for this machine) beside it.

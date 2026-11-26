@@ -120,3 +120,6 @@
 - W20 verify: scrapbook/candle at 1440 shows the page-1 hint "Swipe to turn" in some runs only (Scene.tsx:794): a timing flake on base and branch.
 - W20 re-check LOW: midnight/confetti's line "Happy birthd" is cut mid-reveal in the last recorded frame.
 - W20 re-check: gallery throws "e is not a function" (vendored three.js WebGLState.texSubImage2D, from the gallery's texture upload) 14 to 18 times per receiver visit, on base too; controls work. Its own small task (G1): find what the upload passes and whether a photo is missing for the receiver.
+- W20 last re-check LOW: boarding-pass middle frames show "01 THE LETTER / 1A" flip cells (a stop number and a seat: words of the pass, kept unless the owner says they read as a counter).
+- W20 last re-check LOW: the opening frame of first-day and tailored under the render page is near-black (the cover before its entrance).
+- W20: the receiver press script used by P2-W20 was never committed; scripts/live/flows/r4rc.mjs has no press step.

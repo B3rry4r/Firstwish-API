@@ -249,3 +249,11 @@ progress lines in film styles W20 never touched, 1 false (reel); plants found in
 Ruling IK8e: no third round; a short re-check (VERIFY3-W20) then merge; the 16 film progress lines are re-cut as W22.
 Started VERIFY3-W20 (Sonnet).
 Running: P-R5F (patch); VERIFY3-W20 (verifier).
+
+### 2026-11-26 · second chat · ccr-91b3ed11-fx445c
+Did: VERIFY3-W20: MERGE (all six round-2 findings closed by eye with 3-photo wishes; 8 of 8 named cases clean; receivers same in 18 visits;
+checks green; owned files only). Lows to the sweep list. Verdict in verdicts/w20-VERDICT3.md.
+MERGED W20 into the web: 60f235b (wm3: npm, tsc, records, gates, baseline, test:client, contracts, lint, css, build all EXIT 0). w20 removed.
+Started W22 (T1, Sonnet; brief build/prompts/W22.md): the 16 film progress lines and midnight/confetti's cut line (IK8e).
+Running: P-R5F (patch); W22 (builder).
+Next: WEB-10D after W22 and P-R5F's web part (both near components/styles or components/render); G1 (gallery three.js error) after them.

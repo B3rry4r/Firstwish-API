@@ -579,6 +579,18 @@ real(`R5 round 1 on a stand-in web page${WHY}`, () => {
     expect(await mine()).toEqual([]);
   }, 60_000);
 
+  it("R5F M2: a frame wait that hits its cap is counted in the render's log line (the cap set to 1 ms here; 400 ms is the default); a quiet page counts none and names no remade script world", async () => {
+    const b = make({ frameWaitCapMs: 1 });
+    await b.r.render(req("good-bbbbbbbbbbbb", { seconds: 60 }));
+    expect(b.r.lastRun?.frameWaitCaps).toBeGreaterThanOrEqual(1);
+    expect(b.logs.join("\n")).toMatch(/[1-9]\d* frame wait\(s\) hit the 400 ms cap/);
+    const c = make();
+    await c.r.render(req("good-aaaaaaaaaaaa", { seconds: 60 }));
+    expect(c.logs.join("\n")).toMatch(/\b\d+ frame wait\(s\) hit the 400 ms cap/);
+    expect(c.r.lastRun?.worldsRemade).toBe(0);
+    expect(c.logs.join("\n")).not.toMatch(/script world/);
+  }, 120_000);
+
   it("L7: an ffmpeg that dies while flushing a scene fails the render at once, not at the end of play", async () => {
     const wrap = `${tmpdir()}/pr5-ffmpeg-wrap.sh`;
     writeFileSync(wrap, `#!/bin/sh\nfor last; do :; done\ncase "$last" in *seg-0.ts) cat >/dev/null; sleep 1; echo boom >&2; exit 1;; esac\nexec ${FFMPEG} "$@"\n`, { mode: 0o755 });

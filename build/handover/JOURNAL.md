@@ -190,3 +190,15 @@ untouched file); boarding-pass and polaroid-table envelope at 360 not reached, o
 Ruling IK8d: "Make a wish, X." and the group-chat "..." pill stay; lit approach lights stay; S is a help, the verifier's eyes decide.
 Started P-W20 (round 1, Sonnet, brief build/prompts/P-W20.md).
 Running: P-W19 (patch); P-W20 (patch).
+
+### 2026-11-26 · second chat · ccr-91b3ed11-fx445c
+Did: P-W19 handed back (w19 602175a, round 1: clock-shim.mjs 6 lines, test case 8): cause on the compositor (it takes the held animation time
+at its next real frame, so a shot right after a step could show the step before); a step that moved an animation now waits two real frames
+(250 ms cap). Letter 6 pairs (three under load, -threads 2 and 1): 0 differing input JPEGs, 0 differing decoded frames; tinsel 2 pairs 0;
+polaroid 1 pair 0 with -threads 1. T1 fix under 30 lines closing the named finding: ACCEPTED on the lead's diff read (receivers unchanged by
+construction: the shim is served only as /render-clock.js; round 0's receiver compare holds).
+MERGED W19 into the web: 3c9b8e6 (wm2: npm, tsc, records, gates, baseline, test:client, contracts, lint, css, build all EXIT 0; clock test 24
+passed, 1 skipped without --origin). w19 branch removed.
+Next for the recorder follow-up (IK6h, IK6k; API): `-threads 1` in openSegment; M3 holds under load; the R6 Studio proof; a polaroid render once
+said "404 This render is not available" to the patch builder (cause not looked at): the follow-up finds out.
+Running: P-W20 (patch).

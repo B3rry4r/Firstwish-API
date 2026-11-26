@@ -169,3 +169,4 @@
 - (R7 L1) erase nulls RenderJob.outputFileId but keeps the row (file-jobs.ts:319, wish-lifecycle.service.ts:403); the plan says the row goes too (no letter text in it).
 - (R7 L2) a refunded video's file stays stored until the wish or account is erased; an address issued before the refund serves up to 10 minutes.
 - IK6l: the recorder's first recording after a web start can differ in every frame from the next one (1 of 16 cold letter pairs; one text line 1/64 px wider). Invisible; a candidate fix: the worker opens the render page once at its start.
+- R5F re-check LOW: the world-remade path in realFrames (chromium-video-renderer.ts:862-870) has no test; the log text says "400 ms" even when frameWaitCapMs differs (:933); numbers.md cites the flag at :682 (it is :687).

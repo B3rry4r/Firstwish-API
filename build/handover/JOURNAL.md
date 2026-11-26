@@ -288,3 +288,10 @@ pickers take jpeg, png, webp, gif; HEIC and 503 words show; Try again confirms a
 the server sends `variants` only on Wish.pictures and PublicWishView.files, so the Vault, a reveal and staff reads still show full copies.
 Started VERIFY-WEB-10D (T1, Sonnet).
 Running: VERIFY2-R5F (verifier); VERIFY-WEB-10D (verifier).
+
+### 2026-11-26 · second chat · ccr-91b3ed11-fx445c
+Did: VERIFY2-R5F: MERGE (cold letter 6 pairs and one under load: 0 differing; polaroid and reel 0 with the flag; r5 spec 38 of 38 three times
+under load; render-jobs 123 tests; checks green; no token in any log). Lows to the sweep list. Verdict in verdicts/r5f-VERDICT2.md.
+MERGED R5F into the server: 59d787d (m54: npm, prisma, seed, tsc, lint, gates, contracts, drift, routes, test all EXIT 0; Tests:       1783 passed, 1783 total).
+r5f removed. The renderer work of IK6h is done; R9 (the owner's server and keys) is what is left before the video can be sold (IK3).
+Running: VERIFY-WEB-10D (verifier).

@@ -361,3 +361,10 @@ summary. Stack down by PID, tsconfig restored, worktree removed.
 MERGED G1 (ca2ba63) and WEB-10E (5f9fd26) into the web (wm6 all EXIT 0); seed export gives no change. Branches removed.
 Started W23 (T1, Sonnet; brief build/prompts/W23.md): the two placeholders and the reel false flag.
 Running: W23 (builder).
+
+### 2026-11-26 · second chat · ccr-91b3ed11-fx445c
+Did: VERIFY-W23: MERGE (hints whole at 360, 390, 1440 light and dark; search still finds a wish number and an order; plants caught in 21 of 21;
+a black plate with a ring still flagged). Ruling CP1 (shorter staff search hints). MERGED W23 into the web: 82315b7 (wm7 all EXIT 0).
+Open rows left: UA-149, UA-715, UA-716 (owner's keys), UA-875, UA-896 (owner), UA-725 (the wish page's video, now that the real recorder is in).
+Started V1 (T2, Sonnet; brief build/prompts/V1.md): the website's video flow end to end through the real recorder; close UA-725.
+Running: V1 (builder).

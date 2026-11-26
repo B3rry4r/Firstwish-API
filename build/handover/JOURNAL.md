@@ -280,3 +280,11 @@ MERGED W22 into the web: dae0324 (wm4: all EXIT 0). w22 removed.
 Started WEB-10D (T1, Sonnet; brief build/prompts/WEB-10D.md; web dae0324, API below): screens use the server's sized photos; pickers take only
 the kinds the server takes.
 Running: VERIFY2-R5F (verifier); WEB-10D (builder).
+
+### 2026-11-26 · second chat · ccr-91b3ed11-fx445c
+Did: WEB-10D handed back (web-10d d37b48a, 94 files: lib/pics.ts and SizedImg replace <img> in 79): /w photos 13.1 MB to under 4 MB at 390
+and 1440, 0 full copies, 0 upscaled (on MOCKED reads); sized:false shows the full copy, no shift; the render page uses w1600 and waits on decode;
+pickers take jpeg, png, webp, gif; HEIC and 503 words show; Try again confirms again without a second upload (maker and Vault fixed). REQUEST:
+the server sends `variants` only on Wish.pictures and PublicWishView.files, so the Vault, a reveal and staff reads still show full copies.
+Started VERIFY-WEB-10D (T1, Sonnet).
+Running: VERIFY2-R5F (verifier); VERIFY-WEB-10D (verifier).

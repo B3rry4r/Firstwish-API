@@ -1396,3 +1396,5 @@ HG1 (give race) Two staff giving one Concierge order: the code is right (overlap
   lookbook ending starts, pinboard gift) and its receivers; on a pass W20 merges. The 16 progress lines the new bar read found in film styles W20
   never touched (bloom, cinema, harvest-light, midnight, owambe, runway, screening) are re-cut as W22 (T1, one Pips wrap each), with the LOW cut
   line in midnight/confetti.
+- IK8f (26 Nov, the lead, second chat, on W22's hand-back; Default (lead), owner may override): the midnight style's corner clock ("12:00:03") is
+  the scene's own clock past midnight, not a counter of the wish's progress: it stays under the render page.

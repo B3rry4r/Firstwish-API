@@ -257,3 +257,9 @@ MERGED W20 into the web: 60f235b (wm3: npm, tsc, records, gates, baseline, test:
 Started W22 (T1, Sonnet; brief build/prompts/W22.md): the 16 film progress lines and midnight/confetti's cut line (IK8e).
 Running: P-R5F (patch); W22 (builder).
 Next: WEB-10D after W22 and P-R5F's web part (both near components/styles or components/render); G1 (gallery three.js error) after them.
+
+### 2026-11-26 · second chat · ccr-91b3ed11-fx445c
+Did: W22 handed back (w22 20d360e, 8 files, +52 -32): a Pips wrap on the bar in bloom, cinema, harvest-light, midnight, runway, screening, owambe;
+midnight/confetti's last line whole; 17 of 17 cases clean (16 flagged on the head); 95 of 95 done, 94 clean, 1 false (reel letterbox); receivers
+same, bars still drawn for receivers. Ruling IK8f: midnight's corner clock stays. Started VERIFY-W22 (T1, Sonnet).
+Running: P-R5F (patch); VERIFY-W22 (verifier).

@@ -404,3 +404,13 @@ Left for the owner: Paystack keys and the server (UA-149, UA-715, UA-716; Phase 
 replaces the sample link (UA-875); what makes a style "featured" (UA-896); the style lab (O1), 34 gate-wrong entries (O2), the sample link (O3),
 the 248 colours in the style packages (O4); owambe takes about 36 s of work per second of video (a 60 s owambe about 36 minutes).
 Next: the sweep bundles (one per repo) and a whole live test, or Phase 8 when the owner's keys and server are here.
+
+### 2026-11-27 · second chat · ccr-91b3ed11-fx445c · Deploy (owner's ask)
+Owner: deploy the server on Railway and the web on Vercel from ccr-91b3ed11-fx445c; real providers with TEST keys (stand-ins cannot sign a
+person in or take a payment in a browser); keep Railway's bill low. Then a Sonnet agent walks the whole app as a person.
+Did: Railway project "firstwish" (workspace "Terry Berry's Projects"): Postgres, Redis, bucket "photos" (ams), services api (PROCESS_ROLE=web,
+1 GB, 1 vCPU, health /v1/health, pre-deploy `npm run migrate && npm run seed`, address api-production-693c69f8.up.railway.app) and render-worker
+(PROCESS_ROLE=render-worker, 2 GB, 2 vCPU, Chromium and ffmpeg by apt); sleep on for every service; shared settings set (storage by the bucket's
+references; internal secrets generated). Sleep also turned on for noria-ita's app and database (applies at their next deploy).
+Blocked on the owner: Railway's GitHub app cannot read B3rry4r/Firstwish-API; the test keys (Paystack, Resend, Google, Anthropic) go into
+Railway's variables by the owner; the domain name.
